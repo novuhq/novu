@@ -92,7 +92,7 @@ export class Subscribers extends ClientSDK {
    * Retrieve a subscriber
    *
    * @remarks
-   * Retrive a subscriber by its unique key identifier **subscriberId**.
+   * Retrieve a subscriber by its unique key identifier **subscriberId**.
    *     **subscriberId** field is required.
    */
   async retrieve(
@@ -131,10 +131,11 @@ export class Subscribers extends ClientSDK {
   }
 
   /**
-   * Delete subscriber
+   * Delete a subscriber
    *
    * @remarks
-   * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions
+   * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions.
+   *       **subscriberId** is a required field.
    */
   async delete(
     subscriberId: string,

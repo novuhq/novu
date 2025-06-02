@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete subscriber
+ * Delete a subscriber
  *
  * @remarks
- * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions
+ * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions.
+ *       **subscriberId** is a required field.
  */
 export function subscribersDelete(
   client: NovuCore,

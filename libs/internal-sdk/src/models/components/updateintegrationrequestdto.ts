@@ -29,10 +29,6 @@ export type UpdateIntegrationRequestDto = {
    */
   active?: boolean | undefined;
   credentials?: CredentialsDto | undefined;
-  /**
-   * If true, the Novu branding will be removed from the Inbox component
-   */
-  removeNovuBranding?: boolean | undefined;
   check?: boolean | undefined;
   conditions?: Array<StepFilterDto> | undefined;
 };
@@ -48,7 +44,6 @@ export const UpdateIntegrationRequestDto$inboundSchema: z.ZodType<
   _environmentId: z.string().optional(),
   active: z.boolean().optional(),
   credentials: CredentialsDto$inboundSchema.optional(),
-  removeNovuBranding: z.boolean().optional(),
   check: z.boolean().optional(),
   conditions: z.array(StepFilterDto$inboundSchema).optional(),
 }).transform((v) => {
@@ -64,7 +59,6 @@ export type UpdateIntegrationRequestDto$Outbound = {
   _environmentId?: string | undefined;
   active?: boolean | undefined;
   credentials?: CredentialsDto$Outbound | undefined;
-  removeNovuBranding?: boolean | undefined;
   check?: boolean | undefined;
   conditions?: Array<StepFilterDto$Outbound> | undefined;
 };
@@ -80,7 +74,6 @@ export const UpdateIntegrationRequestDto$outboundSchema: z.ZodType<
   environmentId: z.string().optional(),
   active: z.boolean().optional(),
   credentials: CredentialsDto$outboundSchema.optional(),
-  removeNovuBranding: z.boolean().optional(),
   check: z.boolean().optional(),
   conditions: z.array(StepFilterDto$outboundSchema).optional(),
 }).transform((v) => {

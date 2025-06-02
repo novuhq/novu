@@ -28,7 +28,7 @@ import { Result } from "../types/fp.js";
  * Retrieve a subscriber
  *
  * @remarks
- * Retrive a subscriber by its unique key identifier **subscriberId**.
+ * Retrieve a subscriber by its unique key identifier **subscriberId**.
  *     **subscriberId** field is required.
  */
 export function subscribersRetrieve(
