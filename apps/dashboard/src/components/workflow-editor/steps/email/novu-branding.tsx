@@ -4,18 +4,20 @@ import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Switch } from '@/components/primitives/switch';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, WorkflowOriginEnum } from '@novu/shared';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { Separator } from '@/components/primitives/separator';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 type NovuBrandingProps = HTMLAttributes<HTMLDivElement>;
 
 export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
   const { subscription } = useFetchSubscription();
   const navigate = useNavigate();
+  const { workflow } = useWorkflow();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
 
@@ -27,8 +29,10 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
   const removeNovuBranding = organizationSettings?.data?.removeNovuBranding;
   const isUpdating = updateOrganizationSettings.isPending;
 
+  const showBranding = workflow?.origin === WorkflowOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings;
+
   // Don't render anything while loading or if branding should be removed
-  if (isLoadingSettings || removeNovuBranding) return null;
+  if (!showBranding) return null;
 
   const handleRemoveBrandingChange = (value: boolean) => {
     updateOrganizationSettings.mutate({
