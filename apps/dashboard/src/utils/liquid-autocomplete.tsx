@@ -244,11 +244,37 @@ function getMatchingVariables(
         },
       });
     } else if (!searchText.startsWith(namespace)) {
-      // For all other values, suggest payload.whatever, subscriber.data.whatever
+      const suggestedVariableName = `${namespace}.${searchText.trim()}`;
+      const isPayloadVariable = namespace === PAYLOAD_NAMESPACE;
+
+      // For payload variables, treat them as new suggestions with creation capability
       acc.push({
-        name: `${namespace}.${searchText.trim()}`,
+        name: suggestedVariableName,
         type: 'variable',
-        isNewSuggestion: false,
+        isNewSuggestion: isPayloadVariable,
+        ...(isPayloadVariable && {
+          info: () => {
+            if (!isPayloadSchemaEnabled) {
+              return null;
+            }
+
+            const dom = createInfoPanel({
+              component: (
+                <NewVariablePreview
+                  onCreateClick={() => {
+                    onCreateNewVariable?.(searchText.trim());
+                  }}
+                />
+              ),
+            });
+            return {
+              dom,
+              destroy: () => {
+                dom.remove();
+              },
+            };
+          },
+        }),
       });
     }
 
