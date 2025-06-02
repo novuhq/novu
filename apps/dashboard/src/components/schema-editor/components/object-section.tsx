@@ -98,7 +98,7 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
   }, [append, isAtMaxDepth]);
 
   return (
-    <div className={cn('pt-1', getMarginClassPx(indentationLevel + 1))}>
+    <div className={cn('flex flex-col gap-1.5 pt-1.5', getMarginClassPx(indentationLevel + 1))}>
       {fields.map((nestedField, nestedIndex) => (
         <NestedProperty
           key={nestedField.nestedFieldId}
@@ -117,17 +117,18 @@ export const ObjectSection = memo<ObjectSectionProps>(function ObjectSection({
           Maximum nesting depth of {MAX_NESTING_DEPTH} levels reached. Cannot add more nested properties.
         </div>
       )}
-      <Button
-        size="2xs"
-        variant="secondary"
-        mode="lighter"
-        onClick={handleAddNestedProperty}
-        leadingIcon={RiAddLine}
-        className="mt-1"
-        disabled={isAtMaxDepth}
-      >
-        Add Nested Property
-      </Button>
+      <div>
+        <Button
+          size="2xs"
+          variant="secondary"
+          mode="lighter"
+          onClick={handleAddNestedProperty}
+          leadingIcon={RiAddLine}
+          disabled={isAtMaxDepth}
+        >
+          Add Nested Property
+        </Button>
+      </div>
     </div>
   );
 });

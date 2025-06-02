@@ -16,4 +16,4 @@ export const SCHEMA_TYPE_OPTIONS: SchemaTypeOption[] = [
   { label: 'Null', value: 'null' },
 ];
 
-export const MAX_NESTING_DEPTH = 8;
+export const MAX_NESTING_DEPTH = 7;

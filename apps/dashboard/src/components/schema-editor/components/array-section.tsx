@@ -129,10 +129,9 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
       </div>
 
       {itemIsObject && (
-        <div className={cn('mt-1', getMarginClassPx(1))}>
+        <div className={cn('flex flex-col gap-1.5 pt-1.5', getMarginClassPx(1))}>
           {fields.map((itemNestedField, itemNestedIndex) => (
             <ArrayItemProperty
-              className="mt-1"
               key={itemNestedField.itemNestedFieldId}
               itemNestedIndex={itemNestedIndex}
               itemPropertiesListPath={itemPropertiesListPath}
@@ -148,17 +147,19 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
               Maximum nesting depth of {MAX_NESTING_DEPTH} levels reached. Cannot add more item properties.
             </div>
           )}
-          <Button
-            size="2xs"
-            variant="secondary"
-            mode="lighter"
-            onClick={handleAddArrayItemObjectProperty}
-            leadingIcon={RiAddLine}
-            className="mt-1"
-            disabled={isAtMaxDepth}
-          >
-            Add Item Property
-          </Button>
+          <div>
+            <Button
+              size="2xs"
+              variant="secondary"
+              mode="lighter"
+              onClick={handleAddArrayItemObjectProperty}
+              leadingIcon={RiAddLine}
+              className="mt-1"
+              disabled={isAtMaxDepth}
+            >
+              Add Item Property
+            </Button>
+          </div>
         </div>
       )}
     </div>
