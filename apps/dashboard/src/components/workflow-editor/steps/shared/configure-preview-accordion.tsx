@@ -104,12 +104,14 @@ export const ConfigurePreviewAccordion = ({
   const handleReset = useCallback(() => {
     // Use workflow payloadExample if available, otherwise use empty object
     const resetValue =
-      isPayloadSchemaEnabled && workflow?.payloadExample ? JSON.stringify(workflow.payloadExample, null, 2) : '{}';
+      isPayloadSchemaEnabled && workflow?.payloadExample
+        ? JSON.stringify({ payload: workflow.payloadExample }, null, 2)
+        : '{}';
 
     setEditorValueCallback(resetValue);
 
     if (isPayloadSchemaEnabled) {
-      setJsonData(workflow?.payloadExample || {});
+      setJsonData(workflow?.payloadExample ? { payload: workflow?.payloadExample } : {});
     }
 
     onUpdate();

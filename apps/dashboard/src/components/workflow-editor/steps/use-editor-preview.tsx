@@ -1,7 +1,6 @@
 import * as Sentry from '@sentry/react';
 import isEqual from 'lodash.isequal';
 import { useCallback, useEffect, useState } from 'react';
-import type { JSONSchemaDto } from '@novu/shared';
 
 import { useDataRef } from '@/hooks/use-data-ref';
 import { usePreviewStep } from '@/hooks/use-preview-step';

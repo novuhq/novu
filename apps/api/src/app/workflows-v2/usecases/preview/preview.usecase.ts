@@ -66,7 +66,7 @@ export class PreviewUsecase {
   @InstrumentUsecase()
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
     try {
-      const { user, generatePreviewRequestDto } = command;
+      const { generatePreviewRequestDto } = command;
 
       const {
         stepData,
