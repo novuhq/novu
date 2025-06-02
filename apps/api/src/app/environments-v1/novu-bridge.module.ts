@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { NovuClient, NovuHandler } from '@novu/framework/nest';
 
-import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
+import {
+  EnvironmentRepository,
+  NotificationTemplateRepository,
+  CommunityOrganizationRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import { GetDecryptedSecretKey, FeatureFlagsService } from '@novu/application-generic';
 import { NovuBridgeClient } from './novu-bridge-client';
 import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
@@ -15,6 +20,7 @@ import {
 } from './usecases/output-renderers';
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
+import { GetOrganizationSettings } from '../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -36,6 +42,9 @@ export const featureFlagsService = {
     NovuHandler,
     EnvironmentRepository,
     NotificationTemplateRepository,
+    CommunityOrganizationRepository,
+    IntegrationRepository,
+    GetOrganizationSettings,
     ConstructFrameworkWorkflow,
     GetDecryptedSecretKey,
     InAppOutputRendererUsecase,

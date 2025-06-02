@@ -67,11 +67,28 @@ function pnpmRun(...args) {
 
 function getAffectedCommandResult(str) {
   const outputLines = str.trim().split(/\r?\n/);
-  if (outputLines.length > 2) {
-    return outputLines.slice(2).join('');
+
+  // Find the line that contains the JSON array (starts with [ and ends with ])
+  for (const line of outputLines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.startsWith('[') && trimmedLine.endsWith(']')) {
+      return trimmedLine;
+    }
   }
 
-  return '';
+  // Fallback: look for any line that contains JSON-like content
+  for (const line of outputLines) {
+    const trimmedLine = line.trim();
+    if (trimmedLine.includes('[') && trimmedLine.includes(']')) {
+      // Extract just the JSON part from the line
+      const jsonStart = trimmedLine.indexOf('[');
+      const jsonEnd = trimmedLine.lastIndexOf(']') + 1;
+      return trimmedLine.substring(jsonStart, jsonEnd);
+    }
+  }
+
+  // If no JSON found, return empty array
+  return '[]';
 }
 
 async function affectedProjectsContainingTask(taskName, baseBranch) {

@@ -63,7 +63,7 @@ export type NotificationFeedItemDto = {
   /**
    * Identifier for the message template used.
    */
-  messageTemplateId: string;
+  messageTemplateId?: string | undefined;
   /**
    * Identifier for the organization sending the notification.
    */
@@ -184,7 +184,7 @@ export const NotificationFeedItemDto$inboundSchema: z.ZodType<
   _id: z.string(),
   _templateId: z.string(),
   _environmentId: z.string(),
-  _messageTemplateId: z.string(),
+  _messageTemplateId: z.string().optional(),
   _organizationId: z.string(),
   _notificationId: z.string(),
   _subscriberId: z.string(),
@@ -230,7 +230,7 @@ export type NotificationFeedItemDto$Outbound = {
   _id: string;
   _templateId: string;
   _environmentId: string;
-  _messageTemplateId: string;
+  _messageTemplateId?: string | undefined;
   _organizationId: string;
   _notificationId: string;
   _subscriberId: string;
@@ -264,7 +264,7 @@ export const NotificationFeedItemDto$outboundSchema: z.ZodType<
   id: z.string(),
   templateId: z.string(),
   environmentId: z.string(),
-  messageTemplateId: z.string(),
+  messageTemplateId: z.string().optional(),
   organizationId: z.string(),
   notificationId: z.string(),
   subscriberId: z.string(),

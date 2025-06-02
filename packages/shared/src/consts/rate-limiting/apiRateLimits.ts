@@ -20,5 +20,5 @@ export const DEFAULT_API_RATE_LIMIT_ALGORITHM_CONFIG: IApiRateLimitAlgorithm = {
 export const DEFAULT_API_RATE_LIMIT_COST_CONFIG: IApiRateLimitCost = {
   [ApiRateLimitCostEnum.SINGLE]: 1,
   [ApiRateLimitCostEnum.BULK]: 100,
-  [ApiRateLimitCostEnum.KEYLESS]: 3000,
+  [ApiRateLimitCostEnum.KEYLESS]: 1000,
 };

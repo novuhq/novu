@@ -14,6 +14,7 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 @Controller({ path: `/webhooks`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
+@ApiExcludeController()
 export class WebhooksController {
   constructor(
     private getWebhookPortalTokenUsecase: GetWebhookPortalTokenUsecase,

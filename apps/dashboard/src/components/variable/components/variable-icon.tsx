@@ -6,8 +6,20 @@ import { RepeatVariable } from '@/components/icons/repeat-variable';
 import { REPEAT_BLOCK_ITERABLE_ALIAS } from '@/components/workflow-editor/steps/email/variables/variables';
 import { DIGEST_PREVIEW_MAP } from '@/components/variable/utils/digest-variables';
 
-export const VariableIcon = ({ variableName, hasError }: { variableName: string; hasError?: boolean }) => {
+export const VariableIcon = ({
+  variableName,
+  hasError,
+  isNotInSchema,
+}: {
+  variableName: string;
+  hasError?: boolean;
+  isNotInSchema?: boolean;
+}) => {
   if (hasError) {
+    return <RiErrorWarningLine className="text-error-base size-3.5 min-w-3.5" />;
+  }
+
+  if (isNotInSchema) {
     return <RiErrorWarningLine className="text-error-base size-3.5 min-w-3.5" />;
   }
 

@@ -32,7 +32,7 @@ export type SubscribersRetrieveQueryData =
  * Retrieve a subscriber
  *
  * @remarks
- * Retrive a subscriber by its unique key identifier **subscriberId**.
+ * Retrieve a subscriber by its unique key identifier **subscriberId**.
  *     **subscriberId** field is required.
  */
 export function useSubscribersRetrieve(
@@ -56,7 +56,7 @@ export function useSubscribersRetrieve(
  * Retrieve a subscriber
  *
  * @remarks
- * Retrive a subscriber by its unique key identifier **subscriberId**.
+ * Retrieve a subscriber by its unique key identifier **subscriberId**.
  *     **subscriberId** field is required.
  */
 export function useSubscribersRetrieveSuspense(

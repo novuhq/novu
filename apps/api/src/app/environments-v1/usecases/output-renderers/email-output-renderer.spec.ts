@@ -4,10 +4,22 @@ import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 
 const mockFeatureFlagsService = {
   getFlag: async (context) => {
     return process.env[context.key] === 'true';
+  },
+};
+
+const mockGetOrganizationSettings = {
+  execute: async () => ({
+    removeNovuBranding: false,
+  }),
+  setRemoveNovuBranding(value: boolean) {
+    this.execute = async () => ({
+      removeNovuBranding: value,
+    });
   },
 };
 
@@ -21,6 +33,10 @@ describe('EmailOutputRendererUsecase', () => {
         {
           provide: FeatureFlagsService,
           useValue: mockFeatureFlagsService,
+        },
+        {
+          provide: GetOrganizationSettings,
+          useValue: mockGetOrganizationSettings,
         },
       ],
     }).compile();
@@ -38,6 +54,7 @@ describe('EmailOutputRendererUsecase', () => {
     it('should return subject and body when body is not string', async () => {
       let renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Test Subject',
           body: undefined,
@@ -54,6 +71,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Test Subject',
           body: 123 as any,
@@ -87,6 +105,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Welcome Email',
           body: JSON.stringify(mockTipTapNode),
@@ -121,6 +140,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Order Update',
           body: JSON.stringify(mockTipTapNode),
@@ -160,6 +180,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Welcome',
           body: JSON.stringify(mockTipTapNode),
@@ -222,6 +243,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Order Status',
           body: JSON.stringify(mockTipTapNode),
@@ -300,6 +322,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Subscription Update',
           body: JSON.stringify(mockTipTapNode),
@@ -325,6 +348,7 @@ describe('EmailOutputRendererUsecase', () => {
       // Test with partial data
       const renderCommandWithPartialData = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Subscription Update',
           body: JSON.stringify(mockTipTapNode),
@@ -405,6 +429,7 @@ describe('EmailOutputRendererUsecase', () => {
         it(`should render content when showIfKey is ${desc}`, async () => {
           const renderCommand = {
             environmentId: 'fake_env_id',
+            organizationId: 'fake_org_id',
             controlValues: {
               subject: 'Conditional Test',
               body: JSON.stringify(mockTipTapNode),
@@ -476,6 +501,7 @@ describe('EmailOutputRendererUsecase', () => {
         it(`should not render content when showIfKey is ${desc}`, async () => {
           const renderCommand = {
             environmentId: 'fake_env_id',
+            organizationId: 'fake_org_id',
             controlValues: {
               subject: 'Conditional Test',
               body: JSON.stringify(mockTipTapNode),
@@ -545,6 +571,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Nested Conditional Test',
           body: JSON.stringify(mockTipTapNode),
@@ -633,6 +660,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
@@ -691,6 +719,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Repeat Loop Test',
           body: JSON.stringify(mockTipTapNode),
@@ -748,6 +777,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Repeat Loop Test Limited Iterations',
           body: JSON.stringify(mockTipTapNode),
@@ -810,6 +840,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Repeat Loop Test More Iterations',
           body: JSON.stringify(mockTipTapNode),
@@ -871,6 +902,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Link Test',
           body: JSON.stringify(mockTipTapNode),
@@ -910,6 +942,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Image Test',
           body: JSON.stringify(mockTipTapNode),
@@ -953,6 +986,7 @@ describe('EmailOutputRendererUsecase', () => {
 
       const renderCommand = {
         environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
         controlValues: {
           subject: 'Color Test',
           body: JSON.stringify(mockTipTapNode),
@@ -967,6 +1001,77 @@ describe('EmailOutputRendererUsecase', () => {
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
       expect(result.body).to.include('href="https://example.com"');
+    });
+  });
+
+  describe('Novu branding functionality', () => {
+    const simpleHtmlBody = '<p>Test email content</p>';
+
+    beforeEach(() => {
+      mockGetOrganizationSettings.setRemoveNovuBranding(false);
+    });
+
+    it('should add Novu branding when removeNovuBranding is false', async () => {
+      mockGetOrganizationSettings.setRemoveNovuBranding(false);
+
+      const renderCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Branding Test',
+          body: simpleHtmlBody,
+        },
+        fullPayloadForRender: mockFullPayload,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Test email content');
+      expect(result.body).to.include('data-novu-branding');
+      expect(result.body.length).to.be.greaterThan(simpleHtmlBody.length);
+    });
+
+    it('should not add Novu branding when removeNovuBranding is true', async () => {
+      mockGetOrganizationSettings.setRemoveNovuBranding(true);
+
+      const renderCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Branding Test',
+          body: simpleHtmlBody,
+        },
+        fullPayloadForRender: mockFullPayload,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.equal(simpleHtmlBody);
+    });
+
+    it('should properly insert branding into HTML with body tag', async () => {
+      mockGetOrganizationSettings.setRemoveNovuBranding(false);
+
+      const htmlWithBodyTag = '<html><body><p>Content</p></body></html>';
+      const renderCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Body Tag Test',
+          body: htmlWithBodyTag,
+        },
+        fullPayloadForRender: mockFullPayload,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('<p>Content</p>');
+      expect(result.body).to.include('</body>');
+      expect(result.body).to.include('data-novu-branding');
+      // Branding should be inserted before the closing body tag
+      const brandingIndex = result.body.indexOf('data-novu-branding');
+      const bodyCloseIndex = result.body.indexOf('</body>');
+      expect(brandingIndex).to.be.lessThan(bodyCloseIndex);
     });
   });
 });

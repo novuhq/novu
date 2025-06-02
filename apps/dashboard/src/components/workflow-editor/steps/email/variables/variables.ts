@@ -27,6 +27,7 @@ export type CalculateVariablesProps = {
   namespaces: Array<LiquidVariable>;
   isAllowedVariable: IsAllowedVariable;
   addDigestVariables?: boolean;
+  isPayloadSchemaEnabled?: boolean;
 };
 
 const insertNodeToEditor = ({
@@ -67,12 +68,10 @@ const insertNodeToEditor = ({
 export const insertVariableToEditor = ({
   query,
   editor,
-  isAllowedVariable,
   range,
 }: {
   query: string;
   editor: TiptapEditor;
-  isAllowedVariable: IsAllowedVariable;
   range?: { from: number; to: number };
 }) => {
   // if we type then we need to close, if we accept suggestion then it has range
@@ -80,13 +79,8 @@ export const insertVariableToEditor = ({
   if (!isClosedVariable) return;
 
   const queryWithoutSuffix = query.replace(/}+$/, '');
-  const queryWithPrefixAndSuffix = '{{' + queryWithoutSuffix + '}}';
-  const parsedVariable = parseVariable(queryWithPrefixAndSuffix);
 
   const aliasFor = resolveRepeatBlockAlias(queryWithoutSuffix, editor);
-  const variable: LiquidVariable = { name: parsedVariable?.name ?? '', aliasFor };
-
-  if (!isAllowedVariable(variable)) return;
 
   // Calculate range for manual typing if not provided by suggestion
   const calculatedRange = range || {
@@ -155,8 +149,15 @@ const getVariablesByContext = ({
           return [];
         }
 
-        // Otherwise, get the last part after the iterableName
+        // Handle array payload variables (e.g., "steps.digest-step.events[0].payload.xxx")
+        if (variable.name?.startsWith(iterableName + '[0].payload.')) {
+          const suffix = variable.name.replace(iterableName + '[0].', '');
+          return [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }];
+        }
+
+        // Handle other nested properties - get the last part after the iterableName
         const suffix = variable.name.split('.').pop();
+
         return suffix ? [{ name: `${REPEAT_BLOCK_ITERABLE_ALIAS}.${suffix}` }] : [];
       });
 
@@ -197,6 +198,7 @@ export const calculateVariables = ({
   namespaces,
   isAllowedVariable,
   addDigestVariables = false,
+  isPayloadSchemaEnabled = false,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
@@ -210,6 +212,34 @@ export const calculateVariables = ({
     addDigestVariables,
   });
 
+  // Add new variable creation support for payload variables when schema is enabled
+  const PAYLOAD_NAMESPACE = 'payload';
+
+  if (
+    isPayloadSchemaEnabled &&
+    queryWithoutSuffix.trim() &&
+    (queryWithoutSuffix.startsWith(PAYLOAD_NAMESPACE + '.') ||
+      queryWithoutSuffix.startsWith('current.' + PAYLOAD_NAMESPACE + '.')) &&
+    queryWithoutSuffix !== PAYLOAD_NAMESPACE
+  ) {
+    const variableKey = queryWithoutSuffix
+      .replace('current.' + PAYLOAD_NAMESPACE + '.', '')
+      .replace(PAYLOAD_NAMESPACE + '.', '');
+
+    // Check if this variable doesn't already exist
+    const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
+
+    if (!existingVariable && variableKey.trim()) {
+      variables.unshift({
+        name: queryWithoutSuffix,
+        type: 'new-variable',
+        isNewSuggestion: true,
+        displayLabel: `Create ${queryWithoutSuffix}`,
+        boost: 100, // Boost to show at top
+      });
+    }
+  }
+
   // Add currently typed variable if allowed
   if (
     queryWithoutSuffix.trim() &&
@@ -218,7 +248,11 @@ export const calculateVariables = ({
       aliasFor: resolveRepeatBlockAlias(queryWithoutSuffix, editor),
     })
   ) {
-    variables.push({ name: queryWithoutSuffix });
+    const existingVariable = variables.find((v) => v.name === queryWithoutSuffix);
+
+    if (!existingVariable) {
+      variables.push({ name: queryWithoutSuffix });
+    }
   }
 
   /* Skip variable insertion by closing "}}" for bubble menus since they require special handling:
@@ -227,8 +261,8 @@ export const calculateVariables = ({
    * 3. For now bubble variables can be only added via Enter key which triggers a separate insertion flow
    *    (which is external somewhere in TipTap or Maily)
    */
-  if (from === VariableFrom.Content) {
-    insertVariableToEditor({ query, editor, isAllowedVariable });
+  if (from === VariableFrom.Content && isAllowedVariable({ name: queryWithoutSuffix })) {
+    insertVariableToEditor({ query, editor });
   }
 
   return dedupAndSortVariables(variables, queryWithoutSuffix);

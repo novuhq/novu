@@ -19,10 +19,11 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 type SubscriberOverviewProps = {
   subscriberId: string;
   readOnly?: boolean;
+  onCloseDrawer?: () => void;
 };
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
-  const { subscriberId, readOnly = false } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer } = props;
   const { data, isPending } = useFetchSubscriber({
     subscriberId,
   });
@@ -31,7 +32,7 @@ const SubscriberOverview = (props: SubscriberOverviewProps) => {
     return <SubscriberOverviewSkeleton />;
   }
 
-  return <SubscriberOverviewForm subscriber={data!} readOnly={readOnly} />;
+  return <SubscriberOverviewForm subscriber={data!} readOnly={readOnly} onCloseDrawer={onCloseDrawer} />;
 };
 
 type SubscriberPreferencesProps = {
@@ -58,10 +59,11 @@ const tabTriggerClasses =
 type SubscriberTabsProps = {
   subscriberId: string;
   readOnly?: boolean;
+  onCloseDrawer?: () => void;
 };
 
 export function SubscriberTabs(props: SubscriberTabsProps) {
-  const { subscriberId, readOnly = false } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer } = props;
   const [tab, setTab] = useState('overview');
   const {
     protectedOnValueChange,
@@ -107,7 +109,7 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
-        <SubscriberOverview subscriberId={subscriberId} readOnly={readOnly} />
+        <SubscriberOverview subscriberId={subscriberId} readOnly={readOnly} onCloseDrawer={onCloseDrawer} />
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />

@@ -12,8 +12,8 @@ When writing FrontEnd code, you are an expert on modern dev tool UI and UX desig
 - Prefer iteration and modularization over code duplication, but try to minimize code duplication as possible
 - Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
 - Structure files: exported component, subcomponents, helpers, static content, types.
-- Don't leave comments, unless they explain something complex
--  Don't use nested ternaries
+- Don't leave comments in code, unless they explain something complex and not trivial
+- Don't use nested ternaries
 
 ### Naming Conventions
 - Use lowercase with dashes for directories and files (e.g., components/auth-wizard).
@@ -28,6 +28,7 @@ When writing FrontEnd code, you are an expert on modern dev tool UI and UX desig
 - Use the "function" keyword for pure functions.
 - Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
 - Use declarative JSX.
+- Don't create README.md files unless directly asked
 
 ### Performance Optimization
 - Wrap client components in Suspense with fallback.

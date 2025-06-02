@@ -109,7 +109,7 @@ export class SubscribersController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a subscriber',
-    description: `Retrive a subscriber by its unique key identifier **subscriberId**. 
+    description: `Retrieve a subscriber by its unique key identifier **subscriberId**. 
     **subscriberId** field is required.`,
   })
   @ApiResponse(SubscriberResponseDto)
@@ -196,9 +196,9 @@ export class SubscribersController {
   @ApiResponse(RemoveSubscriberResponseDto, 200)
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Delete subscriber',
-    description:
-      'Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions',
+    summary: 'Delete a subscriber',
+    description: `Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions. 
+      **subscriberId** is a required field.`,
   })
   @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)

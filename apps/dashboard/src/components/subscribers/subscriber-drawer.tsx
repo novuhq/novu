@@ -40,7 +40,7 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
             <SheetTitle />
             <SheetDescription />
           </VisuallyHidden>
-          <SubscriberTabs subscriberId={subscriberId} readOnly={readOnly} />
+          <SubscriberTabs subscriberId={subscriberId} readOnly={readOnly} onCloseDrawer={() => onOpenChange(false)} />
         </SheetContent>
       </Sheet>
 

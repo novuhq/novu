@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/ava
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { CreateSubscriberParameters } from '@/hooks/use-create-subscriber';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { generateUUID } from '@/utils/uuid';
 import { SubscriberResponseDto } from '@novu/api/models/components';
 import { UseMutateAsyncFunction } from '@tanstack/react-query';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
@@ -31,7 +32,7 @@ export const CreateSubscriberForm = (props: CreateSubscriberFormProps) => {
   const form = useForm<z.infer<typeof CreateSubscriberFormSchema>>({
     defaultValues: {
       data: '',
-      subscriberId: crypto.randomUUID(),
+      subscriberId: generateUUID(),
       avatar: '',
       firstName: '',
       lastName: '',

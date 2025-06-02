@@ -16,4 +16,5 @@ export const QueryKeys = Object.freeze({
   patchSubscriberPreferences: 'patchSubscriberPreferences',
   fetchTopics: 'fetchTopics',
   myOrganization: 'myOrganization',
+  organizationSettings: 'organizationSettings',
 });

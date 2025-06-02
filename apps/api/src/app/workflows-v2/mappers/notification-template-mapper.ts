@@ -19,7 +19,8 @@ import {
 
 export function toResponseWorkflowDto(
   workflow: WorkflowWithPreferencesResponseDto,
-  steps: StepResponseDto[]
+  steps: StepResponseDto[],
+  payloadExample?: object
 ): WorkflowResponseDto {
   const preferencesDto: WorkflowPreferencesResponseDto = {
     user: workflow.userPreferences,
@@ -43,6 +44,9 @@ export function toResponseWorkflowDto(
     status: workflow.status || WorkflowStatusEnum.ACTIVE,
     issues: workflow.issues as unknown as Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>,
     lastTriggeredAt: workflow.lastTriggeredAt,
+    payloadSchema: workflow.payloadSchema,
+    payloadExample,
+    validatePayload: workflow.validatePayload,
   };
 }
 

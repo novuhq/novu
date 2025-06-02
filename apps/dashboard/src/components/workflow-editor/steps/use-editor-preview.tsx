@@ -31,6 +31,7 @@ export const useEditorPreview = ({
       Sentry.captureException(error);
     },
   });
+
   const dataRef = useDataRef({
     workflowSlug,
     stepSlug,
@@ -79,6 +80,7 @@ export const useEditorPreview = ({
     setEditorValue: setEditorValueSafe,
     previewStep: previewStepCallback,
     previewData,
+    previewSchema: previewData?.schema || null,
     isPreviewPending,
   };
 };

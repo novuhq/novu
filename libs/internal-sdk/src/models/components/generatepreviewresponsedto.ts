@@ -164,6 +164,10 @@ export type GeneratePreviewResponseDto = {
    */
   previewPayloadExample: PreviewPayloadDto;
   /**
+   * The payload schema that was used to generate the preview payload example
+   */
+  schema?: { [k: string]: any } | null | undefined;
+  /**
    * Preview result
    */
   result: Two | Three | Result4 | Result5 | Six | Seven | Eight | Nine | {
@@ -826,6 +830,7 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   previewPayloadExample: PreviewPayloadDto$inboundSchema,
+  schema: z.nullable(z.record(z.any())).optional(),
   result: z.union([
     z.lazy(() => Two$inboundSchema),
     z.lazy(() => Three$inboundSchema),
@@ -842,6 +847,7 @@ export const GeneratePreviewResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type GeneratePreviewResponseDto$Outbound = {
   previewPayloadExample: PreviewPayloadDto$Outbound;
+  schema?: { [k: string]: any } | null | undefined;
   result:
     | Two$Outbound
     | Three$Outbound
@@ -861,6 +867,7 @@ export const GeneratePreviewResponseDto$outboundSchema: z.ZodType<
   GeneratePreviewResponseDto
 > = z.object({
   previewPayloadExample: PreviewPayloadDto$outboundSchema,
+  schema: z.nullable(z.record(z.any())).optional(),
   result: z.union([
     z.lazy(() => Two$outboundSchema),
     z.lazy(() => Three$outboundSchema),

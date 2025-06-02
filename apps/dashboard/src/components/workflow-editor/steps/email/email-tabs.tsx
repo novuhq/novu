@@ -37,6 +37,7 @@ export const EmailTabs = (props: StepEditorProps) => {
       previewStep={previewStep}
       previewData={previewData}
       isPreviewPending={isPreviewPending}
+      workflow={workflow}
     />
   );
 

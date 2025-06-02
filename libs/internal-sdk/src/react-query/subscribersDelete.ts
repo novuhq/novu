@@ -26,10 +26,11 @@ export type SubscribersDeleteMutationData =
   operations.SubscribersControllerRemoveSubscriberResponse;
 
 /**
- * Delete subscriber
+ * Delete a subscriber
  *
  * @remarks
- * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions
+ * Deletes a subscriber entity from the Novu platform along with associated messages, preferences, and topic subscriptions.
+ *       **subscriberId** is a required field.
  */
 export function useSubscribersDeleteMutation(
   options?: MutationHookOptions<
