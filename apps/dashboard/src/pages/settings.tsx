@@ -152,16 +152,18 @@ export function SettingsPage() {
             <motion.div {...FADE_ANIMATION}>
               <Card className="border-none shadow-none">
                 <div className="pb-6 pt-4">
-                  <InlineToast
-                    title="Tip:"
-                    description="Hide Novu branding from your notification channels by upgrading to a paid plan."
-                    ctaLabel="Upgrade Plan"
-                    onCtaClick={() =>
-                      navigate(ROUTES.SETTINGS_BILLING + '?utm_source=organization_settings_upgrade_prompt')
-                    }
-                    className="mb-4"
-                    variant="tip"
-                  />
+                  {subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE && (
+                    <InlineToast
+                      title="Tip:"
+                      description="Hide Novu branding from your notification channels by upgrading to a paid plan."
+                      ctaLabel="Upgrade Plan"
+                      onCtaClick={() =>
+                        navigate(ROUTES.SETTINGS_BILLING + '?utm_source=organization_settings_upgrade_prompt')
+                      }
+                      className="mb-4"
+                      variant="tip"
+                    />
+                  )}
                   <OrganizationSettings clerkAppearance={clerkAppearance} />
                 </div>
               </Card>

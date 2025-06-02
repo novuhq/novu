@@ -66,8 +66,6 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
      * The image is used only for the actual email delivery.
      */
     style.textContent = `
-      a {pointer-events: none;}
-      
       /* Hide Novu branding table in email preview */
       table[data-novu-branding] {
         display: none !important;

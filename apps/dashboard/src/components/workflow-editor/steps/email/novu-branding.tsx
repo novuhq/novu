@@ -1,6 +1,5 @@
 import { HTMLAttributes } from 'react';
 import { cn } from '@/utils/ui';
-import { Send } from '@/components/icons/send';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Switch } from '@/components/primitives/switch';
@@ -28,7 +27,8 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
   const removeNovuBranding = organizationSettings?.data?.removeNovuBranding;
   const isUpdating = updateOrganizationSettings.isPending;
 
-  if (removeNovuBranding) return null;
+  // Don't render anything while loading or if branding should be removed
+  if (isLoadingSettings || removeNovuBranding) return null;
 
   const handleRemoveBrandingChange = (value: boolean) => {
     updateOrganizationSettings.mutate({
@@ -41,13 +41,17 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
     navigate(ROUTES.SETTINGS_ORGANIZATION);
   };
 
+  /**
+   * Same branding is appended to the actual email
+   * @see apps/api/src/app/environments-v1/usecases/output-renderers/novu-branding-html.ts
+   */
   const brandingContent = (
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-1">
-        <Send width={12} height={12} className="text-foreground-400" />
-        <span className="text-foreground-400 font-mono text-xs font-medium leading-3">POWERED BY</span>
-      </div>
-      <img src="/images/novu-logo-dark.svg" alt="Novu" className="-ml-1 h-4 w-14 object-contain" />
+    <div className="flex items-center">
+      <img
+        src="https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/powered-by-novu.png"
+        alt="Novu"
+        className="h-3 object-contain"
+      />
     </div>
   );
 
@@ -80,7 +84,7 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
   );
 
   return (
-    <div className={cn('flex items-center justify-center gap-1.5 pb-6 pt-4', className)} {...rest}>
+    <div className={cn('flex items-center justify-center pb-6 pt-4', className)} {...rest}>
       {!canRemoveNovuBranding ? (
         <UpgradeCTATooltip
           description="Upgrade to remove Novu branding from your emails."
@@ -92,7 +96,7 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
         </UpgradeCTATooltip>
       ) : (
         <Tooltip>
-          <TooltipTrigger>{brandingContent}</TooltipTrigger>
+          <TooltipTrigger type="button">{brandingContent}</TooltipTrigger>
           <TooltipContent
             side="top"
             align="center"
