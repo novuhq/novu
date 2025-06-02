@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { autocompletion, Completion, CompletionSource } from '@codemirror/autocomplete';
+import { autocompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
@@ -19,6 +19,8 @@ import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 import { useCreateVariable } from '../../variable/hooks/use-create-variable';
+import { DEFAULT_SIDE_OFFSET } from '../popover';
+import { DEFAULT_VARIABLE_PILL_HEIGHT } from './variable-plugin/variable-pill-widget';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -67,6 +69,7 @@ export function ControlInput({
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
@@ -90,6 +93,8 @@ export function ControlInput({
     openSchemaDrawer,
     closeSchemaDrawer,
   } = useCreateVariable();
+
+  const [triggerPosition, setTriggerPosition] = useState<{ top: number; left: number } | null>(null);
 
   // Create a stable key based on schema properties to force editor re-render
   const schemaKey = useMemo(() => {
@@ -193,8 +198,27 @@ export function ControlInput({
     [setSelectedVariable]
   );
 
+  useEffect(() => {
+    // calculate popover trigger position when variable is selected
+    if (selectedVariable && viewRef.current && containerRef.current) {
+      const coords = viewRef.current.coordsAtPos(selectedVariable.from);
+      const containerRect = containerRef.current.getBoundingClientRect();
+
+      const topOffset = DEFAULT_VARIABLE_PILL_HEIGHT - DEFAULT_SIDE_OFFSET + 2;
+
+      if (coords) {
+        setTriggerPosition({
+          top: coords.top - containerRect.top + topOffset,
+          left: coords.left - containerRect.left,
+        });
+      }
+    } else {
+      setTriggerPosition(null);
+    }
+  }, [selectedVariable]);
+
   return (
-    <div className={cn(variants({ size }), className)}>
+    <div ref={containerRef} className={cn(variants({ size }), className)}>
       <Editor
         key={schemaKey}
         fontFamily="inherit"
@@ -236,7 +260,19 @@ export function ControlInput({
             handleCreateNewVariable(variableName);
           }}
         >
-          <div />
+          <div
+            className="pointer-events-none absolute z-10"
+            style={
+              triggerPosition
+                ? {
+                    top: triggerPosition.top,
+                    left: triggerPosition.left,
+                    width: '1px',
+                    height: '1px',
+                  }
+                : undefined
+            }
+          />
         </EditVariablePopover>
       )}
       <PayloadSchemaDrawer
