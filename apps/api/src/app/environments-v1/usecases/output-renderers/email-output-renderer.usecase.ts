@@ -385,14 +385,13 @@ export class EmailOutputRendererUsecase {
   }
 
   private insertBrandingHtml(html: string): string {
-    const hasBodyTag = html.includes('</body>');
+    const matches = [...html.matchAll(/<\/body>/gi)];
 
-    if (hasBodyTag) {
-      // Find the last occurrence of </body> to handle multiple body tags
-      const lastBodyIndex = html.lastIndexOf('</body>');
-      return html.slice(0, lastBodyIndex) + NOVU_BRANDING_HTML + html.slice(lastBodyIndex);
+    if (matches.length === 0) {
+      return html + NOVU_BRANDING_HTML;
     }
 
-    return html + NOVU_BRANDING_HTML;
+    const lastIndex = matches[matches.length - 1].index!;
+    return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
   }
 }
