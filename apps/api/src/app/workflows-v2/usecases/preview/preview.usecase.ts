@@ -235,7 +235,26 @@ export class PreviewUsecase {
         });
       }
 
-      return _.merge(payloadExample, schemaBasedPayloadExample, userPayloadExample);
+      // Start with base payload example, then add schema-based mock data
+      let mergedPayload = _.merge({}, payloadExample, schemaBasedPayloadExample);
+
+      // If user provided payload example, apply it with special handling for arrays
+      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+        mergedPayload = _.mergeWith(
+          mergedPayload,
+          userPayloadExample as Record<string, unknown>,
+          (objValue, srcValue) => {
+            // If source value is an array, completely replace target array
+            if (Array.isArray(srcValue)) {
+              return srcValue;
+            }
+            // Otherwise, let lodash handle normal merging
+            return undefined;
+          }
+        );
+      }
+
+      return mergedPayload;
     }
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
