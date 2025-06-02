@@ -33,7 +33,7 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
   const methods = useForm<SchemaEditorFormValues>({
     defaultValues: initialTransformedValues,
     resolver: zodResolver(editorSchema),
-    mode: 'onChange',
+    mode: 'all',
   });
 
   const { control, watch, formState, getValues, setValue } = methods;

@@ -55,17 +55,18 @@ const baseJsonSchema: z.ZodType<any> = z
 // Defines an item in our editable property list
 const PropertyListItemSchema = z.object({
   id: z.string().uuid(),
-  keyName: z.string().refine(
-    (val) => {
-      // Allow empty string (for new properties being created)
-      if (val.trim() === '') return true;
-      // For non-empty strings, enforce proper naming rules
-      return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val);
-    },
-    {
-      message: 'Name must start with a letter or underscore, and contain only letters, numbers, or underscores.',
-    }
-  ),
+  keyName: z
+    .string()
+    .min(1, { message: 'Property name is required.' })
+    .refine(
+      (val) => {
+        // For non-empty strings, enforce proper naming rules
+        return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(val);
+      },
+      {
+        message: 'Name must start with a letter or underscore, and contain only letters, numbers, or underscores.',
+      }
+    ),
   definition: baseJsonSchema, // The schema definition for this property's value
   isRequired: z.boolean().optional(),
 });
@@ -77,18 +78,16 @@ export const SchemaEditorFormValuesSchema = z.object({
     // Check for unique keyNames among properties
     const names = new Set<string>();
     list.forEach((item, index) => {
-      // Only consider non-empty keyNames for uniqueness validation
-      if (item.keyName && item.keyName.trim() !== '') {
-        if (names.has(item.keyName)) {
-          ctx.addIssue({
-            path: [index, 'keyName'], // Path to the specific duplicate keyName field
-            message: 'Property name must be unique.',
-            code: z.ZodIssueCode.custom,
-          });
-        }
-
-        names.add(item.keyName);
+      // Since keyNames are now required to be non-empty, check all for uniqueness
+      if (names.has(item.keyName)) {
+        ctx.addIssue({
+          path: [index, 'keyName'], // Path to the specific duplicate keyName field
+          message: 'Property name must be unique.',
+          code: z.ZodIssueCode.custom,
+        });
       }
+
+      names.add(item.keyName);
     });
   }),
 });

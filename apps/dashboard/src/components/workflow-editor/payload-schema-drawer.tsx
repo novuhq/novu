@@ -256,7 +256,14 @@ export function PayloadSchemaDrawer({
                 onClick={handleSaveWithValidation}
                 isLoading={isSaving}
                 data-test-id="save-payload-schema-btn"
-                disabled={!isSchemaValid || isSaving || isLoadingWorkflow || isImportMode}
+                disabled={
+                  !isSchemaValid ||
+                  !formState.isValid ||
+                  isSaving ||
+                  isLoadingWorkflow ||
+                  isImportMode ||
+                  fields.length === 0
+                }
               >
                 Save Changes
               </Button>
