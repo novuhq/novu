@@ -388,7 +388,9 @@ export class EmailOutputRendererUsecase {
     const hasBodyTag = html.includes('</body>');
 
     if (hasBodyTag) {
-      return html.replace('</body>', `${NOVU_BRANDING_HTML}</body>`);
+      // Find the last occurrence of </body> to handle multiple body tags
+      const lastBodyIndex = html.lastIndexOf('</body>');
+      return html.slice(0, lastBodyIndex) + NOVU_BRANDING_HTML + html.slice(lastBodyIndex);
     }
 
     return html + NOVU_BRANDING_HTML;
