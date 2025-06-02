@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 import { Controller, Path, useFieldArray, type Control } from 'react-hook-form';
-import { RiAddLine, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBin6Line, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
 import { InputPure, InputRoot } from '@/components/primitives/input';
@@ -30,11 +30,11 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="inline-flex cursor-default items-center justify-center pl-1">
-                      <RiErrorWarningLine className="text-destructive h-3 w-3 shrink-0" />
+                    <span className="inline-flex cursor-default items-center justify-center pl-1 pr-1">
+                      <RiErrorWarningLine className={cn('text-destructive h-4 w-4 shrink-0')} />
                     </span>
                   </TooltipTrigger>
-                  <TooltipContent side="right" sideOffset={4} className="text-xs">
+                  <TooltipContent side="top" sideOffset={5}>
                     <p>{choiceFieldState.error.message}</p>
                   </TooltipContent>
                 </Tooltip>
@@ -43,13 +43,15 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
           </InputRoot>
         )}
       />
+
       <Button
-        variant="secondary"
-        mode="outline"
+        variant="error"
+        mode="ghost"
         size="2xs"
+        leadingIcon={RiDeleteBin6Line}
         onClick={onRemove}
-        leadingIcon={RiDeleteBinLine}
-        className="h-7 w-7 p-1"
+        aria-label="Delete property"
+        className={cn('border-1 !ml-1.5 h-7 w-7 border-neutral-200')}
       />
     </div>
   );
@@ -86,7 +88,7 @@ export const EnumSection = memo<EnumSectionProps>(function EnumSection({ enumArr
       <Button
         size="2xs"
         variant="secondary"
-        mode="outline"
+        mode="lighter"
         onClick={handleAddChoice}
         leadingIcon={RiAddLine}
         className="mt-1"

@@ -117,9 +117,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
   const arrayItemPath = `${currentFullPath}[n]`;
 
   return (
-    <div
-      className={cn('mt-2 rounded border border-dashed border-neutral-200 p-2', getMarginClassPx(indentationLevel + 1))}
-    >
+    <div className={cn('p-1', getMarginClassPx(indentationLevel + 1))}>
       <div className="mb-1 flex items-center space-x-2">
         <Label className="text-xs font-medium text-gray-700">Array Item Type:</Label>
         <PropertyTypeSelector
@@ -153,7 +151,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
           <Button
             size="2xs"
             variant="secondary"
-            mode="outline"
+            mode="lighter"
             onClick={handleAddArrayItemObjectProperty}
             leadingIcon={RiAddLine}
             className="mt-1"

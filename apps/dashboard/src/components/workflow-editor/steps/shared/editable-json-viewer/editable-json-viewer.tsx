@@ -11,6 +11,7 @@ import { SingleClickEditableValue } from './single-click-editable-value';
 import { CustomTextEditor } from './custom-text-editor';
 import { useHideRootNode } from './use-hide-root-node';
 import { JSON_EDITOR_ICONS } from './icons';
+import { InlineToast } from '@/components/primitives/inline-toast';
 
 /**
  * EditableJsonViewer - A JSON editor component with optional schema validation
@@ -60,6 +61,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
 
       const errorMessages = ajvValidator.errors?.map((error) => {
         const path = error.instancePath ? `${error.instancePath}: ` : '';
+
         return `${path}${error.message}`;
       }) || ['Validation failed'];
 
@@ -136,15 +138,21 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
       )}
     >
       {validationErrors.length > 0 && (
-        <div className="p-1.5">
-          <div className="border-destructive bg-destructive/10 text-destructive mb-2 rounded border p-2 text-xs">
-            <div className="mb-1 font-medium">Validation Error{validationErrors.length > 1 ? 's' : ''}</div>
-            {validationErrors.map((error, index) => (
-              <div key={index} className="mt-1 first:mt-0">
-                {error}
-              </div>
-            ))}
-          </div>
+        <div className="p-1.5 pb-0">
+          <InlineToast
+            variant="error"
+            title={`Payload validation issue${validationErrors.length > 1 ? 's' : ''}`}
+            description={
+              <ul>
+                {validationErrors.map((error, index) => (
+                  <li key={index} className="leading-[18px]">
+                    - {error}
+                  </li>
+                ))}
+              </ul>
+            }
+            className="bg-bg-weak border-stroke-soft mb-2"
+          />
         </div>
       )}
       <JsonEditor
