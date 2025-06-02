@@ -460,7 +460,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
               variant="secondary"
               mode="outline"
               leadingIcon={RiListView}
-              className="mt-2 flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+              className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
               type="button"
               onClick={() => setIsPayloadSchemaDrawerOpen(true)}
               trailingIcon={RiArrowRightSLine}
