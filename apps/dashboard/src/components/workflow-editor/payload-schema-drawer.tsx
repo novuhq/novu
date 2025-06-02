@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
 import {
   Sheet,
@@ -12,11 +12,11 @@ import {
 import { Button } from '@/components/primitives/button';
 import { Badge } from '@/components/primitives/badge';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
+import { convertSchemaToPropertyList } from '@/components/schema-editor/utils';
 import { useWorkflowSchema } from './workflow-schema-provider';
 import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
 import { ExternalLink } from '../shared/external-link';
 import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { TooltipProvider } from '../primitives/tooltip';
 import { Tooltip } from '../primitives/tooltip';
 import { RiFileMarkedLine, RiInformation2Line, RiShieldCheckLine } from 'react-icons/ri';
 import { Separator } from '../primitives/separator';
@@ -27,6 +27,7 @@ import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-varia
 import { Switch } from '../primitives/switch';
 import { Hint, HintIcon } from '../primitives/hint';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
+import { useFormProtection } from '../../hooks/use-form-protection';
 import { PayloadSchemaEmptyState, PayloadImportEditor } from './payload-schema/components';
 import { useImportSchema } from './payload-schema/hooks';
 
@@ -67,6 +68,31 @@ export function PayloadSchemaDrawer({
     validatePayload,
     setValidatePayload,
   } = useWorkflowSchema();
+
+  // Custom onValueChange that resets the form when discarding changes
+  const handleFormProtectedValueChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        // User is closing the drawer, reset the form to original state
+        const propertyList = originalSchema?.properties
+          ? convertSchemaToPropertyList(originalSchema.properties, originalSchema.required)
+          : [];
+
+        formMethods.reset({ propertyList });
+      }
+
+      onOpenChange(open);
+    },
+    [onOpenChange, originalSchema, formMethods]
+  );
+
+  const {
+    protectedOnValueChange,
+    ProtectionAlert,
+    ref: protectionRef,
+  } = useFormProtection({
+    onValueChange: handleFormProtectedValueChange,
+  });
 
   const {
     isImportMode,
@@ -145,13 +171,13 @@ export function PayloadSchemaDrawer({
       return;
     }
 
-    onOpenChange(open);
+    protectedOnValueChange(open);
   };
 
   return (
     <>
       <Sheet open={isOpen} onOpenChange={handleSheetOpenChange}>
-        <SheetContent className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
+        <SheetContent ref={protectionRef} className="bg-bg-weak flex w-[600px] flex-col p-0 sm:max-w-3xl">
           <SheetHeader className="space-y-1 px-3 py-4">
             <SheetTitle className="text-label-lg">
               Manage workflow schema{' '}
@@ -280,6 +306,8 @@ export function PayloadSchemaDrawer({
           changes={pendingChanges}
         />
       )}
+
+      {ProtectionAlert}
     </>
   );
 }
