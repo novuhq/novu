@@ -21,13 +21,13 @@
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.0",
     "shortid": "^2.2.16"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
     "@types/mocha": "^8.0.1",
-    "@types/multer": "^1.4.10",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.15.0",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
