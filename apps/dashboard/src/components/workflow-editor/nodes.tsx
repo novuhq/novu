@@ -238,7 +238,7 @@ const StepNode = (props: StepNodeProps) => {
   if (hasConditions) {
     return (
       <>
-        <div className="relative pt-2" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
           <Node
             aria-selected={isSelected}
             className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
@@ -275,7 +275,7 @@ const StepNode = (props: StepNodeProps) => {
 
   return (
     <>
-      <div className="relative pt-2" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
           {rest.children}
         </Node>

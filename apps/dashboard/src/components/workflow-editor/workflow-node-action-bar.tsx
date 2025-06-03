@@ -66,7 +66,7 @@ export const WorkflowNodeActionBar = ({
             ease: 'easeInOut',
           },
         }}
-        className="action-bar-trigger pointer-events-auto absolute left-0 right-0 top-[-35px] z-50 flex justify-center"
+        className="action-bar-trigger pointer-events-auto absolute left-0 right-0 top-[-38px] z-50 flex justify-center"
         style={{
           pointerEvents: 'auto',
           transformOrigin: 'top center',
