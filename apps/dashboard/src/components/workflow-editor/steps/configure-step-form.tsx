@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  FeatureFlagsKeysEnum,
   IEnvironment,
   StepResponseDto,
   StepTypeEnum,
@@ -54,6 +55,7 @@ import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,
@@ -90,6 +92,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
     StepTypeEnum.SMS,
@@ -304,17 +307,31 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
             <>
               <SidebarContent>
-                <Link to={'./edit'} relative="path" state={{ stepType: step.type }}>
-                  <Button
-                    variant="secondary"
-                    mode="outline"
-                    className="flex w-full justify-start gap-1.5 text-xs font-medium"
-                  >
-                    <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
-                    Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
-                    <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-                  </Button>
-                </Link>
+                {isV2TemplateEditorEnabled ? (
+                  <Link to={'./editor'} relative="path" state={{ stepType: step.type }}>
+                    <Button
+                      variant="secondary"
+                      mode="outline"
+                      className="flex w-full justify-start gap-1.5 text-xs font-medium"
+                    >
+                      <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
+                      Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
+                      <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to={'./edit'} relative="path" state={{ stepType: step.type }}>
+                    <Button
+                      variant="secondary"
+                      mode="outline"
+                      className="flex w-full justify-start gap-1.5 text-xs font-medium"
+                    >
+                      <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
+                      Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
+                      <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                    </Button>
+                  </Link>
+                )}
 
                 <SkipConditionsButton origin={workflow.origin} step={step} />
               </SidebarContent>
