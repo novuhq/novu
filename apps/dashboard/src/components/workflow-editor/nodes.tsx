@@ -98,7 +98,6 @@ const StepNode = (props: StepNodeProps) => {
   const { workflow: currentWorkflow, update } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
 
@@ -124,8 +123,6 @@ const StepNode = (props: StepNodeProps) => {
       },
       {
         onSuccess: () => {
-          setIsDeleteModalOpen(false);
-
           if (currentEnvironment?.slug && currentWorkflow?.slug) {
             navigate(
               buildRoute(ROUTES.EDIT_WORKFLOW, {
@@ -242,7 +239,8 @@ const StepNode = (props: StepNodeProps) => {
               <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1000 }}>
                 <WorkflowNodeActionBar
                   stepType={type}
-                  onRemoveClick={() => setIsDeleteModalOpen(true)}
+                  stepName={data.name || 'Untitled Step'}
+                  onRemoveClick={handleRemoveStep}
                   onEditContentClick={handleEditContent}
                   onCopyClick={handleCopyStep}
                 />
@@ -250,15 +248,6 @@ const StepNode = (props: StepNodeProps) => {
             )}
           </AnimatePresence>
         </Node>
-
-        <ConfirmationModal
-          open={isDeleteModalOpen}
-          onOpenChange={setIsDeleteModalOpen}
-          onConfirm={handleRemoveStep}
-          title="Delete step?"
-          description="This action is permanent and cannot be undone."
-          confirmButtonText="Delete step"
-        />
       </>
     );
   }
@@ -272,7 +261,8 @@ const StepNode = (props: StepNodeProps) => {
             <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1000 }}>
               <WorkflowNodeActionBar
                 stepType={type}
-                onRemoveClick={() => setIsDeleteModalOpen(true)}
+                stepName={data.name || 'Untitled Step'}
+                onRemoveClick={handleRemoveStep}
                 onEditContentClick={handleEditContent}
                 onCopyClick={handleCopyStep}
               />
@@ -280,15 +270,6 @@ const StepNode = (props: StepNodeProps) => {
           )}
         </AnimatePresence>
       </Node>
-
-      <ConfirmationModal
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
-        onConfirm={handleRemoveStep}
-        title="Delete step?"
-        description="This action is permanent and cannot be undone."
-        confirmButtonText="Delete step"
-      />
     </>
   );
 };

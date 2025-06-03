@@ -5,6 +5,7 @@ import { Button } from '@/components/primitives/button';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { StepTypeEnum } from '@/utils/enums';
+import TruncatedText from '@/components/truncated-text';
 
 const CHANNEL_STEP_TYPES = [
   StepTypeEnum.EMAIL,
@@ -16,6 +17,7 @@ const CHANNEL_STEP_TYPES = [
 
 type WorkflowNodeActionBarProps = {
   stepType: StepTypeEnum;
+  stepName: string;
   onRemoveClick: () => void;
   onEditContentClick: () => void;
   onCopyClick: () => void;
@@ -23,16 +25,23 @@ type WorkflowNodeActionBarProps = {
 
 export const WorkflowNodeActionBar = ({
   stepType,
+  stepName,
   onRemoveClick,
   onEditContentClick,
   onCopyClick,
 }: WorkflowNodeActionBarProps) => {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const isChannelStep = CHANNEL_STEP_TYPES.includes(stepType);
 
   const handleCopyConfirm = () => {
     onCopyClick();
     setIsCopyModalOpen(false);
+  };
+
+  const handleDeleteConfirm = () => {
+    onRemoveClick();
+    setIsDeleteModalOpen(false);
   };
 
   return (
@@ -93,7 +102,7 @@ export const WorkflowNodeActionBar = ({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onRemoveClick();
+                  setIsDeleteModalOpen(true);
                 }}
               >
                 <RiDeleteBin2Line className="text-error-base h-3.5 w-3.5" />
@@ -111,6 +120,20 @@ export const WorkflowNodeActionBar = ({
         title="Copy step"
         description="Are you sure you want to duplicate this step? A step will be created immediately below the current step."
         confirmButtonText="Copy step"
+      />
+
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleDeleteConfirm}
+        title="Proceeding will delete the step"
+        description={
+          <>
+            You're about to delete the <TruncatedText className="max-w-[32ch] font-bold">{stepName}</TruncatedText>{' '}
+            step, this action is permanent.
+          </>
+        }
+        confirmButtonText="Delete"
       />
     </>
   );
