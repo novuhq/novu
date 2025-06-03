@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
 import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   EmailPreviewBody,
   EmailPreviewBodyMobile,
@@ -27,6 +27,12 @@ import {
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { PreviewContextPanel } from '@/components/workflow-editor/steps/preview-context-panel';
+import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
+import { createMockObjectFromSchema } from '@novu/shared';
+import { Form, FormRoot } from '@/components/primitives/form/form';
+import { useForm } from 'react-hook-form';
+import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -189,6 +195,24 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
   const editorTitle = getEditorTitle(step.type);
   const editorContent = getEditorContent(workflow, step);
 
+  // Fetch test data for subscriber schema
+  const { testData } = useFetchWorkflowTestData({ workflowSlug: workflow.slug || workflow.workflowId });
+
+  // Create mock subscriber data from schema
+  const subscriberData = useMemo(() => {
+    return createMockObjectFromSchema(testData?.to ?? {});
+  }, [testData?.to]);
+
+  // Create form for preview context
+  const previewForm = useForm<TestWorkflowFormType>({
+    mode: 'onSubmit',
+    resolver: zodResolver(buildDynamicFormSchema({ to: testData?.to ?? {} })),
+    values: {
+      to: subscriberData,
+      payload: workflow?.payloadExample ? JSON.stringify(workflow.payloadExample, null, 2) : '{}',
+    },
+  });
+
   const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
@@ -207,7 +231,17 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
   );
 
   const contextContent = previewContextContent || (
-    <PreviewContextPanel workflow={workflow} value={editorValue} onChange={setEditorValue} />
+    <Form {...previewForm}>
+      <FormRoot className="h-full">
+        <PreviewContextPanel
+          workflow={workflow}
+          value={editorValue}
+          onChange={setEditorValue}
+          subscriberData={subscriberData}
+          currentStepId={step.stepId}
+        />
+      </FormRoot>
+    </Form>
   );
 
   return (
