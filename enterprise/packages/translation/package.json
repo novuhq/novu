@@ -38,9 +38,9 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "@nestjs/common": "10.4.1",
+    "@nestjs/common": "10.4.18",
     "@nestjs/swagger": "7.4.0",
-    "@nestjs/platform-express": "10.4.1",
+    "@nestjs/platform-express": "10.4.18",
     "@novu/dal": "workspace:*"
   }
 }

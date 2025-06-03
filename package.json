@@ -231,7 +231,7 @@
       "xml2js@<0.5.0": "^0.5.0",
       "@types/mocha": "^10.0.8",
       "rollup@>=4.0.0 <4.22.4": "^4.22.4",
-      "@nestjs/common@>=10.0.0 <11.0.0": "10.4.1",
+      "@nestjs/common@>=10.0.0 <11.0.0": "10.4.18",
       "prosemirror-model": "1.22.3"
     },
     "onlyBuiltDependencies": [
