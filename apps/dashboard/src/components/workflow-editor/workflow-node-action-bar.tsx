@@ -124,7 +124,7 @@ export const WorkflowNodeActionBar = ({
                   size="2xs"
                   variant="secondary"
                   mode="ghost"
-                  className="pointer-events-auto gap-1.5 px-2 py-1 text-xs"
+                  className="pointer-events-auto gap-1.5 rounded-l-lg rounded-r-none px-2 py-1 text-xs"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -165,7 +165,7 @@ export const WorkflowNodeActionBar = ({
                   size="2xs"
                   variant="secondary"
                   mode="ghost"
-                  className="pointer-events-auto gap-1.5 px-2 py-1 text-xs"
+                  className="pointer-events-auto gap-1.5 rounded-none px-2 py-1 text-xs"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -195,7 +195,9 @@ export const WorkflowNodeActionBar = ({
                   size="2xs"
                   variant="secondary"
                   mode="ghost"
-                  className="text-text-sub pointer-events-auto gap-1.5 rounded-[7px] px-2 py-1 text-xs"
+                  className={`text-text-sub pointer-events-auto gap-1.5 px-2 py-1 text-xs ${
+                    isChannelStep ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
+                  }`}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
