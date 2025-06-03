@@ -22,7 +22,7 @@ import { WorkflowNodeActionBar } from './workflow-node-action-bar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { AnimatePresence } from 'motion/react';
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { StepCreateDto } from '@novu/shared';
 
 export type NodeData = {
@@ -98,6 +98,8 @@ const StepNode = (props: StepNodeProps) => {
   const { workflow: currentWorkflow, update } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const [isHovered, setIsHovered] = useState(false);
+  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
 
@@ -110,6 +112,25 @@ const StepNode = (props: StepNodeProps) => {
   const hasConditions = conditionsCount > 0;
   const isReadOnly =
     currentWorkflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+
+  const handleMouseEnter = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovered(true);
+    }, 150);
+  };
+
+  const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
+
+    setIsHovered(false);
+  };
 
   const handleRemoveStep = useCallback(() => {
     if (!data.stepSlug || !currentWorkflow) {
@@ -217,25 +238,27 @@ const StepNode = (props: StepNodeProps) => {
   if (hasConditions) {
     return (
       <>
-        <Node
-          aria-selected={isSelected}
-          className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
-          pill={
-            <>
-              <RiFilter3Fill className="text-foreground-400 size-3" />
-              <span className="text-foreground-400 text-xs">{conditionsCount}</span>
-            </>
-          }
-          onPillClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
-          }}
-          {...rest}
-        >
-          {rest.children}
+        <div className="relative pt-12" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+          <Node
+            aria-selected={isSelected}
+            className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
+            pill={
+              <>
+                <RiFilter3Fill className="text-foreground-400 size-3" />
+                <span className="text-foreground-400 text-xs">{conditionsCount}</span>
+              </>
+            }
+            onPillClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
+            }}
+            {...rest}
+          >
+            {rest.children}
+          </Node>
           <AnimatePresence>
-            {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
+            {isHovered && !isReadOnly && !data.isTemplateStorePreview && type && (
               <WorkflowNodeActionBar
                 stepType={type}
                 stepName={data.name || 'Untitled Step'}
@@ -245,17 +268,19 @@ const StepNode = (props: StepNodeProps) => {
               />
             )}
           </AnimatePresence>
-        </Node>
+        </div>
       </>
     );
   }
 
   return (
     <>
-      <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
-        {rest.children}
+      <div className="relative pt-12" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
+          {rest.children}
+        </Node>
         <AnimatePresence>
-          {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
+          {isHovered && !isReadOnly && !data.isTemplateStorePreview && type && (
             <WorkflowNodeActionBar
               stepType={type}
               stepName={data.name || 'Untitled Step'}
@@ -265,7 +290,7 @@ const StepNode = (props: StepNodeProps) => {
             />
           )}
         </AnimatePresence>
-      </Node>
+      </div>
     </>
   );
 };
