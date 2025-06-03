@@ -3,13 +3,12 @@ import { Card, CardContent } from '../primitives/card';
 import { useState, useEffect } from 'react';
 import { IEnvironment } from '@novu/shared';
 import { motion, AnimatePresence } from 'motion/react';
-import { Framework as CliFramework, frameworks as cliFrameworks } from './framework-cli.instructions';
-import { Framework as ManualFramework, frameworks as manualFrameworks } from './framework-guides.instructions';
-import { FrameworkInstructions } from './framework-guides';
+import { Framework, getFrameworks } from './framework-guides.instructions';
+import { FrameworkInstructions, FrameworkCliInstructions } from './framework-guides';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
-import { FrameworkCliInstructions } from './framework-cli';
+import { fadeIn } from '@/utils/animation';
 
 const containerVariants = {
   hidden: {},
@@ -20,6 +19,8 @@ const containerVariants = {
     },
   },
 };
+
+const TABS_TRIGGER_CLASSES = 'relative text-xs font-medium text-[#525866] transition-colors hover:text-[#dd2476]';
 
 const cardVariants = {
   hidden: {
@@ -61,12 +62,12 @@ interface InboxFrameworkGuideProps {
 }
 
 function updateFrameworkCode(
-  framework: CliFramework | ManualFramework,
+  framework: Framework,
   environmentIdentifier: string,
   subscriberId: string,
   primaryColor: string,
   foregroundColor: string
-): CliFramework | ManualFramework {
+): Framework {
   return {
     ...framework,
     installSteps: framework.installSteps.map((step) => ({
@@ -88,8 +89,8 @@ export function InboxFrameworkGuide({
   foregroundColor,
 }: InboxFrameworkGuideProps) {
   const track = useTelemetry();
-  const [selectedFramework, setSelectedFramework] = useState<CliFramework | ManualFramework>(
-    cliFrameworks.find((f) => f.selected) || cliFrameworks[0]
+  const [selectedFramework, setSelectedFramework] = useState<Framework>(
+    getFrameworks('cli').find((f) => f.selected) || getFrameworks('cli')[0]
   );
   const [installationMethod, setInstallationMethod] = useState<'cli' | 'manual'>('cli');
   const [packageManager, setPackageManager] = useState<PackageManager>('npm');
@@ -97,7 +98,7 @@ export function InboxFrameworkGuide({
   useEffect(() => {
     if (!currentEnvironment?.identifier || !subscriberId) return;
 
-    const frameworks = installationMethod === 'cli' ? cliFrameworks : manualFrameworks;
+    const frameworks = getFrameworks(installationMethod);
     const updatedFrameworks = frameworks.map((framework) =>
       updateFrameworkCode(framework, currentEnvironment.identifier, subscriberId, primaryColor, foregroundColor)
     );
@@ -118,7 +119,7 @@ export function InboxFrameworkGuide({
     }
   }, [selectedFramework.name]);
 
-  function handleFrameworkSelect(framework: CliFramework | ManualFramework) {
+  function handleFrameworkSelect(framework: Framework) {
     track(TelemetryEvent.INBOX_FRAMEWORK_SELECTED, {
       framework: framework.name,
     });
@@ -126,7 +127,7 @@ export function InboxFrameworkGuide({
     setSelectedFramework(framework);
   }
 
-  const getCliCommand = (framework: CliFramework) => {
+  const getCliCommand = (framework: Framework) => {
     const packageName =
       framework.name.toLowerCase() === 'next.js'
         ? '@novu/nextjs'
@@ -147,7 +148,7 @@ export function InboxFrameworkGuide({
     }
   };
 
-  const frameworks = installationMethod === 'cli' ? cliFrameworks : manualFrameworks;
+  const frameworks = getFrameworks(installationMethod);
 
   return (
     <>
@@ -171,7 +172,6 @@ export function InboxFrameworkGuide({
       {/* Framework Cards */}
       <motion.div variants={containerVariants} initial="hidden" animate="show" className="flex flex-col gap-6 px-6">
         <div className="flex flex-col gap-4">
-          <h3 className="text-sm font-medium text-[#525866]">Select your framework</h3>
           <div className="flex gap-2">
             {frameworks.map((framework) => (
               <motion.div
@@ -200,68 +200,43 @@ export function InboxFrameworkGuide({
           </div>
         </div>
 
-        {!['Remix', 'Native', 'Angular', 'JavaScript'].includes(selectedFramework.name) ? (
-          <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-medium text-[#525866]">Choose installation method</h3>
-            <Tabs
-              defaultValue="cli"
-              value={installationMethod}
-              onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
-            >
-              <TabsList className="inline-flex items-center gap-2 bg-transparent p-0">
-                <TabsTrigger
-                  value="cli"
-                  className="relative text-xs font-medium text-[#525866] transition-colors hover:text-[#dd2476] data-[state=active]:text-[#dd2476]"
-                >
-                  CLI
-                </TabsTrigger>
-                <TabsTrigger
-                  value="manual"
-                  className="relative text-xs font-medium text-[#525866] transition-colors hover:text-[#dd2476] data-[state=active]:text-[#dd2476]"
-                >
-                  Manual
-                </TabsTrigger>
-              </TabsList>
-              <div className="relative mt-2 overflow-hidden pl-0">
-                <AnimatePresence mode="wait">
-                  {installationMethod === 'cli' && (
-                    <motion.div
-                      key="cli"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="w-full"
-                    >
-                      <FrameworkCliInstructions framework={selectedFramework as CliFramework} />
-                    </motion.div>
+        {/* Code block area with subtle installation method selector above */}
+        {['Next.js', 'React'].includes(selectedFramework.name) ? (
+          <div className="flex flex-col gap-3">
+            {/* Header row: label left, tabs right */}
+            <div className="mb-2 flex items-center gap-64 pl-8">
+              <span className="text-base font-medium text-[#222]">Installation method</span>
+              <Tabs
+                defaultValue="cli"
+                value={installationMethod}
+                onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
+              >
+                <TabsList className="ml-4 h-6 bg-transparent p-0 shadow-none">
+                  <TabsTrigger value="cli" className={TABS_TRIGGER_CLASSES}>
+                    CLI Installation
+                  </TabsTrigger>
+                  <TabsTrigger value="manual" className={TABS_TRIGGER_CLASSES}>
+                    Manual
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
+            <div className="relative overflow-hidden pl-0">
+              <AnimatePresence mode="wait">
+                <motion.div key={installationMethod} {...fadeIn} className="w-full">
+                  {installationMethod === 'cli' ? (
+                    <FrameworkCliInstructions framework={selectedFramework as Framework} />
+                  ) : (
+                    <FrameworkInstructions framework={selectedFramework as Framework} />
                   )}
-                  {installationMethod === 'manual' && (
-                    <motion.div
-                      key="manual"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="w-full"
-                    >
-                      <FrameworkInstructions framework={selectedFramework as ManualFramework} />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </Tabs>
+                </motion.div>
+              </AnimatePresence>
+            </div>
           </div>
         ) : (
           <div className="relative mt-2 overflow-hidden pl-0">
-            <motion.div
-              key="manual"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.15 }}
-              className="w-full"
-            >
-              <FrameworkInstructions framework={selectedFramework as ManualFramework} />
+            <motion.div key="manual" {...fadeIn} className="w-full">
+              <FrameworkInstructions framework={selectedFramework as Framework} />
             </motion.div>
           </div>
         )}
