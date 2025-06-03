@@ -10,7 +10,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsKeysEnum, PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+  getFeatureForTierAsBoolean,
+} from '@novu/shared';
+import { FeatureNameEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
@@ -35,6 +42,7 @@ import { UpdateEnvironmentCommand } from './usecases/update-environment/update-e
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { CommunityOrganizationRepository } from '@novu/dal';
 
 /**
  * @deprecated use EnvironmentsControllerV2
@@ -53,6 +61,7 @@ export class EnvironmentsControllerV1 {
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
+    private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
 
@@ -201,13 +210,29 @@ export class EnvironmentsControllerV1 {
   }
 
   private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
+    const organization = await this.organizationRepository.findOne({
+      _id: user.organizationId,
     });
 
-    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true;
+    const [isRbacFlagEnabled, isRbacFeatureEnabled] = await Promise.all([
+      this.featureFlagService.getFlag({
+        organization: { _id: user.organizationId },
+        user: { _id: user._id },
+        key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+        defaultValue: false,
+      }),
+      getFeatureForTierAsBoolean(
+        FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+        organization?.apiServiceLevel || ApiServiceLevelEnum.FREE
+      ),
+    ]);
+
+    const isRbacEnabled = isRbacFlagEnabled && isRbacFeatureEnabled;
+
+    if (!isRbacEnabled) {
+      return true;
+    }
+
+    return user.permissions.includes(PermissionsEnum.API_KEY_READ);
   }
 }
