@@ -73,11 +73,11 @@
     "@eslint/compat": "^1.1.1",
     "@eslint/eslintrc": "^3.1.0",
     "@eslint/js": "^9.9.1",
-    "@nx/eslint": "20.3.0",
-    "@nx/eslint-plugin": "20.3.0",
-    "@nx/jest": "20.3.0",
-    "@nx/plugin": "20.3.0",
-    "@nx/workspace": "20.3.0",
+    "@nx/eslint": "21.1.2",
+    "@nx/eslint-plugin": "21.1.2",
+    "@nx/jest": "21.1.2",
+    "@nx/plugin": "21.1.2",
+    "@nx/workspace": "21.1.2",
     "@octokit/core": "^4.0.0",
     "@pandacss/eslint-plugin": "^0.1.9",
     "@pnpm/filter-workspace-packages": "^7.0.6",
@@ -233,7 +233,8 @@
       "@types/mocha": "^10.0.8",
       "rollup@>=4.0.0 <4.22.4": "^4.22.4",
       "@nestjs/common@>=10.0.0 <11.0.0": "10.4.18",
-      "prosemirror-model": "1.22.3"
+      "prosemirror-model": "1.22.3",
+      "path-to-regexp@<0.1.12": "^0.1.12"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
