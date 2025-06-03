@@ -392,7 +392,7 @@ export class EmailOutputRendererUsecase {
     }
 
     const lastIndex = matches[matches.length - 1].index!;
-    
+
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
   }
 }
