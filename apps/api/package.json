@@ -43,7 +43,7 @@
     "@nestjs/core": "10.4.1",
     "@nestjs/jwt": "10.2.0",
     "@nestjs/passport": "10.0.3",
-    "@nestjs/platform-express": "10.4.1",
+    "@nestjs/platform-express": "10.4.18",
     "@nestjs/swagger": "7.4.0",
     "@nestjs/terminus": "10.2.3",
     "@nestjs/throttler": "6.2.1",
