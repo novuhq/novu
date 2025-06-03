@@ -198,6 +198,29 @@ export function ControlInput({
     [setSelectedVariable]
   );
 
+  /**
+   * This is a workaround to focus the editor when clicking on the container.
+   * It's a known issue with Codemirror in case of the container is bigger in size than a single focusable row.
+   */
+  const handleContainerClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Don't focus if a variable popover is open or if clicking on interactive elements
+      if (isVariablePopoverOpen) return;
+
+      const target = event.target as HTMLElement;
+
+      // Don't focus if clicking on variable pills or other interactive elements
+      if (target.closest('.cm-variable-pill') || target.closest('[role="button"]') || target.closest('button')) {
+        return;
+      }
+
+      if (viewRef.current) {
+        viewRef.current.focus();
+      }
+    },
+    [isVariablePopoverOpen]
+  );
+
   useEffect(() => {
     // calculate popover trigger position when variable is selected
     if (selectedVariable && viewRef.current && containerRef.current) {
@@ -218,7 +241,7 @@ export function ControlInput({
   }, [selectedVariable]);
 
   return (
-    <div ref={containerRef} className={cn(variants({ size }), className)}>
+    <div ref={containerRef} className={cn(variants({ size }), className)} onClick={handleContainerClick}>
       <Editor
         key={schemaKey}
         fontFamily="inherit"
