@@ -252,7 +252,7 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
             <div className="border-b border-neutral-200 px-3 py-2">
               <h3 className="text-sm font-medium text-neutral-900">Preview Context</h3>
             </div>
-            <div className="flex-1 overflow-y-auto px-3 py-2">{contextContent}</div>
+            <div className="flex-1 overflow-y-auto">{contextContent}</div>
           </div>
         </ResizablePanel>
 

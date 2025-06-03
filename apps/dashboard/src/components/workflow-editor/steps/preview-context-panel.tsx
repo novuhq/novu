@@ -76,7 +76,7 @@ export function PreviewContextPanel({
 }: PreviewContextPanelProps) {
   const [payloadJsonData, setPayloadJsonData] = useState<any>({});
   const [payloadError, setPayloadError] = useState<string | null>(null);
-  const [accordionValue, setAccordionValue] = useState<string | undefined>('payload');
+  const [accordionValue, setAccordionValue] = useState<string[]>(['payload', 'subscriber', 'step-results']);
   const [stepResults, setStepResults] = useState<Record<string, any>>(() =>
     generateMockStepResults(workflow, currentStepId)
   );
@@ -188,16 +188,14 @@ export function PreviewContextPanel({
     );
   };
 
+  const accordionItemClassName = 'border-b border-b-neutral-200 border-t-0 border-l-0 border-r-0 rounded-none p-4';
+  const accordionTriggerClassName = 'text-label-xs';
+
   return (
-    <Accordion type="single" collapsible value={accordionValue} onValueChange={setAccordionValue}>
-      <AccordionItem value="payload">
-        <AccordionTrigger>
-          <div className="flex items-center gap-2">
-            <Code2 className="text-feature size-4" />
-            <span className="text-sm font-medium">Payload</span>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-2 pt-2">
+    <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
+      <AccordionItem value="payload" className={accordionItemClassName}>
+        <AccordionTrigger className={accordionTriggerClassName}>Payload</AccordionTrigger>
+        <AccordionContent className="flex flex-col gap-2">
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
             {isPayloadSchemaEnabled ? (
               <EditableJsonViewer
@@ -222,13 +220,8 @@ export function PreviewContextPanel({
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="subscriber">
-        <AccordionTrigger>
-          <div className="flex items-center gap-2">
-            <RiSendPlaneFill className="size-4" />
-            <span className="text-sm font-medium">Subscriber</span>
-          </div>
-        </AccordionTrigger>
+      <AccordionItem value="subscriber" className={accordionItemClassName}>
+        <AccordionTrigger className={accordionTriggerClassName}>Subscriber</AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2 pt-2">
           <div className="flex flex-col gap-2">
             {Object.keys(subscriberValues || subscriberData).map((key) => (
@@ -260,13 +253,10 @@ export function PreviewContextPanel({
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="step-results">
-        <AccordionTrigger>
+      <AccordionItem value="step-results" className={accordionItemClassName}>
+        <AccordionTrigger className={accordionTriggerClassName}>
           <div className="flex w-full items-center justify-between">
-            <div className="flex items-center gap-2">
-              <RiListCheck3 className="size-4" />
-              <span className="text-sm font-medium">Step results</span>
-            </div>
+            Step results
             <Button
               size="2xs"
               leadingIcon={RiRefreshLine}
