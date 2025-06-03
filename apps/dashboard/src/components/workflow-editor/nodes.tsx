@@ -236,15 +236,13 @@ const StepNode = (props: StepNodeProps) => {
           {rest.children}
           <AnimatePresence>
             {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
-              <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1000 }}>
-                <WorkflowNodeActionBar
-                  stepType={type}
-                  stepName={data.name || 'Untitled Step'}
-                  onRemoveClick={handleRemoveStep}
-                  onEditContentClick={handleEditContent}
-                  onCopyClick={handleCopyStep}
-                />
-              </div>
+              <WorkflowNodeActionBar
+                stepType={type}
+                stepName={data.name || 'Untitled Step'}
+                onRemoveClick={handleRemoveStep}
+                onEditContentClick={handleEditContent}
+                onCopyClick={handleCopyStep}
+              />
             )}
           </AnimatePresence>
         </Node>
@@ -258,15 +256,13 @@ const StepNode = (props: StepNodeProps) => {
         {rest.children}
         <AnimatePresence>
           {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
-            <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1000 }}>
-              <WorkflowNodeActionBar
-                stepType={type}
-                stepName={data.name || 'Untitled Step'}
-                onRemoveClick={handleRemoveStep}
-                onEditContentClick={handleEditContent}
-                onCopyClick={handleCopyStep}
-              />
-            </div>
+            <WorkflowNodeActionBar
+              stepType={type}
+              stepName={data.name || 'Untitled Step'}
+              onRemoveClick={handleRemoveStep}
+              onEditContentClick={handleEditContent}
+              onCopyClick={handleCopyStep}
+            />
           )}
         </AnimatePresence>
       </Node>
