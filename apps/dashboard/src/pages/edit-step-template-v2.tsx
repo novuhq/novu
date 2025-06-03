@@ -1,4 +1,4 @@
-import { ConfigureStepTemplateForm } from '@/components/workflow-editor/steps/configure-step-template-form';
+import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { PageMeta } from '@/components/page-meta';
 
@@ -13,7 +13,7 @@ export function EditStepTemplateV2Page() {
     <>
       <PageMeta title={`Edit ${step.name} Template`} />
       <div className="flex h-full w-full">
-        <ConfigureStepTemplateForm workflow={workflow} step={step} update={update} />
+        <StepEditorLayout />
       </div>
     </>
   );
