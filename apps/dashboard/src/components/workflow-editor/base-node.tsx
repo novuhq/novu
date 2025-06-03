@@ -134,8 +134,9 @@ const nodeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'rounded-lg pointer-events-auto [&_span:not(.hover-trigger,.error-trigger)]:pointer-events-none',
-        sm: 'text-neutral-400 w-min rounded-lg pointer-events-auto [&_span:not(.hover-trigger,.error-trigger)]:pointer-events-none',
+        default:
+          'rounded-lg pointer-events-auto [&_span:not(.hover-trigger,.error-trigger,.action-bar-trigger)]:pointer-events-none [&_.action-bar-trigger]:pointer-events-auto',
+        sm: 'text-neutral-400 w-min rounded-lg pointer-events-auto [&_span:not(.hover-trigger,.error-trigger,.action-bar-trigger)]:pointer-events-none [&_.action-bar-trigger]:pointer-events-auto',
       },
     },
     defaultVariants: {

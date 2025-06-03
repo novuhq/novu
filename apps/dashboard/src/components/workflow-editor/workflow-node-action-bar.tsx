@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { RiDeleteBin2Line, RiEditLine } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiEdit2Line, RiEditLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { StepTypeEnum } from '@/utils/enums';
 
@@ -26,32 +26,41 @@ export const WorkflowNodeActionBar = ({ stepType, onRemoveClick, onEditContentCl
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 5 }}
       transition={{ duration: 0.15 }}
-      className="absolute right-0 top-[-35px] z-50 -translate-y-full"
+      className="action-bar-trigger pointer-events-auto absolute left-[-5px] top-[-118px] z-50 -translate-y-full"
+      style={{ pointerEvents: 'auto' }}
     >
-      <div className="mb-2 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white shadow-lg">
+      <div className="pointer-events-auto mb-2 flex items-center gap-1 rounded-lg border border-neutral-200 bg-white shadow-lg">
         {isChannelStep && (
           <>
             <Button
               size="2xs"
               variant="secondary"
               mode="ghost"
-              className="gap-1.5 px-2 py-1 text-xs"
-              onClick={onEditContentClick}
+              className="pointer-events-auto gap-1.5 px-2 py-1 text-xs"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onEditContentClick();
+              }}
             >
-              <RiEditLine className="h-3.5 w-3.5" />
+              <RiEdit2Line className="h-3.5 w-3.5" />
               Edit content
             </Button>
-            <div className="h-4 w-px bg-neutral-200" />
+            <div className="h-6 w-px bg-neutral-100" />
           </>
         )}
         <Button
           size="2xs"
           variant="secondary"
           mode="ghost"
-          className="gap-1.5 px-2 py-1 text-xs"
-          onClick={onRemoveClick}
+          className="text-text-sub pointer-events-auto gap-1.5 rounded-[7px] px-2 py-1 text-xs"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onRemoveClick();
+          }}
         >
-          <RiDeleteBin2Line className="h-3.5 w-3.5" />
+          <RiDeleteBin2Line className="text-error-base h-3.5 w-3.5" />
         </Button>
       </div>
     </motion.div>

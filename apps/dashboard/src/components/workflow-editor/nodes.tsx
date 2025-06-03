@@ -182,11 +182,13 @@ const StepNode = (props: StepNodeProps) => {
           {rest.children}
           <AnimatePresence>
             {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
-              <WorkflowNodeActionBar
-                stepType={type}
-                onRemoveClick={() => setIsDeleteModalOpen(true)}
-                onEditContentClick={handleEditContent}
-              />
+              <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1000 }}>
+                <WorkflowNodeActionBar
+                  stepType={type}
+                  onRemoveClick={() => setIsDeleteModalOpen(true)}
+                  onEditContentClick={handleEditContent}
+                />
+              </div>
             )}
           </AnimatePresence>
         </Node>
@@ -209,11 +211,13 @@ const StepNode = (props: StepNodeProps) => {
         {rest.children}
         <AnimatePresence>
           {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
-            <WorkflowNodeActionBar
-              stepType={type}
-              onRemoveClick={() => setIsDeleteModalOpen(true)}
-              onEditContentClick={handleEditContent}
-            />
+            <div style={{ pointerEvents: 'auto', position: 'relative', zIndex: 1000 }}>
+              <WorkflowNodeActionBar
+                stepType={type}
+                onRemoveClick={() => setIsDeleteModalOpen(true)}
+                onEditContentClick={handleEditContent}
+              />
+            </div>
           )}
         </AnimatePresence>
       </Node>
