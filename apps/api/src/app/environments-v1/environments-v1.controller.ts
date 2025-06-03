@@ -16,8 +16,9 @@ import {
   ProductFeatureKeyEnum,
   UserSessionData,
   getFeatureForTierAsBoolean,
+  FeatureNameEnum,
+  ApiServiceLevelEnum,
 } from '@novu/shared';
-import { FeatureNameEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
