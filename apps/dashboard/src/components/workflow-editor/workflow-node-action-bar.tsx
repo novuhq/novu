@@ -217,9 +217,9 @@ export const WorkflowNodeActionBar = ({
         open={isCopyModalOpen}
         onOpenChange={setIsCopyModalOpen}
         onConfirm={handleCopyConfirm}
-        title="Copy step"
+        title="Duplicate step"
         description="Are you sure you want to duplicate this step? A step will be created immediately below the current step."
-        confirmButtonText="Copy step"
+        confirmButtonText="Duplicate step"
       />
 
       <ConfirmationModal
