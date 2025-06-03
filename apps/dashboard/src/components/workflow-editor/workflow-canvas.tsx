@@ -119,7 +119,7 @@ const mapStepToNode = ({
     : undefined;
 
   return {
-    id: generateUUID(),
+    id: `node-${step.slug}`,
     position: { x: previousPosition.x, y: previousPosition.y + Y_DISTANCE },
     data: {
       name: step.name,
@@ -144,9 +144,13 @@ const WorkflowCanvasChild = ({
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const reactFlowInstance = useReactFlow();
   const { currentEnvironment } = useEnvironment();
-  const { workflow: currentWorkflow } = useWorkflow();
+  const { workflow: currentWorkflow, update } = useWorkflow();
   const navigate = useNavigate();
   const { user } = useUser();
+  const has = useHasPermission();
+
+  const isReadOnly =
+    currentWorkflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   const [nodes, edges] = useMemo(() => {
     const triggerNode: Node<NodeData, 'trigger'> = {
@@ -271,6 +275,7 @@ const WorkflowCanvasChild = ({
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
+
       {currentWorkflow &&
         currentEnvironment?.name === EnvironmentEnum.DEVELOPMENT &&
         currentWorkflow.origin === WorkflowOriginEnum.NOVU_CLOUD &&

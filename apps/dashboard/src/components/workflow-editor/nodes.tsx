@@ -18,6 +18,11 @@ import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { WorkflowNodeActionBar } from './workflow-node-action-bar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { AnimatePresence } from 'motion/react';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useState, useCallback } from 'react';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -78,14 +83,21 @@ export const TriggerNode = ({
   );
 };
 
-type StepNodeProps = ComponentProps<typeof Node> & { data: NodeData };
+type StepNodeProps = ComponentProps<typeof Node> & {
+  data: NodeData;
+  type?: StepTypeEnum;
+};
 
 const StepNode = (props: StepNodeProps) => {
   const navigate = useNavigate();
-  const { className, data, ...rest } = props;
+  const { className, data, type, ...rest } = props;
   const { stepSlug } = useParams<{
     stepSlug: string;
   }>();
+  const { workflow: currentWorkflow, update } = useWorkflow();
+  const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
 
@@ -96,29 +108,126 @@ const StepNode = (props: StepNodeProps) => {
     !!data.stepSlug;
 
   const hasConditions = conditionsCount > 0;
+  const isReadOnly =
+    currentWorkflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+
+  const handleRemoveStep = useCallback(() => {
+    if (!data.stepSlug || !currentWorkflow) {
+      return;
+    }
+
+    update(
+      {
+        ...currentWorkflow,
+        steps: currentWorkflow.steps.filter((s) => s.slug !== data.stepSlug),
+      },
+      {
+        onSuccess: () => {
+          setIsDeleteModalOpen(false);
+
+          if (currentEnvironment?.slug && currentWorkflow?.slug) {
+            navigate(
+              buildRoute(ROUTES.EDIT_WORKFLOW, {
+                environmentSlug: currentEnvironment.slug,
+                workflowSlug: currentWorkflow.slug,
+              })
+            );
+          }
+        },
+      }
+    );
+  }, [data.stepSlug, currentWorkflow, currentEnvironment?.slug, update, navigate]);
+
+  const handleEditContent = useCallback(() => {
+    if (!data.stepSlug || !currentEnvironment?.slug || !type) {
+      return;
+    }
+
+    const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
+
+    if (isTemplateConfigurable) {
+      navigate(
+        buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+          stepSlug: data.stepSlug,
+        })
+      );
+    } else {
+      navigate(
+        buildRoute(ROUTES.EDIT_STEP, {
+          stepSlug: data.stepSlug,
+        })
+      );
+    }
+  }, [data.stepSlug, currentEnvironment?.slug, navigate, type]);
 
   if (hasConditions) {
     return (
-      <Node
-        aria-selected={isSelected}
-        className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
-        pill={
-          <>
-            <RiFilter3Fill className="text-foreground-400 size-3" />
-            <span className="text-foreground-400 text-xs">{conditionsCount}</span>
-          </>
-        }
-        onPillClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
-        }}
-        {...rest}
-      />
+      <>
+        <Node
+          aria-selected={isSelected}
+          className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
+          pill={
+            <>
+              <RiFilter3Fill className="text-foreground-400 size-3" />
+              <span className="text-foreground-400 text-xs">{conditionsCount}</span>
+            </>
+          }
+          onPillClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
+          }}
+          {...rest}
+        >
+          {rest.children}
+          <AnimatePresence>
+            {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
+              <WorkflowNodeActionBar
+                stepType={type}
+                onRemoveClick={() => setIsDeleteModalOpen(true)}
+                onEditContentClick={handleEditContent}
+              />
+            )}
+          </AnimatePresence>
+        </Node>
+
+        <ConfirmationModal
+          open={isDeleteModalOpen}
+          onOpenChange={setIsDeleteModalOpen}
+          onConfirm={handleRemoveStep}
+          title="Delete step?"
+          description="This action is permanent and cannot be undone."
+          confirmButtonText="Delete step"
+        />
+      </>
     );
   }
 
-  return <Node aria-selected={isSelected} className={cn('group', className)} {...rest} />;
+  return (
+    <>
+      <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
+        {rest.children}
+        <AnimatePresence>
+          {isSelected && !isReadOnly && !data.isTemplateStorePreview && type && (
+            <WorkflowNodeActionBar
+              stepType={type}
+              onRemoveClick={() => setIsDeleteModalOpen(true)}
+              onEditContentClick={handleEditContent}
+            />
+          )}
+        </AnimatePresence>
+      </Node>
+
+      <ConfirmationModal
+        open={isDeleteModalOpen}
+        onOpenChange={setIsDeleteModalOpen}
+        onConfirm={handleRemoveStep}
+        title="Delete step?"
+        description="This action is permanent and cannot be undone."
+        confirmButtonText="Delete step"
+      />
+    </>
+  );
 };
 
 const NodeWrapper = ({ children, data, type }: { children: React.ReactNode; data: NodeData; type: StepTypeEnum }) => {
@@ -146,7 +255,7 @@ export const EmailNode = ({ data }: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.EMAIL}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.EMAIL}>
         <NodeHeader type={StepTypeEnum.EMAIL}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.EMAIL]}>
             <Icon />
@@ -176,7 +285,7 @@ export const SmsNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.SMS}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.SMS}>
         <NodeHeader type={StepTypeEnum.SMS}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.SMS]}>
             <Icon />
@@ -204,7 +313,7 @@ export const InAppNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.IN_APP}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.IN_APP}>
         <NodeHeader type={StepTypeEnum.IN_APP}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.IN_APP]}>
             <Icon />
@@ -232,7 +341,7 @@ export const PushNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.PUSH}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.PUSH}>
         <NodeHeader type={StepTypeEnum.PUSH}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.PUSH]}>
             <Icon />
@@ -260,7 +369,7 @@ export const ChatNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.CHAT}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.CHAT}>
         <NodeHeader type={StepTypeEnum.CHAT}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CHAT]}>
             <Icon />
@@ -288,7 +397,7 @@ export const DelayNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.DELAY}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.DELAY}>
         <NodeHeader type={StepTypeEnum.DELAY}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DELAY]}>
             <Icon />
@@ -312,7 +421,7 @@ export const DigestNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.DIGEST}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.DIGEST}>
         <NodeHeader type={StepTypeEnum.DIGEST}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.DIGEST]}>
             <Icon />
@@ -336,7 +445,7 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
 
   return (
     <NodeWrapper data={data} type={StepTypeEnum.CUSTOM}>
-      <StepNode data={data}>
+      <StepNode data={data} type={StepTypeEnum.CUSTOM}>
         <NodeHeader type={StepTypeEnum.CUSTOM}>
           <NodeIcon variant={STEP_TYPE_TO_COLOR[StepTypeEnum.CUSTOM]}>
             <Icon />
