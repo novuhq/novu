@@ -23,6 +23,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { AnimatePresence } from 'motion/react';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useState, useCallback } from 'react';
+import { StepCreateDto } from '@novu/shared';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -138,6 +139,62 @@ const StepNode = (props: StepNodeProps) => {
     );
   }, [data.stepSlug, currentWorkflow, currentEnvironment?.slug, update, navigate]);
 
+  const handleCopyStep = useCallback(() => {
+    if (!data.stepSlug || !currentWorkflow || !type) {
+      return;
+    }
+
+    const currentStepIndex = currentWorkflow.steps.findIndex((s) => s.slug === data.stepSlug);
+
+    if (currentStepIndex === -1) {
+      return;
+    }
+
+    const currentStep = currentWorkflow.steps[currentStepIndex];
+
+    // Create a new step by copying the current step structure
+    const copiedStep: StepCreateDto = {
+      name: `${currentStep.name} (Copy)`,
+      type: currentStep.type,
+      controlValues: { ...currentStep.controls.values },
+    };
+
+    // Insert the copied step immediately after the current step
+    const newSteps = [...currentWorkflow.steps];
+    newSteps.splice(currentStepIndex + 1, 0, copiedStep as any);
+
+    update(
+      {
+        ...currentWorkflow,
+        steps: newSteps,
+      },
+      {
+        onSuccess: (updatedWorkflow) => {
+          // Navigate to the newly created step
+          const newStep = updatedWorkflow.steps[currentStepIndex + 1];
+
+          if (newStep && currentEnvironment?.slug) {
+            const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
+
+            if (isTemplateConfigurable) {
+              navigate(
+                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                  stepSlug: newStep.slug,
+                })
+              );
+            } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(type)) {
+              navigate(
+                buildRoute(ROUTES.EDIT_STEP, {
+                  stepSlug: newStep.slug,
+                })
+              );
+            }
+          }
+        },
+      }
+    );
+  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate]);
+
   const handleEditContent = useCallback(() => {
     if (!data.stepSlug || !currentEnvironment?.slug || !type) {
       return;
@@ -187,6 +244,7 @@ const StepNode = (props: StepNodeProps) => {
                   stepType={type}
                   onRemoveClick={() => setIsDeleteModalOpen(true)}
                   onEditContentClick={handleEditContent}
+                  onCopyClick={handleCopyStep}
                 />
               </div>
             )}
@@ -216,6 +274,7 @@ const StepNode = (props: StepNodeProps) => {
                 stepType={type}
                 onRemoveClick={() => setIsDeleteModalOpen(true)}
                 onEditContentClick={handleEditContent}
+                onCopyClick={handleCopyStep}
               />
             </div>
           )}
