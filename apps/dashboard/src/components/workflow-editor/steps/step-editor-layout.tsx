@@ -26,6 +26,7 @@ import {
   EmailPreviewSubject,
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
+import { PreviewContextPanel } from '@/components/workflow-editor/steps/preview-context-panel';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -188,7 +189,7 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
   const editorTitle = getEditorTitle(step.type);
   const editorContent = getEditorContent(workflow, step);
 
-  const { previewData, isPreviewPending } = useEditorPreview({
+  const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues: form.getValues(),
@@ -205,6 +206,10 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
     </div>
   );
 
+  const contextContent = previewContextContent || (
+    <PreviewContextPanel workflow={workflow} value={editorValue} onChange={setEditorValue} />
+  );
+
   return (
     <div className={cn('h-full w-full', className)}>
       <ResizablePanelGroup direction="horizontal" className="h-full">
@@ -213,13 +218,7 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
             <div className="border-b border-neutral-200 px-3 py-2">
               <h3 className="text-sm font-medium text-neutral-900">Preview Context</h3>
             </div>
-            <div className="flex-1 overflow-y-auto">
-              {previewContextContent || (
-                <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-                  Preview context content will go here
-                </div>
-              )}
-            </div>
+            <div className="flex-1 overflow-y-auto px-3 py-2">{contextContent}</div>
           </div>
         </ResizablePanel>
 
