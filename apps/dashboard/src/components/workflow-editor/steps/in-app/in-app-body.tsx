@@ -6,7 +6,6 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize, containsHTMLEntities, containsVariables } from '@/utils/string';
 import { InputRoot } from '../../../primitives/input';
-import { usePreviewTrigger } from '../preview-trigger-context';
 
 const bodyKey = 'body';
 
@@ -14,7 +13,6 @@ export const InAppBody = () => {
   const { control, getValues } = useFormContext();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const { triggerPreview } = usePreviewTrigger();
 
   return (
     <FormField
@@ -30,10 +28,7 @@ export const InAppBody = () => {
                 placeholder={capitalize(field.name)}
                 id={field.name}
                 value={field.value}
-                onChange={(value) => {
-                  field.onChange(value);
-                  triggerPreview();
-                }}
+                onChange={field.onChange}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
                 multiline

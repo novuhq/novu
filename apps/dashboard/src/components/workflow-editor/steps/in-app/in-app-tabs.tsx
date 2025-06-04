@@ -3,11 +3,10 @@ import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-ed
 import { InAppEditorPreview } from '@/components/workflow-editor/steps/in-app/in-app-editor-preview';
 import { TemplateTabs } from '@/components/workflow-editor/steps/template-tabs';
 import { WorkflowOriginEnum } from '@/utils/enums';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { CustomStepControls } from '../controls/custom-step-controls';
 import { useEditorPreview } from '../use-editor-preview';
-import { PreviewTriggerProvider } from '../preview-trigger-context';
 
 export const InAppTabs = (props: StepEditorProps) => {
   const { workflow, step } = props;
@@ -47,10 +46,10 @@ export const InAppTabs = (props: StepEditorProps) => {
   });
 
   const editorContent = (
-    <PreviewTriggerProvider value={{ triggerPreview: previewStep }}>
+    <>
       {isNovuCloud && <InAppEditor uiSchema={uiSchema} />}
       {isExternal && <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />}
-    </PreviewTriggerProvider>
+    </>
   );
 
   const previewContent = (

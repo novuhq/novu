@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
 import { RiCodeBlock, RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { AnimatePresence, motion } from 'motion/react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   EmailPreviewBody,
   EmailPreviewBodyMobile,
@@ -37,7 +37,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
   step: StepResponseDto;
-  previewContextContent?: React.ReactNode;
   className?: string;
 };
 
@@ -190,7 +189,7 @@ function getCorePreviewContent(step: StepResponseDto, previewData: any, isPrevie
   }
 }
 
-export function StepEditorLayout({ workflow, step, previewContextContent, className }: StepEditorLayoutProps) {
+export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
   const form = useFormContext();
   const editorTitle = getEditorTitle(step.type);
   const editorContent = getEditorContent(workflow, step);
@@ -223,27 +222,16 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
   const { uiSchema } = step.controls;
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
 
+  useEffect(() => {
+    // previewStep();
+  }, [previewStep]);
+
   const previewContent = isNovuCloud ? (
     getCorePreviewContent(step, previewData, isPreviewPending)
   ) : (
     <div className="flex h-full items-center justify-center text-sm text-neutral-500">
       Preview not available for this step configuration
     </div>
-  );
-
-  const contextContent = previewContextContent || (
-    <Form {...previewForm}>
-      <FormRoot className="bg-bg-weak h-full">
-        <PreviewContextPanel
-          workflow={workflow}
-          value={editorValue}
-          onChange={setEditorValue}
-          subscriberData={subscriberData}
-          currentStepId={step.stepId}
-          onUpdate={previewStep}
-        />
-      </FormRoot>
-    </Form>
   );
 
   return (
@@ -257,7 +245,20 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
                 Preview Context
               </h3>
             </div>
-            <div className="flex-1 overflow-y-auto">{contextContent}</div>
+            <div className="flex-1 overflow-y-auto">
+              <Form {...previewForm}>
+                <FormRoot className="bg-bg-weak h-full">
+                  <PreviewContextPanel
+                    workflow={workflow}
+                    value={editorValue}
+                    onChange={setEditorValue}
+                    subscriberData={subscriberData}
+                    currentStepId={step.stepId}
+                    onUpdate={previewStep}
+                  />
+                </FormRoot>
+              </Form>
+            </div>
           </div>
         </ResizablePanel>
 

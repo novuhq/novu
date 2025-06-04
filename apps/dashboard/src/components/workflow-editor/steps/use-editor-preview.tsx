@@ -1,9 +1,24 @@
 import * as Sentry from '@sentry/react';
 import isEqual from 'lodash.isequal';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
-import { useDataRef } from '@/hooks/use-data-ref';
 import { usePreviewStep } from '@/hooks/use-preview-step';
+
+// Custom hook for debouncing values
+function useDebounced<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 export const useEditorPreview = ({
   workflowSlug,
@@ -15,6 +30,10 @@ export const useEditorPreview = ({
   controlValues: Record<string, unknown>;
 }) => {
   const [editorValue, setEditorValue] = useState('{}');
+
+  // Debounce control values to prevent requests on every keystroke
+  const debouncedControlValues = useDebounced(controlValues, 500);
+
   const {
     previewStep,
     data: previewData,
@@ -32,59 +51,60 @@ export const useEditorPreview = ({
     },
   });
 
-  const dataRef = useDataRef({
-    workflowSlug,
-    stepSlug,
-    controlValues,
-    editorValue,
+  // Use React Query to automatically trigger preview when debounced values change
+  // This only triggers after the debounce delay (500ms), preventing requests on every keystroke
+  // React Query handles deduplication, caching, and error states automatically
+  useQuery({
+    queryKey: ['preview-auto-trigger', workflowSlug, stepSlug, debouncedControlValues, editorValue],
+    queryFn: async () => {
+      try {
+        return await previewStep({
+          workflowSlug,
+          stepSlug,
+          previewData: {
+            controlValues: debouncedControlValues,
+            previewPayload: JSON.parse(editorValue),
+          },
+        });
+      } catch (error) {
+        console.error('Failed to parse editorValue for auto preview:', error, editorValue);
+        Sentry.captureException(error);
+        throw error;
+      }
+    },
+    enabled: Boolean(workflowSlug && stepSlug),
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: false,
   });
-
-  const lastControlValuesRef = useRef<string>('');
-
-  useEffect(() => {
-    // Only trigger preview if controlValues actually changed
-    const currentControlValuesStr = JSON.stringify(controlValues);
-
-    if (currentControlValuesStr === lastControlValuesRef.current) {
-      return;
-    }
-
-    lastControlValuesRef.current = currentControlValuesStr;
-
-    previewStep({
-      workflowSlug: dataRef.current.workflowSlug,
-      stepSlug: dataRef.current.stepSlug,
-      previewData: {
-        controlValues: dataRef.current.controlValues,
-        previewPayload: JSON.parse(dataRef.current.editorValue),
-      },
-    });
-  }, [controlValues, dataRef, previewStep]);
 
   const setEditorValueSafe = (value: string): Error | null => {
     try {
       JSON.parse(value);
       setEditorValue(value);
-      dataRef.current = {
-        ...dataRef.current,
-        editorValue: value,
-      };
       return null;
     } catch (e) {
       return e as Error;
     }
   };
 
-  const previewStepCallback = useCallback(() => {
-    return previewStep({
-      workflowSlug: dataRef.current.workflowSlug,
-      stepSlug: dataRef.current.stepSlug,
-      previewData: {
-        controlValues: dataRef.current.controlValues,
-        previewPayload: JSON.parse(dataRef.current.editorValue),
-      },
-    });
-  }, [previewStep, dataRef]);
+  const previewStepCallback = useCallback(async () => {
+    try {
+      return await previewStep({
+        workflowSlug,
+        stepSlug,
+        previewData: {
+          controlValues: debouncedControlValues,
+          previewPayload: JSON.parse(editorValue),
+        },
+      });
+    } catch (error) {
+      console.error('Failed to parse editorValue for preview:', error, editorValue);
+      Sentry.captureException(error);
+      throw error;
+    }
+  }, [previewStep, workflowSlug, stepSlug, debouncedControlValues, editorValue]);
 
   return {
     editorValue,
@@ -93,5 +113,7 @@ export const useEditorPreview = ({
     previewData,
     previewSchema: previewData?.schema || null,
     isPreviewPending,
+    // Expose whether we're in a transitioning state (user input ahead of debounced value)
+    isTransitioning: !isEqual(controlValues, debouncedControlValues),
   };
 };
