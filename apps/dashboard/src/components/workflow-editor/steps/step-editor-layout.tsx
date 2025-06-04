@@ -35,6 +35,7 @@ import { Form, FormRoot } from '@/components/primitives/form/form';
 import { useForm } from 'react-hook-form';
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { InlineToast } from '../../primitives/inline-toast';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -98,7 +99,7 @@ function EmailCorePreview({ previewData, isPreviewPending }: { previewData: any;
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-bg-weak h-full">
-      <div className="bg-bg-weak p-3">
+      <div className="">
         <div className="bg-bg-white overflow-auto rounded-lg border border-neutral-200">
           <div className="flex w-full items-center justify-between px-3 pb-0 pt-3">
             <EmailPreviewHeader />
@@ -191,9 +192,26 @@ function getCorePreviewContent(step: StepResponseDto, previewData: any, isPrevie
     case StepTypeEnum.IN_APP:
       return <InboxPreview {...commonProps} />;
     case StepTypeEnum.SMS:
-      return <SmsPreview {...commonProps} />;
+      return (
+        <div className="flex flex-col items-center justify-center">
+          <SmsPreview {...commonProps} />
+          <InlineToast
+            description="This preview shows how your message will appear on mobile. Actual rendering may vary by device."
+            className="w-full px-3"
+          />
+        </div>
+      );
     case StepTypeEnum.PUSH:
-      return <PushPreview {...commonProps} />;
+      return (
+        <div className="flex flex-col items-center justify-center">
+          <PushPreview {...commonProps} />
+
+          <InlineToast
+            description="This preview shows how your message will appear on mobile. Actual rendering may vary by device."
+            className="w-full px-3"
+          />
+        </div>
+      );
     case StepTypeEnum.CHAT:
       return <ChatPreview {...commonProps} />;
     default:
@@ -297,7 +315,15 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
             <div className="border-b border-neutral-200 p-3">
               <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">Preview</h3>
             </div>
-            <div className="flex-1 overflow-y-auto">{previewContent}</div>
+            <div
+              className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
+              style={{
+                backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
+                backgroundSize: '20px 20px',
+              }}
+            >
+              {previewContent}
+            </div>
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
