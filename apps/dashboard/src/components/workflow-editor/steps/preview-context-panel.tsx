@@ -24,7 +24,6 @@ type PreviewContextPanelProps = {
   onChange: (value: string) => Error | null;
   subscriberData?: Record<string, any>;
   currentStepId?: string;
-  onUpdate?: () => void;
 };
 
 // Get step name from workflow
@@ -63,7 +62,6 @@ export function PreviewContextPanel({
   onChange,
   subscriberData = {},
   currentStepId,
-  onUpdate,
 }: PreviewContextPanelProps) {
   const [payloadJsonData, setPayloadJsonData] = useState<any>({});
   const [payloadError, setPayloadError] = useState<string | null>(null);
@@ -135,13 +133,12 @@ export function PreviewContextPanel({
         } else {
           setPayloadJsonData(updatedData);
           setPayloadError(null);
-          onUpdate?.();
         }
       } catch (error) {
         setPayloadError('Failed to update JSON');
       }
     },
-    [onChange, value, onUpdate]
+    [onChange, value]
   );
 
   const handleSubscriberJsonChange = useCallback(
@@ -157,13 +154,12 @@ export function PreviewContextPanel({
         } else {
           setSubscriberJsonData(updatedData);
           setSubscriberError(null);
-          onUpdate?.();
         }
       } catch (error) {
         setSubscriberError('Failed to update JSON');
       }
     },
-    [onChange, value, onUpdate]
+    [onChange, value]
   );
 
   const handleStepResultsJsonChange = useCallback(
@@ -176,13 +172,12 @@ export function PreviewContextPanel({
 
         if (!error) {
           setStepResultsJsonData(updatedData);
-          onUpdate?.();
         }
       } catch (error) {
         // Handle error silently or add logging if needed
       }
     },
-    [onChange, value, onUpdate]
+    [onChange, value]
   );
 
   const accordionItemClassName =

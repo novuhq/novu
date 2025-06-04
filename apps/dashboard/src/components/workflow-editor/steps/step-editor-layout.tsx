@@ -222,9 +222,7 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   const { uiSchema } = step.controls;
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
 
-  useEffect(() => {
-    // previewStep();
-  }, [previewStep]);
+  // Preview is triggered automatically by useEditorPreview when values change
 
   const previewContent = isNovuCloud ? (
     getCorePreviewContent(step, previewData, isPreviewPending)
@@ -254,7 +252,6 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
                     onChange={setEditorValue}
                     subscriberData={subscriberData}
                     currentStepId={step.stepId}
-                    onUpdate={previewStep}
                   />
                 </FormRoot>
               </Form>
