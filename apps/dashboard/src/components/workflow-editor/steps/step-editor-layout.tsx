@@ -23,9 +23,11 @@ import {
   EmailPreviewBody,
   EmailPreviewBodyMobile,
   EmailPreviewContentMobile,
+  EmailPreviewHeader,
   EmailPreviewSubject,
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
+import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
 import { PreviewContextPanel } from '@/components/workflow-editor/steps/preview-context-panel';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { createMockObjectFromSchema } from '@novu/shared';
@@ -64,7 +66,11 @@ function getEditorContent(workflow: WorkflowResponseDto, step: StepResponseDto) 
 
   switch (step.type) {
     case StepTypeEnum.EMAIL:
-      return <EmailEditor uiSchema={uiSchema} />;
+      return (
+        <div className="border-soft-200 h-full overflow-auto rounded-lg border shadow-lg">
+          <EmailEditor uiSchema={uiSchema} />
+        </div>
+      );
     case StepTypeEnum.IN_APP:
       return <InAppEditor uiSchema={uiSchema} />;
     case StepTypeEnum.SMS:
@@ -91,73 +97,83 @@ function EmailCorePreview({ previewData, isPreviewPending }: { previewData: any;
   const [activeTab, setActiveTab] = useState('desktop');
 
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
-      <div className="flex w-full items-center justify-center pb-2 pt-2">
-        <TabsList>
-          <TabsTrigger value="mobile">
-            <RiSmartphoneFill className="size-4" />
-          </TabsTrigger>
-          <TabsTrigger value="desktop">
-            <RiMacLine className="size-4" />
-          </TabsTrigger>
-        </TabsList>
-      </div>
-      <div className="flex flex-col">
-        <AnimatePresence mode="wait">
-          {isPreviewPending ? (
-            <motion.div
-              key="loading"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={fadeVariants}
-              transition={{ duration: 0.2 }}
-              className="w-full"
-            >
-              <div className="flex flex-col">
-                <div className="border-b px-4 py-1.5">
-                  <Skeleton className="h-8 w-full" />
-                </div>
-                <div className="bg-neutral-50 py-4">
-                  <Skeleton className="mx-auto h-96 max-w-[600px] rounded-lg" />
-                </div>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="content"
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              variants={fadeVariants}
-              transition={{ duration: 0.2 }}
-              className="h-full"
-            >
-              {previewData?.result?.type == ChannelTypeEnum.EMAIL ? (
-                <>
-                  <TabsContent value="mobile">
-                    <div className="w-full bg-neutral-100">
-                      <EmailPreviewContentMobile className="mx-auto">
-                        <EmailPreviewSubjectMobile subject={previewData.result.preview.subject} />
-                        <EmailPreviewBodyMobile body={previewData.result.preview.body} />
-                      </EmailPreviewContentMobile>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-bg-weak h-full">
+      <div className="bg-bg-weak p-3">
+        <div className="bg-bg-white overflow-auto rounded-lg border border-neutral-200">
+          <div className="flex w-full items-center justify-between px-3 pb-0 pt-3">
+            <EmailPreviewHeader />
+            <div>
+              <TabsList>
+                <TabsTrigger value="mobile">
+                  <RiSmartphoneFill className="size-4" />
+                </TabsTrigger>
+                <TabsTrigger value="desktop">
+                  <RiMacLine className="size-4" />
+                </TabsTrigger>
+              </TabsList>
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <AnimatePresence mode="wait">
+              {isPreviewPending ? (
+                <motion.div
+                  key="loading"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={fadeVariants}
+                  transition={{ duration: 0.2 }}
+                  className="w-full"
+                >
+                  <div className="flex flex-col">
+                    <div className={cn('border-b px-4 py-1.5')}>
+                      <Skeleton className="h-8 w-full" />
                     </div>
-                  </TabsContent>
-                  <TabsContent value="desktop" className="h-full">
-                    <div className="border-b px-2">
-                      <EmailPreviewSubject subject={previewData.result.preview.subject} />
-                    </div>
-                    <div className="bg-neutral-50 px-16 py-8">
-                      <EmailPreviewBody body={previewData.result.preview.body} className="bg-background rounded-lg" />
-                    </div>
-                  </TabsContent>
-                </>
+                    <EmailTabsSection className="bg-neutral-50 py-4">
+                      <Skeleton className="mx-auto h-96 max-w-[600px] rounded-lg" />
+                    </EmailTabsSection>
+                  </div>
+                </motion.div>
               ) : (
-                <div className="p-6">No preview available</div>
+                <motion.div
+                  key="content"
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  variants={fadeVariants}
+                  transition={{ duration: 0.2 }}
+                  className="h-full"
+                >
+                  {previewData?.result?.type == ChannelTypeEnum.EMAIL ? (
+                    <>
+                      <TabsContent value="mobile">
+                        <div className="w-full bg-neutral-100">
+                          <EmailPreviewContentMobile className="mx-auto">
+                            <EmailPreviewSubjectMobile subject={previewData.result.preview.subject} />
+                            <EmailPreviewBodyMobile body={previewData.result.preview.body} />
+                          </EmailPreviewContentMobile>
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="desktop" className="h-full">
+                        <div className="border-b px-2">
+                          <EmailPreviewSubject subject={previewData.result.preview.subject} />
+                        </div>
+                        <div className="bg-neutral-50 px-16 py-8">
+                          <EmailPreviewBody
+                            body={previewData.result.preview.body}
+                            className="bg-background rounded-lg"
+                          />
+                        </div>
+                      </TabsContent>
+                    </>
+                  ) : (
+                    <div className="p-6">No preview available</div>
+                  )}
+                </motion.div>
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
     </Tabs>
   );
@@ -268,7 +284,7 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
             <div className="border-b border-neutral-200 p-3">
               <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">{editorTitle}</h3>
             </div>
-            <div className="flex-1 overflow-y-auto">{editorContent}</div>
+            <div className="flex-1 overflow-y-auto p-3">{editorContent}</div>
           </div>
         </ResizablePanel>
 
