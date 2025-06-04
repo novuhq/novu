@@ -1,20 +1,20 @@
-import { Code2 } from '@/components/icons/code-2';
-import { Editor } from '@/components/primitives/editor';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
-import { Input } from '@/components/primitives/input';
 import { Button } from '@/components/primitives/button';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { WorkflowResponseDto, StepTypeEnum } from '@novu/shared';
-import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useCallback, useMemo, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-import { RiSendPlaneFill, RiListCheck3, RiRefreshLine } from 'react-icons/ri';
-import { capitalize } from '@/utils/string';
+import { useFormContext } from 'react-hook-form';
+import {
+  RiRefreshLine,
+  RiMailLine,
+  RiSmartphoneLine,
+  RiNotificationLine,
+  RiChat1Line,
+  RiCodeLine,
+  RiContractUpDownLine,
+  RiExpandUpDownLine,
+} from 'react-icons/ri';
 import { EditableJsonViewer } from './shared/editable-json-viewer/editable-json-viewer';
-
-const basicSetup = { lineNumbers: true, defaultKeymap: true };
-const extensions = [loadLanguage('json')?.extension ?? []];
 
 type PreviewContextPanelProps = {
   workflow?: WorkflowResponseDto;
@@ -24,47 +24,34 @@ type PreviewContextPanelProps = {
   currentStepId?: string;
 };
 
-// Mock step results data based on step types
-const generateMockStepResults = (workflow?: WorkflowResponseDto, currentStepId?: string) => {
-  const results: Record<string, any> = {};
+// Get step name from workflow
+const getStepName = (workflow?: WorkflowResponseDto, stepId?: string) => {
+  const step = workflow?.steps?.find((s) => s.stepId === stepId);
+  return step?.name || stepId || 'Unknown Step';
+};
 
-  workflow?.steps?.forEach((step) => {
-    const stepKey = `steps.${step.stepId}`;
+// Get step type from workflow
+const getStepType = (workflow?: WorkflowResponseDto, stepId?: string) => {
+  const step = workflow?.steps?.find((s) => s.stepId === stepId);
+  return step?.type;
+};
 
-    switch (step.type) {
-      case StepTypeEnum.IN_APP:
-        results[`${stepKey}.seen`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.read`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.lastSeenDate`] = step.stepId === currentStepId ? null : new Date().toISOString();
-        results[`${stepKey}.lastReadDate`] = step.stepId === currentStepId ? null : new Date().toISOString();
-        results[`${stepKey}.isOnline`] = step.stepId === currentStepId ? false : true;
-        break;
-      case StepTypeEnum.EMAIL:
-        results[`${stepKey}.sent`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.delivered`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.opened`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.clicked`] = step.stepId === currentStepId ? false : false;
-        break;
-      case StepTypeEnum.SMS:
-        results[`${stepKey}.sent`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.delivered`] = step.stepId === currentStepId ? false : true;
-        break;
-      case StepTypeEnum.PUSH:
-        results[`${stepKey}.sent`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.delivered`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.clicked`] = step.stepId === currentStepId ? false : false;
-        break;
-      case StepTypeEnum.CHAT:
-        results[`${stepKey}.sent`] = step.stepId === currentStepId ? false : true;
-        results[`${stepKey}.delivered`] = step.stepId === currentStepId ? false : true;
-        break;
-      default:
-        results[`${stepKey}.executed`] = step.stepId === currentStepId ? false : true;
-        break;
-    }
-  });
-
-  return results;
+// Get step type icon
+const getStepTypeIcon = (stepType?: StepTypeEnum) => {
+  switch (stepType) {
+    case StepTypeEnum.EMAIL:
+      return RiMailLine;
+    case StepTypeEnum.SMS:
+      return RiSmartphoneLine;
+    case StepTypeEnum.PUSH:
+      return RiNotificationLine;
+    case StepTypeEnum.IN_APP:
+      return RiNotificationLine;
+    case StepTypeEnum.CHAT:
+      return RiChat1Line;
+    default:
+      return RiCodeLine;
+  }
 };
 
 export function PreviewContextPanel({
@@ -76,42 +63,67 @@ export function PreviewContextPanel({
 }: PreviewContextPanelProps) {
   const [payloadJsonData, setPayloadJsonData] = useState<any>({});
   const [payloadError, setPayloadError] = useState<string | null>(null);
+  const [subscriberJsonData, setSubscriberJsonData] = useState<any>({});
+  const [subscriberError, setSubscriberError] = useState<string | null>(null);
+  const [stepResultsJsonData, setStepResultsJsonData] = useState<any>({});
+
   const [accordionValue, setAccordionValue] = useState<string[]>(['payload', 'subscriber', 'step-results']);
-  const [stepResults, setStepResults] = useState<Record<string, any>>(() =>
-    generateMockStepResults(workflow, currentStepId)
-  );
+  const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
-  const form = useFormContext();
 
-  // Watch subscriber form values if form context is available
-  const subscriberValues = useWatch({
-    name: 'to',
-    control: form?.control,
-    defaultValue: subscriberData,
-  });
-
-  // Parse JSON data for JsonViewer and initialize with workflow payloadExample if available
+  // Parse JSON data for all sections
   useMemo(() => {
-    if (isPayloadSchemaEnabled) {
-      try {
-        const parsed = JSON.parse(value || '{}');
-        setPayloadJsonData(parsed);
-        setPayloadError(null);
-      } catch (error) {
-        // If parsing fails and we have a workflow payloadExample, use it as fallback
-        if (workflow?.payloadExample) {
-          setPayloadJsonData(workflow.payloadExample);
+    try {
+      const parsed = JSON.parse(value || '{}');
+
+      // Handle payload
+      if (isPayloadSchemaEnabled) {
+        try {
+          setPayloadJsonData(parsed.payload || {});
+          setPayloadError(null);
+        } catch (error) {
+          // If parsing fails and we have a workflow payloadExample, use it as fallback
+          if (workflow?.payloadExample) {
+            setPayloadJsonData(workflow.payloadExample);
+          }
+
+          setPayloadError('Invalid JSON format');
         }
-
-        setPayloadError('Invalid JSON format');
       }
-    }
-  }, [value, isPayloadSchemaEnabled, workflow?.payloadExample]);
 
-  const handleJsonChange = useCallback(
+      // Handle subscriber
+      try {
+        setSubscriberJsonData(parsed.subscriber || subscriberData || {});
+        setSubscriberError(null);
+      } catch (error) {
+        setSubscriberJsonData(subscriberData || {});
+        setSubscriberError('Invalid subscriber JSON format');
+      }
+
+      // Handle step results
+      try {
+        setStepResultsJsonData(parsed.steps || {});
+      } catch (error) {
+        setStepResultsJsonData({});
+      }
+    } catch (error) {
+      // If entire JSON is invalid, set defaults
+      if (isPayloadSchemaEnabled && workflow?.payloadExample) {
+        setPayloadJsonData(workflow.payloadExample);
+      }
+
+      setSubscriberJsonData(subscriberData || {});
+      setStepResultsJsonData({});
+      setPayloadError('Invalid JSON format');
+    }
+  }, [value, isPayloadSchemaEnabled, workflow?.payloadExample, subscriberData, workflow, currentStepId]);
+
+  const handlePayloadJsonChange = useCallback(
     (updatedData: any) => {
       try {
-        const stringified = JSON.stringify(updatedData, null, 2);
+        const currentData = JSON.parse(value || '{}');
+        const newData = { ...currentData, payload: updatedData };
+        const stringified = JSON.stringify(newData, null, 2);
         const error = onChange(stringified);
 
         if (error) {
@@ -124,71 +136,50 @@ export function PreviewContextPanel({
         setPayloadError('Failed to update JSON');
       }
     },
-    [onChange]
+    [onChange, value]
   );
 
-  const handleEditorChange = useCallback(
-    (newValue: string) => {
-      const error = onChange(newValue);
+  const handleSubscriberJsonChange = useCallback(
+    (updatedData: any) => {
+      try {
+        const currentData = JSON.parse(value || '{}');
+        const newData = { ...currentData, subscriber: updatedData };
+        const stringified = JSON.stringify(newData, null, 2);
+        const error = onChange(stringified);
 
-      if (error) {
-        setPayloadError(error.message);
-      } else {
-        setPayloadError(null);
+        if (error) {
+          setSubscriberError(error.message);
+        } else {
+          setSubscriberJsonData(updatedData);
+          setSubscriberError(null);
+        }
+      } catch (error) {
+        setSubscriberError('Failed to update JSON');
       }
     },
-    [onChange]
+    [onChange, value]
   );
 
-  const handleStepResultChange = useCallback((key: string, value: any) => {
-    setStepResults((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  }, []);
+  const handleStepResultsJsonChange = useCallback(
+    (updatedData: any) => {
+      try {
+        const currentData = JSON.parse(value || '{}');
+        const newData = { ...currentData, steps: updatedData };
+        const stringified = JSON.stringify(newData, null, 2);
+        const error = onChange(stringified);
 
-  const resetStepResults = useCallback(() => {
-    setStepResults(generateMockStepResults(workflow, currentStepId));
-  }, [workflow, currentStepId]);
+        if (!error) {
+          setStepResultsJsonData(updatedData);
+        }
+      } catch (error) {
+        // Handle error silently or add logging if needed
+      }
+    },
+    [onChange, value]
+  );
 
-  const renderStepResultValue = (key: string, value: any) => {
-    if (typeof value === 'boolean') {
-      return (
-        <select
-          value={value.toString()}
-          onChange={(e) => handleStepResultChange(key, e.target.value === 'true')}
-          className="border-neutral-alpha-200 bg-background text-foreground-600 rounded border px-2 py-1 text-xs"
-        >
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
-      );
-    }
-
-    if (value === null) {
-      return (
-        <select
-          value="null"
-          onChange={(e) => handleStepResultChange(key, e.target.value === 'null' ? null : e.target.value)}
-          className="border-neutral-alpha-200 bg-background text-foreground-600 rounded border px-2 py-1 text-xs"
-        >
-          <option value="null">null</option>
-          <option value="string">string</option>
-        </select>
-      );
-    }
-
-    return (
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => handleStepResultChange(key, e.target.value)}
-        className="border-neutral-alpha-200 bg-background text-foreground-600 rounded border px-2 py-1 text-xs"
-      />
-    );
-  };
-
-  const accordionItemClassName = 'border-b border-b-neutral-200 border-t-0 border-l-0 border-r-0 rounded-none p-4';
+  const accordionItemClassName =
+    'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';
   const accordionTriggerClassName = 'text-label-xs';
 
   return (
@@ -197,24 +188,12 @@ export function PreviewContextPanel({
         <AccordionTrigger className={accordionTriggerClassName}>Payload</AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2">
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
-            {isPayloadSchemaEnabled ? (
-              <EditableJsonViewer
-                value={payloadJsonData}
-                onChange={handleJsonChange}
-                schema={workflow?.payloadSchema}
-                className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-dashed p-3"
-              />
-            ) : (
-              <Editor
-                lang="json"
-                basicSetup={basicSetup}
-                extensions={extensions}
-                className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-dashed p-3"
-                value={value}
-                onChange={handleEditorChange}
-                multiline
-              />
-            )}
+            <EditableJsonViewer
+              value={payloadJsonData}
+              onChange={handlePayloadJsonChange}
+              schema={workflow?.payloadSchema}
+              className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
+            />
             {payloadError && <p className="text-destructive text-xs">{payloadError}</p>}
           </div>
         </AccordionContent>
@@ -222,68 +201,70 @@ export function PreviewContextPanel({
 
       <AccordionItem value="subscriber" className={accordionItemClassName}>
         <AccordionTrigger className={accordionTriggerClassName}>Subscriber</AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-2 pt-2">
-          <div className="flex flex-col gap-2">
-            {Object.keys(subscriberValues || subscriberData).map((key) => (
-              <FormField
-                key={key}
-                control={form?.control}
-                name={`to.${key}`}
-                render={({ field, fieldState }) => (
-                  <FormItem>
-                    <FormLabel htmlFor={key}>{capitalize(key)}</FormLabel>
-                    <FormControl>
-                      <Input
-                        size="xs"
-                        id={key}
-                        {...(field as any)}
-                        hasError={!!fieldState.error}
-                        className="border-neutral-alpha-200 bg-background text-foreground-600"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            ))}
-            {Object.keys(subscriberValues || subscriberData).length === 0 && (
-              <p className="text-xs text-neutral-500">No subscriber fields available</p>
-            )}
+        <AccordionContent className="flex flex-col gap-2">
+          <div className="flex flex-1 flex-col gap-2 overflow-auto">
+            <EditableJsonViewer
+              value={subscriberJsonData}
+              onChange={handleSubscriberJsonChange}
+              className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
+            />
+            {subscriberError && <p className="text-destructive text-xs">{subscriberError}</p>}
           </div>
         </AccordionContent>
       </AccordionItem>
 
-      <AccordionItem value="step-results" className={accordionItemClassName}>
-        <AccordionTrigger className={accordionTriggerClassName}>
-          <div className="flex w-full items-center justify-between">
-            Step results
-            <Button
-              size="2xs"
-              leadingIcon={RiRefreshLine}
-              variant="secondary"
-              mode="ghost"
-              className="ml-auto"
-              onClick={(e) => {
-                e.stopPropagation();
-                resetStepResults();
-              }}
-            >
-              Reset defaults
-            </Button>
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="flex flex-col gap-2 pt-2">
-          <div className="flex flex-col gap-2">
-            {Object.entries(stepResults).map(([key, value]) => (
-              <div key={key} className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs text-neutral-500">{key}</span>
-                {renderStepResultValue(key, value)}
-              </div>
-            ))}
-            {Object.keys(stepResults).length === 0 && (
-              <p className="text-xs italic text-neutral-500">no step results</p>
-            )}
-          </div>
+      <AccordionItem value="step-results" className={accordionItemClassName + ' border-b-0'}>
+        <AccordionTrigger className={accordionTriggerClassName}>Step results</AccordionTrigger>
+        <AccordionContent className="flex flex-col gap-2">
+          {Object.keys(stepResultsJsonData).length > 0 ? (
+            <div className="w-full space-y-1">
+              {Object.entries(stepResultsJsonData).map(([stepId, stepData], index) => {
+                const stepType = getStepType(workflow, stepId);
+                const StepIcon = getStepTypeIcon(stepType);
+                const stepName = getStepName(workflow, stepId);
+                const isCurrentStep = stepId === currentStepId;
+                const isOpen = openSteps[stepId] || false;
+
+                return (
+                  <div key={stepId} className="border-b border-neutral-100 last:border-b-0">
+                    <button
+                      type="button"
+                      onClick={() => setOpenSteps((prev) => ({ ...prev, [stepId]: !isOpen }))}
+                      className="flex w-full items-center gap-2 py-2 transition-colors hover:bg-neutral-50"
+                    >
+                      <div className="flex flex-1 items-center gap-2">
+                        <StepIcon className="h-3 w-3 flex-shrink-0 text-neutral-300" />
+                        <span className="text-label-2xs text-left font-medium">{stepName}</span>
+                        {isCurrentStep && <span className="text-label-2xs text-neutral-500">(current step)</span>}
+                        <div className="border-soft mx-2 flex-1 border-t" />
+                      </div>
+                      <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center">
+                        {isOpen ? (
+                          <RiContractUpDownLine className="h-3 w-3 text-neutral-400" />
+                        ) : (
+                          <RiExpandUpDownLine className="h-3 w-3 text-neutral-400" />
+                        )}
+                      </div>
+                    </button>
+                    {isOpen && (
+                      <div className="pb-3">
+                        <EditableJsonViewer
+                          value={stepData}
+                          onChange={(updatedStepData) => {
+                            const updatedSteps = { ...stepResultsJsonData, [stepId]: updatedStepData };
+                            handleStepResultsJsonChange(updatedSteps);
+                          }}
+                          className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs italic text-neutral-500">no step results</p>
+          )}
         </AccordionContent>
       </AccordionItem>
     </Accordion>

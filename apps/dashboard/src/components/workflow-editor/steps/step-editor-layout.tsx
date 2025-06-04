@@ -232,7 +232,7 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
 
   const contextContent = previewContextContent || (
     <Form {...previewForm}>
-      <FormRoot className="h-full">
+      <FormRoot className="bg-bg-weak h-full">
         <PreviewContextPanel
           workflow={workflow}
           value={editorValue}
