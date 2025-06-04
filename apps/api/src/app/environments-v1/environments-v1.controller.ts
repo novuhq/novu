@@ -10,8 +10,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsKeysEnum, PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
+import {
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+  getFeatureForTierAsBoolean,
+  FeatureNameEnum,
+  ApiServiceLevelEnum,
+} from '@novu/shared';
 import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
@@ -53,6 +62,7 @@ export class EnvironmentsControllerV1 {
     private getEnvironmentUsecase: GetEnvironment,
     private getMyEnvironmentsUsecase: GetMyEnvironments,
     private deleteEnvironmentUsecase: DeleteEnvironment,
+    private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
 
@@ -201,13 +211,29 @@ export class EnvironmentsControllerV1 {
   }
 
   private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
+    const organization = await this.organizationRepository.findOne({
+      _id: user.organizationId,
     });
 
-    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.API_KEY_READ) : true;
+    const [isRbacFlagEnabled, isRbacFeatureEnabled] = await Promise.all([
+      this.featureFlagService.getFlag({
+        organization: { _id: user.organizationId },
+        user: { _id: user._id },
+        key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+        defaultValue: false,
+      }),
+      getFeatureForTierAsBoolean(
+        FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+        organization?.apiServiceLevel || ApiServiceLevelEnum.FREE
+      ),
+    ]);
+
+    const isRbacEnabled = isRbacFlagEnabled && isRbacFeatureEnabled;
+
+    if (!isRbacEnabled) {
+      return true;
+    }
+
+    return user.permissions.includes(PermissionsEnum.API_KEY_READ);
   }
 }
