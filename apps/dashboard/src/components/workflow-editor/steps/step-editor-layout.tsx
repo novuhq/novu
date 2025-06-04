@@ -16,7 +16,7 @@ import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-
 import { useFormContext } from 'react-hook-form';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
-import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
+import { RiCodeBlock, RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState, useMemo } from 'react';
 import {
@@ -213,7 +213,7 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
     },
   });
 
-  const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
+  const { editorValue, setEditorValue, previewStep, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues: form.getValues(),
@@ -239,6 +239,7 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
           onChange={setEditorValue}
           subscriberData={subscriberData}
           currentStepId={step.stepId}
+          onUpdate={previewStep}
         />
       </FormRoot>
     </Form>
@@ -249,8 +250,11 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
       <ResizablePanelGroup direction="horizontal" className="h-full">
         <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="h-full">
           <div className="flex h-full flex-col border-r border-neutral-200">
-            <div className="border-b border-neutral-200 px-3 py-2">
-              <h3 className="text-sm font-medium text-neutral-900">Preview Context</h3>
+            <div className="border-b border-neutral-200 p-3">
+              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
+                <RiCodeBlock className="size-3.5" />
+                Preview Context
+              </h3>
             </div>
             <div className="flex-1 overflow-y-auto">{contextContent}</div>
           </div>
@@ -262,8 +266,8 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
 
         <ResizablePanel defaultSize={50} minSize={30} className="h-full">
           <div className="flex h-full flex-col border-r border-neutral-200">
-            <div className="border-b border-neutral-200 px-3 py-2">
-              <h3 className="text-sm font-medium text-neutral-900">{editorTitle}</h3>
+            <div className="border-b border-neutral-200 p-3">
+              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">{editorTitle}</h3>
             </div>
             <div className="flex-1 overflow-y-auto">{editorContent}</div>
           </div>
@@ -275,8 +279,8 @@ export function StepEditorLayout({ workflow, step, previewContextContent, classN
 
         <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="h-full">
           <div className="flex h-full flex-col">
-            <div className="border-b border-neutral-200 px-3 py-2">
-              <h3 className="text-sm font-medium text-neutral-900">Preview</h3>
+            <div className="border-b border-neutral-200 p-3">
+              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">Preview</h3>
             </div>
             <div className="flex-1 overflow-y-auto">{previewContent}</div>
           </div>

@@ -1,5 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Button } from '@/components/primitives/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { WorkflowResponseDto, StepTypeEnum } from '@novu/shared';
 import { useCallback, useMemo, useState } from 'react';
@@ -13,6 +14,7 @@ import {
   RiCodeLine,
   RiContractUpDownLine,
   RiExpandUpDownLine,
+  RiInformationLine,
 } from 'react-icons/ri';
 import { EditableJsonViewer } from './shared/editable-json-viewer/editable-json-viewer';
 
@@ -22,6 +24,7 @@ type PreviewContextPanelProps = {
   onChange: (value: string) => Error | null;
   subscriberData?: Record<string, any>;
   currentStepId?: string;
+  onUpdate?: () => void;
 };
 
 // Get step name from workflow
@@ -60,6 +63,7 @@ export function PreviewContextPanel({
   onChange,
   subscriberData = {},
   currentStepId,
+  onUpdate,
 }: PreviewContextPanelProps) {
   const [payloadJsonData, setPayloadJsonData] = useState<any>({});
   const [payloadError, setPayloadError] = useState<string | null>(null);
@@ -131,12 +135,13 @@ export function PreviewContextPanel({
         } else {
           setPayloadJsonData(updatedData);
           setPayloadError(null);
+          onUpdate?.();
         }
       } catch (error) {
         setPayloadError('Failed to update JSON');
       }
     },
-    [onChange, value]
+    [onChange, value, onUpdate]
   );
 
   const handleSubscriberJsonChange = useCallback(
@@ -152,12 +157,13 @@ export function PreviewContextPanel({
         } else {
           setSubscriberJsonData(updatedData);
           setSubscriberError(null);
+          onUpdate?.();
         }
       } catch (error) {
         setSubscriberError('Failed to update JSON');
       }
     },
-    [onChange, value]
+    [onChange, value, onUpdate]
   );
 
   const handleStepResultsJsonChange = useCallback(
@@ -170,12 +176,13 @@ export function PreviewContextPanel({
 
         if (!error) {
           setStepResultsJsonData(updatedData);
+          onUpdate?.();
         }
       } catch (error) {
         // Handle error silently or add logging if needed
       }
     },
-    [onChange, value]
+    [onChange, value, onUpdate]
   );
 
   const accordionItemClassName =
@@ -185,7 +192,22 @@ export function PreviewContextPanel({
   return (
     <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
       <AccordionItem value="payload" className={accordionItemClassName}>
-        <AccordionTrigger className={accordionTriggerClassName}>Payload</AccordionTrigger>
+        <AccordionTrigger className={accordionTriggerClassName}>
+          <div className="flex items-center gap-0.5">
+            Payload
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-foreground-400 inline-block hover:cursor-help">
+                  <RiInformationLine className="size-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                The data that will be sent to your workflow when triggered. This can include dynamic values and
+                variables.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2">
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
             <EditableJsonViewer
@@ -200,7 +222,21 @@ export function PreviewContextPanel({
       </AccordionItem>
 
       <AccordionItem value="subscriber" className={accordionItemClassName}>
-        <AccordionTrigger className={accordionTriggerClassName}>Subscriber</AccordionTrigger>
+        <AccordionTrigger className={accordionTriggerClassName}>
+          <div className="flex items-center gap-0.5">
+            Subscriber
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-foreground-400 inline-block hover:cursor-help">
+                  <RiInformationLine className="size-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                Information about the recipient of the notification, including their profile data and preferences.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2">
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
             <EditableJsonViewer
@@ -214,7 +250,21 @@ export function PreviewContextPanel({
       </AccordionItem>
 
       <AccordionItem value="step-results" className={accordionItemClassName + ' border-b-0'}>
-        <AccordionTrigger className={accordionTriggerClassName}>Step results</AccordionTrigger>
+        <AccordionTrigger className={accordionTriggerClassName}>
+          <div className="flex items-center gap-0.5">
+            Step results
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="text-foreground-400 inline-block hover:cursor-help">
+                  <RiInformationLine className="size-3" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                Output data from previous steps in the workflow that can be used in subsequent steps.
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2">
           {Object.keys(stepResultsJsonData).length > 0 ? (
             <div className="w-full space-y-1">
