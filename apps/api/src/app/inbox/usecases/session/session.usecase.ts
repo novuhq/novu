@@ -13,6 +13,7 @@ import {
   shortId,
   UpsertControlValuesUseCase,
   UpsertControlValuesCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -35,6 +36,7 @@ import {
   WorkflowOriginEnum,
   StepTypeEnum,
   PreferencesTypeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
@@ -76,7 +78,8 @@ export class Session {
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -266,6 +269,12 @@ export class Session {
       this.logger.error('Keyless Organization not found');
       throw new InternalServerErrorException('Keyless Organization not found');
     }
+
+    const isKeylessDisabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_KEYLESS_ENVIRONMENT_CREATION_DISABLED,
+      defaultValue: false,
+      organization,
+    });
 
     const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
 

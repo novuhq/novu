@@ -13,6 +13,7 @@ import {
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
   PinoLogger,
   SelectIntegration,
   UpsertControlValuesUseCase,
@@ -67,6 +68,7 @@ describe('Session', () => {
   let upsertControlValuesUseCase: sinon.SinonStubbedInstance<UpsertControlValuesUseCase>;
   let getOrganizationSettingsUsecase: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
+  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -87,6 +89,7 @@ describe('Session', () => {
     upsertControlValuesUseCase = sinon.createStubInstance(UpsertControlValuesUseCase);
     getOrganizationSettingsUsecase = sinon.createStubInstance(GetOrganizationSettings);
     logger = sinon.createStubInstance(PinoLogger);
+    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
 
     session = new Session(
       environmentRepository as any,
@@ -106,7 +109,8 @@ describe('Session', () => {
       preferencesRepository as any,
       upsertControlValuesUseCase as any,
       getOrganizationSettingsUsecase as any,
-      logger as any
+      logger as any,
+      featureFlagsService as any
     );
   });
 
