@@ -11,6 +11,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #inboxService: InboxService;
+  #currentSubscriberId: string;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
@@ -46,6 +47,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       this.#inboxService,
       this.#emitter
     );
+
+    const initialSubscriber = buildSubscriber(options);
+    this.#currentSubscriberId = initialSubscriber.subscriberId;
+
     this.#session.initialize();
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
@@ -81,11 +86,17 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   }
 
   public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
+    if (this.#currentSubscriberId === options.subscriber.subscriberId) {
+      return;
+    }
+
     await this.#session.initialize({
       applicationIdentifier: this.#session.applicationIdentifier || '',
       subscriberHash: options.subscriberHash,
       subscriber: options.subscriber,
     });
+
+    this.#currentSubscriberId = options.subscriber.subscriberId;
   }
 }
 
