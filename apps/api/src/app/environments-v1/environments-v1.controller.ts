@@ -20,6 +20,7 @@ import {
   ApiServiceLevelEnum,
 } from '@novu/shared';
 import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
@@ -43,7 +44,6 @@ import { UpdateEnvironmentCommand } from './usecases/update-environment/update-e
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { CommunityOrganizationRepository } from '@novu/dal';
 
 /**
  * @deprecated use EnvironmentsControllerV2

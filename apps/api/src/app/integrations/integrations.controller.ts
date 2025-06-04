@@ -27,6 +27,7 @@ import {
   RequirePermissions,
 } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
@@ -57,7 +58,6 @@ import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/s
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { CommunityOrganizationRepository } from '@novu/dal';
 
 @ApiCommonResponses()
 @Controller('/integrations')
