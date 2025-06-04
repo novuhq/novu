@@ -6,6 +6,7 @@ import { InputRoot } from '@/components/primitives/input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize, containsHTMLEntities } from '@/utils/string';
+import { usePreviewTrigger } from '../preview-trigger-context';
 
 const subjectKey = 'subject';
 
@@ -13,6 +14,7 @@ export const InAppSubject = () => {
   const { control, getValues } = useFormContext();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { triggerPreview } = usePreviewTrigger();
 
   return (
     <FormField
@@ -28,7 +30,10 @@ export const InAppSubject = () => {
                 placeholder={capitalize(field.name)}
                 id={field.name}
                 value={field.value}
-                onChange={field.onChange}
+                onChange={(value) => {
+                  field.onChange(value);
+                  triggerPreview();
+                }}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
                 autoFocus

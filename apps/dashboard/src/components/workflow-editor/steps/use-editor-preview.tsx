@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react';
 import isEqual from 'lodash.isequal';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useDataRef } from '@/hooks/use-data-ref';
 import { usePreviewStep } from '@/hooks/use-preview-step';
@@ -39,7 +39,18 @@ export const useEditorPreview = ({
     editorValue,
   });
 
+  const lastControlValuesRef = useRef<string>('');
+
   useEffect(() => {
+    // Only trigger preview if controlValues actually changed
+    const currentControlValuesStr = JSON.stringify(controlValues);
+
+    if (currentControlValuesStr === lastControlValuesRef.current) {
+      return;
+    }
+
+    lastControlValuesRef.current = currentControlValuesStr;
+
     previewStep({
       workflowSlug: dataRef.current.workflowSlug,
       stepSlug: dataRef.current.stepSlug,
@@ -48,7 +59,7 @@ export const useEditorPreview = ({
         previewPayload: JSON.parse(dataRef.current.editorValue),
       },
     });
-  }, [dataRef, previewStep]);
+  }, [controlValues, dataRef, previewStep]);
 
   const setEditorValueSafe = (value: string): Error | null => {
     try {
@@ -66,14 +77,14 @@ export const useEditorPreview = ({
 
   const previewStepCallback = useCallback(() => {
     return previewStep({
-      workflowSlug,
-      stepSlug,
+      workflowSlug: dataRef.current.workflowSlug,
+      stepSlug: dataRef.current.stepSlug,
       previewData: {
-        controlValues,
+        controlValues: dataRef.current.controlValues,
         previewPayload: JSON.parse(dataRef.current.editorValue),
       },
     });
-  }, [previewStep, workflowSlug, stepSlug, controlValues, dataRef]);
+  }, [previewStep, dataRef]);
 
   return {
     editorValue,
