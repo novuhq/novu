@@ -19,39 +19,39 @@
     "build": "tsc",
     "start": "ts-node src/cli/index.ts",
     "prepublishOnly": "npm run build"
-},
-"keywords": [
-  "novu",
-  "inbox",
-  "notifications",
-  "react",
-  "nextjs",
-  "cli"
-],
-"dependencies": {
-  "@segment/analytics-node": "^2.2.1",
-  "chalk": "^4.1.2",
-  "commander": "^11.1.0",
-  "prompts": "^2.4.2",
-  "uuid": "^11.1.0"
-},
-"engines": {
-  "node": ">=14.0.0"
-},
-"files": [
-  "dist",
-  "package.json",
-  "README.md",
-  "LICENSE",
-  "CHANGELOG.md"
-],
-"preferGlobal": true,
-"devDependencies": {
-  "@types/commander": "^2.12.5",
-  "@types/prompts": "^2.4.2",
-  "@types/uuid": "^10.0.0",
-  "rimraf": "^6.0.1",
-  "ts-node": "^10.9.2",
-  "typescript": "^5.8.3"
-}
+  },
+  "keywords": [
+    "novu",
+    "inbox",
+    "notifications",
+    "react",
+    "nextjs",
+    "cli"
+  ],
+  "dependencies": {
+    "@segment/analytics-node": "^2.2.1",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "prompts": "^2.4.2",
+    "uuid": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "preferGlobal": true,
+  "devDependencies": {
+    "@types/commander": "^2.12.5",
+    "@types/prompts": "^2.4.2",
+    "@types/uuid": "^10.0.0",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
 }
