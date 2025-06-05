@@ -1,7 +1,7 @@
 import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
-import { BaseCommand } from '@novu/application-generic';
+import { AuthenticatedCommand } from '@novu/application-generic';
 
-export class UpdateOrganizationSettingsCommand extends BaseCommand {
+export class UpdateOrganizationSettingsCommand extends AuthenticatedCommand {
   @IsNotEmpty()
   readonly organizationId: string;
 
