@@ -36,8 +36,6 @@ export class IntegrationEntity {
 
   conditions?: StepFilter[];
 
-  removeNovuBranding?: boolean;
-
   connected?: boolean;
 }
 
