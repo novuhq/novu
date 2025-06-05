@@ -214,6 +214,7 @@ export class NotificationFeedItemDto implements INotificationDto {
     type: 'object',
     nullable: true,
     example: { key: 'value' },
+    additionalProperties: true,
   })
   data?: Record<string, unknown> | null;
 
