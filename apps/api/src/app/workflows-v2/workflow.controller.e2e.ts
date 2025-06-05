@@ -28,7 +28,6 @@ import {
 } from '@novu/shared';
 import { ErrorDto } from '@novu/api/models/errors';
 import { buildSlug } from '../shared/helpers/build-slug';
-import { stepTypeToControlSchema } from './shared';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
@@ -1058,20 +1057,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     }
 
     expect(new Date(updatedWorkflow.updatedAt)).to.be.greaterThan(new Date(expectedPastUpdatedAt));
-  }
-
-  async function assertValuesInSteps(workflowCreated: WorkflowResponseDto) {
-    for (const step of workflowCreated.steps) {
-      expect(step).to.be.ok;
-      expect(step.controls).to.be.ok;
-      if (step.controls) {
-        expect(step.controls.values).to.be.ok;
-        expect(step.controls.dataSchema).to.be.ok;
-        // @ts-expect-error containsSubset is not typed
-        expect(stepTypeToControlSchema[step.type].schema).to.containSubset(step.controls.dataSchema);
-        expect(step.controls.uiSchema).to.deep.equal(stepTypeToControlSchema[step.type].uiSchema);
-      }
-    }
   }
 
   async function create10Workflows(prefix: string = 'Test Workflow') {

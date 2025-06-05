@@ -66,7 +66,10 @@ export enum UiSchemaGroupEnum {
 }
 
 export enum UiComponentEnum {
+  EMAIL_EDITOR_SELECT = 'EMAIL_EDITOR_SELECT',
+  /** @deprecated use EMAIL_BODY instead  */
   BLOCK_EDITOR = 'BLOCK_EDITOR',
+  EMAIL_BODY = 'EMAIL_BODY',
   TEXT_FULL_LINE = 'TEXT_FULL_LINE',
   TEXT_INLINE_LABEL = 'TEXT_INLINE_LABEL',
   IN_APP_BODY = 'IN_APP_BODY',
