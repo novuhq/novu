@@ -11,6 +11,10 @@ export const OptInProvider = (props: PropsWithChildren) => {
     localStorage.setItem('mantine-theme', 'light');
   }, []);
 
+  if (isLoaded && status === null) {
+    return null;
+  }
+
   if (isLoaded && status !== NewDashboardOptInStatusEnum.OPTED_IN) {
     redirectToLegacyDashboard();
 
