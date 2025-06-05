@@ -119,6 +119,7 @@ export class EEOrganizationController {
   async updateSettings(@UserSession() user: UserSessionData, @Body() body: UpdateOrganizationSettingsDto) {
     return await this.updateOrganizationSettingsUsecase.execute(
       UpdateOrganizationSettingsCommand.create({
+        userId: user._id,
         organizationId: user.organizationId,
         removeNovuBranding: body.removeNovuBranding,
       })
