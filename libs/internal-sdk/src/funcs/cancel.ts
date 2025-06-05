@@ -41,9 +41,7 @@ export function cancel(
   Result<
     operations.EventsControllerCancelResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -71,9 +69,7 @@ async function $do(
     Result<
       operations.EventsControllerCancelResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -197,9 +193,7 @@ async function $do(
   const [result] = await M.match<
     operations.EventsControllerCancelResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

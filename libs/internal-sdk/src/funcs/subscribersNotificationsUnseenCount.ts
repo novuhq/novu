@@ -38,9 +38,7 @@ export function subscribersNotificationsUnseenCount(
   Result<
     operations.SubscribersV1ControllerGetUnseenCountResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -66,9 +64,7 @@ async function $do(
     Result<
       operations.SubscribersV1ControllerGetUnseenCountResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -196,9 +192,7 @@ async function $do(
   const [result] = await M.match<
     operations.SubscribersV1ControllerGetUnseenCountResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

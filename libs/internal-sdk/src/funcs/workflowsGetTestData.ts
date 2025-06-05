@@ -39,9 +39,7 @@ export function workflowsGetTestData(
   Result<
     operations.WorkflowControllerGetWorkflowTestDataResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -69,9 +67,7 @@ async function $do(
     Result<
       operations.WorkflowControllerGetWorkflowTestDataResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -196,9 +192,7 @@ async function $do(
   const [result] = await M.match<
     operations.WorkflowControllerGetWorkflowTestDataResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

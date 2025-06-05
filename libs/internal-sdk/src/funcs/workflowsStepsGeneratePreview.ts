@@ -38,9 +38,7 @@ export function workflowsStepsGeneratePreview(
   Result<
     operations.WorkflowControllerGeneratePreviewResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -66,9 +64,7 @@ async function $do(
     Result<
       operations.WorkflowControllerGeneratePreviewResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -198,9 +194,7 @@ async function $do(
   const [result] = await M.match<
     operations.WorkflowControllerGeneratePreviewResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

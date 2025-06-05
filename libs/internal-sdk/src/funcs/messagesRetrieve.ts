@@ -40,9 +40,7 @@ export function messagesRetrieve(
   Result<
     operations.MessagesControllerGetMessagesResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -68,9 +66,7 @@ async function $do(
     Result<
       operations.MessagesControllerGetMessagesResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -193,9 +189,7 @@ async function $do(
   const [result] = await M.match<
     operations.MessagesControllerGetMessagesResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

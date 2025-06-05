@@ -41,9 +41,7 @@ export function notificationsRetrieve(
   Result<
     operations.NotificationsControllerGetNotificationResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -71,9 +69,7 @@ async function $do(
     Result<
       operations.NotificationsControllerGetNotificationResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -198,9 +194,7 @@ async function $do(
   const [result] = await M.match<
     operations.NotificationsControllerGetNotificationResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

@@ -39,9 +39,7 @@ export function workflowsDelete(
   Result<
     operations.WorkflowControllerRemoveWorkflowResponse | undefined,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -69,9 +67,7 @@ async function $do(
     Result<
       operations.WorkflowControllerRemoveWorkflowResponse | undefined,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -197,9 +193,7 @@ async function $do(
   const [result] = await M.match<
     operations.WorkflowControllerRemoveWorkflowResponse | undefined,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

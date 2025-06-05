@@ -42,9 +42,7 @@ export function subscribersMessagesMarkAllAs(
   Result<
     operations.SubscribersV1ControllerMarkMessagesAsResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -74,9 +72,7 @@ async function $do(
     Result<
       operations.SubscribersV1ControllerMarkMessagesAsResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -207,9 +203,7 @@ async function $do(
   const [result] = await M.match<
     operations.SubscribersV1ControllerMarkMessagesAsResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

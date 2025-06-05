@@ -37,9 +37,7 @@ export function environmentsCreate(
   Result<
     operations.EnvironmentsControllerV1CreateEnvironmentResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -67,9 +65,7 @@ async function $do(
     Result<
       operations.EnvironmentsControllerV1CreateEnvironmentResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -191,9 +187,7 @@ async function $do(
   const [result] = await M.match<
     operations.EnvironmentsControllerV1CreateEnvironmentResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

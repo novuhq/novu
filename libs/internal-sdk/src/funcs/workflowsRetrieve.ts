@@ -40,9 +40,7 @@ export function workflowsRetrieve(
   Result<
     operations.WorkflowControllerGetWorkflowResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -72,9 +70,7 @@ async function $do(
     Result<
       operations.WorkflowControllerGetWorkflowResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -206,9 +202,7 @@ async function $do(
   const [result] = await M.match<
     operations.WorkflowControllerGetWorkflowResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

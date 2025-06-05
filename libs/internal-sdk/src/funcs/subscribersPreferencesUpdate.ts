@@ -43,9 +43,7 @@ export function subscribersPreferencesUpdate(
   Result<
     operations.SubscribersControllerUpdateSubscriberPreferencesResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -75,9 +73,7 @@ async function $do(
     Result<
       operations.SubscribersControllerUpdateSubscriberPreferencesResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -210,9 +206,7 @@ async function $do(
   const [result] = await M.match<
     operations.SubscribersControllerUpdateSubscriberPreferencesResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

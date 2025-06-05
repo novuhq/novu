@@ -41,9 +41,7 @@ export function subscribersCreate(
   Result<
     operations.SubscribersControllerCreateSubscriberResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -71,9 +69,7 @@ async function $do(
     Result<
       operations.SubscribersControllerCreateSubscriberResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -194,9 +190,7 @@ async function $do(
   const [result] = await M.match<
     operations.SubscribersControllerCreateSubscriberResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

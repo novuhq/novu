@@ -40,9 +40,7 @@ export function topicsCreate(
   Result<
     operations.TopicsControllerUpsertTopicResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -70,9 +68,7 @@ async function $do(
     Result<
       operations.TopicsControllerUpsertTopicResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -192,9 +188,7 @@ async function $do(
   const [result] = await M.match<
     operations.TopicsControllerUpsertTopicResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

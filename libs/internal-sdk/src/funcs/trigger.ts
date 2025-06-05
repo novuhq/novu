@@ -44,9 +44,7 @@ export function trigger(
     operations.EventsControllerTriggerResponse,
     | errors.PayloadValidationExceptionDto
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -75,9 +73,7 @@ async function $do(
       operations.EventsControllerTriggerResponse,
       | errors.PayloadValidationExceptionDto
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -198,9 +194,7 @@ async function $do(
     operations.EventsControllerTriggerResponse,
     | errors.PayloadValidationExceptionDto
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

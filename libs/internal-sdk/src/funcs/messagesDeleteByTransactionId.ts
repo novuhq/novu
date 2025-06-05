@@ -42,9 +42,7 @@ export function messagesDeleteByTransactionId(
     | operations.MessagesControllerDeleteMessagesByTransactionIdResponse
     | undefined,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -75,9 +73,7 @@ async function $do(
       | operations.MessagesControllerDeleteMessagesByTransactionIdResponse
       | undefined,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -213,9 +209,7 @@ async function $do(
     | operations.MessagesControllerDeleteMessagesByTransactionIdResponse
     | undefined,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

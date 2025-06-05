@@ -40,9 +40,7 @@ export function messagesDelete(
   Result<
     operations.MessagesControllerDeleteMessageResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -70,9 +68,7 @@ async function $do(
     Result<
       operations.MessagesControllerDeleteMessageResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -198,9 +194,7 @@ async function $do(
   const [result] = await M.match<
     operations.MessagesControllerDeleteMessageResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

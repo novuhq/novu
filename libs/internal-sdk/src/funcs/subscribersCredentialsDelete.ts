@@ -42,9 +42,7 @@ export function subscribersCredentialsDelete(
     | operations.SubscribersV1ControllerDeleteSubscriberCredentialsResponse
     | undefined,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -75,9 +73,7 @@ async function $do(
       | operations.SubscribersV1ControllerDeleteSubscriberCredentialsResponse
       | undefined,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -212,9 +208,7 @@ async function $do(
     | operations.SubscribersV1ControllerDeleteSubscriberCredentialsResponse
     | undefined,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError

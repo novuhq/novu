@@ -40,9 +40,7 @@ export function topicsList(
   Result<
     operations.TopicsControllerListTopicsResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
@@ -68,9 +66,7 @@ async function $do(
     Result<
       operations.TopicsControllerListTopicsResponse,
       | errors.ErrorDto
-      | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
       | SDKError
       | SDKValidationError
       | UnexpectedClientError
@@ -194,9 +190,7 @@ async function $do(
   const [result] = await M.match<
     operations.TopicsControllerListTopicsResponse,
     | errors.ErrorDto
-    | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
     | SDKError
     | SDKValidationError
     | UnexpectedClientError
