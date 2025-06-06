@@ -14,9 +14,7 @@ export const OptInProvider = (props: PropsWithChildren) => {
   }, []);
 
   if (isLoaded && status === null) {
-    if (!user?.unsafeMetadata?.newDashboardOptInStatus) {
-      updateUserOptInStatus(NewDashboardOptInStatusEnum.OPTED_IN);
-    }
+    updateUserOptInStatus(NewDashboardOptInStatusEnum.OPTED_IN);
 
     return null;
   }
