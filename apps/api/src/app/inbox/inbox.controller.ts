@@ -91,29 +91,12 @@ export class InboxController {
     @Body() body: SubscriberSessionRequestDto,
     @Headers('origin') origin: string
   ): Promise<SubscriberSessionResponseDto> {
-    const subscriber = this.buildSubscriber(body);
-
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
-        subscriber,
-        applicationIdentifier: body.applicationIdentifier,
-        subscriberHash: body.subscriberHash,
+        requestData: body,
         origin,
       })
     );
-  }
-
-  private buildSubscriber(body: SubscriberSessionRequestDto): SubscriberDto {
-    if (!body.applicationIdentifier || body.applicationIdentifier.startsWith('pk_keyless_')) {
-      return { subscriberId: 'keyless-subscriber-id' };
-    }
-
-    // TODO: Backward compatibility support - remove in future versions (see NV-5801)
-    const subscriber: SubscriberDto | {} =
-      typeof body.subscriber === 'string' ? { subscriberId: body.subscriber } : body.subscriber || {};
-    const subscriberId: string | undefined = body.subscriberId || (subscriber as SubscriberDto).subscriberId;
-
-    return { ...subscriber, subscriberId };
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

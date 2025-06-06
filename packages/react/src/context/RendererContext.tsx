@@ -1,5 +1,4 @@
 import React from 'react';
-import type { NovuUI } from '@novu/js/ui';
 import { createContextAndHook } from '../utils/createContextAndHook';
 
 export type MountedElement = React.ReactNode;
