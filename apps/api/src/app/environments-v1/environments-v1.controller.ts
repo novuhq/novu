@@ -93,6 +93,7 @@ export class EnvironmentsControllerV1 {
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @SdkGroupName('Environments')
   @SdkMethodName('create')
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async createEnvironment(
     @UserSession() user: UserSessionData,
@@ -118,7 +119,6 @@ export class EnvironmentsControllerV1 {
   })
   @ApiResponse(EnvironmentResponseDto, 200, true)
   @ExternalApiAccessible()
-  @ApiExcludeEndpoint()
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     const canAccessApiKeys = await this.canUserAccessApiKeys(user);
@@ -136,8 +136,8 @@ export class EnvironmentsControllerV1 {
   @ApiOperation({
     summary: 'Update env by id',
   })
-  @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto)
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async updateMyEnvironment(
     @UserSession() user: UserSessionData,
@@ -198,7 +198,7 @@ export class EnvironmentsControllerV1 {
   })
   @ApiParam({ name: 'environmentId', type: String, required: true })
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
-  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
