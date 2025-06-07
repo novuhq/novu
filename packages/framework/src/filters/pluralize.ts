@@ -14,7 +14,12 @@ import plur from 'pluralize';
  * @param plural The plural form of the word
  * @param showCount Whether to include the count in the output (default: true)
  */
-export function pluralize(item: unknown, singular: string = '', plural: string = '', showCount: boolean = true): string {
+export function pluralize(
+  item: unknown,
+  singular: string = '',
+  plural: string = '',
+  showCount: boolean = true
+): string {
   if (item === null || item === undefined) {
     return '';
   }
