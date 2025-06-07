@@ -369,7 +369,7 @@ export const getFilters = (): Filters[] => {
           label: 'Show count (optional)', 
           type: 'string', 
           defaultValue: 'true',
-          tip: 'Whether to include the count in the output. Use "true" or "false". Default is true for backward compatibility.'
+          tip: 'Whether to include the count in the output. Use "true" or "false".'
         },
       ],
       sampleValue: '10',
