@@ -361,10 +361,16 @@ export const getFilters = (): Filters[] => {
       value: 'pluralize',
       hasParam: true,
       description: 'Converts word to singular or plural based on count',
-      example: 'eventsCount | pluralize: "apple", "apples" → 1 apple, 2 apples',
+      example: 'eventsCount | pluralize: "apple", "apples", false → apples (without count)',
       params: [
         { label: 'Singular', type: 'string' },
         { label: 'Plural (optional)', type: 'string' },
+        { 
+          label: 'Show count (optional)', 
+          type: 'string', 
+          defaultValue: 'true',
+          tip: 'Whether to include the count in the output. Use "true" or "false". Default is true for backward compatibility.'
+        },
       ],
       sampleValue: '10',
     },
