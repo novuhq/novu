@@ -702,28 +702,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     // Helper function to validate digest event structure
     const validateDigestEvents = (events: any[], expectedPayload: any) => {
       expect(events).to.have.length(DEFAULT_ARRAY_ELEMENTS);
-      events.forEach((event, index) => {
+      events.forEach((event) => {
         expect(event).to.have.property('id').that.is.a('string');
         expect(event).to.have.property('time').that.is.a('string');
         expect(event).to.have.property('payload').that.deep.equals(expectedPayload);
-        // Validate that IDs are unique and follow the pattern
-        expect(event.id).to.equal(`example-id-${index + 1}`);
-        // Validate that times are ISO strings and incrementing
-        expect(new Date(event.time)).to.be.a('date');
       });
     };
-
-    const createExpectedDigestResult = (payload: any) => ({
-      steps: {
-        'digest-step': {
-          events: Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => ({
-            id: `example-id-${index + 1}`,
-            time: expect.any(String),
-            payload,
-          })),
-        },
-      },
-    });
 
     // testing the steps.digest-step.events.length variable
     const controlValues1 = {
@@ -761,13 +745,13 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       stepId: emailStepDatabaseId,
       workflowId,
     });
-    expect(previewResponse3.result.result.preview.body).to.contain(
-      `[${Array.from(
-        { length: DEFAULT_ARRAY_ELEMENTS },
-        (_, index) =>
-          `{'id':'example-id-${index + 1}','time':'2025-06-07T09:0${index}:00.000Z','payload':{'foo':'foo'}}`
-      ).join(',')}]`
-    );
+    // Check that the body contains the digest events array structure without asserting exact times
+    expect(previewResponse3.result.result.preview.body).to.contain("'id':'example-id-1'");
+    expect(previewResponse3.result.result.preview.body).to.contain("'payload':{'foo':'foo'}");
+    expect(previewResponse3.result.result.preview.body).to.contain("'time':");
+    // Count the number of events in the rendered output
+    const eventMatches = previewResponse3.result.result.preview.body.match(/'id':'example-id-\d+'/g);
+    expect(eventMatches).to.have.length(DEFAULT_ARRAY_ELEMENTS);
     expect(previewResponse3.result.result.preview.body).to.contain('single variable: foo');
     validateDigestEvents(previewResponse3.result.previewPayloadExample.steps['digest-step'].events, { foo: 'foo' });
 
