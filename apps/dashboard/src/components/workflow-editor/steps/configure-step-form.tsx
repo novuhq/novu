@@ -307,31 +307,21 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
             <>
               <SidebarContent>
-                {isV2TemplateEditorEnabled ? (
-                  <Link to={'./editor'} relative="path" state={{ stepType: step.type }}>
-                    <Button
-                      variant="secondary"
-                      mode="outline"
-                      className="flex w-full justify-start gap-1.5 text-xs font-medium"
-                    >
-                      <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
-                      Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
-                      <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link to={'./edit'} relative="path" state={{ stepType: step.type }}>
-                    <Button
-                      variant="secondary"
-                      mode="outline"
-                      className="flex w-full justify-start gap-1.5 text-xs font-medium"
-                    >
-                      <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
-                      Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
-                      <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
-                    </Button>
-                  </Link>
-                )}
+                <Link
+                  to={isV2TemplateEditorEnabled ? './editor' : './edit'}
+                  relative="path"
+                  state={{ stepType: step.type }}
+                >
+                  <Button
+                    variant="secondary"
+                    mode="outline"
+                    className="flex w-full justify-start gap-1.5 text-xs font-medium"
+                  >
+                    <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
+                    Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
+                    <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
+                  </Button>
+                </Link>
 
                 <SkipConditionsButton origin={workflow.origin} step={step} />
               </SidebarContent>

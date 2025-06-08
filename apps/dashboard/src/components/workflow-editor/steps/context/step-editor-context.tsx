@@ -34,7 +34,6 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     controlValues,
   });
 
-  // Memoize expensive calculations that depend on step/workflow but don't change often
   const stepCapabilities = useMemo(() => {
     const { uiSchema } = step.controls;
     const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
@@ -49,7 +48,6 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     };
   }, [workflow.origin, step.controls.uiSchema]);
 
-  // Memoize the stable setEditorValue function to prevent unnecessary re-renders
   const stableSetEditorValue = useCallback(
     (value: string) => {
       return setEditorValue(value);
@@ -57,7 +55,6 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     [setEditorValue]
   );
 
-  // Memoize the context value to prevent unnecessary re-renders of consumers
   const contextValue = useMemo(
     (): StepEditorContextType => ({
       workflow,

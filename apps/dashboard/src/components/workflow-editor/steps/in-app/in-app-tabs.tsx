@@ -17,28 +17,7 @@ export const InAppTabs = (props: StepEditorProps) => {
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
   const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
 
-  // Watch specific fields that matter for in-app previews
-  const watchedValues = form.watch([
-    'subject',
-    'body',
-    'avatar',
-    'primaryAction',
-    'secondaryAction',
-    'redirect',
-    'data',
-    'disableOutputSanitization',
-  ]);
-  const controlValues = {
-    subject: watchedValues[0],
-    body: watchedValues[1],
-    avatar: watchedValues[2],
-    primaryAction: watchedValues[3],
-    secondaryAction: watchedValues[4],
-    redirect: watchedValues[5],
-    data: watchedValues[6],
-    disableOutputSanitization: watchedValues[7],
-  };
-
+  const controlValues = form.watch();
   const { editorValue, setEditorValue, previewStep, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
