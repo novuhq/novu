@@ -2519,8 +2519,8 @@ importers:
         specifier: 0.14.1
         version: 0.14.1
       multer:
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: 2.0.1
+        version: 2.0.1
       shortid:
         specifier: ^2.2.16
         version: 2.2.16
@@ -26816,6 +26816,10 @@ packages:
 
   multer@2.0.0:
     resolution: {integrity: sha512-bS8rPZurbAuHGAnApbM9d4h1wSoYqrOqkE+6a64KLMK9yWU7gJXBDDVklKQ3TPi9DRb85cRs6yXaC0+cjxRtRg==}
+    engines: {node: '>= 10.16.0'}
+
+  multer@2.0.1:
+    resolution: {integrity: sha512-Ug8bXeTIUlxurg8xLTEskKShvcKDZALo1THEX5E41pYCD2sCVub5/kIRIGqWNoqV6szyLyQKV6mD4QUrWE5GCQ==}
     engines: {node: '>= 10.16.0'}
 
   multicast-dns@7.2.5:
@@ -69473,6 +69477,16 @@ snapshots:
       append-field: 1.0.0
       busboy: 1.6.0
       concat-stream: 1.6.2
+      mkdirp: 0.5.6
+      object-assign: 4.1.1
+      type-is: 1.6.18
+      xtend: 4.0.2
+
+  multer@2.0.1:
+    dependencies:
+      append-field: 1.0.0
+      busboy: 1.6.0
+      concat-stream: 2.0.0
       mkdirp: 0.5.6
       object-assign: 4.1.1
       type-is: 1.6.18
