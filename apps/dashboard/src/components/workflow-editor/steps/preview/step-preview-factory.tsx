@@ -1,4 +1,4 @@
-import { StepResponseDto, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
 import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
@@ -6,12 +6,7 @@ import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
 import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
 import { InlineToast } from '@/components/primitives/inline-toast';
-
-type StepPreviewFactoryProps = {
-  step: StepResponseDto;
-  previewData: any;
-  isPreviewPending: boolean;
-};
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 
 function NoPreviewAvailable({ stepType }: { stepType: StepTypeEnum }) {
   return (
@@ -21,7 +16,17 @@ function NoPreviewAvailable({ stepType }: { stepType: StepTypeEnum }) {
   );
 }
 
-export function StepPreviewFactory({ step, previewData, isPreviewPending }: StepPreviewFactoryProps) {
+export function StepPreviewFactory() {
+  const { step, previewData, isPreviewPending, isStepPreviewable } = useStepEditor();
+
+  if (!isStepPreviewable) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+        Preview not available for this step configuration
+      </div>
+    );
+  }
+
   const commonProps = {
     previewData,
     isPreviewPending,

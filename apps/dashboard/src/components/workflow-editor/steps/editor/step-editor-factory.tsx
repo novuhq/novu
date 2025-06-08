@@ -1,4 +1,4 @@
-import { StepResponseDto, StepTypeEnum, WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
+import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailEditor } from '@/components/workflow-editor/steps/email/email-editor';
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
@@ -6,27 +6,28 @@ import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
 import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
 import { CustomStepControls } from '@/components/workflow-editor/steps/controls/custom-step-controls';
-
-type StepEditorFactoryProps = {
-  workflow: WorkflowResponseDto;
-  step: StepResponseDto;
-};
+import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 
 function NoEditorAvailable({ message }: { message: string }) {
   return <div className="flex h-full items-center justify-center text-sm text-neutral-500">{message}</div>;
 }
 
-export function StepEditorFactory({ workflow, step }: StepEditorFactoryProps) {
+export function StepEditorFactory() {
+  const { workflow, step, isStepEditable } = useStepEditor();
   const { dataSchema, uiSchema } = step.controls;
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
-  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
 
-  if (isExternal) {
+  if (!isStepEditable) {
+    return <NoEditorAvailable message="No editor available for this step configuration" />;
+  }
+
+  // Handle external workflows
+  if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
     return <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />;
   }
 
-  if (!isNovuCloud || !uiSchema) {
-    return <NoEditorAvailable message="No editor available for this step configuration" />;
+  // Handle Novu Cloud workflows
+  if (!uiSchema) {
+    return <NoEditorAvailable message="No editor configuration available" />;
   }
 
   switch (step.type) {
