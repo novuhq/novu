@@ -1,6 +1,7 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { RiInformationLine } from 'react-icons/ri';
+import { useState } from 'react';
 import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
 import { SubscriberSectionProps } from '../types/preview-context.types';
@@ -12,6 +13,8 @@ export function PreviewSubscriberSection({
   onUpdate,
   onSubscriberSelect,
 }: SubscriberSectionProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
     <AccordionItem value="subscriber" className={ACCORDION_STYLES.item}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
@@ -31,9 +34,12 @@ export function PreviewSubscriberSection({
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">
         <SubscriberAutocomplete
-          value=""
-          onChange={() => {}}
-          onSelectSubscriber={onSubscriberSelect}
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onSelectSubscriber={(subscriber) => {
+            onSubscriberSelect(subscriber);
+            setSearchQuery('');
+          }}
           size="xs"
           className="w-full"
         />
