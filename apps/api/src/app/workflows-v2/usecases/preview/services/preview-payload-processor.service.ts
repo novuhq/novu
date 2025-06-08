@@ -9,6 +9,7 @@ export class PreviewPayloadProcessorService {
   /**
    * Removes computed digest properties (eventCount, events.length) that shouldn't be exposed
    * in the preview payload schema to prevent user confusion.
+   * Also reorders keys to have "payload" first, followed by "subscriber", then the rest.
    */
   cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Record<string, unknown> {
     const cleanedPayloadExample = _.cloneDeep(payloadExample);
@@ -29,7 +30,25 @@ export class PreviewPayloadProcessorService {
         });
     }
 
-    return cleanedPayloadExample;
+    // Reorder keys: payload first, subscriber second, then the rest
+    const reorderedPayload: Record<string, unknown> = {};
+
+    if (cleanedPayloadExample.payload !== undefined) {
+      reorderedPayload.payload = cleanedPayloadExample.payload;
+    }
+
+    if (cleanedPayloadExample.subscriber !== undefined) {
+      reorderedPayload.subscriber = cleanedPayloadExample.subscriber;
+    }
+
+    // Add remaining keys
+    Object.keys(cleanedPayloadExample).forEach((key) => {
+      if (key !== 'payload' && key !== 'subscriber') {
+        reorderedPayload[key] = cleanedPayloadExample[key];
+      }
+    });
+
+    return reorderedPayload;
   }
 
   /**
