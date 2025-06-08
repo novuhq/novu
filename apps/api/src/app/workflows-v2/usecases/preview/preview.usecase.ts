@@ -125,7 +125,8 @@ export class PreviewUsecase {
       let previewPayloadExample = await this.mergePayloadExample(
         workflow,
         previewTemplateData.payloadExample,
-        userPayloadExample
+        userPayloadExample,
+        command
       );
 
       previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
@@ -143,7 +144,7 @@ export class PreviewUsecase {
           type: stepData.type as unknown as ChannelTypeEnum,
         },
         previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
-        schema: this.buildPreviewPayloadSchema(previewPayloadExample, workflow.payloadSchema),
+        schema: await this.buildPreviewPayloadSchema(previewPayloadExample, workflow.payloadSchema, workflow),
       };
     } catch (error) {
       this.logger.error(
@@ -184,10 +185,18 @@ export class PreviewUsecase {
   private async mergePayloadExample(
     workflow: NotificationTemplateEntity,
     payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayloadDto | undefined
+    userPayloadExample: PreviewPayloadDto | undefined,
+    command: PreviewCommand
   ) {
     const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
+      defaultValue: false,
+      organization: { _id: workflow._organizationId },
+      environment: { _id: workflow._environmentId },
+    });
+
+    const isV2TemplateEditorEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
       defaultValue: false,
       organization: { _id: workflow._organizationId },
       environment: { _id: workflow._environmentId },
@@ -255,17 +264,187 @@ export class PreviewUsecase {
         );
       }
 
+      // Always include full subscriber object when V2 template editor is enabled
+      if (isV2TemplateEditorEnabled && !mergedPayload.subscriber) {
+        mergedPayload.subscriber = this.createFullSubscriberObject();
+      }
+
+      // Always include full steps object when V2 template editor is enabled
+      if (isV2TemplateEditorEnabled) {
+        mergedPayload.steps = await this.createFullStepsObject(workflow, command);
+      }
+
       return mergedPayload;
     }
 
+    let finalPayload: Record<string, unknown>;
+
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-      return mergeCommonObjectKeys(
+      finalPayload = mergeCommonObjectKeys(
         userPayloadExample as Record<string, unknown>, // treat the FE payload as target
         payloadExample as Record<string, unknown> // treat the BE payload as source
       );
+    } else {
+      finalPayload = payloadExample;
     }
 
-    return payloadExample;
+    // Always include full subscriber object when V2 template editor is enabled
+    if (isV2TemplateEditorEnabled && !finalPayload.subscriber) {
+      finalPayload.subscriber = this.createFullSubscriberObject();
+    }
+
+    // Always include full steps object when V2 template editor is enabled
+    if (isV2TemplateEditorEnabled) {
+      finalPayload.steps = await this.createFullStepsObject(workflow, command);
+    }
+
+    return finalPayload;
+  }
+
+  /**
+   * Creates a full subscriber object with all available fields for preview purposes
+   */
+  private createFullSubscriberObject(): Record<string, unknown> {
+    return {
+      subscriberId: 'subscriberId',
+      firstName: 'firstName',
+      lastName: 'lastName',
+      email: 'email',
+      phone: 'phone',
+      avatar: 'avatar',
+      locale: 'locale',
+      data: {},
+    };
+  }
+
+  /**
+   * Creates a full steps object based on actual workflow steps that come before the current step
+   */
+  private async createFullStepsObject(
+    workflow: NotificationTemplateEntity,
+    command: PreviewCommand
+  ): Promise<Record<string, unknown>> {
+    const stepsObject: Record<string, unknown> = {};
+
+    // Get the current step data to find its position
+    const currentStepData = await this.getStepData(command);
+    const currentStepId = currentStepData._id;
+
+    // Find the index of the current step in the workflow
+    const currentStepIndex = workflow.steps.findIndex(
+      (step) => step._id === currentStepId || step.stepId === currentStepData.stepId
+    );
+
+    if (currentStepIndex === -1) {
+      // If we can't find the current step, return empty object
+      return stepsObject;
+    }
+
+    // Get all steps that come before the current step
+    const previousSteps = workflow.steps.slice(0, currentStepIndex);
+
+    // Create step data for each previous step
+    for (const step of previousSteps) {
+      const stepId = step.stepId || step._id;
+
+      if (stepId) {
+        // Generate mock result data based on the step type's result schema
+        const mockResult = this.generateMockStepResult(step.template?.type, workflow);
+
+        stepsObject[stepId] = mockResult;
+      }
+    }
+
+    return stepsObject;
+  }
+
+  /**
+   * Generates mock result data for a step based on its type using the corresponding result schema
+   */
+  private generateMockStepResult(
+    stepType: string | undefined,
+    workflow?: NotificationTemplateEntity
+  ): Record<string, unknown> {
+    if (!stepType) {
+      return {};
+    }
+
+    try {
+      // Special handling for digest steps - include workflow payload data
+      if (stepType === 'digest' && workflow?.payloadSchema) {
+        try {
+          // Generate mock payload data based on workflow schema
+          const payloadMockData = JsonSchemaMock.generate(workflow.payloadSchema) as Record<string, unknown>;
+
+          // Get the digest result schema and generate base result
+          const digestResultSchema = actionStepSchemas.digest?.result;
+          const baseDigestResult = digestResultSchema
+            ? (JsonSchemaMock.generate(digestResultSchema) as Record<string, unknown>)
+            : {};
+
+          // Create properly structured digest events with id, time, and payload
+          const oneDayAgo = new Date();
+          oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+          oneDayAgo.setHours(12, 0, 0, 0); // Set to 12:00:00.000
+
+          const digestEvents = [
+            {
+              id: 'event-id-123',
+              time: oneDayAgo.toISOString(),
+              payload: payloadMockData,
+            },
+          ];
+
+          // Merge the base digest result with the properly structured events
+          return {
+            ...baseDigestResult,
+            eventCount: digestEvents.length,
+            events: digestEvents,
+          };
+        } catch (error) {
+          this.logger.warn(
+            {
+              err: error,
+              workflowId: workflow._id,
+              payloadSchema: workflow.payloadSchema,
+            },
+            'Failed to generate digest result with payload data, falling back to basic digest result',
+            LOG_CONTEXT
+          );
+        }
+      }
+
+      // Map step type to the corresponding result schema
+      let resultSchema: any = null;
+
+      // Check channel step schemas
+      if (stepType in channelStepSchemas) {
+        resultSchema = channelStepSchemas[stepType as keyof typeof channelStepSchemas].result;
+      }
+      // Check action step schemas
+      else if (stepType in actionStepSchemas) {
+        resultSchema = actionStepSchemas[stepType as keyof typeof actionStepSchemas].result;
+      }
+
+      if (resultSchema) {
+        // Generate mock data using JsonSchemaMock
+        return JsonSchemaMock.generate(resultSchema) as Record<string, unknown>;
+      }
+
+      // Fallback for unknown step types
+      return {};
+    } catch (error) {
+      this.logger.warn(
+        {
+          err: error,
+          stepType,
+        },
+        'Failed to generate mock step result, falling back to empty object',
+        LOG_CONTEXT
+      );
+
+      return {};
+    }
   }
 
   private async initializePreviewContext(command: PreviewCommand) {
@@ -410,13 +589,23 @@ export class PreviewUsecase {
     }
   }
 
-  private buildPreviewPayloadSchema(
+  private async buildPreviewPayloadSchema(
     previewPayloadExample: PreviewPayloadDto,
-    workflowPayloadSchema?: JSONSchemaDto
-  ): JSONSchemaDto | null {
+    workflowPayloadSchema?: JSONSchemaDto,
+    workflow?: NotificationTemplateEntity
+  ): Promise<JSONSchemaDto | null> {
     if (!workflowPayloadSchema) {
       return null;
     }
+
+    const isV2TemplateEditorEnabled = workflow
+      ? await this.featureFlagService.getFlag({
+          key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
+          defaultValue: false,
+          organization: { _id: workflow._organizationId },
+          environment: { _id: workflow._environmentId },
+        })
+      : false;
 
     const schema: JSONSchemaDto = {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -432,8 +621,8 @@ export class PreviewUsecase {
       };
     }
 
-    // Add subscriber schema if it exists in the example
-    if (previewPayloadExample.subscriber) {
+    // Add subscriber schema if it exists in the example OR if V2 template editor is enabled
+    if (previewPayloadExample.subscriber || isV2TemplateEditorEnabled) {
       schema.properties!.subscriber = {
         type: JsonSchemaTypeEnum.OBJECT,
         properties: {
@@ -450,14 +639,15 @@ export class PreviewUsecase {
       };
     }
 
-    // Add steps schema if it exists in the example
-    if (previewPayloadExample.steps) {
+    // Add steps schema if it exists in the example OR if V2 template editor is enabled
+    if (previewPayloadExample.steps || isV2TemplateEditorEnabled) {
       schema.properties!.steps = {
         type: JsonSchemaTypeEnum.OBJECT,
         description: 'Steps data from previous workflow executions',
         additionalProperties: {
           type: JsonSchemaTypeEnum.OBJECT,
           properties: {
+            eventCount: { type: JsonSchemaTypeEnum.NUMBER },
             events: {
               type: JsonSchemaTypeEnum.ARRAY,
               items: {
