@@ -1,44 +1,15 @@
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { WorkflowOriginEnum, WorkflowResponseDto, StepResponseDto } from '@novu/shared';
 import { cn } from '@/utils/ui';
-import { ChannelTypeEnum, StepResponseDto, StepTypeEnum, WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
-import { STEP_TYPE_LABELS } from '@/utils/constants';
-import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
-import { EmailEditor } from '@/components/workflow-editor/steps/email/email-editor';
-import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
-import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
-import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
-import { ChatEditor } from '@/components/workflow-editor/steps/chat/chat-editor';
-import { CustomStepControls } from '@/components/workflow-editor/steps/controls/custom-step-controls';
-import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
-import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
-import { PushPreview } from '@/components/workflow-editor/steps/push/push-preview';
-import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
-import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
 import { useFormContext } from 'react-hook-form';
-import { Skeleton } from '@/components/primitives/skeleton';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
-import { RiCodeBlock, RiEyeLine, RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
-import { AnimatePresence, motion } from 'motion/react';
-import { useState, useMemo, useEffect } from 'react';
-import {
-  EmailPreviewBody,
-  EmailPreviewBodyMobile,
-  EmailPreviewContentMobile,
-  EmailPreviewHeader,
-  EmailPreviewSubject,
-  EmailPreviewSubjectMobile,
-} from '@/components/workflow-editor/steps/email/email-preview';
-import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
+import { RiCodeBlock, RiEyeLine } from 'react-icons/ri';
+import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
 import { PreviewContextPanel } from '@/components/workflow-editor/steps/preview-context-panel';
-import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
-import { createMockObjectFromSchema } from '@novu/shared';
-import { Form, FormRoot } from '@/components/primitives/form/form';
-import { useForm } from 'react-hook-form';
-import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { InlineToast } from '../../primitives/inline-toast';
 import { StepIssuesPanel } from '@/components/workflow-editor/steps/step-issues-panel';
-import { countStepIssues } from '@/components/workflow-editor/step-utils';
+import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
+import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
+import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
+import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
+import { StepIcon, getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -46,195 +17,17 @@ type StepEditorLayoutProps = {
   className?: string;
 };
 
-function StepIcon({ stepType }: { stepType: StepTypeEnum }) {
-  const Icon = STEP_TYPE_TO_ICON[stepType];
-  return <Icon className="size-3.5" />;
-}
-
-function getEditorTitle(stepType: StepTypeEnum): string {
-  const label = STEP_TYPE_LABELS[stepType];
-  return `${label} Editor`;
-}
-
-function getEditorContent(workflow: WorkflowResponseDto, step: StepResponseDto) {
-  const { dataSchema, uiSchema } = step.controls;
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
-  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
-
-  if (isExternal) {
-    return <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />;
-  }
-
-  if (!isNovuCloud || !uiSchema) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-        No editor available for this step configuration
-      </div>
-    );
-  }
-
-  switch (step.type) {
-    case StepTypeEnum.EMAIL:
-      return (
-        <div className="border-soft-200 h-full overflow-auto rounded-lg border shadow-lg">
-          <EmailEditor uiSchema={uiSchema} isEditorV2={true} />
-        </div>
-      );
-    case StepTypeEnum.IN_APP:
-      return <InAppEditor uiSchema={uiSchema} />;
-    case StepTypeEnum.SMS:
-      return <SmsEditor uiSchema={uiSchema} />;
-    case StepTypeEnum.PUSH:
-      return <PushEditor uiSchema={uiSchema} />;
-    case StepTypeEnum.CHAT:
-      return <ChatEditor uiSchema={uiSchema} />;
-    default:
-      return (
-        <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-          Editor not implemented for {STEP_TYPE_LABELS[step.type]} steps
-        </div>
-      );
-  }
-}
-
-const fadeVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-};
-
-function EmailCorePreview({ previewData, isPreviewPending }: { previewData: any; isPreviewPending: boolean }) {
-  const [activeTab, setActiveTab] = useState('desktop');
-
+function NoPreviewAvailable() {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-bg-weak h-full">
-      <div className="">
-        <div className="bg-bg-white overflow-auto rounded-lg border border-neutral-200">
-          <div className="flex w-full items-center justify-between px-3 pb-0 pt-3">
-            <EmailPreviewHeader />
-            <div>
-              <TabsList>
-                <TabsTrigger value="mobile">
-                  <RiSmartphoneFill className="size-4" />
-                </TabsTrigger>
-                <TabsTrigger value="desktop">
-                  <RiMacLine className="size-4" />
-                </TabsTrigger>
-              </TabsList>
-            </div>
-          </div>
-          <div className="flex flex-col">
-            <AnimatePresence mode="wait">
-              {isPreviewPending ? (
-                <motion.div
-                  key="loading"
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  variants={fadeVariants}
-                  transition={{ duration: 0.2 }}
-                  className="w-full"
-                >
-                  <div className="flex flex-col">
-                    <div className={cn('border-b px-4 py-1.5')}>
-                      <Skeleton className="h-8 w-full" />
-                    </div>
-                    <EmailTabsSection className="bg-neutral-50 py-4">
-                      <Skeleton className="mx-auto h-96 max-w-[600px] rounded-lg" />
-                    </EmailTabsSection>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="content"
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  variants={fadeVariants}
-                  transition={{ duration: 0.2 }}
-                  className="h-full"
-                >
-                  {previewData?.result?.type == ChannelTypeEnum.EMAIL ? (
-                    <>
-                      <TabsContent value="mobile">
-                        <div className="w-full bg-neutral-100">
-                          <EmailPreviewContentMobile className="mx-auto">
-                            <EmailPreviewSubjectMobile subject={previewData.result.preview.subject} />
-                            <EmailPreviewBodyMobile body={previewData.result.preview.body} />
-                          </EmailPreviewContentMobile>
-                        </div>
-                      </TabsContent>
-                      <TabsContent value="desktop" className="h-full">
-                        <div className="border-b px-2">
-                          <EmailPreviewSubject subject={previewData.result.preview.subject} />
-                        </div>
-                        <div className="bg-neutral-50 px-16 py-8">
-                          <EmailPreviewBody
-                            body={previewData.result.preview.body}
-                            className="bg-background rounded-lg"
-                          />
-                        </div>
-                      </TabsContent>
-                    </>
-                  ) : (
-                    <div className="p-6">No preview available</div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </Tabs>
+    <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+      Preview not available for this step configuration
+    </div>
   );
-}
-
-function getCorePreviewContent(step: StepResponseDto, previewData: any, isPreviewPending: boolean) {
-  const commonProps = {
-    previewData,
-    isPreviewPending,
-  };
-
-  switch (step.type) {
-    case StepTypeEnum.EMAIL:
-      return <EmailCorePreview {...commonProps} />;
-    case StepTypeEnum.IN_APP:
-      return <InboxPreview {...commonProps} />;
-    case StepTypeEnum.SMS:
-      return (
-        <div className="flex flex-col items-center justify-center">
-          <SmsPreview {...commonProps} />
-          <InlineToast
-            description="This preview shows how your message will appear on mobile. Actual rendering may vary by device."
-            className="w-full px-3"
-          />
-        </div>
-      );
-    case StepTypeEnum.PUSH:
-      return (
-        <div className="flex flex-col items-center justify-center">
-          <PushPreview {...commonProps} />
-
-          <InlineToast
-            description="This preview shows how your message will appear on mobile. Actual rendering may vary by device."
-            className="w-full px-3"
-          />
-        </div>
-      );
-    case StepTypeEnum.CHAT:
-      return <ChatPreview {...commonProps} />;
-    default:
-      return (
-        <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-          Preview not implemented for {STEP_TYPE_LABELS[step.type]} steps
-        </div>
-      );
-  }
 }
 
 export function StepEditorLayout({ workflow, step, className }: StepEditorLayoutProps) {
   const form = useFormContext();
   const editorTitle = getEditorTitle(step.type);
-  const editorContent = getEditorContent(workflow, step);
 
   const controlValues = form.watch();
   const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
@@ -246,88 +39,59 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   const { uiSchema } = step.controls;
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
 
-  // Preview is triggered automatically by useEditorPreview when values change
-
   const previewContent = isNovuCloud ? (
-    getCorePreviewContent(step, previewData, isPreviewPending)
+    <StepPreviewFactory step={step} previewData={previewData} isPreviewPending={isPreviewPending} />
   ) : (
-    <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-      Preview not available for this step configuration
-    </div>
+    <NoPreviewAvailable />
   );
 
   return (
     <div className={cn('h-full w-full', className)}>
-      <ResizablePanelGroup direction="horizontal" className="h-full">
-        <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="h-full">
-          <div className="flex h-full flex-col border-r border-neutral-200">
-            <div className="border-b border-neutral-200 p-3">
-              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
-                <RiCodeBlock className="size-3.5" />
-                Preview Context
-              </h3>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <PreviewContextPanel
-                workflow={workflow}
-                value={editorValue}
-                onChange={setEditorValue}
-                currentStepId={step.stepId}
-              />
-            </div>
+      <ResizableLayout>
+        <ResizableLayout.ContextPanel>
+          <PanelHeader icon={RiCodeBlock} title="Preview Context" />
+          <div className="flex-1 overflow-y-auto">
+            <PreviewContextPanel
+              workflow={workflow}
+              value={editorValue}
+              onChange={setEditorValue}
+              currentStepId={step.stepId}
+            />
           </div>
-        </ResizablePanel>
+        </ResizableLayout.ContextPanel>
 
-        <ResizableHandle className="group relative w-px bg-transparent transition-colors duration-200 after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 hover:bg-neutral-300">
-          <div className="absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-        </ResizableHandle>
+        <ResizableLayout.Handle />
 
-        <ResizablePanel defaultSize={75} minSize={60} className="h-full">
-          <div className="flex h-full flex-col">
-            <div className="flex-1">
-              <ResizablePanelGroup direction="horizontal" className="h-full">
-                <ResizablePanel defaultSize={67} minSize={40} className="h-full">
-                  <div className="flex h-full flex-col border-r border-neutral-200">
-                    <div className="border-b border-neutral-200 p-3">
-                      <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
-                        <StepIcon stepType={step.type} />
-                        {editorTitle}
-                      </h3>
-                    </div>
-                    <div className="flex-1 overflow-y-auto p-3">{editorContent}</div>
-                  </div>
-                </ResizablePanel>
+        <ResizableLayout.MainContentPanel>
+          <div className="flex-1">
+            <ResizableLayout>
+              <ResizableLayout.EditorPanel>
+                <PanelHeader icon={() => <StepIcon stepType={step.type} />} title={editorTitle} />
+                <div className="flex-1 overflow-y-auto p-3">
+                  <StepEditorFactory workflow={workflow} step={step} />
+                </div>
+              </ResizableLayout.EditorPanel>
 
-                <ResizableHandle className="group relative w-px bg-transparent transition-colors duration-200 after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 hover:bg-neutral-300">
-                  <div className="absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-                </ResizableHandle>
+              <ResizableLayout.Handle />
 
-                <ResizablePanel defaultSize={33} minSize={20} className="h-full">
-                  <div className="flex h-full flex-col">
-                    <div className="border-b border-neutral-200 p-3">
-                      <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
-                        <RiEyeLine className="size-3.5" />
-                        Preview
-                      </h3>
-                    </div>
-                    <div
-                      className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
-                      style={{
-                        backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
-                        backgroundSize: '20px 20px',
-                      }}
-                    >
-                      {previewContent}
-                    </div>
-                  </div>
-                </ResizablePanel>
-              </ResizablePanelGroup>
-            </div>
-
-            <StepIssuesPanel step={step} />
+              <ResizableLayout.PreviewPanel>
+                <PanelHeader icon={RiEyeLine} title="Preview" />
+                <div
+                  className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
+                >
+                  {previewContent}
+                </div>
+              </ResizableLayout.PreviewPanel>
+            </ResizableLayout>
           </div>
-        </ResizablePanel>
-      </ResizablePanelGroup>
+
+          <StepIssuesPanel step={step} />
+        </ResizableLayout.MainContentPanel>
+      </ResizableLayout>
     </div>
   );
 }
