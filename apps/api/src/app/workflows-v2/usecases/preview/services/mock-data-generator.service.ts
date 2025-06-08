@@ -26,7 +26,7 @@ export class MockDataGeneratorService {
         return this.generateDigestStepResult(workflow);
       }
 
-      let resultSchema: any = null;
+      let resultSchema: unknown = null;
 
       if (stepType in channelStepSchemas) {
         resultSchema = channelStepSchemas[stepType as keyof typeof channelStepSchemas].result;

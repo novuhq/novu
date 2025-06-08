@@ -46,7 +46,7 @@ export class JsonSchemaMock {
   /**
    * Generate mock data from a JSON schema with intelligent property detection
    */
-  static generate(schema: any): any {
+  static generate(schema: unknown): unknown {
     this.configure();
 
     const enhancedSchema = this.addExamplesToSchema(schema);
@@ -57,7 +57,7 @@ export class JsonSchemaMock {
   /**
    * Get example value for string property based on intelligent heuristics
    */
-  private static getExampleValueForStringProperty(key: string, prop: any): string {
+  private static getExampleValueForStringProperty(key: string, prop: Record<string, unknown>): string {
     const lowerKey = key.toLowerCase();
 
     // Check explicit format first
@@ -154,6 +154,7 @@ export class JsonSchemaMock {
     if (this.matchesPattern(lowerKey, ['id', 'identifier', 'uuid', 'guid', 'key'])) {
       // Generate a more unique ID for digest events
       const timestamp = Date.now().toString().slice(-6);
+
       return `example-id-${timestamp}`;
     }
     if (this.matchesPattern(lowerKey, ['userid', 'user_id', 'customerid', 'customer_id'])) {
@@ -181,8 +182,10 @@ export class JsonSchemaMock {
         const eventDate = new Date();
         eventDate.setDate(eventDate.getDate() - 1);
         eventDate.setHours(12, 0, 0, 0);
+
         return eventDate.toISOString();
       }
+
       return new Date().toTimeString().split(' ')[0];
     }
     if (this.matchesPattern(lowerKey, ['datetime', 'createdat', 'created_at', 'updatedat', 'updated_at'])) {
