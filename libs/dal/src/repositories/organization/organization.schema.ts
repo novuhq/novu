@@ -11,6 +11,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     apiServiceLevel: {
       type: Schema.Types.String,
       enum: ApiServiceLevelEnum,
+      default: ApiServiceLevelEnum.FREE,
     },
     branding: {
       fontColor: Schema.Types.String,
@@ -38,6 +39,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     defaultLocale: Schema.Types.String,
     domain: Schema.Types.String,
     language: [Schema.Types.String],
+    removeNovuBranding: Schema.Types.Boolean,
     productUseCases: {
       delay: {
         type: Schema.Types.Boolean,
@@ -65,6 +67,16 @@ const organizationSchema = new Schema<OrganizationDBModel>(
   },
   schemaOptions
 );
+
+if (process.env.NOVU_ENTERPRISE !== 'true') {
+  organizationSchema.index(
+    { name: 1 },
+    {
+      unique: true,
+      partialFilterExpression: { name: 'Community Edition' },
+    }
+  );
+}
 
 export const Organization =
   (mongoose.models.Organization as mongoose.Model<OrganizationDBModel>) ||

@@ -1,19 +1,11 @@
-import {
-  ChannelTypeEnum,
-  IPushOptions,
-  IPushProvider,
-  ISendMessageSuccessResponse,
-} from '@novu/stateless';
+import { ChannelTypeEnum, IPushOptions, IPushProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import crypto from 'crypto';
 import axios from 'axios';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class PushWebhookPushProvider
-  extends BaseProvider
-  implements IPushProvider
-{
+export class PushWebhookPushProvider extends BaseProvider implements IPushProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = PushProviderIdEnum.PushWebhook;
   channelType = ChannelTypeEnum.PUSH as ChannelTypeEnum.PUSH;
@@ -22,14 +14,14 @@ export class PushWebhookPushProvider
     private config: {
       hmacSecretKey?: string;
       webhookUrl: string;
-    },
+    }
   ) {
     super();
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { subscriber, step, payload, ...rest } = options;
     const data = this.transform(bridgeProviderData, {
@@ -63,9 +55,6 @@ export class PushWebhookPushProvider
   }
 
   computeHmac(payload: string): string {
-    return crypto
-      .createHmac('sha256', this.config.hmacSecretKey)
-      .update(payload, 'utf-8')
-      .digest('hex');
+    return crypto.createHmac('sha256', this.config.hmacSecretKey).update(payload, 'utf-8').digest('hex');
   }
 }

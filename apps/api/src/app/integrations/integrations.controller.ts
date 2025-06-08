@@ -10,13 +10,24 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  UserSessionData,
+  PermissionsEnum,
+  FeatureFlagsKeysEnum,
+  getFeatureForTierAsBoolean,
+  FeatureNameEnum,
+  ApiServiceLevelEnum,
+} from '@novu/shared';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
+  FeatureFlagsService,
   OtelSpan,
+  RequirePermissions,
 } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
@@ -45,13 +56,13 @@ import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { GetActiveIntegrationsCommand } from './usecases/get-active-integration/get-active-integration.command';
 import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Integrations')
 export class IntegrationsController {
   constructor(
@@ -63,7 +74,9 @@ export class IntegrationsController {
     private updateIntegrationUsecase: UpdateIntegration,
     private setIntegrationAsPrimaryUsecase: SetIntegrationAsPrimary,
     private removeIntegrationUsecase: RemoveIntegration,
-    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+    private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private organizationRepository: CommunityOrganizationRepository,
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   @Get('/')
@@ -72,17 +85,20 @@ export class IntegrationsController {
     description: 'The list of integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
-    summary: 'Get integrations',
-    description:
-      'Return all the integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
+    summary: 'List all integrations',
+    description: 'List all the channels integrations created in the organization',
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
+
     return await this.getIntegrationsUsecase.execute(
       GetIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        returnCredentials: canAccessCredentials,
       })
     );
   }
@@ -93,18 +109,21 @@ export class IntegrationsController {
     description: 'The list of active integrations belonging to the organization that are successfully returned.',
   })
   @ApiOperation({
-    summary: 'Get active integrations',
-    description:
-      'Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change',
+    summary: 'List active integrations',
+    description: 'List all the active integrations created in the organization',
   })
   @ExternalApiAccessible()
   @SdkMethodName('listActive')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getActiveIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
+    const canAccessCredentials = await this.canUserAccessCredentials(user);
+
     return await this.getActiveIntegrationsUsecase.execute(
       GetActiveIntegrationsCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
+        returnCredentials: canAccessCredentials,
       })
     );
   }
@@ -114,13 +133,15 @@ export class IntegrationsController {
     type: Boolean,
     description: 'The status of the webhook for the provider requested',
   })
+  @ApiExcludeEndpoint()
   @ApiOperation({
-    summary: 'Get webhook support status for provider',
-    description:
-      'Return the status of the webhook for this provider, if it is supported or if it is not based on a boolean value',
+    summary: 'Retrieve webhook status',
+    description: `Retrieve the status of the webhook for integration specified in query param **providerOrIntegrationId**. 
+    This API returns a boolean value.`,
   })
   @SdkGroupName('Integrations.Webhooks')
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getWebhookSupportStatus(
     @UserSession() user: UserSessionData,
     @Param('providerOrIntegrationId') providerOrIntegrationId: string
@@ -138,10 +159,12 @@ export class IntegrationsController {
   @Post('/')
   @ApiResponse(IntegrationResponseDto, 201)
   @ApiOperation({
-    summary: 'Create integration',
-    description: 'Create an integration for the current environment the user is based on the API key provided',
+    summary: 'Create an integration',
+    description: `Create an integration for the current environment the user is based on the API key provided. 
+    Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createIntegration(
     @UserSession() user: UserSessionData,
     @Body() body: CreateIntegrationRequestDto
@@ -158,7 +181,7 @@ export class IntegrationsController {
           channel: body.channel,
           credentials: body.credentials,
           active: body.active ?? false,
-          check: body.check ?? true,
+          check: body.check ?? false,
           conditions: body.conditions,
         })
       );
@@ -177,9 +200,12 @@ export class IntegrationsController {
     description: 'The integration with the integrationId provided does not exist in the database.',
   })
   @ApiOperation({
-    summary: 'Update integration',
+    summary: 'Update an integration',
+    description: `Update an integration by its unique key identifier **integrationId**. 
+    Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async updateIntegrationById(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string,
@@ -196,9 +222,8 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           integrationId,
           credentials: body.credentials,
-          removeNovuBranding: body.removeNovuBranding,
           active: body.active,
-          check: body.check ?? true,
+          check: body.check ?? false,
           conditions: body.conditions,
         })
       );
@@ -217,9 +242,13 @@ export class IntegrationsController {
     description: 'The integration with the integrationId provided does not exist in the database.',
   })
   @ApiOperation({
-    summary: 'Set integration as primary',
+    summary: 'Update integration as primary',
+    description: `Update an integration as **primary** by its unique key identifier **integrationId**. 
+    This API will set the integration as primary for that channel in the current environment. 
+    Primary integration is used to deliver notification for sms and email channels in the workflow.`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @SdkMethodName('setAsPrimary')
   setIntegrationAsPrimary(
     @UserSession() user: UserSessionData,
@@ -238,9 +267,12 @@ export class IntegrationsController {
   @Delete('/:integrationId')
   @ApiResponse(IntegrationResponseDto, 200, true)
   @ApiOperation({
-    summary: 'Delete integration',
+    summary: 'Delete an integration',
+    description: `Delete an integration by its unique key identifier **integrationId**. 
+    This action is irreversible.`,
   })
   @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async removeIntegration(
     @UserSession() user: UserSessionData,
     @Param('integrationId') integrationId: string
@@ -258,6 +290,7 @@ export class IntegrationsController {
   @Get('/:channelType/limit')
   @ApiExcludeEndpoint()
   @OtelSpan()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getProviderLimit(
     @UserSession() user: UserSessionData,
     @Param('channelType') channelType: ChannelTypeEnum
@@ -279,6 +312,7 @@ export class IntegrationsController {
 
   @Get('/in-app/status')
   @ApiExcludeEndpoint()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async getInAppActivated(@UserSession() user: UserSessionData) {
     return await this.getInAppActivatedUsecase.execute(
       GetInAppActivatedCommand.create({
@@ -286,5 +320,32 @@ export class IntegrationsController {
         environmentId: user.environmentId,
       })
     );
+  }
+
+  private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    const organization = await this.organizationRepository.findOne({
+      _id: user.organizationId,
+    });
+
+    const [isRbacFlagEnabled, isRbacFeatureEnabled] = await Promise.all([
+      this.featureFlagService.getFlag({
+        organization: { _id: user.organizationId },
+        user: { _id: user._id },
+        key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+        defaultValue: false,
+      }),
+      getFeatureForTierAsBoolean(
+        FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+        organization?.apiServiceLevel || ApiServiceLevelEnum.FREE
+      ),
+    ]);
+
+    const isRbacEnabled = isRbacFlagEnabled && isRbacFeatureEnabled;
+
+    if (!isRbacEnabled) {
+      return true;
+    }
+
+    return user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE);
   }
 }

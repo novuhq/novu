@@ -204,6 +204,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     status: {
       type: Schema.Types.String,
     },
+    lastTriggeredAt: {
+      type: Schema.Types.Date,
+      default: null,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -223,6 +227,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     data: Schema.Types.Mixed,
     rawData: Schema.Types.Mixed,
     payloadSchema: Schema.Types.Mixed,
+    validatePayload: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     issues: Schema.Types.Mixed,
   },
   { ...schemaOptions, minimize: false }
@@ -256,24 +264,25 @@ notificationTemplateSchema.virtual('notificationGroup', {
 });
 
 notificationTemplateSchema.index({
+  _environmentId: 1,
+  'triggers.identifier': 1,
+});
+
+notificationTemplateSchema.index({
+  _environmentId: 1,
+  _id: 1,
+});
+
+// TODO: Deprecate this index. Use the envId, triggerId instead
+notificationTemplateSchema.index({
   _organizationId: 1,
   'triggers.identifier': 1,
 });
 
+// TODO: Deprecate this index. Use the envId, triggerId instead
 notificationTemplateSchema.index({
   _environmentId: 1,
   name: 1,
-});
-
-notificationTemplateSchema.index({
-  _environmentId: 1,
-  'triggers.identifier': 1,
-  name: 1,
-});
-
-notificationTemplateSchema.index({
-  _environmentId: 1,
-  'triggers.identifier': 1,
 });
 
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });

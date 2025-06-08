@@ -1,26 +1,29 @@
-import { useState } from 'react';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useUpdateIntegration } from '@/hooks/use-update-integration';
-import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
-import { IntegrationConfiguration } from './integration-configuration';
 import { Button } from '@/components/primitives/button';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
+import { useUpdateIntegration } from '@/hooks/use-update-integration';
+import { ChannelTypeEnum, providers as novuProviders, PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
+import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
+import { ROUTES } from '../../../utils/routes';
+import { IntegrationFormData } from '../types';
+import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
+import { IntegrationConfiguration } from './integration-configuration';
+import { IntegrationSheet } from './integration-sheet';
 import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
-import { IntegrationSheet } from './integration-sheet';
-import { ChannelTypeEnum, providers as novuProviders } from '@novu/shared';
-import { IntegrationFormData } from '../types';
-import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { handleIntegrationError } from './utils/handle-integration-error';
-import { useIntegrationPrimaryModal } from './hooks/use-integration-primary-modal';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../utils/routes';
-import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
+import { isDemoIntegration } from './utils/helpers';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;
 };
 
 export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarProps) {
+  const has = useHasPermission();
   const navigate = useNavigate();
   const { integrationId } = useParams();
   const { integrations } = useFetchIntegrations();
@@ -50,6 +53,8 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
     mode: 'update',
     setPrimaryIntegration: setPrimaryIntegration,
   });
+
+  const isReadOnly = !has({ permission: PermissionsEnum.INTEGRATION_WRITE });
 
   async function onSubmit(data: IntegrationFormData, skipPrimaryCheck?: boolean) {
     if (!integration) return;
@@ -120,6 +125,9 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
 
   if (!integration || !provider) return null;
 
+  const isIntegrationDeletionAllowed =
+    !isDemoIntegration(integration?.providerId) && integration?.channel !== ChannelTypeEnum.IN_APP && !isReadOnly;
+
   return (
     <>
       <IntegrationSheet isOpened={isOpened} onClose={handleClose} provider={provider} mode="update">
@@ -131,29 +139,34 @@ export function UpdateIntegrationSidebar({ isOpened }: UpdateIntegrationSidebarP
             onSubmit={handleSubmitWithPrimaryCheck}
             mode="update"
             hasOtherProviders={!!hasOtherProviders}
+            isReadOnly={isReadOnly}
           />
         </div>
 
         <div className="bg-background flex justify-between gap-2 border-t p-3">
-          {integration.channel !== ChannelTypeEnum.IN_APP && (
+          {isIntegrationDeletionAllowed && (
             <Button
-              variant="ghostDestructive"
-              size="sm"
+              variant="error"
+              mode="ghost"
               isLoading={isDeleting}
+              disabled={isReadOnly}
               onClick={() => setIsDeleteDialogOpen(true)}
             >
               Delete Integration
             </Button>
           )}
-          <Button
-            type="submit"
-            form="integration-configuration-form"
-            className="ml-auto"
-            isLoading={isUpdating || isSettingPrimary}
-            size="sm"
-          >
-            Save Changes
-          </Button>
+
+          {!isReadOnly && (
+            <Button
+              type="submit"
+              form="integration-configuration-form"
+              className="ml-auto"
+              isLoading={isUpdating || isSettingPrimary}
+              disabled={isReadOnly}
+            >
+              Save Changes
+            </Button>
+          )}
         </div>
       </IntegrationSheet>
 

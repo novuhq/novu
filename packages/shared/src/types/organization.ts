@@ -2,10 +2,15 @@ export type OrganizationId = string;
 
 export enum ApiServiceLevelEnum {
   FREE = 'free',
+  PRO = 'pro',
   BUSINESS = 'business',
   ENTERPRISE = 'enterprise',
-  // TODO: NV-3067 - Remove unlimited tier once all organizations have a service level
   UNLIMITED = 'unlimited',
+}
+
+export enum StripeBillingIntervalEnum {
+  MONTH = 'month',
+  YEAR = 'year',
 }
 
 export enum ProductUseCasesEnum {
@@ -20,7 +25,6 @@ export type ProductUseCases = Partial<Record<ProductUseCasesEnum, boolean>>;
 
 export type OrganizationPublicMetadata = {
   externalOrgId?: string;
-  apiServiceLevel?: ApiServiceLevelEnum;
   domain?: string;
   productUseCases?: ProductUseCases;
   language?: string[];

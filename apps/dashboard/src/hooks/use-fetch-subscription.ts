@@ -1,11 +1,12 @@
-import { differenceInDays, isSameDay } from 'date-fns';
 import { getSubscription } from '@/api/billing';
-import { QueryKeys } from '@/utils/query-keys';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { QueryKeys } from '@/utils/query-keys';
 import type { GetSubscriptionDto } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
+import { differenceInDays, isSameDay } from 'date-fns';
+import { useMemo } from 'react';
+import { IS_SELF_HOSTED } from '@/config';
 
 const today = new Date();
 
@@ -18,7 +19,10 @@ export const useFetchSubscription = () => {
   const { data: subscription, isLoading: isLoadingSubscription } = useQuery<GetSubscriptionDto>({
     queryKey: [QueryKeys.billingSubscription, currentOrganization?._id],
     queryFn: () => getSubscription({ environment: currentEnvironment! }),
-    enabled: !!currentOrganization,
+    enabled: !!currentOrganization && !IS_SELF_HOSTED,
+    meta: {
+      showError: false,
+    },
   });
 
   const daysLeft = useMemo(() => {

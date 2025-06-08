@@ -9,7 +9,6 @@ import {
   IconOutlineMonitorHeart,
   IconRoute,
   IconSettings,
-  IconTaskAlt,
   IconTranslate,
   IconViewQuilt,
   IconWebhook,
@@ -18,17 +17,13 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useToggle } from '@mantine/hooks';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
 import { ROUTES } from '../../constants/routes';
-import { useSegment } from '../providers/SegmentProvider';
 import { useEnvironment } from '../../hooks/useEnvironment';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
-import { useUserOnboardingStatus } from '../../api/hooks/useUserOnboardingStatus';
 import { EnvironmentSelect } from './EnvironmentSelect';
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
 import { OrganizationSelect } from './OrganizationSelect/OrganizationSelect';
-import { RootNavMenuFooter } from './RootNavMenuFooter';
-import { VisibilityButton } from './VisibilityButton';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { parseUrl } from '../../utils/routeUtils';
 import { OrganizationSwitcher } from '../../ee/clerk';
@@ -44,34 +39,15 @@ import { NewDashboardOptInWidget } from '../layout/components/v2/NewDashboardOpt
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
 export const RootNavMenu: React.FC = () => {
-  const segment = useSegment();
-  const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
   const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const [isLocalStudioModalOpen, toggleLocalStudioModalOpen] = useToggle();
   const { navigateToLocalStudio } = useNavigateToLocalStudio({ fallbackFn: toggleLocalStudioModalOpen });
 
-  const handleHideOnboardingClick: React.MouseEventHandler = async () => {
-    segment.track('Click Hide Get Started Page - [Get Started]');
-    await updateOnboardingStatus({ showOnboarding: false });
-  };
-
   return (
     <NavMenu variant="root">
       <NavMenuSection>
         {IS_EE_AUTH_ENABLED ? <OrganizationSwitcher /> : <OrganizationSelect />}
-        <NavMenuLinkButton
-          label="Get started"
-          isVisible={!isLoadingOnboardingStatus && showOnboarding}
-          icon={<IconTaskAlt />}
-          link={ROUTES.GET_STARTED}
-          testId="side-nav-quickstart-link"
-          rightSide={{
-            node: <VisibilityButton onClick={handleHideOnboardingClick} />,
-            triggerOn: 'hover',
-            tooltip: 'Hide this page from menu',
-          }}
-        />
         <NavMenuLinkButton
           icon={<IconCellTower />}
           link={ROUTES.INTEGRATIONS}

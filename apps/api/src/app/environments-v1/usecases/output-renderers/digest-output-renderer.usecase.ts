@@ -9,13 +9,6 @@ export class DigestOutputRendererUsecase {
   execute(renderCommand: RenderCommand): DigestRenderOutput {
     const { skip, ...outputControls } = renderCommand.controlValues ?? {};
 
-    if (outputControls.length === 0) {
-      throw new InternalServerErrorException({
-        message: `Invalid digest control value data sent for rendering`,
-        controlValues: renderCommand.controlValues,
-      });
-    }
-
     return outputControls as any;
   }
 }

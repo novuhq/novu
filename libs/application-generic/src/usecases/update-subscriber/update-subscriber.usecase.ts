@@ -1,32 +1,21 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
-import {
-  InvalidateCacheService,
-  buildSubscriberKey,
-  CachedEntity,
-} from '../../services/cache';
-import { subscriberNeedUpdate } from '../../utils/subscriber';
+import { buildSubscriberKey, CachedResponse, InvalidateCacheService } from '../../services';
+import { subscriberNeedUpdate } from '../../utils';
 
 import { UpdateSubscriberCommand } from './update-subscriber.command';
-import { ApiException } from '../../utils/exceptions';
-import {
-  OAuthHandlerEnum,
-  UpdateSubscriberChannel,
-  UpdateSubscriberChannelCommand,
-} from '../subscribers';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 
 @Injectable()
 export class UpdateSubscriber {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private subscriberRepository: SubscriberRepository,
-    private updateSubscriberChannel: UpdateSubscriberChannel,
+    private updateSubscriberChannel: UpdateSubscriberChannel
   ) {}
 
-  public async execute(
-    command: UpdateSubscriberCommand,
-  ): Promise<SubscriberEntity> {
+  public async execute(command: UpdateSubscriberCommand): Promise<SubscriberEntity> {
     const foundSubscriber = command.subscriber
       ? command.subscriber
       : await this.fetchSubscriber({
@@ -35,7 +24,7 @@ export class UpdateSubscriber {
         });
 
     if (!foundSubscriber) {
-      throw new ApiException(`SubscriberId: ${command.subscriberId} not found`);
+      throw new BadRequestException(`SubscriberId: ${command.subscriberId} not found`);
     }
 
     const updatePayload: Partial<SubscriberEntity> = {};
@@ -62,6 +51,9 @@ export class UpdateSubscriber {
 
     if (command.locale != null) {
       updatePayload.locale = command.locale;
+    }
+    if (command.timezone != null) {
+      updatePayload.timezone = command.timezone;
     }
 
     if (command.data != null) {
@@ -92,7 +84,7 @@ export class UpdateSubscriber {
       },
       {
         $set: updatePayload,
-      },
+      }
     );
 
     // fetch subscriber again as channel credentials are updated
@@ -111,10 +103,7 @@ export class UpdateSubscriber {
     };
   }
 
-  private async updateSubscriberChannels(
-    command: UpdateSubscriberCommand,
-    foundSubscriber: SubscriberEntity,
-  ) {
+  private async updateSubscriberChannels(command: UpdateSubscriberCommand, foundSubscriber: SubscriberEntity) {
     for (const channel of command.channels) {
       await this.updateSubscriberChannel.execute(
         UpdateSubscriberChannelCommand.create({
@@ -127,12 +116,12 @@ export class UpdateSubscriber {
           integrationIdentifier: channel.integrationIdentifier,
           oauthHandler: OAuthHandlerEnum.EXTERNAL,
           isIdempotentOperation: false,
-        }),
+        })
       );
     }
   }
 
-  @CachedEntity({
+  @CachedResponse({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
         _environmentId: command._environmentId,
@@ -146,10 +135,6 @@ export class UpdateSubscriber {
     subscriberId: string;
     _environmentId: string;
   }): Promise<SubscriberEntity | null> {
-    return await this.subscriberRepository.findBySubscriberId(
-      _environmentId,
-      subscriberId,
-      true,
-    );
+    return await this.subscriberRepository.findBySubscriberId(_environmentId, subscriberId, true);
   }
 }

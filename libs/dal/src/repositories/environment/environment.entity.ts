@@ -2,8 +2,8 @@ import { Types } from 'mongoose';
 
 import { EncryptedSecret, IApiRateLimitMaximum } from '@novu/shared';
 
-import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
+import type { OrganizationId } from '../organization';
 
 export interface IApiKey {
   /*
@@ -44,12 +44,20 @@ export class EnvironmentEntity {
 
   _parentId: string;
 
+  color?: string;
+
   echo: {
     url: string;
   };
   bridge: {
     url: string;
   };
+
+  webhookAppId?: string;
+
+  createdAt?: string;
+
+  updatedAt?: string;
 }
 
 export type EnvironmentDBModel = ChangePropsValueType<

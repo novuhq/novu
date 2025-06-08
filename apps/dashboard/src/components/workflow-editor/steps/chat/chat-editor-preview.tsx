@@ -1,17 +1,17 @@
-import { RiChat1Fill } from 'react-icons/ri';
-import { GeneratePreviewResponseDto } from '@novu/shared';
+import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { InlineToast } from '@/components/primitives/inline-toast';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type ChatEditorPreviewProps = {
   editorValue: string;
-  setEditorValue: (value: string) => void;
+  setEditorValue: (value: string) => Error | null;
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
+  workflow?: WorkflowResponseDto;
 };
 
 export const ChatEditorPreview = ({
@@ -20,14 +20,12 @@ export const ChatEditorPreview = ({
   previewStep,
   previewData,
   isPreviewPending = false,
+  workflow,
 }: ChatEditorPreviewProps) => {
   return (
     <TabsSection>
       <div className="relative flex flex-col gap-3">
-        <div className="flex items-center gap-2.5 text-sm font-medium">
-          <RiChat1Fill className="size-3" />
-          Chat template editor
-        </div>
+        <div className="flex items-center gap-2.5 text-sm font-medium">Chat template editor</div>
         <div className="flex flex-col items-center justify-center gap-4">
           <ChatPreview isPreviewPending={isPreviewPending} previewData={previewData} />
           <InlineToast
@@ -35,7 +33,13 @@ export const ChatEditorPreview = ({
             className="w-full px-3"
           />
         </div>
-        <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
+        <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
+          editorValue={editorValue}
+          setEditorValue={setEditorValue}
+          onUpdate={previewStep}
+          workflow={workflow}
+        />
       </div>
     </TabsSection>
   );

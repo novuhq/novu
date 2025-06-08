@@ -69,10 +69,10 @@ export class CommunityMemberRepository
     ];
   }
 
-  async getOrganizationAdminAccount(organizationId: string) {
+  async getOrganizationOwnerAccount(organizationId: string) {
     const requestQuery: MemberQuery = {
       _organizationId: organizationId,
-      roles: MemberRoleEnum.ADMIN,
+      roles: MemberRoleEnum.OSS_ADMIN,
     };
 
     const member = await this.MongooseModel.findOne(requestQuery);
@@ -92,7 +92,7 @@ export class CommunityMemberRepository
 
     return [
       ...membersEntity
-        .filter((i) => i.roles.includes(MemberRoleEnum.ADMIN))
+        .filter((i) => i.roles.includes(MemberRoleEnum.OSS_ADMIN))
         .map((member) => {
           return {
             ...member,

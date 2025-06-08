@@ -16,10 +16,7 @@ const userSchema = new Schema<UserDBModel>(
       reqInDay: Schema.Types.Number,
     },
     showOnBoarding: Schema.Types.Boolean,
-    showOnBoardingTour: {
-      type: Schema.Types.Number,
-      default: 0,
-    },
+    showOnBoardingTour: Schema.Types.Number,
     tokens: [
       {
         providerId: Schema.Types.String,
@@ -45,6 +42,16 @@ const userSchema = new Schema<UserDBModel>(
   },
   schemaOptions
 );
+
+// Create a unique index for email field only when self-hosted
+if (process.env.SELF_HOSTED === 'true') {
+  userSchema.index(
+    { email: 1 },
+    {
+      unique: true,
+    }
+  );
+}
 
 export const User =
   (mongoose.models.User as mongoose.Model<UserDBModel>) || mongoose.model<UserDBModel>('User', userSchema);

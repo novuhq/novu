@@ -1,8 +1,8 @@
-import { Control } from 'react-hook-form';
-import { Input, InputField } from '@/components/primitives/input';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { Input } from '@/components/primitives/input';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { Control } from 'react-hook-form';
 
 type IntegrationFormData = {
   name: string;
@@ -17,11 +17,18 @@ type IntegrationFormData = {
 type GeneralSettingsProps = {
   control: Control<IntegrationFormData>;
   mode: 'create' | 'update';
+  isReadOnly?: boolean;
   hidePrimarySelector?: boolean;
   disabledPrimary?: boolean;
 };
 
-export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPrimary }: GeneralSettingsProps) {
+export function GeneralSettings({
+  control,
+  mode,
+  isReadOnly,
+  hidePrimarySelector,
+  disabledPrimary,
+}: GeneralSettingsProps) {
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
       <FormField
@@ -37,7 +44,7 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
               Active Integration
             </FormLabel>
             <FormControl>
-              <Switch id="active" checked={field.value} onCheckedChange={field.onChange} />
+              <Switch id="active" checked={field.value} onCheckedChange={field.onChange} disabled={isReadOnly} />
             </FormControl>
           </FormItem>
         )}
@@ -61,7 +68,7 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
                   id="primary"
                   checked={field.value}
                   onCheckedChange={field.onChange}
-                  disabled={disabledPrimary}
+                  disabled={disabledPrimary || isReadOnly}
                 />
               </FormControl>
             </FormItem>
@@ -77,13 +84,11 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
         rules={{ required: 'Name is required' }}
         render={({ field }) => (
           <FormItem>
-            <FormLabel className="text-xs" htmlFor="name">
+            <FormLabel className="text-xs" htmlFor="name" required>
               Name
             </FormLabel>
             <FormControl>
-              <InputField>
-                <Input id="name" {...field} />
-              </InputField>
+              <Input id="name" {...field} disabled={isReadOnly} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -100,15 +105,18 @@ export function GeneralSettings({ control, mode, hidePrimarySelector, disabledPr
             message: 'Identifier cannot contain spaces',
           },
         }}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <FormItem>
-            <FormLabel className="text-xs" htmlFor="identifier">
+            <FormLabel className="text-xs" htmlFor="identifier" required>
               Identifier
             </FormLabel>
             <FormControl>
-              <InputField>
-                <Input id="identifier" {...field} readOnly={mode === 'update'} />
-              </InputField>
+              <Input
+                id="identifier"
+                {...field}
+                readOnly={mode === 'update' || isReadOnly}
+                hasError={!!fieldState.error}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>

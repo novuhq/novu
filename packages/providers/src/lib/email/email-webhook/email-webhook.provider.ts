@@ -14,10 +14,7 @@ import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
-export class EmailWebhookProvider
-  extends BaseProvider
-  implements IEmailProvider
-{
+export class EmailWebhookProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = EmailProviderIdEnum.EmailWebhook;
   readonly channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
@@ -28,16 +25,14 @@ export class EmailWebhookProvider
       webhookUrl: string;
       retryCount?: number;
       retryDelay?: number;
-    },
+    }
   ) {
     super();
     this.config.retryDelay ??= 30 * 1000;
     this.config.retryCount ??= 3;
   }
 
-  async checkIntegration(
-    options: IEmailOptions,
-  ): Promise<ICheckIntegrationResponse> {
+  async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     return {
       success: true,
       message: 'Integrated successfully!',
@@ -47,18 +42,14 @@ export class EmailWebhookProvider
 
   async sendMessage(
     options: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, options);
     const bodyData = this.createBody(transformedData.body);
     const hmacValue = this.computeHmac(bodyData);
     let sent = false;
 
-    for (
-      let retries = 0;
-      !sent && retries < this.config.retryCount;
-      retries += 1
-    ) {
+    for (let retries = 0; !sent && retries < this.config.retryCount; retries += 1) {
       try {
         await axios.create().post(this.config.webhookUrl, bodyData, {
           headers: {
@@ -87,9 +78,6 @@ export class EmailWebhookProvider
   }
 
   computeHmac(payload: string): string {
-    return crypto
-      .createHmac('sha256', this.config.hmacSecretKey)
-      .update(payload, 'utf-8')
-      .digest('hex');
+    return crypto.createHmac('sha256', this.config.hmacSecretKey).update(payload, 'utf-8').digest('hex');
   }
 }

@@ -19,20 +19,17 @@ test('should trigger gupshup library correctly', async () => {
   });
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith(
-    'https://enterprise.smsgupshup.com/GatewayAPI/rest',
-    {
-      auth_scheme: 'plain',
-      format: 'text',
-      method: 'sendMessage',
-      msg: 'Your otp code is 32901',
-      msg_type: 'text',
-      password: 'password',
-      send_to: '+2347063317344',
-      userid: '1',
-      v: '1.1',
-    },
-  );
+  expect(spy).toHaveBeenCalledWith('https://enterprise.smsgupshup.com/GatewayAPI/rest', {
+    auth_scheme: 'plain',
+    format: 'text',
+    method: 'sendMessage',
+    msg: 'Your otp code is 32901',
+    msg_type: 'text',
+    password: 'password',
+    send_to: '+2347063317344',
+    userid: '1',
+    v: '1.1',
+  });
 });
 
 test('should trigger gupshup library correctly with _passthrough', async () => {
@@ -57,22 +54,19 @@ test('should trigger gupshup library correctly with _passthrough', async () => {
           send_to: '+3347063317344',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toHaveBeenCalledWith(
-    'https://enterprise.smsgupshup.com/GatewayAPI/rest',
-    {
-      auth_scheme: 'plain',
-      format: 'text',
-      method: 'sendMessage',
-      msg: 'Your otp code is 32901',
-      msg_type: 'text',
-      password: 'password',
-      send_to: '+3347063317344',
-      userid: '1',
-      v: '1.1',
-    },
-  );
+  expect(spy).toHaveBeenCalledWith('https://enterprise.smsgupshup.com/GatewayAPI/rest', {
+    auth_scheme: 'plain',
+    format: 'text',
+    method: 'sendMessage',
+    msg: 'Your otp code is 32901',
+    msg_type: 'text',
+    password: 'password',
+    send_to: '+3347063317344',
+    userid: '1',
+    v: '1.1',
+  });
 });

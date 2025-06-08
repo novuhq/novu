@@ -5,47 +5,54 @@ import {
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
+  ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
   UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
-  TierRestrictionsValidateUsecase,
-  DeleteControlValuesUseCase,
 } from '@novu/application-generic';
 
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { SharedModule } from '../shared/shared.module';
-import { MessageTemplateModule } from '../message-template/message-template.module';
-import { ChangeModule } from '../change/change.module';
 import { AuthModule } from '../auth/auth.module';
+import { BridgeModule } from '../bridge';
+import { ChangeModule } from '../change/change.module';
 import { IntegrationModule } from '../integrations/integrations.module';
-import { WorkflowController } from './workflow.controller';
+import { MessageTemplateModule } from '../message-template/message-template.module';
+import { SharedModule } from '../shared/shared.module';
 import {
-  BuildAvailableVariableSchemaUsecase,
-  BuildDefaultPayloadUsecase,
   BuildStepDataUsecase,
+  BuildVariableSchemaUsecase,
   BuildWorkflowTestDataUseCase,
-  CollectPlaceholderWithDefaultsUsecase,
-  ExtractDefaultValuesFromSchemaUsecase,
-  GeneratePreviewUsecase,
+  PreviewUsecase,
   GetWorkflowUseCase,
   ListWorkflowsUseCase,
-  PostProcessWorkflowUpdate,
-  PrepareAndValidateContentUsecase,
   SyncToEnvironmentUseCase,
   UpsertWorkflowUseCase,
-  ValidatePlaceholderUsecase,
 } from './usecases';
-import { BridgeModule } from '../bridge';
-import { HydrateEmailSchemaUseCase } from '../environments-v1/usecases/output-renderers';
-import { OverloadContentDataOnWorkflowUseCase } from './usecases/overload-content-data';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { PatchStepUsecase } from './usecases/patch-step-data/patch-step.usecase';
-import { BuildPayloadSchema } from './usecases/build-payload-schema/build-payload-schema.usecase';
+import { CreateVariablesObject } from './usecases/create-variables-object/create-variables-object.usecase';
+import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
+import { WorkflowController } from './workflow.controller';
+import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
+import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ControlValueSanitizerService } from './usecases/preview/services/control-value-sanitizer.service';
+import { PayloadMergerService } from './usecases/preview/services/payload-merger.service';
+import { SchemaBuilderService } from './usecases/preview/services/schema-builder.service';
+import { PreviewPayloadProcessorService } from './usecases/preview/services/preview-payload-processor.service';
+import { MockDataGeneratorService } from './usecases/preview/services/mock-data-generator.service';
+import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
+const MODULES = [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule];
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  MODULES.push(WebhooksModule);
+}
+
 @Module({
-  imports: [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule],
+  imports: MODULES,
   controllers: [WorkflowController],
   providers: [
     ...DAL_REPOSITORIES,
@@ -59,26 +66,25 @@ const DAL_REPOSITORIES = [CommunityOrganizationRepository];
     UpsertControlValuesUseCase,
     GetPreferences,
     GetWorkflowByIdsUseCase,
+    GetWorkflowWithPreferencesUseCase,
     SyncToEnvironmentUseCase,
     BuildStepDataUsecase,
-    GeneratePreviewUsecase,
+    PreviewUsecase,
     BuildWorkflowTestDataUseCase,
     GetWorkflowUseCase,
-    HydrateEmailSchemaUseCase,
-    PostProcessWorkflowUpdate,
-    BuildDefaultPayloadUsecase,
-    BuildAvailableVariableSchemaUsecase,
-    CollectPlaceholderWithDefaultsUsecase,
-    PrepareAndValidateContentUsecase,
-    ValidatePlaceholderUsecase,
-    ExtractDefaultValuesFromSchemaUsecase,
-    PatchStepUsecase,
-    PostProcessWorkflowUpdate,
-    OverloadContentDataOnWorkflowUseCase,
+    DuplicateWorkflowUseCase,
+    BuildVariableSchemaUsecase,
     PatchWorkflowUsecase,
+    CreateVariablesObject,
+    BuildStepIssuesUsecase,
+    ResourceValidatorService,
     TierRestrictionsValidateUsecase,
-    BuildPayloadSchema,
-    DeleteControlValuesUseCase,
+    ControlValueSanitizerService,
+    PayloadMergerService,
+    SchemaBuilderService,
+    PreviewPayloadProcessorService,
+    MockDataGeneratorService,
+    PreviewErrorHandler,
   ],
 })
 export class WorkflowModule implements NestModule {

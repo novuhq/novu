@@ -1,16 +1,21 @@
 "use client";
 
 import { Novu } from "@novu/js";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Inbox } from "@novu/nextjs";
+import { useRouter } from "next/navigation";
 import styles from "./Notifications.module.css"; // You'll need to create this
 
 const NotificationToast = () => {
-  const novu = new Novu({
-    subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID || "",
-    applicationIdentifier:
-      process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER || "",
-  });
+  const novu = useMemo(
+    () =>
+      new Novu({
+        subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID || "",
+        applicationIdentifier:
+          process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER || "",
+      }),
+    [],
+  );
 
   const [showToast, setShowToast] = useState(false);
 
@@ -62,5 +67,9 @@ const novuConfig = {
 };
 
 export function NovuInbox() {
-  return <Inbox {...novuConfig} />;
+  const router = useRouter();
+
+  return (
+    <Inbox {...novuConfig} routerPush={(path: string) => router.push(path)} />
+  );
 }

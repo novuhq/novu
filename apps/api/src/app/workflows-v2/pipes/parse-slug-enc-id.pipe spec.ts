@@ -18,7 +18,7 @@ describe('ParseSlugEnvironmentIdPipe', () => {
       _id: 'user-id',
       organizationId: 'org-id',
       roles: [],
-      exp: 0,
+      permissions: [],
       scheme: ApiAuthSchemeEnum.BEARER,
     };
   }

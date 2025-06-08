@@ -27,6 +27,7 @@ export function useSidebarNavigationManager({
         setSelectedIntegration(undefined);
         setStep('select');
       }
+
       setSearchQuery('');
     }
   }, [isOpened, initialProviderId]);

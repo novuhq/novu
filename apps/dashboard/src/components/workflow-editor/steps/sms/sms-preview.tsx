@@ -3,7 +3,7 @@ import { ChannelTypeEnum, SmsRenderOutput, type GeneratePreviewResponseDto } fro
 import { ReactNode } from 'react';
 
 const SmsPreviewContainer = ({ children }: { children: ReactNode }) => {
-  return <div className="pt-2">{children}</div>;
+  return <div className="flex items-center justify-center">{children}</div>;
 };
 
 export const SmsPreview = ({

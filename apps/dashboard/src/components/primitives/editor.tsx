@@ -1,35 +1,42 @@
-import React, { useCallback, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { flushSync } from 'react-dom';
-import { useCodeMirror, ReactCodeMirrorProps, EditorView } from '@uiw/react-codemirror';
-import createTheme from '@uiw/codemirror-themes';
+import { autocompleteFooter, autocompleteHeader, digestIcon, functionIcon } from '@/components/primitives/constants';
+import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
-import { cva, VariantProps } from 'class-variance-authority';
-import { autocompleteFooter, autocompleteHeader, functionIcon } from '@/components/primitives/constants';
+import createTheme from '@uiw/codemirror-themes';
+import {
+  default as CodeMirror,
+  EditorView,
+  ReactCodeMirrorProps,
+  type ReactCodeMirrorRef,
+} from '@uiw/react-codemirror';
+import { cva } from 'class-variance-authority';
+import React, { useCallback, useMemo } from 'react';
+import { flushSync } from 'react-dom';
 
-const editorVariants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
+const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
     size: {
-      default: 'text-xs [&_.cm-editor]:py-1',
-      lg: 'text-base [&_.cm-editor]:py-1',
+      md: 'text-sm',
+      sm: 'text-xs',
+      '2xs': 'text-xs',
     },
   },
   defaultVariants: {
-    size: 'default',
+    size: 'sm',
   },
 });
 
-const baseTheme = (options: { asInput?: boolean }) =>
+const baseTheme = (options: { multiline?: boolean }) =>
   EditorView.baseTheme({
     '&light': {
       backgroundColor: 'transparent',
     },
-    ...(options.asInput
-      ? {
+    ...(options.multiline
+      ? {}
+      : {
           '.cm-scroller': {
             overflow: 'hidden',
           },
-        }
-      : {}),
+        }),
     '.cm-tooltip-autocomplete .cm-completionIcon-variable': {
       '&:before': {
         content: 'Suggestions',
@@ -43,9 +50,22 @@ const baseTheme = (options: { asInput?: boolean }) =>
         backgroundImage: `url('${functionIcon}')`,
       },
     },
+    '.cm-tooltip-autocomplete .cm-completionIcon-digest': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '16px',
+        width: '16px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${digestIcon}')`,
+      },
+    },
     '.cm-tooltip-autocomplete.cm-tooltip': {
       position: 'relative',
-      overflow: 'hidden',
+      overflow: 'visible',
       borderRadius: 'var(--radius)',
       border: '1px solid var(--neutral-100)',
       backgroundColor: 'hsl(var(--background))',
@@ -84,6 +104,7 @@ const baseTheme = (options: { asInput?: boolean }) =>
       alignItems: 'center',
       gap: '8px',
       padding: '4px',
+      fontFamily: 'JetBrains Mono, monospace',
       fontSize: '12px',
       fontWeight: '500',
       lineHeight: '16px',
@@ -102,55 +123,114 @@ const baseTheme = (options: { asInput?: boolean }) =>
     '.cm-line span.cm-matchingBracket': {
       backgroundColor: 'hsl(var(--highlighted) / 0.1)',
     },
+    // important to show the cursor at the beginning of the line
+    '.cm-line': {
+      marginLeft: '1px',
+      lineHeight: '20px',
+    },
     'div.cm-content': {
       padding: 0,
+      whiteSpace: 'preserve nowrap',
+      width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
     },
     'div.cm-gutters': {
       backgroundColor: 'transparent',
       borderRight: 'none',
       color: 'hsl(var(--foreground-400))',
     },
+    '.cm-placeholder': {
+      fontWeight: 'normal',
+    },
+    '.cm-tooltip .cm-completionInfo': {
+      marginInline: '0.375rem',
+      borderRadius: '0.5rem',
+      boxShadow: '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
+      borderColor: 'transparent',
+      padding: '0px !important',
+      backgroundColor: 'hsl(var(--bg-weak))',
+    },
+    '.cm-tooltip-autocomplete.cm-tooltip > ul > li:hover': {
+      backgroundColor: 'hsl(var(--neutral-100))',
+    },
+    // Style for the "Create:" prefix on new variable suggestions
+    '.cm-new-variable-option .cm-completionLabel': {
+      fontWeight: '500',
+      '&::before': {
+        content: "'create: '",
+        color: 'hsl(var(--foreground-400))',
+        marginRight: '0.33em',
+      },
+    },
+    // Style for the icon on new variable suggestions
+    '.cm-new-variable-option .cm-completionIcon': {
+      '&::after': {
+        content: "''",
+        height: '16px',
+        width: '16px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${functionIcon}')`,
+      },
+    },
+    // Adding tooltip content for new variable options
+    '.cm-new-variable-option.cm-completion': {
+      '&[data-has-info=true] ~ .cm-tooltip .cm-completionInfo': {
+        padding: '12px !important',
+        minHeight: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: 'hsl(var(--foreground-950))',
+      },
+    },
   });
 
-type EditorProps = {
+export type EditorProps = {
   value: string;
-  asInput?: boolean;
+  multiline?: boolean;
   placeholder?: string;
   className?: string;
   height?: string;
   onChange?: (value: string) => void;
   fontFamily?: 'inherit';
-} & ReactCodeMirrorProps &
-  VariantProps<typeof editorVariants>;
+  size?: 'sm' | 'md' | '2xs';
+} & ReactCodeMirrorProps;
 
-export const Editor = React.forwardRef<{ focus: () => void; blur: () => void }, EditorProps>(
+export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
   (
     {
       value,
       placeholder,
       className,
       height,
-      size,
-      asInput,
+      multiline = false,
       fontFamily,
       onChange,
+      size = 'sm',
       extensions: extensionsProp,
       basicSetup: basicSetupProp,
       ...restCodeMirrorProps
     },
     ref
   ) => {
-    const editorRef = useRef<HTMLDivElement>(null);
-    const [shouldFocus, setShouldFocus] = useState(false);
-    const extensions = useMemo(() => [...(extensionsProp ?? []), baseTheme({ asInput })], [extensionsProp, asInput]);
+    const onChangeRef = useDataRef(onChange);
+    const extensions = useMemo(
+      () => [...(extensionsProp ?? []), baseTheme({ multiline })],
+      [extensionsProp, multiline]
+    );
+
     const basicSetup = useMemo(
       () => ({
         lineNumbers: false,
         foldGutter: false,
         highlightActiveLine: false,
+        defaultKeymap: multiline,
         ...((typeof basicSetupProp === 'object' ? basicSetupProp : {}) ?? {}),
       }),
-      [basicSetupProp]
+      [basicSetupProp, multiline]
     );
 
     const theme = useMemo(
@@ -177,46 +257,25 @@ export const Editor = React.forwardRef<{ focus: () => void; blur: () => void }, 
         // which results in value not being updated and "jumping" effect in the editor
         // to prevent this we need to flush the state updates synchronously
         flushSync(() => {
-          onChange?.(value);
+          onChangeRef.current?.(value);
         });
       },
-      [onChange]
+      [onChangeRef]
     );
 
-    const { setContainer, view } = useCodeMirror({
-      extensions,
-      height,
-      placeholder,
-      basicSetup,
-      container: editorRef.current,
-      value,
-      onChange: onChangeCallback,
-      theme,
-      ...restCodeMirrorProps,
-    });
-
-    useImperativeHandle(
-      ref,
-      () => ({
-        focus: () => setShouldFocus(true),
-        blur: () => setShouldFocus(false),
-      }),
-      []
+    return (
+      <CodeMirror
+        ref={ref}
+        className={variants({ size, className })}
+        extensions={extensions}
+        height="auto"
+        placeholder={placeholder}
+        basicSetup={basicSetup}
+        value={value}
+        onChange={onChangeCallback}
+        theme={theme}
+        {...restCodeMirrorProps}
+      />
     );
-
-    useEffect(() => {
-      if (editorRef.current) {
-        setContainer(editorRef.current);
-      }
-    }, [setContainer]);
-
-    useLayoutEffect(() => {
-      if (view && shouldFocus) {
-        view.focus();
-        setShouldFocus(false);
-      }
-    }, [shouldFocus, view]);
-
-    return <div ref={editorRef} className={editorVariants({ size, className })} />;
   }
 );

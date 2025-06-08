@@ -37,6 +37,7 @@ export const ChatTabs = (props: StepEditorProps) => {
       previewStep={previewStep}
       previewData={previewData}
       isPreviewPending={isPreviewPending}
+      workflow={workflow}
     />
   );
 

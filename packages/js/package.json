@@ -1,8 +1,8 @@
 {
   "name": "@novu/js",
-  "version": "2.6.4",
+  "version": "3.5.0",
   "repository": "https://github.com/novuhq/novu",
-  "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
+  "description": "Novu JavaScript SDK for <Inbox />",
   "author": "",
   "license": "ISC",
   "main": "dist/cjs/index.js",
@@ -68,15 +68,18 @@
   "scripts": {
     "clean": "rimraf ./dist",
     "start:server": "http-server ./dist -p 4010",
+    "prebuild": "cp ./src/ui/index.css ./src/ui/index.directcss",
     "build": "pnpm run clean && NODE_ENV=production tsup",
-    "postbuild": "./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
+    "postbuild": "rm ./src/ui/index.directcss && ./scripts/copy-package-json.sh && node scripts/size-limit.mjs && pnpm run check-exports",
     "build:umd": "webpack --config webpack.config.cjs",
-    "build:watch": "concurrently \"pnpm run tsup:watch\" \"pnpm run start:server\"",
+    "build:watch": "concurrently \"pnpm run prebuild\" \"NODE_ENV=development pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch",
     "check-exports": "attw --pack .",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "jest"
+    "test": "jest",
+    "publish": "pnpm publish",
+    "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {
     "production": [
@@ -91,7 +94,7 @@
     ]
   },
   "devDependencies": {
-    "@arethetypeswrong/cli": "^0.16.4",
+    "@arethetypeswrong/cli": "^0.17.4",
     "@types/jest": "^29.2.3",
     "@types/node": "^20.15.0",
     "autoprefixer": "^10.4.0",
@@ -125,14 +128,14 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@floating-ui/dom": "^1.6.7",
+    "@floating-ui/dom": "^1.6.13",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
-    "solid-js": "^1.8.11",
-    "solid-motionone": "^1.0.1",
+    "solid-js": "^1.9.4",
+    "solid-motionone": "^1.0.3",
     "tailwind-merge": "^2.4.0"
   },
   "nx": {

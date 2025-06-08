@@ -16,9 +16,7 @@ const mockNovuMessage = {
   replyTo: 'test@test1.com',
   subject: 'test subject',
   html: '<div> Mail Content </div>',
-  attachments: [
-    { mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' },
-  ],
+  attachments: [{ mime: 'text/plain', file: Buffer.from('test'), name: 'test.txt' }],
 };
 
 const mockSESMessage = {
@@ -84,12 +82,10 @@ const mockSESMessage = {
 
 test('should trigger ses library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = vi
-    .spyOn(SESClient.prototype, 'send')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return mockResponse as any;
-    });
+  const spy = vi.spyOn(SESClient.prototype, 'send').mockImplementation(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return mockResponse as any;
+  });
 
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage);
@@ -106,12 +102,10 @@ test('should trigger ses library correctly', async () => {
 
 test('should trigger ses library correctly with _passthrough', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = vi
-    .spyOn(SESClient.prototype, 'send')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return mockResponse as any;
-    });
+  const spy = vi.spyOn(SESClient.prototype, 'send').mockImplementation(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return mockResponse as any;
+  });
 
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage, {
@@ -128,9 +122,7 @@ test('should trigger ses library correctly with _passthrough', async () => {
   const emailContent = buffer.toString();
 
   expect(spy).toHaveBeenCalled();
-  expect(emailContent.includes('Subject: test subject _passthrough')).toBe(
-    true,
-  );
+  expect(emailContent.includes('Subject: test subject _passthrough')).toBe(true);
   expect(response.id).toEqual('<mock-message-id@test-1.amazonses.com>');
 });
 
@@ -183,10 +175,7 @@ describe('parseEventBody', () => {
 
   test('should return undefined when status is unrecognized', async () => {
     const provider = new SESEmailProvider(mockConfig);
-    const messageId = provider.parseEventBody(
-      { event: 'not-real-event' },
-      'test',
-    );
+    const messageId = provider.parseEventBody({ event: 'not-real-event' }, 'test');
     expect(messageId).toBeUndefined();
   });
 });

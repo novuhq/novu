@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { StepTypeEnum } from '@novu/shared';
 
-describe('Get all preferences - /inbox/preferences (GET)', function () {
+describe('Get all preferences - /inbox/preferences (GET) #novu-v2', function () {
   let session: UserSession;
 
   beforeEach(async () => {

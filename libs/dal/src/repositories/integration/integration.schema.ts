@@ -19,6 +19,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
     credentials: {
+      apiVersion: Schema.Types.String,
       apiKey: Schema.Types.String,
       user: Schema.Types.String,
       secretKey: Schema.Types.String,
@@ -76,7 +77,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
-    removeNovuBranding: Schema.Types.Boolean,
     conditions: [
       {
         isNegated: Schema.Types.Boolean,

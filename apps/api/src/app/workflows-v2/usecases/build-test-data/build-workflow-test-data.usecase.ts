@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
-  ControlValuesLevelEnum,
-  JSONSchemaDto,
-  StepTypeEnum,
-  UserSessionData,
-  WorkflowTestDataResponseDto,
-} from '@novu/shared';
+  JsonSchemaFormatEnum,
+  JsonSchemaTypeEnum,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+} from '@novu/dal';
+import { StepTypeEnum, UserSessionData } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -16,14 +15,16 @@ import {
 import { WorkflowTestDataCommand } from './build-workflow-test-data.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { mockSchemaDefaults } from '../../util/utils';
-import { BuildPayloadSchema } from '../build-payload-schema/build-payload-schema.usecase';
-import { BuildPayloadSchemaCommand } from '../build-payload-schema/build-payload-schema.command';
+import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
+import { buildVariablesSchema } from '../../util/create-schema';
+import { JSONSchemaDto, WorkflowTestDataResponseDto } from '../../dtos';
 
 @Injectable()
 export class BuildWorkflowTestDataUseCase {
   constructor(
     private readonly getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private readonly buildPayloadSchema: BuildPayloadSchema
+    private readonly createVariablesObject: CreateVariablesObject
   ) {}
 
   @InstrumentUsecase()
@@ -48,17 +49,19 @@ export class BuildWorkflowTestDataUseCase {
       return parsePayloadSchema(workflow.payloadSchema, { safe: true }) || {};
     }
 
-    return this.buildPayloadSchema.execute(
-      BuildPayloadSchemaCommand.create({
+    const { payload } = await this.createVariablesObject.execute(
+      CreateVariablesObjectCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         userId: command.user._id,
         workflowId: workflow._id,
       })
     );
+
+    return buildVariablesSchema(payload);
   }
 
-  private generatePayloadMock(schema: JSONSchemaDto): Record<string, unknown> {
+  private generatePayloadMock(schema: JSONSchemaDto): JSONSchemaDto {
     if (!schema?.properties || Object.keys(schema.properties).length === 0) {
       return {};
     }
@@ -72,7 +75,6 @@ export class BuildWorkflowTestDataUseCase {
       GetWorkflowByIdsCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        userId: command.user._id,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
       })
     );
@@ -89,23 +91,27 @@ export class BuildWorkflowTestDataUseCase {
     const hasSmsStep = this.hasStepType(steps, StepTypeEnum.SMS);
 
     const properties: { [key: string]: JSONSchemaDto } = {
-      subscriberId: { type: 'string', default: user._id },
+      subscriberId: { type: JsonSchemaTypeEnum.STRING, default: user._id },
     };
 
     const required: string[] = ['subscriberId'];
 
     if (hasEmailStep) {
-      properties.email = { type: 'string', default: user.email ?? '', format: 'email' };
+      properties.email = {
+        type: JsonSchemaTypeEnum.STRING,
+        default: user.email ?? '',
+        format: JsonSchemaFormatEnum.EMAIL,
+      };
       required.push('email');
     }
 
     if (hasSmsStep) {
-      properties.phone = { type: 'string', default: '' };
+      properties.phone = { type: JsonSchemaTypeEnum.STRING, default: '' };
       required.push('phone');
     }
 
     return {
-      type: 'object',
+      type: JsonSchemaTypeEnum.OBJECT,
       properties,
       required,
       additionalProperties: false,

@@ -1,15 +1,6 @@
-import {
-  ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IPushOptions,
-  IPushProvider,
-} from '@novu/stateless';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, IPushOptions, IPushProvider } from '@novu/stateless';
 import { initializeApp, cert, deleteApp, getApp } from 'firebase-admin/app';
-import {
-  getMessaging,
-  Messaging,
-  MulticastMessage,
-} from 'firebase-admin/messaging';
+import { getMessaging, Messaging, MulticastMessage, TopicMessage } from 'firebase-admin/messaging';
 import crypto from 'crypto';
 import { PushProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
@@ -27,7 +18,7 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
       projectId: string;
       email: string;
       secretKey: string;
-    },
+    }
   ) {
     super();
     this.config = config;
@@ -40,14 +31,14 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
           privateKey: this.config.secretKey,
         }),
       },
-      this.appName,
+      this.appName
     );
     this.messaging = getMessaging(firebase);
   }
 
   async sendMessage(
     options: IPushOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const {
       deviceTokens: _,
@@ -64,48 +55,63 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     }) || {};
 
     const payload = this.cleanPayload(options.payload);
+    const transformedBase = this.transform<MulticastMessage | TopicMessage>(bridgeProviderData, {});
+
+    const commonProps: Partial<MulticastMessage & TopicMessage> = {
+      android,
+      apns,
+      fcmOptions,
+      webpush,
+    };
 
     let res;
 
-    if (type === 'data') {
-      res = await this.messaging.sendEachForMulticast(
-        this.transform<MulticastMessage>(bridgeProviderData, {
-          tokens: options.target,
-          data: {
-            ...payload,
-            title: options.title,
-            body: options.content,
-            message: options.content,
-          },
-          android,
-          apns,
-          fcmOptions,
-          webpush,
-        }).body,
-      );
+    if ((transformedBase?.body as TopicMessage).topic) {
+      const topicMessage = this.transform<TopicMessage>(bridgeProviderData, {
+        topic: (transformedBase.body as TopicMessage).topic,
+        notification: {
+          title: options.title,
+          body: options.content,
+        },
+        data,
+        ...commonProps,
+      }).body;
+
+      res = await this.messaging.send(topicMessage);
     } else {
-      res = await this.messaging.sendEachForMulticast(
-        this.transform<MulticastMessage>(bridgeProviderData, {
-          tokens: options.target,
-          notification: {
-            title: options.title,
-            body: options.content,
-            ...overridesData,
-          },
-          data,
-          android,
-          apns,
-          fcmOptions,
-          webpush,
-        }).body,
-      );
+      const multicastConfig: Partial<MulticastMessage> = {
+        tokens: options.target,
+        ...commonProps,
+      };
+
+      // Add either data or notification based on type
+      if (type === 'data') {
+        multicastConfig.data = {
+          ...payload,
+          title: options.title,
+          body: options.content,
+          message: options.content,
+        };
+      } else {
+        multicastConfig.notification = {
+          title: options.title,
+          body: options.content,
+          ...overridesData,
+        };
+        multicastConfig.data = data;
+      }
+
+      const multicastMessage = this.transform<MulticastMessage>(
+        bridgeProviderData,
+        multicastConfig as Record<string, unknown>
+      ).body;
+
+      res = await this.messaging.sendEachForMulticast(multicastMessage);
     }
 
     if (res.successCount === 0) {
       throw new Error(
-        `Sending message failed due to "${
-          res.responses.find((i) => i.success === false).error.message
-        }"`,
+        `Sending message failed due to "${res.responses.find((i) => i.success === false).error.message}"`
       );
     }
 
@@ -113,11 +119,14 @@ export class FcmPushProvider extends BaseProvider implements IPushProvider {
     await deleteApp(app);
 
     return {
-      ids: res?.responses?.map((response, index) =>
-        response.success
-          ? response.messageId
-          : `${response.error.message}. Invalid token:- ${options.target[index]}`,
-      ),
+      ids:
+        typeof res === 'string'
+          ? [res]
+          : res?.responses?.map((response, index) =>
+              response.success
+                ? response.messageId
+                : `${response.error.message}. Invalid token:- ${options.target[index]}`
+            ),
       date: new Date().toISOString(),
     };
   }

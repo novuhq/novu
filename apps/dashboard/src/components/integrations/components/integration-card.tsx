@@ -1,14 +1,30 @@
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
-import { RiCheckboxCircleFill, RiGitBranchFill, RiSettings4Line, RiStarSmileLine } from 'react-icons/ri';
-import { TableIntegration } from '../types';
-import { ChannelTypeEnum, type IEnvironment, type IIntegration, type IProviderConfig } from '@novu/shared';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/utils/routes';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ProviderIcon } from './provider-icon';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  type IEnvironment,
+  type IIntegration,
+  type IProviderConfig,
+} from '@novu/shared';
+import {
+  RiCheckboxCircleFill,
+  RiCloseCircleFill,
+  RiLockStarLine,
+  RiSettings4Line,
+  RiStarSmileLine,
+} from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../utils/routes';
 import { cn } from '../../../utils/ui';
+import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon';
+import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
+import { TableIntegration } from '../types';
+import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
+import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
 
 type IntegrationCardProps = {
   integration: IIntegration;
@@ -19,10 +35,11 @@ type IntegrationCardProps = {
 
 export function IntegrationCard({ integration, provider, environment, onClick }: IntegrationCardProps) {
   const navigate = useNavigate();
+  const { subscription } = useFetchSubscription();
 
-  const handleConfigureClick = (e: React.MouseEvent) => {
+  const handleConfigureClick = (e: React.MouseEvent<HTMLElement>) => {
     if (integration.channel === ChannelTypeEnum.IN_APP && !integration.connected) {
-      e.stopPropagation();
+      e.preventDefault();
 
       navigate(ROUTES.INBOX_EMBED + `?environmentId=${environment._id}`);
     } else {
@@ -39,6 +56,7 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
   };
 
   const isDemo = isDemoIntegration(provider.id);
+  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
 
   return (
     <div
@@ -49,7 +67,7 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
       onClick={handleConfigureClick}
       data-test-id={`integration-${integration._id}-row`}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex justify-between">
         <div className="flex items-center gap-1.5">
           <div className="relative h-6 w-6">
             <ProviderIcon
@@ -60,21 +78,33 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
           </div>
           <span className="text-sm font-medium">{integration.name}</span>
         </div>
-        {integration.primary && (
-          <Tooltip>
-            <TooltipTrigger>
-              <RiStarSmileLine className="text-feature h-4 w-4" />
-            </TooltipTrigger>
-            <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
-          </Tooltip>
-        )}
+        <div className="flex items-center gap-1">
+          {integration.primary && (
+            <Tooltip>
+              <TooltipTrigger>
+                <RiStarSmileLine className="text-feature h-4 w-4" />
+              </TooltipTrigger>
+              <TooltipContent>This is your primary integration for the {provider.channel} channel.</TooltipContent>
+            </Tooltip>
+          )}
+          {integration.channel === ChannelTypeEnum.IN_APP && isFreePlan && (
+            <UpgradeCTATooltip
+              description="Upgrade to remove the Novu branding and extend notification snooze beyond 24 hours in your Inbox component."
+              utmSource="in-app-upgrade-tooltip"
+              side="right"
+              align="center"
+            >
+              <RiLockStarLine className="text-warning h-4 w-4" />
+            </UpgradeCTATooltip>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-2">
         {isDemo && (
           <Tooltip>
             <TooltipTrigger className="flex h-[16px] items-center gap-1">
               <span className="flex h-[16px] items-center gap-1">
-                <Badge variant="warning" className="text-2xs h-[16px] rounded-sm text-[#F6B51E]">
+                <Badge variant="lighter" color="yellow" size="sm">
                   DEMO
                 </Badge>
               </span>
@@ -91,22 +121,26 @@ export function IntegrationCard({ integration, provider, environment, onClick }:
 
       <div className="mt-auto flex items-center gap-2">
         {integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
-          <Button size="xs" className="h-[26px]" variant="outline" onClick={handleConfigureClick}>
-            <RiSettings4Line className="h-4 w-4" />
+          <Button
+            size="xs"
+            leadingIcon={RiSettings4Line}
+            className="h-[26px]"
+            variant="secondary"
+            mode="outline"
+            onClick={handleConfigureClick}
+          >
             Connect
           </Button>
         ) : (
-          <Badge variant={integration.active ? 'success' : 'neutral'} className="capitalize">
-            <RiCheckboxCircleFill className="text-success h-4 w-4" />
+          <StatusBadge variant="light" status={integration.active ? 'completed' : 'disabled'}>
+            <StatusBadgeIcon as={integration.active ? RiCheckboxCircleFill : RiCloseCircleFill} />
             {integration.active ? 'Active' : 'Inactive'}
-          </Badge>
+          </StatusBadge>
         )}
-        <Badge variant="outline" className="shadow-none">
-          <RiGitBranchFill
-            className={cn('h-4 w-4', environment.name.toLowerCase() === 'production' ? 'text-feature' : 'text-warning')}
-          />
+        <StatusBadge variant="stroke" status="pending" className="gap-1 shadow-none">
+          <EnvironmentBranchIcon size="xs" environment={environment} mode="ghost" />
           {environment.name}
-        </Badge>
+        </StatusBadge>
       </div>
     </div>
   );

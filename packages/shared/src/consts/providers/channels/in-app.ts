@@ -9,7 +9,7 @@ export const inAppProviders: IProviderConfig[] = [
     displayName: 'Novu Inbox',
     channel: ChannelTypeEnum.IN_APP,
     credentials: novuInAppConfig,
-    docReference: `https://docs.novu.co/inbox/introduction${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/inbox/overview${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'novu.png', dark: 'novu.png' },
   },
 ];

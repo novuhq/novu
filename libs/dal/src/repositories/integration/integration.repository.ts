@@ -1,6 +1,6 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-import { ApiServiceLevelEnum, ChannelTypeEnum, NOVU_PROVIDERS } from '@novu/shared';
+import { NOVU_PROVIDERS } from '@novu/shared';
 
 import { IntegrationEntity, IntegrationDBModel, ProviderCount } from './integration.entity';
 import { Integration } from './integration.schema';
@@ -31,16 +31,6 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
     return await this.find({
       _environmentId: environmentId,
     });
-  }
-
-  async setRemoveNovuBranding(organizationId: string, value: boolean) {
-    return await this.update(
-      {
-        _organizationId: organizationId,
-        channel: ChannelTypeEnum.IN_APP,
-      },
-      { removeNovuBranding: value }
-    );
   }
 
   async findHighestPriorityIntegration({
@@ -81,10 +71,7 @@ export class IntegrationRepository extends BaseRepository<IntegrationDBModel, In
   }
 
   async delete(query: IntegrationQuery) {
-    const integration = await this.findOne({ _id: query._id, _organizationId: query._organizationId });
-    if (!integration) throw new DalException(`Could not find integration with id ${query._id}`);
-
-    return await this.integration.delete({ _id: integration._id, _organizationId: integration._organizationId });
+    return await this.integration.delete({ _id: query._id, _organizationId: query._organizationId });
   }
 
   async deleteMany(query: IntegrationQuery): Promise<IDeleteResult> {

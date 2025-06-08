@@ -1,58 +1,63 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
-import { StepDataDto, UserSessionData, WorkflowResponseDto } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import {
-  GetWorkflowByIdsCommand,
-  GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesCommand,
+  GetWorkflowWithPreferencesUseCase,
   InstrumentUsecase,
-  WorkflowInternalResponseDto,
+  PinoLogger,
+  FeatureFlagsService,
 } from '@novu/application-generic';
+import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 
-import { NotificationStepEntity } from '@novu/dal';
 import { GetWorkflowCommand } from './get-workflow.command';
 import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
-import { BuildStepDataUsecase } from '../build-step-data/build-step-data.usecase';
-import { BuildStepDataCommand } from '../build-step-data/build-step-data.command';
+import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
+import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
+import { generatePayloadExample } from '../../util/generate-payload-example';
 
 @Injectable()
 export class GetWorkflowUseCase {
   constructor(
-    private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private buildStepDataUsecase: BuildStepDataUsecase
-  ) {}
+    private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
+    private buildStepDataUsecase: BuildStepDataUsecase,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
-    const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
+    const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
+      GetWorkflowWithPreferencesCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        userId: command.user._id,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
       })
     );
 
-    const fullSteps = await this.getFullWorkflowSteps(workflowEntity, command.user);
+    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
+    const payloadExample = await generatePayloadExample(workflowWithPreferences);
 
-    return toResponseWorkflowDto(workflowEntity, fullSteps);
+    return toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
   }
 
   private async getFullWorkflowSteps(
-    workflow: WorkflowInternalResponseDto,
+    workflowWithPreferences: NotificationTemplateEntity,
     user: UserSessionData
-  ): Promise<StepDataDto[]> {
-    const stepPromises = workflow.steps.map((step: NotificationStepEntity & { _id: string }) =>
-      this.buildStepForWorkflow(workflow, step, user)
+  ): Promise<StepResponseDto[]> {
+    const stepPromises = workflowWithPreferences.steps.map((step: NotificationStepEntity & { _id: string }) =>
+      this.buildStepForWorkflow(workflowWithPreferences, step, user)
     );
 
     return Promise.all(stepPromises);
   }
 
   private async buildStepForWorkflow(
-    workflow: WorkflowInternalResponseDto,
+    workflow: NotificationTemplateEntity,
     step: NotificationStepEntity & { _id: string },
     user: UserSessionData
-  ): Promise<StepDataDto> {
+  ): Promise<StepResponseDto> {
     try {
       return await this.buildStepDataUsecase.execute(
         BuildStepDataCommand.create({

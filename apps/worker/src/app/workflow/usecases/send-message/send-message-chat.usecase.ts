@@ -28,14 +28,15 @@ import {
   SelectIntegration,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogRoute,
-  ExecutionLogRouteCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
 } from '@novu/application-generic';
 import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageBase } from './send-message.base';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
 
@@ -50,12 +51,12 @@ export class SendMessageChat extends SendMessageBase {
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected executionLogRoute: ExecutionLogRoute,
+    protected createExecutionDetails: CreateExecutionDetails,
     protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
-      executionLogRoute,
+      createExecutionDetails,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -65,7 +66,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Chat',
     });
@@ -101,7 +102,10 @@ export class SendMessageChat extends SendMessageBase {
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+      };
     }
 
     const chatChannels =
@@ -118,9 +122,9 @@ export class SendMessageChat extends SendMessageBase {
     });
 
     if (chatChannels.length === 0) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -129,14 +133,19 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+      };
     }
 
     let allFailed = true;
     for (const channel of chatChannels) {
       try {
-        await this.sendChannelMessage(command, channel, step, content);
-        allFailed = false;
+        const result = await this.sendChannelMessage(command, channel, step, content);
+        if (result.status === 'success') {
+          allFailed = false;
+        }
       } catch (e) {
         /*
          * Do nothing, one chat channel failed, perhaps another one succeeds
@@ -147,9 +156,9 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     if (allFailed) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -157,7 +166,16 @@ export class SendMessageChat extends SendMessageBase {
           isRetry: false,
         })
       );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+      };
     }
+
+    return {
+      status: 'success',
+    };
   }
 
   private async sendChannelMessage(
@@ -199,9 +217,9 @@ export class SendMessageChat extends SendMessageBase {
 
     if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
       if (!integration) {
-        await this.executionLogRoute.execute(
-          ExecutionLogRouteCommand.create({
-            ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
             detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,
@@ -213,13 +231,30 @@ export class SendMessageChat extends SendMessageBase {
           })
         );
 
-        return;
+        return {
+          status: 'failed',
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        };
       }
     } else if (!integration) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
       /**
        * TODO: Need to handle a proper execution log error for this case
        */
-      return;
+      return {
+        status: 'failed',
+        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
 
     const bridgeOverride = this.getBridgeOverride(command.bridgeData?.providers, integration);
@@ -248,9 +283,9 @@ export class SendMessageChat extends SendMessageBase {
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -262,12 +297,18 @@ export class SendMessageChat extends SendMessageBase {
     );
 
     if ((chatWebhookUrl && integration) || (phoneNumber && integration)) {
-      await this.sendMessage(chatWebhookUrl, integration, content, message, command, channelSpecification, phoneNumber);
-
-      return;
+      return await this.sendMessage(
+        chatWebhookUrl,
+        integration,
+        content,
+        message,
+        command,
+        channelSpecification,
+        phoneNumber
+      );
     }
 
-    await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
+    return await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
   }
 
   private getBridgeOverride(
@@ -293,7 +334,7 @@ export class SendMessageChat extends SendMessageBase {
     message: MessageEntity,
     command: SendMessageCommand,
     phoneNumber?: string
-  ) {
+  ): Promise<SendMessageResult> {
     if (integration?.providerId === ChatProviderIdEnum.WhatsAppBusiness && !phoneNumber) {
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
@@ -304,9 +345,9 @@ export class SendMessageChat extends SendMessageBase {
         'Subscriber does not have phone number specified'
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -318,6 +359,11 @@ export class SendMessageChat extends SendMessageBase {
           }),
         })
       );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
+      };
     } else if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
@@ -328,9 +374,9 @@ export class SendMessageChat extends SendMessageBase {
         'Subscriber does not have active chat channel id'
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -343,7 +389,10 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
 
-      return;
+      return {
+        status: 'failed',
+        reason: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
+      };
     }
     if (!integration) {
       await this.sendErrorStatus(
@@ -351,13 +400,12 @@ export class SendMessageChat extends SendMessageBase {
         'warning',
         'chat_missing_integration_error',
         'Subscriber does not have an active chat integration',
-        command,
-        LogCodeEnum.MISSING_CHAT_INTEGRATION
+        command
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -369,7 +417,17 @@ export class SendMessageChat extends SendMessageBase {
           }),
         })
       );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+      };
     }
+
+    return {
+      status: 'failed',
+      reason: DetailEnum.PROVIDER_ERROR,
+    };
   }
 
   private async sendMessage(
@@ -380,7 +438,7 @@ export class SendMessageChat extends SendMessageBase {
     command: SendMessageCommand,
     channelSpecification?: string | undefined,
     phoneNumber?: string | undefined
-  ) {
+  ): Promise<SendMessageResult> {
     try {
       const chatFactory = new ChatFactory();
       const chatHandler = chatFactory.getHandler(integration);
@@ -392,10 +450,14 @@ export class SendMessageChat extends SendMessageBase {
         ...(command.overrides[integration?.channel] || {}),
         ...(command.overrides[integration?.providerId] || {}),
       };
-      const bridgeProviderData = command.bridgeData?.providers?.[integration.providerId] || {};
 
       const result = await chatHandler.send({
-        bridgeProviderData,
+        bridgeProviderData: this.combineOverrides(
+          command.bridgeData,
+          command.overrides,
+          command.step.stepId,
+          integration.providerId
+        ),
         phoneNumber,
         customData: overrides,
         webhookUrl: chatWebhookUrl,
@@ -403,9 +465,9 @@ export class SendMessageChat extends SendMessageBase {
         content,
       });
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -415,6 +477,10 @@ export class SendMessageChat extends SendMessageBase {
           raw: JSON.stringify(result),
         })
       );
+
+      return {
+        status: 'success',
+      };
     } catch (e) {
       await this.sendErrorStatus(
         message,
@@ -422,13 +488,12 @@ export class SendMessageChat extends SendMessageBase {
         'unexpected_chat_error',
         e.message || e.name || 'Un-expect CHAT provider error',
         command,
-        LogCodeEnum.CHAT_ERROR,
         e
       );
 
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -438,6 +503,11 @@ export class SendMessageChat extends SendMessageBase {
           raw: JSON.stringify(e),
         })
       );
+
+      return {
+        status: 'failed',
+        reason: DetailEnum.PROVIDER_ERROR,
+      };
     }
   }
 }

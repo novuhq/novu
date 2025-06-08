@@ -1,8 +1,8 @@
-import type { JSONSchemaDto } from './json-schema-dto';
-import { Slug } from '../../types/utils';
 import { StepTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowPreferences } from '../../types';
+import { Slug } from '../../types/utils';
+import type { JSONSchemaDto } from './json-schema-dto';
+import { StepCreateDto, StepResponseDto, StepUpdateDto } from './step.dto';
 import { WorkflowStatusEnum } from './workflow-status-enum';
-import { StepCreateDto, StepDataDto, StepUpdateDto } from './step.dto';
 
 export class ControlsSchema {
   schema: JSONSchemaDto;
@@ -13,6 +13,8 @@ export type PatchWorkflowDto = {
   name?: string;
   description?: string;
   tags?: string[];
+  payloadSchema?: object;
+  validatePayload?: boolean;
 };
 
 export type ListWorkflowResponse = {
@@ -22,7 +24,7 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin'
+  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin' | 'lastTriggeredAt'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
@@ -50,18 +52,25 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   slug: Slug;
   updatedAt: string;
   createdAt: string;
-  steps: StepDataDto[];
+  steps: StepResponseDto[];
   origin: WorkflowOriginEnum;
   preferences: PreferencesResponseDto;
   status: WorkflowStatusEnum;
   issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
+  lastTriggeredAt?: string;
+  payloadSchema?: Record<string, any>;
+  payloadExample?: object;
+  validatePayload?: boolean;
 };
+
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
+
 export class RuntimeIssueDto {
   issueType: WorkflowIssueTypeEnum;
   variableName?: string;
   message: string;
 }
+
 export enum WorkflowIssueTypeEnum {
   MISSING_VALUE = 'MISSING_VALUE',
   MAX_LENGTH_ACCESSED = 'MAX_LENGTH_ACCESSED',
@@ -100,6 +109,8 @@ export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {
 export type UpsertStepBody = StepCreateBody | UpdateStepBody;
 export type StepCreateBody = StepCreateDto;
 export type UpdateStepBody = StepUpdateDto;
+
+export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description'>;
 
 export function isStepCreateBody(step: UpsertStepBody): step is StepCreateDto {
   return step && typeof step === 'object' && !(step as UpdateStepBody)._id;

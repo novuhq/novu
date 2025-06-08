@@ -18,7 +18,15 @@ import {
   WorkflowOriginEnum,
   WorkflowTypeEnum,
 } from '@novu/shared';
-import { Event, State, PostActionEnum, ExecuteOutput } from '@novu/framework/internal';
+import {
+  DigestResult,
+  Event,
+  State,
+  PostActionEnum,
+  ExecuteOutput,
+  DelayResult,
+  InAppResult,
+} from '@novu/framework/internal';
 
 import {
   CreateExecutionDetails,
@@ -33,8 +41,6 @@ import {
 } from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
-const LOG_CONTEXT = 'ExecuteBridgeJob';
-
 @Injectable()
 export class ExecuteBridgeJob {
   constructor(
@@ -46,7 +52,9 @@ export class ExecuteBridgeJob {
     private createExecutionDetails: CreateExecutionDetails,
     private executeBridgeRequest: ExecuteBridgeRequest,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: ExecuteBridgeJobCommand): Promise<ExecuteOutput | null> {
@@ -95,7 +103,7 @@ export class ExecuteBridgeJob {
     const { subscriber, payload: originalPayload } = command.variables || {};
     const payload = this.normalizePayload(originalPayload);
 
-    const state = await this.generateState(payload, command);
+    const state = await this.generateState(command);
 
     const variablesStores = isStateful
       ? await this.findControlValues(command, workflow as NotificationTemplateEntity)
@@ -128,7 +136,7 @@ export class ExecuteBridgeJob {
       },
     });
 
-    const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+    const executionDetailsCommand: CreateExecutionDetailsCommand = {
       ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
       detail: DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED,
       source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -138,7 +146,7 @@ export class ExecuteBridgeJob {
       raw: JSON.stringify(bridgeResponse.metadata),
     };
 
-    await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+    await this.createExecutionDetails.execute(executionDetailsCommand);
 
     return bridgeResponse;
   }
@@ -168,7 +176,7 @@ export class ExecuteBridgeJob {
     return payload;
   }
 
-  private async generateState(payload, command: ExecuteBridgeJobCommand): Promise<State[]> {
+  private async generateState(command: ExecuteBridgeJobCommand): Promise<State[]> {
     const previousJobs: State[] = [];
     let theJob = (await this.jobRepository.findOne({
       _id: command.job._parentId,
@@ -176,7 +184,7 @@ export class ExecuteBridgeJob {
     })) as JobEntity;
 
     if (theJob) {
-      const jobState = await this.mapState(theJob, payload);
+      const jobState = await this.mapState(theJob);
       previousJobs.push(jobState);
     }
 
@@ -187,7 +195,7 @@ export class ExecuteBridgeJob {
       })) as JobEntity;
 
       if (theJob) {
-        const jobState = await this.mapState(theJob, payload);
+        const jobState = await this.mapState(theJob);
         previousJobs.push(jobState);
       }
     }
@@ -211,8 +219,10 @@ export class ExecuteBridgeJob {
       event,
       action: PostActionEnum.EXECUTE,
       searchParams,
+      workflowOrigin,
+      environmentId,
       processError: async (response) => {
-        const createExecutionDetailsCommand: CreateExecutionDetailsCommand = {
+        await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.FAILED_BRIDGE_EXECUTION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -225,26 +235,19 @@ export class ExecuteBridgeJob {
             message: response.message,
             code: response.code,
             data: response.data,
+            cause: response.cause,
           }),
-        };
-
-        await this.createExecutionDetails.execute(createExecutionDetailsCommand);
+        });
       },
-      workflowOrigin,
-      environmentId,
     }) as Promise<ExecuteOutput>;
   }
 
-  @Instrument()
-  private async mapState(job: JobEntity, payload: Record<string, unknown>) {
-    let output = {};
-
+  private async mapOutput(job: JobEntity) {
     switch (job.type) {
       case 'delay': {
-        output = {
+        return {
           duration: Date.now() - new Date(job.createdAt).getTime(),
-        };
-        break;
+        } satisfies DelayResult;
       }
       case 'digest': {
         const digestJobs = await this.jobRepository.find(
@@ -261,20 +264,21 @@ export class ExecuteBridgeJob {
             transactionId: 1,
           }
         );
-        output = {
-          events: [...digestJobs, job]
-            .map((digestJob) => ({
-              id: digestJob._id,
-              time: digestJob.createdAt,
-              payload: digestJob.payload ?? {},
-            }))
-            .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
-        };
-        break;
+        const events = [...digestJobs, job]
+          .map((digestJob) => ({
+            id: digestJob._id,
+            time: digestJob.createdAt,
+            payload: digestJob.payload ?? {},
+          }))
+          .sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime());
+
+        return {
+          events,
+          eventCount: events.length,
+        } satisfies DigestResult;
       }
       case 'custom': {
-        output = job.stepOutput || {};
-        break;
+        return job.stepOutput || {};
       }
       case 'in_app': {
         const message = await this.messageRepository.findOne(
@@ -282,19 +286,34 @@ export class ExecuteBridgeJob {
           'seen read lastSeenDate lastReadDate'
         );
         if (message) {
-          output = {
+          return {
             seen: message.seen,
             read: message.read,
             lastSeenDate: message.lastSeenDate || null,
             lastReadDate: message.lastReadDate || null,
-          };
+          } satisfies InAppResult;
+        } else {
+          /*
+           * Provide fallback state for in-app messages to satisfy framework inAppResultSchema validation
+           * when message is not found (e.g., cancelled jobs, nv-5120)
+           */
+          return {
+            seen: false,
+            read: false,
+            lastSeenDate: null,
+            lastReadDate: null,
+          } satisfies InAppResult;
         }
-        break;
       }
       default: {
-        break;
+        return {};
       }
     }
+  }
+
+  @Instrument()
+  private async mapState(job: JobEntity) {
+    const output = await this.mapOutput(job);
 
     return {
       stepId: job?.step.stepId || job?.step.uuid || '',

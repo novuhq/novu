@@ -5,9 +5,7 @@ import { SNSSmsProvider } from './sns.provider';
 
 test('should trigger sns library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = vi
-    .spyOn(SNSClient.prototype, 'send')
-    .mockImplementation(async () => mockResponse);
+  const spy = vi.spyOn(SNSClient.prototype, 'send').mockImplementation(async () => mockResponse);
 
   const mockConfig = {
     accessKeyId: 'TEST',
@@ -36,9 +34,7 @@ test('should trigger sns library correctly', async () => {
 
 test('should trigger sns library correctly with _passthrough', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
-  const spy = vi
-    .spyOn(SNSClient.prototype, 'send')
-    .mockImplementation(async () => mockResponse);
+  const spy = vi.spyOn(SNSClient.prototype, 'send').mockImplementation(async () => mockResponse);
 
   const mockConfig = {
     accessKeyId: 'TEST',

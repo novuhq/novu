@@ -1,36 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import Ajv, { ErrorObject } from 'ajv';
-import addFormats from 'ajv-formats';
-import _ from 'lodash';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 
 import {
-  ControlValuesRepository,
-  NotificationGroupRepository,
-  NotificationStepEntity,
-  NotificationTemplateEntity,
-} from '@novu/dal';
-import {
-  ContentIssue,
-  JSONSchemaDto,
-  DEFAULT_WORKFLOW_PREFERENCES,
-  slugify,
-  StepContentIssueEnum,
-  StepCreateDto,
-  StepIssuesDto,
-  StepUpdateDto,
-  UserSessionData,
-  StepTypeEnum,
-  WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowResponseDto,
-  WorkflowTypeEnum,
-  ControlValuesLevelEnum,
-  WorkflowStatusEnum,
-  StepIssues,
-  ControlSchemas,
-} from '@novu/shared';
-import {
-  CreateWorkflow as CreateWorkflowGeneric,
+  AnalyticsService,
+  CreateWorkflow as CreateWorkflowV0Usecase,
   CreateWorkflowCommand,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -38,100 +10,129 @@ import {
   InstrumentUsecase,
   NotificationStep,
   shortId,
-  UpdateWorkflow as UpdateWorkflowGeneric,
+  UpdateWorkflow as UpdateWorkflowV0Usecase,
   UpdateWorkflowCommand,
-  WorkflowInternalResponseDto,
-  TierRestrictionsValidateUsecase,
   UpsertControlValuesCommand,
-  DeleteControlValuesCommand,
   UpsertControlValuesUseCase,
-  DeleteControlValuesUseCase,
-  TierRestrictionsValidateCommand,
-  dashboardSanitizeControlValues,
-  PinoLogger,
+  SendWebhookMessage,
 } from '@novu/application-generic';
+import {
+  ControlSchemas,
+  ControlValuesRepository,
+  NotificationGroupRepository,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+} from '@novu/dal';
+import {
+  ControlValuesLevelEnum,
+  DEFAULT_WORKFLOW_PREFERENCES,
+  slugify,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WorkflowCreationSourceEnum,
+  WorkflowOriginEnum,
+  WorkflowTypeEnum,
+} from '@novu/shared';
 
-import { UpsertWorkflowCommand, UpsertWorkflowDataCommand } from './upsert-workflow.command';
 import { stepTypeToControlSchema } from '../../shared';
+import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
+import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { buildVariables } from '../../util/build-variables';
-import { BuildAvailableVariableSchemaCommand, BuildAvailableVariableSchemaUsecase } from '../build-variable-schema';
+import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
+import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
   constructor(
-    private createWorkflowGenericUsecase: CreateWorkflowGeneric,
-    private updateWorkflowGenericUsecase: UpdateWorkflowGeneric,
+    private createWorkflowV0Usecase: CreateWorkflowV0Usecase,
+    private updateWorkflowV0Usecase: UpdateWorkflowV0Usecase,
     private notificationGroupRepository: NotificationGroupRepository,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private getWorkflowUseCase: GetWorkflowUseCase,
-    private buildAvailableVariableSchemaUsecase: BuildAvailableVariableSchemaUsecase,
+    private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
-    private deleteControlValuesUseCase: DeleteControlValuesUseCase,
-    private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
-    private logger: PinoLogger
+    private analyticsService: AnalyticsService,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    const workflowForUpdate = await this.queryWorkflow(command);
-    const persistedWorkflow = await this.createOrUpdateWorkflow(workflowForUpdate, command);
-    await this.upsertControlValues(persistedWorkflow, command);
-    const workflow = await this.getWorkflowUseCase.execute(
+    // TODO: use transaction to ensure that the workflows, steps and controls are upserted atomically
+
+    const existingWorkflow = command.workflowIdOrInternalId
+      ? await this.getWorkflowByIdsUseCase.execute(
+          GetWorkflowByIdsCommand.create({
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            workflowIdOrInternalId: command.workflowIdOrInternalId,
+          })
+        )
+      : null;
+
+    let upsertedWorkflow: NotificationTemplateEntity;
+
+    if (existingWorkflow) {
+      this.mixpanelTrack(command, 'Workflow Update - [API]');
+
+      upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
+        UpdateWorkflowCommand.create(await this.buildUpdateWorkflowCommand(command, existingWorkflow))
+      );
+    } else {
+      this.mixpanelTrack(command, 'Workflow Created - [API]');
+
+      upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
+        CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
+      );
+    }
+
+    await this.upsertControlValues(upsertedWorkflow, command);
+
+    const updatedWorkflow = await this.getWorkflowUseCase.execute(
       GetWorkflowCommand.create({
-        workflowIdOrInternalId: persistedWorkflow._id,
+        workflowIdOrInternalId: upsertedWorkflow._id,
         user: command.user,
       })
     );
 
-    return workflow;
-  }
-
-  @Instrument()
-  private async queryWorkflow(command: UpsertWorkflowCommand): Promise<WorkflowInternalResponseDto | null> {
-    if (!command.workflowIdOrInternalId) {
-      return null;
+    if (this.sendWebhookMessage) {
+      if (existingWorkflow) {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+            previousObject: existingWorkflow as unknown as Record<string, unknown>,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      } else {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.WORKFLOW_CREATED,
+          objectType: WebhookObjectTypeEnum.WORKFLOW,
+          payload: {
+            object: updatedWorkflow as unknown as Record<string, unknown>,
+          },
+          organizationId: command.user.organizationId,
+          environmentId: command.user.environmentId,
+        });
+      }
     }
 
-    return await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
-        userId: command.user._id,
-        workflowIdOrInternalId: command.workflowIdOrInternalId,
-      })
-    );
+    return updatedWorkflow;
   }
 
-  @Instrument()
-  private async createOrUpdateWorkflow(
-    existingWorkflow: NotificationTemplateEntity | null,
-    command: UpsertWorkflowCommand
-  ): Promise<WorkflowInternalResponseDto> {
-    if (existingWorkflow && isWorkflowUpdateDto(command.workflowDto, command.workflowIdOrInternalId)) {
-      return await this.updateWorkflowGenericUsecase.execute(
-        UpdateWorkflowCommand.create(
-          await this.buildUpdateWorkflowCommand(command.workflowDto, command.user, existingWorkflow)
-        )
-      );
-    }
-
-    return await this.createWorkflowGenericUsecase.execute(
-      CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
-    );
-  }
-
-  @Instrument()
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
-    const { user, workflowDto } = command;
+    const { user, workflowDto, preserveWorkflowId } = command;
     const isWorkflowActive = workflowDto?.active ?? true;
     const notificationGroupId = await this.getNotificationGroup(command.user.environmentId);
 
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
     }
-    const steps = await this.mapSteps(workflowDto.origin, command.user, workflowDto.steps);
+    const steps = await this.buildSteps(command);
 
     return {
       notificationGroupId,
@@ -146,36 +147,20 @@ export class UpsertWorkflowUseCase {
       active: isWorkflowActive,
       description: workflowDto.description || '',
       tags: workflowDto.tags || [],
-      userPreferences: command.workflowDto.preferences?.user ?? null,
-      defaultPreferences: command.workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
-      triggerIdentifier: slugify(workflowDto.name),
-      status: this.computeStatus(command.workflowDto, steps),
+      userPreferences: workflowDto.preferences?.user ?? null,
+      defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
+      triggerIdentifier: preserveWorkflowId ? workflowDto.workflowId : slugify(workflowDto.name),
+      status: computeWorkflowStatus(isWorkflowActive, steps),
     };
   }
 
-  private computeStatus(workflow: UpsertWorkflowDataCommand, steps: NotificationStep[]) {
-    if (workflow.active === false) {
-      return WorkflowStatusEnum.INACTIVE;
-    }
-
-    const hasIssues = steps.filter((step) => this.hasControlIssues(step.issues)).length > 0;
-    if (!hasIssues) {
-      return WorkflowStatusEnum.ACTIVE;
-    }
-
-    return WorkflowStatusEnum.ERROR;
-  }
-
-  private hasControlIssues(issue: StepIssues | undefined) {
-    return issue?.controls && Object.keys(issue.controls).length > 0;
-  }
-
   private async buildUpdateWorkflowCommand(
-    workflowDto: UpsertWorkflowDataCommand,
-    user: UserSessionData,
+    command: UpsertWorkflowCommand,
     existingWorkflow: NotificationTemplateEntity
   ): Promise<UpdateWorkflowCommand> {
-    const steps = await this.mapSteps(workflowDto.origin, user, workflowDto.steps, existingWorkflow);
+    const { workflowDto, user } = command;
+    const steps = await this.buildSteps(command, existingWorkflow);
+    const workflowActive = workflowDto.active ?? true;
 
     return {
       id: existingWorkflow._id,
@@ -190,160 +175,103 @@ export class UpsertWorkflowUseCase {
       userPreferences: workflowDto.preferences?.user ?? null,
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
       tags: workflowDto.tags,
-      active: workflowDto.active ?? true,
-      status: this.computeStatus(workflowDto, steps),
+      active: workflowActive,
+      status: computeWorkflowStatus(workflowActive, steps),
     };
   }
-  private async mapSteps(
-    workflowOrigin: WorkflowOriginEnum,
-    user: UserSessionData,
-    commandWorkflowSteps: Array<StepCreateDto | StepUpdateDto>,
-    persistedWorkflow?: NotificationTemplateEntity | undefined
+
+  private async buildSteps(
+    command: UpsertWorkflowCommand,
+    existingWorkflow?: NotificationTemplateEntity
   ): Promise<NotificationStep[]> {
     const steps: NotificationStep[] = [];
 
-    for (const step of commandWorkflowSteps) {
-      const mappedStep = await this.mapSingleStep(workflowOrigin, user, persistedWorkflow, step);
-      const baseStepId = mappedStep.stepId;
+    for (const step of command.workflowDto.steps) {
+      const existingStep: NotificationStepEntity | null | undefined =
+        // eslint-disable-next-line id-length
+        '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
-      if (baseStepId) {
-        const previousStepIds = steps.map((stepX) => stepX.stepId).filter((id) => id != null);
-        mappedStep.stepId = this.generateUniqueStepId(baseStepId, previousStepIds);
+      const {
+        user,
+        workflowDto: { origin: workflowOrigin },
+      } = command;
+
+      const controlSchemas: ControlSchemas = existingStep?.template?.controls || stepTypeToControlSchema[step.type];
+      const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
+        workflowOrigin,
+        user,
+        stepInternalId: existingStep?._id,
+        workflow: existingWorkflow,
+        stepType: step.type,
+        controlSchema: controlSchemas.schema,
+        controlsDto: step.controlValues,
+      });
+
+      const updateStepId = existingStep?.stepId;
+      const syncToEnvironmentCreateStepId = step.stepId;
+      const finalStep = {
+        template: {
+          type: step.type,
+          name: step.name,
+          controls: controlSchemas,
+          content: '',
+        },
+        stepId:
+          updateStepId ||
+          syncToEnvironmentCreateStepId ||
+          this.generateUniqueStepId(step, existingWorkflow ? existingWorkflow.steps : command.workflowDto.steps),
+        name: step.name,
+        issues,
+      };
+
+      if (existingStep) {
+        Object.assign(finalStep, {
+          _id: existingStep._templateId,
+          _templateId: existingStep._templateId,
+          template: { ...finalStep.template, _id: existingStep._templateId },
+        });
       }
 
-      steps.push(mappedStep);
+      steps.push(finalStep);
     }
 
     return steps;
   }
 
-  private generateUniqueStepId(baseStepId: string, previousStepIds: string[]): string {
-    let currentStepId = baseStepId;
+  private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
+    const slug = slugify(step.name);
+
+    let finalStepId = slug;
     let attempts = 0;
     const maxAttempts = 5;
 
+    const previousStepIds = previousSteps.reduce<string[]>((acc, { stepId }) => {
+      if (stepId) {
+        acc.push(stepId);
+      }
+
+      return acc;
+    }, []);
+
+    const isStepIdUnique = (stepId: string) => !previousStepIds.includes(stepId);
+
     while (attempts < maxAttempts) {
-      if (isUniqueStepId(currentStepId, previousStepIds)) {
+      if (isStepIdUnique(finalStepId)) {
         break;
       }
-      currentStepId = `${baseStepId}-${shortId()}`;
+
+      finalStepId = `${slug}-${shortId()}`;
       attempts += 1;
     }
 
-    if (attempts === maxAttempts && !isUniqueStepId(currentStepId, previousStepIds)) {
+    if (attempts === maxAttempts && !isStepIdUnique(finalStepId)) {
       throw new BadRequestException({
         message: 'Failed to generate unique stepId',
-        stepId: baseStepId,
+        stepId: finalStepId,
       });
     }
 
-    return currentStepId;
-  }
-
-  private async mapSingleStep(
-    workflowOrigin: WorkflowOriginEnum,
-    user: UserSessionData,
-    persistedWorkflow: NotificationTemplateEntity | undefined,
-    step: StepUpdateDto | StepCreateDto
-  ): Promise<NotificationStep> {
-    const foundPersistedStep = this.getPersistedStepIfFound(persistedWorkflow, step);
-    const controlSchemas: ControlSchemas = foundPersistedStep?.template?.controls || stepTypeToControlSchema[step.type];
-    const issues: StepIssuesDto = await this.buildIssues(
-      workflowOrigin,
-      user,
-      foundPersistedStep,
-      persistedWorkflow,
-      step,
-      controlSchemas
-    );
-
-    const stepEntityToReturn = {
-      template: {
-        type: step.type,
-        name: step.name,
-        controls: controlSchemas,
-        content: '',
-      },
-      stepId: foundPersistedStep?.stepId || slugify(step.name),
-      name: step.name,
-      issues,
-    };
-
-    if (foundPersistedStep) {
-      return {
-        ...stepEntityToReturn,
-        _id: foundPersistedStep._templateId,
-        _templateId: foundPersistedStep._templateId,
-        template: { ...stepEntityToReturn.template, _id: foundPersistedStep._templateId },
-      };
-    }
-
-    return stepEntityToReturn;
-  }
-
-  private async buildIssues(
-    workflowOrigin: WorkflowOriginEnum,
-    user: UserSessionData,
-    foundPersistedStep: NotificationStepEntity | undefined,
-    persistedWorkflow: NotificationTemplateEntity | undefined,
-    step: StepCreateDto | StepUpdateDto,
-    controlSchemas: ControlSchemas
-  ) {
-    const variableSchema = await this.buildAvailableVariableSchemaUsecase.execute(
-      BuildAvailableVariableSchemaCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        stepInternalId: foundPersistedStep?.stepId,
-        workflow: persistedWorkflow,
-        ...(step.controlValues ? { optimisticControlValues: step.controlValues } : {}),
-      })
-    );
-
-    let controlValueLocal = step.controlValues;
-
-    if (!controlValueLocal) {
-      controlValueLocal = (
-        await this.controlValuesRepository.findOne({
-          _environmentId: user.environmentId,
-          _organizationId: user.organizationId,
-          _workflowId: persistedWorkflow?._id,
-          _stepId: foundPersistedStep?._templateId,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
-        })
-      )?.controls;
-    }
-
-    const sanitizedControlValues =
-      controlValueLocal && workflowOrigin === WorkflowOriginEnum.NOVU_CLOUD
-        ? dashboardSanitizeControlValues(this.logger, controlValueLocal, step.type) || {}
-        : frameworkSanitizeEmptyStringsToNull(controlValueLocal) || {};
-
-    const controlIssues = processControlValuesBySchema(controlSchemas?.schema, sanitizedControlValues || {});
-    const liquidTemplateIssues = processControlValuesByLiquid(variableSchema, controlValueLocal || {});
-    const customIssues = await this.processControlValuesByRules(user, step.type, sanitizedControlValues || {});
-    const customControlIssues = _.isEmpty(customIssues) ? {} : { controls: customIssues };
-
-    return _.merge(controlIssues, liquidTemplateIssues, customControlIssues);
-  }
-
-  private getPersistedStepIfFound(
-    persistedWorkflow: NotificationTemplateEntity | undefined,
-    stepUpdateRequest: StepUpdateDto | StepCreateDto
-  ) {
-    if (!persistedWorkflow?.steps) {
-      return;
-    }
-
-    for (const persistedStep of persistedWorkflow.steps) {
-      if (this.isStepUpdateDto(stepUpdateRequest) && persistedStep._templateId === stepUpdateRequest._id) {
-        return persistedStep;
-      }
-    }
-  }
-
-  private isStepUpdateDto(obj: StepUpdateDto | StepCreateDto): obj is StepUpdateDto {
-    return typeof obj === 'object' && obj !== null && !!(obj as StepUpdateDto)._id;
+    return finalStepId;
   }
 
   private async getNotificationGroup(environmentId: string): Promise<string | undefined> {
@@ -360,19 +288,19 @@ export class UpsertWorkflowUseCase {
 
   @Instrument()
   private async upsertControlValues(
-    workflow: NotificationTemplateEntity,
+    updatedWorkflow: NotificationTemplateEntity,
     command: UpsertWorkflowCommand
   ): Promise<void> {
-    const controlValuesUpdates = this.getControlValuesUpdates(workflow.steps, command);
+    const controlValuesUpdates = this.getControlValuesUpdates(updatedWorkflow.steps, command);
     if (controlValuesUpdates.length === 0) return;
 
     await Promise.all(
-      controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, workflow._id, command))
+      controlValuesUpdates.map((update) => this.executeControlValuesUpdate(update, updatedWorkflow._id, command))
     );
   }
 
-  private getControlValuesUpdates(steps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
-    return steps
+  private getControlValuesUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
+    return updatedSteps
       .map((step) => {
         const controlValues = this.findControlValueInRequest(step, command.workflowDto.steps);
         if (controlValues === undefined) return null;
@@ -392,15 +320,13 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (update.shouldDelete) {
-      return this.deleteControlValuesUseCase.execute(
-        DeleteControlValuesCommand.create({
-          environmentId: command.user.environmentId,
-          organizationId: command.user.organizationId,
-          stepId: update.step._templateId,
-          workflowId,
-          userId: command.user._id,
-        })
-      );
+      return this.controlValuesRepository.delete({
+        _environmentId: command.user.environmentId,
+        _organizationId: command.user.organizationId,
+        _workflowId: workflowId,
+        _stepId: update.step._templateId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      });
     }
 
     return this.upsertControlValuesUseCase.execute(
@@ -415,202 +341,35 @@ export class UpsertWorkflowUseCase {
   }
 
   private findControlValueInRequest(
-    step: NotificationStepEntity,
-    steps: (StepCreateDto | StepUpdateDto)[] | StepCreateDto[]
+    updatedStep: NotificationStepEntity,
+    commandSteps: UpsertStepDataCommand[]
   ): Record<string, unknown> | undefined | null {
-    return steps.find((stepRequest) => {
-      if (this.isStepUpdateDto(stepRequest)) {
-        return stepRequest._id === step._templateId;
+    const commandStep = commandSteps.find((commandStepX) => {
+      const isStepUpdateDashboardDto = '_id' in commandStepX;
+      if (isStepUpdateDashboardDto) {
+        return commandStepX._id === updatedStep._templateId;
       }
 
-      return stepRequest.name === step.name;
-    })?.controlValues;
-  }
-
-  private async processControlValuesByRules(
-    user: UserSessionData,
-    stepType: StepTypeEnum,
-    controlValues: Record<string, unknown> | null
-  ): Promise<StepIssuesDto> {
-    const restrictionsErrors = await this.tierRestrictionsValidateUsecase.execute(
-      TierRestrictionsValidateCommand.create({
-        amount: controlValues?.amount as number | undefined,
-        unit: controlValues?.unit as string | undefined,
-        cron: controlValues?.cron as string | undefined,
-        organizationId: user.organizationId,
-        stepType,
-      })
-    );
-
-    if (!restrictionsErrors) {
-      return {};
-    }
-
-    const result: Record<string, ContentIssue[]> = {};
-    for (const restrictionsError of restrictionsErrors) {
-      result[restrictionsError.controlKey] = [
-        {
-          issueType: StepContentIssueEnum.TIER_LIMIT_EXCEEDED,
-          message: restrictionsError.message,
-        },
-      ];
-    }
-
-    return result;
-  }
-}
-
-function isWorkflowUpdateDto(workflowDto: UpsertWorkflowDataCommand, id?: string) {
-  return !!id;
-}
-
-function isUniqueStepId(stepIdToValidate: string, otherStepsIds: string[]) {
-  return !otherStepsIds.some((stepId) => stepId === stepIdToValidate);
-}
-
-function processControlValuesByLiquid(
-  variableSchema: JSONSchemaDto | undefined,
-  controlValues: Record<string, unknown> | null
-): StepIssuesDto {
-  const issues: StepIssuesDto = {};
-
-  function processNestedControlValues(currentValue: unknown, currentPath: string[] = []) {
-    if (!currentValue || typeof currentValue !== 'object') {
-      const liquidTemplateIssues = buildVariables(variableSchema, currentValue);
-
-      if (liquidTemplateIssues.invalidVariables.length > 0) {
-        const controlKey = currentPath.join('.');
-        issues.controls = issues.controls || {};
-
-        issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((error) => {
-          const message = error.message
-            ? error.message[0].toUpperCase() + error.message.slice(1).split(' line:')[0]
-            : '';
-
-          return {
-            message: `${message} variable: ${error.output}`,
-            issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-            variableName: error.output,
-          };
-        });
+      const isCreateBySyncToEnvironment = 'stepId' in commandStepX;
+      if (isCreateBySyncToEnvironment) {
+        return commandStepX.stepId === updatedStep.stepId;
       }
 
-      return;
-    }
+      return commandStepX.name === updatedStep.name;
+    });
 
-    for (const [key, value] of Object.entries(currentValue)) {
-      processNestedControlValues(value, [...currentPath, key]);
-    }
+    if (!commandStep) return null;
+
+    return commandStep.controlValues;
   }
 
-  processNestedControlValues(controlValues);
-
-  return issues;
-}
-
-function processControlValuesBySchema(
-  controlSchema: JSONSchemaDto | undefined,
-  controlValues: Record<string, unknown> | null
-): StepIssuesDto {
-  let issues: StepIssuesDto = {};
-
-  if (!controlSchema || !controlValues) {
-    return issues;
+  private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {
+    this.analyticsService.mixpanelTrack(eventName, command.user?._id, {
+      _organization: command.user.organizationId,
+      name: command.workflowDto.name,
+      tags: command.workflowDto.tags || [],
+      origin: command.workflowDto.origin,
+      source: command.workflowDto.__source,
+    });
   }
-
-  const ajv = new Ajv({ allErrors: true });
-  addFormats(ajv);
-  const validate = ajv.compile(controlSchema);
-  const isValid = validate(controlValues);
-  const errors = validate.errors as null | ErrorObject[];
-
-  if (!isValid && errors && errors?.length !== 0 && controlValues) {
-    issues = {
-      controls: errors.reduce(
-        (acc, error) => {
-          const path = getErrorPath(error);
-          if (!acc[path]) {
-            acc[path] = [];
-          }
-          acc[path].push({
-            message: mapAjvErrorToMessage(error),
-            issueType: mapAjvErrorToIssueType(error),
-            variableName: path,
-          });
-
-          return acc;
-        },
-        {} as Record<string, ContentIssue[]>
-      ),
-    };
-
-    return issues;
-  }
-
-  return issues;
-}
-
-/*
- * Extracts the path from the error object:
- * 1. If instancePath exists, removes leading slash and converts remaining slashes to dots
- * 2. If no instancePath, uses missingProperty from error params
- * Example: "/foo/bar" becomes "foo.bar"
- */
-function getErrorPath(error: ErrorObject): string {
-  const path = error.instancePath.substring(1);
-  const { missingProperty } = error.params;
-
-  if (!path || path.trim().length === 0) {
-    return missingProperty;
-  }
-
-  const fullPath = missingProperty ? `${path}/${missingProperty}` : path;
-
-  return fullPath?.replace(/\//g, '.');
-}
-
-function frameworkSanitizeEmptyStringsToNull(
-  obj: Record<string, unknown> | undefined | null
-): Record<string, unknown> | undefined | null {
-  if (typeof obj !== 'object' || obj === null || obj === undefined) return obj;
-
-  return Object.fromEntries(
-    Object.entries(obj).map(([key, value]) => {
-      if (typeof value === 'string' && value.trim() === '') {
-        return [key, null];
-      }
-      if (typeof value === 'object') {
-        return [key, frameworkSanitizeEmptyStringsToNull(value as Record<string, unknown>)];
-      }
-
-      return [key, value];
-    })
-  );
-}
-
-function mapAjvErrorToIssueType(error: ErrorObject): StepContentIssueEnum {
-  switch (error.keyword) {
-    case 'required':
-      return StepContentIssueEnum.MISSING_VALUE;
-    case 'type':
-      return StepContentIssueEnum.MISSING_VALUE;
-    default:
-      return StepContentIssueEnum.MISSING_VALUE;
-  }
-}
-
-function mapAjvErrorToMessage(error: ErrorObject<string, Record<string, unknown>, unknown>): string {
-  if (error.keyword === 'required') {
-    return `${_.capitalize(error.params.missingProperty)} is required`;
-  }
-  if (
-    error.keyword === 'pattern' &&
-    error.message?.includes('must match pattern') &&
-    error.message?.includes('mailto') &&
-    error.message?.includes('https')
-  ) {
-    return 'Invalid URL format. Must be a valid absolute URL, path, or valid variable';
-  }
-
-  return error.message || 'Invalid value';
 }

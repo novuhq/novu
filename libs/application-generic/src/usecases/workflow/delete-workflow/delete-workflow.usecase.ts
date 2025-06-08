@@ -1,26 +1,18 @@
-import { Injectable } from '@nestjs/common';
-
+import { Injectable, Optional } from '@nestjs/common';
 import {
   ControlValuesRepository,
   MessageTemplateRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { PreferencesTypeEnum } from '@novu/shared';
+import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 
 import { DeleteWorkflowCommand } from './delete-workflow.command';
-import { InvalidateCacheService } from '../../../services/cache/invalidate-cache.service';
 import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
-import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
-import {
-  buildNotificationTemplateIdentifierKey,
-  buildNotificationTemplateKey,
-} from '../../../services/cache/key-builders';
-import {
-  DeletePreferencesUseCase,
-  DeletePreferencesCommand,
-} from '../../delete-preferences';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { DeletePreferencesUseCase, DeletePreferencesCommand } from '../../delete-preferences';
 import { Instrument, InstrumentUsecase } from '../../../instrumentation';
+import { SendWebhookMessage } from '../../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 
 @Injectable()
 export class DeleteWorkflowUseCase {
@@ -28,30 +20,38 @@ export class DeleteWorkflowUseCase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private invalidateCache: InvalidateCacheService,
     private controlValuesRepository: ControlValuesRepository,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
   async execute(command: DeleteWorkflowCommand): Promise<void> {
     const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
+      GetWorkflowWithPreferencesCommand.create({
         ...command,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
-      }),
+      })
     );
 
-    await this.invalidateCacheForWorkflow(workflowEntity, command);
-
     await this.deleteRelatedEntities(command, workflowEntity);
+
+    if (this.sendWebhookMessage) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_DELETED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: workflowEntity as unknown as Record<string, unknown>,
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+    }
   }
 
   @Instrument()
-  private async deleteRelatedEntities(
-    command: DeleteWorkflowCommand,
-    workflow: NotificationTemplateEntity,
-  ) {
+  private async deleteRelatedEntities(command: DeleteWorkflowCommand, workflow: NotificationTemplateEntity) {
     await this.notificationTemplateRepository.withTransaction(async () => {
       await this.controlValuesRepository.deleteMany({
         _environmentId: command.environmentId,
@@ -75,8 +75,9 @@ export class DeleteWorkflowUseCase {
           organizationId: command.organizationId,
           userId: command.userId,
           type: PreferencesTypeEnum.USER_WORKFLOW,
-        }),
+        })
       );
+
       await this.deletePreferencesUsecase.execute(
         DeletePreferencesCommand.create({
           templateId: workflow._id,
@@ -84,7 +85,7 @@ export class DeleteWorkflowUseCase {
           organizationId: command.organizationId,
           userId: command.userId,
           type: PreferencesTypeEnum.WORKFLOW_RESOURCE,
-        }),
+        })
       );
 
       await this.notificationTemplateRepository.delete({
@@ -92,26 +93,6 @@ export class DeleteWorkflowUseCase {
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
       });
-    });
-  }
-
-  @Instrument()
-  private async invalidateCacheForWorkflow(
-    workflow: NotificationTemplateEntity,
-    command: DeleteWorkflowCommand,
-  ) {
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: workflow._id,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: workflow.triggers[0].identifier,
-        _environmentId: command.environmentId,
-      }),
     });
   }
 }

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 
-describe('User registration - /auth/register (POST) @skip-in-ee', async () => {
+describe('User registration - /auth/register (POST) #novu-v0-os', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
   const organizationRepository = new CommunityOrganizationRepository();
@@ -89,7 +89,7 @@ describe('User registration - /auth/register (POST) @skip-in-ee', async () => {
       expect(env.apiKeys[0].key).to.be.ok;
     });
 
-    expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.ADMIN);
+    expect(jwtContent.roles[0]).to.equal(MemberRoleEnum.OSS_ADMIN);
   });
 
   it("should throw error when the password doesn't meets the requirements", async () => {

@@ -37,25 +37,25 @@ const learnResources: Resource[] = [
     title: 'Manage Subscribers',
     duration: '4m read',
     image: 'subscribers.svg',
-    url: 'https://docs.novu.co/concepts/subscribers?utm_source=novu.co&utm_medium=welcome-page',
+    url: 'https://docs.novu.co/platform/concepts/subscribers?utm_source=novu.co&utm_medium=welcome-page',
   },
   {
     title: 'Topics',
     duration: '5m read',
     image: 'topics.svg',
-    url: 'https://docs.novu.co/concepts/topics?utm_source=novu.co&utm_medium=welcome-page',
+    url: 'https://docs.novu.co/platform/concepts/topics?utm_source=novu.co&utm_medium=welcome-page',
   },
   {
     title: 'Code First Workflows',
     duration: '4m read',
     image: 'code-first.svg',
-    url: 'https://docs.novu.co/workflow/introduction?utm_source=novu.co&utm_medium=welcome-page',
+    url: 'https://docs.novu.co/framework/introduction?utm_source=novu.co&utm_medium=welcome-page',
   },
   {
     title: 'Digest Engine',
     duration: '3m read',
     image: 'digest engine-1.svg',
-    url: 'https://docs.novu.co/workflow/digest?utm_source=novu.co&utm_medium=welcome-page',
+    url: 'https://docs.novu.co/platform/workflow/digest?utm_source=novu.co&utm_medium=welcome-page',
   },
 ];
 

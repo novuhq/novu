@@ -8,16 +8,14 @@ test('should trigger Telnyx correctly', async () => {
     messageProfileId: 'jap-ops-pkd-pn-pair',
   });
 
-  const spy = vi
-    .spyOn((provider as any).telnyxClient.messages, 'create')
-    .mockImplementation(async () => {
-      return {
-        data: {
-          id: Math.ceil(Math.random() * 100),
-          received_at: new Date(),
-        },
-      };
-    });
+  const spy = vi.spyOn((provider as any).telnyxClient.messages, 'create').mockImplementation(async () => {
+    return {
+      data: {
+        id: Math.ceil(Math.random() * 100),
+        received_at: new Date(),
+      },
+    };
+  });
   await provider.sendMessage({
     content: 'We are testing',
     to: '+2347069652019',
@@ -39,16 +37,14 @@ test('should trigger Telnyx correctly with _passthrough', async () => {
     messageProfileId: 'jap-ops-pkd-pn-pair',
   });
 
-  const spy = vi
-    .spyOn((provider as any).telnyxClient.messages, 'create')
-    .mockImplementation(async () => {
-      return {
-        data: {
-          id: Math.ceil(Math.random() * 100),
-          received_at: new Date(),
-        },
-      };
-    });
+  const spy = vi.spyOn((provider as any).telnyxClient.messages, 'create').mockImplementation(async () => {
+    return {
+      data: {
+        id: Math.ceil(Math.random() * 100),
+        received_at: new Date(),
+      },
+    };
+  });
   await provider.sendMessage(
     {
       content: 'We are testing',
@@ -60,7 +56,7 @@ test('should trigger Telnyx correctly with _passthrough', async () => {
           from: 'TelynxTest1',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

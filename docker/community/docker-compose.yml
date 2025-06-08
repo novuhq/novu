@@ -10,11 +10,10 @@ services:
         max-size: '50m'
         max-file: '5'
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
-      interval: 30s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
 
   mongodb:
     image: mongo:8.0.3
@@ -35,23 +34,16 @@ services:
     ports:
       - 27017:27017
     healthcheck:
-      test:
-        [
-          'CMD-SHELL',
-          "echo 'db.runCommand({ ping: 1 }).ok' | mongosh mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@127.0.0.1:27017/admin --quiet",
-        ]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
       retries: 5
-      start_period: 60s
 
   api:
-    image: 'ghcr.io/novuhq/novu/api:2.1.0'
+    image: 'ghcr.io/novuhq/novu/api:2.2.0'
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
+      - redis
     container_name: api
     restart: unless-stopped
     logging:
@@ -62,7 +54,6 @@ services:
     environment:
       NODE_ENV: ${NODE_ENV}
       API_ROOT_URL: ${API_ROOT_URL}
-      DISABLE_USER_REGISTRATION: ${DISABLE_USER_REGISTRATION}
       PORT: ${API_PORT}
       FRONT_BASE_URL: ${FRONT_BASE_URL}
       MONGO_URL: ${MONGO_URL}
@@ -81,21 +72,25 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       JWT_SECRET: ${JWT_SECRET}
       STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
+      NOVU_SECRET_KEY: ${NOVU_SECRET_KEY}
       SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME}
       SENTRY_DSN: ${SENTRY_DSN}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       API_CONTEXT_PATH: ${API_CONTEXT_PATH}
+      MONGO_AUTO_CREATE_INDEXES: ${MONGO_AUTO_CREATE_INDEXES}
+      IS_API_IDEMPOTENCY_ENABLED: ${IS_API_IDEMPOTENCY_ENABLED}
+      IS_API_RATE_LIMITING_ENABLED: ${IS_API_RATE_LIMITING_ENABLED}
+      IS_NEW_MESSAGES_API_RESPONSE_ENABLED: ${IS_NEW_MESSAGES_API_RESPONSE_ENABLED}
+      IS_V2_ENABLED: ${IS_V2_ENABLED}
     ports:
       - ${API_PORT}:${API_PORT}
-
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:2.1.0'
+    image: 'ghcr.io/novuhq/novu/worker:2.2.0'
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
+      - redis
     container_name: worker
     restart: unless-stopped
     logging:
@@ -121,18 +116,19 @@ services:
       STORE_ENCRYPTION_KEY: ${STORE_ENCRYPTION_KEY}
       SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: ${SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME}
       SENTRY_DSN: ${SENTRY_DSN}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
-
+      API_ROOT_URL: http://api:${API_PORT}
+      IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED}
+      IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED}
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:2.1.0'
+    image: 'ghcr.io/novuhq/novu/ws:2.2.0'
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongodb
+      - redis
     container_name: ws
     restart: unless-stopped
     logging:
@@ -150,17 +146,18 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       WS_CONTEXT_PATH: ${WS_CONTEXT_PATH}
+      NEW_RELIC_ENABLED: ${NEW_RELIC_ENABLED}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
       - ${WS_PORT}:${WS_PORT}
 
-  web:
-    image: 'ghcr.io/novuhq/novu/web:2.1.0'
+  dashboard:
+    image: 'ghcr.io/novuhq/novu/dashboard:2.2.0'
     depends_on:
       - api
       - worker
-    container_name: web
+    container_name: dashboard
     restart: unless-stopped
     logging:
       driver: 'json-file'
@@ -168,20 +165,11 @@ services:
         max-size: '50m'
         max-file: '5'
     environment:
-      REACT_APP_API_URL: ${API_ROOT_URL}
-      REACT_APP_ENVIRONMENT: ${NODE_ENV}
-      REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
-      REACT_APP_IS_SELF_HOSTED: 'true'
-      REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      VITE_API_HOSTNAME: ${VITE_API_HOSTNAME}
+      VITE_SELF_HOSTED: true
+      VITE_WEBSOCKET_HOSTNAME: ${VITE_WEBSOCKET_HOSTNAME}
     ports:
-      - 4200:4200
-    command: ['/bin/sh', '-c', 'pnpm run envsetup:docker && pnpm run start:static:build']
-    healthcheck:
-      test: ['CMD-SHELL', 'curl --silent --fail http://localhost:4200 || exit 1']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
+      - 4000:4000
 
 volumes:
   mongodb: ~

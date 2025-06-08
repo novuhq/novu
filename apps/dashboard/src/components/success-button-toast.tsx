@@ -21,13 +21,19 @@ export function SuccessButtonToast({ title, description, actionLabel, onAction, 
           <div className="text-foreground-600 text-sm">{description}</div>
         </div>
         <div className="flex items-center justify-end gap-2 self-stretch">
-          <Button variant="ghost" size="sm" className="text-destructive gap-1" onClick={onAction}>
+          <Button
+            trailingIcon={RiArrowRightSLine}
+            variant="secondary"
+            mode="ghost"
+            size="xs"
+            className="text-destructive gap-1"
+            onClick={onAction}
+          >
             {actionLabel}
-            <RiArrowRightSLine />
           </Button>
         </div>
       </div>
-      <ToastClose onClick={onClose} />
+      <ToastClose className="absolute right-3 top-3" onClick={onClose} />
     </>
   );
 }

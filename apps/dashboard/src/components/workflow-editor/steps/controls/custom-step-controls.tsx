@@ -1,30 +1,30 @@
-import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
-import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
-import { RJSFSchema } from '@rjsf/utils';
-import { type ControlsMetadata } from '@novu/shared';
-import { Separator } from '@/components/primitives/separator';
-import { Switch } from '@/components/primitives/switch';
-import { WorkflowOriginEnum } from '@/utils/enums';
-import { cn } from '@/utils/ui';
-import { JsonForm } from './json-form';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useWorkflow } from '../../workflow-provider';
-import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
-import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Separator } from '@/components/primitives/separator';
+import { Switch } from '@/components/primitives/switch';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { WorkflowOriginEnum } from '@/utils/enums';
+import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
+import { cn } from '@/utils/ui';
+import { type Controls } from '@novu/shared';
+import { RJSFSchema } from '@rjsf/utils';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import { useWorkflow } from '../../workflow-provider';
+import { JsonForm } from './json-form';
 
 type CustomStepControlsProps = {
-  dataSchema: ControlsMetadata['dataSchema'];
+  dataSchema: Controls['dataSchema'];
   origin: WorkflowOriginEnum;
   className?: string;
 };
 
-const CONTROLS_DOCS_LINK = 'https://docs.novu.co/concepts/controls';
+const CONTROLS_DOCS_LINK = 'https://docs.novu.co/framework/controls';
 
 export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { className, dataSchema, origin } = props;
@@ -122,8 +122,10 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
               setIsRestoreDefaultModalOpen(true);
               return;
             }
+
             setIsOverridden(checked);
           }}
+          data-testid="override-defaults-switch"
         />
       </div>
       <Separator className="mb-3" />

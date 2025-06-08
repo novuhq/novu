@@ -45,7 +45,7 @@ export function InboxPreviewContent({
       },
       elements: {
         inbox__popoverContent: {
-          maxHeight: '440px',
+          maxHeight: '460px',
         },
         button: {
           fontSize: '12px',
@@ -67,7 +67,7 @@ export function InboxPreviewContent({
     <>
       {selectedStyle === 'popover' && (
         <div className="relative flex h-full w-full flex-col items-center">
-          <div className="mt-10 flex w-full max-w-[440px] items-center justify-end">
+          <div className="mt-5 flex w-full max-w-[440px] items-center justify-end">
             <Inbox
               {...configuration}
               routerPush={(path: string) => {

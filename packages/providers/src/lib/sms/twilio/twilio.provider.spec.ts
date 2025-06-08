@@ -7,13 +7,11 @@ test('should trigger Twilio correctly', async () => {
     authToken: '<twilio-auth-Token>',
     from: '+112345',
   });
-  const spy = vi
-    .spyOn((provider as any).twilioClient.messages, 'create')
-    .mockImplementation(async () => {
-      return {
-        dateCreated: new Date(),
-      };
-    });
+  const spy = vi.spyOn((provider as any).twilioClient.messages, 'create').mockImplementation(async () => {
+    return {
+      dateCreated: new Date(),
+    };
+  });
 
   await provider.sendMessage(
     {
@@ -22,7 +20,7 @@ test('should trigger Twilio correctly', async () => {
     },
     {
       ApplicationSid: 'test',
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();
@@ -40,13 +38,11 @@ test('should trigger Twilio correctly with _passthrough', async () => {
     authToken: '<twilio-auth-Token>',
     from: '+112345',
   });
-  const spy = vi
-    .spyOn((provider as any).twilioClient.messages, 'create')
-    .mockImplementation(async () => {
-      return {
-        dateCreated: new Date(),
-      };
-    });
+  const spy = vi.spyOn((provider as any).twilioClient.messages, 'create').mockImplementation(async () => {
+    return {
+      dateCreated: new Date(),
+    };
+  });
 
   await provider.sendMessage(
     {
@@ -60,7 +56,7 @@ test('should trigger Twilio correctly with _passthrough', async () => {
           body: 'SMS Content _passthrough',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

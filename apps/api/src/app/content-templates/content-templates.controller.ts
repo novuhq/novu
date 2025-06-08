@@ -1,32 +1,35 @@
 /* eslint-disable global-require */
-import { Body, Controller, Logger, Post } from '@nestjs/common';
+import { Body, Controller, Post, BadRequestException } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { format } from 'date-fns';
 import i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import {
-  ApiException,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CompileInAppTemplate,
   CompileInAppTemplateCommand,
   CompileStepTemplate,
   CompileStepTemplateCommand,
+  PinoLogger,
 } from '@novu/application-generic';
 import { IEmailBlock, IMessageCTA, MessageTemplateContentType, UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @Controller('/content-templates')
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class ContentTemplatesController {
   constructor(
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private compileInAppTemplate: CompileInAppTemplate,
     private compileStepTemplate: CompileStepTemplate,
-    private moduleRef: ModuleRef
-  ) {}
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Post('/preview/email')
   public async previewEmail(
@@ -152,7 +155,7 @@ export class ContentTemplatesController {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
-          throw new ApiException('Translation module is not loaded');
+          throw new BadRequestException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         const { namespaces, resources, defaultLocale } = await service.getTranslationsList(
@@ -183,7 +186,7 @@ export class ContentTemplatesController {
         return instance;
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+      this.logger.error({ err: e }, `Unexpected error while importing enterprise modules`);
     }
   }
 }

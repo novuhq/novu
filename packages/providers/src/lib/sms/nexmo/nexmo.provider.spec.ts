@@ -83,7 +83,7 @@ test('should trigger nexmo library correctly with _passthrough', async () => {
           from: '+212345',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

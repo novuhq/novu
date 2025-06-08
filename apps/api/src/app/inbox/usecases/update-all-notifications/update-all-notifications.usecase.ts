@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -9,10 +9,10 @@ import {
 import { MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
 import { UpdateAllNotificationsCommand } from './update-all-notifications.command';
+import { validateDataStructure } from '../../utils/validate-data';
 
 @Injectable()
 export class UpdateAllNotifications {
@@ -32,13 +32,35 @@ export class UpdateAllNotifications {
     });
 
     if (!subscriber) {
-      throw new ApiException(`Subscriber with id: ${command.subscriberId} is not found.`);
+      throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
+    }
+
+    let parsedData;
+    if (command.from.data) {
+      try {
+        parsedData = JSON.parse(command.from.data);
+        validateDataStructure(parsedData);
+      } catch (error) {
+        if (error instanceof BadRequestException) {
+          throw error;
+        }
+
+        throw new BadRequestException('Invalid JSON format for data parameter');
+      }
+    }
+
+    const fromField: Record<string, unknown> = {
+      ...command.from,
+    };
+
+    if (parsedData) {
+      fromField.data = parsedData;
     }
 
     await this.messageRepository.updateMessagesFromToStatus({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
-      from: command.from,
+      from: fromField,
       to: command.to,
     });
 

@@ -8,16 +8,14 @@ test('should trigger BandwidthSmsProvider library correctly', async () => {
     accountId: '<your-bandwidth-accountId>',
   });
 
-  const spy = vi
-    .spyOn((provider as any).controller, 'createMessage')
-    .mockImplementation(async () => {
-      return {
-        result: {
-          id: '12345-67a8',
-          time: new Date().toISOString(),
-        },
-      };
-    });
+  const spy = vi.spyOn((provider as any).controller, 'createMessage').mockImplementation(async () => {
+    return {
+      result: {
+        id: '12345-67a8',
+        time: new Date().toISOString(),
+      },
+    };
+  });
 
   await provider.sendMessage({
     to: '+12345678902',
@@ -42,16 +40,14 @@ test('should trigger BandwidthSmsProvider library correctly with _passthrough', 
     accountId: '<your-bandwidth-accountId>',
   });
 
-  const spy = vi
-    .spyOn((provider as any).controller, 'createMessage')
-    .mockImplementation(async () => {
-      return {
-        result: {
-          id: '12345-67a8',
-          time: new Date().toISOString(),
-        },
-      };
-    });
+  const spy = vi.spyOn((provider as any).controller, 'createMessage').mockImplementation(async () => {
+    return {
+      result: {
+        id: '12345-67a8',
+        time: new Date().toISOString(),
+      },
+    };
+  });
 
   await provider.sendMessage(
     {
@@ -65,7 +61,7 @@ test('should trigger BandwidthSmsProvider library correctly with _passthrough', 
           from: '+2234567890',
         },
       },
-    },
+    }
   );
 
   expect(spy).toHaveBeenCalled();

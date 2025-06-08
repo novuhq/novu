@@ -1,20 +1,19 @@
-import { useState } from 'react';
-import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
-import { useEnvironment } from '@/context/environment/hooks';
-import { CopyButton } from '@/components/primitives/copy-button';
-import { Card, CardContent, CardHeader } from '@/components/primitives/card';
-import { Button } from '@/components/primitives/button';
-import { Input, InputField } from '@/components/primitives/input';
-import { Form } from '@/components/primitives/form/form';
-import { useForm } from 'react-hook-form';
-import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
-import { useFetchApiKeys } from '../hooks/use-fetch-api-keys';
+import { Card, CardContent, CardHeader } from '@/components/primitives/card';
+import { CopyButton } from '@/components/primitives/copy-button';
+import { Form } from '@/components/primitives/form/form';
+import { Input } from '@/components/primitives/input';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
+import { DashboardLayout } from '../components/dashboard-layout';
 import { Container } from '../components/primitives/container';
 import { HelpTooltipIndicator } from '../components/primitives/help-tooltip-indicator';
 import { API_HOSTNAME } from '../config';
-import { Skeleton } from '@/components/primitives/skeleton';
+import { useFetchApiKeys } from '../hooks/use-fetch-api-keys';
 
 interface ApiKeysFormData {
   apiKey: string;
@@ -53,13 +52,13 @@ export function ApiKeysPage() {
                 {'<Inbox />'}
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
                   {'Use the public application identifier in Novu <Inbox />. '}
-                  <ExternalLink href="https://docs.novu.co/inbox/overview" className="text-foreground-500">
+                  <ExternalLink href="https://docs.novu.co/platform/inbox/overview" className="text-foreground-500">
                     Learn more
                   </ExternalLink>
                 </p>
               </CardHeader>
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-3">
-                <div className="space-y-4 p-3">
+              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <div className="space-y-4">
                   <SettingField
                     label="Application Identifier"
                     tooltip={`This is unique for the ${currentEnvironment.name} environment.`}
@@ -74,14 +73,14 @@ export function ApiKeysPage() {
                 Secret Keys
                 <p className="text-foreground-500 mt-1 text-xs font-normal">
                   {'Use the secret key to authenticate your SDK requests. Keep it secure and never share it publicly. '}
-                  <ExternalLink href="https://docs.novu.co/sdks/overview" className="text-foreground-500">
+                  <ExternalLink href="https://docs.novu.co/platform/sdks/overview" className="text-foreground-500">
                     Learn more
                   </ExternalLink>
                 </p>
               </CardHeader>
 
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-3">
-                <div className="space-y-4 p-3">
+              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <div className="space-y-4">
                   <SettingField
                     label="Secret Key"
                     tooltip="Keep it secure and never share it publicly"
@@ -102,8 +101,8 @@ export function ApiKeysPage() {
                   </ExternalLink>
                 </p>
               </CardHeader>
-              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-3">
-                <div className="space-y-4 p-3">
+              <CardContent className="rounded-b-xl border-t bg-neutral-50 bg-white p-4">
+                <div className="space-y-4">
                   <SettingField
                     label="Novu API Hostname"
                     tooltip={`For Novu Cloud in the ${region} region`}
@@ -143,14 +142,14 @@ function SettingField({
   };
 
   const maskSecret = (secret: string) => {
-    return `${'•'.repeat(28)} ${secret.slice(-4)}`;
+    return `${'•'.repeat(28)}${secret.slice(-4)}`;
   };
 
   return (
-    <div className="grid grid-cols-[1fr,400px] items-start gap-3">
-      <label className={`text-foreground-950 text-xs font-medium`}>
+    <div className="grid grid-cols-[1fr,400px] items-center gap-3">
+      <label className="text-foreground-600 font-medium\\ inline-flex items-center gap-1 text-xs">
         {label}
-        {tooltip && <HelpTooltipIndicator text={tooltip} className="relative top-[5px] ml-1" />}
+        {tooltip && <HelpTooltipIndicator text={tooltip} />}
       </label>
       <div className="flex items-center gap-2">
         {isLoading ? (
@@ -160,28 +159,23 @@ function SettingField({
           </>
         ) : (
           <>
-            <InputField className="flex overflow-hidden pr-0">
-              <Input
-                className="cursor-default"
-                value={secret ? (showSecret ? value : maskSecret(value ?? '')) : value}
-                readOnly={readOnly}
-              />
-              <CopyButton size="input-right" valueToCopy={value ?? ''} />
-            </InputField>
-
-            {secret && (
-              <Button
-                variant="outline"
-                size="icon"
-                // TODO: Icon size variant is size-8 but doesn't align with the size of the input. We should fix this.
-                className="size-9"
-                onClick={toggleSecretVisibility}
-                disabled={isLoading}
-                aria-label={showSecret ? 'Hide Secret' : 'Show Secret'}
-              >
-                {showSecret ? <RiEyeOffLine className="size-4" /> : <RiEyeLine className="size-4" />}
-              </Button>
-            )}
+            <Input
+              className="cursor-default font-mono !text-neutral-500"
+              value={secret ? (showSecret ? value : maskSecret(value ?? '')) : value}
+              readOnly={readOnly}
+              trailingNode={<CopyButton valueToCopy={value ?? ''} />}
+              inlineTrailingNode={
+                secret && (
+                  <button type="button" onClick={toggleSecretVisibility}>
+                    {showSecret ? (
+                      <RiEyeOffLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
+                    ) : (
+                      <RiEyeLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
+                    )}
+                  </button>
+                )
+              }
+            />
           </>
         )}
       </div>

@@ -1,8 +1,12 @@
-import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
-import { AddStepMenu } from './add-step-menu';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { WorkflowOriginEnum } from '@novu/shared';
 import { createStep } from '@/components/workflow-editor/step-utils';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
+import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
+import { useNavigate } from 'react-router-dom';
+import { AddStepMenu } from './add-step-menu';
+import { useHasPermission } from '@/hooks/use-has-permission';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
@@ -18,7 +22,11 @@ export function AddNodeEdge({
   markerEnd,
 }: EdgeProps<AddNodeEdgeType>) {
   const { workflow, update } = useWorkflow();
-  const isReadOnly = workflow?.origin === WorkflowOriginEnum.EXTERNAL;
+  const navigate = useNavigate();
+  const has = useHasPermission();
+
+  const isReadOnly =
+    workflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
@@ -47,7 +55,7 @@ export function AddNodeEdge({
           >
             {!isReadOnly && (
               <AddStepMenu
-                onMenuItemClick={(stepType) => {
+                onMenuItemClick={async (stepType) => {
                   if (workflow) {
                     const indexToAdd = data.addStepIndex;
 
@@ -59,10 +67,29 @@ export function AddNodeEdge({
                       ...workflow.steps.slice(indexToAdd),
                     ];
 
-                    update({
-                      ...workflow,
-                      steps: updatedSteps,
-                    });
+                    update(
+                      {
+                        ...workflow,
+                        steps: updatedSteps,
+                      },
+                      {
+                        onSuccess: (data) => {
+                          if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
+                            navigate(
+                              buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                                stepSlug: data.steps[indexToAdd].slug,
+                              })
+                            );
+                          } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
+                            navigate(
+                              buildRoute(ROUTES.EDIT_STEP, {
+                                stepSlug: data.steps[indexToAdd].slug,
+                              })
+                            );
+                          }
+                        },
+                      }
+                    );
                   }
                 }}
               />

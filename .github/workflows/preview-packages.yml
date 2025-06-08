@@ -12,7 +12,7 @@ on:
 
 jobs:
   publish_preview_packages:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
 
     steps:
       - name: Checkout code
@@ -20,11 +20,19 @@ jobs:
         with:
           fetch-depth: 0
 
-      - run: corepack enable
-      - uses: actions/setup-node@v4
+      # https://vercel.com/guides/corepack-errors-github-actions
+      - name: Use Latest Corepack
+        run: |
+          npm install -g corepack@latest
+          corepack enable
+
+      - uses: useblacksmith/setup-node@v5
         with:
-          node-version: 20
+          node-version: 20.19.0
           cache: 'pnpm'
+
+      - name: Install pnpm
+        run: corepack enable
 
       - name: Install dependencies
         run: pnpm install

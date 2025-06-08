@@ -8,22 +8,23 @@ import {
   EmailBlockTypeEnum,
   IApiRateLimitMaximum,
   IEmailBlock,
-  JobTopicNameEnum,
-  StepTypeEnum,
-  TriggerRecipientsPayload,
   isClerkEnabled,
+  MemberRoleEnum,
+  ALL_PERMISSIONS,
+  StepTypeEnum,
 } from '@novu/shared';
 import {
-  UserEntity,
+  ChangeEntity,
+  ChangeRepository,
+  CommunityOrganizationRepository,
   EnvironmentEntity,
-  OrganizationEntity,
+  FeedRepository,
+  LayoutRepository,
   NotificationGroupEntity,
   NotificationGroupRepository,
-  FeedRepository,
-  ChangeRepository,
-  ChangeEntity,
+  OrganizationEntity,
   SubscriberRepository,
-  LayoutRepository,
+  UserEntity,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -38,14 +39,16 @@ import { EEUserService } from './ee/ee.user.service';
 import { EEOrganizationService } from './ee/ee.organization.service';
 import { TEST_USER_PASSWORD } from './constants';
 import { ClerkJwtPayload } from './ee/types';
+import { CLERK_ORGANIZATION_1, CLERK_USER_1 } from './ee/clerk-mock-data';
 
 type UserSessionOptions = {
   noOrganization?: boolean;
   noEnvironment?: boolean;
+  noWidgetSession?: boolean;
   showOnBoardingTour?: boolean;
   ee?: {
-    userId: 'clerk_user_1' | 'clerk_user_2';
-    orgId: 'clerk_org_1';
+    userId: string;
+    orgId: string;
   };
 };
 
@@ -93,9 +96,8 @@ export class UserSession {
     this.jobsService = new JobsService();
   }
 
-  async initialize(options?: UserSessionOptions) {
+  async initialize(options: UserSessionOptions = {}) {
     if (isClerkEnabled()) {
-      // The ids of pre-seeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
       await this.initializeEE(options);
     } else {
       await this.initializeCommunity(options);
@@ -138,32 +140,30 @@ export class UserSession {
       }
     }
 
-    if (!options.noOrganization && !options.noEnvironment) {
+    if (!options.noOrganization && !options.noEnvironment && !options.noWidgetSession) {
       const { token, profile } = await this.initializeWidgetSession();
       this.subscriberToken = token;
       this.subscriberProfile = profile;
     }
   }
 
-  private async initializeEE(options: UserSessionOptions = { ee: { userId: 'clerk_user_1', orgId: 'clerk_org_1' } }) {
+  private async initializeEE(options: UserSessionOptions) {
     const userService = new EEUserService();
 
-    // user is already in org
-    const userId = options.ee?.userId || 'clerk_user_1';
-    const orgId = options.ee?.orgId || 'clerk_org_1';
+    const externalUserId = options.ee?.userId || CLERK_USER_1.id;
+    const externalOrgId = options.ee?.orgId || CLERK_ORGANIZATION_1.id;
 
-    // already existing user in Clerk
-    const user = await userService.getUser(userId);
+    const user = await userService.getUser(externalUserId);
 
     if (!user._id) {
       // not linked in clerk
-      this.user = await userService.createUser(userId);
+      this.user = await userService.createUser(externalUserId);
     } else {
       this.user = user;
     }
 
     if (!options.noOrganization) {
-      await this.addOrganizationEE(orgId);
+      await this.addOrganizationEE(externalOrgId);
     }
 
     await this.fetchJwtEE();
@@ -180,7 +180,7 @@ export class UserSession {
       }
     }
 
-    if (!options.noOrganization && !options.noEnvironment) {
+    if (!options.noOrganization && !options.noEnvironment && !options.noWidgetSession) {
       const { token, profile } = await this.initializeWidgetSession();
       this.subscriberToken = token;
       this.subscriberProfile = profile;
@@ -223,10 +223,10 @@ export class UserSession {
   }
 
   async addOrganization() {
-    if (isClerkEnabled()) {
-      return await this.addOrganizationEE('clerk_org_1');
-    } else {
+    if (!isClerkEnabled()) {
       return await this.addOrganizationCommunity();
+    } else {
+      throw new Error('Not implemented');
     }
   }
 
@@ -245,35 +245,38 @@ export class UserSession {
     await this.updateEETokenClaims({
       externalId: this.user ? this.user._id : '',
       externalOrgId: this.organization ? this.organization._id : '',
-      org_role: 'org:admin',
+      org_role: MemberRoleEnum.OWNER,
+      org_permissions: ALL_PERMISSIONS,
       _id: this.user ? this.user.externalId : 'does_not_matter',
       org_id: this.organization ? this.organization.externalId : 'does_not_matter',
     });
   }
 
   async updateEETokenClaims(claims: Partial<ClerkJwtPayload>) {
-    const decoded = await this.decodeClerkJWT(process.env.CLERK_LONG_LIVED_TOKEN as string);
+    try {
+      const currentPayload = this.token ? jwt.decode(this.token.replace('Bearer ', '')) : null;
 
-    const newToken = {
-      ...decoded,
-      ...claims,
-    };
+      const baseToken = process.env.CLERK_LONG_LIVED_TOKEN as string;
+      const payload = {
+        ...jwt.decode(baseToken),
+        ...(currentPayload || {}),
+        ...claims,
+      };
 
-    const encoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {
-      algorithm: 'RS256',
-    });
+      const encodedToken = jwt.sign(payload, process.env.CLERK_MOCK_JWT_PRIVATE_KEY, {
+        algorithm: 'RS256',
+      });
 
-    this.token = `Bearer ${encoded}`;
+      this.token = `Bearer ${encodedToken}`;
 
-    this.testAgent = superAgentDefaults(request(this.requestEndpoint))
-      .set('Authorization', this.token)
-      .set('Novu-Environment-Id', this.environment ? this.environment._id : '');
-  }
-
-  private async decodeClerkJWT(token: string) {
-    const publicKey = process.env.CLERK_PEM_PUBLIC_KEY;
-
-    return jwt.verify(token, publicKey);
+      // Update test agent with new token and current environment
+      this.testAgent = superAgentDefaults(request(this.requestEndpoint))
+        .set('Authorization', this.token)
+        .set('Novu-Environment-Id', this.environment?._id || '');
+    } catch (error) {
+      console.error('Error in updateEETokenClaims:', error);
+      throw error;
+    }
   }
 
   async createEnvironmentsAndFeeds(): Promise<void> {
@@ -431,30 +434,37 @@ export class UserSession {
     return feed;
   }
 
-  async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
-    await this.testAgent.post('/v1/events/trigger').send({
-      name: triggerName,
-      to,
-      payload,
-    });
-  }
-
-  public async awaitRunningJobs(
-    templateId?: string | string[],
-    delay?: boolean,
-    unfinishedJobs = 0,
-    organizationId = this.organization._id
-  ) {
-    return await this.jobsService.awaitRunningJobs({
+  public async waitForJobCompletion(templateId?: string | string[], organizationId = this.organization._id) {
+    return this.jobsService.waitForJobCompletion({
       templateId,
       organizationId,
-      delay,
-      unfinishedJobs,
     });
   }
 
-  public async queueGet(jobTopicName: JobTopicNameEnum, getter: 'getDelayed') {
-    return await this.jobsService.queueGet(jobTopicName, getter);
+  public async waitForDbJobCompletion({
+    templateId,
+    organizationId,
+  }: {
+    templateId?: string | string[];
+    organizationId?: string | string[];
+  }) {
+    return this.jobsService.waitForDbJobCompletion({ templateId, organizationId });
+  }
+
+  public async waitForWorkflowQueueCompletion() {
+    return this.jobsService.waitForWorkflowQueueCompletion();
+  }
+
+  public async waitForSubscriberQueueCompletion() {
+    return this.jobsService.waitForSubscriberQueueCompletion();
+  }
+
+  public async waitForStandardQueueCompletion() {
+    return this.jobsService.waitForStandardQueueCompletion();
+  }
+
+  public async runStandardQueueDelayedJobsImmediately() {
+    return this.jobsService.runStandardQueueDelayedJobsImmediately();
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {
@@ -477,9 +487,9 @@ export class UserSession {
   }
 
   public async updateOrganizationServiceLevel(serviceLevel: ApiServiceLevelEnum) {
-    const organizationService = isClerkEnabled() ? new EEOrganizationService() : new OrganizationService();
+    const communityOrganizationRepository = new CommunityOrganizationRepository();
 
-    await organizationService.updateServiceLevel(this.organization._id, serviceLevel);
+    await communityOrganizationRepository.update({ _id: this.organization._id }, { apiServiceLevel: serviceLevel });
   }
 
   public async updateEnvironmentApiRateLimits(apiRateLimits: Partial<IApiRateLimitMaximum>) {

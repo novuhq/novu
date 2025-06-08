@@ -1,42 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
 
-import {
-  IntegrationRepository,
-  JobEntity,
-  JobRepository,
-  NotificationTemplateRepository,
-  SubscriberEntity,
-  SubscriberRepository,
-} from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  ProvidersIdEnum,
-  SubscriberSourceEnum,
-} from '@novu/shared';
+import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import { SubscriberSourceEnum } from '@novu/shared';
 
-import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import {
-  buildNotificationTemplateIdentifierKey,
-  CachedEntity,
-} from '../../services/cache';
-import { ApiException } from '../../utils/exceptions';
+import { PinoLogger } from 'nestjs-pino';
+import { InstrumentUsecase } from '../../instrumentation';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { TriggerBase } from '../trigger-base';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
-import { IProcessSubscriberBulkJobDto } from '../../dtos';
+import { CacheService, FeatureFlagsService } from '../../services';
 
-const LOG_CONTEXT = 'TriggerBroadcastUseCase';
 const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 
 @Injectable()
-export class TriggerBroadcast {
+export class TriggerBroadcast extends TriggerBase {
   constructor(
-    private integrationRepository: IntegrationRepository,
     private subscriberRepository: SubscriberRepository,
-    private jobRepository: JobRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private subscriberProcessQueueService: SubscriberProcessQueueService,
-  ) {}
+    protected subscriberProcessQueueService: SubscriberProcessQueueService,
+    protected cacheService: CacheService,
+    protected featureFlagsService: FeatureFlagsService,
+    protected logger: PinoLogger
+  ) {
+    super(subscriberProcessQueueService, cacheService, featureFlagsService, logger, QUEUE_CHUNK_SIZE);
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: TriggerBroadcastCommand) {
@@ -50,121 +37,17 @@ export class TriggerBroadcast {
       },
       'subscriberId',
       {},
-      subscriberFetchBatchSize,
+      subscriberFetchBatchSize
     )) {
       subscribers.push(subscriber);
       if (subscribers.length === subscriberFetchBatchSize) {
-        await this.sendToProcessSubscriberService(command, subscribers);
+        await this.sendToProcessSubscriberService(command, subscribers, SubscriberSourceEnum.BROADCAST);
         subscribers = [];
       }
     }
 
     if (subscribers.length > 0) {
-      await this.sendToProcessSubscriberService(command, subscribers);
+      await this.sendToProcessSubscriberService(command, subscribers, SubscriberSourceEnum.BROADCAST);
     }
-  }
-
-  @CachedEntity({
-    builder: (command: { triggerIdentifier: string; environmentId: string }) =>
-      buildNotificationTemplateIdentifierKey({
-        _environmentId: command.environmentId,
-        templateIdentifier: command.triggerIdentifier,
-      }),
-  })
-  private async getNotificationTemplateByTriggerIdentifier(command: {
-    triggerIdentifier: string;
-    environmentId: string;
-  }) {
-    return await this.notificationTemplateRepository.findByTriggerIdentifier(
-      command.environmentId,
-      command.triggerIdentifier,
-    );
-  }
-
-  @Instrument()
-  private async validateTransactionIdProperty(
-    transactionId: string,
-    environmentId: string,
-  ): Promise<void> {
-    const found = (await this.jobRepository.findOne(
-      {
-        transactionId,
-        _environmentId: environmentId,
-      },
-      '_id',
-    )) as Pick<JobEntity, '_id'>;
-
-    if (found) {
-      throw new ApiException(
-        'transactionId property is not unique, please make sure all triggers have a unique transactionId',
-      );
-    }
-  }
-
-  @Instrument()
-  private async getProviderId(
-    environmentId: string,
-    channelType: ChannelTypeEnum,
-  ): Promise<ProvidersIdEnum> {
-    const integration = await this.integrationRepository.findOne(
-      {
-        _environmentId: environmentId,
-        active: true,
-        channel: channelType,
-      },
-      'providerId',
-    );
-
-    return integration?.providerId as ProvidersIdEnum;
-  }
-
-  private async sendToProcessSubscriberService(
-    command: TriggerBroadcastCommand,
-    subscribers: { subscriberId: string }[],
-  ) {
-    const jobs = this.mapSubscribersToJobs(subscribers, command);
-
-    return await this.subscriberProcessQueueAddBulk(jobs);
-  }
-
-  private mapSubscribersToJobs(
-    subscribers: { subscriberId: string }[],
-    command: TriggerBroadcastCommand,
-  ): IProcessSubscriberBulkJobDto[] {
-    return subscribers.map((subscriber) => {
-      return {
-        name: command.transactionId + subscriber.subscriberId,
-        data: {
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          transactionId: command.transactionId,
-          identifier: command.identifier,
-          payload: command.payload,
-          overrides: command.overrides,
-          tenant: command.tenant,
-          ...(command.actor && { actor: command.actor }),
-          subscriber,
-          templateId: command.template._id,
-          _subscriberSource: SubscriberSourceEnum.BROADCAST,
-          controls: command.controls,
-          requestCategory: command.requestCategory,
-          bridge: {
-            url: command.bridgeUrl,
-            workflow: command.bridgeWorkflow,
-          },
-          environmentName: command.environmentName,
-        },
-        groupId: command.organizationId,
-      };
-    });
-  }
-
-  private async subscriberProcessQueueAddBulk(jobs) {
-    return await Promise.all(
-      _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk) =>
-        this.subscriberProcessQueueService.addBulk(chunk),
-      ),
-    );
   }
 }

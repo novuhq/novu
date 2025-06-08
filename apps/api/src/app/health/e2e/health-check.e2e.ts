@@ -8,7 +8,7 @@ describe('Health-check', () => {
     await session.initialize();
   });
 
-  describe('/health-check (GET)', () => {
+  describe('/health-check (GET) #novu-v2', () => {
     it('should correctly return a health check', async () => {
       const result = await session.testAgent.get('/v1/health-check');
       const { data } = result.body || {};

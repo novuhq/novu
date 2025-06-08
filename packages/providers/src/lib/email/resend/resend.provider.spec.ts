@@ -47,11 +47,9 @@ test('should trigger resend email with From Name', async () => {
   };
 
   const provider = new ResendEmailProvider(mockConfigWithSenderName);
-  const spy = vi
-    .spyOn((provider as any).resendClient.emails, 'send')
-    .mockImplementation(async () => {
-      return {};
-    });
+  const spy = vi.spyOn((provider as any).resendClient.emails, 'send').mockImplementation(async () => {
+    return {};
+  });
 
   await provider.sendMessage(mockNovuMessage);
 
@@ -78,11 +76,9 @@ test('should trigger resend email correctly with _passthrough', async () => {
   };
 
   const provider = new ResendEmailProvider(mockConfigWithSenderName);
-  const spy = vi
-    .spyOn((provider as any).resendClient.emails, 'send')
-    .mockImplementation(async () => {
-      return {};
-    });
+  const spy = vi.spyOn((provider as any).resendClient.emails, 'send').mockImplementation(async () => {
+    return {};
+  });
 
   await provider.sendMessage(mockNovuMessage, {
     _passthrough: {

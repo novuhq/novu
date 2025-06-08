@@ -1,26 +1,46 @@
+import { ActivityFilters } from '@/api/activity';
+import { defaultActivityFilters } from '@/components/activity/constants';
 import { Button } from '@/components/primitives/button';
-import { cn } from '@/utils/ui';
-import { PlayCircleIcon } from 'lucide-react';
-import { RiCloseCircleLine } from 'react-icons/ri';
-import { motion, AnimatePresence } from 'motion/react';
-import { ExternalLink } from '../shared/external-link';
-import { useNavigate } from 'react-router-dom';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { AnimatePresence, motion } from 'motion/react';
+import { useMemo } from 'react';
+import { RiCloseCircleLine, RiPlayCircleLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { ExternalLink } from '../shared/external-link';
+import { PermissionsEnum } from '@novu/shared';
+import { Protect } from '@/utils/protect';
 
 interface ActivityEmptyStateProps {
   className?: string;
+  filters?: ActivityFilters;
   emptySearchResults?: boolean;
+  emptySearchTitle?: string;
+  emptySearchDescription?: string;
+  emptyFiltersDescription?: string;
   onClearFilters?: () => void;
 }
 
-export function ActivityEmptyState({ className, emptySearchResults, onClearFilters }: ActivityEmptyStateProps) {
+export function ActivityEmptyState({
+  className,
+  filters = defaultActivityFilters,
+  emptySearchResults,
+  onClearFilters,
+  emptySearchTitle = 'No activity matches that filter',
+  emptySearchDescription = 'Try adjusting your filters to see more results.',
+  emptyFiltersDescription = 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.',
+}: ActivityEmptyStateProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
 
   const handleNavigateToWorkflows = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' }));
   };
+
+  const emptyFiltersTitle = useMemo(() => {
+    return `No activity in the past ${filters?.dateRange}`;
+  }, [filters]);
 
   return (
     <AnimatePresence mode="wait">
@@ -68,12 +88,10 @@ export function ActivityEmptyState({ className, emptySearchResults, onClearFilte
             className="flex flex-col items-center gap-1 text-center"
           >
             <h2 className="text-foreground-900 text-lg font-medium">
-              {emptySearchResults ? 'No activity match that filter' : 'No activity in the past 30 days'}
+              {emptySearchResults ? emptySearchTitle : emptyFiltersTitle}
             </h2>
             <p className="text-foreground-600 max-w-md text-sm font-normal">
-              {emptySearchResults
-                ? 'Change your search criteria.'
-                : 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.'}
+              {emptySearchResults ? emptySearchDescription : emptyFiltersDescription}
             </p>
           </motion.div>
 
@@ -87,7 +105,7 @@ export function ActivityEmptyState({ className, emptySearchResults, onClearFilte
               }}
               className="flex gap-6"
             >
-              <Button variant="outline" className="gap-2" onClick={onClearFilters}>
+              <Button variant="secondary" mode="outline" className="gap-2" onClick={onClearFilters}>
                 <RiCloseCircleLine className="h-4 w-4" />
                 Clear Filters
               </Button>
@@ -102,15 +120,21 @@ export function ActivityEmptyState({ className, emptySearchResults, onClearFilte
                 duration: 0.2,
                 delay: 0.3,
               }}
-              className="flex gap-6"
+              className="flex items-center gap-6"
             >
-              <ExternalLink href="https://docs.novu.co" variant="documentation" target="_blank">
+              <ExternalLink underline={false} variant="documentation" href="https://docs.novu.co" target="_blank">
                 View Docs
               </ExternalLink>
-              <Button variant="primary" className="gap-2" onClick={handleNavigateToWorkflows}>
-                <PlayCircleIcon className="h-4 w-4" />
-                Trigger Workflow
-              </Button>
+              <Protect permission={PermissionsEnum.EVENT_WRITE}>
+                <Button
+                  leadingIcon={RiPlayCircleLine}
+                  variant="primary"
+                  className="gap-2"
+                  onClick={handleNavigateToWorkflows}
+                >
+                  Trigger Workflow
+                </Button>
+              </Protect>
             </motion.div>
           )}
         </motion.div>
@@ -152,7 +176,7 @@ function ActivityIllustration() {
           y2="98.6257"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
+          <stop stopColor="#F1EFEF" />
           <stop offset="0.48" stopColor="#F9F8F8" />
           <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>
@@ -164,7 +188,7 @@ function ActivityIllustration() {
           y2="105.626"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#F1EFEF" />
+          <stop stopColor="#F1EFEF" />
           <stop offset="0.48" stopColor="#F9F8F8" />
           <stop offset="0.992158" stopColor="#F9F8F8" stopOpacity="0.75" />
         </linearGradient>

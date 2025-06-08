@@ -1,9 +1,9 @@
-import { format } from 'date-fns';
-import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
-import { JOB_STATUS_CONFIG } from '../constants';
-import { IActivityJob, JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
+import { cn } from '@/utils/ui';
+import { IActivityJob, JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { format } from 'date-fns';
+import { JOB_STATUS_CONFIG } from '../constants';
 
 function getStepIcon(type?: StepTypeEnum) {
   const Icon = STEP_TYPE_TO_ICON[type as keyof typeof STEP_TYPE_TO_ICON];
@@ -45,9 +45,11 @@ export function StatusPreviewCard({ jobs }: StatusPreviewCardProps) {
               )}
             </div>
 
-            <div className="text-foreground-400 text-[10px] tabular-nums">
-              {format(new Date(job.createdAt), 'HH:mm')}
-            </div>
+            {job.createdAt && (
+              <div className="text-foreground-400 text-[10px] tabular-nums">
+                {format(new Date(job.createdAt), 'HH:mm')}
+              </div>
+            )}
           </div>
         );
       })}

@@ -35,10 +35,9 @@ test('should trigger email-webhook-provider library correctly', async () => {
     {
       headers: {
         'content-type': 'application/json',
-        'X-Novu-Signature':
-          'd1e94cd19eeceec2e0717e36f7edacaa93612b311bde8756ee35b89d4a994767',
+        'X-Novu-Signature': 'd1e94cd19eeceec2e0717e36f7edacaa93612b311bde8756ee35b89d4a994767',
       },
-    },
+    }
   );
 });
 
@@ -80,9 +79,8 @@ test('should trigger email-webhook-provider library correctly with _passthrough'
     {
       headers: {
         'content-type': 'application/json',
-        'X-Novu-Signature':
-          'b0bfe55e55cfc925891858e6a7a77d1da5e3917321ae4f440e1e81843b2f5fa7',
+        'X-Novu-Signature': 'b0bfe55e55cfc925891858e6a7a77d1da5e3917321ae4f440e1e81843b2f5fa7',
       },
-    },
+    }
   );
 });

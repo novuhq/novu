@@ -10,8 +10,10 @@ import {
   read,
   readAll,
   revertAction,
+  snooze,
   unarchive,
   unread,
+  unsnooze,
 } from './helpers';
 import { Notification } from './notification';
 import type {
@@ -31,6 +33,8 @@ import type {
   FiltersCountArgs,
   CountResponse,
   BaseArgs,
+  SnoozeArgs,
+  UnsnoozeArgs,
 } from './types';
 import { NovuError } from '../utils/errors';
 import { NotificationsCache } from '../cache';
@@ -173,6 +177,28 @@ export class Notifications extends BaseModule {
     );
   }
 
+  async snooze(args: SnoozeArgs): Result<Notification> {
+    return this.callWithSession(async () =>
+      snooze({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async unsnooze(args: BaseArgs): Result<Notification>;
+  async unsnooze(args: InstanceArgs): Result<Notification>;
+  async unsnooze(args: UnsnoozeArgs): Result<Notification> {
+    return this.callWithSession(async () =>
+      unsnooze({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
   async completePrimary(args: BaseArgs): Result<Notification>;
   async completePrimary(args: InstanceArgs): Result<Notification>;
   async completePrimary(args: CompleteArgs): Result<Notification> {
@@ -225,35 +251,47 @@ export class Notifications extends BaseModule {
     );
   }
 
-  async readAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
+  async readAll({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       readAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
         tags,
+        data,
       })
     );
   }
 
-  async archiveAll({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
+  async archiveAll({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
         tags,
+        data,
       })
     );
   }
 
-  async archiveAllRead({ tags }: { tags?: NotificationFilter['tags'] } = {}): Result<void> {
+  async archiveAllRead({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAllRead({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
         tags,
+        data,
       })
     );
   }
@@ -264,5 +302,9 @@ export class Notifications extends BaseModule {
     }
 
     return this.cache.clearAll();
+  }
+
+  async triggerHelloWorldEvent(): Promise<any> {
+    return this._inboxService.triggerHelloWorldEvent();
   }
 }

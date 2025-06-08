@@ -49,4 +49,8 @@ export class CommunityUserRepository
       }
     );
   }
+
+  async findUserSessions(userId: string): Promise<[]> {
+    throw new Error('Not implemented');
+  }
 }

@@ -1,13 +1,14 @@
 import axios from 'axios';
 import { expect } from 'chai';
+import getPort from 'get-port';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
 import { workflow } from '@novu/framework';
-import { BridgeServer } from '../../../../e2e/bridge.server';
+import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
-describe('Bridge Health Check', async () => {
+describe('Bridge Health Check #novu-v2', async () => {
   let session: UserSession;
-  let frameworkClient: BridgeServer;
+  let bridgeServer: TestBridgeServer;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
 
@@ -20,12 +21,13 @@ describe('Bridge Health Check', async () => {
         };
       });
     });
-    frameworkClient = new BridgeServer();
-    await frameworkClient.start({ workflows: [healthCheckWorkflow] });
+    const port = await getPort();
+    bridgeServer = new TestBridgeServer(port);
+    await bridgeServer.start({ workflows: [healthCheckWorkflow] });
   });
 
   after(async () => {
-    await frameworkClient.stop();
+    await bridgeServer.stop();
   });
 
   beforeEach(async () => {
@@ -36,25 +38,25 @@ describe('Bridge Health Check', async () => {
   });
 
   it('should have a status', async () => {
-    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
+    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
 
     expect(result.data.status).to.equal('ok');
   });
 
   it('should have an sdk version', async () => {
-    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
+    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
 
     expect(result.data.sdkVersion).to.be.a('string');
   });
 
   it('should have a framework version', async () => {
-    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
+    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
 
     expect(result.data.frameworkVersion).to.be.a('string');
   });
 
   it('should return the discovered resources', async () => {
-    const result = await axios.get(`${frameworkClient.serverPath}/novu?action=health-check`);
+    const result = await axios.get(`${bridgeServer.serverPath}/novu?action=health-check`);
 
     expect(result.data.discovered).to.deep.equal({ workflows: 1, steps: 1 });
   });

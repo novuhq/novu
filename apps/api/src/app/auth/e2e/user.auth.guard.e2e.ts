@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { ApiAuthSchemeEnum } from '@novu/shared';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 
-describe('UserAuthGuard', () => {
+describe('UserAuthGuard #novu-v2', () => {
   let session: UserSession;
   const defaultPath = '/v1/test-auth/user-route';
   const apiInaccessiblePath = '/v1/test-auth/user-api-inaccessible-route';
@@ -52,7 +52,7 @@ describe('UserAuthGuard', () => {
     it('should return 401 when ApiKey auth scheme is used for an externally inaccessible API route', async () => {
       const response = await request(`${ApiAuthSchemeEnum.API_KEY} ${session.apiKey}`, apiInaccessiblePath);
       expect(response.statusCode).to.equal(401);
-      expect(response.body.message).to.equal('API endpoint not available');
+      expect(response.body.message).to.equal('API endpoint not accessible');
     });
 
     it('should return 200 when ApiKey auth scheme is provided with a valid value', async () => {

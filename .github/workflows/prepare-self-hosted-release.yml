@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api', 'novu/worker', 'novu/web', 'novu/webhook', 'novu/ws']
+        name: ['novu/api', 'novu/worker', 'novu/dashboard', 'novu/webhook', 'novu/ws']
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
@@ -31,7 +31,7 @@ jobs:
         shell: bash
         run: |
           service=${{ matrix.name }}
-          LATEST_VERSION=$(jq -r '.version' lerna.json)
+          LATEST_VERSION=$(jq -r '.version'  apps/api/package.json)
           SERVICE_NAME=$(basename "${service//-/-}")
           SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
           echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
@@ -46,7 +46,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.8.1
+          node-version: 20.19.0
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -92,12 +92,13 @@ jobs:
             --platform=linux/amd64,linux/arm64 --provenance=false
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
+          cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
           cd apps/$SERVICE_COMMON_NAME
 
           if [ "${{ env.SERVICE_NAME }}" == "worker" ]; then
             cd src/ && echo -e "\nIS_SELF_HOSTED=true\nOS_TELEMETRY_URL=\"${{ secrets.OS_TELEMETRY_URL }}\"" >> .example.env && cd ..
-          elif [ "${{ env.SERVICE_NAME }}" == "web" ]; then
-            echo -e "\nIS_V2_ENABLED=true" >> .env.sample
+          elif [ "${{ env.SERVICE_NAME }}" == "dashboard" ]; then
+            echo -e "\nVITE_SELF_HOSTED=true" >> .env
           fi
 
           pnpm run docker:build
@@ -111,10 +112,10 @@ jobs:
             './node_modules/@taskforcesh/bullmq-pro'  # Add more patterns as needed
           )
           for pattern in "${patterns[@]}"; do
-            if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
+            if docker run --rm entrypoint sh novu-$SERVICE_COMMON_NAME -c "ls $pattern 2>/dev/null"; then
               echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
               exit 1
-            fi
+          fi
           done
           echo "No matching EE files found in the Docker image ${{ matrix.name }}"
 

@@ -88,6 +88,7 @@ export interface IAmountAndUnitDigest {
 
 export interface IDigestBaseMetadata extends IAmountAndUnitDigest {
   digestKey?: string;
+  digestValue?: string;
 }
 
 export interface IDigestRegularMetadata extends IDigestBaseMetadata {

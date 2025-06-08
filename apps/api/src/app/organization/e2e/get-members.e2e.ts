@@ -3,7 +3,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { MemberRoleEnum } from '@novu/shared';
 
-describe('Get members - /organization/members (GET) @skip-in-ee', async () => {
+describe('Get members - /organization/members (GET) #novu-v0-os', async () => {
   let session: UserSession;
   let otherSession: UserSession;
 
@@ -24,7 +24,7 @@ describe('Get members - /organization/members (GET) @skip-in-ee', async () => {
         invitees: [
           {
             email: 'dddd@asdas.com',
-            role: MemberRoleEnum.ADMIN,
+            role: MemberRoleEnum.OSS_ADMIN,
           },
         ],
       })

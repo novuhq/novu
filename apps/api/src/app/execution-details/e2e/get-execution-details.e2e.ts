@@ -6,7 +6,7 @@ import { expect } from 'chai';
 
 const axiosInstance = axios.create();
 
-describe('Execution details - Get execution details by notification id - /v1/execution-details/notification/:notificationId (GET)', function () {
+describe('Execution details - Get execution details by notification id - /v1/execution-details/notification/:notificationId (GET) #novu-v2', function () {
   let session: UserSession;
   const executionDetailsRepository: ExecutionDetailsRepository = new ExecutionDetailsRepository();
   let subscriber: SubscriberEntity;

@@ -5,7 +5,6 @@ import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions, WorkflowOriginEnum
 
 import {
   AnalyticsService,
-  ApiException,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   GetNovuProviderCredentials,
@@ -51,7 +50,7 @@ export class SendTestEmail {
     );
 
     if (!integration) {
-      throw new ApiException(`Missing an active email integration`);
+      throw new BadRequestException(`Missing an active email integration`);
     }
 
     if (integration.providerId === EmailProviderIdEnum.Novu) {
@@ -107,7 +106,7 @@ export class SendTestEmail {
       );
 
       if (!data.outputs) {
-        throw new ApiException('Could not retrieve content from edge');
+        throw new BadRequestException('Could not retrieve content from edge');
       }
 
       html = data.outputs.body as string;
@@ -149,7 +148,7 @@ export class SendTestEmail {
         providerId,
       });
     } catch (error) {
-      throw new ApiException(`Unexpected provider error`);
+      throw new BadRequestException(`Unexpected provider error`);
     }
   }
 

@@ -1,16 +1,15 @@
-import { JSONSchemaDefinition, JSONSchemaDto } from '@novu/shared';
-
-export { JSONSchemaDto } from '@novu/shared';
+import { JsonSchemaTypeEnum } from '@novu/dal';
+import { JSONSchemaDto } from '../dtos';
 
 export function emptyJsonSchema(): JSONSchemaDto {
   return {
-    type: 'object',
+    type: JsonSchemaTypeEnum.OBJECT,
     properties: {},
     additionalProperties: true,
   };
 }
 
-export function isMatchingJsonSchema(schema: JSONSchemaDefinition, obj?: Record<string, unknown> | null): boolean {
+export function isMatchingJsonSchema(schema: JSONSchemaDto, obj?: Record<string, unknown> | null): boolean {
   // Ensure the schema is an object with properties
   if (!obj || !schema || typeof schema !== 'object' || schema.type !== 'object' || !schema.properties) {
     return false; // If schema is not structured or no properties are defined, assume match
@@ -40,7 +39,7 @@ export function isMatchingJsonSchema(schema: JSONSchemaDefinition, obj?: Record<
   return true;
 }
 
-export function extractMinValuesFromSchema(schema: JSONSchemaDefinition): Record<string, number> {
+export function extractMinValuesFromSchema(schema: JSONSchemaDto): Record<string, number> {
   const result = {};
 
   if (typeof schema === 'object' && schema.type === 'object') {

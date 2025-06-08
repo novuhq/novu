@@ -17,7 +17,7 @@ export const SmsEditor = (props: SmsEditorProps) => {
           <Sms className="size-3" />
           SMS template editor
         </div>
-        <div className="flex flex-col gap-1 rounded-lg border border-neutral-100 p-1">
+        <div className="rounded-12 flex flex-col gap-2 border border-neutral-100 p-2">
           {getComponentByType({ component: body.component })}
         </div>
       </TabsSection>

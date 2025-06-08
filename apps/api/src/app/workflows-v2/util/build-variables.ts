@@ -1,21 +1,21 @@
-import _ from 'lodash';
-
 import { PinoLogger } from '@novu/application-generic';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
-import { Variable, extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
-import { transformMailyContentToLiquid } from '../usecases/generate-preview/transform-maily-content-to-liquid';
-import { isStringTipTapNode } from './tip-tap.util';
+import { extractFieldsFromRules, isValidRule } from '../../shared/services/query-parser/query-parser.service';
+import { JSONSchemaDto } from '../dtos';
+import { extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
+import { isStringifiedMailyJSONContent, wrapMailyInLiquid } from '../../shared/helpers/maily-utils';
 
 export function buildVariables(
-  variableSchema: Record<string, unknown> | undefined,
+  variableSchema: JSONSchemaDto | undefined,
   controlValue: unknown | Record<string, unknown>,
   logger?: PinoLogger
 ): TemplateVariables {
   let variableControlValue = controlValue;
 
-  if (isStringTipTapNode(variableControlValue)) {
+  if (isStringifiedMailyJSONContent(variableControlValue)) {
     try {
-      variableControlValue = transformMailyContentToLiquid(JSON.parse(variableControlValue));
+      variableControlValue = wrapMailyInLiquid(variableControlValue);
     } catch (error) {
       logger?.error(
         {
@@ -26,68 +26,24 @@ export function buildVariables(
         'BuildVariables'
       );
     }
+  } else if (isValidRule(variableControlValue as RulesLogic<AdditionalOperation>)) {
+    const fields = extractFieldsFromRules(variableControlValue as RulesLogic<AdditionalOperation>)
+      .filter((field) => field.startsWith('payload.') || field.startsWith('subscriber.data.'))
+      .map((field) => `{{${field}}}`);
+
+    variableControlValue = {
+      rules: variableControlValue,
+      fields,
+    };
   }
 
-  const { validVariables, invalidVariables } = extractLiquidTemplateVariables(JSON.stringify(variableControlValue));
-
-  const { validVariables: validSchemaVariables, invalidVariables: invalidSchemaVariables } = identifyUnknownVariables(
-    variableSchema || {},
-    validVariables
-  );
+  const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
+    template: JSON.stringify(variableControlValue),
+    variableSchema,
+  });
 
   return {
-    validVariables: validSchemaVariables,
-    invalidVariables: [...invalidVariables, ...invalidSchemaVariables],
+    validVariables,
+    invalidVariables,
   };
-}
-
-/**
- * Validates variables against a schema to identify which ones are valid/invalid.
- * Returns an object containing arrays of valid and invalid variables.
- */
-function identifyUnknownVariables(
-  variableSchema: Record<string, unknown>,
-  validVariables: Variable[]
-): TemplateVariables {
-  const validVariablesCopy: Variable[] = _.cloneDeep(validVariables);
-
-  const result = validVariablesCopy.reduce<TemplateVariables>(
-    (acc, variable: Variable) => {
-      const parts = variable.name.split('.');
-      let isValid = true;
-      let currentPath = 'properties';
-
-      for (const part of parts) {
-        currentPath += `.${part}`;
-        const valueSearch = _.get(variableSchema, currentPath);
-
-        currentPath += '.properties';
-        const propertiesSearch = _.get(variableSchema, currentPath);
-
-        if (valueSearch === undefined && propertiesSearch === undefined) {
-          isValid = false;
-          break;
-        }
-      }
-
-      if (isValid) {
-        acc.validVariables.push(variable);
-      } else {
-        acc.invalidVariables.push({
-          name: variable.output,
-          context: variable.context,
-          message: 'Variable is not supported',
-          output: variable.output,
-        });
-      }
-
-      return acc;
-    },
-    {
-      validVariables: [] as Variable[],
-      invalidVariables: [] as Variable[],
-    } as TemplateVariables
-  );
-
-  return result;
 }

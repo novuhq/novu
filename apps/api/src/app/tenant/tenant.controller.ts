@@ -19,14 +19,14 @@ import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from 
 import {
   CreateTenant,
   CreateTenantCommand,
-  GetFeatureFlag,
-  GetFeatureFlagCommand,
   GetTenant,
   GetTenantCommand,
   UpdateTenant,
   UpdateTenantCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import {
@@ -51,7 +51,7 @@ import {
   UpdateTenantResponseDto,
 } from './dtos';
 import { ThrottlerCategory } from '../rate-limiting/guards';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 
@@ -62,7 +62,7 @@ const v2TenantsApiDescription = ' Tenants is not supported in code first version
 @Controller('/tenants')
 @ApiTags('Tenants')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiExcludeController()
 export class TenantController {
   constructor(
@@ -71,12 +71,11 @@ export class TenantController {
     private getTenantUsecase: GetTenant,
     private deleteTenantUsecase: DeleteTenant,
     private getTenantsUsecase: GetTenants,
-    private getFeatureFlag: GetFeatureFlag
+    private featureFlagService: FeatureFlagsService
   ) {}
 
   @Get('')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiOkPaginatedResponse(GetTenantResponseDto)
   @ApiOperation({
     summary: 'Get tenants',
@@ -186,7 +185,6 @@ export class TenantController {
 
   @Delete('/:identifier')
   @ExternalApiAccessible()
-  @UserAuthentication()
   @ApiOperation({
     summary: 'Delete tenant',
     description: `Deletes a tenant entity from the Novu platform.${v2TenantsApiDescription}`,
@@ -212,14 +210,13 @@ export class TenantController {
   }
 
   private async verifyTenantsApiAvailability(user: UserSessionData) {
-    const isV2Enabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
-      })
-    );
+    const isV2Enabled = await this.featureFlagService.getFlag({
+      user: { _id: user._id } as UserEntity,
+      environment: { _id: user.environmentId } as EnvironmentEntity,
+      organization: { _id: user.organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_V2_ENABLED,
+      defaultValue: false,
+    });
 
     if (!isV2Enabled) {
       return;

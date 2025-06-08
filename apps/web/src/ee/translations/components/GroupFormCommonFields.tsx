@@ -20,8 +20,6 @@ export const GroupFormCommonFields = ({
   const { defaultLocale } = useGetDefaultLocale();
   const [localeToDelete, setLocaleToDelete] = useState<undefined | { label: string; value: string }>(undefined);
 
-  console.log('Default locale', defaultLocale);
-
   return (
     <Stack spacing={32}>
       <Controller

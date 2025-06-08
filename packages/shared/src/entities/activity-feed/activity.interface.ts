@@ -15,6 +15,7 @@ export interface IActivity {
   _organizationId: string;
   _subscriberId: string;
   _digestedNotificationId?: string;
+  topics?: { _topicId: string; topicKey: string }[];
   transactionId: string;
   channels: ChannelTypeEnum[];
   to: {
@@ -24,7 +25,7 @@ export interface IActivity {
   tags: string[];
   createdAt: string;
   updatedAt: string;
-  template: Pick<INotificationTemplate, '_id' | 'name' | 'triggers'>;
-  subscriber: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>;
+  template?: Pick<INotificationTemplate, '_id' | 'name' | 'triggers' | 'origin'>;
+  subscriber?: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>;
   jobs: IActivityJob[];
 }

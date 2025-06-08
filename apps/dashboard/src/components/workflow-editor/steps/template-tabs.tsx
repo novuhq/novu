@@ -1,12 +1,11 @@
-import { Cross2Icon } from '@radix-ui/react-icons';
-import { RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
 import React, { useEffect } from 'react';
+import { RiCloseLine, RiEdit2Line, RiPencilRuler2Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 
 import { Notification5Fill } from '@/components/icons';
-import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { CompactButton } from '../../primitives/button-compact';
 
 interface TemplateTabsProps {
   editorContent: React.ReactNode;
@@ -35,7 +34,7 @@ export const TemplateTabs = ({
 
   return (
     <Tabs defaultValue="editor" value={tabsValue} onValueChange={onTabChange} className="flex h-full flex-1 flex-col">
-      <header className="flex flex-row items-center gap-3 px-3 py-1.5">
+      <header className="flex h-12 w-full flex-row items-center justify-between gap-3 border-b py-4 pl-3 pr-3">
         <div className="mr-auto flex items-center gap-2.5 text-sm font-medium">
           <RiEdit2Line className="size-4" />
           <span>Configure Template</span>
@@ -51,21 +50,20 @@ export const TemplateTabs = ({
           </TabsTrigger>
         </TabsList>
 
-        <Button
+        <CompactButton
+          icon={RiCloseLine}
           variant="ghost"
-          size="xs"
           className="size-6"
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             navigate('../', { relative: 'path' });
           }}
+          data-testid="tabs-close-button"
         >
-          <Cross2Icon className="h-4 w-4" />
           <span className="sr-only">Close</span>
-        </Button>
+        </CompactButton>
       </header>
-      <Separator />
       <TabsContent value="editor" className="h-full w-full overflow-y-auto">
         {editorContent}
       </TabsContent>

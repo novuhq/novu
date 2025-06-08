@@ -6,7 +6,6 @@ import {
   Get,
   Post,
   Query,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import {
@@ -16,11 +15,11 @@ import {
   GetPreferencesCommand,
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
-  UserAuthGuard,
   UserSession,
 } from '@novu/application-generic';
 import { PreferencesTypeEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 
 /**
@@ -28,6 +27,7 @@ import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
  */
 @Controller('/preferences')
 @UseInterceptors(ClassSerializerInterceptor)
+@RequireAuthentication()
 @ApiExcludeController()
 export class PreferencesController {
   constructor(
@@ -37,7 +37,6 @@ export class PreferencesController {
   ) {}
 
   @Get('/')
-  @UseGuards(UserAuthGuard)
   async get(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
     return this.getPreferences.execute(
       GetPreferencesCommand.create({
@@ -49,7 +48,6 @@ export class PreferencesController {
   }
 
   @Post('/')
-  @UseGuards(UserAuthGuard)
   async upsert(@Body() data: UpsertPreferencesDto, @UserSession() user: UserSessionData) {
     return this.upsertPreferences.upsertUserWorkflowPreferences(
       UpsertUserWorkflowPreferencesCommand.create({
@@ -63,7 +61,6 @@ export class PreferencesController {
   }
 
   @Delete('/')
-  @UseGuards(UserAuthGuard)
   async delete(@UserSession() user: UserSessionData, @Query('workflowId') workflowId: string) {
     return this.deletePreferences.execute(
       DeletePreferencesCommand.create({

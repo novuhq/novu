@@ -5,7 +5,6 @@ import { IUserResetTokenCount, UserEntity, UserRepository } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { normalizeEmail, PasswordResetFlowEnum } from '@novu/shared';
-import { Novu } from '@novu/api';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 
 @Injectable()
@@ -39,21 +38,7 @@ export class PasswordResetRequest {
       await this.userRepository.updatePasswordResetToken(foundUser._id, token, resetTokenCount);
 
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu({ apiKey: process.env.NOVU_API_KEY });
         const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, foundUser, command.src);
-
-        await novu.trigger({
-          name: process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq',
-          to: [
-            {
-              subscriberId: foundUser._id,
-              email: foundUser.email,
-            },
-          ],
-          payload: {
-            resetPasswordLink,
-          },
-        });
       }
     }
 

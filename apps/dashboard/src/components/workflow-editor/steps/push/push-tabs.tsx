@@ -36,6 +36,7 @@ export const PushTabs = (props: StepEditorProps) => {
       previewStep={previewStep}
       previewData={previewData}
       isPreviewPending={isPreviewPending}
+      workflow={workflow}
     />
   );
 

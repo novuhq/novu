@@ -2,7 +2,6 @@ import { cn } from '@/utils/ui';
 import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { Button } from './button';
-import { Loader2 } from 'lucide-react';
 
 const inlineToastVariants = cva('flex items-center justify-between gap-3 rounded-lg border px-2 py-1.5', {
   variants: {
@@ -72,15 +71,19 @@ export function InlineToast({
       </div>
       {ctaLabel && (
         <Button
-          variant="ghost"
-          size="xs"
+          variant="primary"
+          mode="ghost"
+          size="2xs"
           type="button"
-          className={cn('shrink-0 p-0 text-xs font-medium hover:bg-transparent', buttonColorClass, ctaClassName)}
+          className={cn(
+            'h-[22px] shrink-0 p-0 text-xs font-medium hover:bg-transparent',
+            buttonColorClass,
+            ctaClassName
+          )}
           onClick={onCtaClick}
-          disabled={isCtaLoading}
+          isLoading={isCtaLoading}
         >
           {ctaLabel}
-          {isCtaLoading && <Loader2 className="ml-1 h-3 w-3 animate-spin" />}
         </Button>
       )}
     </div>

@@ -1,18 +1,19 @@
-import { Route, ChevronDown, Info } from 'lucide-react';
-import { IActivityJob, IDelayRegularMetadata, IDigestRegularMetadata, JobStatusEnum, StepTypeEnum } from '@novu/shared';
-import { Button } from '@/components/primitives/button';
 import { Badge } from '@/components/primitives/badge';
-import { Card, CardContent, CardHeader } from '../primitives/card';
-import { format } from 'date-fns';
-import { useState } from 'react';
+import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-import { ExecutionDetailItem } from './execution-detail-item';
-import { STEP_TYPE_TO_ICON } from '../icons/utils';
+import { IActivityJob, IDelayRegularMetadata, IDigestRegularMetadata, JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { format } from 'date-fns';
+import { ChevronDown, Info, Route } from 'lucide-react';
+import { useState } from 'react';
 import { STEP_TYPE_TO_COLOR } from '../../utils/color';
-import { JOB_STATUS_CONFIG } from './constants';
-import { TimeDisplayHoverCard } from '../time-display-hover-card';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { formatJSONString } from '../../utils/string';
+import { STEP_TYPE_TO_ICON } from '../icons/utils';
+import { Card, CardContent, CardHeader } from '../primitives/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { TimeDisplayHoverCard } from '../time-display-hover-card';
+import TruncatedText from '../truncated-text';
+import { JOB_STATUS_CONFIG } from './constants';
+import { ExecutionDetailItem } from './execution-detail-item';
 
 interface ActivityJobItemProps {
   job: IActivityJob;
@@ -36,7 +37,7 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
 
       <JobStatusIndicator status={job.status} />
 
-      <Card className="border-1 flex-1 border border-neutral-200 p-1 shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+      <Card className="border-1 flex-1 overflow-hidden border border-neutral-200 p-1 shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
         <CardHeader
           className="flex flex-row items-center justify-between bg-white p-2 px-1 hover:cursor-pointer"
           onClick={() => setIsExpanded(!isExpanded)}
@@ -55,21 +56,23 @@ export function ActivityJobItem({ job, isFirst, isLast }: ActivityJobItemProps) 
           </div>
 
           <Button
-            variant="ghost"
-            type="button"
-            size="sm"
+            variant="secondary"
+            mode="ghost"
+            size="xs"
             className="text-foreground-600 !mt-0 h-5 gap-0 p-0 leading-[12px] hover:bg-transparent"
           >
             Show more
-            <ChevronDown className={cn('h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
+            <ChevronDown className={cn('ml-1 h-4 w-4 transition-transform', isExpanded && 'rotate-180')} />
           </Button>
         </CardHeader>
 
         {!isExpanded && (
           <CardContent className="rounded-lg bg-neutral-50 p-2">
             <div className="flex items-center justify-between">
-              <span className="text-foreground-400 max-w-[300px] truncate pr-2 text-xs">{getStatusMessage(job)}</span>
-              <Badge variant="soft" className="bg-foreground-50 shrink-0 px-2 py-0.5 text-[11px] leading-3">
+              <TruncatedText className="text-foreground-400 max-w-[300px] pr-2 text-xs">
+                {getStatusMessage(job)}
+              </TruncatedText>
+              <Badge variant="lighter" color="gray" size="sm" className="whitespace-nowrap">
                 <TimeDisplayHoverCard date={new Date(job.updatedAt)}>
                   {format(new Date(job.updatedAt), 'MMM d yyyy, HH:mm:ss')}
                 </TimeDisplayHoverCard>
@@ -105,7 +108,9 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
         {lastExecutionDetail.raw ? (
           <ErrorTooltip message={lastExecutionDetail.detail} raw={lastExecutionDetail.raw} />
         ) : (
-          <span className="text-destructive">{lastExecutionDetail.detail}</span>
+          <span className="text-destructive">
+            <TruncatedText>{lastExecutionDetail.detail}</TruncatedText>
+          </span>
         )}
       </div>
     ) : (
@@ -120,6 +125,7 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
           (job.digest as IDigestRegularMetadata)?.unit ?? ''
         }`;
       }
+
       if (job.status === JobStatusEnum.DELAYED) {
         return `Collecting Digest events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${
           (job.digest as IDigestRegularMetadata)?.unit ?? ''
@@ -133,12 +139,15 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
       }
 
       if (job.status === JobStatusEnum.DELAYED) {
-        return (
-          'Waiting for ' +
-          (job.digest as IDelayRegularMetadata)?.amount +
-          ' ' +
-          (job.digest as IDelayRegularMetadata)?.unit
-        );
+        // TODO: Ensure that the API populates the delay unit and amount for all occasions
+        const { unit, amount } = (job.digest || {}) as IDelayRegularMetadata;
+        let msg = 'Waiting';
+
+        if (unit && amount) {
+          msg = `Waiting for ${amount} ${unit}`;
+        }
+
+        return msg;
       }
 
       return '';
@@ -176,18 +185,18 @@ function getJobIcon(type?: StepTypeEnum) {
   return <Icon className="h-3.5 w-3.5" />;
 }
 
-function getJobColor(status: JobStatusEnum) {
+function getJobClasses(status: JobStatusEnum) {
   switch (status) {
     case JobStatusEnum.COMPLETED:
-      return 'success';
+      return 'text-success';
     case JobStatusEnum.FAILED:
-      return 'destructive';
+      return 'text-destructive';
     case JobStatusEnum.DELAYED:
-      return 'warning';
+      return 'text-warning';
     case JobStatusEnum.MERGED:
-      return 'neutral-300';
+      return 'text-neutral-300';
     default:
-      return 'neutral-300';
+      return 'text-neutral-300';
   }
 }
 
@@ -198,7 +207,10 @@ function JobDetails({ job }: { job: IActivityJob }) {
         {job.executionDetails && job.executionDetails.length > 0 && (
           <div className="flex flex-col gap-2">
             {job.executionDetails.map((detail, index) => (
-              <ExecutionDetailItem key={index} detail={detail} />
+              <ExecutionDetailItem
+                key={index}
+                detail={{ ...detail, status: job.executionDetails[job.executionDetails.length - 1].status }}
+              />
             ))}
           </div>
         )}
@@ -236,7 +248,7 @@ function JobStatusIndicator({ status }: JobStatusIndicatorProps) {
   return (
     <div className="relative flex-shrink-0">
       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
-        <div className={`text-${getJobColor(status)} flex items-center justify-center`}>
+        <div className={`${getJobClasses(status)} flex items-center justify-center`}>
           <Icon className={cn('h-4 w-4', animationClass)} />
         </div>
       </div>

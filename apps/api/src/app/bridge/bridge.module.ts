@@ -4,38 +4,33 @@ import {
   CreateMessageTemplate,
   CreateWorkflow,
   DeleteMessageTemplate,
+  DeletePreferencesUseCase,
   DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
+  ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
   UpdateChange,
   UpdateMessageTemplate,
   UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
-  DeletePreferencesUseCase,
-  TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, PreferencesRepository } from '@novu/dal';
 import { SharedModule } from '../shared/shared.module';
 import { BridgeController } from './bridge.controller';
 import { USECASES } from './usecases';
-import { PostProcessWorkflowUpdate } from '../workflows-v2/usecases/post-process-workflow-update';
-import { OverloadContentDataOnWorkflowUseCase } from '../workflows-v2/usecases/overload-content-data';
-import {
-  BuildDefaultPayloadUsecase,
-  CollectPlaceholderWithDefaultsUsecase,
-  PrepareAndValidateContentUsecase,
-  ValidatePlaceholderUsecase,
-} from '../workflows-v2/usecases/validate-content';
-import { BuildAvailableVariableSchemaUsecase } from '../workflows-v2/usecases/build-variable-schema';
-import { ExtractDefaultValuesFromSchemaUsecase } from '../workflows-v2/usecases/extract-default-values-from-schema';
-import { HydrateEmailSchemaUseCase } from '../environments-v1/usecases/output-renderers/hydrate-email-schema.usecase';
-import { BuildPayloadSchema } from '../workflows-v2/usecases/build-payload-schema/build-payload-schema.usecase';
+import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
+import { CreateVariablesObject } from '../workflows-v2/usecases/create-variables-object/create-variables-object.usecase';
+import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 const PROVIDERS = [
   CreateWorkflow,
   UpdateWorkflow,
   GetWorkflowByIdsUseCase,
+  GetWorkflowWithPreferencesUseCase,
   DeleteWorkflowUseCase,
   UpsertControlValuesUseCase,
   CreateMessageTemplate,
@@ -48,22 +43,22 @@ const PROVIDERS = [
   UpsertPreferences,
   DeletePreferencesUseCase,
   UpsertControlValuesUseCase,
-  PostProcessWorkflowUpdate,
-  OverloadContentDataOnWorkflowUseCase,
-  PrepareAndValidateContentUsecase,
-  BuildAvailableVariableSchemaUsecase,
-  BuildDefaultPayloadUsecase,
-  ValidatePlaceholderUsecase,
-  CollectPlaceholderWithDefaultsUsecase,
-  ExtractDefaultValuesFromSchemaUsecase,
-  TierRestrictionsValidateUsecase,
-  HydrateEmailSchemaUseCase,
+  BuildVariableSchemaUsecase,
   CommunityOrganizationRepository,
-  BuildPayloadSchema,
+  CreateVariablesObject,
+  BuildStepIssuesUsecase,
+  ResourceValidatorService,
+  TierRestrictionsValidateUsecase,
 ];
 
+const MODULES = [SharedModule];
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  MODULES.push(WebhooksModule);
+}
+
 @Module({
-  imports: [SharedModule],
+  imports: MODULES,
   providers: [...PROVIDERS, ...USECASES],
   controllers: [BridgeController],
   exports: [...USECASES],

@@ -1,7 +1,7 @@
-import fs from 'fs/promises';
-import path from 'path';
 import bytes from 'bytes-iec';
 import chalk from 'chalk';
+import fs from 'fs/promises';
+import path from 'path';
 
 const baseDir = process.cwd();
 const umdPath = path.resolve(baseDir, './dist/novu.min.js');
@@ -15,7 +15,7 @@ const modules = [
   {
     name: 'UMD minified',
     filePath: umdPath,
-    limitInBytes: 145_000,
+    limitInBytes: 150_000,
   },
   {
     name: 'UMD gzip',

@@ -98,7 +98,7 @@
     "postcss-simple-vars": "^7.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-scanner": "^1.1.0",
+    "react-scanner": "^1.2.0",
     "rimraf": "^3.0.2",
     "storybook": "^8.1.0",
     "storybook-dark-mode": "^4.0.1",

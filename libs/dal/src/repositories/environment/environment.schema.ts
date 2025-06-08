@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { EnvironmentDBModel } from './environment.entity';
@@ -53,10 +53,14 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
     bridge: {
       url: Schema.Types.String,
     },
+    webhookAppId: {
+      type: Schema.Types.String,
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    color: Schema.Types.String,
   },
   schemaOptions
 );

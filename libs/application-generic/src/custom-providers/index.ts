@@ -1,12 +1,5 @@
 import { DalService } from '@novu/dal';
-import {
-  AnalyticsService,
-  CacheInMemoryProviderService,
-  CacheService,
-  DistributedLockService,
-  FeatureFlagsService,
-} from '../services';
-import { GetFeatureFlag } from '../usecases';
+import { AnalyticsService, CacheInMemoryProviderService, CacheService, FeatureFlagsService } from '../services';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -16,18 +9,6 @@ export const featureFlagsService = {
 
     return instance;
   },
-};
-
-export const getFeatureFlag = {
-  provide: GetFeatureFlag,
-  useFactory: async (
-    featureFlagsServiceItem: FeatureFlagsService,
-  ): Promise<GetFeatureFlag> => {
-    const useCase = new GetFeatureFlag(featureFlagsServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
 };
 
 export const cacheInMemoryProviderService = {
@@ -40,8 +21,7 @@ export const cacheInMemoryProviderService = {
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
-    const factoryCacheInMemoryProviderService =
-      cacheInMemoryProviderService.useFactory();
+    const factoryCacheInMemoryProviderService = cacheInMemoryProviderService.useFactory();
 
     const service = new CacheService(factoryCacheInMemoryProviderService);
 
@@ -65,22 +45,6 @@ export const analyticsService = {
   provide: AnalyticsService,
   useFactory: async () => {
     const service = new AnalyticsService(process.env.SEGMENT_TOKEN);
-    await service.initialize();
-
-    return service;
-  },
-};
-
-export const distributedLockService = {
-  provide: DistributedLockService,
-  useFactory: async (): Promise<DistributedLockService> => {
-    const factoryCacheInMemoryProviderService =
-      cacheInMemoryProviderService.useFactory();
-
-    const service = new DistributedLockService(
-      factoryCacheInMemoryProviderService,
-    );
-
     await service.initialize();
 
     return service;

@@ -64,6 +64,9 @@ export const EditGroupSidebar = ({
     formState: { isValid, isDirty },
   } = methods;
 
+  const localesForm = watch('locales');
+
+  // First useEffect for initializing with group data
   useEffect(() => {
     if (!group) return;
 
@@ -72,18 +75,25 @@ export const EditGroupSidebar = ({
     reset({ name: group.name, identifier: group.identifier, locales: groupLocales });
   }, [reset, group]);
 
-  const localesForm = watch('locales');
-
+  // Separate useEffect for handling defaultLocale initialization - only runs when defaultLocale changes
   useEffect(() => {
     if (!defaultLocale) return;
 
-    reset(defaultValues(defaultLocale));
-
-    if (localesForm.length === 0) {
-      setValue('locales', [defaultLocale]);
+    /*
+     * Only initialize with defaultLocale if we don't have group data yet
+     * and the form hasn't been edited by the user
+     */
+    if (!group && !isDirty) {
+      reset(defaultValues(defaultLocale));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultLocale, localesForm]);
+  }, [defaultLocale, group, isDirty, reset]);
+
+  // Separate useEffect for ensuring locales is never empty
+  useEffect(() => {
+    if (!defaultLocale || localesForm.length > 0) return;
+
+    setValue('locales', [defaultLocale]);
+  }, [defaultLocale, localesForm, setValue]);
 
   const onUpdateGroup = async (form) => {
     await updateTranslationGroup({

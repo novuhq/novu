@@ -11,6 +11,14 @@ export type UpdateOrgBrandingPayloadType = {
   contentBackgroundValue?: string;
 };
 
+export type GetOrganizationSettingsDto = {
+  removeNovuBranding: boolean;
+};
+
+export type UpdateOrganizationSettingsDto = {
+  removeNovuBranding?: boolean;
+};
+
 export function getOrganization() {
   return api.get(`/v1/organizations/me`);
 }
@@ -36,7 +44,7 @@ export function getOrganizationMembers() {
 export function inviteMember(email: string) {
   return api.post(`/v1/invites`, {
     email,
-    role: MemberRoleEnum.ADMIN,
+    role: MemberRoleEnum.OSS_ADMIN,
   });
 }
 
@@ -62,4 +70,12 @@ export function updateBrandingSettings(payload: UpdateOrgBrandingPayloadType) {
 
 export function renameOrganization(organizationName: string) {
   return api.patch(`/v1/organizations`, { name: organizationName });
+}
+
+export function getOrganizationSettings() {
+  return api.get(`/v1/organizations/settings`);
+}
+
+export function updateOrganizationSettings(payload: UpdateOrganizationSettingsDto) {
+  return api.patch(`/v1/organizations/settings`, payload);
 }

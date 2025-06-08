@@ -26,7 +26,6 @@ export interface INotificationDto {
   read: boolean;
   seen: boolean;
   subject?: string | null;
-  deleted: boolean;
   deviceTokens?: string[] | null;
   cta: IMessageCTADto;
   status: 'sent' | 'error' | 'warning';

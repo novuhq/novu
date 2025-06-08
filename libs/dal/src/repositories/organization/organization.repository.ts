@@ -1,4 +1,3 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { Inject } from '@nestjs/common';
 import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 import { IOrganizationRepository } from './organization-repository.interface';
@@ -26,16 +25,20 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.updateDefaultLocale(organizationId, defaultLocale);
   }
 
-  findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
-    return this.organizationRepository.findPartnerConfigurationDetails(organizationId, userId, configurationId);
+  findByPartnerConfigurationId(args: { userId: string; configurationId: string }) {
+    return this.organizationRepository.findByPartnerConfigurationId(args);
   }
 
-  updatePartnerConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {
-    return this.organizationRepository.updatePartnerConfiguration(organizationId, userId, configuration);
+  upsertPartnerConfiguration(args: { organizationId: string; configuration: IPartnerConfiguration }) {
+    return this.organizationRepository.upsertPartnerConfiguration(args);
   }
 
-  bulkUpdatePartnerConfiguration(userId: string, data: Record<string, string[]>, configurationId: string) {
-    return this.organizationRepository.bulkUpdatePartnerConfiguration(userId, data, configurationId);
+  bulkUpdatePartnerConfiguration(args: {
+    userId: string;
+    data: Record<string, string[]>;
+    configuration: IPartnerConfiguration;
+  }) {
+    return this.organizationRepository.bulkUpdatePartnerConfiguration(args);
   }
 
   create(data: any, options?: any): Promise<OrganizationEntity> {

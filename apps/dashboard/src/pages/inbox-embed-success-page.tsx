@@ -1,11 +1,11 @@
+import { AnimatedPage } from '@/components/onboarding/animated-page';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthCard } from '../components/auth/auth-card';
 import { Button } from '../components/primitives/button';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../utils/routes';
 import { useTelemetry } from '../hooks/use-telemetry';
+import { ROUTES } from '../utils/routes';
 import { TelemetryEvent } from '../utils/telemetry';
-import { useEffect } from 'react';
-import { AnimatedPage } from '@/components/onboarding/animated-page';
 
 export function InboxEmbedSuccessPage() {
   const navigate = useNavigate();
@@ -41,11 +41,7 @@ export function InboxEmbedSuccessPage() {
           </div>
 
           <div className="flex flex-col px-6">
-            <Button
-              className="mt-8 w-full rounded-xl py-3 text-white"
-              variant="default"
-              onClick={handleNavigateToDashboard}
-            >
+            <Button className="mt-8 w-full" variant="primary" onClick={handleNavigateToDashboard}>
               Go to the Dashboard
             </Button>
           </div>

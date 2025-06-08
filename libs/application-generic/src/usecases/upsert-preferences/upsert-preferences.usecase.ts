@@ -10,6 +10,7 @@ import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-gl
 import { UpsertSubscriberWorkflowPreferencesCommand } from './upsert-subscriber-workflow-preferences.command';
 import { UpsertUserWorkflowPreferencesCommand } from './upsert-user-workflow-preferences.command';
 import { deepMerge } from '../../utils';
+import { Instrument } from '../../instrumentation';
 
 export type WorkflowPreferencesFull = Omit<PreferencesEntity, 'preferences'> & {
   preferences: WorkflowPreferences;
@@ -34,6 +35,7 @@ type UpsertPreferencesCommand = Omit<
 export class UpsertPreferences {
   constructor(private preferencesRepository: PreferencesRepository) {}
 
+  @Instrument()
   public async upsertWorkflowPreferences(
     command: UpsertWorkflowPreferencesCommand,
   ): Promise<WorkflowPreferencesFull> {
@@ -46,6 +48,7 @@ export class UpsertPreferences {
     }) as Promise<WorkflowPreferencesFull>;
   }
 
+  @Instrument()
   public async upsertSubscriberGlobalPreferences(
     command: UpsertSubscriberGlobalPreferencesCommand,
   ) {
@@ -78,7 +81,7 @@ export class UpsertPreferences {
 
     await this.preferencesRepository.update(
       {
-        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         _subscriberId: command._subscriberId,
         type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
         $or: channelTypes.map((channelType) => ({
@@ -91,6 +94,7 @@ export class UpsertPreferences {
     );
   }
 
+  @Instrument()
   public async upsertSubscriberWorkflowPreferences(
     command: UpsertSubscriberWorkflowPreferencesCommand,
   ) {
@@ -104,6 +108,7 @@ export class UpsertPreferences {
     });
   }
 
+  @Instrument()
   public async upsertUserWorkflowPreferences(
     command: UpsertUserWorkflowPreferencesCommand,
   ): Promise<WorkflowPreferencesFull> {

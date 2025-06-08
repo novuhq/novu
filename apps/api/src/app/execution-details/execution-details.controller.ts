@@ -7,12 +7,12 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
-import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)
-@UserAuthentication()
+@RequireAuthentication()
 @ApiTags('Execution Details')
 @ApiExcludeController()
 export class ExecutionDetailsController {

@@ -83,6 +83,7 @@ const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
       message: `${issueField} must be one of ${issue.options.join(', ')}`,
     };
   }
+
   return { message: ctx.defaultError };
 };
 

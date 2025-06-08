@@ -1,12 +1,12 @@
-import { RiCheckboxCircleFill, RiLoader3Line, RiNotification2Fill } from 'react-icons/ri';
-import { Loader2 } from 'lucide-react';
-import { Button } from '../primitives/button';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { ROUTES } from '../../utils/routes';
+import { IEnvironment } from '@novu/shared';
+import { RiCheckboxCircleFill, RiLoader3Line, RiNotification2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
-import { IEnvironment } from '@novu/shared';
+import { ROUTES } from '../../utils/routes';
+import { Button } from '../primitives/button';
+import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
 
 type InboxConnectedGuideProps = {
   subscriberId: string;
@@ -16,6 +16,7 @@ type InboxConnectedGuideProps = {
 export function InboxConnectedGuide({ subscriberId, environment }: InboxConnectedGuideProps) {
   const navigate = useNavigate();
   const { triggerWorkflow, isPending } = useTriggerWorkflow(environment);
+  useInitDemoWorkflow(environment);
 
   async function handleSendNotification() {
     try {
@@ -65,12 +66,15 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
                 subscriberId matches as above.
               </p>
               <div>
-                <Button size="sm" className="gap-1 px-2" onClick={handleSendNotification} disabled={isPending}>
-                  {isPending ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <RiNotification2Fill className="h-3 w-3" />
-                  )}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="gap-1 px-2"
+                  onClick={handleSendNotification}
+                  disabled={isPending}
+                  isLoading={isPending}
+                  trailingIcon={RiNotification2Fill}
+                >
                   Send notification
                 </Button>
               </div>

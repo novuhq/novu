@@ -7,7 +7,7 @@ export function processTestAgentExpectedStatusCode(statusCode: number) {
   const stackTrace = new Error().stack?.split('\n') ?? [];
   stackTrace.splice(1, 1);
 
-  return (err: any, res: Response) => {
+  return (err, res: Response) => {
     if ((res?.status || err.status) !== statusCode) {
       const e = new Error(
         `Expected ${statusCode}, got ${res?.status || err.status} resp: ${

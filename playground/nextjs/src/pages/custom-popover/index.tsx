@@ -17,7 +17,7 @@ export default function CustomPopoverPage() {
             )}
           />
         </PopoverTrigger>
-        <PopoverContent className="h-[500px] w-[400px] overflow-auto p-0">
+        <PopoverContent className="h-[600px] w-[400px] overflow-hidden p-0">
           <InboxContent />
         </PopoverContent>
       </Popover>

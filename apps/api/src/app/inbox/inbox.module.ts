@@ -1,15 +1,17 @@
 import { Module } from '@nestjs/common';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { SharedModule } from '../shared/shared.module';
-import { SubscribersModule } from '../subscribers/subscribers.module';
+import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
 import { InboxController } from './inbox.controller';
 import { USE_CASES } from './usecases';
 import { PreferencesModule } from '../preferences';
+import { OrganizationModule } from '../organization/organization.module';
 
 @Module({
-  imports: [SharedModule, SubscribersModule, AuthModule, IntegrationModule, PreferencesModule],
-  providers: [...USE_CASES],
+  imports: [SharedModule, SubscribersV1Module, AuthModule, IntegrationModule, PreferencesModule, OrganizationModule],
+  providers: [...USE_CASES, CommunityOrganizationRepository],
   exports: [...USE_CASES],
   controllers: [InboxController],
 })

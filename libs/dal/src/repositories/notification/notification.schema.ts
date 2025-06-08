@@ -21,6 +21,17 @@ const notificationSchema = new Schema<NotificationDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
     },
+    topics: [
+      {
+        _topicId: {
+          type: Schema.Types.ObjectId,
+          ref: 'Topic',
+        },
+        topicKey: {
+          type: Schema.Types.String,
+        },
+      },
+    ],
     transactionId: {
       type: Schema.Types.String,
     },
@@ -153,6 +164,23 @@ notificationSchema.index({
   _environmentId: 1,
   createdAt: -1,
 });
+/*
+ * There was no point indexing old records,
+ * we are not searching anything more than a month back
+ */
+notificationSchema.index(
+  {
+    _environmentId: 1,
+    createdAt: 1,
+  },
+  {
+    partialFilterExpression: {
+      createdAt: {
+        $gte: new Date('2025-01-01T00:00:00Z'),
+      },
+    },
+  }
+);
 
 /*
  * This index was created to push entries to Online Archive

@@ -1,4 +1,4 @@
-import { IActivity, IEnvironment } from '@novu/shared';
+import { getDateRangeInMs, IActivity, IEnvironment } from '@novu/shared';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -8,22 +8,31 @@ export type ActivityFilters = {
   subscriberId?: string;
   transactionId?: string;
   dateRange?: string;
+  topicKey?: string;
 };
 
-interface ActivityResponse {
+export interface ActivityResponse {
   data: IActivity[];
   hasMore: boolean;
   pageSize: number;
 }
 
-export function getActivityList(
-  environment: IEnvironment,
-  page = 0,
-  filters?: ActivityFilters,
-  signal?: AbortSignal
-): Promise<ActivityResponse> {
+export function getActivityList({
+  environment,
+  page,
+  limit,
+  filters,
+  signal,
+}: {
+  environment: IEnvironment;
+  page: number;
+  limit: number;
+  filters?: ActivityFilters;
+  signal?: AbortSignal;
+}): Promise<ActivityResponse> {
   const searchParams = new URLSearchParams();
   searchParams.append('page', page.toString());
+  searchParams.append('limit', limit.toString());
 
   if (filters?.channels?.length) {
     filters.channels.forEach((channel) => {
@@ -49,8 +58,12 @@ export function getActivityList(
     searchParams.append('transactionId', filters.transactionId);
   }
 
+  if (filters?.topicKey) {
+    searchParams.append('topicKey', filters.topicKey);
+  }
+
   if (filters?.dateRange) {
-    const after = new Date(Date.now() - getDateRangeInDays(filters?.dateRange) * 24 * 60 * 60 * 1000);
+    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
     searchParams.append('after', after.toISOString());
   }
 
@@ -60,20 +73,10 @@ export function getActivityList(
   });
 }
 
-function getDateRangeInDays(range: string): number {
-  switch (range) {
-    case '24h':
-      return 1;
-    case '7d':
-      return 7;
-    case '30d':
-    default:
-      return 30;
-  }
-}
-
-export function getNotification(notificationId: string, environment: IEnvironment) {
-  return get<{ data: IActivity }>(`/notifications/${notificationId}`, {
+export async function getNotification(notificationId: string, environment: IEnvironment): Promise<IActivity> {
+  const { data } = await get<{ data: IActivity }>(`/notifications/${notificationId}`, {
     environment,
   });
+
+  return data;
 }

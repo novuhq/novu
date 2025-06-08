@@ -1,11 +1,11 @@
-import { LogoCircle } from '../icons';
-import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
-import { Progress } from '../primitives/progress';
-import { Button } from '../primitives/button';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipArrow } from '../primitives/tooltip';
 import { ROUTES } from '@/utils/routes';
-import { Link } from 'react-router-dom';
 import { GetSubscriptionDto } from '@novu/shared';
+import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import { LogoCircle } from '../icons';
+import { Button } from '../primitives/button';
+import { Progress } from '../primitives/progress';
+import { Tooltip, TooltipArrow, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 const transition = 'transition-all duration-300 ease-out';
 
@@ -59,7 +59,12 @@ const CardContent = ({
     <div
       className={`-mt-2 max-h-0 overflow-hidden opacity-0 ${transition} group-hover:max-h-8 group-hover:opacity-100`}
     >
-      <Button className={`w-full translate-y-full ${transition} group-hover:translate-y-0`} variant="light" size="sm">
+      <Button
+        className={`w-full translate-y-full ${transition} group-hover:translate-y-0`}
+        variant="primary"
+        mode="lighter"
+        size="xs"
+      >
         Upgrade now
       </Button>
     </div>
@@ -70,8 +75,7 @@ export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSu
   const daysTotal = subscription && subscription.trial.daysTotal > 0 ? subscription.trial.daysTotal : 100;
   const pluralizedDays = pluralizeDaysLeft(daysLeft);
 
-  const cardClassName =
-    'bg-background group relative left-2 mb-2 flex w-[calc(100%-1rem)] cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
+  const cardClassName = 'bg-background group relative mb-2 flex cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
 
   return (
     <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>

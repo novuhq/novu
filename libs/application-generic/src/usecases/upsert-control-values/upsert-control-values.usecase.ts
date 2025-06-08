@@ -18,11 +18,7 @@ export class UpsertControlValuesUseCase {
     });
 
     if (existingControlValues) {
-      return await this.updateControlValues(
-        existingControlValues,
-        command,
-        command.newControlValues,
-      );
+      return await this.updateControlValues(existingControlValues, command, command.newControlValues);
     }
 
     return await this.controlValuesRepository.create({
@@ -39,7 +35,7 @@ export class UpsertControlValuesUseCase {
   private async updateControlValues(
     found: ControlValuesEntity,
     command: UpsertControlValuesCommand,
-    controlValues: Record<string, unknown>,
+    controlValues: Record<string, unknown>
   ) {
     await this.controlValuesRepository.update(
       {
@@ -49,7 +45,7 @@ export class UpsertControlValuesUseCase {
       {
         priority: 0,
         controls: controlValues,
-      },
+      }
     );
 
     return this.controlValuesRepository.findOne({

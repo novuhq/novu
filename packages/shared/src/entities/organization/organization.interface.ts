@@ -16,6 +16,7 @@ export interface IOrganizationEntity {
   domain?: string;
   productUseCases?: ProductUseCases;
   language?: string[];
+  removeNovuBranding?: boolean;
   createdAt: string;
   updatedAt: string;
   externalId?: string;

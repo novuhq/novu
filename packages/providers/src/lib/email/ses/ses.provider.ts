@@ -33,19 +33,8 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   private async sendMail(
-    {
-      html,
-      text,
-      to,
-      from,
-      senderName,
-      subject,
-      attachments,
-      cc,
-      bcc,
-      replyTo,
-    },
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    { html, text, to, from, senderName, subject, attachments, cc, bcc, replyTo },
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ) {
     const transporter = nodemailer.createTransport({
       SES: { ses: this.ses, aws: { SendRawEmailCommand } },
@@ -65,24 +54,13 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         cc,
         bcc,
         replyTo,
-      }).body,
+      }).body
     );
   }
 
   async sendMessage(
-    {
-      html,
-      text,
-      to,
-      from,
-      subject,
-      attachments,
-      cc,
-      bcc,
-      replyTo,
-      senderName,
-    }: IEmailOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    { html, text, to, from, subject, attachments, cc, bcc, replyTo, senderName }: IEmailOptions,
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail(
       {
@@ -96,12 +74,15 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
           filename: attachment?.name,
           content: attachment.file,
           contentType: attachment.mime,
+          cid: attachment.cid,
+          contentDisposition:
+            attachment.disposition ?? (attachment.cid ? 'inline' : undefined),
         })),
         cc,
         bcc,
         replyTo,
       },
-      bridgeProviderData,
+      bridgeProviderData
     );
 
     return {
@@ -118,10 +99,7 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     return [body.mail.messageId];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): IEmailEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.mail.messageId === identifier);
@@ -183,8 +161,8 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
         attachments: {},
         bcc: [],
         cc: [],
-        replyTo: 'support@novu.co',
-        senderName: 'Novu Support',
+        replyTo: this.config.from,
+        senderName: this.config.senderName,
       });
 
       return {

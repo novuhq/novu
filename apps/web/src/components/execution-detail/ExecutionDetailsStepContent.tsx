@@ -42,17 +42,17 @@ export const ExecutionDetailsStepContent = ({ identifier, step, subscriberVariab
   };
 
   return (
-    <ExecutionDetailsStepContentWrapper key={`execution-detals-step-content-wrapper-${step.id}`}>
+    <ExecutionDetailsStepContentWrapper key={`execution-detals-step-content-wrapper-${step._id}`}>
       <Grid gutter={20}>
         <Grid.Col span={6}>
           <GridColContainer>
             <TimelineTitle>Step Timeline</TimelineTitle>
             {executionDetails.map((executionDetail) => (
               <ExecutionDetail
-                key={`execution-detail-${executionDetail.id}`}
+                key={`execution-detail-${executionDetail._id}`}
                 executionDetail={executionDetail}
-                showTriggerSnippet={detailId !== executionDetail.id}
-                onShowExecutionDetail={onShowExecutionDetail(executionDetail.id, executionDetail.raw)}
+                showTriggerSnippet={detailId !== executionDetail._id}
+                onShowExecutionDetail={onShowExecutionDetail(executionDetail._id, executionDetail.raw)}
                 onHideExecutionDetail={onHideExecutionDetail}
               />
             ))}

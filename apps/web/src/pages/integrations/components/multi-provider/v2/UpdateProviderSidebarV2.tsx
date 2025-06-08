@@ -21,8 +21,8 @@ import { Conditions, IConditions } from '../../../../../components/conditions';
 import { When } from '../../../../../components/utils/When';
 import { useEnvironment } from '../../../../../hooks';
 import { successMessage } from '../../../../../utils/notifications';
-import { Faq } from '../../../../quick-start/components/QuickStartWrapper';
-import { SetupTimeline } from '../../../../quick-start/components/SetupTimeline';
+import { Faq } from './Faq';
+import { SetupTimeline } from './SetupTimeline';
 import { FrameworkEnum } from '../../../../quick-start/consts';
 import { defaultIntegrationConditionsProps } from '../../../constants';
 import type { IIntegratedProvider } from '../../../types';
@@ -30,7 +30,6 @@ import { useProviders } from '../../../useProviders';
 import { IntegrationInput } from '../../IntegrationInput';
 import { ShareableUrl } from '../../Modal/ConnectIntegrationForm';
 import { NovuInAppFrameworkHeader } from '../../NovuInAppFrameworkHeader';
-import { NovuInAppRemoveBranding } from '../../NovuInAppRemoveBranding';
 import { SetupWarning } from '../../SetupWarning';
 import { UpdateIntegrationCommonFields } from '../../UpdateIntegrationCommonFields';
 import { UpdateIntegrationSidebarHeader } from '../../UpdateIntegrationSidebarHeader';
@@ -44,7 +43,6 @@ interface IProviderForm {
   active: boolean;
   identifier: string;
   conditions: IConditions[];
-  removeNovuBranding?: boolean;
 }
 
 enum SidebarStateEnum {
@@ -152,7 +150,6 @@ export function UpdateProviderSidebar({
       }, {} as any),
       conditions: foundProvider.conditions,
       active: foundProvider.active,
-      removeNovuBranding: foundProvider.removeNovuBranding,
     });
   }, [reset, integrationId, providers]);
 
@@ -364,7 +361,6 @@ export function UpdateProviderSidebar({
               />
             </InputWrapper>
           ))}
-          {isNovuInAppProvider && <NovuInAppRemoveBranding control={control} />}
           {isWebhookEnabled && (
             <InputWrapper>
               <Input

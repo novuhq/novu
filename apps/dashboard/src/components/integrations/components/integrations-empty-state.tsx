@@ -1,5 +1,6 @@
 import { Button } from '@/components/primitives/button';
-import { Plus, Settings } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { RiAddFill } from 'react-icons/ri';
 
 type IntegrationsEmptyStateProps = {
   onAddIntegrationClick: () => void;
@@ -15,8 +16,7 @@ export function IntegrationsEmptyState({ onAddIntegrationClick }: IntegrationsEm
         <h2 className="text-xl font-semibold">No integrations found</h2>
         <p className="text-muted-foreground text-sm">Add your first integration to get started</p>
       </div>
-      <Button onClick={onAddIntegrationClick} data-test-id="add-first-integration">
-        <Plus className="mr-2 h-4 w-4" />
+      <Button onClick={onAddIntegrationClick} leadingIcon={RiAddFill} data-test-id="add-first-integration">
         Add Integration
       </Button>
     </div>

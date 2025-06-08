@@ -23,7 +23,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
       accountSid?: string;
       authToken?: string;
       from?: string;
-    },
+    }
   ) {
     super();
     this.plivoClient = new PlivoClient(config.accountSid, config.authToken);
@@ -31,7 +31,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
 
   async sendMessage(
     options: ISmsOptions,
-    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {},
+    bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, {
       src: options.from || this.config.from,
@@ -43,7 +43,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
       transformedData.body.dst,
       transformedData.body.text as string,
       transformedData.body.optionalParams as object,
-      transformedData.body.powerpackUUID as string,
+      transformedData.body.powerpackUUID as string
     );
 
     return {
@@ -60,10 +60,7 @@ export class PlivoSmsProvider extends BaseProvider implements ISmsProvider {
     return [body.messageUuid];
   }
 
-  parseEventBody(
-    body: any | any[],
-    identifier: string,
-  ): ISMSEventBody | undefined {
+  parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
       // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.messageUuid === identifier);
