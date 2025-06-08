@@ -25,7 +25,13 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get notifications
+ * List all events
+ *
+ * @remarks
+ * List all notification events (triggered events) for the current environment.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     Checkout all available filters in the query section.
+ *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
 export function notificationsList(
   client: NovuCore,
@@ -119,6 +125,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "NotificationsController_listNotifications",
     oAuth2Scopes: [],
@@ -150,6 +157,7 @@ async function $do(
     headers: headers,
     query: query,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

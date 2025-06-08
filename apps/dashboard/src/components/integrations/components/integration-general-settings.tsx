@@ -1,16 +1,8 @@
-import { LinkButton } from '@/components/primitives/button-link';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ROUTES } from '@/utils/routes';
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { Control } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../../config';
-import { openInNewTab } from '../../../utils/url';
 
 type IntegrationFormData = {
   name: string;
@@ -20,7 +12,6 @@ type IntegrationFormData = {
   check: boolean;
   primary: boolean;
   environmentId: string;
-  removeNovuBranding?: boolean;
 };
 
 type GeneralSettingsProps = {
@@ -29,66 +20,7 @@ type GeneralSettingsProps = {
   isReadOnly?: boolean;
   hidePrimarySelector?: boolean;
   disabledPrimary?: boolean;
-  isForInAppStep?: boolean;
 };
-
-function NovuBrandingSwitch({
-  id,
-  value,
-  onChange,
-  isReadOnly,
-}: {
-  id: string;
-  value: boolean | undefined;
-  onChange: (value: boolean) => void;
-  isReadOnly?: boolean;
-}) {
-  const { subscription, isLoading } = useFetchSubscription();
-  const navigate = useNavigate();
-
-  const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const disabled = isFreePlan || IS_SELF_HOSTED || isLoading;
-  const checked = disabled ? false : value;
-
-  const popoverContent = IS_SELF_HOSTED
-    ? 'Remove Novu badge from your inbox by upgrading to Cloud plans'
-    : 'Remove Novu badge from your inbox by upgrading to our paid plans';
-
-  const handleLinkClick = () => {
-    if (IS_SELF_HOSTED) {
-      openInNewTab(SELF_HOSTED_UPGRADE_REDIRECT_URL + '?utm_campaign=remove_branding_prompt');
-    } else {
-      navigate(ROUTES.SETTINGS_BILLING + '?utm_source=remove_branding_prompt');
-    }
-  };
-
-  return (
-    <div className="flex items-center">
-      {isFreePlan || IS_SELF_HOSTED ? (
-        <Popover modal>
-          <PopoverTrigger asChild>
-            <Switch id={id} checked={checked} disabled={isReadOnly} />
-          </PopoverTrigger>
-          <PopoverContent className="w-72" align="end" sideOffset={4}>
-            <div className="flex flex-col gap-2 p-1">
-              <div className="flex flex-col gap-1">
-                <h4 className="text-xs font-semibold">Premium Feature</h4>
-                <p className="text-muted-foreground text-xs">{popoverContent}</p>
-              </div>
-              <div className="flex justify-end">
-                <LinkButton size="sm" variant="primary" onClick={handleLinkClick}>
-                  Upgrade Plan
-                </LinkButton>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      ) : (
-        <Switch id={id} onCheckedChange={onChange} checked={checked} disabled={isReadOnly} />
-      )}
-    </div>
-  );
-}
 
 export function GeneralSettings({
   control,
@@ -96,7 +28,6 @@ export function GeneralSettings({
   isReadOnly,
   hidePrimarySelector,
   disabledPrimary,
-  isForInAppStep,
 }: GeneralSettingsProps) {
   return (
     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
@@ -118,35 +49,6 @@ export function GeneralSettings({
           </FormItem>
         )}
       />
-      {isForInAppStep && (
-        <>
-          <FormField
-            control={control}
-            name="removeNovuBranding"
-            render={({ field }) => {
-              return (
-                <FormItem className="flex items-center justify-between gap-2">
-                  <FormLabel
-                    className="text-xs"
-                    htmlFor="removeNovuBranding"
-                    tooltip="If enabled, the Novu badge will be removed from your inbox."
-                  >
-                    Remove Novu badge: <span className="text-text-soft ml-1 text-xs">"Inbox by Novu"</span>
-                  </FormLabel>
-                  <FormControl>
-                    <NovuBrandingSwitch
-                      id="removeNovuBranding"
-                      value={field.value}
-                      onChange={field.onChange}
-                      isReadOnly={isReadOnly}
-                    />
-                  </FormControl>
-                </FormItem>
-              );
-            }}
-          />
-        </>
-      )}
 
       {!hidePrimarySelector && (
         <FormField

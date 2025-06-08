@@ -26,7 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update topic by key
+ * Update a topic
+ *
+ * @remarks
+ * Update a topic name by its unique key identifier **topicKey**
  */
 export function topicsUpdate(
   client: NovuCore,
@@ -127,6 +130,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "TopicsController_updateTopic",
     oAuth2Scopes: [],
@@ -157,6 +161,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

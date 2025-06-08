@@ -50,7 +50,7 @@ export class AppModule implements OnApplicationBootstrap, OnApplicationShutdown,
   }
 
   onApplicationShutdown(signal: string) {
-    Logger.log(`[@novu/worker]: Application shutdown with signal ${signal}.`);
+    Logger.log(`[@novu/worker]: Application shutdown with signal ${signal}`);
     Logger.flush();
   }
 }

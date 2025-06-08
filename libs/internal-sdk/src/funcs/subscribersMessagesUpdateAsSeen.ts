@@ -25,7 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Mark message action as seen
+ * Update notification action status
+ *
+ * @remarks
+ * Update in-app (inbox) notification's action status by its unique key identifier **messageId** and type field **type**.
+ *       **type** field can be **primary** or **secondary**
  */
 export function subscribersMessagesUpdateAsSeen(
   client: NovuCore,
@@ -125,6 +129,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_markActionAsSeen",
     oAuth2Scopes: [],
@@ -155,6 +160,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

@@ -65,7 +65,7 @@
     "@rive-app/react-canvas": "^4.8.1",
     "@rjsf/core": "^5.17.1",
     "@rjsf/validator-ajv8": "^5.17.1",
-    "@segment/analytics-next": "^1.48.0",
+    "@segment/analytics-next": "^1.81.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@storybook/addon-docs": "^7.4.2",

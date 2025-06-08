@@ -26,10 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Patch subscriber
+ * Update a subscriber
  *
  * @remarks
- * Patch subscriber by your internal id used to identify the subscriber
+ * Update a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** is a required field, rest other fields are optional
  */
 export function subscribersPatch(
   client: NovuCore,
@@ -131,6 +132,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersController_patchSubscriber",
     oAuth2Scopes: [],
@@ -161,6 +163,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

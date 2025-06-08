@@ -152,6 +152,40 @@ const baseTheme = (options: { multiline?: boolean }) =>
     '.cm-tooltip-autocomplete.cm-tooltip > ul > li:hover': {
       backgroundColor: 'hsl(var(--neutral-100))',
     },
+    // Style for the "Create:" prefix on new variable suggestions
+    '.cm-new-variable-option .cm-completionLabel': {
+      fontWeight: '500',
+      '&::before': {
+        content: "'create: '",
+        color: 'hsl(var(--foreground-400))',
+        marginRight: '0.33em',
+      },
+    },
+    // Style for the icon on new variable suggestions
+    '.cm-new-variable-option .cm-completionIcon': {
+      '&::after': {
+        content: "''",
+        height: '16px',
+        width: '16px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${functionIcon}')`,
+      },
+    },
+    // Adding tooltip content for new variable options
+    '.cm-new-variable-option.cm-completion': {
+      '&[data-has-info=true] ~ .cm-tooltip .cm-completionInfo': {
+        padding: '12px !important',
+        minHeight: '40px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '14px',
+        fontWeight: '500',
+        color: 'hsl(var(--foreground-950))',
+      },
+    },
   });
 
 export type EditorProps = {

@@ -26,7 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Marks all the subscriber messages as read, unread, seen or unseen.
+ * Update all notifications state
+ *
+ * @remarks
+ * Update all subscriber in-app (inbox) notifications state such as read, unread, seen or unseen by **subscriberId**.
  */
 export function subscribersMessagesMarkAll(
   client: NovuCore,
@@ -132,6 +135,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_markAllUnreadAsRead",
     oAuth2Scopes: [],
@@ -162,6 +166,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

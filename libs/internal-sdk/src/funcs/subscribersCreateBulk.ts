@@ -30,8 +30,7 @@ import { Result } from "../types/fp.js";
  *
  * @remarks
  *
- *       Using this endpoint you can create multiple subscribers at once, to avoid multiple calls to the API.
- *       The bulk API is limited to 500 subscribers per request.
+ *       Using this endpoint multiple subscribers can be created at once. The bulk API is limited to 500 subscribers per request.
  */
 export function subscribersCreateBulk(
   client: NovuCore,
@@ -124,6 +123,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_bulkCreateSubscribers",
     oAuth2Scopes: [],
@@ -154,6 +154,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

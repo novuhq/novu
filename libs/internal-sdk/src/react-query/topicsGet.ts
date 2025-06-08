@@ -28,7 +28,10 @@ import {
 export type TopicsGetQueryData = operations.TopicsControllerGetTopicResponse;
 
 /**
- * Get topic by key
+ * Retrieve a topic
+ *
+ * @remarks
+ * Retrieve a topic by its unique key identifier **topicKey**
  */
 export function useTopicsGet(
   topicKey: string,
@@ -48,7 +51,10 @@ export function useTopicsGet(
 }
 
 /**
- * Get topic by key
+ * Retrieve a topic
+ *
+ * @remarks
+ * Retrieve a topic by its unique key identifier **topicKey**
  */
 export function useTopicsGetSuspense(
   topicKey: string,

@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
  * Update subscriber online status
  *
  * @remarks
- * Used to update the subscriber isOnline flag.
+ * Update the subscriber online status by its unique key identifier **subscriberId**
  */
 export function subscribersPropertiesUpdateOnlineFlag(
   client: NovuCore,
@@ -140,6 +140,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_updateSubscriberOnlineFlag",
     oAuth2Scopes: [],
@@ -170,6 +171,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

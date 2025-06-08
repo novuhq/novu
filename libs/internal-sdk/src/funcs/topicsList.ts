@@ -25,7 +25,12 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get topics list
+ * List all topics
+ *
+ * @remarks
+ * This api returns a paginated list of topics.
+ *     Topics can be filtered by **key**, **name**, or **includeCursor** to paginate through the list.
+ *     Checkout all available filters in the query section.
  */
 export function topicsList(
   client: NovuCore,
@@ -115,6 +120,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "TopicsController_listTopics",
     oAuth2Scopes: [],
@@ -146,6 +152,7 @@ async function $do(
     headers: headers,
     query: query,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

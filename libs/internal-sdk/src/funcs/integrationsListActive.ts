@@ -25,10 +25,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get active integrations
+ * List active integrations
  *
  * @remarks
- * Return all the active integrations the user has created for that organization. Review v.0.17.0 changelog for a breaking change
+ * List all the active integrations created in the organization
  */
 export function integrationsListActive(
   client: NovuCore,
@@ -113,6 +113,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "IntegrationsController_getActiveIntegrations",
     oAuth2Scopes: [],
@@ -143,6 +144,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

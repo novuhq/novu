@@ -67,6 +67,90 @@ export class ErrorDto {
   })
   errorId?: string;
 }
+
+export class PayloadValidationErrorDto {
+  @ApiProperty({
+    description: 'Field path that failed validation',
+    example: 'user.name',
+  })
+  field: string;
+
+  @ApiProperty({
+    description: 'Validation error message',
+    example: "must have required property 'name'",
+  })
+  message: string;
+
+  @ApiProperty({
+    description: 'The actual value that failed validation',
+    oneOf: [
+      { type: 'string', nullable: true },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'object', nullable: true },
+      {
+        type: 'array',
+        items: {
+          anyOf: [
+            { type: 'string', nullable: true },
+            { type: 'number' },
+            { type: 'boolean' },
+            { type: 'object', additionalProperties: true },
+          ],
+        },
+      },
+    ],
+    required: false,
+    example: { age: 25 },
+  })
+  value?: any;
+
+  @ApiProperty({
+    description: 'JSON Schema path where the validation failed',
+    example: '#/required',
+    required: false,
+  })
+  schemaPath?: string;
+}
+
+@ApiExtraModels(PayloadValidationErrorDto)
+export class PayloadValidationExceptionDto extends ErrorDto {
+  @ApiProperty({
+    description: 'Type identifier for payload validation errors',
+    example: 'PAYLOAD_VALIDATION_ERROR',
+  })
+  type: string;
+
+  @ApiProperty({
+    description: 'Array of detailed validation errors',
+    type: [PayloadValidationErrorDto],
+    example: [
+      {
+        field: 'user.name',
+        message: "must have required property 'name'",
+        value: { age: 25 },
+        schemaPath: '#/required',
+      },
+    ],
+  })
+  errors: PayloadValidationErrorDto[];
+
+  @ApiProperty({
+    description: 'The JSON schema that was used for validation',
+    type: 'object',
+    required: false,
+    example: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        age: { type: 'number' },
+      },
+      required: ['name'],
+    },
+  })
+  schema?: any;
+}
+
 @ApiExtraModels(ConstraintValidation)
 export class ValidationErrorDto extends ErrorDto {
   @ApiProperty({

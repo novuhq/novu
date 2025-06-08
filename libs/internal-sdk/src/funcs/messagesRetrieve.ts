@@ -25,10 +25,12 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get messages
+ * List all messages
  *
  * @remarks
- * Returns a list of messages, could paginate using the `page` query parameter
+ * List all messages for the current environment.
+ *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+ *     This API returns a paginated list of messages.
  */
 export function messagesRetrieve(
   client: NovuCore,
@@ -117,6 +119,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "MessagesController_getMessages",
     oAuth2Scopes: [],
@@ -148,6 +151,7 @@ async function $do(
     headers: headers,
     query: query,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

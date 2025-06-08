@@ -94,7 +94,12 @@ export class CreateNovuIntegrations {
   }
 
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
-    await this.createEmailIntegration(command);
-    await this.createInAppIntegration(command);
+    if (!command.channels || command.channels.includes(ChannelTypeEnum.EMAIL)) {
+      await this.createEmailIntegration(command);
+    }
+
+    if (!command.channels || command.channels.includes(ChannelTypeEnum.IN_APP)) {
+      await this.createInAppIntegration(command);
+    }
   }
 }

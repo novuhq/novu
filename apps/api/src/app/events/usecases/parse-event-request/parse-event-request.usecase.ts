@@ -38,6 +38,9 @@ import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
 import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
+import Ajv, { ErrorObject } from 'ajv';
+import addFormats from 'ajv-formats';
+import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 import {
@@ -111,6 +114,10 @@ export class ParseEventRequest {
 
     const reservedVariablesTypes = this.getReservedVariablesTypes(template);
     this.validateTriggerContext(command, reservedVariablesTypes);
+
+    if (template.validatePayload && template.payloadSchema) {
+      this.validatePayloadSchema(command.payload, template.payloadSchema);
+    }
 
     let tenant: TenantEntity | null = null;
     if (command.tenant) {
@@ -397,5 +404,19 @@ export class ParseEventRequest {
     const validItem = this.validateItem(input, invalidValues);
 
     return { validRecipients: validItem, invalidRecipients: invalidValues };
+  }
+
+  private validatePayloadSchema(payload: any, schema: any): void {
+    const ajv = new Ajv({
+      allErrors: true,
+    });
+    addFormats(ajv);
+
+    const validate = ajv.compile(schema);
+    const valid = validate(payload);
+
+    if (!valid && validate.errors) {
+      throw PayloadValidationException.fromAjvErrors(validate.errors, payload, schema);
+    }
   }
 }

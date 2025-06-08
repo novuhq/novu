@@ -2,7 +2,7 @@ import { Sms } from '@/components/icons';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { SmsPreview } from '@/components/workflow-editor/steps/sms/sms-preview';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
-import { GeneratePreviewResponseDto } from '@novu/shared';
+import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type SmsEditorPreviewProps = {
@@ -11,6 +11,7 @@ type SmsEditorPreviewProps = {
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
+  workflow?: WorkflowResponseDto;
 };
 
 export const SmsEditorPreview = ({
@@ -19,6 +20,7 @@ export const SmsEditorPreview = ({
   previewStep,
   previewData,
   isPreviewPending = false,
+  workflow,
 }: SmsEditorPreviewProps) => {
   return (
     <TabsSection>
@@ -34,7 +36,13 @@ export const SmsEditorPreview = ({
             className="w-full px-3"
           />
         </div>
-        <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
+        <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
+          editorValue={editorValue}
+          setEditorValue={setEditorValue}
+          onUpdate={previewStep}
+          workflow={workflow}
+        />
       </div>
     </TabsSection>
   );

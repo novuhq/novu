@@ -11,6 +11,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #inboxService: InboxService;
+  #currentSubscriberId: string;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
@@ -39,13 +40,17 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
       {
-        applicationIdentifier: options.applicationIdentifier,
+        applicationIdentifier: options.applicationIdentifier || '',
         subscriberHash: options.subscriberHash,
         subscriber: buildSubscriber(options),
       },
       this.#inboxService,
       this.#emitter
     );
+
+    const initialSubscriber = buildSubscriber(options);
+    this.#currentSubscriberId = initialSubscriber.subscriberId;
+
     this.#session.initialize();
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
@@ -79,16 +84,33 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       this.#emitter.off(eventName, listener);
     };
   }
+
+  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
+    if (this.#currentSubscriberId === options.subscriber.subscriberId) {
+      return;
+    }
+
+    await this.#session.initialize({
+      applicationIdentifier: this.#session.applicationIdentifier || '',
+      subscriberHash: options.subscriberHash,
+      subscriber: options.subscriber,
+    });
+
+    this.#currentSubscriberId = options.subscriber.subscriberId;
+  }
 }
 
 function buildSubscriber(options: NovuOptions): Subscriber {
-  let subscriberObj: Subscriber;
-
+  // subscriber object
   if (options.subscriber) {
-    subscriberObj = typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
-  } else {
-    subscriberObj = { subscriberId: options.subscriberId as string };
+    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
   }
 
-  return subscriberObj;
+  // subscriberId
+  if (options.subscriberId) {
+    return { subscriberId: options.subscriberId as string };
+  }
+
+  // missing - keyless subscriber, the api will generate a subscriberId
+  return { subscriberId: '' };
 }

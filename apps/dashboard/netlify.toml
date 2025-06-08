@@ -1,12 +1,12 @@
 [build]
-  command = "pnpm run build:dashboard --skip-nx-cache"
+  command = "pnpm run build:dashboard"
 
 [build.environment]
   DISABLE_ESLINT_PLUGIN="true"
   NODE_OPTIONS="--max_old_space_size=4096"
 
 [context.deploy-preview]
-  command = "pnpm run build:dashboard --skip-nx-cache"
+  command = "pnpm run build:dashboard"
   ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF apps/dashboard"
 
 [[redirects]]

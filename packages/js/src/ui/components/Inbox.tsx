@@ -78,8 +78,8 @@ export const InboxContent = (props: InboxContentProps) => {
       class={style(
         'inboxContent',
         cn('nt-h-full nt-flex nt-flex-col [&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8', {
-          '[&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8': isDevelopmentMode(),
-          '[&_.nv-preferencesContainer]:nt-pb-4 [&_.nv-notificationList]:nt-pb-4': !isDevelopmentMode(),
+          '[&_.nv-preferencesContainer]:nt-pb-12 [&_.nv-notificationList]:nt-pb-12': isDevelopmentMode(),
+          '[&_.nv-preferencesContainer]:nt-pb-8 [&_.nv-notificationList]:nt-pb-8': !isDevelopmentMode(),
         })
       )}
     >

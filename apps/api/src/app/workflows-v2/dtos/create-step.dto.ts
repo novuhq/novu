@@ -25,6 +25,7 @@ export class StepUpsertDto {
   })
   @IsEnum(StepTypeEnum)
   type: StepTypeEnum;
+
   @ApiPropertyOptional({
     description: 'Control values for the step',
     type: 'object',

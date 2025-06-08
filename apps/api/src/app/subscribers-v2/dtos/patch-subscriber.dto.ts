@@ -73,9 +73,10 @@ export class PatchSubscriberRequestDto {
   locale?: string | null;
 
   @ApiPropertyOptional({
-    type: Object,
+    type: 'object',
     description: 'Additional custom data for the subscriber',
     nullable: true,
+    additionalProperties: true,
   })
   @IsOptional()
   @ValidateIf((obj) => obj.data !== null)

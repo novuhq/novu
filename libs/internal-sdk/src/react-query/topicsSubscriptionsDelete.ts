@@ -30,6 +30,9 @@ export type TopicsSubscriptionsDeleteMutationData =
 
 /**
  * Delete topic subscriptions
+ *
+ * @remarks
+ * Delete subscriptions for subscriberIds for a topic.
  */
 export function useTopicsSubscriptionsDeleteMutation(
   options?: MutationHookOptions<

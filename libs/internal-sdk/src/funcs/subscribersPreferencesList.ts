@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get subscriber preferences
+ * Retrieve subscriber preferences
  *
  * @remarks
- * Get subscriber global and workflow specific preferences
+ * Retrieve subscriber channel preferences by its unique key identifier **subscriberId**.
+ *     This API returns all five channels preferences for all workflows and global preferences.
  */
 export function subscribersPreferencesList(
   client: NovuCore,
@@ -127,6 +128,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersController_getSubscriberPreferences",
     oAuth2Scopes: [],
@@ -157,6 +159,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

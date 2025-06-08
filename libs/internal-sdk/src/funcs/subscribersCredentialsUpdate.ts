@@ -26,10 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update subscriber credentials
+ * Update provider credentials
  *
  * @remarks
- * Subscriber credentials associated to the delivery methods such as slack and push tokens.
+ * Update credentials for a provider such as slack and push tokens.
+ *       **providerId** is required field. This API appends the **deviceTokens** to the existing ones.
  */
 export function subscribersCredentialsUpdate(
   client: NovuCore,
@@ -137,6 +138,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_updateSubscriberChannel",
     oAuth2Scopes: [],
@@ -167,6 +169,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

@@ -25,7 +25,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get in-app notification feed for a particular subscriber
+ * Retrieve subscriber notifications
+ *
+ * @remarks
+ * Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.
  */
 export function subscribersNotificationsFeed(
   client: NovuCore,
@@ -123,6 +126,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_getNotificationsFeed",
     oAuth2Scopes: [],
@@ -154,6 +158,7 @@ async function $do(
     headers: headers,
     query: query,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

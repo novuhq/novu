@@ -11,6 +11,7 @@ export {
   NotificationStatus,
   NovuError,
   NovuOptions,
+  StandardNovuOptions,
   Preference,
   PreferenceLevel,
   PreferencesResponse,

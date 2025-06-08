@@ -30,7 +30,13 @@ export type NotificationsListQueryData =
   operations.NotificationsControllerListNotificationsResponse;
 
 /**
- * Get notifications
+ * List all events
+ *
+ * @remarks
+ * List all notification events (triggered events) for the current environment.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     Checkout all available filters in the query section.
+ *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
 export function useNotificationsList(
   request: operations.NotificationsControllerListNotificationsRequest,
@@ -48,7 +54,13 @@ export function useNotificationsList(
 }
 
 /**
- * Get notifications
+ * List all events
+ *
+ * @remarks
+ * List all notification events (triggered events) for the current environment.
+ *     This API supports filtering by **channels**, **templates**, **emails**, **subscriberIds**, **transactionId**, **topicKey**.
+ *     Checkout all available filters in the query section.
+ *     This API returns event triggers, to list each channel notifications, check messages APIs.
  */
 export function useNotificationsListSuspense(
   request: operations.NotificationsControllerListNotificationsRequest,

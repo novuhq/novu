@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get subscriber
+ * Retrieve a subscriber
  *
  * @remarks
- * Get subscriber by your internal id used to identify the subscriber
+ * Retrieve a subscriber by its unique key identifier **subscriberId**.
+ *     **subscriberId** field is required.
  */
 export function subscribersRetrieve(
   client: NovuCore,
@@ -124,6 +125,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersController_getSubscriber",
     oAuth2Scopes: [],
@@ -154,6 +156,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

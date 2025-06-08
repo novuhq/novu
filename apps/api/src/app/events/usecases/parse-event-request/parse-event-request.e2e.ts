@@ -11,7 +11,7 @@ import { EventsModule } from '../../events.module';
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
 import { ParseEventRequest } from './parse-event-request.usecase';
 
-describe('ParseEventRequest Usecase', () => {
+describe('ParseEventRequest Usecase - #novu-v2', () => {
   let session: UserSession;
   let subscribersService: SubscribersService;
   let parseEventRequestUsecase: ParseEventRequest;
@@ -49,6 +49,109 @@ describe('ParseEventRequest Usecase', () => {
         'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
       );
     }
+  });
+
+  it('should validate payload against schema when validatePayload is enabled', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled
+    const templateWithSchema = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'number' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithSchema.triggers[0].identifier
+    );
+
+    // Test with invalid payload (missing required field)
+    command.payload = { age: 25 };
+
+    try {
+      await parseEventRequestUsecase.execute(command);
+      expect.fail('Should have thrown validation error');
+    } catch (error) {
+      expect(error.message).to.include('Payload validation failed');
+      expect(error.response).to.exist;
+      expect(error.response.type).to.equal('PAYLOAD_VALIDATION_ERROR');
+      expect(error.response.errors).to.be.an('array');
+      expect(error.response.errors).to.have.length.greaterThan(0);
+      expect(error.response.errors[0]).to.have.property('field');
+      expect(error.response.errors[0]).to.have.property('message');
+      expect(error.response.errors[0].field).to.include('name');
+    }
+  });
+
+  it('should pass validation when payload matches schema', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled
+    const templateWithSchema = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+          age: { type: 'number' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithSchema.triggers[0].identifier
+    );
+
+    // Test with valid payload
+    command.payload = { name: 'John Doe', age: 25 };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+  });
+
+  it('should skip validation when validatePayload is disabled', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation disabled
+    const templateWithoutValidation = await session.createTemplate({
+      validatePayload: false,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string' },
+        },
+        required: ['name'],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithoutValidation.triggers[0].identifier
+    );
+
+    // Test with invalid payload - should not throw error since validation is disabled
+    command.payload = { invalidField: 'value' };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
   });
 });
 

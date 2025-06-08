@@ -29,7 +29,11 @@ export type SubscribersSearchQueryData =
   operations.SubscribersControllerSearchSubscribersResponse;
 
 /**
- * Search for subscribers
+ * Search subscribers
+ *
+ * @remarks
+ * Search subscribers by their **email**, **phone**, **subscriberId** and **name**.
+ *     The search is case sensitive and supports pagination.Checkout all available filters in the query section.
  */
 export function useSubscribersSearch(
   request: operations.SubscribersControllerSearchSubscribersRequest,
@@ -47,7 +51,11 @@ export function useSubscribersSearch(
 }
 
 /**
- * Search for subscribers
+ * Search subscribers
+ *
+ * @remarks
+ * Search subscribers by their **email**, **phone**, **subscriberId** and **name**.
+ *     The search is case sensitive and supports pagination.Checkout all available filters in the query section.
  */
 export function useSubscribersSearchSuspense(
   request: operations.SubscribersControllerSearchSubscribersRequest,

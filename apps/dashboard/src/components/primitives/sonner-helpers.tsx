@@ -44,7 +44,7 @@ export const showErrorToast = (message: string, title?: string, options: Externa
       </>
     ),
     options: {
-      position: 'bottom-center',
+      position: 'bottom-right',
       ...options,
     },
   });

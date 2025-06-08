@@ -1,0 +1,8 @@
+---
+description: 
+globs: apps/dashboard/**/*
+alwaysApply: false
+---
+- Do not attempt to to build or run the dashboard as the user will be already running it, to check types you should be able to access the eslint results in cursor.
+- Use lowercase with dashes for directories and files (e.g., components/auth-wizard).
+- Favor named exports for components.

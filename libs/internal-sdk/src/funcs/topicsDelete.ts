@@ -25,7 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete topic by key
+ * Delete a topic
+ *
+ * @remarks
+ * Delete a topic by its unique key identifier **topicKey**.
+ *     This action is irreversible and will remove all subscriptions to the topic.
  */
 export function topicsDelete(
   client: NovuCore,
@@ -119,6 +123,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "TopicsController_deleteTopic",
     oAuth2Scopes: [],
@@ -149,6 +154,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

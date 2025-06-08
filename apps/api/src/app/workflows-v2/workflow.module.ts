@@ -36,6 +36,12 @@ import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-
 import { WorkflowController } from './workflow.controller';
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { ControlValueSanitizerService } from './usecases/preview/services/control-value-sanitizer.service';
+import { PayloadMergerService } from './usecases/preview/services/payload-merger.service';
+import { SchemaBuilderService } from './usecases/preview/services/schema-builder.service';
+import { PreviewPayloadProcessorService } from './usecases/preview/services/preview-payload-processor.service';
+import { MockDataGeneratorService } from './usecases/preview/services/mock-data-generator.service';
+import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
@@ -73,6 +79,12 @@ if (process.env.NOVU_ENTERPRISE === 'true') {
     BuildStepIssuesUsecase,
     ResourceValidatorService,
     TierRestrictionsValidateUsecase,
+    ControlValueSanitizerService,
+    PayloadMergerService,
+    SchemaBuilderService,
+    PreviewPayloadProcessorService,
+    MockDataGeneratorService,
+    PreviewErrorHandler,
   ],
 })
 export class WorkflowModule implements NestModule {

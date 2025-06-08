@@ -32,7 +32,5 @@ export interface IIntegration {
 
   conditions?: IPreviousStepFilterPart[];
 
-  removeNovuBranding?: boolean;
-
   connected?: boolean;
 }

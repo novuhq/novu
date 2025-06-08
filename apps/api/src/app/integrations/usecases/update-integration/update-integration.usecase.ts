@@ -13,7 +13,7 @@ import {
   FeatureFlagsService,
   PinoLogger,
 } from '@novu/application-generic';
-import { ApiServiceLevelEnum, CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -28,7 +28,6 @@ export class UpdateIntegration {
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
     private featureFlagService: FeatureFlagsService,
-    private communityOrganizationRepository: CommunityOrganizationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -103,27 +102,6 @@ export class UpdateIntegration {
     }
 
     return result;
-  }
-
-  private async shouldUpdateRemoveNovuBranding(
-    command: UpdateIntegrationCommand,
-    existingIntegration: IntegrationEntity
-  ): Promise<boolean> {
-    const organization = await this.communityOrganizationRepository.findOne({ _id: command.organizationId });
-
-    const isRemoveNovuBrandingDefined = typeof command.removeNovuBranding !== 'undefined';
-    const isRemoveNovuBrandingChanged =
-      isRemoveNovuBrandingDefined && existingIntegration.removeNovuBranding !== command.removeNovuBranding;
-
-    if (!isRemoveNovuBrandingChanged) {
-      return false;
-    }
-
-    if (!organization || organization.apiServiceLevel === ApiServiceLevelEnum.FREE) {
-      return false;
-    }
-
-    return true;
   }
 
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
@@ -210,11 +188,6 @@ export class UpdateIntegration {
 
     if (command.conditions) {
       updatePayload.conditions = command.conditions;
-    }
-
-    const shouldUpdateRemoveNovuBranding = await this.shouldUpdateRemoveNovuBranding(command, existingIntegration);
-    if (shouldUpdateRemoveNovuBranding) {
-      updatePayload.removeNovuBranding = command.removeNovuBranding;
     }
 
     if (!Object.keys(updatePayload).length) {

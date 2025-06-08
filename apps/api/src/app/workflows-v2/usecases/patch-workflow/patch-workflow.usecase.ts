@@ -55,6 +55,14 @@ export class PatchWorkflowUsecase {
       transientWorkflow.active = command.active;
     }
 
+    if (command.payloadSchema !== undefined && command.payloadSchema !== null) {
+      transientWorkflow.payloadSchema = command.payloadSchema;
+    }
+
+    if (command.validatePayload !== undefined && command.validatePayload !== null) {
+      transientWorkflow.validatePayload = command.validatePayload;
+    }
+
     if (command.name !== undefined && command.name !== null) {
       transientWorkflow.name = command.name;
     }

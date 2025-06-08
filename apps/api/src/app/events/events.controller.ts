@@ -33,9 +33,11 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+import { PayloadValidationExceptionDto } from '../../error-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
@@ -55,9 +57,13 @@ export class EventsController {
     private processBulkTriggerUsecase: ProcessBulkTrigger
   ) {}
 
+  @KeylessAccessible()
   @ExternalApiAccessible()
   @Post('/trigger')
   @ApiResponse(TriggerEventResponseDto, 201)
+  @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {
+    description: 'Payload validation failed - returned when payload does not match the workflow schema',
+  })
   @ApiOperation({
     summary: 'Trigger event',
     description: `
@@ -103,6 +109,9 @@ export class EventsController {
   @SdkUsageExample('Trigger Notification Events in Bulk')
   @SdkGroupName('')
   @ApiResponse(TriggerEventResponseDto, 201, true)
+  @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {
+    description: 'Payload validation failed - returned when any event payload does not match the workflow schema',
+  })
   @ApiOperation({
     summary: 'Bulk trigger event',
     description: `
@@ -129,6 +138,9 @@ export class EventsController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
+  @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {
+    description: 'Payload validation failed - returned when payload does not match the workflow schema',
+  })
   @SdkMethodName('triggerBroadcast')
   @SdkUsageExample('Broadcast Event to All')
   @SdkGroupName('')

@@ -156,6 +156,14 @@ jobs:
         with:
           slim: 'true'
 
+      - name: Build
+        uses: mansagroup/nrwl-nx-action@v3
+        env:
+          LOG_LEVEL: 'info'
+        with:
+          targets: build
+          projects: '@novu/api'
+
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
         env:
@@ -212,13 +220,19 @@ jobs:
           slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
 
       - uses: ./.github/actions/setup-redis-cluster
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: Lint and build and test
+        with:
+          targets: build
+          projects: '@novu/api'
+          args: ''
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Lint and build and test
         with:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
-          args: '--skip-nx-cache'
+          args: ''
 
   validate_openapi:
     name: Validate OpenAPI

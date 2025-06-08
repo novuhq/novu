@@ -25,10 +25,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete subscriber credentials by providerId
+ * Delete provider credentials
  *
  * @remarks
- * Delete subscriber credentials such as slack and expo tokens.
+ * Delete subscriber credentials for a provider such as **slack** and **FCM** by **providerId**.
+ *     This action is irreversible and will remove the credentials for the provider for particular **subscriberId**.
  */
 export function subscribersCredentialsDelete(
   client: NovuCore,
@@ -137,6 +138,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "SubscribersV1Controller_deleteSubscriberCredentials",
     oAuth2Scopes: [],
@@ -167,6 +169,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

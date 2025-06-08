@@ -27,6 +27,9 @@ import { Result } from "../types/fp.js";
 
 /**
  * Delete topic subscriptions
+ *
+ * @remarks
+ * Delete subscriptions for subscriberIds for a topic.
  */
 export function topicsSubscriptionsDelete(
   client: NovuCore,
@@ -130,6 +133,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "TopicsController_deleteTopicSubscriptions",
     oAuth2Scopes: [],
@@ -160,6 +164,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

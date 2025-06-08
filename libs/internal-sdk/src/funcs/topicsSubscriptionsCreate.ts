@@ -26,7 +26,11 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create topic subscriptions, if the topic does not exist, it will be created.
+ * Create topic subscriptions
+ *
+ * @remarks
+ * This api will create subscription for subscriberIds for a topic.
+ *       Its like subscribing to a common interest group. if topic does not exist, it will be created.
  */
 export function topicsSubscriptionsCreate(
   client: NovuCore,
@@ -130,6 +134,7 @@ async function $do(
   const requestSecurity = resolveGlobalSecurity(securityInput);
 
   const context = {
+    options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
     operationID: "TopicsController_createTopicSubscriptions",
     oAuth2Scopes: [],
@@ -160,6 +165,7 @@ async function $do(
     path: path,
     headers: headers,
     body: body,
+    userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
   }, options);
   if (!requestRes.ok) {

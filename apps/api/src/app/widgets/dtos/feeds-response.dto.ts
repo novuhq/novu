@@ -45,7 +45,7 @@ export class NotificationFeedItemDto implements INotificationDto {
   })
   _environmentId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Identifier for the message template used.',
     example: 'message_template_54321',
     type: String,

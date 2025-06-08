@@ -22,6 +22,7 @@ import { CheckCircleIcon } from 'lucide-react';
 import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
 import { toast } from 'sonner';
 import { showErrorToast, showSavingToast, showSuccessToast } from './toasts';
+import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
 export type UpdateWorkflowFn = (
   data: UpdateWorkflowDto,
@@ -214,7 +215,9 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
         isUpdatePatchPending={isUpdatePatchPending}
         onCancel={handleCancelNavigation}
       />
-      <WorkflowContext.Provider value={value}>{children}</WorkflowContext.Provider>
+      <WorkflowContext.Provider value={value}>
+        <WorkflowSchemaProvider>{children}</WorkflowSchemaProvider>
+      </WorkflowContext.Provider>
     </>
   );
 };

@@ -83,6 +83,8 @@ export class NotificationTemplateEntity {
 
   payloadSchema?: any;
 
+  validatePayload?: boolean;
+
   issues: Record<string, RuntimeIssue[]>;
 
   status?: WorkflowStatusEnum;

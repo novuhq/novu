@@ -29,7 +29,10 @@ export type SubscribersNotificationsFeedQueryData =
   operations.SubscribersV1ControllerGetNotificationsFeedResponse;
 
 /**
- * Get in-app notification feed for a particular subscriber
+ * Retrieve subscriber notifications
+ *
+ * @remarks
+ * Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.
  */
 export function useSubscribersNotificationsFeed(
   request: operations.SubscribersV1ControllerGetNotificationsFeedRequest,
@@ -47,7 +50,10 @@ export function useSubscribersNotificationsFeed(
 }
 
 /**
- * Get in-app notification feed for a particular subscriber
+ * Retrieve subscriber notifications
+ *
+ * @remarks
+ * Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.
  */
 export function useSubscribersNotificationsFeedSuspense(
   request: operations.SubscribersV1ControllerGetNotificationsFeedRequest,

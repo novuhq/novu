@@ -1,4 +1,4 @@
-import { GeneratePreviewResponseDto } from '@novu/shared';
+import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-preview';
@@ -11,6 +11,7 @@ type ChatEditorPreviewProps = {
   previewStep: () => void;
   previewData?: GeneratePreviewResponseDto;
   isPreviewPending: boolean;
+  workflow?: WorkflowResponseDto;
 };
 
 export const ChatEditorPreview = ({
@@ -19,6 +20,7 @@ export const ChatEditorPreview = ({
   previewStep,
   previewData,
   isPreviewPending = false,
+  workflow,
 }: ChatEditorPreviewProps) => {
   return (
     <TabsSection>
@@ -31,7 +33,13 @@ export const ChatEditorPreview = ({
             className="w-full px-3"
           />
         </div>
-        <ConfigurePreviewAccordion editorValue={editorValue} setEditorValue={setEditorValue} onUpdate={previewStep} />
+        <ConfigurePreviewAccordion
+          schema={(previewData as any)?.schema}
+          editorValue={editorValue}
+          setEditorValue={setEditorValue}
+          onUpdate={previewStep}
+          workflow={workflow}
+        />
       </div>
     </TabsSection>
   );

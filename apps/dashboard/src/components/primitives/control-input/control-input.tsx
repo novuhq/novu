@@ -1,12 +1,12 @@
 import { cn } from '@/utils/ui';
-import { autocompletion, Completion } from '@codemirror/autocomplete';
+import { autocompletion } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 
 import { Editor } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { createAutocompleteSource } from '@/utils/liquid-autocomplete';
+import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './hooks/use-variables';
 import { createVariableExtension } from './variable-plugin';
@@ -16,6 +16,11 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
+import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
+import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { useCreateVariable } from '../../variable/hooks/use-create-variable';
+import { DEFAULT_SIDE_OFFSET } from '../popover';
+import { DEFAULT_VARIABLE_PILL_HEIGHT } from './variable-plugin/variable-pill-widget';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -64,6 +69,7 @@ export function ControlInput({
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
@@ -75,11 +81,53 @@ export function ControlInput({
       }
     : undefined;
 
-  const { digestStepBeforeCurrent } = useWorkflow();
+  const { digestStepBeforeCurrent, workflow } = useWorkflow();
   const track = useTelemetry();
 
+  const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
+
+  const {
+    handleCreateNewVariable,
+    isPayloadSchemaDrawerOpen,
+    highlightedVariableKey,
+    openSchemaDrawer,
+    closeSchemaDrawer,
+  } = useCreateVariable();
+
+  const [triggerPosition, setTriggerPosition] = useState<{ top: number; left: number } | null>(null);
+
+  // Create a stable key based on schema properties to force editor re-render
+  const schemaKey = useMemo(() => {
+    if (!currentSchema?.properties) return 'no-schema';
+
+    return `schema-${Object.keys(currentSchema.properties).sort().join('-')}`;
+  }, [currentSchema]);
+
+  // Create an enhanced isAllowedVariable that also checks the current schema
+  const enhancedIsAllowedVariable = useCallback(
+    (variable: LiquidVariable): boolean => {
+      // First check with the original isAllowedVariable
+      if (isAllowedVariable(variable)) {
+        return true;
+      }
+
+      // If not allowed by original function, check if it exists in the current schema
+      if (variable.name.startsWith('payload.') && currentSchema) {
+        const propertyKey = variable.name.replace('payload.', '');
+        return !!getSchemaPropertyByKey(propertyKey);
+      }
+
+      return false;
+    },
+    [isAllowedVariable, currentSchema, getSchemaPropertyByKey]
+  );
+
   const onVariableSelect = useCallback(
-    (completion: Completion) => {
+    (completion: CompletionOption) => {
+      if (completion.isNewVariable && completion.label.startsWith('payload.')) {
+        handleCreateNewVariable(completion.label.replace('payload.', ''));
+      }
+
       if (completion.type === 'digest') {
         const parts = completion.displayLabel?.split('.');
         const lastElement = parts?.[parts.length - 1];
@@ -91,21 +139,21 @@ export function ControlInput({
         }
       }
     },
-    [track]
+    [track, handleCreateNewVariable]
   );
 
-  const completionSource = useMemo(
-    () => createAutocompleteSource(variables, onVariableSelect),
-    [variables, onVariableSelect]
-  );
+  const completionSource = useMemo(() => {
+    return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled);
+  }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
 
   const autocompletionExtension = useMemo(
     () =>
       autocompletion({
-        override: [completionSource],
+        override: completionSource ? [completionSource] : ([] as any[]),
         closeOnBlur: true,
         defaultKeymap: true,
         activateOnTyping: true,
+        optionClass: (completion) => (completion.type === 'new-variable' ? 'cm-new-variable-option' : ''),
       }),
     [completionSource]
   );
@@ -130,10 +178,10 @@ export function ControlInput({
       viewRef,
       lastCompletionRef,
       onSelect: handleVariableSelect,
-      isAllowedVariable,
+      isAllowedVariable: enhancedIsAllowedVariable,
       isDigestEventsVariable,
     });
-  }, [handleVariableSelect, isAllowedVariable, isDigestEventsVariable]);
+  }, [handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
 
   const extensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
@@ -150,9 +198,52 @@ export function ControlInput({
     [setSelectedVariable]
   );
 
+  /**
+   * This is a workaround to focus the editor when clicking on the container.
+   * It's a known issue with Codemirror in case of the container is bigger in size than a single focusable row.
+   */
+  const handleContainerClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Don't focus if a variable popover is open or if clicking on interactive elements
+      if (isVariablePopoverOpen) return;
+
+      const target = event.target as HTMLElement;
+
+      // Don't focus if clicking on variable pills or other interactive elements
+      if (target.closest('.cm-variable-pill') || target.closest('[role="button"]') || target.closest('button')) {
+        return;
+      }
+
+      if (viewRef.current) {
+        viewRef.current.focus();
+      }
+    },
+    [isVariablePopoverOpen]
+  );
+
+  useEffect(() => {
+    // calculate popover trigger position when variable is selected
+    if (selectedVariable && viewRef.current && containerRef.current) {
+      const coords = viewRef.current.coordsAtPos(selectedVariable.from);
+      const containerRect = containerRef.current.getBoundingClientRect();
+
+      const topOffset = DEFAULT_VARIABLE_PILL_HEIGHT - DEFAULT_SIDE_OFFSET + 2;
+
+      if (coords) {
+        setTriggerPosition({
+          top: coords.top - containerRect.top + topOffset,
+          left: coords.left - containerRect.left,
+        });
+      }
+    } else {
+      setTriggerPosition(null);
+    }
+  }, [selectedVariable]);
+
   return (
-    <div className={cn(variants({ size }), className)}>
+    <div ref={containerRef} className={cn(variants({ size }), className)} onClick={handleContainerClick}>
       <Editor
+        key={schemaKey}
         fontFamily="inherit"
         multiline={multiline}
         indentWithTab={indentWithTab}
@@ -167,11 +258,12 @@ export function ControlInput({
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover
+          isPayloadSchemaEnabled={isPayloadSchemaEnabled}
           variables={variables}
           open={isVariablePopoverOpen}
           onOpenChange={handleOpenChange}
           variable={variable}
-          isAllowedVariable={isAllowedVariable}
+          isAllowedVariable={enhancedIsAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
             // Focus back to the editor after updating the variable
@@ -183,10 +275,39 @@ export function ControlInput({
             // Focus back to the editor after updating the variable
             setTimeout(() => viewRef.current?.focus(), 0);
           }}
+          getSchemaPropertyByKey={getSchemaPropertyByKey}
+          onManageSchemaClick={(variableName) => {
+            openSchemaDrawer(variableName);
+          }}
+          onAddToSchemaClick={(variableName) => {
+            handleCreateNewVariable(variableName);
+          }}
         >
-          <div />
+          <div
+            className="pointer-events-none absolute z-10"
+            style={
+              triggerPosition
+                ? {
+                    top: triggerPosition.top,
+                    left: triggerPosition.left,
+                    width: '1px',
+                    height: '1px',
+                  }
+                : undefined
+            }
+          />
         </EditVariablePopover>
       )}
+      <PayloadSchemaDrawer
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            closeSchemaDrawer();
+          }
+        }}
+        workflow={workflow}
+        highlightedPropertyKey={highlightedVariableKey}
+      />
     </div>
   );
 }

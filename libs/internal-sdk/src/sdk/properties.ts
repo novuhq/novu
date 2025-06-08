@@ -13,7 +13,7 @@ export class Properties extends ClientSDK {
    * Update subscriber online status
    *
    * @remarks
-   * Used to update the subscriber isOnline flag.
+   * Update the subscriber online status by its unique key identifier **subscriberId**
    */
   async updateOnlineFlag(
     updateSubscriberOnlineFlagRequestDto:
