@@ -5,6 +5,7 @@
 import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
+import { NovuError } from "./novuerror.js";
 import { SDKValidationError } from "./sdkvalidationerror.js";
 
 export type Five = string | number | boolean | { [k: string]: any };
@@ -58,11 +59,7 @@ export type ErrorDtoData = {
   errorId?: string | undefined;
 };
 
-export class ErrorDto extends Error {
-  /**
-   * HTTP status code of the error response.
-   */
-  statusCode: number;
+export class ErrorDto extends NovuError {
   /**
    * Timestamp of when the error occurred.
    */
@@ -86,14 +83,15 @@ export class ErrorDto extends Error {
   /** The original data that was passed to this error instance. */
   data$: ErrorDtoData;
 
-  constructor(err: ErrorDtoData) {
+  constructor(
+    err: ErrorDtoData,
+    httpMeta: { response: Response; request: Request; body: string },
+  ) {
     const message = "message" in err && typeof err.message === "string"
       ? err.message
       : `API error occurred: ${JSON.stringify(err)}`;
-    super(message);
+    super(message, httpMeta);
     this.data$ = err;
-
-    this.statusCode = err.statusCode;
     this.timestamp = err.timestamp;
     this.path = err.path;
     if (err.ctx != null) this.ctx = err.ctx;
@@ -269,9 +267,16 @@ export const ErrorDto$inboundSchema: z.ZodType<
   ).optional(),
   ctx: z.record(z.any()).optional(),
   errorId: z.string().optional(),
+  request$: z.instanceof(Request),
+  response$: z.instanceof(Response),
+  body$: z.string(),
 })
   .transform((v) => {
-    return new ErrorDto(v);
+    return new ErrorDto(v, {
+      request: v.request$,
+      response: v.response$,
+      body: v.body$,
+    });
   });
 
 /** @internal */

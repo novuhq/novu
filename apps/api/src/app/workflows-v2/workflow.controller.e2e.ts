@@ -598,7 +598,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
     it('should return 404 if workflow does not exist', async () => {
       const notExistingId = '123';
-      const novuRestResult = await expectSdkExceptionGeneric(() => apiClient.workflows.retrieve(notExistingId));
+      const novuRestResult = await expectSdkExceptionGeneric(() => apiClient.workflows.get(notExistingId));
       expect(novuRestResult.error).to.be.ok;
       expect(novuRestResult.error!.statusCode).to.equal(404);
       expect(novuRestResult.error!.message).to.contain('Workflow');
@@ -1016,7 +1016,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   });
 
   async function getWorkflow(id: string): Promise<WorkflowResponseDto> {
-    const res = await apiClient.workflows.retrieve(id);
+    const res = await apiClient.workflows.get(id);
 
     return res.result;
   }
@@ -1115,7 +1115,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   async function listWorkflows(query: string, offset: number, limit: number): Promise<ListWorkflowResponse> {
-    return (await apiClient.workflows.search({ query, offset, limit })).result;
+    return (await apiClient.workflows.list({ query, offset, limit })).result;
   }
 
   async function getAllAndValidate({

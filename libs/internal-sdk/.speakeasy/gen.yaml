@@ -24,6 +24,7 @@ typescript:
     peerDependencies: {}
   additionalPackageJSON: {}
   author: Novu
+  baseErrorName: NovuError
   clientServerStatusCodesAsErrors: true
   defaultErrorName: SDKError
   enableCustomCodeRegions: false

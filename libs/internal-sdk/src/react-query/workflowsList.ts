@@ -13,7 +13,7 @@ import {
   UseSuspenseQueryResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { workflowsSearch } from "../funcs/workflowsSearch.js";
+import { workflowsList } from "../funcs/workflowsList.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -26,22 +26,22 @@ import {
   TupleToPrefixes,
 } from "./_types.js";
 
-export type WorkflowsSearchQueryData =
+export type WorkflowsListQueryData =
   operations.WorkflowControllerSearchWorkflowsResponse;
 
 /**
- * Search workflows
+ * List all workflows
  *
  * @remarks
  * Retrieves a list of workflows with optional filtering and pagination
  */
-export function useWorkflowsSearch(
+export function useWorkflowsList(
   request: operations.WorkflowControllerSearchWorkflowsRequest,
-  options?: QueryHookOptions<WorkflowsSearchQueryData>,
-): UseQueryResult<WorkflowsSearchQueryData, Error> {
+  options?: QueryHookOptions<WorkflowsListQueryData>,
+): UseQueryResult<WorkflowsListQueryData, Error> {
   const client = useNovuContext();
   return useQuery({
-    ...buildWorkflowsSearchQuery(
+    ...buildWorkflowsListQuery(
       client,
       request,
       options,
@@ -51,18 +51,18 @@ export function useWorkflowsSearch(
 }
 
 /**
- * Search workflows
+ * List all workflows
  *
  * @remarks
  * Retrieves a list of workflows with optional filtering and pagination
  */
-export function useWorkflowsSearchSuspense(
+export function useWorkflowsListSuspense(
   request: operations.WorkflowControllerSearchWorkflowsRequest,
-  options?: SuspenseQueryHookOptions<WorkflowsSearchQueryData>,
-): UseSuspenseQueryResult<WorkflowsSearchQueryData, Error> {
+  options?: SuspenseQueryHookOptions<WorkflowsListQueryData>,
+): UseSuspenseQueryResult<WorkflowsListQueryData, Error> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildWorkflowsSearchQuery(
+    ...buildWorkflowsListQuery(
       client,
       request,
       options,
@@ -71,20 +71,20 @@ export function useWorkflowsSearchSuspense(
   });
 }
 
-export function prefetchWorkflowsSearch(
+export function prefetchWorkflowsList(
   queryClient: QueryClient,
   client$: NovuCore,
   request: operations.WorkflowControllerSearchWorkflowsRequest,
 ): Promise<void> {
   return queryClient.prefetchQuery({
-    ...buildWorkflowsSearchQuery(
+    ...buildWorkflowsListQuery(
       client$,
       request,
     ),
   });
 }
 
-export function setWorkflowsSearchData(
+export function setWorkflowsListData(
   client: QueryClient,
   queryKeyBase: [
     parameters: {
@@ -98,14 +98,14 @@ export function setWorkflowsSearchData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: WorkflowsSearchQueryData,
-): WorkflowsSearchQueryData | undefined {
-  const key = queryKeyWorkflowsSearch(...queryKeyBase);
+  data: WorkflowsListQueryData,
+): WorkflowsListQueryData | undefined {
+  const key = queryKeyWorkflowsList(...queryKeyBase);
 
-  return client.setQueryData<WorkflowsSearchQueryData>(key, data);
+  return client.setQueryData<WorkflowsListQueryData>(key, data);
 }
 
-export function invalidateWorkflowsSearch(
+export function invalidateWorkflowsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
     [parameters: {
@@ -123,30 +123,30 @@ export function invalidateWorkflowsSearch(
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Workflows", "search", ...queryKeyBase],
+    queryKey: ["@novu/api", "Workflows", "list", ...queryKeyBase],
   });
 }
 
-export function invalidateAllWorkflowsSearch(
+export function invalidateAllWorkflowsList(
   client: QueryClient,
   filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ["@novu/api", "Workflows", "search"],
+    queryKey: ["@novu/api", "Workflows", "list"],
   });
 }
 
-export function buildWorkflowsSearchQuery(
+export function buildWorkflowsListQuery(
   client$: NovuCore,
   request: operations.WorkflowControllerSearchWorkflowsRequest,
   options?: RequestOptions,
 ): {
   queryKey: QueryKey;
-  queryFn: (context: QueryFunctionContext) => Promise<WorkflowsSearchQueryData>;
+  queryFn: (context: QueryFunctionContext) => Promise<WorkflowsListQueryData>;
 } {
   return {
-    queryKey: queryKeyWorkflowsSearch({
+    queryKey: queryKeyWorkflowsList({
       limit: request.limit,
       offset: request.offset,
       orderDirection: request.orderDirection,
@@ -156,16 +156,16 @@ export function buildWorkflowsSearchQuery(
       status: request.status,
       idempotencyKey: request.idempotencyKey,
     }),
-    queryFn: async function workflowsSearchQueryFn(
+    queryFn: async function workflowsListQueryFn(
       ctx,
-    ): Promise<WorkflowsSearchQueryData> {
+    ): Promise<WorkflowsListQueryData> {
       const sig = combineSignals(ctx.signal, options?.fetchOptions?.signal);
       const mergedOptions = {
         ...options,
         fetchOptions: { ...options?.fetchOptions, signal: sig },
       };
 
-      return unwrapAsync(workflowsSearch(
+      return unwrapAsync(workflowsList(
         client$,
         request,
         mergedOptions,
@@ -174,7 +174,7 @@ export function buildWorkflowsSearchQuery(
   };
 }
 
-export function queryKeyWorkflowsSearch(
+export function queryKeyWorkflowsList(
   parameters: {
     limit?: number | undefined;
     offset?: number | undefined;
@@ -186,5 +186,5 @@ export function queryKeyWorkflowsSearch(
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {
-  return ["@novu/api", "Workflows", "search", parameters];
+  return ["@novu/api", "Workflows", "list", parameters];
 }

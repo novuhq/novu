@@ -11,7 +11,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common/decorators';
-import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   DeleteWorkflowCommand,
   DeleteWorkflowUseCase,
@@ -185,7 +185,7 @@ export class WorkflowController {
     type: String,
     required: false,
   })
-  @SdkMethodName('retrieve')
+  @SdkMethodName('get')
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async getWorkflow(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -229,11 +229,11 @@ export class WorkflowController {
   @Get('')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Search workflows',
+    summary: 'List all workflows',
     description: 'Retrieves a list of workflows with optional filtering and pagination',
   })
   @ApiResponse(ListWorkflowResponse)
-  @SdkMethodName('search')
+  @SdkMethodName('list')
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async searchWorkflows(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -347,6 +347,7 @@ export class WorkflowController {
   @ApiResponse(WorkflowTestDataResponseDto)
   @SdkMethodName('getTestData')
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @ApiExcludeEndpoint()
   async getWorkflowTestData(
     @UserSession() user: UserSessionData,
     @Param('workflowId', ParseSlugIdPipe) workflowIdOrInternalId: string

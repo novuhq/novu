@@ -18,72 +18,83 @@ import {
   UnexpectedClientError,
 } from "../models/errors/httpclienterrors.js";
 import * as errors from "../models/errors/index.js";
-import { SDKError } from "../models/errors/sdkerror.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
 import * as operations from "../models/operations/index.js";
 import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Search workflows
+ * Retrieve a workflow
  *
  * @remarks
- * Retrieves a list of workflows with optional filtering and pagination
+ * Fetches details of a specific workflow
  */
-export function workflowsSearch(
+export function workflowsGet(
   client: NovuCore,
-  request: operations.WorkflowControllerSearchWorkflowsRequest,
+  workflowId: string,
+  environmentId?: string | undefined,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.WorkflowControllerSearchWorkflowsResponse,
-    | errors.ErrorDto
+    operations.WorkflowControllerGetWorkflowResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
-    | SDKError
-    | SDKValidationError
-    | UnexpectedClientError
-    | InvalidRequestError
+    | NovuError
+    | ResponseValidationError
+    | ConnectionError
     | RequestAbortedError
     | RequestTimeoutError
-    | ConnectionError
+    | InvalidRequestError
+    | UnexpectedClientError
+    | SDKValidationError
   >
 > {
   return new APIPromise($do(
     client,
-    request,
+    workflowId,
+    environmentId,
+    idempotencyKey,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  request: operations.WorkflowControllerSearchWorkflowsRequest,
+  workflowId: string,
+  environmentId?: string | undefined,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.WorkflowControllerSearchWorkflowsResponse,
-      | errors.ErrorDto
+      operations.WorkflowControllerGetWorkflowResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
-      | errors.ErrorDto
-      | SDKError
-      | SDKValidationError
-      | UnexpectedClientError
-      | InvalidRequestError
+      | NovuError
+      | ResponseValidationError
+      | ConnectionError
       | RequestAbortedError
       | RequestTimeoutError
-      | ConnectionError
+      | InvalidRequestError
+      | UnexpectedClientError
+      | SDKValidationError
     >,
     APICall,
   ]
 > {
+  const input: operations.WorkflowControllerGetWorkflowRequest = {
+    workflowId: workflowId,
+    environmentId: environmentId,
+    idempotencyKey: idempotencyKey,
+  };
+
   const parsed = safeParse(
-    request,
+    input,
     (value) =>
-      operations.WorkflowControllerSearchWorkflowsRequest$outboundSchema.parse(
+      operations.WorkflowControllerGetWorkflowRequest$outboundSchema.parse(
         value,
       ),
     "Input validation failed",
@@ -94,16 +105,17 @@ async function $do(
   const payload = parsed.value;
   const body = null;
 
-  const path = pathToFunc("/v2/workflows")();
+  const pathParams = {
+    workflowId: encodeSimple("workflowId", payload.workflowId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v2/workflows/{workflowId}")(pathParams);
 
   const query = encodeFormQuery({
-    "limit": payload.limit,
-    "offset": payload.offset,
-    "orderBy": payload.orderBy,
-    "orderDirection": payload.orderDirection,
-    "query": payload.query,
-    "status": payload.status,
-    "tags": payload.tags,
+    "environmentId": payload.environmentId,
   });
 
   const headers = new Headers(compactMap({
@@ -121,7 +133,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "WorkflowController_searchWorkflows",
+    operationID: "WorkflowController_getWorkflow",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -191,22 +203,21 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.WorkflowControllerSearchWorkflowsResponse,
-    | errors.ErrorDto
+    operations.WorkflowControllerGetWorkflowResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
-    | errors.ErrorDto
-    | SDKError
-    | SDKValidationError
-    | UnexpectedClientError
-    | InvalidRequestError
+    | NovuError
+    | ResponseValidationError
+    | ConnectionError
     | RequestAbortedError
     | RequestTimeoutError
-    | ConnectionError
+    | InvalidRequestError
+    | UnexpectedClientError
+    | SDKValidationError
   >(
     M.json(
       200,
-      operations.WorkflowControllerSearchWorkflowsResponse$inboundSchema,
+      operations.WorkflowControllerGetWorkflowResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
@@ -221,7 +232,7 @@ async function $do(
     M.fail(503),
     M.fail("4XX"),
     M.fail("5XX"),
-  )(response, { extraFields: responseFields });
+  )(response, req, { extraFields: responseFields });
   if (!result.ok) {
     return [result, { status: "complete", request: req, response }];
   }
