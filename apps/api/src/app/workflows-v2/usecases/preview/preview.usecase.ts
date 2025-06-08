@@ -36,54 +36,53 @@ export class PreviewUsecase {
 
   @InstrumentUsecase()
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
-    return this.errorHandler.handleErrors(
-      async () => {
-        const context = await this.initializePreviewContext(command);
+    try {
+      const context = await this.initializePreviewContext(command);
 
-        const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
-          context.controlValues,
-          context.stepData,
-          context.workflow.origin || WorkflowOriginEnum.NOVU_CLOUD
-        );
+      const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
+        context.controlValues,
+        context.stepData,
+        context.workflow.origin || WorkflowOriginEnum.NOVU_CLOUD
+      );
 
-        const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
-          sanitizedControls,
-          context.variableSchema,
-          context.variablesObject
-        );
+      const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
+        sanitizedControls,
+        context.variableSchema,
+        context.variablesObject
+      );
 
-        let payloadExample = await this.payloadMerger.mergePayloadExample(
-          context.workflow,
-          previewTemplateData.payloadExample,
-          command.generatePreviewRequestDto.previewPayload,
-          command
-        );
+      let payloadExample = await this.payloadMerger.mergePayloadExample(
+        context.workflow,
+        previewTemplateData.payloadExample,
+        command.generatePreviewRequestDto.previewPayload,
+        command
+      );
 
-        payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
+      payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
-        const executeOutput = await this.executePreviewUsecase(
-          command,
-          context.stepData,
+      const executeOutput = await this.executePreviewUsecase(
+        command,
+        context.stepData,
+        payloadExample,
+        previewTemplateData.controlValues
+      );
+
+      return {
+        result: {
+          preview: executeOutput.outputs as any,
+          type: context.stepData.type as unknown as ChannelTypeEnum,
+        },
+        previewPayloadExample: this.payloadProcessor.cleanPreviewExamplePayload(payloadExample),
+        schema: await this.schemaBuilder.buildPreviewPayloadSchema(
           payloadExample,
-          previewTemplateData.controlValues
-        );
-
-        return {
-          result: {
-            preview: executeOutput.outputs as any,
-            type: context.stepData.type as unknown as ChannelTypeEnum,
-          },
-          previewPayloadExample: this.payloadProcessor.cleanPreviewExamplePayload(payloadExample),
-          schema: await this.schemaBuilder.buildPreviewPayloadSchema(
-            payloadExample,
-            context.workflow.payloadSchema,
-            context.workflow
-          ),
-        };
-      },
-      command.workflowIdOrInternalId,
-      command.stepIdOrInternalId
-    );
+          context.workflow.payloadSchema,
+          context.workflow
+        ),
+      };
+    } catch (error) {
+      // Return default response for non-existent workflows/steps or other errors
+      return this.errorHandler.createErrorResponse();
+    }
   }
 
   private async initializePreviewContext(command: PreviewCommand) {
