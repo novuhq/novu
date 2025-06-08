@@ -5,7 +5,7 @@ import { SkipControlDto } from './skip.dto';
 export class EmailControlDto extends SkipControlDto {
   @ApiProperty({ description: 'Subject of the email.', minLength: 1 })
   @IsString()
-  @MinLength(1)
+  @IsOptional()
   subject: string;
 
   @ApiProperty({ description: 'Body content of the email.', default: '' })

@@ -3,11 +3,13 @@ import { IsString, IsOptional, MinLength } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class PushControlDto extends SkipControlDto {
-  @ApiProperty({ description: 'Subject/title of the push notification.' })
+  @ApiPropertyOptional({ description: 'Subject/title of the push notification.' })
   @IsString()
+  @IsOptional()
   subject: string;
 
-  @ApiProperty({ description: 'Body content of the push notification.' })
+  @ApiPropertyOptional({ description: 'Body content of the push notification.' })
   @IsString()
+  @IsOptional()
   body: string;
 }

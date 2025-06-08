@@ -49,7 +49,7 @@ export type SmsStepResponseDtoControlValues = {
   /**
    * Content of the SMS message.
    */
-  body: string;
+  body?: string | undefined;
   additionalProperties?: { [k: string]: any };
 };
 
@@ -160,7 +160,7 @@ export const SmsStepResponseDtoControlValues$inboundSchema: z.ZodType<
 > = collectExtraKeys$(
   z.object({
     skip: z.lazy(() => SmsStepResponseDtoSkip$inboundSchema).optional(),
-    body: z.string(),
+    body: z.string().optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -169,7 +169,7 @@ export const SmsStepResponseDtoControlValues$inboundSchema: z.ZodType<
 /** @internal */
 export type SmsStepResponseDtoControlValues$Outbound = {
   skip?: SmsStepResponseDtoSkip$Outbound | undefined;
-  body: string;
+  body?: string | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -180,7 +180,7 @@ export const SmsStepResponseDtoControlValues$outboundSchema: z.ZodType<
   SmsStepResponseDtoControlValues
 > = z.object({
   skip: z.lazy(() => SmsStepResponseDtoSkip$outboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
   return {

@@ -20,7 +20,7 @@ export type SmsControlDto = {
   /**
    * Content of the SMS message.
    */
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -78,13 +78,13 @@ export const SmsControlDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => SmsControlDtoSkip$inboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /** @internal */
 export type SmsControlDto$Outbound = {
   skip?: SmsControlDtoSkip$Outbound | undefined;
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -94,7 +94,7 @@ export const SmsControlDto$outboundSchema: z.ZodType<
   SmsControlDto
 > = z.object({
   skip: z.lazy(() => SmsControlDtoSkip$outboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /**

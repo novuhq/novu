@@ -29,7 +29,7 @@ export type ChatStepUpsertDtoControlValues = {
   /**
    * Content of the chat message.
    */
-  body: string;
+  body?: string | undefined;
 };
 
 export type ChatStepUpsertDto = {
@@ -106,13 +106,13 @@ export const ChatStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => ChatStepUpsertDtoSkip$inboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /** @internal */
 export type ChatStepUpsertDtoControlValues$Outbound = {
   skip?: ChatStepUpsertDtoSkip$Outbound | undefined;
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -122,7 +122,7 @@ export const ChatStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   ChatStepUpsertDtoControlValues
 > = z.object({
   skip: z.lazy(() => ChatStepUpsertDtoSkip$outboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /**

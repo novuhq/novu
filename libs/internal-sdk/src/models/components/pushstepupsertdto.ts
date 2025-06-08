@@ -29,11 +29,11 @@ export type PushStepUpsertDtoControlValues = {
   /**
    * Subject/title of the push notification.
    */
-  subject: string;
+  subject?: string | undefined;
   /**
    * Body content of the push notification.
    */
-  body: string;
+  body?: string | undefined;
 };
 
 export type PushStepUpsertDto = {
@@ -110,15 +110,15 @@ export const PushStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => PushStepUpsertDtoSkip$inboundSchema).optional(),
-  subject: z.string(),
-  body: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
 });
 
 /** @internal */
 export type PushStepUpsertDtoControlValues$Outbound = {
   skip?: PushStepUpsertDtoSkip$Outbound | undefined;
-  subject: string;
-  body: string;
+  subject?: string | undefined;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -128,8 +128,8 @@ export const PushStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   PushStepUpsertDtoControlValues
 > = z.object({
   skip: z.lazy(() => PushStepUpsertDtoSkip$outboundSchema).optional(),
-  subject: z.string(),
-  body: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
 });
 
 /**

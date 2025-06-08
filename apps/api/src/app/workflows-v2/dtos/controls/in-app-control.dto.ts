@@ -19,7 +19,6 @@ class RedirectDto {
    * Basic IsUrl or IsString might be sufficient for DTO, relying on backend Zod validation.
    */
   @IsString() // Using IsString as IsUrl might be too strict for template variables
-  @MinLength(1) // Assuming url cannot be empty if present
   @IsOptional()
   url?: string;
 
@@ -36,7 +35,6 @@ class RedirectDto {
 class ActionDto {
   @ApiPropertyOptional({ description: 'Label for the action button.' })
   @IsString()
-  @MinLength(1) // Schema implies label is required if action object is present
   @IsOptional()
   label?: string;
 

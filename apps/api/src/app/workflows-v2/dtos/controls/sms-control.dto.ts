@@ -3,7 +3,8 @@ import { IsString, IsOptional } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class SmsControlDto extends SkipControlDto {
-  @ApiProperty({ description: 'Content of the SMS message.' })
+  @ApiPropertyOptional({ description: 'Content of the SMS message.' })
   @IsString()
+  @IsOptional()
   body: string;
 }

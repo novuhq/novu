@@ -20,11 +20,11 @@ export type PushControlDto = {
   /**
    * Subject/title of the push notification.
    */
-  subject: string;
+  subject?: string | undefined;
   /**
    * Body content of the push notification.
    */
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -82,15 +82,15 @@ export const PushControlDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => PushControlDtoSkip$inboundSchema).optional(),
-  subject: z.string(),
-  body: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
 });
 
 /** @internal */
 export type PushControlDto$Outbound = {
   skip?: PushControlDtoSkip$Outbound | undefined;
-  subject: string;
-  body: string;
+  subject?: string | undefined;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -100,8 +100,8 @@ export const PushControlDto$outboundSchema: z.ZodType<
   PushControlDto
 > = z.object({
   skip: z.lazy(() => PushControlDtoSkip$outboundSchema).optional(),
-  subject: z.string(),
-  body: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
 });
 
 /**

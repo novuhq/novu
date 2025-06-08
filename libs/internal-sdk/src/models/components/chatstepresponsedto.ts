@@ -49,7 +49,7 @@ export type ChatStepResponseDtoControlValues = {
   /**
    * Content of the chat message.
    */
-  body: string;
+  body?: string | undefined;
   additionalProperties?: { [k: string]: any };
 };
 
@@ -160,7 +160,7 @@ export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
 > = collectExtraKeys$(
   z.object({
     skip: z.lazy(() => ChatStepResponseDtoSkip$inboundSchema).optional(),
-    body: z.string(),
+    body: z.string().optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -169,7 +169,7 @@ export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
 /** @internal */
 export type ChatStepResponseDtoControlValues$Outbound = {
   skip?: ChatStepResponseDtoSkip$Outbound | undefined;
-  body: string;
+  body?: string | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -180,7 +180,7 @@ export const ChatStepResponseDtoControlValues$outboundSchema: z.ZodType<
   ChatStepResponseDtoControlValues
 > = z.object({
   skip: z.lazy(() => ChatStepResponseDtoSkip$outboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
   return {

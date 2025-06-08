@@ -29,7 +29,7 @@ export type SmsStepUpsertDtoControlValues = {
   /**
    * Content of the SMS message.
    */
-  body: string;
+  body?: string | undefined;
 };
 
 export type SmsStepUpsertDto = {
@@ -106,13 +106,13 @@ export const SmsStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => SmsStepUpsertDtoSkip$inboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /** @internal */
 export type SmsStepUpsertDtoControlValues$Outbound = {
   skip?: SmsStepUpsertDtoSkip$Outbound | undefined;
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -122,7 +122,7 @@ export const SmsStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   SmsStepUpsertDtoControlValues
 > = z.object({
   skip: z.lazy(() => SmsStepUpsertDtoSkip$outboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /**

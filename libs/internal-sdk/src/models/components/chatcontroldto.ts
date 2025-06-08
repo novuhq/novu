@@ -20,7 +20,7 @@ export type ChatControlDto = {
   /**
    * Content of the chat message.
    */
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -78,13 +78,13 @@ export const ChatControlDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   skip: z.lazy(() => ChatControlDtoSkip$inboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /** @internal */
 export type ChatControlDto$Outbound = {
   skip?: ChatControlDtoSkip$Outbound | undefined;
-  body: string;
+  body?: string | undefined;
 };
 
 /** @internal */
@@ -94,7 +94,7 @@ export const ChatControlDto$outboundSchema: z.ZodType<
   ChatControlDto
 > = z.object({
   skip: z.lazy(() => ChatControlDtoSkip$outboundSchema).optional(),
-  body: z.string(),
+  body: z.string().optional(),
 });
 
 /**

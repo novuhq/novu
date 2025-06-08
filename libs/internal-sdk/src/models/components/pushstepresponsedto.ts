@@ -49,11 +49,11 @@ export type PushStepResponseDtoControlValues = {
   /**
    * Subject/title of the push notification.
    */
-  subject: string;
+  subject?: string | undefined;
   /**
    * Body content of the push notification.
    */
-  body: string;
+  body?: string | undefined;
   additionalProperties?: { [k: string]: any };
 };
 
@@ -164,8 +164,8 @@ export const PushStepResponseDtoControlValues$inboundSchema: z.ZodType<
 > = collectExtraKeys$(
   z.object({
     skip: z.lazy(() => PushStepResponseDtoSkip$inboundSchema).optional(),
-    subject: z.string(),
-    body: z.string(),
+    subject: z.string().optional(),
+    body: z.string().optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -174,8 +174,8 @@ export const PushStepResponseDtoControlValues$inboundSchema: z.ZodType<
 /** @internal */
 export type PushStepResponseDtoControlValues$Outbound = {
   skip?: PushStepResponseDtoSkip$Outbound | undefined;
-  subject: string;
-  body: string;
+  subject?: string | undefined;
+  body?: string | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -186,8 +186,8 @@ export const PushStepResponseDtoControlValues$outboundSchema: z.ZodType<
   PushStepResponseDtoControlValues
 > = z.object({
   skip: z.lazy(() => PushStepResponseDtoSkip$outboundSchema).optional(),
-  subject: z.string(),
-  body: z.string(),
+  subject: z.string().optional(),
+  body: z.string().optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
   return {
