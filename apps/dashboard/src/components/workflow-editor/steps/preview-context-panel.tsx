@@ -73,7 +73,7 @@ export function PreviewContextPanel({
   const [subscriberError, setSubscriberError] = useState<string | null>(null);
   const [stepResultsJsonData, setStepResultsJsonData] = useState<any>({});
   const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
-  const [hasLoadedCurrentUser, setHasLoadedCurrentUser] = useState<boolean>(false);
+  const [hasLoadedCurrentUser, setHasLoadedCurrentUser] = useState<string>('');
 
   const [accordionValue, setAccordionValue] = useState<string[]>(['payload', 'subscriber', 'step-results']);
   const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
@@ -212,27 +212,18 @@ export function PreviewContextPanel({
     [handleSubscriberJsonChange]
   );
 
-  // Reset loading flag when user or environment changes
-  useEffect(() => {
-    setHasLoadedCurrentUser(false);
-  }, [currentUser?.email, currentEnvironment?._id]);
-
-  // Load current user's subscriber data by default
+  // Load current user's subscriber data by default (only once per user/environment)
   useEffect(() => {
     const loadCurrentUserSubscriber = async () => {
-      if (!currentUser?.email || !currentEnvironment || hasLoadedCurrentUser) {
+      if (!currentUser?.email || !currentEnvironment) {
         return;
       }
 
-      // Only load if there's no existing subscriber data or it's empty
-      const currentData = JSON.parse(value || '{}');
-      const existingSubscriberData = currentData.subscriber || {};
-      const hasExistingData =
-        Object.keys(existingSubscriberData).length > 0 &&
-        (existingSubscriberData.subscriberId || existingSubscriberData.email);
+      // Create a unique key for this user/environment combination
+      const userEnvKey = `${currentUser.email}-${currentEnvironment._id}`;
 
-      if (hasExistingData) {
-        setHasLoadedCurrentUser(true);
+      // Skip if we've already loaded for this combination
+      if (hasLoadedCurrentUser === userEnvKey) {
         return;
       }
 
@@ -260,15 +251,15 @@ export function PreviewContextPanel({
           handleSubscriberJsonChange(subscriberData);
         }
 
-        setHasLoadedCurrentUser(true);
+        setHasLoadedCurrentUser(userEnvKey);
       } catch (error) {
         // Silently handle error - user might not have a subscriber record
-        setHasLoadedCurrentUser(true);
+        setHasLoadedCurrentUser(userEnvKey);
       }
     };
 
     loadCurrentUserSubscriber();
-  }, [currentUser?.email, currentEnvironment, hasLoadedCurrentUser, handleSubscriberJsonChange, value]);
+  }, [currentUser?.email, currentEnvironment?._id, hasLoadedCurrentUser, handleSubscriberJsonChange]);
 
   const accordionItemClassName =
     'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';
