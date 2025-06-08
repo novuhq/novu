@@ -14,8 +14,8 @@ export function getEditorTitle(stepType: StepTypeEnum): string {
 
 export function isStepEditable(workflow: WorkflowResponseDto, step: StepResponseDto): boolean {
   const { dataSchema, uiSchema } = step.controls;
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
+  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
   const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
 
-  return isExternal || (isNovuCloud && !!uiSchema);
+  return isExternal || (isNovuCloud && Boolean(uiSchema));
 }

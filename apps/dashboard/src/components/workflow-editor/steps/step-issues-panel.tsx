@@ -1,5 +1,5 @@
 import { StepResponseDto } from '@novu/shared';
-import { RiErrorWarningLine, RiCloseLine, RiErrorWarningFill } from 'react-icons/ri';
+import { RiErrorWarningLine, RiErrorWarningFill } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'motion/react';
 import { countStepIssues, getFirstErrorMessage, getAllStepIssues } from '@/components/workflow-editor/step-utils';
 import { cn } from '@/utils/ui';

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
@@ -8,29 +9,46 @@ import { ChatPreview } from '@/components/workflow-editor/steps/chat/chat-previe
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 
-function NoPreviewAvailable({ stepType }: { stepType: StepTypeEnum }) {
+const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   return (
     <div className="flex h-full items-center justify-center text-sm text-neutral-500">
       Preview not implemented for {STEP_TYPE_LABELS[stepType]} steps
     </div>
   );
-}
+});
 
-export function StepPreviewFactory() {
+const UnavailablePreview = memo(() => {
+  return (
+    <div className="flex h-full items-center justify-center text-sm text-neutral-500">
+      Preview not available for this step configuration
+    </div>
+  );
+});
+
+// Memoize mobile preview wrappers to prevent unnecessary re-renders
+const MobilePreviewWrapper = memo(({ children, description }: { children: React.ReactNode; description: string }) => {
+  return (
+    <div className="flex flex-col items-center justify-center">
+      {children}
+      <InlineToast description={description} className="w-full px-3" />
+    </div>
+  );
+});
+
+function StepPreviewFactoryComponent() {
   const { step, previewData, isPreviewPending, isStepPreviewable } = useStepEditor();
 
   if (!isStepPreviewable) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-        Preview not available for this step configuration
-      </div>
-    );
+    return <UnavailablePreview />;
   }
 
   const commonProps = {
     previewData,
     isPreviewPending,
   };
+
+  const mobilePreviewDescription =
+    'This preview shows how your message will appear on mobile. Actual rendering may vary by device.';
 
   switch (step.type) {
     case StepTypeEnum.EMAIL:
@@ -41,24 +59,16 @@ export function StepPreviewFactory() {
 
     case StepTypeEnum.SMS:
       return (
-        <div className="flex flex-col items-center justify-center">
+        <MobilePreviewWrapper description={mobilePreviewDescription}>
           <SmsPreview {...commonProps} />
-          <InlineToast
-            description="This preview shows how your message will appear on mobile. Actual rendering may vary by device."
-            className="w-full px-3"
-          />
-        </div>
+        </MobilePreviewWrapper>
       );
 
     case StepTypeEnum.PUSH:
       return (
-        <div className="flex flex-col items-center justify-center">
+        <MobilePreviewWrapper description={mobilePreviewDescription}>
           <PushPreview {...commonProps} />
-          <InlineToast
-            description="This preview shows how your message will appear on mobile. Actual rendering may vary by device."
-            className="w-full px-3"
-          />
-        </div>
+        </MobilePreviewWrapper>
       );
 
     case StepTypeEnum.CHAT:
@@ -68,3 +78,6 @@ export function StepPreviewFactory() {
       return <NoPreviewAvailable stepType={step.type} />;
   }
 }
+
+// Memoize the factory component - it should only re-render when step type or preview data changes
+export const StepPreviewFactory = memo(StepPreviewFactoryComponent);

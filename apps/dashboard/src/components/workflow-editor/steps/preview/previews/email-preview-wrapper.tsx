@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, memo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -25,8 +25,45 @@ const fadeVariants = {
   visible: { opacity: 1 },
 };
 
-export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePreviewProps) {
+function EmailCorePreviewComponent({ previewData, isPreviewPending }: EmailCorePreviewProps) {
   const [activeTab, setActiveTab] = useState('desktop');
+
+  // Memoize the preview content extraction to avoid recalculating on every render
+  const emailPreviewContent = useMemo(() => {
+    if (!previewData?.result || previewData.result.type !== ChannelTypeEnum.EMAIL) {
+      return null;
+    }
+
+    return {
+      subject: previewData.result.preview?.subject || '',
+      body: previewData.result.preview?.body || '',
+    };
+  }, [previewData?.result]);
+
+  // Memoize the loading skeleton to avoid recreating it
+  const loadingSkeleton = useMemo(
+    () => (
+      <motion.div
+        key="loading"
+        initial="hidden"
+        animate="visible"
+        exit="hidden"
+        variants={fadeVariants}
+        transition={{ duration: 0.2 }}
+        className="w-full"
+      >
+        <div className="flex flex-col">
+          <div className={cn('border-b px-4 py-1.5')}>
+            <Skeleton className="h-8 w-full" />
+          </div>
+          <EmailTabsSection className="bg-neutral-50 py-4">
+            <Skeleton className="mx-auto h-96 max-w-[600px] rounded-lg" />
+          </EmailTabsSection>
+        </div>
+      </motion.div>
+    ),
+    []
+  );
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="bg-bg-weak h-full">
@@ -48,24 +85,7 @@ export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePre
           <div className="flex flex-col">
             <AnimatePresence mode="wait">
               {isPreviewPending ? (
-                <motion.div
-                  key="loading"
-                  initial="hidden"
-                  animate="visible"
-                  exit="hidden"
-                  variants={fadeVariants}
-                  transition={{ duration: 0.2 }}
-                  className="w-full"
-                >
-                  <div className="flex flex-col">
-                    <div className={cn('border-b px-4 py-1.5')}>
-                      <Skeleton className="h-8 w-full" />
-                    </div>
-                    <EmailTabsSection className="bg-neutral-50 py-4">
-                      <Skeleton className="mx-auto h-96 max-w-[600px] rounded-lg" />
-                    </EmailTabsSection>
-                  </div>
-                </motion.div>
+                loadingSkeleton
               ) : (
                 <motion.div
                   key="content"
@@ -76,25 +96,22 @@ export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePre
                   transition={{ duration: 0.2 }}
                   className="h-full"
                 >
-                  {previewData?.result?.type == ChannelTypeEnum.EMAIL ? (
+                  {emailPreviewContent ? (
                     <>
                       <TabsContent value="mobile">
                         <div className="w-full bg-neutral-100">
                           <EmailPreviewContentMobile className="mx-auto">
-                            <EmailPreviewSubjectMobile subject={previewData.result.preview.subject} />
-                            <EmailPreviewBodyMobile body={previewData.result.preview.body} />
+                            <EmailPreviewSubjectMobile subject={emailPreviewContent.subject} />
+                            <EmailPreviewBodyMobile body={emailPreviewContent.body} />
                           </EmailPreviewContentMobile>
                         </div>
                       </TabsContent>
                       <TabsContent value="desktop" className="h-full">
                         <div className="border-b px-2">
-                          <EmailPreviewSubject subject={previewData.result.preview.subject} />
+                          <EmailPreviewSubject subject={emailPreviewContent.subject} />
                         </div>
                         <div className="bg-neutral-50 px-16 py-8">
-                          <EmailPreviewBody
-                            body={previewData.result.preview.body}
-                            className="bg-background rounded-lg"
-                          />
+                          <EmailPreviewBody body={emailPreviewContent.body} className="bg-background rounded-lg" />
                         </div>
                       </TabsContent>
                     </>
@@ -110,3 +127,13 @@ export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePre
     </Tabs>
   );
 }
+
+// Memoize the component to prevent unnecessary re-renders when props haven't changed
+export const EmailCorePreview = memo(EmailCorePreviewComponent, (prevProps, nextProps) => {
+  // Custom comparison function for better performance
+  return (
+    prevProps.isPreviewPending === nextProps.isPreviewPending &&
+    prevProps.previewData?.result?.preview?.subject === nextProps.previewData?.result?.preview?.subject &&
+    prevProps.previewData?.result?.preview?.body === nextProps.previewData?.result?.preview?.body
+  );
+});
