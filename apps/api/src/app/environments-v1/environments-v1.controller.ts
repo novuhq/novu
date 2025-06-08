@@ -87,6 +87,7 @@ export class EnvironmentsControllerV1 {
   @Post('/')
   @ApiOperation({
     summary: 'Create environment',
+    description: 'Create a new environment for the current organization',
   })
   @ApiResponse(EnvironmentResponseDto, 201)
   @ApiResponse(ErrorDto, 402, false, false)
@@ -116,9 +117,11 @@ export class EnvironmentsControllerV1 {
   @Get('/')
   @ApiOperation({
     summary: 'Get environments',
+    description: 'Get all environments for the current organization',
   })
   @ApiResponse(EnvironmentResponseDto, 200, true)
   @ExternalApiAccessible()
+  @SdkMethodName('list')
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     const canAccessApiKeys = await this.canUserAccessApiKeys(user);
@@ -134,10 +137,12 @@ export class EnvironmentsControllerV1 {
 
   @Put('/:environmentId')
   @ApiOperation({
-    summary: 'Update env by id',
+    summary: 'Update environment',
+    description: 'Update an environment by its ID',
   })
   @ApiResponse(EnvironmentResponseDto)
   @ExternalApiAccessible()
+  @SdkMethodName('update')
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async updateMyEnvironment(
     @UserSession() user: UserSessionData,
@@ -195,10 +200,12 @@ export class EnvironmentsControllerV1 {
   @Delete('/:environmentId')
   @ApiOperation({
     summary: 'Delete environment',
+    description: 'Delete an environment by its ID',
   })
   @ApiParam({ name: 'environmentId', type: String, required: true })
   @ProductFeature(ProductFeatureKeyEnum.MANAGE_ENVIRONMENTS)
   @ExternalApiAccessible()
+  @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async deleteEnvironment(@UserSession() user: UserSessionData, @Param('environmentId') environmentId: string) {
     return await this.deleteEnvironmentUsecase.execute(
