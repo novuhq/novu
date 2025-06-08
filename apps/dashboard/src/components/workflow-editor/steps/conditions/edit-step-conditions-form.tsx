@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { StepContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { formatQuery, prepareRuleGroup, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
+import { formatQuery, generateID, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { z } from 'zod';
 
@@ -85,11 +85,11 @@ export const EditStepConditionsForm = () => {
   const hasConditions = !!step?.controls.values.skip;
   const query = useMemo(
     () =>
-      // prepareRuleGroup and parseJsonLogic calls are needed to generate the unique ids on the query and rules,
-      // otherwise the lib will do it and it will result in the form being dirty
+      // Need to generate unique ids on the query and rules, otherwise react-querybuilder's
+      // QueryBuilder component will do it and it will result in the form being dirty
       hasConditions
-        ? prepareRuleGroup(parseJsonLogic(step.controls.values.skip as RQBJsonLogic))
-        : prepareRuleGroup({ combinator: 'and', rules: [] }),
+        ? parseJsonLogic(step.controls.values.skip as RQBJsonLogic, { generateIDs: true })
+        : { id: generateID(), combinator: 'and', rules: [] },
     [hasConditions, step]
   );
 
