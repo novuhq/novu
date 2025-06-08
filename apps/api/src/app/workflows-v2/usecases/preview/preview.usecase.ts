@@ -60,27 +60,43 @@ export class PreviewUsecase {
 
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
-      const executeOutput = await this.executePreviewUsecase(
-        command,
-        context.stepData,
+      const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
+      const schema = await this.schemaBuilder.buildPreviewPayloadSchema(
         payloadExample,
-        previewTemplateData.controlValues
+        context.workflow.payloadSchema,
+        context.workflow
       );
 
-      return {
-        result: {
-          preview: executeOutput.outputs as any,
-          type: context.stepData.type as unknown as ChannelTypeEnum,
-        },
-        previewPayloadExample: this.payloadProcessor.cleanPreviewExamplePayload(payloadExample),
-        schema: await this.schemaBuilder.buildPreviewPayloadSchema(
+      try {
+        const executeOutput = await this.executePreviewUsecase(
+          command,
+          context.stepData,
           payloadExample,
-          context.workflow.payloadSchema,
-          context.workflow
-        ),
-      };
+          previewTemplateData.controlValues
+        );
+
+        return {
+          result: {
+            preview: executeOutput.outputs as any,
+            type: context.stepData.type as unknown as ChannelTypeEnum,
+          },
+          previewPayloadExample: cleanedPayloadExample,
+          schema,
+        };
+      } catch (previewError) {
+        // If preview execution fails, still return valid schema and payload example
+        // but with an empty preview result
+        return {
+          result: {
+            preview: {},
+            type: context.stepData.type as unknown as ChannelTypeEnum,
+          },
+          previewPayloadExample: cleanedPayloadExample,
+          schema,
+        };
+      }
     } catch (error) {
-      // Return default response for non-existent workflows/steps or other errors
+      // Return default response for non-existent workflows/steps or other critical errors
       return this.errorHandler.createErrorResponse();
     }
   }
@@ -138,23 +154,19 @@ export class PreviewUsecase {
   ) {
     const state = this.payloadProcessor.buildState(previewPayloadExample.steps);
 
-    try {
-      return await this.previewStepUsecase.execute(
-        PreviewStepCommand.create({
-          payload: previewPayloadExample.payload || {},
-          subscriber: previewPayloadExample.subscriber,
-          controls: controlValues || {},
-          environmentId: command.user.environmentId,
-          organizationId: command.user.organizationId,
-          stepId: stepData.stepId,
-          userId: command.user._id,
-          workflowId: stepData.workflowId,
-          workflowOrigin: stepData.origin,
-          state,
-        })
-      );
-    } catch (error) {
-      this.errorHandler.handleFrameworkError(error);
-    }
+    return await this.previewStepUsecase.execute(
+      PreviewStepCommand.create({
+        payload: previewPayloadExample.payload || {},
+        subscriber: previewPayloadExample.subscriber,
+        controls: controlValues || {},
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
+        stepId: stepData.stepId,
+        userId: command.user._id,
+        workflowId: stepData.workflowId,
+        workflowOrigin: stepData.origin,
+        state,
+      })
+    );
   }
 }

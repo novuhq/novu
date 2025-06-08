@@ -114,13 +114,13 @@ export class MockDataGeneratorService {
    */
   createFullSubscriberObject(): Record<string, unknown> {
     return {
-      subscriberId: 'subscriberId',
-      firstName: 'firstName',
-      lastName: 'lastName',
-      email: 'email',
-      phone: 'phone',
-      avatar: 'avatar',
-      locale: 'locale',
+      subscriberId: '123456',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: 'en-US',
       data: {},
     };
   }
