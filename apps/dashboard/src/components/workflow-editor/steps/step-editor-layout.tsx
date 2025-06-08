@@ -2,6 +2,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { cn } from '@/utils/ui';
 import { ChannelTypeEnum, StepResponseDto, StepTypeEnum, WorkflowOriginEnum, WorkflowResponseDto } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
+import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { EmailEditor } from '@/components/workflow-editor/steps/email/email-editor';
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
 import { SmsEditor } from '@/components/workflow-editor/steps/sms/sms-editor';
@@ -16,7 +17,7 @@ import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-
 import { useFormContext } from 'react-hook-form';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
-import { RiCodeBlock, RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
+import { RiCodeBlock, RiEyeLine, RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState, useMemo, useEffect } from 'react';
 import {
@@ -42,6 +43,11 @@ type StepEditorLayoutProps = {
   step: StepResponseDto;
   className?: string;
 };
+
+function StepIcon({ stepType }: { stepType: StepTypeEnum }) {
+  const Icon = STEP_TYPE_TO_ICON[stepType];
+  return <Icon className="size-3.5" />;
+}
 
 function getEditorTitle(stepType: StepTypeEnum): string {
   const label = STEP_TYPE_LABELS[stepType];
@@ -69,7 +75,7 @@ function getEditorContent(workflow: WorkflowResponseDto, step: StepResponseDto) 
     case StepTypeEnum.EMAIL:
       return (
         <div className="border-soft-200 h-full overflow-auto rounded-lg border shadow-lg">
-          <EmailEditor uiSchema={uiSchema} />
+          <EmailEditor uiSchema={uiSchema} isEditorV2={true} />
         </div>
       );
     case StepTypeEnum.IN_APP:
@@ -247,7 +253,7 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   });
 
   const controlValues = form.watch();
-  const { editorValue, setEditorValue, previewStep, previewData, isPreviewPending } = useEditorPreview({
+  const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues,
@@ -300,7 +306,10 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
         <ResizablePanel defaultSize={50} minSize={30} className="h-full">
           <div className="flex h-full flex-col border-r border-neutral-200">
             <div className="border-b border-neutral-200 p-3">
-              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">{editorTitle}</h3>
+              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
+                <StepIcon stepType={step.type} />
+                {editorTitle}
+              </h3>
             </div>
             <div className="flex-1 overflow-y-auto p-3">{editorContent}</div>
           </div>
@@ -313,7 +322,10 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
         <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="h-full">
           <div className="flex h-full flex-col">
             <div className="border-b border-neutral-200 p-3">
-              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">Preview</h3>
+              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
+                <RiEyeLine className="size-3.5" />
+                Preview
+              </h3>
             </div>
             <div
               className="bg-bg-weak relative flex-1 overflow-y-auto p-3"

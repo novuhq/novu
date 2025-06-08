@@ -65,87 +65,158 @@ export class PreviewUsecase {
 
   @InstrumentUsecase()
   async execute(command: PreviewCommand): Promise<GeneratePreviewResponseDto> {
+    let stepData: StepResponseDto | undefined;
+    let workflow: NotificationTemplateEntity | undefined;
+    let previewPayloadExample: Record<string, unknown> = {};
+    let schema: JSONSchemaDto | null = null;
+
     try {
       const { generatePreviewRequestDto } = command;
 
+      // Try to initialize context - this is critical for payload generation
       const {
-        stepData,
+        stepData: initializedStepData,
         controlValues: initialControlValues,
         variableSchema,
         variablesObject,
-        workflow,
+        workflow: initializedWorkflow,
       } = await this.initializePreviewContext(command);
+
+      stepData = initializedStepData;
+      workflow = initializedWorkflow;
       const userPayloadExample = generatePreviewRequestDto.previewPayload;
 
-      /**
-       * We don't want to sanitize control values for code workflows,
-       * as it's the responsibility of the custom code workflow creator
-       */
-      const sanitizedValidatedControls =
-        workflow.origin === WorkflowOriginEnum.NOVU_CLOUD
-          ? this.sanitizeControlsForPreview(initialControlValues, stepData)
-          : initialControlValues;
+      // Generate payload example and schema regardless of preview execution success
+      try {
+        /**
+         * We don't want to sanitize control values for code workflows,
+         * as it's the responsibility of the custom code workflow creator
+         */
+        const sanitizedValidatedControls =
+          workflow.origin === WorkflowOriginEnum.NOVU_CLOUD
+            ? this.sanitizeControlsForPreview(initialControlValues, stepData)
+            : initialControlValues;
 
-      if (!sanitizedValidatedControls && workflow.origin === WorkflowOriginEnum.NOVU_CLOUD) {
-        throw new Error(
-          // eslint-disable-next-line max-len
-          'Control values normalization failed, normalizeControlValues function requires maintenance to sanitize the provided type or data structure correctly'
+        if (!sanitizedValidatedControls && workflow.origin === WorkflowOriginEnum.NOVU_CLOUD) {
+          throw new Error(
+            // eslint-disable-next-line max-len
+            'Control values normalization failed, normalizeControlValues function requires maintenance to sanitize the provided type or data structure correctly'
+          );
+        }
+
+        let previewTemplateData = {
+          payloadExample: {},
+          controlValues: {},
+        };
+
+        for (const [controlKey, controlValue] of Object.entries(sanitizedValidatedControls || {})) {
+          const variables = buildVariables(variableSchema, controlValue, this.logger);
+
+          const controlValueWithFixedVariables = this.fixControlValueInvalidVariables(
+            controlValue,
+            variables.invalidVariables
+          );
+
+          const processedControlValues = this.sanitizeControlValuesByLiquidCompilationFailure(
+            controlKey,
+            controlValueWithFixedVariables
+          );
+
+          previewTemplateData = {
+            payloadExample: _.merge(previewTemplateData.payloadExample, variablesObject),
+            controlValues: {
+              ...previewTemplateData.controlValues,
+              [controlKey]: isObjectMailyJSONContent(processedControlValues)
+                ? JSON.stringify(processedControlValues)
+                : processedControlValues,
+            },
+          };
+        }
+
+        previewPayloadExample = await this.mergePayloadExample(
+          workflow,
+          previewTemplateData.payloadExample,
+          userPayloadExample,
+          command
         );
-      }
 
-      let previewTemplateData = {
-        payloadExample: {},
-        controlValues: {},
-      };
+        previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
+        schema = await this.buildPreviewPayloadSchema(previewPayloadExample, workflow.payloadSchema, workflow);
 
-      for (const [controlKey, controlValue] of Object.entries(sanitizedValidatedControls || {})) {
-        const variables = buildVariables(variableSchema, controlValue, this.logger);
+        // Try to execute the preview, but don't let it affect payload example and schema generation
+        try {
+          const executeOutput = await this.executePreviewUsecase(
+            command,
+            stepData,
+            previewPayloadExample,
+            previewTemplateData.controlValues
+          );
 
-        const controlValueWithFixedVariables = this.fixControlValueInvalidVariables(
-          controlValue,
-          variables.invalidVariables
-        );
+          return {
+            result: {
+              preview: executeOutput.outputs as any,
+              type: stepData.type as unknown as ChannelTypeEnum,
+            },
+            previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
+            schema,
+          };
+        } catch (previewError) {
+          this.logger.warn(
+            {
+              err: previewError,
+              workflowIdOrInternalId: command.workflowIdOrInternalId,
+              stepIdOrInternalId: command.stepIdOrInternalId,
+            },
+            `Preview execution failed, but returning payload example and schema`,
+            LOG_CONTEXT
+          );
 
-        const processedControlValues = this.sanitizeControlValuesByLiquidCompilationFailure(
-          controlKey,
-          controlValueWithFixedVariables
-        );
-
-        previewTemplateData = {
-          payloadExample: _.merge(previewTemplateData.payloadExample, variablesObject),
-          controlValues: {
-            ...previewTemplateData.controlValues,
-            [controlKey]: isObjectMailyJSONContent(processedControlValues)
-              ? JSON.stringify(processedControlValues)
-              : processedControlValues,
+          return {
+            result: {
+              preview: {},
+              type: stepData.type as unknown as ChannelTypeEnum,
+            },
+            previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
+            schema,
+          };
+        }
+      } catch (payloadGenerationError) {
+        this.logger.warn(
+          {
+            err: payloadGenerationError,
+            workflowIdOrInternalId: command.workflowIdOrInternalId,
+            stepIdOrInternalId: command.stepIdOrInternalId,
           },
+          `Payload example generation failed, falling back to basic payload`,
+          LOG_CONTEXT
+        );
+
+        // Generate a basic fallback payload example if possible
+        if (workflow && generatePreviewRequestDto.previewPayload) {
+          previewPayloadExample = generatePreviewRequestDto.previewPayload as Record<string, unknown>;
+          try {
+            schema = await this.buildPreviewPayloadSchema(previewPayloadExample, workflow.payloadSchema, workflow);
+          } catch (schemaError) {
+            this.logger.warn(
+              {
+                err: schemaError,
+                workflowIdOrInternalId: command.workflowIdOrInternalId,
+              },
+              `Schema generation also failed`,
+              LOG_CONTEXT
+            );
+          }
+        }
+
+        return {
+          result: {
+            preview: {},
+            type: stepData?.type as unknown as ChannelTypeEnum,
+          },
+          previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
+          schema,
         };
       }
-
-      let previewPayloadExample = await this.mergePayloadExample(
-        workflow,
-        previewTemplateData.payloadExample,
-        userPayloadExample,
-        command
-      );
-
-      previewPayloadExample = enhanceEventCountValue(previewPayloadExample);
-
-      const executeOutput = await this.executePreviewUsecase(
-        command,
-        stepData,
-        previewPayloadExample,
-        previewTemplateData.controlValues
-      );
-
-      return {
-        result: {
-          preview: executeOutput.outputs as any,
-          type: stepData.type as unknown as ChannelTypeEnum,
-        },
-        previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
-        schema: await this.buildPreviewPayloadSchema(previewPayloadExample, workflow.payloadSchema, workflow),
-      };
     } catch (error) {
       this.logger.error(
         {
@@ -153,7 +224,7 @@ export class PreviewUsecase {
           workflowIdOrInternalId: command.workflowIdOrInternalId,
           stepIdOrInternalId: command.stepIdOrInternalId,
         },
-        `Unexpected error while generating preview`,
+        `Critical error during preview initialization`,
         LOG_CONTEXT
       );
       if (process.env.SENTRY_DSN) {
@@ -163,10 +234,10 @@ export class PreviewUsecase {
       return {
         result: {
           preview: {},
-          type: undefined,
+          type: stepData?.type as unknown as ChannelTypeEnum,
         },
-        previewPayloadExample: {},
-        schema: null,
+        previewPayloadExample: cleanPreviewExamplePayload(previewPayloadExample),
+        schema,
       } as any;
     }
   }
@@ -813,6 +884,12 @@ function replaceInvalidControlValues(
     }
 
     const path = getErrorPath(error);
+
+    // Skip if path is empty (root level errors that we can't handle)
+    if (!path) {
+      continue;
+    }
+
     const defaultValue = _.get(previewControlValueDefault, path);
     _.set(fixedValues, path, defaultValue);
   }
@@ -824,10 +901,23 @@ function replaceInvalidControlValues(
  * Extracts the path from the error object:
  * 1. If instancePath exists, removes leading slash and converts remaining slashes to dots
  * 2. If no instancePath, uses missingProperty from error params
+ * 3. Falls back to empty string if neither is available
  * Example: "/foo/bar" becomes "foo.bar"
  */
 function getErrorPath(error: ErrorObject): string {
-  return (error.instancePath.substring(1) || error.params.missingProperty).replace(/\//g, '.');
+  // Handle instancePath if it exists
+  if (error.instancePath && typeof error.instancePath === 'string') {
+    const path = error.instancePath.substring(1);
+    return path.replace(/\//g, '.');
+  }
+
+  // Handle missingProperty if it exists
+  if (error.params && error.params.missingProperty && typeof error.params.missingProperty === 'string') {
+    return error.params.missingProperty;
+  }
+
+  // Fallback to empty string for root level errors or unknown error types
+  return '';
 }
 
 const EMPTY_STRING = '';

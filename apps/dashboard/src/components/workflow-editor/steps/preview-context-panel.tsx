@@ -184,6 +184,7 @@ export function PreviewContextPanel({
     'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';
   const accordionTriggerClassName = 'text-label-xs';
 
+  console.log('stepResultsJsonData', stepResultsJsonData);
   return (
     <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
       <AccordionItem value="payload" className={accordionItemClassName}>
@@ -263,7 +264,7 @@ export function PreviewContextPanel({
         <AccordionContent className="flex flex-col gap-2">
           {Object.keys(stepResultsJsonData).length > 0 ? (
             <div className="w-full space-y-1">
-              {Object.entries(stepResultsJsonData).map(([stepId, stepData], index) => {
+              {Object.entries(stepResultsJsonData).map(([stepId, stepData]) => {
                 const stepType = getStepType(workflow, stepId);
                 const StepIcon = getStepTypeIcon(stepType);
                 const stepName = getStepName(workflow, stepId);
@@ -291,18 +292,21 @@ export function PreviewContextPanel({
                         )}
                       </div>
                     </button>
-                    {isOpen && (
-                      <div className="pb-3">
-                        <EditableJsonViewer
-                          value={stepData}
-                          onChange={(updatedStepData) => {
-                            const updatedSteps = { ...stepResultsJsonData, [stepId]: updatedStepData };
-                            handleStepResultsJsonChange(updatedSteps);
-                          }}
-                          className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
-                        />
-                      </div>
-                    )}
+                    {isOpen &&
+                      (stepData && Object.keys(stepData).length > 0 ? (
+                        <div className="pb-3">
+                          <EditableJsonViewer
+                            value={stepData}
+                            onChange={(updatedStepData) => {
+                              const updatedSteps = { ...stepResultsJsonData, [stepId]: updatedStepData };
+                              handleStepResultsJsonChange(updatedSteps);
+                            }}
+                            className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
+                          />
+                        </div>
+                      ) : (
+                        <p className="text-xs italic text-neutral-500">no step results</p>
+                      ))}
                   </div>
                 );
               })}

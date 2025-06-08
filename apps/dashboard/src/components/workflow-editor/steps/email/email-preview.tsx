@@ -5,23 +5,27 @@ import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 import { NovuBranding } from './novu-branding';
 
-type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
+type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & { minimalHeader?: boolean };
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
-  const { className, children, ...rest } = props;
+  const { className, children, minimalHeader = false, ...rest } = props;
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
-      <Avatar className="size-8">
-        <AvatarImage src="/images/building.svg" />
-      </Avatar>
+      {!minimalHeader && (
+        <Avatar className="size-8">
+          <AvatarImage src="/images/building.svg" />
+        </Avatar>
+      )}
       <div className="flex flex-1 justify-between">
         <div>
           <div>
             Acme Inc. <span className="text-foreground-600 text-xs">{`<noreply@novu.co>`}</span>
           </div>
-          <div className="text-foreground-600 flex items-center gap-1 text-xs">
-            to me <RiArrowDownSFill />
-          </div>
+          {!minimalHeader && (
+            <div className="text-foreground-600 flex items-center gap-1 text-xs">
+              to me <RiArrowDownSFill />
+            </div>
+          )}
         </div>
         <div className="flex items-center">{children}</div>
       </div>
