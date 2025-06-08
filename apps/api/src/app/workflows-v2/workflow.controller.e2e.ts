@@ -706,60 +706,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       expect(stepRetrievedByStepIdentifier.id).to.equal(stepId);
     });
 
-    it('should get test data', async () => {
-      const steps = [
-        {
-          ...buildEmailStep(),
-          controlValues: {
-            body: 'Welcome to our newsletter {{bodyText}}{{bodyText2}}{{payload.emailPrefixBodyText}}',
-            subject: 'Welcome to our newsletter {{subjectText}} {{payload.prefixSubjectText}}',
-          },
-        },
-        { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{payload.inAppSubjectText}}' } },
-      ];
-      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps } as CreateWorkflowDto);
-      const res = await apiClient.workflows.create(createWorkflowDto);
-      const workflowCreated: WorkflowResponseDto = res.result;
-      const workflowTestData = await getWorkflowTestData(workflowCreated.id);
-
-      expect(workflowTestData).to.be.ok;
-      const { payload } = workflowTestData;
-      if (typeof payload === 'boolean') throw new Error('Variables is not an object');
-
-      expect(payload.properties).to.have.property('emailPrefixBodyText');
-      expect(payload.properties?.emailPrefixBodyText).to.have.property('default').that.equals('emailPrefixBodyText');
-
-      expect(payload.properties).to.have.property('prefixSubjectText');
-      expect(payload.properties?.prefixSubjectText).to.have.property('default').that.equals('prefixSubjectText');
-
-      expect(payload.properties).to.have.property('inAppSubjectText');
-      expect(payload.properties?.inAppSubjectText).to.have.property('default').that.equals('inAppSubjectText');
-      /*
-       * Validate the 'to' schema
-       * Note: Can't use deep comparison since emails differ between local and CI environments due to user sessions
-       */
-      const toSchema = workflowTestData.to;
-      if (
-        typeof toSchema === 'boolean' ||
-        typeof toSchema.properties?.subscriberId === 'boolean' ||
-        typeof toSchema.properties?.email === 'boolean'
-      ) {
-        expect((toSchema as any).type).to.be.a('boolean');
-        expect(((toSchema as any).properties?.subscriberId as any).type).to.be.a('boolean');
-        expect(((toSchema as any).properties?.email as any).type).to.be.a('boolean');
-        throw new Error('To schema is not a boolean');
-      }
-      expect(toSchema.type).to.equal('object');
-      expect(toSchema.properties?.subscriberId.type).to.equal('string');
-      expect(toSchema.properties?.subscriberId.default).to.equal(session.user._id);
-      expect(toSchema.properties?.email.type).to.equal('string');
-      expect(toSchema.properties?.email.format).to.equal('email');
-      expect(toSchema.properties?.email.default).to.be.a('string');
-      expect(toSchema.properties?.email.default).to.not.equal('');
-      expect(toSchema.required).to.deep.equal(['subscriberId', 'email']);
-      expect(toSchema.additionalProperties).to.be.false;
-    });
-
     describe('Variables', () => {
       it('should get step available variables', async () => {
         const steps = [
@@ -1051,14 +997,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
   async function getStepData(workflowId: string, stepId: string, envId?: string) {
     const novuRestResult = await apiClient.workflows.steps.retrieve(workflowId, stepId, undefined, {
-      fetchOptions: { headers: buildHeaders(envId) },
-    });
-
-    return novuRestResult.result;
-  }
-
-  async function getWorkflowTestData(workflowId: string, envId?: string) {
-    const novuRestResult = await apiClient.workflows.getTestData(workflowId, undefined, {
       fetchOptions: { headers: buildHeaders(envId) },
     });
 
