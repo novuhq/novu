@@ -152,7 +152,9 @@ export class JsonSchemaMock {
 
     // ID patterns
     if (this.matchesPattern(lowerKey, ['id', 'identifier', 'uuid', 'guid', 'key'])) {
-      return 'example-id-123';
+      // Generate a more unique ID for digest events
+      const timestamp = Date.now().toString().slice(-6);
+      return `example-id-${timestamp}`;
     }
     if (this.matchesPattern(lowerKey, ['userid', 'user_id', 'customerid', 'customer_id'])) {
       return 'user_12345';
@@ -174,6 +176,13 @@ export class JsonSchemaMock {
       return new Date().toISOString().split('T')[0];
     }
     if (this.matchesPattern(lowerKey, ['time', 'hour', 'minute'])) {
+      // For digest events, return full ISO date string instead of just time
+      if (lowerKey === 'time') {
+        const eventDate = new Date();
+        eventDate.setDate(eventDate.getDate() - 1);
+        eventDate.setHours(12, 0, 0, 0);
+        return eventDate.toISOString();
+      }
       return new Date().toTimeString().split(' ')[0];
     }
     if (this.matchesPattern(lowerKey, ['datetime', 'createdat', 'created_at', 'updatedat', 'updated_at'])) {

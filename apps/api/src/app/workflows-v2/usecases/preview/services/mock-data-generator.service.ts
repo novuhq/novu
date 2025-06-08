@@ -22,7 +22,7 @@ export class MockDataGeneratorService {
     }
 
     try {
-      if (stepType === 'digest' && workflow?.payloadSchema) {
+      if (stepType === 'digest') {
         return this.generateDigestStepResult(workflow);
       }
 
@@ -53,14 +53,13 @@ export class MockDataGeneratorService {
     }
   }
 
-  private generateDigestStepResult(workflow: NotificationTemplateEntity): Record<string, unknown> {
+  private generateDigestStepResult(workflow?: NotificationTemplateEntity): Record<string, unknown> {
     try {
-      const payloadMockData = JsonSchemaMock.generate(workflow.payloadSchema!) as Record<string, unknown>;
+      let payloadMockData = {};
 
-      const digestResultSchema = actionStepSchemas.digest?.result;
-      const baseDigestResult = digestResultSchema
-        ? (JsonSchemaMock.generate(digestResultSchema) as Record<string, unknown>)
-        : {};
+      if (workflow?.payloadSchema) {
+        payloadMockData = JsonSchemaMock.generate(workflow.payloadSchema) as Record<string, unknown>;
+      }
 
       const oneDayAgo = new Date();
       oneDayAgo.setDate(oneDayAgo.getDate() - 1);
@@ -75,7 +74,6 @@ export class MockDataGeneratorService {
       ];
 
       return {
-        ...baseDigestResult,
         eventCount: digestEvents.length,
         events: digestEvents,
       };
@@ -83,19 +81,30 @@ export class MockDataGeneratorService {
       this.logger.warn(
         {
           err: error,
-          workflowId: workflow._id,
-          payloadSchema: workflow.payloadSchema,
+          workflowId: workflow?._id,
+          payloadSchema: workflow?.payloadSchema,
         },
         'Failed to generate digest result with payload data, falling back to basic digest result',
         LOG_CONTEXT
       );
 
-      const digestResultSchema = actionStepSchemas.digest?.result;
-      if (digestResultSchema) {
-        return JsonSchemaMock.generate(digestResultSchema) as Record<string, unknown>;
-      }
+      // Create a basic digest result without using JsonSchemaMock
+      const oneDayAgo = new Date();
+      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+      oneDayAgo.setHours(12, 0, 0, 0);
 
-      return {};
+      const digestEvents = [
+        {
+          id: 'event-id-123',
+          time: oneDayAgo.toISOString(),
+          payload: {},
+        },
+      ];
+
+      return {
+        eventCount: digestEvents.length,
+        events: digestEvents,
+      };
     }
   }
 
