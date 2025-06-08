@@ -58,7 +58,7 @@
     "@rjsf/core": "^5.22.3",
     "@rjsf/utils": "^5.20.0",
     "@rjsf/validator-ajv8": "^5.17.1",
-    "@segment/analytics-next": "^1.77.0",
+    "@segment/analytics-next": "^1.81.0",
     "@sentry/react": "^8.35.0",
     "@tanstack/react-query": "^5.59.6",
     "@tiptap/react": "^2.6.6",
