@@ -101,7 +101,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     []
   );
 
-  useHideRootNode(containerRef);
+  useHideRootNode(containerRef, value);
 
   const customNodeDefinitions = useMemo(() => {
     const components: CustomNodeDefinition<Record<string, any>, Record<string, any>>[] = [
