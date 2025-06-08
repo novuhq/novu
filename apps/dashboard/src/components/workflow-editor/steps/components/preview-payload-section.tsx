@@ -12,7 +12,6 @@ export function PreviewPayloadSection({
   workflow,
   onUpdate,
   onClearPersisted,
-  payloadStatus = 'default',
 }: PayloadSectionProps) {
   return (
     <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
