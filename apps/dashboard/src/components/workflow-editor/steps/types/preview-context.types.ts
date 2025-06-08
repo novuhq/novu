@@ -26,6 +26,10 @@ export type AccordionSectionProps = {
   onUpdate: (section: keyof ParsedData, data: any) => void;
 };
 
+export type PayloadSectionProps = AccordionSectionProps & {
+  onClearPersisted?: () => void;
+};
+
 export type StepResultsSectionProps = AccordionSectionProps & {
   currentStepId?: string;
 };

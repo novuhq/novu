@@ -4,18 +4,35 @@ import { ParsedData, ValidationErrors } from '../types/preview-context.types';
 import { parseJsonValue, createSubscriberData } from '../utils/preview-context.utils';
 import { DEFAULT_ACCORDION_VALUES } from '../constants/preview-context.constants';
 
-export function usePreviewContext(value: string, onChange: (value: string) => Error | null) {
+type UsePreviewContextProps = {
+  workflowId?: string;
+  stepId?: string;
+  environmentId?: string;
+  onDataPersist?: (data: ParsedData) => void;
+};
+
+export function usePreviewContext(
+  value: string,
+  onChange: (value: string) => Error | null,
+  persistenceProps?: UsePreviewContextProps
+) {
   const [accordionValue, setAccordionValue] = useState<string[]>(DEFAULT_ACCORDION_VALUES);
   const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
   const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
   const [errors, setErrors] = useState<ValidationErrors>({ payload: null, subscriber: null });
   const [localParsedData, setLocalParsedData] = useState<ParsedData>(() => parseJsonValue(value));
   const isUpdatingRef = useRef<boolean>(false);
+  const lastValueRef = useRef<string>(value);
 
   // Update local parsed data when external value changes (but not during our own updates)
   useEffect(() => {
-    if (!isUpdatingRef.current) {
-      setLocalParsedData(parseJsonValue(value));
+    if (value !== lastValueRef.current) {
+      lastValueRef.current = value;
+
+      if (!isUpdatingRef.current) {
+        const newParsedData = parseJsonValue(value);
+        setLocalParsedData(newParsedData);
+      }
     }
   }, [value]);
 
@@ -33,7 +50,16 @@ export function usePreviewContext(value: string, onChange: (value: string) => Er
         if (error) {
           setErrors((prev) => ({ ...prev, [section]: error.message }));
         } else {
-          setLocalParsedData((prev) => ({ ...prev, [section]: updatedData }));
+          setLocalParsedData((prev) => {
+            const updatedParsedData = { ...prev, [section]: updatedData };
+
+            // Trigger persistence callback if provided
+            if (persistenceProps?.onDataPersist) {
+              persistenceProps.onDataPersist(updatedParsedData);
+            }
+
+            return updatedParsedData;
+          });
           setErrors((prev) => ({ ...prev, [section]: null }));
         }
       } catch (error) {
@@ -44,7 +70,7 @@ export function usePreviewContext(value: string, onChange: (value: string) => Er
         }, 0);
       }
     },
-    [onChange, value]
+    [onChange, value, persistenceProps]
   );
 
   const handleSubscriberSelection = useCallback(
