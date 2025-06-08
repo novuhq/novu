@@ -234,24 +234,6 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
   const editorTitle = getEditorTitle(step.type);
   const editorContent = getEditorContent(workflow, step);
 
-  // Fetch test data for subscriber schema
-  const { testData } = useFetchWorkflowTestData({ workflowSlug: workflow.slug || workflow.workflowId });
-
-  // Create mock subscriber data from schema
-  const subscriberData = useMemo(() => {
-    return createMockObjectFromSchema(testData?.to ?? {});
-  }, [testData?.to]);
-
-  // Create form for preview context
-  const previewForm = useForm<TestWorkflowFormType>({
-    mode: 'onSubmit',
-    resolver: zodResolver(buildDynamicFormSchema({ to: testData?.to ?? {} })),
-    values: {
-      to: subscriberData,
-      payload: workflow?.payloadExample ? JSON.stringify(workflow.payloadExample, null, 2) : '{}',
-    },
-  });
-
   const controlValues = form.watch();
   const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
@@ -284,17 +266,12 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
               </h3>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <Form {...previewForm}>
-                <FormRoot className="bg-bg-weak h-full">
-                  <PreviewContextPanel
-                    workflow={workflow}
-                    value={editorValue}
-                    onChange={setEditorValue}
-                    subscriberData={subscriberData}
-                    currentStepId={step.stepId}
-                  />
-                </FormRoot>
-              </Form>
+              <PreviewContextPanel
+                workflow={workflow}
+                value={editorValue}
+                onChange={setEditorValue}
+                currentStepId={step.stepId}
+              />
             </div>
           </div>
         </ResizablePanel>

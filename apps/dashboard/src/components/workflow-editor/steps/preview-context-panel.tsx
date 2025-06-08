@@ -3,13 +3,11 @@ import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { WorkflowResponseDto, StepTypeEnum, ISubscriberResponseDto } from '@novu/shared';
-import { useCallback, useMemo, useState, useEffect } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getSubscribers } from '@/api/subscribers';
 import {
-  RiRefreshLine,
   RiMailLine,
   RiSmartphoneLine,
   RiNotificationLine,
@@ -28,6 +26,17 @@ type PreviewContextPanelProps = {
   onChange: (value: string) => Error | null;
   subscriberData?: Record<string, any>;
   currentStepId?: string;
+};
+
+type ParsedData = {
+  payload: any;
+  subscriber: any;
+  steps: any;
+};
+
+type ValidationErrors = {
+  payload: string | null;
+  subscriber: string | null;
 };
 
 // Get step name from workflow
@@ -60,6 +69,31 @@ const getStepTypeIcon = (stepType?: StepTypeEnum) => {
   }
 };
 
+const parseJsonValue = (value: string): ParsedData => {
+  try {
+    const parsed = JSON.parse(value || '{}');
+    return {
+      payload: parsed.payload || {},
+      subscriber: parsed.subscriber || {},
+      steps: parsed.steps || {},
+    };
+  } catch {
+    return { payload: {}, subscriber: {}, steps: {} };
+  }
+};
+
+const createSubscriberData = (subscriber: ISubscriberResponseDto) => ({
+  subscriberId: subscriber.subscriberId,
+  firstName: subscriber.firstName || '',
+  lastName: subscriber.lastName || '',
+  email: subscriber.email || '',
+  phone: subscriber.phone || '',
+  avatar: subscriber.avatar || '',
+  locale: subscriber.locale || 'en',
+  timezone: subscriber.timezone || '',
+  data: null,
+});
+
 export function PreviewContextPanel({
   workflow,
   value,
@@ -67,165 +101,95 @@ export function PreviewContextPanel({
   subscriberData = {},
   currentStepId,
 }: PreviewContextPanelProps) {
-  const [payloadJsonData, setPayloadJsonData] = useState<any>({});
-  const [payloadError, setPayloadError] = useState<string | null>(null);
-  const [subscriberJsonData, setSubscriberJsonData] = useState<any>({});
-  const [subscriberError, setSubscriberError] = useState<string | null>(null);
-  const [stepResultsJsonData, setStepResultsJsonData] = useState<any>({});
-  const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
-  const [hasLoadedCurrentUser, setHasLoadedCurrentUser] = useState<string>('');
-
   const [accordionValue, setAccordionValue] = useState<string[]>(['payload', 'subscriber', 'step-results']);
   const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
+  const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
+  const [errors, setErrors] = useState<ValidationErrors>({ payload: null, subscriber: null });
+  const [localParsedData, setLocalParsedData] = useState<ParsedData>(() => parseJsonValue(value));
+
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
+  const hasLoadedCurrentUserRef = useRef<string>('');
+  const isUpdatingRef = useRef<boolean>(false);
 
-  // Parse JSON data for all sections
-  useMemo(() => {
-    try {
-      const parsed = JSON.parse(value || '{}');
-
-      // Handle payload
-      if (isPayloadSchemaEnabled) {
-        try {
-          setPayloadJsonData(parsed.payload || {});
-          setPayloadError(null);
-        } catch (error) {
-          // If parsing fails and we have a workflow payloadExample, use it as fallback
-          if (workflow?.payloadExample) {
-            setPayloadJsonData(workflow.payloadExample);
-          }
-
-          setPayloadError('Invalid JSON format');
-        }
-      }
-
-      // Handle subscriber
-      try {
-        setSubscriberJsonData(parsed.subscriber || subscriberData || {});
-        setSubscriberError(null);
-      } catch (error) {
-        setSubscriberJsonData(subscriberData || {});
-        setSubscriberError('Invalid subscriber JSON format');
-      }
-
-      // Handle step results
-      try {
-        setStepResultsJsonData(parsed.steps || {});
-      } catch (error) {
-        setStepResultsJsonData({});
-      }
-    } catch (error) {
-      // If entire JSON is invalid, set defaults
-      if (isPayloadSchemaEnabled && workflow?.payloadExample) {
-        setPayloadJsonData(workflow.payloadExample);
-      }
-
-      setSubscriberJsonData(subscriberData || {});
-      setStepResultsJsonData({});
-      setPayloadError('Invalid JSON format');
+  // Update local parsed data when external value changes (but not during our own updates)
+  useEffect(() => {
+    if (!isUpdatingRef.current) {
+      const parsed = parseJsonValue(value);
+      setLocalParsedData({
+        payload: isPayloadSchemaEnabled ? parsed.payload || workflow?.payloadExample || {} : {},
+        subscriber: parsed.subscriber || subscriberData || {},
+        steps: parsed.steps || {},
+      });
     }
-  }, [value, isPayloadSchemaEnabled, workflow?.payloadExample, subscriberData, workflow, currentStepId]);
+  }, [value, isPayloadSchemaEnabled, workflow?.payloadExample, subscriberData]);
 
-  const handlePayloadJsonChange = useCallback(
-    (updatedData: any) => {
+  // Generic JSON update handler
+  const updateJsonSection = useCallback(
+    (section: keyof ParsedData, updatedData: any) => {
+      isUpdatingRef.current = true;
+
       try {
-        const currentData = JSON.parse(value || '{}');
-        const newData = { ...currentData, payload: updatedData };
+        const currentData = parseJsonValue(value);
+        const newData = { ...currentData, [section]: updatedData };
         const stringified = JSON.stringify(newData, null, 2);
         const error = onChange(stringified);
 
         if (error) {
-          setPayloadError(error.message);
+          setErrors((prev) => ({ ...prev, [section]: error.message }));
         } else {
-          setPayloadJsonData(updatedData);
-          setPayloadError(null);
+          // Update local state immediately to prevent flickering
+          setLocalParsedData((prev) => ({ ...prev, [section]: updatedData }));
+          setErrors((prev) => ({ ...prev, [section]: null }));
         }
       } catch (error) {
-        setPayloadError('Failed to update JSON');
+        setErrors((prev) => ({ ...prev, [section]: 'Failed to update JSON' }));
+      } finally {
+        // Reset the flag after a brief delay to allow the parent state to update
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 0);
       }
     },
     [onChange, value]
+  );
+
+  const handlePayloadJsonChange = useCallback(
+    (updatedData: any) => updateJsonSection('payload', updatedData),
+    [updateJsonSection]
   );
 
   const handleSubscriberJsonChange = useCallback(
-    (updatedData: any) => {
-      try {
-        const currentData = JSON.parse(value || '{}');
-        const newData = { ...currentData, subscriber: updatedData };
-        const stringified = JSON.stringify(newData, null, 2);
-        const error = onChange(stringified);
-
-        if (error) {
-          setSubscriberError(error.message);
-        } else {
-          setSubscriberJsonData(updatedData);
-          setSubscriberError(null);
-        }
-      } catch (error) {
-        setSubscriberError('Failed to update JSON');
-      }
-    },
-    [onChange, value]
+    (updatedData: any) => updateJsonSection('subscriber', updatedData),
+    [updateJsonSection]
   );
 
   const handleStepResultsJsonChange = useCallback(
-    (updatedData: any) => {
-      try {
-        const currentData = JSON.parse(value || '{}');
-        const newData = { ...currentData, steps: updatedData };
-        const stringified = JSON.stringify(newData, null, 2);
-        const error = onChange(stringified);
-
-        if (!error) {
-          setStepResultsJsonData(updatedData);
-        }
-      } catch (error) {
-        // Handle error silently or add logging if needed
-      }
-    },
-    [onChange, value]
+    (updatedData: any) => updateJsonSection('steps', updatedData),
+    [updateJsonSection]
   );
 
   const handleSubscriberSelection = useCallback(
     (subscriber: ISubscriberResponseDto) => {
-      // Create subscriber data object from the selected subscriber
-      const subscriberData = {
-        subscriberId: subscriber.subscriberId,
-        firstName: subscriber.firstName || '',
-        lastName: subscriber.lastName || '',
-        email: subscriber.email || '',
-        phone: subscriber.phone || '',
-        avatar: subscriber.avatar || '',
-        locale: subscriber.locale || 'en',
-        timezone: subscriber.timezone || '',
-        data: null,
-      };
-
-      // Update the subscriber JSON data
+      const subscriberData = createSubscriberData(subscriber);
       handleSubscriberJsonChange(subscriberData);
-
-      // Clear the search input
       setSubscriberSearchValue('');
     },
     [handleSubscriberJsonChange]
   );
 
-  // Load current user's subscriber data by default (only once per user/environment)
+  const toggleStepOpen = useCallback((stepId: string) => {
+    setOpenSteps((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
+  }, []);
+
+  // Load current user's subscriber data (only once per user/environment)
   useEffect(() => {
     const loadCurrentUserSubscriber = async () => {
-      if (!currentUser?.email || !currentEnvironment) {
-        return;
-      }
+      if (!currentUser?.email || !currentEnvironment) return;
 
-      // Create a unique key for this user/environment combination
       const userEnvKey = `${currentUser.email}-${currentEnvironment._id}`;
-
-      // Skip if we've already loaded for this combination
-      if (hasLoadedCurrentUser === userEnvKey) {
-        return;
-      }
+      if (hasLoadedCurrentUserRef.current === userEnvKey) return;
 
       try {
         const response = await getSubscribers({
@@ -234,38 +198,26 @@ export function PreviewContextPanel({
           limit: 1,
         });
 
-        if (response.data && response.data.length > 0) {
-          const subscriber = response.data[0];
-          const subscriberData = {
-            subscriberId: subscriber.subscriberId,
-            firstName: subscriber.firstName || '',
-            lastName: subscriber.lastName || '',
-            email: subscriber.email || '',
-            phone: subscriber.phone || '',
-            avatar: subscriber.avatar || '',
-            locale: subscriber.locale || 'en',
-            timezone: subscriber.timezone || '',
-            data: null,
-          };
-
+        if (response.data?.[0]) {
+          const subscriberData = createSubscriberData(response.data[0]);
           handleSubscriberJsonChange(subscriberData);
         }
-
-        setHasLoadedCurrentUser(userEnvKey);
-      } catch (error) {
+      } catch {
         // Silently handle error - user might not have a subscriber record
-        setHasLoadedCurrentUser(userEnvKey);
+      } finally {
+        hasLoadedCurrentUserRef.current = userEnvKey;
       }
     };
 
     loadCurrentUserSubscriber();
-  }, [currentUser?.email, currentEnvironment?._id, hasLoadedCurrentUser, handleSubscriberJsonChange]);
+  }, [currentUser?.email, currentEnvironment?._id, handleSubscriberJsonChange]);
 
   const accordionItemClassName =
     'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';
   const accordionTriggerClassName = 'text-label-xs';
 
-  console.log('stepResultsJsonData', stepResultsJsonData);
+  const stepEntries = Object.entries(localParsedData.steps || {});
+
   return (
     <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
       <AccordionItem value="payload" className={accordionItemClassName}>
@@ -288,12 +240,12 @@ export function PreviewContextPanel({
         <AccordionContent className="flex flex-col gap-2">
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
             <EditableJsonViewer
-              value={payloadJsonData}
+              value={localParsedData.payload}
               onChange={handlePayloadJsonChange}
               schema={workflow?.payloadSchema}
               className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
             />
-            {payloadError && <p className="text-destructive text-xs">{payloadError}</p>}
+            {errors.payload && <p className="text-destructive text-xs">{errors.payload}</p>}
           </div>
         </AccordionContent>
       </AccordionItem>
@@ -324,11 +276,11 @@ export function PreviewContextPanel({
           />
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
             <EditableJsonViewer
-              value={subscriberJsonData}
+              value={localParsedData.subscriber}
               onChange={handleSubscriberJsonChange}
               className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
             />
-            {subscriberError && <p className="text-destructive text-xs">{subscriberError}</p>}
+            {errors.subscriber && <p className="text-destructive text-xs">{errors.subscriber}</p>}
           </div>
           <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
             <RiInformationLine className="h-3 w-3 flex-shrink-0" />
@@ -354,9 +306,9 @@ export function PreviewContextPanel({
           </div>
         </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2">
-          {Object.keys(stepResultsJsonData).length > 0 ? (
+          {stepEntries.length > 0 ? (
             <div className="w-full space-y-1">
-              {Object.entries(stepResultsJsonData).map(([stepId, stepData]) => {
+              {stepEntries.map(([stepId, stepData]) => {
                 const stepType = getStepType(workflow, stepId);
                 const StepIcon = getStepTypeIcon(stepType);
                 const stepName = getStepName(workflow, stepId);
@@ -367,7 +319,7 @@ export function PreviewContextPanel({
                   <div key={stepId} className="border-b border-neutral-100 last:border-b-0">
                     <button
                       type="button"
-                      onClick={() => setOpenSteps((prev) => ({ ...prev, [stepId]: !isOpen }))}
+                      onClick={() => toggleStepOpen(stepId)}
                       className="flex w-full items-center gap-2 py-2 transition-colors hover:bg-neutral-50"
                     >
                       <div className="flex flex-1 items-center gap-2">
@@ -390,7 +342,7 @@ export function PreviewContextPanel({
                           <EditableJsonViewer
                             value={stepData}
                             onChange={(updatedStepData) => {
-                              const updatedSteps = { ...stepResultsJsonData, [stepId]: updatedStepData };
+                              const updatedSteps = { ...(localParsedData.steps || {}), [stepId]: updatedStepData };
                               handleStepResultsJsonChange(updatedSteps);
                             }}
                             className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
