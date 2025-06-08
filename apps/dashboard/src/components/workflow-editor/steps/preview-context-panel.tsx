@@ -106,6 +106,7 @@ export function PreviewContextPanel({
   const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
   const [errors, setErrors] = useState<ValidationErrors>({ payload: null, subscriber: null });
   const [localParsedData, setLocalParsedData] = useState<ParsedData>(() => parseJsonValue(value));
+  const [hasInitializedSubscriber, setHasInitializedSubscriber] = useState<boolean>(false);
 
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { currentUser } = useAuth();
@@ -183,13 +184,22 @@ export function PreviewContextPanel({
     setOpenSteps((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
   }, []);
 
-  // Load current user's subscriber data (only once per user/environment)
+  // Load current user's subscriber data (only once per user/environment and only if no existing subscriber data)
   useEffect(() => {
     const loadCurrentUserSubscriber = async () => {
-      if (!currentUser?.email || !currentEnvironment) return;
+      if (!currentUser?.email || !currentEnvironment || hasInitializedSubscriber) return;
 
       const userEnvKey = `${currentUser.email}-${currentEnvironment._id}`;
       if (hasLoadedCurrentUserRef.current === userEnvKey) return;
+
+      // Don't load if there's already subscriber data from props
+      const hasPropsSubscriberData = subscriberData && Object.keys(subscriberData).length > 0;
+
+      if (hasPropsSubscriberData) {
+        hasLoadedCurrentUserRef.current = userEnvKey;
+        setHasInitializedSubscriber(true);
+        return;
+      }
 
       try {
         const response = await getSubscribers({
@@ -199,18 +209,25 @@ export function PreviewContextPanel({
         });
 
         if (response.data?.[0]) {
-          const subscriberData = createSubscriberData(response.data[0]);
-          handleSubscriberJsonChange(subscriberData);
+          const newSubscriberData = createSubscriberData(response.data[0]);
+          handleSubscriberJsonChange(newSubscriberData);
         }
       } catch {
         // Silently handle error - user might not have a subscriber record
       } finally {
         hasLoadedCurrentUserRef.current = userEnvKey;
+        setHasInitializedSubscriber(true);
       }
     };
 
     loadCurrentUserSubscriber();
-  }, [currentUser?.email, currentEnvironment?._id, handleSubscriberJsonChange]);
+  }, [
+    currentUser?.email,
+    currentEnvironment?._id,
+    subscriberData,
+    hasInitializedSubscriber,
+    handleSubscriberJsonChange,
+  ]);
 
   const accordionItemClassName =
     'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';
