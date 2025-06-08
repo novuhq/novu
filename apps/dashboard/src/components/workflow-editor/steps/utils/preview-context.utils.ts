@@ -1,4 +1,4 @@
-import { WorkflowResponseDto, ISubscriberResponseDto, StepTypeEnum } from '@novu/shared';
+import { WorkflowResponseDto, ISubscriberResponseDto, StepTypeEnum, IUserEntity } from '@novu/shared';
 import { ParsedData } from '../types/preview-context.types';
 import { STEP_TYPE_ICONS, DEFAULT_STEP_ICON } from '../constants/preview-context.constants';
 
@@ -25,6 +25,20 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto) {
     avatar: subscriber.avatar || '',
     locale: subscriber.locale || 'en_US',
     timezone: subscriber.timezone || '',
+    data: null,
+  };
+}
+
+export function createSubscriberDataFromUser(user: IUserEntity) {
+  return {
+    subscriberId: user.email || user._id,
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    email: user.email || '',
+    phone: '',
+    avatar: user.profilePicture || '',
+    locale: 'en_US',
+    timezone: '',
     data: null,
   };
 }
