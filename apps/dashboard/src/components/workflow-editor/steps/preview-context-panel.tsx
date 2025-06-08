@@ -94,13 +94,7 @@ const createSubscriberData = (subscriber: ISubscriberResponseDto) => ({
   data: null,
 });
 
-export function PreviewContextPanel({
-  workflow,
-  value,
-  onChange,
-  subscriberData = {},
-  currentStepId,
-}: PreviewContextPanelProps) {
+export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
   const [accordionValue, setAccordionValue] = useState<string[]>(['payload', 'subscriber', 'step-results']);
   const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
   const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
@@ -120,11 +114,11 @@ export function PreviewContextPanel({
       const parsed = parseJsonValue(value);
       setLocalParsedData({
         payload: isPayloadSchemaEnabled ? parsed.payload || workflow?.payloadExample || {} : {},
-        subscriber: parsed.subscriber || subscriberData || {},
+        subscriber: parsed.subscriber || {},
         steps: parsed.steps || {},
       });
     }
-  }, [value, isPayloadSchemaEnabled, workflow?.payloadExample, subscriberData]);
+  }, [value, isPayloadSchemaEnabled, workflow?.payloadExample]);
 
   // Generic JSON update handler
   const updateJsonSection = useCallback(
@@ -189,17 +183,10 @@ export function PreviewContextPanel({
     const loadCurrentUserSubscriber = async () => {
       if (!currentUser?.email || !currentEnvironment || hasInitializedSubscriber) return;
 
+      setHasInitializedSubscriber(true);
+
       const userEnvKey = `${currentUser.email}-${currentEnvironment._id}`;
       if (hasLoadedCurrentUserRef.current === userEnvKey) return;
-
-      // Don't load if there's already subscriber data from props
-      const hasPropsSubscriberData = subscriberData && Object.keys(subscriberData).length > 0;
-
-      if (hasPropsSubscriberData) {
-        hasLoadedCurrentUserRef.current = userEnvKey;
-        setHasInitializedSubscriber(true);
-        return;
-      }
 
       try {
         const response = await getSubscribers({
@@ -216,18 +203,11 @@ export function PreviewContextPanel({
         // Silently handle error - user might not have a subscriber record
       } finally {
         hasLoadedCurrentUserRef.current = userEnvKey;
-        setHasInitializedSubscriber(true);
       }
     };
 
-    loadCurrentUserSubscriber();
-  }, [
-    currentUser?.email,
-    currentEnvironment?._id,
-    subscriberData,
-    hasInitializedSubscriber,
-    handleSubscriberJsonChange,
-  ]);
+    // loadCurrentUserSubscriber();
+  }, [currentUser?.email, currentEnvironment?._id, hasInitializedSubscriber, handleSubscriberJsonChange]);
 
   const accordionItemClassName =
     'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';

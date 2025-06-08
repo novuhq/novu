@@ -115,8 +115,11 @@ export class PayloadMergerService {
       );
     }
 
-    if (isV2TemplateEditorEnabled && !mergedPayload.subscriber) {
-      mergedPayload.subscriber = this.mockDataGenerator.createFullSubscriberObject();
+    if (isV2TemplateEditorEnabled) {
+      const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
+      const userSubscriberData = (mergedPayload.subscriber as Record<string, unknown>) || {};
+
+      mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
     }
 
     if (isV2TemplateEditorEnabled) {
@@ -144,8 +147,11 @@ export class PayloadMergerService {
       finalPayload = payloadExample;
     }
 
-    if (isV2TemplateEditorEnabled && !finalPayload.subscriber) {
-      finalPayload.subscriber = this.mockDataGenerator.createFullSubscriberObject();
+    if (isV2TemplateEditorEnabled) {
+      const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
+      const userSubscriberData = (finalPayload.subscriber as Record<string, unknown>) || {};
+
+      finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
     }
 
     if (isV2TemplateEditorEnabled) {
