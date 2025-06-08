@@ -2,6 +2,8 @@ import { validateEnhancedDigestFilters, getFirstFilterAndItsArgs } from '@/compo
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
 
+export const DEFAULT_VARIABLE_PILL_HEIGHT = 18;
+
 export class VariablePillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;
   private tooltipElement: HTMLElement | null = null;
@@ -72,7 +74,7 @@ export class VariablePillWidget extends WidgetType {
       fontFamily: 'var(--font-code)',
       display: 'inline-flex',
       alignItems: 'center',
-      height: '18px',
+      height: `${DEFAULT_VARIABLE_PILL_HEIGHT}px`,
       lineHeight: 'inherit',
       fontSize: 'max(12px, calc(1em - 3px))',
       cursor: 'pointer',

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import { createHash } from 'crypto';
 import { differenceInHours } from 'date-fns';
 import {
@@ -13,6 +19,7 @@ import {
   shortId,
   UpsertControlValuesUseCase,
   UpsertControlValuesCommand,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -35,9 +42,11 @@ import {
   WorkflowOriginEnum,
   StepTypeEnum,
   PreferencesTypeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
+import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
@@ -76,14 +85,19 @@ export class Session {
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @LogDecorator()
   async execute(command: SessionCommand): Promise<SubscriberSessionResponseDto> {
-    const applicationIdentifier = await this.getApplicationIdentifier(command);
+    this.validateRequestData(command.requestData);
+
+    const subscriber = this.buildPlatformSubscriber(command.requestData);
+    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData);
+
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(applicationIdentifier);
     if (!environment) {
       throw new BadRequestException('Please provide a valid application identifier');
@@ -106,45 +120,49 @@ export class Session {
     if (inAppIntegration.credentials.hmac) {
       validateHmacEncryption({
         apiKey: environment.apiKeys[0].key,
-        subscriberId: command.subscriber.subscriberId,
-        subscriberHash: command.subscriberHash,
+        subscriberId: subscriber.subscriberId,
+        subscriberHash: command.requestData.subscriberHash,
       });
     }
 
-    const subscriber = await this.createSubscriber.execute(
+    const subscriberEntity = await this.createSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId: environment._id,
         organizationId: environment._organizationId,
-        subscriberId: command.subscriber.subscriberId,
-        firstName: command.subscriber.firstName,
-        lastName: command.subscriber.lastName,
-        phone: command.subscriber.phone,
-        email: command.subscriber.email,
-        avatar: command.subscriber.avatar,
-        data: command.subscriber.data as CustomDataType,
-        timezone: command.subscriber.timezone,
-        allowUpdate: isHmacValid(environment.apiKeys[0].key, command.subscriber.subscriberId, command.subscriberHash),
+        subscriberId: subscriber.subscriberId,
+        firstName: subscriber.firstName,
+        lastName: subscriber.lastName,
+        phone: subscriber.phone,
+        email: subscriber.email,
+        avatar: subscriber.avatar,
+        data: subscriber.data as CustomDataType,
+        timezone: subscriber.timezone,
+        allowUpdate: isHmacValid(
+          environment.apiKeys[0].key,
+          subscriber.subscriberId,
+          command.requestData.subscriberHash
+        ),
       })
     );
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
       _organization: environment._organizationId,
       environmentName: environment.name,
-      _subscriber: subscriber._id,
-      origin: command.applicationIdentifier ? command.origin : 'keyless',
+      _subscriber: subscriberEntity._id,
+      origin: command.requestData.applicationIdentifier ? command.origin : 'keyless',
     });
 
     const { data } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
         environmentId: environment._id,
-        subscriberId: command.subscriber.subscriberId,
+        subscriberId: subscriber.subscriberId,
         filters: [{ read: false, snoozed: false }],
       })
     );
     const [{ count: totalUnreadCount }] = data;
 
-    const token = await this.authService.getSubscriberWidgetToken(subscriber);
+    const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
 
     const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
       GetOrganizationSettingsCommand.create({
@@ -189,15 +207,68 @@ export class Session {
     };
   }
 
-  private async getApplicationIdentifier(command: SessionCommand): Promise<string> {
-    const isKeylessInitialize = !command.applicationIdentifier;
-    const isKeyless = command.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
-    const isKeylessExpired = isKeyless ? await this.isKeylessExpired(command.applicationIdentifier) : false;
+  private validateRequestData(requestData: SubscriberSessionRequestDto): void {
+    if (!requestData.applicationIdentifier && this.extractSubscriberInfo(requestData, true)?.subscriberId) {
+      throw new UnprocessableEntityException(
+        'A valid application identifier is required when providing subscriber information'
+      );
+    }
+  }
+
+  private buildPlatformSubscriber(requestData: SubscriberSessionRequestDto): SubscriberDto {
+    if (!requestData.applicationIdentifier || this.isKeylessApplication(requestData.applicationIdentifier)) {
+      return { subscriberId: 'keyless-subscriber-id' };
+    }
+
+    return this.extractSubscriberInfo(requestData);
+  }
+
+  private isKeylessApplication(applicationIdentifier: string): boolean {
+    return applicationIdentifier.startsWith(this.KEYLESS_ENVIRONMENT_PREFIX);
+  }
+
+  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto): SubscriberDto;
+  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto, safe: true): SubscriberDto | null;
+  private extractSubscriberInfo(requestData: SubscriberSessionRequestDto, safe: boolean = false): SubscriberDto | null {
+    const subscriber: SubscriberDto | null = this.normalizeSubscriber(requestData.subscriber);
+
+    if (subscriber?.subscriberId) {
+      return subscriber;
+    }
+
+    // TODO: Backward compatibility support - remove in future versions (see NV-5801)
+    if (requestData.subscriberId) {
+      return { subscriberId: requestData.subscriberId };
+    }
+
+    if (safe) {
+      return null;
+    }
+
+    throw new UnprocessableEntityException('Subscriber ID is required');
+  }
+
+  private normalizeSubscriber(subscriber: string | SubscriberDto | null | undefined): SubscriberDto | null {
+    if (!subscriber) {
+      return null;
+    }
+
+    if (typeof subscriber === 'string') {
+      return { subscriberId: subscriber };
+    }
+
+    return subscriber;
+  }
+
+  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto): Promise<string> {
+    const isKeylessInitialize = !requestData.applicationIdentifier;
+    const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
+    const isKeylessExpired = isKeyless ? await this.isKeylessExpired(requestData.applicationIdentifier) : false;
 
     const applicationIdentifier =
       isKeylessInitialize || isKeylessExpired
         ? (await this.processKeyless()).identifier
-        : command.applicationIdentifier;
+        : requestData.applicationIdentifier;
 
     return applicationIdentifier;
   }
@@ -267,6 +338,16 @@ export class Session {
       throw new InternalServerErrorException('Keyless Organization not found');
     }
 
+    const isKeylessEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED,
+      defaultValue: false,
+      organization,
+    });
+
+    if (!isKeylessEnabled) {
+      throw new BadRequestException('Keyless environment creation is currently disabled.');
+    }
+
     const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);
 
     if (!user) {
@@ -304,7 +385,11 @@ export class Session {
 
     await this.createWorkflowsUsecase(environment._id, environment._organizationId, user._id);
 
-    return this.convertEnvironmentEntityToDto(environment);
+    const environmentDto = this.convertEnvironmentEntityToDto(environment);
+
+    this.logger.info('Keyless environment created successfully');
+
+    return environmentDto;
   }
 
   async createWorkflowsUsecase(environmentId: string, organizationId: string, userId: string) {

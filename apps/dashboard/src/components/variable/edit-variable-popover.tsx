@@ -179,7 +179,13 @@ export const EditVariablePopover = ({
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="min-w-[275px] max-w-[275px] p-0" align="start" onOpenAutoFocus={handlePopoverOpen}>
+      <PopoverContent
+        className="min-w-[275px] max-w-[275px] overflow-x-hidden p-0"
+        align="start"
+        side="bottom"
+        updatePositionStrategy="optimized"
+        onOpenAutoFocus={handlePopoverOpen}
+      >
         <form
           onClick={(event) => {
             event.preventDefault();

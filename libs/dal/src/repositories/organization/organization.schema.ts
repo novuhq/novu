@@ -11,6 +11,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
     apiServiceLevel: {
       type: Schema.Types.String,
       enum: ApiServiceLevelEnum,
+      default: ApiServiceLevelEnum.FREE,
     },
     branding: {
       fontColor: Schema.Types.String,

@@ -271,6 +271,7 @@ const WorkflowCanvasChild = ({
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
+
       {currentWorkflow &&
         currentEnvironment?.name === EnvironmentEnum.DEVELOPMENT &&
         currentWorkflow.origin === WorkflowOriginEnum.NOVU_CLOUD &&
