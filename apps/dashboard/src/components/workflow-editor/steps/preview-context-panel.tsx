@@ -2,9 +2,12 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { WorkflowResponseDto, StepTypeEnum } from '@novu/shared';
-import { useCallback, useMemo, useState } from 'react';
+import { WorkflowResponseDto, StepTypeEnum, ISubscriberResponseDto } from '@novu/shared';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { useAuth } from '@/context/auth/hooks';
+import { useEnvironment } from '@/context/environment/hooks';
+import { getSubscribers } from '@/api/subscribers';
 import {
   RiRefreshLine,
   RiMailLine,
@@ -17,6 +20,7 @@ import {
   RiInformationLine,
 } from 'react-icons/ri';
 import { EditableJsonViewer } from './shared/editable-json-viewer/editable-json-viewer';
+import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
 
 type PreviewContextPanelProps = {
   workflow?: WorkflowResponseDto;
@@ -68,10 +72,14 @@ export function PreviewContextPanel({
   const [subscriberJsonData, setSubscriberJsonData] = useState<any>({});
   const [subscriberError, setSubscriberError] = useState<string | null>(null);
   const [stepResultsJsonData, setStepResultsJsonData] = useState<any>({});
+  const [subscriberSearchValue, setSubscriberSearchValue] = useState<string>('');
+  const [hasLoadedCurrentUser, setHasLoadedCurrentUser] = useState<boolean>(false);
 
   const [accordionValue, setAccordionValue] = useState<string[]>(['payload', 'subscriber', 'step-results']);
   const [openSteps, setOpenSteps] = useState<Record<string, boolean>>({});
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+  const { currentUser } = useAuth();
+  const { currentEnvironment } = useEnvironment();
 
   // Parse JSON data for all sections
   useMemo(() => {
@@ -180,6 +188,88 @@ export function PreviewContextPanel({
     [onChange, value]
   );
 
+  const handleSubscriberSelection = useCallback(
+    (subscriber: ISubscriberResponseDto) => {
+      // Create subscriber data object from the selected subscriber
+      const subscriberData = {
+        subscriberId: subscriber.subscriberId,
+        firstName: subscriber.firstName || '',
+        lastName: subscriber.lastName || '',
+        email: subscriber.email || '',
+        phone: subscriber.phone || '',
+        avatar: subscriber.avatar || '',
+        locale: subscriber.locale || 'en',
+        timezone: subscriber.timezone || '',
+        data: null,
+      };
+
+      // Update the subscriber JSON data
+      handleSubscriberJsonChange(subscriberData);
+
+      // Clear the search input
+      setSubscriberSearchValue('');
+    },
+    [handleSubscriberJsonChange]
+  );
+
+  // Reset loading flag when user or environment changes
+  useEffect(() => {
+    setHasLoadedCurrentUser(false);
+  }, [currentUser?.email, currentEnvironment?._id]);
+
+  // Load current user's subscriber data by default
+  useEffect(() => {
+    const loadCurrentUserSubscriber = async () => {
+      if (!currentUser?.email || !currentEnvironment || hasLoadedCurrentUser) {
+        return;
+      }
+
+      // Only load if there's no existing subscriber data or it's empty
+      const currentData = JSON.parse(value || '{}');
+      const existingSubscriberData = currentData.subscriber || {};
+      const hasExistingData =
+        Object.keys(existingSubscriberData).length > 0 &&
+        (existingSubscriberData.subscriberId || existingSubscriberData.email);
+
+      if (hasExistingData) {
+        setHasLoadedCurrentUser(true);
+        return;
+      }
+
+      try {
+        const response = await getSubscribers({
+          environment: currentEnvironment,
+          email: currentUser.email,
+          limit: 1,
+        });
+
+        if (response.data && response.data.length > 0) {
+          const subscriber = response.data[0];
+          const subscriberData = {
+            subscriberId: subscriber.subscriberId,
+            firstName: subscriber.firstName || '',
+            lastName: subscriber.lastName || '',
+            email: subscriber.email || '',
+            phone: subscriber.phone || '',
+            avatar: subscriber.avatar || '',
+            locale: subscriber.locale || 'en',
+            timezone: subscriber.timezone || '',
+            data: null,
+          };
+
+          handleSubscriberJsonChange(subscriberData);
+        }
+
+        setHasLoadedCurrentUser(true);
+      } catch (error) {
+        // Silently handle error - user might not have a subscriber record
+        setHasLoadedCurrentUser(true);
+      }
+    };
+
+    loadCurrentUserSubscriber();
+  }, [currentUser?.email, currentEnvironment, hasLoadedCurrentUser, handleSubscriberJsonChange, value]);
+
   const accordionItemClassName =
     'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4';
   const accordionTriggerClassName = 'text-label-xs';
@@ -234,6 +324,13 @@ export function PreviewContextPanel({
           </div>
         </AccordionTrigger>
         <AccordionContent className="flex flex-col gap-2">
+          <SubscriberAutocomplete
+            value={subscriberSearchValue}
+            onChange={setSubscriberSearchValue}
+            onSelectSubscriber={handleSubscriberSelection}
+            size="xs"
+            className="w-full"
+          />
           <div className="flex flex-1 flex-col gap-2 overflow-auto">
             <EditableJsonViewer
               value={subscriberJsonData}
@@ -241,6 +338,10 @@ export function PreviewContextPanel({
               className="border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid"
             />
             {subscriberError && <p className="text-destructive text-xs">{subscriberError}</p>}
+          </div>
+          <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
+            <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+            <span>Changes here only affect the preview and won't be saved to the subscriber.</span>
           </div>
         </AccordionContent>
       </AccordionItem>
