@@ -37,6 +37,8 @@ import { useForm } from 'react-hook-form';
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { InlineToast } from '../../primitives/inline-toast';
+import { StepIssuesPanel } from '@/components/workflow-editor/steps/step-issues-panel';
+import { countStepIssues } from '@/components/workflow-editor/step-utils';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -280,39 +282,49 @@ export function StepEditorLayout({ workflow, step, className }: StepEditorLayout
           <div className="absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
         </ResizableHandle>
 
-        <ResizablePanel defaultSize={50} minSize={30} className="h-full">
-          <div className="flex h-full flex-col border-r border-neutral-200">
-            <div className="border-b border-neutral-200 p-3">
-              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
-                <StepIcon stepType={step.type} />
-                {editorTitle}
-              </h3>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3">{editorContent}</div>
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle className="group relative w-px bg-transparent transition-colors duration-200 after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 hover:bg-neutral-300">
-          <div className="absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
-        </ResizableHandle>
-
-        <ResizablePanel defaultSize={25} minSize={20} maxSize={40} className="h-full">
+        <ResizablePanel defaultSize={75} minSize={60} className="h-full">
           <div className="flex h-full flex-col">
-            <div className="border-b border-neutral-200 p-3">
-              <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
-                <RiEyeLine className="size-3.5" />
-                Preview
-              </h3>
+            <div className="flex-1">
+              <ResizablePanelGroup direction="horizontal" className="h-full">
+                <ResizablePanel defaultSize={67} minSize={40} className="h-full">
+                  <div className="flex h-full flex-col border-r border-neutral-200">
+                    <div className="border-b border-neutral-200 p-3">
+                      <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
+                        <StepIcon stepType={step.type} />
+                        {editorTitle}
+                      </h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-3">{editorContent}</div>
+                  </div>
+                </ResizablePanel>
+
+                <ResizableHandle className="group relative w-px bg-transparent transition-colors duration-200 after:absolute after:inset-y-0 after:left-1/2 after:w-3 after:-translate-x-1/2 hover:bg-neutral-300">
+                  <div className="absolute left-1/2 top-1/2 h-8 w-1 -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-400 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                </ResizableHandle>
+
+                <ResizablePanel defaultSize={33} minSize={20} className="h-full">
+                  <div className="flex h-full flex-col">
+                    <div className="border-b border-neutral-200 p-3">
+                      <h3 className="text-label-sm text-text-strong flex items-center gap-2 font-medium">
+                        <RiEyeLine className="size-3.5" />
+                        Preview
+                      </h3>
+                    </div>
+                    <div
+                      className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
+                      style={{
+                        backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
+                        backgroundSize: '20px 20px',
+                      }}
+                    >
+                      {previewContent}
+                    </div>
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
             </div>
-            <div
-              className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
-              style={{
-                backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
-                backgroundSize: '20px 20px',
-              }}
-            >
-              {previewContent}
-            </div>
+
+            <StepIssuesPanel step={step} />
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
