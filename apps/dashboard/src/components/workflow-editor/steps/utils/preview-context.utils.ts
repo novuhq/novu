@@ -41,5 +41,6 @@ export function getStepType(workflow?: WorkflowResponseDto, stepId?: string): St
 
 export function getStepTypeIcon(stepType?: StepTypeEnum) {
   if (!stepType) return DEFAULT_STEP_ICON;
+
   return STEP_TYPE_ICONS[stepType] || DEFAULT_STEP_ICON;
 }

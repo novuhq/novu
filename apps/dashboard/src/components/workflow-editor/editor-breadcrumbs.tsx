@@ -22,6 +22,7 @@ import { CompactButton } from '../primitives/button-compact';
 import { useWorkflow } from './workflow-provider';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
+import { getStepTypeIcon } from './steps/utils/preview-context.utils';
 
 export const EditorBreadcrumbs = () => {
   const { workflowSlug = '', stepSlug = '' } = useParams<{ workflowSlug: string; stepSlug?: string }>();
@@ -136,7 +137,8 @@ export const EditorBreadcrumbs = () => {
             <BreadcrumbItem>
               <BreadcrumbPage className="flex items-center gap-1">
                 {(() => {
-                  const Icon = STEP_TYPE_TO_ICON[step.type];
+                  const Icon = getStepTypeIcon(step.type);
+
                   return <Icon className="size-3.5" />;
                 })()}
                 <div className="flex max-w-[32ch]">

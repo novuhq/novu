@@ -1,14 +1,16 @@
 import { StepTypeEnum, WorkflowOriginEnum, WorkflowResponseDto, StepResponseDto } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
-import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
+import { getStepTypeIcon } from './preview-context.utils';
 
 export function StepIcon({ stepType }: { stepType: StepTypeEnum }) {
-  const Icon = STEP_TYPE_TO_ICON[stepType];
+  const Icon = getStepTypeIcon(stepType);
+
   return <Icon className="size-3.5" />;
 }
 
 export function getEditorTitle(stepType: StepTypeEnum): string {
   const label = STEP_TYPE_LABELS[stepType];
+
   return `${label} Editor`;
 }
 
