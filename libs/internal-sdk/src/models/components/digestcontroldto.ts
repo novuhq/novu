@@ -15,11 +15,6 @@ import {
 } from "./lookbackwindowdto.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type DigestControlDtoSkip = {};
-
-/**
  * The type of digest strategy. Determines which fields are applicable.
  */
 export const DigestControlDtoType = {
@@ -51,7 +46,7 @@ export type DigestControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: DigestControlDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * The type of digest strategy. Determines which fields are applicable.
    */
@@ -77,54 +72,6 @@ export type DigestControlDto = {
    */
   digestKey?: string | undefined;
 };
-
-/** @internal */
-export const DigestControlDtoSkip$inboundSchema: z.ZodType<
-  DigestControlDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DigestControlDtoSkip$Outbound = {};
-
-/** @internal */
-export const DigestControlDtoSkip$outboundSchema: z.ZodType<
-  DigestControlDtoSkip$Outbound,
-  z.ZodTypeDef,
-  DigestControlDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestControlDtoSkip$ {
-  /** @deprecated use `DigestControlDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = DigestControlDtoSkip$inboundSchema;
-  /** @deprecated use `DigestControlDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = DigestControlDtoSkip$outboundSchema;
-  /** @deprecated use `DigestControlDtoSkip$Outbound` instead. */
-  export type Outbound = DigestControlDtoSkip$Outbound;
-}
-
-export function digestControlDtoSkipToJSON(
-  digestControlDtoSkip: DigestControlDtoSkip,
-): string {
-  return JSON.stringify(
-    DigestControlDtoSkip$outboundSchema.parse(digestControlDtoSkip),
-  );
-}
-
-export function digestControlDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<DigestControlDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DigestControlDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DigestControlDtoSkip' from JSON`,
-  );
-}
 
 /** @internal */
 export const DigestControlDtoType$inboundSchema: z.ZodNativeEnum<
@@ -174,7 +121,7 @@ export const DigestControlDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => DigestControlDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: DigestControlDtoType$inboundSchema.optional(),
   amount: z.number().optional(),
   unit: DigestControlDtoUnit$inboundSchema.optional(),
@@ -185,7 +132,7 @@ export const DigestControlDto$inboundSchema: z.ZodType<
 
 /** @internal */
 export type DigestControlDto$Outbound = {
-  skip?: DigestControlDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   type?: string | undefined;
   amount?: number | undefined;
   unit?: string | undefined;
@@ -200,7 +147,7 @@ export const DigestControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DigestControlDto
 > = z.object({
-  skip: z.lazy(() => DigestControlDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: DigestControlDtoType$outboundSchema.optional(),
   amount: z.number().optional(),
   unit: DigestControlDtoUnit$outboundSchema.optional(),

@@ -26,18 +26,13 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type InAppStepUpsertDtoSkip = {};
-
-/**
  * Control values for the In-App step
  */
 export type ControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: InAppStepUpsertDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content/body of the in-app message. Required if subject is empty.
    */
@@ -92,60 +87,12 @@ export type InAppStepUpsertDto = {
 };
 
 /** @internal */
-export const InAppStepUpsertDtoSkip$inboundSchema: z.ZodType<
-  InAppStepUpsertDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppStepUpsertDtoSkip$Outbound = {};
-
-/** @internal */
-export const InAppStepUpsertDtoSkip$outboundSchema: z.ZodType<
-  InAppStepUpsertDtoSkip$Outbound,
-  z.ZodTypeDef,
-  InAppStepUpsertDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppStepUpsertDtoSkip$ {
-  /** @deprecated use `InAppStepUpsertDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = InAppStepUpsertDtoSkip$inboundSchema;
-  /** @deprecated use `InAppStepUpsertDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = InAppStepUpsertDtoSkip$outboundSchema;
-  /** @deprecated use `InAppStepUpsertDtoSkip$Outbound` instead. */
-  export type Outbound = InAppStepUpsertDtoSkip$Outbound;
-}
-
-export function inAppStepUpsertDtoSkipToJSON(
-  inAppStepUpsertDtoSkip: InAppStepUpsertDtoSkip,
-): string {
-  return JSON.stringify(
-    InAppStepUpsertDtoSkip$outboundSchema.parse(inAppStepUpsertDtoSkip),
-  );
-}
-
-export function inAppStepUpsertDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppStepUpsertDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => InAppStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppStepUpsertDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const ControlValues$inboundSchema: z.ZodType<
   ControlValues,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => InAppStepUpsertDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),
@@ -158,7 +105,7 @@ export const ControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type ControlValues$Outbound = {
-  skip?: InAppStepUpsertDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
   subject?: string | undefined;
   avatar?: string | undefined;
@@ -175,7 +122,7 @@ export const ControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ControlValues
 > = z.object({
-  skip: z.lazy(() => InAppStepUpsertDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),

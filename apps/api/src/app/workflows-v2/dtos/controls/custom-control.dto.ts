@@ -5,6 +5,7 @@ export class CustomControlDto {
   @ApiPropertyOptional({
     description: 'Custom control values for the step.',
     type: 'object',
+    additionalProperties: true,
   })
   @IsObject()
   @IsOptional()

@@ -8,7 +8,10 @@ export class EmailControlDto extends SkipControlDto {
   @IsOptional()
   subject: string;
 
-  @ApiProperty({ description: 'Body content of the email.', default: '' })
+  @ApiProperty({
+    description: 'Body content of the email, either a valid Maily JSON object, or html string.',
+    default: '',
+  })
   @IsString()
   body: string = '';
 

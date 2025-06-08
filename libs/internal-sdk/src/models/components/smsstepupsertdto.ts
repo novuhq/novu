@@ -14,18 +14,13 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type SmsStepUpsertDtoSkip = {};
-
-/**
  * Control values for the SMS step
  */
 export type SmsStepUpsertDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: SmsStepUpsertDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content of the SMS message.
    */
@@ -52,66 +47,18 @@ export type SmsStepUpsertDto = {
 };
 
 /** @internal */
-export const SmsStepUpsertDtoSkip$inboundSchema: z.ZodType<
-  SmsStepUpsertDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type SmsStepUpsertDtoSkip$Outbound = {};
-
-/** @internal */
-export const SmsStepUpsertDtoSkip$outboundSchema: z.ZodType<
-  SmsStepUpsertDtoSkip$Outbound,
-  z.ZodTypeDef,
-  SmsStepUpsertDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepUpsertDtoSkip$ {
-  /** @deprecated use `SmsStepUpsertDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = SmsStepUpsertDtoSkip$inboundSchema;
-  /** @deprecated use `SmsStepUpsertDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = SmsStepUpsertDtoSkip$outboundSchema;
-  /** @deprecated use `SmsStepUpsertDtoSkip$Outbound` instead. */
-  export type Outbound = SmsStepUpsertDtoSkip$Outbound;
-}
-
-export function smsStepUpsertDtoSkipToJSON(
-  smsStepUpsertDtoSkip: SmsStepUpsertDtoSkip,
-): string {
-  return JSON.stringify(
-    SmsStepUpsertDtoSkip$outboundSchema.parse(smsStepUpsertDtoSkip),
-  );
-}
-
-export function smsStepUpsertDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<SmsStepUpsertDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SmsStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsStepUpsertDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const SmsStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   SmsStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => SmsStepUpsertDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 
 /** @internal */
 export type SmsStepUpsertDtoControlValues$Outbound = {
-  skip?: SmsStepUpsertDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
 };
 
@@ -121,7 +68,7 @@ export const SmsStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   SmsStepUpsertDtoControlValues
 > = z.object({
-  skip: z.lazy(() => SmsStepUpsertDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 

@@ -34,18 +34,13 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type PushStepResponseDtoSkip = {};
-
-/**
  * Control values for the push step
  */
 export type PushStepResponseDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: PushStepResponseDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Subject/title of the push notification.
    */
@@ -109,61 +104,13 @@ export type PushStepResponseDto = {
 };
 
 /** @internal */
-export const PushStepResponseDtoSkip$inboundSchema: z.ZodType<
-  PushStepResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type PushStepResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const PushStepResponseDtoSkip$outboundSchema: z.ZodType<
-  PushStepResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  PushStepResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushStepResponseDtoSkip$ {
-  /** @deprecated use `PushStepResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = PushStepResponseDtoSkip$inboundSchema;
-  /** @deprecated use `PushStepResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = PushStepResponseDtoSkip$outboundSchema;
-  /** @deprecated use `PushStepResponseDtoSkip$Outbound` instead. */
-  export type Outbound = PushStepResponseDtoSkip$Outbound;
-}
-
-export function pushStepResponseDtoSkipToJSON(
-  pushStepResponseDtoSkip: PushStepResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    PushStepResponseDtoSkip$outboundSchema.parse(pushStepResponseDtoSkip),
-  );
-}
-
-export function pushStepResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<PushStepResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PushStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PushStepResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const PushStepResponseDtoControlValues$inboundSchema: z.ZodType<
   PushStepResponseDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = collectExtraKeys$(
   z.object({
-    skip: z.lazy(() => PushStepResponseDtoSkip$inboundSchema).optional(),
+    skip: z.record(z.any()).optional(),
     subject: z.string().optional(),
     body: z.string().optional(),
   }).catchall(z.any()),
@@ -173,7 +120,7 @@ export const PushStepResponseDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type PushStepResponseDtoControlValues$Outbound = {
-  skip?: PushStepResponseDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   subject?: string | undefined;
   body?: string | undefined;
   [additionalProperties: string]: unknown;
@@ -185,7 +132,7 @@ export const PushStepResponseDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PushStepResponseDtoControlValues
 > = z.object({
-  skip: z.lazy(() => PushStepResponseDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
   additionalProperties: z.record(z.any()),

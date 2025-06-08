@@ -7,58 +7,12 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Custom control values for the step.
- */
-export type Custom = {};
-
 export type CustomControlDto = {
   /**
    * Custom control values for the step.
    */
-  custom?: Custom | undefined;
+  custom?: { [k: string]: any } | undefined;
 };
-
-/** @internal */
-export const Custom$inboundSchema: z.ZodType<Custom, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Custom$Outbound = {};
-
-/** @internal */
-export const Custom$outboundSchema: z.ZodType<
-  Custom$Outbound,
-  z.ZodTypeDef,
-  Custom
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Custom$ {
-  /** @deprecated use `Custom$inboundSchema` instead. */
-  export const inboundSchema = Custom$inboundSchema;
-  /** @deprecated use `Custom$outboundSchema` instead. */
-  export const outboundSchema = Custom$outboundSchema;
-  /** @deprecated use `Custom$Outbound` instead. */
-  export type Outbound = Custom$Outbound;
-}
-
-export function customToJSON(custom: Custom): string {
-  return JSON.stringify(Custom$outboundSchema.parse(custom));
-}
-
-export function customFromJSON(
-  jsonString: string,
-): SafeParseResult<Custom, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Custom$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Custom' from JSON`,
-  );
-}
 
 /** @internal */
 export const CustomControlDto$inboundSchema: z.ZodType<
@@ -66,12 +20,12 @@ export const CustomControlDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  custom: z.lazy(() => Custom$inboundSchema).optional(),
+  custom: z.record(z.any()).optional(),
 });
 
 /** @internal */
 export type CustomControlDto$Outbound = {
-  custom?: Custom$Outbound | undefined;
+  custom?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -80,7 +34,7 @@ export const CustomControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   CustomControlDto
 > = z.object({
-  custom: z.lazy(() => Custom$outboundSchema).optional(),
+  custom: z.record(z.any()).optional(),
 });
 
 /**

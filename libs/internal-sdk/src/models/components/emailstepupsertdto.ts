@@ -14,24 +14,19 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type EmailStepUpsertDtoSkip = {};
-
-/**
  * Control values for the Email step
  */
 export type EmailStepUpsertDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: EmailStepUpsertDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Subject of the email.
    */
   subject: string;
   /**
-   * Body content of the email.
+   * Body content of the email, either a valid Maily JSON object, or html string.
    */
   body?: string | undefined;
   /**
@@ -60,60 +55,12 @@ export type EmailStepUpsertDto = {
 };
 
 /** @internal */
-export const EmailStepUpsertDtoSkip$inboundSchema: z.ZodType<
-  EmailStepUpsertDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type EmailStepUpsertDtoSkip$Outbound = {};
-
-/** @internal */
-export const EmailStepUpsertDtoSkip$outboundSchema: z.ZodType<
-  EmailStepUpsertDtoSkip$Outbound,
-  z.ZodTypeDef,
-  EmailStepUpsertDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepUpsertDtoSkip$ {
-  /** @deprecated use `EmailStepUpsertDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = EmailStepUpsertDtoSkip$inboundSchema;
-  /** @deprecated use `EmailStepUpsertDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = EmailStepUpsertDtoSkip$outboundSchema;
-  /** @deprecated use `EmailStepUpsertDtoSkip$Outbound` instead. */
-  export type Outbound = EmailStepUpsertDtoSkip$Outbound;
-}
-
-export function emailStepUpsertDtoSkipToJSON(
-  emailStepUpsertDtoSkip: EmailStepUpsertDtoSkip,
-): string {
-  return JSON.stringify(
-    EmailStepUpsertDtoSkip$outboundSchema.parse(emailStepUpsertDtoSkip),
-  );
-}
-
-export function emailStepUpsertDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<EmailStepUpsertDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailStepUpsertDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   EmailStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => EmailStepUpsertDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
   disableOutputSanitization: z.boolean().default(false),
@@ -121,7 +68,7 @@ export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type EmailStepUpsertDtoControlValues$Outbound = {
-  skip?: EmailStepUpsertDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   subject: string;
   body: string;
   disableOutputSanitization: boolean;
@@ -133,7 +80,7 @@ export const EmailStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   EmailStepUpsertDtoControlValues
 > = z.object({
-  skip: z.lazy(() => EmailStepUpsertDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
   disableOutputSanitization: z.boolean().default(false),

@@ -14,18 +14,13 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type ChatStepUpsertDtoSkip = {};
-
-/**
  * Control values for the Chat step
  */
 export type ChatStepUpsertDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: ChatStepUpsertDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content of the chat message.
    */
@@ -52,66 +47,18 @@ export type ChatStepUpsertDto = {
 };
 
 /** @internal */
-export const ChatStepUpsertDtoSkip$inboundSchema: z.ZodType<
-  ChatStepUpsertDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ChatStepUpsertDtoSkip$Outbound = {};
-
-/** @internal */
-export const ChatStepUpsertDtoSkip$outboundSchema: z.ZodType<
-  ChatStepUpsertDtoSkip$Outbound,
-  z.ZodTypeDef,
-  ChatStepUpsertDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatStepUpsertDtoSkip$ {
-  /** @deprecated use `ChatStepUpsertDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = ChatStepUpsertDtoSkip$inboundSchema;
-  /** @deprecated use `ChatStepUpsertDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = ChatStepUpsertDtoSkip$outboundSchema;
-  /** @deprecated use `ChatStepUpsertDtoSkip$Outbound` instead. */
-  export type Outbound = ChatStepUpsertDtoSkip$Outbound;
-}
-
-export function chatStepUpsertDtoSkipToJSON(
-  chatStepUpsertDtoSkip: ChatStepUpsertDtoSkip,
-): string {
-  return JSON.stringify(
-    ChatStepUpsertDtoSkip$outboundSchema.parse(chatStepUpsertDtoSkip),
-  );
-}
-
-export function chatStepUpsertDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<ChatStepUpsertDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ChatStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ChatStepUpsertDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const ChatStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   ChatStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => ChatStepUpsertDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 
 /** @internal */
 export type ChatStepUpsertDtoControlValues$Outbound = {
-  skip?: ChatStepUpsertDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
 };
 
@@ -121,7 +68,7 @@ export const ChatStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ChatStepUpsertDtoControlValues
 > = z.object({
-  skip: z.lazy(() => ChatStepUpsertDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 

@@ -41,11 +41,6 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type DigestStepResponseDtoSkip = {};
-
-/**
  * The type of digest strategy. Determines which fields are applicable.
  */
 export const DigestStepResponseDtoType = {
@@ -84,7 +79,7 @@ export type DigestStepResponseDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: DigestStepResponseDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * The type of digest strategy. Determines which fields are applicable.
    */
@@ -164,54 +159,6 @@ export type DigestStepResponseDto = {
 };
 
 /** @internal */
-export const DigestStepResponseDtoSkip$inboundSchema: z.ZodType<
-  DigestStepResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DigestStepResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const DigestStepResponseDtoSkip$outboundSchema: z.ZodType<
-  DigestStepResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  DigestStepResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestStepResponseDtoSkip$ {
-  /** @deprecated use `DigestStepResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = DigestStepResponseDtoSkip$inboundSchema;
-  /** @deprecated use `DigestStepResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = DigestStepResponseDtoSkip$outboundSchema;
-  /** @deprecated use `DigestStepResponseDtoSkip$Outbound` instead. */
-  export type Outbound = DigestStepResponseDtoSkip$Outbound;
-}
-
-export function digestStepResponseDtoSkipToJSON(
-  digestStepResponseDtoSkip: DigestStepResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    DigestStepResponseDtoSkip$outboundSchema.parse(digestStepResponseDtoSkip),
-  );
-}
-
-export function digestStepResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<DigestStepResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DigestStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DigestStepResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const DigestStepResponseDtoType$inboundSchema: z.ZodNativeEnum<
   typeof DigestStepResponseDtoType
 > = z.nativeEnum(DigestStepResponseDtoType);
@@ -260,7 +207,7 @@ export const DigestStepResponseDtoControlValues$inboundSchema: z.ZodType<
   unknown
 > = collectExtraKeys$(
   z.object({
-    skip: z.lazy(() => DigestStepResponseDtoSkip$inboundSchema).optional(),
+    skip: z.record(z.any()).optional(),
     type: DigestStepResponseDtoType$inboundSchema.optional(),
     amount: z.number().optional(),
     unit: DigestStepResponseDtoUnit$inboundSchema.optional(),
@@ -274,7 +221,7 @@ export const DigestStepResponseDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type DigestStepResponseDtoControlValues$Outbound = {
-  skip?: DigestStepResponseDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   type?: string | undefined;
   amount?: number | undefined;
   unit?: string | undefined;
@@ -290,7 +237,7 @@ export const DigestStepResponseDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DigestStepResponseDtoControlValues
 > = z.object({
-  skip: z.lazy(() => DigestStepResponseDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: DigestStepResponseDtoType$outboundSchema.optional(),
   amount: z.number().optional(),
   unit: DigestStepResponseDtoUnit$outboundSchema.optional(),

@@ -34,24 +34,19 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type EmailStepResponseDtoSkip = {};
-
-/**
  * Control values for the email step
  */
 export type EmailStepResponseDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: EmailStepResponseDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Subject of the email.
    */
   subject: string;
   /**
-   * Body content of the email.
+   * Body content of the email, either a valid Maily JSON object, or html string.
    */
   body?: string | undefined;
   /**
@@ -113,61 +108,13 @@ export type EmailStepResponseDto = {
 };
 
 /** @internal */
-export const EmailStepResponseDtoSkip$inboundSchema: z.ZodType<
-  EmailStepResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type EmailStepResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const EmailStepResponseDtoSkip$outboundSchema: z.ZodType<
-  EmailStepResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  EmailStepResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace EmailStepResponseDtoSkip$ {
-  /** @deprecated use `EmailStepResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = EmailStepResponseDtoSkip$inboundSchema;
-  /** @deprecated use `EmailStepResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = EmailStepResponseDtoSkip$outboundSchema;
-  /** @deprecated use `EmailStepResponseDtoSkip$Outbound` instead. */
-  export type Outbound = EmailStepResponseDtoSkip$Outbound;
-}
-
-export function emailStepResponseDtoSkipToJSON(
-  emailStepResponseDtoSkip: EmailStepResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    EmailStepResponseDtoSkip$outboundSchema.parse(emailStepResponseDtoSkip),
-  );
-}
-
-export function emailStepResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<EmailStepResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => EmailStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'EmailStepResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
   EmailStepResponseDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = collectExtraKeys$(
   z.object({
-    skip: z.lazy(() => EmailStepResponseDtoSkip$inboundSchema).optional(),
+    skip: z.record(z.any()).optional(),
     subject: z.string(),
     body: z.string().default(""),
     disableOutputSanitization: z.boolean().default(false),
@@ -178,7 +125,7 @@ export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type EmailStepResponseDtoControlValues$Outbound = {
-  skip?: EmailStepResponseDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   subject: string;
   body: string;
   disableOutputSanitization: boolean;
@@ -191,7 +138,7 @@ export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   EmailStepResponseDtoControlValues
 > = z.object({
-  skip: z.lazy(() => EmailStepResponseDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
   disableOutputSanitization: z.boolean().default(false),

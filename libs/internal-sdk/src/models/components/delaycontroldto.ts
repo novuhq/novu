@@ -9,11 +9,6 @@ import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type DelayControlDtoSkip = {};
-
-/**
  * Type of the delay. Currently only 'regular' is supported by the schema.
  */
 export const Type = {
@@ -44,7 +39,7 @@ export type DelayControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: DelayControlDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Type of the delay. Currently only 'regular' is supported by the schema.
    */
@@ -58,54 +53,6 @@ export type DelayControlDto = {
    */
   unit: DelayControlDtoUnit;
 };
-
-/** @internal */
-export const DelayControlDtoSkip$inboundSchema: z.ZodType<
-  DelayControlDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DelayControlDtoSkip$Outbound = {};
-
-/** @internal */
-export const DelayControlDtoSkip$outboundSchema: z.ZodType<
-  DelayControlDtoSkip$Outbound,
-  z.ZodTypeDef,
-  DelayControlDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayControlDtoSkip$ {
-  /** @deprecated use `DelayControlDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = DelayControlDtoSkip$inboundSchema;
-  /** @deprecated use `DelayControlDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = DelayControlDtoSkip$outboundSchema;
-  /** @deprecated use `DelayControlDtoSkip$Outbound` instead. */
-  export type Outbound = DelayControlDtoSkip$Outbound;
-}
-
-export function delayControlDtoSkipToJSON(
-  delayControlDtoSkip: DelayControlDtoSkip,
-): string {
-  return JSON.stringify(
-    DelayControlDtoSkip$outboundSchema.parse(delayControlDtoSkip),
-  );
-}
-
-export function delayControlDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<DelayControlDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DelayControlDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DelayControlDtoSkip' from JSON`,
-  );
-}
 
 /** @internal */
 export const Type$inboundSchema: z.ZodNativeEnum<typeof Type> = z.nativeEnum(
@@ -154,7 +101,7 @@ export const DelayControlDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => DelayControlDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: Type$inboundSchema.default("regular"),
   amount: z.number(),
   unit: DelayControlDtoUnit$inboundSchema,
@@ -162,7 +109,7 @@ export const DelayControlDto$inboundSchema: z.ZodType<
 
 /** @internal */
 export type DelayControlDto$Outbound = {
-  skip?: DelayControlDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   type: string;
   amount: number;
   unit: string;
@@ -174,7 +121,7 @@ export const DelayControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DelayControlDto
 > = z.object({
-  skip: z.lazy(() => DelayControlDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: Type$outboundSchema.default("regular"),
   amount: z.number(),
   unit: DelayControlDtoUnit$outboundSchema,

@@ -15,11 +15,6 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type DelayStepUpsertDtoSkip = {};
-
-/**
  * Type of the delay. Currently only 'regular' is supported by the schema.
  */
 export const DelayStepUpsertDtoType = {
@@ -53,7 +48,7 @@ export type DelayStepUpsertDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: DelayStepUpsertDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Type of the delay. Currently only 'regular' is supported by the schema.
    */
@@ -86,54 +81,6 @@ export type DelayStepUpsertDto = {
    */
   controlValues?: DelayStepUpsertDtoControlValues | null | undefined;
 };
-
-/** @internal */
-export const DelayStepUpsertDtoSkip$inboundSchema: z.ZodType<
-  DelayStepUpsertDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type DelayStepUpsertDtoSkip$Outbound = {};
-
-/** @internal */
-export const DelayStepUpsertDtoSkip$outboundSchema: z.ZodType<
-  DelayStepUpsertDtoSkip$Outbound,
-  z.ZodTypeDef,
-  DelayStepUpsertDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayStepUpsertDtoSkip$ {
-  /** @deprecated use `DelayStepUpsertDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = DelayStepUpsertDtoSkip$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = DelayStepUpsertDtoSkip$outboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoSkip$Outbound` instead. */
-  export type Outbound = DelayStepUpsertDtoSkip$Outbound;
-}
-
-export function delayStepUpsertDtoSkipToJSON(
-  delayStepUpsertDtoSkip: DelayStepUpsertDtoSkip,
-): string {
-  return JSON.stringify(
-    DelayStepUpsertDtoSkip$outboundSchema.parse(delayStepUpsertDtoSkip),
-  );
-}
-
-export function delayStepUpsertDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<DelayStepUpsertDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => DelayStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'DelayStepUpsertDtoSkip' from JSON`,
-  );
-}
 
 /** @internal */
 export const DelayStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
@@ -183,7 +130,7 @@ export const DelayStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => DelayStepUpsertDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: DelayStepUpsertDtoType$inboundSchema.default("regular"),
   amount: z.number(),
   unit: DelayStepUpsertDtoUnit$inboundSchema,
@@ -191,7 +138,7 @@ export const DelayStepUpsertDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type DelayStepUpsertDtoControlValues$Outbound = {
-  skip?: DelayStepUpsertDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   type: string;
   amount: number;
   unit: string;
@@ -203,7 +150,7 @@ export const DelayStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   DelayStepUpsertDtoControlValues
 > = z.object({
-  skip: z.lazy(() => DelayStepUpsertDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   type: DelayStepUpsertDtoType$outboundSchema.default("regular"),
   amount: z.number(),
   unit: DelayStepUpsertDtoUnit$outboundSchema,

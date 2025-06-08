@@ -7,16 +7,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Filter conditions for skipping the step.
- */
-export type PushControlDtoSkip = {};
-
 export type PushControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: PushControlDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Subject/title of the push notification.
    */
@@ -28,67 +23,19 @@ export type PushControlDto = {
 };
 
 /** @internal */
-export const PushControlDtoSkip$inboundSchema: z.ZodType<
-  PushControlDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type PushControlDtoSkip$Outbound = {};
-
-/** @internal */
-export const PushControlDtoSkip$outboundSchema: z.ZodType<
-  PushControlDtoSkip$Outbound,
-  z.ZodTypeDef,
-  PushControlDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushControlDtoSkip$ {
-  /** @deprecated use `PushControlDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = PushControlDtoSkip$inboundSchema;
-  /** @deprecated use `PushControlDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = PushControlDtoSkip$outboundSchema;
-  /** @deprecated use `PushControlDtoSkip$Outbound` instead. */
-  export type Outbound = PushControlDtoSkip$Outbound;
-}
-
-export function pushControlDtoSkipToJSON(
-  pushControlDtoSkip: PushControlDtoSkip,
-): string {
-  return JSON.stringify(
-    PushControlDtoSkip$outboundSchema.parse(pushControlDtoSkip),
-  );
-}
-
-export function pushControlDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<PushControlDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PushControlDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PushControlDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const PushControlDto$inboundSchema: z.ZodType<
   PushControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => PushControlDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
 });
 
 /** @internal */
 export type PushControlDto$Outbound = {
-  skip?: PushControlDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   subject?: string | undefined;
   body?: string | undefined;
 };
@@ -99,7 +46,7 @@ export const PushControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PushControlDto
 > = z.object({
-  skip: z.lazy(() => PushControlDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
 });

@@ -34,18 +34,13 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type SmsStepResponseDtoSkip = {};
-
-/**
  * Control values for the SMS step
  */
 export type SmsStepResponseDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: SmsStepResponseDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content of the SMS message.
    */
@@ -105,61 +100,13 @@ export type SmsStepResponseDto = {
 };
 
 /** @internal */
-export const SmsStepResponseDtoSkip$inboundSchema: z.ZodType<
-  SmsStepResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type SmsStepResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const SmsStepResponseDtoSkip$outboundSchema: z.ZodType<
-  SmsStepResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  SmsStepResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsStepResponseDtoSkip$ {
-  /** @deprecated use `SmsStepResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = SmsStepResponseDtoSkip$inboundSchema;
-  /** @deprecated use `SmsStepResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = SmsStepResponseDtoSkip$outboundSchema;
-  /** @deprecated use `SmsStepResponseDtoSkip$Outbound` instead. */
-  export type Outbound = SmsStepResponseDtoSkip$Outbound;
-}
-
-export function smsStepResponseDtoSkipToJSON(
-  smsStepResponseDtoSkip: SmsStepResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    SmsStepResponseDtoSkip$outboundSchema.parse(smsStepResponseDtoSkip),
-  );
-}
-
-export function smsStepResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<SmsStepResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SmsStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsStepResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const SmsStepResponseDtoControlValues$inboundSchema: z.ZodType<
   SmsStepResponseDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = collectExtraKeys$(
   z.object({
-    skip: z.lazy(() => SmsStepResponseDtoSkip$inboundSchema).optional(),
+    skip: z.record(z.any()).optional(),
     body: z.string().optional(),
   }).catchall(z.any()),
   "additionalProperties",
@@ -168,7 +115,7 @@ export const SmsStepResponseDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type SmsStepResponseDtoControlValues$Outbound = {
-  skip?: SmsStepResponseDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
   [additionalProperties: string]: unknown;
 };
@@ -179,7 +126,7 @@ export const SmsStepResponseDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   SmsStepResponseDtoControlValues
 > = z.object({
-  skip: z.lazy(() => SmsStepResponseDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {

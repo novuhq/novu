@@ -19,16 +19,11 @@ import {
   RedirectDto$outboundSchema,
 } from "./redirectdto.js";
 
-/**
- * Filter conditions for skipping the step.
- */
-export type Skip = {};
-
 export type InAppControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: Skip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content/body of the in-app message. Required if subject is empty.
    */
@@ -64,50 +59,12 @@ export type InAppControlDto = {
 };
 
 /** @internal */
-export const Skip$inboundSchema: z.ZodType<Skip, z.ZodTypeDef, unknown> = z
-  .object({});
-
-/** @internal */
-export type Skip$Outbound = {};
-
-/** @internal */
-export const Skip$outboundSchema: z.ZodType<Skip$Outbound, z.ZodTypeDef, Skip> =
-  z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace Skip$ {
-  /** @deprecated use `Skip$inboundSchema` instead. */
-  export const inboundSchema = Skip$inboundSchema;
-  /** @deprecated use `Skip$outboundSchema` instead. */
-  export const outboundSchema = Skip$outboundSchema;
-  /** @deprecated use `Skip$Outbound` instead. */
-  export type Outbound = Skip$Outbound;
-}
-
-export function skipToJSON(skip: Skip): string {
-  return JSON.stringify(Skip$outboundSchema.parse(skip));
-}
-
-export function skipFromJSON(
-  jsonString: string,
-): SafeParseResult<Skip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => Skip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Skip' from JSON`,
-  );
-}
-
-/** @internal */
 export const InAppControlDto$inboundSchema: z.ZodType<
   InAppControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => Skip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),
@@ -120,7 +77,7 @@ export const InAppControlDto$inboundSchema: z.ZodType<
 
 /** @internal */
 export type InAppControlDto$Outbound = {
-  skip?: Skip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
   subject?: string | undefined;
   avatar?: string | undefined;
@@ -137,7 +94,7 @@ export const InAppControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   InAppControlDto
 > = z.object({
-  skip: z.lazy(() => Skip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),

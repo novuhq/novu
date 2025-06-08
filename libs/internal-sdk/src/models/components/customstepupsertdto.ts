@@ -14,18 +14,13 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Custom control values for the step.
- */
-export type CustomStepUpsertDtoCustom = {};
-
-/**
  * Control values for the Custom step
  */
 export type CustomStepUpsertDtoControlValues = {
   /**
    * Custom control values for the step.
    */
-  custom?: CustomStepUpsertDtoCustom | undefined;
+  custom?: { [k: string]: any } | undefined;
 };
 
 export type CustomStepUpsertDto = {
@@ -48,65 +43,17 @@ export type CustomStepUpsertDto = {
 };
 
 /** @internal */
-export const CustomStepUpsertDtoCustom$inboundSchema: z.ZodType<
-  CustomStepUpsertDtoCustom,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type CustomStepUpsertDtoCustom$Outbound = {};
-
-/** @internal */
-export const CustomStepUpsertDtoCustom$outboundSchema: z.ZodType<
-  CustomStepUpsertDtoCustom$Outbound,
-  z.ZodTypeDef,
-  CustomStepUpsertDtoCustom
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace CustomStepUpsertDtoCustom$ {
-  /** @deprecated use `CustomStepUpsertDtoCustom$inboundSchema` instead. */
-  export const inboundSchema = CustomStepUpsertDtoCustom$inboundSchema;
-  /** @deprecated use `CustomStepUpsertDtoCustom$outboundSchema` instead. */
-  export const outboundSchema = CustomStepUpsertDtoCustom$outboundSchema;
-  /** @deprecated use `CustomStepUpsertDtoCustom$Outbound` instead. */
-  export type Outbound = CustomStepUpsertDtoCustom$Outbound;
-}
-
-export function customStepUpsertDtoCustomToJSON(
-  customStepUpsertDtoCustom: CustomStepUpsertDtoCustom,
-): string {
-  return JSON.stringify(
-    CustomStepUpsertDtoCustom$outboundSchema.parse(customStepUpsertDtoCustom),
-  );
-}
-
-export function customStepUpsertDtoCustomFromJSON(
-  jsonString: string,
-): SafeParseResult<CustomStepUpsertDtoCustom, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => CustomStepUpsertDtoCustom$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'CustomStepUpsertDtoCustom' from JSON`,
-  );
-}
-
-/** @internal */
 export const CustomStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   CustomStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  custom: z.lazy(() => CustomStepUpsertDtoCustom$inboundSchema).optional(),
+  custom: z.record(z.any()).optional(),
 });
 
 /** @internal */
 export type CustomStepUpsertDtoControlValues$Outbound = {
-  custom?: CustomStepUpsertDtoCustom$Outbound | undefined;
+  custom?: { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -115,7 +62,7 @@ export const CustomStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   CustomStepUpsertDtoControlValues
 > = z.object({
-  custom: z.lazy(() => CustomStepUpsertDtoCustom$outboundSchema).optional(),
+  custom: z.record(z.any()).optional(),
 });
 
 /**

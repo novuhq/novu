@@ -46,18 +46,13 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type InAppStepResponseDtoSkip = {};
-
-/**
  * Control values for the in-app step
  */
 export type InAppStepResponseDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: InAppStepResponseDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content/body of the in-app message. Required if subject is empty.
    */
@@ -145,61 +140,13 @@ export type InAppStepResponseDto = {
 };
 
 /** @internal */
-export const InAppStepResponseDtoSkip$inboundSchema: z.ZodType<
-  InAppStepResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type InAppStepResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const InAppStepResponseDtoSkip$outboundSchema: z.ZodType<
-  InAppStepResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  InAppStepResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace InAppStepResponseDtoSkip$ {
-  /** @deprecated use `InAppStepResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = InAppStepResponseDtoSkip$inboundSchema;
-  /** @deprecated use `InAppStepResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = InAppStepResponseDtoSkip$outboundSchema;
-  /** @deprecated use `InAppStepResponseDtoSkip$Outbound` instead. */
-  export type Outbound = InAppStepResponseDtoSkip$Outbound;
-}
-
-export function inAppStepResponseDtoSkipToJSON(
-  inAppStepResponseDtoSkip: InAppStepResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    InAppStepResponseDtoSkip$outboundSchema.parse(inAppStepResponseDtoSkip),
-  );
-}
-
-export function inAppStepResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<InAppStepResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => InAppStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'InAppStepResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const InAppStepResponseDtoControlValues$inboundSchema: z.ZodType<
   InAppStepResponseDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = collectExtraKeys$(
   z.object({
-    skip: z.lazy(() => InAppStepResponseDtoSkip$inboundSchema).optional(),
+    skip: z.record(z.any()).optional(),
     body: z.string().optional(),
     subject: z.string().optional(),
     avatar: z.string().optional(),
@@ -215,7 +162,7 @@ export const InAppStepResponseDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type InAppStepResponseDtoControlValues$Outbound = {
-  skip?: InAppStepResponseDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
   subject?: string | undefined;
   avatar?: string | undefined;
@@ -233,7 +180,7 @@ export const InAppStepResponseDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   InAppStepResponseDtoControlValues
 > = z.object({
-  skip: z.lazy(() => InAppStepResponseDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   subject: z.string().optional(),
   avatar: z.string().optional(),

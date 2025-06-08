@@ -7,16 +7,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Filter conditions for skipping the step.
- */
-export type SmsControlDtoSkip = {};
-
 export type SmsControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: SmsControlDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content of the SMS message.
    */
@@ -24,66 +19,18 @@ export type SmsControlDto = {
 };
 
 /** @internal */
-export const SmsControlDtoSkip$inboundSchema: z.ZodType<
-  SmsControlDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type SmsControlDtoSkip$Outbound = {};
-
-/** @internal */
-export const SmsControlDtoSkip$outboundSchema: z.ZodType<
-  SmsControlDtoSkip$Outbound,
-  z.ZodTypeDef,
-  SmsControlDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace SmsControlDtoSkip$ {
-  /** @deprecated use `SmsControlDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = SmsControlDtoSkip$inboundSchema;
-  /** @deprecated use `SmsControlDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = SmsControlDtoSkip$outboundSchema;
-  /** @deprecated use `SmsControlDtoSkip$Outbound` instead. */
-  export type Outbound = SmsControlDtoSkip$Outbound;
-}
-
-export function smsControlDtoSkipToJSON(
-  smsControlDtoSkip: SmsControlDtoSkip,
-): string {
-  return JSON.stringify(
-    SmsControlDtoSkip$outboundSchema.parse(smsControlDtoSkip),
-  );
-}
-
-export function smsControlDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<SmsControlDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => SmsControlDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'SmsControlDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const SmsControlDto$inboundSchema: z.ZodType<
   SmsControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => SmsControlDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 
 /** @internal */
 export type SmsControlDto$Outbound = {
-  skip?: SmsControlDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
 };
 
@@ -93,7 +40,7 @@ export const SmsControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   SmsControlDto
 > = z.object({
-  skip: z.lazy(() => SmsControlDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 

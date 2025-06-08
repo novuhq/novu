@@ -7,16 +7,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Filter conditions for skipping the step.
- */
-export type ChatControlDtoSkip = {};
-
 export type ChatControlDto = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: ChatControlDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content of the chat message.
    */
@@ -24,66 +19,18 @@ export type ChatControlDto = {
 };
 
 /** @internal */
-export const ChatControlDtoSkip$inboundSchema: z.ZodType<
-  ChatControlDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ChatControlDtoSkip$Outbound = {};
-
-/** @internal */
-export const ChatControlDtoSkip$outboundSchema: z.ZodType<
-  ChatControlDtoSkip$Outbound,
-  z.ZodTypeDef,
-  ChatControlDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatControlDtoSkip$ {
-  /** @deprecated use `ChatControlDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = ChatControlDtoSkip$inboundSchema;
-  /** @deprecated use `ChatControlDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = ChatControlDtoSkip$outboundSchema;
-  /** @deprecated use `ChatControlDtoSkip$Outbound` instead. */
-  export type Outbound = ChatControlDtoSkip$Outbound;
-}
-
-export function chatControlDtoSkipToJSON(
-  chatControlDtoSkip: ChatControlDtoSkip,
-): string {
-  return JSON.stringify(
-    ChatControlDtoSkip$outboundSchema.parse(chatControlDtoSkip),
-  );
-}
-
-export function chatControlDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<ChatControlDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ChatControlDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ChatControlDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const ChatControlDto$inboundSchema: z.ZodType<
   ChatControlDto,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => ChatControlDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 
 /** @internal */
 export type ChatControlDto$Outbound = {
-  skip?: ChatControlDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
 };
 
@@ -93,7 +40,7 @@ export const ChatControlDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ChatControlDto
 > = z.object({
-  skip: z.lazy(() => ChatControlDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
 });
 

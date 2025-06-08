@@ -34,18 +34,13 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type ChatStepResponseDtoSkip = {};
-
-/**
  * Control values for the chat step
  */
 export type ChatStepResponseDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: ChatStepResponseDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Content of the chat message.
    */
@@ -105,61 +100,13 @@ export type ChatStepResponseDto = {
 };
 
 /** @internal */
-export const ChatStepResponseDtoSkip$inboundSchema: z.ZodType<
-  ChatStepResponseDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type ChatStepResponseDtoSkip$Outbound = {};
-
-/** @internal */
-export const ChatStepResponseDtoSkip$outboundSchema: z.ZodType<
-  ChatStepResponseDtoSkip$Outbound,
-  z.ZodTypeDef,
-  ChatStepResponseDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace ChatStepResponseDtoSkip$ {
-  /** @deprecated use `ChatStepResponseDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = ChatStepResponseDtoSkip$inboundSchema;
-  /** @deprecated use `ChatStepResponseDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = ChatStepResponseDtoSkip$outboundSchema;
-  /** @deprecated use `ChatStepResponseDtoSkip$Outbound` instead. */
-  export type Outbound = ChatStepResponseDtoSkip$Outbound;
-}
-
-export function chatStepResponseDtoSkipToJSON(
-  chatStepResponseDtoSkip: ChatStepResponseDtoSkip,
-): string {
-  return JSON.stringify(
-    ChatStepResponseDtoSkip$outboundSchema.parse(chatStepResponseDtoSkip),
-  );
-}
-
-export function chatStepResponseDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<ChatStepResponseDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => ChatStepResponseDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ChatStepResponseDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
   ChatStepResponseDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = collectExtraKeys$(
   z.object({
-    skip: z.lazy(() => ChatStepResponseDtoSkip$inboundSchema).optional(),
+    skip: z.record(z.any()).optional(),
     body: z.string().optional(),
   }).catchall(z.any()),
   "additionalProperties",
@@ -168,7 +115,7 @@ export const ChatStepResponseDtoControlValues$inboundSchema: z.ZodType<
 
 /** @internal */
 export type ChatStepResponseDtoControlValues$Outbound = {
-  skip?: ChatStepResponseDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   body?: string | undefined;
   [additionalProperties: string]: unknown;
 };
@@ -179,7 +126,7 @@ export const ChatStepResponseDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ChatStepResponseDtoControlValues
 > = z.object({
-  skip: z.lazy(() => ChatStepResponseDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   body: z.string().optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {

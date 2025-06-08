@@ -14,18 +14,13 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Filter conditions for skipping the step.
- */
-export type PushStepUpsertDtoSkip = {};
-
-/**
  * Control values for the Push step
  */
 export type PushStepUpsertDtoControlValues = {
   /**
    * Filter conditions for skipping the step.
    */
-  skip?: PushStepUpsertDtoSkip | undefined;
+  skip?: { [k: string]: any } | undefined;
   /**
    * Subject/title of the push notification.
    */
@@ -56,67 +51,19 @@ export type PushStepUpsertDto = {
 };
 
 /** @internal */
-export const PushStepUpsertDtoSkip$inboundSchema: z.ZodType<
-  PushStepUpsertDtoSkip,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type PushStepUpsertDtoSkip$Outbound = {};
-
-/** @internal */
-export const PushStepUpsertDtoSkip$outboundSchema: z.ZodType<
-  PushStepUpsertDtoSkip$Outbound,
-  z.ZodTypeDef,
-  PushStepUpsertDtoSkip
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PushStepUpsertDtoSkip$ {
-  /** @deprecated use `PushStepUpsertDtoSkip$inboundSchema` instead. */
-  export const inboundSchema = PushStepUpsertDtoSkip$inboundSchema;
-  /** @deprecated use `PushStepUpsertDtoSkip$outboundSchema` instead. */
-  export const outboundSchema = PushStepUpsertDtoSkip$outboundSchema;
-  /** @deprecated use `PushStepUpsertDtoSkip$Outbound` instead. */
-  export type Outbound = PushStepUpsertDtoSkip$Outbound;
-}
-
-export function pushStepUpsertDtoSkipToJSON(
-  pushStepUpsertDtoSkip: PushStepUpsertDtoSkip,
-): string {
-  return JSON.stringify(
-    PushStepUpsertDtoSkip$outboundSchema.parse(pushStepUpsertDtoSkip),
-  );
-}
-
-export function pushStepUpsertDtoSkipFromJSON(
-  jsonString: string,
-): SafeParseResult<PushStepUpsertDtoSkip, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PushStepUpsertDtoSkip$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PushStepUpsertDtoSkip' from JSON`,
-  );
-}
-
-/** @internal */
 export const PushStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   PushStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = z.object({
-  skip: z.lazy(() => PushStepUpsertDtoSkip$inboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
 });
 
 /** @internal */
 export type PushStepUpsertDtoControlValues$Outbound = {
-  skip?: PushStepUpsertDtoSkip$Outbound | undefined;
+  skip?: { [k: string]: any } | undefined;
   subject?: string | undefined;
   body?: string | undefined;
 };
@@ -127,7 +74,7 @@ export const PushStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   PushStepUpsertDtoControlValues
 > = z.object({
-  skip: z.lazy(() => PushStepUpsertDtoSkip$outboundSchema).optional(),
+  skip: z.record(z.any()).optional(),
   subject: z.string().optional(),
   body: z.string().optional(),
 });
