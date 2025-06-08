@@ -14,7 +14,6 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
   const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const hasInitializedSubscriberRef = useRef(false);
-  const initialValueRef = useRef(value);
   const hasLoadedPersistedDataRef = useRef(false);
   const isInitializingRef = useRef(false);
 

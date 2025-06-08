@@ -7,7 +7,7 @@ export type PersistedPreviewData = {
 };
 
 const STORAGE_VERSION = '1.0.0';
-const TTL_DAYS = 30;
+const TTL_DAYS = 90;
 
 export function getStorageKey(workflowId: string, stepId: string, environmentId: string): string {
   return `preview-context-${workflowId}-${stepId}-${environmentId}`;

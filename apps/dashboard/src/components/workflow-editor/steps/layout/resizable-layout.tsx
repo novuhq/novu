@@ -30,7 +30,7 @@ function MainContentPanel({ children, className }: PanelProps) {
 
 function EditorPanel({ children, className }: PanelProps) {
   return (
-    <ResizablePanel defaultSize={67} minSize={40} className="h-full">
+    <ResizablePanel defaultSize={50} minSize={30} className="h-full">
       <div className={cn('flex h-full flex-col border-r border-neutral-200', className)}>{children}</div>
     </ResizablePanel>
   );
@@ -38,7 +38,7 @@ function EditorPanel({ children, className }: PanelProps) {
 
 function PreviewPanel({ children, className }: PanelProps) {
   return (
-    <ResizablePanel defaultSize={33} minSize={20} className="h-full">
+    <ResizablePanel defaultSize={50} minSize={25} className="h-full">
       <div className={cn('flex h-full flex-col', className)}>{children}</div>
     </ResizablePanel>
   );
