@@ -106,7 +106,18 @@ export class CreateVariablesObject {
           payload = this.generateFallbackPayload(step, hasUsedEventsWithPayload);
         }
 
-        step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => ({ payload }));
+        step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (unused, index) => {
+          const eventDate = new Date();
+          eventDate.setDate(eventDate.getDate() - 1);
+          eventDate.setHours(12, 0, 0, 0);
+          eventDate.setMinutes(eventDate.getMinutes() + index); // Slightly different times for each event
+
+          return {
+            id: `example-id-${index + 1}`,
+            time: eventDate.toISOString(),
+            payload,
+          };
+        });
       }
     });
 
