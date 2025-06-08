@@ -10,7 +10,15 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import { ChannelTypeEnum, UserSessionData, PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  UserSessionData,
+  PermissionsEnum,
+  FeatureFlagsKeysEnum,
+  getFeatureForTierAsBoolean,
+  FeatureNameEnum,
+  ApiServiceLevelEnum,
+} from '@novu/shared';
 import {
   CalculateLimitNovuIntegration,
   CalculateLimitNovuIntegrationCommand,
@@ -19,6 +27,7 @@ import {
   RequirePermissions,
 } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
@@ -66,6 +75,7 @@ export class IntegrationsController {
     private setIntegrationAsPrimaryUsecase: SetIntegrationAsPrimary,
     private removeIntegrationUsecase: RemoveIntegration,
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private organizationRepository: CommunityOrganizationRepository,
     private featureFlagService: FeatureFlagsService
   ) {}
 
@@ -313,13 +323,29 @@ export class IntegrationsController {
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
-    const isRbacEnabled = await this.featureFlagService.getFlag({
-      organization: { _id: user.organizationId },
-      user: { _id: user._id },
-      key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
-      defaultValue: false,
+    const organization = await this.organizationRepository.findOne({
+      _id: user.organizationId,
     });
 
-    return isRbacEnabled ? user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE) : true;
+    const [isRbacFlagEnabled, isRbacFeatureEnabled] = await Promise.all([
+      this.featureFlagService.getFlag({
+        organization: { _id: user.organizationId },
+        user: { _id: user._id },
+        key: FeatureFlagsKeysEnum.IS_RBAC_ENABLED,
+        defaultValue: false,
+      }),
+      getFeatureForTierAsBoolean(
+        FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
+        organization?.apiServiceLevel || ApiServiceLevelEnum.FREE
+      ),
+    ]);
+
+    const isRbacEnabled = isRbacFlagEnabled && isRbacFeatureEnabled;
+
+    if (!isRbacEnabled) {
+      return true;
+    }
+
+    return user.permissions.includes(PermissionsEnum.INTEGRATION_WRITE);
   }
 }

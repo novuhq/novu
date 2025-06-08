@@ -12,11 +12,15 @@ const PopoverTrigger = PopoverPrimitive.Trigger;
 const PopoverAnchor = PopoverPrimitive.Anchor;
 
 const PopoverPortal = PopoverPrimitive.Portal;
+
 const PopoverClose = PopoverPrimitive.Close;
+
+export const DEFAULT_SIDE_OFFSET = 4;
+
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> & { portal?: boolean }
->(({ className, align = 'center', portal = true, sideOffset = 4, ...props }, ref) => {
+>(({ className, align = 'center', portal = true, sideOffset = DEFAULT_SIDE_OFFSET, ...props }, ref) => {
   const body = (
     <PopoverPrimitive.Content
       ref={ref}

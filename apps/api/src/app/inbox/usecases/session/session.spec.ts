@@ -13,6 +13,7 @@ import {
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
   PinoLogger,
   SelectIntegration,
   UpsertControlValuesUseCase,
@@ -67,6 +68,7 @@ describe('Session', () => {
   let upsertControlValuesUseCase: sinon.SinonStubbedInstance<UpsertControlValuesUseCase>;
   let getOrganizationSettingsUsecase: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
+  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -87,6 +89,7 @@ describe('Session', () => {
     upsertControlValuesUseCase = sinon.createStubInstance(UpsertControlValuesUseCase);
     getOrganizationSettingsUsecase = sinon.createStubInstance(GetOrganizationSettings);
     logger = sinon.createStubInstance(PinoLogger);
+    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
 
     session = new Session(
       environmentRepository as any,
@@ -106,15 +109,18 @@ describe('Session', () => {
       preferencesRepository as any,
       upsertControlValuesUseCase as any,
       getOrganizationSettingsUsecase as any,
-      logger as any
+      logger as any,
+      featureFlagsService as any
     );
   });
 
   it('should throw an error if the environment is not found', async () => {
     const command: SessionCommand = {
-      applicationIdentifier: 'invalid-app-id',
-      subscriber: {
-        subscriberId: 'subscriber-id',
+      requestData: {
+        applicationIdentifier: 'invalid-app-id',
+        subscriber: {
+          subscriberId: 'subscriber-id',
+        },
       },
     };
 
@@ -130,9 +136,11 @@ describe('Session', () => {
 
   it('should throw an error if the in-app integration is not found', async () => {
     const command: SessionCommand = {
-      applicationIdentifier: 'app-id',
-      subscriber: {
-        subscriberId: 'subscriber-id',
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: {
+          subscriberId: 'subscriber-id',
+        },
       },
     };
 
@@ -153,11 +161,13 @@ describe('Session', () => {
 
   it('should validate HMAC encryption and return the session response', async () => {
     const command: SessionCommand = {
-      applicationIdentifier: 'app-id',
-      subscriber: {
-        subscriberId: 'subscriber-id',
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: {
+          subscriberId: 'subscriber-id',
+        },
+        subscriberHash: 'hash',
       },
-      subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
     const notificationCount = { data: [{ count: 10, filter: {} }] };
@@ -185,11 +195,13 @@ describe('Session', () => {
 
   it('should return correct removeNovuBranding value when set on the organization', async () => {
     const command: SessionCommand = {
-      applicationIdentifier: 'app-id',
-      subscriber: {
-        subscriberId: 'subscriber-id',
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: {
+          subscriberId: 'subscriber-id',
+        },
+        subscriberHash: 'hash',
       },
-      subscriberHash: 'hash',
     };
     const subscriber = { _id: 'subscriber-id' };
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
@@ -213,11 +225,13 @@ describe('Session', () => {
 
   it('should create a subscriber and return the session response', async () => {
     const command: SessionCommand = {
-      applicationIdentifier: 'app-id',
-      subscriber: {
-        subscriberId: 'subscriber-id',
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: {
+          subscriberId: 'subscriber-id',
+        },
+        subscriberHash: 'hash',
       },
-      subscriberHash: 'hash',
       origin: 'origin',
     };
 
@@ -250,9 +264,11 @@ describe('Session', () => {
 
   it('should return the correct maxSnoozeDurationHours value for different service levels', async () => {
     const command: SessionCommand = {
-      applicationIdentifier: 'app-id',
-      subscriber: { subscriberId: 'subscriber-id' },
-      subscriberHash: 'hash',
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: 'hash',
+      },
     };
 
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };

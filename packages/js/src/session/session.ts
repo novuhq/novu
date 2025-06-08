@@ -54,8 +54,11 @@ export class Session {
     }
   }
 
-  public async initialize(): Promise<void> {
+  public async initialize(options?: InitializeSessionArgs): Promise<void> {
     try {
+      if (options) {
+        this.#options = options;
+      }
       const { subscriber, subscriberHash, applicationIdentifier } = this.#options;
 
       let finalApplicationIdentifier = applicationIdentifier;
