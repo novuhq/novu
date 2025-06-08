@@ -132,16 +132,27 @@ function mergePayloadData(persisted: any, serverDefault: any): any {
   }
 
   if (!serverDefault || typeof serverDefault !== 'object') {
-    return persisted;
+    return serverDefault || {};
   }
 
-  // For payload, we want to keep all persisted values and add any missing server defaults
-  const merged = { ...persisted };
+  // Start with server defaults to ensure structure is correct
+  const merged = { ...serverDefault };
 
-  // Add server defaults for keys that don't exist in persisted data
-  Object.keys(serverDefault).forEach((key) => {
-    if (!(key in merged)) {
-      merged[key] = serverDefault[key];
+  // Overlay persisted values for existing keys only
+  Object.keys(persisted).forEach((key) => {
+    if (key in serverDefault) {
+      if (
+        typeof serverDefault[key] === 'object' &&
+        typeof persisted[key] === 'object' &&
+        serverDefault[key] !== null &&
+        persisted[key] !== null &&
+        !Array.isArray(serverDefault[key]) &&
+        !Array.isArray(persisted[key])
+      ) {
+        merged[key] = mergePayloadData(persisted[key], serverDefault[key]);
+      } else {
+        merged[key] = persisted[key];
+      }
     }
   });
 
@@ -154,16 +165,23 @@ function mergeObjectData(persisted: any, serverDefault: any): any {
   }
 
   if (!serverDefault || typeof serverDefault !== 'object') {
-    return persisted;
+    return serverDefault || {};
   }
 
   // Start with server defaults to ensure structure is correct
   const merged = { ...serverDefault };
 
-  // Overlay persisted values for existing keys
+  // Overlay persisted values for existing keys only
   Object.keys(persisted).forEach((key) => {
     if (key in serverDefault) {
-      if (typeof serverDefault[key] === 'object' && typeof persisted[key] === 'object') {
+      if (
+        typeof serverDefault[key] === 'object' &&
+        typeof persisted[key] === 'object' &&
+        serverDefault[key] !== null &&
+        persisted[key] !== null &&
+        !Array.isArray(serverDefault[key]) &&
+        !Array.isArray(persisted[key])
+      ) {
         merged[key] = mergeObjectData(persisted[key], serverDefault[key]);
       } else {
         merged[key] = persisted[key];

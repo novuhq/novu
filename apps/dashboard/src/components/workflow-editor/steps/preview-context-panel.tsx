@@ -5,6 +5,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getSubscribers } from '@/api/subscribers';
 import { createSubscriberData, createSubscriberDataFromUser, parseJsonValue } from './utils/preview-context.utils';
+import { mergePreviewContextData } from './utils/preview-context-storage.utils';
 import { PreviewContextPanelProps, ParsedData } from './types/preview-context.types';
 import { PreviewPayloadSection, PreviewSubscriberSection, PreviewStepResultsSection } from './components';
 import { usePreviewContext } from './hooks/use-preview-context';
@@ -63,7 +64,14 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
         // Load persisted payload data if available
         const persistedPayload = loadPersistedPayload();
 
-        if (persistedPayload) {
+        if (persistedPayload && isPayloadSchemaEnabled && workflow?.payloadExample) {
+          // Merge persisted payload with server defaults, only keeping fields that exist in server defaults
+          const mergedData = mergePreviewContextData(
+            { payload: persistedPayload, subscriber: {}, steps: {} },
+            { payload: workflow.payloadExample, subscriber: {}, steps: {} }
+          );
+          finalData.payload = mergedData.payload;
+        } else if (persistedPayload) {
           finalData.payload = persistedPayload;
         } else if (isPayloadSchemaEnabled && workflow?.payloadExample) {
           // Apply server defaults for missing payload data
