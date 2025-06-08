@@ -56,7 +56,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 The project is a monorepo, meaning that it is a collection of multiple packages managed in the same repository.
 
-To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community-support/introduction#run-novu-locally?utm_campaign=github-contrib).
+To learn more about the project structure and running the project locally, please have a look [here](https://docs.novu.co/community/run-in-local-machine).
 After cloning your fork, you will need to run the `npm run setup:project` command to install and build all dependencies.
 
 To learn a detailed guide on running the project locally, checkout our guide on [how to run novu in local machine](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-contrib).

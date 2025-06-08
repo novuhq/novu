@@ -97,19 +97,19 @@ export class SyncExternalOrganization {
     );
 
     if (organizationAfterChanges !== null) {
-      await this.startFreeTrial(user.email, organizationAfterChanges._id);
+      await this.createCustomer(user.email, organizationAfterChanges._id);
     }
 
     return organizationAfterChanges as OrganizationEntity;
   }
 
-  private async startFreeTrial(billingEmail: string, organizationId: string) {
+  private async createCustomer(billingEmail: string, organizationId: string) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-billing')?.StartReverseFreeTrial) {
+        if (!require('@novu/ee-billing')?.GetOrCreateCustomer) {
           throw new BadRequestException('Billing module is not loaded');
         }
-        const usecase = this.moduleRef.get(require('@novu/ee-billing')?.StartReverseFreeTrial, {
+        const usecase = this.moduleRef.get(require('@novu/ee-billing')?.GetOrCreateCustomer, {
           strict: false,
         });
         await usecase.execute({
