@@ -26,20 +26,19 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Retrieve a subscriber
+ * List environments
  *
  * @remarks
- * Retrieve a subscriber by its unique key identifier **subscriberId**.
- *     **subscriberId** field is required.
+ * This API returns a list of environments for the current organization.
+ *     Each environment contains its configuration, API keys (if user has access), and metadata.
  */
-export function subscribersRetrieve(
+export function environmentsList(
   client: NovuCore,
-  subscriberId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.SubscribersControllerGetSubscriberResponse,
+    operations.EnvironmentsControllerV1ListMyEnvironmentsResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -54,7 +53,6 @@ export function subscribersRetrieve(
 > {
   return new APIPromise($do(
     client,
-    subscriberId,
     idempotencyKey,
     options,
   ));
@@ -62,13 +60,12 @@ export function subscribersRetrieve(
 
 async function $do(
   client: NovuCore,
-  subscriberId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.SubscribersControllerGetSubscriberResponse,
+      operations.EnvironmentsControllerV1ListMyEnvironmentsResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -83,17 +80,17 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.SubscribersControllerGetSubscriberRequest = {
-    subscriberId: subscriberId,
+  const input: operations.EnvironmentsControllerV1ListMyEnvironmentsRequest = {
     idempotencyKey: idempotencyKey,
   };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.SubscribersControllerGetSubscriberRequest$outboundSchema.parse(
-        value,
-      ),
+      operations
+        .EnvironmentsControllerV1ListMyEnvironmentsRequest$outboundSchema.parse(
+          value,
+        ),
     "Input validation failed",
   );
   if (!parsed.ok) {
@@ -102,14 +99,7 @@ async function $do(
   const payload = parsed.value;
   const body = null;
 
-  const pathParams = {
-    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
-      explode: false,
-      charEncoding: "percent",
-    }),
-  };
-
-  const path = pathToFunc("/v2/subscribers/{subscriberId}")(pathParams);
+  const path = pathToFunc("/v1/environments")();
 
   const headers = new Headers(compactMap({
     Accept: "application/json",
@@ -126,7 +116,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "SubscribersController_getSubscriber",
+    operationID: "EnvironmentsControllerV1_listMyEnvironments",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -195,7 +185,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.SubscribersControllerGetSubscriberResponse,
+    operations.EnvironmentsControllerV1ListMyEnvironmentsResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -209,7 +199,8 @@ async function $do(
   >(
     M.json(
       200,
-      operations.SubscribersControllerGetSubscriberResponse$inboundSchema,
+      operations
+        .EnvironmentsControllerV1ListMyEnvironmentsResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),

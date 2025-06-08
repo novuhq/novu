@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { environmentsCreate } from "../funcs/environmentsCreate.js";
+import { environmentsUpdate } from "../funcs/environmentsUpdate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,61 +17,62 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type EnvironmentsCreateMutationVariables = {
-  createEnvironmentRequestDto: components.CreateEnvironmentRequestDto;
+export type EnvironmentsUpdateMutationVariables = {
+  updateEnvironmentRequestDto: components.UpdateEnvironmentRequestDto;
+  environmentId: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type EnvironmentsCreateMutationData =
-  operations.EnvironmentsControllerV1CreateEnvironmentResponse;
+export type EnvironmentsUpdateMutationData =
+  operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse;
 
 /**
- * Create environment
+ * Update environment
  *
  * @remarks
- * Creates a new environment within the current organization.
- *     Environments allow you to manage different stages of your application development lifecycle.
- *     Each environment has its own set of API keys and configurations.
+ * Update an environment by its unique identifier **environmentId**.
+ *     You can modify the environment name, identifier, color, and other configuration settings.
  */
-export function useEnvironmentsCreateMutation(
+export function useEnvironmentsUpdateMutation(
   options?: MutationHookOptions<
-    EnvironmentsCreateMutationData,
+    EnvironmentsUpdateMutationData,
     Error,
-    EnvironmentsCreateMutationVariables
+    EnvironmentsUpdateMutationVariables
   >,
 ): UseMutationResult<
-  EnvironmentsCreateMutationData,
+  EnvironmentsUpdateMutationData,
   Error,
-  EnvironmentsCreateMutationVariables
+  EnvironmentsUpdateMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildEnvironmentsCreateMutation(client, options),
+    ...buildEnvironmentsUpdateMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyEnvironmentsCreate(): MutationKey {
-  return ["@novu/api", "Environments", "create"];
+export function mutationKeyEnvironmentsUpdate(): MutationKey {
+  return ["@novu/api", "Environments", "update"];
 }
 
-export function buildEnvironmentsCreateMutation(
+export function buildEnvironmentsUpdateMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: EnvironmentsCreateMutationVariables,
-  ) => Promise<EnvironmentsCreateMutationData>;
+    variables: EnvironmentsUpdateMutationVariables,
+  ) => Promise<EnvironmentsUpdateMutationData>;
 } {
   return {
-    mutationKey: mutationKeyEnvironmentsCreate(),
-    mutationFn: function environmentsCreateMutationFn({
-      createEnvironmentRequestDto,
+    mutationKey: mutationKeyEnvironmentsUpdate(),
+    mutationFn: function environmentsUpdateMutationFn({
+      updateEnvironmentRequestDto,
+      environmentId,
       idempotencyKey,
       options,
-    }): Promise<EnvironmentsCreateMutationData> {
+    }): Promise<EnvironmentsUpdateMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -84,9 +85,10 @@ export function buildEnvironmentsCreateMutation(
           ),
         },
       };
-      return unwrapAsync(environmentsCreate(
+      return unwrapAsync(environmentsUpdate(
         client$,
-        createEnvironmentRequestDto,
+        updateEnvironmentRequestDto,
+        environmentId,
         idempotencyKey,
         mergedOptions,
       ));

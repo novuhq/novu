@@ -3,13 +3,14 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -26,20 +27,21 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Retrieve a subscriber
+ * Update environment
  *
  * @remarks
- * Retrieve a subscriber by its unique key identifier **subscriberId**.
- *     **subscriberId** field is required.
+ * Update an environment by its unique identifier **environmentId**.
+ *     You can modify the environment name, identifier, color, and other configuration settings.
  */
-export function subscribersRetrieve(
+export function environmentsUpdate(
   client: NovuCore,
-  subscriberId: string,
+  updateEnvironmentRequestDto: components.UpdateEnvironmentRequestDto,
+  environmentId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.SubscribersControllerGetSubscriberResponse,
+    operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -54,7 +56,8 @@ export function subscribersRetrieve(
 > {
   return new APIPromise($do(
     client,
-    subscriberId,
+    updateEnvironmentRequestDto,
+    environmentId,
     idempotencyKey,
     options,
   ));
@@ -62,13 +65,14 @@ export function subscribersRetrieve(
 
 async function $do(
   client: NovuCore,
-  subscriberId: string,
+  updateEnvironmentRequestDto: components.UpdateEnvironmentRequestDto,
+  environmentId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.SubscribersControllerGetSubscriberResponse,
+      operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -83,35 +87,39 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.SubscribersControllerGetSubscriberRequest = {
-    subscriberId: subscriberId,
+  const input: operations.EnvironmentsControllerV1UpdateMyEnvironmentRequest = {
+    updateEnvironmentRequestDto: updateEnvironmentRequestDto,
+    environmentId: environmentId,
     idempotencyKey: idempotencyKey,
   };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.SubscribersControllerGetSubscriberRequest$outboundSchema.parse(
-        value,
-      ),
+      operations
+        .EnvironmentsControllerV1UpdateMyEnvironmentRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
+  const body = encodeJSON("body", payload.UpdateEnvironmentRequestDto, {
+    explode: true,
+  });
 
   const pathParams = {
-    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+    environmentId: encodeSimple("environmentId", payload.environmentId, {
       explode: false,
       charEncoding: "percent",
     }),
   };
 
-  const path = pathToFunc("/v2/subscribers/{subscriberId}")(pathParams);
+  const path = pathToFunc("/v1/environments/{environmentId}")(pathParams);
 
   const headers = new Headers(compactMap({
+    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -126,7 +134,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "SubscribersController_getSubscriber",
+    operationID: "EnvironmentsControllerV1_updateMyEnvironment",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -150,7 +158,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "GET",
+    method: "PUT",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -195,7 +203,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.SubscribersControllerGetSubscriberResponse,
+    operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -209,7 +217,8 @@ async function $do(
   >(
     M.json(
       200,
-      operations.SubscribersControllerGetSubscriberResponse$inboundSchema,
+      operations
+        .EnvironmentsControllerV1UpdateMyEnvironmentResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
