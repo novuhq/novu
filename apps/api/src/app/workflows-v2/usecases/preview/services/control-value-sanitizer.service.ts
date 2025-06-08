@@ -88,7 +88,7 @@ export class ControlValueSanitizerService {
     controlValues: Record<string, unknown>,
     type: StepTypeEnum
   ): Record<string, unknown> {
-    const outputSchema = channelStepSchemas[type].output || actionStepSchemas[type].output;
+    const outputSchema = channelStepSchemas[type]?.output || actionStepSchemas[type]?.output;
 
     if (!outputSchema || !controlValues) {
       return controlValues;
