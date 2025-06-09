@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { AnalyticsService } from '@novu/application-generic';
 import { UpdateOrganizationSettingsCommand } from './update-organization-settings.command';
 import { GetOrganizationSettingsDto } from '../../dtos/get-organization-settings.dto';
 
 @Injectable()
 export class UpdateOrganizationSettings {
-  constructor(private organizationRepository: CommunityOrganizationRepository) {}
+  constructor(
+    private organizationRepository: CommunityOrganizationRepository,
+    private analyticsService: AnalyticsService
+  ) {}
 
   async execute(command: UpdateOrganizationSettingsCommand): Promise<GetOrganizationSettingsDto> {
     const organization = await this.organizationRepository.findById(command.organizationId);
@@ -24,6 +28,13 @@ export class UpdateOrganizationSettings {
     }
 
     await this.organizationRepository.updateOne({ _id: organization._id }, { $set: updateFields });
+
+    if (command.removeNovuBranding !== undefined) {
+      this.analyticsService.mixpanelTrack('Remove Branding', command.userId, {
+        _organization: command.organizationId,
+        newStatus: command.removeNovuBranding,
+      });
+    }
 
     return this.buildSettingsResponse({
       ...organization,

@@ -948,8 +948,8 @@ importers:
         specifier: ^3.4.11
         version: 3.4.11(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-querybuilder:
-        specifier: ^8.0.0
-        version: 8.1.0(@types/react@18.3.3)(react@18.3.1)(redux@5.0.1)
+        specifier: ^8.3.0
+        version: 8.4.1(@types/react@18.3.3)(react@18.3.1)(redux@5.0.1)
       react-resizable-panels:
         specifier: ^2.1.7
         version: 2.1.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -2528,8 +2528,8 @@ importers:
         specifier: 0.14.1
         version: 0.14.1
       multer:
-        specifier: ^2.0.0
-        version: 2.0.0
+        specifier: 2.0.1
+        version: 2.0.1
       shortid:
         specifier: ^2.2.16
         version: 2.2.16
@@ -26827,6 +26827,10 @@ packages:
     resolution: {integrity: sha512-bS8rPZurbAuHGAnApbM9d4h1wSoYqrOqkE+6a64KLMK9yWU7gJXBDDVklKQ3TPi9DRb85cRs6yXaC0+cjxRtRg==}
     engines: {node: '>= 10.16.0'}
 
+  multer@2.0.1:
+    resolution: {integrity: sha512-Ug8bXeTIUlxurg8xLTEskKShvcKDZALo1THEX5E41pYCD2sCVub5/kIRIGqWNoqV6szyLyQKV6mD4QUrWE5GCQ==}
+    engines: {node: '>= 10.16.0'}
+
   multicast-dns@7.2.5:
     resolution: {integrity: sha512-2eznPJP8z2BFLX50tf0LuODrpINqP1RVIm/CObbTcBRITQgmC/TjcREF1NeTBzIcR5XO/ukWo+YHOjBbFwIupg==}
     hasBin: true
@@ -29985,8 +29989,8 @@ packages:
   react-proptype-conditional-require@1.0.4:
     resolution: {integrity: sha512-nopsRn7KnGgazBe2c3H2+Kf+Csp6PGDRLiBkYEDMKY8o/EIgft/WnIm/OnAKTawZiLnJXHAqhpFBddvs6NiXlw==}
 
-  react-querybuilder@8.1.0:
-    resolution: {integrity: sha512-CNNLJSatSNCATBZA7MNipXq559n4IHVqWMfI4//XsqhnZarhZ2uCcuPLgO/dcu0WOEWegnqZywAIKVMz30zo3g==}
+  react-querybuilder@8.4.1:
+    resolution: {integrity: sha512-RkLD0zS6lzOWp4Vgmb1EKEYFMAWC+a/z82VH44y5mvc1iQ29rLAP5AAR+awLgnmSe8GEJh9NGz2iq2z4WyzJQw==}
     peerDependencies:
       react: '>=18'
 
@@ -69487,6 +69491,16 @@ snapshots:
       type-is: 1.6.18
       xtend: 4.0.2
 
+  multer@2.0.1:
+    dependencies:
+      append-field: 1.0.0
+      busboy: 1.6.0
+      concat-stream: 2.0.0
+      mkdirp: 0.5.6
+      object-assign: 4.1.1
+      type-is: 1.6.18
+      xtend: 4.0.2
+
   multicast-dns@7.2.5:
     dependencies:
       dns-packet: 5.5.0
@@ -73389,7 +73403,7 @@ snapshots:
 
   react-proptype-conditional-require@1.0.4: {}
 
-  react-querybuilder@8.1.0(@types/react@18.3.3)(react@18.3.1)(redux@5.0.1):
+  react-querybuilder@8.4.1(@types/react@18.3.3)(react@18.3.1)(redux@5.0.1):
     dependencies:
       '@reduxjs/toolkit': 2.5.0(react-redux@9.2.0(@types/react@18.3.3)(react@18.3.1)(redux@5.0.1))(react@18.3.1)
       immer: 10.1.1
