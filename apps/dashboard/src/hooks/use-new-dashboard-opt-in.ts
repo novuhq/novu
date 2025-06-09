@@ -53,5 +53,6 @@ export function useNewDashboardOptIn() {
     status: getCurrentOptInStatus(),
     isFirstVisit: getNewDashboardFirstVisit(),
     redirectToLegacyDashboard,
+    updateUserOptInStatus,
   };
 }
