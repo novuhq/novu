@@ -99,20 +99,22 @@ export class PayloadMergerService {
       });
     }
 
-    let mergedPayload = _.merge({}, payloadExample, schemaBasedPayloadExample);
+    let mergedPayload = _.merge({}, schemaBasedPayloadExample);
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-      mergedPayload = _.mergeWith(
-        mergedPayload,
+      // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
+      const filteredUserPayload = this.filterPayloadBySchema(
         userPayloadExample as Record<string, unknown>,
-        (objValue, srcValue) => {
-          if (Array.isArray(srcValue)) {
-            return srcValue;
-          }
-
-          return undefined;
-        }
+        schemaBasedPayloadExample
       );
+
+      mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+        if (Array.isArray(srcValue)) {
+          return srcValue;
+        }
+
+        return undefined;
+      });
     }
 
     if (isV2TemplateEditorEnabled) {
@@ -206,5 +208,28 @@ export class PayloadMergerService {
       stepIdOrInternalId: command.stepIdOrInternalId,
       user: command.user,
     });
+  }
+
+  /**
+   * Recursively filters the user payload to only include keys that exist in the schema-based payload
+   */
+  private filterPayloadBySchema(
+    userPayload: Record<string, unknown>,
+    schemaPayload: Record<string, unknown>
+  ): Record<string, unknown> {
+    // Use lodash pick to only include keys that exist in the schema
+    const filtered = _.pick(userPayload, _.keys(schemaPayload));
+
+    // Recursively filter nested objects
+    for (const [key, value] of Object.entries(filtered)) {
+      if (_.isPlainObject(value) && _.isPlainObject(schemaPayload[key])) {
+        filtered[key] = this.filterPayloadBySchema(
+          value as Record<string, unknown>,
+          schemaPayload[key] as Record<string, unknown>
+        );
+      }
+    }
+
+    return filtered;
   }
 }
