@@ -119,20 +119,18 @@ export class PayloadMergerService {
           return undefined;
         });
       }
-    } else {
-      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-        mergedPayload = _.mergeWith(
-          mergedPayload,
-          userPayloadExample as Record<string, unknown>,
-          (objValue, srcValue) => {
-            if (Array.isArray(srcValue)) {
-              return srcValue;
-            }
-
-            return undefined;
+    } else if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+      mergedPayload = _.mergeWith(
+        mergedPayload,
+        userPayloadExample as Record<string, unknown>,
+        (objValue, srcValue) => {
+          if (Array.isArray(srcValue)) {
+            return srcValue;
           }
-        );
-      }
+
+          return undefined;
+        }
+      );
     }
 
     if (isV2TemplateEditorEnabled) {
