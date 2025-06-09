@@ -15,6 +15,7 @@ import {
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   SendWebhookMessage,
+  EmailControlType,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -27,6 +28,7 @@ import {
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   slugify,
+  StepTypeEnum,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
@@ -40,6 +42,10 @@ import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.u
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
 import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
+import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { PreviewUsecase } from '../preview/preview.usecase';
+import { PreviewCommand } from '../preview';
+import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -52,6 +58,7 @@ export class UpsertWorkflowUseCase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
+    private previewUsecase: PreviewUsecase,
     private analyticsService: AnalyticsService,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
@@ -314,28 +321,53 @@ export class UpsertWorkflowUseCase {
       .filter((update): update is NonNullable<typeof update> => update !== null);
   }
 
-  private executeControlValuesUpdate(
-    update: { step: NotificationStepEntity; controlValues: Record<string, unknown> | null; shouldDelete: boolean },
+  private async executeControlValuesUpdate(
+    {
+      shouldDelete,
+      step,
+      controlValues,
+    }: { step: NotificationStepEntity; controlValues: Record<string, unknown> | null; shouldDelete: boolean },
     workflowId: string,
     command: UpsertWorkflowCommand
   ) {
-    if (update.shouldDelete) {
+    if (shouldDelete) {
       return this.controlValuesRepository.delete({
         _environmentId: command.user.environmentId,
         _organizationId: command.user.organizationId,
         _workflowId: workflowId,
-        _stepId: update.step._templateId,
+        _stepId: step._templateId,
         level: ControlValuesLevelEnum.STEP_CONTROLS,
       });
+    }
+
+    const newControlValues = controlValues || {};
+    if (step.template?.type === StepTypeEnum.EMAIL) {
+      const emailControlValues = newControlValues as EmailControlType;
+      const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
+      if (emailControlValues.editorType === 'html' && isMaily) {
+        const { result } = await this.previewUsecase.execute(
+          PreviewCommand.create({
+            user: command.user,
+            workflowIdOrInternalId: workflowId,
+            stepIdOrInternalId: step._id ?? step.stepId ?? '',
+            generatePreviewRequestDto: {
+              controlValues: emailControlValues,
+            },
+          })
+        );
+        emailControlValues.body = (result.preview as EmailRenderOutput).body;
+      } else if (emailControlValues.editorType === 'block' && !isMaily) {
+        emailControlValues.body = '';
+      }
     }
 
     return this.upsertControlValuesUseCase.execute(
       UpsertControlValuesCommand.create({
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
-        notificationStepEntity: update.step,
+        notificationStepEntity: step,
         workflowId,
-        newControlValues: update.controlValues || {},
+        newControlValues,
       })
     );
   }

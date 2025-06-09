@@ -1,13 +1,7 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import {
-  DigestUnitEnum,
-  JSONSchemaDto,
-  TimeUnitEnum,
-  UiComponentEnum,
-  UiSchema,
-  UiSchemaGroupEnum,
-} from '@novu/shared';
+import { DigestUnitEnum, TimeUnitEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { JSONSchemaEntity } from '@novu/dal';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
 export const delayControlZodSchema = z
@@ -21,10 +15,7 @@ export const delayControlZodSchema = z
 
 export type DelayControlType = z.infer<typeof delayControlZodSchema>;
 
-export const delayControlSchema = zodToJsonSchema(
-  delayControlZodSchema,
-  defaultOptions,
-) as JSONSchemaDto;
+export const delayControlSchema = zodToJsonSchema(delayControlZodSchema, defaultOptions) as JSONSchemaEntity;
 export const delayUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.DELAY,
   properties: {

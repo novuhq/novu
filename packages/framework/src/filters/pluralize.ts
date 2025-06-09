@@ -6,12 +6,20 @@ import plur from 'pluralize';
  * - 0, "event" -> ""
  * - 1, "event" -> 1 event
  * - 2, "event" -> 2 events
+ * - 1, "event", "", false -> event
+ * - 2, "event", "", false -> events
  *
  * @param item The item to pluralize
  * @param singular The singular form of the word
  * @param plural The plural form of the word
+ * @param showCount Whether to include the count in the output (default: true)
  */
-export function pluralize(item: unknown, singular: string = '', plural: string = ''): string {
+export function pluralize(
+  item: unknown,
+  singular: string = '',
+  plural: string = '',
+  showCount: boolean = true
+): string {
   if (item === null || item === undefined) {
     return '';
   }
@@ -37,10 +45,13 @@ export function pluralize(item: unknown, singular: string = '', plural: string =
     return '';
   }
 
+  let word: string;
   if (plural) {
-    return `${count} ${count === 1 ? singular : plural}`;
+    word = count === 1 ? singular : plural;
+  } else {
+    // if no plural is provided we assume the english language rules
+    word = plur(singular, count);
   }
 
-  // if no plural is provided we assume the english language rules
-  return `${count} ${plur(singular, count)}`;
+  return showCount ? `${count} ${word}` : word;
 }

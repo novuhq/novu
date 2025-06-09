@@ -1,7 +1,7 @@
 import React from 'react';
 
 type SaveFormContextValue = {
-  saveForm: (forceSubmit?: boolean) => Promise<void>;
+  saveForm: (options?: { forceSubmit?: boolean; onSuccess?: () => void }) => Promise<void>;
 };
 
 export const SaveFormContext = React.createContext<SaveFormContextValue>({} as SaveFormContextValue);

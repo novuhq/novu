@@ -100,7 +100,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
         onConfirm={async () => {
           const defaultValues = buildDefaultValuesOfDataSchema(step?.controls.dataSchema ?? {});
           reset(defaultValues);
-          saveForm(true);
+          saveForm({ forceSubmit: true });
           setIsRestoreDefaultModalOpen(false);
           setIsOverridden(false);
         }}

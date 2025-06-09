@@ -35,6 +35,7 @@
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "build": "NODE_ENV=production tsup",
+    "debug": "NODE_ENV=production tsup --config tsup-debug.config.ts",
     "build:watch": "tsup --watch",
     "postbuild": "pnpm run check:exports && pnpm check:circulars",
     "check:exports": "attw --pack .",

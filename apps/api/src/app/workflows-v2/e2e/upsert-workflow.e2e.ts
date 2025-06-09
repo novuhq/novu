@@ -178,6 +178,66 @@ describe('Upsert Workflow #novu-v2', function () {
         expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).not.to.have.property('second_variable');
       });
     });
+
+    it('when switching the editor type it should convert the body value', async () => {
+      const workflow = await createWorkflow({
+        name: 'Test Workflow',
+        workflowId: `test-workflow-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: `Email`,
+            type: StepTypeEnum.Email,
+            controlValues: {
+              disableOutputSanitization: false,
+              editorType: 'block',
+              body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"test"}]}]}',
+              subject: 'subject',
+            },
+          },
+        ],
+      });
+
+      const updatedWorkflow = await updateWorkflow(workflow.slug, {
+        ...workflow,
+        steps: [
+          {
+            ...workflow.steps[0],
+            controlValues: {
+              ...workflow.steps[0].controls.values,
+              editorType: 'html',
+            },
+          },
+        ],
+      });
+
+      const updatedEmailStep = updatedWorkflow.steps[0];
+      expect(updatedEmailStep.controls.values.editorType).to.equal('html');
+      expect(updatedEmailStep.controls.values.body).to.contain('<!DOCTYPE');
+      expect(updatedEmailStep.controls.values.body).to.contain('<html');
+      expect(updatedEmailStep.controls.values.body).to.contain('<body');
+      expect(updatedEmailStep.controls.values.body).to.contain('>test</p>');
+      expect(updatedEmailStep.controls.values.body).to.contain('</body>');
+      expect(updatedEmailStep.controls.values.body).to.contain('</html>');
+
+      const updatedWorkflow2 = await updateWorkflow(workflow.slug, {
+        ...workflow,
+        steps: [
+          {
+            ...workflow.steps[0],
+            controlValues: {
+              ...updatedEmailStep.controls.values,
+              editorType: 'block',
+            },
+          },
+        ],
+      });
+
+      const updatedEmailStep2 = updatedWorkflow2.steps[0];
+      expect(updatedEmailStep2.controls.values.editorType).to.equal('block');
+      expect(updatedEmailStep2.controls.values.body).to.equal('');
+    });
   });
 
   async function createWorkflow(workflow: CreateWorkflowDto): Promise<WorkflowResponseDto> {

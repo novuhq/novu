@@ -32,7 +32,6 @@ import {
 } from '@novu/shared';
 import { ErrorDto } from '@novu/api/models/errors';
 import { buildSlug } from '../shared/helpers/build-slug';
-import { stepTypeToControlSchema } from './shared';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,

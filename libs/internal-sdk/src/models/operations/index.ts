@@ -3,6 +3,9 @@
  */
 
 export * from "./environmentscontrollerv1createenvironment.js";
+export * from "./environmentscontrollerv1deleteenvironment.js";
+export * from "./environmentscontrollerv1listmyenvironments.js";
+export * from "./environmentscontrollerv1updatemyenvironment.js";
 export * from "./eventscontrollerbroadcasteventtoall.js";
 export * from "./eventscontrollercancel.js";
 export * from "./eventscontrollertrigger.js";

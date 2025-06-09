@@ -27,21 +27,21 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create environment
+ * Update environment
  *
  * @remarks
- * Creates a new environment within the current organization.
- *     Environments allow you to manage different stages of your application development lifecycle.
- *     Each environment has its own set of API keys and configurations.
+ * Update an environment by its unique identifier **environmentId**.
+ *     You can modify the environment name, identifier, color, and other configuration settings.
  */
-export function environmentsCreate(
+export function environmentsUpdate(
   client: NovuCore,
-  createEnvironmentRequestDto: components.CreateEnvironmentRequestDto,
+  updateEnvironmentRequestDto: components.UpdateEnvironmentRequestDto,
+  environmentId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.EnvironmentsControllerV1CreateEnvironmentResponse,
+    operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -56,7 +56,8 @@ export function environmentsCreate(
 > {
   return new APIPromise($do(
     client,
-    createEnvironmentRequestDto,
+    updateEnvironmentRequestDto,
+    environmentId,
     idempotencyKey,
     options,
   ));
@@ -64,13 +65,14 @@ export function environmentsCreate(
 
 async function $do(
   client: NovuCore,
-  createEnvironmentRequestDto: components.CreateEnvironmentRequestDto,
+  updateEnvironmentRequestDto: components.UpdateEnvironmentRequestDto,
+  environmentId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.EnvironmentsControllerV1CreateEnvironmentResponse,
+      operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -85,15 +87,17 @@ async function $do(
     APICall,
   ]
 > {
-  const input: operations.EnvironmentsControllerV1CreateEnvironmentRequest = {
-    createEnvironmentRequestDto: createEnvironmentRequestDto,
+  const input: operations.EnvironmentsControllerV1UpdateMyEnvironmentRequest = {
+    updateEnvironmentRequestDto: updateEnvironmentRequestDto,
+    environmentId: environmentId,
     idempotencyKey: idempotencyKey,
   };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations.EnvironmentsControllerV1CreateEnvironmentRequest$outboundSchema
+      operations
+        .EnvironmentsControllerV1UpdateMyEnvironmentRequest$outboundSchema
         .parse(value),
     "Input validation failed",
   );
@@ -101,11 +105,18 @@ async function $do(
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.CreateEnvironmentRequestDto, {
+  const body = encodeJSON("body", payload.UpdateEnvironmentRequestDto, {
     explode: true,
   });
 
-  const path = pathToFunc("/v1/environments")();
+  const pathParams = {
+    environmentId: encodeSimple("environmentId", payload.environmentId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v1/environments/{environmentId}")(pathParams);
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -123,7 +134,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "EnvironmentsControllerV1_createEnvironment",
+    operationID: "EnvironmentsControllerV1_updateMyEnvironment",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -147,7 +158,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "POST",
+    method: "PUT",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -165,7 +176,6 @@ async function $do(
     errorCodes: [
       "400",
       "401",
-      "402",
       "403",
       "404",
       "405",
@@ -193,7 +203,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.EnvironmentsControllerV1CreateEnvironmentResponse,
+    operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -206,12 +216,12 @@ async function $do(
     | SDKValidationError
   >(
     M.json(
-      201,
+      200,
       operations
-        .EnvironmentsControllerV1CreateEnvironmentResponse$inboundSchema,
+        .EnvironmentsControllerV1UpdateMyEnvironmentResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
-    M.jsonErr([402, 414], errors.ErrorDto$inboundSchema),
+    M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],
       errors.ErrorDto$inboundSchema,

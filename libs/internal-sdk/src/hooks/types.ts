@@ -3,7 +3,7 @@
  */
 
 import { SDKOptions } from "../lib/config.js";
-import { HTTPClient, RequestInput } from "../lib/http.js";
+import { RequestInput } from "../lib/http.js";
 import { RetryConfig } from "../lib/retries.js";
 import { SecurityState } from "../lib/security.js";
 
@@ -19,11 +19,6 @@ export type HookContext = {
 
 export type Awaitable<T> = T | Promise<T>;
 
-export type SDKInitOptions = {
-  baseURL: URL | null;
-  client: HTTPClient;
-};
-
 export type BeforeCreateRequestContext = HookContext & {};
 export type BeforeRequestContext = HookContext & {};
 export type AfterSuccessContext = HookContext & {};
@@ -34,7 +29,7 @@ export type AfterErrorContext = HookContext & {};
  * hook can return a new baseURL and HTTP client to be used by the SDK.
  */
 export interface SDKInitHook {
-  sdkInit: (opts: SDKInitOptions) => SDKInitOptions;
+  sdkInit: (opts: SDKOptions) => SDKOptions;
 }
 
 export interface BeforeCreateRequestHook {
