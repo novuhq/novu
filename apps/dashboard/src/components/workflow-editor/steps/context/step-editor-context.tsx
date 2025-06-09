@@ -35,6 +35,7 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues,
+    payloadSchema: workflow.payloadSchema,
   });
 
   // Track if we've loaded data at least once

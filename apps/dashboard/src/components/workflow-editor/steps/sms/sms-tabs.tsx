@@ -19,6 +19,7 @@ export const SmsTabs = (props: StepEditorProps) => {
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues,
+    payloadSchema: workflow.payloadSchema,
   });
 
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;

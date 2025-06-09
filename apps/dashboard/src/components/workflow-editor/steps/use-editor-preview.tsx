@@ -46,10 +46,12 @@ export const useEditorPreview = ({
   workflowSlug,
   stepSlug,
   controlValues,
+  payloadSchema,
 }: {
   workflowSlug: string;
   stepSlug: string;
   controlValues: Record<string, unknown>;
+  payloadSchema?: Record<string, any>;
 }) => {
   const [editorValue, setEditorValue] = useState('{}');
   const debouncedControlValues = useDebounced(controlValues, 500);
@@ -65,7 +67,7 @@ export const useEditorPreview = ({
     isPending: isPreviewPending,
     isFetching,
   } = useQuery({
-    queryKey: ['preview-step', workflowSlug, stepSlug, debouncedControlValues, editorValue],
+    queryKey: ['preview-step', workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
     queryFn: async ({ signal }) => {
       const previewPayload = JSON.parse(editorValue);
 

@@ -9,6 +9,8 @@ import {
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
+import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
+import { stepTypeToControlSchema } from '../../shared';
 
 @Injectable()
 export class PatchWorkflowUsecase {
@@ -16,6 +18,7 @@ export class PatchWorkflowUsecase {
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase,
+    private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -23,6 +26,13 @@ export class PatchWorkflowUsecase {
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
     const persistedWorkflow = await this.fetchWorkflow(command);
     const transientWorkflow = this.patchWorkflowFields(persistedWorkflow, command);
+
+    const hasPayloadSchemaChanged = this.hasPayloadSchemaChanged(persistedWorkflow, command);
+
+    if (hasPayloadSchemaChanged) {
+      await this.recalculateStepIssues(transientWorkflow, command.user);
+    }
+
     await this.persistWorkflow(transientWorkflow, command.user);
 
     const updatedWorkflow = await this.getWorkflowUseCase.execute({
@@ -44,6 +54,39 @@ export class PatchWorkflowUsecase {
     }
 
     return updatedWorkflow;
+  }
+
+  private hasPayloadSchemaChanged(
+    persistedWorkflow: NotificationTemplateEntity,
+    command: PatchWorkflowCommand
+  ): boolean {
+    return (
+      command.payloadSchema !== undefined &&
+      command.payloadSchema !== null &&
+      JSON.stringify(persistedWorkflow.payloadSchema) !== JSON.stringify(command.payloadSchema)
+    );
+  }
+
+  private async recalculateStepIssues(
+    workflow: NotificationTemplateEntity,
+    userSessionData: UserSessionData
+  ): Promise<void> {
+    for (const step of workflow.steps) {
+      if (!step._templateId || !step.template?.type) continue;
+
+      const controlSchemas = step.template?.controls || stepTypeToControlSchema[step.template.type];
+
+      const stepIssues = await this.buildStepIssuesUsecase.execute({
+        workflowOrigin: workflow.origin!,
+        user: userSessionData,
+        stepInternalId: step._templateId,
+        workflow,
+        controlSchema: controlSchemas.schema,
+        stepType: step.template.type,
+      });
+
+      step.issues = stepIssues;
+    }
   }
 
   private patchWorkflowFields(

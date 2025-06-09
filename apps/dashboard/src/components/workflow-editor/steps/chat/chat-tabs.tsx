@@ -22,6 +22,7 @@ export const ChatTabs = (props: StepEditorProps) => {
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues,
+    payloadSchema: workflow.payloadSchema,
   });
 
   const editorContent = (
