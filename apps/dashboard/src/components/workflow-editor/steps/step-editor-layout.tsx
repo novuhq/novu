@@ -1,6 +1,6 @@
 import { WorkflowResponseDto, StepResponseDto } from '@novu/shared';
 import { cn } from '@/utils/ui';
-import { RiCodeBlock, RiEyeLine } from 'react-icons/ri';
+import { RiCodeBlock, RiEdit2Line, RiEyeLine } from 'react-icons/ri';
 import { StepIssuesPanel } from '@/components/workflow-editor/steps/step-issues-panel';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
@@ -35,7 +35,7 @@ function StepEditorContent() {
         <div className="flex-1">
           <ResizableLayout>
             <ResizableLayout.EditorPanel>
-              <PanelHeader icon={() => <StepIcon stepType={step.type} />} title={editorTitle} />
+              <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} />
               <div className="flex-1 overflow-y-auto p-3">
                 <StepEditorFactory />
               </div>
