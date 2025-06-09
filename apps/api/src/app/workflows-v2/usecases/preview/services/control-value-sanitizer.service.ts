@@ -1,0 +1,174 @@
+import { Injectable } from '@nestjs/common';
+import _ from 'lodash';
+import get from 'lodash/get';
+import Ajv, { ErrorObject } from 'ajv';
+import addFormats from 'ajv-formats';
+import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { dashboardSanitizeControlValues, PinoLogger } from '@novu/application-generic';
+import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
+import { StepResponseDto, JSONSchemaDto } from '../../../dtos';
+import { Variable, buildLiquidParser } from '../../../util/template-parser/liquid-parser';
+import { buildVariables } from '../../../util/build-variables';
+import {
+  isStringifiedMailyJSONContent,
+  isObjectMailyJSONContent,
+  replaceMailyVariables,
+} from '../../../../shared/helpers/maily-utils';
+import { previewControlValueDefault } from '../preview.constants';
+import { replaceAll } from '../utils/variable-helpers';
+import { PreviewTemplateData, ControlValueProcessingResult } from '../preview.types';
+
+@Injectable()
+export class ControlValueSanitizerService {
+  constructor(private readonly logger: PinoLogger) {}
+
+  sanitizeControlsForPreview(
+    initialControlValues: Record<string, unknown>,
+    stepData: StepResponseDto,
+    workflowOrigin: WorkflowOriginEnum
+  ): Record<string, unknown> {
+    if (workflowOrigin !== WorkflowOriginEnum.NOVU_CLOUD) {
+      return initialControlValues;
+    }
+
+    const sanitizedValues = dashboardSanitizeControlValues(this.logger, initialControlValues, stepData.type);
+    const sanitizedByOutputSchema = this.sanitizeControlValuesByOutputSchema(sanitizedValues || {}, stepData.type);
+
+    if (!sanitizedByOutputSchema) {
+      throw new Error(
+        'Control values normalization failed, normalizeControlValues function requires maintenance to sanitize the provided type or data structure correctly'
+      );
+    }
+
+    return sanitizedByOutputSchema;
+  }
+
+  processControlValues(
+    controlValues: Record<string, unknown>,
+    variableSchema: JSONSchemaDto,
+    variablesObject: Record<string, unknown>
+  ): ControlValueProcessingResult {
+    let previewTemplateData: PreviewTemplateData = {
+      payloadExample: {},
+      controlValues: {},
+    };
+
+    const sanitizedControls: Record<string, unknown> = {};
+
+    for (const [controlKey, controlValue] of Object.entries(controlValues || {})) {
+      const variables = buildVariables(variableSchema, controlValue, this.logger);
+
+      const controlValueWithFixedVariables = this.fixControlValueInvalidVariables(
+        controlValue,
+        variables.invalidVariables
+      );
+
+      const processedControlValues = this.sanitizeControlValuesByLiquidCompilationFailure(
+        controlKey,
+        controlValueWithFixedVariables
+      );
+
+      sanitizedControls[controlKey] = processedControlValues;
+
+      previewTemplateData = {
+        payloadExample: _.merge(previewTemplateData.payloadExample, variablesObject),
+        controlValues: {
+          ...previewTemplateData.controlValues,
+          [controlKey]: isObjectMailyJSONContent(processedControlValues)
+            ? JSON.stringify(processedControlValues)
+            : processedControlValues,
+        },
+      };
+    }
+
+    return { sanitizedControls, previewTemplateData };
+  }
+
+  private sanitizeControlValuesByOutputSchema(
+    controlValues: Record<string, unknown>,
+    type: StepTypeEnum
+  ): Record<string, unknown> {
+    const outputSchema = channelStepSchemas[type]?.output || actionStepSchemas[type]?.output;
+
+    if (!outputSchema || !controlValues) {
+      return controlValues;
+    }
+
+    const ajv = new Ajv({ allErrors: true });
+    addFormats(ajv);
+    const validate = ajv.compile(outputSchema);
+    const isValid = validate(controlValues);
+    const errors = validate.errors as null | ErrorObject[];
+
+    if (isValid || !errors || errors?.length === 0) {
+      return controlValues;
+    }
+
+    return this.replaceInvalidControlValues(controlValues, errors);
+  }
+
+  private replaceInvalidControlValues(
+    normalizedControlValues: Record<string, unknown>,
+    errors: ErrorObject[]
+  ): Record<string, unknown> {
+    const fixedValues = _.cloneDeep(normalizedControlValues);
+
+    for (const error of errors) {
+      if (error.keyword === 'additionalProperties') {
+        continue;
+      }
+
+      const path = this.getErrorPath(error);
+      const defaultValue = _.get(previewControlValueDefault, path);
+      _.set(fixedValues, path, defaultValue);
+    }
+
+    return fixedValues;
+  }
+
+  private getErrorPath(error: ErrorObject): string {
+    return (error.instancePath.substring(1) || error.params.missingProperty).replace(/\//g, '.');
+  }
+
+  private fixControlValueInvalidVariables(controlValue: unknown, invalidVariables: Variable[]): unknown {
+    try {
+      const EMPTY_STRING = '';
+      const isMailyJSONContent = isStringifiedMailyJSONContent(controlValue);
+      let controlValuesString = isMailyJSONContent ? controlValue : JSON.stringify(controlValue);
+
+      for (const invalidVariable of invalidVariables) {
+        let variableOutput = invalidVariable.output;
+
+        if (isMailyJSONContent) {
+          variableOutput = variableOutput.replace(/\{\{|\}\}/g, '').trim();
+          controlValuesString = JSON.stringify(
+            replaceMailyVariables(controlValuesString, variableOutput, EMPTY_STRING)
+          );
+          continue;
+        }
+
+        if (!controlValuesString.includes(variableOutput)) {
+          continue;
+        }
+
+        controlValuesString = replaceAll(controlValuesString, variableOutput, EMPTY_STRING);
+      }
+
+      return JSON.parse(controlValuesString);
+    } catch (error) {
+      return controlValue;
+    }
+  }
+
+  private sanitizeControlValuesByLiquidCompilationFailure(key: string, value: unknown): unknown {
+    const parserEngine = buildLiquidParser();
+
+    try {
+      parserEngine.parse(JSON.stringify(value));
+
+      return value;
+    } catch (error) {
+      return get(previewControlValueDefault, key);
+    }
+  }
+}
