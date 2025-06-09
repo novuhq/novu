@@ -35,7 +35,7 @@ function generateSharedInboxCode(subscriberId: string | null, region: string = '
 
 export function NovuInbox() {
  // ${subscriberId ? 'Using provided subscriber ID - replace with your actual subscriber ID from your auth system' : 'TODO: Replace with your actual subscriber ID from your auth system'}
- const temporarySubscriberId = ${subscriberId ? `"${subscriberId.replace(/"/g, '\\"')}"` : '""'};
+ const temporarySubscriberId = ${subscriberId ? `"${subscriberId.replace(/\\/g, '\\\\').replace(/"/g, '"')}"` : '""'};
 
   const tabs = [
     // Basic tab with no filtering (shows all notifications)

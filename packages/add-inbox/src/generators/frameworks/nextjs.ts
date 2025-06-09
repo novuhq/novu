@@ -34,6 +34,8 @@ export function generateNextJsComponent(subscriberId: string | null = null, regi
     },
   };
 
+  const escapeString = (str: string) => str.replace(/\\/g, '\\\\').replace(/\"/g, '\\"');
+
   const componentCode = `\'use client\';
 
 // The Novu inbox component is a React component that allows you to display a notification inbox.
@@ -48,7 +50,7 @@ import { Inbox } from '@novu/nextjs';
 
 export default function NovuInbox() {
   // Temporary subscriber ID - replace with your actual subscriber ID from your auth system
-  const temporarySubscriberId = ${subscriberId ? `"${subscriberId.replace(/"/g, '\\"')}"` : '""'};
+  const temporarySubscriberId = ${subscriberId ? `"${escapeString(subscriberId)}"` : '""'};
 
   const tabs = [
     // Basic tab with no filtering (shows all notifications)
