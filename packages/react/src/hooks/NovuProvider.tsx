@@ -1,5 +1,5 @@
-import { Novu, NovuOptions, StandardNovuOptions, Subscriber } from '@novu/js';
-import { ReactNode, createContext, useContext, useMemo } from 'react';
+import { Novu, NovuOptions, Subscriber } from '@novu/js';
+import { ReactNode, createContext, useContext, useMemo, useEffect } from 'react';
 
 // @ts-ignore
 const version = PACKAGE_VERSION;
@@ -56,18 +56,15 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         __userAgent: `${baseUserAgent} ${userAgentType}`,
         subscriber: subscriberObj,
       }),
-    [
-      applicationIdentifier,
-      subscriberId,
-      subscriberHash,
-      backendUrl,
-      apiUrl,
-      socketUrl,
-      useCache,
-      subscriberObj,
-      userAgentType,
-    ]
+    [applicationIdentifier, subscriberHash, backendUrl, apiUrl, socketUrl, useCache, userAgentType]
   );
+
+  useEffect(() => {
+    novu.changeSubscriber({
+      subscriber: subscriberObj,
+      subscriberHash: props.subscriberHash,
+    });
+  }, [subscriberObj.subscriberId, props.subscriberHash, novu]);
 
   return <NovuContext.Provider value={novu}>{children}</NovuContext.Provider>;
 };

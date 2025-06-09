@@ -11,6 +11,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #inboxService: InboxService;
+  #currentSubscriberId: string;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
@@ -38,16 +39,18 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     });
     this.#emitter = new NovuEventEmitter();
     this.#session = new Session(
-      options.applicationIdentifier
-        ? {
-            applicationIdentifier: options.applicationIdentifier,
-            subscriberHash: options.subscriberHash,
-            subscriber: buildSubscriber(options),
-          }
-        : {},
+      {
+        applicationIdentifier: options.applicationIdentifier || '',
+        subscriberHash: options.subscriberHash,
+        subscriber: buildSubscriber(options),
+      },
       this.#inboxService,
       this.#emitter
     );
+
+    const initialSubscriber = buildSubscriber(options);
+    this.#currentSubscriberId = initialSubscriber.subscriberId;
+
     this.#session.initialize();
     this.notifications = new Notifications({
       useCache: options.useCache ?? true,
@@ -80,6 +83,20 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
     this.off = (eventName, listener) => {
       this.#emitter.off(eventName, listener);
     };
+  }
+
+  public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
+    if (this.#currentSubscriberId === options.subscriber.subscriberId) {
+      return;
+    }
+
+    await this.#session.initialize({
+      applicationIdentifier: this.#session.applicationIdentifier || '',
+      subscriberHash: options.subscriberHash,
+      subscriber: options.subscriber,
+    });
+
+    this.#currentSubscriberId = options.subscriber.subscriberId;
   }
 }
 

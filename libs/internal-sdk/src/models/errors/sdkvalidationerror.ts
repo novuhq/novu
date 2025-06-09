@@ -15,6 +15,18 @@ export class SDKValidationError extends Error {
    */
   public readonly rawMessage: unknown;
 
+  // Allows for backwards compatibility for `instanceof` checks of `ResponseValidationError`
+  static override [Symbol.hasInstance](
+    instance: unknown,
+  ): instance is SDKValidationError {
+    if (!(instance instanceof Error)) return false;
+    if (!("rawValue" in instance)) return false;
+    if (!("rawMessage" in instance)) return false;
+    if (!("pretty" in instance)) return false;
+    if (typeof instance.pretty !== "function") return false;
+    return true;
+  }
+
   constructor(message: string, cause: unknown, rawValue: unknown) {
     super(`${message}: ${cause}`);
     this.name = "SDKValidationError";
