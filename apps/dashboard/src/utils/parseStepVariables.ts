@@ -9,6 +9,12 @@ import {
   getDynamicDigestVariable,
 } from '../components/variable/utils/digest-variables';
 import { JSONSchema7 } from 'json-schema';
+import {
+  mapJsonSchemaTypeToFieldType,
+  getInputTypeFromSchema,
+  type FieldDataType,
+  type EnhancedField,
+} from './schema-to-field-types';
 
 export interface LiquidVariable {
   type?: 'variable' | 'digest' | 'new-variable';
@@ -20,6 +26,12 @@ export interface LiquidVariable {
   isNewSuggestion?: boolean;
 }
 
+export interface EnhancedLiquidVariable extends LiquidVariable {
+  dataType: FieldDataType;
+  format?: string;
+  inputType?: string;
+}
+
 export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
 
@@ -29,6 +41,10 @@ export interface ParsedVariables {
   variables: LiquidVariable[];
   namespaces: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
+}
+
+export interface EnhancedParsedVariables extends ParsedVariables {
+  enhancedVariables: EnhancedLiquidVariable[];
 }
 
 /**
@@ -206,5 +222,103 @@ export function parseStepVariables(
       : [...result.primitives, ...result.arrays, ...result.namespaces],
 
     isAllowedVariable,
+  };
+}
+
+/**
+ * Enhanced version of parseStepVariables that includes type information for React Query Builder
+ */
+export function parseStepVariablesWithTypes(
+  schema: JSONSchemaDefinition | JSONSchema7,
+  { digestStepId, isPayloadSchemaEnabled }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean }
+): EnhancedParsedVariables {
+  const baseResult = parseStepVariables(schema, { digestStepId, isPayloadSchemaEnabled });
+  const enhancedVariables: EnhancedLiquidVariable[] = [];
+
+  function extractPropertiesWithTypes(obj: JSONSchemaDefinition | JSONSchema7, path = ''): void {
+    if (typeof obj === 'boolean') return;
+
+    if (obj.type === 'object') {
+      if (!obj.properties) return;
+
+      for (const [key, value] of Object.entries(obj.properties)) {
+        const fullPath = path ? `${path}.${key}` : key;
+
+        if (typeof value === 'object') {
+          if (value.type === 'array') {
+            enhancedVariables.push({
+              name: fullPath,
+              dataType: 'array',
+            });
+
+            if (value.properties) {
+              extractPropertiesWithTypes({ type: 'object', properties: value.properties }, fullPath);
+            }
+
+            if (value.items) {
+              const items = Array.isArray(value.items) ? value.items[0] : value.items;
+              extractPropertiesWithTypes(items, `${fullPath}[0]`);
+            }
+          } else if (value.type === 'object') {
+            enhancedVariables.push({
+              name: fullPath,
+              dataType: 'object',
+            });
+
+            extractPropertiesWithTypes(value, fullPath);
+          } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
+            const dataType = mapJsonSchemaTypeToFieldType(value);
+            const inputType = getInputTypeFromSchema(value);
+
+            enhancedVariables.push({
+              name: fullPath,
+              dataType,
+              inputType,
+              format: value.format,
+            });
+          }
+        }
+      }
+    }
+
+    // Handle combinators (allOf, anyOf, oneOf)
+    ['allOf', 'anyOf', 'oneOf'].forEach((combiner) => {
+      if (Array.isArray(obj[combiner as keyof typeof obj])) {
+        for (const subSchema of obj[combiner as keyof typeof obj] as JSONSchemaDefinition[]) {
+          extractPropertiesWithTypes(subSchema, path);
+        }
+      }
+    });
+
+    // Handle conditional schemas (if/then/else)
+    if (obj.if) extractPropertiesWithTypes(obj.if, path);
+    if (obj.then) extractPropertiesWithTypes(obj.then, path);
+    if (obj.else) extractPropertiesWithTypes(obj.else, path);
+  }
+
+  extractPropertiesWithTypes(schema);
+
+  // Add digest variables with default string type
+  if (digestStepId) {
+    const digestVariables = DIGEST_VARIABLES.map((variable) => {
+      const { label: displayLabel, value } = getDynamicDigestVariable({
+        digestStepName: digestStepId,
+        type: variable.name as DIGEST_VARIABLES_ENUM,
+      });
+
+      return {
+        ...variable,
+        name: value,
+        displayLabel,
+        dataType: 'string' as FieldDataType,
+      };
+    });
+
+    enhancedVariables.unshift(...digestVariables);
+  }
+
+  return {
+    ...baseResult,
+    enhancedVariables,
   };
 }

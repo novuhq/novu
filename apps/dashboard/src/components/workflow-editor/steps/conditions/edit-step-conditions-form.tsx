@@ -13,6 +13,8 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { useParseVariablesWithTypes } from '@/hooks/use-parse-variables-with-types';
+import { EnhancedField } from '@/utils/schema-to-field-types';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { countConditions, getUniqueFieldNamespaces, getUniqueOperators } from '@/utils/conditions';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -95,11 +97,41 @@ export const EditStepConditionsForm = () => {
 
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
-  const fields = variables.map((variable) => ({
-    name: variable.name,
-    label: variable.name,
-    value: variable.name,
-  }));
+  // Use enhanced variables with type information for better field types
+  const { enhancedVariables } = useParseVariablesWithTypes(
+    step?.variables,
+    digestStepBeforeCurrent?.stepId,
+    true // Enable payload schema support
+  );
+
+  // Create a map of enhanced variables for quick lookup
+  const enhancedVariableMap = new Map(enhancedVariables.map((v) => [v.name, v]));
+
+  // Merge regular variables with enhanced variables, ensuring all variables are included
+  const fields: EnhancedField[] = variables.map((variable) => {
+    const enhancedVariable = enhancedVariableMap.get(variable.name);
+
+    if (enhancedVariable) {
+      // Use enhanced variable with type information
+      return {
+        name: enhancedVariable.name,
+        label: enhancedVariable.displayLabel || enhancedVariable.name,
+        value: enhancedVariable.name,
+        dataType: enhancedVariable.dataType,
+        inputType: enhancedVariable.inputType,
+        format: enhancedVariable.format,
+      };
+    } else {
+      // Fallback to string type for variables not found in enhanced parsing
+      return {
+        name: variable.name,
+        label: variable.displayLabel || variable.name,
+        value: variable.name,
+        dataType: 'string' as const,
+        inputType: 'text',
+      };
+    }
+  });
 
   const form = useForm<FormQuery>({
     mode: 'onSubmit',
@@ -208,6 +240,7 @@ export const EditStepConditionsForm = () => {
                 fields={fields}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
+                enhancedVariables={enhancedVariables}
               />
             )}
           />
