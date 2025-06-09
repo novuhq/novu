@@ -8,6 +8,7 @@ import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
+  FeatureFlagsKeysEnum,
   StepContentIssue,
   StepContentIssueEnum,
   StepIntegrationIssueEnum,
@@ -18,6 +19,7 @@ import {
 } from '@novu/shared';
 import {
   dashboardSanitizeControlValues,
+  FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
@@ -34,7 +36,7 @@ import {
 } from '../../../shared/services/query-parser/query-validator.service';
 import { parseStepVariables } from '../../util/parse-step-variables';
 import { JSONSchemaDto } from '../../dtos';
-import { buildLiquidParser } from '../../util/template-parser/liquid-parser';
+import { buildLiquidParser } from '../../util/template-parser/liquid-engine';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
@@ -49,7 +51,8 @@ export class BuildStepIssuesUsecase {
     @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private logger: PinoLogger,
-    private integrationsRepository: IntegrationRepository
+    private integrationsRepository: IntegrationRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -89,10 +92,18 @@ export class BuildStepIssuesUsecase {
       )?.controls;
     }
 
+    const isHtmlEditorEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
+      organization: { _id: command.user.organizationId },
+      environment: { _id: command.user.environmentId },
+      user: { _id: command.user._id },
+      defaultValue: false,
+    });
+
     const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepType);
 
     const schemaIssues = this.processControlValuesBySchema(controlSchema, sanitizedControlValues || {}, stepType);
-    const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {});
+    const liquidIssues = this.processControlValuesByLiquid(variableSchema, newControlValues || {}, isHtmlEditorEnabled);
     const customIssues = await this.processControlValuesByCustomeRules(user, stepType, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip
       ? this.validateSkipField(variableSchema, sanitizedControlValues.skip as RulesLogic<AdditionalOperation>)
@@ -120,10 +131,11 @@ export class BuildStepIssuesUsecase {
   @Instrument()
   private processControlValuesByLiquid(
     variableSchema: JSONSchemaDto | undefined,
-    controlValues: Record<string, unknown> | null
+    controlValues: Record<string, unknown> | null,
+    isHtmlEditorEnabled: boolean
   ): StepIssuesDto {
     const issues: StepIssuesDto = {};
-    this.processNestedControlValues(controlValues, [], issues, variableSchema);
+    this.processNestedControlValues(controlValues, [], issues, variableSchema, isHtmlEditorEnabled);
 
     return issues;
   }
@@ -133,10 +145,16 @@ export class BuildStepIssuesUsecase {
     currentValue: unknown,
     currentPath: string[],
     issues: StepIssuesDto,
-    variableSchema: JSONSchemaDto | undefined
+    variableSchema: JSONSchemaDto | undefined,
+    isHtmlEditorEnabled: boolean
   ): void {
     if (!currentValue || typeof currentValue !== 'object') {
-      const liquidTemplateIssues = buildVariables(variableSchema, currentValue);
+      const liquidTemplateIssues = buildVariables({
+        useNewLiquidParser: isHtmlEditorEnabled,
+        variableSchema,
+        controlValue: currentValue,
+        logger: this.logger,
+      });
 
       // Prioritize invalid variable validation over content compilation since it provides more granular error details
       if (liquidTemplateIssues.invalidVariables.length > 0) {
@@ -150,16 +168,16 @@ export class BuildStepIssuesUsecase {
           const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
           if ('filterMessage' in invalidVariable) {
             return {
-              message: `Filter ${invalidVariable.filterMessage} in ${invalidVariable.name}`,
+              message: `Filter "${invalidVariable.filterMessage}" in "${invalidVariable.name}"`,
               issueType: StepContentIssueEnum.INVALID_FILTER_ARG_IN_VARIABLE,
-              variableName: invalidVariable.output,
+              variableName: invalidVariable.name,
             };
           }
 
           return {
-            message: `Variable ${invalidVariable.output} ${message}`.trim(),
+            message: `Variable "${invalidVariable.name}" ${message}`.trim(),
             issueType: StepContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-            variableName: invalidVariable.output,
+            variableName: invalidVariable.name,
           };
         });
       } else {
@@ -179,13 +197,13 @@ export class BuildStepIssuesUsecase {
     }
 
     for (const [key, value] of Object.entries(currentValue)) {
-      this.processNestedControlValues(value, [...currentPath, key], issues, variableSchema);
+      this.processNestedControlValues(value, [...currentPath, key], issues, variableSchema, isHtmlEditorEnabled);
     }
   }
 
   private validateContentCompilation(controlKey: string, currentValue: unknown): StepContentIssue | null {
     try {
-      this.parserEngine.parse(JSON.stringify(currentValue));
+      this.parserEngine.parse(typeof currentValue === 'string' ? currentValue : JSON.stringify(currentValue));
 
       return null;
     } catch (error) {

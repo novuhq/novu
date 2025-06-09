@@ -4,14 +4,7 @@ import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { captureException } from '@sentry/node';
-import {
-  EnvironmentEntity,
-  NotificationTemplateEntity,
-  OrganizationEntity,
-  UserEntity,
-  JsonSchemaTypeEnum,
-  JsonSchemaFormatEnum,
-} from '@novu/dal';
+import { NotificationTemplateEntity, JsonSchemaTypeEnum, JsonSchemaFormatEnum } from '@novu/dal';
 
 import {
   ChannelTypeEnum,
@@ -38,7 +31,8 @@ import { BuildStepDataUsecase } from '../build-step-data';
 import { PreviewCommand } from './preview.command';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
-import { buildLiquidParser, Variable } from '../../util/template-parser/liquid-parser';
+import { buildLiquidParser } from '../../util/template-parser/liquid-engine';
+import type { Variable } from '../../util/template-parser/types';
 import { buildVariables } from '../../util/build-variables';
 import { mergeCommonObjectKeys } from '../../util/utils';
 import { buildVariablesSchema } from '../../util/create-schema';
@@ -98,8 +92,21 @@ export class PreviewUsecase {
         controlValues: {},
       };
 
+      const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
+        organization: { _id: command.user.organizationId },
+        environment: { _id: command.user.environmentId },
+        user: { _id: command.user._id },
+        defaultValue: false,
+      });
+
       for (const [controlKey, controlValue] of Object.entries(sanitizedValidatedControls || {})) {
-        const variables = buildVariables(variableSchema, controlValue, this.logger);
+        const variables = buildVariables({
+          useNewLiquidParser: isHtmlEditorEnabled,
+          variableSchema,
+          controlValue,
+          logger: this.logger,
+        });
 
         const controlValueWithFixedVariables = this.fixControlValueInvalidVariables(
           controlValue,

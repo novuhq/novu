@@ -1,6 +1,6 @@
-import { createLiquidEngine, FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
+import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
 
-import { Filter, LiquidError, Output, RenderError, Template, TokenKind } from 'liquidjs';
+import { Filter, Output, RenderError, Template, TokenKind } from 'liquidjs';
 import {
   DIGEST_EVENTS_VARIABLE_PATTERN,
   extractLiquidExpressions,
@@ -8,56 +8,14 @@ import {
   isValidTemplate,
 } from './parser-utils';
 import { JSONSchemaDto } from '../../dtos';
-
-const LIQUID_CONFIG = {
-  strictVariables: true,
-  strictFilters: true,
-  greedy: false,
-  catchAllErrors: true,
-} as const;
-
-export const buildLiquidParser = () => {
-  return createLiquidEngine(LIQUID_CONFIG);
-};
+import type { TemplateVariables, Variable } from './types';
+import { LiquidError } from './types';
+import { buildLiquidParser } from './liquid-engine';
 
 const parserEngine = buildLiquidParser();
 
-export type Variable = {
-  /**
-   * The variable name/path (e.g. for valid variables "user.name",
-   * for invalid variables will fallback to output "{{user.name | upcase}}")
-   */
-  name: string;
-
-  /** The surrounding context where the variable was found, useful for error messages */
-  context?: string;
-
-  /** Error message if the variable is invalid */
-  message?: string;
-
-  /** Error message if the variable filter is invalid */
-  filterMessage?: string;
-
-  /** The full liquid output string (e.g. "{{user.name | upcase}}") */
-  output: string;
-};
-
-export type TemplateVariables = {
-  validVariables: Array<Variable>;
-  invalidVariables: Array<Variable>;
-};
-
-/**
- * Copy of LiquidErrors type from liquidjs since it's not exported.
- * Used to handle multiple render errors that can occur during template parsing.
- * @see https://github.com/harttle/liquidjs/blob/d61855bf725a6deba203201357f7455f6f9b4a32/src/util/error.ts#L65
- */
-class LiquidErrors extends LiquidError {
-  errors: RenderError[];
-}
-
-function isLiquidErrors(error: unknown): error is LiquidErrors {
-  return error instanceof LiquidError && 'errors' in error && Array.isArray((error as LiquidErrors).errors);
+function isLiquidError(error: unknown): error is LiquidError {
+  return error instanceof LiquidError && 'errors' in error && Array.isArray((error as LiquidError).errors);
 }
 
 /**
@@ -133,7 +91,7 @@ function processLiquidRawOutput({
       result.validVariables.forEach((variable) => addVariable(variable, true));
       result.invalidVariables.forEach((variable) => addVariable(variable, false));
     } catch (error: unknown) {
-      if (isLiquidErrors(error)) {
+      if (isLiquidError(error)) {
         error.errors.forEach((e: RenderError) => {
           addVariable(
             {
@@ -141,6 +99,8 @@ function processLiquidRawOutput({
               message: e.message,
               context: e.context,
               output: rawOutput,
+              outputStart: 0,
+              outputEnd: rawOutput.length,
             },
             false
           );
@@ -235,6 +195,8 @@ function parseByLiquid({
           name: token?.input,
           filterMessage: filterIssues[0].message,
           output: rawOutput,
+          outputStart: 0,
+          outputEnd: rawOutput.length,
         });
 
         return;
@@ -244,7 +206,7 @@ function parseByLiquid({
       if (isValidVariable) {
         const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
         if (isAllowedVariable) {
-          validVariables.push({ name: variableName, output: rawOutput });
+          validVariables.push({ name: variableName, output: rawOutput, outputStart: 0, outputEnd: rawOutput.length });
           if (filters.length > 0) {
             filters.forEach((filter) => {
               const { args } = filter;
@@ -273,6 +235,8 @@ function parseByLiquid({
                     validVariables.push({
                       name: `${variableName}.${firstArg.content}`,
                       output: `{{${firstArg.content}}}`,
+                      outputStart: 0,
+                      outputEnd: rawOutput.length,
                     });
                   }
                 }
@@ -284,6 +248,8 @@ function parseByLiquid({
             name: variableName,
             message: 'is not supported',
             output: rawOutput,
+            outputStart: 0,
+            outputEnd: rawOutput.length,
           });
         }
       }
@@ -294,6 +260,8 @@ function parseByLiquid({
           name: token?.input,
           message: result.error,
           output: rawOutput,
+          outputStart: 0,
+          outputEnd: rawOutput.length,
         });
       }
     });

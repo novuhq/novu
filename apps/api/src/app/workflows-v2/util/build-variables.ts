@@ -3,14 +3,22 @@ import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 import { extractFieldsFromRules, isValidRule } from '../../shared/services/query-parser/query-parser.service';
 import { JSONSchemaDto } from '../dtos';
-import { extractLiquidTemplateVariables, TemplateVariables } from './template-parser/liquid-parser';
+import { extractLiquidTemplateVariables } from './template-parser/liquid-parser';
+import { extractLiquidTemplateVariables as newExtractLiquidTemplateVariables } from './template-parser/new-liquid-parser';
+import type { TemplateVariables } from './template-parser/types';
 import { isStringifiedMailyJSONContent, wrapMailyInLiquid } from '../../shared/helpers/maily-utils';
 
-export function buildVariables(
-  variableSchema: JSONSchemaDto | undefined,
-  controlValue: unknown | Record<string, unknown>,
-  logger?: PinoLogger
-): TemplateVariables {
+export function buildVariables({
+  useNewLiquidParser,
+  variableSchema,
+  controlValue,
+  logger,
+}: {
+  useNewLiquidParser: boolean;
+  variableSchema: JSONSchemaDto | undefined;
+  controlValue: unknown | Record<string, unknown>;
+  logger?: PinoLogger;
+}): TemplateVariables {
   let variableControlValue = controlValue;
 
   if (isStringifiedMailyJSONContent(variableControlValue)) {
@@ -37,8 +45,20 @@ export function buildVariables(
     };
   }
 
+  if (useNewLiquidParser) {
+    const { validVariables, invalidVariables } = newExtractLiquidTemplateVariables({
+      template: typeof variableControlValue === 'string' ? variableControlValue : JSON.stringify(variableControlValue),
+      variableSchema,
+    });
+
+    return {
+      validVariables,
+      invalidVariables,
+    };
+  }
+
   const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
-    template: JSON.stringify(variableControlValue),
+    template: typeof variableControlValue === 'string' ? variableControlValue : JSON.stringify(variableControlValue),
     variableSchema,
   });
 
