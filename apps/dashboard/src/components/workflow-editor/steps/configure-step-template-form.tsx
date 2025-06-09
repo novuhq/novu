@@ -42,7 +42,11 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
 
   const form = useForm({
     defaultValues,
+    values: step.controls.values,
     shouldFocusError: false,
+    resetOptions: {
+      keepDirtyValues: true,
+    },
   });
 
   const { onBlur, saveForm } = useFormAutosave({

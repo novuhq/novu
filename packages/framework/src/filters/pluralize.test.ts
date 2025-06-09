@@ -102,4 +102,34 @@ describe('pluralize', () => {
     expect(pluralize(NaN, 'item')).toBe('');
     expect(pluralize('invalid', 'item')).toBe('');
   });
+
+  it('should support hiding count when showCount is false', () => {
+    expect(pluralize(1, 'item', '', false)).toBe('item');
+    expect(pluralize(2, 'item', '', false)).toBe('items');
+    expect(pluralize(1, 'child', 'children', false)).toBe('child');
+    expect(pluralize(2, 'child', 'children', false)).toBe('children');
+    expect(pluralize(1, 'apple', '', false)).toBe('apple');
+    expect(pluralize(2, 'apple', '', false)).toBe('apples');
+  });
+
+  it('should show count by default when showCount is not specified', () => {
+    expect(pluralize(1, 'item')).toBe('1 item');
+    expect(pluralize(2, 'item')).toBe('2 items');
+    expect(pluralize(1, 'child', 'children')).toBe('1 child');
+    expect(pluralize(2, 'child', 'children')).toBe('2 children');
+  });
+
+  it('should show count when showCount is explicitly true', () => {
+    expect(pluralize(1, 'item', '', true)).toBe('1 item');
+    expect(pluralize(2, 'item', '', true)).toBe('2 items');
+    expect(pluralize(1, 'child', 'children', true)).toBe('1 child');
+    expect(pluralize(2, 'child', 'children', true)).toBe('2 children');
+  });
+
+  it('should return empty string for count <= 0 regardless of showCount', () => {
+    expect(pluralize(0, 'item', '', false)).toBe('');
+    expect(pluralize(-1, 'item', '', false)).toBe('');
+    expect(pluralize(0, 'item', '', true)).toBe('');
+    expect(pluralize(-1, 'item', '', true)).toBe('');
+  });
 });
