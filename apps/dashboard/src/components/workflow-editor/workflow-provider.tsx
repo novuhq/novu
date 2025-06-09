@@ -33,6 +33,7 @@ export type UpdateWorkflowFn = (
 
 export type WorkflowContextType = {
   isPending: boolean;
+  isUpdatePatchPending: boolean;
   workflow?: WorkflowResponseDto;
   step?: StepResponseDto;
   update: UpdateWorkflowFn;
@@ -204,8 +205,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   }, [isAllowedToUnblock, blocker]);
 
   const value = useMemo(
-    () => ({ update, patch, isPending, workflow, step: getStep(), digestStepBeforeCurrent }),
-    [update, patch, isPending, workflow, getStep, digestStepBeforeCurrent]
+    () => ({ update, patch, isPending, workflow, step: getStep(), digestStepBeforeCurrent, isUpdatePatchPending }),
+    [update, patch, isPending, workflow, getStep, digestStepBeforeCurrent, isUpdatePatchPending]
   );
 
   return (
