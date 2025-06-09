@@ -34,7 +34,7 @@ export function generateNextJsComponent(subscriberId: string | null = null, regi
     },
   };
 
-  const componentCode = `'use client';
+  const componentCode = `\'use client\';
 
 // The Novu inbox component is a React component that allows you to display a notification inbox.
 // Learn more: https://docs.novu.co/platform/inbox/overview
@@ -114,7 +114,3 @@ export default function NovuInbox() {
 
   return componentCode;
 }
-
-module.exports = {
-  generateNextJsComponent,
-};

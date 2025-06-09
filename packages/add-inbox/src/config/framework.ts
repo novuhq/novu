@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../utils/logger';
 import { FRAMEWORKS, FrameworkType } from '../constants';
-import fileUtils from '../utils/file';
 
 export interface Framework {
   framework: FrameworkType;
@@ -81,8 +80,13 @@ function getFrameworkVersion(packageJson: PackageJson, framework: string): strin
 function validateFrameworkVersion(version: string | null, framework: FrameworkType): boolean {
   if (!version) return false;
 
-  const [major] = version.split('.');
-  return parseInt(major) >= MIN_VERSIONS[framework];
+  const versionParts = version.split('.');
+  if (versionParts.length === 0) return false;
+
+  const major = parseInt(versionParts[0]);
+  if (isNaN(major)) return false;
+
+  return major >= MIN_VERSIONS[framework];
 }
 
 /**

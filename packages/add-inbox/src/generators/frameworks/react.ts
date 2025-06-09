@@ -1,10 +1,27 @@
 import { getReactVersion } from '../react-version';
-
 export function generateReactComponent(subscriberId: string | null = null): string {
   const reactVersion = getReactVersion();
-  const isModernReact = reactVersion.startsWith('17.') || reactVersion.startsWith('18.');
+  const isModernReact = isReactVersionModern(reactVersion);
 
   return isModernReact ? generateModernReactComponent(subscriberId) : generateLegacyReactComponent(subscriberId);
+}
+
+function isReactVersionModern(version: string): boolean {
+  try {
+    // Remove any pre-release suffixes (e.g., "18.0.0-rc.0" -> "18.0.0")
+    const cleanVersion = version.split('-')[0];
+    const [major, minor] = cleanVersion.split('.').map(Number);
+
+    if (isNaN(major) || isNaN(minor)) {
+      // If we can't parse the version, default to modern React
+      return true;
+    }
+
+    return major >= 17;
+  } catch (error) {
+    // If anything goes wrong, default to modern React
+    return true;
+  }
 }
 
 function generateSharedInboxCode(subscriberId: string | null, region: string = 'us', envAccessor: string): string {
@@ -13,8 +30,8 @@ function generateSharedInboxCode(subscriberId: string | null, region: string = '
 // import { dark } from '@novu/react/themes'; => To enable dark theme support, uncomment this line.
 
 export function NovuInbox() {
-  // Temporary subscriber ID - replace with your actual subscriber ID from your auth system
-  const temporarySubscriberId = ${subscriberId ? `"${subscriberId}"` : '""'};
+ // ${subscriberId ? 'Using provided subscriber ID - replace with your actual subscriber ID from your auth system' : 'TODO: Replace with your actual subscriber ID from your auth system'}
+ const temporarySubscriberId = ${subscriberId ? `"${subscriberId}"` : '""'};
 
   const tabs = [
     // Basic tab with no filtering (shows all notifications)

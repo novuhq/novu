@@ -50,8 +50,23 @@ export async function createComponentStructure(
 
   // Write component file
   const componentPath = fileUtils.joinPaths(inboxDir, 'NovuInbox.tsx');
-  fileUtils.writeFile(componentPath, componentCode);
 
-  logger.success('  ✓ Created Novu Inbox component');
-  logger.gray(`    Location: ${componentPath}`);
+  const fileExists = fileUtils.exists(componentPath);
+  if (fileExists && !overwriteComponents) {
+    logger.warning(`Component already exists at ${componentPath}. Use --overwrite to replace it.`);
+    return;
+  }
+
+  try {
+    fileUtils.writeFile(componentPath, componentCode);
+    logger.success('  ✓ Created Novu Inbox component');
+    logger.gray(`    Location: ${componentPath}`);
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error && 'message' in error) {
+      logger.error(`Failed to create component file: ${(error as any).message}`);
+    } else {
+      logger.error('Failed to create component file: Unknown error');
+    }
+    throw error;
+  }
 }

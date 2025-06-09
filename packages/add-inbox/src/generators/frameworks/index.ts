@@ -1,7 +1,2 @@
-const { generateNextJsComponent } = require('./nextjs');
-const { generateReactComponent } = require('./react');
-
-module.exports = {
-  generateNextJsComponent,
-  generateReactComponent,
-};
+export { generateNextJsComponent } from './nextjs';
+export { generateReactComponent } from './react';

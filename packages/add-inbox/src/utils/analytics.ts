@@ -1,6 +1,6 @@
-import { Analytics } from '@segment/analytics-node';
+import Analytics from '@segment/analytics-node';
 import { v4 as uuidv4 } from 'uuid';
-import { ANALYTICS_ENABLED, SEGMENTS_WRITE_KEY } from '../constants';
+import { SEGMENTS_WRITE_KEY, ANALYTICS_ENABLED } from '../constants';
 
 const ANALYTICS_SOURCE = '[CLI add-inbox]';
 
@@ -16,7 +16,7 @@ interface IAnalyticsIdentity {
 }
 
 export class AnalyticsService {
-  private _analytics!: Analytics;
+  private _analytics?: Analytics;
   private _analyticsEnabled: boolean;
   private _anonymousId: string;
 
@@ -52,7 +52,7 @@ export class AnalyticsService {
         properties: data || {},
       };
 
-      this._analytics.track(payload);
+      this._analytics?.track(payload);
     } catch (error) {
       // Silently fail - we don't want analytics errors to affect the CLI
       console.error('Analytics error:', error);
@@ -72,7 +72,7 @@ export class AnalyticsService {
     }
 
     try {
-      this._analytics.identify({
+      this._analytics?.identify({
         userId: user._id,
         traits: {
           email: user.email,
@@ -94,7 +94,7 @@ export class AnalyticsService {
     }
 
     try {
-      this._analytics.alias({
+      this._analytics?.alias({
         previousId,
         userId,
       });
@@ -109,7 +109,7 @@ export class AnalyticsService {
     }
 
     try {
-      await this._analytics.closeAndFlush();
+      await this._analytics?.closeAndFlush();
     } catch (error) {
       // Silently fail - we don't want analytics errors to affect the CLI
       console.error('Analytics flush error:', error);

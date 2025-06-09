@@ -22,10 +22,11 @@ export const ENV_VARIABLES = {
   },
 } as const;
 
-export const ANALYTICS_ENABLED = true;
-export const SEGMENTS_WRITE_KEY = 'YOUR_SEGMENT_WRITE_KEY'; // Replace with actual key if needed
+// segment analytics
+export const ANALYTICS_ENABLED = process.env.ANALYTICS_ENABLED !== 'false';
+export const SEGMENTS_WRITE_KEY = process.env.CLI_SEGMENT_WRITE_KEY || 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
 
-module.exports = {
+export default {
   FRAMEWORKS,
   PACKAGE_MANAGERS,
   ENV_VARIABLES,

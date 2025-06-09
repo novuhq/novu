@@ -32,20 +32,45 @@ export function detectPackageManager(): PackageManager {
   try {
     const packageJsonPath = fileUtils.joinPaths(cwd, 'package.json');
     if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath) as PackageJson;
-      if (packageJson.packageManager) {
-        const [name, version] = packageJson.packageManager.split('@');
-        if (name === PACKAGE_MANAGERS.NPM) {
-          return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
-        } else if (name === PACKAGE_MANAGERS.YARN) {
-          return { name: PACKAGE_MANAGERS.YARN, install: 'add', init: 'init -y' };
-        } else if (name === PACKAGE_MANAGERS.PNPM) {
-          return { name: PACKAGE_MANAGERS.PNPM, install: 'add', init: 'init' };
+      let packageJson: PackageJson | undefined;
+      try {
+        packageJson = fileUtils.readJson(packageJsonPath) as PackageJson;
+      } catch (readError) {
+        logger.warning(
+          `  • Failed to parse package.json: ${readError instanceof Error ? readError.message : String(readError)}`
+        );
+        return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
+      }
+      if (packageJson && typeof packageJson.packageManager === 'string') {
+        const split = packageJson.packageManager.split('@');
+        if (split.length === 2) {
+          const [name, version] = split;
+          if (name && version && version.trim().length > 0) {
+            if (name === PACKAGE_MANAGERS.NPM) {
+              return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
+            } else if (name === PACKAGE_MANAGERS.YARN) {
+              return { name: PACKAGE_MANAGERS.YARN, install: 'add', init: 'init -y' };
+            } else if (name === PACKAGE_MANAGERS.PNPM) {
+              return { name: PACKAGE_MANAGERS.PNPM, install: 'add', init: 'init' };
+            }
+          } else {
+            logger.warning(
+              `  • Invalid packageManager field in package.json: '${packageJson.packageManager}' (missing name or version)`
+            );
+          }
+        } else {
+          logger.warning(`  • Malformed packageManager field in package.json: '${packageJson.packageManager}'`);
         }
       }
     }
   } catch (error) {
-    logger.warning('  • Could not read package.json for package manager detection');
+    if (error instanceof SyntaxError) {
+      logger.warning(`  • Syntax error in package.json: ${error.message}`);
+    } else if (error instanceof Error) {
+      logger.warning(`  • Error reading package.json: ${error.message}`);
+    } else {
+      logger.warning(`  • Unknown error reading package.json: ${String(error)}`);
+    }
   }
 
   // If no package manager is detected, default to npm
@@ -66,8 +91,20 @@ export async function ensurePackageJson(packageManager: PackageManager): Promise
 
     if (confirm) {
       try {
+        // Validate packageManager.name and packageManager.init
+        const allowedNames = [PACKAGE_MANAGERS.NPM, PACKAGE_MANAGERS.YARN, PACKAGE_MANAGERS.PNPM];
+        const allowedInits = ['init', 'init -y'];
+        const isNameValid = allowedNames.includes(packageManager.name);
+        const isInitValid = allowedInits.includes(packageManager.init);
+        if (!isNameValid || !isInitValid) {
+          logger.error(
+            `  ✗ Unsafe or invalid package manager command: '${packageManager.name} ${packageManager.init}'`
+          );
+          logger.cyan('  Please initialize package.json manually and try again.');
+          return false;
+        }
         logger.gray(`  $ ${packageManager.name} ${packageManager.init}`);
-        execSync(`${packageManager.name} ${packageManager.init}`, { stdio: 'inherit' });
+        execSync(`${packageManager.name} ${packageManager.init}`, { stdio: 'inherit', timeout: 10000 });
         logger.success('  ✓ package.json initialized.');
       } catch (error) {
         logger.error('  ✗ Failed to initialize package.json:');

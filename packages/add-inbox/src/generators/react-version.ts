@@ -8,12 +8,25 @@
  */
 export function getReactVersion(): string {
   try {
-    // Try to get React version from package.json
+    const fs = require('fs');
+    const path = require('path');
+
+    // First try to get React version from current project's package.json
+    const projectPackageJsonPath = path.join(process.cwd(), 'package.json');
+    if (fs.existsSync(projectPackageJsonPath)) {
+      const projectPackageJson = JSON.parse(fs.readFileSync(projectPackageJsonPath, 'utf-8'));
+      const reactVersion = projectPackageJson.dependencies?.react || projectPackageJson.devDependencies?.react;
+      if (reactVersion) {
+        return reactVersion.replace(/[\^~]/, '');
+      }
+    }
+
+    // Fallback to installed React package
     const packageJson = require('react/package.json');
     return packageJson.version;
   } catch (error) {
-    // If we can't get the version, assume it's a modern version
-    return '17.0.0';
+    console.warn('Could not detect React version, assuming 18.0.0');
+    return '18.0.0';
   }
 }
 
