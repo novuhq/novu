@@ -265,8 +265,6 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
       [extensionsProp, multiline]
     );
 
-    console.log({ foldGutter });
-
     const basicSetup = useMemo(
       () => ({
         lineNumbers,
