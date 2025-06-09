@@ -38,7 +38,7 @@ export async function createComponentStructure(
   // Generate component code based on framework
   let componentCode: string;
   if (framework.framework === FRAMEWORKS.NEXTJS) {
-    componentCode = generateNextJsComponent(subscriberId || null, region);
+    componentCode = generateNextJsComponent(subscriberId || null, region as 'us' | 'eu');
   } else {
     // For React, determine if it's modern or legacy
     if (isModernReact()) {
