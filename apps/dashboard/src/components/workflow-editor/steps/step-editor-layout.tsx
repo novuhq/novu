@@ -17,7 +17,7 @@ type StepEditorLayoutProps = {
 };
 
 function StepEditorContent() {
-  const { step } = useStepEditor();
+  const { step, isSubsequentLoad } = useStepEditor();
   const editorTitle = getEditorTitle(step.type);
 
   return (
@@ -44,7 +44,7 @@ function StepEditorContent() {
             <ResizableLayout.Handle />
 
             <ResizableLayout.PreviewPanel>
-              <PanelHeader icon={RiEyeLine} title="Preview" />
+              <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} />
               <div
                 className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
                 style={{

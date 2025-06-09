@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useMemo, useCallback } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { WorkflowResponseDto, StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
@@ -11,6 +11,8 @@ type StepEditorContextType = {
   setEditorValue: (value: string) => Error | null;
   previewData: any;
   isPreviewPending: boolean;
+  isInitialLoad: boolean;
+  isSubsequentLoad: boolean;
   isNovuCloud: boolean;
   isStepEditable: boolean;
   isStepPreviewable: boolean;
@@ -27,12 +29,20 @@ type StepEditorProviderProps = {
 export function StepEditorProvider({ children, workflow, step }: StepEditorProviderProps) {
   const form = useFormContext();
   const controlValues = form.watch();
+  const hasLoadedOnceRef = useRef(false);
 
-  const { editorValue, setEditorValue, previewData, isPreviewPending } = useEditorPreview({
+  const { editorValue, setEditorValue, previewData, isPreviewPending, isFetching } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
     controlValues,
   });
+
+  // Track if we've loaded data at least once
+  useEffect(() => {
+    if (previewData && !hasLoadedOnceRef.current) {
+      hasLoadedOnceRef.current = true;
+    }
+  }, [previewData]);
 
   const stepCapabilities = useMemo(() => {
     const { uiSchema } = step.controls;
@@ -55,6 +65,12 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     [setEditorValue]
   );
 
+  // For initial load: show skeleton when loading and haven't loaded before
+  const isInitialLoad = isPreviewPending && !hasLoadedOnceRef.current;
+
+  // For subsequent load: show header indicator when fetching and have loaded before
+  const isSubsequentLoad = isFetching && hasLoadedOnceRef.current;
+
   const contextValue = useMemo(
     (): StepEditorContextType => ({
       workflow,
@@ -64,9 +80,22 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
       setEditorValue: stableSetEditorValue,
       previewData,
       isPreviewPending,
+      isInitialLoad,
+      isSubsequentLoad,
       ...stepCapabilities,
     }),
-    [workflow, step, controlValues, editorValue, stableSetEditorValue, previewData, isPreviewPending, stepCapabilities]
+    [
+      workflow,
+      step,
+      controlValues,
+      editorValue,
+      stableSetEditorValue,
+      previewData,
+      isPreviewPending,
+      isInitialLoad,
+      isSubsequentLoad,
+      stepCapabilities,
+    ]
   );
 
   return <StepEditorContext.Provider value={contextValue}>{children}</StepEditorContext.Provider>;
