@@ -1,5 +1,5 @@
-import { liquid } from '@codemirror/lang-liquid';
-import { html } from '@codemirror/lang-html';
+import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
+import { html, htmlCompletionSource } from '@codemirror/lang-html';
 import { tags as t } from '@lezer/highlight';
 
 import { VariableEditor } from '@/components/primitives/variable-editor';
@@ -35,6 +35,7 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
       size="sm"
       fontFamily="inherit"
       extensions={[liquid({ base: html() })]}
+      completionSources={[liquidCompletionSource(), htmlCompletionSource]}
       tagStyles={[
         // HTML tag styles
         { tag: t.tagName, color: 'hsl(var(--feature))' },

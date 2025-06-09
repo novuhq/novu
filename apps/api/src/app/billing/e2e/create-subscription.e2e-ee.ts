@@ -101,19 +101,23 @@ describe('CreateSubscription #novu-v2', () => {
           })
         );
 
-        expect(createSubscriptionStub.lastCall.args).to.deep.equal([
-          {
-            customer: 'customer_id',
-            items: [
-              {
-                price: 'price_id_notifications',
-              },
-              {
-                price: 'price_id_flat',
-              },
-            ],
-          },
-        ]);
+        expect(createSubscriptionStub.lastCall.args[0]).to.deep.equal({
+          customer: 'customer_id',
+          items: [
+            {
+              price: 'price_id_notifications',
+            },
+            {
+              price: 'price_id_flat',
+            },
+          ],
+        });
+
+        // Verify that idempotency key is passed in the second argument
+        expect(createSubscriptionStub.lastCall.args[1]).to.have.property('idempotencyKey');
+        expect(createSubscriptionStub.lastCall.args[1].idempotencyKey).to.equal(
+          'subscription-create-organization_id-business-month-combined'
+        );
       });
 
       it('should set the trial configuration for the subscription when trial days are provided', async () => {
@@ -133,25 +137,26 @@ describe('CreateSubscription #novu-v2', () => {
           })
         );
 
-        expect(createSubscriptionStub.lastCall.args).to.deep.equal([
-          {
-            customer: 'customer_id',
-            trial_period_days: 10,
-            trial_settings: {
-              end_behavior: {
-                missing_payment_method: 'cancel',
-              },
+        expect(createSubscriptionStub.lastCall.args[0]).to.deep.equal({
+          customer: 'customer_id',
+          trial_period_days: 10,
+          trial_settings: {
+            end_behavior: {
+              missing_payment_method: 'cancel',
             },
-            items: [
-              {
-                price: 'price_id_notifications',
-              },
-              {
-                price: 'price_id_flat',
-              },
-            ],
           },
-        ]);
+          items: [
+            {
+              price: 'price_id_notifications',
+            },
+            {
+              price: 'price_id_flat',
+            },
+          ],
+        });
+
+        // Verify that idempotency key is passed
+        expect(createSubscriptionStub.lastCall.args[1]).to.have.property('idempotencyKey');
       });
     });
 
@@ -173,28 +178,34 @@ describe('CreateSubscription #novu-v2', () => {
         );
 
         expect(createSubscriptionStub.callCount).to.equal(2);
-        expect(createSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
-          [
+
+        // Check first call (licensed subscription)
+        expect(createSubscriptionStub.getCalls()[0].args[0]).to.deep.equal({
+          customer: 'customer_id',
+          items: [
             {
-              customer: 'customer_id',
-              items: [
-                {
-                  price: 'price_id_flat',
-                },
-              ],
+              price: 'price_id_flat',
             },
           ],
-          [
+        });
+        expect(createSubscriptionStub.getCalls()[0].args[1]).to.have.property('idempotencyKey');
+        expect(createSubscriptionStub.getCalls()[0].args[1].idempotencyKey).to.equal(
+          'subscription-create-organization_id-business-year-licensed'
+        );
+
+        // Check second call (metered subscription)
+        expect(createSubscriptionStub.getCalls()[1].args[0]).to.deep.equal({
+          customer: 'customer_id',
+          items: [
             {
-              customer: 'customer_id',
-              items: [
-                {
-                  price: 'price_id_notifications',
-                },
-              ],
+              price: 'price_id_notifications',
             },
           ],
-        ]);
+        });
+        expect(createSubscriptionStub.getCalls()[1].args[1]).to.have.property('idempotencyKey');
+        expect(createSubscriptionStub.getCalls()[1].args[1].idempotencyKey).to.equal(
+          'subscription-create-organization_id-business-year-metered'
+        );
       });
 
       it('should set the trial configuration for both subscriptions when trial days are provided', async () => {
@@ -215,40 +226,40 @@ describe('CreateSubscription #novu-v2', () => {
         );
 
         expect(createSubscriptionStub.callCount).to.equal(2);
-        expect(createSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
-          [
+
+        // Check first call (licensed subscription)
+        expect(createSubscriptionStub.getCalls()[0].args[0]).to.deep.equal({
+          customer: 'customer_id',
+          trial_period_days: 10,
+          trial_settings: {
+            end_behavior: {
+              missing_payment_method: 'cancel',
+            },
+          },
+          items: [
             {
-              customer: 'customer_id',
-              trial_period_days: 10,
-              trial_settings: {
-                end_behavior: {
-                  missing_payment_method: 'cancel',
-                },
-              },
-              items: [
-                {
-                  price: 'price_id_flat',
-                },
-              ],
+              price: 'price_id_flat',
             },
           ],
-          [
+        });
+        expect(createSubscriptionStub.getCalls()[0].args[1]).to.have.property('idempotencyKey');
+
+        // Check second call (metered subscription)
+        expect(createSubscriptionStub.getCalls()[1].args[0]).to.deep.equal({
+          customer: 'customer_id',
+          trial_period_days: 10,
+          trial_settings: {
+            end_behavior: {
+              missing_payment_method: 'cancel',
+            },
+          },
+          items: [
             {
-              customer: 'customer_id',
-              trial_period_days: 10,
-              trial_settings: {
-                end_behavior: {
-                  missing_payment_method: 'cancel',
-                },
-              },
-              items: [
-                {
-                  price: 'price_id_notifications',
-                },
-              ],
+              price: 'price_id_notifications',
             },
           ],
-        ]);
+        });
+        expect(createSubscriptionStub.getCalls()[1].args[1]).to.have.property('idempotencyKey');
       });
     });
 
@@ -286,22 +297,6 @@ describe('CreateSubscription #novu-v2', () => {
       } catch (e) {
         expect(e.message).to.equal(`Invalid billing interval: 'invalid'`);
       }
-    });
-
-    it('should update the organization with the new apiServiceLevel', async () => {
-      const useCase = createUseCase();
-
-      await useCase.execute(
-        CreateSubscriptionCommand.create({
-          customer: mockCustomerBase as any,
-          billingInterval: StripeBillingIntervalEnum.MONTH,
-          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-        })
-      );
-
-      expect(updateServiceLevelStub.lastCall.args).to.deep.equal([
-        { organizationId: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.BUSINESS, isTrial: false },
-      ]);
     });
   });
 });

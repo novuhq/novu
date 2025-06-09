@@ -1,5 +1,5 @@
 import { cn } from '@/utils/ui';
-import { autocompletion } from '@codemirror/autocomplete';
+import { autocompletion, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 
@@ -32,6 +32,7 @@ type VariableEditorProps = {
   autoFocus?: boolean;
   id?: string;
   indentWithTab?: boolean;
+  completionSources?: CompletionSource[];
 } & Pick<
   EditorProps,
   | 'className'
@@ -64,6 +65,7 @@ export function VariableEditor({
   foldGutter = false,
   extensions,
   tagStyles,
+  completionSources,
 }: VariableEditorProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -140,20 +142,20 @@ export function VariableEditor({
     [track, handleCreateNewVariable]
   );
 
-  const completionSource = useMemo(() => {
+  const variableCompletionSource = useMemo(() => {
     return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled);
   }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
 
   const autocompletionExtension = useMemo(
     () =>
       autocompletion({
-        override: completionSource ? [completionSource] : ([] as any[]),
+        override: [variableCompletionSource, ...(completionSources ?? [])],
         closeOnBlur: true,
         defaultKeymap: true,
         activateOnTyping: true,
         optionClass: (completion) => (completion.type === 'new-variable' ? 'cm-new-variable-option' : ''),
       }),
-    [completionSource]
+    [variableCompletionSource, completionSources]
   );
 
   const isDigestEventsVariable = useCallback(

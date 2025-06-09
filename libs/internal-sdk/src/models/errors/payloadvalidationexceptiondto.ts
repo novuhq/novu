@@ -6,6 +6,7 @@ import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import * as components from "../components/index.js";
+import { NovuError } from "./novuerror.js";
 import { SDKValidationError } from "./sdkvalidationerror.js";
 
 export type MessagePayloadValidationExceptionDto5 =
@@ -80,11 +81,7 @@ export type PayloadValidationExceptionDtoData = {
   schema?: Schema | undefined;
 };
 
-export class PayloadValidationExceptionDto extends Error {
-  /**
-   * HTTP status code of the error response.
-   */
-  statusCode: number;
+export class PayloadValidationExceptionDto extends NovuError {
   /**
    * Timestamp of when the error occurred.
    */
@@ -120,14 +117,15 @@ export class PayloadValidationExceptionDto extends Error {
   /** The original data that was passed to this error instance. */
   data$: PayloadValidationExceptionDtoData;
 
-  constructor(err: PayloadValidationExceptionDtoData) {
+  constructor(
+    err: PayloadValidationExceptionDtoData,
+    httpMeta: { response: Response; request: Request; body: string },
+  ) {
     const message = "message" in err && typeof err.message === "string"
       ? err.message
       : `API error occurred: ${JSON.stringify(err)}`;
-    super(message);
+    super(message, httpMeta);
     this.data$ = err;
-
-    this.statusCode = err.statusCode;
     this.timestamp = err.timestamp;
     this.path = err.path;
     if (err.ctx != null) this.ctx = err.ctx;
@@ -396,9 +394,16 @@ export const PayloadValidationExceptionDto$inboundSchema: z.ZodType<
   type: z.string(),
   errors: z.array(components.PayloadValidationErrorDto$inboundSchema),
   schema: z.lazy(() => Schema$inboundSchema).optional(),
+  request$: z.instanceof(Request),
+  response$: z.instanceof(Response),
+  body$: z.string(),
 })
   .transform((v) => {
-    return new PayloadValidationExceptionDto(v);
+    return new PayloadValidationExceptionDto(v, {
+      request: v.request$,
+      response: v.response$,
+      body: v.body$,
+    });
   });
 
 /** @internal */

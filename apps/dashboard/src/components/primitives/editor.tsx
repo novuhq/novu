@@ -1,4 +1,11 @@
-import { autocompleteFooter, autocompleteHeader, digestIcon, functionIcon } from '@/components/primitives/constants';
+import {
+  autocompleteFooter,
+  autocompleteHeader,
+  codeIcon,
+  digestIcon,
+  functionIcon,
+  keyIcon,
+} from '@/components/primitives/constants';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
@@ -50,6 +57,34 @@ const baseTheme = (options: { multiline?: boolean }) =>
         display: 'block',
         backgroundRepeat: 'no-repeat',
         backgroundImage: `url('${functionIcon}')`,
+      },
+    },
+    '.cm-tooltip-autocomplete .cm-completionIcon-type': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '14px',
+        width: '14px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${codeIcon}')`,
+        backgroundPosition: 'center',
+      },
+    },
+    '.cm-tooltip-autocomplete .cm-completionIcon-keyword': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '14px',
+        width: '14px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${keyIcon}')`,
+        backgroundPosition: 'center',
       },
     },
     '.cm-tooltip-autocomplete .cm-completionIcon-digest': {

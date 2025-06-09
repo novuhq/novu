@@ -152,7 +152,7 @@ const InboxChild = withRenderer(
       subscriberHash,
       backendUrl,
       socketUrl,
-      props.subscriber,
+      subscriber,
     ]);
 
     if (isWithChildrenProps(props)) {

@@ -40,6 +40,14 @@ describe('createLiquidEngine', () => {
     expect(result).toBe('1 other');
   });
 
+  it('should register the pluralize filter with showCount parameter', async () => {
+    const engine = createLiquidEngine();
+    const template = `{{ count | pluralize: 'activity', 'activities', false }}`;
+    const data = { count: 2 };
+    const result = await engine.parseAndRender(template, data);
+    expect(result).toBe('activities');
+  });
+
   it('should correctly handle complex templates with multiple filters', async () => {
     const engine = createLiquidEngine();
 

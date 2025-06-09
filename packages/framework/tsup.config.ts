@@ -19,15 +19,16 @@ const baseConfig: Options = {
   },
 };
 
-export default defineConfig([
-  {
-    ...baseConfig,
-    format: 'cjs',
-    outDir: 'dist/cjs',
-  },
-  {
-    ...baseConfig,
-    format: 'esm',
-    outDir: 'dist/esm',
-  },
-]);
+export const cjsConfig: Options = {
+  ...baseConfig,
+  format: 'cjs',
+  outDir: 'dist/cjs',
+};
+
+export const esmConfig: Options = {
+  ...baseConfig,
+  format: 'esm',
+  outDir: 'dist/esm',
+};
+
+export default defineConfig([cjsConfig, esmConfig]);
