@@ -298,7 +298,7 @@ export function parseStepVariablesWithTypes(
 
   extractPropertiesWithTypes(schema);
 
-  // Add digest variables with default string type
+  // Add digest variables with default string type (only if digestStepId is provided)
   if (digestStepId) {
     const digestVariables = DIGEST_VARIABLES.map((variable) => {
       const { label: displayLabel, value } = getDynamicDigestVariable({
@@ -311,6 +311,7 @@ export function parseStepVariablesWithTypes(
         name: value,
         displayLabel,
         dataType: 'string' as FieldDataType,
+        inputType: 'text',
       };
     });
 
