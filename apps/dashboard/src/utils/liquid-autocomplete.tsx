@@ -1,7 +1,7 @@
 import { getFilters } from '@/components/variable/constants';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { LiquidVariable } from '@/utils/parseStepVariables';
-import { Completion, CompletionContext, CompletionResult } from '@codemirror/autocomplete';
+import { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { createRoot } from 'react-dom/client';
 import React from 'react';
@@ -297,7 +297,7 @@ export function createAutocompleteSource(
   onVariableSelect?: (completion: CompletionOption) => void,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
   isPayloadSchemaEnabled?: boolean
-) {
+): CompletionSource {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
     const word = context.matchBefore(/\{\{([^}]*)/);
@@ -311,35 +311,38 @@ export function createAutocompleteSource(
     return {
       from,
       to,
-      options: options.options.map((option) => ({
-        ...option,
-        apply: (view: EditorView, completion: CompletionOption, from: number, to: number) => {
-          const selectedValue = completion.label;
+      options: options.options.map(
+        (option) =>
+          ({
+            ...option,
+            apply: (view: EditorView, completion: CompletionOption, from: number, to: number) => {
+              const selectedValue = completion.label;
 
-          const content = view.state.doc.toString();
-          const beforeCursor = content.slice(0, from);
-          const afterCursor = content.slice(to);
+              const content = view.state.doc.toString();
+              const beforeCursor = content.slice(0, from);
+              const afterCursor = content.slice(to);
 
-          // Ensure proper {{ }} wrapping
-          const needsOpening = !beforeCursor.endsWith('{{');
-          const needsClosing = !afterCursor.startsWith('}}');
+              // Ensure proper {{ }} wrapping
+              const needsOpening = !beforeCursor.endsWith('{{');
+              const needsClosing = !afterCursor.startsWith('}}');
 
-          const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
+              const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
 
-          // Calculate the final cursor position
-          // Add 2 if we need to account for closing brackets
-          const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
+              // Calculate the final cursor position
+              // Add 2 if we need to account for closing brackets
+              const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
 
-          onVariableSelect?.(completion);
+              onVariableSelect?.(completion);
 
-          view.dispatch({
-            changes: { from, to, insert: wrappedValue },
-            selection: { anchor: finalCursorPos },
-          });
+              view.dispatch({
+                changes: { from, to, insert: wrappedValue },
+                selection: { anchor: finalCursorPos },
+              });
 
-          return true;
-        },
-      })),
+              return true;
+            },
+          }) as Completion
+      ),
     };
   };
 }

@@ -96,17 +96,16 @@ export class ClientSDK {
     } else {
       this.#hooks = new SDKHooks();
     }
+    const defaultHttpClient = new HTTPClient();
+    options.httpClient = options.httpClient || defaultHttpClient;
+    options = this.#hooks.sdkInit(options);
+
     const url = serverURLFromOptions(options);
     if (url) {
       url.pathname = url.pathname.replace(/\/+$/, "") + "/";
     }
-
-    const { baseURL, client } = this.#hooks.sdkInit({
-      baseURL: url,
-      client: options.httpClient || new HTTPClient(),
-    });
-    this._baseURL = baseURL;
-    this.#httpClient = client;
+    this._baseURL = url;
+    this.#httpClient = options.httpClient || defaultHttpClient;
 
     this._options = { ...options, hooks: this.#hooks };
 
