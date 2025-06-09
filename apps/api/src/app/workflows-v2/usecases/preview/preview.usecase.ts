@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowOriginEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { BuildStepDataUsecase } from '../build-step-data';
@@ -12,8 +13,6 @@ import { PreviewCommand } from './preview.command';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { FeatureFlagsService } from '@novu/application-generic';
 // Import new services
 import { ControlValueSanitizerService } from './services/control-value-sanitizer.service';
 import { PayloadMergerService } from './services/payload-merger.service';

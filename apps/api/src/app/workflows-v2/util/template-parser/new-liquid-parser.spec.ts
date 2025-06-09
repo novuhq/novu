@@ -1,7 +1,7 @@
 import { expect } from 'chai';
+import { JsonSchemaTypeEnum } from '@novu/dal';
 import { extractLiquidTemplateVariables } from './new-liquid-parser';
 import { JSONSchemaDto } from '../../dtos';
-import { JsonSchemaTypeEnum } from '@novu/dal';
 
 describe('extractLiquidTemplateVariables', () => {
   // Define a common schema that can be used across multiple describe blocks
@@ -165,7 +165,7 @@ describe('extractLiquidTemplateVariables', () => {
       const template = '{% for item in payload.items %}{{item.name}}{% endfor %}';
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('item'); // Iterator is always valid
       expect(variableNames).to.include('payload.items'); // Collection
       expect(variableNames).to.include('item.name'); // Variable inside loop
@@ -190,7 +190,7 @@ describe('extractLiquidTemplateVariables', () => {
       };
       const { validVariables } = extractLiquidTemplateVariables({ template, variableSchema: schema });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('i');
       expect(variableNames).to.include('start');
       expect(variableNames).to.include('end');
@@ -206,7 +206,7 @@ describe('extractLiquidTemplateVariables', () => {
       `;
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('user');
       expect(variableNames).to.include('payload.users');
       expect(variableNames).to.include('post');
@@ -236,7 +236,7 @@ describe('extractLiquidTemplateVariables', () => {
       const template = '{% if user.age > 18 and user.country == "US" %}Adult US user{% endif %}';
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('user.age');
       expect(variableNames).to.include('user.country');
     });
@@ -277,7 +277,7 @@ describe('extractLiquidTemplateVariables', () => {
       const template = '{% assign fullName = user.firstName %}{{fullName}}';
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('fullName'); // Assigned variable (always valid)
       expect(variableNames).to.include('user.firstName'); // Source variable
     });
@@ -286,7 +286,7 @@ describe('extractLiquidTemplateVariables', () => {
       const template = '{% assign total = cart.subtotal %}{{total}}';
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('total');
       expect(variableNames).to.include('cart.subtotal');
     });
@@ -302,7 +302,7 @@ describe('extractLiquidTemplateVariables', () => {
       `;
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('greeting'); // Captured variable (always valid)
       expect(variableNames).to.include('user.name'); // Variable inside capture
     });
@@ -313,7 +313,7 @@ describe('extractLiquidTemplateVariables', () => {
       const template = '{% tablerow product in payload.products %}{{product.name}}{% endtablerow %}';
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('product'); // Iterator
       expect(variableNames).to.include('payload.products'); // Collection
       expect(variableNames).to.include('product.name'); // Variable inside loop
@@ -323,7 +323,7 @@ describe('extractLiquidTemplateVariables', () => {
       const template = '{% tablerow i in (1..count) %}{{i}}{% endtablerow %}';
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('i');
       expect(variableNames).to.include('count');
     });
@@ -358,7 +358,7 @@ describe('extractLiquidTemplateVariables', () => {
       `;
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('user.role');
       expect(variableNames).to.include('settings.adminRole');
       expect(variableNames).to.include('settings.modRole');
@@ -404,7 +404,7 @@ describe('extractLiquidTemplateVariables', () => {
         variableSchema: commonSchema, // Use the common schema
       });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('item'); // Iterator
       expect(variableNames).to.include('item.anyProperty'); // Should be valid (local variable)
     });
@@ -467,7 +467,7 @@ describe('extractLiquidTemplateVariables', () => {
       `;
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
       expect(variableNames).to.include('user.name');
       expect(variableNames).to.include('user.premium');
       expect(variableNames).to.include('payload.items');
@@ -480,7 +480,7 @@ describe('extractLiquidTemplateVariables', () => {
       const { validVariables } = extractLiquidTemplateVariables({ template });
 
       // With the updated code, we actually get 3 occurrences now
-      const uniqueNames = [...new Set(validVariables.map((v) => v.name))];
+      const uniqueNames = [...new Set(validVariables.map((variable) => variable.name))];
       expect(uniqueNames).to.have.lengthOf(1);
       expect(uniqueNames[0]).to.equal('user.name');
     });
@@ -526,7 +526,7 @@ describe('extractLiquidTemplateVariables', () => {
 
       expect(invalidVariables).to.have.lengthOf(0);
 
-      const variableNames = validVariables.map((v) => v.name);
+      const variableNames = validVariables.map((variable) => variable.name);
 
       // Assigned variables
       expect(variableNames).to.include('customerName');

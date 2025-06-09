@@ -61,7 +61,7 @@ export class ControlValueSanitizerService {
       const variables = buildVariables({
         useNewLiquidParser: isHtmlEditorEnabled,
         variableSchema,
-        controlValue: controlValue,
+        controlValue,
         logger: this.logger,
       });
 

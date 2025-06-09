@@ -41,10 +41,10 @@ export class LiquidError extends LiquidLibError {
   errors: RenderError[];
 }
 
-export interface ProcessContext {
+export type ProcessContext = {
   templates: Template[];
   validVariables: Array<Variable>;
   invalidVariables: Array<Variable>;
   variableSchema?: JSONSchemaDto;
   localVariables?: Set<string>;
-}
+};

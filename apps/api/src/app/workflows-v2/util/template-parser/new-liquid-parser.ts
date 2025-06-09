@@ -96,7 +96,7 @@ function processLiquidRawOutput({
   } catch (error: unknown) {
     if (isLiquidError(error)) {
       error.errors.forEach((e: RenderError) => {
-        const token = e.token;
+        const { token } = e;
         if (token) {
           addVariable(
             {
@@ -112,7 +112,7 @@ function processLiquidRawOutput({
         }
       });
     } else if (error instanceof LiquidError) {
-      const token = (error as any).token;
+      const { token } = error as any;
       if (token) {
         addVariable(
           {
@@ -254,7 +254,7 @@ function validateVariable({
 }) {
   // Check if this is a local variable or uses a local variable
   const isLocalVariable = Array.from(localVariables).some(
-    (localVar) => variableName === localVar || variableName.startsWith(localVar + '.')
+    (localVar) => variableName === localVar || variableName.startsWith(`${localVar}.`)
   );
 
   if (isLocalVariable) {
@@ -304,7 +304,7 @@ function processOutputToken({
   const filters = extractFilters(template);
   const filterIssues = validateFilters(filters, isDigestEventsVariable);
   const hasValidFilters = filterIssues.length === 0;
-  const token = template.token;
+  const { token } = template;
   const outputStart = token.begin;
   const outputEnd = token.end;
   const output = token.input.slice(outputStart, outputEnd);
@@ -317,6 +317,7 @@ function processOutputToken({
       outputStart,
       outputEnd,
     });
+
     return;
   }
 
@@ -328,6 +329,7 @@ function processOutputToken({
       outputStart,
       outputEnd,
     });
+
     return;
   }
 
@@ -342,6 +344,7 @@ function processOutputToken({
         outputStart,
         outputEnd,
       });
+
       return;
     }
 
@@ -353,12 +356,13 @@ function processOutputToken({
       outputStart,
       outputEnd,
     });
+
     return;
   }
 
   // Variable has namespace, proceed with normal validation
   const isLocalVariable = Array.from(localVariables).some(
-    (localVar) => variableName === localVar || variableName.startsWith(localVar + '.')
+    (localVar) => variableName === localVar || variableName.startsWith(`${localVar}.`)
   );
 
   if (isLocalVariable) {
@@ -440,7 +444,7 @@ function processTagToken({
   variableSchema?: JSONSchemaDto;
   localVariables: Set<string>;
 }) {
-  const token = template.token;
+  const { token } = template;
   const outputStart = token.begin;
   const outputEnd = token.end;
   const output = token.input.slice(outputStart, outputEnd);
@@ -770,6 +774,7 @@ function extractVariableFromExpression(expression: string): string | null {
 
   // Match simple variable patterns
   const match = cleanExpression.match(/^([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:\[\d+\])*)$/);
+
   return match ? match[1] : null;
 }
 
@@ -809,6 +814,7 @@ function extractVariablesFromCondition(condition: string): string[] {
   // Replace all string literals (both single and double quoted) with placeholders
   processedCondition = processedCondition.replace(/(["'])(?:(?=(\\?))\2.)*?\1/g, (match) => {
     stringLiterals.push(match);
+
     return `__STRING_LITERAL_${stringLiterals.length - 1}__`;
   });
 
@@ -818,7 +824,7 @@ function extractVariablesFromCondition(condition: string): string[] {
   if (variableMatches) {
     variables.push(
       ...variableMatches.filter(
-        (v) =>
+        (variable) =>
           // Filter out common keywords/operators
           ![
             'true',
@@ -835,9 +841,9 @@ function extractVariablesFromCondition(condition: string): string[] {
             'le',
             'gt',
             'ge',
-          ].includes(v.toLowerCase()) &&
+          ].includes(variable.toLowerCase()) &&
           // Filter out our placeholder patterns
-          !v.startsWith('__STRING_LITERAL_')
+          !variable.startsWith('__STRING_LITERAL_')
       )
     );
   }
@@ -893,6 +899,7 @@ function extractProps(template: any): { valid: boolean; props: string[]; error?:
         error: undefined,
       };
     }
+
     return { valid: true, props: [] };
   }
 
