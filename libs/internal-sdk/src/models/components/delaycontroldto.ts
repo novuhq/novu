@@ -37,7 +37,7 @@ export type DelayControlDtoUnit = ClosedEnum<typeof DelayControlDtoUnit>;
 
 export type DelayControlDto = {
   /**
-   * Filter conditions for skipping the step.
+   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
    */
   skip?: { [k: string]: any } | undefined;
   /**
