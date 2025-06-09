@@ -10,6 +10,7 @@ const variants = cva('relative w-full', {
       md: 'p-2.5',
       sm: 'p-2',
       '2xs': 'px-2 py-1.5',
+      '3xs': 'px-1.5 py-1 text-xs',
     },
   },
   defaultVariants: {
@@ -25,7 +26,7 @@ type ControlInputProps = {
   isAllowedVariable: IsAllowedVariable;
   placeholder?: string;
   autoFocus?: boolean;
-  size?: 'md' | 'sm' | '2xs';
+  size?: 'md' | 'sm' | '2xs' | '3xs';
   id?: string;
   multiline?: boolean;
   indentWithTab?: boolean;

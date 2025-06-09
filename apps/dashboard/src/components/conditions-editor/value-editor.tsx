@@ -2,6 +2,7 @@ import { useFormContext } from 'react-hook-form';
 import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 
 import { InputRoot } from '@/components/primitives/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { ControlInput } from '../primitives/control-input/control-input';
 
@@ -11,11 +12,32 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const { error } = form.getFieldState(queryPath, form.formState);
   const { variables = [], isAllowedVariable } =
     (props.context as { variables: LiquidVariable[]; isAllowedVariable: IsAllowedVariable }) ?? {};
-  const { value, handleOnChange, operator, type } = props;
+  const { value, handleOnChange, operator, type, values } = props;
   const { valueAsArray, multiValueHandler } = useValueEditor(props);
 
   if (operator === 'null' || operator === 'notNull') {
     return null;
+  }
+
+  // Handle select type (for boolean fields and other fields with predefined values)
+  if (type === 'select' && values && values.length > 0) {
+    return (
+      <div className="flex flex-col gap-1">
+        <Select onValueChange={handleOnChange} value={value ?? ''} size="2xs">
+          <SelectTrigger className={`bg-bg-white w-40 ${error ? 'border-destructive' : ''}`} size="2xs">
+            <SelectValue placeholder="Select value" />
+          </SelectTrigger>
+          <SelectContent>
+            {values.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {error && <span className="text-destructive text-xs">{error?.message}</span>}
+      </div>
+    );
   }
 
   if ((operator === 'between' || operator === 'notBetween') && (type === 'select' || type === 'text')) {
@@ -30,7 +52,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
             onChange={(newValue) => multiValueHandler(newValue, i)}
             variables={variables}
             isAllowedVariable={isAllowedVariable}
-            size="2xs"
+            size="3xs"
           />
         </InputRoot>
       );
@@ -59,7 +81,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
           onChange={handleOnChange}
           variables={variables}
           isAllowedVariable={isAllowedVariable}
-          size="2xs"
+          size="3xs"
         />
       </InputRoot>
       {error && <span className="text-destructive text-xs">{error?.message}</span>}

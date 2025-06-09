@@ -104,34 +104,15 @@ export const EditStepConditionsForm = () => {
     true // Enable payload schema support
   );
 
-  // Create a map of enhanced variables for quick lookup
-  const enhancedVariableMap = new Map(enhancedVariables.map((v) => [v.name, v]));
-
-  // Merge regular variables with enhanced variables, ensuring all variables are included
-  const fields: EnhancedField[] = variables.map((variable) => {
-    const enhancedVariable = enhancedVariableMap.get(variable.name);
-
-    if (enhancedVariable) {
-      // Use enhanced variable with type information
-      return {
-        name: enhancedVariable.name,
-        label: enhancedVariable.displayLabel || enhancedVariable.name,
-        value: enhancedVariable.name,
-        dataType: enhancedVariable.dataType,
-        inputType: enhancedVariable.inputType,
-        format: enhancedVariable.format,
-      };
-    } else {
-      // Fallback to string type for variables not found in enhanced parsing
-      return {
-        name: variable.name,
-        label: variable.displayLabel || variable.name,
-        value: variable.name,
-        dataType: 'string' as const,
-        inputType: 'text',
-      };
-    }
-  });
+  // Use enhanced variables as the primary source, with fallback to regular variables
+  const fields: EnhancedField[] = enhancedVariables.map((enhancedVariable) => ({
+    name: enhancedVariable.name,
+    label: enhancedVariable.displayLabel || enhancedVariable.name,
+    value: enhancedVariable.name,
+    dataType: enhancedVariable.dataType,
+    inputType: enhancedVariable.inputType,
+    format: enhancedVariable.format,
+  }));
 
   const form = useForm<FormQuery>({
     mode: 'onSubmit',
