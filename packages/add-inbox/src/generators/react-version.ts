@@ -22,8 +22,12 @@ export function getReactVersion(): string {
     }
 
     // Fallback to installed React package
-    const packageJson = require('react/package.json');
-    return packageJson.version;
+    try {
+      const packageJson = require('react/package.json');
+      return packageJson.version;
+    } catch {
+      throw new Error('React package not found');
+    }
   } catch (error) {
     console.warn('Could not detect React version, assuming 18.0.0');
     return '18.0.0';
@@ -36,7 +40,8 @@ export function getReactVersion(): string {
  */
 export function isModernReact(): boolean {
   const version = getReactVersion();
-  return version.startsWith('17.') || version.startsWith('18.');
+  const majorVersion = parseInt(version.split('.')[0], 10);
+  return majorVersion >= 17;
 }
 
 /**

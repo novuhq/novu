@@ -173,7 +173,7 @@ async function checkDependencyExists(packageName: string): Promise<boolean> {
   return false;
 }
 
-function installDependencies(framework: Framework, packageManager: IPackageManager): void {
+async function installDependencies(framework: Framework, packageManager: IPackageManager): Promise<void> {
   logger.gray('• Installing required packages...');
 
   const packagesToInstall: string[] = [];
@@ -207,7 +207,7 @@ function installDependencies(framework: Framework, packageManager: IPackageManag
       });
 
       // Enhanced verification of package installation
-      const packageJson = fileUtils.readJson(packageJsonPath);
+      const packageJson = await fileUtils.readJson(packageJsonPath);
       const dependencies = {
         ...packageJson.dependencies,
         ...packageJson.devDependencies,
@@ -411,7 +411,7 @@ async function performInstallation(config: IUserConfig) {
     logger.success(`  ✓ Region: ${logger.bold(region)}`);
 
     logger.step(2, 'Installing dependencies');
-    installDependencies(framework, packageManager);
+    await installDependencies(framework, packageManager);
 
     logger.step(3, 'Creating component structure');
     await createComponentStructure(framework as Framework, overwriteComponents, subscriberId || null, region);

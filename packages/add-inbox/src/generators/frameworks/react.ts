@@ -10,17 +10,21 @@ function isReactVersionModern(version: string): boolean {
   try {
     // Remove any pre-release suffixes (e.g., "18.0.0-rc.0" -> "18.0.0")
     const cleanVersion = version.split('-')[0];
-    const [major, minor] = cleanVersion.split('.').map(Number);
+    const [majorStr, minorStr] = cleanVersion.split('.');
+    const major = Number(majorStr);
+    const minor = Number(minorStr);
 
     if (isNaN(major) || isNaN(minor)) {
-      // If we can't parse the version, default to modern React
-      return true;
+      // If we can't parse the version, default to legacy React (not modern)
+      return false;
     }
 
-    return major >= 17;
+    if (major > 17) return true;
+    if (major === 17 && minor >= 0) return true;
+    return false;
   } catch (error) {
-    // If anything goes wrong, default to modern React
-    return true;
+    // If anything goes wrong, default to legacy React (not modern)
+    return false;
   }
 }
 
@@ -31,7 +35,7 @@ function generateSharedInboxCode(subscriberId: string | null, region: string = '
 
 export function NovuInbox() {
  // ${subscriberId ? 'Using provided subscriber ID - replace with your actual subscriber ID from your auth system' : 'TODO: Replace with your actual subscriber ID from your auth system'}
- const temporarySubscriberId = ${subscriberId ? `"${subscriberId}"` : '""'};
+ const temporarySubscriberId = ${subscriberId ? `"${subscriberId.replace(/"/g, '\\"')}"` : '""'};
 
   const tabs = [
     // Basic tab with no filtering (shows all notifications)

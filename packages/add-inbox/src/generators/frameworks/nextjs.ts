@@ -20,7 +20,7 @@ interface RegionConfigs {
   eu: RegionConfig;
 }
 
-export function generateNextJsComponent(subscriberId: string | null = null, region: string = 'us'): string {
+export function generateNextJsComponent(subscriberId: string | null = null, region: 'us' | 'eu' = 'us'): string {
   // Define common filter patterns
   const filterByTags = (tags: string[]): FilterByTags => ({ tags });
   const filterByData = (data: Record<string, any>): FilterByData => ({ data });
@@ -48,7 +48,7 @@ import { Inbox } from '@novu/nextjs';
 
 export default function NovuInbox() {
   // Temporary subscriber ID - replace with your actual subscriber ID from your auth system
-  const temporarySubscriberId = ${subscriberId ? `"${subscriberId}"` : '""'};
+  const temporarySubscriberId = ${subscriberId ? `"${subscriberId.replace(/"/g, '\\"')}"` : '""'};
 
   const tabs = [
     // Basic tab with no filtering (shows all notifications)

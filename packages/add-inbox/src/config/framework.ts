@@ -60,8 +60,8 @@ function getPackageJson(): PackageJson | null {
  */
 function getFrameworkVersion(packageJson: PackageJson, framework: string): string | null {
   const dependencies = {
-    ...packageJson.dependencies,
-    ...packageJson.devDependencies,
+    ...(packageJson.dependencies || {}),
+    ...(packageJson.devDependencies || {}),
   };
 
   const version = dependencies?.[framework];

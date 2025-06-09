@@ -4,9 +4,17 @@ import logger from '../utils/logger';
 import { getEnvironmentVariableName } from './react-version';
 
 export function setupEnvExampleNextJs(updateExisting: boolean, appId: string | null = null): void {
+  // Validate appId to prevent injection
+  if (appId && (appId.includes('\n') || appId.includes('\r'))) {
+    throw new Error('Invalid appId: cannot contain newline characters');
+  }
+
   logger.gray('• Setting up environment configuration for Next.js...');
   const envExamplePath = fileUtils.joinPaths(process.cwd(), '.env.example');
   const envLocalPath = fileUtils.joinPaths(process.cwd(), '.env.local');
+
+  // Validate appId: allow only alphanumeric and dashes
+  const safeAppId = typeof appId === 'string' && /^[a-zA-Z0-9-]+$/.test(appId) ? appId : '';
 
   // For .env.example, always use empty value
   const envExampleContent = `\n# Novu configuration (added by Novu Inbox Installer)
@@ -15,7 +23,7 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=
 
   // For .env.local, use provided appId if available
   const envLocalContent = `\n# Novu configuration (added by Novu Inbox Installer)
-${ENV_VARIABLES.NEXTJS.APP_ID}=${appId || ''}
+${ENV_VARIABLES.NEXTJS.APP_ID}=${safeAppId}
 `;
 
   // Handle .env.example
@@ -42,8 +50,12 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=${appId || ''}
   if (fileUtils.exists(envLocalPath)) {
     const existingContent = fileUtils.readFile(envLocalPath);
     if (existingContent?.includes(ENV_VARIABLES.NEXTJS.APP_ID)) {
-      // Always overwrite with provided appId or empty value
-      fileUtils.writeFile(envLocalPath, envLocalContent.trimStart());
+      // Update only the Novu variable, preserve other content
+      const updatedContent = existingContent.replace(
+        new RegExp(`${ENV_VARIABLES.NEXTJS.APP_ID}=.*`, 'g'),
+        `${ENV_VARIABLES.NEXTJS.APP_ID}=${safeAppId}`
+      );
+      fileUtils.writeFile(envLocalPath, updatedContent);
       logger.blue('  • Updated Novu configuration in .env.local');
     } else {
       fileUtils.appendFile(envLocalPath, envLocalContent);
@@ -66,6 +78,9 @@ export function setupEnvExampleReact(updateExisting: boolean, appId: string | nu
   // Get the appropriate environment variable name based on React version
   const envVarName = getEnvironmentVariableName();
 
+  // Validate appId: allow only alphanumeric and dashes
+  const safeAppId = typeof appId === 'string' && /^[a-zA-Z0-9-]+$/.test(appId) ? appId : '';
+
   // For .env.example, always use empty value
   const envExampleContent = `\n# Novu configuration (added by Novu Inbox Installer)
 ${envVarName}=
@@ -73,7 +88,7 @@ ${envVarName}=
 
   // For .env, use provided appId if available
   const envContent = `\n# Novu configuration (added by Novu Inbox Installer)
-${envVarName}=${appId || ''}
+${envVarName}=${safeAppId}
 `;
 
   if (fileUtils.exists(envPath)) {
@@ -99,8 +114,9 @@ ${envVarName}=${appId || ''}
   if (fileUtils.exists(envLocalPath)) {
     const existingContent = fileUtils.readFile(envLocalPath);
     if (existingContent?.includes(envVarName)) {
-      // Always overwrite with provided appId or empty value
-      fileUtils.writeFile(envLocalPath, envContent.trimStart());
+      // Update only the Novu variable, preserve other content
+      const updatedContent = existingContent.replace(new RegExp(`${envVarName}=.*`, 'g'), `${envVarName}=${safeAppId}`);
+      fileUtils.writeFile(envLocalPath, updatedContent);
       logger.blue('  • Updated Novu configuration in .env');
     } else {
       fileUtils.appendFile(envLocalPath, envContent);
