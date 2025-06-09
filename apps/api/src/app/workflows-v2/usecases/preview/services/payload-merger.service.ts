@@ -99,22 +99,40 @@ export class PayloadMergerService {
       });
     }
 
-    let mergedPayload = _.merge({}, schemaBasedPayloadExample);
+    let mergedPayload = isV2TemplateEditorEnabled
+      ? _.merge({}, schemaBasedPayloadExample)
+      : _.merge({}, payloadExample, schemaBasedPayloadExample);
 
-    if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-      // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
-      const filteredUserPayload = this.filterPayloadBySchema(
-        userPayloadExample as Record<string, unknown>,
-        schemaBasedPayloadExample
-      );
+    if (isV2TemplateEditorEnabled) {
+      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+        // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
+        const filteredUserPayload = this.filterPayloadBySchema(
+          userPayloadExample as Record<string, unknown>,
+          schemaBasedPayloadExample
+        );
 
-      mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
-        if (Array.isArray(srcValue)) {
-          return srcValue;
-        }
+        mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+          if (Array.isArray(srcValue)) {
+            return srcValue;
+          }
 
-        return undefined;
-      });
+          return undefined;
+        });
+      }
+    } else {
+      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+        mergedPayload = _.mergeWith(
+          mergedPayload,
+          userPayloadExample as Record<string, unknown>,
+          (objValue, srcValue) => {
+            if (Array.isArray(srcValue)) {
+              return srcValue;
+            }
+
+            return undefined;
+          }
+        );
+      }
     }
 
     if (isV2TemplateEditorEnabled) {
