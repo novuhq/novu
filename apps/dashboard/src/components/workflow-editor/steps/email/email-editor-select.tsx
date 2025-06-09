@@ -26,7 +26,7 @@ export const EmailEditorSelect = () => {
           <>
             <Tabs
               defaultValue="editor"
-              value={field.value}
+              value={field.value ?? 'block'}
               onValueChange={(value) => {
                 // allow freely switching if the body is empty string or maily json
                 if (!body || body === '' || isEmptyMailyJson(body)) {
