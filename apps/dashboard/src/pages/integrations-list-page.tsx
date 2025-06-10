@@ -33,12 +33,12 @@ export function IntegrationsListPage() {
       <Tabs defaultValue="providers">
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
           <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
-            <TabsTrigger value="providers" variant="regular">
+            <TabsTrigger value="providers" variant="regular" size="xl">
               Providers
             </TabsTrigger>
             <Tooltip>
               <TooltipTrigger>
-                <TabsTrigger value="data-warehouse" variant="regular" disabled>
+                <TabsTrigger value="data-warehouse" variant="regular" disabled size="xl">
                   Data{' '}
                   <Badge color="gray" size="sm" variant="lighter">
                     SOON

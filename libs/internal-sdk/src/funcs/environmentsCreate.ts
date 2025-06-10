@@ -28,6 +28,11 @@ import { Result } from "../types/fp.js";
 
 /**
  * Create environment
+ *
+ * @remarks
+ * Creates a new environment within the current organization.
+ *     Environments allow you to manage different stages of your application development lifecycle.
+ *     Each environment has its own set of API keys and configurations.
  */
 export function environmentsCreate(
   client: NovuCore,

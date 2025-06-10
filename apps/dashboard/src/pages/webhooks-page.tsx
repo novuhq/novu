@@ -206,7 +206,7 @@ export function WebhooksPage() {
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
           <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
             {tabDefinitions.map((tab) => (
-              <TabsTrigger key={tab.value} value={tab.value} variant="regular">
+              <TabsTrigger key={tab.value} value={tab.value} variant="regular" size="xl">
                 {tab.label}
               </TabsTrigger>
             ))}

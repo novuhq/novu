@@ -1,0 +1,60 @@
+{
+  "name": "add-inbox",
+  "version": "1.0.4",
+  "description": "Add inbox notifications to your application with one command",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novu/novu.git"
+  },
+  "homepage": "https://novu.co",
+  "bugs": {
+    "url": "https://github.com/novu/novu/issues"
+  },
+  "license": "ISC",
+  "author": "Novu",
+  "type": "commonjs",
+  "main": "index.js",
+  "bin": {
+    "add-inbox": "dist/src/cli/index.js"
+  },
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "tsc",
+    "start": "ts-node src/cli/index.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "novu",
+    "inbox",
+    "notifications",
+    "react",
+    "nextjs",
+    "cli"
+  ],
+  "dependencies": {
+    "@segment/analytics-node": "^2.2.1",
+    "chalk": "^4.1.2",
+    "commander": "^11.1.0",
+    "prompts": "^2.4.2",
+    "uuid": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "preferGlobal": true,
+  "devDependencies": {
+    "@types/commander": "^2.12.5",
+    "@types/prompts": "^2.4.9",
+    "@types/uuid": "^9.0.0",
+    "rimraf": "^5.0.10",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.0.0"
+  }
+}
