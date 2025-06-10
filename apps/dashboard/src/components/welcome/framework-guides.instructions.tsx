@@ -45,17 +45,28 @@ export const commonInstallStep = (packageName: string): InstallationStep => ({
   codeTitle: 'Terminal',
 });
 
-export const frameworks: Framework[] = [
+export const commonCLIInstallStep = (packageName: string): InstallationStep => ({
+  title: 'Run the CLI command in an existing project',
+  description: `You'll notice a new folder in your project called inbox. This is where you'll find the inbox component boilerplate code. \n You can customize the <Inbox /> component to match your app theme.`,
+  code: `npx novu@add-inbox --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${!isDefaultApi ? ' --region=eu' : ''}`,
+  codeLanguage: 'shell',
+  codeTitle: 'Terminal',
+});
+
+export const getFrameworks = (installationMethod: 'cli' | 'manual'): Framework[] => [
   {
     name: 'Next.js',
     icon: <RiNextjsFill className="h-8 w-8 text-black" />,
     selected: true,
-    installSteps: [
-      commonInstallStep('@novu/nextjs'),
-      {
-        title: 'Add the inbox code to your Next.js app',
-        description: 'Inbox utilizes the Next.js router to enable navigation within your notifications.',
-        code: `import { Inbox } from '@novu/nextjs';
+    installSteps:
+      installationMethod === 'cli'
+        ? [commonCLIInstallStep('@novu/nextjs')]
+        : [
+            commonInstallStep('@novu/nextjs'),
+            {
+              title: 'Add the inbox code to your Next.js app',
+              description: 'Inbox utilizes the Next.js router to enable navigation within your notifications.',
+              code: `import { Inbox } from '@novu/nextjs';
 
 function Novu() {
   return (
@@ -71,22 +82,25 @@ function Novu() {
     />
   );
 }`,
-        codeLanguage: 'tsx',
-        codeTitle: 'Inbox.tsx',
-        tip: customizationTip,
-      },
-    ],
+              codeLanguage: 'tsx',
+              codeTitle: 'Inbox.tsx',
+              tip: customizationTip,
+            },
+          ],
   },
   {
     name: 'React',
     icon: <RiReactjsFill className="h-8 w-8 text-[#61DAFB]" />,
-    installSteps: [
-      commonInstallStep('@novu/react'),
-      {
-        title: 'Add the inbox code to your React app',
-        description:
-          'Inbox utilizes the routerPush prop and your preferred router to enable navigation within your notifications.',
-        code: `import { Inbox } from '@novu/react';
+    installSteps:
+      installationMethod === 'cli'
+        ? [commonCLIInstallStep('@novu/react')]
+        : [
+            commonInstallStep('@novu/react'),
+            {
+              title: 'Add the inbox code to your React app',
+              description:
+                'Inbox utilizes the routerPush prop and your preferred router to enable navigation within your notifications.',
+              code: `import { Inbox } from '@novu/react';
 import { useNavigate } from 'react-router-dom';
 
 function Novu() {
@@ -106,21 +120,24 @@ function Novu() {
     />
   );
 }`,
-        codeLanguage: 'tsx',
-        codeTitle: 'Inbox.tsx',
-        tip: customizationTip,
-      },
-    ],
+              codeLanguage: 'tsx',
+              codeTitle: 'Inbox.tsx',
+              tip: customizationTip,
+            },
+          ],
   },
   {
     name: 'Remix',
     icon: <RiRemixRunFill className="h-8 w-8 text-black" />,
-    installSteps: [
-      commonInstallStep('@novu/react'),
-      {
-        title: 'Add the inbox code to your Remix app',
-        description: 'Inbox utilizes the routerPush prop to enable navigation within your notifications.',
-        code: `import { Inbox } from '@novu/react';
+    installSteps:
+      installationMethod === 'cli'
+        ? [commonCLIInstallStep('@novu/react')]
+        : [
+            commonInstallStep('@novu/react'),
+            {
+              title: 'Add the inbox code to your Remix app',
+              description: 'Inbox utilizes the routerPush prop to enable navigation within your notifications.',
+              code: `import { Inbox } from '@novu/react';
 import { useNavigate } from '@remix-run/react';
 
 function Novu() {
@@ -140,21 +157,24 @@ function Novu() {
     />
   );
 }`,
-        codeLanguage: 'tsx',
-        codeTitle: 'Inbox.tsx',
-        tip: customizationTip,
-      },
-    ],
+              codeLanguage: 'tsx',
+              codeTitle: 'Inbox.tsx',
+              tip: customizationTip,
+            },
+          ],
   },
   {
     name: 'Native',
     icon: <RiReactjsFill className="h-8 w-8 text-black" />,
-    installSteps: [
-      commonInstallStep('@novu/react-native'),
-      {
-        title: 'Add the inbox code to your React Native app',
-        description: 'Implement the notification center in your React Native application.',
-        code: `import { NovuProvider } from '@novu/react-native';
+    installSteps:
+      installationMethod === 'cli'
+        ? [commonCLIInstallStep('@novu/react-native')]
+        : [
+            commonInstallStep('@novu/react-native'),
+            {
+              title: 'Add the inbox code to your React Native app',
+              description: 'Implement the notification center in your React Native application.',
+              code: `import { NovuProvider } from '@novu/react-native';
 import { YourCustomInbox } from './Inbox';
 
 function Layout() {
@@ -167,13 +187,13 @@ function Layout() {
     </NovuProvider>
   );
 }`,
-        codeLanguage: 'tsx',
-        codeTitle: 'App.tsx',
-      },
-      {
-        title: 'Build your custom inbox component',
-        description: 'Build your custom inbox component to use within your app.',
-        code: `import {
+              codeLanguage: 'tsx',
+              codeTitle: 'App.tsx',
+            },
+            {
+              title: 'Build your custom inbox component',
+              description: 'Build your custom inbox component to use within your app.',
+              code: `import {
   FlatList,
   View,
   Text,
@@ -235,20 +255,23 @@ export function YourCustomInbox() {
     />
   );
 }`,
-        codeLanguage: 'tsx',
-        codeTitle: 'Inbox.tsx',
-      },
-    ],
+              codeLanguage: 'tsx',
+              codeTitle: 'Inbox.tsx',
+            },
+          ],
   },
   {
     name: 'Angular',
     icon: <RiAngularjsFill className="h-8 w-8 text-[#DD0031]" />,
-    installSteps: [
-      commonInstallStep('@novu/js'),
-      {
-        title: 'Add the inbox code to your Angular app',
-        description: 'Currently, angular applications are supported with the Novu UI library.',
-        code: `import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+    installSteps:
+      installationMethod === 'cli'
+        ? [commonCLIInstallStep('@novu/js')]
+        : [
+            commonInstallStep('@novu/js'),
+            {
+              title: 'Add the inbox code to your Angular app',
+              description: 'Currently, angular applications are supported with the Novu UI library.',
+              code: `import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NovuUI } from '@novu/js/ui';
 
@@ -278,21 +301,24 @@ export class AppComponent implements AfterViewInit {
     });
   }
 }`,
-        codeLanguage: 'typescript',
-        tip: customizationTip,
-      },
-    ],
+              codeLanguage: 'typescript',
+              tip: customizationTip,
+            },
+          ],
   },
   {
     name: 'JavaScript',
     icon: <RiJavascriptFill className="h-8 w-8 text-[#F7DF1E]" />,
-    installSteps: [
-      commonInstallStep('@novu/js'),
-      {
-        title: 'Add the inbox code to your JavaScript app',
-        description:
-          'You can use the Novu UI library to implement the notification center in your vanilla JavaScript application or any other non-supported framework like Vue.',
-        code: `import { NovuUI } from '@novu/js/ui';
+    installSteps:
+      installationMethod === 'cli'
+        ? [commonCLIInstallStep('@novu/js')]
+        : [
+            commonInstallStep('@novu/js'),
+            {
+              title: 'Add the inbox code to your JavaScript app',
+              description:
+                'You can use the Novu UI library to implement the notification center in your vanilla JavaScript application or any other non-supported framework like Vue.',
+              code: `import { NovuUI } from '@novu/js/ui';
 
  const novu = new NovuUI({
   options: {
@@ -306,9 +332,12 @@ novu.mountComponent({
   props: {},
   element: document.getElementById('notification-inbox'),
 });`,
-        codeLanguage: 'typescript',
-        tip: customizationTip,
-      },
-    ],
+              codeLanguage: 'typescript',
+              tip: customizationTip,
+            },
+          ],
   },
 ];
+
+// Export a default frameworks array for backward compatibility
+export const frameworks = getFrameworks('manual');
