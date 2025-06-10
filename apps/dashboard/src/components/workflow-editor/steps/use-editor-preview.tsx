@@ -1,12 +1,19 @@
 import * as Sentry from '@sentry/react';
 import { useCallback, useEffect, useState, useRef } from 'react';
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
+import type { PreviewPayload } from '@novu/shared';
 
 import { previewStep } from '@/api/steps';
 import { usePreviewStep } from '@/hooks/use-preview-step';
 import { useEnvironment } from '@/context/environment/hooks';
 
-// Custom hook for debouncing values
+type UseEditorPreviewProps = {
+  workflowSlug: string;
+  stepSlug: string;
+  controlValues: Record<string, unknown>;
+  payloadSchema?: Record<string, any>;
+};
+
 function useDebounced<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
@@ -18,49 +25,44 @@ function useDebounced<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-// Helper function to extract payload keys from the example data
-function getPayloadKeys(previewPayloadExample: any): string[] {
-  if (!previewPayloadExample?.payload || typeof previewPayloadExample.payload !== 'object') {
-    return [];
-  }
+const JsonUtils = {
+  parse: (value: string): { data: PreviewPayload | null; error: Error | null } => {
+    try {
+      return { data: JSON.parse(value), error: null };
+    } catch (error) {
+      return { data: null, error: error as Error };
+    }
+  },
 
-  return Object.keys(previewPayloadExample.payload).sort();
-}
+  stringify: (value: unknown, pretty = true): string => {
+    return JSON.stringify(value, null, pretty ? 2 : 0);
+  },
 
-// Helper function to extract payload keys from current editor value
-function getCurrentPayloadKeys(editorValue: string): string[] {
-  try {
-    const parsed = JSON.parse(editorValue);
-
-    if (!parsed?.payload || typeof parsed.payload !== 'object') {
+  extractPayloadKeys: (data: PreviewPayload | null): string[] => {
+    if (!data?.payload || typeof data.payload !== 'object') {
       return [];
     }
 
-    return Object.keys(parsed.payload).sort();
-  } catch {
-    return [];
-  }
+    return Object.keys(data.payload).sort();
+  },
+};
+
+function areKeysEqual(keys1: string[], keys2: string[]): boolean {
+  return JSON.stringify(keys1) === JSON.stringify(keys2);
 }
 
-export const useEditorPreview = ({
-  workflowSlug,
-  stepSlug,
-  controlValues,
-  payloadSchema,
-}: {
-  workflowSlug: string;
-  stepSlug: string;
-  controlValues: Record<string, unknown>;
-  payloadSchema?: Record<string, any>;
-}) => {
+export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloadSchema }: UseEditorPreviewProps) => {
   const [editorValue, setEditorValue] = useState('{}');
   const debouncedControlValues = useDebounced(controlValues, 500);
   const { currentEnvironment } = useEnvironment();
-  const hasInitializedEditorValueRef = useRef(false);
+  const hasInitializedRef = useRef(false);
+  const lastServerKeysRef = useRef<string[]>([]);
 
   const { previewStep: manualPreviewStep } = usePreviewStep({
     onError: (error) => Sentry.captureException(error),
   });
+
+  const { data: parsedEditorPayload } = JsonUtils.parse(editorValue);
 
   const {
     data: previewData,
@@ -69,7 +71,9 @@ export const useEditorPreview = ({
   } = useQuery({
     queryKey: ['preview-step', workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
     queryFn: async ({ signal }) => {
-      const previewPayload = JSON.parse(editorValue);
+      if (!parsedEditorPayload) {
+        throw new Error('Invalid JSON in editor');
+      }
 
       return await previewStep({
         environment: currentEnvironment!,
@@ -77,12 +81,12 @@ export const useEditorPreview = ({
         stepSlug,
         previewData: {
           controlValues: debouncedControlValues,
-          previewPayload,
+          previewPayload: parsedEditorPayload,
         },
         signal,
       });
     },
-    enabled: Boolean(workflowSlug && stepSlug && currentEnvironment),
+    enabled: Boolean(workflowSlug && stepSlug && currentEnvironment && parsedEditorPayload),
     staleTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
@@ -90,19 +94,21 @@ export const useEditorPreview = ({
   });
 
   const setEditorValueSafe = useCallback((value: string): Error | null => {
-    try {
-      JSON.parse(value);
-      setEditorValue(value);
-      return null;
-    } catch (error) {
-      return error as Error;
-    }
+    const { error } = JsonUtils.parse(value);
+    if (error) return error;
+
+    setEditorValue(value);
+    return null;
   }, []);
 
   const manualPreview = useCallback(async () => {
-    try {
-      const previewPayload = JSON.parse(editorValue);
+    const { data: previewPayload, error } = JsonUtils.parse(editorValue);
 
+    if (error || !previewPayload) {
+      throw new Error('Invalid JSON in editor');
+    }
+
+    try {
       return await manualPreviewStep({
         workflowSlug,
         stepSlug,
@@ -117,30 +123,20 @@ export const useEditorPreview = ({
     }
   }, [manualPreviewStep, workflowSlug, stepSlug, debouncedControlValues, editorValue]);
 
-  // Initialize editor value on first load or when payload schema changes
   useEffect(() => {
-    if (!previewData?.previewPayloadExample) {
-      return;
+    const serverPayloadExample = previewData?.previewPayloadExample;
+    if (!serverPayloadExample) return;
+
+    const serverKeys = JsonUtils.extractPayloadKeys(serverPayloadExample);
+
+    const shouldUpdateEditor = !hasInitializedRef.current || !areKeysEqual(serverKeys, lastServerKeysRef.current);
+
+    if (shouldUpdateEditor) {
+      setEditorValue(JsonUtils.stringify(serverPayloadExample));
+      hasInitializedRef.current = true;
+      lastServerKeysRef.current = serverKeys;
     }
-
-    const serverPayloadKeys = getPayloadKeys(previewData.previewPayloadExample);
-    const currentPayloadKeys = getCurrentPayloadKeys(editorValue);
-
-    // Check if schema has changed by comparing both directions:
-    // 1. Keys added to server response (not in current editor)
-    // 2. Keys removed from server response (in current editor but not in server)
-    const hasPayloadSchemaChanged =
-      hasInitializedEditorValueRef.current && JSON.stringify(serverPayloadKeys) !== JSON.stringify(currentPayloadKeys);
-
-    // Update editor value if:
-    // 1. This is the first load, OR
-    // 2. The payload schema has changed (new/removed variables)
-    if (!hasInitializedEditorValueRef.current || hasPayloadSchemaChanged) {
-      const newValue = JSON.stringify(previewData.previewPayloadExample, null, 2);
-      setEditorValue(newValue);
-      hasInitializedEditorValueRef.current = true;
-    }
-  }, [previewData?.previewPayloadExample, editorValue]);
+  }, [previewData?.previewPayloadExample, parsedEditorPayload]);
 
   return {
     editorValue,
