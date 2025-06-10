@@ -13,6 +13,11 @@ on:
         required: true
         type: string
         default: 'v3.0.0'
+      nightly:
+        description: 'Publish as nightly release'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   release:
@@ -33,27 +38,48 @@ jobs:
         with:
           node-version: '20.19.0'
           cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install Dependencies
         shell: bash
         run: pnpm install --frozen-lockfile
 
+      - name: Set version for nightly
+        if: ${{ github.event.inputs.nightly }}
+        run: |
+          echo "NIGHTLY_VERSION=${{ github.event.inputs.version }}-nightly.$(date +'%Y%m%d')" >> $GITHUB_ENV
+
       - name: Release version
         run: |
-          pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }}
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            pnpm nx release version ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }}
+          else
+            pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }}
+          fi
 
       - name: Generate changelog
         run: |
-          pnpm nx release changelog ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }}
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            pnpm nx release changelog ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }}
+          else
+            pnpm nx release changelog ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }}
+          fi
 
       - name: Build packages
         run: pnpm run build:packages
 
       - name: Publish packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          pnpm nx release publish --projects=${{ github.event.inputs.packages }}
+          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
+            pnpm nx release publish --projects=${{ github.event.inputs.packages }} --tag nightly
+          else
+            pnpm nx release publish --projects=${{ github.event.inputs.packages }}
+          fi
 
       - name: Create Pull Request
+        if: ${{ !github.event.inputs.nightly }}
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
