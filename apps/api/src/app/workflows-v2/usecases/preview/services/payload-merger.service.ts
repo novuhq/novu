@@ -135,7 +135,8 @@ export class PayloadMergerService {
 
     if (isV2TemplateEditorEnabled) {
       const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
-      const userSubscriberData = (mergedPayload.subscriber as Record<string, unknown>) || {};
+      // Preserve user-provided subscriber data even if it was filtered out earlier
+      const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
       mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
     }
@@ -167,7 +168,8 @@ export class PayloadMergerService {
 
     if (isV2TemplateEditorEnabled) {
       const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
-      const userSubscriberData = (finalPayload.subscriber as Record<string, unknown>) || {};
+      // Preserve user-provided subscriber data even if it was filtered out earlier
+      const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
       finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
     }
