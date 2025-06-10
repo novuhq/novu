@@ -35,7 +35,7 @@ const MobilePreviewWrapper = memo(({ children, description }: { children: React.
   );
 });
 
-function StepPreviewFactoryComponent() {
+export function StepPreviewFactory() {
   const { step, previewData, isInitialLoad, isStepPreviewable } = useStepEditor();
 
   if (!isStepPreviewable) {
@@ -43,7 +43,7 @@ function StepPreviewFactoryComponent() {
   }
 
   const commonProps = {
-    previewData,
+    previewData: previewData ?? undefined,
     isPreviewPending: isInitialLoad,
   };
 
@@ -78,6 +78,3 @@ function StepPreviewFactoryComponent() {
       return <NoPreviewAvailable stepType={step.type} />;
   }
 }
-
-// Memoize the factory component - it should only re-render when step type or preview data changes
-export const StepPreviewFactory = memo(StepPreviewFactoryComponent);

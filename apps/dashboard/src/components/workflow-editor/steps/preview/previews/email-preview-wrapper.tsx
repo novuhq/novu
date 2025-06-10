@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from 'react';
+import { useState, useMemo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -25,7 +25,7 @@ const fadeVariants = {
   visible: { opacity: 1 },
 };
 
-function EmailCorePreviewComponent({ previewData, isPreviewPending }: EmailCorePreviewProps) {
+export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePreviewProps) {
   const [activeTab, setActiveTab] = useState('desktop');
 
   // Memoize the preview content extraction to avoid recalculating on every render
@@ -127,13 +127,3 @@ function EmailCorePreviewComponent({ previewData, isPreviewPending }: EmailCoreP
     </Tabs>
   );
 }
-
-// Memoize the component to prevent unnecessary re-renders when props haven't changed
-export const EmailCorePreview = memo(EmailCorePreviewComponent, (prevProps, nextProps) => {
-  // Custom comparison function for better performance
-  return (
-    prevProps.isPreviewPending === nextProps.isPreviewPending &&
-    prevProps.previewData?.result?.preview?.subject === nextProps.previewData?.result?.preview?.subject &&
-    prevProps.previewData?.result?.preview?.body === nextProps.previewData?.result?.preview?.body
-  );
-});
