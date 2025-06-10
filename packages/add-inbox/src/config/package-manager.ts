@@ -4,17 +4,17 @@ import { PACKAGE_MANAGERS, PackageManagerType } from '../constants';
 import fileUtils from '../utils/file';
 import logger from '../utils/logger';
 
-interface PackageManager {
+interface IPackageManager {
   name: PackageManagerType;
   install: string;
   init: string;
 }
 
-interface PackageJson {
+interface IPackageJson {
   packageManager?: string;
 }
 
-export function detectPackageManager(): PackageManager {
+export function detectPackageManager(): IPackageManager {
   const cwd = process.cwd();
 
   // Check for lock files first
@@ -32,13 +32,14 @@ export function detectPackageManager(): PackageManager {
   try {
     const packageJsonPath = fileUtils.joinPaths(cwd, 'package.json');
     if (fileUtils.exists(packageJsonPath)) {
-      let packageJson: PackageJson | undefined;
+      let packageJson: IPackageJson | undefined;
       try {
-        packageJson = fileUtils.readJson(packageJsonPath) as PackageJson;
+        packageJson = fileUtils.readJson(packageJsonPath) as IPackageJson;
       } catch (readError) {
         logger.warning(
           `  • Failed to parse package.json: ${readError instanceof Error ? readError.message : String(readError)}`
         );
+
         return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
       }
       if (packageJson && typeof packageJson.packageManager === 'string') {
@@ -75,10 +76,11 @@ export function detectPackageManager(): PackageManager {
 
   // If no package manager is detected, default to npm
   logger.warning('  • No package manager detected, defaulting to npm');
+
   return { name: PACKAGE_MANAGERS.NPM, install: 'install', init: 'init -y' };
 }
 
-export async function ensurePackageJson(packageManager: PackageManager): Promise<boolean> {
+export async function ensurePackageJson(packageManager: IPackageManager): Promise<boolean> {
   const packagePath = fileUtils.joinPaths(process.cwd(), 'package.json');
   if (!fileUtils.exists(packagePath)) {
     logger.warning('No package.json found.');
@@ -101,6 +103,7 @@ export async function ensurePackageJson(packageManager: PackageManager): Promise
             `  ✗ Unsafe or invalid package manager command: '${packageManager.name} ${packageManager.init}'`
           );
           logger.cyan('  Please initialize package.json manually and try again.');
+
           return false;
         }
         logger.gray(`  $ ${packageManager.name} ${packageManager.init}`);
@@ -110,13 +113,16 @@ export async function ensurePackageJson(packageManager: PackageManager): Promise
         logger.error('  ✗ Failed to initialize package.json:');
         logger.error(error instanceof Error ? error.message : String(error));
         logger.cyan('  Please initialize it manually and try again.');
+
         return false;
       }
     } else {
       logger.error('  Installation cannot proceed without a package.json.');
+
       return false;
     }
   }
   logger.success('  ✓ package.json is ready.');
+
   return true;
 }

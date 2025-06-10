@@ -1,6 +1,6 @@
 import { RiAngularjsFill, RiJavascriptFill, RiNextjsFill, RiReactjsFill, RiRemixRunFill } from 'react-icons/ri';
 import { Language } from '../primitives/code-block';
-import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '@/config';
+import { API_HOSTNAME, WEBSOCKET_HOSTNAME, IS_EU } from '@/config';
 
 export interface Framework {
   name: string;
@@ -45,10 +45,10 @@ export const commonInstallStep = (packageName: string): InstallationStep => ({
   codeTitle: 'Terminal',
 });
 
-export const commonCLIInstallStep = (packageName: string): InstallationStep => ({
+export const commonCLIInstallStep = (): InstallationStep => ({
   title: 'Run the CLI command in an existing project',
   description: `You'll notice a new folder in your project called inbox. This is where you'll find the inbox component boilerplate code. \n You can customize the <Inbox /> component to match your app theme.`,
-  code: `npx novu@add-inbox --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${!isDefaultApi ? ' --region=eu' : ''}`,
+  code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${IS_EU ? ' --region=eu' : ''}`,
   codeLanguage: 'shell',
   codeTitle: 'Terminal',
 });
@@ -60,7 +60,7 @@ export const getFrameworks = (installationMethod: 'cli' | 'manual'): Framework[]
     selected: true,
     installSteps:
       installationMethod === 'cli'
-        ? [commonCLIInstallStep('@novu/nextjs')]
+        ? [commonCLIInstallStep()]
         : [
             commonInstallStep('@novu/nextjs'),
             {
@@ -93,7 +93,7 @@ function Novu() {
     icon: <RiReactjsFill className="h-8 w-8 text-[#61DAFB]" />,
     installSteps:
       installationMethod === 'cli'
-        ? [commonCLIInstallStep('@novu/react')]
+        ? [commonCLIInstallStep()]
         : [
             commonInstallStep('@novu/react'),
             {
@@ -131,7 +131,7 @@ function Novu() {
     icon: <RiRemixRunFill className="h-8 w-8 text-black" />,
     installSteps:
       installationMethod === 'cli'
-        ? [commonCLIInstallStep('@novu/react')]
+        ? [commonCLIInstallStep()]
         : [
             commonInstallStep('@novu/react'),
             {
@@ -168,7 +168,7 @@ function Novu() {
     icon: <RiReactjsFill className="h-8 w-8 text-black" />,
     installSteps:
       installationMethod === 'cli'
-        ? [commonCLIInstallStep('@novu/react-native')]
+        ? [commonCLIInstallStep()]
         : [
             commonInstallStep('@novu/react-native'),
             {
@@ -265,7 +265,7 @@ export function YourCustomInbox() {
     icon: <RiAngularjsFill className="h-8 w-8 text-[#DD0031]" />,
     installSteps:
       installationMethod === 'cli'
-        ? [commonCLIInstallStep('@novu/js')]
+        ? [commonCLIInstallStep()]
         : [
             commonInstallStep('@novu/js'),
             {
@@ -311,7 +311,7 @@ export class AppComponent implements AfterViewInit {
     icon: <RiJavascriptFill className="h-8 w-8 text-[#F7DF1E]" />,
     installSteps:
       installationMethod === 'cli'
-        ? [commonCLIInstallStep('@novu/js')]
+        ? [commonCLIInstallStep()]
         : [
             commonInstallStep('@novu/js'),
             {
