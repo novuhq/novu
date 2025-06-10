@@ -7,30 +7,11 @@ import { FrameworkPreviousStepsOutputState } from '../../../../bridge/usecases/p
 @Injectable()
 export class PreviewPayloadProcessorService {
   /**
-   * Removes computed digest properties (eventCount, events.length) that shouldn't be exposed
-   * in the preview payload schema to prevent user confusion.
-   * Also reorders keys to have "payload" first, followed by "subscriber", then the rest.
+   * Reorders keys to have "payload" first, followed by "subscriber", then the rest.
    */
   cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Record<string, unknown> {
     const cleanedPayloadExample = _.cloneDeep(payloadExample);
 
-    if (cleanedPayloadExample.steps && typeof cleanedPayloadExample.steps === 'object') {
-      const steps = cleanedPayloadExample.steps as Record<string, unknown>;
-
-      Object.keys(steps)
-        .filter((stepId) => typeof steps[stepId] === 'object')
-        .forEach((stepId) => {
-          const step = steps[stepId] as Record<string, unknown>;
-
-          delete step.eventCount;
-
-          if (step.events && typeof step.events === 'object' && !Array.isArray(step.events)) {
-            delete (step.events as Record<string, unknown>).length;
-          }
-        });
-    }
-
-    // Reorder keys: payload first, subscriber second, then the rest
     const reorderedPayload: Record<string, unknown> = {};
 
     if (cleanedPayloadExample.payload !== undefined) {

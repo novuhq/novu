@@ -141,7 +141,7 @@ export class PayloadMergerService {
     }
 
     if (isV2TemplateEditorEnabled) {
-      mergedPayload.steps = await this.createFullStepsObject(workflow, command);
+      mergedPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
     }
 
     return mergedPayload;
@@ -173,7 +173,7 @@ export class PayloadMergerService {
     }
 
     if (isV2TemplateEditorEnabled) {
-      finalPayload.steps = await this.createFullStepsObject(workflow, command);
+      finalPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
     }
 
     return finalPayload;
@@ -185,7 +185,8 @@ export class PayloadMergerService {
    */
   private async createFullStepsObject(
     workflow: NotificationTemplateEntity,
-    command: PreviewCommand
+    command: PreviewCommand,
+    userPayloadExample?: PreviewPayloadDto
   ): Promise<Record<string, unknown>> {
     const stepsObject: Record<string, unknown> = {};
 
@@ -201,17 +202,25 @@ export class PayloadMergerService {
     }
 
     const previousSteps = workflow.steps.slice(0, currentStepIndex);
+    const userStepsData = (userPayloadExample?.steps as Record<string, unknown>) || {};
 
     for (const step of previousSteps) {
       const stepId = step.stepId || step._id;
 
       if (stepId) {
-        const mockResult = this.mockDataGenerator.generateMockStepResult({
-          stepType: step.template?.type || '',
-          workflow,
-        });
+        // Check if user provided custom step data
+        if (userStepsData[stepId]) {
+          // Use user-provided step data
+          stepsObject[stepId] = userStepsData[stepId];
+        } else {
+          // Fall back to generating mock data
+          const mockResult = this.mockDataGenerator.generateMockStepResult({
+            stepType: step.template?.type || '',
+            workflow,
+          });
 
-        stepsObject[stepId] = mockResult;
+          stepsObject[stepId] = mockResult;
+        }
       }
     }
 

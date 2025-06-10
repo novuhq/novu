@@ -6,6 +6,7 @@ import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json
 import { StepResultsSectionProps } from '../types/preview-context.types';
 import { ACCORDION_STYLES } from '../constants/preview-context.constants';
 import { getStepName, getStepType, getStepTypeIcon } from '../utils/preview-context.utils';
+import { synchronizeDigestStepData } from '../utils/digest-sync.utils';
 
 export function PreviewStepResultsSection({
   localParsedData,
@@ -18,6 +19,42 @@ export function PreviewStepResultsSection({
   const toggleStepOpen = useCallback((stepId: string) => {
     setOpenSteps((prev) => ({ ...prev, [stepId]: !prev[stepId] }));
   }, []);
+
+  const handleStepDataChange = useCallback(
+    (stepId: string, updatedStepData: any) => {
+      const stepType = getStepType(workflow, stepId);
+
+      let finalStepData = updatedStepData;
+
+      // Apply digest synchronization if it's a digest step
+      if (stepType === 'digest') {
+        const currentStepData = localParsedData.steps?.[stepId] || {};
+        finalStepData = synchronizeDigestStepData(updatedStepData, currentStepData, workflow?.payloadExample);
+      }
+
+      const updatedSteps = {
+        ...(localParsedData.steps || {}),
+        [stepId]: finalStepData,
+      };
+
+      onUpdate('steps', updatedSteps);
+    },
+    [workflow, localParsedData.steps, onUpdate]
+  );
+
+  const getCurrentStepData = useCallback(
+    (stepId: string, stepData: any) => {
+      const stepType = getStepType(workflow, stepId);
+
+      // For digest steps, ensure the data is always synchronized
+      if (stepType === 'digest' && stepData && 'eventCount' in stepData && 'events' in stepData) {
+        return synchronizeDigestStepData(stepData, {}, workflow?.payloadExample);
+      }
+
+      return stepData;
+    },
+    [workflow]
+  );
 
   const stepEntries = Object.entries(localParsedData.steps || {});
 
@@ -47,6 +84,7 @@ export function PreviewStepResultsSection({
               const stepName = getStepName(workflow, stepId);
               const isCurrentStep = stepId === currentStepId;
               const isOpen = openSteps[stepId] || false;
+              const currentStepData = getCurrentStepData(stepId, stepData);
 
               return (
                 <div key={stepId} className="border-b border-neutral-100 last:border-b-0">
@@ -70,14 +108,19 @@ export function PreviewStepResultsSection({
                     </div>
                   </button>
                   {isOpen &&
-                    (stepData && Object.keys(stepData).length > 0 ? (
+                    (currentStepData && Object.keys(currentStepData).length > 0 ? (
                       <div className="pb-3">
+                        {stepType === 'digest' && (
+                          <div className="px-2 pb-2">
+                            <p className="text-2xs text-neutral-500">
+                              Note: eventCount and events array are synchronized automatically
+                            </p>
+                          </div>
+                        )}
                         <EditableJsonViewer
-                          value={stepData}
-                          onChange={(updatedStepData) => {
-                            const updatedSteps = { ...(localParsedData.steps || {}), [stepId]: updatedStepData };
-                            onUpdate('steps', updatedSteps);
-                          }}
+                          key={`${stepId}-${JSON.stringify(currentStepData)}`}
+                          value={currentStepData}
+                          onChange={(updatedStepData) => handleStepDataChange(stepId, updatedStepData)}
                           className={ACCORDION_STYLES.jsonViewer}
                         />
                       </div>

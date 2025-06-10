@@ -6,6 +6,8 @@ import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { MockStepResultOptions } from '../preview.types';
 import { LOG_CONTEXT } from '../preview.constants';
 
+const DEFAULT_DIGEST_EVENTS_COUNT = 3;
+
 @Injectable()
 export class MockDataGeneratorService {
   constructor(private readonly logger: PinoLogger) {}
@@ -61,17 +63,18 @@ export class MockDataGeneratorService {
         payloadMockData = JsonSchemaMock.generate(workflow.payloadSchema) as Record<string, unknown>;
       }
 
-      const oneDayAgo = new Date();
-      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-      oneDayAgo.setHours(12, 0, 0, 0);
+      const digestEvents = Array.from({ length: DEFAULT_DIGEST_EVENTS_COUNT }, (_, index) => {
+        const eventTime = new Date();
+        eventTime.setDate(eventTime.getDate() - 1);
+        eventTime.setHours(12, 0, 0, 0);
+        eventTime.setMinutes(eventTime.getMinutes() - index * 5); // Stagger events by 5 minutes
 
-      const digestEvents = [
-        {
-          id: 'event-id-123',
-          time: oneDayAgo.toISOString(),
+        return {
+          id: `example-id-${index + 1}`,
+          time: eventTime.toISOString(),
           payload: payloadMockData,
-        },
-      ];
+        };
+      });
 
       return {
         eventCount: digestEvents.length,
@@ -89,17 +92,18 @@ export class MockDataGeneratorService {
       );
 
       // Create a basic digest result without using JsonSchemaMock
-      const oneDayAgo = new Date();
-      oneDayAgo.setDate(oneDayAgo.getDate() - 1);
-      oneDayAgo.setHours(12, 0, 0, 0);
+      const digestEvents = Array.from({ length: DEFAULT_DIGEST_EVENTS_COUNT }, (_, index) => {
+        const eventTime = new Date();
+        eventTime.setDate(eventTime.getDate() - 1);
+        eventTime.setHours(12, 0, 0, 0);
+        eventTime.setMinutes(eventTime.getMinutes() - index * 5); // Stagger events by 5 minutes
 
-      const digestEvents = [
-        {
-          id: 'event-id-123',
-          time: oneDayAgo.toISOString(),
+        return {
+          id: `example-id-${index + 1}`,
+          time: eventTime.toISOString(),
           payload: {},
-        },
-      ];
+        };
+      });
 
       return {
         eventCount: digestEvents.length,
