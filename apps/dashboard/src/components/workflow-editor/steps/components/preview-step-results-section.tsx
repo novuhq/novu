@@ -110,19 +110,23 @@ export function PreviewStepResultsSection({
                   {isOpen &&
                     (currentStepData && Object.keys(currentStepData).length > 0 ? (
                       <div className="pb-3">
-                        {stepType === 'digest' && (
-                          <div className="px-2 pb-2">
-                            <p className="text-2xs text-neutral-500">
-                              Note: eventCount and events array are synchronized automatically
-                            </p>
-                          </div>
-                        )}
                         <EditableJsonViewer
                           key={`${stepId}-${JSON.stringify(currentStepData)}`}
                           value={currentStepData}
                           onChange={(updatedStepData) => handleStepDataChange(stepId, updatedStepData)}
                           className={ACCORDION_STYLES.jsonViewer}
                         />
+                        {stepType === 'digest' && (
+                          <div className="pt-2">
+                            <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
+                              <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+                              <span>
+                                Event count and events array are synchronized automatically. The event payload is
+                                originating from the workflow trigger payload.
+                              </span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <p className="text-xs italic text-neutral-500">no step results</p>

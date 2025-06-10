@@ -1,35 +1,61 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { RiInformationLine } from 'react-icons/ri';
+import { RiInformationLine, RiRefreshLine } from 'react-icons/ri';
 import { useState } from 'react';
 import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
 import { SubscriberSectionProps } from '../types/preview-context.types';
 import { ACCORDION_STYLES } from '../constants/preview-context.constants';
+import { Button } from '../../../primitives/button';
 
 export function PreviewSubscriberSection({
   errors,
   localParsedData,
   onUpdate,
   onSubscriberSelect,
+  onClearPersisted,
 }: SubscriberSectionProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <AccordionItem value="subscriber" className={ACCORDION_STYLES.item}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
-        <div className="flex items-center gap-0.5">
-          Subscriber
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="text-foreground-400 inline-block hover:cursor-help">
-                <RiInformationLine className="size-3" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              Information about the recipient of the notification, including their profile data and preferences.
-            </TooltipContent>
-          </Tooltip>
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-0.5">
+              Subscriber
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-foreground-400 inline-block hover:cursor-help">
+                    <RiInformationLine className="size-3" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  Information about the recipient of the notification, including their profile data and preferences.
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+          {onClearPersisted && (
+            <div className="mr-2">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+
+                  onClearPersisted();
+                }}
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="2xs"
+                className="text-foreground-400 hover:text-foreground-600 gap-1"
+              >
+                <RiRefreshLine className="h-3 w-3" />
+                Reset to defaults
+              </Button>
+            </div>
+          )}
         </div>
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">

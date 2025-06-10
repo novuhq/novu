@@ -37,4 +37,5 @@ export type StepResultsSectionProps = AccordionSectionProps & {
 
 export type SubscriberSectionProps = AccordionSectionProps & {
   onSubscriberSelect: (subscriber: ISubscriberResponseDto) => void;
+  onClearPersisted?: () => void;
 };

@@ -68,15 +68,8 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     (payload: any) => {
       if (!workflowId || !environmentId) return;
 
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Debounce save operation
-      saveTimeoutRef.current = setTimeout(() => {
-        savePayloadData(workflowId, environmentId, payload);
-      }, 500);
+      // Save immediately without debouncing to avoid issues with frequent re-renders
+      savePayloadData(workflowId, environmentId, payload);
     },
     [workflowId, environmentId]
   );
@@ -97,15 +90,8 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     (subscriber: any) => {
       if (!workflowId || !environmentId) return;
 
-      // Clear existing timeout
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current);
-      }
-
-      // Debounce save operation
-      saveTimeoutRef.current = setTimeout(() => {
-        saveSubscriberData(workflowId, environmentId, subscriber);
-      }, 500);
+      // Save immediately without debouncing to avoid issues with frequent re-renders
+      saveSubscriberData(workflowId, environmentId, subscriber);
     },
     [workflowId, environmentId]
   );

@@ -47,11 +47,11 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
       environmentId: currentEnvironment?._id,
       onDataPersist: (data: ParsedData) => {
         // Persist both payload and subscriber data
-        if (data.payload) {
+        if (data.payload !== undefined) {
           savePersistedPayload(data.payload);
         }
 
-        if (data.subscriber) {
+        if (data.subscriber !== undefined) {
           savePersistedSubscriber(data.subscriber);
         }
       },
@@ -102,25 +102,6 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
 
         if (persistedSubscriber) {
           finalData.subscriber = persistedSubscriber;
-        } else if (!finalData.subscriber || Object.keys(finalData.subscriber).length === 0) {
-          // Initialize subscriber data if not present in persisted data
-          if (currentUser?.email) {
-            try {
-              const response = await getSubscribers({
-                environment: currentEnvironment,
-                email: currentUser.email,
-                limit: 1,
-              });
-
-              if (response.data?.[0]) {
-                finalData.subscriber = createSubscriberData(response.data[0]);
-              } else {
-                finalData.subscriber = createSubscriberDataFromUser(currentUser);
-              }
-            } catch {
-              finalData.subscriber = createSubscriberDataFromUser(currentUser);
-            }
-          }
         }
 
         // Update if there are changes
@@ -175,21 +156,45 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
   }, [value, workflow?.workflowId, currentStepId, currentEnvironment?._id, loadPersistedSubscriber, onChange]);
 
   const handleClearPersistedData = () => {
+    // Only clear persisted payload data, keep subscriber data
     clearPersistedPayload();
-    clearPersistedSubscriber();
-    // Reset flags to trigger re-initialization
-    hasLoadedPersistedDataRef.current = false;
-    hasInitializedSubscriberRef.current = false;
-    isInitializingRef.current = false;
 
-    // Reset to initial server values
-    const serverDefaults = parseJsonValue('{}');
+    // Get current data to preserve subscriber and step results
+    const currentData = parseJsonValue(value);
+    const finalData = { ...currentData };
 
+    // Reset only the payload to defaults
     if (workflow?.payloadExample && isPayloadSchemaEnabled) {
-      serverDefaults.payload = workflow.payloadExample;
+      finalData.payload = workflow.payloadExample;
+    } else {
+      finalData.payload = {};
     }
 
-    const stringified = JSON.stringify(serverDefaults, null, 2);
+    const stringified = JSON.stringify(finalData, null, 2);
+    onChange(stringified);
+  };
+
+  const handleClearPersistedSubscriber = () => {
+    // Only clear persisted subscriber data, keep payload and step results
+    clearPersistedSubscriber();
+
+    // Get current data to preserve payload and step results
+    const currentData = parseJsonValue(value);
+    const finalData = { ...currentData };
+
+    // Reset subscriber to server's default mock subscriber data
+    finalData.subscriber = {
+      subscriberId: '123456',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: 'en-US',
+      data: {},
+    };
+
+    const stringified = JSON.stringify(finalData, null, 2);
     onChange(stringified);
   };
 
@@ -212,6 +217,9 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
         workflow={workflow}
         onUpdate={updateJsonSection}
         onSubscriberSelect={handleSubscriberSelection}
+        onClearPersisted={
+          workflow?.workflowId && currentStepId && currentEnvironment?._id ? handleClearPersistedSubscriber : undefined
+        }
       />
 
       <PreviewStepResultsSection
