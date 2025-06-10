@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { WorkflowResponseDto } from '@novu/shared';
 import { parseJsonValue } from '../utils/preview-context.utils';
 import { mergePreviewContextData } from '../utils/preview-context-storage.utils';
+import { PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 
 type InitializationProps = {
   workflowId?: string;
@@ -11,8 +12,8 @@ type InitializationProps = {
   onChange: (value: string) => void;
   workflow?: WorkflowResponseDto;
   isPayloadSchemaEnabled: boolean;
-  loadPersistedPayload: () => any | null;
-  loadPersistedSubscriber: () => any | null;
+  loadPersistedPayload: () => PayloadData | null;
+  loadPersistedSubscriber: () => PreviewSubscriberData | null;
 };
 
 export function usePreviewDataInitialization({
@@ -46,8 +47,16 @@ export function usePreviewDataInitialization({
       if (persistedPayload && isPayloadSchemaEnabled && workflow?.payloadExample) {
         // Merge persisted payload with server defaults
         const mergedData = mergePreviewContextData(
-          { payload: persistedPayload, subscriber: {}, steps: {} },
-          { payload: workflow.payloadExample, subscriber: {}, steps: {} }
+          {
+            payload: persistedPayload,
+            subscriber: {},
+            steps: {},
+          },
+          {
+            payload: workflow.payloadExample as PayloadData,
+            subscriber: {},
+            steps: {},
+          }
         );
         finalData.payload = mergedData.payload;
         hasChanges = true;
@@ -59,7 +68,7 @@ export function usePreviewDataInitialization({
         workflow?.payloadExample &&
         Object.keys(currentData.payload || {}).length === 0
       ) {
-        finalData.payload = workflow.payloadExample;
+        finalData.payload = workflow.payloadExample as PayloadData;
         hasChanges = true;
       }
 

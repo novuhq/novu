@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { ParsedData } from '../types/preview-context.types';
+import { ParsedData, PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 import {
   savePreviewContextData,
   loadPreviewContextData,
@@ -57,13 +57,13 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     clearPreviewContextData(workflowId, stepId, environmentId);
   };
 
-  const loadPersistedPayload = (): any | null => {
+  const loadPersistedPayload = (): PayloadData | null => {
     if (!workflowId || !environmentId) return null;
 
     return loadPayloadData(workflowId, environmentId);
   };
 
-  const savePersistedPayload = (payload: any) => {
+  const savePersistedPayload = (payload: PayloadData) => {
     if (!workflowId || !environmentId) return;
 
     savePayloadData(workflowId, environmentId, payload);
@@ -75,13 +75,13 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     clearPayloadData(workflowId, environmentId);
   };
 
-  const loadPersistedSubscriber = (): any | null => {
+  const loadPersistedSubscriber = (): PreviewSubscriberData | null => {
     if (!workflowId || !environmentId) return null;
 
     return loadSubscriberData(workflowId, environmentId);
   };
 
-  const savePersistedSubscriber = (subscriber: any) => {
+  const savePersistedSubscriber = (subscriber: PreviewSubscriberData) => {
     if (!workflowId || !environmentId) return;
 
     saveSubscriberData(workflowId, environmentId, subscriber);

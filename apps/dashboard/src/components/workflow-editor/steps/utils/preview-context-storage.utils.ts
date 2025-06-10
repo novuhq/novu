@@ -1,4 +1,4 @@
-import { ParsedData } from '../types/preview-context.types';
+import { ParsedData, PayloadData, PreviewSubscriberData } from '../types/preview-context.types';
 
 export type PersistedPreviewData = {
   data: ParsedData;
@@ -6,8 +6,14 @@ export type PersistedPreviewData = {
   version: string;
 };
 
-type PersistedGenericData = {
-  [key: string]: any;
+type PersistedPayloadData = {
+  payload: PayloadData;
+  timestamp: number;
+  version: string;
+};
+
+type PersistedSubscriberData = {
+  subscriber: PreviewSubscriberData;
   timestamp: number;
   version: string;
 };
@@ -28,7 +34,7 @@ export function getSubscriberStorageKey(workflowId: string, environmentId: strin
   return `preview-subscriber-${workflowId}-${environmentId}`;
 }
 
-function saveToStorage(storageKey: string, data: any, dataKey: string): void {
+function saveToStorage<T>(storageKey: string, data: T, dataKey: string): void {
   try {
     const persistedData = {
       [dataKey]: data,
@@ -42,13 +48,13 @@ function saveToStorage(storageKey: string, data: any, dataKey: string): void {
   }
 }
 
-function loadFromStorage(storageKey: string, dataKey: string): any | null {
+function loadFromStorage<T>(storageKey: string, dataKey: string): T | null {
   try {
     const stored = localStorage.getItem(storageKey);
 
     if (!stored) return null;
 
-    const persistedData: PersistedGenericData = JSON.parse(stored);
+    const persistedData = JSON.parse(stored);
 
     const isExpired = Date.now() - persistedData.timestamp > TTL_MS;
 
@@ -57,7 +63,7 @@ function loadFromStorage(storageKey: string, dataKey: string): any | null {
       return null;
     }
 
-    return persistedData[dataKey];
+    return persistedData[dataKey] as T;
   } catch (error) {
     console.warn(`Failed to load ${dataKey} from localStorage:`, error);
     return null;
@@ -92,24 +98,24 @@ export function savePreviewContextData(
   }
 }
 
-export function savePayloadData(workflowId: string, environmentId: string, payload: any): void {
+export function savePayloadData(workflowId: string, environmentId: string, payload: PayloadData): void {
   const storageKey = getPayloadStorageKey(workflowId, environmentId);
   saveToStorage(storageKey, payload, 'payload');
 }
 
-export function saveSubscriberData(workflowId: string, environmentId: string, subscriber: any): void {
+export function saveSubscriberData(workflowId: string, environmentId: string, subscriber: PreviewSubscriberData): void {
   const storageKey = getSubscriberStorageKey(workflowId, environmentId);
   saveToStorage(storageKey, subscriber, 'subscriber');
 }
 
-export function loadPayloadData(workflowId: string, environmentId: string): any | null {
+export function loadPayloadData(workflowId: string, environmentId: string): PayloadData | null {
   const storageKey = getPayloadStorageKey(workflowId, environmentId);
-  return loadFromStorage(storageKey, 'payload');
+  return loadFromStorage<PayloadData>(storageKey, 'payload');
 }
 
-export function loadSubscriberData(workflowId: string, environmentId: string): any | null {
+export function loadSubscriberData(workflowId: string, environmentId: string): PreviewSubscriberData | null {
   const storageKey = getSubscriberStorageKey(workflowId, environmentId);
-  return loadFromStorage(storageKey, 'subscriber');
+  return loadFromStorage<PreviewSubscriberData>(storageKey, 'subscriber');
 }
 
 export function loadPreviewContextData(workflowId: string, stepId: string, environmentId: string): ParsedData | null {
@@ -143,16 +149,16 @@ export function mergePreviewContextData(persistedData: ParsedData, serverDefault
   };
 }
 
-function mergeObjectData(persisted: any, serverDefault: any): any {
+function mergeObjectData<T extends Record<string, unknown>>(persisted: T, serverDefault: T): T {
   if (!persisted || typeof persisted !== 'object') {
-    return serverDefault || {};
+    return serverDefault || ({} as T);
   }
 
   if (!serverDefault || typeof serverDefault !== 'object') {
-    return serverDefault || {};
+    return serverDefault || ({} as T);
   }
 
-  const merged = { ...serverDefault };
+  const merged = { ...serverDefault } as Record<string, unknown>;
 
   Object.keys(persisted).forEach((key) => {
     if (key in serverDefault) {
@@ -164,11 +170,13 @@ function mergeObjectData(persisted: any, serverDefault: any): any {
         !Array.isArray(serverDefault[key]) &&
         !Array.isArray(persisted[key]);
 
-      merged[key] = isNestedObject ? mergeObjectData(persisted[key], serverDefault[key]) : persisted[key];
+      merged[key] = isNestedObject
+        ? mergeObjectData(persisted[key] as Record<string, unknown>, serverDefault[key] as Record<string, unknown>)
+        : persisted[key];
     }
   });
 
-  return merged;
+  return merged as T;
 }
 
 export function clearPreviewContextData(workflowId: string, stepId: string, environmentId: string): void {

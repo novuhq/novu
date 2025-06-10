@@ -1,5 +1,5 @@
 import { WorkflowResponseDto, ISubscriberResponseDto, StepTypeEnum, IUserEntity } from '@novu/shared';
-import { ParsedData } from '../types/preview-context.types';
+import { ParsedData, PreviewSubscriberData } from '../types/preview-context.types';
 import { STEP_TYPE_ICONS, DEFAULT_STEP_ICON } from '../constants/preview-context.constants';
 
 export function parseJsonValue(value: string): ParsedData {
@@ -11,11 +11,15 @@ export function parseJsonValue(value: string): ParsedData {
       steps: parsed.steps || {},
     };
   } catch {
-    return { payload: {}, subscriber: {}, steps: {} };
+    return {
+      payload: {},
+      subscriber: {},
+      steps: {},
+    };
   }
 }
 
-export function createSubscriberData(subscriber: ISubscriberResponseDto) {
+export function createSubscriberData(subscriber: ISubscriberResponseDto): PreviewSubscriberData {
   return {
     subscriberId: subscriber.subscriberId,
     firstName: subscriber.firstName || '',
@@ -29,7 +33,7 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto) {
   };
 }
 
-export function createSubscriberDataFromUser(user: IUserEntity) {
+export function createSubscriberDataFromUser(user: IUserEntity): PreviewSubscriberData {
   return {
     subscriberId: user.email || user._id,
     firstName: user.firstName || '',
@@ -38,8 +42,6 @@ export function createSubscriberDataFromUser(user: IUserEntity) {
     phone: '',
     avatar: user.profilePicture || '',
     locale: 'en_US',
-    timezone: '',
-    data: null,
   };
 }
 

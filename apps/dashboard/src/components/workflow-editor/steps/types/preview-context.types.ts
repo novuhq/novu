@@ -1,17 +1,21 @@
-import { WorkflowResponseDto, StepTypeEnum, ISubscriberResponseDto } from '@novu/shared';
+import { WorkflowResponseDto, ISubscriberResponseDto, SubscriberDto } from '@novu/shared';
+
+export type PayloadData = Record<string, unknown>;
+export type PreviewSubscriberData = Partial<SubscriberDto>;
+export type StepsData = Record<string, unknown>;
 
 export type PreviewContextPanelProps = {
   workflow?: WorkflowResponseDto;
   value: string;
   onChange: (value: string) => Error | null;
-  subscriberData?: Record<string, any>;
+  subscriberData?: Record<string, unknown>;
   currentStepId?: string;
 };
 
 export type ParsedData = {
-  payload: any;
-  subscriber: any;
-  steps: any;
+  payload: PayloadData;
+  subscriber: PreviewSubscriberData;
+  steps: StepsData;
 };
 
 export type ValidationErrors = {
@@ -24,7 +28,7 @@ export type AccordionSectionProps = {
   errors: ValidationErrors;
   localParsedData: ParsedData;
   workflow?: WorkflowResponseDto;
-  onUpdate: (section: keyof ParsedData, data: any) => void;
+  onUpdate: (section: keyof ParsedData, data: PayloadData | PreviewSubscriberData | StepsData) => void;
 };
 
 export type PayloadSectionProps = AccordionSectionProps & {

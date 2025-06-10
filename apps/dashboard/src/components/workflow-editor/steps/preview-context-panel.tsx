@@ -2,15 +2,19 @@ import { Accordion } from '@/components/primitives/accordion';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useMemo } from 'react';
 import { useEnvironment } from '@/context/environment/hooks';
-import { parseJsonValue } from './utils/preview-context.utils';
-import { PreviewContextPanelProps, ParsedData } from './types/preview-context.types';
+import {
+  PreviewContextPanelProps,
+  ParsedData,
+  PreviewSubscriberData,
+  PayloadData,
+} from './types/preview-context.types';
 import { PreviewPayloadSection, PreviewSubscriberSection, PreviewStepResultsSection } from './components';
 import { usePreviewContext } from './hooks/use-preview-context';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
 import { usePreviewDataInitialization } from './hooks/use-preview-data-initialization';
 import { StepTypeEnum } from '@/utils/enums';
 
-const DEFAULT_SUBSCRIBER_DATA = {
+const DEFAULT_SUBSCRIBER_DATA: PreviewSubscriberData = {
   subscriberId: '123456',
   firstName: 'John',
   lastName: 'Doe',
@@ -18,7 +22,6 @@ const DEFAULT_SUBSCRIBER_DATA = {
   phone: '+1234567890',
   avatar: 'https://example.com/avatar.png',
   locale: 'en-US',
-  data: {},
 };
 
 export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
@@ -79,8 +82,8 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
     clearPersistedPayload();
 
     // Reset payload to server defaults if available
-    const currentData = parseJsonValue(value);
-    const newPayload = workflow?.payloadExample && isPayloadSchemaEnabled ? workflow.payloadExample : {};
+    const newPayload: PayloadData =
+      workflow?.payloadExample && isPayloadSchemaEnabled ? (workflow.payloadExample as PayloadData) : {};
 
     updateJsonSection('payload', newPayload);
   };
