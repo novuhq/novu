@@ -365,11 +365,11 @@ export const getFilters = (): Filters[] => {
       params: [
         { label: 'Singular', type: 'string' },
         { label: 'Plural (optional)', type: 'string' },
-        { 
-          label: 'Show count (optional)', 
-          type: 'string', 
+        {
+          label: 'Show count (optional)',
+          type: 'string',
           defaultValue: 'true',
-          tip: 'Whether to include the count in the output. Use "true" or "false".'
+          tip: 'Whether to include the count in the output. Use "true" or "false".',
         },
       ],
       sampleValue: '10',

@@ -746,7 +746,12 @@
     "Svix",
     "totp",
     "calcom",
-    "partnerintegration"
+    "partnerintegration",
+    "endcapture",
+    "endtablerow",
+    "endcase",
+    "forloop",
+    "tablerowloop"
   ],
   "flagWords": [],
   "patterns": [

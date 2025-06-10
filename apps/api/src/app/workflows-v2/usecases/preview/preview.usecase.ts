@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowOriginEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { BuildStepDataUsecase } from '../build-step-data';
@@ -12,7 +13,6 @@ import { PreviewCommand } from './preview.command';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-
 // Import new services
 import { ControlValueSanitizerService } from './services/control-value-sanitizer.service';
 import { PayloadMergerService } from './services/payload-merger.service';
@@ -31,7 +31,8 @@ export class PreviewUsecase {
     private readonly payloadMerger: PayloadMergerService,
     private readonly schemaBuilder: SchemaBuilderService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
-    private readonly errorHandler: PreviewErrorHandler
+    private readonly errorHandler: PreviewErrorHandler,
+    private readonly featureFlagService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -45,7 +46,16 @@ export class PreviewUsecase {
         context.workflow.origin || WorkflowOriginEnum.NOVU_CLOUD
       );
 
+      const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
+        organization: { _id: command.user.organizationId },
+        environment: { _id: command.user.environmentId },
+        user: { _id: command.user._id },
+        defaultValue: false,
+      });
+
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
+        isHtmlEditorEnabled,
         sanitizedControls,
         context.variableSchema,
         context.variablesObject

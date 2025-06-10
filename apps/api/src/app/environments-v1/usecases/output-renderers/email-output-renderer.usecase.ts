@@ -70,7 +70,7 @@ export class EmailOutputRendererUsecase {
       const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
       renderedHtml = await mailyRender(strippedMaily);
     } else {
-      renderedHtml = body;
+      renderedHtml = await this.liquidEngine.parseAndRender(body, renderCommand.fullPayloadForRender);
     }
 
     // Add Novu branding if 'removeNovuBranding' is false
