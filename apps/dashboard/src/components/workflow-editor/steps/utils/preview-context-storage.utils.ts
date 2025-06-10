@@ -85,17 +85,7 @@ export function savePreviewContextData(
   data: ParsedData
 ): void {
   const storageKey = getStorageKey(workflowId, stepId, environmentId);
-  const persistedData: PersistedPreviewData = {
-    data,
-    timestamp: Date.now(),
-    version: STORAGE_VERSION,
-  };
-
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(persistedData));
-  } catch (error) {
-    console.warn('Failed to save preview context data to localStorage:', error);
-  }
+  saveToStorage(storageKey, data, 'data');
 }
 
 export function savePayloadData(workflowId: string, environmentId: string, payload: PayloadData): void {
@@ -119,26 +109,8 @@ export function loadSubscriberData(workflowId: string, environmentId: string): P
 }
 
 export function loadPreviewContextData(workflowId: string, stepId: string, environmentId: string): ParsedData | null {
-  try {
-    const storageKey = getStorageKey(workflowId, stepId, environmentId);
-    const stored = localStorage.getItem(storageKey);
-
-    if (!stored) return null;
-
-    const persistedData: PersistedPreviewData = JSON.parse(stored);
-
-    const isExpired = Date.now() - persistedData.timestamp > TTL_MS;
-
-    if (isExpired || persistedData.version !== STORAGE_VERSION) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-
-    return persistedData.data;
-  } catch (error) {
-    console.warn('Failed to load preview context data from localStorage:', error);
-    return null;
-  }
+  const storageKey = getStorageKey(workflowId, stepId, environmentId);
+  return loadFromStorage<ParsedData>(storageKey, 'data');
 }
 
 export function mergePreviewContextData(persistedData: ParsedData, serverDefaults: ParsedData): ParsedData {

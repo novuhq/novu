@@ -14,7 +14,7 @@ function NoEditorAvailable({ message }: { message: string }) {
 
 export function StepEditorFactory() {
   const { workflow, step, isStepEditable } = useStepEditor();
-  const { dataSchema, uiSchema } = step.controls;
+  const { dataSchema, uiSchema } = step.controls || {};
 
   if (!isStepEditable) {
     return <NoEditorAvailable message="No editor available for this step configuration" />;

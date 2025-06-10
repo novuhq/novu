@@ -21,6 +21,11 @@ export function EditStepTemplateV2Page() {
     shouldFocusError: false,
   });
 
+  // Reset form when step changes to ensure form reflects current step's data
+  useEffect(() => {
+    form.reset(defaultValues);
+  }, [form, defaultValues]);
+
   const { onBlur, saveForm } = useFormAutosave({
     previousData: defaultValues,
     form,

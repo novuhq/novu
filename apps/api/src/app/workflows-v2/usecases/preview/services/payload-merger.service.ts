@@ -245,13 +245,29 @@ export class PayloadMergerService {
     // Use lodash pick to only include keys that exist in the schema
     const filtered = _.pick(userPayload, _.keys(schemaPayload));
 
-    // Recursively filter nested objects
+    // Recursively filter nested objects and arrays
     for (const [key, value] of Object.entries(filtered)) {
       if (_.isPlainObject(value) && _.isPlainObject(schemaPayload[key])) {
         filtered[key] = this.filterPayloadBySchema(
           value as Record<string, unknown>,
           schemaPayload[key] as Record<string, unknown>
         );
+      } else if (Array.isArray(value) && Array.isArray(schemaPayload[key])) {
+        // Handle arrays by filtering each element
+        filtered[key] = value.map((item) => {
+          if (_.isPlainObject(item) && schemaPayload[key] && Array.isArray(schemaPayload[key])) {
+            const schemaArray = schemaPayload[key] as unknown[];
+            // Use the first element of the schema array as the template for filtering
+            const schemaTemplate =
+              schemaArray.length > 0 && _.isPlainObject(schemaArray[0])
+                ? (schemaArray[0] as Record<string, unknown>)
+                : {};
+
+            return this.filterPayloadBySchema(item as Record<string, unknown>, schemaTemplate);
+          }
+
+          return item;
+        });
       }
     }
 

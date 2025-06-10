@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { WorkflowResponseDto, StepResponseDto, WorkflowOriginEnum, GeneratePreviewResponseDto } from '@novu/shared';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
@@ -45,26 +45,38 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
   const isInitialLoad = isPreviewPending;
   const isSubsequentLoad = isFetching && !isPreviewPending;
 
-  return (
-    <StepEditorContext.Provider
-      value={{
-        workflow,
-        step,
-        controlValues,
-        editorValue,
-        setEditorValue,
-        previewData: previewData || null,
-        isPreviewPending,
-        isInitialLoad,
-        isSubsequentLoad,
-        isNovuCloud,
-        isStepEditable,
-        isStepPreviewable,
-      }}
-    >
-      {children}
-    </StepEditorContext.Provider>
+  const contextValue = useMemo(
+    () => ({
+      workflow,
+      step,
+      controlValues,
+      editorValue,
+      setEditorValue,
+      previewData: previewData || null,
+      isPreviewPending,
+      isInitialLoad,
+      isSubsequentLoad,
+      isNovuCloud,
+      isStepEditable,
+      isStepPreviewable,
+    }),
+    [
+      workflow,
+      step,
+      controlValues,
+      editorValue,
+      setEditorValue,
+      previewData,
+      isPreviewPending,
+      isInitialLoad,
+      isSubsequentLoad,
+      isNovuCloud,
+      isStepEditable,
+      isStepPreviewable,
+    ]
   );
+
+  return <StepEditorContext.Provider value={contextValue}>{children}</StepEditorContext.Provider>;
 }
 
 export function useStepEditor(): StepEditorContextType {
