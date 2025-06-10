@@ -90,7 +90,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
             <ResizablePanel defaultSize={70} minSize={40} className="h-full">
               <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-1 flex-col" value="trigger">
                 <TabsList variant="regular" className="items-center">
-                  <TabsTrigger value="workflow" asChild variant="regular">
+                  <TabsTrigger value="workflow" asChild variant="regular" size="xl">
                     <Link
                       to={buildRoute(ROUTES.EDIT_WORKFLOW, {
                         environmentSlug,
@@ -100,7 +100,7 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
                       Workflow
                     </Link>
                   </TabsTrigger>
-                  <TabsTrigger value="trigger" asChild variant="regular">
+                  <TabsTrigger value="trigger" asChild variant="regular" size="xl">
                     <Link
                       to={buildRoute(ROUTES.TEST_WORKFLOW, {
                         environmentSlug,

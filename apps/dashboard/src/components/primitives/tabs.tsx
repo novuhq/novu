@@ -82,12 +82,14 @@ const tabsTriggerVariants = cva(
       variant: {
         default: 'py-1 data-[state=active]:text-foreground-950 data-[state=inactive]:text-foreground-400',
         regular:
-          'text-foreground-600 data-[state=active]:text-foreground-950 relative py-3.5 transition-colors duration-300 ease-out',
+          'text-foreground-600 data-[state=active]:text-foreground-950 relative py-3.5 transition-colors duration-300 ease-out px-1',
       },
       size: {
-        md: 'h-7 px-3 text-sm',
-        sm: 'h-6 px-1.5 text-label-xs',
-        xs: 'h-5 px-1 text-label-xs',
+        xl: 'h-12.5 text-label-sm',
+        lg: 'h-11 text-label-sm',
+        md: 'h-7 text-label-sm',
+        sm: 'h-6 text-label-xs',
+        xs: 'h-5 text-label-xs',
       },
     },
 
@@ -95,6 +97,24 @@ const tabsTriggerVariants = cva(
       variant: 'default',
       size: 'md',
     },
+
+    compoundVariants: [
+      {
+        variant: 'default',
+        size: ['xl', 'lg', 'md'],
+        class: 'px-3',
+      },
+      {
+        variant: 'default',
+        size: 'sm',
+        class: 'px-1.5',
+      },
+      {
+        variant: 'default',
+        size: 'xs',
+        class: 'px-1',
+      },
+    ],
   }
 );
 

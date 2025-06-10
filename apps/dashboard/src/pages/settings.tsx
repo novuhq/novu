@@ -112,18 +112,18 @@ export function SettingsPage() {
   return (
     <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
       <Tabs value={currentTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList align="center" variant="regular" className="border-t-0 !py-0">
-          <TabsTrigger variant={'regular'} value="account">
+        <TabsList align="center" variant="regular" className="border-t-transparent !py-0">
+          <TabsTrigger variant="regular" value="account" size="xl">
             Account
           </TabsTrigger>
-          <TabsTrigger variant={'regular'} value="organization">
+          <TabsTrigger variant="regular" value="organization" size="xl">
             Organization
           </TabsTrigger>
-          <TabsTrigger variant={'regular'} value="team">
+          <TabsTrigger variant="regular" value="team" size="xl">
             Team
           </TabsTrigger>
 
-          <TabsTrigger variant={'regular'} value="billing">
+          <TabsTrigger variant="regular" value="billing" size="xl">
             Billing
           </TabsTrigger>
         </TabsList>

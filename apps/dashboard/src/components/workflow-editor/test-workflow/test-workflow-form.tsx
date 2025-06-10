@@ -164,20 +164,20 @@ export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto 
               value={activeSnippetTab}
               onValueChange={(value) => setActiveSnippetTab(value as SnippetLanguage)}
             >
-              <TabsList className="border-t-0" variant="regular">
-                <TabsTrigger className={tabsTriggerClassName} value="typescript" variant="regular">
+              <TabsList className="border-t-transparent" variant="regular">
+                <TabsTrigger className={tabsTriggerClassName} value="typescript" variant="regular" size="xl">
                   NodeJS
                 </TabsTrigger>
-                <TabsTrigger className={tabsTriggerClassName} value="shell" variant="regular">
+                <TabsTrigger className={tabsTriggerClassName} value="shell" variant="regular" size="xl">
                   cURL
                 </TabsTrigger>
-                <TabsTrigger className={tabsTriggerClassName} value="php" variant="regular">
+                <TabsTrigger className={tabsTriggerClassName} value="php" variant="regular" size="xl">
                   PHP
                 </TabsTrigger>
-                <TabsTrigger className={tabsTriggerClassName} value="go" variant="regular">
+                <TabsTrigger className={tabsTriggerClassName} value="go" variant="regular" size="xl">
                   Golang
                 </TabsTrigger>
-                <TabsTrigger className={tabsTriggerClassName} value="python" variant="regular">
+                <TabsTrigger className={tabsTriggerClassName} value="python" variant="regular" size="xl">
                   Python
                 </TabsTrigger>
                 <Button
