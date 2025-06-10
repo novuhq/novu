@@ -70,6 +70,11 @@ jobs:
             pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --verbose
           fi
 
+      - name: Configure Git
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
       - name: Generate changelog
         run: |
           if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
