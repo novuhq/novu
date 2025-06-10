@@ -165,10 +165,6 @@ export function parseStepVariables(
       if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
       if (currentObj.type === 'object') {
-        if (currentObj.additionalProperties === true) {
-          return true;
-        }
-
         if (!currentObj.properties || !(part in currentObj.properties)) {
           return false;
         }
