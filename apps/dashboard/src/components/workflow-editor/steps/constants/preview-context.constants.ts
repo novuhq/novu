@@ -25,8 +25,8 @@ export const STEP_TYPE_ICONS: Record<StepTypeEnum, any> = {
 export const DEFAULT_STEP_ICON = RiCodeLine;
 
 export const ACCORDION_STYLES = {
-  item: 'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4',
-  itemLast: 'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-4 border-b-0',
+  item: 'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-3',
+  itemLast: 'border-b border-b-neutral-200 bg-transparent border-t-0 border-l-0 border-r-0 rounded-none p-3 border-b-0',
   trigger: 'text-label-xs',
   jsonViewer: 'border-neutral-alpha-200 bg-background text-foreground-600 rounded-lg border border-solid',
 } as const;
