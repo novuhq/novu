@@ -1,5 +1,5 @@
 import { FRAMEWORKS, ENV_VARIABLES } from '../constants';
-import fileUtils from '../utils/file';
+import fileUtils, { updateEnvVariable } from '../utils/file';
 import logger from '../utils/logger';
 import { getEnvironmentVariableName } from './react-version';
 
@@ -51,10 +51,7 @@ ${ENV_VARIABLES.NEXTJS.APP_ID}=${safeAppId}
     const existingContent = fileUtils.readFile(envLocalPath);
     if (existingContent?.includes(ENV_VARIABLES.NEXTJS.APP_ID)) {
       // Update only the Novu variable, preserve other content
-      const updatedContent = existingContent.replace(
-        new RegExp(`${ENV_VARIABLES.NEXTJS.APP_ID}=.*`, 'g'),
-        `${ENV_VARIABLES.NEXTJS.APP_ID}=${safeAppId}`
-      );
+      const updatedContent = updateEnvVariable(existingContent, ENV_VARIABLES.NEXTJS.APP_ID, safeAppId);
       fileUtils.writeFile(envLocalPath, updatedContent);
       logger.blue('  • Updated Novu configuration in .env.local');
     } else {
@@ -115,11 +112,7 @@ ${envVarName}=${safeAppId}
     const existingContent = fileUtils.readFile(envLocalPath);
     if (existingContent?.includes(envVarName)) {
       // Update only the Novu variable, preserve other content
-      const lines = existingContent.split('\n');
-      const updatedLines = lines.map((line) =>
-        line.startsWith(`${envVarName}=`) ? `${envVarName}=${safeAppId}` : line
-      );
-      const updatedContent = updatedLines.join('\n');
+      const updatedContent = updateEnvVariable(existingContent, envVarName, safeAppId);
       fileUtils.writeFile(envLocalPath, updatedContent);
       logger.blue('  • Updated Novu configuration in .env');
     } else {

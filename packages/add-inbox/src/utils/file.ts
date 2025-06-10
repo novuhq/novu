@@ -1,21 +1,21 @@
 import fs from 'fs';
 import path from 'path';
 
-interface FileUtils {
+interface IFileUtils {
   exists: (filePath: string) => boolean;
   readJson: <T = unknown>(filePath: string) => T | null;
   writeJson: <T = unknown>(filePath: string, data: T) => boolean;
   readFile: (filePath: string) => string | null;
-  writeFile: (filePath: string, content: string) => void;
-  appendFile: (filePath: string, content: string) => void;
-  createDirectory: (dirPath: string) => void;
+  writeFile: (filePath: string, content: string) => boolean;
+  appendFile: (filePath: string, content: string) => boolean;
+  createDirectory: (dirPath: string) => boolean;
   removeDirectory: (dirPath: string) => boolean;
   joinPaths: (...paths: string[]) => string;
   copyFile: (sourcePath: string, targetPath: string) => boolean;
   deleteFile: (filePath: string) => boolean;
 }
 
-const fileUtils: FileUtils = {
+const fileUtils: IFileUtils = {
   exists: (filePath) => fs.existsSync(filePath),
 
   readJson: <T = unknown>(filePath: string): T | null => {
@@ -32,9 +32,11 @@ const fileUtils: FileUtils = {
 
     try {
       const content = fs.readFileSync(resolvedPath, 'utf-8');
+
       return JSON.parse(content) as T;
     } catch (error) {
       console.warn(`Failed to read JSON from ${resolvedPath}:`, error);
+
       return null;
     }
   },
@@ -47,9 +49,11 @@ const fileUtils: FileUtils = {
     }
     try {
       fs.writeFileSync(resolvedPath, JSON.stringify(data, null, 2));
+
       return true;
     } catch (error) {
       console.error(`Failed to write JSON to ${resolvedPath}:`, error);
+
       return false;
     }
   },
@@ -75,9 +79,12 @@ const fileUtils: FileUtils = {
     }
     try {
       fs.writeFileSync(resolvedPath, content);
+
+      return true;
     } catch (error) {
       console.error(`Failed to write file to ${resolvedPath}:`, error);
-      throw error;
+
+      return false;
     }
   },
 
@@ -87,7 +94,15 @@ const fileUtils: FileUtils = {
     if (!resolvedPath.startsWith(basePath)) {
       throw new Error('Access denied: Path outside working directory');
     }
-    fs.appendFileSync(resolvedPath, content);
+    try {
+      fs.appendFileSync(resolvedPath, content);
+
+      return true;
+    } catch (error) {
+      console.error(`Failed to append to file ${resolvedPath}:`, error);
+
+      return false;
+    }
   },
 
   createDirectory: (dirPath) => {
@@ -96,7 +111,15 @@ const fileUtils: FileUtils = {
     if (!resolvedPath.startsWith(basePath)) {
       throw new Error('Access denied: Path outside working directory');
     }
-    fs.mkdirSync(resolvedPath, { recursive: true });
+    try {
+      fs.mkdirSync(resolvedPath, { recursive: true });
+
+      return true;
+    } catch (error) {
+      console.error(`Failed to create directory ${resolvedPath}:`, error);
+
+      return false;
+    }
   },
 
   removeDirectory: (dirPath) => {
@@ -111,9 +134,11 @@ const fileUtils: FileUtils = {
 
     try {
       fs.rmSync(resolvedPath, { recursive: true, force: false });
+
       return true;
     } catch (error) {
       console.error(`Failed to remove directory ${resolvedPath}:`, error);
+
       return false;
     }
   },
@@ -130,12 +155,15 @@ const fileUtils: FileUtils = {
     try {
       if (!fs.existsSync(resolvedSource)) {
         console.error(`Source file does not exist: ${resolvedSource}`);
+
         return false;
       }
       fs.copyFileSync(resolvedSource, resolvedTarget);
+
       return true;
     } catch (error) {
       console.error(`Failed to copy file from ${resolvedSource} to ${resolvedTarget}:`, error);
+
       return false;
     }
   },
@@ -149,14 +177,32 @@ const fileUtils: FileUtils = {
     try {
       if (fs.existsSync(resolvedPath)) {
         fs.unlinkSync(resolvedPath);
+
         return true;
       }
+
       return false;
     } catch (error) {
       console.error(`Failed to delete file ${resolvedPath}:`, error);
+
       return false;
     }
   },
 };
+
+/**
+ * Updates or inserts an environment variable in the given file content.
+ * If the variable exists, its value is replaced. If not, the variable is appended at the end.
+ */
+export function updateEnvVariable(content: string, variable: string, value: string): string {
+  const regex = new RegExp(`^${variable}=.*$`, 'm');
+  if (regex.test(content)) {
+    return content.replace(regex, `${variable}=${value}`);
+  }
+  // Ensure file ends with a newline before appending
+  const trimmed = content.endsWith('\n') ? content : `${content}\n`;
+
+  return `${trimmed}${variable}=${value}\n`;
+}
 
 export default fileUtils;

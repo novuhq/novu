@@ -39,13 +39,10 @@ export async function createComponentStructure(
   let componentCode: string;
   if (framework.framework === FRAMEWORKS.NEXTJS) {
     componentCode = generateNextJsComponent(subscriberId || null, region as 'us' | 'eu');
+  } else if (isModernReact()) {
+    componentCode = generateModernReactComponent(subscriberId || null, region);
   } else {
-    // For React, determine if it's modern or legacy
-    if (isModernReact()) {
-      componentCode = generateModernReactComponent(subscriberId || null, region);
-    } else {
-      componentCode = generateLegacyReactComponent(subscriberId || null, region);
-    }
+    componentCode = generateLegacyReactComponent(subscriberId || null, region);
   }
 
   // Write component file
@@ -54,6 +51,7 @@ export async function createComponentStructure(
   const fileExists = fileUtils.exists(componentPath);
   if (fileExists && !overwriteComponents) {
     logger.warning(`Component already exists at ${componentPath}. Use --overwrite to replace it.`);
+
     return;
   }
 
@@ -62,8 +60,8 @@ export async function createComponentStructure(
     logger.success('  ✓ Created Novu Inbox component');
     logger.gray(`    Location: ${componentPath}`);
   } catch (error: unknown) {
-    if (typeof error === 'object' && error && 'message' in error) {
-      logger.error(`Failed to create component file: ${(error as any).message}`);
+    if (error instanceof Error) {
+      logger.error(`Failed to create component file: ${error.message}`);
     } else {
       logger.error('Failed to create component file: Unknown error');
     }
