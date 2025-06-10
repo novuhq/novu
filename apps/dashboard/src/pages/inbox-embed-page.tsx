@@ -20,8 +20,8 @@ export function InboxEmbedPage() {
         <div className="w-full">
           <div className="flex flex-1 flex-col overflow-hidden">
             <UsecasePlaygroundHeader
-              title="Integrate <Inbox /> in less than 4 minutes"
-              description="You're just a couple steps away from your having a fully functional notification center in your app."
+              title="Four minutes to a fully functional <Inbox/>"
+              description="You're just a couple steps away from your first notification."
               skipPath={ROUTES.WELCOME}
               onSkip={() =>
                 telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
