@@ -115,7 +115,11 @@ ${envVarName}=${safeAppId}
     const existingContent = fileUtils.readFile(envLocalPath);
     if (existingContent?.includes(envVarName)) {
       // Update only the Novu variable, preserve other content
-      const updatedContent = existingContent.replace(new RegExp(`${envVarName}=.*`, 'g'), `${envVarName}=${safeAppId}`);
+      const lines = existingContent.split('\n');
+      const updatedLines = lines.map((line) =>
+        line.startsWith(`${envVarName}=`) ? `${envVarName}=${safeAppId}` : line
+      );
+      const updatedContent = updatedLines.join('\n');
       fileUtils.writeFile(envLocalPath, updatedContent);
       logger.blue('  • Updated Novu configuration in .env');
     } else {

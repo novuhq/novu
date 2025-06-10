@@ -10,7 +10,7 @@ export async function createComponentStructure(
   framework: Framework,
   overwriteComponents: boolean,
   subscriberId: string | null | undefined,
-  region: string = 'us'
+  region: 'us' | 'eu' = 'us'
 ): Promise<void> {
   logger.gray('• Creating component structure...');
 

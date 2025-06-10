@@ -68,7 +68,7 @@ function getFrameworkVersion(packageJson: PackageJson, framework: string): strin
   if (!version) return null;
 
   // Remove any ^ or ~ from version
-  return version.replace(/[\^~]/, '');
+  return version.replace(/[\^~]/g, '');
 }
 
 /**

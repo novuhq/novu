@@ -17,7 +17,7 @@ export function getReactVersion(): string {
       const projectPackageJson = JSON.parse(fs.readFileSync(projectPackageJsonPath, 'utf-8'));
       const reactVersion = projectPackageJson.dependencies?.react || projectPackageJson.devDependencies?.react;
       if (reactVersion) {
-        return reactVersion.replace(/[\^~]/, '');
+        return reactVersion.replace(/[\^~]/g, '');
       }
     }
 
