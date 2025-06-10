@@ -3423,6 +3423,43 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  packages/add-inbox:
+    dependencies:
+      '@segment/analytics-node':
+        specifier: ^2.2.1
+        version: 2.2.1(encoding@0.1.13)
+      chalk:
+        specifier: ^4.1.2
+        version: 4.1.2
+      commander:
+        specifier: ^11.1.0
+        version: 11.1.0
+      prompts:
+        specifier: ^2.4.2
+        version: 2.4.2
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@types/commander':
+        specifier: ^2.12.5
+        version: 2.12.5
+      '@types/prompts':
+        specifier: ^2.4.9
+        version: 2.4.9
+      '@types/uuid':
+        specifier: ^9.0.0
+        version: 9.0.8
+      rimraf:
+        specifier: ^5.0.10
+        version: 5.0.10
+      ts-node:
+        specifier: ^10.9.1
+        version: 10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.6.2
+
   packages/framework:
     dependencies:
       ajv:
@@ -13781,6 +13818,10 @@ packages:
     resolution: {integrity: sha512-yfhWjos0VKrueIhL7NwwaKJTMmDTDPMeNA9nmCZbbIppxWfgfUdqhkSOktQKTUdxLHOygTwuldvayjuftBsRBA==}
     engines: {node: '>=14'}
 
+  '@segment/analytics-node@2.2.1':
+    resolution: {integrity: sha512-J+p5r2BewzowI6YsnSH6U+W9IAvRbEyheqDOSUEwh6QDbxjwcBXwzuPwtz5DtEjbEGMu2QwrwoJvZlZ/n5fugw==}
+    engines: {node: '>=18'}
+
   '@segment/analytics-page-tools@1.0.0':
     resolution: {integrity: sha512-o9OVB91qLB9qb0Bw1HfjmWm5AnrMNULRjx++4lBqLt8InKRX1urrRBparVlpj+yJA0sckN5ZcsfazRLuPgBYDQ==}
 
@@ -16516,6 +16557,10 @@ packages:
   '@types/command-line-usage@5.0.2':
     resolution: {integrity: sha512-n7RlEEJ+4x4TS7ZQddTmNSxP+zziEG0TNsMfiRIxcIVXt71ENJ9ojeXmGO3wPoTdn7pJcU2xc3CJYMktNT6DPg==}
 
+  '@types/commander@2.12.5':
+    resolution: {integrity: sha512-YXGZ/rz+s57VbzcvEV9fUoXeJlBt5HaKu5iUheiIWNsJs23bz6AnRuRiZBRVBLYyPnixNvVnuzM5pSaxr8Yp/g==}
+    deprecated: This is a stub types definition. commander provides its own type definitions, so you do not need this installed.
+
   '@types/concat-stream@1.6.1':
     resolution: {integrity: sha512-eHE4cQPoj6ngxBZMvVf6Hw7Mh4jMW4U9lpGmS5GBPB9RYxlFg+CHaVN7ErNY4W9XfLIEn20b4VDYaIrbq0q4uA==}
 
@@ -17018,6 +17063,9 @@ packages:
 
   '@types/prompts@2.4.2':
     resolution: {integrity: sha512-TwNx7qsjvRIUv/BCx583tqF5IINEVjCNqg9ofKHRlSoUHE62WBHrem4B1HGXcIrG511v29d1kJ9a/t2Esz7MIg==}
+
+  '@types/prompts@2.4.9':
+    resolution: {integrity: sha512-qTxFi6Buiu8+50/+3DGIWLHM6QuWsEKugJnnP6iv2Mc4ncxE4A/OJkjuVOA+5X0X1S/nq5VJRa8Lu+nwcvbrKA==}
 
   '@types/prop-types@15.7.5':
     resolution: {integrity: sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==}
@@ -24924,6 +24972,9 @@ packages:
 
   jose@4.15.5:
     resolution: {integrity: sha512-jc7BFxgKPKi94uOvEmzlSWFFe2+vASyXaKUpdQKatWAESU2MWjDfFf0fdfc83CDKcA5QecabZeNLyfhe3yKNkg==}
+
+  jose@5.10.0:
+    resolution: {integrity: sha512-s+3Al/p9g32Iq+oqXxkW//7jk2Vig6FF1CFqzVXoTUXt2qz89YWbL+OwS17NFYEvxC35n0FKeGO2LGYSxeM2Gg==}
 
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
@@ -49928,6 +49979,18 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
+  '@segment/analytics-node@2.2.1(encoding@0.1.13)':
+    dependencies:
+      '@lukeed/uuid': 2.0.1
+      '@segment/analytics-core': 1.8.1
+      '@segment/analytics-generic-utils': 1.2.0
+      buffer: 6.0.3
+      jose: 5.10.0
+      node-fetch: 2.7.0(encoding@0.1.13)
+      tslib: 2.8.1
+    transitivePeerDependencies:
+      - encoding
+
   '@segment/analytics-page-tools@1.0.0':
     dependencies:
       tslib: 2.8.1
@@ -54773,6 +54836,10 @@ snapshots:
 
   '@types/command-line-usage@5.0.2': {}
 
+  '@types/commander@2.12.5':
+    dependencies:
+      commander: 11.1.0
+
   '@types/concat-stream@1.6.1':
     dependencies:
       '@types/node': 20.16.5
@@ -55361,6 +55428,11 @@ snapshots:
   '@types/pretty-hrtime@1.0.1': {}
 
   '@types/prompts@2.4.2':
+    dependencies:
+      '@types/node': 20.16.5
+      kleur: 3.0.3
+
+  '@types/prompts@2.4.9':
     dependencies:
       '@types/node': 20.16.5
       kleur: 3.0.3
@@ -66804,6 +66876,8 @@ snapshots:
   jose@4.13.1: {}
 
   jose@4.15.5: {}
+
+  jose@5.10.0: {}
 
   joycon@3.1.1: {}
 
