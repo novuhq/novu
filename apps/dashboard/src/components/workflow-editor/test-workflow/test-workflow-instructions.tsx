@@ -185,19 +185,19 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
         <SheetMain className="p-0">
           <Tabs defaultValue="nodejs" className="w-full">
             <TabsList className="w-full" variant="regular">
-              <TabsTrigger value="nodejs" variant="regular">
+              <TabsTrigger value="nodejs" variant="regular" size="xl">
                 NodeJS
               </TabsTrigger>
-              <TabsTrigger value="shell" variant="regular">
+              <TabsTrigger value="shell" variant="regular" size="xl">
                 cURL
               </TabsTrigger>
-              <TabsTrigger value="php" variant="regular">
+              <TabsTrigger value="php" variant="regular" size="xl">
                 PHP
               </TabsTrigger>
-              <TabsTrigger value="go" variant="regular">
+              <TabsTrigger value="go" variant="regular" size="xl">
                 Golang
               </TabsTrigger>
-              <TabsTrigger value="python" variant="regular">
+              <TabsTrigger value="python" variant="regular" size="xl">
                 Python
               </TabsTrigger>
             </TabsList>

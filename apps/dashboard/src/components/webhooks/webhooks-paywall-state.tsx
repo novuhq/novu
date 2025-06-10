@@ -128,20 +128,20 @@ function EmptyStateSvg() {
         fill="white"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M24.24 56.3098C24.24 56.6323 23.8485 56.792 23.6227 56.5614L19.0035 51.8401C19.6449 51.6144 20.32 51.4994 21 51.5C22.1936 51.5 23.3055 51.8488 24.24 52.4491V56.3098ZM25.92 54.065V56.3098C25.92 58.1379 23.7004 59.0431 22.422 57.7363L17.4544 52.6591C15.966 53.7511 15 55.5129 15 57.5C15 58.7776 15.3994 59.9619 16.08 60.935V58.7023C16.08 56.8741 18.2996 55.9689 19.578 57.2758L24.5389 62.3458C26.031 61.2545 27 59.4905 27 57.5C27 56.2224 26.6006 55.0381 25.92 54.065ZM18.3772 58.4506L22.9879 63.1625C22.3658 63.3811 21.6968 63.5 21 63.5C19.8067 63.5 18.6945 63.1513 17.76 62.5509V58.7023C17.76 58.3798 18.1519 58.22 18.3772 58.4506Z"
         fill="url(#paint2_radial_12184_111598)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M24.24 56.3098C24.24 56.6323 23.8485 56.792 23.6227 56.5614L19.0035 51.8401C19.6449 51.6144 20.32 51.4994 21 51.5C22.1936 51.5 23.3055 51.8488 24.24 52.4491V56.3098ZM25.92 54.065V56.3098C25.92 58.1379 23.7004 59.0431 22.422 57.7363L17.4544 52.6591C15.966 53.7511 15 55.5129 15 57.5C15 58.7776 15.3994 59.9619 16.08 60.935V58.7023C16.08 56.8741 18.2996 55.9689 19.578 57.2758L24.5389 62.3458C26.031 61.2545 27 59.4905 27 57.5C27 56.2224 26.6006 55.0381 25.92 54.065ZM18.3772 58.4506L22.9879 63.1625C22.3658 63.3811 21.6968 63.5 21 63.5C19.8067 63.5 18.6945 63.1513 17.76 62.5509V58.7023C17.76 58.3798 18.1519 58.22 18.3772 58.4506Z"
         fill="url(#paint3_linear_12184_111598)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M24.24 56.3098C24.24 56.6323 23.8485 56.792 23.6227 56.5614L19.0035 51.8401C19.6449 51.6144 20.32 51.4994 21 51.5C22.1936 51.5 23.3055 51.8488 24.24 52.4491V56.3098ZM25.92 54.065V56.3098C25.92 58.1379 23.7004 59.0431 22.422 57.7363L17.4544 52.6591C15.966 53.7511 15 55.5129 15 57.5C15 58.7776 15.3994 59.9619 16.08 60.935V58.7023C16.08 56.8741 18.2996 55.9689 19.578 57.2758L24.5389 62.3458C26.031 61.2545 27 59.4905 27 57.5C27 56.2224 26.6006 55.0381 25.92 54.065ZM18.3772 58.4506L22.9879 63.1625C22.3658 63.3811 21.6968 63.5 21 63.5C19.8067 63.5 18.6945 63.1513 17.76 62.5509V58.7023C17.76 58.3798 18.1519 58.22 18.3772 58.4506Z"
         fill="url(#paint4_linear_12184_111598)"
       />
@@ -205,8 +205,8 @@ function EmptyStateSvg() {
           y2="110.516"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#BCC3CE" />
-          <stop offset="0.759383" stop-color="white" stopOpacity="0.5" />
+          <stop stopColor="#BCC3CE" />
+          <stop offset="0.759383" stopColor="white" stopOpacity="0.5" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_12184_111598"
@@ -216,8 +216,8 @@ function EmptyStateSvg() {
           y2="94"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stop-color="#BCC3CE" />
-          <stop offset="1" stop-color="white" stopOpacity="0.5" />
+          <stop stopColor="#BCC3CE" />
+          <stop offset="1" stopColor="white" stopOpacity="0.5" />
         </linearGradient>
         <radialGradient
           id="paint2_radial_12184_111598"
@@ -227,9 +227,9 @@ function EmptyStateSvg() {
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(20.9999 57.5003) rotate(135) scale(8.48527)"
         >
-          <stop offset="0.34" stop-color="#FF006A" />
-          <stop offset="0.613" stop-color="#E300BD" />
-          <stop offset="0.767" stop-color="#FF4CE1" />
+          <stop offset="0.34" stopColor="#FF006A" />
+          <stop offset="0.613" stopColor="#E300BD" />
+          <stop offset="0.767" stopColor="#FF4CE1" />
         </radialGradient>
         <linearGradient
           id="paint3_linear_12184_111598"
@@ -239,8 +239,8 @@ function EmptyStateSvg() {
           y2="63.5"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.085" stop-color="#FFBA33" />
-          <stop offset="0.553" stop-color="#FF006A" stopOpacity="0" />
+          <stop offset="0.085" stopColor="#FFBA33" />
+          <stop offset="0.553" stopColor="#FF006A" stopOpacity="0" />
         </linearGradient>
         <linearGradient
           id="paint4_linear_12184_111598"
@@ -250,8 +250,8 @@ function EmptyStateSvg() {
           y2="63.5"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.547" stop-color="white" stopOpacity="0" />
-          <stop offset="1" stop-color="white" stopOpacity="0.6" />
+          <stop offset="0.547" stopColor="white" stopOpacity="0" />
+          <stop offset="1" stopColor="white" stopOpacity="0.6" />
         </linearGradient>
         <linearGradient
           id="paint5_linear_12184_111598"
@@ -261,8 +261,8 @@ function EmptyStateSvg() {
           y2="91"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.0501219" stop-color="white" />
-          <stop offset="0.504634" stop-color="white" stopOpacity="0" />
+          <stop offset="0.0501219" stopColor="white" />
+          <stop offset="0.504634" stopColor="white" stopOpacity="0" />
         </linearGradient>
         <linearGradient
           id="paint6_linear_12184_111598"
@@ -272,8 +272,8 @@ function EmptyStateSvg() {
           y2="91"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0.504634" stop-color="white" stopOpacity="0" />
-          <stop offset="0.85" stop-color="white" />
+          <stop offset="0.504634" stopColor="white" stopOpacity="0" />
+          <stop offset="0.85" stopColor="white" />
         </linearGradient>
       </defs>
     </svg>

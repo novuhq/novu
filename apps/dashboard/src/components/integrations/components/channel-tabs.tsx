@@ -15,7 +15,7 @@ export function ChannelTabs({ integrationsByChannel, searchQuery, onIntegrationS
     <Tabs defaultValue={INTEGRATION_CHANNELS[0]} className="flex h-full flex-col">
       <TabsList variant="regular" className="bg-background sticky top-0 z-10 gap-6 border-t-0 !px-3">
         {INTEGRATION_CHANNELS.map((channel) => (
-          <TabsTrigger key={channel} value={channel} variant="regular" className="!px-0 !py-3">
+          <TabsTrigger key={channel} value={channel} variant="regular" className="!px-0 !py-3" size="lg">
             {CHANNEL_TYPE_TO_STRING[channel]}
           </TabsTrigger>
         ))}
