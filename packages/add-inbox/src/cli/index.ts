@@ -32,6 +32,12 @@ interface IPromptResponse {
   updateEnvExample?: boolean;
 }
 
+interface PackageJson {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+  name?: string;
+}
+
 async function promptUserConfiguration(): Promise<IUserConfig | null> {
   // Parse command line arguments
   const { appId, subscriberId, region } = parseCommandLineArgs();
@@ -158,7 +164,7 @@ async function checkDependencyExists(packageName: string): Promise<boolean> {
   try {
     const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
     if (await fileUtils.exists(packageJsonPath)) {
-      const packageJson = await fileUtils.readJson(packageJsonPath);
+      const packageJson = (await fileUtils.readJson(packageJsonPath)) as PackageJson;
       const dependencies = {
         ...packageJson.dependencies,
         ...packageJson.devDependencies,
@@ -207,7 +213,7 @@ async function installDependencies(framework: Framework, packageManager: IPackag
       });
 
       // Enhanced verification of package installation
-      const packageJson = await fileUtils.readJson(packageJsonPath);
+      const packageJson = (await fileUtils.readJson(packageJsonPath)) as PackageJson;
       const dependencies = {
         ...packageJson.dependencies,
         ...packageJson.devDependencies,
@@ -290,7 +296,7 @@ function removeSelf(packageManager: IPackageManager) {
     // Check if we're running from the source directory by looking for package.json
     const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
     if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath);
+      const packageJson = fileUtils.readJson(packageJsonPath) as PackageJson;
       // If we're in the source directory, the package.json will have the name "add-inbox"
       if (packageJson.name === 'add-inbox') {
         logger.blue('  • Running from source directory - skipping self-removal');
@@ -414,7 +420,12 @@ async function performInstallation(config: IUserConfig) {
     await installDependencies(framework, packageManager);
 
     logger.step(3, 'Creating component structure');
-    await createComponentStructure(framework as Framework, overwriteComponents, subscriberId || null, region);
+    await createComponentStructure(
+      framework as Framework,
+      overwriteComponents,
+      subscriberId || null,
+      region as 'us' | 'eu' | undefined
+    );
 
     if (updateEnvExample) {
       logger.step(4, 'Setting up environment variables');
