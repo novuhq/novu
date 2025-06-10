@@ -27,7 +27,7 @@ export class SubscriberDto {
   createdAt: string;
   updatedAt: string;
   lastOnlineAt?: string;
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown> | null;
   timezone?: string;
 }
 
