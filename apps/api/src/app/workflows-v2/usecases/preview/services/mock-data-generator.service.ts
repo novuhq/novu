@@ -63,18 +63,7 @@ export class MockDataGeneratorService {
         payloadMockData = JsonSchemaMock.generate(workflow.payloadSchema) as Record<string, unknown>;
       }
 
-      const digestEvents = Array.from({ length: DEFAULT_DIGEST_EVENTS_COUNT }, (_, index) => {
-        const eventTime = new Date();
-        eventTime.setDate(eventTime.getDate() - 1);
-        eventTime.setHours(12, 0, 0, 0);
-        eventTime.setMinutes(eventTime.getMinutes() - index * 5); // Stagger events by 5 minutes
-
-        return {
-          id: `example-id-${index + 1}`,
-          time: eventTime.toISOString(),
-          payload: payloadMockData,
-        };
-      });
+      const digestEvents = this.createDigestEvents(payloadMockData);
 
       return {
         eventCount: digestEvents.length,
@@ -91,25 +80,28 @@ export class MockDataGeneratorService {
         LOG_CONTEXT
       );
 
-      // Create a basic digest result without using JsonSchemaMock
-      const digestEvents = Array.from({ length: DEFAULT_DIGEST_EVENTS_COUNT }, (_, index) => {
-        const eventTime = new Date();
-        eventTime.setDate(eventTime.getDate() - 1);
-        eventTime.setHours(12, 0, 0, 0);
-        eventTime.setMinutes(eventTime.getMinutes() - index * 5); // Stagger events by 5 minutes
-
-        return {
-          id: `example-id-${index + 1}`,
-          time: eventTime.toISOString(),
-          payload: {},
-        };
-      });
+      const digestEvents = this.createDigestEvents({});
 
       return {
         eventCount: digestEvents.length,
         events: digestEvents,
       };
     }
+  }
+
+  private createDigestEvents(payloadMockData: Record<string, unknown>) {
+    return Array.from({ length: DEFAULT_DIGEST_EVENTS_COUNT }, (_, index) => {
+      const eventTime = new Date();
+      eventTime.setDate(eventTime.getDate() - 1);
+      eventTime.setHours(12, 0, 0, 0);
+      eventTime.setMinutes(eventTime.getMinutes() - index * 5);
+
+      return {
+        id: `example-id-${index + 1}`,
+        time: eventTime.toISOString(),
+        payload: payloadMockData,
+      };
+    });
   }
 
   /**

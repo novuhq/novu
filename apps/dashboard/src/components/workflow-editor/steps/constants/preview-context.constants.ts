@@ -1,4 +1,5 @@
 import { StepTypeEnum } from '@novu/shared';
+import { IconType } from 'react-icons';
 import {
   RiMailLine,
   RiSmartphoneLine,
@@ -10,7 +11,7 @@ import {
   RiPlayCircleLine,
 } from 'react-icons/ri';
 
-export const STEP_TYPE_ICONS: Record<StepTypeEnum, any> = {
+export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.EMAIL]: RiMailLine,
   [StepTypeEnum.SMS]: RiSmartphoneLine,
   [StepTypeEnum.PUSH]: RiNotificationLine,

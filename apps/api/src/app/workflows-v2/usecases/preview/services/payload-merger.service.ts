@@ -208,9 +208,7 @@ export class PayloadMergerService {
       const stepId = step.stepId || step._id;
 
       if (stepId) {
-        // Check if user provided custom step data
         if (userStepsData[stepId]) {
-          // Use user-provided step data
           stepsObject[stepId] = userStepsData[stepId];
         } else {
           // Fall back to generating mock data

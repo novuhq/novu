@@ -6,8 +6,15 @@ export type PersistedPreviewData = {
   version: string;
 };
 
+type PersistedGenericData = {
+  [key: string]: any;
+  timestamp: number;
+  version: string;
+};
+
 const STORAGE_VERSION = '1.0.0';
 const TTL_DAYS = 90;
+const TTL_MS = TTL_DAYS * 24 * 60 * 60 * 1000;
 
 export function getStorageKey(workflowId: string, stepId: string, environmentId: string): string {
   return `preview-context-${workflowId}-${stepId}-${environmentId}`;
@@ -21,20 +28,64 @@ export function getSubscriberStorageKey(workflowId: string, environmentId: strin
   return `preview-subscriber-${workflowId}-${environmentId}`;
 }
 
+function saveToStorage(storageKey: string, data: any, dataKey: string): void {
+  try {
+    const persistedData = {
+      [dataKey]: data,
+      timestamp: Date.now(),
+      version: STORAGE_VERSION,
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(persistedData));
+  } catch (error) {
+    console.warn(`Failed to save ${dataKey} to localStorage:`, error);
+  }
+}
+
+function loadFromStorage(storageKey: string, dataKey: string): any | null {
+  try {
+    const stored = localStorage.getItem(storageKey);
+
+    if (!stored) return null;
+
+    const persistedData: PersistedGenericData = JSON.parse(stored);
+
+    const isExpired = Date.now() - persistedData.timestamp > TTL_MS;
+
+    if (isExpired || persistedData.version !== STORAGE_VERSION) {
+      localStorage.removeItem(storageKey);
+      return null;
+    }
+
+    return persistedData[dataKey];
+  } catch (error) {
+    console.warn(`Failed to load ${dataKey} from localStorage:`, error);
+    return null;
+  }
+}
+
+function clearFromStorage(storageKey: string, dataKey: string): void {
+  try {
+    localStorage.removeItem(storageKey);
+  } catch (error) {
+    console.warn(`Failed to clear ${dataKey} from localStorage:`, error);
+  }
+}
+
 export function savePreviewContextData(
   workflowId: string,
   stepId: string,
   environmentId: string,
   data: ParsedData
 ): void {
-  try {
-    const storageKey = getStorageKey(workflowId, stepId, environmentId);
-    const persistedData: PersistedPreviewData = {
-      data,
-      timestamp: Date.now(),
-      version: STORAGE_VERSION,
-    };
+  const storageKey = getStorageKey(workflowId, stepId, environmentId);
+  const persistedData: PersistedPreviewData = {
+    data,
+    timestamp: Date.now(),
+    version: STORAGE_VERSION,
+  };
 
+  try {
     localStorage.setItem(storageKey, JSON.stringify(persistedData));
   } catch (error) {
     console.warn('Failed to save preview context data to localStorage:', error);
@@ -42,93 +93,23 @@ export function savePreviewContextData(
 }
 
 export function savePayloadData(workflowId: string, environmentId: string, payload: any): void {
-  try {
-    const storageKey = getPayloadStorageKey(workflowId, environmentId);
-    const persistedData = {
-      payload,
-      timestamp: Date.now(),
-      version: STORAGE_VERSION,
-    };
-
-    localStorage.setItem(storageKey, JSON.stringify(persistedData));
-  } catch (error) {
-    console.warn('Failed to save payload data to localStorage:', error);
-  }
+  const storageKey = getPayloadStorageKey(workflowId, environmentId);
+  saveToStorage(storageKey, payload, 'payload');
 }
 
 export function saveSubscriberData(workflowId: string, environmentId: string, subscriber: any): void {
-  try {
-    const storageKey = getSubscriberStorageKey(workflowId, environmentId);
-    const persistedData = {
-      subscriber,
-      timestamp: Date.now(),
-      version: STORAGE_VERSION,
-    };
-
-    localStorage.setItem(storageKey, JSON.stringify(persistedData));
-  } catch (error) {
-    console.warn('Failed to save subscriber data to localStorage:', error);
-  }
+  const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+  saveToStorage(storageKey, subscriber, 'subscriber');
 }
 
 export function loadPayloadData(workflowId: string, environmentId: string): any | null {
-  try {
-    const storageKey = getPayloadStorageKey(workflowId, environmentId);
-    const stored = localStorage.getItem(storageKey);
-
-    if (!stored) return null;
-
-    const persistedData = JSON.parse(stored);
-
-    // Check TTL
-    const isExpired = Date.now() - persistedData.timestamp > TTL_DAYS * 24 * 60 * 60 * 1000;
-
-    if (isExpired) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-
-    // Version check for future migrations
-    if (persistedData.version !== STORAGE_VERSION) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-
-    return persistedData.payload;
-  } catch (error) {
-    console.warn('Failed to load payload data from localStorage:', error);
-    return null;
-  }
+  const storageKey = getPayloadStorageKey(workflowId, environmentId);
+  return loadFromStorage(storageKey, 'payload');
 }
 
 export function loadSubscriberData(workflowId: string, environmentId: string): any | null {
-  try {
-    const storageKey = getSubscriberStorageKey(workflowId, environmentId);
-    const stored = localStorage.getItem(storageKey);
-
-    if (!stored) return null;
-
-    const persistedData = JSON.parse(stored);
-
-    // Check TTL
-    const isExpired = Date.now() - persistedData.timestamp > TTL_DAYS * 24 * 60 * 60 * 1000;
-
-    if (isExpired) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-
-    // Version check for future migrations
-    if (persistedData.version !== STORAGE_VERSION) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-
-    return persistedData.subscriber;
-  } catch (error) {
-    console.warn('Failed to load subscriber data from localStorage:', error);
-    return null;
-  }
+  const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+  return loadFromStorage(storageKey, 'subscriber');
 }
 
 export function loadPreviewContextData(workflowId: string, stepId: string, environmentId: string): ParsedData | null {
@@ -140,16 +121,9 @@ export function loadPreviewContextData(workflowId: string, stepId: string, envir
 
     const persistedData: PersistedPreviewData = JSON.parse(stored);
 
-    // Check TTL
-    const isExpired = Date.now() - persistedData.timestamp > TTL_DAYS * 24 * 60 * 60 * 1000;
+    const isExpired = Date.now() - persistedData.timestamp > TTL_MS;
 
-    if (isExpired) {
-      localStorage.removeItem(storageKey);
-      return null;
-    }
-
-    // Version check for future migrations
-    if (persistedData.version !== STORAGE_VERSION) {
+    if (isExpired || persistedData.version !== STORAGE_VERSION) {
       localStorage.removeItem(storageKey);
       return null;
     }
@@ -161,51 +135,12 @@ export function loadPreviewContextData(workflowId: string, stepId: string, envir
   }
 }
 
-export function mergePreviewContextData(
-  persistedData: ParsedData,
-  serverDefaults: ParsedData,
-  workflowSchema?: any
-): ParsedData {
-  const merged: ParsedData = {
-    payload: mergePayloadData(persistedData.payload, serverDefaults.payload),
+export function mergePreviewContextData(persistedData: ParsedData, serverDefaults: ParsedData): ParsedData {
+  return {
+    payload: mergeObjectData(persistedData.payload, serverDefaults.payload),
     subscriber: mergeObjectData(persistedData.subscriber, serverDefaults.subscriber),
     steps: mergeObjectData(persistedData.steps, serverDefaults.steps),
   };
-
-  return merged;
-}
-
-function mergePayloadData(persisted: any, serverDefault: any): any {
-  if (!persisted || typeof persisted !== 'object') {
-    return serverDefault || {};
-  }
-
-  if (!serverDefault || typeof serverDefault !== 'object') {
-    return serverDefault || {};
-  }
-
-  // Start with server defaults to ensure structure is correct
-  const merged = { ...serverDefault };
-
-  // Overlay persisted values for existing keys only
-  Object.keys(persisted).forEach((key) => {
-    if (key in serverDefault) {
-      if (
-        typeof serverDefault[key] === 'object' &&
-        typeof persisted[key] === 'object' &&
-        serverDefault[key] !== null &&
-        persisted[key] !== null &&
-        !Array.isArray(serverDefault[key]) &&
-        !Array.isArray(persisted[key])
-      ) {
-        merged[key] = mergePayloadData(persisted[key], serverDefault[key]);
-      } else {
-        merged[key] = persisted[key];
-      }
-    }
-  });
-
-  return merged;
 }
 
 function mergeObjectData(persisted: any, serverDefault: any): any {
@@ -217,24 +152,19 @@ function mergeObjectData(persisted: any, serverDefault: any): any {
     return serverDefault || {};
   }
 
-  // Start with server defaults to ensure structure is correct
   const merged = { ...serverDefault };
 
-  // Overlay persisted values for existing keys only
   Object.keys(persisted).forEach((key) => {
     if (key in serverDefault) {
-      if (
+      const isNestedObject =
         typeof serverDefault[key] === 'object' &&
         typeof persisted[key] === 'object' &&
         serverDefault[key] !== null &&
         persisted[key] !== null &&
         !Array.isArray(serverDefault[key]) &&
-        !Array.isArray(persisted[key])
-      ) {
-        merged[key] = mergeObjectData(persisted[key], serverDefault[key]);
-      } else {
-        merged[key] = persisted[key];
-      }
+        !Array.isArray(persisted[key]);
+
+      merged[key] = isNestedObject ? mergeObjectData(persisted[key], serverDefault[key]) : persisted[key];
     }
   });
 
@@ -242,57 +172,41 @@ function mergeObjectData(persisted: any, serverDefault: any): any {
 }
 
 export function clearPreviewContextData(workflowId: string, stepId: string, environmentId: string): void {
-  try {
-    const storageKey = getStorageKey(workflowId, stepId, environmentId);
-    localStorage.removeItem(storageKey);
-  } catch (error) {
-    console.warn('Failed to clear preview context data from localStorage:', error);
-  }
+  const storageKey = getStorageKey(workflowId, stepId, environmentId);
+  clearFromStorage(storageKey, 'preview context data');
 }
 
 export function clearPayloadData(workflowId: string, environmentId: string): void {
-  try {
-    const storageKey = getPayloadStorageKey(workflowId, environmentId);
-    localStorage.removeItem(storageKey);
-  } catch (error) {
-    console.warn('Failed to clear payload data from localStorage:', error);
-  }
+  const storageKey = getPayloadStorageKey(workflowId, environmentId);
+  clearFromStorage(storageKey, 'payload data');
 }
 
 export function clearSubscriberData(workflowId: string, environmentId: string): void {
-  try {
-    const storageKey = getSubscriberStorageKey(workflowId, environmentId);
-    localStorage.removeItem(storageKey);
-  } catch (error) {
-    console.warn('Failed to clear subscriber data from localStorage:', error);
-  }
+  const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+  clearFromStorage(storageKey, 'subscriber data');
 }
 
 export function cleanupExpiredPreviewData(): void {
   try {
     const keysToRemove: string[] = [];
+    const prefixes = ['preview-context-', 'preview-payload-', 'preview-subscriber-'];
 
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
 
-      if (
-        key?.startsWith('preview-context-') ||
-        key?.startsWith('preview-payload-') ||
-        key?.startsWith('preview-subscriber-')
-      ) {
+      if (key && prefixes.some((prefix) => key.startsWith(prefix))) {
         try {
           const stored = localStorage.getItem(key);
 
           if (stored) {
             const persistedData = JSON.parse(stored);
-            const isExpired = Date.now() - persistedData.timestamp > TTL_DAYS * 24 * 60 * 60 * 1000;
+            const isExpired = Date.now() - persistedData.timestamp > TTL_MS;
 
             if (isExpired) {
               keysToRemove.push(key);
             }
           }
         } catch {
-          // Invalid data, mark for removal
           keysToRemove.push(key);
         }
       }

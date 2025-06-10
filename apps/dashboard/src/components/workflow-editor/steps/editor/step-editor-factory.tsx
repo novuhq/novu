@@ -20,12 +20,10 @@ export function StepEditorFactory() {
     return <NoEditorAvailable message="No editor available for this step configuration" />;
   }
 
-  // Handle external workflows
   if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
     return <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />;
   }
 
-  // Handle Novu Cloud workflows
   if (!uiSchema) {
     return <NoEditorAvailable message="No editor configuration available" />;
   }

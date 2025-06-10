@@ -24,16 +24,15 @@ type UsePersistedPreviewContextProps = {
 export function usePersistedPreviewContext({ workflowId, stepId, environmentId }: UsePersistedPreviewContextProps) {
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Cleanup expired data on mount
   useEffect(() => {
     cleanupExpiredPreviewData();
   }, []);
 
-  const loadPersistedData = useCallback((): ParsedData | null => {
+  const loadPersistedData = (): ParsedData | null => {
     if (!workflowId || !stepId || !environmentId) return null;
 
     return loadPreviewContextData(workflowId, stepId, environmentId);
-  }, [workflowId, stepId, environmentId]);
+  };
 
   const savePersistedData = useCallback(
     (data: ParsedData) => {
@@ -52,59 +51,51 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     [workflowId, stepId, environmentId]
   );
 
-  const clearPersistedData = useCallback(() => {
+  const clearPersistedData = () => {
     if (!workflowId || !stepId || !environmentId) return;
 
     clearPreviewContextData(workflowId, stepId, environmentId);
-  }, [workflowId, stepId, environmentId]);
+  };
 
-  const loadPersistedPayload = useCallback((): any | null => {
+  const loadPersistedPayload = (): any | null => {
     if (!workflowId || !environmentId) return null;
 
     return loadPayloadData(workflowId, environmentId);
-  }, [workflowId, environmentId]);
+  };
 
-  const savePersistedPayload = useCallback(
-    (payload: any) => {
-      if (!workflowId || !environmentId) return;
+  const savePersistedPayload = (payload: any) => {
+    if (!workflowId || !environmentId) return;
 
-      // Save immediately without debouncing to avoid issues with frequent re-renders
-      savePayloadData(workflowId, environmentId, payload);
-    },
-    [workflowId, environmentId]
-  );
+    savePayloadData(workflowId, environmentId, payload);
+  };
 
-  const clearPersistedPayload = useCallback(() => {
+  const clearPersistedPayload = () => {
     if (!workflowId || !environmentId) return;
 
     clearPayloadData(workflowId, environmentId);
-  }, [workflowId, environmentId]);
+  };
 
-  const loadPersistedSubscriber = useCallback((): any | null => {
+  const loadPersistedSubscriber = (): any | null => {
     if (!workflowId || !environmentId) return null;
 
     return loadSubscriberData(workflowId, environmentId);
-  }, [workflowId, environmentId]);
+  };
 
-  const savePersistedSubscriber = useCallback(
-    (subscriber: any) => {
-      if (!workflowId || !environmentId) return;
+  const savePersistedSubscriber = (subscriber: any) => {
+    if (!workflowId || !environmentId) return;
 
-      // Save immediately without debouncing to avoid issues with frequent re-renders
-      saveSubscriberData(workflowId, environmentId, subscriber);
-    },
-    [workflowId, environmentId]
-  );
+    saveSubscriberData(workflowId, environmentId, subscriber);
+  };
 
-  const clearPersistedSubscriber = useCallback(() => {
+  const clearPersistedSubscriber = () => {
     if (!workflowId || !environmentId) return;
 
     clearSubscriberData(workflowId, environmentId);
-  }, [workflowId, environmentId]);
+  };
 
-  const mergeWithDefaults = useCallback((persistedData: ParsedData, serverDefaults: ParsedData): ParsedData => {
+  const mergeWithDefaults = (persistedData: ParsedData, serverDefaults: ParsedData): ParsedData => {
     return mergePreviewContextData(persistedData, serverDefaults);
-  }, []);
+  };
 
   // Cleanup timeout on unmount
   useEffect(() => {

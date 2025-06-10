@@ -35,14 +35,16 @@ export const countStepIssues = (issues?: StepIssuesDto): number => {
 
   let count = 0;
 
-  // Count control issues
   if (issues.controls) {
-    count += Object.values(issues.controls).reduce((acc, issueArray) => acc + issueArray.length, 0);
+    const controlIssues = Object.values(issues.controls).reduce((acc, issueArray) => acc + issueArray.length, 0);
+
+    count += controlIssues;
   }
 
-  // Count integration issues
   if (issues.integration) {
-    count += Object.values(issues.integration).reduce((acc, issueArray) => acc + issueArray.length, 0);
+    const integrationIssues = Object.values(issues.integration).reduce((acc, issueArray) => acc + issueArray.length, 0);
+
+    count += integrationIssues;
   }
 
   return count;
@@ -53,14 +55,12 @@ export const getAllStepIssues = (issues?: StepIssuesDto): (StepContentIssue | St
 
   const allIssues: (StepContentIssue | StepIntegrationIssue)[] = [];
 
-  // Add control issues
   if (issues.controls) {
     Object.values(issues.controls).forEach((issueArray) => {
       allIssues.push(...issueArray);
     });
   }
 
-  // Add integration issues
   if (issues.integration) {
     Object.values(issues.integration).forEach((issueArray) => {
       allIssues.push(...issueArray);

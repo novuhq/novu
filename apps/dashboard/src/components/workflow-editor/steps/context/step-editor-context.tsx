@@ -1,6 +1,6 @@
-import { createContext, useContext, ReactNode, useMemo, useCallback, useRef, useEffect } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { WorkflowResponseDto, StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
+import { WorkflowResponseDto, StepResponseDto, WorkflowOriginEnum, GeneratePreviewResponseDto } from '@novu/shared';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
 
 type StepEditorContextType = {
@@ -9,7 +9,7 @@ type StepEditorContextType = {
   controlValues: Record<string, unknown>;
   editorValue: string;
   setEditorValue: (value: string) => Error | null;
-  previewData: any;
+  previewData: GeneratePreviewResponseDto | null;
   isPreviewPending: boolean;
   isInitialLoad: boolean;
   isSubsequentLoad: boolean;
@@ -29,7 +29,6 @@ type StepEditorProviderProps = {
 export function StepEditorProvider({ children, workflow, step }: StepEditorProviderProps) {
   const form = useFormContext();
   const controlValues = form.watch();
-  const hasLoadedOnceRef = useRef(false);
 
   const { editorValue, setEditorValue, previewData, isPreviewPending, isFetching } = useEditorPreview({
     workflowSlug: workflow.workflowId,
@@ -37,69 +36,35 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     controlValues,
     payloadSchema: workflow.payloadSchema,
   });
+  const { uiSchema } = step.controls;
+  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
+  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isStepEditable = isExternal || (isNovuCloud && Boolean(uiSchema));
+  const isStepPreviewable = isNovuCloud;
 
-  // Track if we've loaded data at least once
-  useEffect(() => {
-    if (previewData && !hasLoadedOnceRef.current) {
-      hasLoadedOnceRef.current = true;
-    }
-  }, [previewData]);
+  const isInitialLoad = isPreviewPending;
+  const isSubsequentLoad = isFetching && !isPreviewPending;
 
-  const stepCapabilities = useMemo(() => {
-    const { uiSchema } = step.controls;
-    const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
-    const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
-    const isStepEditable = isExternal || (isNovuCloud && Boolean(uiSchema));
-    const isStepPreviewable = isNovuCloud;
-
-    return {
-      isNovuCloud,
-      isStepEditable,
-      isStepPreviewable,
-    };
-  }, [workflow.origin, step.controls.uiSchema]);
-
-  const stableSetEditorValue = useCallback(
-    (value: string) => {
-      return setEditorValue(value);
-    },
-    [setEditorValue]
+  return (
+    <StepEditorContext.Provider
+      value={{
+        workflow,
+        step,
+        controlValues,
+        editorValue,
+        setEditorValue,
+        previewData: previewData || null,
+        isPreviewPending,
+        isInitialLoad,
+        isSubsequentLoad,
+        isNovuCloud,
+        isStepEditable,
+        isStepPreviewable,
+      }}
+    >
+      {children}
+    </StepEditorContext.Provider>
   );
-
-  // For initial load: show skeleton when loading and haven't loaded before
-  const isInitialLoad = isPreviewPending && !hasLoadedOnceRef.current;
-
-  // For subsequent load: show header indicator when fetching and have loaded before
-  const isSubsequentLoad = isFetching && hasLoadedOnceRef.current;
-
-  const contextValue = useMemo(
-    (): StepEditorContextType => ({
-      workflow,
-      step,
-      controlValues,
-      editorValue,
-      setEditorValue: stableSetEditorValue,
-      previewData,
-      isPreviewPending,
-      isInitialLoad,
-      isSubsequentLoad,
-      ...stepCapabilities,
-    }),
-    [
-      workflow,
-      step,
-      controlValues,
-      editorValue,
-      stableSetEditorValue,
-      previewData,
-      isPreviewPending,
-      isInitialLoad,
-      isSubsequentLoad,
-      stepCapabilities,
-    ]
-  );
-
-  return <StepEditorContext.Provider value={contextValue}>{children}</StepEditorContext.Provider>;
 }
 
 export function useStepEditor(): StepEditorContextType {
