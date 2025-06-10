@@ -127,7 +127,7 @@ export class ControlValueSanitizerService {
   }
 
   private getErrorPath(error: ErrorObject): string {
-    return (error.instancePath.substring(1) || error.params.missingProperty).replace(/\//g, '.');
+    return (error.instancePath.substring(1) || error.params.missingProperty)?.replace(/\//g, '.');
   }
 
   private fixControlValueInvalidVariables(controlValue: unknown, invalidVariables: Variable[]): unknown {

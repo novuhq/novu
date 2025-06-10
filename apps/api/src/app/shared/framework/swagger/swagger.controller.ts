@@ -70,6 +70,11 @@ function buildBaseOptions() {
       'Messages',
       `A message in Novu represents a notification delivered to a recipient on a particular channel. Messages contain information about the request that triggered its delivery, a view of the data sent to the recipient, and a timeline of its lifecycle events. Learn more about messages.`,
       { url: 'https://docs.novu.co/workflows/messages' }
+    )
+    .addTag(
+      'Environments',
+      `Environments allow you to manage different stages of your application development lifecycle. Each environment has its own set of API keys and configurations, enabling you to separate development, staging, and production workflows.`,
+      { url: 'https://docs.novu.co/platform/environments' }
     );
   return options;
 }

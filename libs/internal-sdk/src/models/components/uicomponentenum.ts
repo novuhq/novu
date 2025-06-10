@@ -9,7 +9,9 @@ import { ClosedEnum } from "../../types/enums.js";
  * Component type for the UI Schema Property
  */
 export const UiComponentEnum = {
+  EmailEditorSelect: "EMAIL_EDITOR_SELECT",
   BlockEditor: "BLOCK_EDITOR",
+  EmailBody: "EMAIL_BODY",
   TextFullLine: "TEXT_FULL_LINE",
   TextInlineLabel: "TEXT_INLINE_LABEL",
   InAppBody: "IN_APP_BODY",

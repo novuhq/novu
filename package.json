@@ -88,6 +88,7 @@
     "@types/inquirer": "8.2.10",
     "@types/jest": "29.5.13",
     "@types/node": "18.16.9",
+    "@typescript-eslint/eslint-plugin": "8.33.0",
     "auto": "^10.36.5",
     "chalk": "4.1.2",
     "chalk-animation": "^1.6.0",
