@@ -14,44 +14,19 @@ import {
   Template,
   TokenKind,
   UnlessTag,
+  LiquidError,
 } from 'liquidjs';
-import { DIGEST_EVENTS_VARIABLE_PATTERN, isValidDynamicPath, isValidTemplate } from './parser-utils';
+import { DIGEST_EVENTS_VARIABLE_PATTERN, isLiquidErrors, isValidDynamicPath, isValidTemplate } from './parser-utils';
 import { JSONSchemaDto } from '../../dtos';
 import type { ProcessContext, TemplateVariables, Variable } from './types';
-import { LiquidError } from './types';
 import { buildLiquidParser } from './liquid-engine';
 
 const parserEngine = buildLiquidParser();
 
-function isLiquidError(error: unknown): error is LiquidError {
-  return error instanceof LiquidError && 'errors' in error && Array.isArray((error as LiquidError).errors);
-}
-
 /**
- * Parses a Liquid template string and extracts all variable names, including nested paths.
- * Validates the syntax and separates valid variables from invalid ones.
- *
- * @example
- * // Valid variables
- * parseLiquidVariables('Hello {{user.name}}, your score is {{user.score}}')
- * // Returns:
- * {
- *   validVariables: ['user.name', 'user.score'],
- *   invalidVariables: []
- * }
- *
- * @example
- * // Mixed valid and invalid syntax
- * parseLiquidVariables('{{user.name}} {{invalid..syntax}}')
- * // Returns:
- * {
- *   validVariables: ['user.name'],
- *   invalidVariables: [{
- *     context: '>> 1| {{invalid..syntax}}\n                ^',
- *     message: 'expected "|" before filter',
- *     variable: '{{invalid..syntax}}'
- *   }]
- * }
+ * Parses a Liquid template string and extracts all variable names, including nested, variables used in the tags and conditions.
+ * Validates the syntax and separates valid variables from invalid ones based on the variable schema.
+ * The local variables are not added to the valid variables, for example iterator variables, because they are not part of the schema.
  *
  * @param template - The Liquid template string to parse
  * @param variableSchema - The schema to validate the variables against
@@ -94,7 +69,7 @@ function processLiquidRawOutput({
     result.validVariables.forEach((variable) => addVariable(variable, true));
     result.invalidVariables.forEach((variable) => addVariable(variable, false));
   } catch (error: unknown) {
-    if (isLiquidError(error)) {
+    if (isLiquidErrors(error)) {
       error.errors.forEach((e: RenderError) => {
         const { token } = e;
         if (token) {
@@ -158,7 +133,7 @@ function processTemplates(context: ProcessContext) {
 
   templates.forEach((template: Template) => {
     if (isOutputToken(template)) {
-      processOutputToken({
+      validateOutputToken({
         template,
         validVariables,
         invalidVariables,
@@ -252,12 +227,32 @@ function validateVariable({
   outputStart: number;
   outputEnd: number;
 }) {
-  // Check if this is a local variable or uses a local variable
+  // Check if this variable has no namespace (single part)
+  const hasNoNamespace = variableName.split('.').length === 1;
+  const isNotStepVariable =
+    !hasNoNamespace && !isValidDynamicPath(variableName) && !DIGEST_EVENTS_VARIABLE_PATTERN.test(variableName);
   const isLocalVariable = Array.from(localVariables).some(
     (localVar) => variableName === localVar || variableName.startsWith(`${localVar}.`)
   );
-
   if (isLocalVariable) {
+    return;
+  }
+
+  if (hasNoNamespace || (!variableSchema && isNotStepVariable)) {
+    // Otherwise, it's invalid (missing namespace)
+    invalidVariables.push({
+      name: variableName,
+      message: `missing namespace. Did you mean {{payload.${variableName}}}?`,
+      output,
+      outputStart,
+      outputEnd,
+    });
+
+    return;
+  }
+
+  const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
+  if (isAllowedVariable) {
     validVariables.push({
       name: variableName,
       output,
@@ -265,27 +260,17 @@ function validateVariable({
       outputEnd,
     });
   } else {
-    const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
-    if (isAllowedVariable) {
-      validVariables.push({
-        name: variableName,
-        output,
-        outputStart,
-        outputEnd,
-      });
-    } else {
-      invalidVariables.push({
-        name: variableName,
-        message: 'is not supported',
-        output,
-        outputStart,
-        outputEnd,
-      });
-    }
+    invalidVariables.push({
+      name: variableName,
+      message: 'is not supported',
+      output,
+      outputStart,
+      outputEnd,
+    });
   }
 }
 
-function processOutputToken({
+function validateOutputToken({
   template,
   validVariables,
   invalidVariables,
@@ -300,26 +285,10 @@ function processOutputToken({
 }) {
   const result = extractProps(template);
   const variableName = buildVariable(result.props);
-  const isDigestEventsVariable = !!variableName.match(/^steps\..+\.events$/);
-  const filters = extractFilters(template);
-  const filterIssues = validateFilters(filters, isDigestEventsVariable);
-  const hasValidFilters = filterIssues.length === 0;
   const { token } = template;
   const outputStart = token.begin;
   const outputEnd = token.end;
   const output = token.input.slice(outputStart, outputEnd);
-
-  if (!hasValidFilters) {
-    invalidVariables.push({
-      name: variableName,
-      filterMessage: filterIssues[0].message,
-      output,
-      outputStart,
-      outputEnd,
-    });
-
-    return;
-  }
 
   if (!result.valid) {
     invalidVariables.push({
@@ -333,25 +302,15 @@ function processOutputToken({
     return;
   }
 
-  // Check if this variable has no namespace (single part)
-  const hasNoNamespace = result.props.length === 1;
-  if (hasNoNamespace) {
-    // Check if it's a local variable
-    if (localVariables.has(variableName) || !variableSchema || variableSchema.additionalProperties === true) {
-      validVariables.push({
-        name: variableName,
-        output,
-        outputStart,
-        outputEnd,
-      });
+  const isDigestEventsVariable = !!variableName.match(/^steps\..+\.events$/);
+  const filters = extractFilters(template);
+  const filterIssues = validateFilters(filters, isDigestEventsVariable);
+  const hasValidFilters = filterIssues.length === 0;
 
-      return;
-    }
-
-    // Otherwise, it's invalid (missing namespace)
+  if (!hasValidFilters) {
     invalidVariables.push({
       name: variableName,
-      message: `missing namespace. Did you mean {{payload.${variableName}}}?`,
+      filterMessage: filterIssues[0].message,
       output,
       outputStart,
       outputEnd,
@@ -360,75 +319,62 @@ function processOutputToken({
     return;
   }
 
-  // Variable has namespace, proceed with normal validation
-  const isLocalVariable = Array.from(localVariables).some(
-    (localVar) => variableName === localVar || variableName.startsWith(`${localVar}.`)
-  );
-
-  if (isLocalVariable) {
-    validVariables.push({
-      name: variableName,
-      output,
-      outputStart,
-      outputEnd,
-    });
-  } else {
-    const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
-    if (isAllowedVariable) {
-      validVariables.push({
-        name: variableName,
-        output,
-        outputStart,
-        outputEnd,
-      });
-
-      // Handle filter arguments (like toSentence)
-      if (filters.length > 0) {
-        filters.forEach((filter) => {
-          const { args } = filter;
-          const firstArg = args[0];
-          if (
-            filter.name === 'toSentence' &&
-            args.length > 0 &&
-            'content' in firstArg &&
-            typeof firstArg.content === 'string'
-          ) {
-            /**
-             * Check if the parent variable with the first argument is allowed
-             * basically forcing it to check if additionalProperties is true by checking for final variable name
-             * and if the parent variable is a valid dynamic path as variableSchema can be undefined.
-             * OR
-             * Check if the variable is a digest events array variable
-             * and the first argument starts with payload.
-             */
-            if (
-              (isValidDynamicPath(variableName) &&
-                isPropertyAllowed(variableSchema, `${variableName}.${firstArg.content}`)) ||
-              (firstArg.content.startsWith('payload.') && DIGEST_EVENTS_VARIABLE_PATTERN.test(variableName))
-            ) {
-              const isFirstArgValid = isPropertyAllowed(variableSchema, firstArg.content);
-              if (isFirstArgValid) {
-                validVariables.push({
-                  name: `${variableName}.${firstArg.content}`,
-                  output: firstArg.content,
-                  outputStart,
-                  outputEnd,
-                });
-              }
-            }
+  // Handle filter arguments (like toSentence)
+  if (filters.length > 0) {
+    filters.forEach((filter) => {
+      const { args } = filter;
+      const firstArg = args[0];
+      if (
+        filter.name === 'toSentence' &&
+        args.length > 0 &&
+        'content' in firstArg &&
+        typeof firstArg.content === 'string'
+      ) {
+        /**
+         * Check if the parent variable with the first argument is allowed
+         * basically forcing it to check if additionalProperties is true by checking for final variable name
+         * and if the parent variable is a valid dynamic path as variableSchema can be undefined.
+         * OR
+         * Check if the variable is a digest events array variable
+         * and the first argument starts with payload.
+         */
+        if (
+          (isValidDynamicPath(variableName) &&
+            isPropertyAllowed(variableSchema, `${variableName}.${firstArg.content}`)) ||
+          (firstArg.content.startsWith('payload.') && DIGEST_EVENTS_VARIABLE_PATTERN.test(variableName))
+        ) {
+          const isFirstArgValid = isPropertyAllowed(variableSchema, firstArg.content);
+          if (isFirstArgValid) {
+            validVariables.push({
+              name: `${variableName}.${firstArg.content}`,
+              output: firstArg.content,
+              outputStart,
+              outputEnd,
+            });
+          } else {
+            invalidVariables.push({
+              name: `${variableName}.${firstArg.content}`,
+              message: 'is not supported',
+              output: firstArg.content,
+              outputStart,
+              outputEnd,
+            });
           }
-        });
+        }
       }
-    } else {
-      invalidVariables.push({
-        name: variableName,
-        message: 'is not supported',
-        output,
-        outputStart,
-        outputEnd,
-      });
-    }
+    });
   }
+
+  validateVariable({
+    variableName,
+    validVariables,
+    invalidVariables,
+    variableSchema,
+    localVariables,
+    output,
+    outputStart,
+    outputEnd,
+  });
 }
 
 function processTagToken({
@@ -454,14 +400,6 @@ function processTagToken({
     const forMatch = output.match(/^\s*{%\s*for\s+(\w+)\s+in\s+(.+?)\s*%}/);
     if (forMatch) {
       const [, iteratorVariable, collectionExpression] = forMatch;
-
-      // Iterator variable is always valid
-      validVariables.push({
-        name: iteratorVariable,
-        output,
-        outputStart,
-        outputEnd,
-      });
 
       // Check if it's a range expression
       if (collectionExpression.trim().match(/^\(.+?\.\..+?\)$/)) {
@@ -534,6 +472,23 @@ function processTagToken({
     // Process branches
     const branches = (template as any).branches || [];
     for (const branch of branches) {
+      // Extract variables from branch condition (elsif conditions)
+      if (branch.value) {
+        const branchVariables = extractVariablesFromValue(branch.value);
+        branchVariables.forEach((variableName) => {
+          validateVariable({
+            variableName,
+            validVariables,
+            invalidVariables,
+            variableSchema,
+            localVariables,
+            output: variableName, // Using variable name as output since we don't have the exact token
+            outputStart: 0,
+            outputEnd: variableName.length,
+          });
+        });
+      }
+
       processTemplates({
         templates: branch.templates || [],
         validVariables,
@@ -559,14 +514,6 @@ function processTagToken({
     const assignMatch = output.match(/^\s*{%\s*assign\s+(\w+)\s*=\s*(.+?)\s*%}/);
     if (assignMatch) {
       const [, assignedVariable, valueExpression] = assignMatch;
-
-      // Assigned variable is always valid
-      validVariables.push({
-        name: assignedVariable,
-        output,
-        outputStart,
-        outputEnd,
-      });
 
       // Add to local variables BEFORE processing the value expression
       const newLocalVariables = new Set(localVariables);
@@ -596,14 +543,6 @@ function processTagToken({
     if (captureMatch) {
       const capturedVariable = captureMatch[1];
 
-      // Captured variable is always valid
-      validVariables.push({
-        name: capturedVariable,
-        output,
-        outputStart,
-        outputEnd,
-      });
-
       // Add to local variables BEFORE processing the content
       const newLocalVariables = new Set(localVariables);
       newLocalVariables.add(capturedVariable);
@@ -626,14 +565,6 @@ function processTagToken({
     const tablerowMatch = output.match(/^\s*{%\s*tablerow\s+(\w+)\s+in\s+(.+?)\s*%}/);
     if (tablerowMatch) {
       const [, iteratorVariable, collectionExpression] = tablerowMatch;
-
-      // Iterator variable is always valid
-      validVariables.push({
-        name: iteratorVariable,
-        output,
-        outputStart,
-        outputEnd,
-      });
 
       // Check if it's a range expression
       if (collectionExpression.trim().match(/^\(.+?\.\..+?\)$/)) {
@@ -951,4 +882,53 @@ function validateFilters(filters: Filter[], isDigestEventsVariable: boolean): Li
 
     return [...acc, ...filterIssues];
   }, [] as LiquidFilterIssue[]);
+}
+
+function extractVariablesFromValue(value: any): string[] {
+  const variables: string[] = [];
+
+  function processValue(val: any) {
+    if (!val) return;
+
+    // If it has an initial property, it's likely a variable reference
+    if (val.initial) {
+      const varName = buildVariableFromValue(val);
+      if (varName) {
+        variables.push(varName);
+      }
+    }
+
+    // Process operands for binary expressions
+    if (val.lhs) processValue(val.lhs);
+    if (val.rhs) processValue(val.rhs);
+
+    // Process array/object values
+    if (Array.isArray(val)) {
+      val.forEach(processValue);
+    }
+  }
+
+  processValue(value);
+
+  return variables;
+}
+
+function buildVariableFromValue(value: any): string | null {
+  if (!value?.initial) return null;
+
+  const parts: string[] = [];
+
+  // Add initial content
+  if (value.initial.content) {
+    parts.push(value.initial.content);
+  }
+
+  // Add postfix properties
+  if (value.initial.postfix?.[0]?.props) {
+    for (const prop of value.initial.postfix[0].props) {
+      parts.push(prop.content);
+    }
+  }
+
+  return parts.length > 0 ? buildVariable(parts) : null;
 }

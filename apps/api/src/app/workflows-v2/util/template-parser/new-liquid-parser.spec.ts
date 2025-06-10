@@ -13,6 +13,15 @@ describe('extractLiquidTemplateVariables', () => {
         properties: {
           name: { type: JsonSchemaTypeEnum.STRING },
           email: { type: JsonSchemaTypeEnum.STRING },
+          items: {
+            type: JsonSchemaTypeEnum.ARRAY,
+            items: {
+              type: JsonSchemaTypeEnum.OBJECT,
+              properties: {
+                name: { type: JsonSchemaTypeEnum.STRING },
+              },
+            },
+          },
         },
       },
       payload: {
@@ -34,41 +43,33 @@ describe('extractLiquidTemplateVariables', () => {
 
   describe('Basic output variables without schema', () => {
     it('should extract simple variables', () => {
-      const template = '{{user.name}} {{user.email}}';
+      const template = '{{payload.title}} {{test}}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      expect(validVariables).to.have.lengthOf(2);
-      expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('user.name');
-      expect(validVariables[1].name).to.equal('user.email');
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.title');
+      expect(invalidVariables[0].name).to.equal('test');
     });
 
     it('should handle nested properties', () => {
-      const template = '{{user.profile.address.street}}';
+      const template = '{{payload.title}} {{user.profile.address.street}}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('user.profile.address.street');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.title');
+      expect(invalidVariables[0].name).to.equal('user.profile.address.street');
     });
 
     it('should handle array notation', () => {
-      const template = '{{items[0].name}} {{users[1].email}}';
-      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
-
-      expect(validVariables).to.have.lengthOf(2);
-      expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('items[0].name');
-      expect(validVariables[1].name).to.equal('users[1].email');
-    });
-
-    it('should reject variables without namespace', () => {
-      const template = '{{firstName}}';
+      const template = '{{payload.items[0].name}} {{users[1].email}}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('firstName');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.items[0].name');
+      expect(invalidVariables[0].name).to.equal('users[1].email');
     });
   });
 
@@ -101,22 +102,23 @@ describe('extractLiquidTemplateVariables', () => {
     };
 
     it('should extract simple variables', () => {
-      const template = '{{payload.phone}} {{user.name}}';
+      const template = '{{payload.phone}} {{test}}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template, variableSchema });
 
       expect(validVariables).to.have.lengthOf(1);
       expect(invalidVariables).to.have.lengthOf(1);
       expect(validVariables[0].name).to.equal('payload.phone');
-      expect(invalidVariables[0].name).to.equal('user.name');
+      expect(invalidVariables[0].name).to.equal('test');
     });
 
     it('should handle nested properties', () => {
-      const template = '{{payload.job.title}}';
+      const template = '{{payload.phone}} {{user.profile.address.street}}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template, variableSchema });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('payload.job.title');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.phone');
+      expect(invalidVariables[0].name).to.equal('user.profile.address.street');
     });
 
     it('should handle array notation', () => {
@@ -129,71 +131,80 @@ describe('extractLiquidTemplateVariables', () => {
       expect(invalidVariables[0].name).to.equal('items[0].name');
     });
 
-    it('should reject variables without namespace', () => {
-      const template = '{{firstName}}';
+    it('should handle invalid payload variables', () => {
+      const template = '{{payload.test}} {{items[0].name}}';
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template, variableSchema });
 
       expect(validVariables).to.have.lengthOf(0);
-      expect(invalidVariables).to.have.lengthOf(1);
-      expect(invalidVariables[0].name).to.equal('firstName');
-      expect(invalidVariables[0].message).to.include('missing namespace');
+      expect(invalidVariables).to.have.lengthOf(2);
+      expect(invalidVariables[0].name).to.equal('payload.test');
+      expect(invalidVariables[1].name).to.equal('items[0].name');
     });
   });
 
   describe('Variables with filters', () => {
     it('should handle variables with filters', () => {
-      const template = '{{user.name | upcase}} {{user.email | downcase}}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const template = '{{payload.name | upcase}} {{user.email | downcase}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      expect(validVariables).to.have.lengthOf(2);
-      expect(validVariables[0].name).to.equal('user.name');
-      expect(validVariables[1].name).to.equal('user.email');
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.name');
+      expect(invalidVariables[0].name).to.equal('user.email');
     });
 
     it('should handle toSentence filter with arguments', () => {
       const template = `{{ steps.digest-step.events | toSentence: 'payload.name', 2, 'other' }}`;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(2);
-      expect(validVariables[0].name).to.equal('steps.digest-step.events');
-      expect(validVariables[1].name).to.equal('steps.digest-step.events.payload.name');
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('steps.digest-step.events.payload.name');
+      expect(validVariables[1].name).to.equal('steps.digest-step.events');
     });
   });
 
   describe('For loops', () => {
-    it('should handle for loops with collections', () => {
-      const template = '{% for item in payload.items %}{{item.name}}{% endfor %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+    it('should handle for loops with valid collection variable', () => {
+      const template = '{% for item in payload.items %}{{item.name}}{{invalid}}{% endfor %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('item'); // Iterator is always valid
-      expect(variableNames).to.include('payload.items'); // Collection
-      expect(variableNames).to.include('item.name'); // Variable inside loop
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.items');
+      expect(invalidVariables[0].name).to.equal('invalid');
+    });
+
+    it('should handle for loops with invalid collection variable', () => {
+      const template = '{% for item in invalidCollection %}{{item.name}}{{payload.foo}}{% endfor %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.foo');
+      expect(invalidVariables[0].name).to.equal('invalidCollection');
     });
 
     it('should handle for loops with ranges (literal)', () => {
-      const template = '{% for i in (1..5) %}{{i}}{% endfor %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const template = '{% for i in (1..5) %}{{i}}{{payload.foo}}{% endfor %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(validVariables[0].name).to.equal('i'); // Iterator
+      expect(validVariables[0].name).to.equal('payload.foo');
+      expect(invalidVariables).to.have.lengthOf(0);
     });
 
     it('should handle for loops with ranges (variables)', () => {
-      const template = '{% for i in (start..end) %}{{i}}{% endfor %}';
-      const schema: JSONSchemaDto = {
-        type: JsonSchemaTypeEnum.OBJECT,
-        properties: {
-          start: { type: JsonSchemaTypeEnum.NUMBER },
-          end: { type: JsonSchemaTypeEnum.NUMBER },
-        },
-      };
-      const { validVariables } = extractLiquidTemplateVariables({ template, variableSchema: schema });
+      const template = '{% for i in (payload.start..payload.end) %}{{i}}{{payload.foo}}{{test}}{% endfor %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('i');
-      expect(variableNames).to.include('start');
-      expect(variableNames).to.include('end');
+      expect(validVariables).to.have.lengthOf(3);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(variableNames).to.include('payload.start');
+      expect(variableNames).to.include('payload.end');
+      expect(variableNames).to.include('payload.foo');
+      expect(invalidVariables[0].name).to.equal('test');
     });
 
     it('should handle nested for loops', () => {
@@ -201,49 +212,85 @@ describe('extractLiquidTemplateVariables', () => {
         {% for user in payload.users %}
           {% for post in user.posts %}
             {{post.title}}
+            {{invalid}}
           {% endfor %}
+          {{invalid2}}
         {% endfor %}
       `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('user');
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(2);
       expect(variableNames).to.include('payload.users');
-      expect(variableNames).to.include('post');
-      expect(variableNames).to.include('user.posts');
-      expect(variableNames).to.include('post.title');
+      expect(invalidVariableNames).to.include('invalid');
+      expect(invalidVariableNames).to.include('invalid2');
     });
   });
 
   describe('Conditional tags', () => {
-    it('should handle if statements', () => {
-      const template = '{% if user.isActive %}Welcome!{% endif %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+    it('should handle if statements with valid condition', () => {
+      const template = '{% if payload.isActive %}Welcome!{{invalid}}{% endif %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(validVariables[0].name).to.equal('user.isActive');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.isActive');
+      expect(invalidVariables[0].name).to.equal('invalid');
     });
 
-    it('should handle unless statements', () => {
-      const template = '{% unless user.banned %}Show content{% endunless %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+    it('should handle if statements with invalid condition', () => {
+      const template = '{% if user.isActive %}Welcome!{{invalid}}{% endif %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
+
+      expect(validVariables).to.have.lengthOf(0);
+      expect(invalidVariables).to.have.lengthOf(2);
+      expect(invalidVariableNames).to.include('user.isActive');
+      expect(invalidVariableNames).to.include('invalid');
+    });
+
+    it('should handle unless statements with valid condition', () => {
+      const template = '{% unless payload.banned %}Show content{{invalid}}{% endunless %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(validVariables[0].name).to.equal('user.banned');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.banned');
+      expect(invalidVariables[0].name).to.equal('invalid');
+    });
+
+    it('should handle unless statements with invalid condition', () => {
+      const template = '{% unless user.banned %}Show content{{invalid}}{% endunless %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
+
+      expect(validVariables).to.have.lengthOf(0);
+      expect(invalidVariables).to.have.lengthOf(2);
+      expect(invalidVariableNames).to.include('user.banned');
+      expect(invalidVariableNames).to.include('invalid');
     });
 
     it('should handle complex conditions', () => {
-      const template = '{% if user.age > 18 and user.country == "US" %}Adult US user{% endif %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const template =
+        '{% if user.age > 18 and payload.country == "US" %}Adult US user{{invalid}}{{payload.foo}}{% endif %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('user.age');
-      expect(variableNames).to.include('user.country');
+      const validVariableNames = validVariables.map((variable) => variable.name);
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
+
+      expect(validVariables).to.have.lengthOf(2);
+      expect(invalidVariables).to.have.lengthOf(2);
+      expect(validVariableNames).to.include('payload.country');
+      expect(validVariableNames).to.include('payload.foo');
+      expect(invalidVariableNames).to.include('user.age');
+      expect(invalidVariableNames).to.include('invalid');
     });
 
     it('should handle elsif branches', () => {
       const template = `
-        {% if user.role == "admin" %}
+        {% if payload.role == "admin" %}
           Admin
         {% elsif user.role == "moderator" %}
           Mod
@@ -251,44 +298,48 @@ describe('extractLiquidTemplateVariables', () => {
           User
         {% endif %}
       `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(validVariables[0].name).to.equal('user.role');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.role');
+      expect(invalidVariables[0].name).to.equal('user.role');
     });
 
     it('should handle multiple conditions', () => {
       const template = `
-        {% if product.title == "Awesome Shoes" and product.name == "hello" %}
+        {% if payload.title == "Awesome Shoes" and product.name == "hello" %}
           These shoes are awesome!
         {% endif %}
       `;
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      expect(validVariables).to.have.lengthOf(2);
-      expect(invalidVariables).to.have.lengthOf(0);
-      expect(validVariables[0].name).to.equal('product.title');
-      expect(validVariables[1].name).to.equal('product.name');
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.title');
+      expect(invalidVariables[0].name).to.equal('product.name');
     });
   });
 
   describe('Assign tags', () => {
-    it('should handle assign statements', () => {
-      const template = '{% assign fullName = user.firstName %}{{fullName}}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+    it('should handle assign statements with valid variable', () => {
+      const template = '{% assign fullName = payload.firstName %}{{fullName}}{{invalid}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('fullName'); // Assigned variable (always valid)
-      expect(variableNames).to.include('user.firstName'); // Source variable
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.firstName');
+      expect(invalidVariables[0].name).to.equal('invalid');
     });
 
-    it('should handle assign with expressions', () => {
-      const template = '{% assign total = cart.subtotal %}{{total}}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+    it('should handle assign statements with invalid variable', () => {
+      const template = '{% assign fullName = user.firstName %}{{fullName}}{{payload.foo}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('total');
-      expect(variableNames).to.include('cart.subtotal');
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.foo');
+      expect(invalidVariables[0].name).to.equal('user.firstName');
     });
   });
 
@@ -296,36 +347,42 @@ describe('extractLiquidTemplateVariables', () => {
     it('should handle capture blocks', () => {
       const template = `
         {% capture greeting %}
-          Hello {{user.name}}!
+          Hello {{payload.name}}!
         {% endcapture %}
         {{greeting}}
       `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('greeting'); // Captured variable (always valid)
-      expect(variableNames).to.include('user.name'); // Variable inside capture
+      expect(validVariables).to.have.lengthOf(1);
+      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables[0].name).to.equal('payload.name');
     });
   });
 
   describe('Tablerow tags', () => {
     it('should handle tablerow loops', () => {
-      const template = '{% tablerow product in payload.products %}{{product.name}}{% endtablerow %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const template =
+        '{% tablerow product in payload.products %}{{product.name}}{{invalid}}{{payload.foo}}{% endtablerow %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+      const validVariableNames = validVariables.map((variable) => variable.name);
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('product'); // Iterator
-      expect(variableNames).to.include('payload.products'); // Collection
-      expect(variableNames).to.include('product.name'); // Variable inside loop
+      expect(validVariableNames).to.have.lengthOf(2);
+      expect(validVariableNames).to.include('payload.products');
+      expect(validVariableNames).to.include('payload.foo');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(invalidVariables[0].name).to.equal('invalid');
     });
 
     it('should handle tablerow with ranges', () => {
-      const template = '{% tablerow i in (1..count) %}{{i}}{% endtablerow %}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const template = '{% tablerow i in (1..payload.count) %}{{i}}{{invalid}}{{payload.foo}}{% endtablerow %}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('i');
-      expect(variableNames).to.include('count');
+      const validVariableNames = validVariables.map((variable) => variable.name);
+      expect(validVariableNames).to.have.lengthOf(2);
+      expect(validVariableNames).to.include('payload.count');
+      expect(validVariableNames).to.include('payload.foo');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(invalidVariables[0].name).to.equal('invalid');
     });
   });
 
@@ -340,28 +397,40 @@ describe('extractLiquidTemplateVariables', () => {
           {% else %}
             Unknown status
         {% endcase %}
+        {% case payload.status %}
+          {% when "active" %}
+            Active user
+          {% when "pending" %}
+            Pending user
+          {% else %}
+            Unknown status
+        {% endcase %}
       `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
       expect(validVariables).to.have.lengthOf(1);
-      expect(validVariables[0].name).to.equal('user.status');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.status');
+      expect(invalidVariables[0].name).to.equal('user.status');
     });
 
     it('should handle case with variable when conditions', () => {
       const template = `
-        {% case user.role %}
-          {% when settings.adminRole %}
+        {% case payload.role %}
+          {% when payload.adminRole %}
             Admin
           {% when settings.modRole %}
             Moderator
         {% endcase %}
       `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
-
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
       const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('user.role');
-      expect(variableNames).to.include('settings.adminRole');
-      expect(variableNames).to.include('settings.modRole');
+
+      expect(validVariables).to.have.lengthOf(2);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(variableNames).to.include('payload.role');
+      expect(variableNames).to.include('payload.adminRole');
+      expect(invalidVariables[0].name).to.equal('settings.modRole');
     });
   });
 
@@ -381,49 +450,16 @@ describe('extractLiquidTemplateVariables', () => {
     });
 
     it('should validate array access', () => {
-      const template = '{{payload.items[0].name}}';
-      const { validVariables } = extractLiquidTemplateVariables({
+      const template = '{{payload.items[0].name}} {{user.items[0].name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
         template,
         variableSchema: commonSchema,
       });
 
-      expect(validVariables).to.have.lengthOf(1);
+      expect(validVariables).to.have.lengthOf(2);
+      expect(invalidVariables).to.have.lengthOf(0);
       expect(validVariables[0].name).to.equal('payload.items[0].name');
-    });
-  });
-
-  describe('Local variable scoping', () => {
-    it('should not validate local variables from for loops against schema', () => {
-      const template = `
-        {% for item in payload.items %}
-          {{item.anyProperty}}
-        {% endfor %}
-      `;
-      const { validVariables } = extractLiquidTemplateVariables({
-        template,
-        variableSchema: commonSchema, // Use the common schema
-      });
-
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('item'); // Iterator
-      expect(variableNames).to.include('item.anyProperty'); // Should be valid (local variable)
-    });
-
-    it('should track local variables across nested scopes', () => {
-      const template = `
-        {% assign localVar = "test" %}
-        {% for item in payload.items %}
-          {{localVar}}
-          {{item.name}}
-        {% endfor %}
-      `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
-
-      expect(validVariables).to.have.lengthOf(4);
-      expect(validVariables[0].name).to.equal('localVar');
-      expect(validVariables[1].name).to.equal('item');
-      expect(validVariables[2].name).to.equal('payload.items');
-      expect(validVariables[3].name).to.equal('item.name');
+      expect(validVariables[1].name).to.equal('user.items[0].name');
     });
   });
 
@@ -458,43 +494,51 @@ describe('extractLiquidTemplateVariables', () => {
           {% if user.premium %}
             <span class="premium">Premium User</span>
           {% endif %}
+          {% if payload.premium %}
+            <span class="premium">Premium User</span>
+          {% endif %}
           <ul>
             {% for item in payload.items %}
               <li>{{item.title}}</li>
+              <li>{{invalid}}</li>
             {% endfor %}
           </ul>
         </div>
       `;
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+      const validVariableNames = validVariables.map((variable) => variable.name);
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
 
-      const variableNames = validVariables.map((variable) => variable.name);
-      expect(variableNames).to.include('user.name');
-      expect(variableNames).to.include('user.premium');
-      expect(variableNames).to.include('payload.items');
-      expect(variableNames).to.include('item');
-      expect(variableNames).to.include('item.title');
+      expect(validVariables).to.have.lengthOf(2);
+      expect(invalidVariables).to.have.lengthOf(3);
+      expect(validVariableNames).to.include('payload.premium');
+      expect(validVariableNames).to.include('payload.items');
+      expect(invalidVariableNames).to.include('user.name');
+      expect(invalidVariableNames).to.include('user.premium');
+      expect(invalidVariableNames).to.include('invalid');
     });
 
     it('should deduplicate variables', () => {
-      const template = '{{user.name}} {{user.name}} {{user.name}}';
-      const { validVariables } = extractLiquidTemplateVariables({ template });
+      const template = '{{user.name}} {{user.name}} {{payload.name}} {{payload.name}}';
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
 
-      // With the updated code, we actually get 3 occurrences now
-      const uniqueNames = [...new Set(validVariables.map((variable) => variable.name))];
-      expect(uniqueNames).to.have.lengthOf(1);
-      expect(uniqueNames[0]).to.equal('user.name');
+      expect(validVariables).to.have.lengthOf(1);
+      expect(validVariables[0].name).to.equal('payload.name');
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(invalidVariables[0].name).to.equal('user.name');
     });
   });
 
   describe('Complex real-world scenarios', () => {
     it('should handle complex template', () => {
       const template = `
+        {% assign firstName = payload.firstName %}
         {% assign customerName = customer.firstName %}
         <h1>Hello {{customerName}}!</h1>
         
-        {% if cart.items.size > 0 %}
-          <h2>Your Cart ({{cart.items.size}} items)</h2>
-          {% for item in cart.items %}
+        {% if payload.items.length > 0 %}
+          <h2>Your Cart ({{payload.items.length}} items)</h2>
+          {% for item in payload.items %}
             <div>
               {{item.product.name}} - {{item.quantity}} x {{item.price}}
               {% if item.discountPercentage > 0 %}
@@ -523,31 +567,99 @@ describe('extractLiquidTemplateVariables', () => {
       `;
 
       const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+      const validVariableNames = validVariables.map((variable) => variable.name);
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
 
-      expect(invalidVariables).to.have.lengthOf(0);
+      expect(validVariables).to.have.lengthOf(3);
+      expect(invalidVariables).to.have.lengthOf(5);
 
-      const variableNames = validVariables.map((variable) => variable.name);
+      expect(validVariableNames).to.include('payload.firstName');
+      expect(validVariableNames).to.include('payload.items.length');
+      expect(validVariableNames).to.include('payload.items');
+      expect(invalidVariableNames).to.include('customer.firstName');
+      expect(invalidVariableNames).to.include('cart.subtotal');
+      expect(invalidVariableNames).to.include('cart.discount');
+      expect(invalidVariableNames).to.include('cart.total');
+      expect(invalidVariableNames).to.include('customer.loyaltyTier');
+    });
 
-      // Assigned variables
-      expect(variableNames).to.include('customerName');
+    it('should handle complex template with defined', () => {
+      const template = `
+        {% assign firstName = payload.firstName %}
+        {% assign customerName = payload.invalid %}
+        <h1>Hello {{customerName}}!</h1>
+        
+        {% if payload.items.length > 0 %}
+          <h2>Your Cart ({{payload.items.length}} items)</h2>
+          {% for item in payload.items %}
+            <div>
+              {{item.product.name}} - {{item.quantity}} x {{item.price}}
+              {% if item.discountPercentage > 0 %}
+                <span>{{item.discountPercentage}}% off!</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+          
+          <div>
+            Subtotal: {{payload.subtotal}}
+            {% if payload.discount > 0 %}
+              Discount: -{{payload.discount}}
+            {% endif %}
+            Total: {{payload.total}}
+          </div>
+        {% else %}
+          <p>Your cart is empty</p>
+        {% endif %}
+        
+        {% case customer.loyaltyTier %}
+          {% when "gold" %}
+            <p>Gold member benefits apply!</p>
+          {% when "silver" %}
+            <p>Silver member benefits apply!</p>
+        {% endcase %}
+      `;
+      const variableSchema: JSONSchemaDto = {
+        type: JsonSchemaTypeEnum.OBJECT,
+        properties: {
+          payload: {
+            type: JsonSchemaTypeEnum.OBJECT,
+            properties: {
+              firstName: { type: JsonSchemaTypeEnum.STRING },
+              items: {
+                type: JsonSchemaTypeEnum.ARRAY,
+                properties: {
+                  length: { type: JsonSchemaTypeEnum.NUMBER },
+                },
+                items: {
+                  type: JsonSchemaTypeEnum.OBJECT,
+                  properties: {
+                    name: { type: JsonSchemaTypeEnum.STRING },
+                  },
+                },
+              },
+            },
+          },
+        },
+      };
 
-      // Customer variables
-      expect(variableNames).to.include('customer.firstName');
-      expect(variableNames).to.include('customer.loyaltyTier');
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
+        template,
+        variableSchema,
+      });
+      const validVariableNames = validVariables.map((variable) => variable.name);
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
 
-      // Cart variables
-      expect(variableNames).to.include('cart.items.size');
-      expect(variableNames).to.include('cart.items');
-      expect(variableNames).to.include('cart.subtotal');
-      expect(variableNames).to.include('cart.discount');
-      expect(variableNames).to.include('cart.total');
+      expect(validVariables).to.have.lengthOf(3);
+      expect(invalidVariables).to.have.lengthOf(5);
 
-      // Loop variables
-      expect(variableNames).to.include('item');
-      expect(variableNames).to.include('item.product.name');
-      expect(variableNames).to.include('item.quantity');
-      expect(variableNames).to.include('item.price');
-      expect(variableNames).to.include('item.discountPercentage');
+      expect(validVariableNames).to.include('payload.firstName');
+      expect(validVariableNames).to.include('payload.items.length');
+      expect(validVariableNames).to.include('payload.items');
+      expect(invalidVariableNames).to.include('payload.invalid');
+      expect(invalidVariableNames).to.include('payload.subtotal');
+      expect(invalidVariableNames).to.include('payload.discount');
+      expect(invalidVariableNames).to.include('payload.total');
+      expect(invalidVariableNames).to.include('customer.loyaltyTier');
     });
 
     it('should handle undefined filters as invalid', () => {
@@ -559,6 +671,29 @@ describe('extractLiquidTemplateVariables', () => {
       expect(invalidVariables[0].name).to.equal('item.price');
       expect(invalidVariables[0].message).to.exist;
       expect(invalidVariables[0].message).to.include('undefined filter: currency');
+    });
+
+    it('should validate variables in the loops independently', () => {
+      const template = `
+        {% for item in payload.items %}
+          <div>{{item.product.name}}</div>
+        {% endfor %}
+
+        {% for otherItem in payload.items2 %}
+          <div>{{otherItem.product.name}}</div>
+          <div>{{item.product.name}}</div>
+        {% endfor %}
+      `;
+
+      const { validVariables, invalidVariables } = extractLiquidTemplateVariables({ template });
+      const validVariableNames = validVariables.map((variable) => variable.name);
+      const invalidVariableNames = invalidVariables.map((variable) => variable.name);
+
+      expect(validVariables).to.have.lengthOf(2);
+      expect(invalidVariables).to.have.lengthOf(1);
+      expect(validVariableNames).to.include('payload.items');
+      expect(validVariableNames).to.include('payload.items2');
+      expect(invalidVariableNames).to.include('item.product.name');
     });
   });
 });

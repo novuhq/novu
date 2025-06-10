@@ -1,4 +1,4 @@
-import { LiquidError as LiquidLibError, RenderError, Template } from 'liquidjs';
+import { LiquidError, RenderError, Template } from 'liquidjs';
 import { JSONSchemaDto } from '../../dtos';
 
 export type Variable = {
@@ -37,7 +37,7 @@ export type TemplateVariables = {
  * Used to handle multiple render errors that can occur during template parsing.
  * @see https://github.com/harttle/liquidjs/blob/d61855bf725a6deba203201357f7455f6f9b4a32/src/util/error.ts#L65
  */
-export class LiquidError extends LiquidLibError {
+export class LiquidErrors extends LiquidError {
   errors: RenderError[];
 }
 

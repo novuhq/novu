@@ -4,19 +4,15 @@ import { Filter, Output, RenderError, Template, TokenKind } from 'liquidjs';
 import {
   DIGEST_EVENTS_VARIABLE_PATTERN,
   extractLiquidExpressions,
+  isLiquidErrors,
   isValidDynamicPath,
   isValidTemplate,
 } from './parser-utils';
 import { JSONSchemaDto } from '../../dtos';
 import type { TemplateVariables, Variable } from './types';
-import { LiquidError } from './types';
 import { buildLiquidParser } from './liquid-engine';
 
 const parserEngine = buildLiquidParser();
-
-function isLiquidError(error: unknown): error is LiquidError {
-  return error instanceof LiquidError && 'errors' in error && Array.isArray((error as LiquidError).errors);
-}
 
 /**
  * Parses a Liquid template string and extracts all variable names, including nested paths.
@@ -91,7 +87,7 @@ function processLiquidRawOutput({
       result.validVariables.forEach((variable) => addVariable(variable, true));
       result.invalidVariables.forEach((variable) => addVariable(variable, false));
     } catch (error: unknown) {
-      if (isLiquidError(error)) {
+      if (isLiquidErrors(error)) {
         error.errors.forEach((e: RenderError) => {
           addVariable(
             {
