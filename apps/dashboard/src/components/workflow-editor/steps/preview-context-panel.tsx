@@ -13,7 +13,6 @@ import { usePersistedPreviewContext } from './hooks/use-persisted-preview-contex
 import { StepTypeEnum } from '@/utils/enums';
 
 export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
-  const { currentUser } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const hasInitializedSubscriberRef = useRef(false);
   const hasLoadedPersistedDataRef = useRef(false);

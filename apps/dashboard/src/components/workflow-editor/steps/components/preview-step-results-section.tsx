@@ -77,7 +77,7 @@ export function PreviewStepResultsSection({
       </AccordionTrigger>
       <AccordionContent className="flex flex-col gap-2">
         {stepEntries.length > 0 ? (
-          <div className="w-full space-y-1">
+          <div className="w-full">
             {stepEntries.map(([stepId, stepData]) => {
               const stepType = getStepType(workflow, stepId);
               const StepIcon = getStepTypeIcon(stepType);
@@ -87,11 +87,11 @@ export function PreviewStepResultsSection({
               const currentStepData = getCurrentStepData(stepId, stepData);
 
               return (
-                <div key={stepId} className="border-b border-neutral-100 last:border-b-0">
+                <div key={stepId}>
                   <button
                     type="button"
                     onClick={() => toggleStepOpen(stepId)}
-                    className="flex w-full items-center gap-2 py-2 transition-colors hover:bg-neutral-50"
+                    className="flex w-full items-center gap-2 py-1.5 transition-colors hover:bg-neutral-50"
                   >
                     <div className="flex flex-1 items-center gap-2">
                       <StepIcon className="h-3 w-3 flex-shrink-0 text-neutral-300" />

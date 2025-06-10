@@ -49,10 +49,10 @@ export function PreviewSubscriberSection({
                 variant="secondary"
                 mode="ghost"
                 size="2xs"
-                className="text-foreground-400 hover:text-foreground-600 gap-1"
+                className="text-foreground-600 gap-1"
               >
                 <RiRefreshLine className="h-3 w-3" />
-                Reset to defaults
+                Reset defaults
               </Button>
             </div>
           )}

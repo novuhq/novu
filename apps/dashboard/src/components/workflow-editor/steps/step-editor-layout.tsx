@@ -24,7 +24,7 @@ function StepEditorContent() {
     <ResizableLayout>
       <ResizableLayout.ContextPanel>
         <PanelHeader icon={RiCodeBlock} title="Preview Context" />
-        <div className="flex-1 overflow-y-auto">
+        <div className="bg-bg-weak flex-1 overflow-y-auto">
           <PreviewContextContainer />
         </div>
       </ResizableLayout.ContextPanel>
