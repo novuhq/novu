@@ -1,6 +1,6 @@
 import { Accordion } from '@/components/primitives/accordion';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getSubscribers } from '@/api/subscribers';
@@ -12,11 +12,11 @@ import { usePreviewContext } from './hooks/use-preview-context';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
 import { StepTypeEnum } from '@/utils/enums';
 
+type InitializationState = 'idle' | 'initializing' | 'initialized' | 'ready';
+
 export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
   const { currentEnvironment } = useEnvironment();
-  const hasInitializedSubscriberRef = useRef(false);
-  const hasLoadedPersistedDataRef = useRef(false);
-  const isInitializingRef = useRef(false);
+  const [initState, setInitState] = useState<InitializationState>('idle');
 
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
@@ -56,22 +56,25 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
       },
     });
 
+  // Check if we should initialize
+  const shouldInitialize = useMemo(() => {
+    return (
+      initState === 'idle' &&
+      workflow?.workflowId &&
+      currentStepId &&
+      currentEnvironment?._id &&
+      value &&
+      value !== '{}'
+    );
+  }, [initState, workflow?.workflowId, currentStepId, currentEnvironment?._id, value]);
+
   // Load persisted data and initialize defaults on mount
   useEffect(() => {
-    if (
-      hasLoadedPersistedDataRef.current ||
-      isInitializingRef.current ||
-      !workflow?.workflowId ||
-      !currentStepId ||
-      !currentEnvironment?._id ||
-      !value ||
-      value === '{}'
-    ) {
+    if (!shouldInitialize) {
       return;
     }
 
-    hasLoadedPersistedDataRef.current = true;
-    isInitializingRef.current = true;
+    setInitState('initializing');
 
     const initializeData = async () => {
       try {
@@ -111,21 +114,28 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
           onChange(stringified);
         }
 
-        hasInitializedSubscriberRef.current = true;
-      } finally {
-        isInitializingRef.current = false;
+        setInitState('initialized');
+      } catch (error) {
+        console.warn('Failed to initialize preview context data:', error);
+        setInitState('initialized');
       }
     };
 
     initializeData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workflow?.workflowId, currentStepId, currentEnvironment?._id, value]);
+  }, [
+    shouldInitialize,
+    value,
+    workflow?.payloadExample,
+    isPayloadSchemaEnabled,
+    loadPersistedPayload,
+    loadPersistedSubscriber,
+    onChange,
+  ]);
 
   // Handle server data updates after initial load
   useEffect(() => {
     if (
-      !hasLoadedPersistedDataRef.current ||
-      isInitializingRef.current ||
+      initState !== 'initialized' ||
       !workflow?.workflowId ||
       !currentStepId ||
       !currentEnvironment?._id ||
@@ -146,13 +156,24 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
           const stringified = JSON.stringify(finalData, null, 2);
           onChange(stringified);
         }
+
+        setInitState('ready');
       } catch (error) {
         console.warn('Failed to merge persisted subscriber data:', error);
+        setInitState('ready');
       }
     };
 
     handleServerUpdate();
-  }, [value, workflow?.workflowId, currentStepId, currentEnvironment?._id, loadPersistedSubscriber, onChange]);
+  }, [
+    initState,
+    value,
+    workflow?.workflowId,
+    currentStepId,
+    currentEnvironment?._id,
+    loadPersistedSubscriber,
+    onChange,
+  ]);
 
   const handleClearPersistedData = () => {
     // Only clear persisted payload data, keep subscriber data
