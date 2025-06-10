@@ -27,17 +27,13 @@ export function StepIssuesPanel({ step, className }: StepIssuesPanelProps) {
   const allIssues = getAllStepIssues(step.issues);
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       {issueCount > 0 && (
         <motion.div
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: 'auto', opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
-          transition={{
-            duration: 0.3,
-            ease: [0.4, 0.0, 0.2, 1],
-            opacity: { duration: 0.2 },
-          }}
+          transition={{ duration: 0.2, ease: 'easeInOut' }}
           className={cn(
             'flex min-h-[44px] items-center overflow-hidden border-t border-neutral-200 bg-white px-4 py-3',
             className
@@ -45,21 +41,10 @@ export function StepIssuesPanel({ step, className }: StepIssuesPanelProps) {
         >
           <HoverCard openDelay={200} closeDelay={100}>
             <HoverCardTrigger asChild>
-              <motion.div
-                initial={{ x: -10, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.2, ease: 'easeOut' }}
-                className="flex cursor-pointer items-center gap-1"
-              >
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, duration: 0.2, ease: 'backOut' }}
-                >
-                  <RiErrorWarningFill className="size-4 text-red-600" />
-                </motion.div>
+              <div className="flex cursor-pointer items-center gap-2 transition-colors hover:text-red-700">
+                <RiErrorWarningFill className="size-4 text-red-600" />
                 <span className="text-paragraph-xs font-medium text-red-600">{displayText}</span>
-              </motion.div>
+              </div>
             </HoverCardTrigger>
             <HoverCardContent
               className="bg-bg-weak flex w-80 flex-col gap-1 border border-neutral-200 p-1"
@@ -67,27 +52,17 @@ export function StepIssuesPanel({ step, className }: StepIssuesPanelProps) {
               align="start"
               sideOffset={8}
             >
-              <div className="">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <RiErrorWarningLine className="ml-1 size-4 text-red-600" />
-                    <span className="text-sm font-medium text-red-600">Action required</span>
-                  </div>
-                </div>
+              <div className="flex items-center gap-2 pl-1.5">
+                <RiErrorWarningLine className="size-4 text-red-600" />
+                <span className="text-label-xs font-medium text-red-600">Action required</span>
               </div>
-              <div className="bg-bg-white max-h-60 overflow-y-auto rounded-[6px] border border-neutral-100 p-1">
-                <ul className="">
+              <div className="bg-bg-white max-h-60 overflow-y-auto rounded-[6px] border border-neutral-100 p-2">
+                <ul className="space-y-2">
                   {allIssues.map((issue, index) => (
-                    <motion.li
-                      key={index}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05, duration: 0.2, ease: 'easeOut' }}
-                      className="flex items-start gap-1 py-1 text-sm text-neutral-700"
-                    >
-                      <span className="ml-1 mr-1 mt-1.5 size-1 shrink-0 rounded-full bg-red-600" />
+                    <li key={index} className="flex items-start gap-2 text-sm text-neutral-700">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-red-600" />
                       <span className="text-label-xs text-text-sub font-medium leading-4">{issue.message}</span>
-                    </motion.li>
+                    </li>
                   ))}
                 </ul>
               </div>
