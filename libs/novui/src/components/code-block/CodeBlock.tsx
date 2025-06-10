@@ -5,7 +5,7 @@ import { splitCssProps } from '../../../styled-system/jsx';
 import { codeBlock, CodeBlockVariantProps } from '../../../styled-system/recipes';
 import type { JsxStyleProps } from '../../../styled-system/types';
 import { CoreProps } from '../../types';
-import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
+import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
 
 // TODO: use @mantine/code-highlight/styles.layer.css instead
 import '@mantine/code-highlight/styles.css';
@@ -33,8 +33,7 @@ type PolymorphicComponent = <C extends React.ElementType = CodeBlockElement>(
  * - no line numbers are built-in to Highlight JS
  *
  */
-// @ts-expect-error
-export const CodeBlock: PolymorphicComponent = React.forwardRef(
+export const CodeBlock: PolymorphicComponent = forwardRefWithAs<CodeBlockElement, JsxStyleProps & CodeBlockVariantProps & CoreProps & CodeBlockCoreProps>(
   <C extends React.ElementType = CodeBlockElement>(props: CodeBlockProps<C>, ref?: PolymorphicRef<C>) => {
     const [variantProps, codeBlockProps] = codeBlock.splitVariantProps(props);
     const [cssProps, localProps] = splitCssProps(codeBlockProps);
