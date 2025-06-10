@@ -17,6 +17,10 @@ export function getPayloadStorageKey(workflowId: string, environmentId: string):
   return `preview-payload-${workflowId}-${environmentId}`;
 }
 
+export function getSubscriberStorageKey(workflowId: string, environmentId: string): string {
+  return `preview-subscriber-${workflowId}-${environmentId}`;
+}
+
 export function savePreviewContextData(
   workflowId: string,
   stepId: string,
@@ -52,6 +56,21 @@ export function savePayloadData(workflowId: string, environmentId: string, paylo
   }
 }
 
+export function saveSubscriberData(workflowId: string, environmentId: string, subscriber: any): void {
+  try {
+    const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+    const persistedData = {
+      subscriber,
+      timestamp: Date.now(),
+      version: STORAGE_VERSION,
+    };
+
+    localStorage.setItem(storageKey, JSON.stringify(persistedData));
+  } catch (error) {
+    console.warn('Failed to save subscriber data to localStorage:', error);
+  }
+}
+
 export function loadPayloadData(workflowId: string, environmentId: string): any | null {
   try {
     const storageKey = getPayloadStorageKey(workflowId, environmentId);
@@ -78,6 +97,36 @@ export function loadPayloadData(workflowId: string, environmentId: string): any 
     return persistedData.payload;
   } catch (error) {
     console.warn('Failed to load payload data from localStorage:', error);
+    return null;
+  }
+}
+
+export function loadSubscriberData(workflowId: string, environmentId: string): any | null {
+  try {
+    const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+    const stored = localStorage.getItem(storageKey);
+
+    if (!stored) return null;
+
+    const persistedData = JSON.parse(stored);
+
+    // Check TTL
+    const isExpired = Date.now() - persistedData.timestamp > TTL_DAYS * 24 * 60 * 60 * 1000;
+
+    if (isExpired) {
+      localStorage.removeItem(storageKey);
+      return null;
+    }
+
+    // Version check for future migrations
+    if (persistedData.version !== STORAGE_VERSION) {
+      localStorage.removeItem(storageKey);
+      return null;
+    }
+
+    return persistedData.subscriber;
+  } catch (error) {
+    console.warn('Failed to load subscriber data from localStorage:', error);
     return null;
   }
 }
@@ -210,6 +259,15 @@ export function clearPayloadData(workflowId: string, environmentId: string): voi
   }
 }
 
+export function clearSubscriberData(workflowId: string, environmentId: string): void {
+  try {
+    const storageKey = getSubscriberStorageKey(workflowId, environmentId);
+    localStorage.removeItem(storageKey);
+  } catch (error) {
+    console.warn('Failed to clear subscriber data from localStorage:', error);
+  }
+}
+
 export function cleanupExpiredPreviewData(): void {
   try {
     const keysToRemove: string[] = [];
@@ -217,7 +275,11 @@ export function cleanupExpiredPreviewData(): void {
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
 
-      if (key?.startsWith('preview-context-') || key?.startsWith('preview-payload-')) {
+      if (
+        key?.startsWith('preview-context-') ||
+        key?.startsWith('preview-payload-') ||
+        key?.startsWith('preview-subscriber-')
+      ) {
         try {
           const stored = localStorage.getItem(key);
 

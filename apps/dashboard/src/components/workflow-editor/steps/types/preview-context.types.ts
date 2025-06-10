@@ -28,6 +28,7 @@ export type AccordionSectionProps = {
 
 export type PayloadSectionProps = AccordionSectionProps & {
   onClearPersisted?: () => void;
+  hasDigestStep?: boolean;
 };
 
 export type StepResultsSectionProps = AccordionSectionProps & {

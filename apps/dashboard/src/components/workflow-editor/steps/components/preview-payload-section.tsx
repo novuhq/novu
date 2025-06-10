@@ -12,6 +12,7 @@ export function PreviewPayloadSection({
   workflow,
   onUpdate,
   onClearPersisted,
+  hasDigestStep,
 }: PayloadSectionProps) {
   return (
     <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
@@ -63,6 +64,11 @@ export function PreviewPayloadSection({
             schema={workflow?.payloadSchema}
             className={ACCORDION_STYLES.jsonViewer}
           />
+          {hasDigestStep && (
+            <p className="text-foreground-400 text-xs">
+              💡 To simulate digest event count and content, use the Digest Step Results section below.
+            </p>
+          )}
           {errors.payload && <p className="text-destructive text-xs">{errors.payload}</p>}
         </div>
       </AccordionContent>

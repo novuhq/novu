@@ -1,6 +1,6 @@
 import { Accordion } from '@/components/primitives/accordion';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getSubscribers } from '@/api/subscribers';
@@ -10,6 +10,7 @@ import { PreviewContextPanelProps, ParsedData } from './types/preview-context.ty
 import { PreviewPayloadSection, PreviewSubscriberSection, PreviewStepResultsSection } from './components';
 import { usePreviewContext } from './hooks/use-preview-context';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
+import { StepTypeEnum } from '@/utils/enums';
 
 export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
   const { currentUser } = useAuth();
@@ -20,8 +21,20 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
 
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
 
+  // Check if workflow has digest steps
+  const hasDigestStep = useMemo(() => {
+    return workflow?.steps?.some((step) => step.type === StepTypeEnum.DIGEST) ?? false;
+  }, [workflow?.steps]);
+
   // Initialize persistence hook
-  const { loadPersistedPayload, savePersistedPayload, clearPersistedPayload } = usePersistedPreviewContext({
+  const {
+    loadPersistedPayload,
+    savePersistedPayload,
+    clearPersistedPayload,
+    loadPersistedSubscriber,
+    savePersistedSubscriber,
+    clearPersistedSubscriber,
+  } = usePersistedPreviewContext({
     workflowId: workflow?.workflowId || '',
     stepId: currentStepId || '',
     environmentId: currentEnvironment?._id || '',
@@ -33,9 +46,13 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
       stepId: currentStepId,
       environmentId: currentEnvironment?._id,
       onDataPersist: (data: ParsedData) => {
-        // Only persist payload data
+        // Persist both payload and subscriber data
         if (data.payload) {
           savePersistedPayload(data.payload);
+        }
+
+        if (data.subscriber) {
+          savePersistedSubscriber(data.subscriber);
         }
       },
     });
@@ -47,7 +64,9 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
       isInitializingRef.current ||
       !workflow?.workflowId ||
       !currentStepId ||
-      !currentEnvironment?._id
+      !currentEnvironment?._id ||
+      !value ||
+      value === '{}'
     ) {
       return;
     }
@@ -78,8 +97,13 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
           finalData.payload = workflow.payloadExample;
         }
 
-        // Initialize subscriber data if not present in persisted data
-        if (!finalData.subscriber || Object.keys(finalData.subscriber).length === 0) {
+        // Load persisted subscriber data if available
+        const persistedSubscriber = loadPersistedSubscriber();
+
+        if (persistedSubscriber) {
+          finalData.subscriber = persistedSubscriber;
+        } else if (!finalData.subscriber || Object.keys(finalData.subscriber).length === 0) {
+          // Initialize subscriber data if not present in persisted data
           if (currentUser?.email) {
             try {
               const response = await getSubscribers({
@@ -115,10 +139,44 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
 
     initializeData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workflow?.workflowId, currentStepId, currentEnvironment?._id]);
+  }, [workflow?.workflowId, currentStepId, currentEnvironment?._id, value]);
+
+  // Handle server data updates after initial load
+  useEffect(() => {
+    if (
+      !hasLoadedPersistedDataRef.current ||
+      isInitializingRef.current ||
+      !workflow?.workflowId ||
+      !currentStepId ||
+      !currentEnvironment?._id ||
+      !value ||
+      value === '{}'
+    ) {
+      return;
+    }
+
+    const handleServerUpdate = async () => {
+      try {
+        const currentData = parseJsonValue(value);
+        const persistedSubscriber = loadPersistedSubscriber();
+
+        // If we have persisted subscriber data but current data doesn't have it, merge it in
+        if (persistedSubscriber && (!currentData.subscriber || Object.keys(currentData.subscriber).length === 0)) {
+          const finalData = { ...currentData, subscriber: persistedSubscriber };
+          const stringified = JSON.stringify(finalData, null, 2);
+          onChange(stringified);
+        }
+      } catch (error) {
+        console.warn('Failed to merge persisted subscriber data:', error);
+      }
+    };
+
+    handleServerUpdate();
+  }, [value, workflow?.workflowId, currentStepId, currentEnvironment?._id, loadPersistedSubscriber, onChange]);
 
   const handleClearPersistedData = () => {
     clearPersistedPayload();
+    clearPersistedSubscriber();
     // Reset flags to trigger re-initialization
     hasLoadedPersistedDataRef.current = false;
     hasInitializedSubscriberRef.current = false;
@@ -145,6 +203,7 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
         onClearPersisted={
           workflow?.workflowId && currentStepId && currentEnvironment?._id ? handleClearPersistedData : undefined
         }
+        hasDigestStep={hasDigestStep}
       />
 
       <PreviewSubscriberSection

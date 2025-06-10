@@ -9,6 +9,9 @@ import {
   savePayloadData,
   loadPayloadData,
   clearPayloadData,
+  saveSubscriberData,
+  loadSubscriberData,
+  clearSubscriberData,
 } from '../utils/preview-context-storage.utils';
 
 type UsePersistedPreviewContextProps = {
@@ -84,6 +87,35 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     clearPayloadData(workflowId, environmentId);
   }, [workflowId, environmentId]);
 
+  const loadPersistedSubscriber = useCallback((): any | null => {
+    if (!workflowId || !environmentId) return null;
+
+    return loadSubscriberData(workflowId, environmentId);
+  }, [workflowId, environmentId]);
+
+  const savePersistedSubscriber = useCallback(
+    (subscriber: any) => {
+      if (!workflowId || !environmentId) return;
+
+      // Clear existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+
+      // Debounce save operation
+      saveTimeoutRef.current = setTimeout(() => {
+        saveSubscriberData(workflowId, environmentId, subscriber);
+      }, 500);
+    },
+    [workflowId, environmentId]
+  );
+
+  const clearPersistedSubscriber = useCallback(() => {
+    if (!workflowId || !environmentId) return;
+
+    clearSubscriberData(workflowId, environmentId);
+  }, [workflowId, environmentId]);
+
   const mergeWithDefaults = useCallback((persistedData: ParsedData, serverDefaults: ParsedData): ParsedData => {
     return mergePreviewContextData(persistedData, serverDefaults);
   }, []);
@@ -104,6 +136,9 @@ export function usePersistedPreviewContext({ workflowId, stepId, environmentId }
     loadPersistedPayload,
     savePersistedPayload,
     clearPersistedPayload,
+    loadPersistedSubscriber,
+    savePersistedSubscriber,
+    clearPersistedSubscriber,
     mergeWithDefaults,
   };
 }
