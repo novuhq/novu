@@ -17,6 +17,7 @@ export type ParsedData = {
 export type ValidationErrors = {
   payload: string | null;
   subscriber: string | null;
+  steps: string | null;
 };
 
 export type AccordionSectionProps = {
