@@ -1,3 +1,6 @@
+import { LiquidError } from 'liquidjs';
+import { LiquidErrors } from './types';
+
 /**
  * Validates if the provided template is a non-empty string
  */
@@ -26,4 +29,8 @@ export function isValidDynamicPath(variableName: string): boolean {
   return VALID_DYNAMIC_PATHS.some((path) =>
     typeof path === 'string' ? variableName.startsWith(path) : path.test(variableName)
   );
+}
+
+export function isLiquidErrors(error: unknown): error is LiquidErrors {
+  return error instanceof LiquidError && 'errors' in error && Array.isArray((error as LiquidErrors).errors);
 }
