@@ -174,9 +174,15 @@ jobs:
           echo "SYSTEM_PROMPT<<EOF" >> $GITHUB_ENV
           echo "You are a technical deployment summary assistant for Novu, an open-source notification infrastructure platform. 
 
-          Your task is to analyze recent production deployment PRs and create a well-structured summary organized into clear sections:
+          Your task is to analyze recent production deployment PRs and create a well-structured summary that highlights what's NEW and NOW AVAILABLE to users:
 
-          **IMPORTANT FORMATTING REQUIREMENTS:**
+          **IMPORTANT MESSAGING:**
+          - Focus on what users can NOW DO with these new features
+          - Emphasize that these improvements are LIVE and AVAILABLE
+          - Write from a user benefit perspective, not just technical changes
+          - Use present tense to indicate current availability
+
+          **FORMATTING REQUIREMENTS:**
           - Use clear section headers: *Key Features & Improvements*, *Bug Fixes & Stability*, *Technical Changes*, *Security & Compliance*
           - Use bullet points with • for each item
           - Keep each bullet point concise (1-2 lines max)
@@ -187,10 +193,10 @@ jobs:
           - Ensure clean formatting without escaped characters
 
           **Section Guidelines:**
-          1. *Key Features & Improvements*: New functionality, enhancements, user-facing changes
-          2. *Bug Fixes & Stability*: Critical fixes, performance improvements, reliability enhancements  
-          3. *Technical Changes*: Infrastructure updates, dependency changes, refactoring, tooling
-          4. *Security & Compliance*: Security fixes, compliance updates, vulnerability patches
+          1. *Key Features & Improvements*: New functionality NOW AVAILABLE, enhancements users can use today
+          2. *Bug Fixes & Stability*: Issues that are NOW RESOLVED, improved reliability users will experience  
+          3. *Technical Changes*: Infrastructure improvements, better performance users will notice
+          4. *Security & Compliance*: Security enhancements NOW PROTECTING users
 
           When analyzing Release PRs:
           - Focus on the individual commits and their original PR context
@@ -198,16 +204,16 @@ jobs:
           - Highlight the most impactful changes based on labels and descriptions
           - Pay special attention to breaking changes, security updates, or major features
 
-          **Example Format:**
+          **Example Format (emphasizing availability):**
           *Key Features & Improvements*
-          • *Custom HTML Editor*: Enhanced email editing with editor-type switching (#8457)
-          • *Environment CRUD APIs*: New external API endpoints for environment management (#8469)
+          • *Custom HTML Editor*: You can now switch between HTML and block editors seamlessly (#8457)
+          • *Environment CRUD APIs*: New API endpoints are available for environment management (#8469)
 
           *Bug Fixes & Stability*
-          • *EU Region Fix*: Resolved default region configuration issues (#8489)
-          • *Subscription Idempotency*: Fixed duplicate subscription creation (#8464)
+          • *EU Region Fix*: EU region configuration issues are now resolved (#8489)
+          • *Subscription Idempotency*: Duplicate subscription creation is now prevented (#8464)
 
-          Focus on what changed, why it matters, and which services/areas were affected." >> $GITHUB_ENV
+          Focus on what users can do NOW, what problems are SOLVED, and what value is AVAILABLE." >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           # Set user prompt as environment variable
@@ -288,7 +294,7 @@ jobs:
                 type: "header",
                 text: {
                   type: "plain_text",
-                  text: "🚀 Novu Production Deployment Summary"
+                  text: "🚀 New Production Deployment"
                 }
               },
               {
@@ -296,7 +302,7 @@ jobs:
                 elements: [
                   {
                     type: "mrkdwn",
-                    text: ("*Period:* " + $period + " | *PRs Analyzed:* " + $pr_count)
+                    text: "*The following features and improvements are now live in production*"
                   }
                 ]
               },
@@ -310,8 +316,8 @@ jobs:
           if [[ -n "$features_section" ]]; then
             # Clean up the features section content and make PR links clickable
             cleaned_features=$(echo -e "$features_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links
-            cleaned_features=$(echo "$cleaned_features" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
+            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
+            cleaned_features=$(echo "$cleaned_features" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
             features_text="*✨ Key Features & Improvements*"$'\n'"$cleaned_features"
             jq --arg text "$features_text" '.blocks += [{
               type: "section",
@@ -325,8 +331,8 @@ jobs:
           if [[ -n "$fixes_section" ]]; then
             # Clean up the fixes section content and make PR links clickable
             cleaned_fixes=$(echo -e "$fixes_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links
-            cleaned_fixes=$(echo "$cleaned_fixes" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
+            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
+            cleaned_fixes=$(echo "$cleaned_fixes" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
             fixes_text="*🐛 Bug Fixes & Stability*"$'\n'"$cleaned_fixes"
             jq --arg text "$fixes_text" '.blocks += [{
               type: "section",
@@ -340,8 +346,8 @@ jobs:
           if [[ -n "$technical_section" ]]; then
             # Clean up the technical section content and make PR links clickable
             cleaned_technical=$(echo -e "$technical_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links
-            cleaned_technical=$(echo "$cleaned_technical" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
+            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
+            cleaned_technical=$(echo "$cleaned_technical" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
             technical_text="*⚙️ Technical Changes*"$'\n'"$cleaned_technical"
             jq --arg text "$technical_text" '.blocks += [{
               type: "section",
@@ -355,8 +361,8 @@ jobs:
           if [[ -n "$security_section" ]]; then
             # Clean up the security section content and make PR links clickable
             cleaned_security=$(echo -e "$security_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links
-            cleaned_security=$(echo "$cleaned_security" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
+            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
+            cleaned_security=$(echo "$cleaned_security" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
             security_text="*🔒 Security & Compliance*"$'\n'"$cleaned_security"
             jq --arg text "$security_text" '.blocks += [{
               type: "section",
@@ -369,8 +375,8 @@ jobs:
 
           # If no sections were parsed, add the full summary as one section
           if [[ -z "$features_section" && -z "$fixes_section" && -z "$technical_section" && -z "$security_section" ]]; then
-            # Make PR links clickable in the full summary too
-            summary_with_links=$(echo "$summary_text" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
+            # Make PR links clickable in the full summary too using | as delimiter
+            summary_with_links=$(echo "$summary_text" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
             jq --arg text "*📋 Deployment Summary*"$'\n'"$summary_with_links" '.blocks += [{
               type: "section",
               text: {
@@ -410,7 +416,7 @@ jobs:
           webhook-type: incoming-webhook
           payload: |
             {
-              "text": "🚀 Novu Production Deployment Summary (${{ steps.output-variables.outputs.date_humanized }})",
+              "text": "🚀 New Novu Production Deployment - Features Now Live!",
               "blocks": ${{ steps.prepare-slack.outputs.blocks_json }}
             }
         env:
