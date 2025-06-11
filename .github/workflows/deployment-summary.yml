@@ -87,7 +87,13 @@ jobs:
                 commit_data=$(echo "$commit" | base64 --decode)
                 commit_sha=$(echo "$commit_data" | jq -r '.oid')
                 commit_message=$(echo "$commit_data" | jq -r '.messageHeadline')
-                commit_author=$(echo "$commit_data" | jq -r '.authors.nodes[0].user.login // .authors.nodes[0].name // "unknown"')
+                # Try different possible author structures in GitHub API
+                commit_author=$(echo "$commit_data" | jq -r '
+                  if .author.user.login then .author.user.login
+                  elif .author.name then .author.name
+                  elif .authors then (.authors[0].user.login // .authors[0].name)
+                  else "unknown"
+                  end')
                 
                 # Extract scope from conventional commit format using sed
                 commit_scope=""
