@@ -89,16 +89,19 @@ jobs:
                 commit_message=$(echo "$commit_data" | jq -r '.messageHeadline')
                 commit_author=$(echo "$commit_data" | jq -r '.authors.nodes[0].user.login // .authors.nodes[0].name // "unknown"')
                 
-                # Extract scope from conventional commit format (e.g., "fix(api):" -> "api")
+                # Extract scope from conventional commit format using sed
                 commit_scope=""
-                if [[ "$commit_message" =~ ^[a-z]+\(([^)]+)\): ]]; then
-                  commit_scope="${BASH_REMATCH[1]}"
+                if echo "$commit_message" | grep -q '^[a-z]*([^)]*):'; then
+                  commit_scope=$(echo "$commit_message" | sed -n 's/^[a-z]*(\([^)]*\)):.*/\1/p')
                 fi
                 
-                # Extract PR number from commit message if it exists (e.g., "(#1234)")
-                if [[ "$commit_message" =~ \(#([0-9]+)\) ]]; then
-                  original_pr_number="${BASH_REMATCH[1]}"
-                  
+                # Extract PR number from commit message using sed
+                original_pr_number=""
+                if echo "$commit_message" | grep -q '(#[0-9]*)'; then
+                  original_pr_number=$(echo "$commit_message" | sed -n 's/.*(#\([0-9]*\)).*/\1/p')
+                fi
+                
+                if [[ -n "$original_pr_number" ]]; then
                   # Try to fetch the original PR details
                   if original_pr=$(gh pr view $original_pr_number --json title,body,labels,author,state,files 2>/dev/null); then
                     original_pr_title=$(echo "$original_pr" | jq -r '.title')
