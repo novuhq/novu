@@ -244,132 +244,143 @@ jobs:
           # Read and clean the content for Slack
           summary_text=$(cat /tmp/summary.txt)
 
-          # Parse the AI summary into sections for better Slack formatting
-          echo "$summary_text" > /tmp/full_summary.txt
-
-          # Create structured Slack blocks
-          cat > /tmp/slack_blocks.json << 'BLOCKS_EOF'
-          [
-            {
-              "type": "header",
-              "text": {
-                "type": "plain_text",
-                "text": "🚀 Novu Production Deployment Summary"
-              }
-            },
-            {
-              "type": "context",
-              "elements": [
-                {
-                  "type": "mrkdwn",
-                  "text": "*Period:* Last ${{ steps.output-variables.outputs.days_back }} days (${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }}) | *PRs Analyzed:* ${{ steps.fetch-prs.outputs.pr_count || 0 }}"
-                }
-              ]
-            },
-            {
-              "type": "divider"
-            }
-          ]
-          BLOCKS_EOF
-
-          # Function to add a section block
-          add_section_block() {
-            local title="$1"
-            local content="$2"
-            local emoji="$3"
-            
-            # Clean content for Slack (remove markdown headers, fix formatting)
-            cleaned_content=$(echo "$content" | sed 's/^[#*]*//g' | sed 's/\*\*/*/g' | head -c 2800)
-            
-            if [[ -n "$cleaned_content" && "$cleaned_content" != "None" ]]; then
-              # Create a temporary block
-              cat >> /tmp/slack_blocks.json << SECTION_EOF
-          ,{
-            "type": "section",
-            "text": {
-              "type": "mrkdwn",
-              "text": "*${emoji} ${title}*\n${cleaned_content}"
-            }
-          }
-          SECTION_EOF
-            fi
-          }
-
           # Parse different sections from the AI summary
-          if [[ -s /tmp/full_summary.txt ]]; then
-            # Extract sections using pattern matching
-            features_section=""
-            fixes_section=""
-            technical_section=""
-            security_section=""
-            
-            # Try to extract sections from AI response
-            while IFS= read -r line; do
-              case "$line" in
-                *"Key Features"*|*"Features"*|*"Improvements"*)
-                  current_section="features"
-                  ;;
-                *"Bug Fixes"*|*"Fixes"*|*"Stability"*)
-                  current_section="fixes"
-                  ;;
-                *"Technical"*|*"Infrastructure"*|*"Dependencies"*)
-                  current_section="technical"
-                  ;;
-                *"Security"*|*"Compliance"*)
-                  current_section="security"
-                  ;;
-                "- "*|"• "*)
-                  case "$current_section" in
-                    "features") features_section="$features_section$line\n" ;;
-                    "fixes") fixes_section="$fixes_section$line\n" ;;
-                    "technical") technical_section="$technical_section$line\n" ;;
-                    "security") security_section="$security_section$line\n" ;;
-                  esac
-                  ;;
-              esac
-            done < /tmp/full_summary.txt
+          features_section=""
+          fixes_section=""
+          technical_section=""
+          security_section=""
+          current_section=""
 
-            # If we couldn't parse sections, use the full summary as features
-            if [[ -z "$features_section" && -z "$fixes_section" && -z "$technical_section" ]]; then
-              features_section="$summary_text"
-            fi
+          # Try to extract sections from AI response
+          while IFS= read -r line; do
+            case "$line" in
+              *"Key Features"*|*"Features"*|*"Improvements"*)
+                current_section="features"
+                ;;
+              *"Bug Fixes"*|*"Fixes"*|*"Stability"*)
+                current_section="fixes"
+                ;;
+              *"Technical"*|*"Infrastructure"*|*"Dependencies"*)
+                current_section="technical"
+                ;;
+              *"Security"*|*"Compliance"*)
+                current_section="security"
+                ;;
+              "• "*)
+                case "$current_section" in
+                  "features") features_section="$features_section$line\n" ;;
+                  "fixes") fixes_section="$fixes_section$line\n" ;;
+                  "technical") technical_section="$technical_section$line\n" ;;
+                  "security") security_section="$security_section$line\n" ;;
+                esac
+                ;;
+            esac
+          done < /tmp/summary.txt
 
-            # Add sections to Slack blocks
-            add_section_block "Key Features & Improvements" "$features_section" "✨"
-            add_section_block "Bug Fixes & Stability" "$fixes_section" "🐛"
-            add_section_block "Technical Changes" "$technical_section" "⚙️"
-            add_section_block "Security & Compliance" "$security_section" "🔒"
-          else
-            # Fallback: add the full summary as one section
-            add_section_block "Deployment Summary" "$summary_text" "📋"
+          # Create base Slack payload structure using jq
+          jq -n --arg period "Last ${{ steps.output-variables.outputs.days_back }} days (${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }})" \
+                --arg pr_count "${{ steps.fetch-prs.outputs.pr_count || 0 }}" '{
+            text: "🚀 Novu Production Deployment Summary",
+            blocks: [
+              {
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: "🚀 Novu Production Deployment Summary"
+                }
+              },
+              {
+                type: "context",
+                elements: [
+                  {
+                    type: "mrkdwn",
+                    text: ("*Period:* " + $period + " | *PRs Analyzed:* " + $pr_count)
+                  }
+                ]
+              },
+              {
+                type: "divider"
+              }
+            ]
+          }' > /tmp/slack_payload.json
+
+          # Add sections if they have content
+          if [[ -n "$features_section" ]]; then
+            features_text="*✨ Key Features & Improvements*\n$(echo -e "$features_section")"
+            jq --arg text "$features_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          if [[ -n "$fixes_section" ]]; then
+            fixes_text="*🐛 Bug Fixes & Stability*\n$(echo -e "$fixes_section")"
+            jq --arg text "$fixes_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          if [[ -n "$technical_section" ]]; then
+            technical_text="*⚙️ Technical Changes*\n$(echo -e "$technical_section")"
+            jq --arg text "$technical_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          if [[ -n "$security_section" ]]; then
+            security_text="*🔒 Security & Compliance*\n$(echo -e "$security_section")"
+            jq --arg text "$security_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          # If no sections were parsed, add the full summary as one section
+          if [[ -z "$features_section" && -z "$fixes_section" && -z "$technical_section" && -z "$security_section" ]]; then
+            jq --arg text "*📋 Deployment Summary*\n$summary_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
           fi
 
           # Add footer
-          cat >> /tmp/slack_blocks.json << 'FOOTER_EOF'
-          ,{
-            "type": "divider"
-          },
-          {
-            "type": "context",
-            "elements": [
-              {
-                "type": "mrkdwn",
-                "text": "Generated by <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|GitHub Actions> • <https://github.com/${{ github.repository }}/pulls?q=is%3Apr+is%3Amerged+base%3Aprod|View Recent PRs>"
-              }
-            ]
-          }
-          ]
-          FOOTER_EOF
+          jq --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+             --arg prs_url "https://github.com/${{ github.repository }}/pulls?q=is%3Apr+is%3Amerged+base%3Aprod" \
+             '.blocks += [
+            {
+              type: "divider"
+            },
+            {
+              type: "context",
+              elements: [
+                {
+                  type: "mrkdwn",
+                  text: ("Generated by <" + $run_url + "|GitHub Actions> • <" + $prs_url + "|View Recent PRs>")
+                }
+              ]
+            }
+          ]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
 
-          # Validate and escape the JSON
-          if jq empty /tmp/slack_blocks.json 2>/dev/null; then
-            blocks_json=$(cat /tmp/slack_blocks.json | jq -c .)
-            echo "blocks_json=$blocks_json" >> "$GITHUB_OUTPUT"
-          else
-            echo "❌ Invalid JSON generated, falling back to simple message"
-            simple_message=$(echo "$summary_text" | head -c 1500 | jq -Rs .)
-            echo "blocks_json=[{\"type\":\"section\",\"text\":{\"type\":\"mrkdwn\",\"text\":$simple_message}}]" >> "$GITHUB_OUTPUT"
-          fi
+          # Extract just the blocks array for the webhook
+          blocks_json=$(cat /tmp/slack_payload.json | jq -c '.blocks')
+          echo "blocks_json=$blocks_json" >> "$GITHUB_OUTPUT"
 
       - name: Send deployment summary to Slack
         id: slack
