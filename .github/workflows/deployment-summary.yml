@@ -180,9 +180,11 @@ jobs:
           - Use clear section headers: *Key Features & Improvements*, *Bug Fixes & Stability*, *Technical Changes*, *Security & Compliance*
           - Use bullet points with • for each item
           - Keep each bullet point concise (1-2 lines max)
-          - Use *bold* for emphasis on key terms
+          - Use *bold* for emphasis on key terms (single asterisks only, never double)
           - Focus on business impact and user value
           - If a section has no relevant changes, you can omit it entirely
+          - Do NOT use ** (double asterisks) - use only single * for bold text
+          - Ensure clean formatting without escaped characters
 
           **Section Guidelines:**
           1. *Key Features & Improvements*: New functionality, enhancements, user-facing changes
@@ -306,7 +308,9 @@ jobs:
 
           # Add sections if they have content
           if [[ -n "$features_section" ]]; then
-            features_text="*✨ Key Features & Improvements*\n$(echo -e "$features_section")"
+            # Clean up the features section content
+            cleaned_features=$(echo -e "$features_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            features_text="*✨ Key Features & Improvements*"$'\n'"$cleaned_features"
             jq --arg text "$features_text" '.blocks += [{
               type: "section",
               text: {
@@ -317,7 +321,9 @@ jobs:
           fi
 
           if [[ -n "$fixes_section" ]]; then
-            fixes_text="*🐛 Bug Fixes & Stability*\n$(echo -e "$fixes_section")"
+            # Clean up the fixes section content
+            cleaned_fixes=$(echo -e "$fixes_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            fixes_text="*🐛 Bug Fixes & Stability*"$'\n'"$cleaned_fixes"
             jq --arg text "$fixes_text" '.blocks += [{
               type: "section",
               text: {
@@ -328,7 +334,9 @@ jobs:
           fi
 
           if [[ -n "$technical_section" ]]; then
-            technical_text="*⚙️ Technical Changes*\n$(echo -e "$technical_section")"
+            # Clean up the technical section content
+            cleaned_technical=$(echo -e "$technical_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            technical_text="*⚙️ Technical Changes*"$'\n'"$cleaned_technical"
             jq --arg text "$technical_text" '.blocks += [{
               type: "section",
               text: {
@@ -339,7 +347,9 @@ jobs:
           fi
 
           if [[ -n "$security_section" ]]; then
-            security_text="*🔒 Security & Compliance*\n$(echo -e "$security_section")"
+            # Clean up the security section content
+            cleaned_security=$(echo -e "$security_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            security_text="*🔒 Security & Compliance*"$'\n'"$cleaned_security"
             jq --arg text "$security_text" '.blocks += [{
               type: "section",
               text: {
