@@ -8,14 +8,6 @@ on:
         required: false
         default: '7'
         type: string
-      ai_model:
-        description: 'AI model to use for summarization'
-        required: false
-        default: 'azure-openai/gpt-4o'
-        type: choice
-        options:
-          - azure-openai/gpt-4o
-          - azure-openai/gpt-4o-mini
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -27,6 +19,7 @@ jobs:
       contents: read
       pull-requests: read
       id-token: write
+      models: read
     timeout-minutes: 15
     steps:
       - name: Checkout repo
@@ -47,18 +40,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Fetching PRs merged to prod in the last ${{ steps.output-variables.outputs.days_back }} days..."
-          
+
           prs_json=$(gh pr list \
             --base prod \
             --state merged \
             --limit 50 \
             --json number,title,body,mergedAt,author,labels,files \
             --jq "[.[] | select(.mergedAt >= \"${{ steps.output-variables.outputs.since_date }}\")]")
-          
+
           echo "Found $(echo "$prs_json" | jq length) PRs"
-          
+
           echo "$prs_json" > /tmp/recent_prs.json
-          
+
           for pr in $(echo "$prs_json" | jq -r '.[] | @base64'); do
             pr_data=$(echo "$pr" | base64 --decode)
             pr_number=$(echo "$pr_data" | jq -r '.number')
@@ -73,7 +66,7 @@ jobs:
             printf "## PR #%s: %s\nAuthor: @%s\nMerged: %s\nLabels: %s\nFiles changed: %s\n\nDescription:\n%s\n\n---\n\n" \
               "$pr_number" "$pr_title" "$pr_author" "$pr_merged_at" "$pr_labels" "$files_changed" "$pr_body" >> /tmp/pr_content.txt
           done
-          
+
 
           echo "pr_count=$(echo "$prs_json" | jq length)" >> "$GITHUB_OUTPUT"
 
@@ -83,7 +76,7 @@ jobs:
         run: |
           # Read PR content for the prompt
           pr_content=$(cat /tmp/pr_content.txt)
-          
+
           # Set system prompt as environment variable
           echo "SYSTEM_PROMPT<<EOF" >> $GITHUB_ENV
           echo "You are a technical deployment summary assistant for Novu, an open-source notification infrastructure platform. 
@@ -105,7 +98,7 @@ jobs:
 
           Focus on the business impact and user value of the changes." >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
-          
+
           # Set user prompt as environment variable
           echo "USER_PROMPT<<EOF" >> $GITHUB_ENV
           echo "Please analyze the following production deployment PRs from the last ${{ steps.output-variables.outputs.days_back }} days and create a comprehensive deployment summary:
@@ -121,10 +114,8 @@ jobs:
         if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
         uses: actions/ai-inference@v1
         with:
-          model: ${{ github.event.inputs.ai_model || 'azure-openai/gpt-4o' }}
           system-prompt: ${{ env.SYSTEM_PROMPT }}
           prompt: ${{ env.USER_PROMPT }}
-          max-tokens: 2000
 
       - name: Handle no recent PRs
         id: no-prs-message
