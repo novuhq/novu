@@ -27,7 +27,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
+const Providers: React.FC<PropsWithChildren> = ({ children }) => {
   return (
     <ThemeProvider shouldDisableGlobals>
       <NovuiProvider>

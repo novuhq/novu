@@ -22,7 +22,7 @@ const menuItems = [
   },
 ];
 
-export function HeaderMenuItems({}) {
+export function HeaderMenuItems() {
   const { currentOrganization, currentUser, logout } = useAuth();
 
   const isDark = useIsDarkTheme();
