@@ -399,7 +399,7 @@ export class UpsertWorkflowUseCase {
 
   private removeBrandingFromHtml(html: string): string {
     try {
-      return html.replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>/gi, '');
+      return html.replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>(\s*)/gi, '');
     } catch (error) {
       return html;
     }
