@@ -470,7 +470,7 @@ jobs:
               "blocks": ${{ steps.prepare-slack.outputs.blocks_json }}
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_PRODUCT_WEBHOOK_SLACK }}
 
       - name: Save summary to file
         if: ${{ steps.ai-summary.outputs.response }}
