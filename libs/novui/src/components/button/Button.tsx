@@ -6,7 +6,7 @@ import { button, type ButtonVariant } from '../../../styled-system/recipes';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { IconType } from '../../icons';
 import { CoreProps, CorePropsWithChildren } from '../../types';
-import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
+import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
 import {
   BUTTON_SIZE_TO_EXTERNAL_BUTTON_SIZE,
   BUTTON_SIZE_TO_ICON_SIZE,
@@ -34,8 +34,7 @@ type PolymorphicComponent = <C extends React.ElementType = ButtonDefaultElement>
   props: ButtonProps<C>
 ) => JSX.Element | null;
 
-// @ts-expect-error
-export const Button: PolymorphicComponent = React.forwardRef(
+export const Button: PolymorphicComponent = forwardRefWithAs<ButtonDefaultElement, JsxStyleProps & Partial<ButtonVariant> & CoreProps & ButtonCoreProps>(
   <C extends React.ElementType = ButtonDefaultElement>(
     { variant = DEFAULT_VARIANT, size = DEFAULT_SIZE, ...props }: ButtonProps<C>,
     ref?: PolymorphicRef<C>

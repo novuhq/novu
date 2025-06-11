@@ -4,7 +4,7 @@ import { splitCssProps } from '../../../styled-system/jsx';
 import { text, type TextVariantProps } from '../../../styled-system/recipes';
 import type { JsxStyleProps } from '../../../styled-system/types';
 import { CoreProps } from '../../types';
-import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
+import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
 
 export type TextProps<C extends React.ElementType> = PolymorphicComponentPropWithRef<
   C,
@@ -13,8 +13,7 @@ export type TextProps<C extends React.ElementType> = PolymorphicComponentPropWit
 
 type PolymorphicComponent = <C extends React.ElementType = 'p'>(props: TextProps<C>) => JSX.Element | null;
 
-// @ts-expect-error
-export const Text: PolymorphicComponent = React.forwardRef(
+export const Text: PolymorphicComponent = forwardRefWithAs<'p', JsxStyleProps & TextVariantProps & CoreProps>(
   <C extends React.ElementType = 'p'>(props: TextProps<C>, ref?: PolymorphicRef<C>) => {
     const [variantProps, textProps] = text.splitVariantProps(props);
     const [cssProps, localProps] = splitCssProps(textProps);
