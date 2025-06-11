@@ -5,6 +5,7 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -12,6 +13,20 @@ import {
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
+
+/**
+ * Type of editor to use for the body.
+ */
+export const EmailStepUpsertDtoEditorType = {
+  Block: "block",
+  Html: "html",
+} as const;
+/**
+ * Type of editor to use for the body.
+ */
+export type EmailStepUpsertDtoEditorType = ClosedEnum<
+  typeof EmailStepUpsertDtoEditorType
+>;
 
 /**
  * Control values for the Email step
@@ -29,6 +44,10 @@ export type EmailStepUpsertDtoControlValues = {
    * Body content of the email, either a valid Maily JSON object, or html string.
    */
   body?: string | undefined;
+  /**
+   * Type of editor to use for the body.
+   */
+  editorType?: EmailStepUpsertDtoEditorType | undefined;
   /**
    * Disable sanitization of the output.
    */
@@ -55,6 +74,27 @@ export type EmailStepUpsertDto = {
 };
 
 /** @internal */
+export const EmailStepUpsertDtoEditorType$inboundSchema: z.ZodNativeEnum<
+  typeof EmailStepUpsertDtoEditorType
+> = z.nativeEnum(EmailStepUpsertDtoEditorType);
+
+/** @internal */
+export const EmailStepUpsertDtoEditorType$outboundSchema: z.ZodNativeEnum<
+  typeof EmailStepUpsertDtoEditorType
+> = EmailStepUpsertDtoEditorType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EmailStepUpsertDtoEditorType$ {
+  /** @deprecated use `EmailStepUpsertDtoEditorType$inboundSchema` instead. */
+  export const inboundSchema = EmailStepUpsertDtoEditorType$inboundSchema;
+  /** @deprecated use `EmailStepUpsertDtoEditorType$outboundSchema` instead. */
+  export const outboundSchema = EmailStepUpsertDtoEditorType$outboundSchema;
+}
+
+/** @internal */
 export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   EmailStepUpsertDtoControlValues,
   z.ZodTypeDef,
@@ -63,6 +103,7 @@ export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
+  editorType: EmailStepUpsertDtoEditorType$inboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
 });
 
@@ -71,6 +112,7 @@ export type EmailStepUpsertDtoControlValues$Outbound = {
   skip?: { [k: string]: any } | undefined;
   subject: string;
   body: string;
+  editorType: string;
   disableOutputSanitization: boolean;
 };
 
@@ -83,6 +125,7 @@ export const EmailStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
+  editorType: EmailStepUpsertDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
 });
 

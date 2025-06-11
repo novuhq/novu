@@ -4,8 +4,21 @@
 
 import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+
+/**
+ * Type of editor to use for the body.
+ */
+export const EditorType = {
+  Block: "block",
+  Html: "html",
+} as const;
+/**
+ * Type of editor to use for the body.
+ */
+export type EditorType = ClosedEnum<typeof EditorType>;
 
 export type EmailControlDto = {
   /**
@@ -21,10 +34,33 @@ export type EmailControlDto = {
    */
   body?: string | undefined;
   /**
+   * Type of editor to use for the body.
+   */
+  editorType?: EditorType | undefined;
+  /**
    * Disable sanitization of the output.
    */
   disableOutputSanitization?: boolean | undefined;
 };
+
+/** @internal */
+export const EditorType$inboundSchema: z.ZodNativeEnum<typeof EditorType> = z
+  .nativeEnum(EditorType);
+
+/** @internal */
+export const EditorType$outboundSchema: z.ZodNativeEnum<typeof EditorType> =
+  EditorType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EditorType$ {
+  /** @deprecated use `EditorType$inboundSchema` instead. */
+  export const inboundSchema = EditorType$inboundSchema;
+  /** @deprecated use `EditorType$outboundSchema` instead. */
+  export const outboundSchema = EditorType$outboundSchema;
+}
 
 /** @internal */
 export const EmailControlDto$inboundSchema: z.ZodType<
@@ -35,6 +71,7 @@ export const EmailControlDto$inboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
+  editorType: EditorType$inboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
 });
 
@@ -43,6 +80,7 @@ export type EmailControlDto$Outbound = {
   skip?: { [k: string]: any } | undefined;
   subject: string;
   body: string;
+  editorType: string;
   disableOutputSanitization: boolean;
 };
 
@@ -55,6 +93,7 @@ export const EmailControlDto$outboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
+  editorType: EditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
 });
 

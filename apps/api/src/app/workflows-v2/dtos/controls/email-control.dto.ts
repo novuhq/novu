@@ -15,6 +15,15 @@ export class EmailControlDto extends SkipControlDto {
   @IsString()
   body: string = '';
 
+  @ApiPropertyOptional({
+    description: 'Type of editor to use for the body.',
+    enum: ['block', 'html'],
+    default: 'block',
+  })
+  @IsString()
+  @IsOptional()
+  editorType?: 'block' | 'html' = 'block';
+
   @ApiPropertyOptional({ description: 'Disable sanitization of the output.', default: false })
   @IsBoolean()
   @IsOptional()

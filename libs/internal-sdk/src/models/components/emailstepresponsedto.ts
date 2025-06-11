@@ -8,6 +8,7 @@ import {
   collectExtraKeys as collectExtraKeys$,
   safeParse,
 } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -34,6 +35,20 @@ import {
 } from "./workfloworiginenum.js";
 
 /**
+ * Type of editor to use for the body.
+ */
+export const EmailStepResponseDtoEditorType = {
+  Block: "block",
+  Html: "html",
+} as const;
+/**
+ * Type of editor to use for the body.
+ */
+export type EmailStepResponseDtoEditorType = ClosedEnum<
+  typeof EmailStepResponseDtoEditorType
+>;
+
+/**
  * Control values for the email step
  */
 export type EmailStepResponseDtoControlValues = {
@@ -49,6 +64,10 @@ export type EmailStepResponseDtoControlValues = {
    * Body content of the email, either a valid Maily JSON object, or html string.
    */
   body?: string | undefined;
+  /**
+   * Type of editor to use for the body.
+   */
+  editorType?: EmailStepResponseDtoEditorType | undefined;
   /**
    * Disable sanitization of the output.
    */
@@ -108,6 +127,27 @@ export type EmailStepResponseDto = {
 };
 
 /** @internal */
+export const EmailStepResponseDtoEditorType$inboundSchema: z.ZodNativeEnum<
+  typeof EmailStepResponseDtoEditorType
+> = z.nativeEnum(EmailStepResponseDtoEditorType);
+
+/** @internal */
+export const EmailStepResponseDtoEditorType$outboundSchema: z.ZodNativeEnum<
+  typeof EmailStepResponseDtoEditorType
+> = EmailStepResponseDtoEditorType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EmailStepResponseDtoEditorType$ {
+  /** @deprecated use `EmailStepResponseDtoEditorType$inboundSchema` instead. */
+  export const inboundSchema = EmailStepResponseDtoEditorType$inboundSchema;
+  /** @deprecated use `EmailStepResponseDtoEditorType$outboundSchema` instead. */
+  export const outboundSchema = EmailStepResponseDtoEditorType$outboundSchema;
+}
+
+/** @internal */
 export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
   EmailStepResponseDtoControlValues,
   z.ZodTypeDef,
@@ -117,6 +157,7 @@ export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
     skip: z.record(z.any()).optional(),
     subject: z.string(),
     body: z.string().default(""),
+    editorType: EmailStepResponseDtoEditorType$inboundSchema.default("block"),
     disableOutputSanitization: z.boolean().default(false),
   }).catchall(z.any()),
   "additionalProperties",
@@ -128,6 +169,7 @@ export type EmailStepResponseDtoControlValues$Outbound = {
   skip?: { [k: string]: any } | undefined;
   subject: string;
   body: string;
+  editorType: string;
   disableOutputSanitization: boolean;
   [additionalProperties: string]: unknown;
 };
@@ -141,6 +183,7 @@ export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
+  editorType: EmailStepResponseDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
