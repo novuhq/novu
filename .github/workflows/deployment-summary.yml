@@ -44,13 +44,16 @@ jobs:
           prs_json=$(gh pr list \
             --base prod \
             --state merged \
-            --limit 50 \
+            --limit 10 \
             --json number,title,body,mergedAt,author,labels,files \
             --jq "[.[] | select(.mergedAt >= \"${{ steps.output-variables.outputs.since_date }}\")]")
 
           echo "Found $(echo "$prs_json" | jq length) PRs"
 
           echo "$prs_json" > /tmp/recent_prs.json
+
+          # Clear the output file
+          > /tmp/pr_content.txt
 
           for pr in $(echo "$prs_json" | jq -r '.[] | @base64'); do
             pr_data=$(echo "$pr" | base64 --decode)
@@ -61,12 +64,93 @@ jobs:
             pr_merged_at=$(echo "$pr_data" | jq -r '.mergedAt')
             pr_labels=$(echo "$pr_data" | jq -r '.labels[].name' | tr '\n' ', ' | sed 's/,$//')
             
-            files_changed=$(gh pr view $pr_number --json files --jq '.files[].path' | head -10 | tr '\n' ', ' | sed 's/,$//')
-            
-            printf "## PR #%s: %s\nAuthor: @%s\nMerged: %s\nLabels: %s\nFiles changed: %s\n\nDescription:\n%s\n\n---\n\n" \
-              "$pr_number" "$pr_title" "$pr_author" "$pr_merged_at" "$pr_labels" "$files_changed" "$pr_body" >> /tmp/pr_content.txt
-          done
+            # Check if this is a release PR
+            is_release_pr=false
+            if [[ "$pr_title" =~ "Release" ]] || [[ "$pr_author" == "github-actions[bot]" ]]; then
+              is_release_pr=true
+              echo "Detected release PR #$pr_number - fetching commit details..."
+            fi
 
+            if [[ "$is_release_pr" == "true" ]]; then
+              # Fetch all commits in this PR
+              commits_json=$(gh pr view $pr_number --json commits --jq '.commits')
+              commit_count=$(echo "$commits_json" | jq length)
+              
+              echo "## Release PR #$pr_number: $pr_title" >> /tmp/pr_content.txt
+              echo "Author: @$pr_author | Merged: $pr_merged_at | Commits: $commit_count" >> /tmp/pr_content.txt
+              echo "" >> /tmp/pr_content.txt
+              echo "### Included Changes:" >> /tmp/pr_content.txt
+              echo "" >> /tmp/pr_content.txt
+
+              # Process each commit
+              for commit in $(echo "$commits_json" | jq -r '.[] | @base64'); do
+                commit_data=$(echo "$commit" | base64 --decode)
+                commit_sha=$(echo "$commit_data" | jq -r '.oid')
+                commit_message=$(echo "$commit_data" | jq -r '.messageHeadline')
+                commit_author=$(echo "$commit_data" | jq -r '.authors.nodes[0].user.login // .authors.nodes[0].name // "unknown"')
+                
+                # Extract scope from conventional commit format (e.g., "fix(api):" -> "api")
+                commit_scope=""
+                if [[ "$commit_message" =~ ^[a-z]+\(([^)]+)\): ]]; then
+                  commit_scope="${BASH_REMATCH[1]}"
+                fi
+                
+                # Extract PR number from commit message if it exists (e.g., "(#1234)")
+                if [[ "$commit_message" =~ \(#([0-9]+)\) ]]; then
+                  original_pr_number="${BASH_REMATCH[1]}"
+                  
+                  # Try to fetch the original PR details
+                  if original_pr=$(gh pr view $original_pr_number --json title,body,labels,author,state,files 2>/dev/null); then
+                    original_pr_title=$(echo "$original_pr" | jq -r '.title')
+                    original_pr_body=$(echo "$original_pr" | jq -r '.body // "No description"' | head -n 30 | sed 's/```[^`]*```//g' | tr '\n' ' ' | sed 's/  */ /g' | cut -c1-500)
+                    original_pr_author=$(echo "$original_pr" | jq -r '.author.login')
+                    original_pr_labels=$(echo "$original_pr" | jq -r '.labels[].name' | tr '\n' ', ' | sed 's/,$//')
+                    original_pr_files=$(echo "$original_pr" | jq -r '.files[].path' | grep -E '\.(ts|tsx|js|jsx)$' | head -5 | tr '\n' ', ' | sed 's/,$//')
+                    
+                    echo "- **$commit_message**" >> /tmp/pr_content.txt
+                    echo "  - Original PR: #$original_pr_number by @$original_pr_author" >> /tmp/pr_content.txt
+                    if [[ -n "$commit_scope" ]]; then
+                      echo "  - Scope: $commit_scope" >> /tmp/pr_content.txt
+                    fi
+                    if [[ -n "$original_pr_labels" ]]; then
+                      echo "  - Labels: $original_pr_labels" >> /tmp/pr_content.txt
+                    fi
+                    if [[ -n "$original_pr_files" ]]; then
+                      echo "  - Key files: $original_pr_files" >> /tmp/pr_content.txt
+                    fi
+                    if [[ "$original_pr_body" != "No description" ]] && [[ -n "$original_pr_body" ]]; then
+                      # Clean up the body text
+                      cleaned_body=$(echo "$original_pr_body" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                      if [[ ${#cleaned_body} -gt 200 ]]; then
+                        cleaned_body="${cleaned_body:0:200}..."
+                      fi
+                      echo "  - Summary: $cleaned_body" >> /tmp/pr_content.txt
+                    fi
+                  else
+                    echo "- **$commit_message** by @$commit_author" >> /tmp/pr_content.txt
+                    if [[ -n "$commit_scope" ]]; then
+                      echo "  - Scope: $commit_scope" >> /tmp/pr_content.txt
+                    fi
+                  fi
+                else
+                  echo "- **$commit_message** by @$commit_author" >> /tmp/pr_content.txt
+                  if [[ -n "$commit_scope" ]]; then
+                    echo "  - Scope: $commit_scope" >> /tmp/pr_content.txt
+                  fi
+                fi
+                echo "" >> /tmp/pr_content.txt
+              done
+              
+              echo "---" >> /tmp/pr_content.txt
+              echo "" >> /tmp/pr_content.txt
+            else
+              # For non-release PRs, use the original format
+              files_changed=$(gh pr view $pr_number --json files --jq '.files[].path' | head -10 | tr '\n' ', ' | sed 's/,$//')
+              
+              printf "## PR #%s: %s\nAuthor: @%s\nMerged: %s\nLabels: %s\nFiles changed: %s\n\nDescription:\n%s\n\n---\n\n" \
+                "$pr_number" "$pr_title" "$pr_author" "$pr_merged_at" "$pr_labels" "$files_changed" "$pr_body" >> /tmp/pr_content.txt
+            fi
+          done
 
           echo "pr_count=$(echo "$prs_json" | jq length)" >> "$GITHUB_OUTPUT"
 
@@ -89,6 +173,12 @@ jobs:
           4. **Breaking Changes**: Any changes that might affect existing users or integrations
           5. **Security & Compliance**: Security fixes, compliance updates, vulnerability patches
 
+          When analyzing Release PRs:
+          - Focus on the individual commits and their original PR context
+          - Group related changes together
+          - Highlight the most impactful changes based on labels and descriptions
+          - Pay special attention to commits mentioning breaking changes, security, or major features
+
           IMPORTANT: Format your response for Slack messaging with:
           - Keep it concise (under 2000 characters total)
           - Use simple bullet points with • instead of complex markdown
@@ -98,7 +188,8 @@ jobs:
           - Focus on the most impactful changes only
           - If no significant changes, say so briefly
 
-          Focus on the business impact and user value of the changes." >> $GITHUB_ENV
+          Focus on the business impact and user value of the changes. When you see commit messages with PR numbers (e.g., #1234), 
+          prioritize the context from those original PRs as they contain more detailed information." >> $GITHUB_ENV
           echo "EOF" >> $GITHUB_ENV
 
           # Set user prompt as environment variable
