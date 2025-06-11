@@ -9,7 +9,9 @@ run-name: >
     github.event.inputs.rollback_ws == 'true' && 'ws, ' || ''
   }}${{
     github.event.inputs.rollback_webhook == 'true' && 'webhook ' || ''
-  }}on ${{ github.event.inputs.environment }}
+  }}on ${{ github.event.inputs.environment }} (${{
+    github.event.inputs.revisions_to_rollback
+  }} revisions)
 description: Rollback deployment to the previous task definition for selected services in the specified environment.
 concurrency:
   group: "rollback-${{ github.event.inputs.environment }}"
@@ -51,6 +53,12 @@ on:
         required: true
         type: boolean
         default: true
+
+      revisions_to_rollback:
+        description: 'Number of revisions to rollback (default: 1)'
+        required: true
+        type: number
+        default: 1
       
       rollback_signoff:
         description: "This will rollback the selected services to the previous task definition. This won't rollback any database migration or environment changes. Do you agree?"
@@ -212,8 +220,13 @@ jobs:
               index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
               if [ -n "$index" ]; then
                 if [ "$index" -ge 1 ]; then  # Greater than or equal to 1
-                  previous_index=$((index + 1))
+                  revisions_to_rollback=${{ github.event.inputs.revisions_to_rollback }}
+                  previous_index=$((index + revisions_to_rollback))
                   previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+                  if [ -z "$previous_task_definition_arn" ]; then
+                    echo "Error: Cannot rollback $revisions_to_rollback revisions. Not enough previous versions available."
+                    exit 1
+                  fi
                   echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
                 else
                   echo "Invalid index value: $index"
