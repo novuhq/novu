@@ -407,7 +407,7 @@ async function performInstallation(config: IUserConfig) {
       }
     }
 
-    logger.step(5, "What's next?");
+    logger.step(4, "What's next?");
 
     displayNextSteps(framework);
 

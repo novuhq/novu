@@ -1,6 +1,6 @@
 {
   "name": "add-inbox",
-  "version": "1.0.5",
+  "version": "1.0.7",
   "description": "Add inbox notifications to your application with one command",
   "repository": {
     "type": "git",
