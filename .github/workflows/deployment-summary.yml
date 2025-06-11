@@ -66,7 +66,7 @@ jobs:
             
             # Check if this is a release PR
             is_release_pr=false
-            if [[ "$pr_title" =~ "Release" ]] || [[ "$pr_author" == "github-actions[bot]" ]]; then
+            if [[ "$pr_title" =~ Release ]] || [[ "$pr_author" == "github-actions[bot]" ]]; then
               is_release_pr=true
               echo "Detected release PR #$pr_number - fetching commit details..."
             fi
