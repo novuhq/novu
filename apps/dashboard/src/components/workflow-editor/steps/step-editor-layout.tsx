@@ -21,7 +21,7 @@ function StepEditorContent() {
   const editorTitle = getEditorTitle(step.type);
 
   return (
-    <ResizableLayout>
+    <ResizableLayout autoSaveId="step-editor-main-layout">
       <ResizableLayout.ContextPanel>
         <PanelHeader icon={RiCodeBlock} title="Preview Context" />
         <div className="bg-bg-weak flex-1 overflow-hidden">
@@ -35,7 +35,7 @@ function StepEditorContent() {
 
       <ResizableLayout.MainContentPanel>
         <div className="flex min-h-0 flex-1 flex-col">
-          <ResizableLayout>
+          <ResizableLayout autoSaveId="step-editor-content-layout">
             <ResizableLayout.EditorPanel>
               <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} />
               <div className="flex-1 overflow-y-auto">
