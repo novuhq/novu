@@ -308,8 +308,10 @@ jobs:
 
           # Add sections if they have content
           if [[ -n "$features_section" ]]; then
-            # Clean up the features section content
+            # Clean up the features section content and make PR links clickable
             cleaned_features=$(echo -e "$features_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to clickable links
+            cleaned_features=$(echo "$cleaned_features" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
             features_text="*✨ Key Features & Improvements*"$'\n'"$cleaned_features"
             jq --arg text "$features_text" '.blocks += [{
               type: "section",
@@ -321,8 +323,10 @@ jobs:
           fi
 
           if [[ -n "$fixes_section" ]]; then
-            # Clean up the fixes section content
+            # Clean up the fixes section content and make PR links clickable
             cleaned_fixes=$(echo -e "$fixes_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to clickable links
+            cleaned_fixes=$(echo "$cleaned_fixes" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
             fixes_text="*🐛 Bug Fixes & Stability*"$'\n'"$cleaned_fixes"
             jq --arg text "$fixes_text" '.blocks += [{
               type: "section",
@@ -334,8 +338,10 @@ jobs:
           fi
 
           if [[ -n "$technical_section" ]]; then
-            # Clean up the technical section content
+            # Clean up the technical section content and make PR links clickable
             cleaned_technical=$(echo -e "$technical_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to clickable links
+            cleaned_technical=$(echo "$cleaned_technical" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
             technical_text="*⚙️ Technical Changes*"$'\n'"$cleaned_technical"
             jq --arg text "$technical_text" '.blocks += [{
               type: "section",
@@ -347,8 +353,10 @@ jobs:
           fi
 
           if [[ -n "$security_section" ]]; then
-            # Clean up the security section content
+            # Clean up the security section content and make PR links clickable
             cleaned_security=$(echo -e "$security_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to clickable links
+            cleaned_security=$(echo "$cleaned_security" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
             security_text="*🔒 Security & Compliance*"$'\n'"$cleaned_security"
             jq --arg text "$security_text" '.blocks += [{
               type: "section",
@@ -361,7 +369,9 @@ jobs:
 
           # If no sections were parsed, add the full summary as one section
           if [[ -z "$features_section" && -z "$fixes_section" && -z "$technical_section" && -z "$security_section" ]]; then
-            jq --arg text "*📋 Deployment Summary*\n$summary_text" '.blocks += [{
+            # Make PR links clickable in the full summary too
+            summary_with_links=$(echo "$summary_text" | sed -E 's/\(#([0-9]+)\)/(<https:\/\/github.com\/${{ github.repository }}\/pull\/\1|#\1>)/g')
+            jq --arg text "*📋 Deployment Summary*"$'\n'"$summary_with_links" '.blocks += [{
               type: "section",
               text: {
                 type: "mrkdwn",
