@@ -18,7 +18,7 @@ export function pluralize(
   item: unknown,
   singular: string = '',
   plural: string = '',
-  showCount: boolean = true
+  showCount: 'true' | 'false' = 'true'
 ): string {
   if (item === null || item === undefined) {
     return '';
@@ -53,5 +53,5 @@ export function pluralize(
     word = plur(singular, count);
   }
 
-  return showCount ? `${count} ${word}` : word;
+  return showCount === 'true' ? `${count} ${word}` : word;
 }
