@@ -1,0 +1,170 @@
+name: 'Generate Deployment Summary'
+
+on:
+  workflow_dispatch:
+    inputs:
+      days_back:
+        description: 'Number of days to look back for PRs'
+        required: false
+        default: '7'
+        type: string
+      ai_model:
+        description: 'AI model to use for summarization'
+        required: false
+        default: 'gpt-4o'
+        type: choice
+        options:
+          - gpt-4o
+          - gpt-4o-mini
+          - gpt-3.5-turbo
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+jobs:
+  generate-deployment-summary:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      id-token: write
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set output variables
+        id: output-variables
+        run: |
+          echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
+          echo "days_back=${{ github.event.inputs.days_back || '7' }}" >> "$GITHUB_OUTPUT"
+          echo "since_date=$(date -d '${{ github.event.inputs.days_back || '7' }} days ago' --iso-8601)" >> "$GITHUB_OUTPUT"
+
+      - name: Fetch recent production PRs
+        id: fetch-prs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Fetching PRs merged to prod in the last ${{ steps.output-variables.outputs.days_back }} days..."
+          
+          prs_json=$(gh pr list \
+            --base prod \
+            --state merged \
+            --limit 50 \
+            --json number,title,body,mergedAt,author,labels,files \
+            --jq "[.[] | select(.mergedAt >= \"${{ steps.output-variables.outputs.since_date }}\")]")
+          
+          echo "Found $(echo "$prs_json" | jq length) PRs"
+          
+          echo "$prs_json" > /tmp/recent_prs.json
+          
+          for pr in $(echo "$prs_json" | jq -r '.[] | @base64'); do
+            pr_data=$(echo "$pr" | base64 --decode)
+            pr_number=$(echo "$pr_data" | jq -r '.number')
+            pr_title=$(echo "$pr_data" | jq -r '.title')
+            pr_body=$(echo "$pr_data" | jq -r '.body // "No description provided"')
+            pr_author=$(echo "$pr_data" | jq -r '.author.login')
+            pr_merged_at=$(echo "$pr_data" | jq -r '.mergedAt')
+            pr_labels=$(echo "$pr_data" | jq -r '.labels[].name' | tr '\n' ', ' | sed 's/,$//')
+            
+            files_changed=$(gh pr view $pr_number --json files --jq '.files[].path' | head -10 | tr '\n' ', ' | sed 's/,$//')
+            
+            printf "## PR #%s: %s\nAuthor: @%s\nMerged: %s\nLabels: %s\nFiles changed: %s\n\nDescription:\n%s\n\n---\n\n" \
+              "$pr_number" "$pr_title" "$pr_author" "$pr_merged_at" "$pr_labels" "$files_changed" "$pr_body" >> /tmp/pr_content.txt
+          done
+          
+
+          echo "pr_count=$(echo "$prs_json" | jq length)" >> "$GITHUB_OUTPUT"
+
+      - name: Create AI prompt
+        run: |
+          cat > /tmp/system_prompt.txt << 'EOF'
+          You are a technical deployment summary assistant for Novu, an open-source notification infrastructure platform. 
+          
+          Your task is to analyze recent production deployment PRs and create a comprehensive, well-structured summary that highlights:
+          
+          1. **Key Features & Improvements**: New functionality, enhancements, and user-facing changes
+          2. **Bug Fixes & Stability**: Critical fixes, performance improvements, and reliability enhancements  
+          3. **Technical Changes**: Infrastructure updates, dependency changes, refactoring
+          4. **Breaking Changes**: Any changes that might affect existing users or integrations
+          5. **Security & Compliance**: Security fixes, compliance updates, vulnerability patches
+          
+          Format your response in clear markdown with:
+          - Executive summary (2-3 sentences)
+          - Categorized sections with bullet points
+          - Highlight the most impactful changes
+          - Use emojis to make it visually appealing
+          - Keep technical details accessible to both technical and non-technical stakeholders
+          
+          Focus on the business impact and user value of the changes.
+          EOF
+          
+          cat > /tmp/user_prompt.txt << EOF
+          Please analyze the following production deployment PRs from the last ${{ steps.output-variables.outputs.days_back }} days and create a comprehensive deployment summary:
+          
+          $(cat /tmp/pr_content.txt)
+          
+          Total PRs analyzed: ${{ steps.fetch-prs.outputs.pr_count }}
+          Deployment period: ${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }}
+          EOF
+
+      - name: Generate AI deployment summary
+        id: ai-summary
+        if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
+        uses: actions/ai-inference@v1
+        with:
+          model: ${{ github.event.inputs.ai_model || 'gpt-4o' }}
+          system-prompt-file: '/tmp/system_prompt.txt'
+          prompt-file: '/tmp/user_prompt.txt'
+          max-tokens: 2000
+
+      - name: Handle no recent PRs
+        id: no-prs-message
+        if: ${{ steps.fetch-prs.outputs.pr_count == 0 }}
+        run: |
+          echo "summary=No production deployments found in the last ${{ steps.output-variables.outputs.days_back }} days." >> "$GITHUB_OUTPUT"
+
+      - name: Send deployment summary to Slack
+        id: slack
+        uses: slackapi/slack-github-action@v1.26.0
+        if: ${{ always() }}
+        with:
+          payload: |
+            {
+              "text": "*🚀 Novu Production Deployment Summary (${{ steps.output-variables.outputs.date_humanized }})*",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🚀 Novu Production Deployment Summary*\n*Period:* Last ${{ steps.output-variables.outputs.days_back }} days (${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }})\n*PRs Analyzed:* ${{ steps.fetch-prs.outputs.pr_count || 0 }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Generated by <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|GitHub Actions> using ${{ github.event.inputs.ai_model || 'gpt-4o' }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+
+      - name: Save summary to file
+        if: ${{ steps.ai-summary.outputs.response }}
+        run: |
+          echo "${{ steps.ai-summary.outputs.response }}" > deployment-summary-${{ steps.output-variables.outputs.date_humanized }}.md
+          echo "Summary saved to deployment-summary-${{ steps.output-variables.outputs.date_humanized }}.md"
