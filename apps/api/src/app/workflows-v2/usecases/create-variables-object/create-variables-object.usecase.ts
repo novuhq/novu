@@ -30,9 +30,17 @@ export class CreateVariablesObject {
 
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
+    const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
     const controlValues = await this.getControlValues(command);
 
-    const variables = this.extractAllVariables(controlValues);
+    const variables = this.extractAllVariables(controlValues, isHtmlEditorEnabled);
     const arrayVariables = this.extractArrayVariables(controlValues);
     const showIfVariables = this.extractMailyAttribute(controlValues, MailyAttrsEnum.SHOW_IF_KEY);
 
@@ -201,9 +209,13 @@ export class CreateVariablesObject {
    * returns = [ "name", "address" ]
    */
   @Instrument()
-  private extractAllVariables(controlValues: unknown[]): string[] {
+  private extractAllVariables(controlValues: unknown[], isHtmlEditorEnabled: boolean): string[] {
     const variables = controlValues.flatMap((value) => {
-      const templateVariables = buildVariables(undefined, value);
+      const templateVariables = buildVariables({
+        useNewLiquidParser: isHtmlEditorEnabled,
+        variableSchema: undefined,
+        controlValue: value,
+      });
 
       return templateVariables.validVariables.map((variable) => variable.name);
     });

@@ -1,6 +1,6 @@
 import { LoaderProps as ExternalLoaderProps, LoadingOverlay as ExternalLoadingOverlay } from '@mantine/core';
 import React from 'react';
-import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
+import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { css, cx } from '../../../styled-system/css';
 import { loadingOverlay, type LoadingOverlayVariant } from '../../../styled-system/recipes';
@@ -39,8 +39,7 @@ type PolymorphicComponent = <C extends React.ElementType = LoadingOverlayDefault
  * TODO: Add support for container-scoped loader. For now, only full-page works.
  * To work around this, use position: relative in the parent component
  */
-// @ts-expect-error
-export const LoadingOverlay: PolymorphicComponent = React.forwardRef(
+export const LoadingOverlay: PolymorphicComponent = forwardRefWithAs<LoadingOverlayDefaultElement, JsxStyleProps & Partial<LoadingOverlayVariant> & CoreProps & LoadingOverlayCoreProps>(
   <C extends React.ElementType = LoadingOverlayDefaultElement>(
     { variant, isVisible = true, size = DEFAULT_SIZE, zIndex = DEFAULT_Z_INDEX, ...props }: LoadingOverlayProps<C>,
     ref?: PolymorphicRef<C>
