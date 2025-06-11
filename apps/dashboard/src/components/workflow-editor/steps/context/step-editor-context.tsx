@@ -15,7 +15,6 @@ type StepEditorContextType = {
   isSubsequentLoad: boolean;
   isNovuCloud: boolean;
   isStepEditable: boolean;
-  isStepPreviewable: boolean;
 };
 
 const StepEditorContext = createContext<StepEditorContextType | null>(null);
@@ -40,7 +39,6 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
   const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
   const isStepEditable = isExternal || (isNovuCloud && Boolean(uiSchema));
-  const isStepPreviewable = isNovuCloud;
 
   const isInitialLoad = isPreviewPending;
   const isSubsequentLoad = isFetching && !isPreviewPending;
@@ -58,7 +56,6 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
       isSubsequentLoad,
       isNovuCloud,
       isStepEditable,
-      isStepPreviewable,
     }),
     [
       workflow,
@@ -72,7 +69,6 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
       isSubsequentLoad,
       isNovuCloud,
       isStepEditable,
-      isStepPreviewable,
     ]
   );
 

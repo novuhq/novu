@@ -36,11 +36,7 @@ const MobilePreviewWrapper = memo(({ children, description }: { children: React.
 });
 
 export function StepPreviewFactory() {
-  const { step, previewData, isInitialLoad, isStepPreviewable } = useStepEditor();
-
-  if (!isStepPreviewable) {
-    return <UnavailablePreview />;
-  }
+  const { step, previewData, isInitialLoad } = useStepEditor();
 
   const commonProps = {
     previewData: previewData ?? undefined,
