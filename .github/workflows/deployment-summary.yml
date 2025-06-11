@@ -127,18 +127,20 @@ jobs:
         id: prepare-slack
         if: ${{ always() }}
         run: |
-          # Escape the AI summary for JSON
-          summary_text="${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}"
+          # Write the summary to a temporary file to avoid shell interpretation issues
+          cat > /tmp/summary.txt << 'SUMMARY_EOF'
+          ${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}
+          SUMMARY_EOF
 
-          # Replace problematic characters for JSON
-          summary_text=$(echo "$summary_text" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+          # Read and escape the content for JSON
+          summary_escaped=$(cat /tmp/summary.txt | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
 
           # Truncate if too long (Slack has limits)
-          if [ ${#summary_text} -gt 2500 ]; then
-            summary_text="${summary_text:0:2500}...\n\n_Summary truncated due to length limits._"
+          if [ ${#summary_escaped} -gt 2500 ]; then
+            summary_escaped="${summary_escaped:0:2500}...\\n\\n_Summary truncated due to length limits._"
           fi
 
-          echo "summary_escaped=$summary_text" >> "$GITHUB_OUTPUT"
+          echo "summary_escaped=$summary_escaped" >> "$GITHUB_OUTPUT"
 
       - name: Send deployment summary to Slack
         id: slack
