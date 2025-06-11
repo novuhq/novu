@@ -356,9 +356,7 @@ export class UpsertWorkflowUseCase {
           })
         );
         let htmlBody = (result.preview as EmailRenderOutput).body;
-        if (htmlBody.includes('data-novu-branding')) {
-          htmlBody = this.removeBrandingFromHtml(htmlBody);
-        }
+        htmlBody = this.removeBrandingFromHtml(htmlBody);
         emailControlValues.body = htmlBody;
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
         emailControlValues.body = '';
