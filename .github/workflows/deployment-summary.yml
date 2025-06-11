@@ -123,6 +123,23 @@ jobs:
         run: |
           echo "summary=No production deployments found in the last ${{ steps.output-variables.outputs.days_back }} days." >> "$GITHUB_OUTPUT"
 
+      - name: Prepare Slack payload
+        id: prepare-slack
+        if: ${{ always() }}
+        run: |
+          # Escape the AI summary for JSON
+          summary_text="${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}"
+
+          # Replace problematic characters for JSON
+          summary_text=$(echo "$summary_text" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed ':a;N;$!ba;s/\n/\\n/g')
+
+          # Truncate if too long (Slack has limits)
+          if [ ${#summary_text} -gt 2500 ]; then
+            summary_text="${summary_text:0:2500}...\n\n_Summary truncated due to length limits._"
+          fi
+
+          echo "summary_escaped=$summary_text" >> "$GITHUB_OUTPUT"
+
       - name: Send deployment summary to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
@@ -130,7 +147,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "*🚀 Novu Production Deployment Summary (${{ steps.output-variables.outputs.date_humanized }})*",
+              "text": "🚀 Novu Production Deployment Summary (${{ steps.output-variables.outputs.date_humanized }})",
               "blocks": [
                 {
                   "type": "section",
@@ -143,7 +160,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}"
+                    "text": "${{ steps.prepare-slack.outputs.summary_escaped }}"
                   }
                 },
                 {
