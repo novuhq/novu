@@ -32,7 +32,7 @@ interface IPromptResponse {
   updateEnvExample?: boolean;
 }
 
-interface PackageJson {
+interface IPackageJson {
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   name?: string;
@@ -160,11 +160,11 @@ async function promptUserConfiguration(): Promise<IUserConfig | null> {
   } as IUserConfig;
 }
 
-async function checkDependencyExists(packageName: string): Promise<boolean> {
+function checkDependencyExists(packageName: string): boolean {
   try {
     const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
-    if (await fileUtils.exists(packageJsonPath)) {
-      const packageJson = (await fileUtils.readJson(packageJsonPath)) as PackageJson;
+    if (fileUtils.exists(packageJsonPath)) {
+      const packageJson = fileUtils.readJson(packageJsonPath) as IPackageJson;
       const dependencies = {
         ...packageJson.dependencies,
         ...packageJson.devDependencies,
@@ -213,7 +213,7 @@ async function installDependencies(framework: Framework, packageManager: IPackag
       });
 
       // Enhanced verification of package installation
-      const packageJson = (await fileUtils.readJson(packageJsonPath)) as PackageJson;
+      const packageJson = (await fileUtils.readJson(packageJsonPath)) as IPackageJson;
       const dependencies = {
         ...packageJson.dependencies,
         ...packageJson.devDependencies,
@@ -296,7 +296,7 @@ function removeSelf(packageManager: IPackageManager) {
     // Check if we're running from the source directory by looking for package.json
     const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
     if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath) as PackageJson;
+      const packageJson = fileUtils.readJson(packageJsonPath) as IPackageJson;
       // If we're in the source directory, the package.json will have the name "add-inbox"
       if (packageJson.name === 'add-inbox') {
         logger.blue('  • Running from source directory - skipping self-removal');

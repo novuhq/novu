@@ -167,8 +167,15 @@ const baseTheme = (options: { multiline?: boolean }) =>
     },
     'div.cm-content': {
       padding: 0,
-      whiteSpace: 'preserve nowrap',
-      width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
+      ...(options.multiline
+        ? {
+            whiteSpace: 'pre-wrap',
+            width: '100%',
+          }
+        : {
+            whiteSpace: 'preserve nowrap',
+            width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
+          }),
     },
     'div.cm-gutters': {
       backgroundColor: 'transparent',
