@@ -264,26 +264,48 @@ jobs:
             case "$line" in
               *"Key Features"*|*"Features"*|*"Improvements"*)
                 current_section="features"
+                echo "DEBUG: Found features section header: $line"
                 ;;
               *"Bug Fixes"*|*"Fixes"*|*"Stability"*)
                 current_section="fixes"
+                echo "DEBUG: Found fixes section header: $line"
                 ;;
               *"Technical"*|*"Infrastructure"*|*"Dependencies"*)
                 current_section="technical"
+                echo "DEBUG: Found technical section header: $line"
                 ;;
               *"Security"*|*"Compliance"*)
                 current_section="security"
+                echo "DEBUG: Found security section header: $line"
                 ;;
               "• "*)
                 case "$current_section" in
-                  "features") features_section="$features_section$line\n" ;;
-                  "fixes") fixes_section="$fixes_section$line\n" ;;
-                  "technical") technical_section="$technical_section$line\n" ;;
-                  "security") security_section="$security_section$line\n" ;;
+                  "features") 
+                    features_section="$features_section$line\n"
+                    echo "DEBUG: Added to features: $line"
+                    ;;
+                  "fixes") 
+                    fixes_section="$fixes_section$line\n"
+                    echo "DEBUG: Added to fixes: $line"
+                    ;;
+                  "technical") 
+                    technical_section="$technical_section$line\n"
+                    echo "DEBUG: Added to technical: $line"
+                    ;;
+                  "security") 
+                    security_section="$security_section$line\n"
+                    echo "DEBUG: Added to security: $line"
+                    ;;
                 esac
                 ;;
             esac
           done < /tmp/summary.txt
+
+          echo "DEBUG: Final section lengths:"
+          echo "Features: ${#features_section} chars"
+          echo "Fixes: ${#fixes_section} chars"
+          echo "Technical: ${#technical_section} chars"
+          echo "Security: ${#security_section} chars"
 
           # Create base Slack payload structure using jq
           jq -n --arg period "Last ${{ steps.output-variables.outputs.days_back }} days (${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }})" \
@@ -316,9 +338,16 @@ jobs:
           if [[ -n "$features_section" ]]; then
             # Clean up the features section content and make PR links clickable
             cleaned_features=$(echo -e "$features_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
-            cleaned_features=$(echo "$cleaned_features" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_features=$(echo "$cleaned_features" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
             features_text="*✨ Key Features & Improvements*"$'\n'"$cleaned_features"
+            
+            # Check length and truncate if needed (Slack limit is ~3000 chars per block)
+            if [[ ${#features_text} -gt 2800 ]]; then
+              features_text="${features_text:0:2800}..."
+              echo "⚠️ Features section truncated due to length (${#features_text} chars)"
+            fi
+            
             jq --arg text "$features_text" '.blocks += [{
               type: "section",
               text: {
@@ -331,9 +360,16 @@ jobs:
           if [[ -n "$fixes_section" ]]; then
             # Clean up the fixes section content and make PR links clickable
             cleaned_fixes=$(echo -e "$fixes_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
-            cleaned_fixes=$(echo "$cleaned_fixes" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_fixes=$(echo "$cleaned_fixes" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
             fixes_text="*🐛 Bug Fixes & Stability*"$'\n'"$cleaned_fixes"
+            
+            # Check length and truncate if needed
+            if [[ ${#fixes_text} -gt 2800 ]]; then
+              fixes_text="${fixes_text:0:2800}..."
+              echo "⚠️ Fixes section truncated due to length (${#fixes_text} chars)"
+            fi
+            
             jq --arg text "$fixes_text" '.blocks += [{
               type: "section",
               text: {
@@ -346,9 +382,16 @@ jobs:
           if [[ -n "$technical_section" ]]; then
             # Clean up the technical section content and make PR links clickable
             cleaned_technical=$(echo -e "$technical_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
-            cleaned_technical=$(echo "$cleaned_technical" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_technical=$(echo "$cleaned_technical" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
             technical_text="*⚙️ Technical Changes*"$'\n'"$cleaned_technical"
+            
+            # Check length and truncate if needed
+            if [[ ${#technical_text} -gt 2800 ]]; then
+              technical_text="${technical_text:0:2800}..."
+              echo "⚠️ Technical section truncated due to length (${#technical_text} chars)"
+            fi
+            
             jq --arg text "$technical_text" '.blocks += [{
               type: "section",
               text: {
@@ -361,9 +404,16 @@ jobs:
           if [[ -n "$security_section" ]]; then
             # Clean up the security section content and make PR links clickable
             cleaned_security=$(echo -e "$security_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
-            # Convert (#1234) to clickable links using | as delimiter to avoid URL conflicts
-            cleaned_security=$(echo "$cleaned_security" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_security=$(echo "$cleaned_security" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
             security_text="*🔒 Security & Compliance*"$'\n'"$cleaned_security"
+            
+            # Check length and truncate if needed
+            if [[ ${#security_text} -gt 2800 ]]; then
+              security_text="${security_text:0:2800}..."
+              echo "⚠️ Security section truncated due to length (${#security_text} chars)"
+            fi
+            
             jq --arg text "$security_text" '.blocks += [{
               type: "section",
               text: {
@@ -375,8 +425,8 @@ jobs:
 
           # If no sections were parsed, add the full summary as one section
           if [[ -z "$features_section" && -z "$fixes_section" && -z "$technical_section" && -z "$security_section" ]]; then
-            # Make PR links clickable in the full summary too using | as delimiter
-            summary_with_links=$(echo "$summary_text" | sed -E 's|\(#([0-9]+)\)|(<https://github.com/${{ github.repository }}/pull/\1|#\1>)|g')
+            # Make PR links clickable in the full summary too using markdown format
+            summary_with_links=$(echo "$summary_text" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
             jq --arg text "*📋 Deployment Summary*"$'\n'"$summary_with_links" '.blocks += [{
               type: "section",
               text: {
