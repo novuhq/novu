@@ -68,7 +68,7 @@ export class PreviewUsecase {
         command
       );
 
-      payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
+      payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample, context.stepData);
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
       const schema = await this.schemaBuilder.buildPreviewPayloadSchema(

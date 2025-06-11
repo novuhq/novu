@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
-import { JobStatusEnum } from '@novu/shared';
-import { PreviewPayloadDto } from '../../../dtos';
+import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { FrameworkPreviousStepsOutputState } from '../../../../bridge/usecases/preview-step/preview-step.command';
 
 @Injectable()
@@ -33,10 +33,13 @@ export class PreviewPayloadProcessorService {
   }
 
   /**
-   * Calculates eventCount from events array length for digest steps, ensuring bridge
+   * Calculates eventCount from events array length for digest steps only, ensuring bridge
    * receives accurate event counts for processing.
    */
-  enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
+  enhanceEventCountValue(
+    payloadExample: PreviewPayloadDto,
+    stepData: StepResponseDto
+  ): Record<string, Record<string, unknown>> {
     const preparedPayload = _.cloneDeep(payloadExample);
 
     if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {
@@ -47,7 +50,10 @@ export class PreviewPayloadProcessorService {
         .forEach((stepId) => {
           const step = steps[stepId] as Record<string, unknown>;
 
-          step.eventCount = Array.isArray(step.events) ? step.events.length : 0;
+          // Only add eventCount for digest steps
+          if (stepData.type === StepTypeEnum.DIGEST) {
+            step.eventCount = Array.isArray(step.events) ? step.events.length : 0;
+          }
         });
     }
 
