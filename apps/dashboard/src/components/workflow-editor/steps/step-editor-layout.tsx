@@ -24,20 +24,24 @@ function StepEditorContent() {
     <ResizableLayout>
       <ResizableLayout.ContextPanel>
         <PanelHeader icon={RiCodeBlock} title="Preview Context" />
-        <div className="bg-bg-weak flex-1 overflow-y-auto">
-          <PreviewContextContainer />
+        <div className="bg-bg-weak flex-1 overflow-hidden">
+          <div className="h-full overflow-y-auto">
+            <PreviewContextContainer />
+          </div>
         </div>
       </ResizableLayout.ContextPanel>
 
       <ResizableLayout.Handle />
 
       <ResizableLayout.MainContentPanel>
-        <div className="flex-1">
+        <div className="flex min-h-0 flex-1 flex-col">
           <ResizableLayout>
             <ResizableLayout.EditorPanel>
               <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} />
-              <div className="flex-1 overflow-y-auto p-3">
-                <StepEditorFactory />
+              <div className="flex-1 overflow-y-auto">
+                <div className="h-full p-3">
+                  <StepEditorFactory />
+                </div>
               </div>
             </ResizableLayout.EditorPanel>
 
@@ -45,14 +49,16 @@ function StepEditorContent() {
 
             <ResizableLayout.PreviewPanel>
               <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} />
-              <div
-                className="bg-bg-weak relative flex-1 overflow-y-auto p-3"
-                style={{
-                  backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
-                  backgroundSize: '20px 20px',
-                }}
-              >
-                <StepPreviewFactory />
+              <div className="flex-1 overflow-hidden">
+                <div
+                  className="bg-bg-weak relative h-full overflow-y-auto p-3"
+                  style={{
+                    backgroundImage: 'radial-gradient(circle, hsl(var(--neutral-alpha-100)) 1px, transparent 1px)',
+                    backgroundSize: '20px 20px',
+                  }}
+                >
+                  <StepPreviewFactory />
+                </div>
               </div>
             </ResizableLayout.PreviewPanel>
           </ResizableLayout>
