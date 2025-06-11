@@ -6,7 +6,6 @@ import { InputRoot, InputWrapper } from '@/components/primitives/input';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { ControlInput } from '../primitives/control-input/control-input';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
 
 type ExtendedContext = {
@@ -32,23 +31,53 @@ export const ValueEditor = (props: ValueEditorProps) => {
   const placeholder = getPlaceholder ? getPlaceholder(field, operator) : 'value';
   const helpText = getHelpText ? getHelpText(field, operator) : null;
 
-  // Helper component for error icon with tooltip
-  const ErrorIcon = ({ hasError }: { hasError: boolean }) => {
-    if (!hasError || !error) return null;
+  // Combined icon component that shows error or info content
+  const CombinedIcon = ({ hasError, errorMessage }: { hasError: boolean; errorMessage?: string }) => {
+    if (!helpText && !hasError) return null;
+
+    const IconComponent = hasError ? RiErrorWarningLine : RiInformationLine;
+    const iconColor = hasError ? 'text-destructive' : 'text-foreground-400 hover:text-foreground-600';
 
     return (
-      <TooltipProvider delayDuration={0}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex cursor-default items-center justify-center pl-1 pr-1">
-              <RiErrorWarningLine className="text-destructive h-4 w-4 shrink-0" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="top" sideOffset={5}>
-            <p>{error.message}</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <HoverCard openDelay={100}>
+        <HoverCardTrigger asChild>
+          <button type="button" className="mt-1">
+            <IconComponent className={`size-4 cursor-help ${iconColor}`} />
+          </button>
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80" side="top">
+          <div className="space-y-3">
+            {/* Error content (shown above info when present) */}
+            {hasError && errorMessage && (
+              <>
+                <div className="space-y-2">
+                  <div className="text-destructive font-medium">Validation Error</div>
+                  <div className="text-destructive text-sm">{errorMessage}</div>
+                </div>
+                {helpText && <div className="border-t border-neutral-200" />}
+              </>
+            )}
+
+            {/* Info content (always shown when available) */}
+            {helpText && (
+              <>
+                <div className="text-foreground-950 font-medium">{helpText.title}</div>
+                <div className="text-foreground-600 text-sm">{helpText.description}</div>
+                <div className="space-y-2">
+                  <div className="text-foreground-950 text-xs font-medium">Examples:</div>
+                  <div className="space-y-1">
+                    {helpText.examples.map((example, idx) => (
+                      <div key={idx} className="text-foreground-800 rounded bg-neutral-50 px-2 py-1 font-mono text-xs">
+                        {example}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </HoverCardContent>
+      </HoverCard>
     );
   };
 
@@ -72,7 +101,6 @@ export const ValueEditor = (props: ValueEditorProps) => {
               isAllowedVariable={isAllowedVariable}
               size="3xs"
             />
-            <ErrorIcon hasError={hasError} />
           </InputWrapper>
         </InputRoot>
       );
@@ -83,31 +111,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
         {editors[0]}
         <span className="text-foreground-600 text-paragraph-xs mt-1.5">and</span>
         {editors[1]}
-        {helpText && (
-          <HoverCard openDelay={100}>
-            <HoverCardTrigger asChild>
-              <button type="button" className="mt-1">
-                <RiInformationLine className="text-foreground-400 hover:text-foreground-600 size-4 cursor-help" />
-              </button>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-80" side="top">
-              <div className="space-y-3">
-                <div className="text-foreground-950 font-medium">{helpText.title}</div>
-                <div className="text-foreground-600 text-sm">{helpText.description}</div>
-                <div className="space-y-2">
-                  <div className="text-foreground-950 text-xs font-medium">Examples:</div>
-                  <div className="space-y-1">
-                    {helpText.examples.map((example, idx) => (
-                      <div key={idx} className="text-foreground-800 rounded bg-neutral-50 px-2 py-1 font-mono text-xs">
-                        {example}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        )}
+        <CombinedIcon hasError={!!error} errorMessage={error?.message} />
       </div>
     );
   }
@@ -126,34 +130,9 @@ export const ValueEditor = (props: ValueEditorProps) => {
             isAllowedVariable={isAllowedVariable}
             size="3xs"
           />
-          <ErrorIcon hasError={!!error} />
         </InputWrapper>
       </InputRoot>
-      {helpText && (
-        <HoverCard openDelay={100}>
-          <HoverCardTrigger asChild>
-            <button type="button" className="mt-1">
-              <RiInformationLine className="text-foreground-400 hover:text-foreground-600 size-4 cursor-help" />
-            </button>
-          </HoverCardTrigger>
-          <HoverCardContent className="w-80" side="top">
-            <div className="space-y-3">
-              <div className="text-foreground-950 font-medium">{helpText.title}</div>
-              <div className="text-foreground-600 text-sm">{helpText.description}</div>
-              <div className="space-y-2">
-                <div className="text-foreground-950 text-xs font-medium">Examples:</div>
-                <div className="space-y-1">
-                  {helpText.examples.map((example, idx) => (
-                    <div key={idx} className="text-foreground-800 rounded bg-neutral-50 px-2 py-1 font-mono text-xs">
-                      {example}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </HoverCardContent>
-        </HoverCard>
-      )}
+      <CombinedIcon hasError={!!error} errorMessage={error?.message} />
     </div>
   );
 };
