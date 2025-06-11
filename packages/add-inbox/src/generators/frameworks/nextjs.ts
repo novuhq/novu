@@ -34,7 +34,8 @@ export function generateNextJsComponent(subscriberId: string | null = null, regi
     },
   };
 
-  const escapeString = (str: string) => str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const escapeString = (str: string) =>
+    str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 
   const componentCode = `'use client';
 
