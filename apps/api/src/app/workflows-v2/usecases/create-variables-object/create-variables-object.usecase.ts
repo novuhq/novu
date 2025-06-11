@@ -30,9 +30,17 @@ export class CreateVariablesObject {
 
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
+    const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
     const controlValues = await this.getControlValues(command);
 
-    const variables = this.extractAllVariables(controlValues);
+    const variables = this.extractAllVariables(controlValues, isHtmlEditorEnabled);
     const arrayVariables = this.extractArrayVariables(controlValues);
     const showIfVariables = this.extractMailyAttribute(controlValues, MailyAttrsEnum.SHOW_IF_KEY);
 
@@ -106,7 +114,18 @@ export class CreateVariablesObject {
           payload = this.generateFallbackPayload(step, hasUsedEventsWithPayload);
         }
 
-        step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, () => ({ payload }));
+        step.events = Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (unused, index) => {
+          const eventDate = new Date();
+          eventDate.setDate(eventDate.getDate() - 1);
+          eventDate.setHours(12, 0, 0, 0);
+          eventDate.setMinutes(eventDate.getMinutes() + index); // Slightly different times for each event
+
+          return {
+            id: `example-id-${index + 1}`,
+            time: eventDate.toISOString(),
+            payload,
+          };
+        });
       }
     });
 
@@ -190,9 +209,13 @@ export class CreateVariablesObject {
    * returns = [ "name", "address" ]
    */
   @Instrument()
-  private extractAllVariables(controlValues: unknown[]): string[] {
+  private extractAllVariables(controlValues: unknown[], isHtmlEditorEnabled: boolean): string[] {
     const variables = controlValues.flatMap((value) => {
-      const templateVariables = buildVariables(undefined, value);
+      const templateVariables = buildVariables({
+        useNewLiquidParser: isHtmlEditorEnabled,
+        variableSchema: undefined,
+        controlValue: value,
+      });
 
       return templateVariables.validVariables.map((variable) => variable.name);
     });

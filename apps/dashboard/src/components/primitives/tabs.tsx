@@ -10,7 +10,7 @@ import { Slottable } from '@radix-ui/react-slot';
 const tabsListVariants = cva('inline-flex', {
   variants: {
     variant: {
-      default: 'relative isolate h-9 rounded-[10px] bg-neutral-alpha-100 p-1 text-muted-foreground',
+      default: 'relative isolate rounded-[10px] bg-neutral-alpha-100 p-1 text-muted-foreground',
       regular: 'relative border-neutral-alpha-200 w-full justify-start gap-6 border-b border-t px-3.5',
     },
     align: {
@@ -76,18 +76,45 @@ const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, T
 TabsList.displayName = TabsPrimitive.List.displayName;
 
 const tabsTriggerVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-all text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed px-1',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium ring-offset-background transition-all text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed',
   {
     variants: {
       variant: {
-        default: 'px-3 py-1 data-[state=active]:text-foreground-950 data-[state=inactive]:text-foreground-400',
+        default: 'py-1 data-[state=active]:text-foreground-950 data-[state=inactive]:text-foreground-400',
         regular:
-          'text-foreground-600 data-[state=active]:text-foreground-950 relative py-3.5 transition-colors duration-300 ease-out',
+          'text-foreground-600 data-[state=active]:text-foreground-950 relative py-3.5 transition-colors duration-300 ease-out px-1',
+      },
+      size: {
+        xl: 'h-12.5 text-label-sm',
+        lg: 'h-11 text-label-sm',
+        md: 'h-7 text-label-sm',
+        sm: 'h-6 text-label-xs',
+        xs: 'h-5 text-label-xs',
       },
     },
+
     defaultVariants: {
       variant: 'default',
+      size: 'md',
     },
+
+    compoundVariants: [
+      {
+        variant: 'default',
+        size: ['xl', 'lg', 'md'],
+        class: 'px-3',
+      },
+      {
+        variant: 'default',
+        size: 'sm',
+        class: 'px-1.5',
+      },
+      {
+        variant: 'default',
+        size: 'xs',
+        class: 'px-1',
+      },
+    ],
   }
 );
 
@@ -95,8 +122,8 @@ type TabsTriggerProps = React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trig
   VariantProps<typeof tabsTriggerVariants>;
 
 const TabsTrigger = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Trigger>, TabsTriggerProps>(
-  ({ className, variant, ...props }, ref) => (
-    <TabsPrimitive.Trigger ref={ref} className={cn(tabsTriggerVariants({ variant, className }))} {...props} />
+  ({ className, variant, size, ...props }, ref) => (
+    <TabsPrimitive.Trigger ref={ref} className={cn(tabsTriggerVariants({ variant, size, className }))} {...props} />
   )
 );
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;

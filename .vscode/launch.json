@@ -18,7 +18,11 @@
       "args": ["${workspaceFolder}/apps/api/src/main.ts"],
       "runtimeArgs": ["--nolazy", "-r", "ts-node/register", "-r", "tsconfig-paths/register"],
       "sourceMaps": true,
-      "protocol": "inspector"
+      "protocol": "inspector",
+      "resolveSourceMapLocations": ["${workspaceFolder}/**", "!**/node_modules/**"],
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+      "smartStep": true,
+      "stopOnEntry": false
     },
     {
       "name": "worker",

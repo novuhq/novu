@@ -1,12 +1,8 @@
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
-import {
-  JSONSchemaDto,
-  UiComponentEnum,
-  UiSchema,
-  UiSchemaGroupEnum,
-} from '@novu/shared';
+import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { JSONSchemaEntity } from '@novu/dal';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
 export const smsControlZodSchema = z
@@ -18,10 +14,7 @@ export const smsControlZodSchema = z
 
 export type SmsControlType = z.infer<typeof smsControlZodSchema>;
 
-export const smsControlSchema = zodToJsonSchema(
-  smsControlZodSchema,
-  defaultOptions,
-) as JSONSchemaDto;
+export const smsControlSchema = zodToJsonSchema(smsControlZodSchema, defaultOptions) as JSONSchemaEntity;
 export const smsUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.SMS,
   properties: {

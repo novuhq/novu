@@ -74,6 +74,9 @@
           }
         }
       }
+    },
+    "version": {
+      "useLegacyVersioning": true
     }
   },
   "tasksRunnerOptions": {

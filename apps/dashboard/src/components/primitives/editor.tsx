@@ -1,7 +1,16 @@
-import { autocompleteFooter, autocompleteHeader, digestIcon, functionIcon } from '@/components/primitives/constants';
+import {
+  autocompleteFooter,
+  autocompleteHeader,
+  codeIcon,
+  digestIcon,
+  functionIcon,
+  keyIcon,
+} from '@/components/primitives/constants';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
+import { type TagStyle } from '@codemirror/language';
+
 import {
   default as CodeMirror,
   EditorView,
@@ -48,6 +57,34 @@ const baseTheme = (options: { multiline?: boolean }) =>
         display: 'block',
         backgroundRepeat: 'no-repeat',
         backgroundImage: `url('${functionIcon}')`,
+      },
+    },
+    '.cm-tooltip-autocomplete .cm-completionIcon-type': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '14px',
+        width: '14px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${codeIcon}')`,
+        backgroundPosition: 'center',
+      },
+    },
+    '.cm-tooltip-autocomplete .cm-completionIcon-keyword': {
+      '&:before': {
+        content: 'Suggestions',
+      },
+      '&:after': {
+        content: "''",
+        height: '14px',
+        width: '14px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage: `url('${keyIcon}')`,
+        backgroundPosition: 'center',
       },
     },
     '.cm-tooltip-autocomplete .cm-completionIcon-digest': {
@@ -130,8 +167,15 @@ const baseTheme = (options: { multiline?: boolean }) =>
     },
     'div.cm-content': {
       padding: 0,
-      whiteSpace: 'preserve nowrap',
-      width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
+      ...(options.multiline
+        ? {
+            whiteSpace: 'pre-wrap',
+            width: '100%',
+          }
+        : {
+            whiteSpace: 'preserve nowrap',
+            width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
+          }),
     },
     'div.cm-gutters': {
       backgroundColor: 'transparent',
@@ -197,6 +241,9 @@ export type EditorProps = {
   onChange?: (value: string) => void;
   fontFamily?: 'inherit';
   size?: 'sm' | 'md' | '2xs';
+  foldGutter?: boolean;
+  lineNumbers?: boolean;
+  tagStyles?: TagStyle[];
 } & ReactCodeMirrorProps;
 
 export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
@@ -212,6 +259,9 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
       size = 'sm',
       extensions: extensionsProp,
       basicSetup: basicSetupProp,
+      lineNumbers = false,
+      tagStyles,
+      foldGutter = false,
       ...restCodeMirrorProps
     },
     ref
@@ -224,13 +274,14 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
 
     const basicSetup = useMemo(
       () => ({
-        lineNumbers: false,
-        foldGutter: false,
+        lineNumbers,
+        foldGutter,
         highlightActiveLine: false,
+        highlightActiveLineGutter: false,
         defaultKeymap: multiline,
         ...((typeof basicSetupProp === 'object' ? basicSetupProp : {}) ?? {}),
       }),
-      [basicSetupProp, multiline]
+      [basicSetupProp, multiline, lineNumbers, foldGutter]
     );
 
     const theme = useMemo(
@@ -241,13 +292,14 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
             { tag: t.keyword, color: 'hsl(var(--feature))' },
             { tag: t.string, color: 'hsl(var(--highlighted))' },
             { tag: t.function(t.variableName), color: 'hsl(var(--information))' },
+            ...(tagStyles ?? []),
           ],
           settings: {
             background: 'transparent',
             fontFamily: fontFamily === 'inherit' ? 'inherit' : undefined,
           },
         }),
-      [fontFamily]
+      [fontFamily, tagStyles]
     );
 
     const onChangeCallback = useCallback(

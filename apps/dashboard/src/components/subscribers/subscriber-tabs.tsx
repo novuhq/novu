@@ -54,7 +54,7 @@ const SubscriberPreferences = (props: SubscriberPreferencesProps) => {
 };
 
 const tabTriggerClasses =
-  'hover:data-[state=inactive]:text-foreground-950 h-11 py-3 rounded-none [&>span]:h-5 px-0 relative';
+  'hover:data-[state=inactive]:text-foreground-950 py-3 rounded-none [&>span]:h-5 px-0 relative';
 
 type SubscriberTabsProps = {
   subscriberId: string;
@@ -89,21 +89,21 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       </header>
 
       <TabsList className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0">
-        <TabsTrigger value="overview" className={tabTriggerClasses}>
+        <TabsTrigger value="overview" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Overview</span>
           {tab === 'overview' && <ActiveTabIndicator />}
         </TabsTrigger>
-        <TabsTrigger value="preferences" className={tabTriggerClasses}>
+        <TabsTrigger value="preferences" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Preferences</span>
           {tab === 'preferences' && <ActiveTabIndicator />}
         </TabsTrigger>
         {isTopicsPageActive && (
-          <TabsTrigger value="subscriptions" className={tabTriggerClasses}>
+          <TabsTrigger value="subscriptions" className={tabTriggerClasses} variant="regular" size="lg">
             <span>Subscriptions</span>
             {tab === 'subscriptions' && <ActiveTabIndicator />}
           </TabsTrigger>
         )}
-        <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
+        <TabsTrigger value="activity-feed" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Activity Feed</span>
           {tab === 'activity-feed' && <ActiveTabIndicator />}
         </TabsTrigger>

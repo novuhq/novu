@@ -3,6 +3,9 @@
  */
 
 import { environmentsCreate } from "../funcs/environmentsCreate.js";
+import { environmentsDelete } from "../funcs/environmentsDelete.js";
+import { environmentsList } from "../funcs/environmentsList.js";
+import { environmentsUpdate } from "../funcs/environmentsUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
@@ -11,6 +14,11 @@ import { unwrapAsync } from "../types/fp.js";
 export class Environments extends ClientSDK {
   /**
    * Create environment
+   *
+   * @remarks
+   * Creates a new environment within the current organization.
+   *     Environments allow you to manage different stages of your application development lifecycle.
+   *     Each environment has its own set of API keys and configurations.
    */
   async create(
     createEnvironmentRequestDto: components.CreateEnvironmentRequestDto,
@@ -20,6 +28,68 @@ export class Environments extends ClientSDK {
     return unwrapAsync(environmentsCreate(
       this,
       createEnvironmentRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * List environments
+   *
+   * @remarks
+   * This API returns a list of environments for the current organization.
+   *     Each environment contains its configuration, API keys (if user has access), and metadata.
+   */
+  async list(
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.EnvironmentsControllerV1ListMyEnvironmentsResponse> {
+    return unwrapAsync(environmentsList(
+      this,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Update environment
+   *
+   * @remarks
+   * Update an environment by its unique identifier **environmentId**.
+   *     You can modify the environment name, identifier, color, and other configuration settings.
+   */
+  async update(
+    updateEnvironmentRequestDto: components.UpdateEnvironmentRequestDto,
+    environmentId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse> {
+    return unwrapAsync(environmentsUpdate(
+      this,
+      updateEnvironmentRequestDto,
+      environmentId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Delete environment
+   *
+   * @remarks
+   * Delete an environment by its unique identifier **environmentId**.
+   *     This action is irreversible and will remove the environment and all its associated data.
+   */
+  async delete(
+    environmentId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.EnvironmentsControllerV1DeleteEnvironmentResponse | undefined
+  > {
+    return unwrapAsync(environmentsDelete(
+      this,
+      environmentId,
       idempotencyKey,
       options,
     ));

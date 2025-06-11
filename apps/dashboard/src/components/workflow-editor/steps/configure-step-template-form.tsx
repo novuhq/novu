@@ -42,17 +42,21 @@ export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps)
 
   const form = useForm({
     defaultValues,
+    values: step.controls.values,
     shouldFocusError: false,
+    resetOptions: {
+      keepDirtyValues: true,
+    },
   });
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: defaultValues,
     form,
-    save: (data) => {
+    save: (data, { onSuccess }) => {
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: data,
       };
-      update(updateStepInWorkflow(workflow, step.stepId, updateStepData));
+      update(updateStepInWorkflow(workflow, step.stepId, updateStepData), { onSuccess });
     },
   });
 
