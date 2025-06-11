@@ -16,7 +16,8 @@ import { getOperatorsForFieldType } from '@/components/conditions-editor/field-t
 import {
   getValueEditorTypeForField,
   getInputTypeForField,
-  getValuesForField,
+  getPlaceholderForField,
+  getHelpTextForField,
 } from '@/components/conditions-editor/field-type-editors';
 
 const ruleActionsClassName = `[&>[data-actions="true"]]:opacity-0 [&:hover>[data-actions="true"]]:opacity-100 [&>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;
@@ -156,15 +157,16 @@ function InternalConditionsEditor({
     };
   }, [fieldDataMap, enhancedVariables]);
 
-  const getValues = useMemo(() => {
+  // Add new functions for placeholder and help text
+  const getPlaceholder = useMemo(() => {
     if (!enhancedVariables) return undefined;
 
     return (fieldName: string, operator: string) => {
       const fieldData = fieldDataMap.get(fieldName);
 
       if (!fieldData) {
-        // Fallback to empty values for variables not found in schema
-        return getValuesForField(fieldName, operator, {
+        // Fallback to default placeholder for variables not found in schema
+        return getPlaceholderForField(fieldName, operator, {
           fieldData: {
             name: fieldName,
             label: fieldName,
@@ -174,14 +176,36 @@ function InternalConditionsEditor({
         });
       }
 
-      return getValuesForField(fieldName, operator, { fieldData });
+      return getPlaceholderForField(fieldName, operator, { fieldData });
+    };
+  }, [fieldDataMap, enhancedVariables]);
+
+  const getHelpText = useMemo(() => {
+    if (!enhancedVariables) return undefined;
+
+    return (fieldName: string, operator: string) => {
+      const fieldData = fieldDataMap.get(fieldName);
+
+      if (!fieldData) {
+        // Fallback to default help text for variables not found in schema
+        return getHelpTextForField(fieldName, operator, {
+          fieldData: {
+            name: fieldName,
+            label: fieldName,
+            value: fieldName,
+            dataType: 'string',
+          } as EnhancedField,
+        });
+      }
+
+      return getHelpTextForField(fieldName, operator, { fieldData });
     };
   }, [fieldDataMap, enhancedVariables]);
 
   return (
     <QueryBuilder
       fields={fields}
-      context={context}
+      context={{ ...context, getPlaceholder, getHelpText }}
       controlElements={controlElements}
       query={query}
       onQueryChange={onQueryChange}
@@ -192,7 +216,6 @@ function InternalConditionsEditor({
       getOperators={getOperators}
       getValueEditorType={getValueEditorType}
       getInputType={getInputType}
-      getValues={getValues}
     />
   );
 }
@@ -201,6 +224,11 @@ export type ConditionsEditorContext = {
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   saveForm: () => void;
+  getPlaceholder?: (fieldName: string, operator: string) => string;
+  getHelpText?: (
+    fieldName: string,
+    operator: string
+  ) => { title: string; description: string; examples: string[]; notes?: string[] };
 };
 
 export function ConditionsEditor({
