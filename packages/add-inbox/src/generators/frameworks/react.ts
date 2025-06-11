@@ -1,4 +1,5 @@
 import { getReactVersion } from '../react-version';
+
 export function generateReactComponent(subscriberId: string | null = null, region: string = 'us'): string {
   const reactVersion = getReactVersion();
   const isModernReact = isReactVersionModern(reactVersion);
@@ -16,13 +17,14 @@ function isReactVersionModern(version: string): boolean {
     const major = Number(majorStr);
     const minor = Number(minorStr);
 
-    if (isNaN(major) || isNaN(minor)) {
+    if (Number.isNaN(major) || Number.isNaN(minor)) {
       // If we can't parse the version, default to legacy React (not modern)
       return false;
     }
 
     if (major > 17) return true;
     if (major === 17 && minor >= 0) return true;
+
     return false;
   } catch (error) {
     // If anything goes wrong, default to legacy React (not modern)
