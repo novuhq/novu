@@ -750,7 +750,8 @@
     "endtablerow",
     "endcase",
     "forloop",
-    "tablerowloop"
+    "tablerowloop",
+    "rindex"
   ],
   "flagWords": [],
   "patterns": [
