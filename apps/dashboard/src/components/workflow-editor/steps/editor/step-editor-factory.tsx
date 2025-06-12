@@ -31,7 +31,7 @@ export function StepEditorFactory() {
   switch (step.type) {
     case StepTypeEnum.EMAIL:
       return (
-        <div className="border-soft-200 rounded-lg border shadow-lg">
+        <div className="border-soft-200 h-full overflow-hidden rounded-lg border shadow-lg">
           <EmailEditor uiSchema={uiSchema} isEditorV2={true} />
         </div>
       );
