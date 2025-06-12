@@ -49,13 +49,8 @@ import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/h
 import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { createDigestBlock } from './blocks/digest';
-import {
-  CalculateVariablesProps,
-  insertVariableToEditor,
-  isInsideRepeatBlock,
-  resolveRepeatBlockAlias,
-  VariableFrom,
-} from './variables/variables';
+import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
+import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './variables/repeat-block-aliases';
 import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
 import { ParsedVariables } from '@/utils/parseStepVariables';
