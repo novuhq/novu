@@ -8,6 +8,7 @@ import {
 } from '@/components/primitives/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import {
   type CodeSnippet,
@@ -20,6 +21,7 @@ import {
 } from '@/utils/code-snippets';
 import { TelemetryEvent } from '@/utils/telemetry';
 import type { WorkflowResponseDto } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
 import { CodeBlock, Language } from '../../primitives/code-block';
@@ -144,8 +146,11 @@ function InstructionStep({
 
 export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payload }: TestWorkflowInstructionsProps) {
   const identifier = workflow?.workflowId ?? '';
-  const { data: apiKeysResponse } = useFetchApiKeys();
-  const apiKey = apiKeysResponse?.data?.[0]?.key ?? '';
+  const has = useHasPermission();
+  const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
+
+  const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
+  const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? '') : 'API_KEY';
   const track = useTelemetry();
 
   useEffect(() => {
@@ -213,7 +218,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
                   title="Copy API Keys to"
                   code={`NOVU_SECRET_KEY=${apiKey}`}
                   codeTitle=".env"
-                  secretMask={[{ line: 1, maskStart, maskEnd }]}
+                  secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
                 >
                   Use this key to authenticate your API requests. Keep it secure and never share it publicly.{' '}
                 </InstructionStep>
@@ -249,10 +254,7 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
                   code={`# .env file
 NOVU_SECRET_KEY='${apiKey}'`}
                   codeTitle=".env"
-                  secretMask={[
-                    { line: 2, maskStart, maskEnd },
-                    { line: 5, maskStart: maskStart + 19, maskEnd: maskEnd + 19 },
-                  ]}
+                  secretMask={canReadApiKeys ? [{ line: 2, maskStart, maskEnd }] : undefined}
                 />
 
                 <InstructionStep
@@ -274,7 +276,7 @@ NOVU_SECRET_KEY='${apiKey}'`}
                   title="Copy API Keys to"
                   code={`NOVU_SECRET_KEY = '${apiKey}'`}
                   codeTitle=".env"
-                  secretMask={[{ line: 1, maskStart, maskEnd }]}
+                  secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
                 />
 
                 <InstructionStep
@@ -300,7 +302,7 @@ NOVU_SECRET_KEY='${apiKey}'`}
                   title="Copy API Keys to"
                   code={`NOVU_SECRET_KEY = '${apiKey}'`}
                   codeTitle=".env"
-                  secretMask={[{ line: 1, maskStart, maskEnd }]}
+                  secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
                 />
 
                 <InstructionStep
