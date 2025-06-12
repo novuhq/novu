@@ -10,10 +10,9 @@ import {
 import { Tooltip, Dropdown } from '@novu/design-system';
 import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { captureException } from '@sentry/react';
 import { IS_EE_AUTH_ENABLED, IS_NOVU_PROD_STAGING } from '../../../../config';
-import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
+import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { useAuth } from '../../../../hooks/useAuth';
@@ -47,7 +46,7 @@ export function HeaderNav() {
   useEffect(() => {
     if (isLiveChatVisible && isFirstRender) {
       try {
-        // @ts-ignore
+        // @ts-expect-error - TODO: fix this
         window?.Plain?.init({
           appId: process.env.REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID,
           hideLauncher: true,
@@ -83,13 +82,14 @@ export function HeaderNav() {
         captureException(error);
       }
     }
+
     setIsFirstRender(false);
   }, [isLiveChatVisible, currentUser, isFirstRender]);
 
   const showLiveChat = () => {
     if (isLiveChatVisible) {
       try {
-        // @ts-ignore
+        // @ts-expect-error - TODO: fix this
         window?.Plain?.open();
       } catch (error) {
         console.error('Error opening plain chat: ', error);

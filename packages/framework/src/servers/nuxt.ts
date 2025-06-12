@@ -27,7 +27,6 @@ export const serve = (options: ServeHandlerOptions) => {
      * TODO: Fix this
      */
     handler: (event: H3Event) => ({
-      // eslint-disable-next-line @typescript-eslint/no-base-to-string
       queryString: (key) => String(getQuery(event)[key]),
       body: () => readBody(event),
       headers: (key) => getHeader(event, key),

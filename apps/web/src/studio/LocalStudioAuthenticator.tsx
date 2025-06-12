@@ -102,6 +102,7 @@ export function LocalStudioAuthenticator() {
     // Get the optional tunnel origin parameter
     const tunnelOrigin = parsedSearchParams.get('tunnel_origin');
     const tunnelPath = parsedSearchParams.get('tunnel_route');
+
     if (!tunnelPath) {
       throw new Error('Tunnel Path is not defined');
     }
@@ -116,7 +117,7 @@ export function LocalStudioAuthenticator() {
 
     // TODO: Add apiKeys to the IEnvironment interface as they exist in the response
 
-    // @ts-expect-error
+    // @ts-expect-error - TODO: fix this
     const devSecretKey = environments.find((env) => env.name.toLowerCase() === 'development')?.apiKeys[0]?.key;
 
     if (environments?.length > 0 && !devSecretKey) {

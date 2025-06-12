@@ -274,7 +274,7 @@ const CLERK_OVERRIDE_VARIABLES: Variables = {
 
 const ALLOWED_REDIRECT_ORIGINS = ['http://localhost:*', window.location.origin];
 
-export const ClerkProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
+export const ClerkProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { colorScheme } = useColorScheme();
 
   const navigate = useNavigate();
