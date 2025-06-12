@@ -307,7 +307,6 @@ export const createExtensions = ({
         });
       },
     }),
-    // createTranslationExtension(),
   ];
 
   extensions.push(
