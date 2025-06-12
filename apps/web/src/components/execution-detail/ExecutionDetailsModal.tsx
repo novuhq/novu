@@ -91,7 +91,7 @@ export function ExecutionDetailsModal({
           <Center mt={10}>
             <UnstyledButton
               onClick={() => {
-                onViewDigestExecution && onViewDigestExecution(digestedNotificationId);
+                onViewDigestExecution?.(digestedNotificationId);
               }}
             >
               <Text gradient>View Digest Execution</Text>

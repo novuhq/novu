@@ -11,7 +11,7 @@ const DEFAULT_CONTEXT: IUserProfileSidebarContext = {
 
 export const UserProfileSidebarContext = createContext<IUserProfileSidebarContext>(DEFAULT_CONTEXT);
 
-export const UserProfileSidebarContextProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
+export const UserProfileSidebarContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const value = useUserProfileSetPassword();
 
   return <UserProfileSidebarContext.Provider value={value}>{children}</UserProfileSidebarContext.Provider>;

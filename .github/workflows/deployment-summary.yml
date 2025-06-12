@@ -8,15 +8,6 @@ on:
         required: false
         default: '7'
         type: string
-      ai_model:
-        description: 'AI model to use for summarization'
-        required: false
-        default: 'gpt-4o'
-        type: choice
-        options:
-          - gpt-4o
-          - gpt-4o-mini
-          - gpt-3.5-turbo
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -28,6 +19,7 @@ jobs:
       contents: read
       pull-requests: read
       id-token: write
+      models: read
     timeout-minutes: 15
     steps:
       - name: Checkout repo
@@ -48,18 +40,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Fetching PRs merged to prod in the last ${{ steps.output-variables.outputs.days_back }} days..."
-          
+
           prs_json=$(gh pr list \
             --base prod \
             --state merged \
-            --limit 50 \
+            --limit 10 \
             --json number,title,body,mergedAt,author,labels,files \
             --jq "[.[] | select(.mergedAt >= \"${{ steps.output-variables.outputs.since_date }}\")]")
-          
+
           echo "Found $(echo "$prs_json" | jq length) PRs"
-          
+
           echo "$prs_json" > /tmp/recent_prs.json
-          
+
+          # Clear the output file
+          > /tmp/pr_content.txt
+
           for pr in $(echo "$prs_json" | jq -r '.[] | @base64'); do
             pr_data=$(echo "$pr" | base64 --decode)
             pr_number=$(echo "$pr_data" | jq -r '.number')
@@ -69,56 +64,175 @@ jobs:
             pr_merged_at=$(echo "$pr_data" | jq -r '.mergedAt')
             pr_labels=$(echo "$pr_data" | jq -r '.labels[].name' | tr '\n' ', ' | sed 's/,$//')
             
-            files_changed=$(gh pr view $pr_number --json files --jq '.files[].path' | head -10 | tr '\n' ', ' | sed 's/,$//')
-            
-            printf "## PR #%s: %s\nAuthor: @%s\nMerged: %s\nLabels: %s\nFiles changed: %s\n\nDescription:\n%s\n\n---\n\n" \
-              "$pr_number" "$pr_title" "$pr_author" "$pr_merged_at" "$pr_labels" "$files_changed" "$pr_body" >> /tmp/pr_content.txt
+            # Check if this is a release PR
+            is_release_pr=false
+            if [[ "$pr_title" =~ Release ]] || [[ "$pr_author" == "github-actions[bot]" ]]; then
+              is_release_pr=true
+              echo "Detected release PR #$pr_number - fetching commit details..."
+            fi
+
+            if [[ "$is_release_pr" == "true" ]]; then
+              # Fetch all commits in this PR
+              commits_json=$(gh pr view $pr_number --json commits --jq '.commits')
+              commit_count=$(echo "$commits_json" | jq length)
+              
+              echo "## Release PR #$pr_number: $pr_title" >> /tmp/pr_content.txt
+              echo "Author: @$pr_author | Merged: $pr_merged_at | Commits: $commit_count" >> /tmp/pr_content.txt
+              echo "" >> /tmp/pr_content.txt
+              echo "### Included Changes:" >> /tmp/pr_content.txt
+              echo "" >> /tmp/pr_content.txt
+
+              # Process each commit
+              for commit in $(echo "$commits_json" | jq -r '.[] | @base64'); do
+                commit_data=$(echo "$commit" | base64 --decode)
+                commit_sha=$(echo "$commit_data" | jq -r '.oid')
+                commit_message=$(echo "$commit_data" | jq -r '.messageHeadline')
+                # Try different possible author structures in GitHub API
+                commit_author=$(echo "$commit_data" | jq -r '
+                  if .author.user.login then .author.user.login
+                  elif .author.name then .author.name
+                  elif .authors then (.authors[0].user.login // .authors[0].name)
+                  else "unknown"
+                  end')
+                
+                # Extract scope from conventional commit format using sed
+                commit_scope=""
+                if echo "$commit_message" | grep -q '^[a-z]*([^)]*):'; then
+                  commit_scope=$(echo "$commit_message" | sed -n 's/^[a-z]*(\([^)]*\)):.*/\1/p')
+                fi
+                
+                # Extract PR number from commit message using sed
+                original_pr_number=""
+                if echo "$commit_message" | grep -q '(#[0-9]*)'; then
+                  original_pr_number=$(echo "$commit_message" | sed -n 's/.*(#\([0-9]*\)).*/\1/p')
+                fi
+                
+                if [[ -n "$original_pr_number" ]]; then
+                  # Try to fetch the original PR details
+                  if original_pr=$(gh pr view $original_pr_number --json title,body,labels,author,state,files 2>/dev/null); then
+                    original_pr_title=$(echo "$original_pr" | jq -r '.title')
+                    original_pr_body=$(echo "$original_pr" | jq -r '.body // "No description"' | head -n 30 | sed 's/```[^`]*```//g' | tr '\n' ' ' | sed 's/  */ /g' | cut -c1-500)
+                    original_pr_author=$(echo "$original_pr" | jq -r '.author.login')
+                    original_pr_labels=$(echo "$original_pr" | jq -r '.labels[].name' | tr '\n' ', ' | sed 's/,$//')
+                    original_pr_files=$(echo "$original_pr" | jq -r '.files[].path' | grep -E '\.(ts|tsx|js|jsx)$' | head -5 | tr '\n' ', ' | sed 's/,$//')
+                    
+                    echo "- **$commit_message**" >> /tmp/pr_content.txt
+                    echo "  - Original PR: #$original_pr_number by @$original_pr_author" >> /tmp/pr_content.txt
+                    if [[ -n "$commit_scope" ]]; then
+                      echo "  - Scope: $commit_scope" >> /tmp/pr_content.txt
+                    fi
+                    if [[ -n "$original_pr_labels" ]]; then
+                      echo "  - Labels: $original_pr_labels" >> /tmp/pr_content.txt
+                    fi
+                    if [[ -n "$original_pr_files" ]]; then
+                      echo "  - Key files: $original_pr_files" >> /tmp/pr_content.txt
+                    fi
+                    if [[ "$original_pr_body" != "No description" ]] && [[ -n "$original_pr_body" ]]; then
+                      # Clean up the body text
+                      cleaned_body=$(echo "$original_pr_body" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                      if [[ ${#cleaned_body} -gt 200 ]]; then
+                        cleaned_body="${cleaned_body:0:200}..."
+                      fi
+                      echo "  - Summary: $cleaned_body" >> /tmp/pr_content.txt
+                    fi
+                  else
+                    echo "- **$commit_message** by @$commit_author" >> /tmp/pr_content.txt
+                    if [[ -n "$commit_scope" ]]; then
+                      echo "  - Scope: $commit_scope" >> /tmp/pr_content.txt
+                    fi
+                  fi
+                else
+                  echo "- **$commit_message** by @$commit_author" >> /tmp/pr_content.txt
+                  if [[ -n "$commit_scope" ]]; then
+                    echo "  - Scope: $commit_scope" >> /tmp/pr_content.txt
+                  fi
+                fi
+                echo "" >> /tmp/pr_content.txt
+              done
+              
+              echo "---" >> /tmp/pr_content.txt
+              echo "" >> /tmp/pr_content.txt
+            else
+              # For non-release PRs, use the original format
+              files_changed=$(gh pr view $pr_number --json files --jq '.files[].path' | head -10 | tr '\n' ', ' | sed 's/,$//')
+              
+              printf "## PR #%s: %s\nAuthor: @%s\nMerged: %s\nLabels: %s\nFiles changed: %s\n\nDescription:\n%s\n\n---\n\n" \
+                "$pr_number" "$pr_title" "$pr_author" "$pr_merged_at" "$pr_labels" "$files_changed" "$pr_body" >> /tmp/pr_content.txt
+            fi
           done
-          
 
           echo "pr_count=$(echo "$prs_json" | jq length)" >> "$GITHUB_OUTPUT"
 
-      - name: Create AI prompt
+      - name: Prepare AI prompts
+        id: prepare-prompts
+        if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
         run: |
-          cat > /tmp/system_prompt.txt << 'EOF'
-          You are a technical deployment summary assistant for Novu, an open-source notification infrastructure platform. 
-          
-          Your task is to analyze recent production deployment PRs and create a comprehensive, well-structured summary that highlights:
-          
-          1. **Key Features & Improvements**: New functionality, enhancements, and user-facing changes
-          2. **Bug Fixes & Stability**: Critical fixes, performance improvements, and reliability enhancements  
-          3. **Technical Changes**: Infrastructure updates, dependency changes, refactoring
-          4. **Breaking Changes**: Any changes that might affect existing users or integrations
-          5. **Security & Compliance**: Security fixes, compliance updates, vulnerability patches
-          
-          Format your response in clear markdown with:
-          - Executive summary (2-3 sentences)
-          - Categorized sections with bullet points
-          - Highlight the most impactful changes
-          - Use emojis to make it visually appealing
-          - Keep technical details accessible to both technical and non-technical stakeholders
-          
-          Focus on the business impact and user value of the changes.
-          EOF
-          
-          cat > /tmp/user_prompt.txt << EOF
-          Please analyze the following production deployment PRs from the last ${{ steps.output-variables.outputs.days_back }} days and create a comprehensive deployment summary:
-          
-          $(cat /tmp/pr_content.txt)
-          
+          # Read PR content for the prompt
+          pr_content=$(cat /tmp/pr_content.txt)
+
+          # Set system prompt as environment variable
+          echo "SYSTEM_PROMPT<<EOF" >> $GITHUB_ENV
+          echo "You are a technical deployment summary assistant for Novu, an open-source notification infrastructure platform. 
+
+          Your task is to analyze recent production deployment PRs and create a well-structured summary that highlights what's NEW and NOW AVAILABLE to users:
+
+          **IMPORTANT MESSAGING:**
+          - Focus on what users can NOW DO with these new features
+          - Emphasize that these improvements are LIVE and AVAILABLE
+          - Write from a user benefit perspective, not just technical changes
+          - Use present tense to indicate current availability
+
+          **FORMATTING REQUIREMENTS:**
+          - Use clear section headers: *Key Features & Improvements*, *Bug Fixes & Stability*, *Technical Changes*, *Security & Compliance*
+          - Use bullet points with • for each item
+          - Keep each bullet point concise (1-2 lines max)
+          - Use *bold* for emphasis on key terms (single asterisks only, never double)
+          - Focus on business impact and user value
+          - If a section has no relevant changes, you can omit it entirely
+          - Do NOT use ** (double asterisks) - use only single * for bold text
+          - Ensure clean formatting without escaped characters
+
+          **Section Guidelines:**
+          1. *Key Features & Improvements*: New functionality NOW AVAILABLE, enhancements users can use today
+          2. *Bug Fixes & Stability*: Issues that are NOW RESOLVED, improved reliability users will experience  
+          3. *Technical Changes*: Infrastructure improvements, better performance users will notice
+          4. *Security & Compliance*: Security enhancements NOW PROTECTING users
+
+          When analyzing Release PRs:
+          - Focus on the individual commits and their original PR context
+          - Group related changes together logically
+          - Highlight the most impactful changes based on labels and descriptions
+          - Pay special attention to breaking changes, security updates, or major features
+
+          **Example Format (emphasizing availability):**
+          *Key Features & Improvements*
+          • *Custom HTML Editor*: You can now switch between HTML and block editors seamlessly (#8457)
+          • *Environment CRUD APIs*: New API endpoints are available for environment management (#8469)
+
+          *Bug Fixes & Stability*
+          • *EU Region Fix*: EU region configuration issues are now resolved (#8489)
+          • *Subscription Idempotency*: Duplicate subscription creation is now prevented (#8464)
+
+          Focus on what users can do NOW, what problems are SOLVED, and what value is AVAILABLE." >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+          # Set user prompt as environment variable
+          echo "USER_PROMPT<<EOF" >> $GITHUB_ENV
+          echo "Please analyze the following production deployment PRs from the last ${{ steps.output-variables.outputs.days_back }} days and create a comprehensive deployment summary:
+
+          $pr_content
+
           Total PRs analyzed: ${{ steps.fetch-prs.outputs.pr_count }}
-          Deployment period: ${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }}
-          EOF
+          Deployment period: ${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }}" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
       - name: Generate AI deployment summary
         id: ai-summary
         if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
         uses: actions/ai-inference@v1
         with:
-          model: ${{ github.event.inputs.ai_model || 'gpt-4o' }}
-          system-prompt-file: '/tmp/system_prompt.txt'
-          prompt-file: '/tmp/user_prompt.txt'
-          max-tokens: 2000
+          system-prompt: ${{ env.SYSTEM_PROMPT }}
+          prompt: ${{ env.USER_PROMPT }}
 
       - name: Handle no recent PRs
         id: no-prs-message
@@ -126,42 +240,237 @@ jobs:
         run: |
           echo "summary=No production deployments found in the last ${{ steps.output-variables.outputs.days_back }} days." >> "$GITHUB_OUTPUT"
 
-      - name: Send deployment summary to Slack
-        id: slack
-        uses: slackapi/slack-github-action@v1.26.0
+      - name: Prepare Slack payload
+        id: prepare-slack
         if: ${{ always() }}
-        with:
-          payload: |
+        run: |
+          # Write the summary to a temporary file to avoid shell interpretation issues
+          cat > /tmp/summary.txt << 'SUMMARY_EOF'
+          ${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}
+          SUMMARY_EOF
+
+          # Read and clean the content for Slack
+          summary_text=$(cat /tmp/summary.txt)
+
+          # Parse different sections from the AI summary
+          features_section=""
+          fixes_section=""
+          technical_section=""
+          security_section=""
+          current_section=""
+
+          # Try to extract sections from AI response
+          while IFS= read -r line; do
+            case "$line" in
+              *"Key Features"*|*"Features"*|*"Improvements"*)
+                current_section="features"
+                echo "DEBUG: Found features section header: $line"
+                ;;
+              *"Bug Fixes"*|*"Fixes"*|*"Stability"*)
+                current_section="fixes"
+                echo "DEBUG: Found fixes section header: $line"
+                ;;
+              *"Technical"*|*"Infrastructure"*|*"Dependencies"*)
+                current_section="technical"
+                echo "DEBUG: Found technical section header: $line"
+                ;;
+              *"Security"*|*"Compliance"*)
+                current_section="security"
+                echo "DEBUG: Found security section header: $line"
+                ;;
+              "• "*)
+                case "$current_section" in
+                  "features") 
+                    features_section="$features_section$line\n"
+                    echo "DEBUG: Added to features: $line"
+                    ;;
+                  "fixes") 
+                    fixes_section="$fixes_section$line\n"
+                    echo "DEBUG: Added to fixes: $line"
+                    ;;
+                  "technical") 
+                    technical_section="$technical_section$line\n"
+                    echo "DEBUG: Added to technical: $line"
+                    ;;
+                  "security") 
+                    security_section="$security_section$line\n"
+                    echo "DEBUG: Added to security: $line"
+                    ;;
+                esac
+                ;;
+            esac
+          done < /tmp/summary.txt
+
+          echo "DEBUG: Final section lengths:"
+          echo "Features: ${#features_section} chars"
+          echo "Fixes: ${#fixes_section} chars"
+          echo "Technical: ${#technical_section} chars"
+          echo "Security: ${#security_section} chars"
+
+          # Create base Slack payload structure using jq
+          jq -n --arg period "Last ${{ steps.output-variables.outputs.days_back }} days (${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }})" \
+                --arg pr_count "${{ steps.fetch-prs.outputs.pr_count || 0 }}" '{
+            text: "🚀 Novu Production Deployment Summary",
+            blocks: [
+              {
+                type: "header",
+                text: {
+                  type: "plain_text",
+                  text: "🚀 New Production Deployment"
+                }
+              },
+              {
+                type: "context",
+                elements: [
+                  {
+                    type: "mrkdwn",
+                    text: "*The following features and improvements are now live in production*"
+                  }
+                ]
+              },
+              {
+                type: "divider"
+              }
+            ]
+          }' > /tmp/slack_payload.json
+
+          # Add sections if they have content
+          if [[ -n "$features_section" ]]; then
+            # Clean up the features section content and make PR links clickable
+            cleaned_features=$(echo -e "$features_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_features=$(echo "$cleaned_features" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
+            features_text="*✨ Key Features & Improvements*"$'\n'"$cleaned_features"
+            
+            # Check length and truncate if needed (Slack limit is ~3000 chars per block)
+            if [[ ${#features_text} -gt 2800 ]]; then
+              features_text="${features_text:0:2800}..."
+              echo "⚠️ Features section truncated due to length (${#features_text} chars)"
+            fi
+            
+            jq --arg text "$features_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          if [[ -n "$fixes_section" ]]; then
+            # Clean up the fixes section content and make PR links clickable
+            cleaned_fixes=$(echo -e "$fixes_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_fixes=$(echo "$cleaned_fixes" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
+            fixes_text="*🐛 Bug Fixes & Stability*"$'\n'"$cleaned_fixes"
+            
+            # Check length and truncate if needed
+            if [[ ${#fixes_text} -gt 2800 ]]; then
+              fixes_text="${fixes_text:0:2800}..."
+              echo "⚠️ Fixes section truncated due to length (${#fixes_text} chars)"
+            fi
+            
+            jq --arg text "$fixes_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          if [[ -n "$technical_section" ]]; then
+            # Clean up the technical section content and make PR links clickable
+            cleaned_technical=$(echo -e "$technical_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_technical=$(echo "$cleaned_technical" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
+            technical_text="*⚙️ Technical Changes*"$'\n'"$cleaned_technical"
+            
+            # Check length and truncate if needed
+            if [[ ${#technical_text} -gt 2800 ]]; then
+              technical_text="${technical_text:0:2800}..."
+              echo "⚠️ Technical section truncated due to length (${#technical_text} chars)"
+            fi
+            
+            jq --arg text "$technical_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          if [[ -n "$security_section" ]]; then
+            # Clean up the security section content and make PR links clickable
+            cleaned_security=$(echo -e "$security_section" | sed 's/\\n/\n/g' | sed 's/\*\*/*/g')
+            # Convert (#1234) to markdown links [#1234](URL)
+            cleaned_security=$(echo "$cleaned_security" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
+            security_text="*🔒 Security & Compliance*"$'\n'"$cleaned_security"
+            
+            # Check length and truncate if needed
+            if [[ ${#security_text} -gt 2800 ]]; then
+              security_text="${security_text:0:2800}..."
+              echo "⚠️ Security section truncated due to length (${#security_text} chars)"
+            fi
+            
+            jq --arg text "$security_text" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          # If no sections were parsed, add the full summary as one section
+          if [[ -z "$features_section" && -z "$fixes_section" && -z "$technical_section" && -z "$security_section" ]]; then
+            # Make PR links clickable in the full summary too using markdown format
+            summary_with_links=$(echo "$summary_text" | sed -E 's|\(#([0-9]+)\)|[#\1](https://github.com/${{ github.repository }}/pull/\1)|g')
+            jq --arg text "*📋 Deployment Summary*"$'\n'"$summary_with_links" '.blocks += [{
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: $text
+              }
+            }]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+          fi
+
+          # Add footer
+          jq --arg run_url "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+             --arg prs_url "https://github.com/${{ github.repository }}/pulls?q=is%3Apr+is%3Amerged+base%3Aprod" \
+             '.blocks += [
             {
-              "text": "*🚀 Novu Production Deployment Summary (${{ steps.output-variables.outputs.date_humanized }})*",
-              "blocks": [
+              type: "divider"
+            },
+            {
+              type: "context",
+              elements: [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*🚀 Novu Production Deployment Summary*\n*Period:* Last ${{ steps.output-variables.outputs.days_back }} days (${{ steps.output-variables.outputs.since_date }} to ${{ steps.output-variables.outputs.date_humanized }})\n*PRs Analyzed:* ${{ steps.fetch-prs.outputs.pr_count || 0 }}"
-                  }
-                },
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}"
-                  }
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "Generated by <https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|GitHub Actions> using ${{ github.event.inputs.ai_model || 'gpt-4o' }}"
-                    }
-                  ]
+                  type: "mrkdwn",
+                  text: ("Generated by <" + $run_url + "|GitHub Actions> • <" + $prs_url + "|View Recent PRs>")
                 }
               ]
             }
+          ]' /tmp/slack_payload.json > /tmp/temp.json && mv /tmp/temp.json /tmp/slack_payload.json
+
+          # Extract just the blocks array for the webhook
+          blocks_json=$(cat /tmp/slack_payload.json | jq -c '.blocks')
+          echo "blocks_json=$blocks_json" >> "$GITHUB_OUTPUT"
+
+      - name: Send deployment summary to Slack
+        id: slack
+        uses: slackapi/slack-github-action@v2.1.0
+        if: ${{ always() }}
+        with:
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "🚀 New Novu Production Deployment - Features Now Live!",
+              "blocks": ${{ steps.prepare-slack.outputs.blocks_json }}
+            }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+          SLACK_WEBHOOK_URL: ${{ secrets.TEAM_PRODUCT_WEBHOOK_SLACK }}
 
       - name: Save summary to file
         if: ${{ steps.ai-summary.outputs.response }}

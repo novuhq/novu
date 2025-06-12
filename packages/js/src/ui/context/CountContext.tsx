@@ -51,7 +51,6 @@ export const CountProvider = (props: ParentProps) => {
   };
 
   onMount(() => {
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     updateTabCounts();
   });
 
@@ -59,7 +58,6 @@ export const CountProvider = (props: ParentProps) => {
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setTotalUnreadCount(data.result);
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       updateTabCounts();
     },
   });
@@ -148,18 +146,24 @@ export const CountProvider = (props: ParentProps) => {
 
           if (Array.isArray(filterValue)) {
             if (Array.isArray(notifValue)) {
-              // Both filter value and notification value are arrays.
-              // Check for set equality (same elements, regardless of order).
+              /*
+               * Both filter value and notification value are arrays.
+               * Check for set equality (same elements, regardless of order).
+               */
               if (filterValue.length !== notifValue.length) return false;
-              // Ensure elements are of primitive types for direct sort and comparison.
-              // If elements can be objects, a more sophisticated comparison is needed.
+              /*
+               * Ensure elements are of primitive types for direct sort and comparison.
+               * If elements can be objects, a more sophisticated comparison is needed.
+               */
               const sortedFilterValue = [...(filterValue as (string | number | boolean)[])].sort();
               const sortedNotifValue = [...(notifValue as (string | number | boolean)[])].sort();
 
               return sortedFilterValue.every((val, index) => val === sortedNotifValue[index]);
             } else {
-              // Filter value is an array, notification value is scalar.
-              // Check if the scalar notification value is present in the filter array.
+              /*
+               * Filter value is an array, notification value is scalar.
+               * Check if the scalar notification value is present in the filter array.
+               */
               return (filterValue as unknown[]).includes(notifValue);
             }
           } else {

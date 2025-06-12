@@ -3,11 +3,12 @@ import { Variable } from '@maily-to/core/extensions';
 
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
-import { parseVariable } from '@/utils/liquid';
-
-export const REPEAT_BLOCK_ITERABLE_ALIAS = 'current';
-
-export const ALLOWED_ALIASES = [REPEAT_BLOCK_ITERABLE_ALIAS];
+import {
+  REPEAT_BLOCK_ITERABLE_ALIAS,
+  resolveRepeatBlockAlias,
+  isInsideRepeatBlock,
+  updateRepeatBlockChildAliases,
+} from './repeat-block-aliases';
 
 export enum VariableFrom {
   // variable coming from bubble menu (e.g. 'showIf')
@@ -266,77 +267,6 @@ export const calculateVariables = ({
   }
 
   return dedupAndSortVariables(variables, queryWithoutSuffix);
-};
-
-export function isAllowedAlias(variableName: string): boolean {
-  const [variablePart] = variableName.split('|');
-  const nameRoot = variablePart.split('.')[0];
-
-  return ALLOWED_ALIASES.includes(nameRoot);
-}
-
-export const resolveRepeatBlockAlias = (variable: string, editor: Editor): string | null => {
-  // Extract the root of the variable name (before any dots)
-  const parsedVariable = parseVariable(variable);
-  if (!parsedVariable) return null;
-
-  const { nameRoot, name, filters } = parsedVariable;
-
-  if (isAllowedAlias(nameRoot) && isInsideRepeatBlock(editor)) {
-    // Replace only the variable name part, keeping the filters separate
-    const replacedVariable = name.replace(nameRoot, editor.getAttributes('repeat')?.each);
-
-    // Return the replaced variable with filters appended
-    return replacedVariable + filters;
-  }
-
-  return null;
-};
-
-const findRepeatBlock = (editor: Editor) => {
-  const { $from } = editor.state.selection;
-
-  for (let depth = $from.depth; depth > 0; depth--) {
-    if ($from.node(depth).type.name === 'repeat') {
-      return { block: $from.node(depth), depth };
-    }
-  }
-
-  return null;
-};
-
-/**
- * Updates the 'aliasFor' attribute for all child nodes of the selected repeat block,
- * when the repeat block iterable changes.
- *
- * @example
- * iterable: 'payload.comments' => 'payload.blogs'
- * variable aliasFor: 'payload.comments.author' => 'payload.blogs.author'
- */
-const updateRepeatBlockChildAliases = (editor: Editor) => {
-  const repeat = findRepeatBlock(editor);
-
-  if (!repeat) return;
-
-  editor
-    .chain()
-    .command(({ tr }) => {
-      const { block, depth } = repeat;
-      const repeatPos = editor.state.selection.$from.before(depth);
-
-      block.content.descendants((node, pos) => {
-        if (node.type.name === 'variable' && node.attrs.aliasFor) {
-          const newAlias = resolveRepeatBlockAlias(node.attrs.id, editor);
-          tr.setNodeMarkup(repeatPos + pos + 1, null, { ...node.attrs, aliasFor: newAlias });
-        }
-      });
-      return true;
-    })
-    .run();
-};
-
-export const isInsideRepeatBlock = (editor: TiptapEditor): boolean => {
-  return editor?.isActive('repeat') ?? false;
 };
 
 const getRepeatBlockEachVariables = (editor: TiptapEditor): Array<LiquidVariable> => {
