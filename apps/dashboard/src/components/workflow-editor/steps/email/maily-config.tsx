@@ -43,7 +43,6 @@ import { ReactNodeViewRenderer } from '@tiptap/react';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { StepResponseDto } from '@novu/shared';
 
-import { VariablePill } from '@/components/variable/variable-pill';
 import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
 import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
 import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
@@ -56,13 +55,15 @@ import {
   resolveRepeatBlockAlias,
   VariableFrom,
 } from './variables/variables';
+import { createTranslationExtension } from './translations';
+
 import { ForView } from './views/for-view';
 import { HTMLCodeBlockView } from './views/html-view';
 import { ParsedVariables } from '@/utils/parseStepVariables';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
-import { createVariableView } from './views/variable-view';
+import { createVariableNodeView } from './views/variable-view';
 import { createCards } from './blocks/cards';
-import React from 'react';
+import { BubbleMenuVariablePill } from './views/variable-view';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -225,11 +226,14 @@ export const createExtensions = ({
     }),
     VariableExtension.extend({
       addNodeView() {
-        return ReactNodeViewRenderer(createVariableView(parsedVariables.variables, parsedVariables.isAllowedVariable), {
-          // the variable pill is 3px smaller than the default text size, but never smaller than 12px
-          className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
-          as: 'div',
-        });
+        return ReactNodeViewRenderer(
+          createVariableNodeView(parsedVariables.variables, parsedVariables.isAllowedVariable),
+          {
+            // the variable pill is 3px smaller than the default text size, but never smaller than 12px
+            className: 'relative inline-block text-[max(12px,calc(1em-3px))] h-5',
+            as: 'div',
+          }
+        );
       },
       addAttributes() {
         const attributes = this.parent?.();
@@ -285,10 +289,17 @@ export const createExtensions = ({
           }
         },
       },
-      // variable pills in bubble menus (repeat, showIf...)
+      // variable pills inside buttons and bubble menus (repeat, showIf...)
       renderVariable: (opts) => {
         return (
-          <VariablePill variableName={opts.variable.name} className="h-5 text-xs" from={opts.from as VariableFrom} />
+          <BubbleMenuVariablePill
+            variableName={opts.variable.name}
+            className="h-5 text-xs"
+            editor={opts.editor}
+            from={opts.from as VariableFrom}
+            variables={parsedVariables.variables}
+            isAllowedVariable={parsedVariables.isAllowedVariable}
+          />
         );
       },
       variables: handleCalculateVariables as Variables,
@@ -301,6 +312,7 @@ export const createExtensions = ({
         });
       },
     }),
+    // createTranslationExtension(),
   ];
 
   extensions.push(
