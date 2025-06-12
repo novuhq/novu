@@ -50,9 +50,9 @@ export class PreviewPayloadProcessorService {
         .forEach((stepId) => {
           const step = steps[stepId] as Record<string, unknown>;
 
-          // Only add eventCount for digest steps
-          if (stepData.type === StepTypeEnum.DIGEST) {
-            step.eventCount = Array.isArray(step.events) ? step.events.length : 0;
+          // Add eventCount for any step that has an events array (digest steps)
+          if (Array.isArray(step.events)) {
+            step.eventCount = step.events.length;
           }
         });
     }

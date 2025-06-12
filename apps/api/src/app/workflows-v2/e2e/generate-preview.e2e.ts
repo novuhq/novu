@@ -720,7 +720,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       workflowId,
     });
     expect(previewResponse1.result.result.preview.body).to.contain(`events length ${DEFAULT_ARRAY_ELEMENTS}`);
-    validateDigestEvents(previewResponse1.result.previewPayloadExample.steps['digest-step'].events, {});
+    validateDigestEvents(previewResponse1.result.previewPayloadExample.steps?.['digest-step'].events, {});
 
     // testing the steps.digest-step.eventCount variable
     const controlValues2 = {
@@ -733,7 +733,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       workflowId,
     });
     expect(previewResponse2.result.result.preview.body).to.contain(`eventCount ${DEFAULT_ARRAY_ELEMENTS}`);
-    validateDigestEvents(previewResponse2.result.previewPayloadExample.steps['digest-step'].events, {});
+    validateDigestEvents(previewResponse2.result.previewPayloadExample.steps?.['digest-step'].events, {});
 
     // testing the steps.digest-step.events array and direct access to the first item
     const controlValues3 = {
@@ -753,7 +753,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     const eventMatches = previewResponse3.result.result.preview.body.match(/'id':'example-id-\d+'/g);
     expect(eventMatches).to.have.length(DEFAULT_ARRAY_ELEMENTS);
     expect(previewResponse3.result.result.preview.body).to.contain('single variable: foo');
-    validateDigestEvents(previewResponse3.result.previewPayloadExample.steps['digest-step'].events, { foo: 'foo' });
+    validateDigestEvents(previewResponse3.result.previewPayloadExample.steps?.['digest-step'].events, { foo: 'foo' });
 
     // testing the steps.digest-step.events[0].payload.foo variable
     const controlValues4 = {
@@ -766,7 +766,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       workflowId,
     });
     expect(previewResponse4.result.result.preview.body).to.contain('single variable: foo');
-    validateDigestEvents(previewResponse4.result.previewPayloadExample.steps['digest-step'].events, { foo: 'foo' });
+    validateDigestEvents(previewResponse4.result.previewPayloadExample.steps?.['digest-step'].events, { foo: 'foo' });
 
     // testing the countSummary and sentenceSummary variables
     const controlValues5 = {
@@ -782,7 +782,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse5.result.result.preview.body).to.contain(
       `name, name, and ${DEFAULT_ARRAY_ELEMENTS - 2} other`
     );
-    validateDigestEvents(previewResponse5.result.previewPayloadExample.steps['digest-step'].events, { name: 'name' });
+    validateDigestEvents(previewResponse5.result.previewPayloadExample.steps?.['digest-step'].events, { name: 'name' });
 
     // testing the digest block with 3 variables combining current and full variable
     const controlValues6 = {
@@ -798,7 +798,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'first')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'second')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'third')).to.equal(DEFAULT_ARRAY_ELEMENTS);
-    validateDigestEvents(previewResponse6.result.previewPayloadExample.steps['digest-step'].events, {
+    validateDigestEvents(previewResponse6.result.previewPayloadExample.steps?.['digest-step'].events, {
       third: 'third',
       foo: {
         bar: {
@@ -1424,7 +1424,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         workflowId,
       });
 
-      validateDigestEventsInMergeTest(previewResponse1.result.previewPayloadExample.steps['digest-step'].events, {});
+      validateDigestEventsInMergeTest(previewResponse1.result.previewPayloadExample.steps?.['digest-step'].events, {});
 
       // testing that the final payload has the events with payload.name
       const controlValues2 = {
@@ -1450,7 +1450,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         workflowId,
       });
 
-      validateDigestEventsInMergeTest(previewResponse2.result.previewPayloadExample.steps['digest-step'].events, {
+      validateDigestEventsInMergeTest(previewResponse2.result.previewPayloadExample.steps?.['digest-step'].events, {
         name: 'name',
       });
 
@@ -1488,7 +1488,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       });
 
       // The system should add id and time to user-provided events
-      const actualEvents = previewResponse3.result.previewPayloadExample.steps['digest-step'].events;
+      const actualEvents = previewResponse3.result.previewPayloadExample.steps?.['digest-step'].events;
       expect(actualEvents).to.have.length(3);
       actualEvents.forEach((event) => {
         expect(event).to.have.property('id').that.is.a('string');
@@ -1575,7 +1575,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       });
 
       // The system should add id and time to user-provided events and merge missing keys
-      const actualEvents4 = previewResponse4.result.previewPayloadExample.steps['digest-step'].events;
+      const actualEvents4 = previewResponse4.result.previewPayloadExample.steps?.['digest-step'].events;
       expect(actualEvents4).to.have.length(4);
       actualEvents4.forEach((event) => {
         expect(event).to.have.property('id').that.is.a('string');
@@ -1624,7 +1624,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         stepId: emailStepDatabaseId,
         workflowId,
       });
-      const actualEvents6 = previewResponse6.result.previewPayloadExample.steps['digest-step'].events;
+      const actualEvents6 = previewResponse6.result.previewPayloadExample.steps?.['digest-step'].events;
       expect(actualEvents6).to.have.length(1);
       expect(actualEvents6[0]).to.have.property('id').that.is.a('string');
       expect(actualEvents6[0]).to.have.property('time').that.is.a('string');
