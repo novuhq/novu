@@ -3,7 +3,7 @@ import { type PropsWithChildren, useLayoutEffect } from 'react';
 import { useAuth, useEnvironment, useMonitoring, useRouteScopes } from './hooks';
 import { ROUTES } from './constants/routes';
 
-export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
+export function ApplicationReadyGuard({ children }: PropsWithChildren) {
   useMonitoring();
   const location = useLocation();
   const { inPublicRoute, inStudioRoute } = useRouteScopes();

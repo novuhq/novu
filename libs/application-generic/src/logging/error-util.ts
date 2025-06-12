@@ -88,7 +88,6 @@ export function parseErrorInformation(
       message: 'Critical error in error formatting',
       error: {
         type: 'format_error',
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         details: String(formatingError),
       },
       context: {

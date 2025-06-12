@@ -22,9 +22,9 @@ export const ChangesTable = ({
   changes: any[];
   loading: boolean;
   handleTableChange: (pageIndex) => void;
-  page: Number;
-  pageSize: Number;
-  totalCount: Number;
+  page: number;
+  pageSize: number;
+  totalCount: number;
   dataTestId?: string;
 }) => {
   const queryClient = useQueryClient();
@@ -41,6 +41,7 @@ export const ChangesTable = ({
     if (!error) {
       return;
     }
+
     showNotification({
       message: (error as Error).message,
       color: 'red',

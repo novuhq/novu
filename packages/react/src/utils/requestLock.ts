@@ -3,6 +3,7 @@ export function requestLock(id: string, cb: (id: string) => void) {
   if (!('locks' in navigator)) {
     // If Lock API is not available, immediately invoke the callback and return a no-op function
     cb(id);
+
     return () => {};
   }
 

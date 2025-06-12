@@ -37,7 +37,7 @@ export type AuthContextValue = UserState &
     // TODO: Make redirectToSignUp agnostic to business logic and accept { queryParams: { [key: string]: string }}
     redirectToSignUp: (params: { redirectURL?: string; origin?: string; anonymousId?: string }) => void;
     switchOrganization: (organizationId: string) => Promise<void>;
-    reloadOrganization: () => Promise<{}>;
+    reloadOrganization: () => Promise<object>;
   };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {

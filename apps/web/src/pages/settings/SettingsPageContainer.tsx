@@ -12,7 +12,7 @@ export interface ISettingsPageContainerProps {
 /**
  * This should eventually replace `Container` in the design system
  */
-const SettingsPageContentContainer: FC<PropsWithChildren<{}>> = ({ children }) => {
+const SettingsPageContentContainer: FC<PropsWithChildren> = ({ children }) => {
   return (
     <section
       className={css({
