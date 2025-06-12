@@ -11,7 +11,7 @@ import {
 import { JSONSchema7 } from 'json-schema';
 
 export interface LiquidVariable {
-  type?: 'variable' | 'digest' | 'new-variable';
+  type?: 'variable' | 'digest' | 'new-variable' | 'local';
   name: string;
   boost?: number;
   info?: Completion['info'];

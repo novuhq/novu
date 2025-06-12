@@ -5,6 +5,7 @@ import { Completion, CompletionContext, CompletionResult, CompletionSource } fro
 import { EditorView } from '@uiw/react-codemirror';
 import { createRoot } from 'react-dom/client';
 import React from 'react';
+import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
 
 export interface CompletionOption {
   label: string;
@@ -85,6 +86,7 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  */
 export const completions =
   (
+    scopedVariables: LiquidVariable[],
     variables: LiquidVariable[],
     onCreateNewVariable?: (variableName: string) => Promise<void>,
     isPayloadSchemaEnabled?: boolean
@@ -114,7 +116,14 @@ export const completions =
       };
     }
 
-    const matchingVariables = getMatchingVariables(searchText, variables, onCreateNewVariable, isPayloadSchemaEnabled);
+    const allVariables = [...scopedVariables, ...variables];
+    const matchingVariables = getMatchingVariables(
+      searchText,
+      scopedVariables,
+      variables,
+      onCreateNewVariable,
+      isPayloadSchemaEnabled
+    );
 
     // If we have matches or we're in a valid context, show them
     if (matchingVariables.length > 0 || isInsideLiquidBlock(beforeCursor)) {
@@ -132,7 +141,7 @@ export const completions =
                   v.displayLabel
                 )
               )
-            : variables.map((v) =>
+            : allVariables.map((v) =>
                 createCompletionOption(v.name, v.type ?? 'variable', v.boost, v.info, v.displayLabel)
               ),
       };
@@ -179,18 +188,20 @@ function getFilterCompletions(afterPipe: string): CompletionOption[] {
 
 function getMatchingVariables(
   searchText: string,
+  scopedVariables: LiquidVariable[],
   variables: LiquidVariable[],
   onCreateNewVariable?: (variableName: string) => Promise<void>,
   isPayloadSchemaEnabled?: boolean
 ): LiquidVariable[] {
-  if (!searchText) return variables;
+  const allVariables = [...scopedVariables, ...variables];
+  if (!searchText) return allVariables;
 
   const searchTextTrimmed = searchText.trim();
 
   // Handle dot endings
   if (searchText.endsWith('.')) {
     const prefix = searchText.slice(0, -1);
-    return variables.filter((v) => v.name.startsWith(prefix));
+    return allVariables.filter((v) => v.name.startsWith(prefix));
   }
 
   // Filter jit step namespaces out of the returned variables from the server
@@ -281,7 +292,23 @@ function getMatchingVariables(
     return acc;
   }, []);
 
-  const baseVariables = Array.from(new Map([...jitVariables, ...variables].map((item) => [item.name, item])).values());
+  const prefix = searchText.split('.')[0];
+  const localVariable = scopedVariables.find((v) => v.name === prefix);
+  let combinedVariables = [...jitVariables, ...allVariables];
+
+  if (localVariable) {
+    combinedVariables = [
+      ...jitVariables,
+      {
+        name: searchText,
+        displayLabel: searchText,
+        type: 'local',
+      },
+      ...allVariables,
+    ];
+  }
+
+  const baseVariables = Array.from(new Map(combinedVariables.map((item) => [item.name, item])).values());
 
   const existingMatchingVariables = baseVariables.filter((v) => {
     const namePartWithoutFilters = v.name.split('|')[0].trim();
@@ -303,7 +330,13 @@ export function createAutocompleteSource(
     const word = context.matchBefore(/\{\{([^}]*)/);
     if (!word) return null;
 
-    const options = completions(variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
+    const scopedVariables = getVariablesAtPositionWithLoopProperties(context.state.doc.toString(), context.pos);
+    const scopedLiquidVariables = scopedVariables.map<LiquidVariable>((variable) => ({
+      name: variable,
+      displayLabel: variable,
+      type: 'local',
+    }));
+    const options = completions(scopedLiquidVariables, variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
     if (!options) return null;
 
     const { from, to } = options;

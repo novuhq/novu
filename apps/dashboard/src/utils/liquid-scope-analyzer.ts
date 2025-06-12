@@ -1,7 +1,7 @@
 type Scope = {
   start: number;
   end: number;
-  variables: Set<string>;
+  variables: string[];
   type: 'global' | 'for' | 'tablerow' | 'capture';
 };
 
@@ -20,6 +20,32 @@ const LIQUID_PATTERNS = {
   capture: /{%\s*capture\s+(\w+)\s*%}/g,
   endCapture: /{%\s*endcapture\s*%}/g,
 } as const;
+
+// Built-in Liquid loop object properties
+const FORLOOP_VARIABLES = [
+  'forloop',
+  'forloop.index',
+  'forloop.index0',
+  'forloop.first',
+  'forloop.last',
+  'forloop.length',
+  'forloop.rindex',
+  'forloop.rindex0',
+];
+
+const TABLEROWLOOP_VARIABLES = [
+  'tablerowloop',
+  'tablerowloop.index',
+  'tablerowloop.index0',
+  'tablerowloop.first',
+  'tablerowloop.last',
+  'tablerowloop.length',
+  'tablerowloop.col',
+  'tablerowloop.col0',
+  'tablerowloop.col_first',
+  'tablerowloop.col_last',
+  'tablerowloop.row',
+];
 
 /**
  * Creates a new RegExp instance from a pattern object
@@ -49,14 +75,15 @@ export function isVariableInLocalContext(content: string, name: string, position
   // Get all variables available at this position
   const availableVariables = getVariablesAtPosition(content, position);
 
-  return availableVariables.has(rootName);
+  return availableVariables.includes(rootName) || availableVariables.includes(name);
 }
 
 /**
- * Gets all variables available at a specific position in the content
+ * Gets all variables available at a specific position in the content. Includes forloop and tablerowloop variables.
  */
-function getVariablesAtPosition(content: string, position: number): Set<string> {
-  const availableVariables = new Set<string>();
+function getVariablesAtPosition(content: string, position: number): string[] {
+  const availableVariables: string[] = [];
+  const seen = new Set<string>();
 
   // Parse all scopes in the content
   const allScopes = parseAllScopes(content);
@@ -64,11 +91,21 @@ function getVariablesAtPosition(content: string, position: number): Set<string> 
   // Find scopes that contain the position and collect their variables
   for (const scope of allScopes) {
     if (position >= scope.start && position <= scope.end) {
-      scope.variables.forEach((v) => availableVariables.add(v));
+      scope.variables.forEach((v) => {
+        if (!seen.has(v)) {
+          availableVariables.push(v);
+          seen.add(v);
+        }
+      });
     }
   }
 
-  return availableVariables;
+  return availableVariables.reverse();
+}
+
+export function getVariablesAtPositionWithLoopProperties(content: string, position: number): string[] {
+  const availableVariables = getVariablesAtPosition(content, position);
+  return availableVariables.filter((v) => !v.startsWith('forloop') && !v.startsWith('tablerowloop'));
 }
 
 /**
@@ -78,7 +115,7 @@ function parseAllScopes(content: string): Scope[] {
   const scopes: Scope[] = [];
 
   // Track global variables from assign statements
-  const globalAssigns = new Set<string>();
+  const globalAssigns: string[] = [];
 
   // First pass: find all assign statements that create global variables
   const assignRegex = createRegex(LIQUID_PATTERNS.assign);
@@ -90,16 +127,16 @@ function parseAllScopes(content: string): Scope[] {
 
     // Check if this assign is inside a block scope
     if (!isInsideBlockScope(content, position)) {
-      globalAssigns.add(varName);
+      globalAssigns.push(varName);
     }
   }
 
   // Add global scope for assign variables
-  if (globalAssigns.size > 0) {
+  if (globalAssigns.length > 0) {
     scopes.push({
       start: 0,
       end: content.length,
-      variables: new Set(globalAssigns),
+      variables: globalAssigns,
       type: 'global',
     });
   }
@@ -178,7 +215,8 @@ function parseForLoops(content: string, scopes: Scope[]): void {
     const endMatch = endForRegex.exec(content);
 
     if (endMatch) {
-      const scopeVariables = new Set<string>([iteratorVar, 'forloop']);
+      // Order: iterator variable first, then forloop, then nested assigns
+      const scopeVariables: string[] = [...FORLOOP_VARIABLES, iteratorVar];
 
       // Check for nested assigns within this for loop
       const blockContent = content.substring(start, endMatch.index + endMatch[0].length);
@@ -186,7 +224,7 @@ function parseForLoops(content: string, scopes: Scope[]): void {
       let nestedAssign: RegExpExecArray | null;
 
       while ((nestedAssign = nestedAssignRegex.exec(blockContent)) !== null) {
-        scopeVariables.add(nestedAssign[1]);
+        scopeVariables.push(nestedAssign[1]);
       }
 
       scopes.push({
@@ -223,7 +261,8 @@ function parseTablerowLoops(content: string, scopes: Scope[]): void {
     const endMatch = endTablerowRegex.exec(content);
 
     if (endMatch) {
-      const scopeVariables = new Set<string>([iteratorVar, 'tablerowloop']);
+      // Order: iterator variable first, then tablerowloop, then nested assigns
+      const scopeVariables: string[] = [...TABLEROWLOOP_VARIABLES, iteratorVar];
 
       // Check for nested assigns
       const blockContent = content.substring(start, endMatch.index + endMatch[0].length);
@@ -231,7 +270,7 @@ function parseTablerowLoops(content: string, scopes: Scope[]): void {
       let nestedAssign: RegExpExecArray | null;
 
       while ((nestedAssign = nestedAssignRegex.exec(blockContent)) !== null) {
-        scopeVariables.add(nestedAssign[1]);
+        scopeVariables.push(nestedAssign[1]);
       }
 
       scopes.push({
@@ -271,14 +310,14 @@ function parseCaptureBlocks(content: string, scopes: Scope[]): void {
         scopes.push({
           start: captureEnd,
           end: content.length,
-          variables: new Set([captureVar]),
+          variables: [captureVar],
           type: 'capture',
         });
       } else {
         // Capture inside a block - find parent block and add to its scope
         for (const scope of scopes) {
           if (start >= scope.start && captureEnd <= scope.end && (scope.type === 'for' || scope.type === 'tablerow')) {
-            scope.variables.add(captureVar);
+            scope.variables.push(captureVar);
             break;
           }
         }
