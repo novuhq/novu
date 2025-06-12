@@ -57,13 +57,7 @@ export class PayloadMergerService {
       );
     }
 
-    return this.mergeWithoutPayloadSchema(
-      payloadExample,
-      userPayloadExample,
-      workflow,
-      command,
-      isV2TemplateEditorEnabled
-    );
+    return this.mergeWithoutPayloadSchema(payloadExample, userPayloadExample, workflow, command);
   }
 
   private async mergeWithPayloadSchema(
@@ -133,17 +127,12 @@ export class PayloadMergerService {
       );
     }
 
-    if (isV2TemplateEditorEnabled) {
-      const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
-      // Preserve user-provided subscriber data even if it was filtered out earlier
-      const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
+    const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
+    // Preserve user-provided subscriber data even if it was filtered out earlier
+    const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-      mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
-    }
-
-    if (isV2TemplateEditorEnabled) {
-      mergedPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
-    }
+    mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
+    mergedPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
 
     return mergedPayload;
   }
@@ -152,8 +141,7 @@ export class PayloadMergerService {
     payloadExample: Record<string, unknown>,
     userPayloadExample: PreviewPayloadDto | undefined,
     workflow: NotificationTemplateEntity,
-    command: PreviewCommand,
-    isV2TemplateEditorEnabled: boolean
+    command: PreviewCommand
   ): Promise<Record<string, unknown>> {
     let finalPayload: Record<string, unknown>;
 
@@ -166,17 +154,13 @@ export class PayloadMergerService {
       finalPayload = payloadExample;
     }
 
-    if (isV2TemplateEditorEnabled) {
-      const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
-      // Preserve user-provided subscriber data even if it was filtered out earlier
-      const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
+    const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
+    // Preserve user-provided subscriber data even if it was filtered out earlier
+    const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-      finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
-    }
+    finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
 
-    if (isV2TemplateEditorEnabled) {
-      finalPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
-    }
+    finalPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
 
     return finalPayload;
   }
