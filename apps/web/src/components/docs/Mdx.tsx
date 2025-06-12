@@ -3,7 +3,6 @@ import { Tabs, Tooltip } from '@novu/design-system';
 import { IconInfoOutline, IconOutlineWarning } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { Flex, Grid, GridItem, styled } from '@novu/novui/jsx';
-// eslint-disable-next-line import/no-namespace
 import * as mdxBundler from 'mdx-bundler/client';
 import { useMemo, ReactNode, PropsWithChildren, useEffect } from 'react';
 import { Title, Text } from '@novu/novui';

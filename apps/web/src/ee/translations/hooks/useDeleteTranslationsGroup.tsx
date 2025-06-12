@@ -5,7 +5,7 @@ import { api } from '../../../api';
 
 export const useDeleteTranslationGroup = (
   options: MutationOptions<
-    {},
+    object,
     { error: string; message: string; statusCode: number },
     {
       id: string;
@@ -15,7 +15,7 @@ export const useDeleteTranslationGroup = (
   const queryClient = useQueryClient();
 
   const { mutateAsync: deleteTranslationGroup, ...rest } = useMutation<
-    {},
+    object,
     { error: string; message: string; statusCode: number },
     {
       id: string;
