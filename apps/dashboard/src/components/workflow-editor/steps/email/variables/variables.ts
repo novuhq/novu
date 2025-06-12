@@ -17,6 +17,8 @@ export enum VariableFrom {
   RepeatEachKey = 'repeat-variable',
   // all the other variables
   Content = 'content-variable',
+  // variables inside Button component
+  Button = 'button-variable',
 }
 
 export type CalculateVariablesProps = {
