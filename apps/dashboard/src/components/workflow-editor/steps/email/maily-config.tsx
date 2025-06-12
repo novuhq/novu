@@ -48,7 +48,6 @@ import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/h
 import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { createDigestBlock } from './blocks/digest';
-import { createTranslationExtension } from './translations';
 
 import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
 import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './variables/repeat-block-aliases';
