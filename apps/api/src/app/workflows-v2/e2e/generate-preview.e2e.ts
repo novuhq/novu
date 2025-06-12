@@ -1718,6 +1718,22 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       ],
     };
     const workflowResult = await novuClient.workflows.create(createWorkflowDto);
+    await novuClient.workflows.patch(
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            foo: {
+              type: 'string',
+            },
+            name: {
+              type: 'string',
+            },
+          },
+        },
+      },
+      workflowResult.result.id
+    );
 
     return {
       workflowId: workflowResult.result.id,
