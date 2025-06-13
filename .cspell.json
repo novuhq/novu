@@ -823,6 +823,7 @@
     "*.riv",
     "*/**/.vscode/settings.json",
     "*/**/CHANGELOG.md",
+    "apps/api/src/app/workflows-v2/e2e/generate-preview.e2e.ts",
     "angular.json",
     "apps/api/src/.env.test",
     "apps/api/src/app/analytics/usecases/hubspot-identify-form/hubspot-identify-form.usecase.ts",
