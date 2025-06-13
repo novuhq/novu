@@ -166,6 +166,10 @@ export class UpdateWorkflow {
         updatePayload.payloadSchema = command.payloadSchema;
       }
 
+      if (command.validatePayload !== undefined) {
+        updatePayload.validatePayload = command.validatePayload;
+      }
+
       if (command.status) {
         updatePayload.status = command.status;
       }

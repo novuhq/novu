@@ -191,6 +191,69 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const error = await createWorkflowAndExpectError(apiClient, createWorkflowDto);
       expect(error?.statusCode).eq(400);
     });
+
+    it('should create workflow with payloadSchema and validatePayload fields', async () => {
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          name: {
+            type: 'string',
+            description: 'User name',
+          },
+          age: {
+            type: 'number',
+            minimum: 0,
+          },
+        },
+        required: ['name'],
+      };
+
+      const createWorkflowDto: CreateWorkflowDto = {
+        ...buildWorkflow({
+          name: `Test Workflow with Schema ${new Date().toISOString()}`,
+        }),
+        payloadSchema,
+        validatePayload: true,
+      };
+
+      const workflowCreated = await createWorkflow(apiClient, createWorkflowDto);
+
+      expect(workflowCreated).to.be.ok;
+      expect(workflowCreated.payloadSchema).to.deep.equal(payloadSchema);
+      expect(workflowCreated.validatePayload).to.be.true;
+    });
+
+    it('should create workflow with validatePayload false', async () => {
+      const createWorkflowDto: CreateWorkflowDto = {
+        ...buildWorkflow({
+          name: `Test Workflow No Validation ${new Date().toISOString()}`,
+        }),
+        validatePayload: false,
+      };
+
+      const workflowCreated = await createWorkflow(apiClient, createWorkflowDto);
+
+      expect(workflowCreated).to.be.ok;
+      expect(workflowCreated.validatePayload).to.be.false;
+    });
+
+    it('should reject workflow creation with invalid JSON schema', async () => {
+      const invalidPayloadSchema = {
+        type: 'invalid-type',
+        properties: 'not-an-object',
+      };
+
+      const createWorkflowDto: CreateWorkflowDto = {
+        ...buildWorkflow({
+          name: `Test Invalid Schema ${new Date().toISOString()}`,
+        }),
+        payloadSchema: invalidPayloadSchema,
+      };
+
+      const error = await createWorkflowAndExpectValidationError(apiClient, createWorkflowDto);
+      expect(error?.statusCode).to.equal(422);
+      expect(JSON.stringify(error)).to.include('payloadSchema must be a valid JSON schema');
+    });
   });
 
   describe('Update workflow', () => {
@@ -289,6 +352,50 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         ...mapResponseToUpdateDto(workflowCreated),
         name: 'Test Workflow 3',
       });
+    });
+
+    it('should update workflow with payloadSchema and validatePayload fields', async () => {
+      const workflowCreated = await createWorkflowAndValidate();
+      const payloadSchema = {
+        type: 'object',
+        properties: {
+          email: {
+            type: 'string',
+            format: 'email',
+          },
+          count: {
+            type: 'number',
+            minimum: 1,
+          },
+        },
+        required: ['email'],
+      };
+
+      const updateRequest: UpdateWorkflowDto = {
+        ...mapResponseToUpdateDto(workflowCreated),
+        payloadSchema,
+        validatePayload: true,
+      } as UpdateWorkflowDto;
+
+      const updatedWorkflow = await updateWorkflow(workflowCreated.id, updateRequest);
+
+      expect(updatedWorkflow).to.be.ok;
+      expect(updatedWorkflow.payloadSchema).to.deep.equal(payloadSchema);
+      expect(updatedWorkflow.validatePayload).to.be.true;
+    });
+
+    it('should update workflow to disable payload validation', async () => {
+      const workflowCreated = await createWorkflowAndValidate();
+
+      const updateRequest: UpdateWorkflowDto = {
+        ...mapResponseToUpdateDto(workflowCreated),
+        validatePayload: false,
+      } as UpdateWorkflowDto;
+
+      const updatedWorkflow = await updateWorkflow(workflowCreated.id, updateRequest);
+
+      expect(updatedWorkflow).to.be.ok;
+      expect(updatedWorkflow.validatePayload).to.be.false;
     });
   });
 

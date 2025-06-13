@@ -158,6 +158,8 @@ export class UpsertWorkflowUseCase {
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
       triggerIdentifier: preserveWorkflowId ? workflowDto.workflowId : slugify(workflowDto.name),
       status: computeWorkflowStatus(isWorkflowActive, steps),
+      payloadSchema: workflowDto.payloadSchema,
+      validatePayload: workflowDto.validatePayload,
     };
   }
 
@@ -184,6 +186,8 @@ export class UpsertWorkflowUseCase {
       tags: workflowDto.tags,
       active: workflowActive,
       status: computeWorkflowStatus(workflowActive, steps),
+      payloadSchema: workflowDto.payloadSchema,
+      validatePayload: workflowDto.validatePayload,
     };
   }
 

@@ -152,6 +152,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
     description: 'The payload JSON Schema for the workflow',
     type: 'object',
     nullable: true,
+    additionalProperties: true,
   })
   @IsOptional()
   payloadSchema?: object;
@@ -160,6 +161,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
     description: 'Generated payload example based on the payload schema',
     type: 'object',
     nullable: true,
+    additionalProperties: true,
   })
   @IsOptional()
   payloadExample?: object;

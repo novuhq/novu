@@ -119,6 +119,14 @@ export type CreateWorkflowDto = {
    * Workflow preferences
    */
   preferences?: PreferencesRequestDto | undefined;
+  /**
+   * The payload JSON Schema for the workflow
+   */
+  payloadSchema?: { [k: string]: any } | undefined;
+  /**
+   * Enable or disable payload schema validation
+   */
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -297,6 +305,8 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
   ),
   __source: WorkflowCreationSourceEnum$inboundSchema.default("editor"),
   preferences: PreferencesRequestDto$inboundSchema.optional(),
+  payloadSchema: z.record(z.any()).optional(),
+  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "__source": "source",
@@ -322,6 +332,8 @@ export type CreateWorkflowDto$Outbound = {
   >;
   __source: string;
   preferences?: PreferencesRequestDto$Outbound | undefined;
+  payloadSchema?: { [k: string]: any } | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -381,6 +393,8 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   ),
   source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),
   preferences: PreferencesRequestDto$outboundSchema.optional(),
+  payloadSchema: z.record(z.any()).optional(),
+  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     source: "__source",

@@ -118,6 +118,14 @@ export type UpdateWorkflowDto = {
    * Origin of the workflow
    */
   origin: WorkflowOriginEnum;
+  /**
+   * The payload JSON Schema for the workflow
+   */
+  payloadSchema?: { [k: string]: any } | undefined;
+  /**
+   * Enable or disable payload schema validation
+   */
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -295,6 +303,8 @@ export const UpdateWorkflowDto$inboundSchema: z.ZodType<
   ),
   preferences: PreferencesRequestDto$inboundSchema,
   origin: WorkflowOriginEnum$inboundSchema,
+  payloadSchema: z.record(z.any()).optional(),
+  validatePayload: z.boolean().optional(),
 });
 
 /** @internal */
@@ -316,6 +326,8 @@ export type UpdateWorkflowDto$Outbound = {
   >;
   preferences: PreferencesRequestDto$Outbound;
   origin: string;
+  payloadSchema?: { [k: string]: any } | undefined;
+  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -375,6 +387,8 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
   ),
   preferences: PreferencesRequestDto$outboundSchema,
   origin: WorkflowOriginEnum$outboundSchema,
+  payloadSchema: z.record(z.any()).optional(),
+  validatePayload: z.boolean().optional(),
 });
 
 /**
