@@ -68,7 +68,7 @@ export class PreviewUsecase {
         command
       );
 
-      payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample, context.stepData);
+      payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
       const schema = await this.schemaBuilder.buildPreviewPayloadSchema(
@@ -94,8 +94,10 @@ export class PreviewUsecase {
           schema,
         };
       } catch (previewError) {
-        // If preview execution fails, still return valid schema and payload example
-        // but with an empty preview result
+        /*
+         * If preview execution fails, still return valid schema and payload example
+         * but with an empty preview result
+         */
         return {
           result: {
             preview: {},

@@ -22,7 +22,7 @@ type UsePersistedPreviewContextProps = {
 };
 
 export function usePersistedPreviewContext({ workflowId, stepId, environmentId }: UsePersistedPreviewContextProps) {
-  const saveTimeoutRef = useRef<NodeJS.Timeout>();
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
     cleanupExpiredPreviewData();

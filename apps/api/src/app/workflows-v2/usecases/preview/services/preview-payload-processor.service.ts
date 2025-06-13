@@ -36,10 +36,7 @@ export class PreviewPayloadProcessorService {
    * Calculates eventCount from events array length for digest steps only, ensuring bridge
    * receives accurate event counts for processing.
    */
-  enhanceEventCountValue(
-    payloadExample: PreviewPayloadDto,
-    stepData: StepResponseDto
-  ): Record<string, Record<string, unknown>> {
+  enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
     const preparedPayload = _.cloneDeep(payloadExample);
 
     if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {

@@ -29,7 +29,7 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto): Previe
     avatar: subscriber.avatar || '',
     locale: subscriber.locale || 'en_US',
     timezone: subscriber.timezone || '',
-    data: null,
+    data: {},
   };
 }
 

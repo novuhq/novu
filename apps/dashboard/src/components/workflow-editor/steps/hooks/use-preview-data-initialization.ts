@@ -32,7 +32,7 @@ export function usePreviewDataInitialization({
 
   const initializeData = useCallback(() => {
     // Skip if already initialized or missing required props
-    if (isInitializedRef.current || !workflowId || !stepId || !environmentId || !value || value === '{}') {
+    if (isInitializedRef.current || !workflowId || !stepId || !environmentId) {
       return;
     }
 
