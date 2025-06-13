@@ -105,7 +105,7 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
   }
 
   if (job.status === JobStatusEnum.CANCELED) {
-    return 'Step was filtered out';
+    return 'Step was skipped by step conditions';
   }
 
   if (job.status === JobStatusEnum.FAILED && job.executionDetails?.length > 0) {
