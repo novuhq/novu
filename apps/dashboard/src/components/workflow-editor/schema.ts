@@ -54,7 +54,7 @@ export const buildDynamicFormSchema = ({
       if (key === 'subscriberId') {
         zodValue = zodValue.regex(
           VALID_ID_REGEX,
-          'SubscriberId must be a string of alphanumeric characters, -, and _ or a valid email address.'
+          'SubscriberId must be a string of alphanumeric characters, -, _, and . or a valid email address.'
         );
       }
 
