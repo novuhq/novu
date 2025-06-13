@@ -53,6 +53,7 @@ import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 import { IS_SELF_HOSTED } from './config';
 import { ProtectedRoute } from './routes/protected-route';
+import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -263,6 +264,10 @@ const router = createBrowserRouter([
                   {
                     element: <ConfigureStepTemplate />,
                     path: ROUTES.EDIT_STEP_TEMPLATE,
+                  },
+                  {
+                    element: <EditStepTemplateV2Page />,
+                    path: ROUTES.EDIT_STEP_TEMPLATE_V2,
                   },
                   {
                     element: <EditStepConditions />,

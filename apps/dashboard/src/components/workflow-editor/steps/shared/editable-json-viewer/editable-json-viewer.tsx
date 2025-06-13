@@ -34,7 +34,12 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   const ajvValidator = useMemo(() => {
     if (!schema) return null;
 
-    const ajv = new Ajv({ allErrors: true, verbose: true });
+    const ajv = new Ajv({
+      allErrors: true,
+      verbose: true,
+      strict: false, // Allow unknown keywords like "example"
+      strictSchema: false, // Allow schema keywords that are not in the spec
+    });
     addFormats(ajv);
 
     try {
@@ -96,7 +101,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     []
   );
 
-  useHideRootNode(containerRef);
+  useHideRootNode(containerRef, value);
 
   const customNodeDefinitions = useMemo(() => {
     const components: CustomNodeDefinition<Record<string, any>, Record<string, any>>[] = [

@@ -2,7 +2,8 @@ import { cn } from '@/utils/ui';
 import { ISubscriberResponseDto } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line } from 'react-icons/ri';
+import { IconType } from 'react-icons';
+import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
 import { EnterLineIcon } from '../icons/enter-line';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '../primitives/command';
@@ -23,6 +24,8 @@ type SubscriberAutocompleteProps = {
   onSelectSubscriber?: (subscriber: ISubscriberResponseDto) => void;
   searchField?: SearchField;
   onSearchFieldChange?: (field: SearchField) => void;
+  placeholder?: string;
+  trailingIcon?: IconType;
 };
 
 export function SubscriberAutocomplete({
@@ -36,6 +39,8 @@ export function SubscriberAutocomplete({
   onSelectSubscriber,
   searchField: externalSearchField,
   onSearchFieldChange,
+  placeholder,
+  trailingIcon = RiSearchLine,
 }: SubscriberAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const selectInteractionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -199,16 +204,26 @@ export function SubscriberAutocomplete({
 
   // Get placeholder text based on search field
   const getPlaceholder = () => {
+    let fieldSuffix;
     switch (searchField) {
       case 'email':
-        return 'Add subscriber to this topic by email';
+        fieldSuffix = ' by email';
+        break;
       case 'phone':
-        return 'Add subscriber to this topic by phone';
+        fieldSuffix = ' by phone';
+        break;
       case 'name':
-        return 'Add subscriber to this topic by name';
+        fieldSuffix = ' by name';
+        break;
       default:
-        return 'Add subscriber to this topic by subscriberId';
+        fieldSuffix = ' by subscriberId';
     }
+
+    if (placeholder) {
+      return placeholder + fieldSuffix;
+    }
+
+    return 'Search for a subscriber' + fieldSuffix;
   };
 
   const showDropdown = open && value.length >= 2;
@@ -292,7 +307,7 @@ export function SubscriberAutocomplete({
               disabled={disabled}
               size={size}
               leadingNode={FieldSelector}
-              trailingIcon={RiAddFill}
+              trailingIcon={trailingIcon}
               className="w-full transition-all duration-200"
               autoComplete="off"
               aria-busy={combinedLoading}

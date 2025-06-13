@@ -93,7 +93,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   }
 
   return (
-    <SidebarContent size="md">
+    <SidebarContent size="md" className="p-0">
       <ConfirmationModal
         open={isRestoreDefaultModalOpen}
         onOpenChange={setIsRestoreDefaultModalOpen}

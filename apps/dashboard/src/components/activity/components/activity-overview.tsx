@@ -13,6 +13,7 @@ import { fadeIn } from '@/utils/animation';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { JOB_STATUS_CONFIG } from '../constants';
+import { getActivityStatus } from '../helpers';
 import { OverviewItem } from './overview-item';
 
 export interface ActivityOverviewProps {
@@ -21,7 +22,7 @@ export interface ActivityOverviewProps {
 
 export function ActivityOverview({ activity }: ActivityOverviewProps) {
   const { currentEnvironment } = useEnvironment();
-  const status = activity.jobs[activity?.jobs?.length - 1]?.status;
+  const status = getActivityStatus(activity.jobs);
 
   const workflowPath = buildRoute(ROUTES.EDIT_WORKFLOW, {
     environmentSlug: currentEnvironment?.slug ?? '',

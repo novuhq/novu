@@ -498,7 +498,14 @@ export function previewPayloadExample() {
       },
     },
     subscriber: {
-      firstName: 'firstName',
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: 'en-US',
+      data: {},
     },
+    steps: {},
   };
 }

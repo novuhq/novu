@@ -15,6 +15,7 @@ import type {
   StepUpdateDto,
   UpdateWorkflowDto,
   WorkflowResponseDto,
+  StepIntegrationIssue,
 } from '@novu/shared';
 import { StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
@@ -27,6 +28,46 @@ export const getFirstErrorMessage = (issues: StepIssuesDto, type: 'controls' | '
     const contentIssues = firstIssue?.[1];
     return contentIssues?.[0];
   }
+};
+
+export const countStepIssues = (issues?: StepIssuesDto): number => {
+  if (!issues) return 0;
+
+  let count = 0;
+
+  if (issues.controls) {
+    const controlIssues = Object.values(issues.controls).reduce((acc, issueArray) => acc + issueArray.length, 0);
+
+    count += controlIssues;
+  }
+
+  if (issues.integration) {
+    const integrationIssues = Object.values(issues.integration).reduce((acc, issueArray) => acc + issueArray.length, 0);
+
+    count += integrationIssues;
+  }
+
+  return count;
+};
+
+export const getAllStepIssues = (issues?: StepIssuesDto): (StepContentIssue | StepIntegrationIssue)[] => {
+  if (!issues) return [];
+
+  const allIssues: (StepContentIssue | StepIntegrationIssue)[] = [];
+
+  if (issues.controls) {
+    Object.values(issues.controls).forEach((issueArray) => {
+      allIssues.push(...issueArray);
+    });
+  }
+
+  if (issues.integration) {
+    Object.values(issues.integration).forEach((issueArray) => {
+      allIssues.push(...issueArray);
+    });
+  }
+
+  return allIssues;
 };
 
 export const flattenIssues = (controlIssues?: Record<string, StepContentIssue[]>): Record<string, string> => {

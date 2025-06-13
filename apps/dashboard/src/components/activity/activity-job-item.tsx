@@ -100,6 +100,14 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
     return 'Job is pending';
   }
 
+  if (job.status === JobStatusEnum.SKIPPED) {
+    return 'Step was skipped';
+  }
+
+  if (job.status === JobStatusEnum.CANCELED) {
+    return 'Step was skipped by step conditions';
+  }
+
   if (job.status === JobStatusEnum.FAILED && job.executionDetails?.length > 0) {
     const lastExecutionDetail = job.executionDetails[job.executionDetails.length - 1];
 

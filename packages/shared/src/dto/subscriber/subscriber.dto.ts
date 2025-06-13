@@ -27,6 +27,8 @@ export class SubscriberDto {
   createdAt: string;
   updatedAt: string;
   lastOnlineAt?: string;
+  data?: Record<string, unknown> | null;
+  timezone?: string;
 }
 
 export interface ISubscriberFeedResponseDto {
@@ -48,6 +50,7 @@ export interface ISubscriberResponseDto {
   subscriberId: string;
   channels?: ISubscriberChannel[];
   isOnline?: boolean;
+  data?: Record<string, unknown> | null;
   lastOnlineAt?: string;
   _organizationId: string;
   _environmentId: string;

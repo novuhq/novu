@@ -57,13 +57,7 @@ export class PayloadMergerService {
       );
     }
 
-    return this.mergeWithoutPayloadSchema(
-      payloadExample,
-      userPayloadExample,
-      workflow,
-      command,
-      isV2TemplateEditorEnabled
-    );
+    return this.mergeWithoutPayloadSchema(payloadExample, userPayloadExample, workflow, command);
   }
 
   private async mergeWithPayloadSchema(
@@ -99,9 +93,27 @@ export class PayloadMergerService {
       });
     }
 
-    let mergedPayload = _.merge({}, payloadExample, schemaBasedPayloadExample);
+    let mergedPayload = isV2TemplateEditorEnabled
+      ? _.merge({}, schemaBasedPayloadExample)
+      : _.merge({}, payloadExample, schemaBasedPayloadExample);
 
-    if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+    if (isV2TemplateEditorEnabled) {
+      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+        // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
+        const filteredUserPayload = this.filterPayloadBySchema(
+          userPayloadExample as Record<string, unknown>,
+          schemaBasedPayloadExample
+        );
+
+        mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+          if (Array.isArray(srcValue)) {
+            return srcValue;
+          }
+
+          return undefined;
+        });
+      }
+    } else if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
       mergedPayload = _.mergeWith(
         mergedPayload,
         userPayloadExample as Record<string, unknown>,
@@ -115,16 +127,37 @@ export class PayloadMergerService {
       );
     }
 
-    if (isV2TemplateEditorEnabled) {
-      const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
-      const userSubscriberData = (mergedPayload.subscriber as Record<string, unknown>) || {};
+    const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
+    // Preserve user-provided subscriber data even if it was filtered out earlier
+    const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-      mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
-    }
+    mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
 
-    if (isV2TemplateEditorEnabled) {
-      mergedPayload.steps = await this.createFullStepsObject(workflow, command);
-    }
+    /*
+     * Preserve steps from payloadExample (which contains correctly generated digest events)
+     * and merge with user-provided steps and mock data for missing steps
+     */
+    const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
+    const generatedStepsObject = await this.createFullStepsObject(workflow, command, userPayloadExample);
+
+    /*
+     * Merge with priority: user steps > payloadExample steps > generated mock steps
+     * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
+     */
+    mergedPayload.steps = _.mergeWith(
+      {},
+      generatedStepsObject,
+      stepsFromPayloadExample,
+      (userPayloadExample?.steps as Record<string, unknown>) || {},
+      (objValue, srcValue) => {
+        // If source value is provided by user, always use it (even if it's an empty object)
+        if (srcValue !== undefined) {
+          return srcValue;
+        }
+
+        return undefined; // Let lodash handle the merge
+      }
+    );
 
     return mergedPayload;
   }
@@ -133,8 +166,7 @@ export class PayloadMergerService {
     payloadExample: Record<string, unknown>,
     userPayloadExample: PreviewPayloadDto | undefined,
     workflow: NotificationTemplateEntity,
-    command: PreviewCommand,
-    isV2TemplateEditorEnabled: boolean
+    command: PreviewCommand
   ): Promise<Record<string, unknown>> {
     let finalPayload: Record<string, unknown>;
 
@@ -147,16 +179,37 @@ export class PayloadMergerService {
       finalPayload = payloadExample;
     }
 
-    if (isV2TemplateEditorEnabled) {
-      const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
-      const userSubscriberData = (finalPayload.subscriber as Record<string, unknown>) || {};
+    const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
+    // Preserve user-provided subscriber data even if it was filtered out earlier
+    const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
-      finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
-    }
+    finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
 
-    if (isV2TemplateEditorEnabled) {
-      finalPayload.steps = await this.createFullStepsObject(workflow, command);
-    }
+    /*
+     * Preserve steps from payloadExample (which contains correctly generated digest events)
+     * and merge with user-provided steps and mock data for missing steps
+     */
+    const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
+    const generatedStepsObject = await this.createFullStepsObject(workflow, command, userPayloadExample);
+
+    /*
+     * Merge with priority: user steps > payloadExample steps > generated mock steps
+     * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
+     */
+    finalPayload.steps = _.mergeWith(
+      {},
+      generatedStepsObject,
+      stepsFromPayloadExample,
+      (userPayloadExample?.steps as Record<string, unknown>) || {},
+      (objValue, srcValue) => {
+        // If source value is provided by user, always use it (even if it's an empty object)
+        if (srcValue !== undefined) {
+          return srcValue;
+        }
+
+        return undefined; // Let lodash handle the merge
+      }
+    );
 
     return finalPayload;
   }
@@ -167,7 +220,8 @@ export class PayloadMergerService {
    */
   private async createFullStepsObject(
     workflow: NotificationTemplateEntity,
-    command: PreviewCommand
+    command: PreviewCommand,
+    userPayloadExample?: PreviewPayloadDto
   ): Promise<Record<string, unknown>> {
     const stepsObject: Record<string, unknown> = {};
 
@@ -183,17 +237,23 @@ export class PayloadMergerService {
     }
 
     const previousSteps = workflow.steps.slice(0, currentStepIndex);
+    const userStepsData = (userPayloadExample?.steps as Record<string, unknown>) || {};
 
     for (const step of previousSteps) {
       const stepId = step.stepId || step._id;
 
       if (stepId) {
-        const mockResult = this.mockDataGenerator.generateMockStepResult({
-          stepType: step.template?.type || '',
-          workflow,
-        });
+        if (userStepsData[stepId]) {
+          stepsObject[stepId] = userStepsData[stepId];
+        } else {
+          // Fall back to generating mock data
+          const mockResult = this.mockDataGenerator.generateMockStepResult({
+            stepType: step.template?.type || '',
+            workflow,
+          });
 
-        stepsObject[stepId] = mockResult;
+          stepsObject[stepId] = mockResult;
+        }
       }
     }
 
@@ -206,5 +266,44 @@ export class PayloadMergerService {
       stepIdOrInternalId: command.stepIdOrInternalId,
       user: command.user,
     });
+  }
+
+  /**
+   * Recursively filters the user payload to only include keys that exist in the schema-based payload
+   */
+  private filterPayloadBySchema(
+    userPayload: Record<string, unknown>,
+    schemaPayload: Record<string, unknown>
+  ): Record<string, unknown> {
+    // Use lodash pick to only include keys that exist in the schema
+    const filtered = _.pick(userPayload, _.keys(schemaPayload));
+
+    // Recursively filter nested objects and arrays
+    for (const [key, value] of Object.entries(filtered)) {
+      if (_.isPlainObject(value) && _.isPlainObject(schemaPayload[key])) {
+        filtered[key] = this.filterPayloadBySchema(
+          value as Record<string, unknown>,
+          schemaPayload[key] as Record<string, unknown>
+        );
+      } else if (Array.isArray(value) && Array.isArray(schemaPayload[key])) {
+        // Handle arrays by filtering each element
+        filtered[key] = value.map((item) => {
+          if (_.isPlainObject(item) && schemaPayload[key] && Array.isArray(schemaPayload[key])) {
+            const schemaArray = schemaPayload[key] as unknown[];
+            // Use the first element of the schema array as the template for filtering
+            const schemaTemplate =
+              schemaArray.length > 0 && _.isPlainObject(schemaArray[0])
+                ? (schemaArray[0] as Record<string, unknown>)
+                : {};
+
+            return this.filterPayloadBySchema(item as Record<string, unknown>, schemaTemplate);
+          }
+
+          return item;
+        });
+      }
+    }
+
+    return filtered;
   }
 }

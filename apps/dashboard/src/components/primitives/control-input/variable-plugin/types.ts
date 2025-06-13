@@ -8,4 +8,5 @@ export type PluginState = {
   onSelect?: (value: string, from: number, to: number) => void;
   isAllowedVariable: IsAllowedVariable;
   isDigestEventsVariable?: (variableName: string) => boolean;
+  isCustomHtmlEditorEnabled: boolean;
 };
