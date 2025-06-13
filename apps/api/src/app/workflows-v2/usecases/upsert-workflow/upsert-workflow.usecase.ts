@@ -355,7 +355,7 @@ export class UpsertWorkflowUseCase {
             },
           })
         );
-        let htmlBody = (result.preview as EmailRenderOutput).body;
+        let htmlBody = (result.preview as EmailRenderOutput).body ?? '';
         htmlBody = this.removeBrandingFromHtml(htmlBody);
         emailControlValues.body = htmlBody;
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
