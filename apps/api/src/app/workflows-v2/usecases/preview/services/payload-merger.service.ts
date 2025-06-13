@@ -132,7 +132,32 @@ export class PayloadMergerService {
     const userSubscriberData = (userPayloadExample?.subscriber as Record<string, unknown>) || {};
 
     mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
-    mergedPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
+
+    /*
+     * Preserve steps from payloadExample (which contains correctly generated digest events)
+     * and merge with user-provided steps and mock data for missing steps
+     */
+    const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
+    const generatedStepsObject = await this.createFullStepsObject(workflow, command, userPayloadExample);
+
+    /*
+     * Merge with priority: user steps > payloadExample steps > generated mock steps
+     * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
+     */
+    mergedPayload.steps = _.mergeWith(
+      {},
+      generatedStepsObject,
+      stepsFromPayloadExample,
+      (userPayloadExample?.steps as Record<string, unknown>) || {},
+      (objValue, srcValue) => {
+        // If source value is provided by user, always use it (even if it's an empty object)
+        if (srcValue !== undefined) {
+          return srcValue;
+        }
+
+        return undefined; // Let lodash handle the merge
+      }
+    );
 
     return mergedPayload;
   }
@@ -160,7 +185,31 @@ export class PayloadMergerService {
 
     finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
 
-    finalPayload.steps = await this.createFullStepsObject(workflow, command, userPayloadExample);
+    /*
+     * Preserve steps from payloadExample (which contains correctly generated digest events)
+     * and merge with user-provided steps and mock data for missing steps
+     */
+    const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
+    const generatedStepsObject = await this.createFullStepsObject(workflow, command, userPayloadExample);
+
+    /*
+     * Merge with priority: user steps > payloadExample steps > generated mock steps
+     * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
+     */
+    finalPayload.steps = _.mergeWith(
+      {},
+      generatedStepsObject,
+      stepsFromPayloadExample,
+      (userPayloadExample?.steps as Record<string, unknown>) || {},
+      (objValue, srcValue) => {
+        // If source value is provided by user, always use it (even if it's an empty object)
+        if (srcValue !== undefined) {
+          return srcValue;
+        }
+
+        return undefined; // Let lodash handle the merge
+      }
+    );
 
     return finalPayload;
   }
