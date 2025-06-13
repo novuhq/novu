@@ -38,3 +38,45 @@ export async function readableStreamToArrayBuffer(
 
   return concatenatedChunks.buffer as ArrayBuffer;
 }
+
+/**
+ * Determines the MIME content type based on a file's extension.
+ * Returns null if the extension is not recognized.
+ */
+export function getContentTypeFromFileName(fileName: string): string | null {
+  if (!fileName) return null;
+
+  const ext = fileName.toLowerCase().split(".").pop();
+  if (!ext) return null;
+
+  const mimeTypes: Record<string, string> = {
+    json: "application/json",
+    xml: "application/xml",
+    html: "text/html",
+    htm: "text/html",
+    txt: "text/plain",
+    csv: "text/csv",
+    pdf: "application/pdf",
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+    js: "application/javascript",
+    css: "text/css",
+    zip: "application/zip",
+    tar: "application/x-tar",
+    gz: "application/gzip",
+    mp4: "video/mp4",
+    mp3: "audio/mpeg",
+    wav: "audio/wav",
+    webp: "image/webp",
+    ico: "image/x-icon",
+    woff: "font/woff",
+    woff2: "font/woff2",
+    ttf: "font/ttf",
+    otf: "font/otf",
+  };
+
+  return mimeTypes[ext] || null;
+}
