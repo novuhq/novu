@@ -109,25 +109,56 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
             },
             type: 'object',
           },
+          steps: {
+            type: 'object',
+            description: 'Steps data from previous workflow executions',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                eventCount: {
+                  type: 'number',
+                },
+                events: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      payload: {
+                        type: 'object',
+                        additionalProperties: true,
+                      },
+                    },
+                    additionalProperties: true,
+                  },
+                },
+              },
+              additionalProperties: true,
+            },
+          },
         },
         type: 'object',
       },
       result: {
         preview: {
-          subject: 'Welcome firstName',
-          // cspell:disable-next-line
-          body: 'Hello firstName lastName, Welcome to ORGANIZATIONNAME!',
+          subject: 'Welcome John',
+          body: 'Hello John Doe, Welcome to ORGANIZATIONNAME!',
         },
         type: 'in_app',
       },
       previewPayloadExample: {
         subscriber: {
-          firstName: 'firstName',
-          lastName: 'lastName',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          phone: '+1234567890',
+          avatar: 'https://example.com/avatar.png',
+          locale: 'en-US',
+          data: {},
         },
         payload: {
           organizationName: 'organizationName',
         },
+        steps: {},
       },
     });
   });
@@ -179,7 +210,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       schema: null,
       result: {
         preview: {
-          subject: 'firstName Hello, World! ',
+          subject: 'John Hello, World! ',
           body: 'Hello, World! body random',
           avatar: 'https://www.example.com/avatar.png',
           primaryAction: {
@@ -208,7 +239,13 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       },
       previewPayloadExample: {
         subscriber: {
-          firstName: 'firstName',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          phone: '+1234567890',
+          avatar: 'https://example.com/avatar.png',
+          locale: 'en-US',
+          data: {},
         },
         payload: {
           placeholder: {
@@ -217,6 +254,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
           },
           primaryUrlLabel: 'primaryUrlLabel',
         },
+        steps: {},
       },
     });
   });
@@ -304,6 +342,12 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       previewPayloadExample: {
         subscriber: {
           firstName: 'John',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          phone: '+1234567890',
+          avatar: 'https://example.com/avatar.png',
+          locale: 'en-US',
+          data: {},
         },
         payload: {
           placeholder: {
@@ -311,6 +355,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
           },
           primaryUrlLabel: 'https://example.com',
         },
+        steps: {},
       },
     });
   });
@@ -481,12 +526,44 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
             },
             type: 'object',
           },
+          steps: {
+            type: 'object',
+            description: 'Steps data from previous workflow executions',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                eventCount: {
+                  type: 'number',
+                },
+                events: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      payload: {
+                        type: 'object',
+                        additionalProperties: true,
+                      },
+                    },
+                    additionalProperties: true,
+                  },
+                },
+              },
+              additionalProperties: true,
+            },
+          },
         },
         type: 'object',
       },
       previewPayloadExample: {
         subscriber: {
           firstName: 'First Name',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          phone: '+1234567890',
+          avatar: 'https://example.com/avatar.png',
+          locale: 'en-US',
+          data: {},
         },
         payload: {
           placeholder: {
@@ -496,6 +573,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
           primaryUrlLabel: 'New Click Here',
           organizationName: 'Pokemon Organization',
         },
+        steps: {},
       },
     });
   });
@@ -562,16 +640,84 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
             },
             type: 'object',
           },
+          subscriber: {
+            additionalProperties: true,
+            properties: {
+              avatar: {
+                type: 'string',
+              },
+              data: {
+                additionalProperties: true,
+                type: 'object',
+              },
+              email: {
+                format: 'email',
+                type: 'string',
+              },
+              firstName: {
+                type: 'string',
+              },
+              lastName: {
+                type: 'string',
+              },
+              locale: {
+                type: 'string',
+              },
+              phone: {
+                type: 'string',
+              },
+              subscriberId: {
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+          steps: {
+            type: 'object',
+            description: 'Steps data from previous workflow executions',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                eventCount: {
+                  type: 'number',
+                },
+                events: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      payload: {
+                        type: 'object',
+                        additionalProperties: true,
+                      },
+                    },
+                    additionalProperties: true,
+                  },
+                },
+              },
+              additionalProperties: true,
+            },
+          },
         },
         type: 'object',
       },
       previewPayloadExample: {
+        subscriber: {
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          phone: '+1234567890',
+          avatar: 'https://example.com/avatar.png',
+          locale: 'en-US',
+          data: {},
+        },
         payload: {
           lastName: '{{payload.lastName}}',
           organizationName: '{{payload.organizationName}}',
           firstName: 'John',
           orderId: 'orderId',
         },
+        steps: {},
       },
     });
 
@@ -611,16 +757,84 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
             },
             type: 'object',
           },
+          subscriber: {
+            additionalProperties: true,
+            properties: {
+              avatar: {
+                type: 'string',
+              },
+              data: {
+                additionalProperties: true,
+                type: 'object',
+              },
+              email: {
+                format: 'email',
+                type: 'string',
+              },
+              firstName: {
+                type: 'string',
+              },
+              lastName: {
+                type: 'string',
+              },
+              locale: {
+                type: 'string',
+              },
+              phone: {
+                type: 'string',
+              },
+              subscriberId: {
+                type: 'string',
+              },
+            },
+            type: 'object',
+          },
+          steps: {
+            type: 'object',
+            description: 'Steps data from previous workflow executions',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                eventCount: {
+                  type: 'number',
+                },
+                events: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      payload: {
+                        type: 'object',
+                        additionalProperties: true,
+                      },
+                    },
+                    additionalProperties: true,
+                  },
+                },
+              },
+              additionalProperties: true,
+            },
+          },
         },
         type: 'object',
       },
       previewPayloadExample: {
+        subscriber: {
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'user@example.com',
+          phone: '+1234567890',
+          avatar: 'https://example.com/avatar.png',
+          locale: 'en-US',
+          data: {},
+        },
         payload: {
           lastName: '{{payload.lastName}}',
           organizationName: '{{payload.organizationName}}',
           orderId: '123456',
           firstName: 'John',
         },
+        steps: {},
       },
     });
   });
@@ -827,6 +1041,15 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
     expect(countOccurrences(previewResponse.result.result.preview.body, 'bar')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(previewResponse.result.result.preview.body).to.contain('baz');
     expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      subscriber: {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'user@example.com',
+        phone: '+1234567890',
+        avatar: 'https://example.com/avatar.png',
+        locale: 'en-US',
+        data: {},
+      },
       payload: {
         items: [
           {
@@ -841,16 +1064,30 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
             foo: 'foo',
             bar: 'bar',
           },
-          {
-            foo: 'foo',
-            bar: 'bar',
-          },
-          {
-            foo: 'foo',
-            bar: 'bar',
-          },
         ],
         baz: 'baz',
+      },
+      steps: {
+        'digest-step': {
+          eventCount: 3,
+          events: [
+            {
+              id: 'example-id-1',
+              time: '2025-06-12T09:00:00.000Z',
+              payload: {},
+            },
+            {
+              id: 'example-id-2',
+              time: '2025-06-12T08:55:00.000Z',
+              payload: {},
+            },
+            {
+              id: 'example-id-3',
+              time: '2025-06-12T08:50:00.000Z',
+              payload: {},
+            },
+          ],
+        },
       },
     });
   });
@@ -935,6 +1172,15 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
     expect(previewResponse.result.result.preview.body).to.contain('https://numbered.static.link');
 
     expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      subscriber: {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'user@example.com',
+        phone: '+1234567890',
+        avatar: 'https://example.com/avatar.png',
+        locale: 'en-US',
+        data: {},
+      },
       payload: {
         paragraph_link: 'paragraph_link',
         heading_link: 'heading_link',
@@ -946,6 +1192,28 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
         inline_image_link: 'inline_image_link',
         inline_image_url: 'inline_image_url',
         numbered_link: 'numbered_link',
+      },
+      steps: {
+        'digest-step': {
+          eventCount: 3,
+          events: [
+            {
+              id: 'example-id-1',
+              time: '2025-06-12T09:00:00.000Z',
+              payload: {},
+            },
+            {
+              id: 'example-id-2',
+              time: '2025-06-12T08:55:00.000Z',
+              payload: {},
+            },
+            {
+              id: 'example-id-3',
+              time: '2025-06-12T08:50:00.000Z',
+              payload: {},
+            },
+          ],
+        },
       },
     });
 
@@ -1092,6 +1360,15 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
     expect(previewResponse.result.result.preview.body).to.contain('href="https://numbered.static.link"');
 
     expect(previewResponse.result.previewPayloadExample).to.deep.equal({
+      subscriber: {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'user@example.com',
+        phone: '+1234567890',
+        avatar: 'https://example.com/avatar.png',
+        locale: 'en-US',
+        data: {},
+      },
       payload: {
         items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
           paragraph_link: 'paragraph_link',
@@ -1105,6 +1382,28 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
           inline_image_link: 'inline_image_link',
           numbered_link: 'numbered_link',
         }),
+      },
+      steps: {
+        'digest-step': {
+          eventCount: 3,
+          events: [
+            {
+              id: 'example-id-1',
+              time: '2025-06-12T09:00:00.000Z',
+              payload: {},
+            },
+            {
+              id: 'example-id-2',
+              time: '2025-06-12T08:55:00.000Z',
+              payload: {},
+            },
+            {
+              id: 'example-id-3',
+              time: '2025-06-12T08:50:00.000Z',
+              payload: {},
+            },
+          ],
+        },
       },
     });
 
@@ -1190,7 +1489,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       expect(previewResponseDto.previewPayloadExample).to.exist;
       expect(previewResponseDto.previewPayloadExample?.steps).to.be.ok;
       if (previewResponseDto.result?.type === 'sms' && previewResponseDto.result?.preview.body) {
-        expect(previewResponseDto.result!.preview.body).to.contain(`[[seen]]`);
+        expect(previewResponseDto.result!.preview.body).to.contain(`[[true]]`);
       }
     });
   });
@@ -1212,7 +1511,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       throw new Error('should have a in-app preview ');
     }
     expect(previewResponseDto.result.preview.subject).to.deep.equal(
-      'firstName Hello, World! this is the replacement text for the placeholder'
+      'John Hello, World! this is the replacement text for the placeholder'
     );
   });
 
@@ -1231,7 +1530,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       const inApp = getTestControlValues().in_app;
       const previewRequestWithoutTheRedirect = {
         ...inApp,
-        subject: 'firstName Hello, World! subject',
+        subject: 'John Hello, World! subject',
         body: 'Hello, World! body',
         primaryAction: { label: 'primaryUrlLabel' },
       };
@@ -1246,7 +1545,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       expect(previewResponseDto.previewPayloadExample.subscriber, 'Expecting to find subscriber in the payload').to
         .exist;
 
-      expect(previewResponseDto.result!.preview).to.deep.equal({ body: ' Hello, World! firstName' });
+      expect(previewResponseDto.result!.preview).to.deep.equal({ body: ' Hello, World! John' });
     });
 
     it('push: should match the body in the preview response', async () => {
@@ -1259,7 +1558,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
 
       expect(previewResponseDto.result!.preview).to.deep.equal({
         subject: 'Hello, World!',
-        body: 'Hello, World! firstName',
+        body: 'Hello, World! John',
       });
     });
 
@@ -1271,7 +1570,7 @@ const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text fo
       expect(previewResponseDto.previewPayloadExample.subscriber, 'Expecting to find subscriber in the payload').to
         .exist;
 
-      expect(previewResponseDto.result!.preview).to.deep.equal({ body: 'Hello, World! firstName' });
+      expect(previewResponseDto.result!.preview).to.deep.equal({ body: 'Hello, World! John' });
     });
 
     it('email: should match the body in the preview response', async () => {
