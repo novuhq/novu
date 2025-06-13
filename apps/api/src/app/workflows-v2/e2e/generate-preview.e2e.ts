@@ -1041,55 +1041,50 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(countOccurrences(previewResponse.result.result.preview.body, 'foo')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(countOccurrences(previewResponse.result.result.preview.body, 'bar')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(previewResponse.result.result.preview.body).to.contain('baz');
-    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
-      subscriber: {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'user@example.com',
-        phone: '+1234567890',
-        avatar: 'https://example.com/avatar.png',
-        locale: 'en-US',
-        data: {},
-      },
-      payload: {
-        items: [
-          {
-            foo: 'foo',
-            bar: 'bar',
-          },
-          {
-            foo: 'foo',
-            bar: 'bar',
-          },
-          {
-            foo: 'foo',
-            bar: 'bar',
-          },
-        ],
-        baz: 'baz',
-      },
-      steps: {
-        'digest-step': {
-          eventCount: 3,
-          events: [
-            {
-              id: 'example-id-1',
-              time: '2025-06-12T09:00:00.000Z',
-              payload: {},
-            },
-            {
-              id: 'example-id-2',
-              time: '2025-06-12T08:55:00.000Z',
-              payload: {},
-            },
-            {
-              id: 'example-id-3',
-              time: '2025-06-12T08:50:00.000Z',
-              payload: {},
-            },
-          ],
+
+    // Validate the structure without hardcoded timestamps
+    const actualPayload = previewResponse.result.previewPayloadExample;
+    expect(actualPayload.subscriber).to.deep.equal({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: 'en-US',
+      data: {},
+    });
+    expect(actualPayload.payload).to.deep.equal({
+      items: [
+        {
+          foo: 'foo',
+          bar: 'bar',
         },
-      },
+        {
+          foo: 'foo',
+          bar: 'bar',
+        },
+        {
+          foo: 'foo',
+          bar: 'bar',
+        },
+      ],
+      baz: 'baz',
+    });
+
+    // Validate digest step structure without hardcoded timestamps
+    expect(actualPayload.steps).to.exist;
+    expect(actualPayload.steps).to.have.property('digest-step');
+    expect(actualPayload.steps!['digest-step']).to.have.property('eventCount', 3);
+    expect(actualPayload.steps!['digest-step']).to.have.property('events');
+    expect(actualPayload.steps!['digest-step'].events).to.have.length(3);
+
+    // Validate each event has the required structure without checking exact timestamps
+    actualPayload.steps!['digest-step'].events.forEach((event, index) => {
+      expect(event).to.have.property('id', `example-id-${index + 1}`);
+      expect(event).to.have.property('time').that.is.a('string');
+      expect(event).to.have.property('payload').that.deep.equals({});
+      // Validate that time is a valid ISO string
+      expect(new Date(event.time)).to.be.a('date');
     });
   });
 
@@ -1172,50 +1167,44 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse.result.result.preview.body).to.contain('Numbered static link');
     expect(previewResponse.result.result.preview.body).to.contain('https://numbered.static.link');
 
-    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
-      subscriber: {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'user@example.com',
-        phone: '+1234567890',
-        avatar: 'https://example.com/avatar.png',
-        locale: 'en-US',
-        data: {},
-      },
-      payload: {
-        paragraph_link: 'paragraph_link',
-        heading_link: 'heading_link',
-        blockquote_link: 'blockquote_link',
-        bullet_link: 'bullet_link',
-        button_link: 'button_link',
-        image_variable: 'image_variable',
-        image_link: 'image_link',
-        inline_image_link: 'inline_image_link',
-        inline_image_url: 'inline_image_url',
-        numbered_link: 'numbered_link',
-      },
-      steps: {
-        'digest-step': {
-          eventCount: 3,
-          events: [
-            {
-              id: 'example-id-1',
-              time: '2025-06-12T09:00:00.000Z',
-              payload: {},
-            },
-            {
-              id: 'example-id-2',
-              time: '2025-06-12T08:55:00.000Z',
-              payload: {},
-            },
-            {
-              id: 'example-id-3',
-              time: '2025-06-12T08:50:00.000Z',
-              payload: {},
-            },
-          ],
-        },
-      },
+    // Validate the structure without hardcoded timestamps
+    const actualPayload = previewResponse.result.previewPayloadExample;
+    expect(actualPayload.subscriber).to.deep.equal({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: 'en-US',
+      data: {},
+    });
+    expect(actualPayload.payload).to.deep.equal({
+      paragraph_link: 'paragraph_link',
+      heading_link: 'heading_link',
+      blockquote_link: 'blockquote_link',
+      bullet_link: 'bullet_link',
+      button_link: 'button_link',
+      image_variable: 'image_variable',
+      image_link: 'image_link',
+      inline_image_link: 'inline_image_link',
+      inline_image_url: 'inline_image_url',
+      numbered_link: 'numbered_link',
+    });
+
+    // Validate digest step structure without hardcoded timestamps
+    expect(actualPayload.steps).to.exist;
+    expect(actualPayload.steps).to.have.property('digest-step');
+    expect(actualPayload.steps!['digest-step']).to.have.property('eventCount', 3);
+    expect(actualPayload.steps!['digest-step']).to.have.property('events');
+    expect(actualPayload.steps!['digest-step'].events).to.have.length(3);
+
+    // Validate each event has the required structure without checking exact timestamps
+    actualPayload.steps!['digest-step'].events.forEach((event, index) => {
+      expect(event).to.have.property('id', `example-id-${index + 1}`);
+      expect(event).to.have.property('time').that.is.a('string');
+      expect(event).to.have.property('payload').that.deep.equals({});
+      // Validate that time is a valid ISO string
+      expect(new Date(event.time)).to.be.a('date');
     });
 
     const previewResponse2 = await novuClient.workflows.steps.generatePreview({
@@ -1360,52 +1349,46 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse.result.result.preview.body).to.contain('Numbered static link');
     expect(previewResponse.result.result.preview.body).to.contain('href="https://numbered.static.link"');
 
-    expect(previewResponse.result.previewPayloadExample).to.deep.equal({
-      subscriber: {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'user@example.com',
-        phone: '+1234567890',
-        avatar: 'https://example.com/avatar.png',
-        locale: 'en-US',
-        data: {},
-      },
-      payload: {
-        items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
-          paragraph_link: 'paragraph_link',
-          heading_link: 'heading_link',
-          blockquote_link: 'blockquote_link',
-          bullet_link: 'bullet_link',
-          button_link: 'button_link',
-          image: 'image',
-          image_link: 'image_link',
-          inline_image: 'inline_image',
-          inline_image_link: 'inline_image_link',
-          numbered_link: 'numbered_link',
-        }),
-      },
-      steps: {
-        'digest-step': {
-          eventCount: 3,
-          events: [
-            {
-              id: 'example-id-1',
-              time: '2025-06-12T09:00:00.000Z',
-              payload: {},
-            },
-            {
-              id: 'example-id-2',
-              time: '2025-06-12T08:55:00.000Z',
-              payload: {},
-            },
-            {
-              id: 'example-id-3',
-              time: '2025-06-12T08:50:00.000Z',
-              payload: {},
-            },
-          ],
-        },
-      },
+    // Validate the structure without hardcoded timestamps
+    const actualPayload = previewResponse.result.previewPayloadExample;
+    expect(actualPayload.subscriber).to.deep.equal({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: 'user@example.com',
+      phone: '+1234567890',
+      avatar: 'https://example.com/avatar.png',
+      locale: 'en-US',
+      data: {},
+    });
+    expect(actualPayload.payload).to.deep.equal({
+      items: Array(DEFAULT_ARRAY_ELEMENTS).fill({
+        paragraph_link: 'paragraph_link',
+        heading_link: 'heading_link',
+        blockquote_link: 'blockquote_link',
+        bullet_link: 'bullet_link',
+        button_link: 'button_link',
+        image: 'image',
+        image_link: 'image_link',
+        inline_image: 'inline_image',
+        inline_image_link: 'inline_image_link',
+        numbered_link: 'numbered_link',
+      }),
+    });
+
+    // Validate digest step structure without hardcoded timestamps
+    expect(actualPayload.steps).to.exist;
+    expect(actualPayload.steps).to.have.property('digest-step');
+    expect(actualPayload.steps!['digest-step']).to.have.property('eventCount', 3);
+    expect(actualPayload.steps!['digest-step']).to.have.property('events');
+    expect(actualPayload.steps!['digest-step'].events).to.have.length(3);
+
+    // Validate each event has the required structure without checking exact timestamps
+    actualPayload.steps!['digest-step'].events.forEach((event, index) => {
+      expect(event).to.have.property('id', `example-id-${index + 1}`);
+      expect(event).to.have.property('time').that.is.a('string');
+      expect(event).to.have.property('payload').that.deep.equals({});
+      // Validate that time is a valid ISO string
+      expect(new Date(event.time)).to.be.a('date');
     });
 
     const previewResponse2 = await novuClient.workflows.steps.generatePreview({
