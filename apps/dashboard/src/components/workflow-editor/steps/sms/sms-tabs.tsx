@@ -14,10 +14,12 @@ export const SmsTabs = (props: StepEditorProps) => {
   const form = useFormContext();
   const [tabsValue, setTabsValue] = useState('editor');
 
+  const controlValues = form.watch();
   const { editorValue, setEditorValue, previewStep, previewData, isPreviewPending } = useEditorPreview({
     workflowSlug: workflow.workflowId,
     stepSlug: step.stepId,
-    controlValues: form.getValues(),
+    controlValues,
+    payloadSchema: workflow.payloadSchema,
   });
 
   const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;

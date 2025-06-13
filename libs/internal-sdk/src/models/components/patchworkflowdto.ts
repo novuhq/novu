@@ -7,11 +7,6 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * The payload JSON Schema for the workflow
- */
-export type PatchWorkflowDtoPayloadSchema = {};
-
 export type PatchWorkflowDto = {
   /**
    * Activate or deactivate the workflow
@@ -32,62 +27,12 @@ export type PatchWorkflowDto = {
   /**
    * The payload JSON Schema for the workflow
    */
-  payloadSchema?: PatchWorkflowDtoPayloadSchema | undefined;
+  payloadSchema?: { [k: string]: any } | undefined;
   /**
    * Enable or disable payload schema validation
    */
   validatePayload?: boolean | undefined;
 };
-
-/** @internal */
-export const PatchWorkflowDtoPayloadSchema$inboundSchema: z.ZodType<
-  PatchWorkflowDtoPayloadSchema,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type PatchWorkflowDtoPayloadSchema$Outbound = {};
-
-/** @internal */
-export const PatchWorkflowDtoPayloadSchema$outboundSchema: z.ZodType<
-  PatchWorkflowDtoPayloadSchema$Outbound,
-  z.ZodTypeDef,
-  PatchWorkflowDtoPayloadSchema
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace PatchWorkflowDtoPayloadSchema$ {
-  /** @deprecated use `PatchWorkflowDtoPayloadSchema$inboundSchema` instead. */
-  export const inboundSchema = PatchWorkflowDtoPayloadSchema$inboundSchema;
-  /** @deprecated use `PatchWorkflowDtoPayloadSchema$outboundSchema` instead. */
-  export const outboundSchema = PatchWorkflowDtoPayloadSchema$outboundSchema;
-  /** @deprecated use `PatchWorkflowDtoPayloadSchema$Outbound` instead. */
-  export type Outbound = PatchWorkflowDtoPayloadSchema$Outbound;
-}
-
-export function patchWorkflowDtoPayloadSchemaToJSON(
-  patchWorkflowDtoPayloadSchema: PatchWorkflowDtoPayloadSchema,
-): string {
-  return JSON.stringify(
-    PatchWorkflowDtoPayloadSchema$outboundSchema.parse(
-      patchWorkflowDtoPayloadSchema,
-    ),
-  );
-}
-
-export function patchWorkflowDtoPayloadSchemaFromJSON(
-  jsonString: string,
-): SafeParseResult<PatchWorkflowDtoPayloadSchema, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => PatchWorkflowDtoPayloadSchema$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PatchWorkflowDtoPayloadSchema' from JSON`,
-  );
-}
 
 /** @internal */
 export const PatchWorkflowDto$inboundSchema: z.ZodType<
@@ -99,8 +44,7 @@ export const PatchWorkflowDto$inboundSchema: z.ZodType<
   name: z.string().optional(),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  payloadSchema: z.lazy(() => PatchWorkflowDtoPayloadSchema$inboundSchema)
-    .optional(),
+  payloadSchema: z.record(z.any()).optional(),
   validatePayload: z.boolean().optional(),
 });
 
@@ -110,7 +54,7 @@ export type PatchWorkflowDto$Outbound = {
   name?: string | undefined;
   description?: string | undefined;
   tags?: Array<string> | undefined;
-  payloadSchema?: PatchWorkflowDtoPayloadSchema$Outbound | undefined;
+  payloadSchema?: { [k: string]: any } | undefined;
   validatePayload?: boolean | undefined;
 };
 
@@ -124,8 +68,7 @@ export const PatchWorkflowDto$outboundSchema: z.ZodType<
   name: z.string().optional(),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  payloadSchema: z.lazy(() => PatchWorkflowDtoPayloadSchema$outboundSchema)
-    .optional(),
+  payloadSchema: z.record(z.any()).optional(),
   validatePayload: z.boolean().optional(),
 });
 

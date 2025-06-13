@@ -5,23 +5,27 @@ import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 import { NovuBranding } from './novu-branding';
 
-type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement>;
+type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & { minimalHeader?: boolean };
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
-  const { className, children, ...rest } = props;
+  const { className, children, minimalHeader = false, ...rest } = props;
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
-      <Avatar className="size-8">
-        <AvatarImage src="/images/building.svg" />
-      </Avatar>
+      {!minimalHeader && (
+        <Avatar className="size-8">
+          <AvatarImage src="/images/building.svg" />
+        </Avatar>
+      )}
       <div className="flex flex-1 justify-between">
         <div>
           <div>
             Acme Inc. <span className="text-foreground-600 text-xs">{`<noreply@novu.co>`}</span>
           </div>
-          <div className="text-foreground-600 flex items-center gap-1 text-xs">
-            to me <RiArrowDownSFill />
-          </div>
+          {!minimalHeader && (
+            <div className="text-foreground-600 flex items-center gap-1 text-xs">
+              to me <RiArrowDownSFill />
+            </div>
+          )}
         </div>
         <div className="flex items-center">{children}</div>
       </div>
@@ -133,17 +137,78 @@ type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
 
 export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
   const { body, className, ...rest } = props;
+  const refNode = useRef<HTMLDivElement | null>(null);
+  const shadowRootRef = useRef<ShadowRoot | null>(null);
+
+  const processBody = useCallback((shadowRoot: ShadowRoot, bodyToProcess: string) => {
+    // use a template to parse the full HTML
+    const template = document.createElement('template');
+    template.innerHTML = bodyToProcess;
+
+    const doc = template.content;
+    const style = document.createElement('style');
+
+    /**
+     * Hide the Novu branding image in the email preview,
+     * we use a React component instead in the dashboard.
+     * The image is used only for the actual email delivery.
+     */
+    style.textContent = `
+      /* Hide Novu branding table in email preview */
+      table[data-novu-branding] {
+        display: none !important;
+      }
+      
+      /* Mobile-specific styles */
+      body {
+        margin: 0;
+        padding: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+    `;
+
+    // find the last style tag and append the new style to it
+    const styleTags = doc.querySelectorAll('style');
+    const lastStyleTag = styleTags[styleTags.length - 1];
+
+    if (lastStyleTag) {
+      lastStyleTag.after(style);
+    }
+
+    // give a bit of time for the dom changes to be applied
+    setTimeout(() => {
+      shadowRoot.innerHTML = template.innerHTML;
+    }, 0);
+  }, []);
+
+  const attachShadow = useCallback(
+    (node: HTMLDivElement | null, bodyToProcess: string) => {
+      if (node && !node.shadowRoot) {
+        // use shadow DOM to isolate the styles
+        const shadowRoot = node.attachShadow({ mode: 'open' });
+        shadowRootRef.current = shadowRoot;
+
+        processBody(shadowRoot, bodyToProcess);
+      }
+    },
+    [processBody]
+  );
+
+  useEffect(() => {
+    if (!shadowRootRef.current) return;
+
+    processBody(shadowRootRef.current, body);
+  }, [processBody, body]);
 
   return (
     <div className={cn('flex flex-col', className)} {...rest}>
-      <style>
-        {`
-          .email-preview-mobile table[data-novu-branding] {
-            display: none !important;
-          }
-        `}
-      </style>
-      <div className="email-preview-mobile mx-auto min-h-96 w-full px-4" dangerouslySetInnerHTML={{ __html: body }} />
+      <div
+        className="mx-auto min-h-96 w-full overflow-auto px-4"
+        ref={(node) => {
+          refNode.current = node;
+          attachShadow(node, body);
+        }}
+      />
       <NovuBranding />
     </div>
   );
