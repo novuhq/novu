@@ -147,15 +147,20 @@ function buildObjectFromPaths(
   // Collect all digest events payload properties to build the payload structure
   const digestPayloadProperties = new Map<string, Set<string>>();
 
+  // Capture timestamp once for consistency across all date properties
+  const currentTimestamp = new Date().toISOString();
+
   // First pass: collect all digest events payload properties
   sortedPaths.forEach((path) => {
     const digestEventsMatch = path.match(/^(steps\.[^.]+\.events)(?:\[\d+\])?\.payload\.(.+)$/);
     if (digestEventsMatch) {
       const [, digestEventsPath, payloadProperty] = digestEventsMatch;
-      if (!digestPayloadProperties.has(digestEventsPath)) {
-        digestPayloadProperties.set(digestEventsPath, new Set());
+      // Normalize key by removing array indices for consistent lookup
+      const normalizedKey = digestEventsPath.replace(/\[\d+\]/g, '');
+      if (!digestPayloadProperties.has(normalizedKey)) {
+        digestPayloadProperties.set(normalizedKey, new Set());
       }
-      digestPayloadProperties.get(digestEventsPath)!.add(payloadProperty);
+      digestPayloadProperties.get(normalizedKey)!.add(payloadProperty);
     }
   });
 
@@ -176,7 +181,7 @@ function buildObjectFromPaths(
         value = false;
       }
     } else if (path.match(/^steps\.[^.]+\.(lastSeenDate|lastReadDate)$/)) {
-      value = new Date().toISOString();
+      value = currentTimestamp;
     }
 
     const lastDot = path.lastIndexOf('.');
@@ -184,8 +189,12 @@ function buildObjectFromPaths(
 
     // Handle digest events payload variables
     if (lastPart === 'payload' && DIGEST_EVENTS_VARIABLE_PATTERN.test(finalPart)) {
-      // Build the payload object based on all referenced properties
-      const payloadProperties = digestPayloadProperties.get(finalPart);
+      /*
+       * Build the payload object based on all referenced properties
+       * Normalize key by removing array indices for consistent lookup
+       */
+      const normalizedKey = finalPart.replace(/\[\d+\]/g, '');
+      const payloadProperties = digestPayloadProperties.get(normalizedKey);
       if (payloadProperties && payloadProperties.size > 0) {
         const payload = {};
         payloadProperties.forEach((property) => {
