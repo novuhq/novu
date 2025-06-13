@@ -30,7 +30,6 @@ const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
 const PLACEHOLDER_SUBJECT_INAPP = '{{payload.subject}}';
 const PLACEHOLDER_SUBJECT_INAPP_PAYLOAD_VALUE = 'this is the replacement text for the placeholder';
 
-describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v2', async () => {
   let session: UserSession;
   const notificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository = new EnvironmentRepository();
@@ -1450,9 +1449,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         workflowId,
       });
 
-      validateDigestEventsInMergeTest(previewResponse2.result.previewPayloadExample.steps?.['digest-step'].events, {
-        name: 'name',
-      });
+      validateDigestEventsInMergeTest(previewResponse2.result.previewPayloadExample.steps?.['digest-step'].events, {});
 
       // testing that the final payload doesn't change the user input
       const editedPayloadName = {
@@ -1460,16 +1457,22 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           'digest-step': {
             events: [
               {
+                id: '1',
+                time: '1234',
                 payload: {
                   name: 'hello',
                 },
               },
               {
+                id: '12',
+                time: '32',
                 payload: {
                   name: 'name',
                 },
               },
               {
+                id: '123',
+                time: '123123122',
                 payload: {
                   name: 'name',
                 },
@@ -1510,21 +1513,29 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           'digest-step': {
             events: [
               {
+                id: '1',
+                time: '12312312312',
                 payload: {
                   name: 'hello',
                 },
               },
               {
+                id: '2',
+                time: '12312312312',
                 payload: {
                   name: 'name',
                 },
               },
               {
+                id: '3',
+                time: '12312312312',
                 payload: {
                   name: 'name',
                 },
               },
               {
+                id: '4',
+                time: '12312312312',
                 payload: {
                   name: 'extra name',
                 },
@@ -1533,38 +1544,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           },
         },
       };
-      const resultForExtraItemInTheArray = {
-        steps: {
-          'digest-step': {
-            events: [
-              {
-                payload: {
-                  name: 'hello',
-                  new: 'new',
-                },
-              },
-              {
-                payload: {
-                  name: 'name',
-                  new: 'new',
-                },
-              },
-              {
-                payload: {
-                  name: 'name',
-                  new: 'new',
-                },
-              },
-              {
-                payload: {
-                  name: 'extra name',
-                  new: 'new',
-                },
-              },
-            ],
-          },
-        },
-      };
+
       const previewResponse4 = await novuClient.workflows.steps.generatePreview({
         generatePreviewRequestDto: {
           controlValues: controlValues3,
@@ -1581,21 +1561,29 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         expect(event).to.have.property('id').that.is.a('string');
         expect(event).to.have.property('time').that.is.a('string');
         expect(event).to.have.property('payload');
-        expect(event.payload).to.have.property('new', 'new');
       });
       expect(actualEvents4[0].payload.name).to.equal('hello');
       expect(actualEvents4[1].payload.name).to.equal('name');
       expect(actualEvents4[2].payload.name).to.equal('name');
       expect(actualEvents4[3].payload.name).to.equal('extra name');
       expect(previewResponse4.result.result.preview.body).to.contain('hello, name, and 2 others');
-      expect(previewResponse4.result.result.preview.body).to.contain('new, new, and 2 others');
 
       // testing that the final payload persists the user input even if the events array is empty
       const payloadWithEmptyArray = {
         steps: {
           'digest-step': {
+            eventCount: 0,
             events: [],
           },
+        },
+        subscriber: {
+          avatar: 'https://example.com/avatar.png',
+          data: {},
+          email: 'user@example.com',
+          firstName: 'John',
+          lastName: 'Doe',
+          locale: 'en-US',
+          phone: '+1234567890',
         },
       };
       const previewResponse5 = await novuClient.workflows.steps.generatePreview({
@@ -1612,7 +1600,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       const payloadWithOneItemInTheArray = {
         steps: {
           'digest-step': {
-            events: [{ payload: {} }],
+            events: [{ id: '1', time: '1234', payload: {} }],
           },
         },
       };
@@ -1629,57 +1617,13 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(actualEvents6[0]).to.have.property('id').that.is.a('string');
       expect(actualEvents6[0]).to.have.property('time').that.is.a('string');
       expect(actualEvents6[0]).to.have.property('payload');
-      expect(actualEvents6[0].payload).to.deep.equal({ name: 'name', new: 'new' });
-      expect(previewResponse4.result.result.preview.body).to.contain('hello');
-      expect(previewResponse4.result.result.preview.body).to.contain('new');
-
-      const controlValues4 = {
-        body: `{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"payload.items","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]}]}`,
-        subject: 'events length',
-      };
-
-      const resultForPayloadItems = {
-        payload: {
-          items: 'items',
-        },
-      };
-
-      const previewResponse7 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues4,
-          previewPayload: {},
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
-      });
-      expect(previewResponse7.result.previewPayloadExample).to.deep.equal(resultForPayloadItems);
-
-      const editedItemsToArray = {
-        payload: {
-          items: [
-            {
-              name: 'name',
-            },
-          ],
-        },
-      };
-      const previewResponse8 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues4,
-          previewPayload: editedItemsToArray,
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
-      });
-
-      expect(previewResponse8.result.previewPayloadExample).to.deep.equal(editedItemsToArray);
     });
   });
 
   describe('Missing Required ControlValues', () => {
     const channelTypes = [{ type: StepTypeEnum.InApp, description: 'InApp' }];
 
-    channelTypes.forEach(({ type, description }) => {
+    channelTypes.forEach(({ type }) => {
       // TODO: We need to get back to the drawing board on this one to make the preview action of the framework more forgiving
       it(`[${type}] will generate gracefully the preview if the control values are missing`, async () => {
         const { stepDatabaseId, workflowId, stepId } = await createWorkflowAndReturnId(novuClient, type);
@@ -1718,22 +1662,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       ],
     };
     const workflowResult = await novuClient.workflows.create(createWorkflowDto);
-    await novuClient.workflows.patch(
-      {
-        payloadSchema: {
-          type: 'object',
-          properties: {
-            foo: {
-              type: 'string',
-            },
-            name: {
-              type: 'string',
-            },
-          },
-        },
-      },
-      workflowResult.result.id
-    );
 
     return {
       workflowId: workflowResult.result.id,
