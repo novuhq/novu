@@ -468,7 +468,12 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         name: 'Promote Workflow',
         steps: [
           buildEmailStep({
-            controlValues: { body: 'Example body', subject: 'Example subject', disableOutputSanitization: false },
+            controlValues: {
+              body: 'Example body',
+              subject: 'Example subject',
+              disableOutputSanitization: false,
+              editorType: 'html',
+            },
           }),
           buildInAppStep({
             controlValues: { body: 'Example body', disableOutputSanitization: false },
@@ -495,7 +500,12 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         steps: [
           {
             ...buildEmailStep({
-              controlValues: { body: 'Example body', subject: 'Example subject', disableOutputSanitization: false },
+              controlValues: {
+                body: 'Example body',
+                editorType: 'html',
+                subject: 'Example subject',
+                disableOutputSanitization: false,
+              },
             }),
             id: devWorkflow.steps[0].id,
             name: 'Updated Email Step',
@@ -539,6 +549,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         body: 'Example body',
         subject: 'Example subject',
         disableOutputSanitization: false,
+        editorType: 'html',
       });
 
       // Verify new created step
@@ -712,6 +723,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
             ...buildEmailStep(),
             controlValues: {
               body: 'Welcome to our newsletter {{subscriber.nonExistentValue}}{{payload.prefixBodyText2}}{{payload.prefixBodyText}}',
+              editorType: 'html',
               subject: 'Welcome to our newsletter {{subjectText}} {{payload.prefixSubjectText}}',
             },
           },

@@ -3296,6 +3296,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             name: 'Message Name',
             controlValues: {
               subject: 'Hello {{subscriber.lastName}}, Welcome!',
+              editorType: 'html',
               body: 'body {{subscriber.lastName}}!',
             },
           },
@@ -3357,6 +3358,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
             name: 'Message Name',
             controlValues: {
               subject: 'Hello {{subscriber.lastName}}, Welcome!',
+              editorType: 'html',
               body: liquidJsHtml,
             },
           },
