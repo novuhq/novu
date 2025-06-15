@@ -22,21 +22,22 @@ import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
-import { cn } from '@/utils/ui';
 import { RiPlayCircleLine } from 'react-icons/ri';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
+import { useEnvironment } from '../../../context/environment/hooks';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   testData?: WorkflowTestDataResponseDto;
-  transactionId?: string;
-  onTransactionIdChange: (transactionId: string) => void;
   initialPayload?: PayloadData;
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
-  const { isOpen, onOpenChange, testData, transactionId, onTransactionIdChange, initialPayload } = props;
+  const { isOpen, onOpenChange, testData, initialPayload } = props;
+  const [transactionId, setTransactionId] = useState<string>();
+  const { currentEnvironment } = useEnvironment();
+
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
@@ -54,7 +55,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   } = useFetchSubscriber({
     subscriberId: subscriberIdToFetch,
     options: {
-      enabled: !!subscriberIdToFetch,
+      enabled: !!subscriberIdToFetch && !!currentEnvironment,
     },
   });
 
@@ -156,7 +157,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         });
       }
 
-      onTransactionIdChange(newTransactionId);
+      setTransactionId(newTransactionId);
       setCurrentFormData(data);
       setIsActivityDrawerOpen(true);
     } catch (e) {

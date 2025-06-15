@@ -5,7 +5,6 @@ import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 
 export function TestWorkflowDrawerPage() {
   const [open, setOpen] = useState(true);
-  const [transactionId, setTransactionId] = useState<string>();
   const navigate = useNavigate();
   const { workflowSlug } = useParams<{ workflowSlug: string }>();
 
@@ -21,13 +20,5 @@ export function TestWorkflowDrawerPage() {
     }
   };
 
-  return (
-    <TestWorkflowDrawer
-      isOpen={open}
-      onOpenChange={handleOpenChange}
-      testData={testData}
-      transactionId={transactionId}
-      onTransactionIdChange={setTransactionId}
-    />
-  );
+  return <TestWorkflowDrawer isOpen={open} onOpenChange={handleOpenChange} testData={testData} />;
 }

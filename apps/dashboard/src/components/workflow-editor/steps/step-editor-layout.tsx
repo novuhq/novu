@@ -28,7 +28,6 @@ function StepEditorContent() {
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
-  const [transactionId, setTransactionId] = useState<string>();
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
 
   const handleTestWorkflowClick = () => {
@@ -100,8 +99,6 @@ function StepEditorContent() {
         isOpen={isTestDrawerOpen}
         onOpenChange={setIsTestDrawerOpen}
         testData={testData}
-        transactionId={transactionId}
-        onTransactionIdChange={setTransactionId}
         initialPayload={currentPayload}
       />
     </ResizableLayout>
