@@ -3,7 +3,6 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
-import { cn } from '@/utils/ui';
 import { forwardRef, useState } from 'react';
 
 type SubscriberDrawerProps = {
@@ -29,13 +28,7 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
 
   return (
     <>
-      <Sheet modal={false} open={open} onOpenChange={protectedOnValueChange}>
-        {/* Custom overlay since SheetOverlay does not work with modal={false} */}
-        <div
-          className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-            'pointer-events-none opacity-0': !open,
-          })}
-        />
+      <Sheet open={open} onOpenChange={protectedOnValueChange}>
         <SheetContent ref={combinedRef}>
           <VisuallyHidden>
             <SheetTitle />

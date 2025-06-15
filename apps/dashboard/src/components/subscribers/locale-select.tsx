@@ -26,7 +26,7 @@ export function LocaleSelect(props: LocaleSelectProps) {
   const scrollId = useRef<ReturnType<typeof setTimeout>>();
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="secondary"

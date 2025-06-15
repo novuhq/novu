@@ -136,7 +136,7 @@ export function ActivityLogs({
           <span className="text-foreground-950 text-sm font-medium">Logs</span>
         </div>
 
-        <Popover open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
+        <Popover modal={true} open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
           <PopoverTrigger asChild>
             <div className="flex items-center gap-1">
               <RiCodeBlock className="size-3" />

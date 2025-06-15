@@ -161,13 +161,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   };
 
   return (
-    <Sheet modal={false} open={isOpen} onOpenChange={onOpenChange}>
-      {/* Custom overlay since SheetOverlay does not work with modal={false} */}
-      <div
-        className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-          'pointer-events-none opacity-0': !isOpen,
-        })}
-      />
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent ref={forwardedRef} className="w-[500px]">
         <VisuallyHidden>
           <SheetTitle>Test Workflow</SheetTitle>
@@ -189,7 +183,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
               <div className="flex items-center justify-between px-3 py-1.5">
                 <Button
                   type="submit"
-                  variant="primary"
+                  variant="secondary"
                   size="xs"
                   mode="gradient"
                   isLoading={isPending}
