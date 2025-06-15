@@ -9,6 +9,7 @@ import { Separator } from '@/components/primitives/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
+import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { EditableJsonViewer } from '@/components/workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/preview-context.constants';
@@ -48,6 +49,7 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
   const [accordionValue, setAccordionValue] = useState(['payload', 'subscriber']);
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
   const [subscriberData, setSubscriberData] = useState(DEFAULT_SUBSCRIBER_DATA);
+  const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
 
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const payload = watch('payload');
@@ -192,6 +194,7 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
                     onClick={(e) => {
                       e.stopPropagation();
                       e.preventDefault();
+                      setIsSubscriberDrawerOpen(true);
                     }}
                     type="button"
                     variant="secondary"
@@ -234,6 +237,12 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
           </AccordionItem>
         </Accordion>
       </div>
+
+      <SubscriberDrawer
+        open={isSubscriberDrawerOpen}
+        onOpenChange={setIsSubscriberDrawerOpen}
+        subscriberId={subscriberData.subscriberId}
+      />
     </div>
   );
 }

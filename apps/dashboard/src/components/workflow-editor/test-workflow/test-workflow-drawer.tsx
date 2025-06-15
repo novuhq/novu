@@ -96,7 +96,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
           'pointer-events-none opacity-0': !isOpen,
         })}
       />
-      <SheetContent ref={forwardedRef} className="w-3/4 sm:max-w-5xl">
+      <SheetContent ref={forwardedRef} className="w-[500px]">
         <VisuallyHidden>
           <SheetTitle>Test Workflow</SheetTitle>
           <SheetDescription>Configure and test your workflow</SheetDescription>
