@@ -8,6 +8,7 @@ import { FormControl, FormField, FormItem, FormMessage } from '@/components/prim
 import { Separator } from '@/components/primitives/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
 import { EditableJsonViewer } from '@/components/workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
@@ -15,21 +16,10 @@ import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/p
 import { cn } from '@/utils/ui';
 import { TestWorkflowFormType } from '../schema';
 
-type SubscriberDisplayData = {
-  subscriberId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  avatar: string;
-  locale: string | null;
-  timezone: string | null;
-  data: any;
-};
-
 type TestWorkflowContentProps = {
   workflow?: WorkflowResponseDto;
-  subscriberData: SubscriberDisplayData;
+  subscriberData: Partial<ISubscriberResponseDto> | null;
+  isLoadingSubscriber?: boolean;
   onOpenSubscriberDrawer: () => void;
   onSubscriberSelect: (subscriber: ISubscriberResponseDto) => void;
 };
@@ -37,6 +27,7 @@ type TestWorkflowContentProps = {
 export function TestWorkflowContent({
   workflow,
   subscriberData,
+  isLoadingSubscriber = false,
   onOpenSubscriberDrawer,
   onSubscriberSelect,
 }: TestWorkflowContentProps) {
@@ -76,6 +67,15 @@ export function TestWorkflowContent({
   );
 
   const renderSubscriberRow = (label: string, value: any) => {
+    if (isLoadingSubscriber) {
+      return (
+        <div className="flex items-center gap-1.5 font-mono text-xs">
+          <span className="text-foreground-400 tracking-tight">{label}</span>
+          <Skeleton className="h-3 w-16" />
+        </div>
+      );
+    }
+
     const displayValue = !value ? 'null' : String(value);
     const isNull = displayValue === 'null';
 
@@ -205,15 +205,15 @@ export function TestWorkflowContent({
               />
               <div className="flex flex-1 flex-col gap-2 overflow-auto">
                 <div className="space-y-1">
-                  {renderSubscriberRow('subscriber.subscriberId', subscriberData.subscriberId)}
-                  {renderSubscriberRow('subscriber.firstName', subscriberData.firstName)}
-                  {renderSubscriberRow('subscriber.lastName', subscriberData.lastName)}
-                  {renderSubscriberRow('subscriber.email', subscriberData.email)}
-                  {renderSubscriberRow('subscriber.phone', subscriberData.phone)}
-                  {renderSubscriberRow('subscriber.avatar', subscriberData.avatar)}
-                  {renderSubscriberRow('subscriber.locale', subscriberData.locale)}
-                  {renderSubscriberRow('subscriber.timezone', subscriberData.timezone)}
-                  {renderSubscriberRow('subscriber.data', JSON.stringify(subscriberData.data))}
+                  {renderSubscriberRow('subscriber.subscriberId', subscriberData?.subscriberId)}
+                  {renderSubscriberRow('subscriber.firstName', subscriberData?.firstName)}
+                  {renderSubscriberRow('subscriber.lastName', subscriberData?.lastName)}
+                  {renderSubscriberRow('subscriber.email', subscriberData?.email)}
+                  {renderSubscriberRow('subscriber.phone', subscriberData?.phone)}
+                  {renderSubscriberRow('subscriber.avatar', subscriberData?.avatar)}
+                  {renderSubscriberRow('subscriber.locale', subscriberData?.locale)}
+                  {renderSubscriberRow('subscriber.timezone', subscriberData?.timezone)}
+                  {renderSubscriberRow('subscriber.data', JSON.stringify(subscriberData?.data))}
                 </div>
               </div>
             </AccordionContent>

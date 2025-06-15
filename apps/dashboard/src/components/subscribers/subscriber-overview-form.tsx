@@ -129,7 +129,6 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
       form.reset(createDefaultSubscriberValues(data));
       track(TelemetryEvent.SUBSCRIBER_EDITED);
 
-      // Close drawer if closeOnSave prop is true
       if (closeOnSave && onCloseDrawer) {
         onCloseDrawer();
       }

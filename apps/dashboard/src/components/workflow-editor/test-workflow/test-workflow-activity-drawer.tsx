@@ -4,24 +4,21 @@ import { WorkflowResponseDto } from '@novu/shared';
 import { ActivityPanel } from '@/components/activity/activity-panel';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { Button } from '@/components/primitives/button';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
-import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
 import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
 import { ActivityError } from '@/components/activity/activity-error';
-import { ActivityHeader } from '@/components/activity/activity-header';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
-import { cn } from '@/utils/ui';
-import { RiCheckboxCircleFill, RiCloseLine } from 'react-icons/ri';
+import { RiCheckboxCircleFill } from 'react-icons/ri';
 
 type TestWorkflowActivityDrawerProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   transactionId?: string;
   workflow?: WorkflowResponseDto;
-  to?: any;
+  to?: Record<string, string>;
   payload?: string;
 };
 

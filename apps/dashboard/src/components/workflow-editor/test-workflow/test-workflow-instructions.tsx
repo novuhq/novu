@@ -34,8 +34,8 @@ interface TestWorkflowInstructionsProps {
   isOpen: boolean;
   onClose: () => void;
   workflow?: WorkflowResponseDto;
-  to: Record<string, string>;
-  payload: string;
+  to?: Record<string, string>;
+  payload?: string;
 }
 
 const LANGUAGE_TO_SNIPPET_UTIL: Record<SnippetLanguage, (props: CodeSnippet) => string> = {

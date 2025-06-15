@@ -33,30 +33,6 @@ type TestWorkflowDrawerProps = {
   onTransactionIdChange: (transactionId: string) => void;
 };
 
-type SubscriberDisplayData = {
-  subscriberId: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  avatar: string;
-  locale: string | null;
-  timezone: string | null;
-  data: any;
-};
-
-const DEFAULT_SUBSCRIBER_DATA: SubscriberDisplayData = {
-  subscriberId: '',
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  avatar: '',
-  locale: null,
-  timezone: null,
-  data: null,
-};
-
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
   const { isOpen, onOpenChange, testData, transactionId, onTransactionIdChange } = props;
   const { workflow } = useWorkflow();
@@ -66,11 +42,15 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [currentFormData, setCurrentFormData] = useState<TestWorkflowFormType | null>(null);
   const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
-  const [subscriberData, setSubscriberData] = useState(DEFAULT_SUBSCRIBER_DATA);
+  const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
 
   // Fetch subscriber data for the currently selected subscriber (starts with current user)
-  const subscriberIdToFetch = subscriberData.subscriberId || currentUser?._id || '';
-  const { data: fetchedSubscriberData, refetch: refetchSubscriber } = useFetchSubscriber({
+  const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
+  const {
+    data: fetchedSubscriberData,
+    refetch: refetchSubscriber,
+    isLoading: isLoadingSubscriber,
+  } = useFetchSubscriber({
     subscriberId: subscriberIdToFetch,
     options: {
       enabled: !!subscriberIdToFetch,
@@ -80,60 +60,43 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   // Set subscriber data when fetched subscriber data is loaded
   useEffect(() => {
     if (fetchedSubscriberData) {
-      const newSubscriberData: SubscriberDisplayData = {
+      setSubscriberData({
         subscriberId: fetchedSubscriberData.subscriberId || '',
         firstName: fetchedSubscriberData.firstName || '',
         lastName: fetchedSubscriberData.lastName || '',
         email: fetchedSubscriberData.email || '',
         phone: fetchedSubscriberData.phone || '',
         avatar: fetchedSubscriberData.avatar || '',
-        locale: fetchedSubscriberData.locale || null,
-        timezone: fetchedSubscriberData.timezone || null,
-        data: fetchedSubscriberData.data || null,
-      };
-      setSubscriberData(newSubscriberData);
-    } else if (currentUser && !fetchedSubscriberData && !subscriberData.subscriberId) {
+        locale: fetchedSubscriberData.locale || undefined,
+        timezone: fetchedSubscriberData.timezone || undefined,
+        data: fetchedSubscriberData.data || undefined,
+      });
+    } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
       // If no subscriber found but we have current user, use user data as fallback
-      const fallbackSubscriberData: SubscriberDisplayData = {
+      setSubscriberData({
         subscriberId: currentUser._id,
         firstName: currentUser.firstName || '',
         lastName: currentUser.lastName || '',
         email: currentUser.email || '',
         phone: '',
         avatar: '',
-        locale: null,
-        timezone: null,
-        data: null,
-      };
-      setSubscriberData(fallbackSubscriberData);
+        locale: '',
+        timezone: '',
+        data: {},
+      });
     }
-  }, [fetchedSubscriberData, currentUser, subscriberData.subscriberId]);
+  }, [fetchedSubscriberData, currentUser, subscriberData?.subscriberId, isLoadingSubscriber]);
 
   const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
-    const newSubscriberData: SubscriberDisplayData = {
-      subscriberId: subscriber.subscriberId || '',
-      firstName: subscriber.firstName || '',
-      lastName: subscriber.lastName || '',
-      email: subscriber.email || '',
-      phone: subscriber.phone || '',
-      avatar: subscriber.avatar || '',
-      locale: subscriber.locale || null,
-      timezone: subscriber.timezone || null,
-      data: subscriber.data || null,
-    };
-    setSubscriberData(newSubscriberData);
+    setSubscriberData(subscriber);
   }, []);
 
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
   const payload = useMemo(() => {
-    // Use workflow payloadExample if available and feature flag is enabled
     if (isPayloadSchemaEnabled && workflow?.payloadExample) {
       return workflow.payloadExample;
     }
-
-    // Fallback to test data payload
-    return createMockObjectFromSchema(testData?.payload ?? {});
   }, [testData, workflow?.payloadExample, isPayloadSchemaEnabled]);
 
   const form = useForm<TestWorkflowFormType>({
@@ -149,11 +112,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       setIsSubscriberDrawerOpen(open);
 
       // Refetch subscriber data when drawer closes to get latest updates
-      if (!open && subscriberData.subscriberId) {
+      if (!open && subscriberData?.subscriberId) {
         refetchSubscriber();
       }
     },
-    [refetchSubscriber, subscriberData.subscriberId]
+    [refetchSubscriber, subscriberData?.subscriberId]
   );
 
   const onSubmit = async (data: TestWorkflowFormType) => {
@@ -196,13 +159,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   };
 
   return (
-    <Sheet modal={false} open={isOpen} onOpenChange={onOpenChange}>
-      {/* Custom overlay since SheetOverlay does not work with modal={false} */}
-      <div
-        className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-          'pointer-events-none opacity-0': !isOpen,
-        })}
-      />
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent ref={forwardedRef} className="w-[500px]">
         <VisuallyHidden>
           <SheetTitle>Test Workflow</SheetTitle>
@@ -214,6 +171,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             <TestWorkflowContent
               workflow={workflow}
               subscriberData={subscriberData}
+              isLoadingSubscriber={isLoadingSubscriber}
               onOpenSubscriberDrawer={() => setIsSubscriberDrawerOpen(true)}
               onSubscriberSelect={handleSubscriberSelect}
             />
@@ -250,7 +208,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       <SubscriberDrawer
         open={isSubscriberDrawerOpen}
         onOpenChange={handleSubscriberDrawerClose}
-        subscriberId={subscriberData.subscriberId}
+        subscriberId={subscriberData?.subscriberId || ''}
         closeOnSave={true}
       />
     </Sheet>
