@@ -102,7 +102,6 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
           disabled={!activity.subscriber}
           className="text-start"
           subscriberId={activity.subscriber?.subscriberId || activity._subscriberId}
-          readOnly={true}
         >
           <OverviewItem
             label="Subscriber ID"
