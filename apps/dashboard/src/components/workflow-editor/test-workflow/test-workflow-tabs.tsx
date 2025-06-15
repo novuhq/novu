@@ -109,8 +109,8 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
             </TabsTrigger>
             <div className="my-auto ml-auto flex items-center gap-2">
               <Button
-                variant="primary"
-                size="xs"
+                variant="secondary"
+                size="2xs"
                 mode="gradient"
                 leadingIcon={RiPlayCircleLine}
                 onClick={handleTestWorkflowClick}

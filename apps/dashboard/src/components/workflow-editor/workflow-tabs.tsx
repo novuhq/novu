@@ -33,7 +33,7 @@ export const WorkflowTabs = () => {
     <div className="flex h-full flex-1 flex-nowrap">
       <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value="workflow">
         <TabsList variant="regular" className="items-center">
-          <TabsTrigger value="workflow" asChild variant="regular" size="xl">
+          <TabsTrigger value="workflow" asChild variant="regular" size="lg">
             <Link
               to={buildRoute(ROUTES.EDIT_WORKFLOW, {
                 environmentSlug: currentEnvironment?.slug ?? '',
@@ -45,7 +45,7 @@ export const WorkflowTabs = () => {
           </TabsTrigger>
           {!isV2TemplateEditorEnabled && (
             <Protect permission={PermissionsEnum.EVENT_WRITE}>
-              <TabsTrigger value="trigger" asChild variant="regular" size="xl">
+              <TabsTrigger value="trigger" asChild variant="regular" size="lg">
                 <Link
                   to={buildRoute(ROUTES.TEST_WORKFLOW, {
                     environmentSlug: currentEnvironment?.slug ?? '',
@@ -61,8 +61,8 @@ export const WorkflowTabs = () => {
             <div className="my-auto ml-auto flex items-center gap-2">
               <Protect permission={PermissionsEnum.EVENT_WRITE}>
                 <Button
-                  variant="primary"
-                  size="xs"
+                  variant="secondary"
+                  size="2xs"
                   mode="gradient"
                   leadingIcon={RiPlayCircleLine}
                   onClick={handleTestWorkflowClick}
