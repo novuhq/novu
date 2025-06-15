@@ -88,7 +88,7 @@ export const WorkflowTabs = () => {
                   leadingIcon={RiPlayCircleLine}
                   onClick={() => {
                     navigate(
-                      buildRoute(ROUTES.TEST_WORKFLOW, {
+                      buildRoute(ROUTES.TRIGGER_WORKFLOW, {
                         environmentSlug: currentEnvironment?.slug ?? '',
                         workflowSlug: workflow?.slug ?? '',
                       })
