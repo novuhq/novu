@@ -1,4 +1,4 @@
-import { forwardRef, useMemo } from 'react';
+import { forwardRef, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createMockObjectFromSchema, type WorkflowTestDataResponseDto, FeatureFlagsKeysEnum } from '@novu/shared';
@@ -11,6 +11,7 @@ import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
+import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useWorkflow } from '../workflow-provider';
@@ -30,6 +31,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const { workflow } = useWorkflow();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
+  const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
+  const [currentFormData, setCurrentFormData] = useState<TestWorkflowFormType | null>(null);
 
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
@@ -80,6 +83,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       }
 
       onTransactionIdChange(newTransactionId);
+      setCurrentFormData(data);
+      setIsActivityDrawerOpen(true);
     } catch (e) {
       showErrorToast(
         e instanceof Error ? e.message : 'There was an error triggering the workflow.',
@@ -109,17 +114,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             {/* Footer */}
             <div className="border-t border-neutral-200 bg-white">
               <div className="flex items-center justify-between px-3 py-1.5">
-                <Button type="button" variant="secondary" mode="ghost" size="xs" className="gap-1 text-neutral-600">
-                  <RiPlayCircleLine className="h-4 w-4" />
-                  View docs
-                </Button>
                 <Button
                   type="submit"
                   variant="primary"
                   size="xs"
                   mode="gradient"
                   isLoading={isPending}
-                  className="gap-1"
+                  className="ml-auto gap-1"
                 >
                   Test workflow
                   <RiPlayCircleLine className="h-4 w-4" />
@@ -129,6 +130,15 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
           </FormRoot>
         </Form>
       </SheetContent>
+
+      <TestWorkflowActivityDrawer
+        isOpen={isActivityDrawerOpen}
+        onOpenChange={setIsActivityDrawerOpen}
+        transactionId={transactionId}
+        workflow={workflow}
+        to={currentFormData?.to}
+        payload={currentFormData?.payload}
+      />
     </Sheet>
   );
 });

@@ -165,8 +165,8 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
       {/* Header */}
       <div className="border-b border-neutral-200 px-3 py-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Test workflow</h2>
-          <p className="text-sm text-neutral-600">
+          <h2 className="text-label-lg text-text-strong">Test workflow</h2>
+          <p className="text-paragraph-xs text-text-soft">
             Time to test the workflow you just built.{' '}
             <a href="#" className="underline">
               Learn more ↗
@@ -176,7 +176,7 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="bg-bg-weak flex-1 overflow-auto">
         <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
           {/* Payload Section */}
           <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
@@ -226,7 +226,7 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
           </AccordionItem>
 
           {/* Subscriber Section */}
-          <AccordionItem value="subscriber" className={ACCORDION_STYLES.item}>
+          <AccordionItem value="subscriber" className={cn(ACCORDION_STYLES.item, 'border-b-0')}>
             <AccordionTrigger className={ACCORDION_STYLES.trigger}>
               <div className="flex w-full items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -256,7 +256,7 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
                     variant="secondary"
                     mode="ghost"
                     size="2xs"
-                    className="text-foreground-600 gap-1"
+                    className="text-foreground-600 h-[18px] gap-1"
                   >
                     <RiPencilLine className="h-3 w-3" />
                     Edit subscriber
