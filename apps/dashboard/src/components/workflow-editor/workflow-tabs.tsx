@@ -35,8 +35,6 @@ export const WorkflowTabs = () => {
     setIsIntegrateDrawerOpen(true);
   };
 
-  const isWorkflowNotTriggered = !workflow?.lastTriggeredAt;
-
   return (
     <div className="flex h-full flex-1 flex-nowrap">
       <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value="workflow">

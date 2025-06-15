@@ -97,6 +97,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     if (isPayloadSchemaEnabled && workflow?.payloadExample) {
       return workflow.payloadExample;
     }
+
+    return {};
   }, [testData, workflow?.payloadExample, isPayloadSchemaEnabled]);
 
   const form = useForm<TestWorkflowFormType>({

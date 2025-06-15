@@ -58,10 +58,11 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
 type SubscriberDrawerButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   subscriberId: string;
   readOnly?: boolean;
+  closeOnSave?: boolean;
 };
 
 export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
-  const { subscriberId, onClick, readOnly = false, ...rest } = props;
+  const { subscriberId, onClick, readOnly = false, closeOnSave = false, ...rest } = props;
   const [open, setOpen] = useState(false);
 
   return (
@@ -73,7 +74,13 @@ export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
           onClick?.(e);
         }}
       />
-      <SubscriberDrawer open={open} onOpenChange={setOpen} subscriberId={subscriberId} readOnly={readOnly} />
+      <SubscriberDrawer
+        open={open}
+        onOpenChange={setOpen}
+        subscriberId={subscriberId}
+        readOnly={readOnly}
+        closeOnSave={closeOnSave}
+      />
     </>
   );
 };
