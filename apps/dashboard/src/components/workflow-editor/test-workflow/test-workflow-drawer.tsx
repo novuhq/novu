@@ -7,12 +7,10 @@ import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
-import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/test-workflow-form';
-import { TestWorkflowLogsSidebar } from '@/components/workflow-editor/test-workflow/test-workflow-logs-sidebar';
+import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useWorkflow } from '../workflow-provider';
@@ -104,48 +102,32 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
           <SheetDescription>Configure and test your workflow</SheetDescription>
         </VisuallyHidden>
 
-        <div className="flex h-full flex-col">
-          <div className="border-b border-neutral-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">Test Workflow</h2>
-                <p className="text-sm text-neutral-600">Configure and trigger your workflow for testing</p>
-              </div>
-              <Form {...form}>
-                <FormRoot onSubmit={handleSubmit(onSubmit)}>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="xs"
-                    mode="gradient"
-                    isLoading={isPending}
-                    leadingIcon={RiPlayCircleLine}
-                  >
-                    Test workflow
-                  </Button>
-                </FormRoot>
-              </Form>
-            </div>
-          </div>
+        <Form {...form}>
+          <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-col">
+            <TestWorkflowContent workflow={workflow} />
 
-          <div className="flex-1 overflow-hidden">
-            <Form {...form}>
-              <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full">
-                <ResizablePanelGroup direction="horizontal">
-                  <ResizablePanel defaultSize={70} minSize={40} className="h-full">
-                    <div className="h-full overflow-auto p-6">
-                      <TestWorkflowForm workflow={workflow} />
-                    </div>
-                  </ResizablePanel>
-                  <ResizableHandle />
-                  <ResizablePanel defaultSize={30} minSize={30} maxSize={50}>
-                    <TestWorkflowLogsSidebar transactionId={transactionId} workflow={workflow} />
-                  </ResizablePanel>
-                </ResizablePanelGroup>
-              </FormRoot>
-            </Form>
-          </div>
-        </div>
+            {/* Footer */}
+            <div className="border-t border-neutral-200 bg-white">
+              <div className="flex items-center justify-between px-3 py-1.5">
+                <Button type="button" variant="secondary" mode="ghost" size="xs" className="gap-1 text-neutral-600">
+                  <RiPlayCircleLine className="h-4 w-4" />
+                  View docs
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="xs"
+                  mode="gradient"
+                  isLoading={isPending}
+                  className="gap-1"
+                >
+                  Test workflow
+                  <RiPlayCircleLine className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </FormRoot>
+        </Form>
       </SheetContent>
     </Sheet>
   );
