@@ -1,7 +1,11 @@
-import { forwardRef, useMemo, useState } from 'react';
+import { forwardRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createMockObjectFromSchema, type WorkflowTestDataResponseDto, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  createMockObjectFromSchema,
+  type WorkflowTestDataResponseDto,
+  type ISubscriberResponseDto,
+} from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
@@ -12,8 +16,11 @@ import { showErrorToast, showToast } from '@/components/primitives/sonner-helper
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
 import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
+import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
 import { cn } from '@/utils/ui';
 import { RiPlayCircleLine } from 'react-icons/ri';
@@ -26,13 +33,96 @@ type TestWorkflowDrawerProps = {
   onTransactionIdChange: (transactionId: string) => void;
 };
 
+type SubscriberDisplayData = {
+  subscriberId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  locale: string | null;
+  timezone: string | null;
+  data: any;
+};
+
+const DEFAULT_SUBSCRIBER_DATA: SubscriberDisplayData = {
+  subscriberId: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  avatar: '',
+  locale: null,
+  timezone: null,
+  data: null,
+};
+
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
   const { isOpen, onOpenChange, testData, transactionId, onTransactionIdChange } = props;
   const { workflow } = useWorkflow();
+  const { currentUser } = useAuth();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [currentFormData, setCurrentFormData] = useState<TestWorkflowFormType | null>(null);
+  const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
+  const [subscriberData, setSubscriberData] = useState(DEFAULT_SUBSCRIBER_DATA);
+
+  // Fetch subscriber data for the currently selected subscriber (starts with current user)
+  const subscriberIdToFetch = subscriberData.subscriberId || currentUser?._id || '';
+  const { data: fetchedSubscriberData, refetch: refetchSubscriber } = useFetchSubscriber({
+    subscriberId: subscriberIdToFetch,
+    options: {
+      enabled: !!subscriberIdToFetch,
+    },
+  });
+
+  // Set subscriber data when fetched subscriber data is loaded
+  useEffect(() => {
+    if (fetchedSubscriberData) {
+      const newSubscriberData: SubscriberDisplayData = {
+        subscriberId: fetchedSubscriberData.subscriberId || '',
+        firstName: fetchedSubscriberData.firstName || '',
+        lastName: fetchedSubscriberData.lastName || '',
+        email: fetchedSubscriberData.email || '',
+        phone: fetchedSubscriberData.phone || '',
+        avatar: fetchedSubscriberData.avatar || '',
+        locale: fetchedSubscriberData.locale || null,
+        timezone: fetchedSubscriberData.timezone || null,
+        data: fetchedSubscriberData.data || null,
+      };
+      setSubscriberData(newSubscriberData);
+    } else if (currentUser && !fetchedSubscriberData && !subscriberData.subscriberId) {
+      // If no subscriber found but we have current user, use user data as fallback
+      const fallbackSubscriberData: SubscriberDisplayData = {
+        subscriberId: currentUser._id,
+        firstName: currentUser.firstName || '',
+        lastName: currentUser.lastName || '',
+        email: currentUser.email || '',
+        phone: '',
+        avatar: '',
+        locale: null,
+        timezone: null,
+        data: null,
+      };
+      setSubscriberData(fallbackSubscriberData);
+    }
+  }, [fetchedSubscriberData, currentUser, subscriberData.subscriberId]);
+
+  const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
+    const newSubscriberData: SubscriberDisplayData = {
+      subscriberId: subscriber.subscriberId || '',
+      firstName: subscriber.firstName || '',
+      lastName: subscriber.lastName || '',
+      email: subscriber.email || '',
+      phone: subscriber.phone || '',
+      avatar: subscriber.avatar || '',
+      locale: subscriber.locale || null,
+      timezone: subscriber.timezone || null,
+      data: subscriber.data || null,
+    };
+    setSubscriberData(newSubscriberData);
+  }, []);
 
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
@@ -53,6 +143,18 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   });
 
   const { handleSubmit } = form;
+
+  const handleSubscriberDrawerClose = useCallback(
+    (open: boolean) => {
+      setIsSubscriberDrawerOpen(open);
+
+      // Refetch subscriber data when drawer closes to get latest updates
+      if (!open && subscriberData.subscriberId) {
+        refetchSubscriber();
+      }
+    },
+    [refetchSubscriber, subscriberData.subscriberId]
+  );
 
   const onSubmit = async (data: TestWorkflowFormType) => {
     try {
@@ -109,7 +211,12 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
         <Form {...form}>
           <FormRoot onSubmit={handleSubmit(onSubmit)} className="flex h-full flex-col">
-            <TestWorkflowContent workflow={workflow} />
+            <TestWorkflowContent
+              workflow={workflow}
+              subscriberData={subscriberData}
+              onOpenSubscriberDrawer={() => setIsSubscriberDrawerOpen(true)}
+              onSubscriberSelect={handleSubscriberSelect}
+            />
 
             {/* Footer */}
             <div className="border-t border-neutral-200 bg-white">
@@ -138,6 +245,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         workflow={workflow}
         to={currentFormData?.to}
         payload={currentFormData?.payload}
+      />
+
+      <SubscriberDrawer
+        open={isSubscriberDrawerOpen}
+        onOpenChange={handleSubscriberDrawerClose}
+        subscriberId={subscriberData.subscriberId}
+        closeOnSave={true}
       />
     </Sheet>
   );
