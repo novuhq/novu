@@ -11,14 +11,16 @@ import { Button } from '../primitives/button';
 import { WorkflowCanvas } from './workflow-canvas';
 import { Protect } from '@/utils/protect';
 import { PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { RiPlayCircleLine } from 'react-icons/ri';
+import { RiPlayCircleLine, RiCodeSSlashLine } from 'react-icons/ri';
 import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
+import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 
 export const WorkflowTabs = () => {
   const { workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
   const [transactionId, setTransactionId] = useState<string>();
 
   const { testData } = useFetchWorkflowTestData({
@@ -28,6 +30,12 @@ export const WorkflowTabs = () => {
   const handleTestWorkflowClick = () => {
     setIsDrawerOpen(true);
   };
+
+  const handleIntegrateWorkflowClick = () => {
+    setIsIntegrateDrawerOpen(true);
+  };
+
+  const isWorkflowNotTriggered = !workflow?.lastTriggeredAt;
 
   return (
     <div className="flex h-full flex-1 flex-nowrap">
@@ -63,6 +71,15 @@ export const WorkflowTabs = () => {
                 <Button
                   variant="secondary"
                   size="2xs"
+                  mode="ghost"
+                  leadingIcon={RiCodeSSlashLine}
+                  onClick={handleIntegrateWorkflowClick}
+                >
+                  Integrate workflow
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="2xs"
                   mode="gradient"
                   leadingIcon={RiPlayCircleLine}
                   onClick={handleTestWorkflowClick}
@@ -79,13 +96,22 @@ export const WorkflowTabs = () => {
       </Tabs>
 
       {isV2TemplateEditorEnabled && (
-        <TestWorkflowDrawer
-          isOpen={isDrawerOpen}
-          onOpenChange={setIsDrawerOpen}
-          testData={testData}
-          transactionId={transactionId}
-          onTransactionIdChange={setTransactionId}
-        />
+        <>
+          <TestWorkflowDrawer
+            isOpen={isDrawerOpen}
+            onOpenChange={setIsDrawerOpen}
+            testData={testData}
+            transactionId={transactionId}
+            onTransactionIdChange={setTransactionId}
+          />
+          <TestWorkflowInstructions
+            isOpen={isIntegrateDrawerOpen}
+            onClose={() => setIsIntegrateDrawerOpen(false)}
+            workflow={workflow}
+            to={{}}
+            payload="{}"
+          />
+        </>
       )}
     </div>
   );

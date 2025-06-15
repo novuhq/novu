@@ -36,7 +36,7 @@ function StepEditorContent() {
   return (
     <ResizableLayout autoSaveId="step-editor-main-layout">
       <ResizableLayout.ContextPanel>
-        <PanelHeader icon={RiCodeBlock} title="Preview Context">
+        <PanelHeader icon={RiCodeBlock} title="Preview Context" className="py-2">
           <Button
             variant="secondary"
             size="2xs"
