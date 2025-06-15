@@ -9,7 +9,7 @@ import {
 
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetOverlay, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
@@ -161,7 +161,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   };
 
   return (
-    <Sheet open={isOpen} onOpenChange={onOpenChange}>
+    <Sheet modal={false} open={isOpen} onOpenChange={onOpenChange}>
+      {/* Custom overlay since SheetOverlay does not work with modal={false} */}
+      <div
+        className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
+          'pointer-events-none opacity-0': !isOpen,
+        })}
+      />
       <SheetContent ref={forwardedRef} className="w-[500px]">
         <VisuallyHidden>
           <SheetTitle>Test Workflow</SheetTitle>
