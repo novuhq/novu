@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiInformationLine, RiPencilLine, RiSearchLine } from 'react-icons/ri';
 import { type WorkflowResponseDto, type ISubscriberResponseDto } from '@novu/shared';
@@ -12,6 +12,8 @@ import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-auto
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { EditableJsonViewer } from '@/components/workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useAuth } from '@/context/auth/hooks';
 import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/preview-context.constants';
 import { cn } from '@/utils/ui';
 import { TestWorkflowFormType } from '../schema';
@@ -33,10 +35,10 @@ type SubscriberDisplayData = {
 };
 
 const DEFAULT_SUBSCRIBER_DATA: SubscriberDisplayData = {
-  subscriberId: 'test123454',
-  firstName: 'Naveen',
-  lastName: 'M',
-  email: 'naveen+test@novu.co',
+  subscriberId: '',
+  firstName: '',
+  lastName: '',
+  email: '',
   phone: '',
   avatar: '',
   locale: null,
@@ -46,13 +48,55 @@ const DEFAULT_SUBSCRIBER_DATA: SubscriberDisplayData = {
 
 export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
   const { control, setValue, watch } = useFormContext<TestWorkflowFormType>();
+  const { currentUser } = useAuth();
   const [accordionValue, setAccordionValue] = useState(['payload', 'subscriber']);
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
   const [subscriberData, setSubscriberData] = useState(DEFAULT_SUBSCRIBER_DATA);
   const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
 
+  // Fetch subscriber data for the currently selected subscriber (starts with current user)
+  const subscriberIdToFetch = subscriberData.subscriberId || currentUser?._id || '';
+  const { data: fetchedSubscriberData, refetch: refetchSubscriber } = useFetchSubscriber({
+    subscriberId: subscriberIdToFetch,
+    options: {
+      enabled: !!subscriberIdToFetch,
+    },
+  });
+
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const payload = watch('payload');
+
+  // Set subscriber data when fetched subscriber data is loaded
+  useEffect(() => {
+    if (fetchedSubscriberData) {
+      const newSubscriberData: SubscriberDisplayData = {
+        subscriberId: fetchedSubscriberData.subscriberId || '',
+        firstName: fetchedSubscriberData.firstName || '',
+        lastName: fetchedSubscriberData.lastName || '',
+        email: fetchedSubscriberData.email || '',
+        phone: fetchedSubscriberData.phone || '',
+        avatar: fetchedSubscriberData.avatar || '',
+        locale: fetchedSubscriberData.locale || null,
+        timezone: fetchedSubscriberData.timezone || null,
+        data: fetchedSubscriberData.data || null,
+      };
+      setSubscriberData(newSubscriberData);
+    } else if (currentUser && !fetchedSubscriberData && !subscriberData.subscriberId) {
+      // If no subscriber found but we have current user, use user data as fallback
+      const fallbackSubscriberData: SubscriberDisplayData = {
+        subscriberId: currentUser._id,
+        firstName: currentUser.firstName || '',
+        lastName: currentUser.lastName || '',
+        email: currentUser.email || '',
+        phone: '',
+        avatar: '',
+        locale: null,
+        timezone: null,
+        data: null,
+      };
+      setSubscriberData(fallbackSubscriberData);
+    }
+  }, [fetchedSubscriberData, currentUser, subscriberData.subscriberId]);
 
   const payloadJsonData = useMemo(() => {
     try {
@@ -90,9 +134,21 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
     setSubscriberSearchQuery('');
   }, []);
 
+  const handleSubscriberDrawerClose = useCallback(
+    (open: boolean) => {
+      setIsSubscriberDrawerOpen(open);
+
+      // Refetch subscriber data when drawer closes to get latest updates
+      if (!open && subscriberData.subscriberId) {
+        refetchSubscriber();
+      }
+    },
+    [refetchSubscriber, subscriberData.subscriberId]
+  );
+
   const renderSubscriberRow = (label: string, value: any) => {
-    const displayValue = value === null || value === undefined ? 'null' : String(value);
-    const isNull = value === null || value === undefined;
+    const displayValue = !value ? 'null' : String(value);
+    const isNull = displayValue === 'null';
 
     return (
       <div className="flex items-center gap-1.5 font-mono text-xs">
@@ -220,18 +276,16 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
               />
               <div className="flex flex-1 flex-col gap-2 overflow-auto">
                 <div className="space-y-1">
+                  {renderSubscriberRow('subscriber.subscriberId', subscriberData.subscriberId)}
                   {renderSubscriberRow('subscriber.firstName', subscriberData.firstName)}
                   {renderSubscriberRow('subscriber.lastName', subscriberData.lastName)}
-                  {renderSubscriberRow('subscriber.id', subscriberData.subscriberId)}
                   {renderSubscriberRow('subscriber.email', subscriberData.email)}
+                  {renderSubscriberRow('subscriber.phone', subscriberData.phone)}
+                  {renderSubscriberRow('subscriber.avatar', subscriberData.avatar)}
                   {renderSubscriberRow('subscriber.locale', subscriberData.locale)}
                   {renderSubscriberRow('subscriber.timezone', subscriberData.timezone)}
-                  {renderSubscriberRow('subscriber.data', subscriberData.data)}
+                  {renderSubscriberRow('subscriber.data', JSON.stringify(subscriberData.data))}
                 </div>
-              </div>
-              <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
-                <RiInformationLine className="h-3 w-3 flex-shrink-0" />
-                <span>Changes here only affect the preview and won't be saved to the subscriber.</span>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -240,8 +294,9 @@ export function TestWorkflowContent({ workflow }: TestWorkflowContentProps) {
 
       <SubscriberDrawer
         open={isSubscriberDrawerOpen}
-        onOpenChange={setIsSubscriberDrawerOpen}
+        onOpenChange={handleSubscriberDrawerClose}
         subscriberId={subscriberData.subscriberId}
+        closeOnSave={true}
       />
     </div>
   );

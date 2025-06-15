@@ -11,10 +11,11 @@ type SubscriberDrawerProps = {
   onOpenChange: (open: boolean) => void;
   subscriberId: string;
   readOnly?: boolean;
+  closeOnSave?: boolean;
 };
 
 export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps>((props, forwardedRef) => {
-  const { open, onOpenChange, subscriberId, readOnly = false } = props;
+  const { open, onOpenChange, subscriberId, readOnly = false, closeOnSave = false } = props;
 
   const {
     protectedOnValueChange,
@@ -40,7 +41,12 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
             <SheetTitle />
             <SheetDescription />
           </VisuallyHidden>
-          <SubscriberTabs subscriberId={subscriberId} readOnly={readOnly} onCloseDrawer={() => onOpenChange(false)} />
+          <SubscriberTabs
+            subscriberId={subscriberId}
+            readOnly={readOnly}
+            onCloseDrawer={() => onOpenChange(false)}
+            closeOnSave={closeOnSave}
+          />
         </SheetContent>
       </Sheet>
 
