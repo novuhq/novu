@@ -18,6 +18,7 @@ export const ROUTES = {
   WORKFLOWS: '/env/:environmentSlug/workflows',
   EDIT_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug',
   TEST_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug/test',
+  TRIGGER_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug/trigger',
   WELCOME: '/env/:environmentSlug/welcome',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
   EDIT_STEP: 'steps/:stepSlug',

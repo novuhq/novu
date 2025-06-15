@@ -251,7 +251,7 @@ function useChecklistItems(steps: Step[]) {
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Trigger workflow' });
           navigate(
-            buildRoute(ROUTES.TEST_WORKFLOW, {
+            buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
               environmentSlug: currentEnvironment?.slug ?? '',
               workflowSlug: workflow?.slug ?? '',
             })

@@ -44,6 +44,7 @@ import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
+import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TopicsPage } from './pages/topics';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
@@ -278,14 +279,22 @@ const router = createBrowserRouter([
                     path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
                   },
                   {
-                    path: ROUTES.TEST_WORKFLOW,
+                    path: ROUTES.TRIGGER_WORKFLOW,
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
-                        <TestWorkflowRouteHandler />
+                        <TestWorkflowDrawerPage />
                       </ProtectedRoute>
                     ),
                   },
                 ],
+              },
+              {
+                path: ROUTES.TEST_WORKFLOW,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE}>
+                    <TestWorkflowRouteHandler />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.WEBHOOKS_ENDPOINTS,
@@ -352,6 +361,7 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
+
               {
                 path: '*',
                 element: <CatchAllRoute />,
