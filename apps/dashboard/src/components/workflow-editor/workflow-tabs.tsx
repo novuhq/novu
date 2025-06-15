@@ -1,10 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import { Button } from '../primitives/button';
@@ -12,24 +11,14 @@ import { WorkflowCanvas } from './workflow-canvas';
 import { Protect } from '@/utils/protect';
 import { PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { RiPlayCircleLine, RiCodeSSlashLine } from 'react-icons/ri';
-import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 
 export const WorkflowTabs = () => {
   const { workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
-  const [transactionId, setTransactionId] = useState<string>();
-
-  const { testData } = useFetchWorkflowTestData({
-    workflowSlug: workflow?.slug ?? '',
-  });
-
-  const handleTestWorkflowClick = () => {
-    setIsDrawerOpen(true);
-  };
 
   const handleIntegrateWorkflowClick = () => {
     setIsIntegrateDrawerOpen(true);
@@ -80,7 +69,14 @@ export const WorkflowTabs = () => {
                   size="2xs"
                   mode="gradient"
                   leadingIcon={RiPlayCircleLine}
-                  onClick={handleTestWorkflowClick}
+                  onClick={() => {
+                    navigate(
+                      buildRoute(ROUTES.TEST_WORKFLOW, {
+                        environmentSlug: currentEnvironment?.slug ?? '',
+                        workflowSlug: workflow?.slug ?? '',
+                      })
+                    );
+                  }}
                 >
                   Test workflow
                 </Button>
@@ -94,22 +90,13 @@ export const WorkflowTabs = () => {
       </Tabs>
 
       {isV2TemplateEditorEnabled && (
-        <>
-          <TestWorkflowDrawer
-            isOpen={isDrawerOpen}
-            onOpenChange={setIsDrawerOpen}
-            testData={testData}
-            transactionId={transactionId}
-            onTransactionIdChange={setTransactionId}
-          />
-          <TestWorkflowInstructions
-            isOpen={isIntegrateDrawerOpen}
-            onClose={() => setIsIntegrateDrawerOpen(false)}
-            workflow={workflow}
-            to={{}}
-            payload="{}"
-          />
-        </>
+        <TestWorkflowInstructions
+          isOpen={isIntegrateDrawerOpen}
+          onClose={() => setIsIntegrateDrawerOpen(false)}
+          workflow={workflow}
+          to={{}}
+          payload="{}"
+        />
       )}
     </div>
   );
