@@ -11,7 +11,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiPencilRuler2Fill } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiArrowRightSLine, RiCloseFill, RiDeleteBin2Line, RiEdit2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 
@@ -317,8 +317,8 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                     mode="outline"
                     className="flex w-full justify-start gap-1.5 text-xs font-medium"
                   >
-                    <RiPencilRuler2Fill className="h-4 w-4 text-neutral-600" />
-                    Configure {STEP_TYPE_LABELS[step.type]} Step template{' '}
+                    <RiEdit2Line className="h-4 w-4 text-neutral-600" />
+                    Edit {STEP_TYPE_LABELS[step.type]} Step content{' '}
                     <RiArrowRightSLine className="ml-auto h-4 w-4 text-neutral-600" />
                   </Button>
                 </Link>

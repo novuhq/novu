@@ -36,7 +36,7 @@ export class StepConfigSidebar {
   }
 
   async configureTemplateClick(): Promise<void> {
-    const configureInAppTemplateBtn = this.page.getByRole('link').filter({ hasText: /Configure.* template/ });
+    const configureInAppTemplateBtn = this.page.getByRole('link').filter({ hasText: /Edit.* Step content/ });
     await configureInAppTemplateBtn.click();
   }
 
