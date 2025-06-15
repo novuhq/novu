@@ -1,21 +1,38 @@
 import { Link } from 'react-router-dom';
+import { useState } from 'react';
 
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
+import { Button } from '../primitives/button';
 import { WorkflowCanvas } from './workflow-canvas';
 import { Protect } from '@/utils/protect';
-import { PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { RiPlayCircleLine } from 'react-icons/ri';
+import { TestWorkflowDrawer } from './test-workflow/test-workflow-drawer';
 
 export const WorkflowTabs = () => {
   const { workflow } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [transactionId, setTransactionId] = useState<string>();
+
+  const { testData } = useFetchWorkflowTestData({
+    workflowSlug: workflow?.slug ?? '',
+  });
+
+  const handleTestWorkflowClick = () => {
+    setIsDrawerOpen(true);
+  };
 
   return (
     <div className="flex h-full flex-1 flex-nowrap">
       <Tabs defaultValue="workflow" className="-mt-px flex h-full flex-1 flex-col" value="workflow">
-        <TabsList variant="regular">
+        <TabsList variant="regular" className="items-center">
           <TabsTrigger value="workflow" asChild variant="regular" size="xl">
             <Link
               to={buildRoute(ROUTES.EDIT_WORKFLOW, {
@@ -26,23 +43,50 @@ export const WorkflowTabs = () => {
               Workflow
             </Link>
           </TabsTrigger>
-          <Protect permission={PermissionsEnum.EVENT_WRITE}>
-            <TabsTrigger value="trigger" asChild variant="regular" size="xl">
-              <Link
-                to={buildRoute(ROUTES.TEST_WORKFLOW, {
-                  environmentSlug: currentEnvironment?.slug ?? '',
-                  workflowSlug: workflow?.slug ?? '',
-                })}
-              >
-                Trigger
-              </Link>
-            </TabsTrigger>
-          </Protect>
+          {!isV2TemplateEditorEnabled && (
+            <Protect permission={PermissionsEnum.EVENT_WRITE}>
+              <TabsTrigger value="trigger" asChild variant="regular" size="xl">
+                <Link
+                  to={buildRoute(ROUTES.TEST_WORKFLOW, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    workflowSlug: workflow?.slug ?? '',
+                  })}
+                >
+                  Trigger
+                </Link>
+              </TabsTrigger>
+            </Protect>
+          )}
+          {isV2TemplateEditorEnabled && (
+            <div className="my-auto ml-auto flex items-center gap-2">
+              <Protect permission={PermissionsEnum.EVENT_WRITE}>
+                <Button
+                  variant="primary"
+                  size="xs"
+                  mode="gradient"
+                  leadingIcon={RiPlayCircleLine}
+                  onClick={handleTestWorkflowClick}
+                >
+                  Test workflow
+                </Button>
+              </Protect>
+            </div>
+          )}
         </TabsList>
         <TabsContent value="workflow" className="mt-0 h-full w-full">
           <WorkflowCanvas steps={workflow?.steps || []} />
         </TabsContent>
       </Tabs>
+
+      {isV2TemplateEditorEnabled && (
+        <TestWorkflowDrawer
+          isOpen={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          testData={testData}
+          transactionId={transactionId}
+          onTransactionIdChange={setTransactionId}
+        />
+      )}
     </div>
   );
 };
