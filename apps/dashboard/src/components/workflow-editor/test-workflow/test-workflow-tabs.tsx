@@ -9,25 +9,20 @@ import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/tes
 import { TestWorkflowLogsSidebar } from '@/components/workflow-editor/test-workflow/test-workflow-logs-sidebar';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createMockObjectFromSchema, type WorkflowTestDataResponseDto, FeatureFlagsKeysEnum } from '@novu/shared';
+import { createMockObjectFromSchema, type WorkflowTestDataResponseDto } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useParams } from 'react-router-dom';
 import { useWorkflow } from '../workflow-provider';
-import { TestWorkflowDrawer } from './test-workflow-drawer';
-import { WorkflowCanvas } from '../workflow-canvas';
 
 export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResponseDto }) => {
   const { environmentSlug = '', workflowSlug = '' } = useParams<{ environmentSlug: string; workflowSlug: string }>();
   const { workflow } = useWorkflow();
   const [transactionId, setTransactionId] = useState<string>();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
@@ -87,55 +82,6 @@ export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResp
     }
   };
 
-  const handleTestWorkflowClick = () => {
-    setIsDrawerOpen(true);
-  };
-
-  // If V2 template editor is enabled, show only the workflow tab with test button
-  if (isV2TemplateEditorEnabled) {
-    return (
-      <div className="h-full w-full">
-        <Tabs defaultValue="workflow" className="-mt-[1px] flex h-full flex-1 flex-col" value="workflow">
-          <TabsList variant="regular" className="items-center">
-            <TabsTrigger value="workflow" asChild variant="regular" size="xl">
-              <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW, {
-                  environmentSlug,
-                  workflowSlug,
-                })}
-              >
-                Workflow
-              </Link>
-            </TabsTrigger>
-            <div className="my-auto ml-auto flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="2xs"
-                mode="gradient"
-                leadingIcon={RiPlayCircleLine}
-                onClick={handleTestWorkflowClick}
-              >
-                Test workflow
-              </Button>
-            </div>
-          </TabsList>
-          <TabsContent value="workflow" className="mt-0 h-full w-full">
-            <WorkflowCanvas steps={workflow?.steps || []} />
-          </TabsContent>
-        </Tabs>
-
-        <TestWorkflowDrawer
-          isOpen={isDrawerOpen}
-          onOpenChange={setIsDrawerOpen}
-          testData={testData}
-          transactionId={transactionId}
-          onTransactionIdChange={setTransactionId}
-        />
-      </div>
-    );
-  }
-
-  // Original behavior when feature flag is disabled
   return (
     <div className="h-full w-full">
       <Form {...form}>

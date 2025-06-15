@@ -5,7 +5,6 @@ import { type WorkflowResponseDto, type ISubscriberResponseDto } from '@novu/sha
 
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
-import { Separator } from '@/components/primitives/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -66,7 +65,7 @@ export function TestWorkflowContent({
     [onSubscriberSelect]
   );
 
-  const renderSubscriberRow = (label: string, value: any) => {
+  const renderSubscriberRow = (label: string, value?: string | null) => {
     if (isLoadingSubscriber) {
       return (
         <div className="flex items-center gap-1.5 font-mono text-xs">
@@ -134,7 +133,7 @@ export function TestWorkflowContent({
                 <FormField
                   control={control}
                   name="payload"
-                  render={({ field: { ref: _ref, ...restField } }) => (
+                  render={({ field: { ref: _ref } }) => (
                     <FormItem className="flex flex-1 flex-col">
                       <FormControl>
                         <>
@@ -154,7 +153,6 @@ export function TestWorkflowContent({
             </AccordionContent>
           </AccordionItem>
 
-          {/* Subscriber Section */}
           <AccordionItem value="subscriber" className={cn(ACCORDION_STYLES.item, 'border-b-0')}>
             <AccordionTrigger className={ACCORDION_STYLES.trigger}>
               <div className="flex w-full items-center justify-between">

@@ -1,4 +1,4 @@
-import { WorkflowResponseDto, StepResponseDto } from '@novu/shared';
+import { WorkflowResponseDto, StepResponseDto, PermissionsEnum } from '@novu/shared';
 import { cn } from '@/utils/ui';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine } from 'react-icons/ri';
 import { useState } from 'react';
@@ -8,12 +8,13 @@ import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/ste
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
 import { PanelHeader } from '@/components/workflow-editor/steps/layout/panel-header';
-import { StepIcon, getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
+import { getEditorTitle } from '@/components/workflow-editor/steps/utils/step-utils';
 import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/steps/context/step-editor-context';
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { Button } from '@/components/primitives/button';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
+import { Protect } from '../../../utils/protect';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -37,15 +38,17 @@ function StepEditorContent() {
     <ResizableLayout autoSaveId="step-editor-main-layout">
       <ResizableLayout.ContextPanel>
         <PanelHeader icon={RiCodeBlock} title="Preview Context" className="py-2">
-          <Button
-            variant="secondary"
-            size="2xs"
-            mode="gradient"
-            leadingIcon={RiPlayCircleLine}
-            onClick={handleTestWorkflowClick}
-          >
-            Test workflow
-          </Button>
+          <Protect permission={PermissionsEnum.EVENT_WRITE}>
+            <Button
+              variant="secondary"
+              size="2xs"
+              mode="gradient"
+              leadingIcon={RiPlayCircleLine}
+              onClick={handleTestWorkflowClick}
+            >
+              Test workflow
+            </Button>
+          </Protect>
         </PanelHeader>
         <div className="bg-bg-weak flex-1 overflow-hidden">
           <div className="h-full overflow-y-auto">
