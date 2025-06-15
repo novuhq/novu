@@ -9,7 +9,7 @@ import {
 
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
-import { Sheet, SheetContent, SheetDescription, SheetOverlay, SheetTitle } from '@/components/primitives/sheet';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
@@ -24,6 +24,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
 import { cn } from '@/utils/ui';
 import { RiPlayCircleLine } from 'react-icons/ri';
+import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
@@ -31,10 +32,11 @@ type TestWorkflowDrawerProps = {
   testData?: WorkflowTestDataResponseDto;
   transactionId?: string;
   onTransactionIdChange: (transactionId: string) => void;
+  initialPayload?: PayloadData;
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
-  const { isOpen, onOpenChange, testData, transactionId, onTransactionIdChange } = props;
+  const { isOpen, onOpenChange, testData, transactionId, onTransactionIdChange, initialPayload } = props;
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
@@ -44,7 +46,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
   const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
 
-  // Fetch subscriber data for the currently selected subscriber (starts with current user)
   const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
   const {
     data: fetchedSubscriberData,
@@ -69,7 +70,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         avatar: fetchedSubscriberData.avatar || '',
         locale: fetchedSubscriberData.locale || undefined,
         timezone: fetchedSubscriberData.timezone || undefined,
-        data: fetchedSubscriberData.data || undefined,
+        data: fetchedSubscriberData.data,
       });
     } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
       // If no subscriber found but we have current user, use user data as fallback
@@ -94,12 +95,18 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
   const payload = useMemo(() => {
+    // Use initialPayload if provided (from step editor context)
+    if (initialPayload && Object.keys(initialPayload).length > 0) {
+      return initialPayload;
+    }
+
+    // Fallback to workflow payloadExample if available and feature flag is enabled
     if (isPayloadSchemaEnabled && workflow?.payloadExample) {
       return workflow.payloadExample;
     }
 
     return {};
-  }, [testData, workflow?.payloadExample, isPayloadSchemaEnabled]);
+  }, [initialPayload, testData, workflow?.payloadExample, isPayloadSchemaEnabled]);
 
   const form = useForm<TestWorkflowFormType>({
     mode: 'onSubmit',
