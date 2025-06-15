@@ -90,23 +90,20 @@ export function TestWorkflowContent({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="border-b border-neutral-200 px-3 py-4">
         <div className="flex flex-col gap-1">
           <h2 className="text-label-lg text-text-strong">Test workflow</h2>
           <p className="text-paragraph-xs text-text-soft">
             Time to test the workflow you just built.{' '}
-            <a href="#" className="underline">
+            <a href="https://docs.novu.co/platform/concepts/trigger" target="_blank" className="underline">
               Learn more ↗
             </a>
           </p>
         </div>
       </div>
 
-      {/* Content */}
       <div className="bg-bg-weak flex-1 overflow-auto">
         <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
-          {/* Payload Section */}
           <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
             <AccordionTrigger className={ACCORDION_STYLES.trigger}>
               <div className="flex w-full items-center justify-between">
