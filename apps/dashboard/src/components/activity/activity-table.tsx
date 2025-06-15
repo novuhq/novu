@@ -24,6 +24,7 @@ export interface ActivityTableProps {
   hasActiveFilters: boolean;
   onClearFilters: () => void;
   isLoading?: boolean;
+  onTriggerWorkflow?: () => void;
 }
 
 export function ActivityTable({
@@ -32,6 +33,7 @@ export function ActivityTable({
   filters,
   hasActiveFilters,
   onClearFilters,
+  onTriggerWorkflow,
 }: ActivityTableProps) {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -75,7 +77,12 @@ export function ActivityTable({
           transition={{ duration: 0.2 }}
           className="flex h-full w-full items-center justify-center"
         >
-          <ActivityEmptyState filters={filters} emptySearchResults={hasActiveFilters} onClearFilters={onClearFilters} />
+          <ActivityEmptyState
+            filters={filters}
+            emptySearchResults={hasActiveFilters}
+            onClearFilters={onClearFilters}
+            onTriggerWorkflow={onTriggerWorkflow}
+          />
         </motion.div>
       ) : (
         <motion.div
