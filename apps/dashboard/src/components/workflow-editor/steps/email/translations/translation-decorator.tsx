@@ -7,7 +7,7 @@ import { TranslationPill } from './translation-pill';
  */
 export const createTranslationExtension = (isTranslationEnabled: boolean) => {
   if (!isTranslationEnabled) {
-    return null;
+    return {};
   }
 
   return InlineDecoratorExtension.configure({
