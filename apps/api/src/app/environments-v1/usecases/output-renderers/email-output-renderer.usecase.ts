@@ -388,7 +388,7 @@ export class EmailOutputRendererUsecase {
     const matches = [...html.matchAll(/<\/body>/gi)];
 
     if (matches.length === 0) {
-      if (html.trim()) {
+      if (html?.trim()) {
         return html + NOVU_BRANDING_HTML;
       } else {
         return html;
