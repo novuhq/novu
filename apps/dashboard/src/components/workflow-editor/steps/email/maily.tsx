@@ -121,6 +121,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const overrideTippyBoxStyles = () => (
     <style>
       {`
+          [data-tippy-root] {
+            z-index: 50 !important;
+          }
           .tippy-box {
             padding-right: 20px;
             pointer-events: auto;
@@ -155,7 +158,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   return (
-    <>
+    <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-16 pt-8">
       {overrideTippyBoxStyles()}
       <div
         ref={editorParentRef}
@@ -194,6 +197,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         workflow={workflow}
         highlightedPropertyKey={highlightedVariableKey}
       />
-    </>
+    </div>
   );
 };

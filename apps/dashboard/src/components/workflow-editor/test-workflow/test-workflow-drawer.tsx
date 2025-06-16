@@ -19,6 +19,7 @@ import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-wo
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
@@ -42,6 +43,12 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const { currentUser } = useAuth();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
+
+  // Add workflow-level payload persistence
+  const { getInitialPayload, savePersistedPayload } = useWorkflowPayloadPersistence({
+    workflowId: workflow?.workflowId || '',
+    environmentId: currentEnvironment?._id || '',
+  });
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
   const [currentFormData, setCurrentFormData] = useState<TestWorkflowFormType | null>(null);
   const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
@@ -96,18 +103,14 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
   const payload = useMemo(() => {
-    // Use initialPayload if provided (from step editor context)
+    // Priority: initialPayload (from step editor) > persisted > payloadExample > empty
     if (initialPayload && Object.keys(initialPayload).length > 0) {
       return initialPayload;
     }
 
-    // Fallback to workflow payloadExample if available and feature flag is enabled
-    if (isPayloadSchemaEnabled && workflow?.payloadExample) {
-      return workflow.payloadExample;
-    }
-
-    return {};
-  }, [initialPayload, testData, workflow?.payloadExample, isPayloadSchemaEnabled]);
+    // Use workflow-level persistence when no initialPayload
+    return getInitialPayload(workflow);
+  }, [initialPayload, workflow, getInitialPayload]);
 
   const form = useForm<TestWorkflowFormType>({
     mode: 'onSubmit',
@@ -115,7 +118,20 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     values: { to, payload: JSON.stringify(payload, null, 2) },
   });
 
-  const { handleSubmit } = form;
+  const { handleSubmit, watch } = form;
+
+  // Watch for payload changes and persist them (only when not from step editor)
+  const watchedPayload = watch('payload');
+  useEffect(() => {
+    if (!initialPayload && watchedPayload) {
+      try {
+        const parsedPayload = JSON.parse(watchedPayload);
+        savePersistedPayload(parsedPayload);
+      } catch {
+        // Invalid JSON, don't persist
+      }
+    }
+  }, [watchedPayload, initialPayload, savePersistedPayload]);
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {

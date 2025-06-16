@@ -213,11 +213,14 @@ describe('Upsert Workflow #novu-v2', function () {
       });
 
       const updatedEmailStep = updatedWorkflow.steps[0];
+
       expect(updatedEmailStep.controls.values.editorType).to.equal('html');
       expect(updatedEmailStep.controls.values.body).to.contain('<!DOCTYPE');
       expect(updatedEmailStep.controls.values.body).to.contain('<html');
       expect(updatedEmailStep.controls.values.body).to.contain('<body');
-      expect(updatedEmailStep.controls.values.body).to.contain('>test</p>');
+      expect(updatedEmailStep.controls.values.body).to.contain(`>
+              test
+            </p>`);
       expect(updatedEmailStep.controls.values.body).to.contain('</body>');
       expect(updatedEmailStep.controls.values.body).to.contain('</html>');
 

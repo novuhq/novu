@@ -1,15 +1,24 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import { Completion, CompletionContext } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { html, htmlCompletionSource } from '@codemirror/lang-html';
 import { tags as t } from '@lezer/highlight';
+import { format } from 'prettier/standalone';
+import * as parserHtml from 'prettier/plugins/html';
+import * as parserLiquid from '@shopify/prettier-plugin-liquid/standalone';
+import { RiCodeSSlashFill } from 'react-icons/ri';
 
 import { VariableEditor } from '@/components/primitives/variable-editor';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { cn } from '@/utils/ui';
 import { CompletionOption } from '@/utils/liquid-autocomplete';
+import { Tooltip } from '@/components/primitives/tooltip';
+import { TooltipContent } from '@/components/primitives/tooltip';
+import { TooltipTrigger } from '@/components/primitives/tooltip';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type HtmlEditorProps = {
   value: string;
@@ -22,6 +31,8 @@ const gutterElementClassName =
 export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { saveForm } = useSaveForm();
+  const formatButtonRef = useRef<HTMLButtonElement>(null);
 
   const enhancedLiquidCompletionSource = useCallback((context: CompletionContext) => {
     const result = liquidCompletionSource()(context);
@@ -102,24 +113,82 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
     ];
   }, []);
 
+  const handleFormatClick = useCallback(
+    async (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      e.preventDefault();
+
+      try {
+        const formattedValue = await format(value, {
+          parser: 'liquid-html',
+          printWidth: 120,
+          tabWidth: 2,
+          useTabs: false,
+          htmlWhitespaceSensitivity: 'css',
+          plugins: [parserHtml, parserLiquid],
+        });
+
+        onChange(formattedValue);
+        saveForm();
+      } catch (error) {
+        showErrorToast(
+          <>
+            <p className="font-semibold">Failed to format code:</p>
+            <p className="text-sm">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          </>
+        );
+      }
+    },
+    [value, onChange, saveForm]
+  );
+
+  const handleEditorBlur = useCallback((e: React.FocusEvent<HTMLDivElement, Element>) => {
+    // if the blur happens on the format button, we don't want to trigger blur on the editor
+    // because it will save the form unformatted and than format it again
+    if (e.relatedTarget === formatButtonRef.current) {
+      e.stopPropagation();
+      e.preventDefault();
+      return;
+    }
+  }, []);
+
   return (
-    <VariableEditor
-      className={cn(
-        'bg-background min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2',
-        gutterElementClassName
-      )}
-      value={value}
-      onChange={onChange}
-      variables={variables}
-      isAllowedVariable={isAllowedVariable}
-      multiline
-      lineNumbers
-      foldGutter
-      size="sm"
-      fontFamily="inherit"
-      extensions={extensions}
-      completionSources={completionSources}
-      tagStyles={tagStyles}
-    />
+    <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-8 pt-8">
+      <Tooltip>
+        <TooltipTrigger
+          ref={formatButtonRef}
+          className="sticky left-full top-0 -mt-8 -translate-y-14 translate-x-6 pt-8"
+          onClick={handleFormatClick}
+          onBlur={(e) => {
+            // don't trigger blur as it will result is save form unnecessary request
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <RiCodeSSlashFill className="size-3.5 fill-neutral-500" />
+        </TooltipTrigger>
+        <TooltipContent className="-mb-8">Format code</TooltipContent>
+      </Tooltip>
+
+      <VariableEditor
+        className={cn(
+          'bg-background -mt-6 min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2',
+          gutterElementClassName
+        )}
+        value={value}
+        onChange={onChange}
+        onBlur={handleEditorBlur}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
+        multiline
+        lineNumbers
+        foldGutter
+        size="sm"
+        fontFamily="inherit"
+        extensions={extensions}
+        completionSources={completionSources}
+        tagStyles={tagStyles}
+      />
+    </div>
   );
 }
