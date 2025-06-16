@@ -157,7 +157,7 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
       <Tooltip>
         <TooltipTrigger
           ref={formatButtonRef}
-          className="sticky left-full top-0 -mt-8 -translate-y-12 translate-x-6 pt-8"
+          className="sticky left-full top-0 -mt-8 -translate-y-14 translate-x-6 pt-8"
           onClick={handleFormatClick}
           onBlur={(e) => {
             // don't trigger blur as it will result is save form unnecessary request
