@@ -46,6 +46,10 @@ export default defineConfig(({ mode }) => {
       alias: {
         '@': path.resolve(__dirname, './src'),
         ...(isSelfHosted ? { '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx') } : {}),
+        // Explicitly map prettier imports to browser-compatible versions
+        'prettier/standalone': path.resolve(__dirname, '../../node_modules/prettier/standalone.js'),
+        'prettier/plugins/html': path.resolve(__dirname, '../../node_modules/prettier/plugins/html.js'),
+        prettier: path.resolve(__dirname, '../../node_modules/prettier/standalone.js'),
       },
     },
     server: {

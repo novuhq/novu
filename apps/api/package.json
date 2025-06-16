@@ -99,6 +99,7 @@
     "passport-headerapikey": "^1.2.2",
     "passport-jwt": "^4.0.1",
     "passport-oauth2": "^1.8.0",
+    "prettier": "~3.3.3",
     "recursive-diff": "^1.0.8",
     "reflect-metadata": "0.2.2",
     "request-ip": "^3.3.0",
