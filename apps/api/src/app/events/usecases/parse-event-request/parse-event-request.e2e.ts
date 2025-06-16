@@ -153,6 +153,89 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
     const result = await parseEventRequestUsecase.execute(command);
     expect(result.acknowledged).to.be.true;
   });
+
+  it('should apply default values from schema when validatePayload is enabled', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled and default values
+    const templateWithDefaults = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', default: 'Default Name' },
+          age: { type: 'number', default: 30 },
+          isActive: { type: 'boolean', default: true },
+          settings: {
+            type: 'object',
+            properties: {
+              theme: { type: 'string', default: 'dark' },
+              notifications: { type: 'boolean', default: false },
+            },
+            default: {},
+          },
+        },
+        required: [],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithDefaults.triggers[0].identifier
+    );
+
+    // Test with partial payload - defaults should be applied
+    command.payload = { name: 'John Doe' };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+
+    // Verify that defaults were applied to the payload
+    expect(command.payload.name).to.equal('John Doe'); // Provided value should remain
+    expect(command.payload.age).to.equal(30); // Default value should be applied
+    expect(command.payload.isActive).to.equal(true); // Default value should be applied
+    expect(command.payload.settings).to.deep.equal({ theme: 'dark', notifications: false }); // Nested defaults should be applied
+  });
+
+  it('should not override provided values with defaults', async () => {
+    const transactionId = uuid();
+    const subscriber = await subscribersService.createSubscriber();
+
+    // Create a template with payload schema validation enabled and default values
+    const templateWithDefaults = await session.createTemplate({
+      validatePayload: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', default: 'Default Name' },
+          age: { type: 'number', default: 30 },
+          isActive: { type: 'boolean', default: true },
+        },
+        required: [],
+      },
+    });
+
+    const command = buildCommand(
+      session,
+      transactionId,
+      [{ subscriberId: subscriber.subscriberId }],
+      templateWithDefaults.triggers[0].identifier
+    );
+
+    // Test with full payload - no defaults should override provided values
+    command.payload = { name: 'Jane Doe', age: 25, isActive: false };
+
+    const result = await parseEventRequestUsecase.execute(command);
+    expect(result.acknowledged).to.be.true;
+
+    // Verify that provided values were not overridden by defaults
+    expect(command.payload.name).to.equal('Jane Doe');
+    expect(command.payload.age).to.equal(25);
+    expect(command.payload.isActive).to.equal(false);
+  });
 });
 
 const buildCommand = (

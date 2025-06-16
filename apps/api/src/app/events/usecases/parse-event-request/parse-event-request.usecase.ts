@@ -116,7 +116,9 @@ export class ParseEventRequest {
     this.validateTriggerContext(command, reservedVariablesTypes);
 
     if (template.validatePayload && template.payloadSchema) {
-      this.validatePayloadSchema(command.payload, template.payloadSchema);
+      const validatedPayload = this.validateAndApplyPayloadDefaults(command.payload, template.payloadSchema);
+      // eslint-disable-next-line no-param-reassign
+      command.payload = validatedPayload;
     }
 
     let tenant: TenantEntity | null = null;
@@ -406,17 +408,23 @@ export class ParseEventRequest {
     return { validRecipients: validItem, invalidRecipients: invalidValues };
   }
 
-  private validatePayloadSchema(payload: any, schema: any): void {
+  private validateAndApplyPayloadDefaults(payload: any, schema: any): any {
     const ajv = new Ajv({
       allErrors: true,
+      useDefaults: true,
     });
     addFormats(ajv);
 
     const validate = ajv.compile(schema);
-    const valid = validate(payload);
+
+    // Create a deep copy of the payload to avoid mutating the original
+    const payloadWithDefaults = JSON.parse(JSON.stringify(payload));
+    const valid = validate(payloadWithDefaults);
 
     if (!valid && validate.errors) {
       throw PayloadValidationException.fromAjvErrors(validate.errors, payload, schema);
     }
+
+    return payloadWithDefaults;
   }
 }
