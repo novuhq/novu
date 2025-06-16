@@ -18,24 +18,23 @@ export function EditStepTemplateV2Page() {
 
   const form = useForm({
     defaultValues,
+    values: step?.controls.values,
     shouldFocusError: false,
+    resetOptions: {
+      keepDirtyValues: true,
+    },
   });
-
-  // Reset form when step changes to ensure form reflects current step's data
-  useEffect(() => {
-    form.reset(defaultValues);
-  }, [form, defaultValues]);
 
   const { onBlur, saveForm } = useFormAutosave({
     previousData: defaultValues,
     form,
-    save: (data) => {
+    save: (data, { onSuccess }) => {
       if (!workflow || !step) return;
 
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: data,
       };
-      update(updateStepInWorkflow(workflow, step.stepId, updateStepData));
+      update(updateStepInWorkflow(workflow, step.stepId, updateStepData), { onSuccess });
     },
   });
 

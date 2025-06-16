@@ -121,6 +121,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   const overrideTippyBoxStyles = () => (
     <style>
       {`
+          [data-tippy-root] {
+            z-index: 50 !important;
+          }
           .tippy-box {
             padding-right: 20px;
             pointer-events: auto;

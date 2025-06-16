@@ -41,6 +41,7 @@ type VariableEditorProps = {
   | 'placeholder'
   | 'value'
   | 'onChange'
+  | 'onBlur'
   | 'multiline'
   | 'size'
   | 'fontFamily'
@@ -53,6 +54,7 @@ type VariableEditorProps = {
 export function VariableEditor({
   value,
   onChange = () => {},
+  onBlur = () => {},
   variables,
   className,
   placeholder,
@@ -261,6 +263,7 @@ export function VariableEditor({
         foldGutter={foldGutter}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         tagStyles={tagStyles}
       />
       {isVariablePopoverOpen && (
