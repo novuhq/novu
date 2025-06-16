@@ -309,7 +309,7 @@ export const createExtensions = ({
         });
       },
     }),
-    createTranslationExtension(isTranslationEnabled),
+    isTranslationEnabled ? createTranslationExtension(isTranslationEnabled) : undefined,
   ];
 
   extensions.push(
@@ -412,7 +412,6 @@ export const createExtensions = ({
         };
       },
     }),
-    // @ts-expect-error - the core and core-digest collides
     LinkExtension.extend({
       addAttributes() {
         const attributes = this.parent?.();
