@@ -18,6 +18,7 @@ import { Tooltip } from '@/components/primitives/tooltip';
 import { TooltipContent } from '@/components/primitives/tooltip';
 import { TooltipTrigger } from '@/components/primitives/tooltip';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type HtmlEditorProps = {
   value: string;
@@ -117,17 +118,26 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
       e.stopPropagation();
       e.preventDefault();
 
-      const formattedValue = await format(value, {
-        parser: 'liquid-html',
-        printWidth: 120,
-        tabWidth: 2,
-        useTabs: false,
-        htmlWhitespaceSensitivity: 'css',
-        plugins: [parserHtml, parserLiquid],
-      });
+      try {
+        const formattedValue = await format(value, {
+          parser: 'liquid-html',
+          printWidth: 120,
+          tabWidth: 2,
+          useTabs: false,
+          htmlWhitespaceSensitivity: 'css',
+          plugins: [parserHtml, parserLiquid],
+        });
 
-      onChange(formattedValue);
-      saveForm();
+        onChange(formattedValue);
+        saveForm();
+      } catch (error) {
+        showErrorToast(
+          <>
+            <p className="font-semibold">Failed to format code:</p>
+            <p className="text-sm">{error instanceof Error ? error.message : 'Unknown error'}</p>
+          </>
+        );
+      }
     },
     [value, onChange, saveForm]
   );
@@ -143,11 +153,11 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
   }, []);
 
   return (
-    <>
+    <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-8 pt-8">
       <Tooltip>
         <TooltipTrigger
           ref={formatButtonRef}
-          className="sticky left-full top-0 -mt-8 -translate-y-12 translate-x-12 pt-8"
+          className="sticky left-full top-0 -mt-8 -translate-y-12 translate-x-6 pt-8"
           onClick={handleFormatClick}
           onBlur={(e) => {
             // don't trigger blur as it will result is save form unnecessary request
@@ -162,7 +172,7 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
 
       <VariableEditor
         className={cn(
-          'bg-background min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2',
+          'bg-background -mt-6 min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2',
           gutterElementClassName
         )}
         value={value}
@@ -179,6 +189,6 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
         completionSources={completionSources}
         tagStyles={tagStyles}
       />
-    </>
+    </div>
   );
 }

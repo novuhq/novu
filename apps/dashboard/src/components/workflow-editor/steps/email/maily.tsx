@@ -158,7 +158,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   return (
-    <>
+    <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-16 pt-8">
       {overrideTippyBoxStyles()}
       <div
         ref={editorParentRef}
@@ -197,6 +197,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         workflow={workflow}
         highlightedPropertyKey={highlightedVariableKey}
       />
-    </>
+    </div>
   );
 };
