@@ -10,14 +10,25 @@ import { FieldSelector } from '@/components/conditions-editor/field-selector';
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
 import { ValueEditor } from '@/components/conditions-editor/value-editor';
-import { IsAllowedVariable, LiquidVariable, EnhancedLiquidVariable } from '@/utils/parseStepVariables';
-import { EnhancedField } from '@/utils/schema-to-field-types';
+import {
+  IsAllowedVariable,
+  LiquidVariable,
+  EnhancedLiquidVariable,
+  type FieldDataType,
+} from '@/utils/parseStepVariables';
 import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import {
   getValueEditorTypeForField,
   getPlaceholderForField,
   getHelpTextForField,
 } from '@/components/conditions-editor/field-type-editors';
+
+// Enhanced field type for the conditions editor
+export interface EnhancedField extends Field {
+  dataType: FieldDataType;
+  inputType?: string;
+  format?: string;
+}
 
 const ruleActionsClassName = `[&>[data-actions="true"]]:opacity-0 [&:hover>[data-actions="true"]]:opacity-100 [&>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;
 const groupActionsClassName = `[&_.ruleGroup-header>[data-actions="true"]]:opacity-0 [&_.ruleGroup-header:hover>[data-actions="true"]]:opacity-100 [&_.ruleGroup-header>[data-actions="true"]:has(~[data-radix-popper-content-wrapper])]:opacity-100`;

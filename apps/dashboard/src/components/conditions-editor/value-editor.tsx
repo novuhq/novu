@@ -46,7 +46,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
             <IconComponent className={`size-4 ${iconColor}`} />
           </div>
         </HoverCardTrigger>
-        <HoverCardContent className="w-[240px] p-1.5" side="top">
+        <HoverCardContent className="w-[240px] p-2">
           <div>
             {/* Error content (shown above info when present) */}
             {hasError && errorMessage && (
@@ -133,7 +133,7 @@ export const ValueEditor = (props: ValueEditorProps) => {
           isAllowedVariable={isAllowedVariable}
           size="3xs"
         />
-        <CombinedIcon hasError={!!error} errorMessage={error?.message} className="mr-1" />
+        <CombinedIcon hasError={!!error} errorMessage={error?.message} />
       </InputWrapper>
     </InputRoot>
   );

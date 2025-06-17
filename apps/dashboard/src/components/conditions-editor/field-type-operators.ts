@@ -1,5 +1,5 @@
 import type { Operator } from 'react-querybuilder';
-import type { FieldDataType } from '@/utils/schema-to-field-types';
+import type { FieldDataType } from '@/utils/parseStepVariables';
 
 export const FIELD_TYPE_OPERATORS: Record<FieldDataType, Operator[]> = {
   string: [

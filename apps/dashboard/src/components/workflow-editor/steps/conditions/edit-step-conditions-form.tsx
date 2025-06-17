@@ -13,8 +13,7 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { useParseVariablesWithTypes } from '@/hooks/use-parse-variables-with-types';
-import { EnhancedField } from '@/utils/schema-to-field-types';
+import { type EnhancedLiquidVariable } from '@/utils/parseStepVariables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { countConditions, getUniqueFieldNamespaces, getUniqueOperators } from '@/utils/conditions';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -95,15 +94,13 @@ export const EditStepConditionsForm = () => {
     [hasConditions, step]
   );
 
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-
-  const { enhancedVariables } = useParseVariablesWithTypes(
+  const { variables, isAllowedVariable, enhancedVariables } = useParseVariables(
     step?.variables,
     digestStepBeforeCurrent?.stepId,
     true // Enable payload schema support
   );
 
-  const fields: EnhancedField[] = enhancedVariables.map((enhancedVariable) => ({
+  const fields = enhancedVariables.map((enhancedVariable: EnhancedLiquidVariable) => ({
     name: enhancedVariable.name,
     label: enhancedVariable.displayLabel || enhancedVariable.name,
     value: enhancedVariable.name,

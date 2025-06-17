@@ -1,5 +1,6 @@
 import type { ValueEditorType, Option } from 'react-querybuilder';
-import type { EnhancedField } from '@/utils/schema-to-field-types';
+import type { FieldDataType } from '@/utils/parseStepVariables';
+import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
 
 export function getValueEditorTypeForField(fieldName: string, operator: string): ValueEditorType {
   if (operator === 'null' || operator === 'notNull') {
