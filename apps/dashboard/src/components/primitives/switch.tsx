@@ -16,8 +16,7 @@ const Switch = React.forwardRef<
       <div
         className={cn(
           // base
-          'h-4 w-7 rounded-full p-0.5 outline-none',
-          'bg-bg-soft group-data-[state=checked]/switch:bg-current',
+          'bg-bg-soft h-4 w-7 rounded-full p-0.5 outline-none',
           'transition duration-200 ease-out',
           !disabled && [
             // hover
@@ -26,6 +25,12 @@ const Switch = React.forwardRef<
             'group-focus-visible/switch:bg-bg-sub',
             // pressed
             'group-active/switch:bg-bg-soft',
+            // checked
+            'group-data-[state=checked]/switch:bg-primary-base',
+            // checked hover
+            'group-hover:data-[state=checked]/switch:bg-primary-darker',
+            // checked pressed
+            'group-active:data-[state=checked]/switch:bg-primary-base',
             // focus
             'group-focus/switch:outline-none',
           ],
@@ -37,7 +42,6 @@ const Switch = React.forwardRef<
           className={cn(
             // base
             'pointer-events-none relative block size-3',
-            'bg-bg-white group-data-[state=checked]/switch:bg-current',
             'transition-transform duration-200 ease-out',
             // checked
             'data-[state=checked]:translate-x-3',

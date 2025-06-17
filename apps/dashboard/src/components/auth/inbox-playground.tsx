@@ -137,13 +137,6 @@ export function InboxPlayground() {
     navigate(`${ROUTES.INBOX_EMBED}?${queryParams}`);
   };
 
-  const handleSkipToDashboard = () => {
-    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
-      skippedFrom: 'inbox-playground',
-    });
-    navigate(ROUTES.WELCOME);
-  };
-
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === 'selectedStyle') {
