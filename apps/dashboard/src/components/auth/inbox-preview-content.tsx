@@ -15,6 +15,21 @@ interface InboxPreviewContentProps {
   enableTabs?: boolean;
 }
 
+const defaultTabs = [
+  {
+    label: 'All Notifications',
+    filter: { tags: [] },
+  },
+  {
+    label: 'Promotions',
+    filter: { tags: ['promotions'] },
+  },
+  {
+    label: 'Security Alerts',
+    filter: { tags: ['security', 'alert'] },
+  },
+];
+
 export function InboxPreviewContent({
   selectedStyle,
   hasNotificationBeenSent,
@@ -31,21 +46,6 @@ export function InboxPreviewContent({
   if (!currentEnvironment || !user) {
     return null;
   }
-
-  const defaultTabs = [
-    {
-      label: 'All Notifications',
-      filter: { tags: [] },
-    },
-    {
-      label: 'Promotions',
-      filter: { tags: ['promotions'] },
-    },
-    {
-      label: 'Security Alerts',
-      filter: { tags: ['security', 'alert'] },
-    },
-  ];
 
   const configuration: InboxProps = {
     applicationIdentifier: currentEnvironment?.identifier,
