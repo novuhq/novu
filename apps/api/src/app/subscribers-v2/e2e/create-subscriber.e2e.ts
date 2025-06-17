@@ -76,4 +76,18 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
     } = await novuClient.subscribers.search({ subscriberId });
     expect(subscribers.length).to.equal(1);
   });
+
+  it('should create the subscriber with null values', async () => {
+    const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
+    const payload = {
+      subscriberId,
+    };
+
+    const { result: subscriber } = await novuClient.subscribers.create(payload, payload.subscriberId);
+
+    expect(subscriber.subscriberId).to.equal(payload.subscriberId);
+
+    expect(subscriber.firstName).to.be.undefined;
+    expect(subscriber.lastName).to.be.undefined;
+  });
 });

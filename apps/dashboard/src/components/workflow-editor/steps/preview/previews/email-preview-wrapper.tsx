@@ -18,6 +18,7 @@ import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email
 type EmailCorePreviewProps = {
   previewData: any;
   isPreviewPending: boolean;
+  controlValues?: Record<string, unknown>;
 };
 
 const fadeVariants = {
@@ -25,8 +26,11 @@ const fadeVariants = {
   visible: { opacity: 1 },
 };
 
-export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePreviewProps) {
+export function EmailCorePreview({ previewData, isPreviewPending, controlValues }: EmailCorePreviewProps) {
   const [activeTab, setActiveTab] = useState('desktop');
+
+  // Check if using custom HTML editor
+  const isCustomHtmlEditor = controlValues?.editorType === 'html';
 
   // Memoize the preview content extraction to avoid recalculating on every render
   const emailPreviewContent = useMemo(() => {
@@ -110,8 +114,11 @@ export function EmailCorePreview({ previewData, isPreviewPending }: EmailCorePre
                         <div className="border-b px-2">
                           <EmailPreviewSubject subject={emailPreviewContent.subject} />
                         </div>
-                        <div className="bg-neutral-50 px-16 py-8">
-                          <EmailPreviewBody body={emailPreviewContent.body} className="bg-background rounded-lg" />
+                        <div className={cn(isCustomHtmlEditor ? '' : 'bg-neutral-50 px-16 py-8')}>
+                          <EmailPreviewBody
+                            body={emailPreviewContent.body}
+                            className={isCustomHtmlEditor ? 'bg-background max-w-auto max-w-none rounded-lg' : ''}
+                          />
                         </div>
                       </TabsContent>
                     </>

@@ -153,12 +153,12 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
   }, []);
 
   return (
-    <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-8 pt-8">
+    <div className="relative h-full flex-1 border-t border-neutral-200">
       <Tooltip>
         <TooltipTrigger
           ref={formatButtonRef}
-          className="sticky left-full top-0 -mt-8 -translate-y-14 translate-x-6 pt-8"
           onClick={handleFormatClick}
+          className="absolute right-2 top-2 z-10"
           onBlur={(e) => {
             // don't trigger blur as it will result is save form unnecessary request
             e.stopPropagation();
@@ -167,12 +167,12 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
         >
           <RiCodeSSlashFill className="size-3.5 fill-neutral-500" />
         </TooltipTrigger>
-        <TooltipContent className="-mb-8">Format code</TooltipContent>
+        <TooltipContent side="right">Format code</TooltipContent>
       </Tooltip>
 
       <VariableEditor
         className={cn(
-          'bg-background -mt-6 min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2',
+          'bg-background h-full w-full overflow-y-auto rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2 [&_.cm-scroller]:overflow-auto',
           gutterElementClassName
         )}
         value={value}
