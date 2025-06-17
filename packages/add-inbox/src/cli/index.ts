@@ -463,8 +463,8 @@ function trackCliError(
       ...context,
       nodeVersion: process.version,
       platform: process.platform,
-      argv: process.argv.join(' '),
-      cwd: process.cwd(),
+      argv: process.argv.slice(2).join(' '), // Exclude node and script paths
+      cwd: process.cwd().replace(/\/home\/[^/]+/, '/home/***'), // Sanitize user paths
     },
   });
 }
