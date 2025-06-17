@@ -3,31 +3,61 @@ import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 
 // Custom JsonLogic operations for parsing relative date operators
 const customJsonLogicOperations = {
-  moreThanXAgo: (val: any) => ({
-    field: val[0].var,
-    operator: 'moreThanXAgo',
-    value: JSON.stringify(val[1]),
-  }),
-  lessThanXAgo: (val: any) => ({
-    field: val[0].var,
-    operator: 'lessThanXAgo',
-    value: JSON.stringify(val[1]),
-  }),
-  exactlyXAgo: (val: any) => ({
-    field: val[0].var,
-    operator: 'exactlyXAgo',
-    value: JSON.stringify(val[1]),
-  }),
-  withinLast: (val: any) => ({
-    field: val[0].var,
-    operator: 'withinLast',
-    value: JSON.stringify(val[1]),
-  }),
-  notWithinLast: (val: any) => ({
-    field: val[0].var,
-    operator: 'notWithinLast',
-    value: JSON.stringify(val[1]),
-  }),
+  moreThanXAgo: (val: any) => {
+    if (!val || !Array.isArray(val) || val.length < 2) {
+      return false;
+    }
+
+    return {
+      field: val[0]?.var,
+      operator: 'moreThanXAgo',
+      value: JSON.stringify(val[1]),
+    };
+  },
+  lessThanXAgo: (val: any) => {
+    if (!val || !Array.isArray(val) || val.length < 2) {
+      return false;
+    }
+
+    return {
+      field: val[0]?.var,
+      operator: 'lessThanXAgo',
+      value: JSON.stringify(val[1]),
+    };
+  },
+  exactlyXAgo: (val: any) => {
+    if (!val || !Array.isArray(val) || val.length < 2) {
+      return false;
+    }
+
+    return {
+      field: val[0]?.var,
+      operator: 'exactlyXAgo',
+      value: JSON.stringify(val[1]),
+    };
+  },
+  withinLast: (val: any) => {
+    if (!val || !Array.isArray(val) || val.length < 2) {
+      return false;
+    }
+
+    return {
+      field: val[0]?.var,
+      operator: 'withinLast',
+      value: JSON.stringify(val[1]),
+    };
+  },
+  notWithinLast: (val: any) => {
+    if (!val || !Array.isArray(val) || val.length < 2) {
+      return false;
+    }
+
+    return {
+      field: val[0]?.var,
+      operator: 'notWithinLast',
+      value: JSON.stringify(val[1]),
+    };
+  },
 };
 
 // Shared parse options for consistency

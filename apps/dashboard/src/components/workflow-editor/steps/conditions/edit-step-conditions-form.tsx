@@ -43,7 +43,11 @@ const customRuleProcessor = (rule: RuleType, options: any) => {
     try {
       const parsedValue = JSON.parse(rule.value as string);
 
-      if (parsedValue && typeof parsedValue.amount === 'number' && parsedValue.unit) {
+      if (
+        parsedValue &&
+        (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
+        parsedValue.unit
+      ) {
         const result = {
           [rule.operator]: [{ var: rule.field }, parsedValue],
         };
@@ -88,7 +92,11 @@ const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | R
           try {
             const parsed = JSON.parse(value);
 
-            if (!parsed || !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)) {
+            if (
+              !parsed ||
+              (!parsed.amount && parsed.amount !== 0) ||
+              !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)
+            ) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Invalid amount or time unit',
