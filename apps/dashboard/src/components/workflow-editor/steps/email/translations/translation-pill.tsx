@@ -15,7 +15,6 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  // const { control, getValues } = useFormContext();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 

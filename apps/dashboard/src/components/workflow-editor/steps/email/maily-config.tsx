@@ -309,7 +309,7 @@ export const createExtensions = ({
         });
       },
     }),
-    isTranslationEnabled ? createTranslationExtension(isTranslationEnabled) : undefined,
+    createTranslationExtension(isTranslationEnabled),
   ];
 
   extensions.push(
