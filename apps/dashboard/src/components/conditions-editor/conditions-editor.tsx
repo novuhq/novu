@@ -131,14 +131,6 @@ function InternalConditionsEditor({
     };
   }, [fieldDataMap, enhancedVariables]);
 
-  const getInputType = useMemo(() => {
-    if (!enhancedVariables) return undefined;
-
-    return () => {
-      return 'text';
-    };
-  }, [fieldDataMap, enhancedVariables]);
-
   // Add new functions for placeholder and help text
   const getPlaceholder = useMemo(() => {
     if (!enhancedVariables) return undefined;
@@ -197,7 +189,6 @@ function InternalConditionsEditor({
       resetOnFieldChange={false}
       getOperators={getOperators}
       getValueEditorType={getValueEditorType}
-      getInputType={getInputType}
     />
   );
 }
