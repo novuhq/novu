@@ -53,13 +53,15 @@ export function RelativeDateValueEditor(props: ValueEditorProps) {
 
     if (!isNaN(amount) && amount > 0) {
       const newValue = { ...parsedValue, amount };
-      handleOnChange(JSON.stringify(newValue));
+      const jsonValue = JSON.stringify(newValue);
+      handleOnChange(jsonValue);
     }
   };
 
   const handleUnitChange = (newUnit: string) => {
     const newValue = { ...parsedValue, unit: newUnit as RelativeDateValue['unit'] };
-    handleOnChange(JSON.stringify(newValue));
+    const jsonValue = JSON.stringify(newValue);
+    handleOnChange(jsonValue);
   };
 
   // Get help text for the operator

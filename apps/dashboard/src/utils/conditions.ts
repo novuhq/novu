@@ -1,6 +1,40 @@
 import { RuleGroupType, RQBJsonLogic } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 
+// Custom JsonLogic operations for parsing relative date operators
+const customJsonLogicOperations = {
+  moreThanXAgo: (val: any) => ({
+    field: val[0].var,
+    operator: 'moreThanXAgo',
+    value: JSON.stringify(val[1]),
+  }),
+  lessThanXAgo: (val: any) => ({
+    field: val[0].var,
+    operator: 'lessThanXAgo',
+    value: JSON.stringify(val[1]),
+  }),
+  exactlyXAgo: (val: any) => ({
+    field: val[0].var,
+    operator: 'exactlyXAgo',
+    value: JSON.stringify(val[1]),
+  }),
+  withinLast: (val: any) => ({
+    field: val[0].var,
+    operator: 'withinLast',
+    value: JSON.stringify(val[1]),
+  }),
+  notWithinLast: (val: any) => ({
+    field: val[0].var,
+    operator: 'notWithinLast',
+    value: JSON.stringify(val[1]),
+  }),
+};
+
+// Shared parse options for consistency
+const parseJsonLogicOptions = {
+  jsonLogicOperations: customJsonLogicOperations,
+};
+
 function countRules(query: RuleGroupType): number {
   let count = 0;
 
@@ -18,7 +52,7 @@ function countRules(query: RuleGroupType): number {
 export const countConditions = (jsonLogic?: RQBJsonLogic) => {
   if (!jsonLogic) return 0;
 
-  const query = parseJsonLogic(jsonLogic);
+  const query = parseJsonLogic(jsonLogic, parseJsonLogicOptions);
 
   return countRules(query);
 };
@@ -47,7 +81,7 @@ function recursiveGetUniqueFields(query: RuleGroupType): string[] {
 export const getUniqueFieldNamespaces = (jsonLogic?: RQBJsonLogic): string[] => {
   if (!jsonLogic) return [];
 
-  const query = parseJsonLogic(jsonLogic);
+  const query = parseJsonLogic(jsonLogic, parseJsonLogicOptions);
 
   return recursiveGetUniqueFields(query);
 };
@@ -72,7 +106,10 @@ function recursiveGetUniqueOperators(query: RuleGroupType): string[] {
 export const getUniqueOperators = (jsonLogic?: RQBJsonLogic): string[] => {
   if (!jsonLogic) return [];
 
-  const query = parseJsonLogic(jsonLogic);
+  const query = parseJsonLogic(jsonLogic, parseJsonLogicOptions);
 
   return recursiveGetUniqueOperators(query);
 };
+
+// Export shared configuration for use in other files
+export { customJsonLogicOperations, parseJsonLogicOptions };
