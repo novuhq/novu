@@ -153,7 +153,7 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
   }, []);
 
   return (
-    <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-8 pt-8">
+    <div className="relative h-full flex-1 overflow-y-auto border-t border-neutral-200">
       <Tooltip>
         <TooltipTrigger
           ref={formatButtonRef}
