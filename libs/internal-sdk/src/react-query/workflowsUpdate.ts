@@ -28,10 +28,10 @@ export type WorkflowsUpdateMutationData =
   operations.WorkflowControllerUpdateResponse;
 
 /**
- * Update an existing workflow
+ * Update a workflow
  *
  * @remarks
- * Updates the details of an existing workflow
+ * Updates the details of an existing workflow, here **workflowId** is the identifier of the workflow
  */
 export function useWorkflowsUpdateMutation(
   options?: MutationHookOptions<

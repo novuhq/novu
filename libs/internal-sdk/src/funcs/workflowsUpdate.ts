@@ -27,10 +27,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update an existing workflow
+ * Update a workflow
  *
  * @remarks
- * Updates the details of an existing workflow
+ * Updates the details of an existing workflow, here **workflowId** is the identifier of the workflow
  */
 export function workflowsUpdate(
   client: NovuCore,

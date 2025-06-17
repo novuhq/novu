@@ -30,7 +30,7 @@ export type WorkflowsDeleteMutationData =
  * Delete a workflow
  *
  * @remarks
- * Removes a specific workflow
+ * Removes a specific workflow by its unique identifier **workflowId**
  */
 export function useWorkflowsDeleteMutation(
   options?: MutationHookOptions<

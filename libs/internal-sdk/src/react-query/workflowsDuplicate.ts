@@ -29,6 +29,9 @@ export type WorkflowsDuplicateMutationData =
 
 /**
  * Duplicate a workflow
+ *
+ * @remarks
+ * Duplicates a workflow by its unique identifier **workflowId**. This will create a new workflow with the same steps and settings.
  */
 export function useWorkflowsDuplicateMutation(
   options?: MutationHookOptions<

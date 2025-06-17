@@ -26,10 +26,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Generate preview
+ * Generate step preview
  *
  * @remarks
- * Generates a preview for a specific workflow step
+ * Generates a preview for a specific workflow step by its unique identifier **stepId**
  */
 export function workflowsStepsGeneratePreview(
   client: NovuCore,
