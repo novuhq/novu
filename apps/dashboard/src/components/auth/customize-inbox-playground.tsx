@@ -148,6 +148,7 @@ function ColorPickerSection({ form }: { form: UseFormReturn<InboxPlaygroundFormD
             href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
             className="cursor-pointer underline"
             target="_blank"
+            rel="noopener noreferrer"
           >
             appearance prop
           </a>
