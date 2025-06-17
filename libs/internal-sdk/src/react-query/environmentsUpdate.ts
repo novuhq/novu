@@ -28,7 +28,7 @@ export type EnvironmentsUpdateMutationData =
   operations.EnvironmentsControllerV1UpdateMyEnvironmentResponse;
 
 /**
- * Update environment
+ * Update an environment
  *
  * @remarks
  * Update an environment by its unique identifier **environmentId**.

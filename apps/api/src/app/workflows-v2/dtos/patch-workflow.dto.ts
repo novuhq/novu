@@ -40,6 +40,7 @@ export class PatchWorkflowDto {
   @ApiPropertyOptional({
     description: 'The payload JSON Schema for the workflow',
     type: 'object',
+    additionalProperties: true,
   })
   @IsOptional()
   @IsValidJsonSchema({

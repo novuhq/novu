@@ -1,4 +1,4 @@
-import { PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { ComponentProps } from 'react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
@@ -24,6 +24,7 @@ import { AnimatePresence } from 'motion/react';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useState, useCallback, useRef } from 'react';
 import { StepCreateDto } from '@novu/shared';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -48,6 +49,8 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 export const TriggerNode = ({
   data,
 }: NodeProps<FlowNode<{ environmentSlug: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+
   const content = (
     <Node
       className="relative rounded-tl-none [&>span]:rounded-tl-none"
@@ -74,7 +77,7 @@ export const TriggerNode = ({
 
   return (
     <Link
-      to={buildRoute(ROUTES.TEST_WORKFLOW, {
+      to={buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
         environmentSlug: data.environmentSlug,
         workflowSlug: data.workflowSlug,
       })}
@@ -98,6 +101,7 @@ const StepNode = (props: StepNodeProps) => {
   const { workflow: currentWorkflow, update } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -195,11 +199,19 @@ const StepNode = (props: StepNodeProps) => {
             const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
             if (isTemplateConfigurable) {
-              navigate(
-                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                  stepSlug: newStep.slug,
-                })
-              );
+              if (isV2TemplateEditorEnabled) {
+                navigate(
+                  buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                    stepSlug: newStep.slug,
+                  })
+                );
+              } else {
+                navigate(
+                  buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                    stepSlug: newStep.slug,
+                  })
+                );
+              }
             } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(type)) {
               navigate(
                 buildRoute(ROUTES.EDIT_STEP, {
@@ -211,7 +223,7 @@ const StepNode = (props: StepNodeProps) => {
         },
       }
     );
-  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate]);
+  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate, isV2TemplateEditorEnabled]);
 
   const handleEditContent = useCallback(() => {
     if (!data.stepSlug || !currentEnvironment?.slug || !type) {
@@ -221,11 +233,19 @@ const StepNode = (props: StepNodeProps) => {
     const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
     if (isTemplateConfigurable) {
-      navigate(
-        buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-          stepSlug: data.stepSlug,
-        })
-      );
+      if (isV2TemplateEditorEnabled && currentWorkflow) {
+        navigate(
+          buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+            stepSlug: data.stepSlug,
+          })
+        );
+      } else {
+        navigate(
+          buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+            stepSlug: data.stepSlug,
+          })
+        );
+      }
     } else {
       navigate(
         buildRoute(ROUTES.EDIT_STEP, {
@@ -233,7 +253,7 @@ const StepNode = (props: StepNodeProps) => {
         })
       );
     }
-  }, [data.stepSlug, currentEnvironment?.slug, navigate, type]);
+  }, [data.stepSlug, currentEnvironment?.slug, navigate, type, isV2TemplateEditorEnabled, currentWorkflow]);
 
   if (hasConditions) {
     return (
@@ -532,6 +552,8 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
   const has = useHasPermission();
+  const { currentEnvironment } = useEnvironment();
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   if (!workflow) {
     return null;
@@ -558,11 +580,19 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
             {
               onSuccess: (data) => {
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                  navigate(
-                    buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                      stepSlug: data.steps[data.steps.length - 1].slug,
-                    })
-                  );
+                  if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
+                    navigate(
+                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                        stepSlug: data.steps[data.steps.length - 1].slug,
+                      })
+                    );
+                  } else {
+                    navigate(
+                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                        stepSlug: data.steps[data.steps.length - 1].slug,
+                      })
+                    );
+                  }
                 } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                   navigate(
                     buildRoute(ROUTES.EDIT_STEP, {

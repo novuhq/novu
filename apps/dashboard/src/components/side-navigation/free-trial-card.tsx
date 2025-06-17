@@ -44,8 +44,7 @@ const CardContent = ({
         <TooltipContent variant="light" size="lg" side="right" className="w-48">
           <TooltipArrow variant="light" className="-translate-y-[1px]" />
           <span className="text-foreground-600 text-xs">
-            After the trial ends, continue to enjoy Novu's free tier with up to 20 workflows and up to 10k
-            events/month.
+            After the trial ends, continue to enjoy Novu's free tier with up to 20 workflows and up to 10k events/month.
           </span>
         </TooltipContent>
       </Tooltip>

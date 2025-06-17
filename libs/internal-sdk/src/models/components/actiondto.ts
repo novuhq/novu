@@ -15,11 +15,11 @@ import {
 
 export type ActionDto = {
   /**
-   * Label for the action
+   * Label for the action button.
    */
-  label: string;
+  label?: string | undefined;
   /**
-   * Redirect details for the action
+   * Redirect configuration for the action.
    */
   redirect?: RedirectDto | undefined;
 };
@@ -30,13 +30,13 @@ export const ActionDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  label: z.string(),
+  label: z.string().optional(),
   redirect: RedirectDto$inboundSchema.optional(),
 });
 
 /** @internal */
 export type ActionDto$Outbound = {
-  label: string;
+  label?: string | undefined;
   redirect?: RedirectDto$Outbound | undefined;
 };
 
@@ -46,7 +46,7 @@ export const ActionDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ActionDto
 > = z.object({
-  label: z.string(),
+  label: z.string().optional(),
   redirect: RedirectDto$outboundSchema.optional(),
 });
 

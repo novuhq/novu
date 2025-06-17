@@ -85,14 +85,14 @@ export class CreateWorkflow {
         environment: { _id: command.environmentId },
       });
 
-      if (isPayloadSchemaEnabled) {
+      if (isPayloadSchemaEnabled && !command.payloadSchema) {
         command.payloadSchema = {
           type: JsonSchemaTypeEnum.OBJECT,
           additionalProperties: true,
           properties: {},
         };
 
-        command.validatePayload = true;
+        command.validatePayload = command.validatePayload ?? true;
       }
 
       storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
@@ -279,7 +279,7 @@ export class CreateWorkflow {
   ): Promise<WorkflowWithPreferencesResponseDto> {
     this.logger.info(`Creating workflow ${JSON.stringify(command)}`);
 
-    const savedWorkflow = await this.notificationTemplateRepository.create({
+    const workflowData = {
       _organizationId: command.organizationId,
       _creatorId: command.userId,
       _environmentId: command.environmentId,
@@ -303,9 +303,11 @@ export class CreateWorkflow {
       issues: command.issues,
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),
-      ...(command.validatePayload ? { validatePayload: command.validatePayload } : {}),
+      ...(command.validatePayload !== undefined ? { validatePayload: command.validatePayload } : {}),
       ...(command.data ? { data: command.data } : {}),
-    });
+    };
+
+    const savedWorkflow = await this.notificationTemplateRepository.create(workflowData);
 
     // defaultPreferences is required, so we always call the upsert
     await this.upsertPreferences.upsertWorkflowPreferences(

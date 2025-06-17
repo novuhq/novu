@@ -16,7 +16,7 @@ export type ArrayVariable = {
   iterations: number;
 };
 
-export const DEFAULT_ARRAY_ELEMENTS = 5;
+export const DEFAULT_ARRAY_ELEMENTS = 3;
 /**
  * Extracts all the variables used in the step control values.
  * Then it creates the object representation of those variables.

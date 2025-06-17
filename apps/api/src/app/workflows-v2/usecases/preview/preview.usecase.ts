@@ -94,8 +94,10 @@ export class PreviewUsecase {
           schema,
         };
       } catch (previewError) {
-        // If preview execution fails, still return valid schema and payload example
-        // but with an empty preview result
+        /*
+         * If preview execution fails, still return valid schema and payload example
+         * but with an empty preview result
+         */
         return {
           result: {
             preview: {},

@@ -144,19 +144,68 @@ function buildObjectFromPaths(
   // Sort paths by number of dots (depth) in ascending order
   const sortedPaths = [...paths].sort((a, b) => (a.match(/\./g) || []).length - (b.match(/\./g) || []).length);
 
+  // Collect all digest events payload properties to build the payload structure
+  const digestPayloadProperties = new Map<string, Set<string>>();
+
+  // Capture timestamp once for consistency across all date properties
+  const currentTimestamp = new Date().toISOString();
+
+  // First pass: collect all digest events payload properties
+  sortedPaths.forEach((path) => {
+    const digestEventsMatch = path.match(/^(steps\.[^.]+\.events)(?:\[\d+\])?\.payload\.(.+)$/);
+    if (digestEventsMatch) {
+      const [, digestEventsPath, payloadProperty] = digestEventsMatch;
+      // Normalize key by removing array indices for consistent lookup
+      const normalizedKey = digestEventsPath.replace(/\[\d+\]/g, '');
+      if (!digestPayloadProperties.has(normalizedKey)) {
+        digestPayloadProperties.set(normalizedKey, new Set());
+      }
+      digestPayloadProperties.get(normalizedKey)!.add(payloadProperty);
+    }
+  });
+
   // Set all other paths
   sortedPaths.forEach((path) => {
     const lastPart = path
       .split('.')
       .pop()
       ?.replace(/\[\d+\]/g, ''); // Remove array indices from the value
+
     let value: unknown = showIfVariablesPaths?.includes(path) ? true : lastPart;
+
+    // Handle step result properties with proper types
+    if (path.match(/^steps\.[^.]+\.(seen|read)$/)) {
+      if (lastPart === 'seen') {
+        value = true;
+      } else if (lastPart === 'read') {
+        value = false;
+      }
+    } else if (path.match(/^steps\.[^.]+\.(lastSeenDate|lastReadDate)$/)) {
+      value = currentTimestamp;
+    }
 
     const lastDot = path.lastIndexOf('.');
     const finalPart = lastDot === -1 ? path : path.substring(0, lastDot);
 
+    // Handle digest events payload variables
     if (lastPart === 'payload' && DIGEST_EVENTS_VARIABLE_PATTERN.test(finalPart)) {
-      value = {};
+      /*
+       * Build the payload object based on all referenced properties
+       * Normalize key by removing array indices for consistent lookup
+       */
+      const normalizedKey = finalPart.replace(/\[\d+\]/g, '');
+      const payloadProperties = digestPayloadProperties.get(normalizedKey);
+      if (payloadProperties && payloadProperties.size > 0) {
+        const payload = {};
+        payloadProperties.forEach((property) => {
+          const propertyParts = property.split('.');
+          const propertyValue = propertyParts[propertyParts.length - 1];
+          setNestedProperty(payload, property, propertyValue);
+        });
+        value = payload;
+      } else {
+        value = {};
+      }
     }
 
     const arrayParent = arrayVariables.find(
@@ -179,6 +228,22 @@ function buildObjectFromPaths(
   });
 
   return result;
+}
+
+// Helper function to set nested properties in an object
+function setNestedProperty(obj: Record<string, unknown>, path: string, value: string) {
+  const keys = path.split('.');
+  let current = obj;
+
+  for (let i = 0; i < keys.length - 1; i += 1) {
+    const key = keys[i];
+    if (!(key in current) || typeof current[key] !== 'object' || current[key] === null) {
+      current[key] = {};
+    }
+    current = current[key] as Record<string, unknown>;
+  }
+
+  current[keys[keys.length - 1]] = value;
 }
 
 /**

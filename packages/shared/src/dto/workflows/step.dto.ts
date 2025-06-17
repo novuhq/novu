@@ -4,6 +4,7 @@ import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from '.
 
 export type StepResponseDto = {
   controls: Controls;
+  controlValues?: Record<string, unknown>;
   variables: JSONSchemaDto;
   stepId: string;
   _id: string;

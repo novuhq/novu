@@ -20,10 +20,11 @@ type SubscriberOverviewProps = {
   subscriberId: string;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
+  closeOnSave?: boolean;
 };
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
-  const { subscriberId, readOnly = false, onCloseDrawer } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const { data, isPending } = useFetchSubscriber({
     subscriberId,
   });
@@ -32,7 +33,14 @@ const SubscriberOverview = (props: SubscriberOverviewProps) => {
     return <SubscriberOverviewSkeleton />;
   }
 
-  return <SubscriberOverviewForm subscriber={data!} readOnly={readOnly} onCloseDrawer={onCloseDrawer} />;
+  return (
+    <SubscriberOverviewForm
+      subscriber={data!}
+      readOnly={readOnly}
+      onCloseDrawer={onCloseDrawer}
+      closeOnSave={closeOnSave}
+    />
+  );
 };
 
 type SubscriberPreferencesProps = {
@@ -60,10 +68,11 @@ type SubscriberTabsProps = {
   subscriberId: string;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
+  closeOnSave?: boolean;
 };
 
 export function SubscriberTabs(props: SubscriberTabsProps) {
-  const { subscriberId, readOnly = false, onCloseDrawer } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const [tab, setTab] = useState('overview');
   const {
     protectedOnValueChange,
@@ -109,7 +118,12 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
-        <SubscriberOverview subscriberId={subscriberId} readOnly={readOnly} onCloseDrawer={onCloseDrawer} />
+        <SubscriberOverview
+          subscriberId={subscriberId}
+          readOnly={readOnly}
+          onCloseDrawer={onCloseDrawer}
+          closeOnSave={closeOnSave}
+        />
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />

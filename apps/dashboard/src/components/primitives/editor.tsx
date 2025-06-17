@@ -46,19 +46,20 @@ const baseTheme = (options: { multiline?: boolean }) =>
             overflow: 'hidden',
           },
         }),
-    '.cm-tooltip-autocomplete .cm-completionIcon-variable': {
-      '&:before': {
-        content: 'Suggestions',
+    '.cm-tooltip-autocomplete .cm-completionIcon-variable, .cm-tooltip-autocomplete .cm-completionIcon-local, .cm-tooltip-autocomplete .cm-completionIcon-property':
+      {
+        '&:before': {
+          content: 'Suggestions',
+        },
+        '&:after': {
+          content: "''",
+          height: '16px',
+          width: '16px',
+          display: 'block',
+          backgroundRepeat: 'no-repeat',
+          backgroundImage: `url('${functionIcon}')`,
+        },
       },
-      '&:after': {
-        content: "''",
-        height: '16px',
-        width: '16px',
-        display: 'block',
-        backgroundRepeat: 'no-repeat',
-        backgroundImage: `url('${functionIcon}')`,
-      },
-    },
     '.cm-tooltip-autocomplete .cm-completionIcon-type': {
       '&:before': {
         content: 'Suggestions',

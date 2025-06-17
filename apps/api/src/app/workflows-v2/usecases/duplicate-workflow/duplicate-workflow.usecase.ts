@@ -4,15 +4,14 @@ import { InstrumentUsecase } from '@novu/application-generic';
 import { PreferencesTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertWorkflowCommand, UpsertWorkflowDataCommand, UpsertWorkflowUseCase } from '../upsert-workflow';
-import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
 import {
-  DuplicateWorkflowDto,
-  StepResponseDto,
-  StepUpsertDto,
-  WorkflowPreferencesDto,
-  WorkflowResponseDto,
-} from '../../dtos';
+  UpsertWorkflowCommand,
+  UpsertWorkflowDataCommand,
+  UpsertWorkflowUseCase,
+  UpsertStepDataCommand,
+} from '../upsert-workflow';
+import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
+import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 
 export const DUPLICABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
@@ -65,16 +64,16 @@ export class DuplicateWorkflowUseCase {
       active: false,
       origin: WorkflowOriginEnum.NOVU_CLOUD,
       __source: WorkflowCreationSourceEnum.DASHBOARD,
-      steps: await this.mapStepsToDuplicate(originWorkflow.steps),
+      steps: this.mapStepsToDuplicate(originWorkflow.steps),
       preferences: this.mapPreferences(preferences),
     };
   }
 
-  private async mapStepsToDuplicate(steps: StepResponseDto[]): Promise<StepUpsertDto[]> {
+  private mapStepsToDuplicate(steps: StepResponseDto[]): UpsertStepDataCommand[] {
     return steps.map((step) => ({
       name: step.name ?? '',
       type: step.type,
-      controlValues: step.controls.values ?? {},
+      controlValues: step.controls.values ?? null,
     }));
   }
 

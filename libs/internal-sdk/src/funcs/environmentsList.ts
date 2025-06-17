@@ -26,7 +26,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * List environments
+ * List all environments
  *
  * @remarks
  * This API returns a list of environments for the current organization.

@@ -176,7 +176,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
         exit={{ opacity: 0.1 }}
         transition={{ duration: 0.1 }}
       >
-        <SidebarHeader className="items-center border-b text-sm font-medium">
+        <SidebarHeader className="items-center border-b py-3 text-sm font-medium">
           <Link to="../" className="flex items-center">
             <CompactButton icon={RiArrowLeftSLine} variant="ghost" size="md" type="button">
               <span className="sr-only">Back</span>

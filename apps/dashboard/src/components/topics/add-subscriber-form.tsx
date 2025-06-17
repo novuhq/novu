@@ -1,5 +1,6 @@
 import { ISubscriberResponseDto } from '@novu/shared';
 import { useState } from 'react';
+import { RiAddFill } from 'react-icons/ri';
 import { SubscriberAutocomplete } from '../subscribers/subscriber-autocomplete';
 import { useAddTopicSubscribers } from './hooks/use-topic-subscribers';
 
@@ -38,6 +39,8 @@ export function AddSubscriberForm({ topicKey, onSuccess }: AddSubscriberFormProp
         size="xs"
         className="w-full"
         isLoading={isPending}
+        placeholder="Add subscriber to this topic"
+        trailingIcon={RiAddFill}
       />
     </div>
   );

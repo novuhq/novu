@@ -26,7 +26,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Get workflow step data
+ * Retrieve workflow step
  *
  * @remarks
  * Retrieves data for a specific step in a workflow

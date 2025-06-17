@@ -2,11 +2,13 @@ import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
 import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
 import { useNavigate } from 'react-router-dom';
 import { AddStepMenu } from './add-step-menu';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useEnvironment } from '@/context/environment/hooks';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
@@ -24,6 +26,8 @@ export function AddNodeEdge({
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
   const has = useHasPermission();
+  const { currentEnvironment } = useEnvironment();
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   const isReadOnly =
     workflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
@@ -75,11 +79,19 @@ export function AddNodeEdge({
                       {
                         onSuccess: (data) => {
                           if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                            navigate(
-                              buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                                stepSlug: data.steps[indexToAdd].slug,
-                              })
-                            );
+                            if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
+                              navigate(
+                                buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                                  stepSlug: data.steps[indexToAdd].slug,
+                                })
+                              );
+                            } else {
+                              navigate(
+                                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                                  stepSlug: data.steps[indexToAdd].slug,
+                                })
+                              );
+                            }
                           } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                             navigate(
                               buildRoute(ROUTES.EDIT_STEP, {

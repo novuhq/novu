@@ -13,7 +13,7 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Environments extends ClientSDK {
   /**
-   * Create environment
+   * Create an environment
    *
    * @remarks
    * Creates a new environment within the current organization.
@@ -34,7 +34,7 @@ export class Environments extends ClientSDK {
   }
 
   /**
-   * List environments
+   * List all environments
    *
    * @remarks
    * This API returns a list of environments for the current organization.
@@ -52,7 +52,7 @@ export class Environments extends ClientSDK {
   }
 
   /**
-   * Update environment
+   * Update an environment
    *
    * @remarks
    * Update an environment by its unique identifier **environmentId**.
@@ -74,7 +74,7 @@ export class Environments extends ClientSDK {
   }
 
   /**
-   * Delete environment
+   * Delete an environment
    *
    * @remarks
    * Delete an environment by its unique identifier **environmentId**.

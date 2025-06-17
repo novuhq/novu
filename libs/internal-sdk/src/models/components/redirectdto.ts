@@ -4,24 +4,54 @@
 
 import * as z from "zod";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import {
-  RedirectTargetEnum,
-  RedirectTargetEnum$inboundSchema,
-  RedirectTargetEnum$outboundSchema,
-} from "./redirecttargetenum.js";
+
+/**
+ * Target window for the redirection.
+ */
+export const Target = {
+  Self: "_self",
+  Blank: "_blank",
+  Parent: "_parent",
+  Top: "_top",
+  UnfencedTop: "_unfencedTop",
+} as const;
+/**
+ * Target window for the redirection.
+ */
+export type Target = ClosedEnum<typeof Target>;
 
 export type RedirectDto = {
   /**
-   * URL to redirect to
+   * URL for redirection. Must be a valid URL or start with / or {{"{{"}} variable }}.
    */
-  url: string;
+  url?: string | undefined;
   /**
-   * Target of the redirect
+   * Target window for the redirection.
    */
-  target?: RedirectTargetEnum | undefined;
+  target?: Target | undefined;
 };
+
+/** @internal */
+export const Target$inboundSchema: z.ZodNativeEnum<typeof Target> = z
+  .nativeEnum(Target);
+
+/** @internal */
+export const Target$outboundSchema: z.ZodNativeEnum<typeof Target> =
+  Target$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Target$ {
+  /** @deprecated use `Target$inboundSchema` instead. */
+  export const inboundSchema = Target$inboundSchema;
+  /** @deprecated use `Target$outboundSchema` instead. */
+  export const outboundSchema = Target$outboundSchema;
+}
 
 /** @internal */
 export const RedirectDto$inboundSchema: z.ZodType<
@@ -29,14 +59,14 @@ export const RedirectDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  url: z.string(),
-  target: RedirectTargetEnum$inboundSchema.optional(),
+  url: z.string().optional(),
+  target: Target$inboundSchema.default("_self"),
 });
 
 /** @internal */
 export type RedirectDto$Outbound = {
-  url: string;
-  target?: string | undefined;
+  url?: string | undefined;
+  target: string;
 };
 
 /** @internal */
@@ -45,8 +75,8 @@ export const RedirectDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   RedirectDto
 > = z.object({
-  url: z.string(),
-  target: RedirectTargetEnum$outboundSchema.optional(),
+  url: z.string().optional(),
+  target: Target$outboundSchema.default("_self"),
 });
 
 /**

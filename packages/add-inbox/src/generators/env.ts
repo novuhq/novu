@@ -1,4 +1,4 @@
-import { FRAMEWORKS, ENV_VARIABLES } from '../constants';
+import { ENV_VARIABLES } from '../constants';
 import fileUtils, { updateEnvVariable } from '../utils/file';
 import logger from '../utils/logger';
 import { getEnvironmentVariableName } from './react-version';
