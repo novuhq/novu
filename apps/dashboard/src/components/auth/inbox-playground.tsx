@@ -207,9 +207,6 @@ export function InboxPlayground() {
                 </Button>
               ) : (
                 <>
-                  <Button size="xs" variant="secondary" mode="ghost" className="px-2" onClick={handleSkipToDashboard}>
-                    Skip to Dashboard
-                  </Button>
                   <Button size="xs" variant="secondary" onClick={handleImplementClick}>
                     Implement &lt;Inbox /&gt;
                   </Button>

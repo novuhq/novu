@@ -1,15 +1,9 @@
-import { EditorView } from '@uiw/react-codemirror';
 import { Info } from 'lucide-react';
-import { useFormContext, UseFormReturn } from 'react-hook-form';
+import { Controller, UseFormReturn } from 'react-hook-form';
 import { RiLayoutLine } from 'react-icons/ri';
-
-import { InAppActionDropdown } from '@/components/in-app-action-dropdown';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { ColorPicker } from '@/components/primitives/color-picker';
-import { Editor } from '@/components/primitives/editor';
-import { FormControl, FormField, FormItem } from '@/components/primitives/form/form';
-import { capitalize } from '@/utils/string';
-import { InputRoot, InputWrapper } from '../primitives/input';
+
 import type { InboxPlaygroundFormData } from './inbox-playground';
 import { Switch } from '../primitives/switch';
 
@@ -46,11 +40,17 @@ export function CustomizeInbox({ form }: CustomizeInboxProps) {
                 Customize Inbox
               </div>
               <div className="flex items-center gap-2">
-                <Switch
-                  checked={form.watch('enableTabs')}
-                  onCheckedChange={(checked) => form.setValue('enableTabs', checked)}
-                  id="enable-tabs-toggle"
-                  className="text-[#7D52F4]"
+                <Controller
+                  control={form.control}
+                  name="enableTabs"
+                  render={({ field }) => (
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      id="enable-tabs-toggle"
+                      className="text-[#7D52F4]"
+                    />
+                  )}
                 />
                 <label
                   htmlFor="enable-tabs-toggle"
@@ -147,6 +147,7 @@ function ColorPickerSection({ form }: { form: UseFormReturn<InboxPlaygroundFormD
           <a
             href="https://docs.novu.co/platform/inbox/react/styling#appearance-prop"
             className="cursor-pointer underline"
+            target="_blank"
           >
             appearance prop
           </a>
