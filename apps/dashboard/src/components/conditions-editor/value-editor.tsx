@@ -200,7 +200,7 @@ function RelativeDateEditor({
   errorMessage?: string;
 }) {
   const parseRelativeDateValue = (val: string): RelativeDateValue => {
-    let parsedValue: RelativeDateValue = { amount: 1, unit: 'days' };
+    let parsedValue: RelativeDateValue = { amount: '', unit: 'days' };
 
     if (!val) {
       return parsedValue;
@@ -266,7 +266,7 @@ function RelativeDateEditor({
           <ControlInput
             multiline={false}
             indentWithTab={false}
-            placeholder="1"
+            placeholder={'4'}
             value={String(parsedValue.amount)}
             onChange={handleAmountChange}
             variables={variables}
