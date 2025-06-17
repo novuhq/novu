@@ -214,7 +214,7 @@ function RelativeDateEditor({
         if (parsed && typeof parsed === 'object' && parsed.unit) {
           // Valid JSON object with unit property
           parsedValue = {
-            amount: parsed.amount || 1,
+            amount: parsed.amount,
             unit: parsed.unit || 'days',
           };
         } else {

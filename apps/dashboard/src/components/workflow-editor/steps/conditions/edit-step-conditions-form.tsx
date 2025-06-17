@@ -26,7 +26,6 @@ import {
   countConditions,
   getUniqueFieldNamespaces,
   getUniqueOperators,
-  customJsonLogicOperations,
   parseJsonLogicOptions,
 } from '@/utils/conditions';
 import { TelemetryEvent } from '@/utils/telemetry';
