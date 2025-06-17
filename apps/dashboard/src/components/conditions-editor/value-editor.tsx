@@ -7,6 +7,8 @@ import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { ControlInput } from '../primitives/control-input/control-input';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
+import { shouldUseRelativeDateEditor } from '@/components/conditions-editor/field-type-editors';
+import { RelativeDateValueEditor } from '@/components/conditions-editor/relative-date-value-editor';
 import { Badge } from '../primitives/badge';
 
 type ExtendedContext = {
@@ -26,6 +28,11 @@ export const ValueEditor = (props: ValueEditorProps) => {
 
   if (operator === 'null' || operator === 'notNull') {
     return null;
+  }
+
+  // Use relative date editor for relative date operators
+  if (shouldUseRelativeDateEditor(operator)) {
+    return <RelativeDateValueEditor {...props} />;
   }
 
   // Get dynamic placeholder and help text

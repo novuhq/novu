@@ -17,6 +17,7 @@ import { type EnhancedLiquidVariable } from '@/utils/parseStepVariables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { countConditions, getUniqueFieldNamespaces, getUniqueOperators } from '@/utils/conditions';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
 import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
@@ -39,6 +40,36 @@ const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | R
 
           if (!values || values.length !== 2) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Both values are required', path: ['value'] });
+          }
+        } else if (isRelativeDateOperator(operator)) {
+          // Validate relative date values
+          if (!value) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Amount and unit are required', path: ['value'] });
+
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(value);
+
+            if (
+              !parsed ||
+              typeof parsed.amount !== 'number' ||
+              parsed.amount <= 0 ||
+              !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)
+            ) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Invalid amount or time unit',
+                path: ['value'],
+              });
+            }
+          } catch {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Invalid relative date format',
+              path: ['value'],
+            });
           }
         } else if (operator !== 'null' && operator !== 'notNull') {
           const trimmedValue = value?.trim();
