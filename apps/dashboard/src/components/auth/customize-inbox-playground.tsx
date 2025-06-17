@@ -1,7 +1,7 @@
 import { EditorView } from '@uiw/react-codemirror';
 import { Info } from 'lucide-react';
-import { FormProvider, useFormContext, UseFormReturn } from 'react-hook-form';
-import { RiInputField, RiLayoutLine } from 'react-icons/ri';
+import { useFormContext, UseFormReturn } from 'react-hook-form';
+import { RiLayoutLine } from 'react-icons/ri';
 
 import { InAppActionDropdown } from '@/components/in-app-action-dropdown';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
@@ -31,11 +31,6 @@ const previewStyles: PreviewStyle[] = [
 
 export function CustomizeInbox({ form }: CustomizeInboxProps) {
   const selectedStyle = form.watch('selectedStyle');
-  const openAccordion = form.watch('openAccordion');
-
-  const handleAccordionChange = (value: string | undefined) => {
-    form.setValue('openAccordion', value);
-  };
 
   return (
     <div className="space-y-3 p-3">
@@ -82,23 +77,6 @@ export function CustomizeInbox({ form }: CustomizeInboxProps) {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      {/* This is commented out because we don't want to show the configure notification section for now */}
-      {/* <FormProvider {...form}> 
-        <Accordion type="single" collapsible value={openAccordion} onValueChange={handleAccordionChange}>
-          <AccordionItem value="configure" className="bg-white p-0">
-            <AccordionTrigger className="bg-neutral-alpha-50 p-2 data-[state=open]:border-b">
-              <div className="flex items-center gap-1 text-xs">
-                <RiInputField className="text-feature size-5" />
-                Configure notification
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="flex flex-col gap-2 p-2">
-              <NotificationConfigSection />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </FormProvider> */}
     </div>
   );
 }
@@ -174,72 +152,6 @@ function ColorPickerSection({ form }: { form: UseFormReturn<InboxPlaygroundFormD
           </a>
         </p>
       </div>
-    </div>
-  );
-}
-
-const extensions = [EditorView.lineWrapping];
-const basicSetup = {
-  defaultKeymap: true,
-};
-
-function NotificationConfigSection() {
-  const { control } = useFormContext();
-
-  return (
-    <div className="flex flex-col gap-1 p-1">
-      <div className="flex gap-1">
-        <FormField
-          control={control}
-          name="subject"
-          render={({ field, fieldState }) => (
-            <FormItem className="w-full">
-              <FormControl>
-                <InputRoot hasError={!!fieldState.error}>
-                  <InputWrapper className="flex items-center justify-center px-1 py-2">
-                    <Editor
-                      indentWithTab={false}
-                      fontFamily="inherit"
-                      placeholder={capitalize(field.name)}
-                      id={field.name}
-                      extensions={extensions}
-                      value={field.value}
-                      onChange={field.onChange}
-                    />
-                  </InputWrapper>
-                </InputRoot>
-              </FormControl>
-            </FormItem>
-          )}
-        />
-      </div>
-      <FormField
-        control={control}
-        name="body"
-        render={({ field }) => (
-          <FormItem className="w-full">
-            <FormControl>
-              <InputRoot>
-                <InputWrapper className="flex h-36 items-center justify-center px-1 py-2">
-                  <Editor
-                    fontFamily="inherit"
-                    indentWithTab={false}
-                    placeholder={capitalize(field.name)}
-                    id={field.name}
-                    extensions={extensions}
-                    basicSetup={basicSetup}
-                    ref={field.ref}
-                    value={field.value}
-                    onChange={field.onChange}
-                    height="100%"
-                  />
-                </InputWrapper>
-              </InputRoot>
-            </FormControl>
-          </FormItem>
-        )}
-      />
-      <InAppActionDropdown />
     </div>
   );
 }
