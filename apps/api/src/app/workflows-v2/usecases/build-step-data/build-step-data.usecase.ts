@@ -37,6 +37,7 @@ export class BuildStepDataUsecase {
         uiSchema: currentStep.template?.controls?.uiSchema,
         values: controlValues,
       },
+      controlValues,
       variables,
       name: stepName,
       slug,
@@ -47,7 +48,7 @@ export class BuildStepDataUsecase {
       workflowId: workflow.triggers[0].identifier,
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
-    };
+    } as StepResponseDto;
   }
 
   private async buildAvailableVariableSchema(

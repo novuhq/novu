@@ -21,6 +21,8 @@ import { cn } from '../../utils/ui';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { useWorkflow } from './workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 interface WorkflowChecklistProps {
   steps: Step[];
@@ -179,6 +181,7 @@ function useChecklistItems(steps: Step[]) {
   const { workflow } = useWorkflow();
   const { integrations } = useFetchIntegrations();
   const telemetry = useTelemetry();
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   const foundInAppIntegration = integrations?.find(
     (integration) =>
@@ -215,8 +218,9 @@ function useChecklistItems(steps: Step[]) {
           const stepToConfig = steps.find((step) => step.type !== StepTypeEnum.TRIGGER);
 
           if (stepToConfig) {
+            const route = isV2TemplateEditorEnabled ? ROUTES.EDIT_STEP_TEMPLATE_V2 : ROUTES.EDIT_STEP_TEMPLATE;
             navigate(
-              buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+              buildRoute(route, {
                 environmentSlug: currentEnvironment?.slug ?? '',
                 workflowSlug: workflow?.slug ?? '',
                 stepSlug: stepToConfig.slug,
@@ -247,7 +251,7 @@ function useChecklistItems(steps: Step[]) {
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Trigger workflow' });
           navigate(
-            buildRoute(ROUTES.TEST_WORKFLOW, {
+            buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
               environmentSlug: currentEnvironment?.slug ?? '',
               workflowSlug: workflow?.slug ?? '',
             })
@@ -259,7 +263,7 @@ function useChecklistItems(steps: Step[]) {
         },
       },
     ],
-    [currentEnvironment, workflow, foundInAppIntegration, navigate, steps, telemetry]
+    [currentEnvironment, workflow, foundInAppIntegration, navigate, steps, telemetry, isV2TemplateEditorEnabled]
   );
 }
 

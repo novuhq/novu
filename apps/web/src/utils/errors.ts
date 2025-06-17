@@ -1,6 +1,6 @@
 import type { IResponseError } from '@novu/shared';
 
-export function parseServerErrorMessage(error: IResponseError | null): String {
+export function parseServerErrorMessage(error: IResponseError | null): string {
   if (!error) {
     return '';
   }

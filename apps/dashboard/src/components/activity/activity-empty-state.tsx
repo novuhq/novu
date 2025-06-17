@@ -20,6 +20,7 @@ interface ActivityEmptyStateProps {
   emptySearchDescription?: string;
   emptyFiltersDescription?: string;
   onClearFilters?: () => void;
+  onTriggerWorkflow?: () => void;
 }
 
 export function ActivityEmptyState({
@@ -27,6 +28,7 @@ export function ActivityEmptyState({
   filters = defaultActivityFilters,
   emptySearchResults,
   onClearFilters,
+  onTriggerWorkflow,
   emptySearchTitle = 'No activity matches that filter',
   emptySearchDescription = 'Try adjusting your filters to see more results.',
   emptyFiltersDescription = 'Your activity feed is empty. Once you trigger your first workflow, you can monitor notifications and view delivery details.',
@@ -37,6 +39,8 @@ export function ActivityEmptyState({
   const handleNavigateToWorkflows = () => {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' }));
   };
+
+  const handleTriggerWorkflow = onTriggerWorkflow || handleNavigateToWorkflows;
 
   const emptyFiltersTitle = useMemo(() => {
     return `No activity in the past ${filters?.dateRange}`;
@@ -130,7 +134,7 @@ export function ActivityEmptyState({
                   leadingIcon={RiPlayCircleLine}
                   variant="primary"
                   className="gap-2"
-                  onClick={handleNavigateToWorkflows}
+                  onClick={handleTriggerWorkflow}
                 >
                   Trigger Workflow
                 </Button>

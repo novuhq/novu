@@ -7,7 +7,8 @@ import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { dashboardSanitizeControlValues, PinoLogger } from '@novu/application-generic';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
 import { StepResponseDto, JSONSchemaDto } from '../../../dtos';
-import { Variable, buildLiquidParser } from '../../../util/template-parser/liquid-parser';
+import { buildLiquidParser } from '../../../util/template-parser/liquid-engine';
+import type { Variable } from '../../../util/template-parser/types';
 import { buildVariables } from '../../../util/build-variables';
 import {
   isStringifiedMailyJSONContent,
@@ -44,6 +45,7 @@ export class ControlValueSanitizerService {
   }
 
   processControlValues(
+    isHtmlEditorEnabled: boolean,
     controlValues: Record<string, unknown>,
     variableSchema: JSONSchemaDto,
     variablesObject: Record<string, unknown>
@@ -56,7 +58,12 @@ export class ControlValueSanitizerService {
     const sanitizedControls: Record<string, unknown> = {};
 
     for (const [controlKey, controlValue] of Object.entries(controlValues || {})) {
-      const variables = buildVariables(variableSchema, controlValue, this.logger);
+      const variables = buildVariables({
+        useNewLiquidParser: isHtmlEditorEnabled,
+        variableSchema,
+        controlValue,
+        logger: this.logger,
+      });
 
       const controlValueWithFixedVariables = this.fixControlValueInvalidVariables(
         controlValue,

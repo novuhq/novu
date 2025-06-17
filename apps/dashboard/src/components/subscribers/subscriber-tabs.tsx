@@ -20,10 +20,11 @@ type SubscriberOverviewProps = {
   subscriberId: string;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
+  closeOnSave?: boolean;
 };
 
 const SubscriberOverview = (props: SubscriberOverviewProps) => {
-  const { subscriberId, readOnly = false, onCloseDrawer } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const { data, isPending } = useFetchSubscriber({
     subscriberId,
   });
@@ -32,7 +33,14 @@ const SubscriberOverview = (props: SubscriberOverviewProps) => {
     return <SubscriberOverviewSkeleton />;
   }
 
-  return <SubscriberOverviewForm subscriber={data!} readOnly={readOnly} onCloseDrawer={onCloseDrawer} />;
+  return (
+    <SubscriberOverviewForm
+      subscriber={data!}
+      readOnly={readOnly}
+      onCloseDrawer={onCloseDrawer}
+      closeOnSave={closeOnSave}
+    />
+  );
 };
 
 type SubscriberPreferencesProps = {
@@ -54,16 +62,17 @@ const SubscriberPreferences = (props: SubscriberPreferencesProps) => {
 };
 
 const tabTriggerClasses =
-  'hover:data-[state=inactive]:text-foreground-950 h-11 py-3 rounded-none [&>span]:h-5 px-0 relative';
+  'hover:data-[state=inactive]:text-foreground-950 py-3 rounded-none [&>span]:h-5 px-0 relative';
 
 type SubscriberTabsProps = {
   subscriberId: string;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
+  closeOnSave?: boolean;
 };
 
 export function SubscriberTabs(props: SubscriberTabsProps) {
-  const { subscriberId, readOnly = false, onCloseDrawer } = props;
+  const { subscriberId, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const [tab, setTab] = useState('overview');
   const {
     protectedOnValueChange,
@@ -89,27 +98,32 @@ export function SubscriberTabs(props: SubscriberTabsProps) {
       </header>
 
       <TabsList className="border-bg-soft h-auto w-full items-center gap-6 rounded-none border-b bg-transparent px-3 py-0">
-        <TabsTrigger value="overview" className={tabTriggerClasses}>
+        <TabsTrigger value="overview" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Overview</span>
           {tab === 'overview' && <ActiveTabIndicator />}
         </TabsTrigger>
-        <TabsTrigger value="preferences" className={tabTriggerClasses}>
+        <TabsTrigger value="preferences" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Preferences</span>
           {tab === 'preferences' && <ActiveTabIndicator />}
         </TabsTrigger>
         {isTopicsPageActive && (
-          <TabsTrigger value="subscriptions" className={tabTriggerClasses}>
+          <TabsTrigger value="subscriptions" className={tabTriggerClasses} variant="regular" size="lg">
             <span>Subscriptions</span>
             {tab === 'subscriptions' && <ActiveTabIndicator />}
           </TabsTrigger>
         )}
-        <TabsTrigger value="activity-feed" className={tabTriggerClasses}>
+        <TabsTrigger value="activity-feed" className={tabTriggerClasses} variant="regular" size="lg">
           <span>Activity Feed</span>
           {tab === 'activity-feed' && <ActiveTabIndicator />}
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="h-full w-full overflow-y-auto">
-        <SubscriberOverview subscriberId={subscriberId} readOnly={readOnly} onCloseDrawer={onCloseDrawer} />
+        <SubscriberOverview
+          subscriberId={subscriberId}
+          readOnly={readOnly}
+          onCloseDrawer={onCloseDrawer}
+          closeOnSave={closeOnSave}
+        />
       </TabsContent>
       <TabsContent value="preferences" className="h-full w-full overflow-y-auto">
         <SubscriberPreferences subscriberId={subscriberId} readOnly={readOnly} />

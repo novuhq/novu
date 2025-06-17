@@ -40,14 +40,6 @@ export const ConfigurePreviewAccordion = ({
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
     useCreateVariable();
 
-  // Initialize with workflow payloadExample if available
-  useEffect(() => {
-    if (isPayloadSchemaEnabled && workflow?.payloadExample && (!editorValue || editorValue === '{}')) {
-      const payloadExampleString = JSON.stringify(workflow.payloadExample, null, 2);
-      setEditorValue(payloadExampleString);
-    }
-  }, [workflow?.payloadExample, isPayloadSchemaEnabled, editorValue, setEditorValue]);
-
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (contentRef.current) {
@@ -59,7 +51,6 @@ export const ConfigurePreviewAccordion = ({
     return () => clearTimeout(timeout);
   }, [editorValue, jsonData]);
 
-  // Parse JSON data for JsonViewer
   useEffect(() => {
     if (isPayloadSchemaEnabled) {
       try {

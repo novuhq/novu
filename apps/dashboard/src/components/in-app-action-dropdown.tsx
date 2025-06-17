@@ -51,7 +51,7 @@ export const InAppActionDropdown = ({ onMenuItemClick }: { onMenuItemClick?: () 
     <>
       <DropdownMenu modal={false}>
         <div className={cn('mt-3 flex items-center gap-1')}>
-          <div className="border-neutral-alpha-200 shadow-input relative flex min-h-10 w-full flex-wrap items-center justify-end gap-1 rounded-md border p-1">
+          <div className="border-neutral-alpha-200 shadow-input relative flex min-h-10 w-full flex-wrap items-center justify-end gap-1 rounded-md border bg-white p-1">
             {!primaryAction && !secondaryAction && (
               <Button
                 variant="secondary"

@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.15.0",
-    "@typescript-eslint/parser": "^4.14.2",
+    "@typescript-eslint/parser": "^8.33.0",
     "apollo-boost": "0.4.9",
     "rimraf": "^3.0.2",
     "supertest": "^7.0.0",

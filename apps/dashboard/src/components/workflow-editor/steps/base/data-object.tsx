@@ -96,8 +96,8 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
               const isDuplicate = currentPairs.findIndex((p) => p.key === pair.key) < index;
 
               return (
-                <div className="flex flex-col gap-1">
-                  <div key={index} className="grid grid-cols-[3fr,4fr,1.75rem] items-center gap-2">
+                <div className="flex flex-col gap-1" key={index}>
+                  <div className="grid grid-cols-[3fr,4fr,1.75rem] items-center gap-2">
                     <Input
                       placeholder="Insert property key..."
                       type="text"

@@ -70,7 +70,7 @@ export class EmailOutputRendererUsecase {
       const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
       renderedHtml = await mailyRender(strippedMaily);
     } else {
-      renderedHtml = body;
+      renderedHtml = await this.liquidEngine.parseAndRender(body, renderCommand.fullPayloadForRender);
     }
 
     // Add Novu branding if 'removeNovuBranding' is false
@@ -388,7 +388,11 @@ export class EmailOutputRendererUsecase {
     const matches = [...html.matchAll(/<\/body>/gi)];
 
     if (matches.length === 0) {
-      return html + NOVU_BRANDING_HTML;
+      if (html?.trim()) {
+        return html + NOVU_BRANDING_HTML;
+      } else {
+        return html;
+      }
     }
 
     const lastIndex = matches[matches.length - 1].index!;

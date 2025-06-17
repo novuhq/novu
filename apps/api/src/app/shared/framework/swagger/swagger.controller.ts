@@ -60,12 +60,11 @@ function buildBaseOptions() {
       `With the help of the Integration Store, you can easily integrate your favorite delivery provider. During the runtime of the API, the Integrations Store is responsible for storing the configurations of all the providers.`,
       { url: 'https://docs.novu.co/channels-and-providers/integration-store' }
     )
-    // .addTag(
-    //   'Workflows',
-    //   `All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system.`,
-    //   { url: 'https://docs.novu.co/workflows' }
-    // )
-
+    .addTag(
+      'Workflows',
+      `All notifications are sent via a workflow. Each workflow acts as a container for the logic and blueprint that are associated with a type of notification in your system.`,
+      { url: 'https://docs.novu.co/workflows' }
+    )
     .addTag(
       'Messages',
       `A message in Novu represents a notification delivered to a recipient on a particular channel. Messages contain information about the request that triggered its delivery, a view of the data sent to the recipient, and a timeline of its lifecycle events. Learn more about messages.`,

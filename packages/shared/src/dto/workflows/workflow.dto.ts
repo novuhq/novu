@@ -87,6 +87,10 @@ export type CreateWorkflowDto = WorkflowCommonsFields & {
   __source: WorkflowCreationSourceEnum;
 
   preferences?: PreferencesRequestDto;
+
+  payloadSchema?: object;
+
+  validatePayload?: boolean;
 };
 
 export type UpdateWorkflowDto = WorkflowCommonsFields & {
@@ -100,6 +104,10 @@ export type UpdateWorkflowDto = WorkflowCommonsFields & {
   preferences: PreferencesRequestDto;
 
   origin: WorkflowOriginEnum;
+
+  payloadSchema?: object;
+
+  validatePayload?: boolean;
 };
 
 export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {

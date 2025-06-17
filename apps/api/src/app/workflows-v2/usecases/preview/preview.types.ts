@@ -1,7 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { StepResponseDto, JSONSchemaDto, PreviewPayloadDto } from '../../dtos';
-import { Variable } from '../../util/template-parser/liquid-parser';
+import { StepResponseDto, JSONSchemaDto } from '../../dtos';
 
 export type PreviewContext = {
   stepData: StepResponseDto;

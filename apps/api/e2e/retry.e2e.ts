@@ -1,10 +1,9 @@
 import { Novu } from '@novu/api';
 import { expect } from 'chai';
 import { topicsList } from '@novu/api/funcs/topicsList';
-import { FilterTopicsResponseDto } from '@novu/api/src/models/components/filtertopicsresponsedto';
 import { expectSdkExceptionGeneric } from '../src/app/shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { MockHTTPClient } from './mock-http-server';
 import { ErrorDto } from '../src/error-dto';
+import { MockHTTPClient } from './mock-http-client';
 
 function getIdempotencyKeys(mockHTTPClient: MockHTTPClient) {
   return mockHTTPClient
@@ -43,7 +42,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
     });
 
     await novuClient.trigger({
-      name: 'fake-workflow',
+      workflowId: 'fake-workflow',
       to: { subscriberId: '123' },
       payload: {},
     });
@@ -237,7 +236,7 @@ describe('Novu Node.js package - Retries and idempotency-key', () => {
         baseUrl: BACKEND_URL,
         path: TOPICS_PATH,
         responseCode: 200,
-        responseJson: { data: [], page: 1, pageSize: 30, totalCount: 0 } as FilterTopicsResponseDto,
+        responseJson: { data: [], page: 1, pageSize: 30, totalCount: 0 },
         method: 'GET',
         times: 1,
       },

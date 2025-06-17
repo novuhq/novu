@@ -5,7 +5,7 @@ import { useDataRef } from './useDataRef';
 export const useInlineComponent: <T>(
   Component: ComponentType<T>,
   props: T & { children?: ReactNode }
-) => ComponentType<{}> = (Component, props) => {
+) => ComponentType = (Component, props) => {
   const dataRef = useDataRef(props);
 
   return useMemo(() => {

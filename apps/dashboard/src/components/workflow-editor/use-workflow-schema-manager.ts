@@ -43,13 +43,9 @@ function getSchemaPropertyByKeyInternal(keyPath: string, schema: JSONSchema7 | u
     if (nodeType === 'object') {
       if (currentSchemaNode.properties && currentSchemaNode.properties[part]) {
         currentSchemaNode = currentSchemaNode.properties[part] as JSONSchema7;
-      } else if (currentSchemaNode.additionalProperties && typeof currentSchemaNode.additionalProperties === 'object') {
-        currentSchemaNode = currentSchemaNode.additionalProperties as JSONSchema7;
-      } else if (currentSchemaNode.additionalProperties === true) {
-        // If additionalProperties is true, we can't determine a specific schema for the part
-        // For the purpose of getting a property, this means it's effectively 'any' or undefined for structure
-        return { type: 'string' }; // Representing 'any' with a basic type or return undefined
       } else {
+        // Return undefined for any key not explicitly defined in properties,
+        // regardless of additionalProperties value
         return undefined;
       }
     } else if (nodeType === 'array') {

@@ -36,6 +36,10 @@ export type StepResponseDto = {
    */
   controls: ControlsMetadataDto;
   /**
+   * Control values for the step (alias for controls.values)
+   */
+  controlValues?: { [k: string]: any } | undefined;
+  /**
    * JSON Schema for variables, follows the JSON Schema standard
    */
   variables: { [k: string]: any };
@@ -84,6 +88,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   controls: ControlsMetadataDto$inboundSchema,
+  controlValues: z.record(z.any()).optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   _id: z.string(),
@@ -103,6 +108,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type StepResponseDto$Outbound = {
   controls: ControlsMetadataDto$Outbound;
+  controlValues?: { [k: string]: any } | undefined;
   variables: { [k: string]: any };
   stepId: string;
   _id: string;
@@ -122,6 +128,7 @@ export const StepResponseDto$outboundSchema: z.ZodType<
   StepResponseDto
 > = z.object({
   controls: ControlsMetadataDto$outboundSchema,
+  controlValues: z.record(z.any()).optional(),
   variables: z.record(z.any()),
   stepId: z.string(),
   id: z.string(),

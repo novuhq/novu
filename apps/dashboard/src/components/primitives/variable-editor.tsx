@@ -2,6 +2,7 @@ import { cn } from '@/utils/ui';
 import { autocompletion, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { Editor, EditorProps } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
@@ -20,6 +21,7 @@ import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema
 import { useCreateVariable } from '../variable/hooks/use-create-variable';
 import { DEFAULT_SIDE_OFFSET } from './popover';
 import { DEFAULT_VARIABLE_PILL_HEIGHT } from './control-input/variable-plugin/variable-pill-widget';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type CompletionRange = {
   from: number;
@@ -39,6 +41,7 @@ type VariableEditorProps = {
   | 'placeholder'
   | 'value'
   | 'onChange'
+  | 'onBlur'
   | 'multiline'
   | 'size'
   | 'fontFamily'
@@ -51,6 +54,7 @@ type VariableEditorProps = {
 export function VariableEditor({
   value,
   onChange = () => {},
+  onBlur = () => {},
   variables,
   className,
   placeholder,
@@ -67,6 +71,7 @@ export function VariableEditor({
   tagStyles,
   completionSources,
 }: VariableEditorProps) {
+  const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -180,8 +185,9 @@ export function VariableEditor({
       onSelect: handleVariableSelect,
       isAllowedVariable: enhancedIsAllowedVariable,
       isDigestEventsVariable,
+      isCustomHtmlEditorEnabled,
     });
-  }, [handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
+  }, [isCustomHtmlEditorEnabled, handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
 
   const editorExtensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
@@ -257,6 +263,7 @@ export function VariableEditor({
         foldGutter={foldGutter}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         tagStyles={tagStyles}
       />
       {isVariablePopoverOpen && (

@@ -46,19 +46,20 @@ const baseTheme = (options: { multiline?: boolean }) =>
             overflow: 'hidden',
           },
         }),
-    '.cm-tooltip-autocomplete .cm-completionIcon-variable': {
-      '&:before': {
-        content: 'Suggestions',
+    '.cm-tooltip-autocomplete .cm-completionIcon-variable, .cm-tooltip-autocomplete .cm-completionIcon-local, .cm-tooltip-autocomplete .cm-completionIcon-property':
+      {
+        '&:before': {
+          content: 'Suggestions',
+        },
+        '&:after': {
+          content: "''",
+          height: '16px',
+          width: '16px',
+          display: 'block',
+          backgroundRepeat: 'no-repeat',
+          backgroundImage: `url('${functionIcon}')`,
+        },
       },
-      '&:after': {
-        content: "''",
-        height: '16px',
-        width: '16px',
-        display: 'block',
-        backgroundRepeat: 'no-repeat',
-        backgroundImage: `url('${functionIcon}')`,
-      },
-    },
     '.cm-tooltip-autocomplete .cm-completionIcon-type': {
       '&:before': {
         content: 'Suggestions',
@@ -167,8 +168,15 @@ const baseTheme = (options: { multiline?: boolean }) =>
     },
     'div.cm-content': {
       padding: 0,
-      whiteSpace: 'preserve nowrap',
-      width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
+      ...(options.multiline
+        ? {
+            whiteSpace: 'pre-wrap',
+            width: '100%',
+          }
+        : {
+            whiteSpace: 'preserve nowrap',
+            width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
+          }),
     },
     'div.cm-gutters': {
       backgroundColor: 'transparent',

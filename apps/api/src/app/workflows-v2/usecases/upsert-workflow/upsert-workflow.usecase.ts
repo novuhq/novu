@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { format } from 'prettier';
 
 import {
   AnalyticsService,
@@ -16,6 +17,7 @@ import {
   UpsertControlValuesUseCase,
   SendWebhookMessage,
   EmailControlType,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -60,6 +62,7 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
     private analyticsService: AnalyticsService,
+    private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -158,6 +161,8 @@ export class UpsertWorkflowUseCase {
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
       triggerIdentifier: preserveWorkflowId ? workflowDto.workflowId : slugify(workflowDto.name),
       status: computeWorkflowStatus(isWorkflowActive, steps),
+      payloadSchema: workflowDto.payloadSchema,
+      validatePayload: workflowDto.validatePayload,
     };
   }
 
@@ -184,6 +189,8 @@ export class UpsertWorkflowUseCase {
       tags: workflowDto.tags,
       active: workflowActive,
       status: computeWorkflowStatus(workflowActive, steps),
+      payloadSchema: workflowDto.payloadSchema,
+      validatePayload: workflowDto.validatePayload,
     };
   }
 
@@ -355,7 +362,20 @@ export class UpsertWorkflowUseCase {
             },
           })
         );
-        emailControlValues.body = (result.preview as EmailRenderOutput).body;
+        let htmlBody = this.removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
+        try {
+          htmlBody = await format(htmlBody, {
+            parser: 'html',
+            printWidth: 120,
+            tabWidth: 2,
+            useTabs: false,
+            htmlWhitespaceSensitivity: 'css',
+          });
+        } catch (error) {
+          this.logger.warn({ err: error }, 'Failed to prettify HTML');
+        }
+
+        emailControlValues.body = htmlBody;
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
         emailControlValues.body = '';
       }
@@ -393,6 +413,14 @@ export class UpsertWorkflowUseCase {
     if (!commandStep) return null;
 
     return commandStep.controlValues;
+  }
+
+  private removeBrandingFromHtml(html: string): string {
+    try {
+      return html.replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>(\s*)/gi, '');
+    } catch (error) {
+      return html;
+    }
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {

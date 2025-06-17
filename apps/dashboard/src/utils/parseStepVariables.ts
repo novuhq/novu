@@ -1,6 +1,6 @@
 import { Completion } from '@codemirror/autocomplete';
 
-import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/variables';
+import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/repeat-block-aliases';
 
 import type { JSONSchemaDefinition } from '@novu/shared';
 import {
@@ -17,7 +17,7 @@ import {
 } from './schema-to-field-types';
 
 export interface LiquidVariable {
-  type?: 'variable' | 'digest' | 'new-variable';
+  type?: 'variable' | 'digest' | 'new-variable' | 'local';
   name: string;
   boost?: number;
   info?: Completion['info'];
@@ -181,10 +181,6 @@ export function parseStepVariables(
       if (typeof currentObj === 'boolean' || !('type' in currentObj)) return false;
 
       if (currentObj.type === 'object') {
-        if (currentObj.additionalProperties === true) {
-          return true;
-        }
-
         if (!currentObj.properties || !(part in currentObj.properties)) {
           return false;
         }
