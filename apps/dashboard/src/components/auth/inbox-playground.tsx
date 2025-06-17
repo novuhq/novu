@@ -36,6 +36,7 @@ export interface InboxPlaygroundFormData {
   openAccordion?: string;
   primaryAction: ActionConfig;
   secondaryAction: ActionConfig | null;
+  enableTabs?: boolean;
 }
 
 const formSchema = z.object({
@@ -61,6 +62,7 @@ const formSchema = z.object({
       }),
     })
     .nullable(),
+  enableTabs: z.boolean().optional(),
 });
 
 const defaultFormValues = (): InboxPlaygroundFormData => ({
@@ -78,6 +80,7 @@ const defaultFormValues = (): InboxPlaygroundFormData => ({
     },
   },
   secondaryAction: null,
+  enableTabs: true,
 });
 
 export function InboxPlayground() {
@@ -222,6 +225,7 @@ export function InboxPlayground() {
             selectedStyle={form.watch('selectedStyle')}
             primaryColor={form.watch('primaryColor')}
             foregroundColor={form.watch('foregroundColor')}
+            enableTabs={form.watch('enableTabs')}
           />
         </div>
       </div>

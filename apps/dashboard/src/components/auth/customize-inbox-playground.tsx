@@ -11,6 +11,7 @@ import { FormControl, FormField, FormItem } from '@/components/primitives/form/f
 import { capitalize } from '@/utils/string';
 import { InputRoot, InputWrapper } from '../primitives/input';
 import type { InboxPlaygroundFormData } from './inbox-playground';
+import { Switch } from '../primitives/switch';
 
 interface PreviewStyle {
   id: string;
@@ -38,12 +39,31 @@ export function CustomizeInbox({ form }: CustomizeInboxProps) {
 
   return (
     <div className="space-y-3 p-3">
-      <Accordion type="single" collapsible value={openAccordion} onValueChange={handleAccordionChange}>
+      <Accordion type="single" value="layout">
         <AccordionItem value="layout" className="bg-white p-0">
-          <AccordionTrigger className="bg-neutral-alpha-50 p-2 data-[state=open]:border-b">
-            <div className="flex items-center gap-1 text-xs">
-              <RiLayoutLine className="text-feature size-5" />
-              Customize Inbox
+          <AccordionTrigger
+            className="bg-neutral-alpha-50 hover:bg-neutral-alpha-50 cursor-default select-text p-2 active:scale-100 data-[state=open]:border-b"
+            withChevron={false}
+          >
+            <div className="flex w-full items-center justify-between">
+              <div className="flex items-center gap-1 text-xs">
+                <RiLayoutLine className="text-feature size-5" />
+                Customize Inbox
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={form.watch('enableTabs')}
+                  onCheckedChange={(checked) => form.setValue('enableTabs', checked)}
+                  id="enable-tabs-toggle"
+                  className="text-[#7D52F4]"
+                />
+                <label
+                  htmlFor="enable-tabs-toggle"
+                  className="text-foreground cursor-pointer select-none text-xs font-normal"
+                >
+                  Enable Tabs
+                </label>
+              </div>
             </div>
           </AccordionTrigger>
           <AccordionContent className="flex flex-col gap-2 p-2">
@@ -63,7 +83,8 @@ export function CustomizeInbox({ form }: CustomizeInboxProps) {
         </AccordionItem>
       </Accordion>
 
-      <FormProvider {...form}>
+      {/* This is commented out because we don't want to show the configure notification section for now */}
+      {/* <FormProvider {...form}> 
         <Accordion type="single" collapsible value={openAccordion} onValueChange={handleAccordionChange}>
           <AccordionItem value="configure" className="bg-white p-0">
             <AccordionTrigger className="bg-neutral-alpha-50 p-2 data-[state=open]:border-b">
@@ -77,7 +98,7 @@ export function CustomizeInbox({ form }: CustomizeInboxProps) {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </FormProvider>
+      </FormProvider> */}
     </div>
   );
 }
