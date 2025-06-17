@@ -1,25 +1,12 @@
 import type { ValueEditorType, Option } from 'react-querybuilder';
 import type { EnhancedField } from '@/utils/schema-to-field-types';
 
-export function getValueEditorTypeForField(
-  fieldName: string,
-  operator: string,
-  { fieldData }: { fieldData: EnhancedField }
-): ValueEditorType {
+export function getValueEditorTypeForField(fieldName: string, operator: string): ValueEditorType {
   if (operator === 'null' || operator === 'notNull') {
     return null;
   }
 
-  // Always return text for all field types - no more select dropdowns
-  return 'text';
-}
-
-export function getInputTypeForField(
-  fieldName: string,
-  operator: string,
-  { fieldData }: { fieldData: EnhancedField }
-): string {
-  // Always return text input type - no more specialized HTML input types
+  // Always return text for all field types this allows both values and variables
   return 'text';
 }
 
@@ -43,7 +30,6 @@ export function getPlaceholderForField(
     }
   }
 
-  // Handle in/notIn operators
   if (operator === 'in' || operator === 'notIn') {
     switch (dataType) {
       case 'number':
@@ -84,11 +70,7 @@ export type HelpTextInfo = {
   examples: string[];
 };
 
-export function getHelpTextForField(
-  fieldName: string,
-  operator: string,
-  { fieldData }: { fieldData: EnhancedField }
-): HelpTextInfo {
+export function getHelpTextForField(operator: string, { fieldData }: { fieldData: EnhancedField }): HelpTextInfo {
   const { dataType } = fieldData;
 
   // Handle between operators
@@ -249,5 +231,3 @@ export function getHelpTextForField(
       };
   }
 }
-
-// Remove the getValuesForField function as we no longer need it for select dropdowns

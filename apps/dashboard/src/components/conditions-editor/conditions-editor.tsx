@@ -15,7 +15,6 @@ import { EnhancedField } from '@/utils/schema-to-field-types';
 import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import {
   getValueEditorTypeForField,
-  getInputTypeForField,
   getPlaceholderForField,
   getHelpTextForField,
 } from '@/components/conditions-editor/field-type-editors';
@@ -117,43 +116,15 @@ function InternalConditionsEditor({
     if (!enhancedVariables) return undefined;
 
     return (fieldName: string, operator: string) => {
-      const fieldData = fieldDataMap.get(fieldName);
-
-      if (!fieldData) {
-        // Fallback to default text editor for variables not found in schema
-        return getValueEditorTypeForField(fieldName, operator, {
-          fieldData: {
-            name: fieldName,
-            label: fieldName,
-            value: fieldName,
-            dataType: 'string',
-          } as EnhancedField,
-        });
-      }
-
-      return getValueEditorTypeForField(fieldName, operator, { fieldData });
+      return getValueEditorTypeForField(fieldName, operator);
     };
   }, [fieldDataMap, enhancedVariables]);
 
   const getInputType = useMemo(() => {
     if (!enhancedVariables) return undefined;
 
-    return (fieldName: string, operator: string) => {
-      const fieldData = fieldDataMap.get(fieldName);
-
-      if (!fieldData) {
-        // Fallback to default text input for variables not found in schema
-        return getInputTypeForField(fieldName, operator, {
-          fieldData: {
-            name: fieldName,
-            label: fieldName,
-            value: fieldName,
-            dataType: 'string',
-          } as EnhancedField,
-        });
-      }
-
-      return getInputTypeForField(fieldName, operator, { fieldData });
+    return () => {
+      return 'text';
     };
   }, [fieldDataMap, enhancedVariables]);
 
@@ -188,7 +159,7 @@ function InternalConditionsEditor({
 
       if (!fieldData) {
         // Fallback to default help text for variables not found in schema
-        return getHelpTextForField(fieldName, operator, {
+        return getHelpTextForField(operator, {
           fieldData: {
             name: fieldName,
             label: fieldName,
@@ -198,7 +169,7 @@ function InternalConditionsEditor({
         });
       }
 
-      return getHelpTextForField(fieldName, operator, { fieldData });
+      return getHelpTextForField(operator, { fieldData });
     };
   }, [fieldDataMap, enhancedVariables]);
 

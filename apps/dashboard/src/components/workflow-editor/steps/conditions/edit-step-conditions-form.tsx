@@ -97,14 +97,12 @@ export const EditStepConditionsForm = () => {
 
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
-  // Use enhanced variables with type information for better field types
   const { enhancedVariables } = useParseVariablesWithTypes(
     step?.variables,
     digestStepBeforeCurrent?.stepId,
     true // Enable payload schema support
   );
 
-  // Use enhanced variables as the primary source, with fallback to regular variables
   const fields: EnhancedField[] = enhancedVariables.map((enhancedVariable) => ({
     name: enhancedVariable.name,
     label: enhancedVariable.displayLabel || enhancedVariable.name,
