@@ -88,12 +88,7 @@ const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | R
           try {
             const parsed = JSON.parse(value);
 
-            if (
-              !parsed ||
-              typeof parsed.amount !== 'number' ||
-              parsed.amount <= 0 ||
-              !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)
-            ) {
+            if (!parsed || !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)) {
               ctx.addIssue({
                 code: z.ZodIssueCode.custom,
                 message: 'Invalid amount or time unit',
