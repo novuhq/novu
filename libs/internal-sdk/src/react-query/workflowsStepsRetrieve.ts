@@ -29,7 +29,7 @@ export type WorkflowsStepsRetrieveQueryData =
   operations.WorkflowControllerGetWorkflowStepDataResponse;
 
 /**
- * Get workflow step data
+ * Retrieve workflow step
  *
  * @remarks
  * Retrieves data for a specific step in a workflow
@@ -54,7 +54,7 @@ export function useWorkflowsStepsRetrieve(
 }
 
 /**
- * Get workflow step data
+ * Retrieve workflow step
  *
  * @remarks
  * Retrieves data for a specific step in a workflow

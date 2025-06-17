@@ -27,7 +27,7 @@ export type EnvironmentsCreateMutationData =
   operations.EnvironmentsControllerV1CreateEnvironmentResponse;
 
 /**
- * Create environment
+ * Create an environment
  *
  * @remarks
  * Creates a new environment within the current organization.

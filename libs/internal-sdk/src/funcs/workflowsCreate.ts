@@ -27,7 +27,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create a new workflow
+ * Create a workflow
  *
  * @remarks
  * Creates a new workflow in the Novu Cloud environment

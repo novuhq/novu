@@ -32,7 +32,7 @@ export type WorkflowsGetQueryData =
  * Retrieve a workflow
  *
  * @remarks
- * Fetches details of a specific workflow
+ * Fetches details of a specific workflow by its unique identifier **workflowId**
  */
 export function useWorkflowsGet(
   workflowId: string,
@@ -57,7 +57,7 @@ export function useWorkflowsGet(
  * Retrieve a workflow
  *
  * @remarks
- * Fetches details of a specific workflow
+ * Fetches details of a specific workflow by its unique identifier **workflowId**
  */
 export function useWorkflowsGetSuspense(
   workflowId: string,

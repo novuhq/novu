@@ -90,7 +90,7 @@ export class WorkflowController {
 
   @Post('')
   @ApiOperation({
-    summary: 'Create a new workflow',
+    summary: 'Create a workflow',
     description: 'Creates a new workflow in the Novu Cloud environment',
   })
   @ExternalApiAccessible()
@@ -121,8 +121,8 @@ export class WorkflowController {
   @Put(':workflowId/sync')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Sync workflow to another environment',
-    description: 'Synchronizes a workflow to a target environment',
+    summary: 'Sync a workflow',
+    description: 'Synchronizes a workflow to the target environment',
   })
   @ApiBody({ type: SyncWorkflowDto, description: 'Sync workflow details' })
   @ApiResponse(WorkflowResponseDto)
@@ -145,8 +145,8 @@ export class WorkflowController {
   @Put(':workflowId')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Update an existing workflow',
-    description: 'Updates the details of an existing workflow',
+    summary: 'Update a workflow',
+    description: 'Updates the details of an existing workflow, here **workflowId** is the identifier of the workflow',
   })
   @ApiBody({ type: UpdateWorkflowDto, description: 'Workflow update details' })
   @ApiResponse(WorkflowResponseDto)
@@ -177,7 +177,7 @@ export class WorkflowController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Retrieve a workflow',
-    description: 'Fetches details of a specific workflow',
+    description: 'Fetches details of a specific workflow by its unique identifier **workflowId**',
   })
   @ApiResponse(WorkflowResponseDto)
   @ApiQuery({
@@ -208,7 +208,7 @@ export class WorkflowController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a workflow',
-    description: 'Removes a specific workflow',
+    description: 'Removes a specific workflow by its unique identifier **workflowId**',
   })
   @SdkMethodName('delete')
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
@@ -254,8 +254,12 @@ export class WorkflowController {
   }
 
   @Post(':workflowId/duplicate')
-  @ApiOperation({ summary: 'Duplicate a workflow' }) // Summary for the endpoint
-  @ApiBody({ type: DuplicateWorkflowDto }) // Documenting the request body
+  @ApiOperation({
+    summary: 'Duplicate a workflow',
+    description:
+      'Duplicates a workflow by its unique identifier **workflowId**. This will create a new workflow with the same steps and settings.',
+  })
+  @ApiBody({ type: DuplicateWorkflowDto })
   @ApiResponse(WorkflowResponseDto, 201)
   @SdkMethodName('duplicate')
   @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
@@ -275,8 +279,8 @@ export class WorkflowController {
 
   @Post('/:workflowId/step/:stepId/preview')
   @ApiOperation({
-    summary: 'Generate preview',
-    description: 'Generates a preview for a specific workflow step',
+    summary: 'Generate step preview',
+    description: 'Generates a preview for a specific workflow step by its unique identifier **stepId**',
   })
   @ApiBody({ type: GeneratePreviewRequestDto, description: 'Preview generation details' })
   @ApiResponse(GeneratePreviewResponseDto, 201)
@@ -301,7 +305,7 @@ export class WorkflowController {
 
   @Get('/:workflowId/steps/:stepId')
   @ApiOperation({
-    summary: 'Get workflow step data',
+    summary: 'Retrieve workflow step',
     description: 'Retrieves data for a specific step in a workflow',
   })
   @ApiResponse(StepResponseDto)
@@ -322,8 +326,8 @@ export class WorkflowController {
   @Patch('/:workflowId')
   @ExternalApiAccessible()
   @ApiOperation({
-    summary: 'Patch workflow',
-    description: 'Partially updates a workflow',
+    summary: 'Update a workflow',
+    description: 'Partially updates a workflow by its unique identifier **workflowId**',
   })
   @ApiBody({ type: PatchWorkflowDto, description: 'Workflow patch details' })
   @ApiResponse(WorkflowResponseDto)
@@ -341,8 +345,8 @@ export class WorkflowController {
 
   @Get('/:workflowId/test-data')
   @ApiOperation({
-    summary: 'Get workflow test data',
-    description: 'Retrieves test data for a specific workflow',
+    summary: 'Retrieve workflow test data',
+    description: 'Retrieves test data for a specific workflow by its unique identifier **workflowId**',
   })
   @ApiResponse(WorkflowTestDataResponseDto)
   @SdkMethodName('getTestData')

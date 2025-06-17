@@ -25,10 +25,10 @@ export type WorkflowsStepsGeneratePreviewMutationData =
   operations.WorkflowControllerGeneratePreviewResponse;
 
 /**
- * Generate preview
+ * Generate step preview
  *
  * @remarks
- * Generates a preview for a specific workflow step
+ * Generates a preview for a specific workflow step by its unique identifier **stepId**
  */
 export function useWorkflowsStepsGeneratePreviewMutation(
   options?: MutationHookOptions<

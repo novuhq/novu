@@ -36,7 +36,7 @@ const MobilePreviewWrapper = memo(({ children, description }: { children: React.
 });
 
 export function StepPreviewFactory() {
-  const { step, previewData, isInitialLoad } = useStepEditor();
+  const { step, previewData, isInitialLoad, controlValues } = useStepEditor();
 
   const commonProps = {
     previewData: previewData ?? undefined,
@@ -48,7 +48,7 @@ export function StepPreviewFactory() {
 
   switch (step.type) {
     case StepTypeEnum.EMAIL:
-      return <EmailCorePreview {...commonProps} />;
+      return <EmailCorePreview {...commonProps} controlValues={controlValues} />;
 
     case StepTypeEnum.IN_APP:
       return <InboxPreview {...commonProps} />;

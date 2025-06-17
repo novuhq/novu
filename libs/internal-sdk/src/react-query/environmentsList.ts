@@ -29,7 +29,7 @@ export type EnvironmentsListQueryData =
   operations.EnvironmentsControllerV1ListMyEnvironmentsResponse;
 
 /**
- * List environments
+ * List all environments
  *
  * @remarks
  * This API returns a list of environments for the current organization.
@@ -51,7 +51,7 @@ export function useEnvironmentsList(
 }
 
 /**
- * List environments
+ * List all environments
  *
  * @remarks
  * This API returns a list of environments for the current organization.
