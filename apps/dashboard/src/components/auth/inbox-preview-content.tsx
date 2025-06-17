@@ -78,7 +78,7 @@ export function InboxPreviewContent({
         },
       },
     },
-    tabs: enableTabs ? defaultTabs : [],
+    ...(enableTabs ? { tabs: defaultTabs } : {}),
   };
 
   return (
