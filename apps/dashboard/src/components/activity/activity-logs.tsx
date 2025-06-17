@@ -216,7 +216,7 @@ export function ActivityLogs({
         {children}
       </motion.div>
 
-      <Dialog open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
+      <Dialog modal={false} open={isFullscreenOpen} onOpenChange={setIsFullscreenOpen}>
         <DialogContent className="flex max-h-[90vh] w-[90%] flex-col overflow-hidden p-0 [&>button.absolute.right-4.top-4]:hidden">
           <DialogHeader className="flex-none border-b border-neutral-100 p-3">
             <div className="flex items-center justify-between">
