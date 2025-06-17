@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
  * Delete a workflow
  *
  * @remarks
- * Removes a specific workflow
+ * Removes a specific workflow by its unique identifier **workflowId**
  */
 export function workflowsDelete(
   client: NovuCore,

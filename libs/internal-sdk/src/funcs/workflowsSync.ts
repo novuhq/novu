@@ -27,10 +27,10 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Sync workflow to another environment
+ * Sync a workflow
  *
  * @remarks
- * Synchronizes a workflow to a target environment
+ * Synchronizes a workflow to the target environment
  */
 export function workflowsSync(
   client: NovuCore,
