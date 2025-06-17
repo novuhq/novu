@@ -172,7 +172,7 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
 
       <VariableEditor
         className={cn(
-          'bg-background -mt-6 min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2',
+          'bg-background -mt-6 min-h-full w-full rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2 [&_.cm-scroller]:overflow-auto',
           gutterElementClassName
         )}
         value={value}
