@@ -24,7 +24,7 @@ export const ENV_VARIABLES = {
 
 // segment analytics
 export const ANALYTICS_ENABLED = process.env.ANALYTICS_ENABLED !== 'false';
-export const SEGMENTS_WRITE_KEY = process.env.CLI_SEGMENT_WRITE_KEY || 'tz68K6ytWx6AUqDl30XAwiIoUfr7iWVW';
+export const SEGMENTS_WRITE_KEY = process.env.CLI_SEGMENT_WRITE_KEY || 'DkJoarwiEx8NAJ5lAkhaqe1v999ZevN9';
 
 export default {
   FRAMEWORKS,
