@@ -54,7 +54,7 @@ ENV NX_DAEMON=false \
     NODE_ENV=local \
     PNPM_STORE_DIR="/tmp/.pnpm-store" \
     PNPM_CACHE_DIR="/tmp/.pnpm-cache" \
-    NODE_OPTIONS="--max-old-space-size=4096"
+    NODE_OPTIONS=--max-old-space-size=4096
 
 # Create minimal directory structure and set permissions
 RUN mkdir -p \
