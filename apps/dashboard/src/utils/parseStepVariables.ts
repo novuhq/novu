@@ -240,7 +240,6 @@ export function parseStepVariables(
     return true;
   }
 
-  // Add digest variables with type information
   if (digestStepId) {
     const digestVariables = DIGEST_VARIABLES.map((variable) => {
       const { label: displayLabel, value } = getDynamicDigestVariable({

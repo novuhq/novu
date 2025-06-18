@@ -166,13 +166,33 @@ export const EditStepConditionsForm = () => {
     [hasConditions, step]
   );
 
-  const { variables, isAllowedVariable, enhancedVariables } = useParseVariables(
+  const { variables, isAllowedVariable, enhancedVariables, namespaces } = useParseVariables(
     step?.variables,
     digestStepBeforeCurrent?.stepId,
-    true // Enable payload schema support
+    true
   );
 
-  const fields = enhancedVariables.map((enhancedVariable: EnhancedLiquidVariable) => ({
+  const isVariableAllowedInConditions = (variable: EnhancedLiquidVariable): boolean => {
+    // Filter out top-level namespace variables (subscriber, payload, steps)
+    // Users should use specific properties within these namespaces instead
+    const isTopLevelNamespace = namespaces.some((ns) => ns.name === variable.name);
+
+    if (isTopLevelNamespace) {
+      return false;
+    }
+
+    // Filter out digest summary variables (these are processed variables with filters)
+    // We want to hide the raw digest variables that have type 'digest'
+    if (variable.type === 'digest') {
+      return false;
+    }
+
+    return true;
+  };
+
+  const filteredEnhancedVariables = enhancedVariables.filter(isVariableAllowedInConditions);
+
+  const fields = filteredEnhancedVariables.map((enhancedVariable: EnhancedLiquidVariable) => ({
     name: enhancedVariable.name,
     label: enhancedVariable.displayLabel || enhancedVariable.name,
     value: enhancedVariable.name,
@@ -288,7 +308,7 @@ export const EditStepConditionsForm = () => {
                 fields={fields}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
-                enhancedVariables={enhancedVariables}
+                enhancedVariables={filteredEnhancedVariables}
               />
             )}
           />
