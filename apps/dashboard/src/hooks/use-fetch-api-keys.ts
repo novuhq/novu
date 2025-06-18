@@ -21,7 +21,7 @@ export const useRegenerateApiKeys = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: regenerateApiKeys,
+    mutationFn: () => regenerateApiKeys({ environment: currentEnvironment! }),
     onSuccess: () => {
       // Invalidate the API keys query to refetch the new keys
       queryClient.invalidateQueries({

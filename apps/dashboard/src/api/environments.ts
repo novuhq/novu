@@ -43,6 +43,6 @@ export async function deleteEnvironment({ environment }: { environment: IEnviron
   return del(`/environments/${environment._id}`);
 }
 
-export async function regenerateApiKeys(): Promise<{ data: IApiKey[] }> {
-  return post<{ data: IApiKey[] }>(`/environments/api-keys/regenerate`, {});
+export async function regenerateApiKeys({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
+  return post<{ data: IApiKey[] }>(`/environments/api-keys/regenerate`, { environment });
 }
