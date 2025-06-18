@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 
@@ -23,7 +23,6 @@ import {
   getHelpTextForField,
 } from '@/components/conditions-editor/field-type-editors';
 
-// Enhanced field type for the conditions editor
 export interface EnhancedField extends Field {
   dataType: FieldDataType;
   inputType?: string;
@@ -78,7 +77,7 @@ function InternalConditionsEditor({
   saveForm,
   enhancedVariables,
 }: {
-  fields: Field[] | EnhancedField[];
+  fields: EnhancedField[];
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   query: RuleGroupType;
@@ -86,9 +85,6 @@ function InternalConditionsEditor({
   saveForm: () => void;
   enhancedVariables?: EnhancedLiquidVariable[];
 }) {
-  const context = useMemo(() => ({ variables, isAllowedVariable, saveForm }), [variables, isAllowedVariable, saveForm]);
-
-  // Create field data map for enhanced field lookups
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
 
@@ -102,16 +98,18 @@ function InternalConditionsEditor({
           dataType: variable.dataType,
           inputType: variable.inputType,
           format: variable.format,
-        } as EnhancedField,
+        },
       ])
     );
   }, [enhancedVariables]);
 
-  // Enhanced configuration functions
-  const getOperators = useMemo(() => {
-    if (!enhancedVariables) return undefined;
+  const getOperators = useCallback(
+    (fieldName: string) => {
+      if (!enhancedVariables) {
+        // Fallback to default string operators for variables not found in schema
+        return getOperatorsForFieldType('string');
+      }
 
-    return (fieldName: string) => {
       const fieldData = fieldDataMap.get(fieldName);
 
       if (!fieldData) {
@@ -120,22 +118,29 @@ function InternalConditionsEditor({
       }
 
       return getOperatorsForFieldType(fieldData.dataType);
-    };
-  }, [fieldDataMap, enhancedVariables]);
+    },
+    [fieldDataMap, enhancedVariables]
+  );
 
-  const getValueEditorType = useMemo(() => {
-    if (!enhancedVariables) return undefined;
-
-    return (fieldName: string, operator: string) => {
-      return getValueEditorTypeForField(fieldName, operator);
-    };
-  }, [fieldDataMap, enhancedVariables]);
+  const getValueEditorType = useCallback((fieldName: string, operator: string) => {
+    return getValueEditorTypeForField(fieldName, operator);
+  }, []);
 
   // Add new functions for placeholder and help text
-  const getPlaceholder = useMemo(() => {
-    if (!enhancedVariables) return undefined;
+  const getPlaceholder = useCallback(
+    (fieldName: string, operator: string) => {
+      if (!enhancedVariables) {
+        // Fallback to default placeholder for variables not found in schema
+        return getPlaceholderForField(fieldName, operator, {
+          fieldData: {
+            name: fieldName,
+            label: fieldName,
+            value: fieldName,
+            dataType: 'string',
+          } as EnhancedField,
+        });
+      }
 
-    return (fieldName: string, operator: string) => {
       const fieldData = fieldDataMap.get(fieldName);
 
       if (!fieldData) {
@@ -151,13 +156,24 @@ function InternalConditionsEditor({
       }
 
       return getPlaceholderForField(fieldName, operator, { fieldData });
-    };
-  }, [fieldDataMap, enhancedVariables]);
+    },
+    [fieldDataMap, enhancedVariables]
+  );
 
-  const getHelpText = useMemo(() => {
-    if (!enhancedVariables) return undefined;
+  const getHelpText = useCallback(
+    (fieldName: string, operator: string) => {
+      if (!enhancedVariables) {
+        // Fallback to default help text for variables not found in schema
+        return getHelpTextForField(operator, {
+          fieldData: {
+            name: fieldName,
+            label: fieldName,
+            value: fieldName,
+            dataType: 'string',
+          },
+        });
+      }
 
-    return (fieldName: string, operator: string) => {
       const fieldData = fieldDataMap.get(fieldName);
 
       if (!fieldData) {
@@ -168,18 +184,30 @@ function InternalConditionsEditor({
             label: fieldName,
             value: fieldName,
             dataType: 'string',
-          } as EnhancedField,
+          },
         });
       }
 
       return getHelpTextForField(operator, { fieldData });
-    };
-  }, [fieldDataMap, enhancedVariables]);
+    },
+    [fieldDataMap, enhancedVariables]
+  );
+
+  const context = useMemo(
+    () => ({
+      variables,
+      isAllowedVariable,
+      saveForm,
+      getPlaceholder,
+      getHelpText,
+    }),
+    [variables, isAllowedVariable, saveForm, getPlaceholder, getHelpText]
+  );
 
   return (
     <QueryBuilder
       fields={fields}
-      context={{ ...context, getPlaceholder, getHelpText }}
+      context={context}
       controlElements={controlElements}
       query={query}
       onQueryChange={onQueryChange}
@@ -215,7 +243,7 @@ export function ConditionsEditor({
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
-  fields: Field[] | EnhancedField[];
+  fields: EnhancedField[];
   saveForm: () => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
