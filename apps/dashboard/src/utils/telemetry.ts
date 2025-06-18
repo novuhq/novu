@@ -68,4 +68,5 @@ export enum TelemetryEvent {
   CARD_BLOCK_ADDED = 'Card block added',
   TOPICS_PAGE_VISIT = 'Topics Page Visit',
   DIGEST_VARIABLE_SELECTED = 'Digest variable selected',
+  LAYOUTS_PAGE_VISIT = 'Layouts page visit',
 }

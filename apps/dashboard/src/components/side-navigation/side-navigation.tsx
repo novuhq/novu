@@ -13,6 +13,7 @@ import {
   RiDiscussLine,
   RiGroup2Line,
   RiKey2Line,
+  RiLayout5Line,
   RiRouteFill,
   RiSettings4Line,
   RiSignalTowerLine,
@@ -108,6 +109,7 @@ export const SideNavigation = () => {
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
+  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -151,6 +153,20 @@ export const SideNavigation = () => {
                 </Protect>
               )}
             </NavigationGroup>
+            {isEmailLayoutsPageActive && (
+              <Protect permission={PermissionsEnum.LAYOUT_READ}>
+                <NavigationGroup label="Resources">
+                  <Protect permission={PermissionsEnum.LAYOUT_READ}>
+                    <NavigationLink
+                      to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    >
+                      <RiLayout5Line className="size-4" />
+                      <span>Email Layouts</span>
+                    </NavigationLink>
+                  </Protect>
+                </NavigationGroup>
+              </Protect>
+            )}
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
