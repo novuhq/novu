@@ -7,12 +7,15 @@ import {
   ParsedData,
   PreviewSubscriberData,
   PayloadData,
+  PayloadSectionProps,
 } from './types/preview-context.types';
 import { PreviewPayloadSection, PreviewSubscriberSection, PreviewStepResultsSection } from './components';
 import { usePreviewContext } from './hooks/use-preview-context';
 import { usePersistedPreviewContext } from './hooks/use-persisted-preview-context';
 import { usePreviewDataInitialization } from './hooks/use-preview-data-initialization';
 import { StepTypeEnum } from '@/utils/enums';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { PayloadSchemaDrawer } from '../payload-schema-drawer';
 
 const DEFAULT_SUBSCRIBER_DATA: PreviewSubscriberData = {
   subscriberId: '123456',
@@ -27,13 +30,13 @@ const DEFAULT_SUBSCRIBER_DATA: PreviewSubscriberData = {
 export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
   const { currentEnvironment } = useEnvironment();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
+  const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
+    useCreateVariable();
 
-  // Check if workflow has digest steps
   const hasDigestStep = useMemo(() => {
     return workflow?.steps?.some((step) => step.type === StepTypeEnum.DIGEST) ?? false;
   }, [workflow?.steps]);
 
-  // Initialize persistence hook
   const {
     loadPersistedPayload,
     savePersistedPayload,
@@ -91,39 +94,54 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
   const handleClearPersistedSubscriber = () => {
     clearPersistedSubscriber();
 
-    // Reset subscriber to default mock data
     updateJsonSection('subscriber', DEFAULT_SUBSCRIBER_DATA);
   };
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
 
   return (
-    <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
-      <PreviewPayloadSection
-        errors={errors}
-        localParsedData={localParsedData}
-        workflow={workflow}
-        onUpdate={updateJsonSection}
-        onClearPersisted={canClearPersisted ? handleClearPersistedPayload : undefined}
-        hasDigestStep={hasDigestStep}
-      />
+    <>
+      <Accordion type="multiple" value={accordionValue} onValueChange={setAccordionValue}>
+        <PreviewPayloadSection
+          errors={errors}
+          localParsedData={localParsedData}
+          workflow={workflow}
+          onUpdate={updateJsonSection}
+          onClearPersisted={canClearPersisted ? handleClearPersistedPayload : undefined}
+          hasDigestStep={hasDigestStep}
+          onManageSchema={openSchemaDrawer}
+        />
 
-      <PreviewSubscriberSection
-        errors={errors}
-        localParsedData={localParsedData}
-        workflow={workflow}
-        onUpdate={updateJsonSection}
-        onSubscriberSelect={handleSubscriberSelection}
-        onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
-      />
+        <PreviewSubscriberSection
+          errors={errors}
+          localParsedData={localParsedData}
+          workflow={workflow}
+          onUpdate={updateJsonSection}
+          onSubscriberSelect={handleSubscriberSelection}
+          onClearPersisted={canClearPersisted ? handleClearPersistedSubscriber : undefined}
+        />
 
-      <PreviewStepResultsSection
-        errors={errors}
-        localParsedData={localParsedData}
+        <PreviewStepResultsSection
+          errors={errors}
+          localParsedData={localParsedData}
+          workflow={workflow}
+          onUpdate={updateJsonSection}
+          currentStepId={currentStepId}
+        />
+      </Accordion>
+      <PayloadSchemaDrawer
+        isOpen={isPayloadSchemaDrawerOpen}
+        onOpenChange={(isOpen: boolean) => {
+          if (!isOpen) {
+            closeSchemaDrawer();
+          }
+        }}
         workflow={workflow}
-        onUpdate={updateJsonSection}
-        currentStepId={currentStepId}
+        highlightedPropertyKey={highlightedVariableKey}
+        onSave={() => {
+          // TODO: maybe refetch workflow
+        }}
       />
-    </Accordion>
+    </>
   );
 }
