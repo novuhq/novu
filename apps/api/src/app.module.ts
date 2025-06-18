@@ -59,7 +59,9 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+      modules.push(require('@novu/ee-translation')?.TranslationModule);
     }
+
     if (require('@novu/ee-billing')?.BillingModule) {
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }

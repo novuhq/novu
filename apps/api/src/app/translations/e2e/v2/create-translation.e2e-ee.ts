@@ -1,0 +1,99 @@
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { Novu } from '@novu/api';
+import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+
+describe('Create/update translation - /v2/translations (POST) #novu-v2', async () => {
+  let session: UserSession;
+  let novuClient: Novu;
+  let workflowId: string;
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+    novuClient = initNovuClassSdkInternalAuth(session);
+
+    const { result: workflow } = await novuClient.workflows.create({
+      name: 'Test Workflow for Translations',
+      workflowId: `test-workflow-${Date.now()}`,
+      source: WorkflowCreationSourceEnum.EDITOR,
+      active: true,
+      steps: [
+        {
+          name: 'In-App Step',
+          type: StepTypeEnum.IN_APP,
+          controlValues: {
+            body: 'Test content',
+          },
+        },
+      ],
+    });
+    workflowId = workflow.id;
+  });
+
+  it('should create new translation successfully', async () => {
+    const requestBody = {
+      workflowId,
+      locale: 'en-US',
+      content: {
+        'welcome.title': 'Welcome',
+        'welcome.message': 'Hello there!',
+        'button.submit': 'Submit',
+      },
+    };
+
+    const { body } = await session.testAgent.post('/v2/translations').send(requestBody).expect(200);
+
+    expect(body.data._id).to.be.a('string');
+    expect(body.data.locale).to.equal('en-US');
+    expect(body.data._workflowId).to.equal(workflowId);
+    expect(body.data.content).to.deep.equal(requestBody.content);
+    expect(body.data.createdAt).to.be.a('string');
+    expect(body.data.updatedAt).to.be.a('string');
+  });
+
+  it('should update existing translation', async () => {
+    const originalContent = {
+      key1: 'original value',
+      key2: 'another value',
+    };
+    const updatedContent = {
+      key1: 'updated value',
+      key3: 'new value',
+    };
+
+    // Create initial translation
+    await session.testAgent
+      .post('/v2/translations')
+      .send({
+        workflowId,
+        locale: 'en-US',
+        content: originalContent,
+      })
+      .expect(200);
+
+    // Update the translation
+    const { body } = await session.testAgent
+      .post('/v2/translations')
+      .send({
+        workflowId,
+        locale: 'en-US',
+        content: updatedContent,
+      })
+      .expect(200);
+
+    expect(body.data.content).to.deep.equal(updatedContent);
+  });
+
+  it('should validate locale format', async () => {
+    await session.testAgent
+      .post('/v2/translations')
+      .send({
+        workflowId,
+        locale: '123',
+        content: { key: 'value' },
+      })
+      .expect(422);
+  });
+});
