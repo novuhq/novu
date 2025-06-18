@@ -1,5 +1,4 @@
-import type { ValueEditorType, Option } from 'react-querybuilder';
-import type { FieldDataType } from '@/utils/parseStepVariables';
+import type { ValueEditorType } from 'react-querybuilder';
 import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
 import { isRelativeDateOperator } from './field-type-operators';
 
