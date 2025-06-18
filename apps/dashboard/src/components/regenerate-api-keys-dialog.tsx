@@ -9,7 +9,7 @@ import {
   DialogPortal,
   DialogTitle,
 } from '@/components/primitives/dialog';
-import { FormInput } from '@/components/primitives/form/form';
+import { Input } from '@/components/primitives/input';
 import { IEnvironment } from '@novu/shared';
 import { useState } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
@@ -70,7 +70,7 @@ export const RegenerateApiKeysDialog = ({
             </div>
           </div>
           <div className="mt-4">
-            <FormInput
+            <Input
               placeholder={environment.name}
               value={environmentName}
               onChange={(e) => setEnvironmentName(e.target.value)}

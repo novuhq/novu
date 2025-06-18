@@ -218,11 +218,12 @@ function SettingField({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <CompactButton
-                    size="md"
+                    size="lg"
                     variant="stroke"
                     icon={RiLoopRightFill}
                     onClick={onRegenerateClick}
                     disabled={isRegenerateLoading}
+                    className="h-[38px] w-[38px]"
                   />
                 </TooltipTrigger>
                 <TooltipContent>Regenerate API Key</TooltipContent>
