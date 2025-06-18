@@ -130,13 +130,11 @@ function getToleranceMs(unit: string): number {
     case 'hours':
       return 60 * 60 * 1000; // ±1 hour tolerance
     case 'days':
-      return 24 * 60 * 60 * 1000; // ±1 day tolerance
     case 'weeks':
-      return 24 * 60 * 60 * 1000; // ±1 day tolerance (not ±1 week!)
     case 'months':
-      return 24 * 60 * 60 * 1000; // ±1 day tolerance (not ±30 days!)
+      return 24 * 60 * 60 * 1000; // ±1 day tolerance
     case 'years':
-      return 7 * 24 * 60 * 60 * 1000; // ±1 week tolerance (not ±365 days!)
+      return 7 * 24 * 60 * 60 * 1000; // ±1 week tolerance
     default:
       return 24 * 60 * 60 * 1000; // default to 1 day
   }
