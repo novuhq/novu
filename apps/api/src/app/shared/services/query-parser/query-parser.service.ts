@@ -126,17 +126,17 @@ function calculateRelativeDate(amount: number, unit: string, fromDate = new Date
 function getToleranceMs(unit: string): number {
   switch (unit) {
     case 'minutes':
-      return 60 * 1000; // 1 minute tolerance
+      return 60 * 1000; // ±1 minute tolerance
     case 'hours':
-      return 60 * 60 * 1000; // 1 hour tolerance
+      return 60 * 60 * 1000; // ±1 hour tolerance
     case 'days':
-      return 24 * 60 * 60 * 1000; // 1 day tolerance
+      return 24 * 60 * 60 * 1000; // ±1 day tolerance
     case 'weeks':
-      return 7 * 24 * 60 * 60 * 1000; // 1 week tolerance
+      return 24 * 60 * 60 * 1000; // ±1 day tolerance (not ±1 week!)
     case 'months':
-      return 30 * 24 * 60 * 60 * 1000; // 30 days tolerance
+      return 24 * 60 * 60 * 1000; // ±1 day tolerance (not ±30 days!)
     case 'years':
-      return 365 * 24 * 60 * 60 * 1000; // 365 days tolerance
+      return 7 * 24 * 60 * 60 * 1000; // ±1 week tolerance (not ±365 days!)
     default:
       return 24 * 60 * 60 * 1000; // default to 1 day
   }
