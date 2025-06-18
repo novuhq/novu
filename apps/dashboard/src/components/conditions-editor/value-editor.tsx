@@ -266,7 +266,7 @@ function RelativeDateEditor({
           <ControlInput
             multiline={false}
             indentWithTab={false}
-            placeholder={'4'}
+            placeholder={'Amount'}
             value={String(parsedValue.amount)}
             onChange={handleAmountChange}
             variables={variables}
