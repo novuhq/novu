@@ -41,7 +41,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
-  const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
 
   // Add workflow-level payload persistence
