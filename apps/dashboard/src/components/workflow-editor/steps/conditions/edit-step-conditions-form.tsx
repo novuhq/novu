@@ -105,7 +105,7 @@ export const EditStepConditionsForm = () => {
     // Users should use specific properties within these namespaces instead
     const isTopLevelNamespace = namespaces.some((ns) => ns.name === variable.name);
 
-    if (isTopLevelNamespace) {
+    if (isTopLevelNamespace && variable.name !== 'subscriber.data') {
       return false;
     }
 
