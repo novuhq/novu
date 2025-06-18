@@ -461,10 +461,6 @@ function trackCliError(
       stack,
       ...getAnalyticsContext(config),
       ...context,
-      nodeVersion: process.version,
-      platform: process.platform,
-      argv: process.argv.slice(2).join(' '), // Exclude node and script paths
-      cwd: process.cwd().replace(/\/home\/[^/]+/, '/home/***'), // Sanitize user paths
     },
   });
 }
@@ -481,10 +477,6 @@ function trackCliCancelled(
       reason,
       ...getAnalyticsContext(config),
       ...context,
-      nodeVersion: process.version,
-      platform: process.platform,
-      argv: process.argv.join(' '),
-      cwd: process.cwd(),
     },
   });
 }
@@ -495,10 +487,6 @@ function trackCliCompleted(analytics: AnalyticsService, config: IUserConfig, con
     data: {
       ...getAnalyticsContext(config),
       ...context,
-      nodeVersion: process.version,
-      platform: process.platform,
-      argv: process.argv.join(' '),
-      cwd: process.cwd(),
     },
   });
 }
