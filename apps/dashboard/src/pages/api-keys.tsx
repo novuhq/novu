@@ -16,7 +16,7 @@ import { API_HOSTNAME } from '../config';
 import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
 import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
 import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
-import { CompactButton } from '../components/primitives/button-compact';
+import { Button } from '../components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
 import { PermissionsEnum } from '@novu/shared';
 import { useHasPermission } from '../hooks/use-has-permission';
@@ -217,14 +217,16 @@ function SettingField({
             {showRegenerateButton && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <CompactButton
-                    size="lg"
-                    variant="stroke"
-                    icon={RiLoopRightFill}
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    mode="outline"
                     onClick={onRegenerateClick}
                     disabled={isRegenerateLoading}
-                    className="h-[38px] w-[38px]"
-                  />
+                    className="h-[38px] min-w-[38px] p-0"
+                  >
+                    <RiLoopRightFill className="h-4 w-4" />
+                  </Button>
                 </TooltipTrigger>
                 <TooltipContent>Regenerate API Key</TooltipContent>
               </Tooltip>
