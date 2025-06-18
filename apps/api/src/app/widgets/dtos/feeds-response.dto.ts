@@ -209,6 +209,15 @@ export class NotificationFeedItemDto implements INotificationDto {
   })
   payload?: Record<string, unknown>;
 
+  @ApiPropertyOptional({
+    description: 'The data sent with the notification.',
+    type: 'object',
+    nullable: true,
+    example: { key: 'value' },
+    additionalProperties: true,
+  })
+  data?: Record<string, unknown> | null;
+
   @ApiProperty({
     description: 'Provider-specific overrides used when triggering the notification.',
     type: 'object',
@@ -217,6 +226,14 @@ export class NotificationFeedItemDto implements INotificationDto {
     example: { overrideKey: 'overrideValue' },
   })
   overrides?: Record<string, unknown>;
+
+  @ApiPropertyOptional({
+    description: 'Tags associated with the workflow that triggered the notification.',
+    type: [String],
+    nullable: true,
+    example: ['tag1', 'tag2'],
+  })
+  tags?: string[] | null;
 }
 
 export class FeedResponseDto {

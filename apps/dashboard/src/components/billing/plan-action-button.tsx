@@ -54,7 +54,7 @@ export function PlanActionButton({
         disabled={isLoadingPortal}
         isLoading={isLoadingSubscription}
       >
-        Manage Account
+        Manage Plan
       </Button>
     );
   }
