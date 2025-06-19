@@ -59,6 +59,11 @@ export const envValidators = {
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
+
+      CLICK_HOUSE_URL: str(),
+      CLICK_HOUSE_DATABASE: str(),
+      CLICK_HOUSE_USER: str(),
+      CLICK_HOUSE_PASSWORD: str(),
     }),
 
   // Feature Flags
@@ -101,9 +106,4 @@ export const envValidators = {
     VERCEL_REDIRECT_URI: url({ default: 'https://dashboard.novu.co/auth/login' }),
     VERCEL_BASE_URL: url({ default: 'https://api.vercel.com' }),
   }),
-
-  CLICK_HOUSE_URL: str({ default: 'http://127.0.0.1:8123' }),
-  CLICK_HOUSE_DATABASE: str({ default: 'default' }),
-  CLICK_HOUSE_USER: str({ default: 'default' }),
-  CLICK_HOUSE_PASSWORD: str({ default: '' }),
 } satisfies Record<string, ValidatorSpec<unknown>>;
