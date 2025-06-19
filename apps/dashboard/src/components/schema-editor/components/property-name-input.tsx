@@ -1,5 +1,6 @@
 import { Controller, type Control, type Path } from 'react-hook-form';
 import { RiErrorWarningLine } from 'react-icons/ri';
+import { memo } from 'react';
 
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -15,7 +16,7 @@ type PropertyNameInputProps = {
   placeholder?: string;
 };
 
-export function PropertyNameInput({
+export const PropertyNameInput = memo(function PropertyNameInput({
   fieldPath,
   control,
   isDisabled = false,
@@ -33,7 +34,10 @@ export function PropertyNameInput({
               <InputWrapper>
                 <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
                 <InputPure
-                  {...field} // spread field props (onChange, onBlur, value, ref)
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  name={field.name}
                   placeholder={placeholder}
                   className="text-xs"
                   disabled={isDisabled}
@@ -59,4 +63,4 @@ export function PropertyNameInput({
       />
     </div>
   );
-}
+});
