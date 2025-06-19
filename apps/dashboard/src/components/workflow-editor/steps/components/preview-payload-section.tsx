@@ -69,20 +69,22 @@ export function PreviewPayloadSection({
           {errors.payload && <p className="text-destructive text-xs">{errors.payload}</p>}
         </div>
         {onManageSchema && (
-          <Hint className="text-label-2xs text-foreground-600 font-normal">
-            <HintIcon className="size-3" as={RiInformationLine} />
-            Manage required fields and validations with{' '}
-            <b
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onManageSchema();
-              }}
-              className="text-foreground-600 cursor-pointer font-medium"
-            >
-              Payload schema ↗
-            </b>
-          </Hint>
+          <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
+            <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+            <span>
+              Manage required fields and validations with{' '}
+              <b
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onManageSchema();
+                }}
+                className="text-foreground-600 cursor-pointer font-medium"
+              >
+                Payload schema ↗
+              </b>
+            </span>
+          </div>
         )}
       </AccordionContent>
     </AccordionItem>
