@@ -1,19 +1,44 @@
 import { useFormContext } from 'react-hook-form';
 import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
-import { RiInformationLine, RiErrorWarningLine } from 'react-icons/ri';
 
 import { InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { ControlInput } from '../primitives/control-input/control-input';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
-import { Badge } from '../primitives/badge';
+import { shouldUseRelativeDateEditor } from '@/components/conditions-editor/field-type-editors';
+import { HelpIcon } from '@/components/conditions-editor/help-icon';
+
+type RelativeDateValue = {
+  amount: number | string;
+  unit: 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years';
+};
 
 type ExtendedContext = {
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   getPlaceholder?: (fieldName: string, operator: string) => string;
   getHelpText?: (fieldName: string, operator: string) => HelpTextInfo;
+};
+
+const TIME_UNITS = [
+  { value: 'minutes', label: 'minutes' },
+  { value: 'hours', label: 'hours' },
+  { value: 'days', label: 'days' },
+  { value: 'weeks', label: 'weeks' },
+  { value: 'months', label: 'months' },
+  { value: 'years', label: 'years' },
+] as const;
+
+type BaseEditorProps = {
+  value: string;
+  onChange: (newValue: string) => void;
+  placeholder: string;
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+  hasError: boolean;
+  helpText: HelpTextInfo | null;
+  errorMessage?: string;
 };
 
 export const ValueEditor = (props: ValueEditorProps) => {
@@ -28,113 +53,242 @@ export const ValueEditor = (props: ValueEditorProps) => {
     return null;
   }
 
-  // Get dynamic placeholder and help text
   const placeholder = getPlaceholder ? getPlaceholder(field, operator) : 'value';
   const helpText = getHelpText ? getHelpText(field, operator) : null;
+  const hasError = !!error;
 
-  // Combined icon component that shows error or info content
-  const CombinedIcon = ({ hasError, errorMessage }: { hasError: boolean; errorMessage?: string }) => {
-    if (!helpText && !hasError) return null;
-
-    const IconComponent = hasError ? RiErrorWarningLine : RiInformationLine;
-    const iconColor = hasError ? 'text-destructive' : 'text-foreground-400 hover:text-foreground-600';
-
+  if (shouldUseRelativeDateEditor(operator)) {
     return (
-      <HoverCard openDelay={100}>
-        <HoverCardTrigger asChild>
-          <div className="mr-1 flex cursor-help items-center justify-center" role="button" tabIndex={-1}>
-            <IconComponent className={`size-4 ${iconColor}`} />
-          </div>
-        </HoverCardTrigger>
-        <HoverCardContent className="w-[240px] p-2">
-          <div>
-            {/* Error content (shown above info when present) */}
-            {hasError && errorMessage && (
-              <>
-                <div className="text-label-xs mb-1 font-medium text-red-600">{errorMessage}</div>
-                {helpText && <div className="mb-1.5 border-t border-neutral-200" />}
-              </>
-            )}
-
-            {helpText && (
-              <>
-                <div className="flex items-start gap-2">
-                  <div className="flex-1">
-                    <div>
-                      <Badge color="yellow" size="sm" variant="lighter" className="mr-1">
-                        💡 TIP
-                      </Badge>
-                    </div>
-                    <div className="text-label-xs mt-1 text-gray-600">{helpText.description}</div>
-                  </div>
-                </div>
-                <div className="mt-1 space-y-1 pl-1.5">
-                  {helpText.examples.map((example, idx) => (
-                    <div key={idx} className="flex items-start gap-1.5">
-                      <div className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-gray-400" />
-                      <div className="text-label-xs text-gray-600">{example}</div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </HoverCardContent>
-      </HoverCard>
+      <RelativeDateEditor
+        value={value}
+        onChange={handleOnChange}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable || (() => true)}
+        hasError={hasError}
+        helpText={helpText}
+        errorMessage={error?.message}
+      />
     );
-  };
+  }
 
   if (operator === 'between' || operator === 'notBetween') {
-    const betweenPlaceholder = getPlaceholder ? getPlaceholder(field, operator) : 'value1,value2';
-    const [fromPlaceholder, toPlaceholder] = betweenPlaceholder.split(',').map((p) => p.trim());
-
-    const editors = ['from', 'to'].map((key, i) => {
-      const hasError = !!error && !valueAsArray[i];
-      const isLastInput = i === 1;
-
-      return (
-        <InputRoot key={key} className="bg-bg-white w-28" hasError={hasError}>
-          <InputWrapper className="gap-0 px-0">
-            <ControlInput
-              multiline={false}
-              indentWithTab={false}
-              placeholder={i === 0 ? fromPlaceholder : toPlaceholder}
-              value={valueAsArray[i] ?? ''}
-              onChange={(newValue) => multiValueHandler(newValue, i)}
-              variables={variables}
-              isAllowedVariable={isAllowedVariable}
-              size="3xs"
-            />
-            {isLastInput && <CombinedIcon hasError={!!error} errorMessage={error?.message} />}
-          </InputWrapper>
-        </InputRoot>
-      );
-    });
-
     return (
-      <div className="flex items-start gap-1">
-        {editors[0]}
-        <span className="text-foreground-600 text-paragraph-xs mt-1.5">and</span>
-        {editors[1]}
-      </div>
+      <BetweenValueEditor
+        valueAsArray={valueAsArray}
+        multiValueHandler={multiValueHandler}
+        placeholder={placeholder}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
+        hasError={hasError}
+        helpText={helpText}
+        errorMessage={error?.message}
+      />
     );
   }
 
   return (
-    <InputRoot className="bg-bg-white w-48" hasError={!!error}>
+    <SingleValueEditor
+      value={value}
+      onChange={handleOnChange}
+      placeholder={placeholder}
+      variables={variables}
+      isAllowedVariable={isAllowedVariable}
+      hasError={hasError}
+      helpText={helpText}
+      errorMessage={error?.message}
+    />
+  );
+};
+
+function SingleValueEditor({
+  value,
+  onChange,
+  placeholder,
+  variables,
+  isAllowedVariable,
+  hasError,
+  helpText,
+  errorMessage,
+}: BaseEditorProps) {
+  return (
+    <InputRoot className="bg-bg-white w-48" hasError={hasError}>
       <InputWrapper className="gap-0 px-0">
         <ControlInput
           multiline={false}
           indentWithTab={false}
           placeholder={placeholder}
           value={value ?? ''}
-          onChange={handleOnChange}
+          onChange={onChange}
           variables={variables}
           isAllowedVariable={isAllowedVariable}
           size="3xs"
         />
-        <CombinedIcon hasError={!!error} errorMessage={error?.message} />
+        <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} />
       </InputWrapper>
     </InputRoot>
   );
-};
+}
+
+function BetweenValueEditor({
+  valueAsArray,
+  multiValueHandler,
+  placeholder,
+  variables,
+  isAllowedVariable,
+  hasError,
+  helpText,
+  errorMessage,
+}: {
+  valueAsArray: string[];
+  multiValueHandler: (value: string, index: number) => void;
+  placeholder: string;
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+  hasError: boolean;
+  helpText: HelpTextInfo | null;
+  errorMessage?: string;
+}) {
+  const [fromPlaceholder, toPlaceholder] = placeholder.split(',').map((p) => p.trim());
+
+  const editors = ['from', 'to'].map((key, i) => {
+    const hasInputError = hasError && !valueAsArray[i];
+    const isLastInput = i === 1;
+
+    return (
+      <InputRoot key={key} className="bg-bg-white w-28" hasError={hasInputError}>
+        <InputWrapper className="gap-0 px-0">
+          <ControlInput
+            multiline={false}
+            indentWithTab={false}
+            placeholder={i === 0 ? fromPlaceholder : toPlaceholder}
+            value={valueAsArray[i] ?? ''}
+            onChange={(newValue) => multiValueHandler(newValue, i)}
+            variables={variables}
+            isAllowedVariable={isAllowedVariable}
+            size="3xs"
+          />
+          {isLastInput && <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} />}
+        </InputWrapper>
+      </InputRoot>
+    );
+  });
+
+  return (
+    <div className="flex items-start gap-1">
+      {editors[0]}
+      <span className="text-foreground-600 text-paragraph-xs mt-1.5">and</span>
+      {editors[1]}
+    </div>
+  );
+}
+
+function RelativeDateEditor({
+  value,
+  onChange,
+  variables,
+  isAllowedVariable,
+  hasError,
+  helpText,
+  errorMessage,
+}: {
+  value: string;
+  onChange: (newValue: string) => void;
+  variables: LiquidVariable[];
+  isAllowedVariable: IsAllowedVariable;
+  hasError: boolean;
+  helpText: HelpTextInfo | null;
+  errorMessage?: string;
+}) {
+  const parseRelativeDateValue = (val: string): RelativeDateValue => {
+    let parsedValue: RelativeDateValue = { amount: '', unit: 'days' };
+
+    if (!val) {
+      return parsedValue;
+    }
+
+    try {
+      if (typeof val === 'string') {
+        // Try to parse as JSON first
+        const parsed = JSON.parse(val);
+
+        if (parsed && typeof parsed === 'object' && parsed.unit) {
+          // Valid JSON object with unit property
+          parsedValue = {
+            amount: parsed.amount,
+            unit: parsed.unit || 'days',
+          };
+        } else {
+          // If parsed value is not a valid relative date object, treat as raw amount
+          parsedValue = { amount: parsed, unit: 'days' };
+        }
+      } else if (typeof val === 'object' && val) {
+        parsedValue = val as RelativeDateValue;
+      }
+    } catch {
+      // JSON parsing failed - treat the entire value as the amount
+      // This handles cases where the value is just a liquid variable like "{{payload.amount}}"
+      parsedValue = { amount: val, unit: 'days' };
+    }
+
+    return parsedValue;
+  };
+
+  const parsedValue = parseRelativeDateValue(value);
+
+  const handleAmountChange = (newAmount: string) => {
+    // If it's a variable or dynamic value, store it directly without validation
+    if (newAmount.includes('{{') || newAmount.includes('${')) {
+      const newValue = { ...parsedValue, amount: newAmount };
+      const jsonValue = JSON.stringify(newValue);
+      onChange(jsonValue);
+      return;
+    }
+
+    // For static values, try to parse as number but allow any string
+    const amount = parseInt(newAmount, 10);
+    const finalAmount = !isNaN(amount) && amount > 0 ? amount : newAmount;
+
+    const newValue = { ...parsedValue, amount: finalAmount };
+    const jsonValue = JSON.stringify(newValue);
+    onChange(jsonValue);
+  };
+
+  const handleUnitChange = (newUnit: string) => {
+    const newValue = { ...parsedValue, unit: newUnit as RelativeDateValue['unit'] };
+    const jsonValue = JSON.stringify(newValue);
+    onChange(jsonValue);
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <InputRoot className="bg-bg-white w-32" hasError={hasError}>
+        <InputWrapper className="gap-0 px-0">
+          <ControlInput
+            multiline={false}
+            indentWithTab={false}
+            placeholder={'Amount'}
+            value={String(parsedValue.amount)}
+            onChange={handleAmountChange}
+            variables={variables}
+            isAllowedVariable={isAllowedVariable || (() => true)}
+            size="3xs"
+          />
+          <HelpIcon hasError={hasError} errorMessage={errorMessage} helpText={helpText} contentWidth="w-[280px]" />
+        </InputWrapper>
+      </InputRoot>
+
+      <Select value={parsedValue.unit} onValueChange={handleUnitChange}>
+        <SelectTrigger className="bg-bg-white text-paragraph-xs border-border-strong h-7 w-20 px-2">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {TIME_UNITS.map((unit) => (
+            <SelectItem key={unit.value} value={unit.value} className="text-paragraph-xs">
+              {unit.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}

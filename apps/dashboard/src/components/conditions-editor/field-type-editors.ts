@@ -1,6 +1,6 @@
-import type { ValueEditorType, Option } from 'react-querybuilder';
-import type { FieldDataType } from '@/utils/parseStepVariables';
+import type { ValueEditorType } from 'react-querybuilder';
 import type { EnhancedField } from '@/components/conditions-editor/conditions-editor';
+import { isRelativeDateOperator } from './field-type-operators';
 
 export function getValueEditorTypeForField(fieldName: string, operator: string): ValueEditorType {
   if (operator === 'null' || operator === 'notNull') {
@@ -9,6 +9,10 @@ export function getValueEditorTypeForField(fieldName: string, operator: string):
 
   // Always return text for all field types this allows both values and variables
   return 'text';
+}
+
+export function shouldUseRelativeDateEditor(operator: string): boolean {
+  return isRelativeDateOperator(operator);
 }
 
 export function getPlaceholderForField(
@@ -99,6 +103,50 @@ export function getHelpTextForField(operator: string, { fieldData }: { fieldData
           examples: ['First: value1, Second: value2', 'Dynamic: {{payload.minValue}}'],
         };
     }
+  }
+
+  // Handle relative date operators
+  if (operator === 'moreThanXAgo') {
+    return {
+      title: 'More than X time ago',
+      description:
+        'Check if the date occurred more than the specified amount of time ago. Uses current time as reference.',
+      examples: ['5 days ago', '2 hours ago', '1 week ago'],
+    };
+  }
+
+  if (operator === 'lessThanXAgo') {
+    return {
+      title: 'Less than X time ago',
+      description:
+        'Check if the date occurred less than the specified amount of time ago. Uses current time as reference.',
+      examples: ['3 days ago', '30 minutes ago', '6 months ago'],
+    };
+  }
+
+  if (operator === 'withinLast') {
+    return {
+      title: 'Within last X time',
+      description: 'Check if the date occurred within the last specified amount of time. Excludes future dates.',
+      examples: ['within last 7 days', 'within last 24 hours', 'within last 1 year'],
+    };
+  }
+
+  if (operator === 'notWithinLast') {
+    return {
+      title: 'Not within last X time',
+      description: 'Check if the date did NOT occur within the last specified amount of time.',
+      examples: ['not within last 30 days', 'not within last 2 weeks'],
+    };
+  }
+
+  if (operator === 'exactlyXAgo') {
+    return {
+      title: 'Exactly X time ago',
+      description:
+        'Check if the date occurred exactly the specified amount of time ago (with tolerance based on time unit).',
+      examples: ['exactly 1 day ago', 'exactly 2 hours ago'],
+    };
   }
 
   // Handle in/notIn operators
