@@ -101,4 +101,9 @@ export const envValidators = {
     VERCEL_REDIRECT_URI: url({ default: 'https://dashboard.novu.co/auth/login' }),
     VERCEL_BASE_URL: url({ default: 'https://api.vercel.com' }),
   }),
+
+  CLICK_HOUSE_URL: str({ default: 'http://127.0.0.1:8123' }),
+  CLICK_HOUSE_DATABASE: str({ default: 'default' }),
+  CLICK_HOUSE_USER: str({ default: 'default' }),
+  CLICK_HOUSE_PASSWORD: str({ default: '' }),
 } satisfies Record<string, ValidatorSpec<unknown>>;

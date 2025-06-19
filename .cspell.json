@@ -752,7 +752,8 @@
     "endcase",
     "forloop",
     "tablerowloop",
-    "rindex"
+    "rindex",
+    "ClickHouse"
   ],
   "flagWords": [],
   "patterns": [

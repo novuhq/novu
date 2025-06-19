@@ -32,6 +32,7 @@ import {
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
+  ClickHouseService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
@@ -124,6 +125,7 @@ const PROVIDERS = [
   CreateExecutionDetails,
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
+  ClickHouseService,
 ];
 
 const IMPORTS = [

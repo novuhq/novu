@@ -27,3 +27,5 @@ export * from './cron';
 export * from './content.service';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
+export * from './clickhouse/clickhouse.service';
+export * from './clickhouse/types';

@@ -38,6 +38,7 @@ import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
+import { ANALYTICS_STRATEGY, LogAnalytics } from '../../middleware/analytics-logs';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
@@ -60,6 +61,7 @@ export class EventsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @Post('/trigger')
+  @LogAnalytics(ANALYTICS_STRATEGY.EVENTS)
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {
     description: 'Payload validation failed - returned when payload does not match the workflow schema',
