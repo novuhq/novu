@@ -68,4 +68,8 @@ describe('Get single translation - /v2/translations/:workflowId/:locale (GET) #n
 
     await session.testAgent.get(`/v2/translations/${fakeWorkflowId}/en-US`).expect(404);
   });
+
+  it('should validate locale format in URL parameter', async () => {
+    await session.testAgent.get(`/v2/translations/${workflowId}/invalid-locale-123`).expect(400);
+  });
 });

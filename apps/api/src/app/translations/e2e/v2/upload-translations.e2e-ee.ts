@@ -4,7 +4,7 @@ import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe.only('Upload translation files - /v2/translations/upload (POST) #novu-v2', async () => {
+describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', async () => {
   let session: UserSession;
   let novuClient: Novu;
   let workflowId: string;
