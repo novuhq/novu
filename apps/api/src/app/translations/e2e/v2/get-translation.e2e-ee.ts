@@ -10,6 +10,10 @@ describe('Get single translation - /v2/translations/:workflowId/:locale (GET) #n
   let workflowId: string;
 
   beforeEach(async () => {
+    // Enable translation feature for testing
+    // @ts-ignore - Setting environment variable for testing
+    process.env.IS_TRANSLATION_ENABLED = 'true';
+
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
@@ -32,6 +36,12 @@ describe('Get single translation - /v2/translations/:workflowId/:locale (GET) #n
     workflowId = workflow.id;
   });
 
+  afterEach(() => {
+    // Disable translation feature after each test
+    // @ts-ignore - Setting environment variable for testing
+    process.env.IS_TRANSLATION_ENABLED = 'false';
+  });
+
   it('should get existing translation', async () => {
     const translationContent = {
       'welcome.title': 'Welcome',
@@ -43,16 +53,16 @@ describe('Get single translation - /v2/translations/:workflowId/:locale (GET) #n
       .post('/v2/translations')
       .send({
         workflowId,
-        locale: 'en-US',
+        locale: 'en_US',
         content: translationContent,
       })
       .expect(200);
 
     // Get the translation
-    const { body } = await session.testAgent.get(`/v2/translations/${workflowId}/en-US`).expect(200);
+    const { body } = await session.testAgent.get(`/v2/translations/${workflowId}/en_US`).expect(200);
 
     expect(body.data._workflowId).to.equal(workflowId);
-    expect(body.data.locale).to.equal('en-US');
+    expect(body.data.locale).to.equal('en_US');
     expect(body.data.content).to.deep.equal(translationContent);
     expect(body.data._id).to.be.a('string');
     expect(body.data.createdAt).to.be.a('string');
@@ -60,13 +70,13 @@ describe('Get single translation - /v2/translations/:workflowId/:locale (GET) #n
   });
 
   it('should return 404 for non-existent translation', async () => {
-    await session.testAgent.get(`/v2/translations/${workflowId}/fr-FR`).expect(404);
+    await session.testAgent.get(`/v2/translations/${workflowId}/fr_FR`).expect(404);
   });
 
   it('should return 404 for non-existent workflow', async () => {
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
-    await session.testAgent.get(`/v2/translations/${fakeWorkflowId}/en-US`).expect(404);
+    await session.testAgent.get(`/v2/translations/${fakeWorkflowId}/en_US`).expect(404);
   });
 
   it('should validate locale format in URL parameter', async () => {

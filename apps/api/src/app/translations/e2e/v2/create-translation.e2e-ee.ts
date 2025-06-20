@@ -10,6 +10,10 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
   let workflowId: string;
 
   beforeEach(async () => {
+    // Enable translation feature for testing
+    // @ts-ignore - Setting environment variable for testing
+    process.env.IS_TRANSLATION_ENABLED = 'true';
+
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
@@ -32,10 +36,16 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
     workflowId = workflow.id;
   });
 
+  afterEach(() => {
+    // Disable translation feature after each test
+    // @ts-ignore - Setting environment variable for testing
+    process.env.IS_TRANSLATION_ENABLED = 'false';
+  });
+
   it('should create new translation successfully', async () => {
     const requestBody = {
       workflowId,
-      locale: 'en-US',
+      locale: 'en_US',
       content: {
         'welcome.title': 'Welcome',
         'welcome.message': 'Hello there!',
@@ -46,7 +56,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
     const { body } = await session.testAgent.post('/v2/translations').send(requestBody).expect(200);
 
     expect(body.data._id).to.be.a('string');
-    expect(body.data.locale).to.equal('en-US');
+    expect(body.data.locale).to.equal('en_US');
     expect(body.data._workflowId).to.equal(workflowId);
     expect(body.data.content).to.deep.equal(requestBody.content);
     expect(body.data.createdAt).to.be.a('string');
@@ -68,7 +78,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
       .post('/v2/translations')
       .send({
         workflowId,
-        locale: 'en-US',
+        locale: 'en_US',
         content: originalContent,
       })
       .expect(200);
@@ -78,7 +88,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
       .post('/v2/translations')
       .send({
         workflowId,
-        locale: 'en-US',
+        locale: 'en_US',
         content: updatedContent,
       })
       .expect(200);

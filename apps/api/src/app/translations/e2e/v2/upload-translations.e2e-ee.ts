@@ -10,6 +10,10 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
   let workflowId: string;
 
   beforeEach(async () => {
+    // Enable translation feature for testing
+    // @ts-ignore - Setting environment variable for testing
+    process.env.IS_TRANSLATION_ENABLED = 'true';
+
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
@@ -32,6 +36,12 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     workflowId = workflow.id;
   });
 
+  afterEach(() => {
+    // Disable translation feature after each test
+    // @ts-ignore - Setting environment variable for testing
+    process.env.IS_TRANSLATION_ENABLED = 'false';
+  });
+
   it('should upload single translation file', async () => {
     const translationContent = {
       'welcome.title': 'Welcome',
@@ -42,7 +52,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from(JSON.stringify(translationContent)), 'en-US.json')
+      .attach('files', Buffer.from(JSON.stringify(translationContent)), 'en_US.json')
       .expect(200);
 
     expect(body.data.totalFiles).to.equal(1);
@@ -51,7 +61,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     expect(body.data.errors).to.be.an('array').that.is.empty;
 
     // Verify the translation was created
-    const { body: translation } = await session.testAgent.get(`/v2/translations/${workflowId}/en-US`).expect(200);
+    const { body: translation } = await session.testAgent.get(`/v2/translations/${workflowId}/en_US`).expect(200);
 
     expect(translation.data.content).to.deep.equal(translationContent);
   });
@@ -70,8 +80,8 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from(JSON.stringify(enContent)), 'en-US.json')
-      .attach('files', Buffer.from(JSON.stringify(esContent)), 'es-ES.json')
+      .attach('files', Buffer.from(JSON.stringify(enContent)), 'en_US.json')
+      .attach('files', Buffer.from(JSON.stringify(esContent)), 'es_ES.json')
       .expect(200);
 
     expect(body.data.totalFiles).to.equal(2);
@@ -95,20 +105,20 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from(JSON.stringify(originalContent)), 'en-US.json')
+      .attach('files', Buffer.from(JSON.stringify(originalContent)), 'en_US.json')
       .expect(200);
 
     // Upload updated translation
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from(JSON.stringify(updatedContent)), 'en-US.json')
+      .attach('files', Buffer.from(JSON.stringify(updatedContent)), 'en_US.json')
       .expect(200);
 
     expect(body.data.successfulUploads).to.equal(1);
 
     // Verify the content was updated
-    const { body: translation } = await session.testAgent.get(`/v2/translations/${workflowId}/en-US`).expect(200);
+    const { body: translation } = await session.testAgent.get(`/v2/translations/${workflowId}/en_US`).expect(200);
 
     expect(translation.data.content).to.deep.equal(updatedContent);
   });
@@ -117,10 +127,10 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const content = { key: 'value' };
 
     const testCases = [
-      { filename: 'en-US.json', expectedLocale: 'en-US' },
-      { filename: 'fr-FR.json', expectedLocale: 'fr-FR' },
-      { filename: 'de_DE.json', expectedLocale: 'de-DE' },
-      { filename: 'it.json', expectedLocale: 'it' },
+      { filename: 'en_US.json', expectedLocale: 'en_US' },
+      { filename: 'fr_FR.json', expectedLocale: 'fr_FR' },
+      { filename: 'de_DE.json', expectedLocale: 'de_DE' },
+      { filename: 'it_IT.json', expectedLocale: 'it_IT' },
     ];
 
     for (const testCase of testCases) {
@@ -145,7 +155,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from('invalid json content'), 'en-US.json')
+      .attach('files', Buffer.from('invalid json content'), 'en_US.json')
       .expect(200);
 
     expect(body.data.totalFiles).to.equal(1);
@@ -175,7 +185,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
 
     await session.testAgent
       .post('/v2/translations/upload')
-      .attach('files', Buffer.from(JSON.stringify(content)), 'en-US.json')
+      .attach('files', Buffer.from(JSON.stringify(content)), 'en_US.json')
       .expect(422);
   });
 
@@ -186,8 +196,8 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'en-US.json')
-      .attach('files', Buffer.from('invalid json'), 'es-ES.json')
+      .attach('files', Buffer.from(JSON.stringify(validContent)), 'en_US.json')
+      .attach('files', Buffer.from('invalid json'), 'es_ES.json')
       .attach('files', Buffer.from(JSON.stringify(validContent)), 'invalid-name.json')
       .expect(400);
 
@@ -203,15 +213,15 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('workflowId', workflowId)
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'en-US.json')
-      .attach('files', Buffer.from('invalid json'), 'es-ES.json')
-      .attach('files', Buffer.from(JSON.stringify(validContent)), 'fr-FR.json')
+      .attach('files', Buffer.from(JSON.stringify(validContent)), 'en_US.json')
+      .attach('files', Buffer.from('invalid json'), 'es_ES.json')
+      .attach('files', Buffer.from(JSON.stringify(validContent)), 'fr_FR.json')
       .expect(200);
 
     expect(body.data.totalFiles).to.equal(3);
     expect(body.data.successfulUploads).to.equal(2);
     expect(body.data.failedUploads).to.equal(1);
     expect(body.data.errors).to.have.lengthOf(1);
-    expect(body.data.errors[0]).to.include('Invalid JSON in file: es-ES.json');
+    expect(body.data.errors[0]).to.include('Invalid JSON in file: es_ES.json');
   });
 });
