@@ -8,7 +8,6 @@ import {
   useSubscribersUrlState,
 } from '@/components/subscribers/hooks/use-subscribers-url-state';
 import { SubscriberListBlank } from '@/components/subscribers/subscriber-list-blank';
-import { SubscriberListNoResults } from '@/components/subscribers/subscriber-list-no-results';
 import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/subscriber-row';
 import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
 import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
@@ -17,6 +16,7 @@ import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { RiUserSharedLine } from 'react-icons/ri';
 import { PermissionButton } from '@/components/primitives/permission-button';
+import { ListNoResults } from '../list-no-results';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<SubscribersUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -28,7 +28,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
-    <div className={cn('flex flex-col p-2', className)} {...rest}>
+    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
       <div className="flex items-center justify-between">
         <SubscribersFilters
           onFiltersChange={handleFiltersChange}
@@ -166,7 +166,11 @@ export const SubscriberList = (props: SubscriberListProps) => {
         isFetching={isFetching}
         {...rest}
       >
-        <SubscriberListNoResults />
+        <ListNoResults
+          title="No subscribers found"
+          description="We couldn't find any subscribers that match your search criteria. Try adjusting your filters or import subscribers via API."
+          onClearFilters={resetFilters}
+        />
       </SubscriberListWrapper>
     );
   }

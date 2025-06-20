@@ -14,6 +14,7 @@ import {
   ActivityFeed,
   ApiKeysPage,
   CreateWorkflowPage,
+  LayoutsPage,
   ErrorPage,
   IntegrationsListPage,
   OrganizationListPage,
@@ -43,7 +44,8 @@ import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
-import { TestWorkflowPage } from './pages/test-workflow';
+import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
+import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TopicsPage } from './pages/topics';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
@@ -226,6 +228,14 @@ const router = createBrowserRouter([
                 ],
               },
               {
+                path: ROUTES.LAYOUTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                    <LayoutsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
                 path: ROUTES.API_KEYS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
@@ -277,13 +287,29 @@ const router = createBrowserRouter([
                     element: <ChannelPreferences />,
                     path: ROUTES.EDIT_WORKFLOW_PREFERENCES,
                   },
+                  {
+                    path: ROUTES.TRIGGER_WORKFLOW,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE} isDrawerRoute>
+                        <TestWorkflowDrawerPage />
+                      </ProtectedRoute>
+                    ),
+                  },
                 ],
+              },
+              {
+                path: ROUTES.EDIT_WORKFLOW_ACTIVITY,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <EditWorkflowPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.TEST_WORKFLOW,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.EVENT_WRITE}>
-                    <TestWorkflowPage />
+                    <TestWorkflowRouteHandler />
                   </ProtectedRoute>
                 ),
               },
@@ -352,6 +378,7 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
+
               {
                 path: '*',
                 element: <CatchAllRoute />,

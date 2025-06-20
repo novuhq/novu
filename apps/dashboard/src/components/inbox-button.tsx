@@ -1,7 +1,7 @@
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { API_HOSTNAME, APP_ID, IS_SELF_HOSTED, WEBSOCKET_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useTestPage } from '@/hooks/use-test-page';
+import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { useUser } from '@clerk/clerk-react';
 import { Bell, InboxContent, Inbox, useNovu } from '@novu/react';
 import { useEffect, useState } from 'react';
@@ -22,7 +22,7 @@ declare global {
 const InboxInner = () => {
   const [open, setOpen] = useState(false);
   const [jingle, setJingle] = useState(false);
-  const { isTestPage } = useTestPage();
+  const { isWorkflowEditorPage } = useWorkflowEditorPage();
 
   const novu = useNovu();
   useEffect(() => {
@@ -51,19 +51,19 @@ const InboxInner = () => {
               label={
                 <>
                   Inbox
-                  {isTestPage && ' (Test)'}
+                  {isWorkflowEditorPage && ' (Test)'}
                   {unreadCount > 0 && ` (${unreadCount})`}
                 </>
               }
               disableTooltip={open}
-              className={isTestPage ? 'bg-test-pattern' : ''}
+              className={isWorkflowEditorPage ? 'bg-test-pattern' : ''}
             >
               <div className="relative flex items-center justify-center">
                 <InboxBellFilled
                   className={`text-foreground-600 size-4 cursor-pointer stroke-[0.5px]`}
                   bellClassName={`origin-top ${jingle ? 'animate-swing' : ''}`}
                   ringerClassName={`origin-top ${jingle ? 'animate-jingle' : ''}`}
-                  codeClassName={isTestPage ? 'block' : 'hidden'}
+                  codeClassName={isWorkflowEditorPage ? 'block' : 'hidden'}
                 />
                 {unreadCount > 0 && (
                   <div className="absolute right-[-4px] top-[-6px] flex h-3 w-3 items-center justify-center rounded-full border-[3px] border-[white] bg-white">
@@ -87,7 +87,7 @@ const InboxInner = () => {
 export const InboxButton = () => {
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
-  const { isTestPage } = useTestPage();
+  const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
   const { currentOrganization } = useAuth();
 
   if (!user?.externalId || !currentEnvironment || !currentOrganization) {

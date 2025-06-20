@@ -27,7 +27,7 @@ export type WorkflowsCreateMutationData =
   operations.WorkflowControllerCreateResponse;
 
 /**
- * Create a new workflow
+ * Create a workflow
  *
  * @remarks
  * Creates a new workflow in the Novu Cloud environment

@@ -205,6 +205,7 @@ export function SubscriberAutocomplete({
   // Get placeholder text based on search field
   const getPlaceholder = () => {
     let fieldSuffix;
+
     switch (searchField) {
       case 'email':
         fieldSuffix = ' by email';
@@ -289,7 +290,7 @@ export function SubscriberAutocomplete({
   return (
     <form onSubmit={handleSubmit} className={className}>
       <div className="relative w-full">
-        <Popover open={showDropdown} onOpenChange={setOpen}>
+        <Popover modal={true} open={showDropdown} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Input
               ref={inputRef}

@@ -31,7 +31,7 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
   const renderTopicsContent = () => {
     if (!activity.topics?.length) {
-      return '-';
+      return <span className="text-foreground-400 text-[10px] leading-[14px]">-</span>;
     }
 
     if (activity.topics.length === 1) {
@@ -102,7 +102,6 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
           disabled={!activity.subscriber}
           className="text-start"
           subscriberId={activity.subscriber?.subscriberId || activity._subscriberId}
-          readOnly={true}
         >
           <OverviewItem
             label="Subscriber ID"

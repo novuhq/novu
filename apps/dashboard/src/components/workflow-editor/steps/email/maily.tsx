@@ -1,4 +1,4 @@
-import { HTMLAttributes, useCallback, useEffect, useMemo, useState } from 'react';
+import { HTMLAttributes, useCallback, useMemo, useState } from 'react';
 import { Editor } from '@maily-to/core';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
@@ -14,6 +14,8 @@ import { useRemoveGrammarly } from '@/hooks/use-remove-grammarly';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
@@ -101,6 +103,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     ]
   );
 
+  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+
   const extensions = useMemo(
     () =>
       createExtensions({
@@ -109,8 +113,16 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         blocks,
         onCreateNewVariable: handleCreateNewVariable,
         isPayloadSchemaEnabled,
+        isTranslationEnabled,
       }),
-    [handleCalculateVariables, parsedVariables, blocks, isPayloadSchemaEnabled, handleCreateNewVariable]
+    [
+      handleCalculateVariables,
+      parsedVariables,
+      blocks,
+      isPayloadSchemaEnabled,
+      handleCreateNewVariable,
+      isTranslationEnabled,
+    ]
   );
 
   /*

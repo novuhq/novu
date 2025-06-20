@@ -8,12 +8,18 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
+import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { Container } from '../components/primitives/container';
 import { HelpTooltipIndicator } from '../components/primitives/help-tooltip-indicator';
 import { API_HOSTNAME } from '../config';
-import { useFetchApiKeys } from '../hooks/use-fetch-api-keys';
+import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
+import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
+import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
+import { Button } from '../components/primitives/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
+import { PermissionsEnum } from '@novu/shared';
+import { useHasPermission } from '../hooks/use-has-permission';
 
 interface ApiKeysFormData {
   apiKey: string;
@@ -26,6 +32,10 @@ export function ApiKeysPage() {
   const { currentEnvironment } = useEnvironment();
   const apiKeys = apiKeysQuery.data?.data;
   const isLoading = apiKeysQuery.isLoading;
+  const [isRegenerateDialogOpen, setIsRegenerateDialogOpen] = useState(false);
+  const regenerateApiKeysMutation = useRegenerateApiKeys();
+  const has = useHasPermission();
+  const canRegenerateApiKeys = has({ permission: PermissionsEnum.API_KEY_WRITE });
 
   const form = useForm<ApiKeysFormData>({
     values: {
@@ -34,6 +44,17 @@ export function ApiKeysPage() {
       identifier: currentEnvironment?.identifier ?? '',
     },
   });
+
+  const handleRegenerateKeys = async () => {
+    try {
+      await regenerateApiKeysMutation.mutateAsync();
+      showSuccessToast('API keys regenerated successfully');
+      setIsRegenerateDialogOpen(false);
+    } catch (e: any) {
+      const message = e?.message || 'Failed to regenerate API keys';
+      showErrorToast(message);
+    }
+  };
 
   if (!currentEnvironment) {
     return null;
@@ -87,6 +108,9 @@ export function ApiKeysPage() {
                     value={form.getValues('apiKey')}
                     secret
                     isLoading={isLoading}
+                    showRegenerateButton={canRegenerateApiKeys}
+                    onRegenerateClick={() => setIsRegenerateDialogOpen(true)}
+                    isRegenerateLoading={regenerateApiKeysMutation.isPending}
                   />
                 </div>
               </CardContent>
@@ -114,6 +138,13 @@ export function ApiKeysPage() {
           </Form>
         </Container>
       </DashboardLayout>
+      <RegenerateApiKeysDialog
+        environment={currentEnvironment}
+        open={isRegenerateDialogOpen}
+        onOpenChange={setIsRegenerateDialogOpen}
+        onConfirm={handleRegenerateKeys}
+        isLoading={regenerateApiKeysMutation.isPending}
+      />
     </>
   );
 }
@@ -125,6 +156,9 @@ interface SettingFieldProps {
   secret?: boolean;
   isLoading?: boolean;
   readOnly?: boolean;
+  showRegenerateButton?: boolean;
+  onRegenerateClick?: () => void;
+  isRegenerateLoading?: boolean;
 }
 
 function SettingField({
@@ -134,6 +168,9 @@ function SettingField({
   secret = false,
   isLoading = false,
   readOnly = true,
+  showRegenerateButton = false,
+  onRegenerateClick,
+  isRegenerateLoading,
 }: SettingFieldProps) {
   const [showSecret, setShowSecret] = useState(false);
 
@@ -156,6 +193,7 @@ function SettingField({
           <>
             <Skeleton className="h-[38px] flex-1 rounded-lg" />
             {secret && <Skeleton className="h-[38px] w-[38px] rounded-lg" />}
+            {showRegenerateButton && <Skeleton className="h-[38px] w-[38px] rounded-lg" />}
           </>
         ) : (
           <>
@@ -176,6 +214,23 @@ function SettingField({
                 )
               }
             />
+            {showRegenerateButton && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="md"
+                    variant="secondary"
+                    mode="outline"
+                    onClick={onRegenerateClick}
+                    disabled={isRegenerateLoading}
+                    className="h-[38px] min-w-[38px] p-0"
+                  >
+                    <RiLoopRightFill className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Regenerate API Key</TooltipContent>
+              </Tooltip>
+            )}
           </>
         )}
       </div>

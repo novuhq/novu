@@ -11,8 +11,30 @@ export function useHideRootNode(containerRef: React.RefObject<HTMLDivElement>, v
       });
     };
 
-    const timer = setTimeout(hideRootNodeName, 0);
+    // Try to hide immediately
+    const immediateTimer = setTimeout(hideRootNodeName, 0);
 
-    return () => clearTimeout(timer);
+    // Also try after a longer delay to handle timing issues
+    const delayedTimer = setTimeout(hideRootNodeName, 100);
+
+    // Set up a MutationObserver to watch for DOM changes
+    let observer: MutationObserver | null = null;
+
+    if (containerRef.current) {
+      observer = new MutationObserver(() => {
+        hideRootNodeName();
+      });
+
+      observer.observe(containerRef.current, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    return () => {
+      clearTimeout(immediateTimer);
+      clearTimeout(delayedTimer);
+      observer?.disconnect();
+    };
   }, [containerRef, value]);
 }
