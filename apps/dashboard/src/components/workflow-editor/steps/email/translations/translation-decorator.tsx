@@ -13,15 +13,15 @@ export const createTranslationExtension = (isTranslationEnabled: boolean) => {
 
   return InlineDecoratorExtension.configure({
     triggerPattern: TRANSLATION_TRIGGER,
-    closingPattern: '}}',
-    openingPattern: '{{',
+    closingPattern: '}',
+    openingPattern: '{',
     extractKey: (text: string) => {
-      const match = text.match(/\{\{(t\.[^}]+)\}\}/);
+      const match = text.match(/\{t\.([^}]+)\}/);
       return match ? match[1] : null;
     },
-    formatPattern: (key: string) => `{{${key}}}`,
+    formatPattern: (key: string) => `{t.${key}}`,
     isPatternMatch: (value: string) => {
-      return value.startsWith('{{') && value.endsWith('}}');
+      return value.startsWith('{') && value.endsWith('}');
     },
     decoratorComponent: TranslationPill,
     suggestion: getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, TRANSLATION_KEYS),

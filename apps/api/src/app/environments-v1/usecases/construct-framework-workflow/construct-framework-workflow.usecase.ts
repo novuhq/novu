@@ -59,8 +59,8 @@ export class ConstructFrameworkWorkflow {
             step,
             staticStep,
             fullPayloadForRender,
-            dbWorkflow._environmentId,
-            dbWorkflow._organizationId
+            dbWorkflow,
+            subscriber.locale
           );
         }
       },
@@ -84,8 +84,8 @@ export class ConstructFrameworkWorkflow {
     step: Step,
     staticStep: NotificationStepEntity,
     fullPayloadForRender: FullPayloadForRender,
-    environmentId: string,
-    organizationId: string
+    dbWorkflow: NotificationTemplateEntity,
+    locale?: string
   ): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
@@ -111,7 +111,12 @@ export class ConstructFrameworkWorkflow {
           stepId,
           // The step callback function. Takes controls and returns the step outputs
           async (controlValues) => {
-            return this.inAppOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.inAppOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              dbWorkflow,
+              locale,
+            });
           },
           // Step options
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
@@ -123,8 +128,8 @@ export class ConstructFrameworkWorkflow {
             return this.emailOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
-              environmentId,
-              organizationId,
+              dbWorkflow,
+              locale,
             });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
@@ -133,7 +138,12 @@ export class ConstructFrameworkWorkflow {
         return step.sms(
           stepId,
           async (controlValues) => {
-            return this.smsOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.smsOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              dbWorkflow,
+              locale,
+            });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
@@ -141,7 +151,12 @@ export class ConstructFrameworkWorkflow {
         return step.chat(
           stepId,
           async (controlValues) => {
-            return this.chatOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.chatOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              dbWorkflow,
+              locale,
+            });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
@@ -149,7 +164,12 @@ export class ConstructFrameworkWorkflow {
         return step.push(
           stepId,
           async (controlValues) => {
-            return this.pushOutputRendererUseCase.execute({ controlValues, fullPayloadForRender });
+            return this.pushOutputRendererUseCase.execute({
+              controlValues,
+              fullPayloadForRender,
+              dbWorkflow,
+              locale,
+            });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
         );
