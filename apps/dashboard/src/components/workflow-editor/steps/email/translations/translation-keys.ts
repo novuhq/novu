@@ -61,8 +61,3 @@ export const TRANSLATION_KEYS = [
   { name: 'status.warning' },
   { name: 'status.info' },
 ];
-
-/**
- * Translation key trigger character for the editor
- */
-export const TRANSLATION_TRIGGER = '{t.';

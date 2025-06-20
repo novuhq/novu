@@ -1,7 +1,10 @@
 import { InlineDecoratorExtension, getInlineDecoratorSuggestionsReact } from '@maily-to/core/extensions';
-import { TRANSLATION_KEYS, TRANSLATION_TRIGGER } from './translation-keys';
+import { TRANSLATION_KEYS } from './translation-keys';
 import { TranslationPill } from './translation-pill';
 import { AnyExtension } from '@tiptap/core';
+import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
+
+const TRANSLATION_TRIGGER = '{t.';
 
 /**
  * Creates the translation decorator extension configured for translation keys
@@ -16,7 +19,7 @@ export const createTranslationExtension = (isTranslationEnabled: boolean) => {
     closingPattern: '}',
     openingPattern: '{',
     extractKey: (text: string) => {
-      const match = text.match(/\{t\.([^}]+)\}/);
+      const match = text.match(TRANSLATION_KEY_SINGLE_REGEX);
       return match ? match[1] : null;
     },
     formatPattern: (key: string) => `{t.${key}}`,
