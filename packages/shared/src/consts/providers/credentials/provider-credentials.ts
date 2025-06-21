@@ -559,7 +559,7 @@ export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
     displayName: 'Service Account (entire JSON file)',
-    type: 'text',
+    type: 'textarea',
     required: true,
   },
   ...pushConfigBase,
