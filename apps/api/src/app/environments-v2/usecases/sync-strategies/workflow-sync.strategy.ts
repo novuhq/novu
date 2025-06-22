@@ -19,12 +19,14 @@ import {
   SyncToEnvironmentUseCase,
   SYNCABLE_WORKFLOW_ORIGINS,
 } from '../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
+import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../workflows-v2/usecases/get-workflow';
+import { WorkflowResponseDto } from '../../../workflows-v2/dtos/workflow-response.dto';
 import { SyncToEnvironmentCommand } from '../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.command';
 
 // Utility functions for workflow comparison
-function normalizeWorkflowForComparison(workflow: any, preferences: any[] = []): any {
+function normalizeWorkflowForComparison(workflow: WorkflowResponseDto): any {
   return {
-    workflowId: workflow.triggers?.[0]?.identifier || workflow.workflowId,
+    workflowId: workflow.workflowId,
     name: workflow.name,
     active: workflow.active,
     tags: workflow.tags,
@@ -32,7 +34,7 @@ function normalizeWorkflowForComparison(workflow: any, preferences: any[] = []):
     payloadSchema: workflow.payloadSchema,
     validatePayload: workflow.validatePayload,
     steps: normalizeSteps(workflow.steps || []),
-    preferences: normalizePreferences(preferences),
+    preferences: workflow.preferences,
   };
 }
 
@@ -44,7 +46,7 @@ function normalizeSteps(steps: any[]): any[] {
     active: step.active,
     shouldStopOnFail: step.shouldStopOnFail,
     filters: step.filters,
-    controlValues: step.template?.content || step.controlValues || {},
+    controlValues: step.controls?.values || step.controlValues || step.template?.content || {},
   }));
 }
 
@@ -61,7 +63,8 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     logger: PinoLogger,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private preferencesRepository: PreferencesRepository,
-    private syncToEnvironmentUseCase: SyncToEnvironmentUseCase
+    private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
+    private getWorkflowUseCase: GetWorkflowUseCase
   ) {
     super(logger);
   }
@@ -266,50 +269,63 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
   }
 
   private async compareWorkflows(sourceWorkflow: any, targetWorkflow: any): Promise<Record<string, any>> {
-    // Get preferences for both workflows
-    const [sourcePreferences, targetPreferences] = await Promise.all([
-      this.preferencesRepository.find({
-        _templateId: sourceWorkflow._id,
-        _environmentId: sourceWorkflow._environmentId,
-        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
-      }),
-      this.preferencesRepository.find({
-        _templateId: targetWorkflow._id,
-        _environmentId: targetWorkflow._environmentId,
-        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
-      }),
-    ]);
+    try {
+      // Get proper WorkflowResponseDto for both workflows to ensure we have the correct structure
+      const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
+        this.getWorkflowUseCase.execute(
+          GetWorkflowCommand.create({
+            user: {
+              _id: 'system',
+              environmentId: sourceWorkflow._environmentId,
+              organizationId: sourceWorkflow._organizationId,
+              roles: [],
+              permissions: [],
+              scheme: 'Bearer' as any,
+            },
+            workflowIdOrInternalId: sourceWorkflow._id,
+          })
+        ),
+        this.getWorkflowUseCase.execute(
+          GetWorkflowCommand.create({
+            user: {
+              _id: 'system',
+              environmentId: targetWorkflow._environmentId,
+              organizationId: targetWorkflow._organizationId,
+              roles: [],
+              permissions: [],
+              scheme: 'Bearer' as any,
+            },
+            workflowIdOrInternalId: targetWorkflow._id,
+          })
+        ),
+      ]);
 
-    // Normalize both workflows using the same logic as sync-to-environment
-    const normalizedSource = normalizeWorkflowForComparison(sourceWorkflow, sourcePreferences);
-    const normalizedTarget = normalizeWorkflowForComparison(targetWorkflow, targetPreferences);
+      // Normalize both workflows using the same logic as sync-to-environment
+      const normalizedSource = normalizeWorkflowForComparison(sourceWorkflowDto);
+      const normalizedTarget = normalizeWorkflowForComparison(targetWorkflowDto);
 
-    // Get differences using deep-object-diff
-    const differences = diff(normalizedTarget, normalizedSource);
+      // Get differences using deep-object-diff
+      const differences = diff(normalizedTarget, normalizedSource);
 
-    // If no differences, return empty object
-    if (Object.keys(differences).length === 0) {
-      return {};
-    }
+      // If no differences, return empty object
+      if (Object.keys(differences).length === 0) {
+        return {};
+      }
 
-    // Transform differences to match expected format
-    const changes: Record<string, any> = {};
+      // Transform differences to match expected format
+      const changes: Record<string, any> = {};
 
-    for (const [field, value] of Object.entries(differences)) {
-      // For steps, just report the count change
-      if (field === 'steps') {
-        changes[field] = {
-          old: targetWorkflow.steps?.length || 0,
-          new: sourceWorkflow.steps?.length || 0,
-        };
-      } else {
+      for (const [field, value] of Object.entries(differences)) {
         changes[field] = {
           old: normalizedTarget[field],
           new: normalizedSource[field],
         };
       }
-    }
 
-    return changes;
+      return changes;
+    } catch (error) {
+      this.logger.error(`Failed to compare workflows: ${error.message}`);
+      return {}; // Return empty changes if comparison fails
+    }
   }
 }
