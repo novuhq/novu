@@ -5,6 +5,7 @@ import {
   createMockObjectFromSchema,
   type WorkflowTestDataResponseDto,
   type ISubscriberResponseDto,
+  PermissionsEnum,
 } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
@@ -20,6 +21,8 @@ import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
 import { RiPlayCircleLine, RiMore2Fill, RiFileCopyLine } from 'react-icons/ri';
@@ -32,7 +35,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { API_HOSTNAME } from '@/config';
-import { getToken } from '@/utils/auth';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
@@ -41,14 +43,13 @@ type TestWorkflowDrawerProps = {
   initialPayload?: PayloadData;
 };
 
-const generateCurlCommand = async (data: {
+const generateCurlCommand = (data: {
   workflowId: string;
   to: unknown;
   payload: string;
-  environmentId: string;
+  apiKey: string;
 }) => {
   const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-  const token = await getToken();
   
   // Parse payload if it's a string, otherwise use as-is
   let parsedPayload = {};
@@ -66,9 +67,8 @@ const generateCurlCommand = async (data: {
   };
 
   return `curl -X POST "${baseUrl}/v1/events/trigger" \\
-  -H "Authorization: Bearer ${token}" \\
+  -H "Authorization: ApiKey ${data.apiKey}" \\
   -H "Content-Type: application/json" \\
-  -H "Novu-Environment-Id: ${data.environmentId}" \\
   -d '${JSON.stringify(body, null, 2)}'`;
 };
 
@@ -81,6 +81,12 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
+
+  // API key management
+  const has = useHasPermission();
+  const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
+  const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
+  const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
 
   // Add workflow-level payload persistence
   const { getInitialPayload, savePersistedPayload } = useWorkflowPayloadPersistence({
@@ -223,18 +229,18 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   };
 
   const handleCopyCurl = useCallback(async () => {
-    if (!workflow?.workflowId || !currentEnvironment?._id) {
-      showErrorToast('Workflow or environment information is missing');
+    if (!workflow?.workflowId) {
+      showErrorToast('Workflow information is missing');
       return;
     }
 
     try {
       const formData = form.getValues();
-      const curlCommand = await generateCurlCommand({
+      const curlCommand = generateCurlCommand({
         workflowId: workflow.workflowId,
         to: formData.to,
         payload: formData.payload,
-        environmentId: currentEnvironment._id,
+        apiKey: apiKey,
       });
 
       await navigator.clipboard.writeText(curlCommand);
@@ -253,11 +259,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       } catch {
         showErrorToast('Failed to copy cURL command', 'Copy Error');
       }
-  }, [workflow?.workflowId, currentEnvironment?._id, form]);
+  }, [workflow?.workflowId, apiKey, form]);
 
   const handleOpenInPostman = useCallback(async () => {
-    if (!workflow?.workflowId || !currentEnvironment?._id) {
-      showErrorToast('Workflow or environment information is missing');
+    if (!workflow?.workflowId) {
+      showErrorToast('Workflow information is missing');
       return;
     }
 
@@ -293,15 +299,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
               header: [
                 {
                   key: 'Authorization',
-                  value: 'Bearer {{NOVU_API_KEY}}',
+                  value: `ApiKey ${apiKey}`,
                 },
                 {
                   key: 'Content-Type',
                   value: 'application/json',
-                },
-                {
-                  key: 'Novu-Environment-Id',
-                  value: currentEnvironment._id,
                 },
               ],
               body: {
@@ -315,12 +317,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
               },
               url: `${baseUrl}/v1/events/trigger`,
             },
-          },
-        ],
-        variable: [
-          {
-            key: 'NOVU_API_KEY',
-            value: 'your-api-key-here',
           },
         ],
       };
@@ -345,7 +341,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy Postman collection', 'Postman Error');
     }
-  }, [workflow?.workflowId, currentEnvironment?._id, form]);
+  }, [workflow?.workflowId, apiKey, form]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
