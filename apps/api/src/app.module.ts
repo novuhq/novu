@@ -54,7 +54,7 @@ import { WidgetsModule } from './app/widgets/widgets.module';
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { WorkflowModule } from './app/workflows-v2/workflow.module';
-import { AnalyticsLogsInterceptor } from './middleware/analytics-logs';
+import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.interceptor';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];

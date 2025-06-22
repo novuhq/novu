@@ -8,11 +8,11 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { FeatureFlagsService, ClickHouseService, PinoLogger, AnalyticsHttpLog } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger, HttpLogRepository, HttpLog } from '@novu/application-generic';
 import { UserSessionData, FeatureFlagsKeysEnum } from '@novu/shared';
-import { sanitizePayload, retryWithBackoff } from '../utils/payload-sanitizer';
 import { getClientIp } from 'request-ip';
-import { TriggerEventResponseDto } from '../app/events/dtos/trigger-event-response.dto';
+import { sanitizePayload, retryWithBackoff } from '../../../utils/payload-sanitizer';
+import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
 
 const LOG_ANALYTICS_KEY = 'logAnalytics';
 
@@ -62,7 +62,7 @@ export function isLogAnalytics(context: ExecutionContext): boolean {
 export class AnalyticsLogsInterceptor implements NestInterceptor {
   constructor(
     private readonly featureFlagsService: FeatureFlagsService,
-    private readonly clickhouseService: ClickHouseService,
+    private readonly httpLogRepository: HttpLogRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -96,7 +96,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
 
         try {
-          await retryWithBackoff(() => this.clickhouseService.insertHttpLog(analyticsLog));
+          await retryWithBackoff(() => this.httpLogRepository.insert(analyticsLog));
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
         }
@@ -104,11 +104,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     );
   }
 
-  private buildLogByStrategy(
-    context: ExecutionContext,
-    analyticsLog: AnalyticsHttpLog,
-    res: unknown
-  ): AnalyticsHttpLog {
+  private buildLogByStrategy(context: ExecutionContext, analyticsLog: HttpLog, res: unknown): HttpLog {
     const strategy = getAnalyticsStrategy(context);
 
     if (strategy === ANALYTICS_STRATEGY.EVENTS) {
@@ -123,7 +119,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     return analyticsLog;
   }
 
-  private buildLog(req: any, res: any, data: any, user: UserSessionData, duration: number): AnalyticsHttpLog {
+  private buildLog(req: any, res: any, data: any, user: UserSessionData, duration: number): HttpLog {
     return {
       timestamp: new Date(),
       path: req.path,
@@ -131,6 +127,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
       hostname: req.hostname,
       status_code: res.statusCode,
       method: req.method,
+      transaction_id: undefined,
       ip: getClientIp(req) || undefined,
       user_agent: req.headers['user-agent'] || '',
       query_params: JSON.stringify(req.query),
