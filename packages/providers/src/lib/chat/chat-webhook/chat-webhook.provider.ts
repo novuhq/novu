@@ -57,7 +57,10 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
   }
 
   computeHmac(payload: string, hmacSecretKey?: string): string {
-    const secretKey = hmacSecretKey || this.config.hmacSecretKey;
+    const secretKey = hmacSecretKey;
+    if (!secretKey) {
+      return;
+    }
 
     return crypto.createHmac('sha256', secretKey).update(payload, 'utf-8').digest('hex');
   }

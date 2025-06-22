@@ -599,7 +599,7 @@ export const chatWebhookConfig: IConfigCredentials[] = [
     displayName: 'Secret Hmac Key',
     type: 'string',
     description: 'the secret used to sign webhooks calls',
-    required: true,
+    required: false,
   },
 ];
 
