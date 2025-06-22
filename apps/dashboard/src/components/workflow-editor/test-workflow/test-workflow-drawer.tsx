@@ -9,6 +9,7 @@ import {
 } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
+import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
@@ -25,7 +26,7 @@ import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
-import { RiPlayCircleLine, RiMore2Fill, RiFileCopyLine } from 'react-icons/ri';
+import { RiPlayCircleLine, RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 import { useEnvironment } from '../../../context/environment/hooks';
 import {
@@ -363,41 +364,45 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
             {/* Footer */}
             <div className="border-t border-neutral-200 bg-white">
-              <div className="flex items-center justify-between px-3 py-1.5">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+              <div className="flex items-center justify-end px-3 py-1.5">
+                <ButtonGroupRoot size="xs">
+                  <ButtonGroupItem asChild>
                     <Button
-                      type="button"
+                      type="submit"
+                      mode="gradient"
+                      className="rounded-l-lg rounded-r-none border-none p-2 text-white"
                       variant="secondary"
                       size="xs"
-                      mode="outline"
-                      className="gap-1"
+                      leadingIcon={RiPlayCircleLine}
+                      isLoading={isPending}
                     >
-                      <RiMore2Fill className="h-4 w-4" />
+                      Test workflow
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
-                      <RiFileCopyLine />
-                      Copy cURL
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleOpenInPostman} className="cursor-pointer">
-                      <RiFileCopyLine />
-                      Copy Postman Collection
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  size="xs"
-                  mode="gradient"
-                  isLoading={isPending}
-                  className="ml-auto gap-1"
-                >
-                  Test workflow
-                  <RiPlayCircleLine className="h-4 w-4" />
-                </Button>
+                  </ButtonGroupItem>
+                  <ButtonGroupItem asChild>
+                    <DropdownMenu modal={false}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          mode="gradient"
+                          className="rounded-l-none rounded-r-lg border-none text-white"
+                          variant="secondary"
+                          size="xs"
+                          leadingIcon={RiArrowDownSLine}
+                        ></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy cURL
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleOpenInPostman} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy Postman Collection
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </ButtonGroupItem>
+                </ButtonGroupRoot>
               </div>
             </div>
           </FormRoot>
