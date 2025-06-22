@@ -82,6 +82,7 @@ export class EnvironmentsController {
   }
 
   @Post('/diff')
+  @HttpCode(200)
   @ApiOperation({ summary: 'Compare workflows between source and target environments' })
   @ApiResponse(DiffEnvironmentResponseDto)
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)

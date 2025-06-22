@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, BaseRepository } from '@novu/dal';
 import { DiffEnvironmentCommand } from './diff-environment.command';
 import { EntityTypeEnum, ISyncStrategy, IEnvironmentDiffResult } from '../../types/sync.types';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
@@ -57,6 +57,14 @@ export class DiffEnvironmentUseCase {
   private async validateEnvironments(command: DiffEnvironmentCommand): Promise<void> {
     if (command.sourceEnvironmentId === command.targetEnvironmentId) {
       throw new BadRequestException('Source and target environments cannot be the same');
+    }
+
+    // Validate ObjectId format
+    if (
+      !BaseRepository.isInternalId(command.sourceEnvironmentId) ||
+      !BaseRepository.isInternalId(command.targetEnvironmentId)
+    ) {
+      throw new BadRequestException('Invalid environment ID format');
     }
 
     const [sourceEnv, targetEnv] = await Promise.all([

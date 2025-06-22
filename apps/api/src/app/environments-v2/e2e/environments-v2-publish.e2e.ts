@@ -85,18 +85,6 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
       if (!targetEnv) {
         throw new Error('Production environment not found');
       }
-
-      // Clean up any existing workflows in both environments for clean tests
-      // Note: We'll rely on the beforeEach creating fresh environments for each test
-      const sourceWorkflows = await workflowRepository.find({
-        _environmentId: sourceEnv._id,
-        _organizationId: session.organization._id,
-      });
-
-      const targetWorkflows = await workflowRepository.find({
-        _environmentId: targetEnv._id,
-        _organizationId: session.organization._id,
-      });
     });
 
     it('should create new workflow in target environment when publishing', async () => {
