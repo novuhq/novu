@@ -595,13 +595,6 @@ export const pushWebhookConfig: IConfigCredentials[] = [
 
 export const chatWebhookConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.WebhookUrl,
-    displayName: 'Webhook URL',
-    type: 'string',
-    description: 'the webhook URL to call to trigger chat notifications',
-    required: true,
-  },
-  {
     key: CredentialsKeyEnum.SecretKey,
     displayName: 'Secret Hmac Key',
     type: 'string',

@@ -13,7 +13,6 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
   constructor(
     private config: {
       hmacSecretKey?: string;
-      webhookUrl: string;
     }
   ) {
     super();
@@ -23,19 +22,23 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
     options: IChatOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    const { content, customData, webhookUrl, channel, phoneNumber } = options;
+    const { content, webhookUrl, channel, phoneNumber } = options;
     const data = this.transform(bridgeProviderData, {
       content,
       webhookUrl,
       channel,
       phoneNumber,
-      ...(customData || {}),
     });
     const body = this.createBody(data.body);
 
-    const hmacValue = this.computeHmac(body);
+    const hmacSecretKey = (data.body.hmacSecretKey as string) || this.config.hmacSecretKey;
+    const hmacValue = this.computeHmac(body, hmacSecretKey);
 
-    const response = await axios.create().post(this.config.webhookUrl, body, {
+    if (data.body.hmacSecretKey as string) {
+      delete data.body.hmacSecretKey;
+    }
+
+    const response = await axios.create().post((data?.body?.webhookUrl as string) || webhookUrl, body, {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,
@@ -53,7 +56,9 @@ export class ChatWebhookProvider extends BaseProvider implements IChatProvider {
     return JSON.stringify(options);
   }
 
-  computeHmac(payload: string): string {
-    return crypto.createHmac('sha256', this.config.hmacSecretKey).update(payload, 'utf-8').digest('hex');
+  computeHmac(payload: string, hmacSecretKey?: string): string {
+    const secretKey = hmacSecretKey || this.config.hmacSecretKey;
+
+    return crypto.createHmac('sha256', secretKey).update(payload, 'utf-8').digest('hex');
   }
 }

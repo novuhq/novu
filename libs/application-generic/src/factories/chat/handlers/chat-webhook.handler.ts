@@ -11,7 +11,6 @@ export class ChatWebhookHandler extends BaseChatHandler {
 
   buildProvider(credentials: ICredentials) {
     const config = {
-      webhookUrl: credentials.webhookUrl,
       hmacSecretKey: credentials.secretKey,
     };
 
