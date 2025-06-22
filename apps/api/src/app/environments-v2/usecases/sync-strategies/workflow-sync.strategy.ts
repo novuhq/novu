@@ -50,13 +50,6 @@ function normalizeSteps(steps: any[]): any[] {
   }));
 }
 
-function normalizePreferences(preferences: any[]): any {
-  return {
-    user: preferences.find((p) => p.type === PreferencesTypeEnum.USER_WORKFLOW)?.preferences || null,
-    workflow: preferences.find((p) => p.type === PreferencesTypeEnum.WORKFLOW_RESOURCE)?.preferences || null,
-  };
-}
-
 @Injectable()
 export class WorkflowSyncStrategy extends BaseSyncStrategy {
   constructor(

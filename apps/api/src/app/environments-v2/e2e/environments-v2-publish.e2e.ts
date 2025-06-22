@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
+import { StepTypeEnum, EmailBlockTypeEnum, WorkflowOriginEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -300,6 +300,236 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
       );
       expect(skippedWorkflow).to.exist;
       expect(skippedWorkflow.reason).to.contain('No changes detected');
+    });
+
+    it('should properly publish workflow changes when workflow is modified', async () => {
+      // Create a workflow in source environment using the v2 API
+      const sourceWorkflow = await createWorkflow({
+        name: 'Test Workflow for Control Values Update',
+        workflowId: `test-control-values-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: 'In-App Step',
+            type: StepTypeEnum.IN_APP,
+            controlValues: {
+              body: 'Original in-app message',
+            },
+          },
+        ],
+      });
+
+      expect(sourceWorkflow).to.exist;
+      expect(sourceWorkflow.workflowId).to.exist;
+
+      // First publish from source to target
+      const { body: firstPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Verify initial workflow was created in target environment
+      const initialTargetWorkflows = await workflowRepository.find({
+        _environmentId: targetEnv._id,
+        _organizationId: session.organization._id,
+        'triggers.identifier': sourceWorkflow.workflowId,
+      });
+
+      expect(initialTargetWorkflows).to.have.length(1);
+      const initialTargetWorkflow = initialTargetWorkflows[0];
+      expect(initialTargetWorkflow.name).to.equal('Test Workflow for Control Values Update');
+
+      // Update the workflow in source environment with new control values using patch
+      const { result: updatedWorkflow } = await novuClient.workflows.patch(
+        {
+          name: 'Test Workflow for Control Values Update - Modified',
+        },
+        sourceWorkflow.workflowId
+      );
+
+      expect(updatedWorkflow).to.exist;
+
+      // Publish the updated workflow from source to target
+      const { body: secondPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Verify that the workflow result shows it was updated, not skipped
+      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      expect(workflowResult).to.exist;
+      expect(workflowResult.successful).to.have.length.greaterThan(0);
+
+      const updatedWorkflowResult = workflowResult.successful.find(
+        (item) => item.entityName === 'Test Workflow for Control Values Update - Modified'
+      );
+      expect(updatedWorkflowResult).to.exist;
+      expect(updatedWorkflowResult.action).to.equal('updated');
+
+      // Switch to target environment to verify the control values were updated
+      const originalEnvironmentId = session.environment._id;
+      session.environment._id = targetEnv._id;
+
+      try {
+        // Use SDK to retrieve the updated workflow from target environment
+        const { result: updatedTargetWorkflow } = await novuClient.workflows.get(sourceWorkflow.workflowId);
+
+        expect(updatedTargetWorkflow).to.exist;
+        expect(updatedTargetWorkflow.name).to.equal('Test Workflow for Control Values Update - Modified');
+        expect(updatedTargetWorkflow.steps).to.have.length(1);
+
+        const targetStep = updatedTargetWorkflow.steps[0];
+        expect(targetStep.name).to.equal('In-App Step');
+      } finally {
+        // Restore original environment
+        session.environment._id = originalEnvironmentId;
+      }
+    });
+
+    it('should properly publish updated control values when workflow control values are modified', async () => {
+      // Create a workflow in source environment using the v2 API
+      const sourceWorkflow = await createWorkflow({
+        name: 'Test Workflow for Control Values Update',
+        workflowId: `test-control-values-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: 'In-App Step',
+            type: StepTypeEnum.IN_APP,
+            controlValues: {
+              body: 'Original in-app message',
+            },
+          },
+        ],
+      });
+
+      expect(sourceWorkflow).to.exist;
+      expect(sourceWorkflow.workflowId).to.exist;
+
+      // First publish from source to target
+      const { body: firstPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Verify initial workflow was created in target environment
+      const originalEnvironmentId = session.environment._id;
+      session.environment._id = targetEnv._id;
+
+      try {
+        const { result: initialTargetWorkflow } = await novuClient.workflows.get(sourceWorkflow.workflowId);
+        expect(initialTargetWorkflow).to.exist;
+        expect(initialTargetWorkflow.name).to.equal('Test Workflow for Control Values Update');
+        expect(initialTargetWorkflow.steps).to.have.length(1);
+        expect((initialTargetWorkflow.steps[0].controls.values as any).body).to.equal('Original in-app message');
+      } finally {
+        // Restore original environment
+        session.environment._id = originalEnvironmentId;
+      }
+
+      // Update the workflow control values in source environment using the full update method
+      const { result: updatedWorkflow } = await novuClient.workflows.update(
+        {
+          name: sourceWorkflow.name,
+          description: sourceWorkflow.description,
+          tags: sourceWorkflow.tags || [],
+          active: sourceWorkflow.active,
+          steps: [
+            {
+              id: sourceWorkflow.steps[0].id,
+              name: sourceWorkflow.steps[0].name,
+              type: StepTypeEnum.IN_APP,
+              controlValues: {
+                body: 'Updated in-app message with new content',
+              },
+            } as any,
+          ],
+          preferences: {
+            user: {
+              all: { enabled: true, readOnly: false },
+              channels: {
+                email: { enabled: true },
+                sms: { enabled: true },
+                in_app: { enabled: true },
+                chat: { enabled: true },
+                push: { enabled: true },
+              },
+            },
+          },
+          origin: WorkflowOriginEnum.NOVU_CLOUD,
+        },
+        sourceWorkflow.workflowId
+      );
+
+      expect(updatedWorkflow).to.exist;
+
+      // Publish the updated workflow from source to target
+      const { body: secondPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Verify that the workflow result shows it was updated, not skipped
+      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      expect(workflowResult).to.exist;
+      expect(workflowResult.successful).to.have.length.greaterThan(0);
+
+      const updatedWorkflowResult = workflowResult.successful.find(
+        (item) => item.entityName === 'Test Workflow for Control Values Update'
+      );
+      expect(updatedWorkflowResult).to.exist;
+      expect(updatedWorkflowResult.action).to.equal('updated');
+
+      // Switch to target environment to verify the control values were updated
+      session.environment._id = targetEnv._id;
+
+      try {
+        // Use SDK to retrieve the updated workflow from target environment
+        const { result: finalTargetWorkflow } = await novuClient.workflows.get(sourceWorkflow.workflowId);
+
+        expect(finalTargetWorkflow).to.exist;
+        expect(finalTargetWorkflow.name).to.equal('Test Workflow for Control Values Update');
+        expect(finalTargetWorkflow.steps).to.have.length(1);
+
+        const targetStep = finalTargetWorkflow.steps[0];
+        expect(targetStep.name).to.equal('In-App Step');
+
+        // Verify the control values were properly updated
+        expect((targetStep.controls.values as any).body).to.equal('Updated in-app message with new content');
+      } finally {
+        // Restore original environment
+        session.environment._id = originalEnvironmentId;
+      }
     });
   });
 
