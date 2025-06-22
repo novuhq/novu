@@ -146,7 +146,6 @@ const WorkflowCanvasChild = ({
   const { currentEnvironment } = useEnvironment();
   const { workflow: currentWorkflow } = useWorkflow();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user } = useUser();
 
   const [nodes, edges] = useMemo(() => {
@@ -256,17 +255,6 @@ const WorkflowCanvasChild = ({
         panOnDrag={panOnDrag}
         onPaneClick={() => {
           if (isTemplateStorePreview) {
-            return;
-          }
-
-          // Don't navigate if we're on the trigger workflow route (drawer is open)
-          // This prevents interference with the drawer's own navigation logic
-          const triggerWorkflowRoute = buildRoute(ROUTES.TRIGGER_WORKFLOW, {
-            environmentSlug: currentEnvironment?.slug ?? '',
-            workflowSlug: currentWorkflow?.slug ?? '',
-          });
-          
-          if (location.pathname === triggerWorkflowRoute) {
             return;
           }
 
