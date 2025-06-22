@@ -46,6 +46,7 @@ export function useIntegrationList(searchQuery: string = '') {
         ChatProviderIdEnum.Discord,
         ChatProviderIdEnum.MsTeams,
         ChatProviderIdEnum.Mattermost,
+        ChatProviderIdEnum.ChatWebhook,
       ],
       [ChannelTypeEnum.IN_APP]: [],
     };

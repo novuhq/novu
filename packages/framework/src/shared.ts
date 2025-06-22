@@ -170,6 +170,7 @@ export enum ChatProviderIdEnum {
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
   WhatsAppBusiness = 'whatsapp-business',
+  ChatWebhook = 'chat-webhook',
 }
 
 export enum PushProviderIdEnum {
