@@ -69,27 +69,65 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
         );
       }
 
+      // Fetch target workflows to compare for changes
+      const targetWorkflows = await this.fetchSyncableWorkflows(
+        context.targetEnvironmentId,
+        context.user.organizationId,
+        true // include inactive for comparison
+      );
+
+      const targetWorkflowMap = new Map(
+        targetWorkflows.map((workflow) => [workflow.triggers[0]?.identifier, workflow])
+      );
+
       for (const workflow of sourceWorkflows) {
         try {
           const syncStart = Date.now();
+          const sourceIdentifier = workflow.triggers[0]?.identifier;
+          const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
-          await this.syncToEnvironmentUseCase.execute(
-            SyncToEnvironmentCommand.create({
-              user: { ...context.user, environmentId: context.sourceEnvironmentId },
-              workflowIdOrInternalId: workflow._id,
-              targetEnvironmentId: context.targetEnvironmentId,
-            })
-          );
+          let action: 'created' | 'updated' | 'skipped' = 'created';
+          let shouldSync = true;
 
-          successful.push({
-            entityType: EntityTypeEnum.WORKFLOW,
-            entityId: workflow._id,
-            entityName: workflow.name,
-            action: 'updated', // We'll determine this more precisely later
-            duration: Date.now() - syncStart,
-          });
+          if (targetWorkflow) {
+            // Check if there are actual changes
+            const changes = this.compareWorkflows(workflow, targetWorkflow);
+            if (Object.keys(changes).length === 0) {
+              // No changes detected, skip this workflow
+              skipped.push({
+                entityType: EntityTypeEnum.WORKFLOW,
+                entityId: workflow._id,
+                entityName: workflow.name,
+                reason: 'No changes detected',
+              });
+              shouldSync = false;
+              action = 'skipped';
+            } else {
+              action = 'updated';
+            }
+          }
 
-          this.logger.info(`Successfully synced workflow: ${workflow.name}`);
+          if (shouldSync) {
+            await this.syncToEnvironmentUseCase.execute(
+              SyncToEnvironmentCommand.create({
+                user: { ...context.user, environmentId: context.sourceEnvironmentId },
+                workflowIdOrInternalId: workflow._id,
+                targetEnvironmentId: context.targetEnvironmentId,
+              })
+            );
+
+            successful.push({
+              entityType: EntityTypeEnum.WORKFLOW,
+              entityId: workflow._id,
+              entityName: workflow.name,
+              action,
+              duration: Date.now() - syncStart,
+            });
+
+            this.logger.info(`Successfully synced workflow: ${workflow.name} (${action})`);
+          } else {
+            this.logger.info(`Skipped workflow: ${workflow.name} (${action})`);
+          }
         } catch (error) {
           failed.push({
             entityType: EntityTypeEnum.WORKFLOW,
@@ -196,7 +234,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     const changes: Record<string, any> = {};
 
     // Compare basic properties
-    const fieldsToCompare = ['name', 'description', 'active', 'tags'];
+    const fieldsToCompare = ['name', 'description', 'active', 'tags', 'preferenceSettings', 'critical'];
 
     for (const field of fieldsToCompare) {
       if (JSON.stringify(sourceWorkflow[field]) !== JSON.stringify(targetWorkflow[field])) {
@@ -207,14 +245,177 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       }
     }
 
-    // Compare steps (simplified comparison)
-    if (sourceWorkflow.steps?.length !== targetWorkflow.steps?.length) {
+    // Compare steps - more detailed comparison
+    if (this.compareSteps(sourceWorkflow.steps || [], targetWorkflow.steps || [])) {
       changes.steps = {
         old: targetWorkflow.steps?.length || 0,
         new: sourceWorkflow.steps?.length || 0,
       };
     }
 
+    // Compare triggers - improved logic
+    if (this.compareTriggers(sourceWorkflow.triggers || [], targetWorkflow.triggers || [])) {
+      changes.triggers = {
+        old: targetWorkflow.triggers?.length || 0,
+        new: sourceWorkflow.triggers?.length || 0,
+      };
+    }
+
+    // Compare payload schema
+    if (JSON.stringify(sourceWorkflow.payloadSchema) !== JSON.stringify(targetWorkflow.payloadSchema)) {
+      changes.payloadSchema = {
+        old: targetWorkflow.payloadSchema,
+        new: sourceWorkflow.payloadSchema,
+      };
+    }
+
+    // Compare rawData - but ignore if source is undefined and target has metadata
+    // This happens because target workflows get additional metadata after sync
+    const sourceRawData = sourceWorkflow.rawData;
+    const targetRawData = targetWorkflow.rawData;
+
+    // Only compare rawData if both have meaningful data or if source has data but target doesn't
+    if (sourceRawData && targetRawData) {
+      // Both have rawData, compare them
+      if (JSON.stringify(sourceRawData) !== JSON.stringify(targetRawData)) {
+        changes.rawData = {
+          old: targetRawData,
+          new: sourceRawData,
+        };
+      }
+    } else if (sourceRawData && !targetRawData) {
+      // Source has rawData but target doesn't - this is a real change
+      changes.rawData = {
+        old: targetRawData,
+        new: sourceRawData,
+      };
+    }
+    // If source is undefined/null but target has rawData, this is expected metadata
+    // from the sync process, so we don't consider it a change
+
     return changes;
+  }
+
+  private compareSteps(sourceSteps: any[], targetSteps: any[]): boolean {
+    if (sourceSteps.length !== targetSteps.length) {
+      return true;
+    }
+
+    // Create maps for easier comparison by stepId
+    const sourceStepMap = new Map(sourceSteps.map((step) => [step.stepId || step._id, step]));
+    const targetStepMap = new Map(targetSteps.map((step) => [step.stepId || step._id, step]));
+
+    // Check if all source steps exist in target with same properties
+    for (const [stepId, sourceStep] of sourceStepMap) {
+      const targetStep = targetStepMap.get(stepId);
+      if (!targetStep) {
+        return true; // Step missing in target
+      }
+
+      // Compare step properties
+      const stepFieldsToCompare = ['name', 'active', 'shouldStopOnFail', 'filters'];
+      for (const field of stepFieldsToCompare) {
+        if (JSON.stringify(sourceStep[field]) !== JSON.stringify(targetStep[field])) {
+          return true;
+        }
+      }
+
+      // Compare template properties if they exist
+      if (sourceStep.template && targetStep.template) {
+        const templateFieldsToCompare = ['type', 'name', 'content', 'subject', 'title'];
+        for (const field of templateFieldsToCompare) {
+          if (JSON.stringify(sourceStep.template[field]) !== JSON.stringify(targetStep.template[field])) {
+            return true;
+          }
+        }
+      } else if (sourceStep.template !== targetStep.template) {
+        return true;
+      }
+    }
+
+    // Check if target has steps not in source
+    for (const stepId of targetStepMap.keys()) {
+      if (!sourceStepMap.has(stepId)) {
+        return true; // Extra step in target
+      }
+    }
+
+    return false;
+  }
+
+  private compareTriggers(sourceTriggers: any[], targetTriggers: any[]): boolean {
+    if (sourceTriggers.length !== targetTriggers.length) {
+      return true;
+    }
+
+    // Compare triggers by identifier
+    const sourceTriggerMap = new Map(sourceTriggers.map((trigger) => [trigger.identifier, trigger]));
+    const targetTriggerMap = new Map(targetTriggers.map((trigger) => [trigger.identifier, trigger]));
+
+    for (const [identifier, sourceTrigger] of sourceTriggerMap) {
+      const targetTrigger = targetTriggerMap.get(identifier);
+      if (!targetTrigger) {
+        return true; // Trigger missing in target
+      }
+
+      // Compare trigger properties that matter for sync
+      const triggerFieldsToCompare = ['type', 'variables', 'subscriberVariables', 'reservedVariables'];
+      for (const field of triggerFieldsToCompare) {
+        const sourceValue = sourceTrigger[field];
+        const targetValue = targetTrigger[field];
+
+        // Handle undefined/null values properly
+        if (sourceValue !== targetValue) {
+          // For array fields like variables, subscriberVariables, reservedVariables
+          // we need to compare content ignoring database-generated _id fields
+          if (sourceValue || targetValue) {
+            if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
+              // Compare arrays ignoring _id fields
+              if (!this.compareArraysIgnoringIds(sourceValue, targetValue)) {
+                return true;
+              }
+            } else if (JSON.stringify(sourceValue) !== JSON.stringify(targetValue)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
+    // Check if target has triggers not in source
+    for (const identifier of targetTriggerMap.keys()) {
+      if (!sourceTriggerMap.has(identifier)) {
+        return true; // Extra trigger in target
+      }
+    }
+
+    return false;
+  }
+
+  private compareArraysIgnoringIds(sourceArray: any[], targetArray: any[]): boolean {
+    if (sourceArray.length !== targetArray.length) {
+      return false;
+    }
+
+    // Sort both arrays by name (or other stable field) for comparison
+    const sortedSource = [...sourceArray].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const sortedTarget = [...targetArray].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+    for (let i = 0; i < sortedSource.length; i++) {
+      const sourceItem = sortedSource[i];
+      const targetItem = sortedTarget[i];
+
+      // Compare all fields except _id
+      const sourceItemWithoutId = { ...sourceItem };
+      const targetItemWithoutId = { ...targetItem };
+      delete sourceItemWithoutId._id;
+      delete targetItemWithoutId._id;
+
+      if (JSON.stringify(sourceItemWithoutId) !== JSON.stringify(targetItemWithoutId)) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

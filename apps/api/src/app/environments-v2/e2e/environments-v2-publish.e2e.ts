@@ -3,8 +3,8 @@ import { UserSession } from '@novu/testing';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
-import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
+import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async () => {
   let session: UserSession;
@@ -131,8 +131,10 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
       expect(targetWorkflow.name).to.equal('Test Workflow for Creation');
       expect(targetWorkflow.triggers[0].identifier).to.equal(sourceWorkflow.workflowId);
       expect(targetWorkflow.steps).to.have.length(1);
-      // Note: v2 workflows store control values differently than v1 templates
-      // The subject is stored in the rawData for v2 workflows
+      /*
+       * Note: v2 workflows store control values differently than v1 templates
+       * The subject is stored in the rawData for v2 workflows
+       */
     });
 
     it('should handle multiple workflows during publishing', async () => {
@@ -235,6 +237,69 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
       const targetWorkflow = targetWorkflows[0];
       expect(targetWorkflow.name).to.equal('Multi-Step Workflow');
       expect(targetWorkflow.steps).to.have.length(2);
+    });
+
+    it('should not report workflows as updated when no changes are made on second publish', async () => {
+      // Create a workflow in source environment using the v2 API
+      const sourceWorkflow = await createWorkflow({
+        name: 'Test Workflow for Duplicate Publish',
+        workflowId: `test-duplicate-publish-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: 'Email Step',
+            type: StepTypeEnum.EMAIL,
+            controlValues: {
+              subject: 'Test Email Subject',
+              body: 'Test email content',
+            },
+          },
+        ],
+      });
+
+      // First publish from source to target
+      const { body: firstPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Second publish without any changes - should not report workflows as updated
+      const { body: secondPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      /*
+       * The issue: currently this fails because workflows are always reported as "updated"
+       * even when no changes were made
+       */
+      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.totalSuccessful).to.equal(0);
+      expect(secondPublish.data.summary.totalSkipped).to.be.greaterThan(0);
+
+      // Verify that the workflow result shows it was skipped, not updated
+      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      expect(workflowResult).to.exist;
+      expect(workflowResult.successful).to.have.length(0);
+      expect(workflowResult.skipped).to.have.length.greaterThan(0);
+
+      const skippedWorkflow = workflowResult.skipped.find(
+        (item) => item.entityName === 'Test Workflow for Duplicate Publish'
+      );
+      expect(skippedWorkflow).to.exist;
+      expect(skippedWorkflow.reason).to.contain('No changes detected');
     });
   });
 
