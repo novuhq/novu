@@ -2,7 +2,8 @@ import { Button, LoadingOverlay } from '@novu/design-system';
 import { useForm } from 'react-hook-form';
 import { css } from '@novu/novui/css';
 import { Stack } from '@novu/novui/jsx';
-import { useUpdateOrganizationBranding } from '../../api/hooks';
+import { useEffect } from 'react';
+import { useUpdateOrganizationBranding, useFetchOrganization } from '../../api/hooks';
 import { useAuth } from '../../hooks/useAuth';
 import { successMessage } from '../../utils/notifications';
 import { SettingsPageContainer } from '../settings/SettingsPageContainer';
@@ -17,6 +18,7 @@ import { InAppInputs } from './InAppInputs';
 
 export function BrandingPage() {
   const { currentOrganization } = useAuth();
+  const { data: organizationData, isLoading: isLoadingOrganization } = useFetchOrganization();
 
   const {
     setValue,
@@ -26,13 +28,28 @@ export function BrandingPage() {
     formState: { isDirty },
   } = useForm<IBrandFormValues>({
     defaultValues: {
-      fontFamily: currentOrganization?.branding?.fontFamily || DEFAULT_FONT_FAMILY,
-      color: currentOrganization?.branding?.color || DEFAULT_BRANDING_COLOR,
-      fontColor: currentOrganization?.branding?.fontColor || DEFAULT_FONT_COLOR,
-      logo: currentOrganization?.branding?.logo || '',
+      fontFamily: DEFAULT_FONT_FAMILY,
+      color: DEFAULT_BRANDING_COLOR,
+      fontColor: DEFAULT_FONT_COLOR,
+      logo: '',
       file: null,
     },
   });
+
+  // Update form values when organization data is loaded
+  useEffect(() => {
+    if (organizationData?.branding) {
+      const branding = organizationData.branding;
+      
+      reset({
+        fontFamily: branding.fontFamily || DEFAULT_FONT_FAMILY,
+        color: branding.color || DEFAULT_BRANDING_COLOR,
+        fontColor: branding.fontColor || DEFAULT_FONT_COLOR,
+        logo: branding.logo || '',
+        file: null,
+      });
+    }
+  }, [organizationData, reset]);
 
   const { isLoading, updateOrganizationBranding } = useUpdateOrganizationBranding({
     onSuccess: (data) => {
@@ -54,7 +71,7 @@ export function BrandingPage() {
 
   return (
     <SettingsPageContainer title="Branding">
-      <LoadingOverlay visible={!currentOrganization}>
+      <LoadingOverlay visible={!currentOrganization || isLoadingOrganization}>
         <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
           <Stack gap="200">
             <BrandInputs control={control} setValue={setValue} />
