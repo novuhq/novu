@@ -1,24 +1,41 @@
-import { z } from 'zod';
+import {
+  ClickhouseSchema,
+  InferClickhouseSchemaType,
+  CHUInt16,
+  CHString,
+  CHDateTime,
+  CHLowCardinality,
+  CHNullable,
+  CHUInt32,
+} from 'clickhouse-schema';
+import { TABLE_NAME } from './http-log.repository';
 
 // Corresponds to the ClickHouse http_logs table schema
-export const httpLogSchema = z.object({
-  timestamp: z.date().or(z.string()).describe('DateTime'),
-  path: z.string().describe('String'),
-  url: z.string().describe('String'),
-  hostname: z.string().describe('String'),
-  status_code: z.number().describe('UInt16'),
-  method: z.string().describe('LowCardinality(String)'),
-  transaction_id: z.string().nullable().describe('Nullable(String)'),
-  ip: z.string().describe('String'),
-  user_agent: z.string().describe('String'),
-  query_params: z.string().describe('String'),
-  request_body: z.string().describe('String'),
-  response_body: z.string().describe('String'),
-  user_id: z.string().describe('String'),
-  organization_id: z.string().describe('String'),
-  environment_id: z.string().describe('String'),
-  schema_type: z.string().describe('String'),
-  duration_ms: z.number().describe('UInt32'),
-});
+export const httpLogSchema = new ClickhouseSchema(
+  {
+    timestamp: { type: CHDateTime('UTC') },
+    path: { type: CHString() },
+    url: { type: CHString() },
+    hostname: { type: CHString() },
+    status_code: { type: CHUInt16() },
+    method: { type: CHLowCardinality(CHString()) },
+    transaction_id: {
+      type: CHNullable(CHString()),
+    },
+    ip: { type: CHString() },
+    user_agent: { type: CHString() },
+    query_params: { type: CHString() },
+    request_body: { type: CHString() },
+    response_body: { type: CHString() },
+    user_id: { type: CHString() },
+    organization_id: { type: CHString() },
+    environment_id: { type: CHString() },
+    schema_type: { type: CHString() },
+    duration_ms: { type: CHUInt32() },
+  },
+  {
+    table_name: TABLE_NAME,
+  }
+);
 
-export type HttpLog = z.infer<typeof httpLogSchema>;
+export type HttpLog = InferClickhouseSchemaType<typeof httpLogSchema>;

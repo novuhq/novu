@@ -76,6 +76,7 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "clickhouse-query": "^1.10.2",
+    "clickhouse-schema": "^2.0.1",
     "cron-parser": "^4.9.0",
     "date-fns": "^2.29.2",
     "got": "^11.8.6",
