@@ -4,6 +4,7 @@ export const getActivityStatus = (jobs: IActivityJob[]) => {
   if (!jobs.length) return JobStatusEnum.PENDING;
 
   const hasFailedJob = jobs.some(job => job.status === JobStatusEnum.FAILED);
+
   if (hasFailedJob) {
     return JobStatusEnum.FAILED;
   }

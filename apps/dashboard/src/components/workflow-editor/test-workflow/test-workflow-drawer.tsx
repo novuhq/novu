@@ -18,14 +18,21 @@ import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/
 import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
-import { RiPlayCircleLine } from 'react-icons/ri';
+import { RiPlayCircleLine, RiMore2Fill, RiFileCopyLine } from 'react-icons/ri';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 import { useEnvironment } from '../../../context/environment/hooks';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
+import { API_HOSTNAME } from '@/config';
+import { getToken } from '@/utils/auth';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
@@ -33,6 +40,38 @@ type TestWorkflowDrawerProps = {
   testData?: WorkflowTestDataResponseDto;
   initialPayload?: PayloadData;
 };
+
+const generateCurlCommand = async (data: {
+  workflowId: string;
+  to: unknown;
+  payload: string;
+  environmentId: string;
+}) => {
+  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
+  const token = await getToken();
+  
+  // Parse payload if it's a string, otherwise use as-is
+  let parsedPayload = {};
+
+  try {
+    parsedPayload = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload;
+  } catch {
+    parsedPayload = {};
+  }
+  
+  const body = {
+    name: data.workflowId,
+    to: data.to,
+    payload: { ...parsedPayload, __source: 'dashboard' },
+  };
+
+  return `curl -X POST "${baseUrl}/v1/events/trigger" \\
+  -H "Authorization: Bearer ${token}" \\
+  -H "Content-Type: application/json" \\
+  -H "Novu-Environment-Id: ${data.environmentId}" \\
+  -d '${JSON.stringify(body, null, 2)}'`;
+};
+
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
   const { isOpen, onOpenChange, testData, initialPayload } = props;
@@ -183,6 +222,131 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   };
 
+  const handleCopyCurl = useCallback(async () => {
+    if (!workflow?.workflowId || !currentEnvironment?._id) {
+      showErrorToast('Workflow or environment information is missing');
+      return;
+    }
+
+    try {
+      const formData = form.getValues();
+      const curlCommand = await generateCurlCommand({
+        workflowId: workflow.workflowId,
+        to: formData.to,
+        payload: formData.payload,
+        environmentId: currentEnvironment._id,
+      });
+
+      await navigator.clipboard.writeText(curlCommand);
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <span>cURL command copied to clipboard</span>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: {
+          position: 'bottom-right',
+        },
+              });
+      } catch {
+        showErrorToast('Failed to copy cURL command', 'Copy Error');
+      }
+  }, [workflow?.workflowId, currentEnvironment?._id, form]);
+
+  const handleOpenInPostman = useCallback(async () => {
+    if (!workflow?.workflowId || !currentEnvironment?._id) {
+      showErrorToast('Workflow or environment information is missing');
+      return;
+    }
+
+    try {
+      const formData = form.getValues();
+      
+      // Parse payload if it's a string, otherwise use as-is
+      let parsedPayload = {};
+
+      try {
+        parsedPayload = typeof formData.payload === 'string' ? JSON.parse(formData.payload) : formData.payload;
+      } catch {
+        parsedPayload = {};
+      }
+      
+      const body = {
+        name: workflow.workflowId,
+        to: formData.to,
+        payload: { ...parsedPayload, __source: 'dashboard' },
+      };
+
+      const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
+      const postmanCollection = {
+        info: {
+          name: `Novu - Trigger ${workflow.workflowId}`,
+          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
+        item: [
+          {
+            name: `Trigger ${workflow.workflowId}`,
+            request: {
+              method: 'POST',
+              header: [
+                {
+                  key: 'Authorization',
+                  value: 'Bearer {{NOVU_API_KEY}}',
+                },
+                {
+                  key: 'Content-Type',
+                  value: 'application/json',
+                },
+                {
+                  key: 'Novu-Environment-Id',
+                  value: currentEnvironment._id,
+                },
+              ],
+              body: {
+                mode: 'raw',
+                raw: JSON.stringify(body, null, 2),
+                options: {
+                  raw: {
+                    language: 'json',
+                  },
+                },
+              },
+              url: `${baseUrl}/v1/events/trigger`,
+            },
+          },
+        ],
+        variable: [
+          {
+            key: 'NOVU_API_KEY',
+            value: 'your-api-key-here',
+          },
+        ],
+      };
+
+      await navigator.clipboard.writeText(JSON.stringify(postmanCollection, null, 2));
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <div className="flex flex-col gap-1">
+              <span>Postman collection copied to clipboard</span>
+              <span className="text-xs text-foreground-600">Import it in Postman: File → Import → Raw text</span>
+            </div>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: {
+          position: 'bottom-right',
+          duration: 5000,
+        },
+      });
+    } catch {
+      showErrorToast('Failed to copy Postman collection', 'Postman Error');
+    }
+  }, [workflow?.workflowId, currentEnvironment?._id, form]);
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent ref={forwardedRef} className="w-[500px]">
@@ -204,6 +368,29 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             {/* Footer */}
             <div className="border-t border-neutral-200 bg-white">
               <div className="flex items-center justify-between px-3 py-1.5">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="xs"
+                      mode="outline"
+                      className="gap-1"
+                    >
+                      <RiMore2Fill className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
+                      <RiFileCopyLine />
+                      Copy cURL
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleOpenInPostman} className="cursor-pointer">
+                      <RiFileCopyLine />
+                      Copy Postman Collection
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <Button
                   type="submit"
                   variant="secondary"
