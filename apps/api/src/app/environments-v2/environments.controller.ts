@@ -63,6 +63,7 @@ export class EnvironmentsController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Publish all workflows from source to target environment' })
   @ApiResponse(PublishEnvironmentResponseDto)
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async publishEnvironment(
     @UserSession() user: UserSessionData,
@@ -85,6 +86,7 @@ export class EnvironmentsController {
   @HttpCode(200)
   @ApiOperation({ summary: 'Compare workflows between source and target environments' })
   @ApiResponse(DiffEnvironmentResponseDto)
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async diffEnvironment(
     @UserSession() user: UserSessionData,
