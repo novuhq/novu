@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { BaseRepository } from './base.repository';
-import { ClickHouseService } from './clickhouse.service';
+import { BaseRepository } from '../base.repository';
+import { ClickHouseService } from '../clickhouse.service';
 import { httpLogSchema } from './http-log.schema';
 
 export const TABLE_NAME = 'http_logs';

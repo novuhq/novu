@@ -2,9 +2,25 @@ import { PinoLogger } from 'nestjs-pino';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { ClickHouseService } from './clickhouse.service';
 
-// todo make operator typed instead of string
+export type ClickhouseOperator =
+  | '='
+  | '=='
+  | '!='
+  | '<>'
+  | '<='
+  | '>='
+  | '<'
+  | '>'
+  | 'LIKE'
+  | 'NOT LIKE'
+  | 'ILIKE'
+  | 'IN'
+  | 'NOT IN'
+  | 'GLOBAL IN'
+  | 'GLOBAL NOT IN';
+
 export type Where<T> = {
-  [K in keyof T]?: T[K] | { operator: string; value: T[K] | T[K][] };
+  [K in keyof T]?: T[K] | { operator: ClickhouseOperator; value: T[K] | T[K][] };
 };
 
 export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
@@ -31,11 +47,11 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     const params: Record<string, any> = {};
     const clauses = Object.entries(where)
       .map(([key, value], index) => {
-        let operator = '=';
+        let operator: ClickhouseOperator = '=';
         let actualValue = value;
 
         if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
-          operator = String(value.operator);
+          operator = value.operator;
           actualValue = value.value;
         }
 
