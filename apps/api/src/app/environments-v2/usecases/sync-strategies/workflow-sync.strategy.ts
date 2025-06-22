@@ -234,7 +234,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     const changes: Record<string, any> = {};
 
     // Compare basic properties
-    const fieldsToCompare = ['name', 'description', 'active', 'tags', 'preferenceSettings', 'critical'];
+    const fieldsToCompare = ['name', 'description', 'active', 'tags', 'critical'];
 
     for (const field of fieldsToCompare) {
       if (JSON.stringify(sourceWorkflow[field]) !== JSON.stringify(targetWorkflow[field])) {
@@ -243,6 +243,14 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           new: sourceWorkflow[field],
         };
       }
+    }
+
+    // Special handling for preferenceSettings to ignore property order
+    if (!this.deepEqual(sourceWorkflow.preferenceSettings, targetWorkflow.preferenceSettings)) {
+      changes.preferenceSettings = {
+        old: targetWorkflow.preferenceSettings,
+        new: sourceWorkflow.preferenceSettings,
+      };
     }
 
     // Compare steps - more detailed comparison
@@ -269,29 +277,13 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       };
     }
 
-    // Compare rawData - but ignore if source is undefined and target has metadata
-    // This happens because target workflows get additional metadata after sync
-    const sourceRawData = sourceWorkflow.rawData;
-    const targetRawData = targetWorkflow.rawData;
-
-    // Only compare rawData if both have meaningful data or if source has data but target doesn't
-    if (sourceRawData && targetRawData) {
-      // Both have rawData, compare them
-      if (JSON.stringify(sourceRawData) !== JSON.stringify(targetRawData)) {
-        changes.rawData = {
-          old: targetRawData,
-          new: sourceRawData,
-        };
-      }
-    } else if (sourceRawData && !targetRawData) {
-      // Source has rawData but target doesn't - this is a real change
-      changes.rawData = {
-        old: targetRawData,
-        new: sourceRawData,
+    // Compare validatePayload
+    if (sourceWorkflow.validatePayload !== targetWorkflow.validatePayload) {
+      changes.validatePayload = {
+        old: targetWorkflow.validatePayload,
+        new: sourceWorkflow.validatePayload,
       };
     }
-    // If source is undefined/null but target has rawData, this is expected metadata
-    // from the sync process, so we don't consider it a change
 
     return changes;
   }
@@ -412,6 +404,58 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       delete targetItemWithoutId._id;
 
       if (JSON.stringify(sourceItemWithoutId) !== JSON.stringify(targetItemWithoutId)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private deepEqual(obj1: any, obj2: any): boolean {
+    if (obj1 === obj2) {
+      return true;
+    }
+
+    if (obj1 == null || obj2 == null) {
+      return obj1 === obj2;
+    }
+
+    if (typeof obj1 !== typeof obj2) {
+      return false;
+    }
+
+    if (typeof obj1 !== 'object') {
+      return obj1 === obj2;
+    }
+
+    if (Array.isArray(obj1) !== Array.isArray(obj2)) {
+      return false;
+    }
+
+    if (Array.isArray(obj1)) {
+      if (obj1.length !== obj2.length) {
+        return false;
+      }
+      for (let i = 0; i < obj1.length; i++) {
+        if (!this.deepEqual(obj1[i], obj2[i])) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    const keys1 = Object.keys(obj1);
+    const keys2 = Object.keys(obj2);
+
+    if (keys1.length !== keys2.length) {
+      return false;
+    }
+
+    for (const key of keys1) {
+      if (!keys2.includes(key)) {
+        return false;
+      }
+      if (!this.deepEqual(obj1[key], obj2[key])) {
         return false;
       }
     }

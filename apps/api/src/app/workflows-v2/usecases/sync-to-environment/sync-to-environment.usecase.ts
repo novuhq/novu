@@ -103,6 +103,8 @@ export class SyncToEnvironmentUseCase {
   ): Promise<UpsertWorkflowDataCommand> {
     return {
       workflowId: sourceWorkflow.workflowId,
+      payloadSchema: sourceWorkflow.payloadSchema,
+      validatePayload: sourceWorkflow.validatePayload,
       origin: WorkflowOriginEnum.NOVU_CLOUD,
       name: sourceWorkflow.name,
       active: sourceWorkflow.active,
@@ -121,6 +123,8 @@ export class SyncToEnvironmentUseCase {
   ): Promise<UpsertWorkflowDataCommand> {
     return {
       origin: WorkflowOriginEnum.NOVU_CLOUD,
+      payloadSchema: sourceWorkflow.payloadSchema,
+      validatePayload: sourceWorkflow.validatePayload,
       workflowId: sourceWorkflow.workflowId,
       name: sourceWorkflow.name,
       active: sourceWorkflow.active,
