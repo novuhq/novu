@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateRepository, PreferencesRepository } from '@novu/dal';
-import { WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { WorkflowOriginEnum, WorkflowStatusEnum, PreferencesTypeEnum } from '@novu/shared';
+import { diff } from 'deep-object-diff';
 import { BaseSyncStrategy } from './base-sync.strategy';
 import {
   EntityTypeEnum,
@@ -19,6 +20,40 @@ import {
   SYNCABLE_WORKFLOW_ORIGINS,
 } from '../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { SyncToEnvironmentCommand } from '../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.command';
+
+// Utility functions for workflow comparison
+function normalizeWorkflowForComparison(workflow: any, preferences: any[] = []): any {
+  return {
+    workflowId: workflow.triggers?.[0]?.identifier || workflow.workflowId,
+    name: workflow.name,
+    active: workflow.active,
+    tags: workflow.tags,
+    description: workflow.description,
+    payloadSchema: workflow.payloadSchema,
+    validatePayload: workflow.validatePayload,
+    steps: normalizeSteps(workflow.steps || []),
+    preferences: normalizePreferences(preferences),
+  };
+}
+
+function normalizeSteps(steps: any[]): any[] {
+  return steps.map((step) => ({
+    stepId: step.stepId || step._templateId,
+    name: step.name || '',
+    type: step.template?.type || step.type,
+    active: step.active,
+    shouldStopOnFail: step.shouldStopOnFail,
+    filters: step.filters,
+    controlValues: step.template?.content || step.controlValues || {},
+  }));
+}
+
+function normalizePreferences(preferences: any[]): any {
+  return {
+    user: preferences.find((p) => p.type === PreferencesTypeEnum.USER_WORKFLOW)?.preferences || null,
+    workflow: preferences.find((p) => p.type === PreferencesTypeEnum.WORKFLOW_RESOURCE)?.preferences || null,
+  };
+}
 
 @Injectable()
 export class WorkflowSyncStrategy extends BaseSyncStrategy {
@@ -91,7 +126,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
           if (targetWorkflow) {
             // Check if there are actual changes
-            const changes = this.compareWorkflows(workflow, targetWorkflow);
+            const changes = await this.compareWorkflows(workflow, targetWorkflow);
             if (Object.keys(changes).length === 0) {
               // No changes detected, skip this workflow
               skipped.push({
@@ -174,7 +209,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
             action: DiffActionEnum.ADDED,
           });
         } else {
-          const changes = this.compareWorkflows(sourceWorkflow, targetWorkflow);
+          const changes = await this.compareWorkflows(sourceWorkflow, targetWorkflow);
           if (Object.keys(changes).length > 0) {
             diffs.push({
               entityId: sourceWorkflow._id,
@@ -230,236 +265,51 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     return await this.notificationTemplateRepository.find(query);
   }
 
-  private compareWorkflows(sourceWorkflow: any, targetWorkflow: any): Record<string, any> {
+  private async compareWorkflows(sourceWorkflow: any, targetWorkflow: any): Promise<Record<string, any>> {
+    // Get preferences for both workflows
+    const [sourcePreferences, targetPreferences] = await Promise.all([
+      this.preferencesRepository.find({
+        _templateId: sourceWorkflow._id,
+        _environmentId: sourceWorkflow._environmentId,
+        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+      }),
+      this.preferencesRepository.find({
+        _templateId: targetWorkflow._id,
+        _environmentId: targetWorkflow._environmentId,
+        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+      }),
+    ]);
+
+    // Normalize both workflows using the same logic as sync-to-environment
+    const normalizedSource = normalizeWorkflowForComparison(sourceWorkflow, sourcePreferences);
+    const normalizedTarget = normalizeWorkflowForComparison(targetWorkflow, targetPreferences);
+
+    // Get differences using deep-object-diff
+    const differences = diff(normalizedTarget, normalizedSource);
+
+    // If no differences, return empty object
+    if (Object.keys(differences).length === 0) {
+      return {};
+    }
+
+    // Transform differences to match expected format
     const changes: Record<string, any> = {};
 
-    // Compare basic properties
-    const fieldsToCompare = ['name', 'description', 'active', 'tags', 'critical'];
-
-    for (const field of fieldsToCompare) {
-      if (JSON.stringify(sourceWorkflow[field]) !== JSON.stringify(targetWorkflow[field])) {
+    for (const [field, value] of Object.entries(differences)) {
+      // For steps, just report the count change
+      if (field === 'steps') {
         changes[field] = {
-          old: targetWorkflow[field],
-          new: sourceWorkflow[field],
+          old: targetWorkflow.steps?.length || 0,
+          new: sourceWorkflow.steps?.length || 0,
+        };
+      } else {
+        changes[field] = {
+          old: normalizedTarget[field],
+          new: normalizedSource[field],
         };
       }
     }
 
-    // Special handling for preferenceSettings to ignore property order
-    if (!this.deepEqual(sourceWorkflow.preferenceSettings, targetWorkflow.preferenceSettings)) {
-      changes.preferenceSettings = {
-        old: targetWorkflow.preferenceSettings,
-        new: sourceWorkflow.preferenceSettings,
-      };
-    }
-
-    // Compare steps - more detailed comparison
-    if (this.compareSteps(sourceWorkflow.steps || [], targetWorkflow.steps || [])) {
-      changes.steps = {
-        old: targetWorkflow.steps?.length || 0,
-        new: sourceWorkflow.steps?.length || 0,
-      };
-    }
-
-    // Compare triggers - improved logic
-    if (this.compareTriggers(sourceWorkflow.triggers || [], targetWorkflow.triggers || [])) {
-      changes.triggers = {
-        old: targetWorkflow.triggers?.length || 0,
-        new: sourceWorkflow.triggers?.length || 0,
-      };
-    }
-
-    // Compare payload schema
-    if (JSON.stringify(sourceWorkflow.payloadSchema) !== JSON.stringify(targetWorkflow.payloadSchema)) {
-      changes.payloadSchema = {
-        old: targetWorkflow.payloadSchema,
-        new: sourceWorkflow.payloadSchema,
-      };
-    }
-
-    // Compare validatePayload
-    if (sourceWorkflow.validatePayload !== targetWorkflow.validatePayload) {
-      changes.validatePayload = {
-        old: targetWorkflow.validatePayload,
-        new: sourceWorkflow.validatePayload,
-      };
-    }
-
     return changes;
-  }
-
-  private compareSteps(sourceSteps: any[], targetSteps: any[]): boolean {
-    if (sourceSteps.length !== targetSteps.length) {
-      return true;
-    }
-
-    // Create maps for easier comparison by stepId
-    const sourceStepMap = new Map(sourceSteps.map((step) => [step.stepId || step._id, step]));
-    const targetStepMap = new Map(targetSteps.map((step) => [step.stepId || step._id, step]));
-
-    // Check if all source steps exist in target with same properties
-    for (const [stepId, sourceStep] of sourceStepMap) {
-      const targetStep = targetStepMap.get(stepId);
-      if (!targetStep) {
-        return true; // Step missing in target
-      }
-
-      // Compare step properties
-      const stepFieldsToCompare = ['name', 'active', 'shouldStopOnFail', 'filters'];
-      for (const field of stepFieldsToCompare) {
-        if (JSON.stringify(sourceStep[field]) !== JSON.stringify(targetStep[field])) {
-          return true;
-        }
-      }
-
-      // Compare template properties if they exist
-      if (sourceStep.template && targetStep.template) {
-        const templateFieldsToCompare = ['type', 'name', 'content', 'subject', 'title'];
-        for (const field of templateFieldsToCompare) {
-          if (JSON.stringify(sourceStep.template[field]) !== JSON.stringify(targetStep.template[field])) {
-            return true;
-          }
-        }
-      } else if (sourceStep.template !== targetStep.template) {
-        return true;
-      }
-    }
-
-    // Check if target has steps not in source
-    for (const stepId of targetStepMap.keys()) {
-      if (!sourceStepMap.has(stepId)) {
-        return true; // Extra step in target
-      }
-    }
-
-    return false;
-  }
-
-  private compareTriggers(sourceTriggers: any[], targetTriggers: any[]): boolean {
-    if (sourceTriggers.length !== targetTriggers.length) {
-      return true;
-    }
-
-    // Compare triggers by identifier
-    const sourceTriggerMap = new Map(sourceTriggers.map((trigger) => [trigger.identifier, trigger]));
-    const targetTriggerMap = new Map(targetTriggers.map((trigger) => [trigger.identifier, trigger]));
-
-    for (const [identifier, sourceTrigger] of sourceTriggerMap) {
-      const targetTrigger = targetTriggerMap.get(identifier);
-      if (!targetTrigger) {
-        return true; // Trigger missing in target
-      }
-
-      // Compare trigger properties that matter for sync
-      const triggerFieldsToCompare = ['type', 'variables', 'subscriberVariables', 'reservedVariables'];
-      for (const field of triggerFieldsToCompare) {
-        const sourceValue = sourceTrigger[field];
-        const targetValue = targetTrigger[field];
-
-        // Handle undefined/null values properly
-        if (sourceValue !== targetValue) {
-          // For array fields like variables, subscriberVariables, reservedVariables
-          // we need to compare content ignoring database-generated _id fields
-          if (sourceValue || targetValue) {
-            if (Array.isArray(sourceValue) && Array.isArray(targetValue)) {
-              // Compare arrays ignoring _id fields
-              if (!this.compareArraysIgnoringIds(sourceValue, targetValue)) {
-                return true;
-              }
-            } else if (JSON.stringify(sourceValue) !== JSON.stringify(targetValue)) {
-              return true;
-            }
-          }
-        }
-      }
-    }
-
-    // Check if target has triggers not in source
-    for (const identifier of targetTriggerMap.keys()) {
-      if (!sourceTriggerMap.has(identifier)) {
-        return true; // Extra trigger in target
-      }
-    }
-
-    return false;
-  }
-
-  private compareArraysIgnoringIds(sourceArray: any[], targetArray: any[]): boolean {
-    if (sourceArray.length !== targetArray.length) {
-      return false;
-    }
-
-    // Sort both arrays by name (or other stable field) for comparison
-    const sortedSource = [...sourceArray].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    const sortedTarget = [...targetArray].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-    for (let i = 0; i < sortedSource.length; i++) {
-      const sourceItem = sortedSource[i];
-      const targetItem = sortedTarget[i];
-
-      // Compare all fields except _id
-      const sourceItemWithoutId = { ...sourceItem };
-      const targetItemWithoutId = { ...targetItem };
-      delete sourceItemWithoutId._id;
-      delete targetItemWithoutId._id;
-
-      if (JSON.stringify(sourceItemWithoutId) !== JSON.stringify(targetItemWithoutId)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private deepEqual(obj1: any, obj2: any): boolean {
-    if (obj1 === obj2) {
-      return true;
-    }
-
-    if (obj1 == null || obj2 == null) {
-      return obj1 === obj2;
-    }
-
-    if (typeof obj1 !== typeof obj2) {
-      return false;
-    }
-
-    if (typeof obj1 !== 'object') {
-      return obj1 === obj2;
-    }
-
-    if (Array.isArray(obj1) !== Array.isArray(obj2)) {
-      return false;
-    }
-
-    if (Array.isArray(obj1)) {
-      if (obj1.length !== obj2.length) {
-        return false;
-      }
-      for (let i = 0; i < obj1.length; i++) {
-        if (!this.deepEqual(obj1[i], obj2[i])) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    const keys1 = Object.keys(obj1);
-    const keys2 = Object.keys(obj2);
-
-    if (keys1.length !== keys2.length) {
-      return false;
-    }
-
-    for (const key of keys1) {
-      if (!keys2.includes(key)) {
-        return false;
-      }
-      if (!this.deepEqual(obj1[key], obj2[key])) {
-        return false;
-      }
-    }
-
-    return true;
   }
 }
