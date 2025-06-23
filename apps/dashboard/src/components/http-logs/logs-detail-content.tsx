@@ -91,7 +91,7 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
       <div className="space-y-2 px-3 py-2.5">
         <div className="mb-3">
           <div className="mb-3 flex items-center gap-2">
-            <div className="w-[52px]">
+            <div>
               <HttpStatusBadge statusCode={log.statusCode} className="text-xs" />
             </div>
             <span className="text-text-soft font-mono text-xs font-normal tracking-[-0.24px]">{log.method}</span>
