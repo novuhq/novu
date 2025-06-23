@@ -1,61 +1,66 @@
 import { Injectable } from '@nestjs/common';
-import { ClickHouseService } from '@novu/application-generic';
+import { HttpLog, HttpLogRepository, Where } from '@novu/application-generic';
 import { GetHttpLogsCommand } from './get-http-logs.command';
 import { GetHttpLogsResponseDto } from '../../dtos/get-http-logs-response.dto';
 
 @Injectable()
 export class GetHttpLogs {
-  constructor(private readonly clickhouseService: ClickHouseService) {}
+  constructor(private readonly httpLogRepository: HttpLogRepository) {}
 
   async execute(command: GetHttpLogsCommand): Promise<GetHttpLogsResponseDto> {
-    const whereClauses: string[] = ['organization_id = {organizationId:String}'];
-    const params: Record<string, unknown> = {
-      organizationId: command.organizationId,
+    const limit = command.limit || 10;
+    const page = command.page || 0;
+    const offset = page * limit;
+
+    const where: Where<HttpLog> = {
+      organization_id: command.organizationId,
     };
 
     if (command.statusCode) {
-      whereClauses.push('status_code = {statusCode:String}');
-      params.statusCode = command.statusCode;
+      where.status_code = parseInt(command.statusCode, 10);
     }
 
     if (command.url) {
-      whereClauses.push('url LIKE {url:String}');
-      params.url = `%${command.url}%`;
+      where.url = { operator: 'LIKE', value: `%${command.url}%` };
     }
 
     if (command.transactionId) {
-      whereClauses.push('transaction_id = {transactionId:String}');
-      params.transactionId = command.transactionId;
+      where.transaction_id = command.transactionId;
     }
 
     if (command.days) {
-      whereClauses.push('timestamp >= {startDate:DateTime}');
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - parseInt(command.days, 10));
-      params.startDate = startDate;
+      where.timestamp = {
+        operator: '>=',
+        value: startDate.toISOString().slice(0, 19).replace('T', ' '),
+      };
     }
 
-    const query = `
-      SELECT *
-      FROM http_logs
-      WHERE ${whereClauses.join(' AND ')}
-      ORDER BY timestamp DESC
-      LIMIT {limit:UInt32} OFFSET {offset:UInt32}
-    `;
+    const [findResult, total] = await Promise.all([
+      this.httpLogRepository.find({
+        where,
+        limit,
+        offset,
+        orderBy: 'timestamp',
+        orderDirection: 'DESC',
+      }),
+      this.httpLogRepository.count({ where }),
+    ]);
 
-    params.limit = command.limit || 10;
-    params.offset = (command.page || 0) * (command.limit || 10);
-
-    const { data, rows: total } = await this.clickhouseService.query({
-      query,
-      params,
-    });
+    const mappedData = findResult.data.map((log) => ({
+      id: log.transaction_id || new Date(log.timestamp || 0).getTime().toString(),
+      timestamp: new Date(log.timestamp || 0).toISOString(),
+      url: log.url || '',
+      method: log.method || '',
+      statusCode: log.status_code || 0,
+    }));
 
     return {
-      data: data as any[],
+      data: mappedData,
       total,
-      pageSize: command.limit,
-      page: command.page,
+      pageSize: limit,
+      page,
     };
   }
 }

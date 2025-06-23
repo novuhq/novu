@@ -22,7 +22,6 @@ import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
 import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
 
-const LOG_CONTEXT = 'IdempotencyInterceptor';
 const IDEMPOTENCY_CACHE_TTL = 60 * 60 * 24; // 24h
 const IDEMPOTENCY_PROGRESS_TTL = 60 * 5; // 5min
 

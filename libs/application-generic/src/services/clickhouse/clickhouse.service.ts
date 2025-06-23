@@ -1,7 +1,6 @@
 import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { AnalyticsHttpLog, AnalyticsTablesEnum } from './types';
 
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
@@ -80,14 +79,14 @@ export class ClickHouseService implements OnModuleDestroy {
     return data;
   }
 
-  public async insertHttpLog(value: AnalyticsHttpLog) {
+  public async insert<T extends Record<string, unknown>>(table: string, values: T[]) {
     if (!this.client) {
       return;
     }
 
     await this.client.insert({
-      table: AnalyticsTablesEnum.HTTP_LOGS,
-      values: [value],
+      table,
+      values,
       format: 'JSONEachRow',
     });
   }

@@ -40,6 +40,7 @@ import {
   ExecuteBridgeRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
+  HttpLogRepository,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
@@ -99,6 +100,7 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   ControlValuesRepository,
   PreferencesRepository,
+  HttpLogRepository,
 ];
 
 const dalService = {
@@ -126,6 +128,7 @@ const PROVIDERS = [
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
   ClickHouseService,
+  HttpLogRepository,
 ];
 
 const IMPORTS = [
