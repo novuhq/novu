@@ -1,13 +1,13 @@
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
-import { HttpLog } from '../../types/logs';
+import { RequestLog } from '../../types/logs';
 import { MethodBadge } from './method-badge';
 import { HttpStatusBadge } from './http-status-badge';
 
 type LogsTableRowProps = {
-  log: HttpLog;
-  onClick?: (log: HttpLog) => void;
+  log: RequestLog;
+  onClick?: (log: RequestLog) => void;
   isSelected?: boolean;
 };
 

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
-import { HttpLog } from '../../types/logs';
+import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { mockLogsData, getTotalLogsCount } from './mock-logs-data';
@@ -10,7 +10,7 @@ import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiSkipBackLine, RiSkipForwardLine } from 'react-icons/ri';
 
 type LogsTableProps = {
-  onLogClick?: (log: HttpLog) => void;
+  onLogClick?: (log: RequestLog) => void;
 };
 
 export function LogsTable({ onLogClick }: LogsTableProps) {
@@ -46,7 +46,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     setCurrentPage(totalPages);
   };
 
-  const handleRowClick = (log: HttpLog) => {
+  const handleRowClick = (log: RequestLog) => {
     const logId = log.transactionId || `error-${logsData.indexOf(log)}`;
     handleLogSelect(logId);
     onLogClick?.(log);

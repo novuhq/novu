@@ -1,7 +1,7 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class GetHttpLogsDto {
+export class GetRequestsDto {
   @IsNumber()
   @IsOptional()
   @Type(() => Number)

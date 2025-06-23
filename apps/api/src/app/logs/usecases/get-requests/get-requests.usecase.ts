@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { HttpLog, HttpLogRepository, Where } from '@novu/application-generic';
-import { GetHttpLogsCommand } from './get-http-logs.command';
-import { GetHttpLogsResponseDto } from '../../dtos/get-http-logs-response.dto';
+import { GetRequestsCommand } from './get-requests.command';
+import { GetRequestsResponseDto } from '../../dtos/get-requests.response.dto';
 
 @Injectable()
-export class GetHttpLogs {
+export class GetRequests {
   constructor(private readonly httpLogRepository: HttpLogRepository) {}
 
-  async execute(command: GetHttpLogsCommand): Promise<GetHttpLogsResponseDto> {
+  async execute(command: GetRequestsCommand): Promise<GetRequestsResponseDto> {
     const limit = command.limit || 10;
     const page = command.page || 0;
     const offset = page * limit;
@@ -54,6 +54,19 @@ export class GetHttpLogs {
       url: log.url || '',
       method: log.method || '',
       statusCode: log.status_code || 0,
+      path: log.path || '',
+      hostname: log.hostname || '',
+      transactionId: log.transaction_id || null,
+      ip: log.ip || '',
+      userAgent: log.user_agent || '',
+      queryParams: log.query_params || '',
+      requestBody: log.request_body || '',
+      responseBody: log.response_body || '',
+      userId: log.user_id || '',
+      organizationId: log.organization_id || '',
+      environmentId: log.environment_id || '',
+      schemaType: log.schema_type || '',
+      durationMs: log.duration_ms || 0,
     }));
 
     return {

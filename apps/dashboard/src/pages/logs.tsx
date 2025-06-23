@@ -1,10 +1,10 @@
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
 import { LogsTable } from '../components/http-logs/logs-table';
-import { HttpLog } from '../types/logs';
+import { RequestLog } from '../types/logs';
 
 export function Logs() {
-  const handleLogClick = (log: HttpLog) => {
+  const handleLogClick = (log: RequestLog) => {
     console.log('Log clicked:', log);
     // TODO: Implement log detail view or modal
   };

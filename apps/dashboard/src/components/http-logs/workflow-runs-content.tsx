@@ -1,7 +1,8 @@
 import { CheckCircle, AlertTriangle, Loader } from 'lucide-react';
+import { RequestLog } from '../../types/logs';
 
 type WorkflowRunsContentProps = {
-  log: HttpLog;
+  log: RequestLog;
 };
 
 type WorkflowRunStatus = 'in-progress' | 'success' | 'error';

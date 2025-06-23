@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { HttpLog } from '../../types/logs';
+import { RequestLog } from '../../types/logs';
 import { LogsDetailHeader } from './logs-detail-header';
 import { LogsDetailContent } from './logs-detail-content';
 import { LogsDetailSkeleton } from './logs-detail-skeleton';
@@ -9,7 +9,7 @@ import { WorkflowRunsTabs } from './workflow-runs-tabs';
 import { WorkflowRunsContent } from './workflow-runs-content';
 
 type LogsDetailPanelProps = {
-  log?: HttpLog;
+  log?: RequestLog;
   isLoading?: boolean;
   error?: boolean;
 };

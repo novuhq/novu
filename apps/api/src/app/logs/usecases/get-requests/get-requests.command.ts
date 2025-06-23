@@ -1,7 +1,7 @@
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { OrganizationCommand } from '@novu/application-generic';
 
-export class GetHttpLogsCommand extends OrganizationCommand {
+export class GetRequestsCommand extends OrganizationCommand {
   @IsNumber()
   @IsOptional()
   public page?: number;

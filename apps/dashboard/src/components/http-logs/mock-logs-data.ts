@@ -1,6 +1,6 @@
-import { HttpLog } from '../../types/logs';
+import { RequestLog } from '../../types/logs';
 
-export const mockLogsData: HttpLog[] = [
+export const mockLogsData: RequestLog[] = [
   {
     timestamp: '2024-11-05T08:16:49Z',
     path: '/v1/api/trigger',

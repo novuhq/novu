@@ -1,4 +1,5 @@
-export type RequestLog = {
+export class RequestLog {
+  id: string;
   timestamp: string;
   url: string;
   method: string;
@@ -16,16 +17,11 @@ export type RequestLog = {
   environmentId: string;
   schemaType: string;
   durationMs: number;
-};
+}
 
-export type LogsFilters = {
-  statusCode?: number[];
-  method?: string[];
-  dateRange?: {
-    from: Date;
-    to: Date;
-  };
-  search?: string;
-};
-
-export type LogsSortOrder = 'asc' | 'desc';
+export class GetRequestsResponseDto {
+  data: RequestLog[];
+  total: number;
+  pageSize?: number;
+  page?: number;
+}

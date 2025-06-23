@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { RiArrowUpSLine } from 'react-icons/ri';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
-import { HttpLog } from '../../types/logs';
+import { RequestLog } from '../../types/logs';
 import { HttpStatusBadge } from './http-status-badge';
-import { Separator } from '../primitives/separator';
 import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { CopyButton } from '../primitives/copy-button';
 
 type LogsDetailContentProps = {
-  log: HttpLog;
+  log: RequestLog;
 };
 
 function JsonDisplay({ content }: { content: string | object }) {

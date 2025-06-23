@@ -1,7 +1,7 @@
-import { HttpLog } from '../../types/logs';
+import { RequestLog } from '../../types/logs';
 
 type LogsDetailHeaderProps = {
-  log: HttpLog;
+  log: RequestLog;
   className?: string;
 };
 
