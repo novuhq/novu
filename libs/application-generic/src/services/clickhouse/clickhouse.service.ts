@@ -55,6 +55,31 @@ export class ClickHouseService implements OnModuleDestroy {
     }
   }
 
+  async query<T>({
+    query,
+    params,
+  }: {
+    query: string;
+    params: Record<string, unknown>;
+  }): Promise<{ data: T[]; rows: number }> {
+    if (!this.client) {
+      throw new Error('ClickHouse client not initialized');
+    }
+
+    const resultSet = await this.client.query({
+      query,
+      query_params: params,
+      format: 'JSON',
+    });
+
+    const data = (await resultSet.json()) as {
+      data: T[];
+      rows: number;
+    };
+
+    return data;
+  }
+
   public async insertHttpLog(value: AnalyticsHttpLog) {
     if (!this.client) {
       return;

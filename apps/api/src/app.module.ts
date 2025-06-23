@@ -32,6 +32,7 @@ import { MessagesModule } from './app/messages/messages.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { NotificationModule } from './app/notifications/notification.module';
 import { OrganizationModule } from './app/organization/organization.module';
+import { ObservabilityModule } from './app/observability/observability.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { PreferencesModule } from './app/preferences';
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
@@ -97,6 +98,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   NotificationGroupsModule,
   ContentTemplatesModule,
   OrganizationModule,
+  ObservabilityModule,
   UserModule,
   IntegrationModule,
   ChangeModule,
