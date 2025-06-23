@@ -25,4 +25,5 @@ export * from './repositories/schema-default.options';
 export * from './repositories/control-values';
 export * from './repositories/preferences';
 export * from './repositories/localization';
+export * from './repositories/localization-group';
 export * from './types';

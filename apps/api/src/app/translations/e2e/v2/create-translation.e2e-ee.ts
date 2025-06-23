@@ -2,6 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { LocalizationResourceType } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Create/update translation - /v2/translations (POST) #novu-v2', async () => {
@@ -44,7 +45,8 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
 
   it('should create new translation successfully', async () => {
     const requestBody = {
-      workflowId,
+      resourceId: workflowId,
+      resourceType: LocalizationResourceType.WORKFLOW,
       locale: 'en_US',
       content: {
         'welcome.title': 'Welcome',
@@ -57,7 +59,8 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
 
     expect(body.data._id).to.be.a('string');
     expect(body.data.locale).to.equal('en_US');
-    expect(body.data._workflowId).to.equal(workflowId);
+    expect(body.data.resourceId).to.equal(workflowId);
+    expect(body.data.resourceType).to.equal(LocalizationResourceType.WORKFLOW);
     expect(body.data.content).to.deep.equal(requestBody.content);
     expect(body.data.createdAt).to.be.a('string');
     expect(body.data.updatedAt).to.be.a('string');
@@ -77,7 +80,8 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
     await session.testAgent
       .post('/v2/translations')
       .send({
-        workflowId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceType.WORKFLOW,
         locale: 'en_US',
         content: originalContent,
       })
@@ -87,7 +91,8 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
     const { body } = await session.testAgent
       .post('/v2/translations')
       .send({
-        workflowId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceType.WORKFLOW,
         locale: 'en_US',
         content: updatedContent,
       })
@@ -100,7 +105,8 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
     await session.testAgent
       .post('/v2/translations')
       .send({
-        workflowId,
+        resourceId: workflowId,
+        resourceType: LocalizationResourceType.WORKFLOW,
         locale: '123',
         content: { key: 'value' },
       })

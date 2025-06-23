@@ -11,19 +11,23 @@ export class LocalizationRepository extends BaseRepository<
   constructor() {
     super(Localization, LocalizationEntity);
   }
-
-  async findByWorkflowAndLocale(workflowId: string, locale: string, environmentId: string, organizationId: string) {
+  async findByGroupAndLocale(
+    localizationGroupId: string,
+    locale: string,
+    environmentId: string,
+    organizationId: string
+  ) {
     return this.findOne({
-      _workflowId: workflowId,
+      _localizationGroupId: localizationGroupId,
       locale,
       _environmentId: environmentId,
       _organizationId: organizationId,
     });
   }
 
-  async findByWorkflow(workflowId: string, environmentId: string, organizationId: string) {
+  async findByGroup(localizationGroupId: string, environmentId: string, organizationId: string) {
     return this.find({
-      _workflowId: workflowId,
+      _localizationGroupId: localizationGroupId,
       _environmentId: environmentId,
       _organizationId: organizationId,
     });

@@ -1,20 +1,16 @@
 import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
-import { LocalizationDBModel } from './localization.entity';
+import { LocalizationGroupDBModel, LocalizationResourceType } from './localization-group.entity';
 
-const localizationSchema = new Schema<LocalizationDBModel>(
+const localizationGroupSchema = new Schema<LocalizationGroupDBModel>(
   {
-    locale: {
+    resourceType: {
       type: Schema.Types.String,
+      enum: Object.values(LocalizationResourceType),
       required: true,
     },
-    content: {
+    resourceId: {
       type: Schema.Types.String,
-      required: true,
-    },
-    _localizationGroupId: {
-      type: Schema.Types.ObjectId,
-      ref: 'LocalizationGroup',
       required: true,
     },
     _environmentId: {
@@ -31,6 +27,6 @@ const localizationSchema = new Schema<LocalizationDBModel>(
   schemaOptions
 );
 
-export const Localization =
-  (mongoose.models.Localization as mongoose.Model<LocalizationDBModel>) ||
-  mongoose.model<LocalizationDBModel>('Localization', localizationSchema);
+export const LocalizationGroup =
+  (mongoose.models.LocalizationGroup as mongoose.Model<LocalizationGroupDBModel>) ||
+  mongoose.model<LocalizationGroupDBModel>('LocalizationGroup', localizationGroupSchema);
