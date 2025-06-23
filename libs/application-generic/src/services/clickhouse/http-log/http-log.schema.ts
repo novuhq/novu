@@ -10,7 +10,6 @@ import {
 } from 'clickhouse-schema';
 import { TABLE_NAME } from './http-log.repository';
 
-// Corresponds to the ClickHouse http_logs table schema
 export const httpLogSchema = new ClickhouseSchema(
   {
     timestamp: { type: CHDateTime('UTC') },
