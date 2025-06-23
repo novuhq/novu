@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -8,10 +8,9 @@ import { FullPayloadForRender } from './render-command';
 
 @Injectable()
 export abstract class BaseTranslationRendererUsecase {
-  protected readonly logger = new Logger(this.constructor.name);
-
   constructor(
     protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
     protected featureFlagsService: FeatureFlagsService
   ) {}
 
