@@ -17,6 +17,7 @@ import {
   LayoutsPage,
   ErrorPage,
   IntegrationsListPage,
+  Logs,
   OrganizationListPage,
   QuestionnairePage,
   SettingsPage,
@@ -252,6 +253,14 @@ const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.LOGS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <Logs />
                   </ProtectedRoute>
                 ),
               },
