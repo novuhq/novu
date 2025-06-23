@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
@@ -23,6 +23,10 @@ const mockGetOrganizationSettings = {
   },
 };
 
+const mockPinoLogger = {
+  setContext: () => {},
+};
+
 describe('EmailOutputRendererUsecase', () => {
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
@@ -37,6 +41,10 @@ describe('EmailOutputRendererUsecase', () => {
         {
           provide: GetOrganizationSettings,
           useValue: mockGetOrganizationSettings,
+        },
+        {
+          provide: PinoLogger,
+          useValue: mockPinoLogger,
         },
       ],
     }).compile();
