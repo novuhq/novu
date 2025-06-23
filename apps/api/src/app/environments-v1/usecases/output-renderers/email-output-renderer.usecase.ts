@@ -116,6 +116,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       const translatedMaily = await this.processMailyTranslations(parsedMaily, variables, dbWorkflow, locale);
 
       const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
+
       return await mailyRender(strippedMaily);
     } else {
       // For simple text body, apply translations directly
@@ -141,9 +142,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     try {
       const contentString = JSON.stringify(mailyContent);
       const translatedContent = await this.processStringTranslations(contentString, variables, dbWorkflow, locale);
+
       return JSON.parse(translatedContent);
     } catch (error) {
       this.logger.error('Maily translation processing failed, falling back to original content', error);
+
       return mailyContent;
     }
   }
@@ -156,9 +159,11 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   ): Promise<string> {
     try {
       const translatedText = await this.processStringTranslations(text, variables, dbWorkflow, locale);
+
       return await this.liquidEngine.parseAndRender(translatedText, variables);
     } catch (error) {
       this.logger.error('Text translation processing failed, falling back to liquid processing', error);
+
       return await this.liquidEngine.parseAndRender(text, variables);
     }
   }
