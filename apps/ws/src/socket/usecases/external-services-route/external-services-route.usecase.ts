@@ -21,12 +21,6 @@ export class ExternalServicesRoute {
   public async execute(command: ExternalServicesRouteCommand) {
     const isOnline = await this.connectionExist(command);
 
-    if (!isOnline) {
-      Logger.log(`Connection does not exist, ignoring command for ${command.userId}`, LOG_CONTEXT);
-
-      return;
-    }
-
     if (command.event === WebSocketEventEnum.RECEIVED) {
       await this.processReceivedEvent(command);
     }

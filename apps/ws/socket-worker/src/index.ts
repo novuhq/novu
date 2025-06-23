@@ -332,13 +332,11 @@ export default {
 
 		// Route WebSocket connections to Durable Objects
 		if (url.pathname === '/ws') {
-			// Verify JWT token first
-			const authHeader = request.headers.get('Authorization');
-			if (!authHeader || !authHeader.startsWith('Bearer ')) {
-				return new Response('Unauthorized: Missing or invalid Authorization header', { status: 401 });
+			// Verify JWT token from query parameter
+			const token = url.searchParams.get('token');
+			if (!token) {
+				return new Response('Unauthorized: Missing token query parameter', { status: 401 });
 			}
-
-			const token = authHeader.substring(7);
 			try {
 				const isValid = await verifyJWT(token, env.JWT_SECRET);
 				if (!isValid) {
@@ -352,7 +350,7 @@ export default {
 
 				// Extract user information from JWT payload
 				const userPayload = payload.payload;
-				const userId = userPayload._id || userPayload.subscriberId;
+				const userId = userPayload._id;
 				const subscriberId = userPayload.subscriberId || userId;
 				const { organizationId } = userPayload;
 				const { environmentId } = userPayload;
@@ -362,7 +360,7 @@ export default {
 				}
 
 				// Create room ID based on organization, environment, and subscriber
-				const roomId = `${organizationId}:${environmentId}:${subscriberId}`;
+				const roomId = `${environmentId}:${userId}`;
 
 				// Get the Durable Object for this room
 				const id = env.WEBSOCKET_ROOM.idFromName(roomId);
@@ -411,13 +409,7 @@ export default {
 				 * Create room ID based on organization, environment, and subscriber if provided
 				 * Fall back to global room if not provided for backward compatibility
 				 */
-				let roomId = 'global-room';
-				if (organizationId && environmentId && subscriberId) {
-					roomId = `${organizationId}:${environmentId}:${subscriberId}`;
-				} else if (organizationId && environmentId) {
-					// Fallback for backward compatibility - use userId as subscriberId
-					roomId = `${organizationId}:${environmentId}:${userId}`;
-				}
+				const roomId = `${environmentId}:${userId}`;
 
 				console.log(`Routing message to room: ${roomId} for user: ${userId}, event: ${event}`);
 

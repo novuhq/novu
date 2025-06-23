@@ -1,4 +1,4 @@
-import io, { Socket as SocketIO } from 'socket.io-client';
+import PartySocket, { WebSocket } from 'partysocket';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import type { BaseSocketInterface } from './base-socket';
@@ -23,7 +23,7 @@ import {
 } from '../types';
 import { NovuError } from '../utils/errors';
 
-const PRODUCTION_SOCKET_URL = 'https://ws.novu.co';
+const PRODUCTION_SOCKET_URL = 'wss://ws.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
@@ -115,10 +115,10 @@ const mapToNotification = ({
   };
 };
 
-export class Socket extends BaseModule implements BaseSocketInterface {
+export class PartySocketClient extends BaseModule implements BaseSocketInterface {
   #token: string;
   #emitter: NovuEventEmitter;
-  #socketIo: SocketIO | undefined;
+  #partySocket: WebSocket | undefined;
   #socketUrl: string;
 
   constructor({
@@ -142,52 +142,94 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     this.#token = token;
   }
 
-  #notificationReceived = ({ message }: { message: TODO }) => {
-    this.#emitter.emit(NOTIFICATION_RECEIVED, {
-      result: new Notification(mapToNotification(message), this.#emitter, this._inboxService),
-    });
+  #notificationReceived = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.RECEIVED) {
+        this.#emitter.emit(NOTIFICATION_RECEIVED, {
+          result: new Notification(mapToNotification(data.data.message), this.#emitter, this._inboxService),
+        });
+      }
+    } catch (error) {
+      console.log('error', error);
+      // Failed to parse notification received event
+    }
   };
 
-  #unseenCountChanged = ({ unseenCount }: { unseenCount: number }) => {
-    this.#emitter.emit(UNSEEN_COUNT_CHANGED, {
-      result: unseenCount,
-    });
+  #unseenCountChanged = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.UNSEEN) {
+        this.#emitter.emit(UNSEEN_COUNT_CHANGED, {
+          result: data.data.unseenCount,
+        });
+      }
+    } catch (error) {
+      // Failed to parse unseen count changed event
+    }
   };
 
-  #unreadCountChanged = ({ unreadCount }: { unreadCount: number }) => {
-    this.#emitter.emit(UNREAD_COUNT_CHANGED, {
-      result: unreadCount,
-    });
+  #unreadCountChanged = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.event === WebSocketEvent.UNREAD) {
+        this.#emitter.emit(UNREAD_COUNT_CHANGED, {
+          result: data.data.unreadCount,
+        });
+      }
+    } catch (error) {
+      // Failed to parse unread count changed event
+    }
+  };
+
+  #handleMessage = (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      switch (data.event) {
+        case WebSocketEvent.RECEIVED:
+          this.#notificationReceived(event);
+          break;
+        case WebSocketEvent.UNSEEN:
+          this.#unseenCountChanged(event);
+          break;
+        case WebSocketEvent.UNREAD:
+          this.#unreadCountChanged(event);
+          break;
+        default:
+        // Unknown WebSocket event type
+      }
+    } catch (error) {
+      // Failed to parse WebSocket message
+    }
   };
 
   async #initializeSocket(): Promise<void> {
-    // eslint-disable-next-line no-extra-boolean-cast
-    if (!!this.#socketIo) {
+    if (this.#partySocket) {
       return;
     }
 
     const args = { socketUrl: this.#socketUrl };
     this.#emitter.emit('socket.connect.pending', { args });
 
-    this.#socketIo = io(this.#socketUrl, {
-      reconnectionDelayMax: 10000,
-      transports: ['websocket'],
-      query: {
-        token: `${this.#token}`,
-      },
-    });
+    const url = new URL(this.#socketUrl);
+    url.searchParams.set('token', this.#token);
 
-    this.#socketIo.on('connect', () => {
+    this.#partySocket = new WebSocket(url.toString());
+
+    this.#partySocket.addEventListener('open', () => {
       this.#emitter.emit('socket.connect.resolved', { args });
     });
 
-    this.#socketIo.on('connect_error', (error) => {
+    this.#partySocket.addEventListener('error', (error) => {
       this.#emitter.emit('socket.connect.resolved', { args, error });
     });
 
-    this.#socketIo?.on(WebSocketEvent.RECEIVED, this.#notificationReceived);
-    this.#socketIo?.on(WebSocketEvent.UNSEEN, this.#unseenCountChanged);
-    this.#socketIo?.on(WebSocketEvent.UNREAD, this.#unreadCountChanged);
+    this.#partySocket.addEventListener('message', this.#handleMessage);
+
+    this.#partySocket.addEventListener('close', () => {
+      // PartySocket connection closed
+    });
   }
 
   async #handleConnectSocket(): Result<void> {
@@ -196,18 +238,18 @@ export class Socket extends BaseModule implements BaseSocketInterface {
 
       return {};
     } catch (error) {
-      return { error: new NovuError('Failed to initialize the socket', error) };
+      return { error: new NovuError('Failed to initialize the PartySocket', error) };
     }
   }
 
   async #handleDisconnectSocket(): Result<void> {
     try {
-      this.#socketIo?.disconnect();
-      this.#socketIo = undefined;
+      this.#partySocket?.close();
+      this.#partySocket = undefined;
 
       return {};
     } catch (error) {
-      return { error: new NovuError('Failed to disconnect from the socket', error) };
+      return { error: new NovuError('Failed to disconnect from the PartySocket', error) };
     }
   }
 
@@ -226,7 +268,7 @@ export class Socket extends BaseModule implements BaseSocketInterface {
   }
 
   async disconnect(): Result<void> {
-    if (this.#socketIo) {
+    if (this.#partySocket) {
       return this.#handleDisconnectSocket();
     }
 
