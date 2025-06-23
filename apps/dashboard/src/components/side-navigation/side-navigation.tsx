@@ -112,8 +112,6 @@ export const SideNavigation = () => {
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
-
-  console.log('isHttpLogsPageEnabled', isHttpLogsPageEnabled, FeatureFlagsKeysEnum);
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
   const onEnvironmentChange = (value: string) => {
