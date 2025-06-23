@@ -2,7 +2,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { StepContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
-import { formatQuery, generateID, RQBJsonLogic, RuleGroupType, RuleType } from 'react-querybuilder';
+import {
+  formatQuery,
+  generateID,
+  RQBJsonLogic,
+  RuleGroupType,
+  RuleType,
+  defaultRuleProcessorJsonLogic,
+} from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { z } from 'zod';
 
@@ -13,13 +20,47 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { type EnhancedLiquidVariable } from '@/utils/parseStepVariables';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { countConditions, getUniqueFieldNamespaces, getUniqueOperators } from '@/utils/conditions';
+import {
+  countConditions,
+  getUniqueFieldNamespaces,
+  getUniqueOperators,
+  parseJsonLogicOptions,
+} from '@/utils/conditions';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
 import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';
+
+// Custom rule processor to handle relative date operators
+const customRuleProcessor = (rule: RuleType, options: any) => {
+  // Handle relative date operators
+  if (isRelativeDateOperator(rule.operator)) {
+    try {
+      const parsedValue = JSON.parse(rule.value as string);
+
+      if (
+        parsedValue &&
+        (typeof parsedValue.amount === 'number' || typeof parsedValue.amount === 'string') &&
+        parsedValue.unit
+      ) {
+        const result = {
+          [rule.operator]: [{ var: rule.field }, parsedValue],
+        };
+
+        return result;
+      }
+    } catch (error) {
+      console.warn('Failed to parse relative date value:', rule.value, error);
+    }
+  }
+
+  // Fall back to the default rule processor for all other operators
+  return defaultRuleProcessorJsonLogic(rule, options);
+};
 
 const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | RuleGroupType> => {
   const allowedFields = fields.map((field) => field.value);
@@ -38,6 +79,35 @@ const getRuleSchema = (fields: Array<{ value: string }>): z.ZodType<RuleType | R
 
           if (!values || values.length !== 2) {
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Both values are required', path: ['value'] });
+          }
+        } else if (isRelativeDateOperator(operator)) {
+          // Validate relative date values
+          if (!value) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Amount and unit are required', path: ['value'] });
+
+            return;
+          }
+
+          try {
+            const parsed = JSON.parse(value);
+
+            if (
+              !parsed ||
+              (!parsed.amount && parsed.amount !== 0) ||
+              !['minutes', 'hours', 'days', 'weeks', 'months', 'years'].includes(parsed.unit)
+            ) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Invalid amount or time unit',
+                path: ['value'],
+              });
+            }
+          } catch {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: 'Invalid relative date format',
+              path: ['value'],
+            });
           }
         } else if (operator !== 'null' && operator !== 'notNull') {
           const trimmedValue = value?.trim();
@@ -88,17 +158,47 @@ export const EditStepConditionsForm = () => {
       // Need to generate unique ids on the query and rules, otherwise react-querybuilder's
       // QueryBuilder component will do it and it will result in the form being dirty
       hasConditions
-        ? parseJsonLogic(step.controls.values.skip as RQBJsonLogic, { generateIDs: true })
+        ? parseJsonLogic(step.controls.values.skip as RQBJsonLogic, {
+            generateIDs: true,
+            ...parseJsonLogicOptions,
+          })
         : { id: generateID(), combinator: 'and', rules: [] },
     [hasConditions, step]
   );
 
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { variables, isAllowedVariable, enhancedVariables, namespaces } = useParseVariables(
+    step?.variables,
+    digestStepBeforeCurrent?.stepId,
+    true
+  );
 
-  const fields = variables.map((variable) => ({
-    name: variable.name,
-    label: variable.name,
-    value: variable.name,
+  const isVariableAllowedInConditions = (variable: EnhancedLiquidVariable): boolean => {
+    // Filter out top-level namespace variables (subscriber, payload, steps)
+    // Users should use specific properties within these namespaces instead
+    const isTopLevelNamespace = namespaces.some((ns) => ns.name === variable.name);
+
+    if (isTopLevelNamespace && variable.name !== 'subscriber.data') {
+      return false;
+    }
+
+    // Filter out digest summary variables (these are processed variables with filters)
+    // We want to hide the raw digest variables that have type 'digest'
+    if (variable.type === 'digest') {
+      return false;
+    }
+
+    return true;
+  };
+
+  const filteredEnhancedVariables = enhancedVariables.filter(isVariableAllowedInConditions);
+
+  const fields = filteredEnhancedVariables.map((enhancedVariable: EnhancedLiquidVariable) => ({
+    name: enhancedVariable.name,
+    label: enhancedVariable.displayLabel || enhancedVariable.name,
+    value: enhancedVariable.name,
+    dataType: enhancedVariable.dataType,
+    inputType: enhancedVariable.inputType,
+    format: enhancedVariable.format,
   }));
 
   const form = useForm<FormQuery>({
@@ -118,7 +218,7 @@ export const EditStepConditionsForm = () => {
     save: (data) => {
       if (!step || !workflow) return;
 
-      const skip = formatQuery(data.query, 'jsonlogic');
+      const skip = formatQuery(data.query, { format: 'jsonlogic', ruleProcessor: customRuleProcessor });
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: { ...step.controls.values, skip },
       };
@@ -208,6 +308,7 @@ export const EditStepConditionsForm = () => {
                 fields={fields}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
+                enhancedVariables={filteredEnhancedVariables}
               />
             )}
           />

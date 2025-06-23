@@ -86,7 +86,7 @@ export class EnvironmentsControllerV1 {
 
   @Post('/')
   @ApiOperation({
-    summary: 'Create environment',
+    summary: 'Create an environment',
     description: `Creates a new environment within the current organization. 
     Environments allow you to manage different stages of your application development lifecycle.
     Each environment has its own set of API keys and configurations.`,
@@ -118,7 +118,7 @@ export class EnvironmentsControllerV1 {
 
   @Get('/')
   @ApiOperation({
-    summary: 'List environments',
+    summary: 'List all environments',
     description: `This API returns a list of environments for the current organization. 
     Each environment contains its configuration, API keys (if user has access), and metadata.`,
   })
@@ -141,7 +141,7 @@ export class EnvironmentsControllerV1 {
 
   @Put('/:environmentId')
   @ApiOperation({
-    summary: 'Update environment',
+    summary: 'Update an environment',
     description: `Update an environment by its unique identifier **environmentId**. 
     You can modify the environment name, identifier, color, and other configuration settings.`,
   })
@@ -206,7 +206,7 @@ export class EnvironmentsControllerV1 {
 
   @Delete('/:environmentId')
   @ApiOperation({
-    summary: 'Delete environment',
+    summary: 'Delete an environment',
     description: `Delete an environment by its unique identifier **environmentId**. 
     This action is irreversible and will remove the environment and all its associated data.`,
   })

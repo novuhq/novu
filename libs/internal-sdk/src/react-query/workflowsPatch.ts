@@ -28,10 +28,10 @@ export type WorkflowsPatchMutationData =
   operations.WorkflowControllerPatchWorkflowResponse;
 
 /**
- * Patch workflow
+ * Update a workflow
  *
  * @remarks
- * Partially updates a workflow
+ * Partially updates a workflow by its unique identifier **workflowId**
  */
 export function useWorkflowsPatchMutation(
   options?: MutationHookOptions<

@@ -6,6 +6,7 @@ import type { PreviewPayload } from '@novu/shared';
 import { previewStep } from '@/api/steps';
 import { usePreviewStep } from '@/hooks/use-preview-step';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDataRef } from '@/hooks/use-data-ref';
 
 type UseEditorPreviewProps = {
   workflowSlug: string;
@@ -16,11 +17,18 @@ type UseEditorPreviewProps = {
 
 function useDebounced<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const oldValueRef = useDataRef(debouncedValue);
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
+    const timer = setTimeout(() => {
+      const oldValue = JSON.stringify(oldValueRef.current);
+      const newValue = JSON.stringify(value);
+      if (oldValue === newValue) return;
+
+      setDebouncedValue(value);
+    }, delay);
     return () => clearTimeout(timer);
-  }, [value, delay]);
+  }, [value, delay, oldValueRef]);
 
   return debouncedValue;
 }

@@ -61,9 +61,9 @@ import {
  */
 export type Metadata =
   | DelayScheduledMetadata
-  | DelayRegularMetadata
+  | DigestRegularMetadata
   | DigestTimedMetadata
-  | DigestRegularMetadata;
+  | DelayRegularMetadata;
 
 export type NotificationStepDto = {
   /**
@@ -107,9 +107,9 @@ export type NotificationStepDto = {
    */
   metadata?:
     | DelayScheduledMetadata
-    | DelayRegularMetadata
-    | DigestTimedMetadata
     | DigestRegularMetadata
+    | DigestTimedMetadata
+    | DelayRegularMetadata
     | undefined;
   /**
    * Callback information for replies, including whether it is active and the callback URL.
@@ -125,17 +125,17 @@ export const Metadata$inboundSchema: z.ZodType<
   unknown
 > = z.union([
   DelayScheduledMetadata$inboundSchema,
-  DelayRegularMetadata$inboundSchema,
-  DigestTimedMetadata$inboundSchema,
   DigestRegularMetadata$inboundSchema,
+  DigestTimedMetadata$inboundSchema,
+  DelayRegularMetadata$inboundSchema,
 ]);
 
 /** @internal */
 export type Metadata$Outbound =
   | DelayScheduledMetadata$Outbound
-  | DelayRegularMetadata$Outbound
+  | DigestRegularMetadata$Outbound
   | DigestTimedMetadata$Outbound
-  | DigestRegularMetadata$Outbound;
+  | DelayRegularMetadata$Outbound;
 
 /** @internal */
 export const Metadata$outboundSchema: z.ZodType<
@@ -144,9 +144,9 @@ export const Metadata$outboundSchema: z.ZodType<
   Metadata
 > = z.union([
   DelayScheduledMetadata$outboundSchema,
-  DelayRegularMetadata$outboundSchema,
-  DigestTimedMetadata$outboundSchema,
   DigestRegularMetadata$outboundSchema,
+  DigestTimedMetadata$outboundSchema,
+  DelayRegularMetadata$outboundSchema,
 ]);
 
 /**
@@ -193,9 +193,9 @@ export const NotificationStepDto$inboundSchema: z.ZodType<
   _parentId: z.string().optional(),
   metadata: z.union([
     DelayScheduledMetadata$inboundSchema,
-    DelayRegularMetadata$inboundSchema,
-    DigestTimedMetadata$inboundSchema,
     DigestRegularMetadata$inboundSchema,
+    DigestTimedMetadata$inboundSchema,
+    DelayRegularMetadata$inboundSchema,
   ]).optional(),
   replyCallback: ReplyCallback$inboundSchema.optional(),
   variants: z.array(NotificationStepData$inboundSchema).optional(),
@@ -220,9 +220,9 @@ export type NotificationStepDto$Outbound = {
   _parentId?: string | undefined;
   metadata?:
     | DelayScheduledMetadata$Outbound
-    | DelayRegularMetadata$Outbound
-    | DigestTimedMetadata$Outbound
     | DigestRegularMetadata$Outbound
+    | DigestTimedMetadata$Outbound
+    | DelayRegularMetadata$Outbound
     | undefined;
   replyCallback?: ReplyCallback$Outbound | undefined;
   variants?: Array<NotificationStepData$Outbound> | undefined;
@@ -245,9 +245,9 @@ export const NotificationStepDto$outboundSchema: z.ZodType<
   parentId: z.string().optional(),
   metadata: z.union([
     DelayScheduledMetadata$outboundSchema,
-    DelayRegularMetadata$outboundSchema,
-    DigestTimedMetadata$outboundSchema,
     DigestRegularMetadata$outboundSchema,
+    DigestTimedMetadata$outboundSchema,
+    DelayRegularMetadata$outboundSchema,
   ]).optional(),
   replyCallback: ReplyCallback$outboundSchema.optional(),
   variants: z.array(NotificationStepData$outboundSchema).optional(),

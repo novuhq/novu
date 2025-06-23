@@ -31,6 +31,20 @@ describe('Get Subscriber - /subscribers/:subscriberId (GET) #novu-v2', () => {
 
     expect(error?.statusCode).to.equal(404);
   });
+
+  it('should return null values if subscriber has null or undefined values', async () => {
+    const subscriberId = `test-subscriber-${`${randomBytes(4).toString('hex')}`}`;
+    const payload = {
+      subscriberId,
+    };
+
+    await novuClient.subscribers.create(payload);
+
+    const res = await novuClient.subscribers.retrieve(subscriberId);
+
+    expect(res.result.firstName).to.be.undefined;
+    expect(res.result.lastName).to.be.undefined;
+  });
 });
 
 async function createSubscriberAndValidate(id: string = '') {

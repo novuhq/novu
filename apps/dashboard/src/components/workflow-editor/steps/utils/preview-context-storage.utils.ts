@@ -121,7 +121,7 @@ export function mergePreviewContextData(persistedData: ParsedData, serverDefault
   };
 }
 
-function mergeObjectData<T extends Record<string, unknown>>(persisted: T, serverDefault: T): T {
+export function mergeObjectData<T extends Record<string, unknown>>(persisted: T, serverDefault: T): T {
   if (!persisted || typeof persisted !== 'object') {
     return serverDefault || ({} as T);
   }

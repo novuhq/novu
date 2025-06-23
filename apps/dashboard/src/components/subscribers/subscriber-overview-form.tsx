@@ -47,6 +47,7 @@ type SubscriberOverviewFormProps = {
   subscriber: SubscriberResponseDto;
   readOnly?: boolean;
   onCloseDrawer?: () => void;
+  closeOnSave?: boolean;
 };
 
 const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
@@ -61,7 +62,7 @@ const createDefaultSubscriberValues = (subscriber: SubscriberResponseDto) => ({
 });
 
 export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
-  const { subscriber, readOnly = false, onCloseDrawer } = props;
+  const { subscriber, readOnly = false, onCloseDrawer, closeOnSave = false } = props;
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const track = useTelemetry();
   const queryClient = useQueryClient();
@@ -88,9 +89,9 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
         });
         navigateToSubscribersFirstPage();
       } else {
-        const firstTwoSubscribersInternalIds = data?.data.slice(0, 2).map(s => s._id as string) || [];
+        const firstTwoSubscribersInternalIds = data?.data.slice(0, 2).map((s) => s._id as string) || [];
         const subscribersCount = data?.data.length || 0;
-        
+
         const hasTwoSubscribersInternalIds = firstTwoSubscribersInternalIds.length === 2 && subscribersCount > 1;
         const firstSubscriberInternalId = firstTwoSubscribersInternalIds[0] || '';
         const isFirstSubscriberBeingDeleted = (subscriber as any)._id === firstSubscriberInternalId;
@@ -127,6 +128,10 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
       showSuccessToast(`Updated subscriber: ${getSubscriberTitle(data)}`, undefined, toastOptions);
       form.reset(createDefaultSubscriberValues(data));
       track(TelemetryEvent.SUBSCRIBER_EDITED);
+
+      if (closeOnSave && onCloseDrawer) {
+        onCloseDrawer();
+      }
     },
     onError: () => {
       showErrorToast('Failed to update subscriber', undefined, toastOptions);

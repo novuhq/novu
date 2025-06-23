@@ -316,7 +316,7 @@ const CreateWorkflowButton = () => {
         </TooltipTrigger>
         <TooltipContent>
           Almost there! Your role just doesn't have permission for this one.{' '}
-          <a href="https://docs.novu.co/" target="_blank" className="underline">
+          <a href="https://docs.novu.co/platform/account/roles-and-permissions" target="_blank" className="underline">
             Learn More ↗
           </a>
         </TooltipContent>

@@ -36,6 +36,7 @@ export interface InboxPlaygroundFormData {
   openAccordion?: string;
   primaryAction: ActionConfig;
   secondaryAction: ActionConfig | null;
+  enableTabs?: boolean;
 }
 
 const formSchema = z.object({
@@ -61,6 +62,7 @@ const formSchema = z.object({
       }),
     })
     .nullable(),
+  enableTabs: z.boolean().optional(),
 });
 
 const defaultFormValues = (): InboxPlaygroundFormData => ({
@@ -78,6 +80,7 @@ const defaultFormValues = (): InboxPlaygroundFormData => ({
     },
   },
   secondaryAction: null,
+  enableTabs: true,
 });
 
 export function InboxPlayground() {
@@ -132,13 +135,6 @@ export function InboxPlayground() {
     });
     const queryParams = new URLSearchParams({ primaryColor, foregroundColor }).toString();
     navigate(`${ROUTES.INBOX_EMBED}?${queryParams}`);
-  };
-
-  const handleSkipToDashboard = () => {
-    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
-      skippedFrom: 'inbox-playground',
-    });
-    navigate(ROUTES.WELCOME);
   };
 
   useEffect(() => {
@@ -204,9 +200,6 @@ export function InboxPlayground() {
                 </Button>
               ) : (
                 <>
-                  <Button size="xs" variant="secondary" mode="ghost" className="px-2" onClick={handleSkipToDashboard}>
-                    Skip to Dashboard
-                  </Button>
                   <Button size="xs" variant="secondary" onClick={handleImplementClick}>
                     Implement &lt;Inbox /&gt;
                   </Button>
@@ -222,6 +215,7 @@ export function InboxPlayground() {
             selectedStyle={form.watch('selectedStyle')}
             primaryColor={form.watch('primaryColor')}
             foregroundColor={form.watch('foregroundColor')}
+            enableTabs={form.watch('enableTabs')}
           />
         </div>
       </div>

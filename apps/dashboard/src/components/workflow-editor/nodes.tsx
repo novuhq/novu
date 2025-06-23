@@ -48,7 +48,9 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 
 export const TriggerNode = ({
   data,
-}: NodeProps<FlowNode<{ environmentSlug: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
+}: NodeProps<FlowNode<{ environment: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+
   const content = (
     <Node
       className="relative rounded-tl-none [&>span]:rounded-tl-none"
@@ -75,8 +77,8 @@ export const TriggerNode = ({
 
   return (
     <Link
-      to={buildRoute(ROUTES.TEST_WORKFLOW, {
-        environmentSlug: data.environmentSlug,
+      to={buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
+        environmentSlug: data.environment,
         workflowSlug: data.workflowSlug,
       })}
     >

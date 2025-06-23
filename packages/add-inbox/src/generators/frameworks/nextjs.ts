@@ -1,42 +1,43 @@
-interface FilterByTags {
+interface IFilterByTags {
   tags: string[];
 }
 
-interface FilterByData {
-  data: Record<string, any>;
+interface IFilterByData {
+  data: Record<string, unknown>;
 }
 
-interface FilterByTagsAndData {
+interface IFilterByTagsAndData {
   tags: string[];
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
-interface RegionConfig {
+interface IRegionConfig {
   socketUrl: string;
   backendUrl: string;
 }
 
-interface RegionConfigs {
-  eu: RegionConfig;
+interface IRegionConfigs {
+  eu: IRegionConfig;
 }
 
 export function generateNextJsComponent(subscriberId: string | null = null, region: 'us' | 'eu' = 'us'): string {
   // Define common filter patterns
-  const filterByTags = (tags: string[]): FilterByTags => ({ tags });
-  const filterByData = (data: Record<string, any>): FilterByData => ({ data });
-  const filterByTagsAndData = (tags: string[], data: Record<string, any>): FilterByTagsAndData => ({ tags, data });
+  const filterByTags = (tags: string[]): IFilterByTags => ({ tags });
+  const filterByData = (data: Record<string, unknown>): IFilterByData => ({ data });
+  const filterByTagsAndData = (tags: string[], data: Record<string, unknown>): IFilterByTagsAndData => ({ tags, data });
 
   // Define region-specific configuration
-  const regionConfig: RegionConfigs = {
+  const regionConfig: IRegionConfigs = {
     eu: {
       socketUrl: 'https://eu.ws.novu.co',
       backendUrl: 'https://eu.api.novu.co',
     },
   };
 
-  const escapeString = (str: string) => str.replace(/\\/g, '\\\\').replace(/\"/g, '\\"');
+  const escapeString = (str: string) =>
+    str.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
 
-  const componentCode = `\'use client\';
+  const componentCode = `'use client';
 
 // The Novu inbox component is a React component that allows you to display a notification inbox.
 // Learn more: https://docs.novu.co/platform/inbox/overview

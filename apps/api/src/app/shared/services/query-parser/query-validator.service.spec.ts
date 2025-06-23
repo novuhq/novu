@@ -507,6 +507,29 @@ describe('QueryValidatorService', () => {
       expect(issues).to.be.empty;
     });
 
+    it('should validate namespace field itself (subscriber.data)', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'subscriber.data' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.be.empty;
+    });
+
+    it('should detect invalid namespace field (payload)', () => {
+      const rule: RulesLogic<AdditionalOperation> = {
+        '==': [{ var: 'payload' }, 'value'],
+      };
+
+      const issues = queryValidatorService.validateQueryRules(rule);
+
+      expect(issues).to.have.lengthOf(1);
+      expect(issues[0].message).to.include('Value is not valid');
+      expect(issues[0].path).to.deep.equal([]);
+      expect(issues[0].type).to.equal(QueryIssueTypeEnum.INVALID_FIELD_VALUE);
+    });
+
     it('should detect invalid field that is not in allowed list', () => {
       const rule: RulesLogic<AdditionalOperation> = {
         '==': [{ var: 'not_allowed_field' }, 'value'],

@@ -26,7 +26,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Delete environment
+ * Delete an environment
  *
  * @remarks
  * Delete an environment by its unique identifier **environmentId**.

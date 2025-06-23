@@ -17,7 +17,9 @@ export const ROUTES = {
   SETTINGS_BILLING: '/settings/billing',
   WORKFLOWS: '/env/:environmentSlug/workflows',
   EDIT_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug',
+  EDIT_WORKFLOW_ACTIVITY: '/env/:environmentSlug/workflows/:workflowSlug/activity',
   TEST_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug/test',
+  TRIGGER_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug/trigger',
   WELCOME: '/env/:environmentSlug/welcome',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
   EDIT_STEP: 'steps/:stepSlug',
@@ -47,6 +49,7 @@ export const ROUTES = {
   TOPICS: '/env/:environmentSlug/topics',
   TOPICS_CREATE: '/env/:environmentSlug/topics/create',
   TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
+  LAYOUTS: '/env/:environmentSlug/layouts',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

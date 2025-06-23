@@ -3,7 +3,6 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
-import { cn } from '@/utils/ui';
 import { forwardRef, useState } from 'react';
 
 type SubscriberDrawerProps = {
@@ -11,10 +10,11 @@ type SubscriberDrawerProps = {
   onOpenChange: (open: boolean) => void;
   subscriberId: string;
   readOnly?: boolean;
+  closeOnSave?: boolean;
 };
 
 export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps>((props, forwardedRef) => {
-  const { open, onOpenChange, subscriberId, readOnly = false } = props;
+  const { open, onOpenChange, subscriberId, readOnly = false, closeOnSave = false } = props;
 
   const {
     protectedOnValueChange,
@@ -28,19 +28,18 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
 
   return (
     <>
-      <Sheet modal={false} open={open} onOpenChange={protectedOnValueChange}>
-        {/* Custom overlay since SheetOverlay does not work with modal={false} */}
-        <div
-          className={cn('fade-in animate-in fixed inset-0 z-50 bg-black/20 transition-opacity duration-300', {
-            'pointer-events-none opacity-0': !open,
-          })}
-        />
+      <Sheet open={open} onOpenChange={protectedOnValueChange}>
         <SheetContent ref={combinedRef}>
           <VisuallyHidden>
             <SheetTitle />
             <SheetDescription />
           </VisuallyHidden>
-          <SubscriberTabs subscriberId={subscriberId} readOnly={readOnly} onCloseDrawer={() => onOpenChange(false)} />
+          <SubscriberTabs
+            subscriberId={subscriberId}
+            readOnly={readOnly}
+            onCloseDrawer={() => onOpenChange(false)}
+            closeOnSave={closeOnSave}
+          />
         </SheetContent>
       </Sheet>
 
@@ -52,10 +51,11 @@ export const SubscriberDrawer = forwardRef<HTMLDivElement, SubscriberDrawerProps
 type SubscriberDrawerButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   subscriberId: string;
   readOnly?: boolean;
+  closeOnSave?: boolean;
 };
 
 export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
-  const { subscriberId, onClick, readOnly = false, ...rest } = props;
+  const { subscriberId, onClick, readOnly = false, closeOnSave = false, ...rest } = props;
   const [open, setOpen] = useState(false);
 
   return (
@@ -67,7 +67,13 @@ export const SubscriberDrawerButton = (props: SubscriberDrawerButtonProps) => {
           onClick?.(e);
         }}
       />
-      <SubscriberDrawer open={open} onOpenChange={setOpen} subscriberId={subscriberId} readOnly={readOnly} />
+      <SubscriberDrawer
+        open={open}
+        onOpenChange={setOpen}
+        subscriberId={subscriberId}
+        readOnly={readOnly}
+        closeOnSave={closeOnSave}
+      />
     </>
   );
 };

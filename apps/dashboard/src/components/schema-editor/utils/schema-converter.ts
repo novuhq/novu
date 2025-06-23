@@ -107,8 +107,11 @@ function processArrayItems(items: JSONSchema7): JSONSchema7 {
 
   if (isObjectWithPropertyList(itemsWithList)) {
     const itemsConversion = convertPropertyListToSchema(itemsWithList.propertyList);
+    // Destructure to exclude propertyList from the spread
+    const { propertyList, ...itemsWithoutPropertyList } = itemsWithList;
+
     return {
-      ...itemsWithList,
+      ...itemsWithoutPropertyList,
       type: 'object',
       properties: itemsConversion.properties,
       ...(itemsConversion.required && itemsConversion.required.length > 0
@@ -117,7 +120,11 @@ function processArrayItems(items: JSONSchema7): JSONSchema7 {
     };
   }
 
-  return items;
+  // Always remove propertyList from items, even if they don't match the object condition
+  const cleanedItems = { ...items };
+  delete (cleanedItems as any).propertyList;
+
+  return cleanedItems;
 }
 
 // Type guards

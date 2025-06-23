@@ -4,10 +4,10 @@ import logger from '../utils/logger';
 import { generateNextJsComponent } from './frameworks/nextjs';
 import { generateModernReactComponent, generateLegacyReactComponent } from './frameworks/react';
 import { isModernReact } from './react-version';
-import { Framework } from '../config/framework';
+import { IFramework } from '../config/framework';
 
 export async function createComponentStructure(
-  framework: Framework,
+  framework: IFramework,
   overwriteComponents: boolean,
   subscriberId: string | null | undefined,
   region: 'us' | 'eu' = 'us'

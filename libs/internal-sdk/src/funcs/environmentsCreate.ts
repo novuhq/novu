@@ -27,7 +27,7 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Create environment
+ * Create an environment
  *
  * @remarks
  * Creates a new environment within the current organization.

@@ -4,10 +4,11 @@ import { Button } from '@/components/primitives/button';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { useEnvironment } from '@/context/environment/hooks';
 import { PermissionsEnum } from '@novu/shared';
-import { RiBookMarkedLine, RiRouteFill, RiSearchLine } from 'react-icons/ri';
+import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { buildRoute, ROUTES } from '../utils/routes';
 import { LinkButton } from './primitives/button-link';
+import { ListNoResults } from './list-no-results';
 
 interface WorkflowListEmptyProps {
   emptySearchResults?: boolean;
@@ -18,7 +19,13 @@ export const WorkflowListEmpty = ({ emptySearchResults, onClearFilters }: Workfl
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
 
   if (emptySearchResults) {
-    return <NoResultsFound onClearFilters={onClearFilters} />;
+    return (
+      <ListNoResults
+        title="No workflows found"
+        description="We couldn't find any workflows that match your search criteria. Try adjusting your filters or create a new workflow."
+        onClearFilters={onClearFilters}
+      />
+    );
   }
 
   const isProd = currentEnvironment?.name === 'Production';
@@ -29,25 +36,6 @@ export const WorkflowListEmpty = ({ emptySearchResults, onClearFilters }: Workfl
     <WorkflowListEmptyDev />
   );
 };
-
-const NoResultsFound = ({ onClearFilters }: { onClearFilters?: () => void }) => (
-  <div className="flex h-full w-full flex-col items-center justify-center gap-6">
-    <div className="text-foreground-400 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
-      <RiSearchLine className="size-6" />
-    </div>
-    <div className="flex flex-col items-center gap-2 text-center">
-      <span className="text-foreground-900 block font-medium">No workflows found</span>
-      <p className="text-foreground-400 max-w-[60ch] text-sm">
-        We couldn't find any workflows matching your search criteria.
-      </p>
-    </div>
-    {onClearFilters && (
-      <Button variant="secondary" onClick={onClearFilters}>
-        Clear filters
-      </Button>
-    )}
-  </div>
-);
 
 const WorkflowListEmptyProd = ({ switchToDev }: { switchToDev: () => void }) => (
   <div className="flex h-full w-full flex-col items-center justify-center gap-6">

@@ -29,7 +29,7 @@ import { Result } from "../types/fp.js";
  * Retrieve a workflow
  *
  * @remarks
- * Fetches details of a specific workflow
+ * Fetches details of a specific workflow by its unique identifier **workflowId**
  */
 export function workflowsGet(
   client: NovuCore,

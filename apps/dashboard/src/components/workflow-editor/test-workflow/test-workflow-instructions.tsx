@@ -34,8 +34,8 @@ interface TestWorkflowInstructionsProps {
   isOpen: boolean;
   onClose: () => void;
   workflow?: WorkflowResponseDto;
-  to: Record<string, string>;
-  payload: string;
+  to?: Record<string, string>;
+  payload?: string;
 }
 
 const LANGUAGE_TO_SNIPPET_UTIL: Record<SnippetLanguage, (props: CodeSnippet) => string> = {
@@ -161,7 +161,8 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
 
   const getSnippetForLanguage = (language: SnippetLanguage) => {
     const snippetUtil = LANGUAGE_TO_SNIPPET_UTIL[language];
-    return snippetUtil({ identifier, to, payload });
+
+    return snippetUtil({ identifier, to: to ?? {}, payload: payload ?? '' });
   };
 
   // Calculate the positions to mask the API key, showing only last 4 characters

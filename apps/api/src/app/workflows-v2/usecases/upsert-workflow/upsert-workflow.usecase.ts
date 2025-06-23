@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { format } from 'prettier';
 
 import {
   AnalyticsService,
@@ -16,6 +17,7 @@ import {
   UpsertControlValuesUseCase,
   SendWebhookMessage,
   EmailControlType,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -60,6 +62,7 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
     private analyticsService: AnalyticsService,
+    private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -359,8 +362,19 @@ export class UpsertWorkflowUseCase {
             },
           })
         );
-        let htmlBody = (result.preview as EmailRenderOutput).body ?? '';
-        htmlBody = this.removeBrandingFromHtml(htmlBody);
+        let htmlBody = this.removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
+        try {
+          htmlBody = await format(htmlBody, {
+            parser: 'html',
+            printWidth: 120,
+            tabWidth: 2,
+            useTabs: false,
+            htmlWhitespaceSensitivity: 'css',
+          });
+        } catch (error) {
+          this.logger.warn({ err: error }, 'Failed to prettify HTML');
+        }
+
         emailControlValues.body = htmlBody;
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
         emailControlValues.body = '';

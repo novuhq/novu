@@ -5,8 +5,8 @@ import prompts from 'prompts';
 import { Command } from 'commander';
 import logger from '../utils/logger';
 import fileUtils from '../utils/file';
-import { detectFramework, Framework } from '../config/framework';
-import { detectPackageManager, ensurePackageJson } from '../config/package-manager';
+import { detectFramework, IFramework } from '../config/framework';
+import { detectPackageManager } from '../config/package-manager';
 import { createComponentStructure } from '../generators/component';
 import { setupEnvExampleNextJs, setupEnvExampleReact } from '../generators/env';
 import { FRAMEWORKS } from '../constants';
@@ -18,7 +18,7 @@ interface IPackageManager {
 }
 
 interface IUserConfig {
-  framework: Framework;
+  framework: IFramework;
   appId?: string;
   subscriberId?: string;
   region: string;
@@ -98,10 +98,6 @@ async function promptUserConfiguration(): Promise<IUserConfig | null> {
   }
 
   const envExamplePath = fileUtils.joinPaths(process.cwd(), '.env.example');
-  const envPath = fileUtils.joinPaths(
-    process.cwd(),
-    initialResponses.framework?.framework === FRAMEWORKS.NEXTJS ? '.env.local' : '.env'
-  );
 
   // Check if environment files exist and need updating
   if (fileUtils.exists(envExamplePath)) {
@@ -179,7 +175,7 @@ function checkDependencyExists(packageName: string): boolean {
   return false;
 }
 
-async function installDependencies(framework: Framework, packageManager: IPackageManager): Promise<void> {
+async function installDependencies(framework: IFramework, packageManager: IPackageManager): Promise<void> {
   logger.gray('• Installing required packages...');
 
   const packagesToInstall: string[] = [];
@@ -291,51 +287,26 @@ async function installDependencies(framework: Framework, packageManager: IPackag
   }
 }
 
-function removeSelf(packageManager: IPackageManager) {
-  try {
-    // Check if we're running from the source directory by looking for package.json
-    const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
-    if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath) as IPackageJson;
-      // If we're in the source directory, the package.json will have the name "add-inbox"
-      if (packageJson.name === 'add-inbox') {
-        logger.blue('  • Running from source directory - skipping self-removal');
-        logger.gray('    This is expected when testing locally.');
-
-        return;
-      }
-    }
-
-    const command = `${packageManager.name} remove add-inbox`;
-    logger.gray(`  $ ${command}`);
-    execSync(command, { stdio: 'inherit' });
-    logger.success('  ✓ Removed add-inbox package');
-  } catch (error) {
-    logger.warning('  • Could not remove add-inbox package automatically.');
-    logger.gray('    You can manually remove it later if desired.');
-  }
-}
-
-function displayNextSteps(framework: Framework) {
+function displayNextSteps(framework: IFramework) {
   const componentImportPath = './components/ui/inbox/NovuInbox';
 
-  logger.blue('\n Next Steps');
+  logger.info(logger.blue('\n Next Steps'));
   logger.divider();
 
-  logger.blue('1. The Novu Inbox component has been created at:');
-  logger.cyan(`   src/${componentImportPath}.tsx\n`);
+  logger.info(logger.blue('1. The Novu Inbox component has been created at:'));
+  logger.info(logger.cyan(`   src/${componentImportPath}.tsx\n`));
 
-  logger.blue('2. Import the Inbox component in your app:');
-  logger.cyan(`   import NovuInbox from '${componentImportPath}';\n`);
+  logger.info(logger.blue('2. Import the Inbox component in your app:'));
+  logger.info(logger.cyan(`   import NovuInbox from '${componentImportPath}';\n`));
 
-  logger.blue('3. Use the component in your app:');
-  logger.cyan('   <NovuInbox />\n');
+  logger.info(logger.blue('3. Use the component in your app:'));
+  logger.info(logger.cyan('   <NovuInbox />\n'));
 
-  logger.blue('4. Get your Novu credentials:');
+  logger.info(logger.blue('4. Get your Novu credentials:'));
   logger.gray('   • Visit https://web.novu.co to create an account and application.');
   logger.gray('   • Find your Application Identifier in the Novu dashboard.\n');
 
-  logger.blue('5. Customize your Inbox & learn more:');
+  logger.info(logger.blue('5. Customize your Inbox & learn more:'));
   logger.gray(`   • Styling:     ${logger.cyan('https://docs.novu.co/platform/inbox/react/styling')}`);
   logger.gray(`   • Hooks:       ${logger.cyan('https://docs.novu.co/platform/inbox/react/hooks')}`);
   logger.gray(`   • Localization:${logger.cyan('https://docs.novu.co/platform/inbox/react/localization')}`);
@@ -421,7 +392,7 @@ async function performInstallation(config: IUserConfig) {
 
     logger.step(3, 'Creating component structure');
     await createComponentStructure(
-      framework as Framework,
+      framework,
       overwriteComponents,
       subscriberId || null,
       region as 'us' | 'eu' | undefined
@@ -436,8 +407,7 @@ async function performInstallation(config: IUserConfig) {
       }
     }
 
-    logger.step(5, 'Cleaning up');
-    removeSelf(packageManager);
+    logger.step(4, "What's next?");
 
     displayNextSteps(framework);
 
