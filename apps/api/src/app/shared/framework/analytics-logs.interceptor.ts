@@ -112,7 +112,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
       return {
         ...analyticsLog,
-        transaction_id: eventResponse.transactionId,
+        transaction_id: eventResponse.transactionId || null,
       };
     }
 
@@ -127,8 +127,8 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
       hostname: req.hostname,
       status_code: res.statusCode,
       method: req.method,
-      transaction_id: undefined,
-      ip: getClientIp(req) || undefined,
+      transaction_id: null,
+      ip: getClientIp(req) || '',
       user_agent: req.headers['user-agent'] || '',
       query_params: JSON.stringify(req.query),
       request_body: sanitizePayload(req.body),

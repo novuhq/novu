@@ -33,7 +33,7 @@ export class GetHttpLogs {
       startDate.setDate(startDate.getDate() - parseInt(command.days, 10));
       where.timestamp = {
         operator: '>=',
-        value: startDate.toISOString().slice(0, 19).replace('T', ' '),
+        value: startDate,
       };
     }
 
