@@ -1,12 +1,29 @@
 import { PinoLogger } from 'nestjs-pino';
-import { ZodSchema, z } from 'zod';
+import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { ClickHouseService } from './clickhouse.service';
 
+export type ClickhouseOperator =
+  | '='
+  | '=='
+  | '!='
+  | '<>'
+  | '<='
+  | '>='
+  | '<'
+  | '>'
+  | 'LIKE'
+  | 'NOT LIKE'
+  | 'ILIKE'
+  | 'IN'
+  | 'NOT IN'
+  | 'GLOBAL IN'
+  | 'GLOBAL NOT IN';
+
 export type Where<T> = {
-  [K in keyof T]?: T[K] | { operator: string; value: T[K] | T[K][] };
+  [K in keyof T]?: T[K] | { operator: ClickhouseOperator; value: T[K] | T[K][] };
 };
 
-export abstract class BaseRepository<T extends ZodSchema> {
+export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
   abstract readonly table: string;
   abstract readonly schema: T;
 
@@ -16,27 +33,25 @@ export abstract class BaseRepository<T extends ZodSchema> {
   ) {}
 
   private getColumnType(column: string): string {
-    if (this.schema instanceof z.ZodObject) {
-      const shape = this.schema.shape as Record<string, z.ZodTypeAny>;
-      const field = shape[column];
-
-      if (field && field.description) {
-        return field.description;
-      }
+    const columnSchema = this.schema.schema[column];
+    if (columnSchema && columnSchema.type) {
+      return columnSchema.type.toString();
     }
 
     return 'String';
   }
 
-  private buildWhereClause(where: Where<z.infer<T>>): { clause: string; params: Record<string, any> } {
+  private buildWhereClause(
+    where: Where<InferClickhouseSchemaType<T>>
+  ): { clause: string; params: Record<string, any> } {
     const params: Record<string, any> = {};
     const clauses = Object.entries(where)
       .map(([key, value], index) => {
-        let operator = '=';
+        let operator: ClickhouseOperator = '=';
         let actualValue = value;
 
         if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
-          operator = String(value.operator);
+          operator = value.operator;
           actualValue = value.value;
         }
 
@@ -50,23 +65,21 @@ export abstract class BaseRepository<T extends ZodSchema> {
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }
 
-  async insert(data: z.infer<T>): Promise<void> {
-    const parsedData = this.schema.parse(data);
-    await this.clickhouseService.insert(this.table, [parsedData]);
+  async insert(data: InferClickhouseSchemaType<T>): Promise<void> {
+    await this.clickhouseService.insert(this.table, [data]);
   }
 
-  async insertMany(data: z.infer<T>[]): Promise<void> {
-    const parsedData = this.schema.array().parse(data);
-    await this.clickhouseService.insert(this.table, parsedData);
+  async insertMany(data: InferClickhouseSchemaType<T>[]): Promise<void> {
+    await this.clickhouseService.insert(this.table, data);
   }
 
   async find(options: {
-    where: Where<z.infer<T>>;
+    where: Where<InferClickhouseSchemaType<T>>;
     limit?: number;
     offset?: number;
-    orderBy?: keyof z.infer<T>;
+    orderBy?: keyof InferClickhouseSchemaType<T>;
     orderDirection?: 'ASC' | 'DESC';
-  }): Promise<{ data: z.infer<T>[]; rows: number }> {
+  }): Promise<{ data: InferClickhouseSchemaType<T>[]; rows: number }> {
     const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC' } = options;
     const { clause, params } = this.buildWhereClause(where);
 
@@ -79,29 +92,15 @@ export abstract class BaseRepository<T extends ZodSchema> {
       OFFSET ${offset}
     `;
 
-    const result = await this.clickhouseService.query<z.infer<T>>({
+    const result = await this.clickhouseService.query<InferClickhouseSchemaType<T>>({
       query,
       params,
     });
 
-    const validation = this.schema.array().safeParse(result.data);
-
-    if (!validation.success) {
-      this.logger.warn(
-        {
-          error: validation.error,
-        },
-        'Data from ClickHouse did not match schema'
-      );
-    }
-
-    return {
-      data: validation.success ? validation.data : result.data,
-      rows: result.rows,
-    };
+    return result;
   }
 
-  async count(options: { where: Where<z.infer<T>> }): Promise<number> {
+  async count(options: { where: Where<InferClickhouseSchemaType<T>> }): Promise<number> {
     const { where } = options;
     const { clause, params } = this.buildWhereClause(where);
 
