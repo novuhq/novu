@@ -93,7 +93,7 @@ export class UpsertLayoutUseCase {
       );
     }
 
-    const upsertedControlValues = await this.upsertContolValues(command, upsertedLayout._id!);
+    const upsertedControlValues = await this.upsertControlValues(command, upsertedLayout._id!);
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
@@ -132,7 +132,7 @@ export class UpsertLayoutUseCase {
     }
   }
 
-  private async upsertContolValues(command: UpsertLayoutCommand, layoutId: string) {
+  private async upsertControlValues(command: UpsertLayoutCommand, layoutId: string) {
     const {
       layoutDto: { controlValues },
     } = command;
