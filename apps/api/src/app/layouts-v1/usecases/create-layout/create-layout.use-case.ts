@@ -41,9 +41,10 @@ export class CreateLayoutUseCase {
     if (isV2Layout) {
       entity = this.mapToEntity({
         ...command,
-        variables,
         controls: { schema: layoutControlSchema, uiSchema: layoutUiSchema },
         contentType: undefined,
+        type: command.type,
+        origin: command.origin,
       });
     }
 
@@ -103,8 +104,8 @@ export class CreateLayoutUseCase {
       identifier: domainEntity.identifier,
       variables: domainEntity.variables,
       isDefault: domainEntity.isDefault ?? false,
-      type: domainEntity.type ?? ResourceTypeEnum.BRIDGE,
-      origin: domainEntity.origin ?? ResourceOriginEnum.NOVU_CLOUD,
+      type: domainEntity.type,
+      origin: domainEntity.origin,
       deleted: false,
       controls: domainEntity.controls,
     };
