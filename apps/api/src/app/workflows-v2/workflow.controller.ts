@@ -23,13 +23,13 @@ import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
   UserSessionData,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   PermissionsEnum,
 } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ParseSlugEnvironmentIdPipe } from './pipes/parse-slug-env-id.pipe';
-import { ParseSlugIdPipe } from './pipes/parse-slug-id.pipe';
+import { ParseSlugEnvironmentIdPipe } from '../pipes/parse-slug-env-id.pipe';
+import { ParseSlugIdPipe } from '../pipes/parse-slug-id.pipe';
 import {
   BuildStepDataCommand,
   BuildStepDataUsecase,
@@ -111,7 +111,7 @@ export class WorkflowController {
         workflowDto: {
           ...createWorkflowDto,
           steps: upsertSteps,
-          origin: WorkflowOriginEnum.NOVU_CLOUD,
+          origin: ResourceOriginEnum.NOVU_CLOUD,
         },
         user,
       })

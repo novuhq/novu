@@ -29,3 +29,4 @@ export * from './utils';
 export * from './workflow-channel-preferences';
 export * from './workflow-override';
 export * from './ws';
+export * from './general';

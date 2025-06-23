@@ -27,6 +27,7 @@ typescript:
   author: Novu
   baseErrorName: NovuError
   clientServerStatusCodesAsErrors: true
+  constFieldsAlwaysOptional: true
   defaultErrorName: SDKError
   enableCustomCodeRegions: false
   enableMCPServer: false

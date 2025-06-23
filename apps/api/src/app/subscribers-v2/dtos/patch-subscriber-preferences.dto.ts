@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IPreferenceChannels } from '@novu/shared';
 import { Type, Transform } from 'class-transformer';
 import { IsOptional } from 'class-validator';
-import { parseSlugId } from '../../workflows-v2/pipes/parse-slug-id';
+import { parseSlugId } from '../../pipes/parse-slug-id';
 
 export class PatchPreferenceChannelsDto implements IPreferenceChannels {
   @ApiProperty({ description: 'Email channel preference' })

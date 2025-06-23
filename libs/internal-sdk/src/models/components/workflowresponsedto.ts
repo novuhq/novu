@@ -50,6 +50,11 @@ import {
   PushStepResponseDto$outboundSchema,
 } from "./pushstepresponsedto.js";
 import {
+  ResourceOriginEnum,
+  ResourceOriginEnum$inboundSchema,
+  ResourceOriginEnum$outboundSchema,
+} from "./resourceoriginenum.js";
+import {
   RuntimeIssueDto,
   RuntimeIssueDto$inboundSchema,
   RuntimeIssueDto$Outbound,
@@ -61,11 +66,6 @@ import {
   SmsStepResponseDto$Outbound,
   SmsStepResponseDto$outboundSchema,
 } from "./smsstepresponsedto.js";
-import {
-  WorkflowOriginEnum,
-  WorkflowOriginEnum$inboundSchema,
-  WorkflowOriginEnum$outboundSchema,
-} from "./workfloworiginenum.js";
 import {
   WorkflowPreferencesResponseDto,
   WorkflowPreferencesResponseDto$inboundSchema,
@@ -141,7 +141,7 @@ export type WorkflowResponseDto = {
   /**
    * Origin of the workflow
    */
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   /**
    * Preferences for the workflow
    */
@@ -349,7 +349,7 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
       ),
     ]),
   ),
-  origin: WorkflowOriginEnum$inboundSchema,
+  origin: ResourceOriginEnum$inboundSchema,
   preferences: WorkflowPreferencesResponseDto$inboundSchema,
   status: WorkflowStatusEnum$inboundSchema,
   issues: z.record(RuntimeIssueDto$inboundSchema).optional(),
@@ -453,7 +453,7 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
       ),
     ]),
   ),
-  origin: WorkflowOriginEnum$outboundSchema,
+  origin: ResourceOriginEnum$outboundSchema,
   preferences: WorkflowPreferencesResponseDto$outboundSchema,
   status: WorkflowStatusEnum$outboundSchema,
   issues: z.record(RuntimeIssueDto$outboundSchema).optional(),

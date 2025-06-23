@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose';
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 
 import { LayoutDBModel } from './layout.entity';
 import { schemaOptions } from '../schema-default.options';
@@ -49,6 +50,15 @@ const layoutSchema = new Schema<LayoutDBModel>(
     channel: {
       type: Schema.Types.String,
     },
+    type: {
+      type: Schema.Types.String,
+      default: ResourceTypeEnum.REGULAR,
+    },
+    origin: {
+      type: Schema.Types.String,
+      default: ResourceOriginEnum.NOVU_CLOUD,
+    },
+    controls: { schema: Schema.Types.Mixed, uiSchema: Schema.Types.Mixed },
   },
   schemaOptions
 );

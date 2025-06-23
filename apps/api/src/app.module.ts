@@ -27,7 +27,8 @@ import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
 import { InvitesModule } from './app/invites/invites.module';
-import { LayoutsModule } from './app/layouts/layouts.module';
+import { LayoutsV1Module } from './app/layouts-v1/layouts-v1.module';
+import { LayoutsV2Module } from './app/layouts-v2/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { NotificationModule } from './app/notifications/notification.module';
@@ -102,7 +103,8 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   SubscribersV1Module,
   SubscribersModule,
   FeedsModule,
-  LayoutsModule,
+  LayoutsV1Module,
+  LayoutsV2Module,
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsV1Module,

@@ -3,8 +3,8 @@ import type {
   BuilderGroupValues,
   CustomDataType,
   FilterParts,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '../../types';
 import { JSONSchemaDto } from '../../dto/workflows';
 import type { StepContentIssue, StepIntegrationIssue, StepIssue } from '../../dto/workflows/step.dto';
@@ -32,13 +32,13 @@ export interface INotificationTemplate {
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
   blueprintId?: string;
-  type?: WorkflowTypeEnum;
+  type?: ResourceTypeEnum;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData?: any;
   data?: CustomDataType;
-  origin?: WorkflowOriginEnum;
+  origin?: ResourceOriginEnum;
 }
 
 export class IGroupedBlueprint {

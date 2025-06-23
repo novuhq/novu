@@ -71,7 +71,7 @@ import { Link } from 'react-router-dom';
 import { Protect } from '@/utils/protect';
 
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
-import { WorkflowOriginEnum, WorkflowResponseDto, UpdateWorkflowDto } from '@novu/shared';
+import { ResourceOriginEnum, WorkflowResponseDto, UpdateWorkflowDto } from '@novu/shared';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 
@@ -111,7 +111,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     },
   });
 
-  const isReadOnly = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isReadOnly = workflow.origin === ResourceOriginEnum.EXTERNAL;
 
   const { deleteWorkflow, isPending: isDeleteWorkflowPending } = useDeleteWorkflow({
     onSuccess: () => {
@@ -191,7 +191,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   }, []);
 
   const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
-  const isDuplicable = useMemo(() => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD, [workflow.origin]);
+  const isDuplicable = useMemo(() => workflow.origin === ResourceOriginEnum.NOVU_CLOUD, [workflow.origin]);
 
   return (
     <>
@@ -304,7 +304,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 <DropdownMenuGroup className="*:cursor-pointer">
                   <DropdownMenuItem
                     className="text-destructive"
-                    disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
+                    disabled={workflow.origin === ResourceOriginEnum.EXTERNAL}
                     onClick={() => {
                       setIsDeleteModalOpen(true);
                     }}
@@ -455,7 +455,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
               <span className="ml-auto" />
             </Button>
           </Link>
-          {isPayloadSchemaEnabled && workflow?.origin === WorkflowOriginEnum.NOVU_CLOUD && (
+          {isPayloadSchemaEnabled && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
             <Button
               variant="secondary"
               mode="outline"

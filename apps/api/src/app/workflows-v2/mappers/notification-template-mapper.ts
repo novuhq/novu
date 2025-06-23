@@ -3,9 +3,9 @@ import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   ShortIsPrefixEnum,
   StepTypeEnum,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowStatusEnum,
-  WorkflowTypeEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 import { buildSlug } from '../../shared/helpers/build-slug';
 import {
@@ -76,13 +76,13 @@ function buildStepTypeOverview(step: NotificationStepEntity): StepTypeEnum | und
   return step.template?.type;
 }
 
-function computeOrigin(template: NotificationTemplateEntity): WorkflowOriginEnum {
+function computeOrigin(template: NotificationTemplateEntity): ResourceOriginEnum {
   // Required to differentiate between old V1 and new workflows in an attempt to eliminate the need for type field
   if (typeof template.type === 'undefined' && typeof template.origin === 'undefined') {
-    return WorkflowOriginEnum.NOVU_CLOUD_V1;
+    return ResourceOriginEnum.NOVU_CLOUD_V1;
   }
 
-  return template?.type === WorkflowTypeEnum.REGULAR
-    ? WorkflowOriginEnum.NOVU_CLOUD_V1
-    : template.origin || WorkflowOriginEnum.EXTERNAL;
+  return template?.type === ResourceTypeEnum.REGULAR
+    ? ResourceOriginEnum.NOVU_CLOUD_V1
+    : template.origin || ResourceOriginEnum.EXTERNAL;
 }

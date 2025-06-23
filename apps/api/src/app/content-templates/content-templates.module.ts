@@ -6,7 +6,7 @@ import { CommunityOrganizationRepository } from '@novu/dal';
 import { USE_CASES } from './usecases';
 import { ContentTemplatesController } from './content-templates.controller';
 import { SharedModule } from '../shared/shared.module';
-import { LayoutsModule } from '../layouts/layouts.module';
+import { LayoutsV1Module } from '../layouts-v1/layouts-v1.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -20,7 +20,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 @Module({
-  imports: [SharedModule, LayoutsModule, ...enterpriseImports()],
+  imports: [SharedModule, LayoutsV1Module, ...enterpriseImports()],
   providers: [...USE_CASES, CommunityOrganizationRepository],
   exports: [...USE_CASES],
   controllers: [ContentTemplatesController],

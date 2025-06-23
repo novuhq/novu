@@ -8,7 +8,7 @@ import {
   createPhpSnippet,
   createPythonSnippet,
 } from '@/utils/code-snippets';
-import { WorkflowOriginEnum } from '@/utils/enums';
+import { ResourceOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import type { WorkflowResponseDto } from '@novu/shared';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
@@ -47,7 +47,7 @@ const extensions = [loadLanguage('json')?.extension ?? []];
 export const TestWorkflowForm = ({ workflow }: { workflow?: WorkflowResponseDto }) => {
   const { control, setValue } = useFormContext<TestWorkflowFormType>();
   const [activeSnippetTab, setActiveSnippetTab] = useState<SnippetLanguage>(() =>
-    workflow?.origin === WorkflowOriginEnum.EXTERNAL ? 'framework' : 'typescript'
+    workflow?.origin === ResourceOriginEnum.EXTERNAL ? 'framework' : 'typescript'
   );
   const [showInstructions, setShowInstructions] = useState(false);
   const [payloadJsonData, setPayloadJsonData] = useState<any>({});

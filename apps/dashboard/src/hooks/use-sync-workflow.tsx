@@ -9,7 +9,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import type { IEnvironment, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
-import { WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -27,16 +27,16 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
   let loadingToast: string | number | undefined = undefined;
 
   const isSyncable = useMemo(
-    () => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && workflow.status !== WorkflowStatusEnum.ERROR,
+    () => workflow.origin === ResourceOriginEnum.NOVU_CLOUD && workflow.status !== WorkflowStatusEnum.ERROR,
     [workflow.origin, workflow.status]
   );
 
   const getTooltipContent = () => {
-    if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
+    if (workflow.origin === ResourceOriginEnum.EXTERNAL) {
       return 'Code-first workflows cannot be synced using dashboard.';
     }
 
-    if (workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1) {
+    if (workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1) {
       return 'V1 workflows cannot be synced using dashboard. Please visit the legacy portal.';
     }
 

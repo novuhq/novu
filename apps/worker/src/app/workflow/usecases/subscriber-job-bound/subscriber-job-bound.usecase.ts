@@ -18,7 +18,7 @@ import {
   ISubscribersDefine,
   ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
-  WorkflowTypeEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
@@ -86,7 +86,7 @@ export class SubscriberJobBound {
 
     this.analyticsService.mixpanelTrack('Notification event trigger - [Triggers]', segmentUserId, {
       name: template.name,
-      type: template?.type || WorkflowTypeEnum.REGULAR,
+      type: template?.type || ResourceTypeEnum.REGULAR,
       origin: template?.origin,
       transactionId: command.transactionId,
       _template: template._id,
@@ -191,7 +191,7 @@ export class SubscriberJobBound {
      */
     return {
       ...bridgeWorkflow,
-      type: WorkflowTypeEnum.BRIDGE,
+      type: ResourceTypeEnum.BRIDGE,
       _id: syncedWorkflowId,
       steps: bridgeWorkflow.steps.map((step) => {
         const stepControlVariables = command.controls?.steps?.[step.stepId];
