@@ -1,6 +1,15 @@
 import { DurableObject } from 'cloudflare:workers';
 import jwt from '@tsndr/cloudflare-worker-jwt';
 
+// JWT utility functions
+async function verifyJWT(token: string, secret: string): Promise<boolean> {
+	return await jwt.verify(token, secret);
+}
+
+function decodeJWT(token: string): any {
+	return jwt.decode(token);
+}
+
 /**
  * Welcome to Cloudflare Workers! This is your first Durable Objects application.
  *
@@ -66,61 +75,51 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 			return new Response('Expected WebSocket upgrade', { status: 426 });
 		}
 
-		// Verify JWT token
-		const authHeader = request.headers.get('Authorization');
-		if (!authHeader || !authHeader.startsWith('Bearer ')) {
-			return new Response('Unauthorized: Missing or invalid Authorization header', { status: 401 });
+		// Extract user information from headers (already verified by main worker)
+		const userId = request.headers.get('X-User-Id');
+		const subscriberId = request.headers.get('X-Subscriber-Id');
+		const organizationId = request.headers.get('X-Organization-Id');
+		const environmentId = request.headers.get('X-Environment-Id');
+		const userEmail = request.headers.get('X-User-Email');
+		const userName = request.headers.get('X-User-Name');
+
+		if (!userId || !organizationId || !environmentId) {
+			return new Response('Missing required user information', { status: 400 });
 		}
 
-		const token = authHeader.substring(7);
-		try {
-			const isValid = await verifyJWT(token, this.env.JWT_SECRET);
-			if (!isValid) {
-				return new Response('Unauthorized: Invalid JWT token', { status: 401 });
-			}
+		// Create WebSocket pair
+		const [client, server] = Object.values(new WebSocketPair());
 
-			const payload = decodeJWT(token);
-			if (!payload || !payload.payload) {
-				return new Response('Unauthorized: Invalid JWT payload', { status: 401 });
-			}
+		// Accept the WebSocket connection
+		server.accept();
 
-			// Extract user information from JWT payload
-			const userPayload = payload.payload;
-			const userId = userPayload._id || userPayload.subscriberId;
-			const { organizationId } = userPayload;
-			const { environmentId } = userPayload;
+		// Create connection metadata
+		const metadata: IConnectionMetadata = {
+			subscriberId: subscriberId || userId,
+			userId,
+			organizationId,
+			environmentId,
+			connectedAt: Date.now(),
+		};
 
-			if (!userId || !organizationId || !environmentId) {
-				return new Response('Unauthorized: Missing required user information in JWT', { status: 401 });
-			}
+		// Store connection
+		this.connections.set(server, metadata);
 
-			// Create room ID based on organization and environment
-			const roomId = `${organizationId}:${environmentId}`;
-
-			// Get the Durable Object for this room
-			const id = this.env.WEBSOCKET_ROOM.idFromName(roomId);
-			const room = this.env.WEBSOCKET_ROOM.get(id);
-
-			// Forward the request to the Durable Object with user info
-			const requestWithUserInfo = new Request(request.url, {
-				method: request.method,
-				headers: {
-					...Object.fromEntries(request.headers.entries()),
-					'X-User-Id': userId,
-					'X-Organization-Id': organizationId,
-					'X-Environment-Id': environmentId,
-					'X-User-Email': userPayload.email || '',
-					'X-User-Name': `${userPayload.firstName || ''} ${userPayload.lastName || ''}`.trim(),
-				},
-				body: request.body,
-			});
-
-			return room.fetch(requestWithUserInfo);
-		} catch (error) {
-			console.error('JWT verification failed:', error);
-
-			return new Response('Unauthorized: JWT verification failed', { status: 401 });
+		// Track user connections
+		if (!this.userConnections.has(userId)) {
+			this.userConnections.set(userId, new Set());
 		}
+		this.userConnections.get(userId)!.add(server);
+
+		// Set up WebSocket handlers
+		this.setupWebSocketHandlers(server, metadata);
+
+		console.log(`WebSocket connected for subscriber: ${metadata.subscriberId} (${userId}) in room ${organizationId}:${environmentId}`);
+
+		return new Response(null, {
+			status: 101,
+			webSocket: client,
+		});
 	}
 
 	/**
@@ -257,15 +256,21 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 	/**
 	 * Private helper methods
 	 */
-	private async verifyJWT(token: string, secret: string): Promise<boolean> {
-		return jwt.verify(token, secret);
-	}
-
-	private decodeJWT(token: string): any {
-		return jwt.decode(token);
-	}
 
 	private setupWebSocketHandlers(ws: WebSocket, metadata: IConnectionMetadata): void {
+		// Set up event handlers
+		ws.addEventListener('message', (event) => {
+			this.webSocketMessage(ws, event.data);
+		});
+
+		ws.addEventListener('close', (event) => {
+			this.webSocketClose(ws, event.code, event.reason, event.wasClean);
+		});
+
+		ws.addEventListener('error', (event) => {
+			this.webSocketError(ws, event);
+		});
+
 		// Send welcome message
 		ws.send(
 			JSON.stringify({
@@ -275,7 +280,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 					userId: metadata.userId,
 					connectedAt: metadata.connectedAt,
 				},
-			})
+			}),
 		);
 	}
 
@@ -327,37 +332,103 @@ export default {
 
 		// Route WebSocket connections to Durable Objects
 		if (url.pathname === '/ws') {
-			/*
-			 * Get or create a Durable Object instance
-			 * You can use different strategies for routing (by user, organization, etc.)
-			 */
-			const id = env.WEBSOCKET_ROOM.idFromName('global-room');
-			const stub = env.WEBSOCKET_ROOM.get(id);
+			// Verify JWT token first
+			const authHeader = request.headers.get('Authorization');
+			if (!authHeader || !authHeader.startsWith('Bearer ')) {
+				return new Response('Unauthorized: Missing or invalid Authorization header', { status: 401 });
+			}
 
-			return stub.fetch(request);
+			const token = authHeader.substring(7);
+			try {
+				const isValid = await verifyJWT(token, env.JWT_SECRET);
+				if (!isValid) {
+					return new Response('Unauthorized: Invalid JWT token', { status: 401 });
+				}
+
+				const payload = decodeJWT(token);
+				if (!payload || !payload.payload) {
+					return new Response('Unauthorized: Invalid JWT payload', { status: 401 });
+				}
+
+				// Extract user information from JWT payload
+				const userPayload = payload.payload;
+				const userId = userPayload._id || userPayload.subscriberId;
+				const subscriberId = userPayload.subscriberId || userId;
+				const { organizationId } = userPayload;
+				const { environmentId } = userPayload;
+
+				if (!userId || !subscriberId || !organizationId || !environmentId) {
+					return new Response('Unauthorized: Missing required user information in JWT', { status: 401 });
+				}
+
+				// Create room ID based on organization, environment, and subscriber
+				const roomId = `${organizationId}:${environmentId}:${subscriberId}`;
+
+				// Get the Durable Object for this room
+				const id = env.WEBSOCKET_ROOM.idFromName(roomId);
+				const stub = env.WEBSOCKET_ROOM.get(id);
+
+				// Forward the request to the Durable Object with user info
+				const requestWithUserInfo = new Request(request.url, {
+					method: request.method,
+					headers: {
+						...Object.fromEntries(request.headers.entries()),
+						'X-User-Id': userId,
+						'X-Subscriber-Id': userPayload.subscriberId || userId,
+						'X-Organization-Id': organizationId,
+						'X-Environment-Id': environmentId,
+						'X-User-Email': userPayload.email || '',
+						'X-User-Name': `${userPayload.firstName || ''} ${userPayload.lastName || ''}`.trim(),
+					},
+					body: request.body,
+				});
+
+				return stub.fetch(requestWithUserInfo);
+			} catch (error) {
+				console.error('JWT verification failed:', error);
+
+				return new Response('Unauthorized: JWT verification failed', { status: 401 });
+			}
 		}
 
 		// Handle HTTP API endpoints for sending messages
 		if (url.pathname === '/api/send' && request.method === 'POST') {
 			try {
-				const { userId, event, data } = (await request.json()) as {
+				const { userId, event, data, organizationId, environmentId, subscriberId } = (await request.json()) as {
 					userId: string;
 					event: string;
 					data: any;
+					organizationId?: string;
+					environmentId?: string;
+					subscriberId?: string;
 				};
 
 				if (!userId || !event) {
-					return new Response('Missing required fields', { status: 400 });
+					return new Response('Missing required fields: userId and event', { status: 400 });
 				}
 
-				// Get the Durable Object instance
-				const id = env.WEBSOCKET_ROOM.idFromName('global-room');
+				/*
+				 * Create room ID based on organization, environment, and subscriber if provided
+				 * Fall back to global room if not provided for backward compatibility
+				 */
+				let roomId = 'global-room';
+				if (organizationId && environmentId && subscriberId) {
+					roomId = `${organizationId}:${environmentId}:${subscriberId}`;
+				} else if (organizationId && environmentId) {
+					// Fallback for backward compatibility - use userId as subscriberId
+					roomId = `${organizationId}:${environmentId}:${userId}`;
+				}
+
+				console.log(`Routing message to room: ${roomId} for user: ${userId}, event: ${event}`);
+
+				// Get the Durable Object instance for the appropriate room
+				const id = env.WEBSOCKET_ROOM.idFromName(roomId);
 				const stub = env.WEBSOCKET_ROOM.get(id);
 
 				// Send message to the specific user
 				await stub.sendToUser(userId, event, data);
 
-				return new Response(JSON.stringify({ success: true }), {
+				return new Response(JSON.stringify({ success: true, roomId }), {
 					headers: { 'Content-Type': 'application/json' },
 				});
 			} catch (error) {

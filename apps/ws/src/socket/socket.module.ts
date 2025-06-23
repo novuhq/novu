@@ -4,12 +4,13 @@ import { WorkflowInMemoryProviderService } from '@novu/application-generic';
 import { WSGateway } from './ws.gateway';
 import { SharedModule } from '../shared/shared.module';
 import { ExternalServicesRoute } from './usecases/external-services-route';
+import { CloudflareWebSocketService } from './services/cloudflare-websocket.service';
 
 import { WebSocketWorker } from './services';
 
 const USE_CASES: Provider[] = [ExternalServicesRoute];
 
-const PROVIDERS: Provider[] = [WSGateway, WebSocketWorker];
+const PROVIDERS: Provider[] = [WSGateway, WebSocketWorker, CloudflareWebSocketService];
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,

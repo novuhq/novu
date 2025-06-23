@@ -5,6 +5,7 @@ import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { ExternalServicesRouteCommand } from './external-services-route.command';
 import { WSGateway } from '../../ws.gateway';
+import { CloudflareWebSocketService } from '../../services/cloudflare-websocket.service';
 import { IUnreadCountPaginationIndication, IUnseenCountPaginationIndication } from './types';
 
 const LOG_CONTEXT = 'ExternalServicesRoute';
@@ -13,7 +14,8 @@ const LOG_CONTEXT = 'ExternalServicesRoute';
 export class ExternalServicesRoute {
   constructor(
     private wsGateway: WSGateway,
-    private messageRepository: MessageRepository
+    private messageRepository: MessageRepository,
+    private cloudflareWebSocketService: CloudflareWebSocketService
   ) {}
 
   public async execute(command: ExternalServicesRouteCommand) {
@@ -40,21 +42,36 @@ export class ExternalServicesRoute {
 
   private async processReceivedEvent(command: ExternalServicesRouteCommand): Promise<void> {
     const { message, messageId } = command.payload || {};
+    let messageData = null;
+
     // TODO: Retro-compatibility for a bit just in case stalled messages
     if (message) {
       Logger.log('Sending full message in the payload', LOG_CONTEXT);
-      await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+      messageData = command.payload;
     } else if (messageId) {
       Logger.log(`Sending messageId: ${messageId} in the payload, we need to retrieve the full message`, LOG_CONTEXT);
       const storedMessage = await this.messageRepository.findOne({
         _id: messageId,
         _environmentId: command._environmentId,
       });
-      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
+      messageData = { message: storedMessage };
     }
 
-    // Only recalculate the counts if we send a messageId/message.
-    if (message || messageId) {
+    if (messageData) {
+      // Send to both Socket.io and Cloudflare in parallel
+      await Promise.all([
+        this.wsGateway.sendMessage(command.userId, command.event, messageData),
+        this.cloudflareWebSocketService.sendMessage(
+          command.userId,
+          command.event,
+          messageData,
+          command._organizationId,
+          command._environmentId,
+          command.subscriberId
+        ),
+      ]);
+
+      // Only recalculate the counts if we send a messageId/message.
       await this.sendUnseenCountChange(command);
       await this.sendUnreadCountChange(command);
     }
@@ -75,10 +92,23 @@ export class ExternalServicesRoute {
     const paginationIndication: IUnreadCountPaginationIndication =
       unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
 
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
+    const countData = {
       unreadCount: paginationIndication.unreadCount,
       hasMore: paginationIndication.hasMore,
-    });
+    };
+
+    // Send to both Socket.io and Cloudflare in parallel
+    await Promise.all([
+      this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, countData),
+      this.cloudflareWebSocketService.sendMessage(
+        command.userId,
+        WebSocketEventEnum.UNREAD,
+        countData,
+        command._organizationId,
+        command._environmentId,
+        command.subscriberId
+      ),
+    ]);
   }
 
   private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
@@ -99,10 +129,23 @@ export class ExternalServicesRoute {
     const paginationIndication: IUnseenCountPaginationIndication =
       unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
 
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
+    const countData = {
       unseenCount: paginationIndication.unseenCount,
       hasMore: paginationIndication.hasMore,
-    });
+    };
+
+    // Send to both Socket.io and Cloudflare in parallel
+    await Promise.all([
+      this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, countData),
+      this.cloudflareWebSocketService.sendMessage(
+        command.userId,
+        WebSocketEventEnum.UNSEEN,
+        countData,
+        command._organizationId,
+        command._environmentId,
+        command.subscriberId
+      ),
+    ]);
   }
 
   private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {

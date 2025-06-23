@@ -14,6 +14,8 @@
 	},
 	"dependencies": {
 		"@tsndr/cloudflare-worker-jwt": "^3.2.0",
+		"@types/jsonwebtoken": "^8.5.9",
+		"jsonwebtoken": "9.0.0",
 		"ws": "^8.18.0"
 	}
 }
