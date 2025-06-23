@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PushRenderOutput } from '@novu/shared';
-import { InstrumentUsecase, FeatureFlagsService } from '@novu/application-generic';
+import { InstrumentUsecase, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { RenderCommand } from './render-command';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
@@ -15,9 +15,10 @@ export class PushOutputRendererCommand extends RenderCommand {
 export class PushOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
     protected featureFlagsService: FeatureFlagsService
   ) {
-    super(moduleRef, featureFlagsService);
+    super(moduleRef, logger, featureFlagsService);
   }
 
   @InstrumentUsecase()

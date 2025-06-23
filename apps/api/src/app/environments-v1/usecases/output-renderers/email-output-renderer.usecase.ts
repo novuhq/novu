@@ -3,7 +3,7 @@ import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-t
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { EmailRenderOutput } from '@novu/shared';
-import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 
 import { Liquid } from 'liquidjs';
@@ -48,9 +48,10 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     private getOrganizationSettings: GetOrganizationSettings,
     protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
     protected featureFlagsService: FeatureFlagsService
   ) {
-    super(moduleRef, featureFlagsService);
+    super(moduleRef, logger, featureFlagsService);
     this.liquidEngine = createLiquidEngine();
   }
 

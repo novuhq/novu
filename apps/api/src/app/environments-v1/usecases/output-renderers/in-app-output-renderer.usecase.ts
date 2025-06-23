@@ -1,7 +1,7 @@
 import { InAppRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { InstrumentUsecase, sanitizeHtmlInObject, FeatureFlagsService } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeHtmlInObject, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { RenderCommand } from './render-command';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
@@ -15,9 +15,10 @@ export class InAppOutputRendererCommand extends RenderCommand {
 export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
     protected featureFlagsService: FeatureFlagsService
   ) {
-    super(moduleRef, featureFlagsService);
+    super(moduleRef, logger, featureFlagsService);
   }
 
   @InstrumentUsecase()

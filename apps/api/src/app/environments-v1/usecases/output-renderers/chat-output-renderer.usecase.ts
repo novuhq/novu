@@ -1,7 +1,7 @@
 import { ChatRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { InstrumentUsecase, FeatureFlagsService } from '@novu/application-generic';
+import { InstrumentUsecase, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { RenderCommand } from './render-command';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
@@ -15,9 +15,10 @@ export class ChatOutputRendererCommand extends RenderCommand {
 export class ChatOutputRendererUsecase extends BaseTranslationRendererUsecase {
   constructor(
     protected moduleRef: ModuleRef,
-    protected featureFlagsService: FeatureFlagsService
+    protected featureFlagsService: FeatureFlagsService,
+    protected logger: PinoLogger
   ) {
-    super(moduleRef, featureFlagsService);
+    super(moduleRef, logger, featureFlagsService);
   }
 
   @InstrumentUsecase()
