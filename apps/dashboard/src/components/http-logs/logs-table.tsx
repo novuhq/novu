@@ -56,13 +56,13 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     <div className="flex h-full flex-col">
       <div className="relative flex flex-1">
         <ResizablePanelGroup direction="horizontal" className="gap-2">
-          <ResizablePanel defaultSize={70} minSize={50}>
+          <ResizablePanel defaultSize={50} minSize={50}>
             <div className="flex h-full flex-col">
               <div className="flex-1">
                 <Table isLoading={isLoading}>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="h-8 px-2 py-0">Logs</TableHead>
+                      <TableHead className="text-text-strong h-8 px-2 py-0">Logs</TableHead>
                       <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -129,8 +129,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
           <AnimatePresence mode="wait">
             {selectedLogId && (
               <>
-                <ResizableHandle className="bg-transparent" />
-                <ResizablePanel defaultSize={35} minSize={35} maxSize={50}>
+                <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
                   <motion.div
                     key={selectedLogId}
                     initial={{ opacity: 0 }}

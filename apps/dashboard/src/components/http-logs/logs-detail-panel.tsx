@@ -30,7 +30,7 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="bg-background flex h-full flex-col overflow-hidden"
+      className="border-stroke-soft flex h-full flex-col overflow-hidden rounded-lg border bg-white"
     >
       <LogsDetailHeader log={log} />
       <LogsDetailContent log={log} />
