@@ -4,8 +4,6 @@ import { LayoutResponseDto } from '../../dtos';
 
 @Injectable()
 export class DuplicateLayoutUseCase {
-  constructor() {}
-
   async execute(command: DuplicateLayoutCommand): Promise<LayoutResponseDto> {
     throw new Error('Method not implemented.');
   }

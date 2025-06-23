@@ -1,12 +1,11 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { LayoutRepository } from '@novu/dal';
 import { AnalyticsService, GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
+import { ResourceOriginEnum } from '@novu/shared';
 
 import { DeleteLayoutCommand } from './delete-layout.command';
-
 import { CheckLayoutIsUsedCommand, CheckLayoutIsUsedUseCase } from '../check-layout-is-used';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { ResourceOriginEnum } from '@novu/shared';
 
 @Injectable()
 export class DeleteLayoutUseCase {

@@ -8,8 +8,6 @@ import { LayoutVariablesSchemaCommand } from './layout-variables-schema.command'
 
 @Injectable()
 export class LayoutVariablesSchemaUseCase {
-  constructor() {}
-
   @InstrumentUsecase()
   async execute(command: LayoutVariablesSchemaCommand): Promise<JSONSchemaDto> {
     return {
