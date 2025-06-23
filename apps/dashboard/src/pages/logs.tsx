@@ -19,7 +19,7 @@ export function Logs() {
           </h1>
         }
       >
-        <div className="flex h-full flex-col">
+        <div className="flex h-full flex-col p-2">
           <LogsTable onLogClick={handleLogClick} />
         </div>
       </DashboardLayout>
