@@ -1,6 +1,6 @@
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
-import { LogsTable } from '../components/logs/logs-table';
+import { LogsTable } from '../components/http-logs/logs-table';
 import { HttpLog } from '../types/logs';
 
 export function Logs() {
@@ -19,7 +19,7 @@ export function Logs() {
           </h1>
         }
       >
-        <div className="flex h-full flex-col p-2">
+        <div className="h-[calc(100vh-98px)] p-2">
           <LogsTable onLogClick={handleLogClick} />
         </div>
       </DashboardLayout>
