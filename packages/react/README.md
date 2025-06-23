@@ -132,9 +132,9 @@ HMAC encryption will make sure that a `subscriberId` is encrypted using the se
 
 In order to enable Hash-Based Message Authentication Codes, you need to visit the admin panel In-App settings page and enable HMAC encryption for your environment.
 
-<Frame caption="How to enable HMAC encryption for In-App Inbox">
+<!-- <Frame caption="How to enable HMAC encryption for In-App Inbox">
   <img src="/images/notification-center/client/react/get-started/hmac-encryption-enable.png" />
-</Frame>
+</Frame> -->
 
 1. Next step would be to generate an HMAC encrypted subscriberId on your backend:
 
