@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { LocalizationResourceType } from '@novu/dal';
+import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', async () => {
@@ -53,7 +53,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(translationContent)), 'en_US.json')
       .expect(200);
 
@@ -64,7 +64,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
 
     // Verify the translation was created
     const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(200);
 
     expect(translation.data.content).to.deep.equal(translationContent);
@@ -84,7 +84,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(enContent)), 'en_US.json')
       .attach('files', Buffer.from(JSON.stringify(esContent)), 'es_ES.json')
       .expect(200);
@@ -96,7 +96,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
 
     // Verify both translations were created
     const { body: allTranslations } = await session.testAgent
-      .get(`/v2/translations?resourceId=${workflowId}&resourceType=${LocalizationResourceType.WORKFLOW}`)
+      .get(`/v2/translations?resourceId=${workflowId}&resourceType=${LocalizationResourceEnum.WORKFLOW}`)
       .expect(200);
 
     expect(allTranslations.total).to.equal(2);
@@ -110,7 +110,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(originalContent)), 'en_US.json')
       .expect(200);
 
@@ -118,7 +118,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(updatedContent)), 'en_US.json')
       .expect(200);
 
@@ -126,7 +126,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
 
     // Verify the content was updated
     const { body: translation } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(200);
 
     expect(translation.data.content).to.deep.equal(updatedContent);
@@ -146,7 +146,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       const { body } = await session.testAgent
         .post('/v2/translations/upload')
         .field('resourceId', workflowId)
-        .field('resourceType', LocalizationResourceType.WORKFLOW)
+        .field('resourceType', LocalizationResourceEnum.WORKFLOW)
         .attach('files', Buffer.from(JSON.stringify(content)), testCase.filename)
         .expect(200);
 
@@ -154,7 +154,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
 
       // Verify the locale was extracted correctly
       const { body: translation } = await session.testAgent
-        .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/${testCase.expectedLocale}`)
+        .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/${testCase.expectedLocale}`)
         .expect(200);
 
       expect(translation.data.locale).to.equal(testCase.expectedLocale);
@@ -165,7 +165,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from('invalid json content'), 'en_US.json')
       .expect(200);
 
@@ -182,7 +182,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(content)), 'invalid-filename.json')
       .expect(400);
 
@@ -208,7 +208,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(validContent)), 'en_US.json')
       .attach('files', Buffer.from('invalid json'), 'es_ES.json')
       .attach('files', Buffer.from(JSON.stringify(validContent)), 'invalid-name.json')
@@ -226,7 +226,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     const { body } = await session.testAgent
       .post('/v2/translations/upload')
       .field('resourceId', workflowId)
-      .field('resourceType', LocalizationResourceType.WORKFLOW)
+      .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from(JSON.stringify(validContent)), 'en_US.json')
       .attach('files', Buffer.from('invalid json'), 'es_ES.json')
       .attach('files', Buffer.from(JSON.stringify(validContent)), 'fr_FR.json')

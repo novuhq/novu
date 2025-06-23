@@ -2,7 +2,7 @@ import { BaseRepository } from '../base-repository';
 import {
   LocalizationGroupEntity,
   LocalizationGroupDBModel,
-  LocalizationResourceType,
+  LocalizationResourceEnum,
 } from './localization-group.entity';
 import { LocalizationGroup } from './localization-group.schema';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
@@ -17,7 +17,7 @@ export class LocalizationGroupRepository extends BaseRepository<
   }
 
   async findByResource(
-    resourceType: LocalizationResourceType,
+    resourceType: LocalizationResourceEnum,
     resourceId: string,
     environmentId: string,
     organizationId: string
@@ -39,7 +39,7 @@ export class LocalizationGroupRepository extends BaseRepository<
   }
 
   async getOrCreateForResource(
-    resourceType: LocalizationResourceType,
+    resourceType: LocalizationResourceEnum,
     resourceId: string,
     environmentId: string,
     organizationId: string,
@@ -62,7 +62,7 @@ export class LocalizationGroupRepository extends BaseRepository<
     return group;
   }
 
-  async findByResourceType(resourceType: LocalizationResourceType, environmentId: string, organizationId: string) {
+  async findByResourceType(resourceType: LocalizationResourceEnum, environmentId: string, organizationId: string) {
     return this.find({
       resourceType,
       _environmentId: environmentId,

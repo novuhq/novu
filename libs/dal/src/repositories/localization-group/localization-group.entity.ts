@@ -2,14 +2,14 @@ import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
 
-export enum LocalizationResourceType {
+export enum LocalizationResourceEnum {
   WORKFLOW = 'workflow',
 }
 
 export class LocalizationGroupEntity {
   _id: string;
 
-  resourceType: LocalizationResourceType;
+  resourceType: LocalizationResourceEnum;
   resourceId: string;
 
   _environmentId: EnvironmentId;

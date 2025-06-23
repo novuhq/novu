@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { LocalizationResourceType } from '@novu/dal';
+import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get single translation - /v2/translations/:resourceType/:resourceId/:locale (GET) #novu-v2', async () => {
@@ -54,7 +54,7 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: translationContent,
       })
@@ -62,11 +62,11 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
 
     // Get the translation
     const { body } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(200);
 
     expect(body.data.resourceId).to.equal(workflowId);
-    expect(body.data.resourceType).to.equal(LocalizationResourceType.WORKFLOW);
+    expect(body.data.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
     expect(body.data.locale).to.equal('en_US');
     expect(body.data.content).to.deep.equal(translationContent);
     expect(body.data._id).to.be.a('string');
@@ -76,7 +76,7 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
 
   it('should return 404 for non-existent translation', async () => {
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/fr_FR`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/fr_FR`)
       .expect(404);
   });
 
@@ -84,13 +84,13 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${fakeWorkflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${fakeWorkflowId}/en_US`)
       .expect(404);
   });
 
   it('should validate locale format in URL parameter', async () => {
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/invalid-locale-123`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/invalid-locale-123`)
       .expect(400);
   });
 });

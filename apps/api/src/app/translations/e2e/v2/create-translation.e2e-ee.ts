@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { LocalizationResourceType } from '@novu/dal';
+import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Create/update translation - /v2/translations (POST) #novu-v2', async () => {
@@ -46,7 +46,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
   it('should create new translation successfully', async () => {
     const requestBody = {
       resourceId: workflowId,
-      resourceType: LocalizationResourceType.WORKFLOW,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
       locale: 'en_US',
       content: {
         'welcome.title': 'Welcome',
@@ -60,7 +60,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
     expect(body.data._id).to.be.a('string');
     expect(body.data.locale).to.equal('en_US');
     expect(body.data.resourceId).to.equal(workflowId);
-    expect(body.data.resourceType).to.equal(LocalizationResourceType.WORKFLOW);
+    expect(body.data.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
     expect(body.data.content).to.deep.equal(requestBody.content);
     expect(body.data.createdAt).to.be.a('string');
     expect(body.data.updatedAt).to.be.a('string');
@@ -81,7 +81,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: originalContent,
       })
@@ -92,7 +92,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: updatedContent,
       })
@@ -106,7 +106,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: '123',
         content: { key: 'value' },
       })

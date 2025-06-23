@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { LocalizationResourceType } from '@novu/dal';
+import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete translation - /v2/translations/:resourceType/:resourceId/:locale (DELETE) #novu-v2', async () => {
@@ -55,7 +55,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: translationContent,
       })
@@ -63,23 +63,23 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
     // Verify translation exists
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(200);
 
     // Delete the translation
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(204);
 
     // Verify translation no longer exists
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(404);
   });
 
   it('should return 404 when trying to delete non-existent translation', async () => {
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/fr_FR`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/fr_FR`)
       .expect(404);
   });
 
@@ -87,13 +87,13 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
     const fakeWorkflowId = '507f1f77bcf86cd799439011';
 
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${fakeWorkflowId}/en_US`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${fakeWorkflowId}/en_US`)
       .expect(404);
   });
 
   it('should validate locale format in URL parameter', async () => {
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/invalid-locale-123`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/invalid-locale-123`)
       .expect(400);
   });
 
@@ -107,7 +107,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: translationContent,
       })
@@ -115,12 +115,12 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
     // Delete with dash format (should be normalized to underscore)
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en-US`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en-US`)
       .expect(204);
 
     // Verify translation no longer exists
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(404);
   });
 
@@ -140,7 +140,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: englishContent,
       })
@@ -150,7 +150,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'fr_FR',
         content: frenchContent,
       })
@@ -158,17 +158,17 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
     // Delete only the English translation
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(204);
 
     // Verify English translation is gone
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/en_US`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/en_US`)
       .expect(404);
 
     // Verify French translation still exists
     const { body } = await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/fr_FR`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/fr_FR`)
       .expect(200);
     expect(body.data.content).to.deep.equal(frenchContent);
   });
@@ -183,7 +183,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .post('/v2/translations')
       .send({
         resourceId: workflowId,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'zh_Hans_CN',
         content: translationContent,
       })
@@ -191,12 +191,12 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
     // Delete the translation
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/zh_Hans_CN`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_Hans_CN`)
       .expect(204);
 
     // Verify translation no longer exists
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceType.WORKFLOW}/${workflowId}/zh_Hans_CN`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_Hans_CN`)
       .expect(404);
   });
 });

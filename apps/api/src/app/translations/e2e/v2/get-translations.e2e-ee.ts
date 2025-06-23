@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
-import { LocalizationResourceType } from '@novu/dal';
+import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get translations list - /v2/translations (GET) #novu-v2', async () => {
@@ -58,25 +58,25 @@ describe('Get translations list - /v2/translations (GET) #novu-v2', async () => 
     const translations = [
       {
         resourceId: workflowId1,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: { key1: 'value1' },
       },
       {
         resourceId: workflowId1,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'es_ES',
         content: { key1: 'valor1' },
       },
       {
         resourceId: workflowId2,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'en_US',
         content: { key2: 'value2' },
       },
       {
         resourceId: workflowId2,
-        resourceType: LocalizationResourceType.WORKFLOW,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
         locale: 'fr_FR',
         content: { key2: 'valeur2' },
       },
@@ -103,14 +103,14 @@ describe('Get translations list - /v2/translations (GET) #novu-v2', async () => 
 
   it('should filter by resourceId and resourceType', async () => {
     const { body } = await session.testAgent
-      .get(`/v2/translations?resourceId=${workflowId1}&resourceType=${LocalizationResourceType.WORKFLOW}`)
+      .get(`/v2/translations?resourceId=${workflowId1}&resourceType=${LocalizationResourceEnum.WORKFLOW}`)
       .expect(200);
 
     expect(body.data).to.have.lengthOf(2);
     expect(body.total).to.equal(2);
     body.data.forEach((translation: any) => {
       expect(translation.resourceId).to.equal(workflowId1);
-      expect(translation.resourceType).to.equal(LocalizationResourceType.WORKFLOW);
+      expect(translation.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
     });
   });
 
@@ -126,13 +126,13 @@ describe('Get translations list - /v2/translations (GET) #novu-v2', async () => 
 
   it('should filter by resourceId, resourceType and locale', async () => {
     const { body } = await session.testAgent
-      .get(`/v2/translations?resourceId=${workflowId1}&resourceType=${LocalizationResourceType.WORKFLOW}&locale=es_ES`)
+      .get(`/v2/translations?resourceId=${workflowId1}&resourceType=${LocalizationResourceEnum.WORKFLOW}&locale=es_ES`)
       .expect(200);
 
     expect(body.data).to.have.lengthOf(1);
     expect(body.total).to.equal(1);
     expect(body.data[0].resourceId).to.equal(workflowId1);
-    expect(body.data[0].resourceType).to.equal(LocalizationResourceType.WORKFLOW);
+    expect(body.data[0].resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
     expect(body.data[0].locale).to.equal('es_ES');
   });
 
