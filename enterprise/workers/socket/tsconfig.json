@@ -36,6 +36,6 @@
 
 		/* Skip type checking all .d.ts files. */
 		"skipLibCheck": true,
-		"types": ["./worker-configuration"]
+		"types": ["@cloudflare/workers-types", "./worker-configuration"]
 	}
 }
