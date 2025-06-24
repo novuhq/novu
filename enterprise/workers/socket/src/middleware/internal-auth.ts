@@ -2,10 +2,8 @@ import type { Context, Next } from 'hono';
 
 export async function authenticateInternalAPI(context: Context, next: Next) {
 	const authHeader = context.req.header('Authorization');
-	const apiKey = context.req.header('X-API-Key');
 
-	// Support both Authorization header and X-API-Key header
-	const providedKey = authHeader?.replace('Bearer ', '') || apiKey;
+	const providedKey = authHeader?.replace('Bearer ', '');
 
 	if (!providedKey) {
 		return context.json({ error: 'Unauthorized: Missing API key' }, 401);

@@ -5,7 +5,6 @@ export async function handleWebSocketUpgrade(context: Context) {
 	const subscriberId = context.get('subscriberId');
 	const organizationId = context.get('organizationId');
 	const environmentId = context.get('environmentId');
-	const userPayload = context.get('userPayload');
 
 	const roomId = `${environmentId}:${userId}`;
 
@@ -56,7 +55,6 @@ export async function handleSendMessage(context: Context) {
 		const id = context.env.WEBSOCKET_ROOM.idFromName(roomId);
 		const stub = context.env.WEBSOCKET_ROOM.get(id);
 
-		// Send message to the specific user
 		await stub.sendToUser(userId, event, data);
 
 		return context.json({ success: true, roomId, timestamp: new Date().toISOString() });
