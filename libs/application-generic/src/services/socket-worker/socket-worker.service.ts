@@ -27,7 +27,7 @@ export class SocketWorkerService {
     private messageRepository?: MessageRepository
   ) {
     this.socketWorkerUrl = process.env.SOCKET_WORKER_URL;
-    this.socketWorkerApiKey = process.env.SOCKET_WORKER_API_KEY;
+    this.socketWorkerApiKey = process.env.INTERNAL_SERVICES_API_KEY;
   }
 
   async sendMessage(
