@@ -16,14 +16,14 @@ export function WorkflowRunsTabs({ activeTab = 'workflow-runs', onTabChange }: W
     <div className="w-full border-t border-[#e1e4ea] bg-[#fbfbfb]">
       <div className="flex items-center px-3.5 py-2">
         <div className="flex w-full items-center gap-6">
-          <div className="relative">
+          {/* <div className="relative">
             <button
               onClick={() => onTabChange?.('execution-detail')}
               className="flex items-center justify-center gap-1.5 text-sm font-medium leading-5 tracking-[-0.084px] text-[#525866]"
             >
               Execution detail
             </button>
-          </div>
+          </div> */}
           <div className="relative">
             <button
               onClick={() => onTabChange?.('workflow-runs')}

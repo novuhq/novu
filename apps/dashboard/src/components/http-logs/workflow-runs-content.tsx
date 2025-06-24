@@ -1,5 +1,18 @@
-import { CheckCircle, AlertTriangle, Loader } from 'lucide-react';
+import { useMemo } from 'react';
+import { DirectionEnum, IActivity, ChannelTypeEnum } from '@novu/shared';
+import {
+  RiCheckboxCircleFill,
+  RiErrorWarningFill,
+  RiLoader4Fill,
+  RiHourglassFill,
+  RiSmartphoneLine,
+  RiMailLine,
+  RiCodeBlock,
+} from 'react-icons/ri';
+import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
 import { RequestLog } from '../../types/logs';
+import { WorkflowRunsFilters } from './workflow-runs-filters';
+import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 
 type WorkflowRunsContentProps = {
   log: RequestLog;
@@ -7,39 +20,191 @@ type WorkflowRunsContentProps = {
 
 type WorkflowRunStatus = 'in-progress' | 'success' | 'error';
 
-type WorkflowRun = {
-  id: string;
-  name: string;
-  timestamp: string;
-  transactionId: string;
-  company: string;
-  status: WorkflowRunStatus;
-};
+// Helper functions to extract data from IActivity
+function getWorkflowRunStatus(activity: IActivity): WorkflowRunStatus {
+  // For now, return a mock status based on activity ID
+  // In real implementation, this would be derived from activity.jobs status
+  const statusMap: Record<string, WorkflowRunStatus> = {
+    '1': 'in-progress',
+    '2': 'success',
+    '3': 'error',
+    '4': 'success',
+    '5': 'in-progress',
+  };
+  return statusMap[activity._id] || 'in-progress';
+}
 
-const mockWorkflowRuns: WorkflowRun[] = [
+function getCompanyName(activity: IActivity): string {
+  // For now, return a mock company name
+  // In real implementation, this could be derived from subscriber data or payload
+  const companyMap: Record<string, string> = {
+    '1': 'pearce corp',
+    '2': 'pearce corp',
+    '3': 'pearce corp',
+    '4': 'tech solutions',
+    '5': 'retail inc',
+  };
+  return companyMap[activity._id] || 'unknown company';
+}
+
+function formatTimestamp(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+}
+
+const mockWorkflowRuns: IActivity[] = [
   {
-    id: '1',
-    name: 'welcome-onboarding-email',
-    timestamp: 'Nov 5 2024 08:16:49',
+    _id: '1',
+    _templateId: 'template-1',
+    _environmentId: 'env-1',
+    _organizationId: 'org-1',
+    _subscriberId: 'subscriber-1',
     transactionId: '657c929208be7e008a458508',
-    company: 'pearce corp',
-    status: 'in-progress',
+    channels: [ChannelTypeEnum.EMAIL],
+    to: {
+      subscriberId: 'subscriber-1',
+    },
+    payload: {},
+    tags: [],
+    createdAt: '2024-11-05T08:16:49.000Z',
+    updatedAt: '2024-11-05T08:16:49.000Z',
+    template: {
+      _id: 'template-1',
+      name: 'welcome-onboarding-email',
+      triggers: [],
+      origin: 'external' as any,
+    },
+    subscriber: {
+      _id: 'subscriber-1',
+      subscriberId: 'subscriber-1',
+      firstName: 'John',
+      lastName: 'Doe',
+    },
+    jobs: [],
   },
   {
-    id: '2',
-    name: 'welcome-onboarding-email',
-    timestamp: 'Nov 5 2024 08:16:49',
+    _id: '2',
+    _templateId: 'template-1',
+    _environmentId: 'env-1',
+    _organizationId: 'org-1',
+    _subscriberId: 'subscriber-2',
     transactionId: '657c929208be7e008a458508',
-    company: 'pearce corp',
-    status: 'success',
+    channels: [ChannelTypeEnum.EMAIL],
+    to: {
+      subscriberId: 'subscriber-2',
+    },
+    payload: {},
+    tags: [],
+    createdAt: '2024-11-05T08:16:49.000Z',
+    updatedAt: '2024-11-05T08:16:49.000Z',
+    template: {
+      _id: 'template-1',
+      name: 'welcome-onboarding-email',
+      triggers: [],
+      origin: 'external' as any,
+    },
+    subscriber: {
+      _id: 'subscriber-2',
+      subscriberId: 'subscriber-2',
+      firstName: 'Jane',
+      lastName: 'Smith',
+    },
+    jobs: [],
   },
   {
-    id: '3',
-    name: 'welcome-onboarding-email',
-    timestamp: 'Nov 5 2024 08:16:49',
+    _id: '3',
+    _templateId: 'template-1',
+    _environmentId: 'env-1',
+    _organizationId: 'org-1',
+    _subscriberId: 'subscriber-3',
     transactionId: '657c929208be7e008a458508',
-    company: 'pearce corp',
-    status: 'error',
+    channels: [ChannelTypeEnum.EMAIL],
+    to: {
+      subscriberId: 'subscriber-3',
+    },
+    payload: {},
+    tags: [],
+    createdAt: '2024-11-05T08:16:49.000Z',
+    updatedAt: '2024-11-05T08:16:49.000Z',
+    template: {
+      _id: 'template-1',
+      name: 'welcome-onboarding-email',
+      triggers: [],
+      origin: 'external' as any,
+    },
+    subscriber: {
+      _id: 'subscriber-3',
+      subscriberId: 'subscriber-3',
+      firstName: 'Bob',
+      lastName: 'Johnson',
+    },
+    jobs: [],
+  },
+  {
+    _id: '4',
+    _templateId: 'template-2',
+    _environmentId: 'env-1',
+    _organizationId: 'org-1',
+    _subscriberId: 'subscriber-4',
+    transactionId: '657c929208be7e008a458509',
+    channels: [ChannelTypeEnum.EMAIL],
+    to: {
+      subscriberId: 'subscriber-4',
+    },
+    payload: {},
+    tags: [],
+    createdAt: '2024-11-05T08:15:30.000Z',
+    updatedAt: '2024-11-05T08:15:30.000Z',
+    template: {
+      _id: 'template-2',
+      name: 'password-reset-notification',
+      triggers: [],
+      origin: 'external' as any,
+    },
+    subscriber: {
+      _id: 'subscriber-4',
+      subscriberId: 'subscriber-4',
+      firstName: 'Alice',
+      lastName: 'Brown',
+    },
+    jobs: [],
+  },
+  {
+    _id: '5',
+    _templateId: 'template-3',
+    _environmentId: 'env-1',
+    _organizationId: 'org-1',
+    _subscriberId: 'subscriber-5',
+    transactionId: '657c929208be7e008a458510',
+    channels: [ChannelTypeEnum.EMAIL],
+    to: {
+      subscriberId: 'subscriber-5',
+    },
+    payload: {},
+    tags: [],
+    createdAt: '2024-11-05T08:14:15.000Z',
+    updatedAt: '2024-11-05T08:14:15.000Z',
+    template: {
+      _id: 'template-3',
+      name: 'order-confirmation',
+      triggers: [],
+      origin: 'external' as any,
+    },
+    subscriber: {
+      _id: 'subscriber-5',
+      subscriberId: 'subscriber-5',
+      firstName: 'Charlie',
+      lastName: 'Wilson',
+    },
+    jobs: [],
   },
 ];
 
@@ -50,19 +215,19 @@ function StatusIcon({ status }: { status: WorkflowRunStatus }) {
     case 'success':
       return (
         <div className={`${iconClass} flex items-center justify-center bg-white`}>
-          <CheckCircle className="h-3 w-3 fill-current text-[#1fc16b]" />
+          <RiCheckboxCircleFill className="h-4 w-4 text-[#1fc16b]" />
         </div>
       );
     case 'error':
       return (
         <div className={`${iconClass} flex items-center justify-center bg-white`}>
-          <AlertTriangle className="h-3 w-3 fill-current text-[#fb3748]" />
+          <RiErrorWarningFill className="h-4 w-4 text-[#fb3748]" />
         </div>
       );
     case 'in-progress':
       return (
         <div className={`${iconClass} flex items-center justify-center bg-white`}>
-          <Loader className="h-3 w-3 animate-spin text-[#f6b51e]" />
+          <RiLoader4Fill className="h-4 w-4 animate-spin text-[#f6b51e]" />
         </div>
       );
     default:
@@ -105,7 +270,7 @@ function StepIndicator({ status }: { status: WorkflowRunStatus }) {
           className={`flex h-6 w-6 items-center justify-center rounded-full bg-white ${getStepColor(status)} border`}
         >
           <div className="h-3.5 w-3.5 overflow-hidden">
-            <div style={{ color: getIconColor(status) }}>⏳</div>
+            <RiHourglassFill className="h-3.5 w-3.5" style={{ color: getIconColor(status) }} />
           </div>
         </div>
       </div>
@@ -116,7 +281,10 @@ function StepIndicator({ status }: { status: WorkflowRunStatus }) {
           className={`flex h-6 w-6 items-center justify-center rounded-full bg-white ${status === 'success' ? getStepColor(status) : 'border-[#e1e4ea] bg-[#fbfbfb]'} border`}
         >
           <div className="flex h-3.5 w-3.5 items-center justify-center overflow-hidden">
-            <div className="h-3 w-2 rounded-sm border border-gray-400"></div>
+            <RiSmartphoneLine
+              className="h-3.5 w-3.5"
+              style={{ color: status === 'success' ? getIconColor(status) : '#e1e4ea' }}
+            />
           </div>
         </div>
       </div>
@@ -127,7 +295,10 @@ function StepIndicator({ status }: { status: WorkflowRunStatus }) {
           className={`flex h-6 w-6 items-center justify-center rounded-full bg-white ${status === 'success' ? getStepColor(status) : 'border-[#e1e4ea] bg-[#fbfbfb]'} border`}
         >
           <div className="flex h-3.5 w-3.5 items-center justify-center overflow-hidden">
-            <div style={{ color: status === 'success' ? getIconColor(status) : '#e1e4ea' }}>✉</div>
+            <RiMailLine
+              className="h-3.5 w-3.5"
+              style={{ color: status === 'success' ? getIconColor(status) : '#e1e4ea' }}
+            />
           </div>
         </div>
       </div>
@@ -138,7 +309,10 @@ function StepIndicator({ status }: { status: WorkflowRunStatus }) {
           className={`flex h-6 w-6 items-center justify-center rounded-full bg-white ${status === 'success' ? getStepColor(status) : 'border-[#e1e4ea] bg-[#fbfbfb]'} border`}
         >
           <div className="flex h-3.5 w-3.5 items-center justify-center overflow-hidden">
-            <div style={{ color: status === 'success' ? getIconColor(status) : '#e1e4ea' }}>⚡</div>
+            <RiCodeBlock
+              className="h-3.5 w-3.5"
+              style={{ color: status === 'success' ? getIconColor(status) : '#e1e4ea' }}
+            />
           </div>
         </div>
       </div>
@@ -147,6 +321,98 @@ function StepIndicator({ status }: { status: WorkflowRunStatus }) {
 }
 
 export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
+  const { filterValues, handleFiltersChange, resetFilters, orderBy, orderDirection, toggleSort } =
+    useWorkflowRunsUrlState();
+
+  // Filter the workflow runs based on the current filters
+  const filteredWorkflowRuns = useMemo(() => {
+    let filtered = [...mockWorkflowRuns];
+
+    // Apply search filter (workflow names)
+    if (filterValues.search) {
+      const searchTerm = filterValues.search.toLowerCase();
+      filtered = filtered.filter((activity) => activity.template?.name.toLowerCase().includes(searchTerm));
+    }
+
+    // Apply status filter
+    if (filterValues.status && filterValues.status.length > 0) {
+      filtered = filtered.filter((activity) => filterValues.status!.includes(getWorkflowRunStatus(activity)));
+    }
+
+    // Apply company filter (keeping for backward compatibility)
+    if (filterValues.company) {
+      const companyTerm = filterValues.company.toLowerCase();
+      filtered = filtered.filter((activity) => getCompanyName(activity).toLowerCase().includes(companyTerm));
+    }
+
+    // Apply transaction ID filter
+    if (filterValues.transactionId) {
+      const transactionTerm = filterValues.transactionId.toLowerCase();
+      filtered = filtered.filter((activity) => activity.transactionId.toLowerCase().includes(transactionTerm));
+    }
+
+    // Apply subscriber ID filter
+    if (filterValues.subscriberId) {
+      const subscriberTerm = filterValues.subscriberId.toLowerCase();
+      filtered = filtered.filter((activity) => activity._subscriberId.toLowerCase().includes(subscriberTerm));
+    }
+
+    // Apply channels filter
+    if (filterValues.channels && filterValues.channels.length > 0) {
+      filtered = filtered.filter((activity) =>
+        activity.channels.some((channel) => filterValues.channels!.includes(channel))
+      );
+    }
+
+    // Apply sorting
+    if (orderBy) {
+      filtered.sort((a, b) => {
+        let aValue: string | number;
+        let bValue: string | number;
+
+        switch (orderBy) {
+          case 'name':
+            aValue = a.template?.name || '';
+            bValue = b.template?.name || '';
+            break;
+          case 'timestamp':
+            aValue = new Date(a.createdAt).getTime();
+            bValue = new Date(b.createdAt).getTime();
+            break;
+          case 'status':
+            aValue = getWorkflowRunStatus(a);
+            bValue = getWorkflowRunStatus(b);
+            break;
+          default:
+            return 0;
+        }
+
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const result = aValue.localeCompare(bValue);
+          return orderDirection === DirectionEnum.ASC ? result : -result;
+        }
+
+        if (typeof aValue === 'number' && typeof bValue === 'number') {
+          const result = aValue - bValue;
+          return orderDirection === DirectionEnum.ASC ? result : -result;
+        }
+
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [filterValues, orderBy, orderDirection]);
+
+  const areFiltersApplied =
+    filterValues.search !== '' ||
+    (filterValues.status && filterValues.status.length > 0) ||
+    filterValues.company !== '' ||
+    filterValues.transactionId !== '' ||
+    filterValues.subscriberId !== '' ||
+    (filterValues.channels && filterValues.channels.length > 0) ||
+    (filterValues.timePeriod && filterValues.timePeriod !== '60d');
+
   return (
     <div className="w-full flex-1">
       <div className="flex w-full flex-col items-start gap-3 px-3 pb-0 pt-3">
@@ -159,7 +425,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                   <div className="flex w-full flex-col items-start gap-0.5 text-left font-['Inter'] font-medium leading-[0]">
                     <div className="flex flex-col justify-center text-[14px] tracking-[-0.084px] text-[#525866]">
                       <p className="leading-[20px]">
-                        <span className="text-[#525866]">2,413</span>
+                        <span className="text-[#525866]">{filteredWorkflowRuns.length}</span>
                         <span className="text-[#99a0ae]"> workflow triggers</span>
                       </p>
                     </div>
@@ -177,85 +443,113 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
           </div>
         </div>
 
-        {/* Separator */}
+        {/* Filters */}
+        <div className="w-full">
+          <WorkflowRunsFilters
+            filterValues={filterValues}
+            onFiltersChange={handleFiltersChange}
+            onReset={resetFilters}
+          />
+        </div>
+
         <div className="w-full">
           <div className="flex w-full flex-row items-center justify-center gap-2 p-0">
             <div className="h-0 flex-1 border-t border-[#f2f5f8]"></div>
           </div>
         </div>
 
-        {/* Workflow Runs List */}
+        {/* Table without header */}
         <div className="w-full flex-1">
-          <div className="flex w-full flex-col items-start">
-            {mockWorkflowRuns.map((run) => (
-              <div key={run.id} className="h-[50px] min-h-12 w-full">
-                <div className="min-h-inherit flex w-full flex-col items-end">
-                  <div className="min-h-inherit flex h-[50px] w-full flex-col items-end gap-0.5 px-0 py-1.5">
-                    <div className="w-full">
-                      <div className="flex w-full flex-row items-center gap-1 p-0">
-                        <StatusIcon status={run.status} />
-                        <div className="flex-1">
-                          <div className="flex w-full flex-col items-start overflow-hidden p-0">
-                            <div className="w-full text-left font-['Inter'] text-[12px] font-medium leading-[16px] text-[#0e121b]">
-                              {run.name}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-start p-0">
-                          <div className="text-left font-['JetBrains_Mono'] text-[11px] font-normal leading-normal text-[#99a0ae]">
-                            {run.timestamp}
-                          </div>
-                        </div>
-                      </div>
+          <Table containerClassname="border-x-0 border-b-0 border-t-0 rounded-none shadow-none">
+            <TableBody>
+              {filteredWorkflowRuns.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={1} className="px-3 py-8 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="text-[14px] font-medium text-[#525866]">
+                        {areFiltersApplied ? 'No workflow runs match your filters' : 'No workflow runs found'}
+                      </span>
+                      {areFiltersApplied && (
+                        <button onClick={resetFilters} className="text-[12px] text-[#0e121b] hover:underline">
+                          Clear filters
+                        </button>
+                      )}
                     </div>
-                    <div className="w-full">
-                      <div className="flex w-full flex-row items-center justify-between p-0">
-                        <div className="rounded bg-[#fbfbfb]">
-                          <div className="overflow-hidden">
-                            <div className="flex flex-col items-start px-1.5 py-px">
-                              <div className="text-left font-['JetBrains_Mono'] text-[10px] font-normal leading-[14px] tracking-[-0.2px] text-[#525866]">
-                                {run.transactionId} • {run.company}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredWorkflowRuns.map((activity) => (
+                  <TableRow key={activity._id} className="h-[50px] hover:bg-neutral-50">
+                    <TableCell className="px-3 py-1.5">
+                      <div className="flex w-full flex-col items-end gap-0.5">
+                        {/* Top row: Status icon, workflow name, and date */}
+                        <div className="w-full">
+                          <div className="flex w-full flex-row items-center gap-1">
+                            <StatusIcon status={getWorkflowRunStatus(activity)} />
+                            <div className="flex-1">
+                              <div className="text-left font-['Inter'] text-[12px] font-medium leading-[16px] text-[#0e121b]">
+                                {activity.template?.name || 'Unknown Workflow'}
                               </div>
                             </div>
+                            <div className="text-left font-['JetBrains_Mono'] text-[11px] font-normal leading-normal text-[#99a0ae]">
+                              {formatTimestamp(activity.createdAt)}
+                            </div>
                           </div>
                         </div>
-                        <StepIndicator status={run.status} />
+
+                        {/* Bottom row: Transaction ID + company and step indicators */}
+                        <div className="w-full">
+                          <div className="flex w-full flex-row items-center justify-between">
+                            <div className="rounded bg-[#fbfbfb]">
+                              <div className="overflow-hidden">
+                                <div className="flex flex-col items-start px-1.5 py-px">
+                                  <div className="text-left font-['JetBrains_Mono'] text-[10px] font-normal leading-[14px] tracking-[-0.2px] text-[#525866]">
+                                    {activity.transactionId} • {getCompanyName(activity)}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <StepIndicator status={getWorkflowRunStatus(activity)} />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
         </div>
 
-        {/* Load More */}
-        <div className="w-full bg-white">
-          <div className="flex w-full flex-col items-start gap-2.5 px-0 py-2">
-            <div className="w-full">
-              <div className="flex w-full flex-row items-center justify-center p-0">
-                <div className="h-0 flex-1 border-t border-[#f2f5f8]"></div>
-                <div className="rounded-2xl border border-[#f2f5f8] bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
-                  <div className="flex flex-row items-center justify-center overflow-hidden">
-                    <div className="flex flex-row items-center gap-0.5 px-1.5 py-1">
-                      <div className="flex flex-row items-center justify-center">
-                        <div className="flex flex-row items-center justify-center px-1 py-0">
-                          <div className="text-left font-['Inter'] text-[12px] font-medium leading-[16px] text-[#525866]">
-                            Load more
+        {/* Load More - Only show if there are results and no filters applied */}
+        {filteredWorkflowRuns.length > 0 && !areFiltersApplied && (
+          <div className="w-full bg-white">
+            <div className="flex w-full flex-col items-start gap-2.5 px-0 py-2">
+              <div className="w-full">
+                <div className="flex w-full flex-row items-center justify-center p-0">
+                  <div className="h-0 flex-1 border-t border-[#f2f5f8]"></div>
+                  <div className="rounded-2xl border border-[#f2f5f8] bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+                    <div className="flex flex-row items-center justify-center overflow-hidden">
+                      <div className="flex flex-row items-center gap-0.5 px-1.5 py-1">
+                        <div className="flex flex-row items-center justify-center">
+                          <div className="flex flex-row items-center justify-center px-1 py-0">
+                            <div className="text-left font-['Inter'] text-[12px] font-medium leading-[16px] text-[#525866]">
+                              Load more
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="h-5 w-5 overflow-hidden">
-                        <div className="text-[#525866]">▼</div>
+                        <div className="h-5 w-5 overflow-hidden">
+                          <div className="text-[#525866]">▼</div>
+                        </div>
                       </div>
                     </div>
                   </div>
+                  <div className="h-0 flex-1 border-t border-[#f2f5f8]"></div>
                 </div>
-                <div className="h-0 flex-1 border-t border-[#f2f5f8]"></div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
