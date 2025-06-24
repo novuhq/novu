@@ -5,11 +5,15 @@ import { JSONSchemaEntity } from '@novu/dal';
 import { defaultOptions } from './shared';
 
 const layoutZodSchema = z.object({
-  email: z.object({
-    content: z.string().min(1),
-    editorType: z.enum(['block', 'html']).optional().default('block'),
-  }),
+  email: z
+    .object({
+      content: z.string().min(1),
+      editorType: z.enum(['block', 'html']).optional().default('block'),
+    })
+    .optional(),
 });
+
+export type LayoutControlType = z.infer<typeof layoutZodSchema>;
 
 export const layoutUiSchema: UiSchema = {
   group: UiSchemaGroupEnum.LAYOUT,

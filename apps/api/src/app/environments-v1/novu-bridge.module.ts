@@ -6,6 +6,8 @@ import {
   NotificationTemplateRepository,
   CommunityOrganizationRepository,
   IntegrationRepository,
+  ControlValuesRepository,
+  LayoutRepository,
 } from '@novu/dal';
 import { GetDecryptedSecretKey, FeatureFlagsService } from '@novu/application-generic';
 import { NovuBridgeClient } from './novu-bridge-client';
@@ -21,6 +23,7 @@ import {
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
 import { GetOrganizationSettings } from '../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { HtmlRendererUseCase } from './usecases/html-renderer/html-renderer.usecase';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -44,6 +47,8 @@ export const featureFlagsService = {
     NotificationTemplateRepository,
     CommunityOrganizationRepository,
     IntegrationRepository,
+    ControlValuesRepository,
+    LayoutRepository,
     GetOrganizationSettings,
     ConstructFrameworkWorkflow,
     GetDecryptedSecretKey,
@@ -55,6 +60,7 @@ export const featureFlagsService = {
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
     featureFlagsService,
+    HtmlRendererUseCase,
   ],
 })
 export class NovuBridgeModule {}

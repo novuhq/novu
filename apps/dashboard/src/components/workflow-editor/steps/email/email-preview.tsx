@@ -82,6 +82,8 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
 
     if (lastStyleTag) {
       lastStyleTag.after(style);
+    } else {
+      doc.prepend(style);
     }
 
     // give a bit of time for the dom changes to be applied

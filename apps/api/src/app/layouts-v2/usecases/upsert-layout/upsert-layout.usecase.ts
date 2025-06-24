@@ -8,11 +8,17 @@ import {
   GetLayoutUseCase,
 } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum, slugify } from '@novu/shared';
+import {
+  ControlValuesLevelEnum,
+  LAYOUT_CONTENT_VARIABLE,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  slugify,
+} from '@novu/shared';
 
 import { LayoutResponseDto } from '../../dtos';
 import { UpsertLayoutCommand } from './upsert-layout.command';
-import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
@@ -129,6 +135,13 @@ export class UpsertLayoutUseCase {
       } else if (editorType === 'block' && !isMailyContent) {
         throw new BadRequestException('Content must be a valid Maily JSON content');
       }
+
+      if (
+        (isMailyContent && !hasMailyVariable(content, LAYOUT_CONTENT_VARIABLE)) ||
+        (isHtmlContent && !this.hasHtmlVariable(content, LAYOUT_CONTENT_VARIABLE))
+      ) {
+        throw new BadRequestException('The layout body should contain the "content" variable');
+      }
     }
   }
 
@@ -166,5 +179,11 @@ export class UpsertLayoutUseCase {
       name: command.layoutDto.name,
       source: command.layoutDto.__source,
     });
+  }
+
+  private hasHtmlVariable(content: string, variable: string): boolean {
+    const liquidVariableRegex = new RegExp(`\\{\\{\\s*${variable}\\s*\\}\\}`, 'g');
+
+    return liquidVariableRegex.test(content);
   }
 }
