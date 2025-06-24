@@ -13,7 +13,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 	const namespace = region === 'eu' ? context.env.WEBSOCKET_ROOM.jurisdiction('eu') : context.env.WEBSOCKET_ROOM;
 
 	const id = namespace.idFromName(roomId);
-	const stub = context.env.WEBSOCKET_ROOM.get(id);
+	const stub = namespace.get(id);
 
 	// Forward the request to the Durable Object with user info
 	const requestWithUserInfo = new Request(context.req.raw.url, {
@@ -63,7 +63,7 @@ export async function handleSendMessage(context: Context) {
 		const namespace = region === 'eu' ? context.env.WEBSOCKET_ROOM.jurisdiction('eu') : context.env.WEBSOCKET_ROOM;
 
 		const id = namespace.idFromName(roomId);
-		const stub = context.env.WEBSOCKET_ROOM.get(id);
+		const stub = namespace.get(id);
 
 		await stub.sendToUser(userId, event, data);
 

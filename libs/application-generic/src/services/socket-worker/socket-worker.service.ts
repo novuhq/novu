@@ -23,8 +23,8 @@ export class SocketWorkerService {
   private readonly socketWorkerApiKey: string | undefined;
 
   constructor(
-    private featureFlagsService?: FeatureFlagsService,
-    private messageRepository?: MessageRepository
+    private featureFlagsService: FeatureFlagsService,
+    private messageRepository: MessageRepository
   ) {
     this.socketWorkerUrl = process.env.SOCKET_WORKER_URL;
     this.socketWorkerApiKey = process.env.INTERNAL_SERVICES_API_KEY;
