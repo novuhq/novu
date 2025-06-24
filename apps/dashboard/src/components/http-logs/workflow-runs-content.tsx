@@ -8,6 +8,7 @@ import {
   RiSmartphoneLine,
   RiMailLine,
   RiCodeBlock,
+  RiArrowDownSLine,
 } from 'react-icons/ri';
 import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
 import { RequestLog } from '../../types/logs';
@@ -521,7 +522,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
           </Table>
         </div>
 
-        {/* Load More - Only show if there are results and no filters applied */}
         {filteredWorkflowRuns.length > 0 && !areFiltersApplied && (
           <div className="w-full bg-white">
             <div className="flex w-full flex-col items-start gap-2.5 px-0 py-2">
@@ -539,7 +539,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                           </div>
                         </div>
                         <div className="h-5 w-5 overflow-hidden">
-                          <div className="text-[#525866]">▼</div>
+                          <RiArrowDownSLine className="h-5 w-5 text-[#525866]" />
                         </div>
                       </div>
                     </div>
