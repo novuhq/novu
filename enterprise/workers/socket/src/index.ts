@@ -114,7 +114,9 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 		// Set up WebSocket handlers
 		this.setupWebSocketHandlers(server, metadata);
 
-		console.log(`WebSocket connected for subscriber: ${metadata.subscriberId} (${userId}) in room ${organizationId}:${environmentId}`);
+		console.log(
+			`WebSocket connected for subscriber: ${metadata.subscriberId} (${userId}) in room ${organizationId}:${environmentId}`
+		);
 
 		return new Response(null, {
 			status: 101,
@@ -280,7 +282,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 					userId: metadata.userId,
 					connectedAt: metadata.connectedAt,
 				},
-			}),
+			})
 		);
 	}
 

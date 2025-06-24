@@ -10,74 +10,89 @@
 	"migrations": [
 		{
 			"new_sqlite_classes": ["WebSocketRoom"],
-			"tag": "v1"
-		}
+			"tag": "v1",
+		},
 	],
 	"observability": {
-		"enabled": true
+		"enabled": true,
 	},
 	"env": {
+		"local": {
+			"name": "socket-worker-local",
+			"workers_dev": true,
+			"durable_objects": {
+				"bindings": [
+					{
+						"class_name": "WebSocketRoom",
+						"name": "WEBSOCKET_ROOM",
+					},
+				],
+			},
+			"vars": {
+				"NODE_ENV": "staging",
+			},
+		},
 		"staging": {
 			"name": "socket-worker-staging",
 			"routes": [
 				{
 					"pattern": "socket.novu-staging.co",
-					"custom_domain": true
-				}
+					"custom_domain": true,
+				},
 			],
 			"durable_objects": {
 				"bindings": [
 					{
 						"class_name": "WebSocketRoom",
-						"name": "WEBSOCKET_ROOM"
-					}
-				]
+						"name": "WEBSOCKET_ROOM",
+					},
+				],
 			},
 			"vars": {
-				"NODE_ENV": "staging"
-			}
+				"NODE_ENV": "staging",
+			},
 		},
 		"production": {
 			"name": "socket-worker-production",
 			"routes": [
 				{
 					"pattern": "socket.novu.co",
-					"custom_domain": true
-				}
+					"custom_domain": true,
+				},
 			],
 			"durable_objects": {
 				"bindings": [
 					{
 						"class_name": "WebSocketRoom",
-						"name": "WEBSOCKET_ROOM"
-					}
-				]
+						"name": "WEBSOCKET_ROOM",
+					},
+				],
 			},
 			"vars": {
-				"NODE_ENV": "production"
-			}
+				"NODE_ENV": "production",
+			},
 		},
 		"production-eu": {
 			"name": "socket-worker-production-eu",
 			"routes": [
 				{
 					"pattern": "eu.socket.novu.co",
-					"custom_domain": true
-				}
+					"custom_domain": true,
+				},
 			],
 			"durable_objects": {
 				"bindings": [
 					{
 						"class_name": "WebSocketRoom",
-						"name": "WEBSOCKET_ROOM"
-					}
-				]
+						"name": "WEBSOCKET_ROOM",
+					},
+				],
 			},
 			"vars": {
-				"NODE_ENV": "production"
-			}
-		}
-	}
+				"NODE_ENV": "production",
+			},
+		},
+	},
 	/**
 	 * Smart Placement
 	 * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
