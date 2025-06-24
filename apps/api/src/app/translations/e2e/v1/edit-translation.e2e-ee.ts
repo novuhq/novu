@@ -7,7 +7,7 @@ const createTranslationGroup = {
   locales: ['hi_IN'],
 };
 
-describe('Edit translation - /translations/groups/:identifier/locales/:locale (PATCH) #novu-v2', async () => {
+describe('Edit translation - /translations/groups/:identifier/locales/:locale (PATCH) #novu-v1', async () => {
   let session: UserSession;
 
   before(async () => {

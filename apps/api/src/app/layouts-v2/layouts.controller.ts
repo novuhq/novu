@@ -12,12 +12,16 @@ import {
   UseInterceptors,
 } from '@nestjs/common/decorators';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, UserSession, RequirePermissions } from '@novu/application-generic';
+import {
+  ExternalApiAccessible,
+  UserSession,
+  RequirePermissions,
+  ParseSlugEnvironmentIdPipe,
+  ParseSlugIdPipe,
+} from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, DirectionEnum, UserSessionData, PermissionsEnum } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ParseSlugEnvironmentIdPipe } from '../pipes/parse-slug-env-id.pipe';
-import { ParseSlugIdPipe } from '../pipes/parse-slug-id.pipe';
 import {
   CreateLayoutDto,
   DuplicateLayoutDto,

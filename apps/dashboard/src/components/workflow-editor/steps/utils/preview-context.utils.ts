@@ -1,4 +1,4 @@
-import { WorkflowResponseDto, ISubscriberResponseDto, StepTypeEnum, IUserEntity } from '@novu/shared';
+import { WorkflowResponseDto, ISubscriberResponseDto, StepTypeEnum, IUserEntity, DEFAULT_LOCALE } from '@novu/shared';
 import { ParsedData, PreviewSubscriberData } from '../types/preview-context.types';
 import { STEP_TYPE_ICONS, DEFAULT_STEP_ICON } from '../constants/preview-context.constants';
 
@@ -27,7 +27,7 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto): Previe
     email: subscriber.email || '',
     phone: subscriber.phone || '',
     avatar: subscriber.avatar || '',
-    locale: subscriber.locale || 'en_US',
+    locale: subscriber.locale || DEFAULT_LOCALE,
     timezone: subscriber.timezone || '',
     data: {},
   };
@@ -41,7 +41,7 @@ export function createSubscriberDataFromUser(user: IUserEntity): PreviewSubscrib
     email: user.email || '',
     phone: '',
     avatar: user.profilePicture || '',
-    locale: 'en_US',
+    locale: DEFAULT_LOCALE,
   };
 }
 

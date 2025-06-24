@@ -24,7 +24,8 @@ export const SEGMENT_KEY = import.meta.env.VITE_SEGMENT_KEY;
 
 export const MIXPANEL_KEY = import.meta.env.VITE_MIXPANEL_KEY;
 
-export const LEGACY_DASHBOARD_URL = import.meta.env.VITE_LEGACY_DASHBOARD_URL;
+export const LEGACY_DASHBOARD_URL =
+  window._env_?.VITE_LEGACY_DASHBOARD_URL || import.meta.env.VITE_LEGACY_DASHBOARD_URL;
 
 export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;
 
