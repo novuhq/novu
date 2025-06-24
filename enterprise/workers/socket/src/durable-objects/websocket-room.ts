@@ -189,7 +189,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 		return {
 			userId,
 			environmentId,
-			connectedAt: Date.now(), // We can't persist this with hibernation, so use current time
+			connectedAt: Date.now(),
 		};
 	}
 
