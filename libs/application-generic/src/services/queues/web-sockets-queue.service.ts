@@ -5,6 +5,7 @@ import { QueueBaseService } from './queue-base.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
+import { FeatureFlagsService } from '../feature-flags';
 import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 
 const LOG_CONTEXT = 'WebSocketsQueueService';
@@ -13,10 +14,13 @@ const LOG_CONTEXT = 'WebSocketsQueueService';
 export class WebSocketsQueueService extends QueueBaseService {
   private socketWorkerService: SocketWorkerService;
 
-  constructor(public workflowInMemoryProviderService: WorkflowInMemoryProviderService) {
+  constructor(
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    private featureFlagsService: FeatureFlagsService
+  ) {
     super(JobTopicNameEnum.WEB_SOCKETS, new BullMqService(workflowInMemoryProviderService));
 
-    this.socketWorkerService = new SocketWorkerService();
+    this.socketWorkerService = new SocketWorkerService(this.featureFlagsService);
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
@@ -25,22 +29,34 @@ export class WebSocketsQueueService extends QueueBaseService {
 
   public async add(data: IWebSocketJobDto) {
     // If socket worker is enabled, send directly to socket worker instead of queuing
-    if (this.socketWorkerService.isEnabled() && data.data) {
-      const { userId, event, _environmentId, _organizationId, subscriberId, payload } = data.data;
+    const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(
+      data.data?._organizationId,
+      data.data?._environmentId,
+      data.data?.userId
+    );
 
+    if (isSocketWorkerEnabled && data.data) {
+      const { userId, event, _environmentId, _organizationId, subscriberId, payload } = data.data;
       await this.socketWorkerService.sendMessage(userId, event, payload, _organizationId, _environmentId, subscriberId);
 
       Logger.debug(`Sent message directly to socket worker for user ${userId}, event ${event}`, LOG_CONTEXT);
-
-      return null;
     }
 
     return await super.add(data);
   }
 
   public async addBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
-    // If socket worker is enabled, send each message directly
-    if (this.socketWorkerService.isEnabled()) {
+    // Check if socket worker is enabled using the first item's context
+    const firstItem = data.find((item) => item.data);
+    const isSocketWorkerEnabled = firstItem
+      ? await this.socketWorkerService.isEnabled(
+          firstItem.data?._organizationId,
+          firstItem.data?._environmentId,
+          firstItem.data?.userId
+        )
+      : false;
+
+    if (isSocketWorkerEnabled) {
       const promises = data.map(async (item) => {
         if (item.data) {
           const { userId, event, _environmentId, _organizationId, subscriberId, payload } = item.data;
@@ -66,7 +82,11 @@ export class WebSocketsQueueService extends QueueBaseService {
     await super.addBulk(data);
   }
 
-  public isSocketWorkerEnabled(): boolean {
-    return this.socketWorkerService.isEnabled();
+  public async isSocketWorkerEnabled(
+    organizationId?: string,
+    environmentId?: string,
+    userId?: string
+  ): Promise<boolean> {
+    return this.socketWorkerService.isEnabled(organizationId, environmentId, userId);
   }
 }

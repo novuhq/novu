@@ -2,7 +2,12 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { IWebSocketDataDto, WebSocketsQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
+import {
+  IWebSocketDataDto,
+  WebSocketsQueueService,
+  WorkflowInMemoryProviderService,
+  FeatureFlagsService,
+} from '@novu/application-generic';
 import { WebSocketEventEnum } from '@novu/shared';
 
 import { WebSocketWorker } from './web-socket.worker';
@@ -12,6 +17,11 @@ import { ExternalServicesRoute } from '../usecases/external-services-route';
 
 let webSocketsQueueService: WebSocketsQueueService;
 let webSocketWorker: WebSocketWorker;
+
+// Mock FeatureFlagsService
+const mockFeatureFlagsService = {
+  getFlag: async () => false, // Default to disabled for tests
+} as any;
 
 describe('WebSocket Worker', () => {
   before(async () => {
@@ -29,7 +39,7 @@ describe('WebSocket Worker', () => {
 
     webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
 
-    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService);
+    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService, mockFeatureFlagsService);
     await webSocketsQueueService.queue.obliterate();
   });
 

@@ -1,4 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
+import got, { HTTPError, RequestError } from 'got';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+
+import { FeatureFlagsService } from '../feature-flags';
 
 const LOG_CONTEXT = 'SocketWorkerService';
 
@@ -7,7 +11,7 @@ export class SocketWorkerService {
   private readonly socketWorkerUrl: string | undefined;
   private readonly socketWorkerApiKey: string | undefined;
 
-  constructor() {
+  constructor(private featureFlagsService?: FeatureFlagsService) {
     this.socketWorkerUrl = process.env.SOCKET_WORKER_URL;
     this.socketWorkerApiKey = process.env.SOCKET_WORKER_API_KEY;
   }
@@ -44,38 +48,77 @@ export class SocketWorkerService {
 
       Logger.log(`Dispatching event ${event} to socket worker for user ${userId}`, LOG_CONTEXT);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const response = await (global as any).fetch(`${this.socketWorkerUrl}/api/send`, {
-        method: 'POST',
+      await got.post(`${this.socketWorkerUrl}/send`, {
+        json: payload,
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${this.socketWorkerApiKey}`,
         },
-        body: JSON.stringify(payload),
+        responseType: 'json',
+        timeout: 5000, // 5 second timeout
+        retry: {
+          limit: 2,
+          methods: ['POST'],
+          statusCodes: [408, 429, 500, 502, 503, 504],
+        },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        if (response.status === 401) {
+      Logger.debug(`Successfully dispatched event ${event} to socket worker for user ${userId}`, LOG_CONTEXT);
+    } catch (error) {
+      if (error instanceof HTTPError) {
+        const { statusCode } = error.response;
+        const errorText = error.response.body || error.message;
+
+        if (statusCode === 401) {
           Logger.error(
             `Unauthorized request to socket worker - check API key configuration: ${errorText}`,
             LOG_CONTEXT
           );
         } else {
-          Logger.error(`Failed to dispatch to socket worker: ${response.status} - ${errorText}`, LOG_CONTEXT);
+          Logger.error(`Failed to dispatch to socket worker: ${statusCode} - ${errorText}`, LOG_CONTEXT);
         }
+      } else if (error instanceof RequestError) {
+        Logger.error(`Request error dispatching to socket worker: ${error.message}`, LOG_CONTEXT);
       } else {
-        Logger.debug(`Successfully dispatched event ${event} to socket worker for user ${userId}`, LOG_CONTEXT);
+        Logger.error(
+          `Error dispatching to socket worker: ${error instanceof Error ? error.message : String(error)}`,
+          LOG_CONTEXT
+        );
       }
-    } catch (error) {
-      Logger.error(
-        `Error dispatching to socket worker: ${error instanceof Error ? error.message : String(error)}`,
-        LOG_CONTEXT
-      );
     }
   }
 
-  isEnabled(): boolean {
-    return !!this.socketWorkerUrl && !!this.socketWorkerApiKey;
+  async isEnabled(organizationId?: string, environmentId?: string, userId?: string): Promise<boolean> {
+    // First check if environment variables are configured
+    const hasConfig = !!this.socketWorkerUrl && !!this.socketWorkerApiKey;
+
+    if (!hasConfig) {
+      return false;
+    }
+
+    // If no feature flag service is available, fall back to environment-only check
+    if (!this.featureFlagsService) {
+      return true;
+    }
+
+    try {
+      // Check the feature flag
+      const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_CLOUDFLARE_SOCKETS_ENABLED,
+        organization: organizationId ? { _id: organizationId } : undefined,
+        environment: environmentId ? { _id: environmentId } : undefined,
+        user: userId ? { _id: userId } : undefined,
+        defaultValue: false,
+      });
+
+      return isFeatureFlagEnabled;
+    } catch (error) {
+      Logger.error(
+        `Error checking socket worker feature flag: ${error instanceof Error ? error.message : String(error)}`,
+        LOG_CONTEXT
+      );
+
+      // Fall back to environment-only check if feature flag service fails
+      return true;
+    }
   }
 }

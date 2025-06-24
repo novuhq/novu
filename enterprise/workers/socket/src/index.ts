@@ -9,7 +9,7 @@ const app = new Hono<{ Bindings: IEnv }>();
 
 app.get('/', authenticateJWT, handleWebSocketUpgrade);
 
-app.post('/api/send', authenticateInternalAPI, handleSendMessage);
+app.post('/send', authenticateInternalAPI, handleSendMessage);
 
 app.get('/health', (context) => context.text('OK'));
 
