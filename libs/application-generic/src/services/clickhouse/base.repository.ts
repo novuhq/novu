@@ -41,9 +41,10 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     return 'String';
   }
 
-  private buildWhereClause(
-    where: Where<InferClickhouseSchemaType<T>>
-  ): { clause: string; params: Record<string, any> } {
+  private buildWhereClause(where: Where<InferClickhouseSchemaType<T>>): {
+    clause: string;
+    params: Record<string, any>;
+  } {
     const params: Record<string, any> = {};
     const clauses = Object.entries(where)
       .map(([key, value], index) => {

@@ -1,5 +1,5 @@
 const SENSITIVE_KEYS = ['password', 'token', 'secret', 'apikey', 'email', 'phone', 'bearer'];
-const MAX_PAYLOAD_SIZE = 10240; // 10KB
+const MAX_PAYLOAD_SIZE = 51200; // 50KB
 
 function maskSensitive(obj: any): any {
   if (Array.isArray(obj)) return obj.map(maskSensitive);
@@ -7,7 +7,7 @@ function maskSensitive(obj: any): any {
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => {
         const lowerKey = key.toLowerCase();
-        const isSensitive = SENSITIVE_KEYS.some((s) => lowerKey.includes(s));
+        const isSensitive = SENSITIVE_KEYS.some((sensitiveKey) => lowerKey.includes(sensitiveKey));
         if (isSensitive) return [key, '***'];
 
         return [key, maskSensitive(value)];
@@ -18,10 +18,9 @@ function maskSensitive(obj: any): any {
   return obj;
 }
 
-export function sanitizePayload(payload: any): string {
+export function sanitizePayload(payload: Record<string, unknown>): string {
   try {
-    const masked = maskSensitive(payload);
-    let str = JSON.stringify(masked);
+    let str = JSON.stringify(payload);
     if (str.length > MAX_PAYLOAD_SIZE) {
       str = `${str.slice(0, MAX_PAYLOAD_SIZE)}...`;
     }
@@ -33,16 +32,18 @@ export function sanitizePayload(payload: any): string {
 }
 
 export async function retryWithBackoff<T>(fn: () => Promise<T>, maxAttempts = 3, initialDelayMs = 100): Promise<T> {
-  let attempt = 0;
   let delay = initialDelayMs;
-  while (true) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       return await fn();
     } catch (err) {
-      attempt++;
-      if (attempt >= maxAttempts) throw err;
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      if (attempt === maxAttempts - 1) throw err;
+      const currentDelay = delay;
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), currentDelay);
+      });
       delay *= 2;
     }
   }
+  throw new Error('Max attempts reached');
 }
