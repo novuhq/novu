@@ -38,17 +38,39 @@ export class SocketWorkerService {
     environmentId?: string,
     subscriberId?: string
   ): Promise<void> {
-    await this.sendMessageInternal(userId, event, data, organizationId, environmentId, subscriberId);
+    if (event === WebSocketEventEnum.RECEIVED) {
+      const { messageId } = data || {};
+      const storedMessage = await this.messageRepository.findOne({
+        _id: messageId,
+        _environmentId: environmentId,
+      });
 
-    // Handle count updates for RECEIVED events
-    if (event === WebSocketEventEnum.RECEIVED && environmentId) {
-      const { message, messageId } = data || {};
+      if (!storedMessage) {
+        Logger.error(`Message with id ${messageId} not found in environment ${environmentId}`, LOG_CONTEXT);
+
+        return;
+      }
+
+      await this.sendMessageInternal(
+        userId,
+        event,
+        { message: storedMessage },
+        organizationId,
+        environmentId,
+        subscriberId
+      );
 
       // Only recalculate the counts if we send a messageId/message.
-      if (message || messageId) {
+      if (messageId) {
         await this.sendUnseenCount(userId, environmentId, organizationId);
         await this.sendUnreadCount(userId, environmentId, organizationId);
       }
+    } else if (event === WebSocketEventEnum.UNREAD) {
+      await this.sendUnreadCount(userId, environmentId, organizationId);
+    } else if (event === WebSocketEventEnum.UNSEEN) {
+      await this.sendUnseenCount(userId, environmentId, organizationId);
+    } else {
+      await this.sendMessageInternal(userId, event, data, organizationId, environmentId, subscriberId);
     }
   }
 
