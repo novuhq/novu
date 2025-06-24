@@ -62,8 +62,10 @@ export class SocketWorkerService {
 
       // Only recalculate the counts if we send a messageId/message.
       if (messageId) {
-        await this.sendUnseenCount(userId, environmentId, organizationId);
-        await this.sendUnreadCount(userId, environmentId, organizationId);
+        await Promise.all([
+          this.sendUnseenCount(userId, environmentId, organizationId),
+          this.sendUnreadCount(userId, environmentId, organizationId),
+        ]);
       }
     } else if (event === WebSocketEventEnum.UNREAD) {
       await this.sendUnreadCount(userId, environmentId, organizationId);
