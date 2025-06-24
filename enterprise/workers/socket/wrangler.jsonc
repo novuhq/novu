@@ -31,6 +31,7 @@
 			"vars": {
 				"NODE_ENV": "staging",
 				"API_URL": "https://fa3f-46-117-110-24.ngrok-free.app",
+				"REGION": "global",
 			},
 		},
 		"staging": {
@@ -52,9 +53,10 @@
 			"vars": {
 				"NODE_ENV": "staging",
 				"API_URL": "https://api.novu-staging.co",
+				"REGION": "global",
 			},
 		},
-		"production": {
+		"production-us": {
 			"name": "socket-worker-production",
 			"routes": [
 				{
@@ -73,6 +75,7 @@
 			"vars": {
 				"NODE_ENV": "production",
 				"API_URL": "https://api.novu.co",
+				"REGION": "global",
 			},
 		},
 		"production-eu": {
@@ -94,6 +97,7 @@
 			"vars": {
 				"NODE_ENV": "production",
 				"API_URL": "https://eu.api.novu.co",
+				"REGION": "eu",
 			},
 		},
 	},

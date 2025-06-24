@@ -6,7 +6,7 @@ import {
   IWebSocketDataDto,
   WebSocketsQueueService,
   WorkflowInMemoryProviderService,
-  FeatureFlagsService,
+  SocketWorkerService,
 } from '@novu/application-generic';
 import { WebSocketEventEnum } from '@novu/shared';
 
@@ -18,14 +18,10 @@ import { ExternalServicesRoute } from '../usecases/external-services-route';
 let webSocketsQueueService: WebSocketsQueueService;
 let webSocketWorker: WebSocketWorker;
 
-// Mock FeatureFlagsService
-const mockFeatureFlagsService = {
-  getFlag: async () => false, // Default to disabled for tests
-} as any;
-
-// Mock MessageRepository
-const mockMessageRepository = {
-  getCount: async () => 0,
+// Mock SocketWorkerService
+const mockSocketWorkerService = {
+  isEnabled: async () => false,
+  sendMessage: async () => undefined,
 } as any;
 
 describe('WebSocket Worker', () => {
@@ -44,11 +40,7 @@ describe('WebSocket Worker', () => {
 
     webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
 
-    webSocketsQueueService = new WebSocketsQueueService(
-      workflowInMemoryProviderService,
-      mockFeatureFlagsService,
-      mockMessageRepository
-    );
+    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService, mockSocketWorkerService);
     await webSocketsQueueService.queue.obliterate();
   });
 

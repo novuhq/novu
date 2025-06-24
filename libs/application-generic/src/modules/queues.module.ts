@@ -10,7 +10,7 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { ReadinessService, WorkflowInMemoryProviderService } from '../services';
+import { ReadinessService, WorkflowInMemoryProviderService, SocketWorkerService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   InboundParseQueueService,
@@ -66,7 +66,12 @@ export class QueuesModule implements OnApplicationShutdown {
         case JobTopicNameEnum.WEB_SOCKETS:
           healthIndicators.push(WebSocketsQueueServiceHealthIndicator);
           tokenList.push(WebSocketsQueueService);
-          DYNAMIC_PROVIDERS.push(MessageRepository, WebSocketsQueueService, WebSocketsQueueServiceHealthIndicator);
+          DYNAMIC_PROVIDERS.push(
+            MessageRepository,
+            SocketWorkerService,
+            WebSocketsQueueService,
+            WebSocketsQueueServiceHealthIndicator
+          );
           break;
         case JobTopicNameEnum.STANDARD:
           tokenList.push(StandardQueueService);

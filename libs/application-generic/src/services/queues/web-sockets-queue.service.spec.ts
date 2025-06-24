@@ -3,19 +3,15 @@ import { Test } from '@nestjs/testing';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import { FeatureFlagsService } from '../feature-flags';
+import { SocketWorkerService } from '../socket-worker';
 import { IWebSocketJobDto } from '../../dtos';
 
 let webSocketsQueueService: WebSocketsQueueService;
 
-// Mock FeatureFlagsService
-const mockFeatureFlagsService = {
-  getFlag: jest.fn().mockResolvedValue(false), // Default to disabled for tests
-} as any;
-
-// Mock MessageRepository
-const mockMessageRepository = {
-  getCount: jest.fn().mockResolvedValue(0),
+// Mock SocketWorkerService
+const mockSocketWorkerService = {
+  isEnabled: jest.fn().mockResolvedValue(false),
+  sendMessage: jest.fn().mockResolvedValue(undefined),
 } as any;
 
 describe('WebSockets Queue service', () => {
@@ -23,8 +19,7 @@ describe('WebSockets Queue service', () => {
     beforeAll(async () => {
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
-        mockFeatureFlagsService,
-        mockMessageRepository
+        mockSocketWorkerService
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -136,8 +131,7 @@ describe('WebSockets Queue service', () => {
 
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
-        mockFeatureFlagsService,
-        mockMessageRepository
+        mockSocketWorkerService
       );
       await webSocketsQueueService.queue.obliterate();
     });

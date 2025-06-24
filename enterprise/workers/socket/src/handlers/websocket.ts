@@ -8,7 +8,11 @@ export async function handleWebSocketUpgrade(context: Context) {
 
 	const roomId = `${environmentId}:${userId}`;
 
-	const id = context.env.WEBSOCKET_ROOM.idFromName(roomId);
+	// Apply EU jurisdiction if REGION is set to "eu"
+	const region = context.env.REGION;
+	const namespace = region === 'eu' ? context.env.WEBSOCKET_ROOM.jurisdiction('eu') : context.env.WEBSOCKET_ROOM;
+
+	const id = namespace.idFromName(roomId);
 	const stub = context.env.WEBSOCKET_ROOM.get(id);
 
 	// Forward the request to the Durable Object with user info
@@ -51,8 +55,14 @@ export async function handleSendMessage(context: Context) {
 
 		console.log(`[Internal API] Routing message to room: ${roomId} for user: ${userId}, event: ${event}`);
 
-		// Get the Durable Object instance for the appropriate room
-		const id = context.env.WEBSOCKET_ROOM.idFromName(roomId);
+		/*
+		 * Get the Durable Object instance for the appropriate room
+		 * Apply EU jurisdiction if REGION is set to "eu"
+		 */
+		const region = context.env.REGION;
+		const namespace = region === 'eu' ? context.env.WEBSOCKET_ROOM.jurisdiction('eu') : context.env.WEBSOCKET_ROOM;
+
+		const id = namespace.idFromName(roomId);
 		const stub = context.env.WEBSOCKET_ROOM.get(id);
 
 		await stub.sendToUser(userId, event, data);

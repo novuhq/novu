@@ -1,28 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
-import { MessageRepository } from '@novu/dal';
 
 import { QueueBaseService } from './queue-base.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
-import { FeatureFlagsService } from '../feature-flags';
 import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 
 const LOG_CONTEXT = 'WebSocketsQueueService';
 
 @Injectable()
 export class WebSocketsQueueService extends QueueBaseService {
-  private socketWorkerService: SocketWorkerService;
-
   constructor(
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private featureFlagsService: FeatureFlagsService,
-    private messageRepository: MessageRepository
+    private socketWorkerService: SocketWorkerService
   ) {
     super(JobTopicNameEnum.WEB_SOCKETS, new BullMqService(workflowInMemoryProviderService));
-
-    this.socketWorkerService = new SocketWorkerService(this.featureFlagsService, this.messageRepository);
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 

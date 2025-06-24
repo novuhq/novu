@@ -8,7 +8,8 @@
 		"start": "wrangler dev",
 		"cf-typegen": "wrangler types",
 		"deploy:staging": "wrangler deploy --env staging",
-		"deploy:production": "wrangler deploy --env production",
+		"deploy:production-us": "wrangler deploy --env production-us",
+		"deploy:production-eu": "wrangler deploy --env production-eu",
 		"deploy:local": "wrangler deploy --env local"
 	},
 	"devDependencies": {

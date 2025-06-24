@@ -3,6 +3,7 @@ export interface IEnv {
 	JWT_SECRET: string;
 	INTERNAL_API_KEY: string;
 	API_URL?: string;
+	REGION?: string;
 }
 
 export interface IConnectionMetadata {
