@@ -26,6 +26,7 @@ const mockedWorkflow = {
   triggers: [{ identifier: '123', type: TriggerTypeEnum.EVENT, variables: [] }],
   critical: false,
   tags: [],
+  createdAt: '2023-01-01T00:00:00.000Z',
 } satisfies ITemplateConfiguration;
 const mockedWorkflowPreference = {
   type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -117,23 +118,23 @@ describe('GetInboxPreferences', () => {
 
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
     expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      GetSubscriberGlobalPreferenceCommand.create({
+      {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: false,
-      })
+      }
     );
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
     expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      GetSubscriberPreferenceCommand.create({
+      {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         tags: undefined,
         includeInactiveChannels: false,
-      })
+      }
     );
 
     expect(result).to.deep.equal([
@@ -164,6 +165,7 @@ describe('GetInboxPreferences', () => {
           triggers: [{ identifier: '111', type: TriggerTypeEnum.EVENT, variables: [] }],
           critical: false,
           tags: ['newsletter'],
+          createdAt: '2023-01-01T00:00:00.000Z',
         },
         preference: mockedWorkflowPreference.preference,
         type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -175,6 +177,7 @@ describe('GetInboxPreferences', () => {
           triggers: [{ identifier: '222', type: TriggerTypeEnum.EVENT, variables: [] }],
           critical: false,
           tags: ['security'],
+          createdAt: '2023-01-02T00:00:00.000Z',
         },
         preference: mockedWorkflowPreference.preference,
         type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -196,23 +199,23 @@ describe('GetInboxPreferences', () => {
 
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
     expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      GetSubscriberGlobalPreferenceCommand.create({
+      {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         includeInactiveChannels: false,
-      })
+      }
     );
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
     expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      GetSubscriberPreferenceCommand.create({
+      {
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         tags: command.tags,
         includeInactiveChannels: false,
-      })
+      }
     );
 
     expect(result).to.deep.equal([
