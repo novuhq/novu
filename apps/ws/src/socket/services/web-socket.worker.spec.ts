@@ -1,96 +1,117 @@
-import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { setTimeout } from 'timers/promises';
+import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  IWebSocketDataDto,
-  WebSocketsQueueService,
-  WorkflowInMemoryProviderService,
-  FeatureFlagsService,
-} from '@novu/application-generic';
-import { WebSocketEventEnum } from '@novu/shared';
+import { MessageRepository } from '@novu/dal';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
-import { WebSocketWorker } from './web-socket.worker';
+import { ExternalServicesRouteCommand } from './external-services-route.command';
+import { WSGateway } from '../../ws.gateway';
+import { IUnreadCountPaginationIndication, IUnseenCountPaginationIndication } from './types';
 
-import { SocketModule } from '../socket.module';
-import { ExternalServicesRoute } from '../usecases/external-services-route';
+const LOG_CONTEXT = 'ExternalServicesRoute';
 
-let webSocketsQueueService: WebSocketsQueueService;
-let webSocketWorker: WebSocketWorker;
+@Injectable()
+export class ExternalServicesRoute {
+  constructor(
+    private wsGateway: WSGateway,
+    private messageRepository: MessageRepository
+  ) {}
 
-// Mock FeatureFlagsService
-const mockFeatureFlagsService = {
-  getFlag: async () => false, // Default to disabled for tests
-} as any;
+  public async execute(command: ExternalServicesRouteCommand) {
+    const isOnline = await this.connectionExist(command);
 
-describe('WebSocket Worker', () => {
-  before(async () => {
-    process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-    process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
+    if (!isOnline) {
+      Logger.log(`Connection does not exist, ignoring command for ${command.userId}`, LOG_CONTEXT);
 
-    const moduleRef = await Test.createTestingModule({
-      imports: [SocketModule],
-    }).compile();
+      return;
+    }
 
-    const externalServicesRoute = moduleRef.get<ExternalServicesRoute>(ExternalServicesRoute);
-    const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
-      WorkflowInMemoryProviderService
+    if (command.event === WebSocketEventEnum.RECEIVED) {
+      await this.processReceivedEvent(command);
+    }
+
+    if (command.event === WebSocketEventEnum.UNSEEN) {
+      await this.sendUnseenCountChange(command);
+    }
+
+    if (command.event === WebSocketEventEnum.UNREAD) {
+      await this.sendUnreadCountChange(command);
+    }
+  }
+
+  private async processReceivedEvent(command: ExternalServicesRouteCommand): Promise<void> {
+    const { message, messageId } = command.payload || {};
+    // TODO: Retro-compatibility for a bit just in case stalled messages
+    if (message) {
+      Logger.log('Sending full message in the payload', LOG_CONTEXT);
+      await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
+    } else if (messageId) {
+      Logger.log(`Sending messageId: ${messageId} in the payload, we need to retrieve the full message`, LOG_CONTEXT);
+      const storedMessage = await this.messageRepository.findOne({
+        _id: messageId,
+        _environmentId: command._environmentId,
+      });
+      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
+    }
+
+    // Only recalculate the counts if we send a messageId/message.
+    if (message || messageId) {
+      await this.sendUnseenCountChange(command);
+      await this.sendUnreadCountChange(command);
+    }
+  }
+
+  private async sendUnreadCountChange(command: ExternalServicesRouteCommand) {
+    if (!command._environmentId) {
+      return;
+    }
+
+    const unreadCount = await this.messageRepository.getCount(
+      command._environmentId,
+      command.userId,
+      ChannelTypeEnum.IN_APP,
+      { read: false },
+      { limit: 101 }
+    );
+    const paginationIndication: IUnreadCountPaginationIndication =
+      unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
+
+    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
+      unreadCount: paginationIndication.unreadCount,
+      hasMore: paginationIndication.hasMore,
+    });
+  }
+
+  private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
+    if (!command._environmentId) {
+      Logger.warn('No environmentId found, unable to send unseen count', LOG_CONTEXT);
+
+      return;
+    }
+
+    const unseenCount = await this.messageRepository.getCount(
+      command._environmentId,
+      command.userId,
+      ChannelTypeEnum.IN_APP,
+      { seen: false },
+      { limit: 101 }
     );
 
-    webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
+    const paginationIndication: IUnseenCountPaginationIndication =
+      unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
 
-    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService, mockFeatureFlagsService);
-    await webSocketsQueueService.queue.obliterate();
-  });
-
-  after(async () => {
-    await webSocketsQueueService.queue.drain();
-    await webSocketWorker.gracefulShutdown();
-  });
-
-  it('should be initialised properly', async () => {
-    expect(webSocketWorker).to.be.ok;
-    expect(await webSocketWorker.bullMqService.getStatus()).to.deep.equal({
-      queueIsPaused: undefined,
-      queueName: undefined,
-      workerName: 'ws_socket_queue',
-      workerIsPaused: false,
-      workerIsRunning: true,
+    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
+      unseenCount: paginationIndication.unseenCount,
+      hasMore: paginationIndication.hasMore,
     });
-    expect(webSocketWorker.worker.opts).to.deep.include({
-      concurrency: 400,
-      lockDuration: 90000,
-    });
-  });
+  }
 
-  it('should be able to automatically pull a job from the queue', async () => {
-    const existingJobs = await webSocketsQueueService.queue.getJobs();
-    expect(existingJobs.length).to.equal(0);
+  private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {
+    if (!this.wsGateway.server) {
+      Logger.error('No sw server found, unable to check if connection exists', LOG_CONTEXT);
 
-    const jobId = 'web-socket-queue-job-id';
-    const _environmentId = 'web-socket-queue-environment-id';
-    const _organizationId = 'web-socket-queue-organization-id';
-    const _userId = 'web-socket-queue-user-id';
-    const jobData = {
-      event: WebSocketEventEnum.RECEIVED,
-      _environmentId,
-      _organizationId,
-      userId: _userId,
-    } as IWebSocketDataDto;
+      return;
+    }
 
-    await webSocketsQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
-
-    expect(await webSocketsQueueService.queue.getActiveCount()).to.equal(1);
-    expect(await webSocketsQueueService.queue.getWaitingCount()).to.equal(0);
-
-    // When we arrive to pull the job it has been already pulled by the worker
-    const nextJob = await webSocketWorker.worker.getNextJob(jobId);
-    expect(nextJob).to.equal(undefined);
-
-    await setTimeout(100);
-
-    // No jobs left in queue
-    const queueJobs = await webSocketsQueueService.queue.getJobs();
-    expect(queueJobs.length).to.equal(0);
-  });
-});
+    return !!(await this.wsGateway.server.in(command.userId).fetchSockets()).length;
+  }
+}
