@@ -49,8 +49,6 @@ export class WebSocketWorker extends WebSocketsWorkerService {
                   event: data.event,
                   payload: data.payload,
                   _environmentId: data._environmentId,
-                  _organizationId: data._organizationId,
-                  subscriberId: data.subscriberId,
                 })
               )
               .then(resolve)

@@ -26,12 +26,4 @@ export class ExternalServicesRouteCommand extends BaseCommand {
 
   @IsString()
   _environmentId: string;
-
-  @IsOptional()
-  @IsString()
-  _organizationId?: string;
-
-  @IsOptional()
-  @IsString()
-  subscriberId?: string;
 }
