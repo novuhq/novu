@@ -75,8 +75,6 @@ export class WebSocketsQueueService extends QueueBaseService {
       await Promise.all(promises);
 
       Logger.debug(`Sent ${data.length} messages directly to socket worker`, LOG_CONTEXT);
-
-      return;
     }
 
     await super.addBulk(data);
