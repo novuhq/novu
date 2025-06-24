@@ -97,11 +97,14 @@ export class SocketWorkerService {
 
     // If no feature flag service is available, fall back to environment-only check
     if (!this.featureFlagsService) {
-      return true;
+      return false;
+    }
+
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
+      return false;
     }
 
     try {
-      // Check the feature flag
       const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_CLOUDFLARE_SOCKETS_ENABLED,
         organization: organizationId ? { _id: organizationId } : undefined,
