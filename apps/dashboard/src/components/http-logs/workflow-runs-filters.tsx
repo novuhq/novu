@@ -1,46 +1,26 @@
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
 import { HTMLAttributes, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiLoader4Line, RiArrowDownSLine, RiCalendarLine, RiStarSLine } from 'react-icons/ri';
-import { WorkflowRunsFilter, defaultWorkflowRunsFilter } from './hooks/use-workflow-runs-url-state';
+import { RiLoader4Line } from 'react-icons/ri';
+import { defaultWorkflowRunsFilter } from './hooks/use-workflow-runs-url-state';
+import { ActivityFilters } from '@/api/activity';
+import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 
 export type WorkflowRunsFiltersProps = HTMLAttributes<HTMLDivElement> & {
-  onFiltersChange: (filter: WorkflowRunsFilter) => void;
-  filterValues: WorkflowRunsFilter;
+  onFiltersChange: (filter: ActivityFilters) => void;
+  filterValues: ActivityFilters;
   onReset?: () => void;
   isFetching?: boolean;
 };
 
-const statusOptions = [
-  { label: 'In Progress', value: 'in-progress' },
-  { label: 'Success', value: 'success' },
-  { label: 'Error', value: 'error' },
-];
-
-const timePeriodOptions = [
-  { label: '24H', value: '24h' },
-  { label: '7D', value: '7d' },
-  { label: '30D', value: '30d' },
-  { label: '60D', value: '60d' },
-  { label: '90D', value: '90d' },
-];
-
-const channelOptions = [
-  { label: 'Email', value: 'email' },
-  { label: 'SMS', value: 'sms' },
-  { label: 'Push', value: 'push' },
-  { label: 'In-App', value: 'in_app' },
-  { label: 'Chat', value: 'chat' },
-];
-
 export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
   const { onFiltersChange, filterValues, onReset, className, isFetching, ...rest } = props;
+  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
 
-  const form = useForm<WorkflowRunsFilter>({
+  const form = useForm<ActivityFilters>({
     values: filterValues,
     defaultValues: {
       ...filterValues,
@@ -50,7 +30,7 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
 
   useEffect(() => {
     const subscription = watch((value) => {
-      onFiltersChange(value as WorkflowRunsFilter);
+      onFiltersChange(value as ActivityFilters);
     });
 
     return () => subscription.unsubscribe();
@@ -64,124 +44,31 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
 
   const isResetButtonVisible =
     formState.isDirty ||
-    filterValues.search !== '' ||
-    filterValues.status?.length ||
-    filterValues.company !== '' ||
-    filterValues.timePeriod !== '24h' ||
     filterValues.channels?.length ||
-    filterValues.transactionId !== '' ||
+    filterValues.workflows?.length ||
     filterValues.subscriberId !== '';
 
   return (
     <div className={cn('flex items-center gap-2 px-2.5 py-1.5', className)} {...rest}>
       <Form {...form}>
         <FormRoot className="flex items-center gap-2">
-          {/* Time Period and Status Button Group */}
-          <div className="flex rounded-lg border border-neutral-200 bg-white">
-            <FormField
-              control={form.control}
-              name="timePeriod"
-              render={({ field }) => (
-                <FormItem className="relative">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        mode="ghost"
-                        size="2xs"
-                        className={cn(
-                          'h-8 rounded-r-none border-0 border-r border-neutral-200 px-3 text-xs font-normal',
-                          'hover:bg-neutral-50'
-                        )}
-                      >
-                        <RiCalendarLine className="mr-1 h-3 w-3" />
-                        {timePeriodOptions.find((option) => option.value === field.value)?.label || '24H'}
-                        <RiArrowDownSLine className="ml-1 h-3 w-3" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-0" align="start">
-                      <div className="p-2">
-                        {timePeriodOptions.map((option) => (
-                          <div
-                            key={option.value}
-                            className="flex cursor-pointer items-center rounded p-2 hover:bg-neutral-50"
-                            onClick={() => field.onChange(option.value)}
-                          >
-                            <input type="radio" checked={field.value === option.value} readOnly className="mr-2" />
-                            <span className="text-sm">{option.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem className="relative">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        mode="ghost"
-                        size="2xs"
-                        className={cn('h-8 rounded-l-none border-0 px-3 text-xs font-normal', 'hover:bg-neutral-50')}
-                      >
-                        <RiStarSLine className="mr-1 h-3 w-3" />
-                        {field.value?.length ? `${field.value.length} selected` : 'All status'}
-                        <RiArrowDownSLine className="ml-1 h-3 w-3" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-48 p-0" align="start">
-                      <div className="p-2">
-                        {statusOptions.map((option) => (
-                          <div
-                            key={option.value}
-                            className="flex cursor-pointer items-center rounded p-2 hover:bg-neutral-50"
-                            onClick={() => {
-                              const currentValues = field.value || [];
-                              const newValues = currentValues.includes(option.value)
-                                ? currentValues.filter((v) => v !== option.value)
-                                : [...currentValues, option.value];
-                              field.onChange(newValues);
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={field.value?.includes(option.value) || false}
-                              readOnly
-                              className="mr-2"
-                            />
-                            <span className="text-sm">{option.label}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Individual Filters with Dashed Borders */}
           <FormField
             control={form.control}
-            name="search"
+            name="workflows"
             render={({ field }) => (
               <FormItem className="relative">
                 <FacetedFormFilter
-                  type="text"
+                  type="multi"
                   size="small"
                   title="Workflows"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Search workflows..."
+                  options={
+                    workflowTemplates?.workflows?.map((workflow) => ({
+                      label: workflow.name,
+                      value: workflow._id,
+                    })) || []
+                  }
+                  selected={field.value || []}
+                  onSelect={field.onChange}
                 />
               </FormItem>
             )}
@@ -212,30 +99,13 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
 
           <FormField
             control={form.control}
-            name="transactionId"
-            render={({ field }) => (
-              <FormItem className="relative">
-                <FacetedFormFilter
-                  type="text"
-                  size="small"
-                  title="TransactionId"
-                  value={field.value}
-                  onChange={field.onChange}
-                  placeholder="Search by transaction ID..."
-                />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
             name="subscriberId"
             render={({ field }) => (
               <FormItem className="relative">
                 <FacetedFormFilter
                   type="text"
                   size="small"
-                  title="SubscriberId"
+                  title="Subscriber ID"
                   value={field.value}
                   onChange={field.onChange}
                   placeholder="Search by subscriber ID..."

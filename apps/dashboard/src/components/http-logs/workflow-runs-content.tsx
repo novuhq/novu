@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChannelTypeEnum, JobStatusEnum, DirectionEnum } from '@novu/shared';
+import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import {
   RiCheckboxCircleFill,
   RiErrorWarningFill,
@@ -13,7 +13,6 @@ import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/t
 import { Button } from '@/components/primitives/button';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { getActivityStatus } from '@/components/activity/helpers';
-import { useEnvironment } from '@/context/environment/hooks';
 import { RequestLog } from '../../types/logs';
 import { WorkflowRunsFilters } from './workflow-runs-filters';
 import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
@@ -103,9 +102,7 @@ function StatusIcon({ status }: { status: WorkflowRunStatus }) {
 export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
   // Note: log parameter is currently unused but kept for future functionality
   // where we might want to filter activities related to a specific request log
-  const { filterValues, handleFiltersChange, resetFilters, orderBy, orderDirection, toggleSort } =
-    useWorkflowRunsUrlState();
-  const { currentEnvironment } = useEnvironment();
+  const { filterValues, handleFiltersChange, resetFilters } = useWorkflowRunsUrlState();
 
   // Local state for pagination
   const [displayedItemsCount, setDisplayedItemsCount] = useState(ITEMS_PER_PAGE);
@@ -115,31 +112,23 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
   const activityFilters = useMemo(() => {
     const filters: ActivityFilters = { transactionId: log.transactionId || '' };
 
-    // Always apply the time period filter - this is crucial for getting recent activities
-    if (filterValues.timePeriod) {
-      filters.dateRange = filterValues.timePeriod;
-    } else {
-      // Fallback to default if no time period is set
-      filters.dateRange = '24h';
-    }
-
     // Only apply other filters if they are explicitly set by the user
     // Map channels from workflow runs format to activity format
     if (filterValues.channels && filterValues.channels.length > 0) {
       filters.channels = filterValues.channels;
     }
 
-    // // Map other filters only if they have meaningful values
-    // if (filterValues.transactionId && filterValues.transactionId.trim()) {
-    //   filters.transactionId = filterValues.transactionId;
-    // }
+    // Map workflows filter to activity format
+    if (filterValues.workflows && filterValues.workflows.length > 0) {
+      filters.workflows = filterValues.workflows;
+    }
 
     if (filterValues.subscriberId && filterValues.subscriberId.trim()) {
       filters.subscriberId = filterValues.subscriberId;
     }
 
     return filters;
-  }, [filterValues]);
+  }, [filterValues, log.transactionId]);
 
   // Fetch activities using the same pattern as ActivityLogs
   const { activities, isLoading, error } = useFetchActivities(
@@ -160,47 +149,22 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
       return [];
     }
 
-    let filtered = [...activities];
+    const filtered = [...activities];
 
-    // Apply search filter (workflow names) - client-side filtering
-    if (filterValues.search && filterValues.search.trim()) {
-      const searchTerm = filterValues.search.toLowerCase();
-      filtered = filtered.filter((activity) => activity.template?.name?.toLowerCase().includes(searchTerm));
-    }
-
-    // Apply status filter - client-side filtering
-    if (filterValues.status && filterValues.status.length > 0) {
-      filtered = filtered.filter((activity) => filterValues.status!.includes(getWorkflowRunStatus(activity)));
-    }
-
-    // Apply sorting
-    if (orderBy === 'timestamp') {
-      filtered.sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return orderDirection === DirectionEnum.ASC ? dateA - dateB : dateB - dateA;
-      });
-    } else if (orderBy === 'name') {
-      filtered.sort((a, b) => {
-        const nameA = a.template?.name || '';
-        const nameB = b.template?.name || '';
-        return orderDirection === DirectionEnum.ASC ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-      });
-    } else if (orderBy === 'status') {
-      filtered.sort((a, b) => {
-        const statusA = getWorkflowRunStatus(a);
-        const statusB = getWorkflowRunStatus(b);
-        return orderDirection === DirectionEnum.ASC ? statusA.localeCompare(statusB) : statusB.localeCompare(statusA);
-      });
-    }
+    // Apply default sorting by timestamp (newest first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA; // Newest first
+    });
 
     return filtered;
-  }, [activities, filterValues, orderBy, orderDirection]);
+  }, [activities]);
 
   // Reset displayed items when filters change
   useMemo(() => {
     setDisplayedItemsCount(ITEMS_PER_PAGE);
-  }, [filterValues, orderBy, orderDirection]);
+  }, []);
 
   // Get items to display (paginated)
   const displayedActivities = filteredActivities.slice(0, displayedItemsCount);
