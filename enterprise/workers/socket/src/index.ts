@@ -28,28 +28,6 @@ interface IEnv {
 	JWT_SECRET: string;
 }
 
-// Types for JWT payload
-interface ISubscriberJwt {
-	_id: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	subscriberId: string;
-	organizationId: string;
-	environmentId: string;
-	aud: 'widget_user';
-	iat?: number;
-	exp?: number;
-}
-
-// WebSocket events enum
-enum WebSocketEventEnum {
-	RECEIVED = 'notification_received',
-	UNREAD = 'unread_count_changed',
-	UNSEEN = 'unseen_count_changed',
-}
-
-// Connection metadata
 interface IConnectionMetadata {
 	subscriberId: string;
 	userId: string;
@@ -394,13 +372,11 @@ export default {
 		// Handle HTTP API endpoints for sending messages
 		if (url.pathname === '/api/send' && request.method === 'POST') {
 			try {
-				const { userId, event, data, organizationId, environmentId, subscriberId } = (await request.json()) as {
+				const { userId, event, data, environmentId } = (await request.json()) as {
 					userId: string;
 					event: string;
 					data: any;
-					organizationId?: string;
 					environmentId?: string;
-					subscriberId?: string;
 				};
 
 				if (!userId || !event) {
