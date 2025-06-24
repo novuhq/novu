@@ -1,4 +1,4 @@
-import PartySocket, { WebSocket } from 'partysocket';
+import { WebSocket } from 'partysocket';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
 import type { BaseSocketInterface } from './base-socket';
@@ -226,10 +226,6 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     });
 
     this.#partySocket.addEventListener('message', this.#handleMessage);
-
-    this.#partySocket.addEventListener('close', () => {
-      // PartySocket connection closed
-    });
   }
 
   async #handleConnectSocket(): Result<void> {

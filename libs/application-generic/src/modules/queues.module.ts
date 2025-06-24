@@ -24,6 +24,7 @@ import {
   WorkflowQueueService,
 } from '../services/queues';
 import { ActiveJobsMetricWorkerService } from '../services/workers';
+import { featureFlagsService } from '../custom-providers';
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,
@@ -36,7 +37,7 @@ const memoryQueueService = {
   },
 };
 
-const INTERNAL_MODULE_PROVIDERS = [memoryQueueService];
+const INTERNAL_MODULE_PROVIDERS = [memoryQueueService, featureFlagsService];
 const BASE_PROVIDERS: Provider[] = [ReadinessService];
 
 @Module({
