@@ -18,6 +18,7 @@ export function createSocket({
   if (
     !socketUrl ||
     socketUrl === 'wss://eu.socket.novu.co' ||
+    socketUrl === 'wss://socket.novu.co' ||
     socketUrl === 'wss://socket.novu-staging.co' ||
     socketUrl === 'wss://socket-worker-local.cli-shortener.workers.dev'
   ) {
