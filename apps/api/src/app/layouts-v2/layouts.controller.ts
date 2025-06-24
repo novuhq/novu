@@ -11,7 +11,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common/decorators';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ExternalApiAccessible,
   UserSession,
@@ -42,6 +42,7 @@ import { ListLayoutsCommand, ListLayoutsUseCase } from './usecases/list-layouts'
 @Controller({ path: `/layouts`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
+@ApiExcludeController()
 @ApiTags('Layouts')
 export class LayoutsController {
   constructor(
