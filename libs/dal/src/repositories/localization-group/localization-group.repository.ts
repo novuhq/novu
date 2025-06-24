@@ -18,13 +18,13 @@ export class LocalizationGroupRepository extends BaseRepository<
 
   async findByResource(
     resourceType: LocalizationResourceEnum,
-    resourceId: string,
+    resourceInternalId: string,
     environmentId: string,
     organizationId: string
   ) {
     return this.findOne({
       resourceType,
-      resourceId,
+      _resourceInternalId: resourceInternalId,
       _environmentId: environmentId,
       _organizationId: organizationId,
     });
@@ -41,19 +41,17 @@ export class LocalizationGroupRepository extends BaseRepository<
   async getOrCreateForResource(
     resourceType: LocalizationResourceEnum,
     resourceId: string,
+    _resourceInternalId: string,
     environmentId: string,
-    organizationId: string,
-    name?: string,
-    description?: string
+    organizationId: string
   ) {
-    let group = await this.findByResource(resourceType, resourceId, environmentId, organizationId);
+    let group = await this.findByResource(resourceType, _resourceInternalId, environmentId, organizationId);
 
     if (!group) {
       group = await this.create({
         resourceType,
         resourceId,
-        name,
-        description,
+        _resourceInternalId,
         _environmentId: environmentId,
         _organizationId: organizationId,
       });

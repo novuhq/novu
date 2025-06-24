@@ -13,6 +13,10 @@ const localizationGroupSchema = new Schema<LocalizationGroupDBModel>(
       type: Schema.Types.String,
       required: true,
     },
+    _resourceInternalId: {
+      type: Schema.Types.ObjectId,
+      required: true,
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',

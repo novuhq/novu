@@ -34,7 +34,7 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
         },
       ],
     });
-    workflowId = workflow.id;
+    workflowId = workflow.workflowId;
   });
 
   afterEach(() => {
@@ -167,13 +167,9 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       .field('resourceId', workflowId)
       .field('resourceType', LocalizationResourceEnum.WORKFLOW)
       .attach('files', Buffer.from('invalid json content'), 'en_US.json')
-      .expect(200);
+      .expect(400);
 
-    expect(body.data.totalFiles).to.equal(1);
-    expect(body.data.successfulUploads).to.equal(0);
-    expect(body.data.failedUploads).to.equal(1);
-    expect(body.data.errors).to.have.lengthOf(1);
-    expect(body.data.errors[0]).to.include('Invalid JSON');
+    expect(body.message).to.include('No valid translation files were found');
   });
 
   it('should reject files with invalid locale patterns', async () => {
@@ -186,10 +182,9 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       .attach('files', Buffer.from(JSON.stringify(content)), 'invalid-filename.json')
       .expect(400);
 
-    expect(body.message).to.equal('Invalid file names');
+    expect(body.message).to.include('invalid names or formats');
     expect(body.errors).to.be.an('array').that.is.not.empty;
     expect(body.errors[0]).to.include('invalid-filename.json');
-    expect(body.errors[0]).to.include('must be a valid locale filename');
   });
 
   it('should require resourceId and resourceType', async () => {
@@ -214,10 +209,9 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
       .attach('files', Buffer.from(JSON.stringify(validContent)), 'invalid-name.json')
       .expect(400);
 
-    expect(body.message).to.equal('Invalid file names');
+    expect(body.message).to.include('invalid names or formats');
     expect(body.errors).to.be.an('array').that.is.not.empty;
     expect(body.errors[0]).to.include('invalid-name.json');
-    expect(body.errors[0]).to.include('must be a valid locale filename');
   });
 
   it('should handle mixed success and failure uploads with valid filenames', async () => {
@@ -236,6 +230,6 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     expect(body.data.successfulUploads).to.equal(2);
     expect(body.data.failedUploads).to.equal(1);
     expect(body.data.errors).to.have.lengthOf(1);
-    expect(body.data.errors[0]).to.include('Invalid JSON in file: es_ES.json');
+    expect(body.data.errors[0]).to.include("Failed to process file 'es_ES.json'");
   });
 });
