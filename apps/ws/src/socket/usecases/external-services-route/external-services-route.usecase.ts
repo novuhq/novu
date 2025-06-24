@@ -40,26 +40,21 @@ export class ExternalServicesRoute {
 
   private async processReceivedEvent(command: ExternalServicesRouteCommand): Promise<void> {
     const { message, messageId } = command.payload || {};
-    let messageData: any = null;
-
     // TODO: Retro-compatibility for a bit just in case stalled messages
     if (message) {
       Logger.log('Sending full message in the payload', LOG_CONTEXT);
-      messageData = command.payload;
+      await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
     } else if (messageId) {
       Logger.log(`Sending messageId: ${messageId} in the payload, we need to retrieve the full message`, LOG_CONTEXT);
       const storedMessage = await this.messageRepository.findOne({
         _id: messageId,
         _environmentId: command._environmentId,
       });
-      messageData = { message: storedMessage };
+      await this.wsGateway.sendMessage(command.userId, command.event, { message: storedMessage });
     }
 
-    if (messageData) {
-      // Send to Socket.io (socket worker communication now handled by WebSocketsQueueService)
-      await this.wsGateway.sendMessage(command.userId, command.event, messageData);
-
-      // Only recalculate the counts if we send a messageId/message.
+    // Only recalculate the counts if we send a messageId/message.
+    if (message || messageId) {
       await this.sendUnseenCountChange(command);
       await this.sendUnreadCountChange(command);
     }
@@ -80,13 +75,10 @@ export class ExternalServicesRoute {
     const paginationIndication: IUnreadCountPaginationIndication =
       unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
 
-    const countData = {
+    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, {
       unreadCount: paginationIndication.unreadCount,
       hasMore: paginationIndication.hasMore,
-    };
-
-    // Send to Socket.io (socket worker communication now handled by WebSocketsQueueService)
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNREAD, countData);
+    });
   }
 
   private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
@@ -107,13 +99,10 @@ export class ExternalServicesRoute {
     const paginationIndication: IUnseenCountPaginationIndication =
       unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
 
-    const countData = {
+    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, {
       unseenCount: paginationIndication.unseenCount,
       hasMore: paginationIndication.hasMore,
-    };
-
-    // Send to Socket.io (socket worker communication now handled by WebSocketsQueueService)
-    await this.wsGateway.sendMessage(command.userId, WebSocketEventEnum.UNSEEN, countData);
+    });
   }
 
   private async connectionExist(command: ExternalServicesRouteCommand): Promise<boolean | undefined> {
