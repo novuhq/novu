@@ -15,7 +15,12 @@ export function createSocket({
   eventEmitterInstance: NovuEventEmitter;
 }): BaseSocketInterface {
   let socketType = SocketType.SOCKET_IO;
-  if (!socketUrl || socketUrl === 'https://eu.socket.novu.co') {
+  if (
+    !socketUrl ||
+    socketUrl === 'wss://eu.socket.novu.co' ||
+    socketUrl === 'wss://socket.novu-staging.co' ||
+    socketUrl === 'wss://socket-worker-local.cli-shortener.workers.dev'
+  ) {
     socketType = SocketType.PARTY_SOCKET;
   }
 

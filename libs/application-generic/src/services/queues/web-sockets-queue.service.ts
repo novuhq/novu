@@ -30,12 +30,7 @@ export class WebSocketsQueueService extends QueueBaseService {
   }
 
   public async add(data: IWebSocketJobDto) {
-    // If socket worker is enabled, send directly to socket worker instead of queuing
-    const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(
-      data.data?._organizationId,
-      data.data?._environmentId,
-      data.data?.userId
-    );
+    const isSocketWorkerEnabled = await this.socketWorkerService.isEnabled(data.data?._environmentId);
 
     if (isSocketWorkerEnabled && data.data) {
       const { userId, event, _environmentId, _organizationId, subscriberId, payload } = data.data;
@@ -51,11 +46,7 @@ export class WebSocketsQueueService extends QueueBaseService {
     // Check if socket worker is enabled using the first item's context
     const firstItem = data.find((item) => item.data);
     const isSocketWorkerEnabled = firstItem
-      ? await this.socketWorkerService.isEnabled(
-          firstItem.data?._organizationId,
-          firstItem.data?._environmentId,
-          firstItem.data?.userId
-        )
+      ? await this.socketWorkerService.isEnabled(firstItem.data?._environmentId)
       : false;
 
     if (isSocketWorkerEnabled) {
@@ -80,13 +71,5 @@ export class WebSocketsQueueService extends QueueBaseService {
     }
 
     await super.addBulk(data);
-  }
-
-  public async isSocketWorkerEnabled(
-    organizationId?: string,
-    environmentId?: string,
-    userId?: string
-  ): Promise<boolean> {
-    return this.socketWorkerService.isEnabled(organizationId, environmentId, userId);
   }
 }

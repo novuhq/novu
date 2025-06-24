@@ -193,16 +193,10 @@ export class SocketWorkerService {
     return this.sendUnreadCountChange(userId, environmentId, organizationId);
   }
 
-  async isEnabled(organizationId?: string, environmentId?: string, userId?: string): Promise<boolean> {
-    // First check if environment variables are configured
+  async isEnabled(environmentId?: string): Promise<boolean> {
     const hasConfig = !!this.socketWorkerUrl && !!this.socketWorkerApiKey;
 
     if (!hasConfig) {
-      return false;
-    }
-
-    // If no feature flag service is available, fall back to environment-only check
-    if (!this.featureFlagsService) {
       return false;
     }
 
@@ -210,24 +204,12 @@ export class SocketWorkerService {
       return false;
     }
 
-    try {
-      const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_CLOUDFLARE_SOCKETS_ENABLED,
-        organization: organizationId ? { _id: organizationId } : undefined,
-        environment: environmentId ? { _id: environmentId } : undefined,
-        user: userId ? { _id: userId } : undefined,
-        defaultValue: false,
-      });
+    const isFeatureFlagEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CLOUDFLARE_SOCKETS_ENABLED,
+      environment: { _id: environmentId },
+      defaultValue: false,
+    });
 
-      return isFeatureFlagEnabled;
-    } catch (error) {
-      Logger.error(
-        `Error checking socket worker feature flag: ${error instanceof Error ? error.message : String(error)}`,
-        LOG_CONTEXT
-      );
-
-      // Fall back to environment-only check if feature flag service fails
-      return true;
-    }
+    return isFeatureFlagEnabled;
   }
 }
