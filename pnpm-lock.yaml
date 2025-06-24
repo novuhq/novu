@@ -2551,6 +2551,9 @@ importers:
       class-validator:
         specifier: 0.14.1
         version: 0.14.1
+      i18next:
+        specifier: ^23.7.11
+        version: 23.7.11
       multer:
         specifier: ^2.0.0
         version: 2.0.1
@@ -2579,6 +2582,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      liquidjs:
+        specifier: ^10.20.1
+        version: 10.20.1
       mocha:
         specifier: ^8.1.1
         version: 8.4.0
