@@ -50,7 +50,7 @@ export class GetRequests {
 
     const mappedData = findResult.data.map((log) => ({
       id: log.transaction_id || new Date(log.timestamp || 0).getTime().toString(),
-      timestamp: new Date(log.timestamp || 0).toISOString(),
+      timestamp: new Date(`${log.timestamp} UTC`).toISOString(),
       url: log.url || '',
       method: log.method || '',
       statusCode: log.status_code || 0,

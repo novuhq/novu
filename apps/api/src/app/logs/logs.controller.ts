@@ -27,7 +27,6 @@ export class LogsController {
       ...query,
     });
 
-    
     return this.getRequestsUsecase.execute(command);
   }
 }
