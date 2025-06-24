@@ -1,25 +1,22 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 
 import { QueueBaseService } from './queue-base.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import {
-  IWebSocketBulkJobDto,
-  IWebSocketJobDto,
-} from '../../dtos/web-sockets-job.dto';
+import { SocketWorkerService } from '../socket-worker';
+import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 
 const LOG_CONTEXT = 'WebSocketsQueueService';
 
 @Injectable()
 export class WebSocketsQueueService extends QueueBaseService {
-  constructor(
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-  ) {
-    super(
-      JobTopicNameEnum.WEB_SOCKETS,
-      new BullMqService(workflowInMemoryProviderService),
-    );
+  private socketWorkerService: SocketWorkerService;
+
+  constructor(public workflowInMemoryProviderService: WorkflowInMemoryProviderService) {
+    super(JobTopicNameEnum.WEB_SOCKETS, new BullMqService(workflowInMemoryProviderService));
+
+    this.socketWorkerService = new SocketWorkerService();
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
@@ -27,10 +24,49 @@ export class WebSocketsQueueService extends QueueBaseService {
   }
 
   public async add(data: IWebSocketJobDto) {
+    // If socket worker is enabled, send directly to socket worker instead of queuing
+    if (this.socketWorkerService.isEnabled() && data.data) {
+      const { userId, event, _environmentId, _organizationId, subscriberId, payload } = data.data;
+
+      await this.socketWorkerService.sendMessage(userId, event, payload, _organizationId, _environmentId, subscriberId);
+
+      Logger.debug(`Sent message directly to socket worker for user ${userId}, event ${event}`, LOG_CONTEXT);
+
+      return null;
+    }
+
     return await super.add(data);
   }
 
-  public async addBulk(data: IWebSocketBulkJobDto[]) {
-    return await super.addBulk(data);
+  public async addBulk(data: IWebSocketBulkJobDto[]): Promise<void> {
+    // If socket worker is enabled, send each message directly
+    if (this.socketWorkerService.isEnabled()) {
+      const promises = data.map(async (item) => {
+        if (item.data) {
+          const { userId, event, _environmentId, _organizationId, subscriberId, payload } = item.data;
+
+          return this.socketWorkerService.sendMessage(
+            userId,
+            event,
+            payload,
+            _organizationId,
+            _environmentId,
+            subscriberId
+          );
+        }
+      });
+
+      await Promise.all(promises);
+
+      Logger.debug(`Sent ${data.length} messages directly to socket worker`, LOG_CONTEXT);
+
+      return;
+    }
+
+    await super.addBulk(data);
+  }
+
+  public isSocketWorkerEnabled(): boolean {
+    return this.socketWorkerService.isEnabled();
   }
 }

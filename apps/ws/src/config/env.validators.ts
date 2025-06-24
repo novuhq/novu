@@ -8,7 +8,6 @@ export function validateEnv() {
 export type ValidatedEnv = StringifyEnv<CleanedEnv<typeof envValidators>>;
 
 export const envValidators = {
-  CLOUDFLARE_WORKER_URL: str({ default: undefined }),
   JWT_SECRET: str(),
   MONGO_AUTO_CREATE_INDEXES: bool({ default: false }),
   MONGO_MAX_IDLE_TIME_IN_MS: num({ default: 1000 * 30 }),
