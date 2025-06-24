@@ -1,12 +1,15 @@
 {
-	"name": "socket-worker",
-	"version": "0.0.0",
+	"name": "@novu/socket-worker",
+	"version": "0.0.1",
 	"private": true,
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",
 		"start": "wrangler dev",
-		"cf-typegen": "wrangler types"
+		"cf-typegen": "wrangler types",
+		"deploy:staging": "wrangler deploy --env staging",
+		"deploy:production": "wrangler deploy --env production",
+		"deploy:local": "wrangler deploy --env local"
 	},
 	"devDependencies": {
 		"typescript": "^5.5.2",
