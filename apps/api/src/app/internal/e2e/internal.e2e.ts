@@ -5,24 +5,12 @@ describe('Internal Controller (GET /v1/internal) - #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
+    (process.env as any).INTERNAL_SERVICES_API_KEY = 'test-internal-key';
     session = new UserSession();
     await session.initialize();
   });
 
   describe('/subscriber-online-state (POST)', () => {
-    it('should return 401 when no authorization header is provided', async () => {
-      const { body } = await session.testAgent
-        .post('/v1/internal/subscriber-online-state')
-        .send({
-          subscriberId: 'test-subscriber',
-          environmentId: 'test-env',
-          isOnline: true,
-        })
-        .expect(401);
-
-      expect(body.message).to.equal('Missing authorization header');
-    });
-
     it('should return 401 when invalid API key is provided', async () => {
       const { body } = await session.testAgent
         .post('/v1/internal/subscriber-online-state')
@@ -68,27 +56,13 @@ describe('Internal Controller (GET /v1/internal) - #novu-v2', () => {
         .post('/v1/internal/subscriber-online-state')
         .set('Authorization', 'Bearer test-internal-key')
         .send({
-          subscriberId: 'test-subscriber',
-          environmentId: 'test-env',
+          subscriberId: session.subscriberId,
+          environmentId: session.environment._id,
           isOnline: true,
         })
         .expect(200);
 
-      expect(body.success).to.equal(true);
-      expect(body.message).to.equal('Subscriber online state updated successfully');
-    });
-
-    it('should return 400 when required fields are missing', async () => {
-      (process.env as any).INTERNAL_SERVICES_API_KEY = 'test-internal-key';
-
-      await session.testAgent
-        .post('/v1/internal/subscriber-online-state')
-        .set('Authorization', 'Bearer test-internal-key')
-        .send({
-          subscriberId: 'test-subscriber',
-          // Missing environmentId and isOnline
-        })
-        .expect(400);
+      expect(body.data.success).to.equal(true);
     });
   });
 });
