@@ -18,6 +18,8 @@ import {
   ExternalApiAccessible,
   UserSession,
   RequirePermissions,
+  ParseSlugEnvironmentIdPipe,
+  ParseSlugIdPipe,
 } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
@@ -28,8 +30,6 @@ import {
 } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ParseSlugEnvironmentIdPipe } from './pipes/parse-slug-env-id.pipe';
-import { ParseSlugIdPipe } from './pipes/parse-slug-id.pipe';
 import {
   BuildStepDataCommand,
   BuildStepDataUsecase,

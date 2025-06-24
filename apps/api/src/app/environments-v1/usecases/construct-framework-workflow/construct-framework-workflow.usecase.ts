@@ -60,7 +60,7 @@ export class ConstructFrameworkWorkflow {
             staticStep,
             fullPayloadForRender,
             dbWorkflow,
-            subscriber.locale
+            subscriber.locale ?? undefined
           );
         }
       },
