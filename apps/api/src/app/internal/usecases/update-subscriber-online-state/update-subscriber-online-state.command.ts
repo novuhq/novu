@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsMongoId } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
 
 export class UpdateSubscriberOnlineStateCommand extends BaseCommand {
@@ -8,6 +8,7 @@ export class UpdateSubscriberOnlineStateCommand extends BaseCommand {
 
   @IsString()
   @IsNotEmpty()
+  @IsMongoId()
   environmentId: string;
 
   @IsBoolean()

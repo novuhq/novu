@@ -66,7 +66,9 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 	/**
 	 * Handle WebSocket connection close (called automatically by Cloudflare runtime)
 	 */
-	async webSocketClose(ws: WebSocket): Promise<void> {
+	async webSocketClose(ws: WebSocket, code: number, reason: string): Promise<void> {
+		ws.close(code, reason);
+
 		const metadata = this.getConnectionMetadata(ws);
 
 		if (metadata) {
@@ -243,9 +245,13 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 	private async handleSubscriberDisconnection(metadata: IConnectionMetadata): Promise<void> {
 		const activeConnections = this.getActiveConnectionsForUser(metadata.userId);
 
-		console.log(`Disconnect request received from ${metadata.userId}. Active connections: ${activeConnections}`);
+		const remainingConnections = activeConnections - 1;
 
-		if (activeConnections === 0) {
+		console.log(
+			`Disconnect request received from ${metadata.userId}. Active connections: ${activeConnections}, remaining: ${remainingConnections}`
+		);
+
+		if (remainingConnections <= 0) {
 			console.log(`Subscriber ${metadata.userId} is now offline`);
 			// Notify API that subscriber is offline
 			await this.notifySubscriberOnlineState(metadata.userId, metadata.environmentId, false);

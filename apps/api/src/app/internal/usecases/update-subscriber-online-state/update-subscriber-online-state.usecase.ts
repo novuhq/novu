@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
+import { SubscriberRepository } from '@novu/dal';
 import { UpdateSubscriberOnlineStateCommand } from './update-subscriber-online-state.command';
 
 @Injectable()
 export class UpdateSubscriberOnlineState {
-  constructor(private readonly logger: PinoLogger) {
+  constructor(
+    private readonly logger: PinoLogger,
+    private readonly subscriberRepository: SubscriberRepository
+  ) {
     this.logger.setContext(UpdateSubscriberOnlineState.name);
   }
 
@@ -13,32 +17,25 @@ export class UpdateSubscriberOnlineState {
       `Updating subscriber online state: ${command.subscriberId} in environment ${command.environmentId} to ${command.isOnline}`
     );
 
-    try {
-      /*
-       * Here you can add your business logic for handling subscriber online state
-       * For example:
-       * - Update subscriber status in database
-       * - Trigger events or notifications
-       * - Update analytics or metrics
-       * - Send notifications to other services
-       */
+    const updatePayload: { isOnline: boolean; lastOnlineAt?: string } = {
+      isOnline: command.isOnline,
+      lastOnlineAt: new Date().toISOString(),
+    };
 
-      // For now, we'll just log the event
-      this.logger.info(
-        `Subscriber ${command.subscriberId} is now ${command.isOnline ? 'online' : 'offline'} in environment ${command.environmentId}`
-      );
+    await this.subscriberRepository.update(
+      { _id: command.subscriberId, _environmentId: command.environmentId },
+      {
+        $set: updatePayload,
+      }
+    );
 
-      return {
-        success: true,
-        message: 'Subscriber online state updated successfully',
-      };
-    } catch (error) {
-      this.logger.error(
-        `Failed to update subscriber online state for ${command.subscriberId}: ${error.message}`,
-        error.stack
-      );
+    this.logger.info(
+      `Subscriber ${command.subscriberId} is now ${command.isOnline ? 'online' : 'offline'} in environment ${command.environmentId}`
+    );
 
-      throw error;
-    }
+    return {
+      success: true,
+      message: 'Subscriber online state updated successfully',
+    };
   }
 }

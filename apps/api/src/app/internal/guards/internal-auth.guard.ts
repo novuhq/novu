@@ -15,7 +15,7 @@ export class InternalAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing API key');
     }
 
-    const validApiKey = process.env.INTERNAL_API_KEY;
+    const validApiKey = process.env.INTERNAL_SERVICES_API_KEY;
     if (!validApiKey) {
       throw new UnauthorizedException('Internal API key not configured');
     }
