@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 
-describe('Internal Controller (GET /v1/internal)', () => {
+describe('Internal Controller (GET /v1/internal) - #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -37,10 +37,10 @@ describe('Internal Controller (GET /v1/internal)', () => {
       expect(body.message).to.equal('Invalid API key');
     });
 
-    it('should return 401 when INTERNAL_API_KEY is not configured', async () => {
+    it('should return 401 when INTERNAL_SERVICES_API_KEY is not configured', async () => {
       // Temporarily remove the env var
-      const originalKey = process.env.INTERNAL_API_KEY;
-      delete (process.env as any).INTERNAL_API_KEY;
+      const originalKey = process.env.INTERNAL_SERVICES_API_KEY;
+      delete (process.env as any).INTERNAL_SERVICES_API_KEY;
 
       const { body } = await session.testAgent
         .post('/v1/internal/subscriber-online-state')
@@ -56,13 +56,13 @@ describe('Internal Controller (GET /v1/internal)', () => {
 
       // Restore the env var
       if (originalKey) {
-        (process.env as any).INTERNAL_API_KEY = originalKey;
+        (process.env as any).INTERNAL_SERVICES_API_KEY = originalKey;
       }
     });
 
     it('should return 200 when valid API key is provided', async () => {
       // Set a test API key
-      (process.env as any).INTERNAL_API_KEY = 'test-internal-key';
+      (process.env as any).INTERNAL_SERVICES_API_KEY = 'test-internal-key';
 
       const { body } = await session.testAgent
         .post('/v1/internal/subscriber-online-state')
@@ -79,7 +79,7 @@ describe('Internal Controller (GET /v1/internal)', () => {
     });
 
     it('should return 400 when required fields are missing', async () => {
-      (process.env as any).INTERNAL_API_KEY = 'test-internal-key';
+      (process.env as any).INTERNAL_SERVICES_API_KEY = 'test-internal-key';
 
       await session.testAgent
         .post('/v1/internal/subscriber-online-state')
