@@ -1,4 +1,5 @@
 export type RequestLog = {
+  // id: string;
   timestamp: string;
   url: string;
   method: string;

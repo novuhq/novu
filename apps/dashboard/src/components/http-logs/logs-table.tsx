@@ -5,8 +5,8 @@ import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/res
 import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
 import { LogsDetailPanel } from './logs-detail-panel';
-import { mockLogsData, getTotalLogsCount } from './mock-logs-data';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
+import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiSkipBackLine, RiSkipForwardLine } from 'react-icons/ri';
 
 type LogsTableProps = {
@@ -15,19 +15,23 @@ type LogsTableProps = {
 
 export function LogsTable({ onLogClick }: LogsTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading] = useState(false);
   const { selectedLogId, handleLogSelect } = useLogsUrlState();
-
-  const logsData = mockLogsData;
-  const totalCount = getTotalLogsCount();
   const itemsPerPage = 20;
+
+  const { data: logsResponse, isLoading } = useFetchRequestLogs({
+    page: currentPage - 1, // API is 0-based
+    limit: itemsPerPage,
+  });
+
+  const logsData = logsResponse?.data || [];
+  const totalCount = logsResponse?.total || 0;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, totalCount);
 
   const selectedLog = selectedLogId
-    ? logsData.find((log) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
+    ? logsData.find((log: RequestLog) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
     : undefined;
 
   const handlePreviousPage = () => {
@@ -67,7 +71,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {logsData.map((log, index) => {
+                    {logsData.map((log: RequestLog, index: number) => {
                       const logId = log.transactionId || `error-${index}`;
                       return (
                         <LogsTableRow
