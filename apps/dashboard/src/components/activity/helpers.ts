@@ -3,7 +3,8 @@ import { JobStatusEnum, IActivityJob } from '@novu/shared';
 export const getActivityStatus = (jobs: IActivityJob[]) => {
   if (!jobs.length) return JobStatusEnum.PENDING;
 
-  const hasFailedJob = jobs.some(job => job.status === JobStatusEnum.FAILED);
+  const hasFailedJob = jobs.some((job) => job.status === JobStatusEnum.FAILED);
+
   if (hasFailedJob) {
     return JobStatusEnum.FAILED;
   }
@@ -12,9 +13,9 @@ export const getActivityStatus = (jobs: IActivityJob[]) => {
 
   if (lastJob.status === JobStatusEnum.SKIPPED || lastJob.status === JobStatusEnum.CANCELED) {
     const previousJobs = jobs.slice(0, -1);
-    const hasPreviousCompletedJobs = previousJobs.some(job => job.status === JobStatusEnum.COMPLETED);
-    
-    if (hasPreviousCompletedJobs) {
+    const hasPreviousCompletedJobs = previousJobs.some((job) => job.status === JobStatusEnum.COMPLETED);
+
+    if (hasPreviousCompletedJobs || !previousJobs.length) {
       return JobStatusEnum.COMPLETED;
     }
   }

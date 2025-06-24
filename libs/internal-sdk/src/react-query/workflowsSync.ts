@@ -28,10 +28,10 @@ export type WorkflowsSyncMutationData =
   operations.WorkflowControllerSyncResponse;
 
 /**
- * Sync workflow to another environment
+ * Sync a workflow
  *
  * @remarks
- * Synchronizes a workflow to a target environment
+ * Synchronizes a workflow to the target environment
  */
 export function useWorkflowsSyncMutation(
   options?: MutationHookOptions<

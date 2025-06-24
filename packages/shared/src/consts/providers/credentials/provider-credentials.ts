@@ -559,7 +559,7 @@ export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
     displayName: 'Service Account (entire JSON file)',
-    type: 'text',
+    type: 'textarea',
     required: true,
   },
   ...pushConfigBase,
@@ -591,6 +591,16 @@ export const pushWebhookConfig: IConfigCredentials[] = [
     required: true,
   },
   ...pushConfigBase,
+];
+
+export const chatWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: false,
+  },
 ];
 
 export const oneSignalConfig: IConfigCredentials[] = [

@@ -28,6 +28,9 @@ import { Result } from "../types/fp.js";
 
 /**
  * Duplicate a workflow
+ *
+ * @remarks
+ * Duplicates a workflow by its unique identifier **workflowId**. This will create a new workflow with the same steps and settings.
  */
 export function workflowsDuplicate(
   client: NovuCore,

@@ -1,5 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import {
+  chatWebhookConfig,
   grafanaOnCallConfig,
   slackConfig,
   getstreamConfig,
@@ -16,7 +17,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,
     credentials: slackConfig,
-    docReference: `https://docs.novu.co/channels-and-providers/chat/slack${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/chat/slack${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
@@ -24,7 +25,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Discord',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: `https://docs.novu.co/channels-and-providers/chat/discord${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/chat/discord${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
   {
@@ -40,7 +41,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'MSTeams',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: `https://docs.novu.co/channels-and-providers/chat/ms-teams${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/chat/ms-teams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
   {
@@ -64,7 +65,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Zulip',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: `https://docs.novu.co/channels-and-providers/chat/zulip${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docReference: `https://docs.novu.co/platform/integrations/chat/zulip${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
   },
   {
@@ -90,5 +91,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: whatsAppBusinessConfig,
     docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.ChatWebhook,
+    displayName: 'Chat Webhook',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: chatWebhookConfig,
+    docReference: `https://docs.novu.co/channels-and-providers/chat/chat-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'chat-webhook.svg', dark: 'chat-webhook.svg' },
+    betaVersion: true,
   },
 ];

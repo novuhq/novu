@@ -101,6 +101,12 @@ jobs:
             echo -e "\nVITE_SELF_HOSTED=true" >> .env
           fi
 
+          # Switch from PM2 cluster mode to single node process for open source builds
+          if [[ "${{ env.SERVICE_NAME }}" =~ ^(api|worker|webhook|ws)$ ]]; then
+            echo "Switching ${{ env.SERVICE_NAME }} from PM2 cluster mode to single node process for open source"
+            sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
+          fi
+
           pnpm run docker:build
           docker images
 

@@ -14,6 +14,7 @@ import {
   ActivityFeed,
   ApiKeysPage,
   CreateWorkflowPage,
+  LayoutsPage,
   ErrorPage,
   IntegrationsListPage,
   OrganizationListPage,
@@ -225,6 +226,14 @@ const router = createBrowserRouter([
                     ),
                   },
                 ],
+              },
+              {
+                path: ROUTES.LAYOUTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                    <LayoutsPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.API_KEYS,

@@ -3,6 +3,7 @@ import { WorkflowResponseDto } from '@novu/shared';
 import {
   loadPayloadData,
   savePayloadData,
+  mergeObjectData,
 } from '@/components/workflow-editor/steps/utils/preview-context-storage.utils';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 import { useIsPayloadSchemaEnabled } from './use-is-payload-schema-enabled';
@@ -32,18 +33,26 @@ export function useWorkflowPayloadPersistence({ workflowId, environmentId }: Use
 
   const getInitialPayload = useCallback(
     (workflow?: WorkflowResponseDto): PayloadData => {
-      // Priority: persisted > payloadExample > empty object
+      // Get the server's payload example (the source of truth for schema)
+      const serverPayloadExample =
+        isPayloadSchemaEnabled && workflow?.payloadExample ? (workflow.payloadExample as PayloadData) : {};
+
+      // Get persisted payload from localStorage
       const persistedPayload = loadPersistedPayload();
 
-      if (persistedPayload && Object.keys(persistedPayload).length > 0) {
+      // If no persisted payload, use server example
+      if (!persistedPayload || Object.keys(persistedPayload).length === 0) {
+        return serverPayloadExample;
+      }
+
+      // If no server example, use persisted (fallback for older workflows)
+      if (!serverPayloadExample || Object.keys(serverPayloadExample).length === 0) {
         return persistedPayload;
       }
 
-      if (isPayloadSchemaEnabled && workflow?.payloadExample) {
-        return workflow.payloadExample as PayloadData;
-      }
-
-      return {};
+      // Merge persisted payload with server example
+      // This ensures new schema keys are included while preserving user modifications
+      return mergeObjectData(persistedPayload, serverPayloadExample);
     },
     [loadPersistedPayload, isPayloadSchemaEnabled]
   );

@@ -20,6 +20,14 @@ export interface LiquidVariable {
   isNewSuggestion?: boolean;
 }
 
+export type FieldDataType = 'string' | 'number' | 'boolean' | 'date' | 'datetime' | 'array' | 'object';
+
+export interface EnhancedLiquidVariable extends LiquidVariable {
+  dataType: FieldDataType;
+  format?: string;
+  inputType?: string;
+}
+
 export type IsAllowedVariable = (variable: LiquidVariable) => boolean;
 export type IsArbitraryNamespace = (path: string) => boolean;
 
@@ -31,16 +39,57 @@ export interface ParsedVariables {
   isAllowedVariable: IsAllowedVariable;
 }
 
-/**
- * Parse JSON Schema and extract variables for Liquid autocompletion.
- * @param schema - The JSON Schema to parse.
- * @returns An object containing three arrays: primitives, arrays, and namespaces.
- */
+export interface EnhancedParsedVariables extends ParsedVariables {
+  enhancedVariables: EnhancedLiquidVariable[];
+}
+
+function mapJsonSchemaTypeToFieldType(schemaProperty: JSONSchemaDefinition | JSONSchema7): FieldDataType {
+  if (typeof schemaProperty === 'boolean') return 'string';
+
+  const { type, format } = schemaProperty;
+
+  switch (type) {
+    case 'string':
+      if (format === 'date') return 'date';
+      if (format === 'date-time') return 'datetime';
+      return 'string';
+    case 'number':
+    case 'integer':
+      return 'number';
+    case 'boolean':
+      return 'boolean';
+    case 'array':
+      return 'array';
+    case 'object':
+      return 'object';
+    default:
+      return 'string';
+  }
+}
+
+function getInputTypeFromSchema(schemaProperty: JSONSchemaDefinition | JSONSchema7): string {
+  if (typeof schemaProperty === 'boolean') return 'text';
+
+  const { type, format } = schemaProperty;
+
+  switch (type) {
+    case 'number':
+    case 'integer':
+      return 'number';
+    case 'string':
+      if (format === 'date') return 'date';
+      if (format === 'date-time') return 'datetime-local';
+      if (format === 'email') return 'email';
+      return 'text';
+    default:
+      return 'text';
+  }
+}
 
 export function parseStepVariables(
   schema: JSONSchemaDefinition | JSONSchema7,
   { digestStepId, isPayloadSchemaEnabled }: { digestStepId?: string; isPayloadSchemaEnabled?: boolean }
-): ParsedVariables {
+): EnhancedParsedVariables {
   const result: ParsedVariables = {
     primitives: [],
     arrays: [],
@@ -48,6 +97,8 @@ export function parseStepVariables(
     namespaces: [],
     isAllowedVariable: () => false,
   };
+
+  const enhancedVariables: EnhancedLiquidVariable[] = [];
 
   function extractProperties(obj: JSONSchemaDefinition | JSONSchema7, path = ''): void {
     if (typeof obj === 'boolean') return;
@@ -60,8 +111,10 @@ export function parseStepVariables(
 
         if (typeof value === 'object') {
           if (value.type === 'array') {
-            result.arrays.push({
+            result.arrays.push({ name: fullPath });
+            enhancedVariables.push({
               name: fullPath,
+              dataType: 'array',
             });
 
             if (value.properties) {
@@ -73,14 +126,23 @@ export function parseStepVariables(
               extractProperties(items, `${fullPath}[0]`);
             }
           } else if (value.type === 'object') {
-            if (fullPath !== 'payload' && fullPath !== 'steps') {
-              result.namespaces.push({ name: fullPath });
-            }
+            result.namespaces.push({ name: fullPath });
+            enhancedVariables.push({
+              name: fullPath,
+              dataType: 'object',
+            });
 
             extractProperties(value, fullPath);
           } else if (value.type && ['string', 'number', 'boolean', 'integer'].includes(value.type as string)) {
-            result.primitives.push({
+            const dataType = mapJsonSchemaTypeToFieldType(value);
+            const inputType = getInputTypeFromSchema(value);
+
+            result.primitives.push({ name: fullPath });
+            enhancedVariables.push({
               name: fullPath,
+              dataType,
+              inputType,
+              format: value.format,
             });
           }
         }
@@ -178,6 +240,25 @@ export function parseStepVariables(
     return true;
   }
 
+  if (digestStepId) {
+    const digestVariables = DIGEST_VARIABLES.map((variable) => {
+      const { label: displayLabel, value } = getDynamicDigestVariable({
+        digestStepName: digestStepId,
+        type: variable.name as DIGEST_VARIABLES_ENUM,
+      });
+
+      return {
+        ...variable,
+        name: value,
+        displayLabel,
+        dataType: 'string' as FieldDataType,
+        inputType: 'text',
+      };
+    });
+
+    enhancedVariables.unshift(...digestVariables);
+  }
+
   return {
     ...result,
 
@@ -202,5 +283,6 @@ export function parseStepVariables(
       : [...result.primitives, ...result.arrays, ...result.namespaces],
 
     isAllowedVariable,
+    enhancedVariables,
   };
 }

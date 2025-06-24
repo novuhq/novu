@@ -12,3 +12,4 @@ export * from './sign-up';
 export * from './usecase-select-page';
 export * from './welcome-page';
 export * from './workflows';
+export * from './layouts';

@@ -17,20 +17,13 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
           name: 'Inbox',
           type: StepTypeEnum.IN_APP,
           controlValues: {
-            subject: '{{payload.subject}}',
-            body: '{{payload.body}}',
+            subject: '**In-App Notification Subject**',
+            body: "Welcome to Novu! This is a demo notification to showcase the Inbox component. You can customize the content, styling and actions of notifications to match your app's needs.",
             avatar: window.location.origin + '/images/novu.svg',
             primaryAction: {
-              label: '{{payload.primaryActionLabel}}',
+              label: 'Add to your app',
               redirect: {
-                target: '_self',
-                url: '/onboarding/inbox/embed',
-              },
-            },
-            secondaryAction: {
-              label: '{{payload.secondaryActionLabel}}',
-              redirect: {
-                target: '_self',
+                target: '_blank',
                 url: '/onboarding/inbox/embed',
               },
             },

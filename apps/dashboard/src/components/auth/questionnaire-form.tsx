@@ -276,7 +276,7 @@ function useSubmitQuestionnaire() {
       });
     },
     onSuccess: () => {
-      navigate(ROUTES.USECASE_SELECT);
+      navigate(ROUTES.INBOX_USECASE);
     },
   });
 }

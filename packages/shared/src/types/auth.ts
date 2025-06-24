@@ -44,6 +44,10 @@ export enum PermissionsEnum {
   WORKFLOW_READ = 'org:workflow:read',
   WORKFLOW_WRITE = 'org:workflow:write',
 
+  // Email Layouts
+  LAYOUT_READ = 'org:layout:read',
+  LAYOUT_WRITE = 'org:layout:write',
+
   // Webhooks
   WEBHOOK_READ = 'org:webhook:read',
   WEBHOOK_WRITE = 'org:webhook:write',

@@ -32,11 +32,22 @@ export class PushWebhookPushProvider extends BaseProvider implements IPushProvid
         step,
       },
     });
+
+    const hmacSecretKey = (data.body.hmacSecretKey as string) || this.config.hmacSecretKey;
+    const webhookUrl = (data.body.webhookUrl as string) || this.config.webhookUrl;
+
+    // Clean up override fields from the body before sending
+    if (data.body.hmacSecretKey) {
+      delete data.body.hmacSecretKey;
+    }
+    if (data.body.webhookUrl) {
+      delete data.body.webhookUrl;
+    }
+
     const body = this.createBody(data.body);
+    const hmacValue = this.computeHmac(body, hmacSecretKey);
 
-    const hmacValue = this.computeHmac(body);
-
-    const response = await axios.create().post(this.config.webhookUrl, body, {
+    const response = await axios.create().post(webhookUrl, body, {
       headers: {
         'content-type': 'application/json',
         'X-Novu-Signature': hmacValue,
@@ -54,7 +65,9 @@ export class PushWebhookPushProvider extends BaseProvider implements IPushProvid
     return JSON.stringify(options);
   }
 
-  computeHmac(payload: string): string {
-    return crypto.createHmac('sha256', this.config.hmacSecretKey).update(payload, 'utf-8').digest('hex');
+  computeHmac(payload: string, hmacSecretKey: string): string {
+    const secretKey = hmacSecretKey;
+
+    return crypto.createHmac('sha256', secretKey).update(payload, 'utf-8').digest('hex');
   }
 }

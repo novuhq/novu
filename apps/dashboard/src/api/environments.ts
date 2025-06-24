@@ -42,3 +42,7 @@ export async function createEnvironment(payload: { name: string; color: string }
 export async function deleteEnvironment({ environment }: { environment: IEnvironment }): Promise<void> {
   return del(`/environments/${environment._id}`);
 }
+
+export async function regenerateApiKeys({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
+  return post<{ data: IApiKey[] }>(`/environments/api-keys/regenerate`, { environment });
+}

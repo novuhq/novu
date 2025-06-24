@@ -10,10 +10,10 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Steps extends ClientSDK {
   /**
-   * Generate preview
+   * Generate step preview
    *
    * @remarks
-   * Generates a preview for a specific workflow step
+   * Generates a preview for a specific workflow step by its unique identifier **stepId**
    */
   async generatePreview(
     request: operations.WorkflowControllerGeneratePreviewRequest,
@@ -27,7 +27,7 @@ export class Steps extends ClientSDK {
   }
 
   /**
-   * Get workflow step data
+   * Retrieve workflow step
    *
    * @remarks
    * Retrieves data for a specific step in a workflow

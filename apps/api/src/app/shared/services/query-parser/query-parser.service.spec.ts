@@ -380,5 +380,247 @@ describe('QueryParserService', () => {
         expect(result).to.be.false;
       });
     });
+
+    describe('Relative Date Operators', () => {
+      describe('moreThanXAgo operator', () => {
+        it('should return true when date is more than 5 days ago', () => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: sevenDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should return false when date is less than 5 days ago', () => {
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: threeDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+
+        it('should return false with invalid date input', () => {
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: 'invalid-date' };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+
+        it('should return false with invalid rule value', () => {
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 'invalid', unit: 'days' }],
+          };
+          const data = { createdAt: new Date().toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+      });
+
+      describe('lessThanXAgo operator', () => {
+        it('should return true when date is less than 5 days ago', () => {
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            lessThanXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: threeDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should return false when date is more than 5 days ago', () => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            lessThanXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: sevenDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+      });
+
+      describe('withinLast operator', () => {
+        it('should return true when date is within last 5 days', () => {
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            withinLast: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: threeDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should return false when date is more than 5 days ago', () => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            withinLast: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: sevenDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+
+        it('should return false when date is in the future', () => {
+          const tomorrow = new Date();
+          tomorrow.setDate(tomorrow.getDate() + 1);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            withinLast: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: tomorrow.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+      });
+
+      describe('notWithinLast operator', () => {
+        it('should return true when date is more than 5 days ago', () => {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            notWithinLast: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: sevenDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should return false when date is within last 5 days', () => {
+          const threeDaysAgo = new Date();
+          threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            notWithinLast: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: threeDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+      });
+
+      describe('exactlyXAgo operator', () => {
+        it('should return true when date is exactly (within tolerance) 5 days ago', () => {
+          const fiveDaysAgo = new Date();
+          fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            exactlyXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: fiveDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should return false when date is significantly different from 5 days ago', () => {
+          const tenDaysAgo = new Date();
+          tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            exactlyXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'days' }],
+          };
+          const data = { createdAt: tenDaysAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.false;
+        });
+      });
+
+      describe('Different time units', () => {
+        it('should work with hours', () => {
+          const threeHoursAgo = new Date();
+          threeHoursAgo.setHours(threeHoursAgo.getHours() - 3);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            withinLast: [{ var: 'createdAt' }, { amount: 5, unit: 'hours' }],
+          };
+          const data = { createdAt: threeHoursAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should work with minutes', () => {
+          const tenMinutesAgo = new Date();
+          tenMinutesAgo.setMinutes(tenMinutesAgo.getMinutes() - 10);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 5, unit: 'minutes' }],
+          };
+          const data = { createdAt: tenMinutesAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should work with weeks', () => {
+          const threeWeeksAgo = new Date();
+          threeWeeksAgo.setDate(threeWeeksAgo.getDate() - 21);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 2, unit: 'weeks' }],
+          };
+          const data = { createdAt: threeWeeksAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should work with months', () => {
+          const threeMonthsAgo = new Date();
+          threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 2, unit: 'months' }],
+          };
+          const data = { createdAt: threeMonthsAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+
+        it('should work with years', () => {
+          const twoYearsAgo = new Date();
+          twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+          const rule: RulesLogic<AdditionalOperation> = {
+            moreThanXAgo: [{ var: 'createdAt' }, { amount: 1, unit: 'years' }],
+          };
+          const data = { createdAt: twoYearsAgo.toISOString() };
+          const { result, error } = evaluateRules(rule, data);
+          expect(error).to.be.undefined;
+          expect(result).to.be.true;
+        });
+      });
+    });
   });
 });

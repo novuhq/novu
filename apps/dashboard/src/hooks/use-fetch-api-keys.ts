@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '@/context/environment/hooks';
 import { IApiKey } from '@novu/shared';
-import { getApiKeys } from '../api/environments';
+import { getApiKeys, regenerateApiKeys } from '../api/environments';
 
 export const useFetchApiKeys = ({ enabled = true }: { enabled?: boolean } = {}) => {
   const { currentEnvironment } = useEnvironment();
@@ -14,4 +14,19 @@ export const useFetchApiKeys = ({ enabled = true }: { enabled?: boolean } = {}) 
   });
 
   return query;
+};
+
+export const useRegenerateApiKeys = () => {
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: () => regenerateApiKeys({ environment: currentEnvironment! }),
+    onSuccess: () => {
+      // Invalidate the API keys query to refetch the new keys
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.getApiKeys, currentEnvironment?._id],
+      });
+    },
+  });
 };
