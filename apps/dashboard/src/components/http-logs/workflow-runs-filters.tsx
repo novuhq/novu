@@ -67,7 +67,7 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
     filterValues.search !== '' ||
     filterValues.status?.length ||
     filterValues.company !== '' ||
-    filterValues.timePeriod !== '60d' ||
+    filterValues.timePeriod !== '24h' ||
     filterValues.channels?.length ||
     filterValues.transactionId !== '' ||
     filterValues.subscriberId !== '';
@@ -83,20 +83,38 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
               name="timePeriod"
               render={({ field }) => (
                 <FormItem className="relative">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    mode="ghost"
-                    size="2xs"
-                    className={cn(
-                      'h-8 rounded-r-none border-0 border-r border-neutral-200 px-3 text-xs font-normal',
-                      'hover:bg-neutral-50'
-                    )}
-                  >
-                    <RiCalendarLine className="mr-1 h-3 w-3" />
-                    {field.value || '60D'}
-                    <RiArrowDownSLine className="ml-1 h-3 w-3" />
-                  </Button>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        mode="ghost"
+                        size="2xs"
+                        className={cn(
+                          'h-8 rounded-r-none border-0 border-r border-neutral-200 px-3 text-xs font-normal',
+                          'hover:bg-neutral-50'
+                        )}
+                      >
+                        <RiCalendarLine className="mr-1 h-3 w-3" />
+                        {timePeriodOptions.find((option) => option.value === field.value)?.label || '24H'}
+                        <RiArrowDownSLine className="ml-1 h-3 w-3" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-0" align="start">
+                      <div className="p-2">
+                        {timePeriodOptions.map((option) => (
+                          <div
+                            key={option.value}
+                            className="flex cursor-pointer items-center rounded p-2 hover:bg-neutral-50"
+                            onClick={() => field.onChange(option.value)}
+                          >
+                            <input type="radio" checked={field.value === option.value} readOnly className="mr-2" />
+                            <span className="text-sm">{option.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </FormItem>
               )}
             />

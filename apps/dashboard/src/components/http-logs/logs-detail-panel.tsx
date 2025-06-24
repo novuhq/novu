@@ -34,10 +34,17 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
       transition={{ duration: 0.2 }}
       className="border-stroke-soft flex h-full flex-col overflow-hidden rounded-lg border bg-white"
     >
+      {/* Fixed header sections */}
+      {/* <div className="flex-none"> */}
       <LogsDetailHeader log={log} />
       <LogsDetailContent log={log} />
       <WorkflowRunsTabs />
+      {/* </div> */}
+
+      {/* Scrollable workflow runs content */}
+      {/* <div className="flex-1 overflow-hidden"> */}
       <WorkflowRunsContent log={log} />
+      {/* </div> */}
     </motion.div>
   );
 }

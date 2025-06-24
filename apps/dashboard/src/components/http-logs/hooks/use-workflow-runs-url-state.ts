@@ -18,7 +18,7 @@ export const defaultWorkflowRunsFilter: WorkflowRunsFilter = {
   search: '',
   status: [],
   company: '',
-  timePeriod: '60d',
+  timePeriod: '24h',
   channels: [],
   transactionId: '',
   subscriberId: '',
@@ -41,7 +41,7 @@ export function useWorkflowRunsUrlState(): WorkflowRunsUrlState {
     const search = searchParams.get('search') || '';
     const status = searchParams.getAll('status') || [];
     const company = searchParams.get('company') || '';
-    const timePeriod = searchParams.get('timePeriod') || '60d';
+    const timePeriod = searchParams.get('timePeriod') || '24h';
     const channels = searchParams.getAll('channels') || [];
     const transactionId = searchParams.get('transactionId') || '';
     const subscriberId = searchParams.get('subscriberId') || '';
@@ -123,7 +123,7 @@ export function useWorkflowRunsUrlState(): WorkflowRunsUrlState {
     params.delete('search');
     params.delete('status');
     params.delete('company');
-    params.delete('timePeriod');
+    params.set('timePeriod', defaultWorkflowRunsFilter.timePeriod || '24h');
     params.delete('channels');
     params.delete('transactionId');
     params.delete('subscriberId');
