@@ -26,6 +26,7 @@ import { HealthModule } from './app/health/health.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
+import { InternalModule } from './app/internal/internal.module';
 import { InvitesModule } from './app/invites/invites.module';
 import { LayoutsModule } from './app/layouts/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
@@ -100,6 +101,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   OrganizationModule,
   UserModule,
   IntegrationModule,
+  InternalModule,
   ChangeModule,
   SubscribersV1Module,
   SubscribersModule,

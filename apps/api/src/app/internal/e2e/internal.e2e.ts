@@ -1,0 +1,94 @@
+import { expect } from 'chai';
+import { UserSession } from '@novu/testing';
+
+describe('Internal Controller (GET /v1/internal)', () => {
+  let session: UserSession;
+
+  beforeEach(async () => {
+    session = new UserSession();
+    await session.initialize();
+  });
+
+  describe('/subscriber-online-state (POST)', () => {
+    it('should return 401 when no authorization header is provided', async () => {
+      const { body } = await session.testAgent
+        .post('/v1/internal/subscriber-online-state')
+        .send({
+          subscriberId: 'test-subscriber',
+          environmentId: 'test-env',
+          isOnline: true,
+        })
+        .expect(401);
+
+      expect(body.message).to.equal('Missing authorization header');
+    });
+
+    it('should return 401 when invalid API key is provided', async () => {
+      const { body } = await session.testAgent
+        .post('/v1/internal/subscriber-online-state')
+        .set('Authorization', 'Bearer invalid-key')
+        .send({
+          subscriberId: 'test-subscriber',
+          environmentId: 'test-env',
+          isOnline: true,
+        })
+        .expect(401);
+
+      expect(body.message).to.equal('Invalid API key');
+    });
+
+    it('should return 401 when INTERNAL_API_KEY is not configured', async () => {
+      // Temporarily remove the env var
+      const originalKey = process.env.INTERNAL_API_KEY;
+      delete (process.env as any).INTERNAL_API_KEY;
+
+      const { body } = await session.testAgent
+        .post('/v1/internal/subscriber-online-state')
+        .set('Authorization', 'Bearer test-key')
+        .send({
+          subscriberId: 'test-subscriber',
+          environmentId: 'test-env',
+          isOnline: true,
+        })
+        .expect(401);
+
+      expect(body.message).to.equal('Internal API key not configured');
+
+      // Restore the env var
+      if (originalKey) {
+        (process.env as any).INTERNAL_API_KEY = originalKey;
+      }
+    });
+
+    it('should return 200 when valid API key is provided', async () => {
+      // Set a test API key
+      (process.env as any).INTERNAL_API_KEY = 'test-internal-key';
+
+      const { body } = await session.testAgent
+        .post('/v1/internal/subscriber-online-state')
+        .set('Authorization', 'Bearer test-internal-key')
+        .send({
+          subscriberId: 'test-subscriber',
+          environmentId: 'test-env',
+          isOnline: true,
+        })
+        .expect(200);
+
+      expect(body.success).to.equal(true);
+      expect(body.message).to.equal('Subscriber online state updated successfully');
+    });
+
+    it('should return 400 when required fields are missing', async () => {
+      (process.env as any).INTERNAL_API_KEY = 'test-internal-key';
+
+      await session.testAgent
+        .post('/v1/internal/subscriber-online-state')
+        .set('Authorization', 'Bearer test-internal-key')
+        .send({
+          subscriberId: 'test-subscriber',
+          // Missing environmentId and isOnline
+        })
+        .expect(400);
+    });
+  });
+});

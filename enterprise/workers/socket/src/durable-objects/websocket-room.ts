@@ -43,6 +43,9 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
 		console.log(`WebSocket connected for subscriber: ${userId} in room ${environmentId}`);
 
+		// Notify API that subscriber is online
+		await this.notifySubscriberOnlineState(userId, environmentId, true);
+
 		return new Response(null, {
 			status: 101,
 			webSocket: client,
@@ -168,6 +171,50 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 		return Array.from(users);
 	}
 
+	/**
+	 * Notify the API about subscriber online state changes
+	 */
+	private async notifySubscriberOnlineState(
+		subscriberId: string,
+		environmentId: string,
+		isOnline: boolean,
+		organizationId?: string
+	): Promise<void> {
+		const apiUrl = this.env.API_URL;
+		const apiKey = this.env.INTERNAL_API_KEY;
+
+		if (!apiUrl || !apiKey) {
+			console.warn('API_URL or INTERNAL_API_KEY not configured, skipping online state notification');
+
+			return;
+		}
+
+		try {
+			const response = await fetch(`${apiUrl}/v1/internal/subscriber-online-state`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${apiKey}`,
+				},
+				body: JSON.stringify({
+					subscriberId,
+					environmentId,
+					isOnline,
+					organizationId,
+					timestamp: Date.now(),
+				}),
+			});
+
+			if (!response.ok) {
+				console.error(`Failed to notify API about subscriber online state: ${response.status} ${response.statusText}`);
+			} else {
+				console.log(`Successfully notified API: subscriber ${subscriberId} is ${isOnline ? 'online' : 'offline'}`);
+			}
+		} catch (error) {
+			console.error(`Error notifying API about subscriber online state:`, error);
+		}
+	}
+
 	private getConnectionMetadata(ws: WebSocket): IConnectionMetadata | null {
 		const tags = this.ctx.getTags(ws);
 
@@ -200,6 +247,8 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
 		if (activeConnections === 0) {
 			console.log(`Subscriber ${metadata.userId} is now offline`);
+			// Notify API that subscriber is offline
+			await this.notifySubscriberOnlineState(metadata.userId, metadata.environmentId, false);
 		}
 	}
 }
