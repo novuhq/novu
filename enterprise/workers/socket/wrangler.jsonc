@@ -11,30 +11,72 @@
 		{
 			"new_sqlite_classes": ["WebSocketRoom"],
 			"tag": "v1"
-		},
-		{
-			"renamed_classes": [
-				{
-					"from": "MyDurableObject",
-					"to": "WebSocketRoom"
-				}
-			],
-			"tag": "v2"
 		}
 	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"class_name": "WebSocketRoom",
-				"name": "WEBSOCKET_ROOM"
-			}
-		]
-	},
 	"observability": {
 		"enabled": true
 	},
-	"vars": {
-		"NODE_ENV": "production"
+	"env": {
+		"staging": {
+			"name": "socket-worker-staging",
+			"routes": [
+				{
+					"pattern": "socket.novu-staging.co",
+					"custom_domain": true
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"class_name": "WebSocketRoom",
+						"name": "WEBSOCKET_ROOM"
+					}
+				]
+			},
+			"vars": {
+				"NODE_ENV": "staging"
+			}
+		},
+		"production": {
+			"name": "socket-worker-production",
+			"routes": [
+				{
+					"pattern": "socket.novu.co",
+					"custom_domain": true
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"class_name": "WebSocketRoom",
+						"name": "WEBSOCKET_ROOM"
+					}
+				]
+			},
+			"vars": {
+				"NODE_ENV": "production"
+			}
+		},
+		"production-eu": {
+			"name": "socket-worker-production-eu",
+			"routes": [
+				{
+					"pattern": "eu.socket.novu.co",
+					"custom_domain": true
+				}
+			],
+			"durable_objects": {
+				"bindings": [
+					{
+						"class_name": "WebSocketRoom",
+						"name": "WEBSOCKET_ROOM"
+					}
+				]
+			},
+			"vars": {
+				"NODE_ENV": "production"
+			}
+		}
 	}
 	/**
 	 * Smart Placement
