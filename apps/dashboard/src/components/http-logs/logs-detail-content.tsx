@@ -70,7 +70,7 @@ function CollapsibleSection({
       </div>
 
       {isExpanded && (
-        <div className="border-stroke-soft bg-bg-weak border-t">
+        <div className="border-stroke-soft bg-bg-weak h-[148px] overflow-y-auto border-t">
           <JsonDisplay content={content} />
         </div>
       )}
@@ -86,7 +86,7 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
   const hasResponseBody = log.responseBody && log.responseBody !== '{}' && log.responseBody.toString().trim() !== '';
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div className="overflow-auto">
       <div className="space-y-2 px-3 py-2.5">
         <div className="mb-3">
           <div className="mb-3 flex items-center gap-2">
