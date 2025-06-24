@@ -23,6 +23,11 @@ const mockFeatureFlagsService = {
   getFlag: async () => false, // Default to disabled for tests
 } as any;
 
+// Mock MessageRepository
+const mockMessageRepository = {
+  getCount: async () => 0,
+} as any;
+
 describe('WebSocket Worker', () => {
   before(async () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
@@ -39,7 +44,11 @@ describe('WebSocket Worker', () => {
 
     webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
 
-    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService, mockFeatureFlagsService);
+    webSocketsQueueService = new WebSocketsQueueService(
+      workflowInMemoryProviderService,
+      mockFeatureFlagsService,
+      mockMessageRepository
+    );
     await webSocketsQueueService.queue.obliterate();
   });
 

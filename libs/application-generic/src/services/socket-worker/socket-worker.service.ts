@@ -1,22 +1,58 @@
 import { Injectable, Logger } from '@nestjs/common';
 import got, { HTTPError, RequestError } from 'got';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
+import { MessageRepository } from '@novu/dal';
 
 import { FeatureFlagsService } from '../feature-flags';
 
 const LOG_CONTEXT = 'SocketWorkerService';
+
+type UnseenCountPaginationIndication = {
+  unseenCount: number;
+  hasMore: boolean;
+};
+
+type UnreadCountPaginationIndication = {
+  unreadCount: number;
+  hasMore: boolean;
+};
 
 @Injectable()
 export class SocketWorkerService {
   private readonly socketWorkerUrl: string | undefined;
   private readonly socketWorkerApiKey: string | undefined;
 
-  constructor(private featureFlagsService?: FeatureFlagsService) {
+  constructor(
+    private featureFlagsService?: FeatureFlagsService,
+    private messageRepository?: MessageRepository
+  ) {
     this.socketWorkerUrl = process.env.SOCKET_WORKER_URL;
     this.socketWorkerApiKey = process.env.SOCKET_WORKER_API_KEY;
   }
 
   async sendMessage(
+    userId: string,
+    event: string,
+    data: any,
+    organizationId?: string,
+    environmentId?: string,
+    subscriberId?: string
+  ): Promise<void> {
+    await this.sendMessageInternal(userId, event, data, organizationId, environmentId, subscriberId);
+
+    // Handle count updates for RECEIVED events
+    if (event === WebSocketEventEnum.RECEIVED && environmentId) {
+      const { message, messageId } = data || {};
+
+      // Only recalculate the counts if we send a messageId/message.
+      if (message || messageId) {
+        await this.sendUnseenCount(userId, environmentId, organizationId);
+        await this.sendUnreadCount(userId, environmentId, organizationId);
+      }
+    }
+  }
+
+  private async sendMessageInternal(
     userId: string,
     event: string,
     data: any,
@@ -85,6 +121,76 @@ export class SocketWorkerService {
         );
       }
     }
+  }
+
+  private async sendUnreadCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
+    try {
+      const unreadCount = await this.messageRepository.getCount(
+        environmentId,
+        userId,
+        ChannelTypeEnum.IN_APP,
+        { read: false },
+        { limit: 101 }
+      );
+
+      const paginationIndication: UnreadCountPaginationIndication =
+        unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
+
+      await this.sendMessageInternal(
+        userId,
+        WebSocketEventEnum.UNREAD,
+        {
+          unreadCount: paginationIndication.unreadCount,
+          hasMore: paginationIndication.hasMore,
+        },
+        organizationId,
+        environmentId
+      );
+    } catch (error) {
+      Logger.error(
+        `Error sending unread count change: ${error instanceof Error ? error.message : String(error)}`,
+        LOG_CONTEXT
+      );
+    }
+  }
+
+  private async sendUnseenCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
+    try {
+      const unseenCount = await this.messageRepository.getCount(
+        environmentId,
+        userId,
+        ChannelTypeEnum.IN_APP,
+        { seen: false },
+        { limit: 101 }
+      );
+
+      const paginationIndication: UnseenCountPaginationIndication =
+        unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
+
+      await this.sendMessageInternal(
+        userId,
+        WebSocketEventEnum.UNSEEN,
+        {
+          unseenCount: paginationIndication.unseenCount,
+          hasMore: paginationIndication.hasMore,
+        },
+        organizationId,
+        environmentId
+      );
+    } catch (error) {
+      Logger.error(
+        `Error sending unseen count change: ${error instanceof Error ? error.message : String(error)}`,
+        LOG_CONTEXT
+      );
+    }
+  }
+
+  async sendUnseenCount(userId: string, environmentId: string, organizationId?: string): Promise<void> {
+    return this.sendUnseenCountChange(userId, environmentId, organizationId);
+  }
+
+  async sendUnreadCount(userId: string, environmentId: string, organizationId?: string): Promise<void> {
+    return this.sendUnreadCountChange(userId, environmentId, organizationId);
   }
 
   async isEnabled(organizationId?: string, environmentId?: string, userId?: string): Promise<boolean> {

@@ -13,12 +13,18 @@ const mockFeatureFlagsService = {
   getFlag: jest.fn().mockResolvedValue(false), // Default to disabled for tests
 } as any;
 
+// Mock MessageRepository
+const mockMessageRepository = {
+  getCount: jest.fn().mockResolvedValue(0),
+} as any;
+
 describe('WebSockets Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
-        mockFeatureFlagsService
+        mockFeatureFlagsService,
+        mockMessageRepository
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -130,7 +136,8 @@ describe('WebSockets Queue service', () => {
 
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
-        mockFeatureFlagsService
+        mockFeatureFlagsService,
+        mockMessageRepository
       );
       await webSocketsQueueService.queue.obliterate();
     });
