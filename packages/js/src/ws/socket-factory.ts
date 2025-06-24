@@ -6,16 +6,19 @@ import { PartySocketClient } from './party-socket';
 import { Socket } from './socket';
 
 export function createSocket({
-  socketType = SocketType.SOCKET_IO,
   socketUrl,
   inboxServiceInstance,
   eventEmitterInstance,
 }: {
-  socketType?: SocketType;
   socketUrl?: string;
   inboxServiceInstance: InboxService;
   eventEmitterInstance: NovuEventEmitter;
 }): BaseSocketInterface {
+  let socketType = SocketType.SOCKET_IO;
+  if (!socketUrl || socketUrl === 'https://eu.socket.novu.co') {
+    socketType = SocketType.PARTY_SOCKET;
+  }
+
   switch (socketType) {
     case SocketType.PARTY_SOCKET:
       return new PartySocketClient({

@@ -1,4 +1,4 @@
-import { Novu, NovuOptions, Subscriber, SocketType } from '@novu/js';
+import { Novu, NovuOptions, Subscriber } from '@novu/js';
 import { ReactNode, createContext, useContext, useMemo, useEffect } from 'react';
 
 // @ts-ignore
@@ -52,7 +52,6 @@ export const InternalNovuProvider = (props: NovuProviderProps & { userAgentType:
         backendUrl,
         apiUrl,
         socketUrl,
-        socketType: SocketType.PARTY_SOCKET,
         useCache,
         __userAgent: `${baseUserAgent} ${userAgentType}`,
         subscriber: subscriberObj,

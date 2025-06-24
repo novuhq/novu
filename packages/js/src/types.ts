@@ -190,7 +190,6 @@ export type StandardNovuOptions = {
   subscriberHash?: string;
   apiUrl?: string;
   socketUrl?: string;
-  socketType?: SocketType;
   useCache?: boolean;
 } & (
   | {

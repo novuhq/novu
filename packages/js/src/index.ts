@@ -11,7 +11,6 @@ export {
   NotificationStatus,
   NovuError,
   NovuOptions,
-  SocketType,
   StandardNovuOptions,
   Preference,
   PreferenceLevel,
