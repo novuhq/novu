@@ -828,6 +828,7 @@
     "angular.json",
     "apps/api/src/.env.test",
     "apps/api/src/app/analytics/usecases/hubspot-identify-form/hubspot-identify-form.usecase.ts",
+    "apps/api/src/app/translations/e2e/v2/**/*",
     "apps/api/src/app/workflows-v2/maily-test-data.ts",
     "apps/api/src/app/workflows-v2/usecases/validate-content/validate-placeholders/validate-placeholder.usecase.ts",
     "apps/dashboard/eslint.config.js",

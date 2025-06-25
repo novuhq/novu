@@ -61,8 +61,8 @@ export class CreateLayoutUseCase {
         origin: dto.origin,
       });
       await this.setDefaultLayout.execute(setDefaultLayoutCommand);
-    } else {
-      await this.createChange(command, dto._id, isV2Layout);
+    } else if (!isV2Layout) {
+      await this.createChange(command, dto._id);
     }
 
     this.analyticsService.track('[Layout] - Create', command.userId, {
@@ -74,11 +74,7 @@ export class CreateLayoutUseCase {
     return dto;
   }
 
-  private async createChange(command: CreateLayoutCommand, layoutId: LayoutId, isV2Layout: boolean): Promise<void> {
-    if (isV2Layout) {
-      return;
-    }
-
+  private async createChange(command: CreateLayoutCommand, layoutId: LayoutId): Promise<void> {
     const createLayoutChangeCommand = CreateLayoutChangeCommand.create({
       environmentId: command.environmentId,
       layoutId,

@@ -6,7 +6,7 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 
 interface TranslationPillProps {
-  decoratorKey: string; // "t.common.submit"
+  decoratorKey: string; // "common.submit"
   onUpdate?: (newKey: string) => void;
   onDelete?: () => void;
 }
@@ -22,7 +22,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
     if (!decoratorKey) return '';
     const keyParts = decoratorKey.split('.');
 
-    return keyParts.length >= 3 ? '..' + keyParts.slice(-2).join('.') : decoratorKey;
+    return keyParts.length >= 2 ? '..' + keyParts.slice(-2).join('.') : decoratorKey;
   }, [decoratorKey]);
 
   const handleClick = (e: React.MouseEvent) => {

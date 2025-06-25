@@ -12,7 +12,7 @@ export class ListLayoutResponseDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => LayoutResponseDto)
-  workflows: LayoutResponseDto[];
+  layouts: LayoutResponseDto[];
 
   @ApiProperty({
     description: 'Total number of layouts',

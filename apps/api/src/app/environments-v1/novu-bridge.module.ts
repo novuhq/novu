@@ -23,7 +23,6 @@ import {
 import { DelayOutputRendererUsecase } from './usecases/output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-output-renderer.usecase';
 import { GetOrganizationSettings } from '../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { HtmlRendererUseCase } from './usecases/html-renderer/html-renderer.usecase';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -60,7 +59,6 @@ export const featureFlagsService = {
     DelayOutputRendererUsecase,
     DigestOutputRendererUsecase,
     featureFlagsService,
-    HtmlRendererUseCase,
   ],
 })
 export class NovuBridgeModule {}
