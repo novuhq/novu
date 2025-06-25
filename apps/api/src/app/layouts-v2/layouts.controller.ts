@@ -42,7 +42,7 @@ import { ListLayoutsCommand, ListLayoutsUseCase } from './usecases/list-layouts'
 @Controller({ path: `/layouts`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
-// @ApiExcludeController()
+@ApiExcludeController()
 @ApiTags('Layouts')
 export class LayoutsController {
   constructor(
