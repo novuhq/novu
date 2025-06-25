@@ -1,6 +1,6 @@
 export type RequestLog = {
   // id: string;
-  timestamp: string;
+  createdAt: string;
   url: string;
   method: string;
   statusCode: number;

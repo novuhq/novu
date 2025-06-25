@@ -121,7 +121,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
   private buildLog(req: any, res: any, data: any, user: UserSessionData, duration: number): HttpLog {
     return {
-      timestamp: new Date(),
+      created_at: new Date(),
       path: req.path,
       url: req.originalUrl,
       hostname: req.hostname,

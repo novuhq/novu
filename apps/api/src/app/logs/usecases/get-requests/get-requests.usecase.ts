@@ -31,7 +31,7 @@ export class GetRequests {
     if (command.days) {
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - command.days);
-      where.timestamp = {
+      where.created_at = {
         operator: '>=',
         value: startDate,
       };
@@ -42,15 +42,15 @@ export class GetRequests {
         where,
         limit,
         offset,
-        orderBy: 'timestamp',
+        orderBy: 'created_at',
         orderDirection: 'DESC',
       }),
       this.httpLogRepository.count({ where }),
     ]);
 
     const mappedData = findResult.data.map((log) => ({
-      id: log.transaction_id || new Date(log.timestamp || 0).getTime().toString(),
-      timestamp: new Date(`${log.timestamp} UTC`).toISOString(),
+      id: log.transaction_id || new Date(log.created_at || 0).getTime().toString(),
+      createdAt: new Date(`${log.created_at} UTC`).toISOString(),
       url: log.url || '',
       method: log.method || '',
       statusCode: log.status_code || 0,

@@ -12,7 +12,7 @@ import { TABLE_NAME } from './http-log.repository';
 
 export const httpLogSchema = new ClickhouseSchema(
   {
-    timestamp: { type: CHDateTime('UTC') },
+    created_at: { type: CHDateTime('UTC') },
     path: { type: CHString() },
     url: { type: CHString() },
     hostname: { type: CHString() },
@@ -38,6 +38,6 @@ export const httpLogSchema = new ClickhouseSchema(
   }
 );
 
-export const ORDER_BY: (keyof typeof httpLogSchema.schema)[] = ['organization_id', 'environment_id', 'timestamp'];
+export const ORDER_BY: (keyof typeof httpLogSchema.schema)[] = ['organization_id', 'environment_id', 'created_at'];
 
 export type HttpLog = InferClickhouseSchemaType<typeof httpLogSchema>;

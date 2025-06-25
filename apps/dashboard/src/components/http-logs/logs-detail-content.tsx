@@ -106,8 +106,8 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
             <div className="flex items-center justify-between">
               <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Received at</span>
               <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">
-                <TimeDisplayHoverCard date={new Date(log.timestamp)}>
-                  {formatDateSimple(log.timestamp, {
+                <TimeDisplayHoverCard date={new Date(log.createdAt)}>
+                  {formatDateSimple(log.createdAt, {
                     year: 'numeric',
                     month: 'short',
                     day: 'numeric',
