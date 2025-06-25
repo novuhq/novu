@@ -117,25 +117,21 @@ describe('GetInboxPreferences', () => {
     const result = await getInboxPreferences.execute(command);
 
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      {
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        includeInactiveChannels: false,
-      }
-    );
+    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+      includeInactiveChannels: false,
+    });
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      {
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        organizationId: command.organizationId,
-        tags: undefined,
-        includeInactiveChannels: false,
-      }
-    );
+    expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal({
+      environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+      organizationId: command.organizationId,
+      tags: undefined,
+      includeInactiveChannels: false,
+    });
 
     expect(result).to.deep.equal([
       {
@@ -198,25 +194,21 @@ describe('GetInboxPreferences', () => {
     const result = await getInboxPreferences.execute(command);
 
     expect(getSubscriberGlobalPreferenceMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      {
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        includeInactiveChannels: false,
-      }
-    );
+    expect(getSubscriberGlobalPreferenceMock.execute.firstCall.args[0]).to.deep.equal({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+      includeInactiveChannels: false,
+    });
 
     expect(getSubscriberPreferenceMock.execute.calledOnce).to.be.true;
-    expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal(
-      {
-        environmentId: command.environmentId,
-        subscriberId: command.subscriberId,
-        organizationId: command.organizationId,
-        tags: command.tags,
-        includeInactiveChannels: false,
-      }
-    );
+    expect(getSubscriberPreferenceMock.execute.firstCall.args[0]).to.deep.equal({
+      environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+      organizationId: command.organizationId,
+      tags: command.tags,
+      includeInactiveChannels: false,
+    });
 
     expect(result).to.deep.equal([
       { level: PreferenceLevelEnum.GLOBAL, ...mockedGlobalPreferences },
