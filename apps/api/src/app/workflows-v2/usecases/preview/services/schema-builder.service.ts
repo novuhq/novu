@@ -3,8 +3,9 @@ import _ from 'lodash';
 import { NotificationTemplateEntity, JsonSchemaTypeEnum, JsonSchemaFormatEnum } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { JSONSchemaDto, PreviewPayloadDto } from '../../../dtos';
-import { buildVariablesSchema } from '../../../util/create-schema';
+import { PreviewPayloadDto } from '../../../dtos';
+import { JSONSchemaDto } from '../../../../shared/dtos/json-schema.dto';
+import { buildVariablesSchema } from '../../../../shared/utils/create-schema';
 
 @Injectable()
 export class SchemaBuilderService {

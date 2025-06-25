@@ -1,4 +1,4 @@
-import { EnvironmentEnum, WorkflowOriginEnum, PermissionsEnum } from '@novu/shared';
+import { EnvironmentEnum, ResourceOriginEnum, PermissionsEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -68,10 +68,10 @@ const panOnDrag = [1, 2];
 // y distance = node height + space between nodes
 const Y_DISTANCE = NODE_HEIGHT + 50;
 
-const mapStepToNodeContent = (step: Step, workflowOrigin: WorkflowOriginEnum): string | undefined => {
+const mapStepToNodeContent = (step: Step, workflowOrigin: ResourceOriginEnum): string | undefined => {
   const controlValues = step.controls.values;
   const delayMessage =
-    workflowOrigin === WorkflowOriginEnum.EXTERNAL
+    workflowOrigin === ResourceOriginEnum.EXTERNAL
       ? 'Delay duration defined in code'
       : `Delay for ${controlValues.amount} ${controlValues.unit}`;
 
@@ -103,13 +103,13 @@ const mapStepToNode = ({
   addStepIndex,
   previousPosition,
   step,
-  workflowOrigin = WorkflowOriginEnum.NOVU_CLOUD,
+  workflowOrigin = ResourceOriginEnum.NOVU_CLOUD,
   isTemplateStorePreview,
 }: {
   addStepIndex: number;
   previousPosition: { x: number; y: number };
   step: Step;
-  workflowOrigin?: WorkflowOriginEnum;
+  workflowOrigin?: ResourceOriginEnum;
   isTemplateStorePreview?: boolean;
 }): Node<NodeData, keyof typeof nodeTypes> => {
   const content = mapStepToNodeContent(step, workflowOrigin);
@@ -274,7 +274,7 @@ const WorkflowCanvasChild = ({
 
       {currentWorkflow &&
         currentEnvironment?.name === EnvironmentEnum.DEVELOPMENT &&
-        currentWorkflow.origin === WorkflowOriginEnum.NOVU_CLOUD &&
+        currentWorkflow.origin === ResourceOriginEnum.NOVU_CLOUD &&
         !user?.unsafeMetadata?.workflowChecklistCompleted && (
           <WorkflowChecklist steps={steps} workflow={currentWorkflow} />
         )}

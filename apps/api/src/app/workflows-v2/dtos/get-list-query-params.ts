@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 import { WorkflowStatusEnum } from '@novu/shared';
-import { LimitOffsetPaginationQueryDto } from './limit-offset-pagination.dto';
+import { LimitOffsetPaginationQueryDto } from '../../shared/dtos/limit-offset-pagination.dto';
 import { WorkflowResponseDto } from './workflow-response.dto';
 
 export class GetListQueryParamsDto extends LimitOffsetPaginationQueryDto(WorkflowResponseDto, [

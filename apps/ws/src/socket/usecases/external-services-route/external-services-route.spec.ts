@@ -76,11 +76,12 @@ describe('ExternalServicesRoute', () => {
       findOneStub.resolves(Promise.resolve({ _id: messageId }));
     });
 
-    it('should send message, unseen count and unread count change when event is received', async () => {
+    it('should send message, unseen count and unread count change when event is received to Socket.io', async () => {
       getCountStub.resolves(Promise.resolve(5));
 
       await externalServicesRoute.execute(commandReceivedMessage);
 
+      // Verify Socket.io calls
       sinon.assert.calledWithMatch(wsGatewayStub.sendMessage.getCall(0), userId, WebSocketEventEnum.RECEIVED, {
         message: {
           _id: messageId,

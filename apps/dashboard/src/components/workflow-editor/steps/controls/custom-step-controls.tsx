@@ -5,7 +5,7 @@ import { Separator } from '@/components/primitives/separator';
 import { Switch } from '@/components/primitives/switch';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { WorkflowOriginEnum } from '@/utils/enums';
+import { ResourceOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
 import { cn } from '@/utils/ui';
 import { type Controls } from '@novu/shared';
@@ -20,7 +20,7 @@ import { JsonForm } from './json-form';
 
 type CustomStepControlsProps = {
   dataSchema: Controls['dataSchema'];
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   className?: string;
 };
 
@@ -34,7 +34,7 @@ export const CustomStepControls = (props: CustomStepControlsProps) => {
   const { reset } = useFormContext();
   const { saveForm } = useSaveForm();
 
-  if (origin !== WorkflowOriginEnum.EXTERNAL || Object.keys(dataSchema?.properties ?? {}).length === 0) {
+  if (origin !== ResourceOriginEnum.EXTERNAL || Object.keys(dataSchema?.properties ?? {}).length === 0) {
     return (
       <SidebarContent size="md">
         <Accordion

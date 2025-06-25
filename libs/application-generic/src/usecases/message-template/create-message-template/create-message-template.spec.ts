@@ -1,16 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
-import {
-  ChangeRepository,
-  LayoutRepository,
-  MessageTemplateRepository,
-} from '@novu/dal';
-import {
-  EmailBlockTypeEnum,
-  StepTypeEnum,
-  TemplateVariableTypeEnum,
-  WorkflowTypeEnum,
-} from '@novu/shared';
+import { ChangeRepository, LayoutRepository, MessageTemplateRepository } from '@novu/dal';
+import { EmailBlockTypeEnum, StepTypeEnum, TemplateVariableTypeEnum, ResourceTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 import { CreateMessageTemplate } from './create-message-template.usecase';
@@ -25,13 +16,7 @@ describe('Create Message Template', function () {
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [],
-      providers: [
-        MessageTemplateRepository,
-        LayoutRepository,
-        CreateChange,
-        UpdateChange,
-        ChangeRepository,
-      ],
+      providers: [MessageTemplateRepository, LayoutRepository, CreateChange, UpdateChange, ChangeRepository],
     }).compile();
 
     session = new UserSession();
@@ -66,7 +51,7 @@ describe('Create Message Template', function () {
       ],
       content,
       parentChangeId,
-      workflowType: WorkflowTypeEnum.REGULAR,
+      workflowType: ResourceTypeEnum.REGULAR,
     });
 
     const result = await useCase.execute(command);

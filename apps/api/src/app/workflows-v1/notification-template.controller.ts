@@ -15,8 +15,8 @@ import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
   UserSessionData,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 import {
   CreateWorkflow,
@@ -121,7 +121,7 @@ export class NotificationTemplateController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         data: body.data,
-        type: WorkflowTypeEnum.REGULAR,
+        type: ResourceTypeEnum.REGULAR,
       })
     );
   }
@@ -144,7 +144,7 @@ export class NotificationTemplateController {
         organizationId: user.organizationId,
         userId: user._id,
         templateId,
-        type: WorkflowTypeEnum.REGULAR,
+        type: ResourceTypeEnum.REGULAR,
       })
     );
   }
@@ -206,8 +206,8 @@ export class NotificationTemplateController {
         blueprintId: body.blueprintId,
         data: body.data,
         __source: query?.__source,
-        type: WorkflowTypeEnum.REGULAR,
-        origin: WorkflowOriginEnum.NOVU_CLOUD,
+        type: ResourceTypeEnum.REGULAR,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
       })
     );
   }

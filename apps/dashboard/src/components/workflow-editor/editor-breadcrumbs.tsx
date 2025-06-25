@@ -1,4 +1,4 @@
-import { WorkflowOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
+import { ResourceOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import React from 'react';
 import { FaCode } from 'react-icons/fa6';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -105,8 +105,8 @@ function isOnStepEditingRoute(stepSlug: string | undefined, pathname: string): b
   );
 }
 
-function WorkflowIcon({ origin }: { origin: WorkflowOriginEnum }) {
-  if (origin === WorkflowOriginEnum.EXTERNAL) {
+function WorkflowIcon({ origin }: { origin: ResourceOriginEnum }) {
+  if (origin === ResourceOriginEnum.EXTERNAL) {
     return (
       <Badge color="yellow" size="sm" variant="lighter">
         <FaCode className="size-3.5" />

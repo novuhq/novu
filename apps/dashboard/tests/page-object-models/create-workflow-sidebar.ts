@@ -30,8 +30,9 @@ export class CreateWorkflowSidebar {
 
     // fill the tags
     const tagsInput = this.page.getByPlaceholder('Type a tag and press Enter');
+
     if (typeof tags === 'number') {
-      // eslint-disable-next-line no-plusplus
+       
       for (let i = 0; i < tags; i++) {
         await tagsInput.click();
         await tagsInput.fill(`${1 + i}`);

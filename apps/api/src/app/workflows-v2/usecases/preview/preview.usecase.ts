@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, WorkflowOriginEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -43,7 +43,7 @@ export class PreviewUsecase {
       const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
         context.controlValues,
         context.stepData,
-        context.workflow.origin || WorkflowOriginEnum.NOVU_CLOUD
+        context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
       );
 
       const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
