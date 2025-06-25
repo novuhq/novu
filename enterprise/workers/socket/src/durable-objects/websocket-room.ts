@@ -6,6 +6,8 @@ import type { IEnv, IConnectionMetadata } from '../types';
  * Manages WebSocket connections for subscribers with JWT authentication
  */
 export class WebSocketRoom extends DurableObject<IEnv> {
+	private connectionTokens = new Map<WebSocket, string>();
+
 	/**
 	 * Handle incoming HTTP requests (WebSocket upgrades)
 	 */
@@ -16,20 +18,28 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
 		const userId = request.headers.get('X-User-Id');
 		const environmentId = request.headers.get('X-Environment-Id');
+		const jwtToken = request.headers.get('X-JWT-Token');
 
 		if (!userId || !environmentId) {
 			return new Response('Missing required user information', { status: 400 });
+		}
+
+		if (!jwtToken) {
+			return new Response('Missing JWT token', { status: 400 });
 		}
 
 		const [client, server] = Object.values(new WebSocketPair());
 
 		/*
 		 * Use hibernation-compatible WebSocket acceptance
-		 * This allows the Durable Object to hibernate while keeping WebSocket connections alive
+		 * Store JWT token separately to avoid tag size limitations
 		 */
 		const tags = [`user:${userId}`, `env:${environmentId}`];
 
 		this.ctx.acceptWebSocket(server, tags);
+
+		// Store JWT token for this connection
+		this.connectionTokens.set(server, jwtToken);
 
 		server.send(
 			JSON.stringify({
@@ -43,8 +53,8 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
 		console.log(`WebSocket connected for subscriber: ${userId} in room ${environmentId}`);
 
-		// Notify API that subscriber is online
-		await this.notifySubscriberOnlineState(userId, environmentId, true);
+		// Notify API that subscriber is online using JWT authentication
+		await this.notifySubscriberOnlineState(userId, environmentId, true, undefined, jwtToken);
 
 		return new Response(null, {
 			status: 101,
@@ -75,6 +85,9 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 			console.log(`WebSocket connection closed for subscriber: ${metadata.userId}`);
 			await this.handleSubscriberDisconnection(metadata);
 		}
+
+		// Clean up stored JWT token
+		this.connectionTokens.delete(ws);
 	}
 
 	/**
@@ -87,6 +100,9 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 		if (metadata) {
 			console.log(`WebSocket error for subscriber: ${metadata.userId}`);
 		}
+
+		// Clean up stored JWT token
+		this.connectionTokens.delete(ws);
 	}
 
 	/**
@@ -180,13 +196,19 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 		subscriberId: string,
 		environmentId: string,
 		isOnline: boolean,
-		organizationId?: string
+		organizationId?: string,
+		jwtToken?: string
 	): Promise<void> {
 		const apiUrl = this.env.API_URL;
-		const apiKey = this.env.INTERNAL_API_KEY;
 
-		if (!apiUrl || !apiKey) {
-			console.warn('API_URL or INTERNAL_API_KEY not configured, skipping online state notification');
+		if (!apiUrl) {
+			console.warn('API_URL not configured, skipping online state notification');
+
+			return;
+		}
+
+		if (!jwtToken) {
+			console.warn('JWT token not available, skipping online state notification');
 
 			return;
 		}
@@ -196,7 +218,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					Authorization: `Bearer ${apiKey}`,
+					Authorization: `Bearer ${jwtToken}`,
 				},
 				body: JSON.stringify({
 					subscriberId,
@@ -219,6 +241,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
 	private getConnectionMetadata(ws: WebSocket): IConnectionMetadata | null {
 		const tags = this.ctx.getTags(ws);
+		const jwtToken = this.connectionTokens.get(ws);
 
 		let userId: string | undefined;
 		let environmentId: string | undefined;
@@ -231,7 +254,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 			}
 		}
 
-		if (!userId || !environmentId) {
+		if (!userId || !environmentId || !jwtToken) {
 			return null;
 		}
 
@@ -239,6 +262,7 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 			userId,
 			environmentId,
 			connectedAt: Date.now(),
+			jwtToken,
 		};
 	}
 
@@ -253,8 +277,14 @@ export class WebSocketRoom extends DurableObject<IEnv> {
 
 		if (remainingConnections <= 0) {
 			console.log(`Subscriber ${metadata.userId} is now offline`);
-			// Notify API that subscriber is offline
-			await this.notifySubscriberOnlineState(metadata.userId, metadata.environmentId, false);
+			// Notify API that subscriber is offline using JWT authentication
+			await this.notifySubscriberOnlineState(
+				metadata.userId,
+				metadata.environmentId,
+				false,
+				undefined,
+				metadata.jwtToken
+			);
 		}
 	}
 }

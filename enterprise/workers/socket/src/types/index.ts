@@ -10,6 +10,7 @@ export interface IConnectionMetadata {
 	userId: string;
 	environmentId: string;
 	connectedAt: number;
+	jwtToken: string;
 }
 
 export interface IWebSocketRoom {

@@ -1,6 +1,6 @@
-import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { RequireInternalAuth } from './decorators/internal-auth.decorator';
+import { Body, Controller, Post, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 import {
   UpdateSubscriberOnlineStateRequestDto,
   UpdateSubscriberOnlineStateResponseDto,
@@ -9,11 +9,12 @@ import { UpdateSubscriberOnlineState } from './usecases/update-subscriber-online
 import { UpdateSubscriberOnlineStateCommand } from './usecases/update-subscriber-online-state/update-subscriber-online-state.command';
 
 @Controller('/internal')
-@RequireInternalAuth()
+@ApiExcludeController()
 export class InternalController {
   constructor(private readonly updateSubscriberOnlineStateUsecase: UpdateSubscriberOnlineState) {}
 
   @Post('/subscriber-online-state')
+  @UseGuards(AuthGuard('subscriberJwt'))
   @HttpCode(HttpStatus.OK)
   async updateSubscriberOnlineState(
     @Body() body: UpdateSubscriberOnlineStateRequestDto

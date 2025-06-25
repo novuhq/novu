@@ -6,6 +6,9 @@ export async function handleWebSocketUpgrade(context: Context) {
 	const organizationId = context.get('organizationId');
 	const environmentId = context.get('environmentId');
 
+	// Extract JWT token from query parameter
+	const jwtToken = context.req.query('token');
+
 	const roomId = `${environmentId}:${userId}`;
 
 	// Apply EU jurisdiction if REGION is set to "eu"
@@ -15,7 +18,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 	const id = namespace.idFromName(roomId);
 	const stub = namespace.get(id);
 
-	// Forward the request to the Durable Object with user info
+	// Forward the request to the Durable Object with user info and JWT token
 	const requestWithUserInfo = new Request(context.req.raw.url, {
 		method: context.req.method,
 		headers: {
@@ -24,6 +27,7 @@ export async function handleWebSocketUpgrade(context: Context) {
 			'X-Subscriber-Id': subscriberId,
 			'X-Organization-Id': organizationId,
 			'X-Environment-Id': environmentId,
+			'X-JWT-Token': jwtToken || '',
 		},
 		body: context.req.raw.body,
 	});
