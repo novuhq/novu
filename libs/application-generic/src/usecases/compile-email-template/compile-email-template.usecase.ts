@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { merge } from 'lodash';
 import { readFile } from 'fs/promises';
 import { ModuleRef } from '@nestjs/core';
@@ -6,7 +6,6 @@ import { ModuleRef } from '@nestjs/core';
 import { IEmailBlock, CommunityOrganizationRepository } from '@novu/dal';
 
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
-import { BadRequestException } from '@nestjs/common';
 import { CompileEmailTemplateCommand } from './compile-email-template.command';
 import { LayoutDto, GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { VerifyPayloadService } from '../../services';
@@ -40,7 +39,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     if (command.layoutId) {
       layout = await this.getLayoutUsecase.execute(
         GetLayoutCommand.create({
-          layoutId: command.layoutId,
+          layoutIdOrInternalId: command.layoutId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
         })

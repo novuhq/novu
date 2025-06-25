@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { Slug, StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { Slug, StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { ControlsMetadataDto } from './controls-metadata.dto';
-import { JSONSchemaDto } from './json-schema.dto';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { StepIssuesDto } from './step-issues.dto';
 
 export class StepResponseDto<T = Record<string, unknown>> {
@@ -58,11 +58,11 @@ export class StepResponseDto<T = Record<string, unknown>> {
 
   @ApiProperty({
     description: 'Origin of the step',
-    enum: [...Object.values(WorkflowOriginEnum)],
-    enumName: 'WorkflowOriginEnum',
+    enum: [...Object.values(ResourceOriginEnum)],
+    enumName: 'ResourceOriginEnum',
   })
-  @IsEnum(WorkflowOriginEnum)
-  origin: WorkflowOriginEnum;
+  @IsEnum(ResourceOriginEnum)
+  origin: ResourceOriginEnum;
 
   @ApiProperty({ description: 'Workflow identifier' })
   @IsString()

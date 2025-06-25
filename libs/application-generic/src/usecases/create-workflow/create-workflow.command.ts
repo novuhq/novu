@@ -16,9 +16,9 @@ import {
 import {
   CustomDataType,
   INotificationGroup,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowStatusEnum,
-  WorkflowTypeEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 
 import { Type } from 'class-transformer';
@@ -110,13 +110,13 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsBoolean()
   validatePayload?: boolean;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  type: WorkflowTypeEnum;
+  type: ResourceTypeEnum;
 
-  @IsEnum(WorkflowOriginEnum)
+  @IsEnum(ResourceOriginEnum)
   @IsDefined()
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
 
   /**
    * Optional identifier for the workflow trigger.

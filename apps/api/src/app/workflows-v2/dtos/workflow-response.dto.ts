@@ -6,7 +6,7 @@ import {
   Slug,
   StepTypeEnum,
   UpdateWorkflowDto,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
@@ -105,11 +105,11 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
 
   @ApiProperty({
     description: 'Origin of the workflow',
-    enum: [...Object.values(WorkflowOriginEnum)],
-    enumName: 'WorkflowOriginEnum',
+    enum: [...Object.values(ResourceOriginEnum)],
+    enumName: 'ResourceOriginEnum',
   })
-  @IsEnum(WorkflowOriginEnum)
-  origin: WorkflowOriginEnum;
+  @IsEnum(ResourceOriginEnum)
+  origin: ResourceOriginEnum;
 
   @ApiProperty({
     description: 'Preferences for the workflow',

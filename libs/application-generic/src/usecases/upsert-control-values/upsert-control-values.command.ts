@@ -1,14 +1,23 @@
-import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
-import { NotificationStepEntity } from '@novu/dal';
+import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { ControlValuesLevelEnum } from '@novu/shared';
 import { EnvironmentCommand } from '../../commands';
 
 export class UpsertControlValuesCommand extends EnvironmentCommand {
-  @IsObject()
-  notificationStepEntity: NotificationStepEntity;
+  @IsString()
+  @IsOptional()
+  workflowId?: string;
 
   @IsString()
+  @IsOptional()
+  stepId?: string;
+
+  @IsString()
+  @IsOptional()
+  layoutId?: string;
+
+  @IsEnum(ControlValuesLevelEnum)
   @IsNotEmpty()
-  workflowId: string;
+  level: ControlValuesLevelEnum;
 
   @IsObject()
   @IsOptional()

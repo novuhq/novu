@@ -7,7 +7,7 @@ import {
   ITemplateVariable,
   MessageTemplateContentType,
   StepTypeEnum,
-  WorkflowTypeEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../commands';
@@ -81,7 +81,7 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   stepId?: string;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  workflowType: WorkflowTypeEnum;
+  workflowType: ResourceTypeEnum;
 }
