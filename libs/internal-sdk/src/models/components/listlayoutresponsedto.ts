@@ -17,7 +17,7 @@ export type ListLayoutResponseDto = {
   /**
    * List of layouts
    */
-  workflows: Array<LayoutResponseDto>;
+  layouts: Array<LayoutResponseDto>;
   /**
    * Total number of layouts
    */
@@ -30,13 +30,13 @@ export const ListLayoutResponseDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  workflows: z.array(LayoutResponseDto$inboundSchema),
+  layouts: z.array(LayoutResponseDto$inboundSchema),
   totalCount: z.number(),
 });
 
 /** @internal */
 export type ListLayoutResponseDto$Outbound = {
-  workflows: Array<LayoutResponseDto$Outbound>;
+  layouts: Array<LayoutResponseDto$Outbound>;
   totalCount: number;
 };
 
@@ -46,7 +46,7 @@ export const ListLayoutResponseDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   ListLayoutResponseDto
 > = z.object({
-  workflows: z.array(LayoutResponseDto$outboundSchema),
+  layouts: z.array(LayoutResponseDto$outboundSchema),
   totalCount: z.number(),
 });
 

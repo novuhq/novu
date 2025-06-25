@@ -229,12 +229,18 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     noHtmlWrappingTags?: boolean;
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
+      const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
       const liquifiedMaily = wrapMailyInLiquid(body);
-      const transformedMaily = await this.transformMailyContent(liquifiedMaily, payload);
-      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, payload);
+      const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
+      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, escapedPayloadForJson);
 
       // Apply translations to the liquid-processed Maily JSON before rendering
-      const translatedMaily = await this.processMailyTranslations(parsedMaily, payload, dbWorkflow, locale);
+      const translatedMaily = await this.processMailyTranslations(
+        parsedMaily,
+        escapedPayloadForJson,
+        dbWorkflow,
+        locale
+      );
 
       const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
 
@@ -597,5 +603,47 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const lastIndex = matches[matches.length - 1].index!;
 
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
+  }
+
+  private deepEscapePayloadStrings(payload: FullPayloadForRender): FullPayloadForRender {
+    return this.deepEscapeObject(payload) as FullPayloadForRender;
+  }
+
+  private deepEscapeObject(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.escapeStringForJson(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepEscapeObject(item));
+    }
+
+    if (typeof obj === 'object') {
+      const escapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        escapedObj[key] = this.deepEscapeObject(value);
+      }
+
+      return escapedObj;
+    }
+
+    return obj;
+  }
+
+  private escapeStringForJson(str: string): string {
+    return str
+      .replace(/\\/g, '\\\\') // Escape backslashes
+      .replace(/"/g, '\\"') // Escape quotes
+      .replace(/\n/g, '\\n') // Escape newlines
+      .replace(/\r/g, '\\r') // Escape carriage returns
+      .replace(/\t/g, '\\t'); // Escape tabs
   }
 }
