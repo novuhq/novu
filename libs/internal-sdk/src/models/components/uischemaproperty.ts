@@ -12,7 +12,7 @@ import {
   UiComponentEnum$outboundSchema,
 } from "./uicomponentenum.js";
 
-export type Placeholder5 = string | number | boolean | { [k: string]: any };
+export type Five = string | number | boolean | { [k: string]: any };
 
 /**
  * Placeholder for the UI Schema Property
@@ -40,51 +40,47 @@ export type UiSchemaProperty = {
    * Component type for the UI Schema Property
    */
   component: UiComponentEnum;
+  /**
+   * Properties of the UI Schema
+   */
+  properties?: { [k: string]: UiSchemaProperty } | undefined;
 };
 
 /** @internal */
-export const Placeholder5$inboundSchema: z.ZodType<
-  Placeholder5,
-  z.ZodTypeDef,
-  unknown
-> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Five$inboundSchema: z.ZodType<Five, z.ZodTypeDef, unknown> = z
+  .union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /** @internal */
-export type Placeholder5$Outbound = string | number | boolean | {
-  [k: string]: any;
-};
+export type Five$Outbound = string | number | boolean | { [k: string]: any };
 
 /** @internal */
-export const Placeholder5$outboundSchema: z.ZodType<
-  Placeholder5$Outbound,
-  z.ZodTypeDef,
-  Placeholder5
-> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Five$outboundSchema: z.ZodType<Five$Outbound, z.ZodTypeDef, Five> =
+  z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Placeholder5$ {
-  /** @deprecated use `Placeholder5$inboundSchema` instead. */
-  export const inboundSchema = Placeholder5$inboundSchema;
-  /** @deprecated use `Placeholder5$outboundSchema` instead. */
-  export const outboundSchema = Placeholder5$outboundSchema;
-  /** @deprecated use `Placeholder5$Outbound` instead. */
-  export type Outbound = Placeholder5$Outbound;
+export namespace Five$ {
+  /** @deprecated use `Five$inboundSchema` instead. */
+  export const inboundSchema = Five$inboundSchema;
+  /** @deprecated use `Five$outboundSchema` instead. */
+  export const outboundSchema = Five$outboundSchema;
+  /** @deprecated use `Five$Outbound` instead. */
+  export type Outbound = Five$Outbound;
 }
 
-export function placeholder5ToJSON(placeholder5: Placeholder5): string {
-  return JSON.stringify(Placeholder5$outboundSchema.parse(placeholder5));
+export function fiveToJSON(five: Five): string {
+  return JSON.stringify(Five$outboundSchema.parse(five));
 }
 
-export function placeholder5FromJSON(
+export function fiveFromJSON(
   jsonString: string,
-): SafeParseResult<Placeholder5, SDKValidationError> {
+): SafeParseResult<Five, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Placeholder5$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Placeholder5' from JSON`,
+    (x) => Five$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Five' from JSON`,
   );
 }
 
@@ -164,6 +160,7 @@ export const UiSchemaProperty$inboundSchema: z.ZodType<
     ]),
   ).optional(),
   component: UiComponentEnum$inboundSchema,
+  properties: z.record(z.lazy(() => UiSchemaProperty$inboundSchema)).optional(),
 });
 
 /** @internal */
@@ -177,6 +174,7 @@ export type UiSchemaProperty$Outbound = {
     | null
     | undefined;
   component: string;
+  properties?: { [k: string]: UiSchemaProperty$Outbound } | undefined;
 };
 
 /** @internal */
@@ -197,6 +195,8 @@ export const UiSchemaProperty$outboundSchema: z.ZodType<
     ]),
   ).optional(),
   component: UiComponentEnum$outboundSchema,
+  properties: z.record(z.lazy(() => UiSchemaProperty$outboundSchema))
+    .optional(),
 });
 
 /**

@@ -1,5 +1,5 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { JobStatusEnum, WorkflowOriginEnum } from '@novu/shared';
+import { JobStatusEnum, ResourceOriginEnum } from '@novu/shared';
 import { SubscriberResponseDtoOptional } from '../../../subscribers/dtos';
 
 export class PreviewStepCommand extends EnvironmentWithUserCommand {
@@ -8,7 +8,7 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   controls: Record<string, unknown>;
   payload: Record<string, unknown>;
   subscriber?: SubscriberResponseDtoOptional;
-  workflowOrigin: WorkflowOriginEnum;
+  workflowOrigin: ResourceOriginEnum;
   state?: FrameworkPreviousStepsOutputState[];
 }
 export type FrameworkPreviousStepsOutputState = {

@@ -1,5 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 import {
+  chatWebhookConfig,
   grafanaOnCallConfig,
   slackConfig,
   getstreamConfig,
@@ -90,5 +91,14 @@ export const chatProviders: IProviderConfig[] = [
     credentials: whatsAppBusinessConfig,
     docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.ChatWebhook,
+    displayName: 'Chat Webhook',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: chatWebhookConfig,
+    docReference: `https://docs.novu.co/channels-and-providers/chat/chat-webhook${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'chat-webhook.svg', dark: 'chat-webhook.svg' },
+    betaVersion: true,
   },
 ];

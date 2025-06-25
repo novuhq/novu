@@ -17,8 +17,9 @@ import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { mockSchemaDefaults } from '../../util/utils';
 import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
 import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
-import { buildVariablesSchema } from '../../util/create-schema';
-import { JSONSchemaDto, WorkflowTestDataResponseDto } from '../../dtos';
+import { buildVariablesSchema } from '../../../shared/utils/create-schema';
+import { WorkflowTestDataResponseDto } from '../../dtos';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
 @Injectable()
 export class BuildWorkflowTestDataUseCase {

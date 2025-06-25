@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { ComponentProps } from 'react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
@@ -48,7 +48,7 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 
 export const TriggerNode = ({
   data,
-}: NodeProps<FlowNode<{ environmentSlug: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
+}: NodeProps<FlowNode<{ environment: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   const content = (
@@ -78,7 +78,7 @@ export const TriggerNode = ({
   return (
     <Link
       to={buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
-        environmentSlug: data.environmentSlug,
+        environmentSlug: data.environment,
         workflowSlug: data.workflowSlug,
       })}
     >
@@ -115,7 +115,7 @@ const StepNode = (props: StepNodeProps) => {
 
   const hasConditions = conditionsCount > 0;
   const isReadOnly =
-    currentWorkflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    currentWorkflow?.origin === ResourceOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
@@ -560,7 +560,7 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   }
 
   const isReadOnly =
-    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    workflow.origin === ResourceOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
   if (isReadOnly) {
     return null;

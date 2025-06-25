@@ -6,6 +6,7 @@ const ANALYTICS_SOURCE = '[CLI add-inbox]';
 
 export enum AnalyticsEventEnum {
   CLI_STARTED = 'CLI add-inbox Started',
+  CLI_USER_CANCELLED = 'CLI add-inbox User Cancelled',
   CLI_COMPLETED = 'CLI add-inbox Completed',
   CLI_ERROR = 'CLI add-inbox Error',
 }
@@ -22,7 +23,7 @@ export class AnalyticsService {
 
   constructor(subscriberId?: string) {
     this._analyticsEnabled = ANALYTICS_ENABLED;
-    this._anonymousId = subscriberId || uuidv4();
+    this._anonymousId = typeof subscriberId === 'string' && subscriberId ? subscriberId : uuidv4();
 
     if (this._analyticsEnabled && SEGMENTS_WRITE_KEY) {
       this._analytics = new Analytics({

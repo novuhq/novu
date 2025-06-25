@@ -10,6 +10,7 @@ export * from './http';
 export * from './instrumentation/index';
 export * from './logging/index';
 export * from './modules';
+export * from './pipes';
 export * from './resilience';
 export * from './services';
 export * from './tracing';

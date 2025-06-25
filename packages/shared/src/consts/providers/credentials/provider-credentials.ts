@@ -593,6 +593,16 @@ export const pushWebhookConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const chatWebhookConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Secret Hmac Key',
+    type: 'string',
+    description: 'the secret used to sign webhooks calls',
+    required: false,
+  },
+];
+
 export const oneSignalConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApplicationId,

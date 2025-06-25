@@ -14,6 +14,11 @@ import {
   ControlsMetadataDto$outboundSchema,
 } from "./controlsmetadatadto.js";
 import {
+  ResourceOriginEnum,
+  ResourceOriginEnum$inboundSchema,
+  ResourceOriginEnum$outboundSchema,
+} from "./resourceoriginenum.js";
+import {
   StepIssuesDto,
   StepIssuesDto$inboundSchema,
   StepIssuesDto$Outbound,
@@ -24,11 +29,6 @@ import {
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
-import {
-  WorkflowOriginEnum,
-  WorkflowOriginEnum$inboundSchema,
-  WorkflowOriginEnum$outboundSchema,
-} from "./workfloworiginenum.js";
 
 export type StepResponseDto = {
   /**
@@ -66,7 +66,7 @@ export type StepResponseDto = {
   /**
    * Origin of the workflow
    */
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   /**
    * Workflow identifier
    */
@@ -95,7 +95,7 @@ export const StepResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   slug: z.string(),
   type: StepTypeEnum$inboundSchema,
-  origin: WorkflowOriginEnum$inboundSchema,
+  origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),
   issues: StepIssuesDto$inboundSchema.optional(),
@@ -135,7 +135,7 @@ export const StepResponseDto$outboundSchema: z.ZodType<
   name: z.string(),
   slug: z.string(),
   type: StepTypeEnum$outboundSchema,
-  origin: WorkflowOriginEnum$outboundSchema,
+  origin: ResourceOriginEnum$outboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),
   issues: StepIssuesDto$outboundSchema.optional(),

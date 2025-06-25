@@ -3,7 +3,7 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
-import { JSONSchemaDto } from '../dtos';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../usecases/create-variables-object/create-variables-object.usecase';
 import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
 

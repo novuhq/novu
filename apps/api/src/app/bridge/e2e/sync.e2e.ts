@@ -7,7 +7,7 @@ import {
   MessageTemplateRepository,
   ControlValuesRepository,
 } from '@novu/dal';
-import { WorkflowOriginEnum, WorkflowTypeEnum } from '@novu/shared';
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { workflow } from '@novu/framework';
 import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
@@ -108,7 +108,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     expect(workflowsCount.length).to.equal(1);
 
     expect(workflowData.name).to.equal(workflowId);
-    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
+    expect(workflowData.type).to.equal(ResourceTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId);
 
@@ -144,7 +144,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     expect(workflowsCount.length).to.equal(1);
 
     expect(workflowData.name).to.equal(workflowId);
-    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
+    expect(workflowData.type).to.equal(ResourceTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId);
 
@@ -303,7 +303,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     const workflowData = workflows[0];
 
     expect(workflowData.name).to.equal(workflowId2);
-    expect(workflowData.type).to.equal(WorkflowTypeEnum.BRIDGE);
+    expect(workflowData.type).to.equal(ResourceTypeEnum.BRIDGE);
     expect(workflowData.rawData.workflowId).to.equal(workflowId2);
     expect(workflowData.triggers[0].identifier).to.equal(workflowId2);
 
@@ -591,7 +591,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     }
 
     expect(firstWorkflowResponse.name).to.equal(workflowId);
-    expect(firstWorkflowResponse.type).to.equal(WorkflowTypeEnum.BRIDGE);
+    expect(firstWorkflowResponse.type).to.equal(ResourceTypeEnum.BRIDGE);
     expect(firstWorkflowResponse.rawData.workflowId).to.equal(workflowId);
     expect(firstWorkflowResponse.triggers[0].identifier).to.equal(workflowId);
 
@@ -633,7 +633,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
     }
 
     expect(secondWorkflowResponse.name).to.equal(workflowId);
-    expect(secondWorkflowResponse.type).to.equal(WorkflowTypeEnum.BRIDGE);
+    expect(secondWorkflowResponse.type).to.equal(ResourceTypeEnum.BRIDGE);
     expect(secondWorkflowResponse.rawData.workflowId).to.equal(workflowId);
     expect(secondWorkflowResponse.triggers[0].identifier).to.equal(workflowId);
 
@@ -665,7 +665,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
       active: true,
       draft: false,
       workflowId,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
     });
 
     // Now try to sync a workflow with the same ID through bridge
@@ -704,7 +704,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
       active: true,
       draft: false,
       workflowId,
-      origin: WorkflowOriginEnum.EXTERNAL,
+      origin: ResourceOriginEnum.EXTERNAL,
     });
 
     // Now try to sync a workflow with the same ID through bridge
@@ -727,7 +727,7 @@ describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {
       _environmentId: session.environment._id,
       _id: externalWorkflow._id,
     });
-    expect(workflows?.origin).to.equal(WorkflowOriginEnum.EXTERNAL);
+    expect(workflows?.origin).to.equal(ResourceOriginEnum.EXTERNAL);
     expect(workflows?.steps[0]?.stepId).to.equal('send-email');
   });
 });

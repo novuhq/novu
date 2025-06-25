@@ -8,15 +8,15 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  ResourceOriginEnum,
+  ResourceOriginEnum$inboundSchema,
+  ResourceOriginEnum$outboundSchema,
+} from "./resourceoriginenum.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
-import {
-  WorkflowOriginEnum,
-  WorkflowOriginEnum$inboundSchema,
-  WorkflowOriginEnum$outboundSchema,
-} from "./workfloworiginenum.js";
 import {
   WorkflowStatusEnum,
   WorkflowStatusEnum$inboundSchema,
@@ -59,7 +59,7 @@ export type WorkflowListResponseDto = {
   /**
    * Origin of the workflow
    */
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   /**
    * Timestamp of the last workflow trigger
    */
@@ -84,7 +84,7 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   workflowId: z.string(),
   slug: z.string(),
   status: WorkflowStatusEnum$inboundSchema,
-  origin: WorkflowOriginEnum$inboundSchema,
+  origin: ResourceOriginEnum$inboundSchema,
   lastTriggeredAt: z.nullable(z.string()).optional(),
   stepTypeOverviews: z.array(StepTypeEnum$inboundSchema),
 }).transform((v) => {
@@ -122,7 +122,7 @@ export const WorkflowListResponseDto$outboundSchema: z.ZodType<
   workflowId: z.string(),
   slug: z.string(),
   status: WorkflowStatusEnum$outboundSchema,
-  origin: WorkflowOriginEnum$outboundSchema,
+  origin: ResourceOriginEnum$outboundSchema,
   lastTriggeredAt: z.nullable(z.string()).optional(),
   stepTypeOverviews: z.array(StepTypeEnum$outboundSchema),
 }).transform((v) => {
