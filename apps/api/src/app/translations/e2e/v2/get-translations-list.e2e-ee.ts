@@ -117,7 +117,7 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
         content: {
           'order.title': 'Order Confirmation',
           'order.message': 'Your order #{{payload.orderId}} has been confirmed',
-          'order.total': 'Total: ${{payload.total}}',
+          'order.total': 'Total: {{payload.total}}',
         },
       },
       {
@@ -127,7 +127,7 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
         content: {
           'order.title': 'Bestellbestätigung',
           'order.message': 'Ihre Bestellung #{{payload.orderId}} wurde bestätigt',
-          'order.total': 'Gesamt: €{{payload.total}}',
+          'order.total': 'Gesamt: {{payload.total}} EUR',
         },
       },
       // Password Reset - One locale
