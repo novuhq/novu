@@ -285,7 +285,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
     createdAt?: {
       $gte: Date;
-    }
+    },
+    readPreference: 'secondaryPreferred' | 'primary' = 'secondaryPreferred'
   ) {
     const requestQuery = await this.getFilterQueryForMessage(
       environmentId,
@@ -304,7 +305,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       createdAt
     );
 
-    return this.MongooseModel.countDocuments(requestQuery, options).read('secondaryPreferred');
+    return this.MongooseModel.countDocuments(requestQuery, options).read(readPreference);
   }
 
   private getReadSeenUpdateQuery(
