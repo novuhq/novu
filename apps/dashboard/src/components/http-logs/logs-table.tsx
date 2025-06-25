@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { CursorPagination } from '@/components/cursor-pagination';
 import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiSkipBackLine, RiSkipForwardLine } from 'react-icons/ri';
 import { RequestLogsEmptyState } from './logs-empty-state';
 
 type LogsTableProps = {
@@ -15,41 +15,31 @@ type LogsTableProps = {
 };
 
 export function LogsTable({ onLogClick }: LogsTableProps) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const { selectedLogId, handleLogSelect } = useLogsUrlState();
-  const itemsPerPage = 20;
+  const urlState = useLogsUrlState();
+  const { currentPage, limit } = urlState;
 
   const { data: logsResponse, isLoading } = useFetchRequestLogs({
     page: currentPage - 1, // API is 0-based
-    limit: itemsPerPage,
+    limit: limit,
   });
 
   const logsData = logsResponse?.data || [];
   const totalCount = logsResponse?.total || 0;
-  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
-  const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, totalCount);
+  // Create pagination state with total count
+  const paginationState = useMemo(() => {
+    const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
+    const hasNext = totalCount > 0 && currentPage < totalPages;
+    const hasPrevious = currentPage > 1;
+
+    return { hasNext, hasPrevious };
+  }, [totalCount, limit, currentPage]);
+
+  const { selectedLogId, handleLogSelect, handleNext, handlePrevious, handleFirst } = urlState;
 
   const selectedLog = selectedLogId
     ? logsData.find((log: RequestLog) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
     : undefined;
-
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(1, prev - 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-  };
-
-  const handleFirstPage = () => {
-    setCurrentPage(1);
-  };
-
-  const handleLastPage = () => {
-    setCurrentPage(totalPages);
-  };
 
   const handleRowClick = (log: RequestLog) => {
     const logId = log.transactionId || `error-${logsData.indexOf(log)}`;
@@ -91,47 +81,17 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                 </Table>
               </div>
 
-              <div className="flex items-center justify-between border-t border-neutral-200 bg-white px-6 py-4">
-                <div className="text-foreground-600 text-sm">{totalCount.toLocaleString()} results</div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleFirstPage}
-                    disabled={currentPage === 1}
-                    className="rounded-md p-2 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <RiSkipBackLine className="size-4" />
-                  </button>
-
-                  <button
-                    onClick={handlePreviousPage}
-                    disabled={currentPage === 1}
-                    className="rounded-md p-2 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <RiArrowLeftSLine className="size-4" />
-                  </button>
-
-                  <span className="px-3 py-1 text-sm">
-                    {startItem}-{endItem} of {totalCount.toLocaleString()}
-                  </span>
-
-                  <button
-                    onClick={handleNextPage}
-                    disabled={currentPage === totalPages}
-                    className="rounded-md p-2 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <RiArrowRightSLine className="size-4" />
-                  </button>
-
-                  <button
-                    onClick={handleLastPage}
-                    disabled={currentPage === totalPages}
-                    className="rounded-md p-2 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <RiSkipForwardLine className="size-4" />
-                  </button>
+              {(paginationState.hasNext || paginationState.hasPrevious) && (
+                <div className="border-t border-neutral-200">
+                  <CursorPagination
+                    hasNext={paginationState.hasNext}
+                    hasPrevious={paginationState.hasPrevious}
+                    onNext={handleNext}
+                    onPrevious={handlePrevious}
+                    onFirst={handleFirst}
+                  />
                 </div>
-              </div>
+              )}
             </div>
           </ResizablePanel>
 
