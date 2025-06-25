@@ -34,7 +34,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
         },
       ],
     });
-    workflowId = workflow.id;
+    workflowId = workflow.workflowId;
   });
 
   afterEach(() => {

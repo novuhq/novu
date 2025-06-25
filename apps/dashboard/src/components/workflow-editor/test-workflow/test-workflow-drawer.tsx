@@ -5,9 +5,11 @@ import {
   createMockObjectFromSchema,
   type WorkflowTestDataResponseDto,
   type ISubscriberResponseDto,
+  PermissionsEnum,
 } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
+import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
@@ -18,20 +20,52 @@ import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/
 import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useAuth } from '@/context/auth/hooks';
 import { useWorkflow } from '../workflow-provider';
-import { RiPlayCircleLine } from 'react-icons/ri';
+import { RiPlayCircleLine, RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 import { useEnvironment } from '../../../context/environment/hooks';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/primitives/dropdown-menu';
+import { API_HOSTNAME } from '@/config';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   testData?: WorkflowTestDataResponseDto;
   initialPayload?: PayloadData;
+};
+
+const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: string; apiKey: string }) => {
+  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
+
+  // Parse payload if it's a string, otherwise use as-is
+  let parsedPayload = {};
+
+  try {
+    parsedPayload = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload;
+  } catch {
+    parsedPayload = {};
+  }
+
+  const body = {
+    name: data.workflowId,
+    to: data.to,
+    payload: { ...parsedPayload, __source: 'dashboard' },
+  };
+
+  return `curl -X POST "${baseUrl}/v1/events/trigger" \\
+  -H "Authorization: ApiKey ${data.apiKey}" \\
+  -H "Content-Type: application/json" \\
+  -d '${JSON.stringify(body, null, 2)}'`;
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
@@ -42,6 +76,12 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
+
+  // API key management
+  const has = useHasPermission();
+  const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
+  const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
+  const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
 
   // Add workflow-level payload persistence
   const { getInitialPayload, savePersistedPayload } = useWorkflowPayloadPersistence({
@@ -183,6 +223,121 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   };
 
+  const handleCopyCurl = useCallback(async () => {
+    if (!workflow?.workflowId) {
+      showErrorToast('Workflow information is missing');
+      return;
+    }
+
+    try {
+      const formData = form.getValues();
+      const curlCommand = generateCurlCommand({
+        workflowId: workflow.workflowId,
+        to: formData.to,
+        payload: formData.payload,
+        apiKey: apiKey,
+      });
+
+      await navigator.clipboard.writeText(curlCommand);
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <span>cURL command copied to clipboard</span>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: {
+          position: 'bottom-right',
+        },
+      });
+    } catch {
+      showErrorToast('Failed to copy cURL command', 'Copy Error');
+    }
+  }, [workflow?.workflowId, apiKey, form]);
+
+  const handleOpenInPostman = useCallback(async () => {
+    if (!workflow?.workflowId) {
+      showErrorToast('Workflow information is missing');
+      return;
+    }
+
+    try {
+      const formData = form.getValues();
+
+      // Parse payload if it's a string, otherwise use as-is
+      let parsedPayload = {};
+
+      try {
+        parsedPayload = typeof formData.payload === 'string' ? JSON.parse(formData.payload) : formData.payload;
+      } catch {
+        parsedPayload = {};
+      }
+
+      const body = {
+        name: workflow.workflowId,
+        to: formData.to,
+        payload: { ...parsedPayload, __source: 'dashboard' },
+      };
+
+      const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
+      const postmanCollection = {
+        info: {
+          name: `Novu - Trigger ${workflow.workflowId}`,
+          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+        },
+        item: [
+          {
+            name: `Trigger ${workflow.workflowId}`,
+            request: {
+              method: 'POST',
+              header: [
+                {
+                  key: 'Authorization',
+                  value: `ApiKey ${apiKey}`,
+                },
+                {
+                  key: 'Content-Type',
+                  value: 'application/json',
+                },
+              ],
+              body: {
+                mode: 'raw',
+                raw: JSON.stringify(body, null, 2),
+                options: {
+                  raw: {
+                    language: 'json',
+                  },
+                },
+              },
+              url: `${baseUrl}/v1/events/trigger`,
+            },
+          },
+        ],
+      };
+
+      await navigator.clipboard.writeText(JSON.stringify(postmanCollection, null, 2));
+      showToast({
+        children: ({ close }) => (
+          <>
+            <ToastIcon variant="success" />
+            <div className="flex flex-col gap-1">
+              <span>Postman collection copied to clipboard</span>
+              <span className="text-foreground-600 text-xs">Import it in Postman: File → Import → Raw text</span>
+            </div>
+            <ToastClose onClick={close} />
+          </>
+        ),
+        options: {
+          position: 'bottom-right',
+          duration: 5000,
+        },
+      });
+    } catch {
+      showErrorToast('Failed to copy Postman collection', 'Postman Error');
+    }
+  }, [workflow?.workflowId, apiKey, form]);
+
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent ref={forwardedRef} className="w-[500px]">
@@ -203,18 +358,44 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
             {/* Footer */}
             <div className="border-t border-neutral-200 bg-white">
-              <div className="flex items-center justify-between px-3 py-1.5">
-                <Button
-                  type="submit"
-                  variant="secondary"
-                  size="xs"
-                  mode="gradient"
-                  isLoading={isPending}
-                  className="ml-auto gap-1"
-                >
-                  Test workflow
-                  <RiPlayCircleLine className="h-4 w-4" />
-                </Button>
+              <div className="flex items-center justify-end px-3 py-1.5">
+                <ButtonGroupRoot size="xs">
+                  <ButtonGroupItem asChild>
+                    <Button
+                      type="submit"
+                      mode="gradient"
+                      className="rounded-l-lg rounded-r-none border-none p-2 text-white"
+                      variant="secondary"
+                      size="xs"
+                      isLoading={isPending}
+                    >
+                      Test workflow
+                    </Button>
+                  </ButtonGroupItem>
+                  <ButtonGroupItem asChild>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          mode="gradient"
+                          className="rounded-l-none rounded-r-lg border-none text-white"
+                          variant="secondary"
+                          size="xs"
+                          leadingIcon={RiArrowDownSLine}
+                        ></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy cURL
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleOpenInPostman} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy Postman Collection
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </ButtonGroupItem>
+                </ButtonGroupRoot>
               </div>
             </div>
           </FormRoot>
