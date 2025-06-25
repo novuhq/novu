@@ -1,4 +1,4 @@
-import { IActivity, JobStatusEnum, WorkflowOriginEnum } from '@novu/shared';
+import { IActivity, JobStatusEnum, ResourceOriginEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { FaCode } from 'react-icons/fa6';
 
@@ -116,7 +116,7 @@ export const SubscriberActivityList = ({
             }}
           >
             <div className={cn('flex max-w-96 items-center gap-2 px-3 py-2', { 'opacity-50': !activity.template })}>
-              {activity.template?.origin === WorkflowOriginEnum.EXTERNAL ? (
+              {activity.template?.origin === ResourceOriginEnum.EXTERNAL ? (
                 <FaCode className="size-3.5 min-w-3.5" />
               ) : (
                 <RouteFill className={cn('text-feature size-3.5 min-w-3.5')} />

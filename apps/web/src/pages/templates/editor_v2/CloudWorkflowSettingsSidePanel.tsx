@@ -5,7 +5,7 @@ import { Title } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { useFormContext } from 'react-hook-form';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { WorkflowTypeEnum } from '@novu/shared';
+import { ResourceTypeEnum } from '@novu/shared';
 import { useCloudWorkflowPreferences } from '../../../hooks/workflowPreferences/useCloudWorkflowPreferences';
 import { WorkflowDetailFormContext } from '../../../studio/components/workflows/preferences/WorkflowDetailFormContextProvider';
 import { WorkflowSettingsSidePanelContent } from '../../../studio/components/workflows/preferences/WorkflowSettingsSidePanelContent';
@@ -29,7 +29,7 @@ export const CloudWorkflowSettingsSidePanel: FC<CloudWorkflowSettingsSidePanelPr
       <div className={css({ colorPalette: 'mode.local' })}>
         <WorkflowSettingsSidePanelContent
           isLoading={isLoading}
-          workflowType={searchParams.get('type') as WorkflowTypeEnum}
+          workflowType={searchParams.get('type') as ResourceTypeEnum}
           workflowResourcePreferences={workflowResourcePreferences}
         />
       </div>

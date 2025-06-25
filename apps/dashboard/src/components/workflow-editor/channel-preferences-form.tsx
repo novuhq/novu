@@ -22,7 +22,7 @@ import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
-import { StepTypeEnum, WorkflowOriginEnum } from '@/utils/enums';
+import { StepTypeEnum, ResourceOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -53,7 +53,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const track = useTelemetry();
 
   const isDefaultPreferences = useMemo(() => workflow.preferences.user === null, [workflow.preferences.user]);
-  const isDashboardWorkflow = useMemo(() => workflow.origin === WorkflowOriginEnum.NOVU_CLOUD, [workflow.origin]);
+  const isDashboardWorkflow = useMemo(() => workflow.origin === ResourceOriginEnum.NOVU_CLOUD, [workflow.origin]);
   const formDataToRender = useMemo(() => {
     const steps = new Set(workflow.steps.map((step) => step.type));
     const defaultPreferences = isDefaultPreferences ? workflow.preferences.default : workflow.preferences.user;

@@ -18,8 +18,8 @@ import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   UserSessionData,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   PermissionsEnum,
 } from '@novu/shared';
 import {
@@ -88,7 +88,7 @@ export class BridgeController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+        workflowOrigin: ResourceOriginEnum.EXTERNAL,
       })
     );
   }
@@ -145,7 +145,7 @@ export class BridgeController {
     const templates = await this.notificationTemplateRepository.find({
       _environmentId: user.environmentId,
       type: {
-        $in: [WorkflowTypeEnum.ECHO, WorkflowTypeEnum.BRIDGE],
+        $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
       },
     });
 

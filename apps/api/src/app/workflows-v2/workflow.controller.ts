@@ -25,7 +25,7 @@ import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
   UserSessionData,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   PermissionsEnum,
 } from '@novu/shared';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
@@ -111,7 +111,7 @@ export class WorkflowController {
         workflowDto: {
           ...createWorkflowDto,
           steps: upsertSteps,
-          origin: WorkflowOriginEnum.NOVU_CLOUD,
+          origin: ResourceOriginEnum.NOVU_CLOUD,
         },
         user,
       })

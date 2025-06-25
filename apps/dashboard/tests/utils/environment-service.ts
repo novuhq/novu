@@ -48,6 +48,7 @@ export class EnvironmentService {
     const environment = await this.createEnvironment(organizationId, userId, name, parentId);
 
     let parentGroup;
+
     if (parentId) {
       parentGroup = await notificationGroupRepository.findOne({
         _environmentId: parentId,

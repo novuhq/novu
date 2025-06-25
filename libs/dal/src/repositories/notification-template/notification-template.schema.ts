@@ -1,4 +1,4 @@
-import { WorkflowTypeEnum } from '@novu/shared';
+import { ResourceTypeEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -25,7 +25,7 @@ const variantSchemePart = {
   name: Schema.Types.String,
   type: {
     type: Schema.Types.String,
-    default: WorkflowTypeEnum.REGULAR,
+    default: ResourceTypeEnum.REGULAR,
   },
   filters: [
     {
@@ -112,7 +112,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     },
     type: {
       type: Schema.Types.String,
-      default: WorkflowTypeEnum.REGULAR,
+      default: ResourceTypeEnum.REGULAR,
     },
     draft: {
       type: Schema.Types.Boolean,

@@ -9,8 +9,9 @@ import { EnforceEnvOrOrgIds } from '../../types';
 export interface DeleteManyValuesQuery {
   _environmentId: string;
   _organizationId: string;
-  _workflowId: string;
+  _workflowId?: string;
   _stepId?: string;
+  _layoutId?: string;
   level?: ControlValuesLevelEnum;
 }
 
@@ -18,8 +19,9 @@ export interface DeleteManyValuesQuery {
 export interface FindControlValuesQuery {
   _environmentId: string;
   _organizationId: string;
-  _workflowId: string;
-  _stepId: string;
+  _workflowId?: string;
+  _stepId?: string;
+  _layoutId?: string;
   level?: ControlValuesLevelEnum;
 }
 

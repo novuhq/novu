@@ -34,8 +34,8 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 
 import { stepTypeToControlSchema } from '../../shared';
@@ -48,6 +48,7 @@ import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-uti
 import { PreviewUsecase } from '../preview/preview.usecase';
 import { PreviewCommand } from '../preview';
 import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
+import { removeBrandingFromHtml } from '../../../shared/utils/html';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -151,8 +152,8 @@ export class UpsertWorkflowUseCase {
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
-      type: WorkflowTypeEnum.BRIDGE,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       steps,
       active: isWorkflowActive,
       description: workflowDto.description || '',
@@ -182,7 +183,7 @@ export class UpsertWorkflowUseCase {
       name: workflowDto.name,
       steps,
       rawData: workflowDto as unknown as Record<string, unknown>,
-      type: WorkflowTypeEnum.BRIDGE,
+      type: ResourceTypeEnum.BRIDGE,
       description: workflowDto.description,
       userPreferences: workflowDto.preferences?.user ?? null,
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
@@ -362,7 +363,7 @@ export class UpsertWorkflowUseCase {
             },
           })
         );
-        let htmlBody = this.removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
+        let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
         try {
           htmlBody = await format(htmlBody, {
             parser: 'html',
@@ -385,8 +386,9 @@ export class UpsertWorkflowUseCase {
       UpsertControlValuesCommand.create({
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
-        notificationStepEntity: step,
+        stepId: step._templateId,
         workflowId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         newControlValues,
       })
     );
@@ -413,14 +415,6 @@ export class UpsertWorkflowUseCase {
     if (!commandStep) return null;
 
     return commandStep.controlValues;
-  }
-
-  private removeBrandingFromHtml(html: string): string {
-    try {
-      return html.replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>(\s*)/gi, '');
-    } catch (error) {
-      return html;
-    }
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {

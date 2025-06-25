@@ -54,6 +54,11 @@ export enum WebSocketEvent {
   UNSEEN = 'unseen_count_changed',
 }
 
+export enum SocketType {
+  SOCKET_IO = 'socket.io',
+  PARTY_SOCKET = 'partysocket',
+}
+
 export type Session = {
   token: string;
   totalUnreadCount: number;

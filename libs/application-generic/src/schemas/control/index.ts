@@ -5,3 +5,4 @@ export * from './chat-control.schema';
 export * from './delay-control.schema';
 export * from './digest-control.schema';
 export * from './push-control.schema';
+export * from './layout-control.schema';

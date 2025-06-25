@@ -18,8 +18,8 @@ import {
   IStepVariant,
   slugify,
   TriggerTypeEnum,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 
 import { CreateChange, CreateChangeCommand } from '../create-change';
@@ -103,7 +103,7 @@ export class CreateWorkflow {
     try {
       if (
         (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
-        storedWorkflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
+        storedWorkflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1
       ) {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new PlatformException('Translation module is not loaded');
@@ -141,7 +141,7 @@ export class CreateWorkflow {
     }
 
     let triggerIdentifier: string;
-    if (command.type === WorkflowTypeEnum.BRIDGE && command.origin === WorkflowOriginEnum.EXTERNAL)
+    if (command.type === ResourceTypeEnum.BRIDGE && command.origin === ResourceOriginEnum.EXTERNAL)
       /*
        * Bridge workflows need to have the identifier preserved to ensure that
        * the Framework-defined identifier is the source of truth.
@@ -435,7 +435,7 @@ export class CreateWorkflow {
     organizationId: string;
     environmentId: string;
     userId: string;
-    workflowType: WorkflowTypeEnum;
+    workflowType: ResourceTypeEnum;
   }): Promise<IStepVariant[]> {
     if (!variants?.length) return [];
 
@@ -510,8 +510,8 @@ export class CreateWorkflow {
       defaultPreferences: command.defaultPreferences,
       blueprintId: command.blueprintId,
       __source: command.__source,
-      type: WorkflowTypeEnum.REGULAR,
-      origin: command.origin ?? WorkflowOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.REGULAR,
+      origin: command.origin ?? ResourceOriginEnum.NOVU_CLOUD,
     });
   }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { StepEditorProps } from '@/components/workflow-editor/steps/configure-step-template-form';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
 import { CustomStepControls } from '../controls/custom-step-controls';
@@ -13,8 +13,8 @@ export const PushTabs = (props: StepEditorProps) => {
   const { dataSchema, uiSchema } = step.controls;
   const [tabsValue, setTabsValue] = useState('editor');
   const form = useFormContext();
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
-  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isNovuCloud = workflow.origin === ResourceOriginEnum.NOVU_CLOUD && uiSchema;
+  const isExternal = workflow.origin === ResourceOriginEnum.EXTERNAL;
 
   const controlValues = form.watch();
   const { editorValue, setEditorValue, previewStep, previewData, isPreviewPending } = useEditorPreview({
