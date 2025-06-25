@@ -17,7 +17,7 @@ export class GetRequests {
     };
 
     if (command.statusCode) {
-      where.status_code = parseInt(command.statusCode, 10);
+      where.status_code = command.statusCode;
     }
 
     if (command.url) {
