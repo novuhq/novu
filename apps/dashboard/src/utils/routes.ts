@@ -50,6 +50,7 @@ export const ROUTES = {
   TOPICS_CREATE: '/env/:environmentSlug/topics/create',
   TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
   LAYOUTS: '/env/:environmentSlug/layouts',
+  TRANSLATIONS: '/env/:environmentSlug/translations',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
