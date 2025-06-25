@@ -16,8 +16,11 @@ export class GetRequests {
       organization_id: command.organizationId,
     };
 
-    if (command.statusCode) {
-      where.status_code = command.statusCode;
+    if (command.statusCodes) {
+      where.status_code = {
+        operator: 'IN',
+        value: command.statusCodes,
+      };
     }
 
     if (command.url) {

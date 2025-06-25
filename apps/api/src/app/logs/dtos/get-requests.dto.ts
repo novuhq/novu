@@ -1,5 +1,33 @@
-import { IsNumber, IsOptional, IsString, Matches, MaxLength, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsString, Matches, MaxLength, Min, Max, IsArray } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+
+// Custom transformer to convert statusCode to array of numbers
+const StatusCodeTransformer = Transform(({ value }) => {
+  if (!value) return undefined;
+
+  // If already an array of numbers, return as is
+  if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
+    return value;
+  }
+
+  // If array of strings/mixed, convert each to number
+  if (Array.isArray(value)) {
+    return value.map((item) => parseInt(String(item), 10)).filter((num) => !Number.isNaN(num));
+  }
+
+  // If string with comma-separated values
+  if (typeof value === 'string' && value.includes(',')) {
+    return value
+      .split(',')
+      .map((item) => parseInt(item.trim(), 10))
+      .filter((num) => !Number.isNaN(num));
+  }
+
+  // If single string or number
+  const num = parseInt(String(value), 10);
+
+  return Number.isNaN(num) ? undefined : [num];
+});
 
 export class GetRequestsDto {
   @IsNumber()
@@ -16,10 +44,11 @@ export class GetRequestsDto {
   @Max(100)
   limit?: number;
 
-  @IsNumber()
   @IsOptional()
-  @Matches(/^[0-9]{3}$/, { message: 'Status code must be a 3-digit number' })
-  statusCode?: number;
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @StatusCodeTransformer
+  statusCodes?: number[];
 
   @IsString()
   @IsOptional()

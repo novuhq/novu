@@ -6,6 +6,7 @@ import { CursorPagination } from '@/components/cursor-pagination';
 import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
 import { LogsDetailPanel } from './logs-detail-panel';
+import { LogsFilters } from './logs-filters';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RequestLogsEmptyState } from './logs-empty-state';
@@ -16,11 +17,13 @@ type LogsTableProps = {
 
 export function LogsTable({ onLogClick }: LogsTableProps) {
   const urlState = useLogsUrlState();
-  const { currentPage, limit } = urlState;
+  const { currentPage, limit, filters, handleFiltersChange, clearFilters, hasActiveFilters } = urlState;
 
   const { data: logsResponse, isLoading } = useFetchRequestLogs({
     page: currentPage - 1, // API is 0-based
     limit: limit,
+    status: filters.status,
+    transactionId: filters.transactionId || undefined,
   });
 
   const logsData = logsResponse?.data || [];
@@ -47,13 +50,22 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     onLogClick?.(log);
   };
 
-  if (!isLoading && logsData.length === 0) {
+  if (!isLoading && logsData.length === 0 && !hasActiveFilters) {
     return <RequestLogsEmptyState />;
   }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="relative flex flex-1">
+      <div className="flex items-center justify-between">
+        <LogsFilters
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          onClearFilters={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+      </div>
+
+      <div className="relative flex flex-1 pt-2">
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={50}>
             <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-white">
@@ -80,6 +92,20 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                   </TableBody>
                 </Table>
               </div>
+
+              {!isLoading && logsData.length === 0 && hasActiveFilters && (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-foreground-600 mb-2">No logs found matching your filters</p>
+                    <button
+                      onClick={clearFilters}
+                      className="text-foreground-950 hover:text-foreground-600 text-sm font-medium underline"
+                    >
+                      Clear filters
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {(paginationState.hasNext || paginationState.hasPrevious) && (
                 <div className="border-t border-neutral-200">

@@ -67,12 +67,6 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     if (!this.schema.schema[columnName]) {
       throw new Error(`Column '${columnName}' does not exist in schema`);
     }
-
-    if (!this.schemaOrderBy.includes(columnName)) {
-      throw new Error(
-        `Column '${columnName}' is not available for ordering. Allowed columns: ${this.schemaOrderBy.join(', ')}`
-      );
-    }
   }
 
   private validateOperator(operator: ClickhouseOperator): void {
@@ -119,7 +113,16 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
 
         params[paramName] = actualValue;
 
-        return `${key} ${operator} {${paramName}:${this.getColumnType(key)}}`;
+        // Determine the correct parameter type based on operator and value
+        let paramType = this.getColumnType(key);
+
+        // For array-based operators, use Array() type wrapper
+        const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
+        if (arrayOperators.includes(operator) && Array.isArray(actualValue)) {
+          paramType = `Array(${paramType})`;
+        }
+
+        return `${key} ${operator} {${paramName}:${paramType}}`;
       })
       .join(' AND ');
 
@@ -154,6 +157,12 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
 
     if (orderBy) {
       this.validateColumnName(String(orderBy));
+
+      if (!this.schemaOrderBy.includes(orderBy)) {
+        throw new Error(
+          `Column '${orderBy as string}' cannot be used for ordering. Available columns: ${this.schemaOrderBy.join(', ')}`
+        );
+      }
     }
 
     if (orderDirection && !ORDER_DIRECTION.includes(orderDirection)) {

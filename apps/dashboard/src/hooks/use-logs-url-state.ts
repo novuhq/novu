@@ -1,6 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+export interface LogsFilters {
+  status: string[];
+  transactionId: string;
+}
+
 export interface LogsUrlState {
   selectedLogId: string | null;
   handleLogSelect: (logId: string) => void;
@@ -9,6 +14,10 @@ export interface LogsUrlState {
   handleNext: () => void;
   handlePrevious: () => void;
   handleFirst: () => void;
+  filters: LogsFilters;
+  handleFiltersChange: (newFilters: LogsFilters) => void;
+  clearFilters: () => void;
+  hasActiveFilters: boolean;
 }
 
 export function useLogsUrlState(): LogsUrlState {
@@ -55,6 +64,53 @@ export function useLogsUrlState(): LogsUrlState {
     });
   }, [setSearchParams]);
 
+  // Filter state
+  const filters = useMemo(
+    (): LogsFilters => ({
+      status: searchParams.getAll('status'),
+      transactionId: searchParams.get('transactionId') || '',
+    }),
+    [searchParams]
+  );
+
+  const handleFiltersChange = useCallback(
+    (newFilters: LogsFilters) => {
+      setSearchParams((prev) => {
+        // Clear existing filter params
+        prev.delete('status');
+        prev.delete('transactionId');
+
+        // Set new filter params
+        if (newFilters.status.length > 0) {
+          newFilters.status.forEach((status) => prev.append('status', status));
+        }
+
+        if (newFilters.transactionId.trim()) {
+          prev.set('transactionId', newFilters.transactionId);
+        }
+
+        // Reset to first page when filters change
+        prev.delete('page');
+
+        return prev;
+      });
+    },
+    [setSearchParams]
+  );
+
+  const clearFilters = useCallback(() => {
+    setSearchParams((prev) => {
+      prev.delete('status');
+      prev.delete('transactionId');
+      prev.delete('page');
+      return prev;
+    });
+  }, [setSearchParams]);
+
+  const hasActiveFilters = useMemo(() => {
+    return filters.status.length > 0 || filters.transactionId.trim() !== '';
+  }, [filters]);
+
   return useMemo(
     () => ({
       selectedLogId,
@@ -64,7 +120,23 @@ export function useLogsUrlState(): LogsUrlState {
       handleNext,
       handlePrevious,
       handleFirst,
+      filters,
+      handleFiltersChange,
+      clearFilters,
+      hasActiveFilters,
     }),
-    [selectedLogId, handleLogSelect, currentPage, limit, handleNext, handlePrevious, handleFirst]
+    [
+      selectedLogId,
+      handleLogSelect,
+      currentPage,
+      limit,
+      handleNext,
+      handlePrevious,
+      handleFirst,
+      filters,
+      handleFiltersChange,
+      clearFilters,
+      hasActiveFilters,
+    ]
   );
 }

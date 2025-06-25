@@ -5,6 +5,7 @@ import { getRequestLogs, GetRequestLogsParams, GetRequestLogsResponse } from '@/
 
 interface UseFetchRequestLogsParams extends Omit<GetRequestLogsParams, 'environment'> {
   enabled?: boolean;
+  status?: string[];
 }
 
 export function useFetchRequestLogs(
@@ -12,11 +13,17 @@ export function useFetchRequestLogs(
   options: Omit<UseQueryOptions<GetRequestLogsResponse>, 'queryKey' | 'queryFn'> = {}
 ) {
   const { currentEnvironment } = useEnvironment();
-  const { enabled = true, ...queryParams } = params;
+  const { enabled = true, status, ...queryParams } = params;
+
+  // Convert status array to statusCode parameter for API
+  const apiParams = {
+    ...queryParams,
+    ...(status && status.length > 0 && { statusCode: status.join(',') }),
+  };
 
   return useQuery<GetRequestLogsResponse>({
-    queryKey: [QueryKeys.fetchRequestLogs, currentEnvironment?._id, queryParams],
-    queryFn: () => getRequestLogs({ environment: currentEnvironment!, ...queryParams }),
+    queryKey: [QueryKeys.fetchRequestLogs, currentEnvironment?._id, apiParams],
+    queryFn: () => getRequestLogs({ environment: currentEnvironment!, ...apiParams }),
     enabled: !!currentEnvironment && enabled,
     ...options,
   });

@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { OrganizationCommand } from '@novu/application-generic';
 
 export class GetRequestsCommand extends OrganizationCommand {
@@ -10,9 +10,10 @@ export class GetRequestsCommand extends OrganizationCommand {
   @IsOptional()
   public limit?: number;
 
-  @IsNumber()
   @IsOptional()
-  public statusCode?: number;
+  @IsArray()
+  @IsNumber({}, { each: true })
+  statusCodes?: number[];
 
   @IsString()
   @IsOptional()
