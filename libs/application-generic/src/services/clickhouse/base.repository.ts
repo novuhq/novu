@@ -2,30 +2,44 @@ import { PinoLogger } from 'nestjs-pino';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { ClickHouseService } from './clickhouse.service';
 
-export type ClickhouseOperator =
-  | '='
-  | '=='
-  | '!='
-  | '<>'
-  | '<='
-  | '>='
-  | '<'
-  | '>'
-  | 'LIKE'
-  | 'NOT LIKE'
-  | 'ILIKE'
-  | 'IN'
-  | 'NOT IN'
-  | 'GLOBAL IN'
-  | 'GLOBAL NOT IN';
+// Define operators as const assertion to maintain literal types
+const CLICKHOUSE_OPERATORS = [
+  '=',
+  '==',
+  '!=',
+  '<>',
+  '<=',
+  '>=',
+  '<',
+  '>',
+  'LIKE',
+  'NOT LIKE',
+  'ILIKE',
+  'IN',
+  'NOT IN',
+  'GLOBAL IN',
+  'GLOBAL NOT IN',
+] as const;
+
+// Generate the type from the const array - this ensures single source of truth
+export type ClickhouseOperator = (typeof CLICKHOUSE_OPERATORS)[number];
+
+// Export the array for runtime validation
+export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERATORS;
+
+const LIMIT_MAX_THRESHOLD = 1000;
+export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
 export type Where<T> = {
   [K in keyof T]?: T[K] | { operator: ClickhouseOperator; value: T[K] | T[K][] };
 };
 
+export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
+
 export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
   abstract readonly table: string;
   abstract readonly schema: T;
+  abstract readonly schemaOrderBy: SchemaKeys<T>[];
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
@@ -41,6 +55,43 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     return 'String';
   }
 
+  private validateColumnName(columnName: SchemaKeys<T>): void {
+    if (!columnName || typeof columnName !== 'string') {
+      throw new Error('Invalid column name: must be a non-empty string');
+    }
+
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(columnName)) {
+      throw new Error(`Invalid column name format: ${columnName}`);
+    }
+
+    if (!this.schema.schema[columnName]) {
+      throw new Error(`Column '${columnName}' does not exist in schema`);
+    }
+
+    if (!this.schemaOrderBy.includes(columnName)) {
+      throw new Error(
+        `Column '${columnName}' is not available for ordering. Allowed columns: ${this.schemaOrderBy.join(', ')}`
+      );
+    }
+  }
+
+  private validateOperator(operator: ClickhouseOperator): void {
+    if (!ALLOWED_OPERATORS.includes(operator)) {
+      throw new Error(`Invalid operator: ${operator}. Allowed operators: ${ALLOWED_OPERATORS.join(', ')}`);
+    }
+  }
+
+  /**
+   * Builds a WHERE clause with parameterized values for ClickHouse queries.
+   * @param where - Object mapping column names to values or {operator, value} objects
+   * @returns Object with SQL WHERE clause string and parameter map for safe query execution
+   * @example
+   * Input: { user_id: 123, name: { operator: 'LIKE', value: 'John%' } }
+   * Output: {
+   *   clause: "WHERE user_id = {param_0_userid:String} AND name LIKE {param_1_name:String}",
+   *   params: { param_0_userid: 123, param_1_name: 'John%' }
+   * }
+   */
   private buildWhereClause(where: Where<InferClickhouseSchemaType<T>>): {
     clause: string;
     params: Record<string, any>;
@@ -48,6 +99,8 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     const params: Record<string, any> = {};
     const clauses = Object.entries(where)
       .map(([key, value], index) => {
+        this.validateColumnName(key);
+
         let operator: ClickhouseOperator = '=';
         let actualValue = value;
 
@@ -56,7 +109,14 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
           actualValue = value.value;
         }
 
-        const paramName = `${key.replace(/[^a-zA-Z0-9_]/g, '')}${index}`;
+        this.validateOperator(operator);
+
+        const paramName = `param_${index}_${key.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+        if (actualValue === null || actualValue === undefined) {
+          throw new Error(`Invalid value for column '${key}': value cannot be null or undefined`);
+        }
+
         params[paramName] = actualValue;
 
         return `${key} ${operator} {${paramName}:${this.getColumnType(key)}}`;
@@ -78,11 +138,27 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     where: Where<InferClickhouseSchemaType<T>>;
     limit?: number;
     offset?: number;
-    orderBy?: keyof InferClickhouseSchemaType<T>;
+    orderBy?: SchemaKeys<T>;
     orderDirection?: 'ASC' | 'DESC';
   }): Promise<{ data: InferClickhouseSchemaType<T>[]; rows: number }> {
     const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC' } = options;
+
+    if (limit < 0 || limit > LIMIT_MAX_THRESHOLD) {
+      throw new Error(`Limit must be between 0 and ${LIMIT_MAX_THRESHOLD}`);
+    }
+    if (offset < 0) {
+      throw new Error('Offset must be non-negative');
+    }
+
     const { clause, params } = this.buildWhereClause(where);
+
+    if (orderBy) {
+      this.validateColumnName(String(orderBy));
+    }
+
+    if (orderDirection && !ORDER_DIRECTION.includes(orderDirection)) {
+      throw new Error(`Invalid order direction: ${orderDirection}. Allowed directions: ${ORDER_DIRECTION.join(', ')}`);
+    }
 
     const query = `
       SELECT *

@@ -34,7 +34,10 @@ export const httpLogSchema = new ClickhouseSchema(
   },
   {
     table_name: TABLE_NAME,
+    engine: 'MergeTree',
   }
 );
+
+export const ORDER_BY: (keyof typeof httpLogSchema.schema)[] = ['organization_id', 'environment_id', 'timestamp'];
 
 export type HttpLog = InferClickhouseSchemaType<typeof httpLogSchema>;
