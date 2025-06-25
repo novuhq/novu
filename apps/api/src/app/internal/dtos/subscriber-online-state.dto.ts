@@ -3,36 +3,11 @@ import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 
 export class UpdateSubscriberOnlineStateRequestDto {
   @ApiProperty({
-    description: 'The subscriber ID',
-    example: 'user123',
-  })
-  @IsString()
-  @IsNotEmpty()
-  subscriberId: string;
-
-  @ApiProperty({
-    description: 'The environment ID',
-    example: 'env_123',
-  })
-  @IsString()
-  @IsNotEmpty()
-  environmentId: string;
-
-  @ApiProperty({
     description: 'Whether the subscriber is online',
     example: true,
   })
   @IsBoolean()
   isOnline: boolean;
-
-  @ApiProperty({
-    description: 'Optional organization ID',
-    example: 'org_123',
-    required: false,
-  })
-  @IsString()
-  @IsOptional()
-  organizationId?: string;
 
   @ApiProperty({
     description: 'Optional timestamp of the state change',
