@@ -1,6 +1,6 @@
 import { createContext, useContext, ReactNode, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { WorkflowResponseDto, StepResponseDto, WorkflowOriginEnum, GeneratePreviewResponseDto } from '@novu/shared';
+import { WorkflowResponseDto, StepResponseDto, ResourceOriginEnum, GeneratePreviewResponseDto } from '@novu/shared';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
 
 type StepEditorContextType = {
@@ -36,8 +36,8 @@ export function StepEditorProvider({ children, workflow, step }: StepEditorProvi
     payloadSchema: workflow.payloadSchema,
   });
   const { uiSchema } = step.controls;
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
-  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isNovuCloud = workflow.origin === ResourceOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
+  const isExternal = workflow.origin === ResourceOriginEnum.EXTERNAL;
   const isStepEditable = isExternal || (isNovuCloud && Boolean(uiSchema));
 
   const isInitialLoad = isPreviewPending;

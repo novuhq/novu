@@ -17,7 +17,7 @@ import {
   LiquidError,
 } from 'liquidjs';
 import { DIGEST_EVENTS_VARIABLE_PATTERN, isLiquidErrors, isValidDynamicPath, isValidTemplate } from './parser-utils';
-import { JSONSchemaDto } from '../../dtos';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import type { ProcessContext, TemplateVariables, Variable } from './types';
 import { buildLiquidParser } from './liquid-engine';
 

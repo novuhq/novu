@@ -1,5 +1,5 @@
 import { IsDefined, IsEnum, IsMongoId } from 'class-validator';
-import { WorkflowTypeEnum } from '@novu/shared';
+import { ResourceTypeEnum } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 /**
@@ -12,7 +12,7 @@ export class DeleteNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsMongoId()
   templateId: string;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  type: WorkflowTypeEnum;
+  type: ResourceTypeEnum;
 }

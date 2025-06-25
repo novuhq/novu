@@ -38,11 +38,12 @@ import {
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
   CustomDataType,
-  WorkflowTypeEnum,
-  WorkflowOriginEnum,
+  ResourceTypeEnum,
+  ResourceOriginEnum,
   StepTypeEnum,
   PreferencesTypeEnum,
   FeatureFlagsKeysEnum,
+  ControlValuesLevelEnum,
 } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
@@ -557,8 +558,8 @@ export class Session {
       draft: false,
       critical: false,
       tags: [],
-      type: WorkflowTypeEnum.BRIDGE,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       steps: [
         {
           name: 'In-App Notification',
@@ -658,7 +659,8 @@ export class Session {
       UpsertControlValuesCommand.create({
         organizationId,
         environmentId,
-        notificationStepEntity: workflow.steps[0],
+        stepId: workflow.steps[0]._templateId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         workflowId: workflow._id,
         newControlValues: {
           body: '{{payload.body}}',

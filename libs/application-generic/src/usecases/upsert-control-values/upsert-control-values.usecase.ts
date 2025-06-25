@@ -13,8 +13,9 @@ export class UpsertControlValuesUseCase {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _workflowId: command.workflowId,
-      _stepId: command.notificationStepEntity._templateId,
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
+      _stepId: command.stepId,
+      _layoutId: command.layoutId,
+      level: command.level,
     });
 
     if (existingControlValues) {
@@ -25,8 +26,9 @@ export class UpsertControlValuesUseCase {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _workflowId: command.workflowId,
-      _stepId: command.notificationStepEntity._templateId,
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
+      _stepId: command.stepId,
+      _layoutId: command.layoutId,
+      level: command.level,
       priority: 0,
       controls: command.newControlValues,
     });

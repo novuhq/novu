@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
@@ -23,6 +23,10 @@ const mockGetOrganizationSettings = {
   },
 };
 
+const mockPinoLogger = {
+  setContext: () => {},
+};
+
 describe('EmailOutputRendererUsecase', () => {
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
@@ -38,6 +42,10 @@ describe('EmailOutputRendererUsecase', () => {
           provide: GetOrganizationSettings,
           useValue: mockGetOrganizationSettings,
         },
+        {
+          provide: PinoLogger,
+          useValue: mockPinoLogger,
+        },
       ],
     }).compile();
 
@@ -50,6 +58,12 @@ describe('EmailOutputRendererUsecase', () => {
     steps: {} as Record<string, unknown>,
   };
 
+  const mockDbWorkflow = {
+    _id: 'fake_workflow_id',
+    _organizationId: 'fake_org_id',
+    _environmentId: 'fake_env_id',
+  } as any;
+
   describe('general flow', () => {
     it('should return subject and body when body is not string', async () => {
       let renderCommand = {
@@ -60,6 +74,7 @@ describe('EmailOutputRendererUsecase', () => {
           body: undefined,
         },
         fullPayloadForRender: mockFullPayload,
+        dbWorkflow: mockDbWorkflow,
       };
 
       let result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -77,6 +92,7 @@ describe('EmailOutputRendererUsecase', () => {
           body: 123 as any,
         },
         fullPayloadForRender: mockFullPayload,
+        dbWorkflow: mockDbWorkflow,
       };
 
       result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -114,6 +130,7 @@ describe('EmailOutputRendererUsecase', () => {
           ...mockFullPayload,
           payload: { name: 'John' },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -152,6 +169,7 @@ describe('EmailOutputRendererUsecase', () => {
             order: { id: '12345', status: 'shipped' },
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -189,6 +207,7 @@ describe('EmailOutputRendererUsecase', () => {
           ...mockFullPayload,
           payload: {},
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -258,6 +277,7 @@ describe('EmailOutputRendererUsecase', () => {
             },
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -331,6 +351,7 @@ describe('EmailOutputRendererUsecase', () => {
           ...mockFullPayload,
           payload: {}, // Empty payload to test fallback values
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -362,6 +383,7 @@ describe('EmailOutputRendererUsecase', () => {
             },
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const resultWithPartialData = await emailOutputRendererUsecase.execute(renderCommandWithPartialData);
@@ -440,6 +462,7 @@ describe('EmailOutputRendererUsecase', () => {
                 isPremium: value,
               },
             },
+            dbWorkflow: mockDbWorkflow,
           };
 
           const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -512,6 +535,7 @@ describe('EmailOutputRendererUsecase', () => {
                 isPremium: value,
               },
             },
+            dbWorkflow: mockDbWorkflow,
           };
 
           const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -583,6 +607,7 @@ describe('EmailOutputRendererUsecase', () => {
             isPremium: true,
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       let result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -673,6 +698,7 @@ describe('EmailOutputRendererUsecase', () => {
             comments: [{ author: 'John' }, { author: 'Jane' }],
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
       const result = await emailOutputRendererUsecase.execute(renderCommand);
       expect(result.body).to.include('This is an author: <!-- -->John<!-- -->Post Title');
@@ -730,6 +756,7 @@ describe('EmailOutputRendererUsecase', () => {
             names: ['John', 'Jane'],
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
       const result = await emailOutputRendererUsecase.execute(renderCommand);
       expect(result.body).to.include('John');
@@ -788,6 +815,7 @@ describe('EmailOutputRendererUsecase', () => {
             items: ['item1', 'item2', 'item3', 'item4'],
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -851,6 +879,7 @@ describe('EmailOutputRendererUsecase', () => {
             items: ['item1', 'item2', 'item3'],
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -913,6 +942,7 @@ describe('EmailOutputRendererUsecase', () => {
             linkUrl: 'https://example.com',
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -953,6 +983,7 @@ describe('EmailOutputRendererUsecase', () => {
             imageUrl: 'https://example.com/image.jpg',
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -997,6 +1028,7 @@ describe('EmailOutputRendererUsecase', () => {
             href: 'https://example.com',
           },
         },
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -1022,6 +1054,7 @@ describe('EmailOutputRendererUsecase', () => {
           body: simpleHtmlBody,
         },
         fullPayloadForRender: mockFullPayload,
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -1042,6 +1075,7 @@ describe('EmailOutputRendererUsecase', () => {
           body: simpleHtmlBody,
         },
         fullPayloadForRender: mockFullPayload,
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
@@ -1061,6 +1095,7 @@ describe('EmailOutputRendererUsecase', () => {
           body: htmlWithBodyTag,
         },
         fullPayloadForRender: mockFullPayload,
+        dbWorkflow: mockDbWorkflow,
       };
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);

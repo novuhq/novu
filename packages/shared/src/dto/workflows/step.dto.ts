@@ -1,5 +1,5 @@
 import type { JSONSchemaDto } from './json-schema-dto';
-import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
+import { Slug, StepTypeEnum, ResourceOriginEnum } from '../../types';
 import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
@@ -11,7 +11,7 @@ export type StepResponseDto = {
   name: string;
   slug: Slug;
   type: StepTypeEnum;
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   workflowId: string;
   workflowDatabaseId: string;
   issues?: StepIssuesDto;
@@ -64,6 +64,7 @@ export enum UiSchemaGroupEnum {
   CHAT = 'CHAT',
   PUSH = 'PUSH',
   SKIP = 'SKIP',
+  LAYOUT = 'LAYOUT',
 }
 
 export enum UiComponentEnum {
@@ -93,11 +94,13 @@ export enum UiComponentEnum {
   PUSH_SUBJECT = 'PUSH_SUBJECT',
   QUERY_EDITOR = 'QUERY_EDITOR',
   DATA = 'DATA',
+  LAYOUT_EMAIL = 'LAYOUT_EMAIL',
 }
 
 export class UiSchemaProperty {
   placeholder?: unknown;
   component: UiComponentEnum;
+  properties?: Record<string, UiSchemaProperty>;
 }
 
 export class UiSchema {

@@ -6,7 +6,7 @@ import {
   NotificationTemplateRepository,
   OrganizationEntity,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsNumber, UNLIMITED_VALUE } from '@novu/shared';
 
 import { FeatureFlagsService } from './feature-flags';
 import { NotificationStep } from '../value-objects/notification.step';
@@ -105,6 +105,10 @@ export class ResourceValidatorService {
   }
 
   private async getMaxWorkflowsTierLimit(environment, organization) {
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return UNLIMITED_VALUE; // Use existing constant for unlimited
+    }
+
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       organization.apiServiceLevel || ApiServiceLevelEnum.FREE,

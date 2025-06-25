@@ -1,11 +1,13 @@
 /* eslint-disable no-param-reassign */
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { EmailRenderOutput } from '@novu/shared';
-import { InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
+import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 
 import { Liquid } from 'liquidjs';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import {
@@ -20,12 +22,13 @@ import {
 import { NOVU_BRANDING_HTML } from './novu-branding-html';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
-  environmentId: string;
-  organizationId: string;
+  dbWorkflow: NotificationTemplateEntity;
+  locale?: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -39,12 +42,19 @@ function isJsonString(str: string): boolean {
 }
 
 @Injectable()
-export class EmailOutputRendererUsecase {
+export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   private readonly liquidEngine: Liquid;
 
-  constructor(private getOrganizationSettings: GetOrganizationSettings) {
+  constructor(
+    private getOrganizationSettings: GetOrganizationSettings,
+    protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
+    protected featureFlagsService: FeatureFlagsService
+  ) {
+    super(moduleRef, logger, featureFlagsService);
     this.liquidEngine = createLiquidEngine();
   }
+
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
     const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
@@ -55,39 +65,108 @@ export class EmailOutputRendererUsecase {
        * This passes responsibility to framework to throw type validation exceptions
        * rather than handling invalid types here.
        */
+
       return {
         subject: controlSubject as string,
         body: body as string,
       };
     }
 
-    let renderedHtml: string;
+    // Step 1: Apply translations to subject (already liquid-interpolated)
+    const translatedSubject = await this.processSubjectTranslations(
+      controlSubject as string,
+      renderCommand.fullPayloadForRender,
+      renderCommand.dbWorkflow,
+      renderCommand.locale
+    );
 
+    // Step 2: Process body content (with translations applied before rendering)
+    const renderedHtml = await this.processBodyContent(
+      body,
+      renderCommand.fullPayloadForRender,
+      renderCommand.dbWorkflow,
+      renderCommand.locale
+    );
+
+    // Step 3: Add Novu branding
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, renderCommand.dbWorkflow._organizationId);
+
+    // Step 4: Sanitize output if needed
+    if (disableOutputSanitization) {
+      return { subject: translatedSubject, body: htmlWithBranding };
+    }
+
+    return {
+      subject: sanitizeHTML(translatedSubject),
+      body: sanitizeHTML(htmlWithBranding),
+    };
+  }
+
+  private async processBodyContent(
+    body: string,
+    variables: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity,
+    locale?: string
+  ): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
       const liquifiedMaily = wrapMailyInLiquid(body);
-      const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
-      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
-      const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
-      renderedHtml = await mailyRender(strippedMaily);
+      const transformedMaily = await this.transformMailyContent(liquifiedMaily, variables);
+      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, variables);
+
+      // Apply translations to the liquid-processed Maily JSON before rendering
+      const translatedMaily = await this.processMailyTranslations(parsedMaily, variables, dbWorkflow, locale);
+
+      const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
+
+      return await mailyRender(strippedMaily);
     } else {
-      renderedHtml = await this.liquidEngine.parseAndRender(body, renderCommand.fullPayloadForRender);
+      // For simple text body, apply translations directly
+      return await this.processTextTranslations(body, variables, dbWorkflow, locale);
     }
+  }
 
-    // Add Novu branding if 'removeNovuBranding' is false
-    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, renderCommand.organizationId);
+  private async processSubjectTranslations(
+    subject: string,
+    variables: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity,
+    locale?: string
+  ): Promise<string> {
+    return this.processStringTranslations(subject, variables, dbWorkflow, locale);
+  }
 
-    /**
-     * Force type mapping in case undefined control.
-     * This passes responsibility to framework to throw type validation exceptions
-     * rather than handling invalid types here.
-     */
-    const subject = controlSubject as string;
+  private async processMailyTranslations(
+    mailyContent: MailyJSONContent,
+    variables: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity,
+    locale?: string
+  ): Promise<MailyJSONContent> {
+    try {
+      const contentString = JSON.stringify(mailyContent);
+      const translatedContent = await this.processStringTranslations(contentString, variables, dbWorkflow, locale);
 
-    if (disableOutputSanitization) {
-      return { subject, body: htmlWithBranding };
+      return JSON.parse(translatedContent);
+    } catch (error) {
+      this.logger.error('Maily translation processing failed, falling back to original content', error);
+
+      return mailyContent;
     }
+  }
 
-    return { subject: sanitizeHTML(subject), body: sanitizeHTML(htmlWithBranding) };
+  private async processTextTranslations(
+    text: string,
+    variables: FullPayloadForRender,
+    dbWorkflow: NotificationTemplateEntity,
+    locale?: string
+  ): Promise<string> {
+    try {
+      const translatedText = await this.processStringTranslations(text, variables, dbWorkflow, locale);
+
+      return await this.liquidEngine.parseAndRender(translatedText, variables);
+    } catch (error) {
+      this.logger.error('Text translation processing failed, falling back to liquid processing', error);
+
+      return await this.liquidEngine.parseAndRender(text, variables);
+    }
   }
 
   private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {

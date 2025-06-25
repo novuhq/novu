@@ -1,68 +1,63 @@
 // TODO: just a mock for now
 export const TRANSLATION_KEYS = [
   // Common buttons
-  { name: 't.common.button.cancel' },
-  { name: 't.common.button.submit' },
-  { name: 't.common.button.save' },
-  { name: 't.common.button.confirm' },
-  { name: 't.common.button.delete' },
-  { name: 't.common.button.edit' },
-  { name: 't.common.button.view' },
-  { name: 't.common.button.download' },
-  { name: 't.common.button.upload' },
-  { name: 't.common.button.retry' },
+  { name: 'common.button.cancel' },
+  { name: 'common.button.submit' },
+  { name: 'common.button.save' },
+  { name: 'common.button.confirm' },
+  { name: 'common.button.delete' },
+  { name: 'common.button.edit' },
+  { name: 'common.button.view' },
+  { name: 'common.button.download' },
+  { name: 'common.button.upload' },
+  { name: 'common.button.retry' },
 
   // Common phrases
-  { name: 't.common.greeting' },
-  { name: 't.common.farewell' },
-  { name: 't.common.thanks' },
-  { name: 't.common.welcome' },
-  { name: 't.common.congratulations' },
-  { name: 't.common.sorry' },
+  { name: 'common.greeting' },
+  { name: 'common.farewell' },
+  { name: 'common.thanks' },
+  { name: 'common.welcome' },
+  { name: 'common.congratulations' },
+  { name: 'common.sorry' },
 
   // User-related
-  { name: 't.user.name' },
-  { name: 't.user.email' },
-  { name: 't.user.firstName' },
-  { name: 't.user.lastName' },
-  { name: 't.user.fullName' },
-  { name: 't.user.username' },
-  { name: 't.user.role' },
+  { name: 'user.name' },
+  { name: 'user.email' },
+  { name: 'user.firstName' },
+  { name: 'user.lastName' },
+  { name: 'user.fullName' },
+  { name: 'user.username' },
+  { name: 'user.role' },
 
   // Application-related
-  { name: 't.app.name' },
-  { name: 't.app.version' },
-  { name: 't.app.url' },
-  { name: 't.app.support.email' },
-  { name: 't.app.support.phone' },
+  { name: 'app.name' },
+  { name: 'app.version' },
+  { name: 'app.url' },
+  { name: 'app.support.email' },
+  { name: 'app.support.phone' },
 
   // Company-related
-  { name: 't.company.name' },
-  { name: 't.company.address' },
-  { name: 't.company.phone' },
-  { name: 't.company.email' },
-  { name: 't.company.website' },
+  { name: 'company.name' },
+  { name: 'company.address' },
+  { name: 'company.phone' },
+  { name: 'company.email' },
+  { name: 'company.website' },
 
   // Notification-specific
-  { name: 't.notification.title' },
-  { name: 't.notification.message' },
-  { name: 't.notification.action' },
-  { name: 't.notification.unsubscribe' },
+  { name: 'notification.title' },
+  { name: 'notification.message' },
+  { name: 'notification.action' },
+  { name: 'notification.unsubscribe' },
 
   // Date and time
-  { name: 't.date.today' },
-  { name: 't.date.tomorrow' },
-  { name: 't.date.yesterday' },
-  { name: 't.time.now' },
+  { name: 'date.today' },
+  { name: 'date.tomorrow' },
+  { name: 'date.yesterday' },
+  { name: 'time.now' },
 
   // Status messages
-  { name: 't.status.success' },
-  { name: 't.status.error' },
-  { name: 't.status.warning' },
-  { name: 't.status.info' },
+  { name: 'status.success' },
+  { name: 'status.error' },
+  { name: 'status.warning' },
+  { name: 'status.info' },
 ];
-
-/**
- * Translation key trigger character for the editor
- */
-export const TRANSLATION_TRIGGER = '{{t.';

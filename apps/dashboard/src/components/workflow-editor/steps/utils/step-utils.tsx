@@ -1,4 +1,4 @@
-import { StepTypeEnum, WorkflowOriginEnum, WorkflowResponseDto, StepResponseDto } from '@novu/shared';
+import { StepTypeEnum, ResourceOriginEnum, WorkflowResponseDto, StepResponseDto } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { getStepTypeIcon } from './preview-context.utils';
 
@@ -16,8 +16,8 @@ export function getEditorTitle(stepType: StepTypeEnum): string {
 
 export function isStepEditable(workflow: WorkflowResponseDto, step: StepResponseDto): boolean {
   const { dataSchema, uiSchema } = step.controls;
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
-  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isNovuCloud = workflow.origin === ResourceOriginEnum.NOVU_CLOUD && Boolean(uiSchema);
+  const isExternal = workflow.origin === ResourceOriginEnum.EXTERNAL;
 
   return isExternal || (isNovuCloud && Boolean(uiSchema));
 }
