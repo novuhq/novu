@@ -35,10 +35,10 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     const hasNext = totalCount > 0 && currentPage < totalPages;
     const hasPrevious = currentPage > 1;
 
-    return { hasNext, hasPrevious };
+    return { hasNext, hasPrevious, totalPages };
   }, [totalCount, limit, currentPage]);
 
-  const { selectedLogId, handleLogSelect, handleNext, handlePrevious, handleFirst } = urlState;
+  const { selectedLogId, handleLogSelect, handleNext, handlePrevious, handleFirst, handleLast } = urlState;
 
   const selectedLog = selectedLogId
     ? logsData.find((log: RequestLog) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
@@ -48,6 +48,10 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     const logId = log.transactionId || `error-${logsData.indexOf(log)}`;
     handleLogSelect(logId);
     onLogClick?.(log);
+  };
+
+  const handleLastPage = () => {
+    handleLast(paginationState.totalPages);
   };
 
   if (!isLoading && logsData.length === 0 && !hasActiveFilters) {
@@ -115,6 +119,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                     onNext={handleNext}
                     onPrevious={handlePrevious}
                     onFirst={handleFirst}
+                    onLast={handleLastPage}
                   />
                 </div>
               )}

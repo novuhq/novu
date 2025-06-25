@@ -14,6 +14,7 @@ export interface LogsUrlState {
   handleNext: () => void;
   handlePrevious: () => void;
   handleFirst: () => void;
+  handleLast: (totalPages: number) => void;
   filters: LogsFilters;
   handleFiltersChange: (newFilters: LogsFilters) => void;
   clearFilters: () => void;
@@ -63,6 +64,16 @@ export function useLogsUrlState(): LogsUrlState {
       return prev;
     });
   }, [setSearchParams]);
+
+  const handleLast = useCallback(
+    (totalPages: number) => {
+      setSearchParams((prev) => {
+        prev.set('page', totalPages.toString());
+        return prev;
+      });
+    },
+    [setSearchParams]
+  );
 
   // Filter state
   const filters = useMemo(
@@ -120,6 +131,7 @@ export function useLogsUrlState(): LogsUrlState {
       handleNext,
       handlePrevious,
       handleFirst,
+      handleLast,
       filters,
       handleFiltersChange,
       clearFilters,
@@ -133,6 +145,7 @@ export function useLogsUrlState(): LogsUrlState {
       handleNext,
       handlePrevious,
       handleFirst,
+      handleLast,
       filters,
       handleFiltersChange,
       clearFilters,
