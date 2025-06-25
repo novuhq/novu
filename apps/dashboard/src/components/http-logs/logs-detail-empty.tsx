@@ -1,19 +1,33 @@
-import { RiFileList3Line } from 'react-icons/ri';
+import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 
-export function LogsDetailEmpty() {
+export function RequestLogDetailEmptyState2() {
   return (
     <div className="flex h-full items-center justify-center p-4">
       <div className="flex flex-col items-center gap-3 text-center">
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-neutral-100">
-          <RiFileList3Line className="h-6 w-6 text-neutral-500" />
+          <EmptyTopicsIllustration />
         </div>
         <div>
-          <h3 className="text-foreground-900 text-sm font-medium">Select a log to view details</h3>
-          <p className="text-foreground-600 text-xs">
-            Click on any log entry to see detailed information about the request and response.
+          <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+            Nothing to show,
+            <br />
+            Select an log on the left to view detailed info here
           </p>
         </div>
       </div>
+    </div>
+  );
+}
+
+export function RequestLogDetailEmptyState() {
+  return (
+    <div className="flex h-full w-full flex-col items-center justify-center gap-6 text-center">
+      <EmptyTopicsIllustration />
+      <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+        Nothing to show,
+        <br />
+        Select an log on the left to view detailed info here
+      </p>
     </div>
   );
 }

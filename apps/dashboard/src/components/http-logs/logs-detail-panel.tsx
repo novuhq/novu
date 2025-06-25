@@ -4,7 +4,7 @@ import { LogsDetailHeader } from './logs-detail-header';
 import { LogsDetailContent } from './logs-detail-content';
 import { LogsDetailSkeleton } from './logs-detail-skeleton';
 import { LogsDetailError } from './logs-detail-error';
-import { LogsDetailEmpty } from './logs-detail-empty';
+import { RequestLogDetailEmptyState } from './logs-detail-empty';
 import { WorkflowRunsTabs } from './workflow-runs-tabs';
 import { WorkflowRunsContent } from './workflow-runs-content';
 
@@ -24,7 +24,7 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
   }
 
   if (!log) {
-    return <LogsDetailEmpty />;
+    return <RequestLogDetailEmptyState />;
   }
 
   return (
@@ -34,17 +34,10 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
       transition={{ duration: 0.2 }}
       className="border-stroke-soft flex h-full flex-col overflow-hidden rounded-lg border bg-white"
     >
-      {/* Fixed header sections */}
-      {/* <div className="flex-none"> */}
       <LogsDetailHeader log={log} />
       <LogsDetailContent log={log} />
       <WorkflowRunsTabs />
-      {/* </div> */}
-
-      {/* Scrollable workflow runs content */}
-      {/* <div className="flex-1 overflow-hidden"> */}
       <WorkflowRunsContent log={log} />
-      {/* </div> */}
     </motion.div>
   );
 }

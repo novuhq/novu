@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 import { Button } from '../primitives/button';
 
-export const LogsListBlank = () => {
+export const RequestLogsEmptyState = () => {
   const navigate = useNavigate();
 
   const handleCreateWorkflow = () => {

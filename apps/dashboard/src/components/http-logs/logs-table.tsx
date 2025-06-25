@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { motion } from 'motion/react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { RequestLog } from '../../types/logs';
@@ -8,7 +8,7 @@ import { LogsDetailPanel } from './logs-detail-panel';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiSkipBackLine, RiSkipForwardLine } from 'react-icons/ri';
-import { LogsListBlank } from './logs-empty-state';
+import { RequestLogsEmptyState } from './logs-empty-state';
 
 type LogsTableProps = {
   onLogClick?: (log: RequestLog) => void;
@@ -58,7 +58,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
   };
 
   if (!isLoading && logsData.length === 0) {
-    return <LogsListBlank />;
+    return <RequestLogsEmptyState />;
   }
 
   return (
@@ -66,7 +66,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
       <div className="relative flex flex-1">
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={50}>
-            <div className="flex h-full flex-col">
+            <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-white">
               <div className="flex-1">
                 <Table isLoading={isLoading}>
                   <TableHeader>
@@ -135,23 +135,17 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
             </div>
           </ResizablePanel>
 
-          <AnimatePresence mode="wait">
-            {selectedLogId && (
-              <>
-                <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
-                  <motion.div
-                    key={selectedLogId}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2 }}
-                    className="bg-background h-full overflow-auto"
-                  >
-                    <LogsDetailPanel log={selectedLog} />
-                  </motion.div>
-                </ResizablePanel>
-              </>
-            )}
-          </AnimatePresence>
+          <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
+            <motion.div
+              key={selectedLogId || 'empty'}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="h-full overflow-auto rounded-lg border border-neutral-200 bg-white"
+            >
+              <LogsDetailPanel log={selectedLog} />
+            </motion.div>
+          </ResizablePanel>
         </ResizablePanelGroup>
       </div>
     </div>
