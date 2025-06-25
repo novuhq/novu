@@ -44,14 +44,9 @@ type TestWorkflowDrawerProps = {
   initialPayload?: PayloadData;
 };
 
-const generateCurlCommand = (data: {
-  workflowId: string;
-  to: unknown;
-  payload: string;
-  apiKey: string;
-}) => {
+const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: string; apiKey: string }) => {
   const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-  
+
   // Parse payload if it's a string, otherwise use as-is
   let parsedPayload = {};
 
@@ -60,7 +55,7 @@ const generateCurlCommand = (data: {
   } catch {
     parsedPayload = {};
   }
-  
+
   const body = {
     name: data.workflowId,
     to: data.to,
@@ -72,7 +67,6 @@ const generateCurlCommand = (data: {
   -H "Content-Type: application/json" \\
   -d '${JSON.stringify(body, null, 2)}'`;
 };
-
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
   const { isOpen, onOpenChange, testData, initialPayload } = props;
@@ -256,10 +250,10 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         options: {
           position: 'bottom-right',
         },
-              });
-      } catch {
-        showErrorToast('Failed to copy cURL command', 'Copy Error');
-      }
+      });
+    } catch {
+      showErrorToast('Failed to copy cURL command', 'Copy Error');
+    }
   }, [workflow?.workflowId, apiKey, form]);
 
   const handleOpenInPostman = useCallback(async () => {
@@ -270,7 +264,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
     try {
       const formData = form.getValues();
-      
+
       // Parse payload if it's a string, otherwise use as-is
       let parsedPayload = {};
 
@@ -279,7 +273,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       } catch {
         parsedPayload = {};
       }
-      
+
       const body = {
         name: workflow.workflowId,
         to: formData.to,
@@ -329,7 +323,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
             <ToastIcon variant="success" />
             <div className="flex flex-col gap-1">
               <span>Postman collection copied to clipboard</span>
-              <span className="text-xs text-foreground-600">Import it in Postman: File → Import → Raw text</span>
+              <span className="text-foreground-600 text-xs">Import it in Postman: File → Import → Raw text</span>
             </div>
             <ToastClose onClick={close} />
           </>
@@ -373,14 +367,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
                       className="rounded-l-lg rounded-r-none border-none p-2 text-white"
                       variant="secondary"
                       size="xs"
-                      leadingIcon={RiPlayCircleLine}
                       isLoading={isPending}
                     >
                       Test workflow
                     </Button>
                   </ButtonGroupItem>
                   <ButtonGroupItem asChild>
-                    <DropdownMenu modal={false}>
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
                           mode="gradient"
