@@ -11,6 +11,7 @@ export class LocalizationGroupEntity {
 
   resourceType: LocalizationResourceEnum;
   resourceId: string;
+  resourceName: string;
 
   _resourceInternalId: string;
   _environmentId: EnvironmentId;

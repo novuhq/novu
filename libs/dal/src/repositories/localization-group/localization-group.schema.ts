@@ -13,6 +13,10 @@ const localizationGroupSchema = new Schema<LocalizationGroupDBModel>(
       type: Schema.Types.String,
       required: true,
     },
+    resourceName: {
+      type: Schema.Types.String,
+      required: true,
+    },
     _resourceInternalId: {
       type: Schema.Types.ObjectId,
       required: true,
@@ -30,6 +34,19 @@ const localizationGroupSchema = new Schema<LocalizationGroupDBModel>(
   },
   schemaOptions
 );
+
+localizationGroupSchema.index({
+  resourceType: 1,
+  _resourceInternalId: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+});
+
+localizationGroupSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  updatedAt: -1,
+});
 
 export const LocalizationGroup =
   (mongoose.models.LocalizationGroup as mongoose.Model<LocalizationGroupDBModel>) ||

@@ -31,6 +31,19 @@ const localizationSchema = new Schema<LocalizationDBModel>(
   schemaOptions
 );
 
+localizationSchema.index({
+  _localizationGroupId: 1,
+  locale: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+});
+
+localizationSchema.index({
+  _localizationGroupId: 1,
+  _environmentId: 1,
+  _organizationId: 1,
+});
+
 export const Localization =
   (mongoose.models.Localization as mongoose.Model<LocalizationDBModel>) ||
   mongoose.model<LocalizationDBModel>('Localization', localizationSchema);

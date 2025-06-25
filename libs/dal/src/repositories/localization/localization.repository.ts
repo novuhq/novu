@@ -11,40 +11,4 @@ export class LocalizationRepository extends BaseRepository<
   constructor() {
     super(Localization, LocalizationEntity);
   }
-  async findByGroupAndLocale(
-    localizationGroupId: string,
-    locale: string,
-    environmentId: string,
-    organizationId: string
-  ) {
-    return this.findOne({
-      _localizationGroupId: localizationGroupId,
-      locale,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-    });
-  }
-
-  async findByGroup(localizationGroupId: string, environmentId: string, organizationId: string) {
-    return this.find({
-      _localizationGroupId: localizationGroupId,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-    });
-  }
-
-  async findByLocale(locale: string, environmentId: string, organizationId: string) {
-    return this.find({
-      locale,
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-    });
-  }
-
-  async getAllLocalizations(environmentId: string, organizationId: string) {
-    return this.find({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-    });
-  }
 }

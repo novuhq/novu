@@ -41,6 +41,7 @@ export class LocalizationGroupRepository extends BaseRepository<
   async getOrCreateForResource(
     resourceType: LocalizationResourceEnum,
     resourceId: string,
+    resourceName: string,
     _resourceInternalId: string,
     environmentId: string,
     organizationId: string
@@ -51,27 +52,69 @@ export class LocalizationGroupRepository extends BaseRepository<
       group = await this.create({
         resourceType,
         resourceId,
+        resourceName,
         _resourceInternalId,
         _environmentId: environmentId,
         _organizationId: organizationId,
       });
+    } else if (group.resourceName !== resourceName) {
+      // Update resource name if it has changed
+      await this.update(
+        {
+          _id: group._id,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        { resourceName }
+      );
+
+      group = await this.findByResource(resourceType, _resourceInternalId, environmentId, organizationId);
     }
 
     return group;
   }
 
-  async findByResourceType(resourceType: LocalizationResourceEnum, environmentId: string, organizationId: string) {
-    return this.find({
-      resourceType,
+  async findPaginatedGroups(
+    environmentId: string,
+    organizationId: string,
+    options: {
+      query?: string;
+      limit: number;
+      offset: number;
+    }
+  ): Promise<{ data: LocalizationGroupEntity[]; totalCount: number }> {
+    const { query, limit, offset } = options;
+
+    const filters: any = {
       _environmentId: environmentId,
       _organizationId: organizationId,
-    });
+    };
+
+    if (query) {
+      // Use regex search like workflow controller for consistency
+      filters.$or = [
+        { resourceName: { $regex: this.regExpEscape(query), $options: 'i' } },
+        { resourceId: { $regex: this.regExpEscape(query), $options: 'i' } },
+      ];
+    }
+
+    const [totalCount, data] = await Promise.all([
+      this.count(filters),
+      this.find(
+        filters,
+        {},
+        {
+          sort: { updatedAt: -1 },
+          skip: offset,
+          limit,
+        }
+      ),
+    ]);
+
+    return { data, totalCount };
   }
 
-  async getAllGroups(environmentId: string, organizationId: string) {
-    return this.find({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-    });
+  private regExpEscape(literalString: string): string {
+    return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
   }
 }
