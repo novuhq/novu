@@ -23,7 +23,7 @@ export class UpdateSubscriberOnlineState {
     };
 
     await this.subscriberRepository.update(
-      { _id: command.subscriberId, _environmentId: command.environmentId },
+      { subscriberId: command.subscriberId, _environmentId: command.environmentId },
       {
         $set: updatePayload,
       }
