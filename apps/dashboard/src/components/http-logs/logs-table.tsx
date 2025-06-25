@@ -8,6 +8,7 @@ import { LogsDetailPanel } from './logs-detail-panel';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiSkipBackLine, RiSkipForwardLine } from 'react-icons/ri';
+import { LogsListBlank } from './logs-empty-state';
 
 type LogsTableProps = {
   onLogClick?: (log: RequestLog) => void;
@@ -55,6 +56,10 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     handleLogSelect(logId);
     onLogClick?.(log);
   };
+
+  if (!isLoading && logsData.length === 0) {
+    return <LogsListBlank />;
+  }
 
   return (
     <div className="flex h-full flex-col">
