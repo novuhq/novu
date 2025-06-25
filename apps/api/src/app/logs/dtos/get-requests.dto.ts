@@ -16,10 +16,10 @@ export class GetRequestsDto {
   @Max(100)
   limit?: number;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
   @Matches(/^[0-9]{3}$/, { message: 'Status code must be a 3-digit number' })
-  statusCode?: string;
+  statusCode?: number;
 
   @IsString()
   @IsOptional()

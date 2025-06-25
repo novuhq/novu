@@ -50,11 +50,11 @@ export function LogAnalytics(strategy: ANALYTICS_STRATEGY = ANALYTICS_STRATEGY.B
   return applyDecorators(SetMetadata(LOG_ANALYTICS_KEY, strategy));
 }
 
-export function getAnalyticsStrategy(context: ExecutionContext): ANALYTICS_STRATEGY {
+function getAnalyticsStrategy(context: ExecutionContext): ANALYTICS_STRATEGY {
   return context.getHandler && Reflect.getMetadata(LOG_ANALYTICS_KEY, context.getHandler());
 }
 
-export function isLogAnalytics(context: ExecutionContext): boolean {
+function shouldLogAnalytics(context: ExecutionContext): boolean {
   return getAnalyticsStrategy(context) !== undefined;
 }
 
@@ -69,7 +69,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   }
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
-    const shouldLog = isLogAnalytics(context);
+    const shouldLog = shouldLogAnalytics(context);
     if (!shouldLog) return next.handle();
 
     const req = context.switchToHttp().getRequest();

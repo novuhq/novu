@@ -10,9 +10,9 @@ export class GetRequestsCommand extends OrganizationCommand {
   @IsOptional()
   public limit?: number;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  public statusCode?: string;
+  public statusCode?: number;
 
   @IsString()
   @IsOptional()
@@ -22,7 +22,7 @@ export class GetRequestsCommand extends OrganizationCommand {
   @IsOptional()
   public transactionId?: string;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  public days?: string;
+  public days?: number;
 }

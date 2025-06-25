@@ -30,7 +30,7 @@ export class GetRequests {
 
     if (command.days) {
       const startDate = new Date();
-      startDate.setDate(startDate.getDate() - parseInt(command.days, 10));
+      startDate.setDate(startDate.getDate() - command.days);
       where.timestamp = {
         operator: '>=',
         value: startDate,
