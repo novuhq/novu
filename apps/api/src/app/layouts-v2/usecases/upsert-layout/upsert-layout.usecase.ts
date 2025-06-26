@@ -61,7 +61,7 @@ export class UpsertLayoutUseCase {
 
     let upsertedLayout: LayoutDto;
     if (existingLayout) {
-      this.mixpanelTrack(command, 'Layout Update - [API]');
+      this.mixpanelTrack(command, 'Layout Update - [Layouts]');
 
       upsertedLayout = await this.updateLayoutUseCaseV0.execute(
         UpdateLayoutCommand.create({
@@ -75,7 +75,7 @@ export class UpsertLayoutUseCase {
         })
       );
     } else {
-      this.mixpanelTrack(command, 'Layout Created - [API]');
+      this.mixpanelTrack(command, 'Layout Create - [Layouts]');
 
       const defaultLayout = await this.layoutRepository.findOne({
         _organizationId: command.user.organizationId,

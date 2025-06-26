@@ -116,16 +116,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     // Step 2: Process body content (with translations applied before rendering)
     let renderedHtml = '';
     if (isLayoutsPageActive) {
-      const stepBodyHtml = await this.processBodyContent({
-        body,
-        payload: fullPayloadForRender,
-        dbWorkflow,
-        locale,
-        noHtmlWrappingTags: true,
-      });
-      const cleanedStepBodyHtml = stepBodyHtml.replace(/<!DOCTYPE.*?>/, '').replace(/<!--\/$-->/, '');
       renderedHtml = await this.renderWithLayout({
-        stepContent: cleanedStepBodyHtml,
+        body,
         layoutId,
         payload: fullPayloadForRender,
         dbWorkflow,
@@ -155,13 +147,13 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   }
 
   private async renderWithLayout({
-    stepContent,
+    body,
     layoutId,
     payload,
     dbWorkflow,
     locale,
   }: {
-    stepContent: string;
+    body: string;
     layoutId?: string;
     payload: FullPayloadForRender;
     dbWorkflow: NotificationTemplateEntity;
@@ -198,17 +190,26 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         : null;
     }
 
+    const stepBodyHtml = await this.processBodyContent({
+      body,
+      payload,
+      dbWorkflow,
+      locale,
+      noHtmlWrappingTags: !!layoutControlsEntity,
+    });
+
     if (!layoutControlsEntity) {
-      return stepContent;
+      return stepBodyHtml;
     }
 
+    const cleanedStepBodyHtml = stepBodyHtml.replace(/<!DOCTYPE.*?>/, '').replace(/<!--\/$-->/, '');
     const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
 
     return this.processBodyContent({
       body: layoutControlValues.email?.content ?? '',
       payload: {
         ...payload,
-        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(stepContent.replace(/\n/g, '')),
+        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),
       },
       dbWorkflow,
       locale,

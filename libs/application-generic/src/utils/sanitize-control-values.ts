@@ -83,6 +83,7 @@ function sanitizeEmail(controlValues: EmailControlType) {
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
     skip: controlValues.skip,
     disableOutputSanitization: controlValues.disableOutputSanitization,
+    layoutId: controlValues.layoutId,
   };
 
   return filterNullishValues(emailControls);
