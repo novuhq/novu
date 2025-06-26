@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 export interface LogsFilters {
   status: string[];
   transactionId: string;
+  created?: string; // Hours value for creation time filter
 }
 
 export interface LogsUrlState {
@@ -80,6 +81,7 @@ export function useLogsUrlState(): LogsUrlState {
     (): LogsFilters => ({
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
+      created: searchParams.get('created') || undefined,
     }),
     [searchParams]
   );
@@ -90,6 +92,7 @@ export function useLogsUrlState(): LogsUrlState {
         // Clear existing filter params
         prev.delete('status');
         prev.delete('transactionId');
+        prev.delete('created');
 
         // Set new filter params
         if (newFilters.status.length > 0) {
@@ -98,6 +101,10 @@ export function useLogsUrlState(): LogsUrlState {
 
         if (newFilters.transactionId.trim()) {
           prev.set('transactionId', newFilters.transactionId);
+        }
+
+        if (newFilters.created) {
+          prev.set('created', newFilters.created);
         }
 
         // Reset to first page when filters change
@@ -113,13 +120,14 @@ export function useLogsUrlState(): LogsUrlState {
     setSearchParams((prev) => {
       prev.delete('status');
       prev.delete('transactionId');
+      prev.delete('created');
       prev.delete('page');
       return prev;
     });
   }, [setSearchParams]);
 
   const hasActiveFilters = useMemo(() => {
-    return filters.status.length > 0 || filters.transactionId.trim() !== '';
+    return filters.status.length > 0 || filters.transactionId.trim() !== '' || !!filters.created;
   }, [filters]);
 
   return useMemo(

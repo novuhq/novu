@@ -24,6 +24,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     limit: limit,
     status: filters.status,
     transactionId: filters.transactionId || undefined,
+    created: filters.created?.toString(),
   });
 
   const logsData = logsResponse?.data || [];

@@ -10,7 +10,7 @@ export interface GetRequestLogsParams {
   url?: string;
   transactionId?: string;
   search?: string;
-  days?: string;
+  created?: string;
 }
 
 export interface GetRequestLogsResponse {

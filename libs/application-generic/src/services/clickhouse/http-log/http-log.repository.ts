@@ -4,7 +4,7 @@ import { BaseRepository, SchemaKeys } from '../base.repository';
 import { ClickHouseService } from '../clickhouse.service';
 import { httpLogSchema, ORDER_BY } from './http-log.schema';
 
-export const TABLE_NAME = 'request_logs';
+export const TABLE_NAME = 'requests';
 
 @Injectable()
 export class HttpLogRepository extends BaseRepository<typeof httpLogSchema> {

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { subHours } from 'date-fns';
 import { HttpLog, HttpLogRepository, Where } from '@novu/application-generic';
 import { GetRequestsCommand } from './get-requests.command';
 import { GetRequestsResponseDto } from '../../dtos/get-requests.response.dto';
@@ -31,12 +32,10 @@ export class GetRequests {
       where.transaction_id = command.transactionId;
     }
 
-    if (command.days) {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - command.days);
+    if (command.hoursAgo) {
       where.created_at = {
         operator: '>=',
-        value: startDate,
+        value: subHours(new Date(), command.hoursAgo).toISOString().slice(0, 19).replace('T', ' ') as any,
       };
     }
 
@@ -52,7 +51,7 @@ export class GetRequests {
     ]);
 
     const mappedData = findResult.data.map((log) => ({
-      id: log.transaction_id || new Date(log.created_at || 0).getTime().toString(),
+      id: log.transaction_id || '',
       createdAt: new Date(`${log.created_at} UTC`).toISOString(),
       url: log.url || '',
       method: log.method || '',

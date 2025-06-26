@@ -25,5 +25,5 @@ export class GetRequestsCommand extends OrganizationCommand {
 
   @IsNumber()
   @IsOptional()
-  public days?: number;
+  public hoursAgo?: number;
 }

@@ -62,4 +62,11 @@ export class GetRequestsDto {
   @IsOptional()
   @MaxLength(100)
   transactionId?: string;
+
+  @IsNumber()
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  @Max(2160) // 90 days * 24 hours
+  created?: number;
 }

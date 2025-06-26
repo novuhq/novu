@@ -22,6 +22,7 @@ export class LogsController {
     const command = GetRequestsCommand.create({
       organizationId: user.organizationId,
       userId: user._id,
+      hoursAgo: query.created,
       ...query,
     });
 
