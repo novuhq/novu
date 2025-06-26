@@ -4,6 +4,6 @@
   "start": "cd scripts && node setup-env-files.js && cd .. && pnpm start:api & pnpm start:dashboard & pnpm start:worker &",
   "build": {
     "context": "..",
-    "dockerfile": "Dockerfile"
+    "dockerfile": ".cursor/Dockerfile"
   }
 }
