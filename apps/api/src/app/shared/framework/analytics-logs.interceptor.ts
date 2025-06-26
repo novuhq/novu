@@ -8,11 +8,12 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { FeatureFlagsService, PinoLogger, HttpLogRepository, HttpLog } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
 import { UserSessionData, FeatureFlagsKeysEnum } from '@novu/shared';
 import { getClientIp } from 'request-ip';
 import { sanitizePayload, retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
+import { generateTransactionId } from '../helpers';
 
 const LOG_ANALYTICS_KEY = 'logAnalytics';
 
@@ -20,6 +21,8 @@ export enum AnalyticsStrategyEnum {
   BASIC = 'basic',
   EVENTS = 'events',
 }
+
+type CreateHttpLog = Omit<RequestLog, 'id'>;
 
 /**
  * Analytics Logs Decorator & Interceptor
@@ -62,7 +65,7 @@ function shouldLogAnalytics(context: ExecutionContext): boolean {
 export class AnalyticsLogsInterceptor implements NestInterceptor {
   constructor(
     private readonly featureFlagsService: FeatureFlagsService,
-    private readonly httpLogRepository: HttpLogRepository,
+    private readonly requestLogRepository: RequestLogRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -96,7 +99,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
 
         try {
-          await retryWithBackoff(() => this.httpLogRepository.insert(analyticsLog));
+          await retryWithBackoff(() => this.requestLogRepository.insert(analyticsLog));
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
         }
@@ -104,33 +107,35 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     );
   }
 
-  private buildLogByStrategy(context: ExecutionContext, analyticsLog: HttpLog, res: unknown): HttpLog {
+  private buildLogByStrategy(context: ExecutionContext, analyticsLog: CreateHttpLog, res: unknown): CreateHttpLog {
     const strategy = getAnalyticsStrategy(context);
 
     if (strategy === AnalyticsStrategyEnum.EVENTS) {
       const eventResponse = (res as any).data as TriggerEventResponseDto;
 
-      return {
-        ...analyticsLog,
-        transaction_id: eventResponse.transactionId || null,
-      };
+      if (eventResponse.transactionId) {
+        return {
+          ...analyticsLog,
+          transaction_id: eventResponse.transactionId,
+        };
+      }
     }
 
     return analyticsLog;
   }
 
-  private buildLog(req: any, res: any, data: any, user: UserSessionData, duration: number): HttpLog {
+  private buildLog(req: any, res: any, data: any, user: UserSessionData, duration: number): CreateHttpLog {
     return {
       created_at: new Date(),
       path: req.path,
       url: req.originalUrl,
+      url_pattern: req.route.path,
       hostname: req.hostname,
       status_code: res.statusCode,
       method: req.method,
-      transaction_id: null,
+      transaction_id: generateTransactionId(),
       ip: getClientIp(req) || '',
       user_agent: req.headers['user-agent'] || '',
-      query_params: JSON.stringify(req.query),
       request_body: sanitizePayload(req.body),
       response_body: sanitizePayload(data),
       user_id: user._id,

@@ -1,6 +1,7 @@
 import { PinoLogger } from 'nestjs-pino';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { ClickHouseService } from './clickhouse.service';
+import { generateObjectId } from '../../utils/generate-id';
 
 // Define operators as const assertion to maintain literal types
 const CLICKHOUSE_OPERATORS = [
@@ -40,6 +41,7 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
   abstract readonly table: string;
   abstract readonly schema: T;
   abstract readonly schemaOrderBy: SchemaKeys<T>[];
+  abstract readonly identifierPrefix: string;
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
@@ -129,12 +131,17 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }
 
-  async insert(data: InferClickhouseSchemaType<T>): Promise<void> {
-    await this.clickhouseService.insert(this.table, [data]);
+  async insert(data: Omit<InferClickhouseSchemaType<T>, 'id'>): Promise<void> {
+    const id = `${this.identifierPrefix}${generateObjectId()}`;
+    await this.clickhouseService.insert(this.table, [{ ...data, id }]);
   }
 
-  async insertMany(data: InferClickhouseSchemaType<T>[]): Promise<void> {
-    await this.clickhouseService.insert(this.table, data);
+  async insertMany(data: Omit<InferClickhouseSchemaType<T>, 'id'>[]): Promise<void> {
+    const ids = data.map((item) => `${this.identifierPrefix}${generateObjectId()}`);
+    await this.clickhouseService.insert(
+      this.table,
+      data.map((item, index) => ({ ...item, id: ids[index] }))
+    );
   }
 
   async find(options: {

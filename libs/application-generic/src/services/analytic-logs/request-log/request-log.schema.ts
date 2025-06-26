@@ -8,13 +8,15 @@ import {
   CHNullable,
   CHUInt32,
 } from 'clickhouse-schema';
-import { TABLE_NAME } from './http-log.repository';
+import { TABLE_NAME } from './request-log.repository';
 
-export const httpLogSchema = new ClickhouseSchema(
+export const requestLogSchema = new ClickhouseSchema(
   {
+    id: { type: CHString() },
     created_at: { type: CHDateTime('UTC') },
     path: { type: CHString() },
     url: { type: CHString() },
+    url_pattern: { type: CHString() },
     hostname: { type: CHString() },
     status_code: { type: CHUInt16() },
     method: { type: CHLowCardinality(CHString()) },
@@ -23,7 +25,6 @@ export const httpLogSchema = new ClickhouseSchema(
     },
     ip: { type: CHString() },
     user_agent: { type: CHString() },
-    query_params: { type: CHString() },
     request_body: { type: CHString() },
     response_body: { type: CHString() },
     user_id: { type: CHString() },
@@ -38,6 +39,11 @@ export const httpLogSchema = new ClickhouseSchema(
   }
 );
 
-export const ORDER_BY: (keyof typeof httpLogSchema.schema)[] = ['organization_id', 'environment_id', 'created_at'];
+export const ORDER_BY: (keyof typeof requestLogSchema.schema)[] = [
+  'organization_id',
+  'environment_id',
+  'created_at',
+  'id',
+];
 
-export type HttpLog = InferClickhouseSchemaType<typeof httpLogSchema>;
+export type RequestLog = InferClickhouseSchemaType<typeof requestLogSchema>;

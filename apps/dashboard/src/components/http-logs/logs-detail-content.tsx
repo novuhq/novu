@@ -97,9 +97,7 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
             <span className="text-text-sub flex-1 truncate font-mono text-xs font-medium tracking-[-0.24px]">
               {log.path}
             </span>
-            <span className="text-text-soft font-mono text-[11px] font-normal">
-              {log.transactionId || `req_${Math.random().toString(36).substr(2, 14)}`}
-            </span>
+            <span className="text-text-soft font-mono text-[11px] font-normal">{log.transactionId}</span>
           </div>
 
           <div className="space-y-3">

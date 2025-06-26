@@ -1,7 +1,8 @@
-export class RequestLog {
+export type RequestLogResponseDto = {
   id: string;
   createdAt: string;
   url: string;
+  urlPattern: string;
   method: string;
   statusCode: number;
   path: string;
@@ -9,7 +10,6 @@ export class RequestLog {
   transactionId: string | null;
   ip: string;
   userAgent: string;
-  queryParams: string;
   requestBody: string;
   responseBody: string;
   userId: string;
@@ -17,11 +17,11 @@ export class RequestLog {
   environmentId: string;
   schemaType: string;
   durationMs: number;
-}
+};
 
-export class GetRequestsResponseDto {
-  data: RequestLog[];
+export type GetRequestsResponseDto = {
+  data: RequestLogResponseDto[];
   total: number;
   pageSize?: number;
   page?: number;
-}
+};

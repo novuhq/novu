@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { subHours } from 'date-fns';
-import { HttpLog, HttpLogRepository, Where } from '@novu/application-generic';
+import { RequestLog, RequestLogRepository, Where } from '@novu/application-generic';
 import { GetRequestsCommand } from './get-requests.command';
-import { GetRequestsResponseDto } from '../../dtos/get-requests.response.dto';
+import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 
 @Injectable()
 export class GetRequests {
-  constructor(private readonly httpLogRepository: HttpLogRepository) {}
+  constructor(private readonly requestLogRepository: RequestLogRepository) {}
 
   async execute(command: GetRequestsCommand): Promise<GetRequestsResponseDto> {
     const limit = command.limit || 10;
     const page = command.page || 0;
     const offset = page * limit;
 
-    const where: Where<HttpLog> = {
+    const where: Where<RequestLog> = {
       organization_id: command.organizationId,
     };
 
@@ -40,35 +40,35 @@ export class GetRequests {
     }
 
     const [findResult, total] = await Promise.all([
-      this.httpLogRepository.find({
+      this.requestLogRepository.find({
         where,
         limit,
         offset,
         orderBy: 'created_at',
         orderDirection: 'DESC',
       }),
-      this.httpLogRepository.count({ where }),
+      this.requestLogRepository.count({ where }),
     ]);
 
-    const mappedData = findResult.data.map((log) => ({
-      id: log.transaction_id || '',
+    const mappedData: RequestLogResponseDto[] = findResult.data.map((log) => ({
+      id: log.id,
       createdAt: new Date(`${log.created_at} UTC`).toISOString(),
-      url: log.url || '',
-      method: log.method || '',
-      statusCode: log.status_code || 0,
-      path: log.path || '',
-      hostname: log.hostname || '',
-      transactionId: log.transaction_id || null,
-      ip: log.ip || '',
-      userAgent: log.user_agent || '',
-      queryParams: log.query_params || '',
-      requestBody: log.request_body || '',
-      responseBody: log.response_body || '',
-      userId: log.user_id || '',
-      organizationId: log.organization_id || '',
-      environmentId: log.environment_id || '',
-      schemaType: log.schema_type || '',
-      durationMs: log.duration_ms || 0,
+      url: log.url,
+      urlPattern: log.url_pattern,
+      method: log.method,
+      path: log.path,
+      statusCode: log.status_code,
+      hostname: log.hostname,
+      transactionId: log.transaction_id,
+      ip: log.ip,
+      userAgent: log.user_agent,
+      requestBody: log.request_body,
+      responseBody: log.response_body,
+      userId: log.user_id,
+      organizationId: log.organization_id,
+      environmentId: log.environment_id,
+      schemaType: log.schema_type,
+      durationMs: log.duration_ms,
     }));
 
     return {

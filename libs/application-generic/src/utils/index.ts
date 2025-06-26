@@ -14,3 +14,4 @@ export * from './variants';
 export * from './deepmerge';
 export * from './generate-id';
 export * from './sanitize-control-values';
+export * from './timestamp-hex';
