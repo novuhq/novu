@@ -1,5 +1,5 @@
-import { ListLayoutsResponse, IEnvironment } from '@novu/shared';
-import { getV2 } from './api.client';
+import { ListLayoutsResponse, IEnvironment, CreateLayoutDto, LayoutResponseDto } from '@novu/shared';
+import { getV2, postV2 } from './api.client';
 
 export const getLayouts = async ({
   environment,
@@ -31,6 +31,12 @@ export const getLayouts = async ({
   }
 
   const { data } = await getV2<{ data: ListLayoutsResponse }>(`/layouts?${params.toString()}`, { environment });
+
+  return data;
+};
+
+export const createLayout = async ({ environment, layout }: { environment: IEnvironment; layout: CreateLayoutDto }) => {
+  const { data } = await postV2<{ data: LayoutResponseDto }>(`/layouts`, { environment, body: layout });
 
   return data;
 };

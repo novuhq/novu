@@ -31,6 +31,7 @@ export class CreateLayoutUseCase {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       identifier: command.identifier,
+      ...(isV2Layout ? { type: command.type, origin: command.origin } : {}),
     });
     if (layoutIdentifierExist) {
       throw new ConflictException(
