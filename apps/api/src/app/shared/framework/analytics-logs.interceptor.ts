@@ -16,7 +16,7 @@ import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-respons
 
 const LOG_ANALYTICS_KEY = 'logAnalytics';
 
-export enum ANALYTICS_STRATEGY {
+export enum AnalyticsStrategyEnum {
   BASIC = 'basic',
   EVENTS = 'events',
 }
@@ -46,11 +46,11 @@ export enum ANALYTICS_STRATEGY {
  *   - The interceptor is extensible for future options (e.g., sampling, custom log fields).
  */
 
-export function LogAnalytics(strategy: ANALYTICS_STRATEGY = ANALYTICS_STRATEGY.BASIC): MethodDecorator {
+export function LogAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC): MethodDecorator {
   return applyDecorators(SetMetadata(LOG_ANALYTICS_KEY, strategy));
 }
 
-function getAnalyticsStrategy(context: ExecutionContext): ANALYTICS_STRATEGY {
+function getAnalyticsStrategy(context: ExecutionContext): AnalyticsStrategyEnum {
   return context.getHandler && Reflect.getMetadata(LOG_ANALYTICS_KEY, context.getHandler());
 }
 
@@ -107,7 +107,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   private buildLogByStrategy(context: ExecutionContext, analyticsLog: HttpLog, res: unknown): HttpLog {
     const strategy = getAnalyticsStrategy(context);
 
-    if (strategy === ANALYTICS_STRATEGY.EVENTS) {
+    if (strategy === AnalyticsStrategyEnum.EVENTS) {
       const eventResponse = (res as any).data as TriggerEventResponseDto;
 
       return {
