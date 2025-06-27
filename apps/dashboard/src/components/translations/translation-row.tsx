@@ -200,7 +200,7 @@ export function TranslationRow({ translation, onTranslationClick, onImportSucces
   }, [onTranslationClick, translation]);
 
   return (
-    <TableRow key={translation._id} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
+    <TableRow key={translation.resourceId} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
       <TranslationTableCell className="font-medium">
         <ResourceInfo resourceId={translation.resourceId} resourceName={translation.resourceName} />
       </TranslationTableCell>

@@ -131,7 +131,7 @@ function TranslationListContent({ translations, onTranslationClick, onImportSucc
     <>
       {translations.map((translation) => (
         <TranslationRow
-          key={translation._id}
+          key={translation.resourceId}
           translation={translation}
           onTranslationClick={onTranslationClick}
           onImportSuccess={onImportSuccess}
