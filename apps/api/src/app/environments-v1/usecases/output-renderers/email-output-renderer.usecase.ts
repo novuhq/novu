@@ -39,6 +39,7 @@ import { GetOrganizationSettings } from '../../../organization/usecases/get-orga
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
@@ -67,7 +68,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     protected logger: PinoLogger,
     protected featureFlagsService: FeatureFlagsService,
     private controlValuesRepository: ControlValuesRepository,
-    private layoutRepository: LayoutRepository
+    private getLayoutUseCase: GetLayoutUseCase
   ) {
     super(moduleRef, logger, featureFlagsService);
     this.liquidEngine = createLiquidEngine();
@@ -163,22 +164,32 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
     if (layoutId) {
+      const layout = await this.getLayoutUseCase.execute(
+        GetLayoutCommand.create({
+          layoutIdOrInternalId: layoutId,
+          environmentId,
+          organizationId,
+          userId: dbWorkflow._creatorId,
+          skipAdditionalFields: true,
+        })
+      );
+
       layoutControlsEntity = await this.controlValuesRepository.findOne({
         _organizationId: organizationId,
         _environmentId: environmentId,
-        _layoutId: layoutId,
+        _layoutId: layout._id,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
     } else if (typeof layoutId === 'undefined') {
       // otherwise find the default layout controls
-      const defaultEmailLayout = await this.layoutRepository.findOne({
-        _organizationId: organizationId,
-        _environmentId: environmentId,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
-        type: ResourceTypeEnum.BRIDGE,
-        isDefault: true,
-        channel: ChannelTypeEnum.EMAIL,
-      });
+      const defaultEmailLayout = await this.getLayoutUseCase.execute(
+        GetLayoutCommand.create({
+          environmentId,
+          organizationId,
+          userId: dbWorkflow._creatorId,
+          skipAdditionalFields: true,
+        })
+      );
 
       layoutControlsEntity = defaultEmailLayout
         ? await this.controlValuesRepository.findOne({

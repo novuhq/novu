@@ -116,7 +116,9 @@ export class LayoutsController {
     return this.getLayoutUseCase.execute(
       GetLayoutCommand.create({
         layoutIdOrInternalId,
-        user,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }

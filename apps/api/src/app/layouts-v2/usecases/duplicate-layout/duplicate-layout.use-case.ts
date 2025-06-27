@@ -1,33 +1,30 @@
 import { Injectable } from '@nestjs/common';
-import {
-  GetLayoutCommand as GetLayoutCommandV1,
-  GetLayoutUseCase as GetLayoutUseCaseV1,
-  AnalyticsService,
-} from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum, slugify } from '@novu/shared';
+import { ControlValuesLevelEnum } from '@novu/shared';
 
 import { DuplicateLayoutCommand } from './duplicate-layout.command';
 import { LayoutResponseDto } from '../../dtos';
 import { UpsertLayoutCommand, UpsertLayoutUseCase } from '../upsert-layout';
+import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 
 @Injectable()
 export class DuplicateLayoutUseCase {
   constructor(
-    private getLayoutUseCaseV1: GetLayoutUseCaseV1,
+    private getLayoutUseCase: GetLayoutUseCase,
     private upsertLayoutUseCase: UpsertLayoutUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: DuplicateLayoutCommand): Promise<LayoutResponseDto> {
-    const originalLayout = await this.getLayoutUseCaseV1.execute(
-      GetLayoutCommandV1.create({
+    const originalLayout = await this.getLayoutUseCase.execute(
+      GetLayoutCommand.create({
         layoutIdOrInternalId: command.layoutIdOrInternalId,
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
+        userId: command.user._id,
+        skipAdditionalFields: true,
       })
     );
 

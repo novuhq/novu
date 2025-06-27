@@ -42,10 +42,19 @@ import { SchemaBuilderService } from './usecases/preview/services/schema-builder
 import { PreviewPayloadProcessorService } from './usecases/preview/services/preview-payload-processor.service';
 import { MockDataGeneratorService } from './usecases/preview/services/mock-data-generator.service';
 import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
+import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 
-const MODULES = [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, BridgeModule, IntegrationModule];
+const MODULES = [
+  SharedModule,
+  MessageTemplateModule,
+  ChangeModule,
+  AuthModule,
+  BridgeModule,
+  IntegrationModule,
+  LayoutsV2Module,
+];
 
 if (process.env.NOVU_ENTERPRISE === 'true') {
   MODULES.push(WebhooksModule);

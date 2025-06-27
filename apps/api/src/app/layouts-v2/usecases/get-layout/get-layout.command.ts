@@ -1,8 +1,12 @@
-import { IsString, IsDefined } from 'class-validator';
-import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
-export class GetLayoutCommand extends EnvironmentWithUserObjectCommand {
+export class GetLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()
-  @IsDefined()
-  layoutIdOrInternalId: string;
+  @IsOptional()
+  layoutIdOrInternalId?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  skipAdditionalFields?: boolean;
 }

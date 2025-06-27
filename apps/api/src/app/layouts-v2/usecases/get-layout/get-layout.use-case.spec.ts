@@ -92,7 +92,9 @@ describe('GetLayoutUseCase', () => {
     it('should successfully get layout with control values', async () => {
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       const result = await getLayoutUseCase.execute(command);
@@ -125,7 +127,9 @@ describe('GetLayoutUseCase', () => {
 
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       const result = await getLayoutUseCase.execute(command);
@@ -146,20 +150,26 @@ describe('GetLayoutUseCase', () => {
     it('should call layout variables schema use case', async () => {
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       await getLayoutUseCase.execute(command);
 
       expect(layoutVariablesSchemaUseCaseMock.execute.calledOnce).to.be.true;
       const schemaCommand = layoutVariablesSchemaUseCaseMock.execute.firstCall.args[0];
-      expect(schemaCommand.user).to.deep.equal(mockUser);
+      expect(schemaCommand.environmentId).to.equal('env_id');
+      expect(schemaCommand.organizationId).to.equal('org_id');
+      expect(schemaCommand.userId).to.equal('user_id');
     });
 
     it('should track analytics event', async () => {
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       await getLayoutUseCase.execute(command);
@@ -183,7 +193,9 @@ describe('GetLayoutUseCase', () => {
 
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       const result = await getLayoutUseCase.execute(command);
@@ -201,7 +213,9 @@ describe('GetLayoutUseCase', () => {
 
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'default_layout',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       const result = await getLayoutUseCase.execute(command);
@@ -218,7 +232,9 @@ describe('GetLayoutUseCase', () => {
 
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'non_existent',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       try {
@@ -235,7 +251,9 @@ describe('GetLayoutUseCase', () => {
 
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       try {
@@ -252,7 +270,9 @@ describe('GetLayoutUseCase', () => {
 
       const command = GetLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        user: mockUser as any,
+        environmentId: 'env_id',
+        organizationId: 'org_id',
+        userId: 'user_id',
       });
 
       try {

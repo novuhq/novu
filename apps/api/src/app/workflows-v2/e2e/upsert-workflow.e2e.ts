@@ -1,9 +1,12 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import {
+  CreateLayoutDto,
   CreateWorkflowDto,
   EmailStepResponseDto,
   JSONSchemaDto,
+  LayoutCreationSourceEnum,
+  LayoutResponseDto,
   StepTypeEnum,
   UpdateWorkflowDto,
   WorkflowCreationSourceEnum,
@@ -181,7 +184,23 @@ describe('Upsert Workflow #novu-v2', function () {
     });
 
     describe('email step layoutId functionality', () => {
+      beforeEach(async () => {
+        // @ts-ignore - Setting environment variables
+        process.env.IS_LAYOUTS_PAGE_ACTIVE = 'true';
+      });
+
+      afterEach(async () => {
+        // @ts-ignore - Setting environment variables
+        process.env.IS_LAYOUTS_PAGE_ACTIVE = 'false';
+      });
+
       it('should assign default v2 layout when creating email step with undefined layoutId', async () => {
+        await createLayout({
+          name: 'Test Layout',
+          layoutId: 'test-layout-id',
+          source: LayoutCreationSourceEnum.Dashboard,
+        });
+
         const workflow = await createWorkflow({
           name: 'Test Email Workflow',
           workflowId: `test-email-workflow-${Date.now()}`,
@@ -231,84 +250,152 @@ describe('Upsert Workflow #novu-v2', function () {
         expect(emailStep.controls.values.layoutId).to.be.null;
       });
 
-      it('should allow updating layoutId to specific value', async () => {
-        const workflow = await createWorkflow({
-          name: 'Test Email Workflow',
-          workflowId: `test-email-workflow-${Date.now()}`,
-          source: WorkflowCreationSourceEnum.Editor,
-          active: true,
-          steps: [
-            {
-              name: `Email Step`,
-              type: StepTypeEnum.Email,
-              controlValues: {
-                subject: 'Test Subject',
-                body: 'Test Body',
+      it('should throw error when creating email step with invalid layoutId', async () => {
+        try {
+          await createWorkflow({
+            name: 'Test Email Workflow Invalid',
+            workflowId: `test-email-workflow-invalid-${Date.now()}`,
+            source: WorkflowCreationSourceEnum.Editor,
+            active: true,
+            steps: [
+              {
+                name: `Email Step`,
+                type: StepTypeEnum.Email,
+                controlValues: {
+                  subject: 'Test Subject',
+                  body: 'Test Body',
+                  layoutId: 'non-existent-layout-id-12345',
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        // Update the workflow with a specific layoutId
-        const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...mapResponseToUpdateDto(workflow),
-          steps: [
-            {
-              ...mapResponseToUpdateDto(workflow).steps[0],
-              type: StepTypeEnum.Email,
-              controlValues: {
-                subject: 'Test Subject',
-                body: 'Test Body',
-                layoutId: 'custom-layout-id',
-              },
-            },
-          ],
-        });
-
-        const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
-        expect(emailStep.type).to.equal(StepTypeEnum.Email);
-        expect(emailStep.controls.values.layoutId).to.equal('custom-layout-id');
+          // Should not reach this point
+          expect.fail('Expected BadRequestException to be thrown');
+        } catch (error) {
+          expect(error.message).to.contain('Layout not found');
+        }
       });
 
-      it('should allow updating layoutId to null to remove layout', async () => {
-        const workflow = await createWorkflow({
-          name: 'Test Email Workflow',
-          workflowId: `test-email-workflow-${Date.now()}`,
-          source: WorkflowCreationSourceEnum.Editor,
-          active: true,
-          steps: [
-            {
-              name: `Email Step`,
-              type: StepTypeEnum.Email,
-              controlValues: {
-                subject: 'Test Subject',
-                body: 'Test Body',
-                layoutId: 'some-layout-id',
+      it('should throw error when updating email step with invalid layoutId', async () => {
+        try {
+          const workflow = await createWorkflow({
+            name: 'Test Email Workflow Update Invalid',
+            workflowId: `test-email-workflow-update-invalid-${Date.now()}`,
+            source: WorkflowCreationSourceEnum.Editor,
+            active: true,
+            steps: [
+              {
+                name: `Email Step`,
+                type: StepTypeEnum.Email,
+                controlValues: {
+                  subject: 'Test Subject',
+                  body: 'Test Body',
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        // Update the workflow to remove layout
-        const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...mapResponseToUpdateDto(workflow),
-          steps: [
-            {
-              ...mapResponseToUpdateDto(workflow).steps[0],
-              type: StepTypeEnum.Email,
-              controlValues: {
-                subject: 'Test Subject',
-                body: 'Test Body',
-                layoutId: null,
+          await updateWorkflow(workflow.slug, {
+            ...mapResponseToUpdateDto(workflow),
+            steps: [
+              {
+                ...mapResponseToUpdateDto(workflow).steps[0],
+                type: StepTypeEnum.Email,
+                controlValues: {
+                  subject: 'Test Subject',
+                  body: 'Test Body',
+                  layoutId: 'invalid-layout-id-67890',
+                },
               },
-            },
-          ],
-        });
+            ],
+          });
 
-        const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
-        expect(emailStep.type).to.equal(StepTypeEnum.Email);
-        expect(emailStep.controls.values.layoutId).to.be.null;
+          // Should not reach this point
+          expect.fail('Expected BadRequestException to be thrown');
+        } catch (error) {
+          expect(error.message).to.contain('Default layout not found in the environment');
+        }
       });
+    });
+
+    it('should allow updating layoutId to specific value', async () => {
+      const workflow = await createWorkflow({
+        name: 'Test Email Workflow',
+        workflowId: `test-email-workflow-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: `Email Step`,
+            type: StepTypeEnum.Email,
+            controlValues: {
+              subject: 'Test Subject',
+              body: 'Test Body',
+            },
+          },
+        ],
+      });
+
+      // Update the workflow with a specific layoutId
+      const updatedWorkflow = await updateWorkflow(workflow.slug, {
+        ...mapResponseToUpdateDto(workflow),
+        steps: [
+          {
+            ...mapResponseToUpdateDto(workflow).steps[0],
+            type: StepTypeEnum.Email,
+            controlValues: {
+              subject: 'Test Subject',
+              body: 'Test Body',
+              layoutId: 'custom-layout-id',
+            },
+          },
+        ],
+      });
+
+      const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
+      expect(emailStep.type).to.equal(StepTypeEnum.Email);
+      expect(emailStep.controls.values.layoutId).to.equal('custom-layout-id');
+    });
+
+    it('should allow updating layoutId to null to remove layout', async () => {
+      const workflow = await createWorkflow({
+        name: 'Test Email Workflow',
+        workflowId: `test-email-workflow-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: `Email Step`,
+            type: StepTypeEnum.Email,
+            controlValues: {
+              subject: 'Test Subject',
+              body: 'Test Body',
+              layoutId: 'some-layout-id',
+            },
+          },
+        ],
+      });
+
+      // Update the workflow to remove layout
+      const updatedWorkflow = await updateWorkflow(workflow.slug, {
+        ...mapResponseToUpdateDto(workflow),
+        steps: [
+          {
+            ...mapResponseToUpdateDto(workflow).steps[0],
+            type: StepTypeEnum.Email,
+            controlValues: {
+              subject: 'Test Subject',
+              body: 'Test Body',
+              layoutId: null,
+            },
+          },
+        ],
+      });
+
+      const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
+      expect(emailStep.type).to.equal(StepTypeEnum.Email);
+      expect(emailStep.controls.values.layoutId).to.be.null;
     });
 
     it('when switching the editor type it should convert the body value', async () => {
@@ -374,6 +461,12 @@ describe('Upsert Workflow #novu-v2', function () {
       expect(updatedEmailStep2.controls.values.body).to.equal('');
     });
   });
+
+  async function createLayout(layout: CreateLayoutDto): Promise<LayoutResponseDto> {
+    const { result: createLayoutBody } = await novuClient.layouts.create(layout);
+
+    return createLayoutBody;
+  }
 
   async function createWorkflow(workflow: CreateWorkflowDto): Promise<WorkflowResponseDto> {
     const { result: createWorkflowBody } = await novuClient.workflows.create(workflow);

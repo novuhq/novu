@@ -1,31 +1,29 @@
 import { Injectable, ConflictException } from '@nestjs/common';
-import {
-  GetLayoutCommand as GetLayoutCommandV1,
-  GetLayoutUseCase as GetLayoutUseCaseV1,
-  AnalyticsService,
-} from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { LayoutRepository, ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum } from '@novu/shared';
 
 import { DeleteLayoutCommand } from './delete-layout.command';
+import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 
 @Injectable()
 export class DeleteLayoutUseCase {
   constructor(
-    private getLayoutUseCaseV1: GetLayoutUseCaseV1,
+    private getLayoutUseCase: GetLayoutUseCase,
     private layoutRepository: LayoutRepository,
     private controlValuesRepository: ControlValuesRepository,
     private analyticsService: AnalyticsService
   ) {}
 
   async execute(command: DeleteLayoutCommand): Promise<void> {
-    const layout = await this.getLayoutUseCaseV1.execute(
-      GetLayoutCommandV1.create({
+    const { environmentId, organizationId, _id: userId } = command.user;
+    const layout = await this.getLayoutUseCase.execute(
+      GetLayoutCommand.create({
         layoutIdOrInternalId: command.layoutIdOrInternalId,
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
-        type: ResourceTypeEnum.BRIDGE,
-        origin: ResourceOriginEnum.NOVU_CLOUD,
+        environmentId,
+        organizationId,
+        userId,
+        skipAdditionalFields: true,
       })
     );
 
@@ -37,22 +35,22 @@ export class DeleteLayoutUseCase {
 
     await this.removeLayoutReferencesFromStepControls({
       layoutId: layout._id!,
-      environmentId: layout._environmentId,
-      organizationId: layout._organizationId,
+      environmentId,
+      organizationId,
     });
 
-    await this.layoutRepository.deleteLayout(layout._id!, layout._environmentId, layout._organizationId);
+    await this.layoutRepository.deleteLayout(layout._id!, environmentId, organizationId);
 
     await this.controlValuesRepository.delete({
-      _environmentId: command.user.environmentId,
-      _organizationId: command.user.organizationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
       _layoutId: layout._id!,
       level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     });
 
-    this.analyticsService.track('Delete layout - [Layouts]', command.user._id, {
-      _organizationId: command.user.organizationId,
-      _environmentId: command.user.environmentId,
+    this.analyticsService.track('Delete layout - [Layouts]', userId, {
+      _organizationId: organizationId,
+      _environmentId: environmentId,
       layoutId: layout._id!,
     });
   }
