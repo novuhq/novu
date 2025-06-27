@@ -11,7 +11,7 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * Unit of time for the look-back window.
  */
-export const Unit = {
+export const LookBackWindowDtoUnit = {
   Seconds: "seconds",
   Minutes: "minutes",
   Hours: "hours",
@@ -22,7 +22,7 @@ export const Unit = {
 /**
  * Unit of time for the look-back window.
  */
-export type Unit = ClosedEnum<typeof Unit>;
+export type LookBackWindowDtoUnit = ClosedEnum<typeof LookBackWindowDtoUnit>;
 
 export type LookBackWindowDto = {
   /**
@@ -32,27 +32,28 @@ export type LookBackWindowDto = {
   /**
    * Unit of time for the look-back window.
    */
-  unit: Unit;
+  unit: LookBackWindowDtoUnit;
 };
 
 /** @internal */
-export const Unit$inboundSchema: z.ZodNativeEnum<typeof Unit> = z.nativeEnum(
-  Unit,
-);
+export const LookBackWindowDtoUnit$inboundSchema: z.ZodNativeEnum<
+  typeof LookBackWindowDtoUnit
+> = z.nativeEnum(LookBackWindowDtoUnit);
 
 /** @internal */
-export const Unit$outboundSchema: z.ZodNativeEnum<typeof Unit> =
-  Unit$inboundSchema;
+export const LookBackWindowDtoUnit$outboundSchema: z.ZodNativeEnum<
+  typeof LookBackWindowDtoUnit
+> = LookBackWindowDtoUnit$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Unit$ {
-  /** @deprecated use `Unit$inboundSchema` instead. */
-  export const inboundSchema = Unit$inboundSchema;
-  /** @deprecated use `Unit$outboundSchema` instead. */
-  export const outboundSchema = Unit$outboundSchema;
+export namespace LookBackWindowDtoUnit$ {
+  /** @deprecated use `LookBackWindowDtoUnit$inboundSchema` instead. */
+  export const inboundSchema = LookBackWindowDtoUnit$inboundSchema;
+  /** @deprecated use `LookBackWindowDtoUnit$outboundSchema` instead. */
+  export const outboundSchema = LookBackWindowDtoUnit$outboundSchema;
 }
 
 /** @internal */
@@ -62,7 +63,7 @@ export const LookBackWindowDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   amount: z.number(),
-  unit: Unit$inboundSchema,
+  unit: LookBackWindowDtoUnit$inboundSchema,
 });
 
 /** @internal */
@@ -78,7 +79,7 @@ export const LookBackWindowDto$outboundSchema: z.ZodType<
   LookBackWindowDto
 > = z.object({
   amount: z.number(),
-  unit: Unit$outboundSchema,
+  unit: LookBackWindowDtoUnit$outboundSchema,
 });
 
 /**
