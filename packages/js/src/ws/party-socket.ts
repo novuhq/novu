@@ -23,7 +23,7 @@ import {
 } from '../types';
 import { NovuError } from '../utils/errors';
 
-const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
+export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
