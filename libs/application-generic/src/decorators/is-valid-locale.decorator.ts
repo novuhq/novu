@@ -1,5 +1,5 @@
 import { ValidationArguments, registerDecorator, ValidationOptions } from 'class-validator';
-import { LocaleValidator } from '../utils/locale-validator.util';
+import { LocaleValidator } from '../utils/locale-validator';
 
 export function IsValidLocale(validationOptions?: ValidationOptions) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

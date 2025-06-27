@@ -8,6 +8,7 @@ export type FetchTranslationsParams = {
   resourceId: string;
   resourceType: LocalizationResourceEnum;
   locale?: string;
+  enabled?: boolean;
 };
 
 export const useFetchTranslations = (params: FetchTranslationsParams) => {
@@ -25,6 +26,6 @@ export const useFetchTranslations = (params: FetchTranslationsParams) => {
         ...params,
       });
     },
-    enabled: !!currentEnvironment && !!params.resourceId && !!params.resourceType,
+    enabled: !!currentEnvironment && !!params.resourceId && !!params.resourceType && !!params.enabled,
   });
 };
