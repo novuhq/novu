@@ -7,10 +7,9 @@ interface CursorPaginationProps {
   onNext: () => void;
   onPrevious: () => void;
   onFirst: () => void;
-  onLast: () => void;
 }
 
-export function CursorPagination({ hasNext, hasPrevious, onNext, onPrevious, onFirst, onLast }: CursorPaginationProps) {
+export function CursorPagination({ hasNext, hasPrevious, onNext, onPrevious, onFirst }: CursorPaginationProps) {
   return (
     <div className="bottom-0 mt-auto bg-white py-3">
       <div className="border-input flex place-self-center rounded-lg border bg-transparent">
@@ -40,21 +39,9 @@ export function CursorPagination({ hasNext, hasPrevious, onNext, onPrevious, onF
           mode="ghost"
           disabled={!hasNext}
           onClick={onNext}
-          className="border-l-input rounded-none border-0 border-l"
-        >
-          <ChevronRightIcon className="size-3" />
-        </Button>
-        <Button
-          variant="secondary"
-          mode="ghost"
-          disabled={!hasNext}
-          onClick={onLast}
           className="border-l-input rounded-l-none border-0 border-l"
         >
-          <div className="flex items-center">
-            <ChevronRightIcon className="size-3" />
-            <ChevronRightIcon className="-ml-2 size-3" />
-          </div>
+          <ChevronRightIcon className="size-3" />
         </Button>
       </div>
     </div>

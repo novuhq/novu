@@ -16,8 +16,19 @@ type LogsTableProps = {
 };
 
 export function LogsTable({ onLogClick }: LogsTableProps) {
-  const urlState = useLogsUrlState();
-  const { currentPage, limit, filters, handleFiltersChange, clearFilters, hasActiveFilters } = urlState;
+  const {
+    selectedLogId,
+    handleLogSelect,
+    handleNext,
+    handlePrevious,
+    handleFirst,
+    handleFiltersChange,
+    clearFilters,
+    hasActiveFilters,
+    currentPage,
+    limit,
+    filters,
+  } = useLogsUrlState();
 
   const { data: logsResponse, isLoading } = useFetchRequestLogs({
     page: currentPage - 1, // API is 0-based
@@ -39,8 +50,6 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     return { hasNext, hasPrevious, totalPages };
   }, [totalCount, limit, currentPage]);
 
-  const { selectedLogId, handleLogSelect, handleNext, handlePrevious, handleFirst, handleLast } = urlState;
-
   const selectedLog = selectedLogId
     ? logsData.find((log: RequestLog) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
     : undefined;
@@ -49,10 +58,6 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     const logId = log.transactionId || `error-${logsData.indexOf(log)}`;
     handleLogSelect(logId);
     onLogClick?.(log);
-  };
-
-  const handleLastPage = () => {
-    handleLast(paginationState.totalPages);
   };
 
   if (!isLoading && logsData.length === 0 && !hasActiveFilters) {
@@ -120,7 +125,6 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                     onNext={handleNext}
                     onPrevious={handlePrevious}
                     onFirst={handleFirst}
-                    onLast={handleLastPage}
                   />
                 </div>
               )}
