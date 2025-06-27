@@ -72,6 +72,10 @@ export type EmailStepResponseDtoControlValues = {
    * Disable sanitization of the output.
    */
   disableOutputSanitization?: boolean | undefined;
+  /**
+   * Layout ID to use for the email. Null means no layout, undefined means default layout.
+   */
+  layoutId?: string | null | undefined;
   additionalProperties?: { [k: string]: any };
 };
 
@@ -159,6 +163,7 @@ export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
     body: z.string().default(""),
     editorType: EmailStepResponseDtoEditorType$inboundSchema.default("block"),
     disableOutputSanitization: z.boolean().default(false),
+    layoutId: z.nullable(z.string()).optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -171,6 +176,7 @@ export type EmailStepResponseDtoControlValues$Outbound = {
   body: string;
   editorType: string;
   disableOutputSanitization: boolean;
+  layoutId?: string | null | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -185,6 +191,7 @@ export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
   body: z.string().default(""),
   editorType: EmailStepResponseDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
+  layoutId: z.nullable(z.string()).optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
   return {

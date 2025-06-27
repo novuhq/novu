@@ -52,6 +52,10 @@ export type EmailStepUpsertDtoControlValues = {
    * Disable sanitization of the output.
    */
   disableOutputSanitization?: boolean | undefined;
+  /**
+   * Layout ID to use for the email. Null means no layout, undefined means default layout.
+   */
+  layoutId?: string | null | undefined;
 };
 
 export type EmailStepUpsertDto = {
@@ -105,6 +109,7 @@ export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   body: z.string().default(""),
   editorType: EmailStepUpsertDtoEditorType$inboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
+  layoutId: z.nullable(z.string()).optional(),
 });
 
 /** @internal */
@@ -114,6 +119,7 @@ export type EmailStepUpsertDtoControlValues$Outbound = {
   body: string;
   editorType: string;
   disableOutputSanitization: boolean;
+  layoutId?: string | null | undefined;
 };
 
 /** @internal */
@@ -127,6 +133,7 @@ export const EmailStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   body: z.string().default(""),
   editorType: EmailStepUpsertDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
+  layoutId: z.nullable(z.string()).optional(),
 });
 
 /**

@@ -22,11 +22,13 @@ import {
 import {
   ControlSchemas,
   ControlValuesRepository,
+  LayoutRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
 import {
+  ChannelTypeEnum,
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
   slugify,
@@ -60,6 +62,7 @@ export class UpsertWorkflowUseCase {
     private getWorkflowUseCase: GetWorkflowUseCase,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private controlValuesRepository: ControlValuesRepository,
+    private layoutRepository: LayoutRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
     private analyticsService: AnalyticsService,
@@ -351,6 +354,13 @@ export class UpsertWorkflowUseCase {
     const newControlValues = controlValues || {};
     if (step.template?.type === StepTypeEnum.EMAIL) {
       const emailControlValues = newControlValues as EmailControlType;
+
+      // Assign default layoutId if undefined (but not if null)
+      if (emailControlValues.layoutId === undefined) {
+        const defaultLayout = await this.findDefaultV2Layout(command.user.environmentId, command.user.organizationId);
+        emailControlValues.layoutId = defaultLayout?._id;
+      }
+
       const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
       if (emailControlValues.editorType === 'html' && isMaily) {
         const { result } = await this.previewUsecase.execute(
@@ -392,6 +402,17 @@ export class UpsertWorkflowUseCase {
         newControlValues,
       })
     );
+  }
+
+  private async findDefaultV2Layout(environmentId: string, organizationId: string) {
+    return this.layoutRepository.findOne({
+      _organizationId: organizationId,
+      _environmentId: environmentId,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      isDefault: true,
+      channel: ChannelTypeEnum.EMAIL,
+    });
   }
 
   private findControlValueInRequest(
