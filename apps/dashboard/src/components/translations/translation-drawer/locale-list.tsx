@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { StatusBadge } from '@/components/primitives/status-badge';
+import { Badge } from '@/components/primitives/badge';
 import { FlagCircle } from '@/components/flag-circle';
 import { cn } from '@/utils/ui';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
@@ -39,10 +41,11 @@ function TranslationStatus({ updatedAt }: TranslationStatusProps) {
 type LocaleButtonProps = {
   locale: string;
   isSelected: boolean;
+  isDefault?: boolean;
   onClick: () => void;
 };
 
-function LocaleButton({ locale, isSelected, onClick }: LocaleButtonProps) {
+function LocaleButton({ locale, isSelected, isDefault, onClick }: LocaleButtonProps) {
   const displayName = getLocaleDisplayName(locale);
 
   return (
@@ -57,9 +60,15 @@ function LocaleButton({ locale, isSelected, onClick }: LocaleButtonProps) {
       trailingIcon={RiArrowRightSLine}
     >
       <FlagCircle locale={locale} size="md" />
-      <span className="font-medium text-neutral-900">{locale}</span>
-      <span className="text-neutral-500"> ({displayName})</span>
-      <span className="ml-auto" />
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        <span className="text-sm font-medium text-neutral-900">{locale}</span>
+        <span className="truncate text-xs text-neutral-500">({displayName})</span>
+      </div>
+      {isDefault && (
+        <Badge variant="lighter" color="orange" size="md">
+          DEFAULT
+        </Badge>
+      )}
     </Button>
   );
 }
@@ -69,6 +78,7 @@ type LocaleListProps = {
   selectedLocale: string | null;
   onLocaleSelect: (locale: string) => void;
   updatedAt: string;
+  defaultLocale?: string;
   hasUnsavedChanges?: boolean;
   onUnsavedChangesCheck?: (action: () => void) => void;
 };
@@ -78,6 +88,7 @@ export function LocaleList({
   selectedLocale,
   onLocaleSelect,
   updatedAt,
+  defaultLocale,
   hasUnsavedChanges = false,
   onUnsavedChangesCheck,
 }: LocaleListProps) {
@@ -89,6 +100,17 @@ export function LocaleList({
     }
   };
 
+  // Sort locales to put default locale first
+  const sortedLocales = useMemo(() => {
+    if (!defaultLocale) return locales;
+
+    const defaultIndex = locales.indexOf(defaultLocale);
+    if (defaultIndex === -1) return locales;
+
+    // Move default locale to the front
+    return [defaultLocale, ...locales.filter((locale) => locale !== defaultLocale)];
+  }, [locales, defaultLocale]);
+
   return (
     <div className="w-[400px] border-r border-neutral-200">
       <TranslationStatus updatedAt={updatedAt} />
@@ -98,11 +120,12 @@ export function LocaleList({
           <div className="p-4 text-center text-sm text-neutral-500">No locales found</div>
         ) : (
           <div className="space-y-2">
-            {locales.map((locale) => (
+            {sortedLocales.map((locale) => (
               <LocaleButton
                 key={locale}
                 locale={locale}
                 isSelected={selectedLocale === locale}
+                isDefault={locale === defaultLocale}
                 onClick={() => handleLocaleClick(locale)}
               />
             ))}

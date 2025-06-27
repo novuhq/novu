@@ -1,12 +1,16 @@
 import { HTMLAttributes, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiDownloadLine, RiLoader4Line, RiSettings4Line } from 'react-icons/ri';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
 import { FlagCircle } from '@/components/flag-circle';
 import { cn } from '@/utils/ui';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { DEFAULT_LOCALE } from '@novu/shared';
 
 import { defaultTranslationsFilter, TranslationsFilter } from './hooks/use-translations-url-state';
 
@@ -49,11 +53,16 @@ function FilterResetButton({ isVisible, isFetching, onReset }: FilterResetButton
 
 type DefaultLocaleButtonProps = {
   locale: string;
+  onClick: () => void;
 };
 
-function DefaultLocaleButton({ locale }: DefaultLocaleButtonProps) {
+function DefaultLocaleButton({ locale, onClick }: DefaultLocaleButtonProps) {
   return (
-    <button className="group flex h-8 items-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-xs hover:bg-neutral-50 focus:bg-neutral-100">
+    <button
+      type="button"
+      className="group flex h-8 items-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-xs hover:bg-neutral-50 focus:bg-neutral-100"
+      onClick={onClick}
+    >
       <span className="px-3 py-2">Default locale</span>
       <span className="flex items-center gap-2 border-l border-neutral-200 bg-white p-2 font-medium text-neutral-700 group-hover:bg-neutral-50">
         <FlagCircle locale={locale} size="sm" />
@@ -63,22 +72,28 @@ function DefaultLocaleButton({ locale }: DefaultLocaleButtonProps) {
   );
 }
 
-type ActionButtonsProps = {
-  onExport: () => void;
-  onConfigure: () => void;
-  defaultLocale?: string;
-};
+function ActionButtons() {
+  const navigate = useNavigate();
+  const { environmentSlug } = useParams();
+  const { data: organizationSettings } = useFetchOrganizationSettings();
 
-function ActionButtons({ onExport, onConfigure, defaultLocale = 'en_US' }: ActionButtonsProps) {
+  const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+
+  const handleConfigure = () => {
+    if (environmentSlug) {
+      navigate(buildRoute(ROUTES.TRANSLATION_SETTINGS, { environmentSlug }));
+    }
+  };
+
   return (
     <div className="ml-auto flex items-center gap-2">
-      <Button variant="secondary" mode="lighter" size="xs" className="!w-8" onClick={onExport}>
+      <Button variant="secondary" mode="lighter" size="xs" className="!w-8" onClick={() => {}}>
         <RiDownloadLine className="h-3 w-3" />
       </Button>
 
-      <DefaultLocaleButton locale={defaultLocale} />
+      <DefaultLocaleButton locale={defaultLocale} onClick={handleConfigure} />
 
-      <Button variant="secondary" mode="lighter" size="xs" onClick={onConfigure}>
+      <Button variant="secondary" mode="lighter" size="xs" onClick={handleConfigure}>
         <RiSettings4Line className="mr-2 h-4 w-4" />
         Configure translations
       </Button>
@@ -126,9 +141,6 @@ export type TranslationsFiltersProps = HTMLAttributes<HTMLFormElement> & {
   filterValues: TranslationsFilter;
   onReset?: () => void;
   isFetching?: boolean;
-  onExport?: () => void;
-  onConfigure?: () => void;
-  defaultLocale?: string;
 };
 
 export function TranslationsFilters({
@@ -137,9 +149,6 @@ export function TranslationsFilters({
   onReset,
   className,
   isFetching,
-  onExport = () => {},
-  onConfigure = () => {},
-  defaultLocale,
   ...props
 }: TranslationsFiltersProps) {
   const { form, handleReset, isResetButtonVisible } = useTranslationsFiltersLogic(
@@ -165,7 +174,7 @@ export function TranslationsFilters({
           <FilterResetButton isVisible={isResetButtonVisible} isFetching={isFetching} onReset={handleReset} />
         </div>
 
-        <ActionButtons onExport={onExport} onConfigure={onConfigure} defaultLocale={defaultLocale} />
+        <ActionButtons />
       </FormRoot>
     </Form>
   );

@@ -7,7 +7,8 @@ import { useTranslationEditor } from './hooks';
 
 export function useTranslationDrawerLogic(
   translationGroup: TranslationGroup,
-  onTranslationGroupUpdated?: (resourceId: string) => void | Promise<void>
+  onTranslationGroupUpdated?: (resourceId: string) => void | Promise<void>,
+  defaultLocale?: string
 ) {
   const [selectedLocale, setSelectedLocale] = useState<string | null>(null);
 
@@ -20,9 +21,13 @@ export function useTranslationDrawerLogic(
   );
 
   useEffect(() => {
-    const firstLocale = translationGroup.locales[0] || null;
-    setSelectedLocale(firstLocale);
-  }, [translationGroup.locales, translationGroup.updatedAt]);
+    // Prioritize default locale if it exists in the locales list
+    const preferredLocale =
+      defaultLocale && translationGroup.locales.includes(defaultLocale)
+        ? defaultLocale
+        : translationGroup.locales[0] || null;
+    setSelectedLocale(preferredLocale);
+  }, [translationGroup.locales, translationGroup.updatedAt, defaultLocale]);
 
   const {
     data: selectedTranslation,
@@ -64,10 +69,12 @@ export function useTranslationDrawerLogic(
       onTranslationGroupUpdated?.(resource.resourceId);
 
       const remainingLocales = translationGroup.locales.filter((l) => l !== locale);
-      const nextLocale = remainingLocales[0] || null;
+      // Prioritize default locale if it exists in remaining locales
+      const nextLocale =
+        defaultLocale && remainingLocales.includes(defaultLocale) ? defaultLocale : remainingLocales[0] || null;
       setSelectedLocale(nextLocale);
     },
-    [deleteTranslationMutation, resource, onTranslationGroupUpdated, translationGroup.locales]
+    [deleteTranslationMutation, resource, onTranslationGroupUpdated, translationGroup.locales, defaultLocale]
   );
 
   return {

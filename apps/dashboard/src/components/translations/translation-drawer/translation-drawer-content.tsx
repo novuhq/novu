@@ -5,6 +5,8 @@ import { TranslationHeader } from './translation-header';
 import { LocaleList } from './locale-list';
 import { EditorPanel } from './editor-panel';
 import { useTranslationDrawerLogic } from './use-translation-drawer-logic';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { forwardRef, useImperativeHandle, useState, useCallback } from 'react';
 
 type TranslationDrawerContentProps = {
@@ -21,6 +23,9 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
     const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
+    const { data: organizationSettings } = useFetchOrganizationSettings();
+    const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+
     const {
       selectedLocale,
       selectedTranslation,
@@ -33,7 +38,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
       handleLocaleSelect,
       handleSave,
       handleDelete,
-    } = useTranslationDrawerLogic(translationGroup, onTranslationGroupUpdated);
+    } = useTranslationDrawerLogic(translationGroup, onTranslationGroupUpdated, defaultLocale);
 
     const canSave = selectedLocale && editor.modifiedContent && !saveTranslationMutation.isPending && !editor.jsonError;
 
@@ -77,6 +82,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             selectedLocale={selectedLocale}
             onLocaleSelect={handleLocaleSelect}
             updatedAt={translationGroup.updatedAt}
+            defaultLocale={defaultLocale}
             hasUnsavedChanges={editor.hasUnsavedChanges}
             onUnsavedChangesCheck={checkUnsavedChanges}
           />

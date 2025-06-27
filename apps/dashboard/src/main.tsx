@@ -57,6 +57,7 @@ import { overrideZodErrorMap } from './utils/validation';
 import { IS_SELF_HOSTED } from './config';
 import { ProtectedRoute } from './routes/protected-route';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
+import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -239,6 +240,12 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.TRANSLATIONS,
                 element: <TranslationsPage />,
+                children: [
+                  {
+                    path: ROUTES.TRANSLATION_SETTINGS,
+                    element: <TranslationSettingsPage />,
+                  },
+                ],
               },
               {
                 path: ROUTES.API_KEYS,
