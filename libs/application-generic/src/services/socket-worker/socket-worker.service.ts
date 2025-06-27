@@ -154,7 +154,9 @@ export class SocketWorkerService {
         userId,
         ChannelTypeEnum.IN_APP,
         { read: false },
-        { limit: 101 }
+        { limit: 101 },
+        undefined,
+        'primary'
       );
 
       const paginationIndication: UnreadCountPaginationIndication =
@@ -185,7 +187,9 @@ export class SocketWorkerService {
         userId,
         ChannelTypeEnum.IN_APP,
         { seen: false },
-        { limit: 101 }
+        { limit: 101 },
+        undefined,
+        'primary'
       );
 
       const paginationIndication: UnseenCountPaginationIndication =

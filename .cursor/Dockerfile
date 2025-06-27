@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     ca-certificates \
     gnupg \
     lsb-release \
+    sudo \
     # Build tools for native modules
     build-essential \
     python3 \
@@ -49,11 +50,23 @@ RUN npm --no-update-notifier --no-fund --global install \
     typescript@5.6.2 \
     && npm cache clean --force
 
+# Create non-root user as recommended for background agents
+RUN useradd -m -s /bin/bash ubuntu \
+    && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && mkdir -p /home/ubuntu/.pnpm-store /home/ubuntu/.pnpm-cache \
+    && chown -R ubuntu:ubuntu /home/ubuntu
+
+# Switch to non-root user
+USER ubuntu
+
+# Set working directory to home directory as recommended
+WORKDIR /home/ubuntu
+
 # Set up optimized environment variables
 ENV NX_DAEMON=false \
     NODE_ENV=local \
-    PNPM_STORE_DIR="/tmp/.pnpm-store" \
-    PNPM_CACHE_DIR="/tmp/.pnpm-cache"
+    PNPM_STORE_DIR="/home/ubuntu/.pnpm-store" \
+    PNPM_CACHE_DIR="/home/ubuntu/.pnpm-cache"
 
 # Create minimal directory structure and set permissions
 RUN mkdir -p \
@@ -68,8 +81,8 @@ RUN mkdir -p \
     && chmod 755 /data/db /data/redis
 
 # Configure pnpm for speed and efficiency
-RUN pnpm config set store-dir /tmp/.pnpm-store \
-    && pnpm config set cache-dir /tmp/.pnpm-cache \
+RUN pnpm config set store-dir /home/ubuntu/.pnpm-store \
+    && pnpm config set cache-dir /home/ubuntu/.pnpm-cache \
     && pnpm config set network-timeout 60000 \
     && pnpm config set fetch-retries 3
 
@@ -122,8 +135,8 @@ WORKDIR /workspace
 EXPOSE 3000 4000 27017 6379
 
 # Labels for identification
-LABEL version="cursor-2.0.0" \
-      description="Optimized Novu environment for Cursor AI with full Ubuntu compatibility"
+LABEL version="cursor-background-agent-1.0.0" \
+      description="Novu development environment optimized for Cursor background agents"
 
 # Health check for both services
 HEALTHCHECK --interval=60s --timeout=5s --start-period=30s --retries=2 \

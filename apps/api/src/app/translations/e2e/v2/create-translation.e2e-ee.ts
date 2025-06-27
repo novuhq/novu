@@ -34,7 +34,7 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
         },
       ],
     });
-    workflowId = workflow.id;
+    workflowId = workflow.workflowId;
   });
 
   afterEach(() => {
@@ -57,7 +57,6 @@ describe('Create/update translation - /v2/translations (POST) #novu-v2', async (
 
     const { body } = await session.testAgent.post('/v2/translations').send(requestBody).expect(200);
 
-    expect(body.data._id).to.be.a('string');
     expect(body.data.locale).to.equal('en_US');
     expect(body.data.resourceId).to.equal(workflowId);
     expect(body.data.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);

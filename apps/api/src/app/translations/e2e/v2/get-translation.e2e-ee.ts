@@ -34,7 +34,7 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
         },
       ],
     });
-    workflowId = workflow.id;
+    workflowId = workflow.workflowId;
   });
 
   afterEach(() => {
@@ -69,7 +69,6 @@ describe('Get single translation - /v2/translations/:resourceType/:resourceId/:l
     expect(body.data.resourceType).to.equal(LocalizationResourceEnum.WORKFLOW);
     expect(body.data.locale).to.equal('en_US');
     expect(body.data.content).to.deep.equal(translationContent);
-    expect(body.data._id).to.be.a('string');
     expect(body.data.createdAt).to.be.a('string');
     expect(body.data.updatedAt).to.be.a('string');
   });

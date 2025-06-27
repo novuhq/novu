@@ -40,7 +40,7 @@ export function BrandingPage() {
   useEffect(() => {
     if (organizationData?.branding) {
       const branding = organizationData.branding;
-      
+
       reset({
         fontFamily: branding.fontFamily || DEFAULT_FONT_FAMILY,
         color: branding.color || DEFAULT_BRANDING_COLOR,

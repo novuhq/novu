@@ -1,55 +1,47 @@
-import { Test } from '@nestjs/testing';
+import sinon from 'sinon';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
+import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ModuleRef } from '@nestjs/core';
 import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 
-const mockFeatureFlagsService = {
-  getFlag: async (context) => {
-    return process.env[context.key] === 'true';
-  },
-};
-
-const mockGetOrganizationSettings = {
-  execute: async () => ({
-    removeNovuBranding: false,
-  }),
-  setRemoveNovuBranding(value: boolean) {
-    this.execute = async () => ({
-      removeNovuBranding: value,
-    });
-  },
-};
-
-const mockPinoLogger = {
-  setContext: () => {},
-};
-
 describe('EmailOutputRendererUsecase', () => {
+  let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
+  let moduleRef: sinon.SinonStubbedInstance<ModuleRef>;
+  let getOrganizationSettingsMock: sinon.SinonStubbedInstance<GetOrganizationSettings>;
+  let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
+  let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
+  let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
   beforeEach(async () => {
-    const moduleRef = await Test.createTestingModule({
-      providers: [
-        EmailOutputRendererUsecase,
-        {
-          provide: FeatureFlagsService,
-          useValue: mockFeatureFlagsService,
-        },
-        {
-          provide: GetOrganizationSettings,
-          useValue: mockGetOrganizationSettings,
-        },
-        {
-          provide: PinoLogger,
-          useValue: mockPinoLogger,
-        },
-      ],
-    }).compile();
+    moduleRef = sinon.createStubInstance(ModuleRef);
+    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
+    featureFlagsServiceMock.getFlag.resolves(false);
+    getOrganizationSettingsMock = sinon.createStubInstance(GetOrganizationSettings);
+    getOrganizationSettingsMock.execute.resolves({
+      removeNovuBranding: false,
+    });
+    pinoLoggerMock = sinon.createStubInstance(PinoLogger);
+    controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
+    layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
 
-    emailOutputRendererUsecase = moduleRef.get<EmailOutputRendererUsecase>(EmailOutputRendererUsecase);
+    emailOutputRendererUsecase = new EmailOutputRendererUsecase(
+      getOrganizationSettingsMock as any,
+      moduleRef as any,
+      pinoLoggerMock as any,
+      featureFlagsServiceMock as any,
+      controlValuesRepositoryMock as any,
+      layoutRepositoryMock as any
+    );
+  });
+
+  afterEach(() => {
+    sinon.restore();
   });
 
   const mockFullPayload: FullPayloadForRender = {
@@ -1036,15 +1028,551 @@ describe('EmailOutputRendererUsecase', () => {
     });
   });
 
+  describe('Layout functionality', () => {
+    const simpleBodyContent = '<p>Step content {{payload.name}}</p>';
+    const layoutContent = '<html><body><div class="layout">{{content}}</div></body></html>';
+
+    let mockControlValuesEntity: any;
+    let mockLayoutEntity: any;
+
+    beforeEach(() => {
+      // Reset mocks
+      mockControlValuesEntity = {
+        controls: {
+          email: {
+            content: layoutContent,
+          },
+        },
+      };
+
+      mockLayoutEntity = {
+        _id: 'default_layout_id',
+        _organizationId: 'fake_org_id',
+        _environmentId: 'fake_env_id',
+        isDefault: true,
+      };
+
+      // Set default stub returns
+      controlValuesRepositoryMock.findOne.resolves(mockControlValuesEntity as any);
+      layoutRepositoryMock.findOne.resolves(mockLayoutEntity as any);
+    });
+
+    afterEach(() => {
+      sinon.restore();
+    });
+
+    describe('when layouts feature flag is disabled', () => {
+      beforeEach(() => {
+        featureFlagsServiceMock.getFlag.resolves(false);
+      });
+
+      it('should render without layout when feature flag is disabled', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+        expect(result.body).to.not.include('<html>');
+
+        // Verify that repository methods were not called when feature flag is disabled
+        expect(controlValuesRepositoryMock.findOne.called).to.be.false;
+        expect(layoutRepositoryMock.findOne.called).to.be.false;
+      });
+    });
+
+    describe('when layouts feature flag is enabled', () => {
+      beforeEach(() => {
+        featureFlagsServiceMock.getFlag.resolves(true);
+      });
+
+      it('should render with specified layout when layoutId is provided', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('class="layout"');
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.include('<html>');
+        expect(result.body).to.include('<body>');
+
+        // Verify repository was called with correct parameters
+        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(controlValuesRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          _layoutId: 'test_layout_id',
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        });
+
+        // Layout repository should not be called when layoutId is provided
+        expect(layoutRepositoryMock.findOne.called).to.be.false;
+      });
+
+      it('should use default layout when layoutId is undefined', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            // layoutId is undefined
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('class="layout"');
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.include('<html>');
+
+        // Verify layout repository was called first to find default layout
+        expect(layoutRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(layoutRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          origin: ResourceOriginEnum.NOVU_CLOUD,
+          type: ResourceTypeEnum.BRIDGE,
+          isDefault: true,
+          channel: ChannelTypeEnum.EMAIL,
+        });
+
+        // Then control values repository should be called with the default layout ID
+        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(controlValuesRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          _layoutId: 'default_layout_id',
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        });
+      });
+
+      it('should render without layout when no layout is found', async () => {
+        controlValuesRepositoryMock.findOne.resolves(null);
+        layoutRepositoryMock.findOne.resolves(null);
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'non_existent_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+        expect(result.body).to.not.include('<html>');
+
+        // Verify repository was called but returned null
+        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+      });
+
+      it('should render without layout when default layout does not exist', async () => {
+        layoutRepositoryMock.findOne.resolves(null);
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            // layoutId is undefined, should look for default
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+        expect(result.body).to.not.include('<html>');
+
+        // Verify layout repository was called but returned null
+        expect(layoutRepositoryMock.findOne.calledOnce).to.be.true;
+        // Control values repository should not be called when default layout is not found
+        expect(controlValuesRepositoryMock.findOne.called).to.be.false;
+      });
+
+      it('should clean step content before injecting into layout', async () => {
+        const bodyWithDoctype = '<!DOCTYPE html><p>Content</p><!--/$-->';
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: bodyWithDoctype,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('class="layout"');
+        expect(result.body).to.include('<p>Content</p>');
+        expect(result.body).to.not.include('<!DOCTYPE');
+        expect(result.body).to.not.include('<!--/$-->');
+      });
+
+      it('should handle layout with liquid variables in layout content', async () => {
+        const layoutWithVariables =
+          '<html><body><h1>{{payload.title}}</h1><div class="layout">{{content}}</div></body></html>';
+
+        controlValuesRepositoryMock.findOne.resolves({
+          _id: 'test_layout_id',
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+          priority: 0,
+          controls: {
+            email: {
+              content: layoutWithVariables,
+            },
+          },
+        });
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John', title: 'Welcome' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('<h1>Welcome</h1>');
+        expect(result.body).to.include('class="layout"');
+        expect(result.body).to.include('Step content John');
+      });
+
+      it('should handle maily content in layout', async () => {
+        const mailyLayoutContent = JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Layout: ',
+                },
+                {
+                  type: 'variable',
+                  attrs: {
+                    id: 'content',
+                  },
+                },
+              ],
+            },
+          ],
+        });
+
+        controlValuesRepositoryMock.findOne.resolves({
+          _id: 'test_layout_id',
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+          priority: 0,
+          controls: {
+            email: {
+              content: mailyLayoutContent,
+            },
+          },
+        });
+
+        const mailyStepContent = JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Hello {{payload.name}}',
+                },
+              ],
+            },
+          ],
+        });
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: mailyStepContent,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(result.body).to.include('Layout:');
+        expect(result.body).to.include('Hello John');
+      });
+
+      it('should handle layout with no email content', async () => {
+        controlValuesRepositoryMock.findOne.resolves({
+          _id: 'test_layout_id',
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+          priority: 0,
+          controls: {
+            email: {},
+          },
+        });
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        // Should render empty layout content
+        expect(result.body).to.not.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+      });
+
+      it('should pass correct repository query parameters for specific layout', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'specific_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(controlValuesRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          _layoutId: 'specific_layout_id',
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        });
+      });
+
+      it('should pass correct repository query parameters for default layout', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            // layoutId is undefined
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(layoutRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(layoutRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          origin: ResourceOriginEnum.NOVU_CLOUD,
+          type: ResourceTypeEnum.BRIDGE,
+          isDefault: true,
+          channel: ChannelTypeEnum.EMAIL,
+        });
+
+        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(controlValuesRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          _layoutId: 'default_layout_id',
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        });
+      });
+
+      it('should not call layout repository when layoutId is explicitly set to null', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: null, // explicitly set to null
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        expect(layoutRepositoryMock.findOne.called).to.be.false;
+        expect(controlValuesRepositoryMock.findOne.called).to.be.false;
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+      });
+
+      it('should handle layout controls entity with missing email controls', async () => {
+        controlValuesRepositoryMock.findOne.resolves({
+          _id: 'test_layout_id',
+          _organizationId: 'fake_org_id',
+          _environmentId: 'fake_env_id',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+          priority: 0,
+          controls: {
+            // no email property
+          },
+        });
+
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            layoutId: 'test_layout_id',
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+        // Should handle missing email controls gracefully
+        expect(result.body).to.not.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
+      });
+
+      it('should call repository methods in correct order for default layout', async () => {
+        const renderCommand = {
+          environmentId: 'fake_env_id',
+          organizationId: 'fake_org_id',
+          controlValues: {
+            subject: 'Layout Test',
+            body: simpleBodyContent,
+            // layoutId is undefined
+          },
+          fullPayloadForRender: {
+            ...mockFullPayload,
+            payload: { name: 'John' },
+          },
+          dbWorkflow: mockDbWorkflow,
+        };
+
+        await emailOutputRendererUsecase.execute(renderCommand);
+
+        // Verify call order: layout repository should be called before control values repository
+        expect(layoutRepositoryMock.findOne.calledBefore(controlValuesRepositoryMock.findOne)).to.be.true;
+      });
+    });
+  });
+
   describe('Novu branding functionality', () => {
     const simpleHtmlBody = '<p>Test email content</p>';
 
     beforeEach(() => {
-      mockGetOrganizationSettings.setRemoveNovuBranding(false);
+      // Ensure layouts feature flag is disabled for branding tests
+      featureFlagsServiceMock.getFlag.resolves(false);
     });
 
     it('should add Novu branding when removeNovuBranding is false', async () => {
-      mockGetOrganizationSettings.setRemoveNovuBranding(false);
+      getOrganizationSettingsMock.execute.resolves({
+        removeNovuBranding: false,
+      });
 
       const renderCommand = {
         environmentId: 'fake_env_id',
@@ -1065,7 +1593,9 @@ describe('EmailOutputRendererUsecase', () => {
     });
 
     it('should not add Novu branding when removeNovuBranding is true', async () => {
-      mockGetOrganizationSettings.setRemoveNovuBranding(true);
+      getOrganizationSettingsMock.execute.resolves({
+        removeNovuBranding: true,
+      });
 
       const renderCommand = {
         environmentId: 'fake_env_id',
@@ -1084,7 +1614,9 @@ describe('EmailOutputRendererUsecase', () => {
     });
 
     it('should properly insert branding into HTML with body tag', async () => {
-      mockGetOrganizationSettings.setRemoveNovuBranding(false);
+      getOrganizationSettingsMock.execute.resolves({
+        removeNovuBranding: false,
+      });
 
       const htmlWithBodyTag = '<html><body><p>Content</p></body></html>';
       const renderCommand = {

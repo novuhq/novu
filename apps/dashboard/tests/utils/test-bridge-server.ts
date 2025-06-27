@@ -15,7 +15,6 @@ export class TestBridgeServer {
   }
 
   private log(level: 'info' | 'error' | 'warn', message: string, ...args: any[]) {
-     
     console[level](`[BridgeServer] ${message}`, ...args);
   }
 

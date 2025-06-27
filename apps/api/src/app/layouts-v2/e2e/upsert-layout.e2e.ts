@@ -93,7 +93,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Updated Layout Name',
         controlValues: {
           email: {
-            content: '<html><body><div>Updated content {{{body}}}</div></body></html>',
+            content: '<html><body><div>{{content}}</div></body></html>',
             editorType: 'html',
           },
         },
@@ -148,12 +148,71 @@ describe('Upsert Layout #novu-v2', () => {
       }
     });
 
+    it('should not allow Maily JSON content when no content variable provided', async () => {
+      const validMailyContent = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            attrs: { textAlign: null, showIfKey: null },
+            content: [{ type: 'text', text: 'Hello from layout' }],
+          },
+        ],
+      });
+      const updateData: UpdateLayoutDto = {
+        name: 'Block Layout',
+        controlValues: {
+          email: {
+            content: validMailyContent,
+            editorType: 'block',
+          },
+        },
+      };
+
+      try {
+        await novuClient.layouts.update(updateData, existingLayout.layoutId);
+        expect.fail('Should have thrown validation error');
+      } catch (error: any) {
+        expect(error.statusCode).to.equal(400);
+        expect(error.message).to.contain('The layout body should contain the "content" variable');
+      }
+    });
+
+    it('should not allow HTML content when no content variable provided', async () => {
+      const validHtmlContent = `
+        <html>
+          <head><title>Test Layout</title></head>
+          <body>
+            <div>Hello {{subscriber.firstName}}</div>
+          </body>
+        </html>
+      `;
+      const updateData: UpdateLayoutDto = {
+        name: 'Block Layout',
+        controlValues: {
+          email: {
+            content: validHtmlContent,
+            editorType: 'html',
+          },
+        },
+      };
+
+      try {
+        await novuClient.layouts.update(updateData, existingLayout.layoutId);
+        expect.fail('Should have thrown validation error');
+      } catch (error: any) {
+        expect(error.statusCode).to.equal(400);
+        expect(error.message).to.contain('The layout body should contain the "content" variable');
+      }
+    });
+
     it('should accept valid HTML content', async () => {
       const validHtmlContent = `
         <html>
           <head><title>Test Layout</title></head>
           <body>
             <div>Hello {{subscriber.firstName}}</div>
+            <div>{{content}}</div>
           </body>
         </html>
       `;
@@ -182,7 +241,15 @@ describe('Upsert Layout #novu-v2', () => {
           {
             type: 'paragraph',
             attrs: { textAlign: null, showIfKey: null },
-            content: [{ type: 'text', text: 'Hello from layout' }],
+            content: [
+              { type: 'text', text: 'Hello from layout' },
+              {
+                type: 'variable',
+                attrs: {
+                  id: 'content',
+                },
+              },
+            ],
           },
         ],
       });
@@ -223,7 +290,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Non-existent Layout',
         controlValues: {
           email: {
-            content: '<html><body><div>Content</div></body></html>',
+            content: '<html><body><div>Content: {{content}}</div></body></html>',
             editorType: 'html',
           },
         },

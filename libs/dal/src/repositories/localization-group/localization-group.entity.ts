@@ -11,7 +11,9 @@ export class LocalizationGroupEntity {
 
   resourceType: LocalizationResourceEnum;
   resourceId: string;
+  resourceName: string;
 
+  _resourceInternalId: string;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
   createdAt: string;
@@ -20,5 +22,5 @@ export class LocalizationGroupEntity {
 
 export type LocalizationGroupDBModel = ChangePropsValueType<
   LocalizationGroupEntity,
-  '_environmentId' | '_organizationId'
+  '_environmentId' | '_organizationId' | '_resourceInternalId'
 >;

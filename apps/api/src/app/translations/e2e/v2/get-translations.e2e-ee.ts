@@ -35,7 +35,7 @@ describe('Get translations list - /v2/translations (GET) #novu-v2', async () => 
         },
       ],
     });
-    workflowId1 = workflow1.id;
+    workflowId1 = workflow1.workflowId;
 
     const { result: workflow2 } = await novuClient.workflows.create({
       name: 'Test Workflow 2 for Translations',
@@ -52,7 +52,7 @@ describe('Get translations list - /v2/translations (GET) #novu-v2', async () => 
         },
       ],
     });
-    workflowId2 = workflow2.id;
+    workflowId2 = workflow2.workflowId;
 
     // Create test data
     const translations = [

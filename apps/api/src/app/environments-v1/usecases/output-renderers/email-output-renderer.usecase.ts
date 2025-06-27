@@ -2,12 +2,27 @@
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { EmailRenderOutput } from '@novu/shared';
-import { InstrumentUsecase, sanitizeHTML, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import {
+  ChannelTypeEnum,
+  ControlValuesLevelEnum,
+  EmailRenderOutput,
+  FeatureFlagsKeysEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  LAYOUT_CONTENT_VARIABLE,
+} from '@novu/shared';
+import {
+  InstrumentUsecase,
+  sanitizeHTML,
+  FeatureFlagsService,
+  PinoLogger,
+  EmailControlType,
+  LayoutControlType,
+} from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
 
 import { Liquid } from 'liquidjs';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, LayoutRepository, NotificationTemplateEntity } from '@novu/dal';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import {
@@ -23,6 +38,7 @@ import { NOVU_BRANDING_HTML } from './novu-branding-html';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { removeBrandingFromHtml } from '../../../shared/utils/html';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
@@ -49,7 +65,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     private getOrganizationSettings: GetOrganizationSettings,
     protected moduleRef: ModuleRef,
     protected logger: PinoLogger,
-    protected featureFlagsService: FeatureFlagsService
+    protected featureFlagsService: FeatureFlagsService,
+    private controlValuesRepository: ControlValuesRepository,
+    private layoutRepository: LayoutRepository
   ) {
     super(moduleRef, logger, featureFlagsService);
     this.liquidEngine = createLiquidEngine();
@@ -57,7 +75,12 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
-    const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
+    const {
+      body,
+      subject: controlSubject,
+      disableOutputSanitization,
+      layoutId,
+    } = renderCommand.controlValues as EmailControlType;
 
     if (!body || typeof body !== 'string') {
       /**
@@ -72,24 +95,53 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       };
     }
 
+    const { fullPayloadForRender, dbWorkflow, locale } = renderCommand;
+    const { _environmentId: environmentId, _organizationId: organizationId } = renderCommand.dbWorkflow;
+
+    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+    });
+
     // Step 1: Apply translations to subject (already liquid-interpolated)
     const translatedSubject = await this.processSubjectTranslations(
       controlSubject as string,
-      renderCommand.fullPayloadForRender,
-      renderCommand.dbWorkflow,
-      renderCommand.locale
+      fullPayloadForRender,
+      dbWorkflow,
+      locale
     );
 
     // Step 2: Process body content (with translations applied before rendering)
-    const renderedHtml = await this.processBodyContent(
-      body,
-      renderCommand.fullPayloadForRender,
-      renderCommand.dbWorkflow,
-      renderCommand.locale
-    );
+    let renderedHtml = '';
+    if (isLayoutsPageActive) {
+      const stepBodyHtml = await this.processBodyContent({
+        body,
+        payload: fullPayloadForRender,
+        dbWorkflow,
+        locale,
+        noHtmlWrappingTags: true,
+      });
+      const cleanedStepBodyHtml = stepBodyHtml.replace(/<!DOCTYPE.*?>/, '').replace(/<!--\/$-->/, '');
+      renderedHtml = await this.renderWithLayout({
+        stepContent: cleanedStepBodyHtml,
+        layoutId,
+        payload: fullPayloadForRender,
+        dbWorkflow,
+        locale,
+      });
+    } else {
+      renderedHtml = await this.processBodyContent({
+        body,
+        payload: fullPayloadForRender,
+        dbWorkflow,
+        locale,
+      });
+    }
 
     // Step 3: Add Novu branding
-    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, renderCommand.dbWorkflow._organizationId);
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, dbWorkflow._organizationId);
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
@@ -102,26 +154,100 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     };
   }
 
-  private async processBodyContent(
-    body: string,
-    variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): Promise<string> {
+  private async renderWithLayout({
+    stepContent,
+    layoutId,
+    payload,
+    dbWorkflow,
+    locale,
+  }: {
+    stepContent: string;
+    layoutId?: string;
+    payload: FullPayloadForRender;
+    dbWorkflow: NotificationTemplateEntity;
+    locale?: string;
+  }): Promise<string> {
+    const { _environmentId: environmentId, _organizationId: organizationId } = dbWorkflow;
+    let layoutControlsEntity: ControlValuesEntity | null = null;
+    // if the step control values have a layoutId then find layout controls entity
+    if (layoutId) {
+      layoutControlsEntity = await this.controlValuesRepository.findOne({
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        _layoutId: layoutId,
+        level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+      });
+    } else if (typeof layoutId === 'undefined') {
+      // otherwise find the default layout controls
+      const defaultEmailLayout = await this.layoutRepository.findOne({
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        type: ResourceTypeEnum.BRIDGE,
+        isDefault: true,
+        channel: ChannelTypeEnum.EMAIL,
+      });
+
+      layoutControlsEntity = defaultEmailLayout
+        ? await this.controlValuesRepository.findOne({
+            _organizationId: organizationId,
+            _environmentId: environmentId,
+            _layoutId: defaultEmailLayout._id,
+            level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+          })
+        : null;
+    }
+
+    if (!layoutControlsEntity) {
+      return stepContent;
+    }
+
+    const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
+
+    return this.processBodyContent({
+      body: layoutControlValues.email?.content ?? '',
+      payload: {
+        ...payload,
+        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(stepContent.replace(/\n/g, '')),
+      },
+      dbWorkflow,
+      locale,
+    });
+  }
+
+  private async processBodyContent({
+    body,
+    payload,
+    dbWorkflow,
+    locale,
+    noHtmlWrappingTags,
+  }: {
+    body: string;
+    payload: FullPayloadForRender;
+    dbWorkflow: NotificationTemplateEntity;
+    locale?: string;
+    noHtmlWrappingTags?: boolean;
+  }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
+      const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
       const liquifiedMaily = wrapMailyInLiquid(body);
-      const transformedMaily = await this.transformMailyContent(liquifiedMaily, variables);
-      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, variables);
+      const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
+      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, escapedPayloadForJson);
 
       // Apply translations to the liquid-processed Maily JSON before rendering
-      const translatedMaily = await this.processMailyTranslations(parsedMaily, variables, dbWorkflow, locale);
+      const translatedMaily = await this.processMailyTranslations(
+        parsedMaily,
+        escapedPayloadForJson,
+        dbWorkflow,
+        locale
+      );
 
       const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
 
-      return await mailyRender(strippedMaily);
+      return await mailyRender(strippedMaily, { noHtmlWrappingTags });
     } else {
       // For simple text body, apply translations directly
-      return await this.processTextTranslations(body, variables, dbWorkflow, locale);
+      return await this.processTextTranslations(body, payload, dbWorkflow, locale);
     }
   }
 
@@ -477,5 +603,47 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const lastIndex = matches[matches.length - 1].index!;
 
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
+  }
+
+  private deepEscapePayloadStrings(payload: FullPayloadForRender): FullPayloadForRender {
+    return this.deepEscapeObject(payload) as FullPayloadForRender;
+  }
+
+  private deepEscapeObject(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.escapeStringForJson(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepEscapeObject(item));
+    }
+
+    if (typeof obj === 'object') {
+      const escapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        escapedObj[key] = this.deepEscapeObject(value);
+      }
+
+      return escapedObj;
+    }
+
+    return obj;
+  }
+
+  private escapeStringForJson(str: string): string {
+    return str
+      .replace(/\\/g, '\\\\') // Escape backslashes
+      .replace(/"/g, '\\"') // Escape quotes
+      .replace(/\n/g, '\\n') // Escape newlines
+      .replace(/\r/g, '\\r') // Escape carriage returns
+      .replace(/\t/g, '\\t'); // Escape tabs
   }
 }

@@ -32,7 +32,6 @@ export class CreateWorkflowSidebar {
     const tagsInput = this.page.getByPlaceholder('Type a tag and press Enter');
 
     if (typeof tags === 'number') {
-       
       for (let i = 0; i < tags; i++) {
         await tagsInput.click();
         await tagsInput.fill(`${1 + i}`);

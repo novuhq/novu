@@ -11,4 +11,5 @@ export * from './inviteTeamMemberNudge';
 export * from './preferences';
 export * from './validIdRegex';
 export * from './feature-tiers-constants';
+export * from './layouts';
 export * from './translation';

@@ -57,7 +57,7 @@
 			},
 		},
 		"production-us": {
-			"name": "socket-worker-production",
+			"name": "socket-worker-production-us",
 			"routes": [
 				{
 					"pattern": "socket.novu.co",
