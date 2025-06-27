@@ -12,7 +12,7 @@ import {
   TableCell,
 } from '@/components/primitives/table';
 import { TranslationGroup } from '@/api/translations';
-import { useFetchTranslations } from '@/hooks/use-fetch-translations';
+import { useFetchTranslationList } from '@/hooks/use-fetch-translation-list';
 import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 
 import { TranslationsFilter, TranslationsUrlState, useTranslationsUrlState } from './hooks/use-translations-url-state';
@@ -179,7 +179,7 @@ function useTranslationListLogic() {
     total: 0,
   });
 
-  const { data, isPending, isFetching, refetch } = useFetchTranslations(filterValues);
+  const { data, isPending, isFetching, refetch } = useFetchTranslationList(filterValues);
 
   const handleTranslationClick = useCallback((translationGroup: TranslationGroup) => {
     setSelectedTranslationGroup(translationGroup);

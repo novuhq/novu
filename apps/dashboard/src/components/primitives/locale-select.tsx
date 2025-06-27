@@ -13,6 +13,7 @@ type LocaleSelectProps = Omit<ButtonProps, 'onChange'> & {
   readOnly?: boolean;
   onChange: (val: string) => void;
   placeholder?: string;
+  availableLocales?: string[];
 };
 
 // Get most common locales for better performance
@@ -44,26 +45,50 @@ const COMMON_LOCALES = [
 ];
 
 export function LocaleSelect(props: LocaleSelectProps) {
-  const { value, disabled, readOnly, onChange, className, placeholder = 'Select locale', ...rest } = props;
+  const {
+    value,
+    disabled,
+    readOnly,
+    onChange,
+    className,
+    placeholder = 'Select locale',
+    availableLocales,
+    ...rest
+  } = props;
   const [isOpen, setIsOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>('left');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
   const currentLocale = locales.find((locale) => locale.langIso === value);
 
+  // Get the base locales list - either all locales or filtered by availableLocales
+  const baseLocales = useMemo(() => {
+    if (availableLocales && availableLocales.length > 0) {
+      return locales.filter((locale) => availableLocales.includes(locale.langIso));
+    }
+
+    return locales;
+  }, [availableLocales]);
+
   // Optimize locale filtering with memoization
   const filteredLocales = useMemo(() => {
     if (!searchValue.trim()) {
+      // If we have availableLocales, show them in order, otherwise show common locales first
+      if (availableLocales && availableLocales.length > 0) {
+        return baseLocales.slice(0, 100);
+      }
+
       // Show common locales first, then others
-      const common = locales.filter((locale) => COMMON_LOCALES.includes(locale.langIso));
-      const others = locales.filter((locale) => !COMMON_LOCALES.includes(locale.langIso));
+      const common = baseLocales.filter((locale) => COMMON_LOCALES.includes(locale.langIso));
+      const others = baseLocales.filter((locale) => !COMMON_LOCALES.includes(locale.langIso));
       return [...common, ...others].slice(0, 100);
     }
 
     const search = searchValue.toLowerCase();
-    return locales
+    return baseLocales
       .filter(
         (locale) =>
           locale.langIso.toLowerCase().includes(search) ||
@@ -71,7 +96,7 @@ export function LocaleSelect(props: LocaleSelectProps) {
           locale.name.toLowerCase().includes(search)
       )
       .slice(0, 100);
-  }, [searchValue]);
+  }, [searchValue, baseLocales, availableLocales]);
 
   const handleSelect = (localeValue: string) => {
     onChange(localeValue);
@@ -81,6 +106,22 @@ export function LocaleSelect(props: LocaleSelectProps) {
 
   const handleToggle = () => {
     if (!disabled && !readOnly) {
+      // Calculate dropdown position based on available space
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const dropdownWidth = 320;
+        const spaceOnRight = viewportWidth - rect.right;
+        const spaceOnLeft = rect.left;
+
+        // If there's not enough space on the right but enough on the left, position left
+        if (spaceOnRight < dropdownWidth && spaceOnLeft >= dropdownWidth) {
+          setDropdownPosition('right');
+        } else {
+          setDropdownPosition('left');
+        }
+      }
+
       setIsOpen(!isOpen);
     }
   };
@@ -112,6 +153,15 @@ export function LocaleSelect(props: LocaleSelectProps) {
     }
   };
 
+  const showSearchLimitMessage =
+    searchValue &&
+    baseLocales.filter(
+      (locale) =>
+        locale.langIso.toLowerCase().includes(searchValue.toLowerCase()) ||
+        locale.langName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        locale.name.toLowerCase().includes(searchValue.toLowerCase())
+    ).length > 100;
+
   return (
     <div ref={containerRef} className="relative">
       <Button
@@ -142,7 +192,12 @@ export function LocaleSelect(props: LocaleSelectProps) {
       </Button>
 
       {isOpen && (
-        <div className="border-border bg-background absolute z-50 mt-1 w-full min-w-[320px] rounded-lg border shadow-lg">
+        <div
+          className={cn(
+            'border-border bg-background absolute z-[9999] mt-1 w-full min-w-[320px] rounded-lg border shadow-lg',
+            dropdownPosition === 'right' ? 'right-0' : 'left-0'
+          )}
+        >
           <div className="border-border border-b p-2">
             <Input
               ref={inputRef}
@@ -185,17 +240,11 @@ export function LocaleSelect(props: LocaleSelectProps) {
                     </button>
                   );
                 })}
-                {searchValue &&
-                  locales.filter(
-                    (locale) =>
-                      locale.langIso.toLowerCase().includes(searchValue.toLowerCase()) ||
-                      locale.langName.toLowerCase().includes(searchValue.toLowerCase()) ||
-                      locale.name.toLowerCase().includes(searchValue.toLowerCase())
-                  ).length > 100 && (
-                    <div className="text-muted-foreground py-2 text-center text-xs">
-                      Showing first 100 results. Continue typing to narrow down.
-                    </div>
-                  )}
+                {showSearchLimitMessage && (
+                  <div className="text-muted-foreground py-2 text-center text-xs">
+                    Showing first 100 results. Continue typing to narrow down.
+                  </div>
+                )}
               </>
             )}
           </div>

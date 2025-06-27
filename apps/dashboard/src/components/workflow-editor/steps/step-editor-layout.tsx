@@ -16,6 +16,8 @@ import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/t
 import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { Protect } from '../../../utils/protect';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
+import { LocaleSelect } from '@/components/primitives/locale-select';
+import { useFetchTranslations, type FetchTranslationsParams } from '@/hooks/use-fetch-translations';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -24,11 +26,20 @@ type StepEditorLayoutProps = {
 };
 
 function StepEditorContent() {
-  const { step, isSubsequentLoad, editorValue } = useStepEditor();
+  const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale } = useStepEditor();
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
+
+  // Fetch translations for the current workflow
+  const { data: translationsData } = useFetchTranslations({
+    resourceId: workflow._id,
+    resourceType: 'workflow' as FetchTranslationsParams['resourceType'],
+  });
+
+  // Extract available locales from translations
+  const availableLocales = translationsData?.data?.map((translation) => translation.locale) || [];
 
   const handleTestWorkflowClick = () => {
     setIsTestDrawerOpen(true);
@@ -76,7 +87,14 @@ function StepEditorContent() {
             <ResizableLayout.Handle />
 
             <ResizableLayout.PreviewPanel>
-              <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} />
+              <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad}>
+                <LocaleSelect
+                  value={selectedLocale}
+                  onChange={setSelectedLocale}
+                  placeholder="Select locale"
+                  availableLocales={availableLocales}
+                />
+              </PanelHeader>
               <div className="flex-1 overflow-hidden">
                 <div
                   className="bg-bg-weak relative h-full overflow-y-auto p-3"
