@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { DEFAULT_TRANSLATIONS_LIMIT, DEFAULT_TRANSLATIONS_OFFSET } from '../constants';
 
 export type TranslationsFilter = {
   query: string;
@@ -9,8 +10,8 @@ export type TranslationsFilter = {
 
 export const defaultTranslationsFilter: TranslationsFilter = {
   query: '',
-  limit: 50,
-  offset: 0,
+  limit: DEFAULT_TRANSLATIONS_LIMIT,
+  offset: DEFAULT_TRANSLATIONS_OFFSET,
 };
 
 export type TranslationsUrlState = {
@@ -27,10 +28,10 @@ type UseTranslationsUrlStateProps = {
   limit?: number;
 };
 
-export const useTranslationsUrlState = ({
+export function useTranslationsUrlState({
   total = 0,
-  limit = 50,
-}: UseTranslationsUrlStateProps): TranslationsUrlState => {
+  limit = DEFAULT_TRANSLATIONS_LIMIT,
+}: UseTranslationsUrlStateProps): TranslationsUrlState {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filterValues = useMemo(() => {
@@ -97,4 +98,4 @@ export const useTranslationsUrlState = ({
     handlePrevious,
     handleFirst,
   };
-};
+}
