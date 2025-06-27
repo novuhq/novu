@@ -25,6 +25,8 @@ describe('EmailOutputRendererUsecase', () => {
     getOrganizationSettingsMock = sinon.createStubInstance(GetOrganizationSettings);
     getOrganizationSettingsMock.execute.resolves({
       removeNovuBranding: false,
+      defaultLocale: 'en_US',
+      translationsEnabled: false,
     });
     pinoLoggerMock = sinon.createStubInstance(PinoLogger);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
