@@ -72,7 +72,7 @@ export interface IResourceDiff {
   targetResourceName: string | null;
   resourceType: ResourceTypeEnum;
   action: DiffActionEnum;
-  changes?: {
+  diffs?: {
     previous: Record<string, any> | null;
     new: Record<string, any> | null;
   };
@@ -88,7 +88,7 @@ export interface IDiffResult {
   sourceResourceName: string | null;
   targetResourceId: string | null;
   targetResourceName: string | null;
-  diffs: IResourceDiff[];
+  changes: IResourceDiff[];
   summary: {
     added: number;
     modified: number;

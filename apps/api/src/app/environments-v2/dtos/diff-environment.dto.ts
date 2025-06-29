@@ -86,7 +86,7 @@ export class ResourceDiffDto {
       },
     },
   })
-  changes?: {
+  diffs?: {
     previous: Record<string, any> | null;
     new: Record<string, any> | null;
   };
@@ -175,7 +175,7 @@ export class ResourceDiffResultDto {
     description: 'List of specific changes for this resource',
     type: [ResourceDiffDto],
   })
-  diffs: ResourceDiffDto[];
+  changes: ResourceDiffDto[];
 
   @ApiProperty({
     description: 'Summary of changes for this resource',

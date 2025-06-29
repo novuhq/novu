@@ -147,7 +147,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.resources[0].summary.added).to.be.greaterThan(0);
 
       // Find the added workflow in the diff
-      const addedWorkflow = body.data.resources[0].diffs.find(
+      const addedWorkflow = body.data.resources[0].changes.find(
         (diff: any) => diff.action === 'added' && diff.sourceResourceName === 'New Workflow for Diff'
       );
       expect(addedWorkflow).to.exist;
@@ -202,9 +202,9 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       );
       expect(modifiedWorkflowResult).to.exist;
 
-      const modifiedWorkflow = modifiedWorkflowResult.diffs.find((diff: any) => diff.action === 'modified');
+      const modifiedWorkflow = modifiedWorkflowResult.changes.find((diff: any) => diff.action === 'modified');
       expect(modifiedWorkflow).to.exist;
-      expect(modifiedWorkflow.changes).to.exist;
+      expect(modifiedWorkflow.diffs).to.exist;
     });
 
     it('should detect deleted workflows', async () => {
@@ -249,7 +249,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       );
       expect(deletedWorkflowResult).to.exist;
 
-      const deletedWorkflow = deletedWorkflowResult.diffs.find((diff: any) => diff.action === 'deleted');
+      const deletedWorkflow = deletedWorkflowResult.changes.find((diff: any) => diff.action === 'deleted');
       expect(deletedWorkflow).to.exist;
     });
 
@@ -297,7 +297,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         expect(workflowResource).to.have.property('sourceResourceName');
         expect(workflowResource).to.have.property('targetResourceId');
         expect(workflowResource).to.have.property('targetResourceName');
-        expect(workflowResource).to.have.property('diffs');
+        expect(workflowResource).to.have.property('changes');
         expect(workflowResource).to.have.property('summary');
         expect(workflowResource.summary).to.have.property('added');
         expect(workflowResource.summary).to.have.property('modified');
@@ -367,10 +367,10 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       // Now each workflow has its own resource entry, so we need to check across all resources
       const allResources = body.data.resources;
       const addedWorkflows = allResources.filter((resource: any) =>
-        resource.diffs.some((diff: any) => diff.action === 'added')
+        resource.changes.some((diff: any) => diff.action === 'added')
       );
       const modifiedWorkflows = allResources.filter((resource: any) =>
-        resource.diffs.some((diff: any) => diff.action === 'modified')
+        resource.changes.some((diff: any) => diff.action === 'modified')
       );
 
       expect(addedWorkflows.length).to.be.greaterThan(0);
@@ -406,7 +406,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       if (body.data.resources.length > 0) {
         const resource = body.data.resources[0];
         expect(resource).to.have.property('resourceType');
-        expect(resource).to.have.property('diffs');
+        expect(resource).to.have.property('changes');
         expect(resource).to.have.property('summary');
         expect(resource.summary).to.have.property('added');
         expect(resource.summary).to.have.property('modified');
@@ -435,8 +435,8 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         })
         .expect(200);
 
-      if (body.data.resources.length > 0 && body.data.resources[0].diffs.length > 0) {
-        const diff = body.data.resources[0].diffs[0];
+      if (body.data.resources.length > 0 && body.data.resources[0].changes.length > 0) {
+        const diff = body.data.resources[0].changes[0];
         expect(diff).to.have.property('sourceResourceId');
         expect(diff).to.have.property('sourceResourceName');
         expect(diff).to.have.property('targetResourceId');
@@ -445,7 +445,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         expect(['added', 'modified', 'deleted', 'unchanged']).to.include(diff.action);
 
         if (diff.action === 'modified') {
-          expect(diff).to.have.property('changes');
+          expect(diff).to.have.property('diffs');
         }
       }
     });

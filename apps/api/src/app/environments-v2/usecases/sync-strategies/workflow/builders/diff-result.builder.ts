@@ -10,17 +10,17 @@ export class DiffResultBuilder {
     sourceResourceName: string | null,
     targetResourceId: string | null,
     targetResourceName: string | null,
-    diffs: IResourceDiff[]
+    changes: IResourceDiff[]
   ): this {
-    if (diffs.length > 0) {
+    if (changes.length > 0) {
       this.results.push({
         resourceType: ResourceTypeEnum.WORKFLOW,
         sourceResourceId,
         sourceResourceName,
         targetResourceId,
         targetResourceName,
-        diffs,
-        summary: this.calculateSummary(diffs),
+        changes,
+        summary: this.calculateSummary(changes),
       });
     }
 
@@ -43,7 +43,7 @@ export class DiffResultBuilder {
       sourceResourceName,
       targetResourceId: null,
       targetResourceName: null,
-      diffs: [diff],
+      changes: [diff],
       summary: this.calculateSummary([diff]),
     });
 
@@ -66,7 +66,7 @@ export class DiffResultBuilder {
       sourceResourceName: null,
       targetResourceId,
       targetResourceName,
-      diffs: [diff],
+      changes: [diff],
       summary: this.calculateSummary([diff]),
     });
 
@@ -84,7 +84,7 @@ export class DiffResultBuilder {
   }
 
   getStats() {
-    const totalDiffs = this.results.reduce((acc, result) => acc + result.diffs.length, 0);
+    const totalDiffs = this.results.reduce((acc, result) => acc + result.changes.length, 0);
     const summaryTotals = this.results.reduce(
       (acc, result) => ({
         added: acc.added + result.summary.added,

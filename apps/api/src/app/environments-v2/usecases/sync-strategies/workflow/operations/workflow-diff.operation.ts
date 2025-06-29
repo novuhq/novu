@@ -122,7 +122,7 @@ export class WorkflowDiffOperation {
         targetResourceName: targetWorkflow.name,
         resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
-        changes: workflowChanges,
+        diffs: workflowChanges,
       });
     }
 

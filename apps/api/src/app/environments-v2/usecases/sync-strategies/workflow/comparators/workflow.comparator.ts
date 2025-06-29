@@ -154,7 +154,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       stepType: sourceStep.type,
       action: DiffActionEnum.ADDED,
       newIndex: sourceIndex,
-      changes: {
+      diffs: {
         previous: null,
         new: normalizedStep,
       },
@@ -181,7 +181,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       action: DiffActionEnum.MODIFIED,
       previousIndex: targetIndex,
       newIndex: sourceIndex,
-      changes: stepChanges,
+      diffs: stepChanges,
     };
   }
 
@@ -216,7 +216,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       stepType: targetStep.type,
       action: DiffActionEnum.DELETED,
       previousIndex: targetIndex,
-      changes: {
+      diffs: {
         previous: normalizedStep,
         new: null,
       },
