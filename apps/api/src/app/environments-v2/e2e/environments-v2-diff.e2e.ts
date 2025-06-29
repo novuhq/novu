@@ -141,17 +141,17 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       expect(body.data.summary.hasChanges).to.be.true;
       expect(body.data.summary.totalChanges).to.be.greaterThan(0);
-      expect(body.data.results).to.have.length(1);
-      expect(body.data.results[0].resourceType).to.equal('workflow');
-      expect(body.data.results[0].resourceName).to.equal('New Workflow for Diff');
-      expect(body.data.results[0].summary.added).to.be.greaterThan(0);
+      expect(body.data.resources).to.have.length(1);
+      expect(body.data.resources[0].resourceType).to.equal('workflow');
+      expect(body.data.resources[0].sourceResourceName).to.equal('New Workflow for Diff');
+      expect(body.data.resources[0].summary.added).to.be.greaterThan(0);
 
       // Find the added workflow in the diff
-      const addedWorkflow = body.data.results[0].diffs.find(
-        (diff: any) => diff.action === 'added' && diff.resourceName === 'New Workflow for Diff'
+      const addedWorkflow = body.data.resources[0].diffs.find(
+        (diff: any) => diff.action === 'added' && diff.sourceResourceName === 'New Workflow for Diff'
       );
       expect(addedWorkflow).to.exist;
-      expect(addedWorkflow.resourceId).to.exist;
+      expect(addedWorkflow.sourceResourceId).to.exist;
     });
 
     it('should detect modified workflows', async () => {
@@ -197,8 +197,8 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary.totalChanges).to.be.greaterThan(0);
 
       // Find the modified workflow in the diff - now each workflow has its own result
-      const modifiedWorkflowResult = body.data.results.find(
-        (result: any) => result.resourceName === 'Modified Workflow Name'
+      const modifiedWorkflowResult = body.data.resources.find(
+        (result: any) => result.sourceResourceName === 'Modified Workflow Name'
       );
       expect(modifiedWorkflowResult).to.exist;
 
@@ -244,8 +244,8 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary.totalChanges).to.be.greaterThan(0);
 
       // Find the deleted workflow in the diff - now each workflow has its own result
-      const deletedWorkflowResult = body.data.results.find(
-        (result: any) => result.resourceName === 'Workflow to Delete'
+      const deletedWorkflowResult = body.data.resources.find(
+        (result: any) => result.targetResourceName === 'Workflow to Delete'
       );
       expect(deletedWorkflowResult).to.exist;
 
@@ -293,8 +293,10 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       if (body.data.resources.length > 0) {
         const workflowResource = body.data.resources[0];
         expect(workflowResource).to.have.property('resourceType');
-        expect(workflowResource).to.have.property('resourceId');
-        expect(workflowResource).to.have.property('resourceName');
+        expect(workflowResource).to.have.property('sourceResourceId');
+        expect(workflowResource).to.have.property('sourceResourceName');
+        expect(workflowResource).to.have.property('targetResourceId');
+        expect(workflowResource).to.have.property('targetResourceName');
         expect(workflowResource).to.have.property('diffs');
         expect(workflowResource).to.have.property('summary');
         expect(workflowResource.summary).to.have.property('added');
@@ -435,8 +437,10 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       if (body.data.resources.length > 0 && body.data.resources[0].diffs.length > 0) {
         const diff = body.data.resources[0].diffs[0];
-        expect(diff).to.have.property('resourceId');
-        expect(diff).to.have.property('resourceName');
+        expect(diff).to.have.property('sourceResourceId');
+        expect(diff).to.have.property('sourceResourceName');
+        expect(diff).to.have.property('targetResourceId');
+        expect(diff).to.have.property('targetResourceName');
         expect(diff).to.have.property('action');
         expect(['added', 'modified', 'deleted', 'unchanged']).to.include(diff.action);
 

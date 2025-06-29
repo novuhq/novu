@@ -26,13 +26,11 @@ export interface INormalizedStep {
 }
 
 export interface IWorkflowComparison {
-  workflowChanges: Record<string, IFieldChange>;
+  workflowChanges: {
+    previous: Record<string, any>;
+    new: Record<string, any>;
+  } | null;
   stepDiffs: IResourceDiff[];
-}
-
-export interface IFieldChange {
-  previous: any;
-  new: any;
 }
 
 export interface IWorkflowNormalizer {

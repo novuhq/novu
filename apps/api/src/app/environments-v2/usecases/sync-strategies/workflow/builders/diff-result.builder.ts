@@ -5,12 +5,20 @@ import { ResourceTypeEnum, IDiffResult, IResourceDiff, DiffActionEnum } from '..
 export class DiffResultBuilder {
   private results: IDiffResult[] = [];
 
-  addWorkflowDiff(resourceId: string, resourceName: string, diffs: IResourceDiff[]): this {
+  addWorkflowDiff(
+    sourceResourceId: string | null,
+    sourceResourceName: string | null,
+    targetResourceId: string | null,
+    targetResourceName: string | null,
+    diffs: IResourceDiff[]
+  ): this {
     if (diffs.length > 0) {
       this.results.push({
         resourceType: ResourceTypeEnum.WORKFLOW,
-        resourceId,
-        resourceName,
+        sourceResourceId,
+        sourceResourceName,
+        targetResourceId,
+        targetResourceName,
         diffs,
         summary: this.calculateSummary(diffs),
       });
@@ -19,18 +27,22 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addWorkflowAdded(resourceId: string, resourceName: string): this {
+  addWorkflowAdded(sourceResourceId: string, sourceResourceName: string): this {
     const diff: IResourceDiff = {
-      resourceId,
-      resourceName,
+      sourceResourceId,
+      sourceResourceName,
+      targetResourceId: null,
+      targetResourceName: null,
       resourceType: ResourceTypeEnum.WORKFLOW,
       action: DiffActionEnum.ADDED,
     };
 
     this.results.push({
       resourceType: ResourceTypeEnum.WORKFLOW,
-      resourceId,
-      resourceName,
+      sourceResourceId,
+      sourceResourceName,
+      targetResourceId: null,
+      targetResourceName: null,
       diffs: [diff],
       summary: this.calculateSummary([diff]),
     });
@@ -38,18 +50,22 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addWorkflowDeleted(resourceId: string, resourceName: string): this {
+  addWorkflowDeleted(targetResourceId: string, targetResourceName: string): this {
     const diff: IResourceDiff = {
-      resourceId,
-      resourceName,
+      sourceResourceId: null,
+      sourceResourceName: null,
+      targetResourceId,
+      targetResourceName,
       resourceType: ResourceTypeEnum.WORKFLOW,
       action: DiffActionEnum.DELETED,
     };
 
     this.results.push({
       resourceType: ResourceTypeEnum.WORKFLOW,
-      resourceId,
-      resourceName,
+      sourceResourceId: null,
+      sourceResourceName: null,
+      targetResourceId,
+      targetResourceName,
       diffs: [diff],
       summary: this.calculateSummary([diff]),
     });

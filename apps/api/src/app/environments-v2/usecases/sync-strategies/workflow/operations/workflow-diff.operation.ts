@@ -6,7 +6,6 @@ import { SYNCABLE_WORKFLOW_ORIGINS } from '../../../../../workflows-v2/usecases/
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
 import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
-import { IFieldChange } from '../types/workflow-sync.types';
 import { WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 
 @Injectable()
@@ -70,11 +69,17 @@ export class WorkflowDiffOperation {
           userContext
         );
 
-        const allDiffs = this.createWorkflowDiffs(sourceWorkflow, workflowChanges, stepDiffs);
+        const allDiffs = this.createWorkflowDiffs(sourceWorkflow, targetWorkflow, workflowChanges, stepDiffs);
 
         // Only create a result if there are changes
         if (allDiffs.length > 0) {
-          resultBuilder.addWorkflowDiff(this.getWorkflowIdentifier(sourceWorkflow), sourceWorkflow.name, allDiffs);
+          resultBuilder.addWorkflowDiff(
+            this.getWorkflowIdentifier(sourceWorkflow),
+            sourceWorkflow.name,
+            this.getWorkflowIdentifier(targetWorkflow),
+            targetWorkflow.name,
+            allDiffs
+          );
         }
       }
     }
@@ -99,16 +104,22 @@ export class WorkflowDiffOperation {
 
   private createWorkflowDiffs(
     sourceWorkflow: NotificationTemplateEntity,
-    workflowChanges: Record<string, IFieldChange>,
+    targetWorkflow: NotificationTemplateEntity,
+    workflowChanges: {
+      previous: Record<string, any>;
+      new: Record<string, any>;
+    } | null,
     stepDiffs: IResourceDiff[]
   ): IResourceDiff[] {
     const allDiffs: IResourceDiff[] = [];
 
     // Add workflow-level changes if any
-    if (Object.keys(workflowChanges).length > 0) {
+    if (workflowChanges) {
       allDiffs.push({
-        resourceId: this.getWorkflowIdentifier(sourceWorkflow),
-        resourceName: sourceWorkflow.name,
+        sourceResourceId: this.getWorkflowIdentifier(sourceWorkflow),
+        sourceResourceName: sourceWorkflow.name,
+        targetResourceId: this.getWorkflowIdentifier(targetWorkflow),
+        targetResourceName: targetWorkflow.name,
         resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
         changes: workflowChanges,

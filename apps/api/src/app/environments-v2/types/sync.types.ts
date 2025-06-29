@@ -69,17 +69,16 @@ export enum DiffActionEnum {
 }
 
 export interface IResourceDiff {
-  resourceId: string;
-  resourceName: string;
+  sourceResourceId: string | null;
+  sourceResourceName: string | null;
+  targetResourceId: string | null;
+  targetResourceName: string | null;
   resourceType: ResourceTypeEnum;
   action: DiffActionEnum;
-  changes?: Record<
-    string,
-    {
-      previous: any;
-      new: any;
-    }
-  >;
+  changes?: {
+    previous: Record<string, any>;
+    new: Record<string, any>;
+  };
   // Step-specific fields
   stepType?: string;
   workflowId?: string;
@@ -90,8 +89,10 @@ export interface IResourceDiff {
 
 export interface IDiffResult {
   resourceType: ResourceTypeEnum;
-  resourceId: string;
-  resourceName: string;
+  sourceResourceId: string | null;
+  sourceResourceName: string | null;
+  targetResourceId: string | null;
+  targetResourceName: string | null;
   diffs: IResourceDiff[];
   summary: {
     added: number;

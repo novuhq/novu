@@ -153,7 +153,7 @@ export class WorkflowSyncOperation {
       targetWorkflow,
       context.user
     );
-    const hasWorkflowChanges = Object.keys(workflowChanges).length > 0;
+    const hasWorkflowChanges = workflowChanges !== null;
     const hasStepChanges = stepDiffs.length > 0;
 
     if (!hasWorkflowChanges && !hasStepChanges) {

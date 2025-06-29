@@ -18,13 +18,41 @@ export class DiffEnvironmentRequestDto {
 }
 
 export class ResourceDiffDto {
-  @ApiProperty({ description: 'Resource ID (workflow ID or step ID)' })
+  @ApiPropertyOptional({
+    description: 'Source resource ID (workflow ID or step ID)',
+    nullable: true,
+    example: 'welcome-email-workflow',
+  })
+  @IsOptional()
   @IsString()
-  resourceId: string;
+  sourceResourceId: string | null;
 
-  @ApiProperty({ description: 'Resource name (workflow name or step name)' })
+  @ApiPropertyOptional({
+    description: 'Source resource name (workflow name or step name)',
+    nullable: true,
+    example: 'Welcome Email Workflow',
+  })
+  @IsOptional()
   @IsString()
-  resourceName: string;
+  sourceResourceName: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Target resource ID (workflow ID or step ID)',
+    nullable: true,
+    example: 'welcome-email-workflow',
+  })
+  @IsOptional()
+  @IsString()
+  targetResourceId: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Target resource name (workflow name or step name)',
+    nullable: true,
+    example: 'Welcome Email Workflow',
+  })
+  @IsOptional()
+  @IsString()
+  targetResourceName: string | null;
 
   @ApiProperty({
     description: 'Type of resource',
@@ -43,21 +71,23 @@ export class ResourceDiffDto {
   @ApiPropertyOptional({
     type: 'object',
     description: 'Detailed changes (only for modified resources)',
-    additionalProperties: {
-      type: 'object',
-      properties: {
-        previous: { description: 'Previous value' },
-        new: { description: 'New value' },
+    properties: {
+      previous: {
+        type: 'object',
+        description: 'Previous state of the resource',
+        additionalProperties: true,
+      },
+      new: {
+        type: 'object',
+        description: 'New state of the resource',
+        additionalProperties: true,
       },
     },
   })
-  changes?: Record<
-    string,
-    {
-      previous: any;
-      new: any;
-    }
-  >;
+  changes?: {
+    previous: Record<string, any>;
+    new: Record<string, any>;
+  };
 
   // Step-specific fields
   @ApiPropertyOptional({ description: 'Step type (only for step resources)' })
@@ -113,19 +143,41 @@ export class ResourceDiffResultDto {
   @IsEnum(['workflow'])
   resourceType: string;
 
-  @ApiProperty({
-    description: 'ID of the resource being compared',
-    example: '507f1f77bcf86cd799439011',
+  @ApiPropertyOptional({
+    description: 'Source resource ID',
+    nullable: true,
+    example: 'welcome-email-workflow',
   })
+  @IsOptional()
   @IsString()
-  resourceId: string;
+  sourceResourceId: string | null;
 
-  @ApiProperty({
-    description: 'Name of the resource being compared',
+  @ApiPropertyOptional({
+    description: 'Source resource name',
+    nullable: true,
     example: 'Welcome Email Workflow',
   })
+  @IsOptional()
   @IsString()
-  resourceName: string;
+  sourceResourceName: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Target resource ID',
+    nullable: true,
+    example: 'welcome-email-workflow',
+  })
+  @IsOptional()
+  @IsString()
+  targetResourceId: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Target resource name',
+    nullable: true,
+    example: 'Welcome Email Workflow',
+  })
+  @IsOptional()
+  @IsString()
+  targetResourceName: string | null;
 
   @ApiProperty({
     description: 'List of specific changes for this resource',
