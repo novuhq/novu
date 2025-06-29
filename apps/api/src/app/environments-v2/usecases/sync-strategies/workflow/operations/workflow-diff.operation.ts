@@ -61,7 +61,7 @@ export class WorkflowDiffOperation {
 
       if (!targetWorkflow) {
         // Entire workflow was added
-        resultBuilder.addWorkflowAdded(sourceWorkflow._id, sourceWorkflow.name);
+        resultBuilder.addWorkflowAdded(this.getWorkflowIdentifier(sourceWorkflow), sourceWorkflow.name);
       } else {
         // Compare workflow and get both workflow changes and step diffs
         const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
@@ -74,7 +74,7 @@ export class WorkflowDiffOperation {
 
         // Only create a result if there are changes
         if (allDiffs.length > 0) {
-          resultBuilder.addWorkflowDiff(sourceWorkflow._id, sourceWorkflow.name, allDiffs);
+          resultBuilder.addWorkflowDiff(this.getWorkflowIdentifier(sourceWorkflow), sourceWorkflow.name, allDiffs);
         }
       }
     }
@@ -92,7 +92,7 @@ export class WorkflowDiffOperation {
     for (const targetWorkflow of targetWorkflows) {
       const targetIdentifier = targetWorkflow.triggers?.[0]?.identifier;
       if (!sourceWorkflowMap.has(targetIdentifier)) {
-        resultBuilder.addWorkflowDeleted(targetWorkflow._id, targetWorkflow.name);
+        resultBuilder.addWorkflowDeleted(this.getWorkflowIdentifier(targetWorkflow), targetWorkflow.name);
       }
     }
   }
@@ -107,7 +107,7 @@ export class WorkflowDiffOperation {
     // Add workflow-level changes if any
     if (Object.keys(workflowChanges).length > 0) {
       allDiffs.push({
-        resourceId: sourceWorkflow._id,
+        resourceId: this.getWorkflowIdentifier(sourceWorkflow),
         resourceName: sourceWorkflow.name,
         resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
@@ -131,5 +131,9 @@ export class WorkflowDiffOperation {
       origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
       status: { $ne: WorkflowStatusEnum.ERROR },
     });
+  }
+
+  private getWorkflowIdentifier(workflow: NotificationTemplateEntity): string {
+    return workflow.triggers?.[0]?.identifier as string;
   }
 }

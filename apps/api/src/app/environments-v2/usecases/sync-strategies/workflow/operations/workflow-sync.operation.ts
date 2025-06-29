@@ -48,7 +48,7 @@ export class WorkflowSyncOperation {
           .addSkippedEntities(
             sourceWorkflows.map((workflow) => ({
               resourceType: 'workflow' as any,
-              resourceId: workflow._id,
+              resourceId: this.getWorkflowIdentifier(workflow),
               resourceName: workflow.name,
               reason: SKIP_REASONS.DRY_RUN,
             }))
@@ -88,14 +88,18 @@ export class WorkflowSyncOperation {
 
         if (shouldSync.sync) {
           await this.syncWorkflowToTarget(context, workflow);
-          resultBuilder.addSuccess(workflow._id, workflow.name, shouldSync.action as 'created' | 'updated');
+          resultBuilder.addSuccess(
+            this.getWorkflowIdentifier(workflow),
+            workflow.name,
+            shouldSync.action as 'created' | 'updated'
+          );
           this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SUCCESS(workflow.name, shouldSync.action));
         } else {
-          resultBuilder.addSkipped(workflow._id, workflow.name, shouldSync.reason!);
+          resultBuilder.addSkipped(this.getWorkflowIdentifier(workflow), workflow.name, shouldSync.reason!);
           this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SKIP(workflow.name, shouldSync.action));
         }
       } catch (error) {
-        resultBuilder.addFailure(workflow._id, workflow.name, error.message, error.stack);
+        resultBuilder.addFailure(this.getWorkflowIdentifier(workflow), workflow.name, error.message, error.stack);
         this.logger.error(WORKFLOW_SYNC_MESSAGES.SYNC_FAILED(workflow.name, error.message));
       }
     }
@@ -115,11 +119,20 @@ export class WorkflowSyncOperation {
         const targetIdentifier = targetWorkflow.triggers[0]?.identifier;
         if (!sourceWorkflowMap.has(targetIdentifier) && targetWorkflow.active) {
           await this.deleteWorkflowFromTarget(context, targetWorkflow);
-          resultBuilder.addSuccess(targetWorkflow._id, targetWorkflow.name, WORKFLOW_SYNC_ACTIONS.DELETED);
+          resultBuilder.addSuccess(
+            this.getWorkflowIdentifier(targetWorkflow),
+            targetWorkflow.name,
+            WORKFLOW_SYNC_ACTIONS.DELETED
+          );
           this.logger.info(WORKFLOW_SYNC_MESSAGES.DELETE_SUCCESS(targetWorkflow.name));
         }
       } catch (error) {
-        resultBuilder.addFailure(targetWorkflow._id, targetWorkflow.name, error.message, error.stack);
+        resultBuilder.addFailure(
+          this.getWorkflowIdentifier(targetWorkflow),
+          targetWorkflow.name,
+          error.message,
+          error.stack
+        );
         this.logger.error(WORKFLOW_SYNC_MESSAGES.DELETE_FAILED(targetWorkflow.name, error.message));
       }
     }
@@ -178,5 +191,9 @@ export class WorkflowSyncOperation {
       origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
       status: { $ne: WorkflowStatusEnum.ERROR },
     });
+  }
+
+  private getWorkflowIdentifier(workflow: any): string {
+    return workflow.triggers[0]?.identifier || workflow._id;
   }
 }
