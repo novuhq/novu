@@ -1,5 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getMaxAvailableLogsDateRange } from '@/utils/logs-filters.utils';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { useOrganization } from '@clerk/clerk-react';
 
 export interface LogsFilters {
   status: string[];
@@ -23,7 +26,18 @@ export interface LogsUrlState {
 
 export function useLogsUrlState(): LogsUrlState {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { organization } = useOrganization();
+  const { subscription } = useFetchSubscription();
   const selectedLogId = searchParams.get('selectedLogId');
+
+  const maxAvailableLogsDateRange = useMemo(
+    () =>
+      getMaxAvailableLogsDateRange({
+        organization,
+        subscription,
+      }),
+    [organization, subscription]
+  );
 
   const handleLogSelect = useCallback(
     (logId: string) => {
@@ -70,9 +84,9 @@ export function useLogsUrlState(): LogsUrlState {
     (): LogsFilters => ({
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
-      created: searchParams.get('created') || '24', // Default to 24 hours like activity filters
+      created: searchParams.get('created') || maxAvailableLogsDateRange, // Default to max available for user's tier
     }),
-    [searchParams]
+    [searchParams, maxAvailableLogsDateRange]
   );
 
   const handleFiltersChange = useCallback(
@@ -116,8 +130,10 @@ export function useLogsUrlState(): LogsUrlState {
   }, [setSearchParams]);
 
   const hasActiveFilters = useMemo(() => {
-    return filters.status.length > 0 || filters.transactionId.trim() !== '' || filters.created !== '24';
-  }, [filters]);
+    return (
+      filters.status.length > 0 || filters.transactionId.trim() !== '' || filters.created !== maxAvailableLogsDateRange
+    );
+  }, [filters, maxAvailableLogsDateRange]);
 
   return useMemo(
     () => ({

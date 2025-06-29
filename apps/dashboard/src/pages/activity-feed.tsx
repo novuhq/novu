@@ -22,13 +22,16 @@ export function ActivityFeed() {
     if (location.pathname.includes('/activity/logs')) {
       return 'logs';
     }
+
     if (location.pathname.includes('/activity/runs')) {
       return 'workflow-runs';
     }
+
     // Default fallback for the original activity-feed route
     if (location.pathname.includes('/activity-feed')) {
       return 'workflow-runs';
     }
+
     return 'workflow-runs';
   };
 
@@ -91,7 +94,7 @@ export function ActivityFeed() {
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-140px)]" />
           </TabsContent>
-          <TabsContent value="logs">
+          <TabsContent value="logs" className="h-[calc(100vh-140px)]">
             <LogsTable />
           </TabsContent>
         </Tabs>

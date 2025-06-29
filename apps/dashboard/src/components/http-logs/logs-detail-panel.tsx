@@ -32,9 +32,9 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="border-stroke-soft flex h-full flex-col overflow-hidden rounded-lg border bg-white"
+      className="flex h-full flex-col overflow-hidden"
     >
-      <LogsDetailHeader log={log} />
+      <LogsDetailHeader />
       <LogsDetailContent log={log} />
       <WorkflowRunsTabs />
       <WorkflowRunsContent log={log} />

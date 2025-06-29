@@ -75,7 +75,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
         />
       </div>
 
-      <div className="relative flex flex-1 pt-2.5">
+      <div className="relative flex h-full min-h-full flex-1 pt-2.5">
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={50}>
             <div className="flex h-full flex-col">
@@ -137,7 +137,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
-              className="h-full overflow-auto"
+              className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
             >
               <LogsDetailPanel log={selectedLog} />
             </motion.div>

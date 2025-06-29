@@ -33,7 +33,7 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
       <TooltipTrigger asChild>
         <Link
           to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
-          className="block transition-all duration-200 hover:scale-110"
+          className="block flex items-center justify-center transition-all duration-200 hover:scale-105"
         >
           <Badge color="purple" size="sm" variant="lighter">
             Upgrade
