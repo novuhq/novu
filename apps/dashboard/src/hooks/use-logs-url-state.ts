@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 export interface LogsFilters {
   status: string[];
   transactionId: string;
-  created?: string; // Hours value for creation time filter
+  created: string; // Hours value for creation time filter, defaults to '24'
 }
 
 export interface LogsUrlState {
@@ -70,7 +70,7 @@ export function useLogsUrlState(): LogsUrlState {
     (): LogsFilters => ({
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
-      created: searchParams.get('created') || undefined,
+      created: searchParams.get('created') || '24', // Default to 24 hours like activity filters
     }),
     [searchParams]
   );
@@ -109,14 +109,14 @@ export function useLogsUrlState(): LogsUrlState {
     setSearchParams((prev) => {
       prev.delete('status');
       prev.delete('transactionId');
-      prev.delete('created');
+      prev.delete('created'); // Remove from URL so it defaults to '24'
       prev.delete('page');
       return prev;
     });
   }, [setSearchParams]);
 
   const hasActiveFilters = useMemo(() => {
-    return filters.status.length > 0 || filters.transactionId.trim() !== '' || !!filters.created;
+    return filters.status.length > 0 || filters.transactionId.trim() !== '' || filters.created !== '24';
   }, [filters]);
 
   return useMemo(

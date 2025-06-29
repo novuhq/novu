@@ -269,13 +269,22 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.LOGS,
+                path: ROUTES.ACTIVITY_RUNS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <Logs />
+                    <ActivityFeed />
                   </ProtectedRoute>
                 ),
               },
+              {
+                path: ROUTES.ACTIVITY_LOGS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+
               {
                 path: ROUTES.EDIT_WORKFLOW,
                 element: (

@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
-import { RiCalendarLine } from 'react-icons/ri';
+import { CalendarIcon } from 'lucide-react';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import type { LogsFilters } from '@/hooks/use-logs-url-state';
 
@@ -71,24 +71,19 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     });
   };
 
-  const getCreatedTitle = () => {
-    if (!filters.created) return '60D';
-    const selectedOption = CREATED_OPTIONS.find((option) => option.value === filters.created);
-    return selectedOption
-      ? selectedOption.label.replace(' Days', 'D').replace(' Day', 'D').replace('Last ', '')
-      : '60D';
-  };
-
   return (
-    <div className="flex items-center gap-2 py-2.5">
+    <div className="flex items-center gap-2">
       <FacetedFormFilter
         size="small"
         type="single"
-        title={getCreatedTitle()}
-        icon={RiCalendarLine}
+        hideClear
+        hideSearch
+        hideTitle
+        title="Time period"
         options={CREATED_OPTIONS}
         selected={filters.created ? [filters.created] : []}
         onSelect={handleCreatedChange}
+        icon={CalendarIcon}
       />
       <FacetedFormFilter
         type="text"

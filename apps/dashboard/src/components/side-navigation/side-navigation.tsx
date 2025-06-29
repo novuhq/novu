@@ -183,20 +183,14 @@ export const SideNavigation = () => {
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                   <NavigationLink
-                    to={buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_RUNS : ROUTES.ACTIVITY_FEED, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                    })}
                   >
                     <RiBarChartBoxLine className="size-4" />
                     <span>Activity Feed</span>
                   </NavigationLink>
                 </Protect>
-                {isHttpLogsPageEnabled && (
-                  <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <NavigationLink to={buildRoute(ROUTES.LOGS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                      <RiFileTextLine className="size-4" />
-                      <span>Logs</span>
-                    </NavigationLink>
-                  </Protect>
-                )}
               </NavigationGroup>
             </Protect>
             <Protect

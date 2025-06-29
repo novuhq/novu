@@ -65,7 +65,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-2.5">
       <div className="flex items-center justify-between">
         <LogsFilters
           filters={filters}
@@ -75,10 +75,10 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
         />
       </div>
 
-      <div className="relative flex flex-1 pt-2">
+      <div className="relative flex flex-1 pt-2.5">
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={50}>
-            <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-white">
+            <div className="flex h-full flex-col">
               <div className="flex-1">
                 <Table isLoading={isLoading}>
                   <TableHeader>
@@ -137,7 +137,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
-              className="h-full overflow-auto rounded-lg border border-neutral-200 bg-white"
+              className="h-full overflow-auto"
             >
               <LogsDetailPanel log={selectedLog} />
             </motion.div>

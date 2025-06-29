@@ -34,6 +34,8 @@ export const ROUTES = {
   API_KEYS: '/env/:environmentSlug/api-keys',
   ENVIRONMENTS: '/env/:environmentSlug/environments',
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
+  ACTIVITY_RUNS: '/env/:environmentSlug/activity/runs',
+  ACTIVITY_LOGS: '/env/:environmentSlug/activity/logs',
   LOGS: '/env/:environmentSlug/logs',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
   WORKFLOWS_CREATE: '/env/:environmentSlug/workflows/create',
