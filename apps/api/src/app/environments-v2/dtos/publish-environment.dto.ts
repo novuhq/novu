@@ -116,17 +116,17 @@ export class SyncResultDto {
 }
 
 export class PublishSummaryDto {
-  @ApiProperty({ description: 'Total number of entities processed' })
-  totalEntities: number;
+  @ApiProperty({ description: 'Number of entities processed' })
+  entities: number;
 
-  @ApiProperty({ description: 'Total number of successful syncs' })
-  totalSuccessful: number;
+  @ApiProperty({ description: 'Number of successful syncs' })
+  successful: number;
 
-  @ApiProperty({ description: 'Total number of failed syncs' })
-  totalFailed: number;
+  @ApiProperty({ description: 'Number of failed syncs' })
+  failed: number;
 
-  @ApiProperty({ description: 'Total number of skipped entities' })
-  totalSkipped: number;
+  @ApiProperty({ description: 'Number of skipped entities' })
+  skipped: number;
 }
 
 export class PublishEnvironmentResponseDto {
