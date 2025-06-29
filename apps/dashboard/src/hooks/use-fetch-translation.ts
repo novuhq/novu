@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { LocalizationResourceEnum } from '@novu/dal';
+import { LocalizationResourceEnum } from '@/components/translations/types';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getTranslation } from '@/api/translations';
 import { QueryKeys } from '@/utils/query-keys';

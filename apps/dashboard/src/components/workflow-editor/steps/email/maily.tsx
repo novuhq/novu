@@ -15,6 +15,7 @@ import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
@@ -105,6 +106,11 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
 
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    workflowId: workflow?._id || '',
+    enabled: isTranslationEnabled && !!workflow?._id,
+  });
+
   const extensions = useMemo(
     () =>
       createExtensions({
@@ -113,7 +119,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         blocks,
         onCreateNewVariable: handleCreateNewVariable,
         isPayloadSchemaEnabled,
-        isTranslationEnabled,
+        isTranslationEnabled: isTranslationEnabled && !isTranslationKeysLoading,
+        translationKeys,
       }),
     [
       handleCalculateVariables,
@@ -122,6 +129,8 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       isPayloadSchemaEnabled,
       handleCreateNewVariable,
       isTranslationEnabled,
+      isTranslationKeysLoading,
+      translationKeys,
     ]
   );
 

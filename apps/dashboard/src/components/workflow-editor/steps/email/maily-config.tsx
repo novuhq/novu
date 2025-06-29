@@ -185,6 +185,7 @@ export const createExtensions = ({
   onCreateNewVariable,
   isPayloadSchemaEnabled = false,
   isTranslationEnabled = false,
+  translationKeys = [],
 }: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
@@ -192,6 +193,7 @@ export const createExtensions = ({
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  translationKeys?: { name: string }[];
 }) => {
   const extensions = [
     RepeatExtension.extend({
@@ -309,7 +311,7 @@ export const createExtensions = ({
         });
       },
     }),
-    createTranslationExtension(isTranslationEnabled),
+    createTranslationExtension(isTranslationEnabled, translationKeys),
   ];
 
   extensions.push(

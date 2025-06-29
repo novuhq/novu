@@ -1,5 +1,4 @@
 import { InlineDecoratorExtension, getInlineDecoratorSuggestionsReact } from '@maily-to/core/extensions';
-import { TRANSLATION_KEYS } from './translation-keys';
 import { TranslationPill } from './translation-pill';
 import { AnyExtension } from '@tiptap/core';
 import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
@@ -9,7 +8,7 @@ const TRANSLATION_TRIGGER = '{t.';
 /**
  * Creates the translation decorator extension configured for translation keys
  */
-export const createTranslationExtension = (isTranslationEnabled: boolean) => {
+export const createTranslationExtension = (isTranslationEnabled: boolean, translationKeys: { name: string }[] = []) => {
   if (!isTranslationEnabled) {
     return {} as AnyExtension;
   }
@@ -27,6 +26,6 @@ export const createTranslationExtension = (isTranslationEnabled: boolean) => {
       return value.startsWith('{') && value.endsWith('}');
     },
     decoratorComponent: TranslationPill,
-    suggestion: getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, TRANSLATION_KEYS),
+    suggestion: getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, translationKeys),
   });
 };

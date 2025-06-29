@@ -15,7 +15,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   const displayTranslationKey = useMemo(() => {
@@ -80,6 +80,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
         triggerRef={buttonRef}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
+        workflowId={workflow?._id || ''}
       />
     </>
   );

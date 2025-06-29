@@ -12,7 +12,7 @@ import { TranslateVariable } from '@/components/icons/translate-variable';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { TRANSLATION_KEYS } from './translation-keys';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 
 interface EditTranslationPopoverProps {
   open: boolean;
@@ -24,6 +24,7 @@ interface EditTranslationPopoverProps {
   triggerRef?: RefObject<HTMLButtonElement>;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
+  workflowId: string;
 }
 
 function useTranslationEditor(
@@ -91,34 +92,6 @@ function usePopoverHandlers(
     handleClose,
     handleDelete,
   };
-}
-
-function useTranslationKeys() {
-  const [translationKeys, setTranslationKeys] = useState<{ name: string }[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // TODO: Replace with actual API call
-    const fetchTranslationKeys = async () => {
-      try {
-        setIsLoading(true);
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        // For now, use the static keys as if they came from API
-        setTranslationKeys(TRANSLATION_KEYS);
-      } catch (error) {
-        console.error('Failed to fetch translation keys:', error);
-        setTranslationKeys([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTranslationKeys();
-  }, []);
-
-  return { translationKeys, isLoading };
 }
 
 function useTranslationKeyValidation(translationKey: string, availableKeys: { name: string }[]) {
@@ -293,11 +266,17 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
   triggerRef,
   variables,
   isAllowedVariable,
+  workflowId,
 }) => {
   const id = useId();
   const editor = useTranslationEditor(translationKey, translationValue, onUpdate);
   const handlers = usePopoverHandlers(onOpenChange, onDelete, editor);
-  const { translationKeys, isLoading } = useTranslationKeys();
+
+  const { translationKeys, isLoading } = useFetchTranslationKeys({
+    workflowId,
+    enabled: open,
+  });
+
   const validation = useTranslationKeyValidation(editor.editKey, translationKeys);
 
   useEscapeKeyManager(id, handlers.handleClose, EscapeKeyManagerPriority.POPOVER, open);
