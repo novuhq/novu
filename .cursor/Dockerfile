@@ -50,25 +50,7 @@ RUN npm --no-update-notifier --no-fund --global install \
     typescript@5.6.2 \
     && npm cache clean --force
 
-# Create non-root user as recommended for background agents
-RUN useradd -m -s /bin/bash ubuntu \
-    && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
-    && mkdir -p /home/ubuntu/.pnpm-store /home/ubuntu/.pnpm-cache \
-    && chown -R ubuntu:ubuntu /home/ubuntu
-
-# Switch to non-root user
-USER ubuntu
-
-# Set working directory to home directory as recommended
-WORKDIR /home/ubuntu
-
-# Set up optimized environment variables
-ENV NX_DAEMON=false \
-    NODE_ENV=local \
-    PNPM_STORE_DIR="/home/ubuntu/.pnpm-store" \
-    PNPM_CACHE_DIR="/home/ubuntu/.pnpm-cache"
-
-# Create minimal directory structure and set permissions
+# Create minimal directory structure and set permissions (must be done as root)
 RUN mkdir -p \
     /var/log/supervisor \
     /etc/supervisor/conf.d \
@@ -80,13 +62,7 @@ RUN mkdir -p \
     && chown redis:redis /data/redis \
     && chmod 755 /data/db /data/redis
 
-# Configure pnpm for speed and efficiency
-RUN pnpm config set store-dir /home/ubuntu/.pnpm-store \
-    && pnpm config set cache-dir /home/ubuntu/.pnpm-cache \
-    && pnpm config set network-timeout 60000 \
-    && pnpm config set fetch-retries 3
-
-# Create optimized supervisor configuration
+# Create optimized supervisor configuration (must be done as root)
 RUN printf '[supervisord]\n\
 nodaemon=false\n\
 silent=true\n\
@@ -109,7 +85,7 @@ autorestart=true\n\
 redirect_stderr=true\n\
 stdout_logfile=/dev/null\n' > /etc/supervisor/conf.d/services.conf
 
-# Create optimized startup script
+# Create optimized startup script (must be done as root)
 RUN printf '#!/bin/bash\n\
 set -e\n\
 echo "🚀 Novu Cursor Environment"\n\
@@ -127,6 +103,31 @@ echo "✅ MongoDB & Redis ready!"\n\
 echo "🚀 Quick start: git clone https://github.com/novuhq/novu.git /workspace/novu"\n\
 exec /bin/bash\n' > /usr/local/bin/start-dev.sh \
     && chmod +x /usr/local/bin/start-dev.sh
+
+# Create non-root user as recommended for background agents
+RUN useradd -m -s /bin/bash ubuntu \
+    && echo "ubuntu ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers \
+    && mkdir -p /home/ubuntu/.pnpm-store /home/ubuntu/.pnpm-cache \
+    && chown -R ubuntu:ubuntu /home/ubuntu \
+    && chown -R ubuntu:ubuntu /workspace
+
+# Switch to non-root user
+USER ubuntu
+
+# Set working directory to home directory as recommended
+WORKDIR /home/ubuntu
+
+# Set up optimized environment variables
+ENV NX_DAEMON=false \
+    NODE_ENV=local \
+    PNPM_STORE_DIR="/home/ubuntu/.pnpm-store" \
+    PNPM_CACHE_DIR="/home/ubuntu/.pnpm-cache"
+
+# Configure pnpm for speed and efficiency
+RUN pnpm config set store-dir /home/ubuntu/.pnpm-store \
+    && pnpm config set cache-dir /home/ubuntu/.pnpm-cache \
+    && pnpm config set network-timeout 60000 \
+    && pnpm config set fetch-retries 3
 
 # Set workspace as working directory
 WORKDIR /workspace
