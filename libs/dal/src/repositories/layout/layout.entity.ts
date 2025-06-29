@@ -1,3 +1,4 @@
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   EnvironmentId,
@@ -10,6 +11,7 @@ import {
   UserId,
 } from './types';
 import type { ChangePropsValueType } from '../../types/helpers';
+import { ControlSchemas } from '../message-template';
 
 export class LayoutEntity {
   _id: LayoutId;
@@ -21,13 +23,16 @@ export class LayoutEntity {
   identifier: LayoutIdentifier;
   description?: LayoutDescription;
   variables?: ITemplateVariable[];
-  content: string;
-  contentType: 'customHtml';
+  content?: string;
+  contentType?: string;
   isDefault: boolean;
   deleted: boolean;
   channel: ChannelTypeEnum;
+  type?: ResourceTypeEnum;
+  origin?: ResourceOriginEnum;
   createdAt?: string;
   updatedAt?: string;
+  controls?: ControlSchemas;
 }
 
 export type LayoutDBModel = ChangePropsValueType<

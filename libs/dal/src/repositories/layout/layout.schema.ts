@@ -49,6 +49,13 @@ const layoutSchema = new Schema<LayoutDBModel>(
     channel: {
       type: Schema.Types.String,
     },
+    type: {
+      type: Schema.Types.String,
+    },
+    origin: {
+      type: Schema.Types.String,
+    },
+    controls: { schema: Schema.Types.Mixed, uiSchema: Schema.Types.Mixed },
   },
   schemaOptions
 );

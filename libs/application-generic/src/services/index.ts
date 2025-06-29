@@ -28,3 +28,4 @@ export * from './content.service';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
 export * from './clickhouse';
+export * from './socket-worker';

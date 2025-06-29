@@ -24,6 +24,7 @@ export const CatchAllRoute = () => {
   }
 
   const routeEntries = Object.entries(ROUTES);
+
   for (const [key, routePath] of routeEntries) {
     if (
       typeof routePath === 'string' &&
@@ -32,6 +33,7 @@ export const CatchAllRoute = () => {
       !routePath.includes('/', '/env/:environmentSlug/'.length)
     ) {
       const routeName = routePath.replace('/env/:environmentSlug/', '');
+
       if (path === routeName) {
         const targetPath = buildRoute(routePath, { environmentSlug: currentEnvironment.slug });
         return <Navigate to={`${targetPath}${location.search}${location.hash}`} />;

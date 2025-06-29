@@ -1,6 +1,7 @@
 import io, { Socket as SocketIO } from 'socket.io-client';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
+import type { BaseSocketInterface } from './base-socket';
 
 import {
   NotificationReceivedEvent,
@@ -114,7 +115,7 @@ const mapToNotification = ({
   };
 };
 
-export class Socket extends BaseModule {
+export class Socket extends BaseModule implements BaseSocketInterface {
   #token: string;
   #emitter: NovuEventEmitter;
   #socketIo: SocketIO | undefined;

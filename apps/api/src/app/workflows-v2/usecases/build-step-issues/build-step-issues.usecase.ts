@@ -15,7 +15,7 @@ import {
   StepIssuesDto,
   StepTypeEnum,
   UserSessionData,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
 } from '@novu/shared';
 import {
   dashboardSanitizeControlValues,
@@ -35,7 +35,7 @@ import {
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
 import { parseStepVariables } from '../../util/parse-step-variables';
-import { JSONSchemaDto } from '../../dtos';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { buildLiquidParser } from '../../util/template-parser/liquid-engine';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
@@ -120,10 +120,10 @@ export class BuildStepIssuesUsecase {
   @Instrument()
   private sanitizeControlValues(
     newControlValues: Record<string, unknown> | undefined,
-    workflowOrigin: WorkflowOriginEnum,
+    workflowOrigin: ResourceOriginEnum,
     stepType: StepTypeEnum
   ) {
-    return newControlValues && workflowOrigin === WorkflowOriginEnum.NOVU_CLOUD
+    return newControlValues && workflowOrigin === ResourceOriginEnum.NOVU_CLOUD
       ? dashboardSanitizeControlValues(this.logger, newControlValues, stepType) || {}
       : this.frameworkSanitizeEmptyStringsToNull(newControlValues) || {};
   }

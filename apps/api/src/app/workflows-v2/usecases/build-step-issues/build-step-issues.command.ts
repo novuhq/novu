@@ -1,8 +1,8 @@
 import { NotificationTemplateEntity } from '@novu/dal';
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { IsDefined, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { JSONSchemaDto } from '../../dtos';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
 export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
   /**
@@ -10,8 +10,8 @@ export class BuildStepIssuesCommand extends EnvironmentWithUserObjectCommand {
    * before workflow creation
    */
   @IsDefined()
-  @IsEnum(WorkflowOriginEnum)
-  workflowOrigin: WorkflowOriginEnum;
+  @IsEnum(ResourceOriginEnum)
+  workflowOrigin: ResourceOriginEnum;
 
   @IsOptional()
   workflow?: NotificationTemplateEntity;

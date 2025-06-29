@@ -1,3 +1,4 @@
+export * from './base-translation-renderer.usecase';
 export * from './chat-output-renderer.usecase';
 export * from './render-command';
 export * from './push-output-renderer.usecase';

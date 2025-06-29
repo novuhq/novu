@@ -1,6 +1,6 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
-import { StepTypeEnum, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { StepTypeEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { WorkflowResponseDto } from './workflow-response.dto';
 
 export class WorkflowListResponseDto {
@@ -48,8 +48,8 @@ export class WorkflowListResponseDto {
 
   @ApiProperty({
     description: 'Workflow origin',
-    enum: [...Object.values(WorkflowOriginEnum)],
-    enumName: 'WorkflowOriginEnum',
+    enum: [...Object.values(ResourceOriginEnum)],
+    enumName: 'ResourceOriginEnum',
   })
   origin: WorkflowResponseDto['origin'];
 

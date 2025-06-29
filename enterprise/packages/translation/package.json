@@ -15,12 +15,13 @@
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
     "@novu/application-generic": "workspace:*",
-    "@novu/ee-dal": "workspace:*",
     "@novu/ee-auth": "workspace:*",
+    "@novu/ee-dal": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
+    "i18next": "^23.7.11",
     "multer": "^2.0.0",
     "shortid": "^2.2.16"
   },
@@ -35,12 +36,13 @@
     "mocha": "^8.1.1",
     "sinon": "^9.2.4",
     "ts-node": "~10.9.1",
-    "typescript": "5.6.2"
+    "typescript": "5.6.2",
+    "liquidjs": "^10.20.1"
   },
   "peerDependencies": {
     "@nestjs/common": "10.4.18",
-    "@nestjs/swagger": "7.4.0",
     "@nestjs/platform-express": "10.4.18",
+    "@nestjs/swagger": "7.4.0",
     "@novu/dal": "workspace:*"
   }
 }

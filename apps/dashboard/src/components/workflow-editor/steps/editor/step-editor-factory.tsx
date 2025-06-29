@@ -1,4 +1,4 @@
-import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailEditor } from '@/components/workflow-editor/steps/email/email-editor';
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
@@ -20,7 +20,7 @@ export function StepEditorFactory() {
     return <NoEditorAvailable message="No editor available for this step configuration" />;
   }
 
-  if (workflow.origin === WorkflowOriginEnum.EXTERNAL) {
+  if (workflow.origin === ResourceOriginEnum.EXTERNAL) {
     return <CustomStepControls dataSchema={dataSchema} origin={workflow.origin} />;
   }
 
