@@ -39,7 +39,7 @@ function JsonDisplay({ content }: { content: string | object }) {
   );
 }
 
-function CollapsibleSection({
+export function CollapsibleSection({
   title,
   content,
   isExpanded,
