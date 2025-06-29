@@ -2,7 +2,7 @@ import { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { formatDate } from '@/utils/format-date';
+import { formatDate, formatDateSimple } from '@/utils/format-date';
 import { parsePageParam } from '@/utils/parse-page-param';
 import { cn } from '@/utils/ui';
 import { ISubscriber } from '@novu/shared';
@@ -93,18 +93,11 @@ export function ActivityTable({
           transition={{ duration: 0.2 }}
           className="flex flex-col"
         >
-          <Table
-            isLoading={isLoading}
-            loadingRow={<SkeletonRow />}
-            containerClassname="border-x-0 border-b-0 border-t border-t-neutral-200 rounded-none shadow-none"
-          >
-            <TableHeader className="shadow-none">
-              <TableRow className="border-b border-neutral-200 shadow-none [&>th]:border-b [&>th]:border-neutral-200">
-                <TableHead className="h-9 px-3 py-0">Event</TableHead>
-                <TableHead className="h-9 px-3 py-0">Subscriber</TableHead>
-                <TableHead className="h-9 px-3 py-0">Status</TableHead>
-                <TableHead className="h-9 px-3 py-0">Steps</TableHead>
-                <TableHead className="h-9 px-3 py-0">Triggered at</TableHead>
+          <Table isLoading={isLoading} loadingRow={<SkeletonRow />}>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-text-strong h-8 px-2 py-0">Activity</TableHead>
+                <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -118,48 +111,41 @@ export function ActivityTable({
                   )}
                   onClick={() => onActivitySelect(activity._id)}
                 >
-                  <TableCell className="px-3">
+                  <TableCell className="p-1.5">
                     <div className="flex flex-col">
-                      <span className="text-foreground-950 font-medium">
+                      <span className="text-foreground-950 text-label-xs flex items-center gap-1">
+                        <div className="relative top-[2px] flex items-center justify-center gap-0.5">
+                          <ActivityStatusBadge jobs={activity.jobs} />
+                        </div>
                         {activity.template?.name || 'Deleted workflow'}
                       </span>
-                      <span className="text-foreground-400 text-[10px] leading-[14px]" title={'Transaction ID'}>
-                        {activity.transactionId || '-'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground-600 px-3">
-                    <div className="flex flex-col">
-                      <span
-                        className="inline-block max-w-[200px] truncate"
-                        title={'Subscriber ID: ' + activity.subscriber?.subscriberId || ''}
-                      >
-                        {activity.subscriber?.subscriberId || '-'}
-                      </span>
-                      <span className="text-foreground-400 text-[10px] leading-[14px]" title={'Subscriber Name'}>
+                      <span className="text-foreground-400 ml-[5px] text-[10px] leading-[14px]">
                         {getSubscriberDisplay(
                           activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
                         )}
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-3">
-                    <ActivityStatusBadge jobs={activity.jobs} />
-                  </TableCell>
-                  <TableCell className="px-3">
-                    <StepIndicators jobs={activity.jobs} />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 px-3">
-                    <TimeDisplayHoverCard date={new Date(activity.createdAt)}>
-                      <span>{formatDate(activity.createdAt)}</span>
-                    </TimeDisplayHoverCard>
+
+                  <TableCell className="flex flex-col p-1.5 text-right">
+                    <span className="text-text-soft text-xs font-normal leading-normal">
+                      {formatDateSimple(activity.createdAt)}
+                    </span>
+                    <div className="ml-auto gap-1 text-right">
+                      <StepIndicators jobs={activity.jobs} size="sm" />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
 
-          <ArrowPagination page={page} hasMore={hasMore} onPageChange={handlePageChange} />
+          <ArrowPagination
+            page={page}
+            hasMore={hasMore}
+            onPageChange={handlePageChange}
+            className="border-t-0 bg-transparent"
+          />
         </motion.div>
       )}
     </AnimatePresence>

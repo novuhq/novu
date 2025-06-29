@@ -26,6 +26,8 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
     return <RequestLogDetailEmptyState />;
   }
 
+  const shouldShowWorkflowRuns = log.path === '/v1/events/trigger' || log.path === '/v1/events/trigger/bulk';
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -35,7 +37,7 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
     >
       <LogsDetailHeader />
       <LogsDetailContent log={log} />
-      <WorkflowRunsContent log={log} />
+      {shouldShowWorkflowRuns && <WorkflowRunsContent log={log} />}
     </motion.div>
   );
 }

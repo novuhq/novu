@@ -4,9 +4,6 @@ import {
   RiCheckboxCircleFill,
   RiErrorWarningFill,
   RiLoader4Fill,
-  RiSmartphoneLine,
-  RiMailLine,
-  RiCodeBlock,
   RiArrowDownSLine,
   RiArrowRightUpLine,
 } from 'react-icons/ri';
@@ -24,6 +21,7 @@ import { WorkflowRunsFilters } from './workflow-runs-filters';
 import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 import { type ActivityFilters } from '@/api/activity';
 import { formatDateSimple } from '../../utils/format-date';
+import { StepIndicators } from '@/components/activity/components/step-indicators';
 
 type WorkflowRunsContentProps = {
   log: RequestLog;
@@ -49,24 +47,6 @@ function getWorkflowRunStatus(activity: any): WorkflowRunStatus {
       return 'in-progress';
     default:
       return 'in-progress';
-  }
-}
-
-// Helper function to get channel icon
-function getChannelIcon(channel: ChannelTypeEnum) {
-  switch (channel) {
-    case ChannelTypeEnum.EMAIL:
-      return <RiMailLine className="h-3 w-3 text-[#0e121b]" />;
-    case ChannelTypeEnum.SMS:
-      return <RiSmartphoneLine className="h-3 w-3 text-[#0e121b]" />;
-    case ChannelTypeEnum.PUSH:
-      return <RiSmartphoneLine className="h-3 w-3 text-[#0e121b]" />;
-    case ChannelTypeEnum.IN_APP:
-      return <RiCodeBlock className="h-3 w-3 text-[#0e121b]" />;
-    case ChannelTypeEnum.CHAT:
-      return <RiCodeBlock className="h-3 w-3 text-[#0e121b]" />;
-    default:
-      return <RiCodeBlock className="h-3 w-3 text-[#0e121b]" />;
   }
 }
 
@@ -130,11 +110,11 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
     {
       filters: activityFilters,
       page: 0,
-      limit: 50, // Get more items for better filtering
+      limit: 50,
     },
     {
       refetchOnWindowFocus: false,
-      staleTime: 30000, // Cache for 30 seconds
+      staleTime: 30000,
     }
   );
 
@@ -221,7 +201,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
         <div className="flex-1 overflow-y-auto">
           <div className="min-h-full">
             {isLoading ? (
-              // Loading skeleton
               <div className="p-3">
                 {Array.from({ length: 3 }).map((_, index) => (
                   <div key={index} className="mb-3 flex items-center gap-2 rounded-lg border border-neutral-100 p-3">
@@ -255,7 +234,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
               </div>
             ) : (
               <>
-                {/* Activity List */}
                 <div className="p-3">
                   <Table>
                     <TableBody>
@@ -281,18 +259,11 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                                 <div className="flex w-full flex-row items-center gap-1">
                                   <div className="flex-1">
                                     <div className="text-left font-['JetBrains_Mono'] text-[11px] font-normal leading-normal text-[#99a0ae]">
-                                      {activity.transactionId}
+                                      {activity.transactionId} - {activity.subscriber?.subscriberId || 'Deleted'}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-1">
-                                    {activity.channels?.slice(0, 3).map((channel, index) => (
-                                      <div key={index} className="flex items-center">
-                                        {getChannelIcon(channel)}
-                                      </div>
-                                    ))}
-                                    {activity.channels && activity.channels.length > 3 && (
-                                      <div className="text-[11px] text-[#99a0ae]">+{activity.channels.length - 3}</div>
-                                    )}
+                                    <StepIndicators jobs={activity.jobs || []} size="sm" />
                                   </div>
                                 </div>
                               </div>
@@ -304,7 +275,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                   </Table>
                 </div>
 
-                {/* Load More Button */}
                 {hasMoreItems && (
                   <div className="border-t border-[#f2f5f8] bg-white p-3">
                     <div className="flex w-full justify-center">

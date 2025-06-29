@@ -14,6 +14,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
+import { cn } from '../../utils/ui';
 
 type ActivityFeedContentProps = {
   initialFilters?: Partial<ActivityFiltersData>;
@@ -111,7 +112,7 @@ export function ActivityFeedContent({
   );
 
   return (
-    <div className={className}>
+    <div className={cn('p-2.5', className)}>
       <ActivityFilters
         filters={mergedFilterValues}
         onFiltersChange={handleFiltersChange}

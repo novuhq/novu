@@ -12,7 +12,6 @@ export interface StatusBadgeProps {
 
 export function ActivityStatusBadge({ jobs }: StatusBadgeProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const errorCount = jobs.filter((job) => job.status === JobStatusEnum.FAILED).length;
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const handleMouseEnter = () => {
@@ -45,15 +44,13 @@ export function ActivityStatusBadge({ jobs }: StatusBadgeProps) {
 
   const status = getActivityStatus(jobs);
 
-  const { variant, icon: Icon, label } = JOB_STATUS_CONFIG[status] || JOB_STATUS_CONFIG[JobStatusEnum.PENDING];
-  const displayLabel =
-    status === JobStatusEnum.FAILED ? `${errorCount} ${errorCount === 1 ? 'ERROR' : 'ERRORS'}` : label;
+  const { variant, icon: Icon } = JOB_STATUS_CONFIG[status] || JOB_STATUS_CONFIG[JobStatusEnum.PENDING];
 
   return (
     <Popover open={isOpen}>
       <PopoverTrigger onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <StatusBadgeComponent variant="light" status={variant}>
-          <StatusBadgeIcon as={Icon} /> {displayLabel}
+        <StatusBadgeComponent variant="stroke" status={variant} className="h-4 w-4 border-0 px-0 ring-0">
+          <StatusBadgeIcon as={Icon} />
         </StatusBadgeComponent>
       </PopoverTrigger>
       <PopoverContent
