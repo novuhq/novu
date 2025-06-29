@@ -8,6 +8,16 @@ import { TransactionalSyncService } from './services/transactional-sync.service'
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
 
+// Import workflow sync components
+import {
+  WorkflowNormalizer,
+  WorkflowComparator,
+  SyncResultBuilder,
+  DiffResultBuilder,
+  WorkflowSyncOperation,
+  WorkflowDiffOperation,
+} from './usecases/sync-strategies/workflow';
+
 @Module({
   imports: [SharedModule, WorkflowModule],
   controllers: [EnvironmentsController],
@@ -17,6 +27,14 @@ import { WorkflowModule } from '../workflows-v2/workflow.module';
     DiffEnvironmentUseCase,
     WorkflowSyncStrategy,
     TransactionalSyncService,
+
+    // Workflow sync components
+    WorkflowNormalizer,
+    WorkflowComparator,
+    SyncResultBuilder,
+    DiffResultBuilder,
+    WorkflowSyncOperation,
+    WorkflowDiffOperation,
   ],
   exports: [],
 })
