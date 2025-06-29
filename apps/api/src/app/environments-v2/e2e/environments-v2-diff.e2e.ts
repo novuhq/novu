@@ -101,7 +101,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         })
         .expect(200);
 
-      expect(body.data).to.have.property('results');
+      expect(body.data).to.have.property('resources');
       expect(body.data).to.have.property('summary');
       expect(body.data.summary).to.have.property('totalEntities');
       expect(body.data.summary).to.have.property('totalChanges');
