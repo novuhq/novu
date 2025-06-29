@@ -63,10 +63,10 @@ export class ResourceDiffDto {
 
   @ApiProperty({
     description: 'Type of change',
-    enum: ['added', 'modified', 'deleted', 'unchanged', 'stepAdded', 'stepModified', 'stepDeleted', 'stepMoved'],
+    enum: ['added', 'modified', 'deleted', 'unchanged', 'moved'],
   })
-  @IsEnum(['added', 'modified', 'deleted', 'unchanged', 'stepAdded', 'stepModified', 'stepDeleted', 'stepMoved'])
-  action: 'added' | 'modified' | 'deleted' | 'unchanged' | 'stepAdded' | 'stepModified' | 'stepDeleted' | 'stepMoved';
+  @IsEnum(['added', 'modified', 'deleted', 'unchanged', 'moved'])
+  action: 'added' | 'modified' | 'deleted' | 'unchanged' | 'moved';
 
   @ApiPropertyOptional({
     type: 'object',
@@ -74,19 +74,21 @@ export class ResourceDiffDto {
     properties: {
       previous: {
         type: 'object',
-        description: 'Previous state of the resource',
+        description: 'Previous state of the resource (null for added resources)',
         additionalProperties: true,
+        nullable: true,
       },
       new: {
         type: 'object',
-        description: 'New state of the resource',
+        description: 'New state of the resource (null for deleted resources)',
         additionalProperties: true,
+        nullable: true,
       },
     },
   })
   changes?: {
-    previous: Record<string, any>;
-    new: Record<string, any>;
+    previous: Record<string, any> | null;
+    new: Record<string, any> | null;
   };
 
   // Step-specific fields
@@ -94,16 +96,6 @@ export class ResourceDiffDto {
   @IsOptional()
   @IsString()
   stepType?: string;
-
-  @ApiPropertyOptional({ description: 'Parent workflow ID (only for step resources)' })
-  @IsOptional()
-  @IsString()
-  workflowId?: string;
-
-  @ApiPropertyOptional({ description: 'Parent workflow name (only for step resources)' })
-  @IsOptional()
-  @IsString()
-  workflowName?: string;
 
   @ApiPropertyOptional({ description: 'Previous index in steps array (for moved/deleted steps)' })
   @IsOptional()

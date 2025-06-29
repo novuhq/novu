@@ -62,10 +62,7 @@ export enum DiffActionEnum {
   MODIFIED = 'modified',
   DELETED = 'deleted',
   UNCHANGED = 'unchanged',
-  STEP_ADDED = 'stepAdded',
-  STEP_MODIFIED = 'stepModified',
-  STEP_DELETED = 'stepDeleted',
-  STEP_MOVED = 'stepMoved',
+  MOVED = 'moved',
 }
 
 export interface IResourceDiff {
@@ -76,13 +73,11 @@ export interface IResourceDiff {
   resourceType: ResourceTypeEnum;
   action: DiffActionEnum;
   changes?: {
-    previous: Record<string, any>;
-    new: Record<string, any>;
+    previous: Record<string, any> | null;
+    new: Record<string, any> | null;
   };
   // Step-specific fields
   stepType?: string;
-  workflowId?: string;
-  workflowName?: string;
   previousIndex?: number;
   newIndex?: number;
 }

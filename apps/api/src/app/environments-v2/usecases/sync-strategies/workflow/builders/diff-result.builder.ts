@@ -107,16 +107,13 @@ export class DiffResultBuilder {
       (acc, diffItem) => {
         switch (diffItem.action) {
           case DiffActionEnum.ADDED:
-          case DiffActionEnum.STEP_ADDED:
             acc.added += 1;
             break;
           case DiffActionEnum.MODIFIED:
-          case DiffActionEnum.STEP_MODIFIED:
-          case DiffActionEnum.STEP_MOVED:
+          case DiffActionEnum.MOVED:
             acc.modified += 1;
             break;
           case DiffActionEnum.DELETED:
-          case DiffActionEnum.STEP_DELETED:
             acc.deleted += 1;
             break;
           case DiffActionEnum.UNCHANGED:

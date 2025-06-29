@@ -106,8 +106,8 @@ export class WorkflowDiffOperation {
     sourceWorkflow: NotificationTemplateEntity,
     targetWorkflow: NotificationTemplateEntity,
     workflowChanges: {
-      previous: Record<string, any>;
-      new: Record<string, any>;
+      previous: Record<string, any> | null;
+      new: Record<string, any> | null;
     } | null,
     stepDiffs: IResourceDiff[]
   ): IResourceDiff[] {

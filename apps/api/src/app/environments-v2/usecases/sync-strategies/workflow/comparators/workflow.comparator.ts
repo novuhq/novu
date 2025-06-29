@@ -57,8 +57,8 @@ export class WorkflowComparator implements IWorkflowComparator {
       const workflowDifferences = diff(targetWithoutSteps, sourceWithoutSteps);
 
       let workflowChanges: {
-        previous: Record<string, any>;
-        new: Record<string, any>;
+        previous: Record<string, any> | null;
+        new: Record<string, any> | null;
       } | null = null;
 
       if (Object.keys(workflowDifferences).length > 0) {
@@ -69,12 +69,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       }
 
       // Compare steps and generate step-level diffs
-      const stepDiffs = this.compareStepsAsEntities(
-        sourceSteps,
-        targetSteps,
-        sourceWorkflowDto._id,
-        sourceWorkflowDto.name
-      );
+      const stepDiffs = this.compareStepsAsEntities(sourceSteps, targetSteps);
 
       return { workflowChanges, stepDiffs };
     } catch (error) {
@@ -84,12 +79,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     }
   }
 
-  compareStepsAsEntities(
-    sourceSteps: INormalizedStep[],
-    targetSteps: INormalizedStep[],
-    workflowId: string,
-    workflowName: string
-  ): IResourceDiff[] {
+  compareStepsAsEntities(sourceSteps: INormalizedStep[], targetSteps: INormalizedStep[]): IResourceDiff[] {
     const stepDiffs: IResourceDiff[] = [];
 
     // Create maps for efficient lookup
@@ -103,27 +93,15 @@ export class WorkflowComparator implements IWorkflowComparator {
       const targetStepData = targetStepMap.get(sourceStep.stepId);
 
       if (!targetStepData) {
-        stepDiffs.push(this.createStepAddedDiff(sourceStep, sourceIndex, workflowId, workflowName));
+        stepDiffs.push(this.createStepAddedDiff(sourceStep, sourceIndex));
       } else {
         const { step: targetStep, index: targetIndex } = targetStepData;
         const stepChanges = this.compareIndividualStep(sourceStep, targetStep);
 
         if (stepChanges) {
-          stepDiffs.push(
-            this.createStepModifiedDiff(
-              sourceStep,
-              targetStep,
-              sourceIndex,
-              targetIndex,
-              stepChanges,
-              workflowId,
-              workflowName
-            )
-          );
+          stepDiffs.push(this.createStepModifiedDiff(sourceStep, targetStep, sourceIndex, targetIndex, stepChanges));
         } else if (sourceIndex !== targetIndex) {
-          stepDiffs.push(
-            this.createStepMovedDiff(sourceStep, targetStep, sourceIndex, targetIndex, workflowId, workflowName)
-          );
+          stepDiffs.push(this.createStepMovedDiff(sourceStep, targetStep, sourceIndex, targetIndex));
         }
       }
 
@@ -133,7 +111,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     // Process deleted steps
     targetSteps.forEach((targetStep, targetIndex) => {
       if (!processedSteps.has(targetStep.stepId)) {
-        stepDiffs.push(this.createStepDeletedDiff(targetStep, targetIndex, workflowId, workflowName));
+        stepDiffs.push(this.createStepDeletedDiff(targetStep, targetIndex));
       }
     });
 
@@ -164,12 +142,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     };
   }
 
-  private createStepAddedDiff(
-    sourceStep: INormalizedStep,
-    sourceIndex: number,
-    workflowId: string,
-    workflowName: string
-  ): IResourceDiff {
+  private createStepAddedDiff(sourceStep: INormalizedStep, sourceIndex: number): IResourceDiff {
     const normalizedStep = this.workflowNormalizer.normalizeStepForComparison(sourceStep);
 
     return {
@@ -179,12 +152,10 @@ export class WorkflowComparator implements IWorkflowComparator {
       targetResourceName: null,
       resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
-      workflowId,
-      workflowName,
-      action: DiffActionEnum.STEP_ADDED,
+      action: DiffActionEnum.ADDED,
       newIndex: sourceIndex,
       changes: {
-        previous: {},
+        previous: null,
         new: normalizedStep,
       },
     };
@@ -198,9 +169,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     stepChanges: {
       previous: Record<string, any>;
       new: Record<string, any>;
-    },
-    workflowId: string,
-    workflowName: string
+    }
   ): IResourceDiff {
     return {
       sourceResourceId: sourceStep.stepId,
@@ -209,9 +178,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       targetResourceName: targetStep.name,
       resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
-      workflowId,
-      workflowName,
-      action: DiffActionEnum.STEP_MODIFIED,
+      action: DiffActionEnum.MODIFIED,
       previousIndex: targetIndex,
       newIndex: sourceIndex,
       changes: stepChanges,
@@ -222,9 +189,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     sourceStep: INormalizedStep,
     targetStep: INormalizedStep,
     sourceIndex: number,
-    targetIndex: number,
-    workflowId: string,
-    workflowName: string
+    targetIndex: number
   ): IResourceDiff {
     return {
       sourceResourceId: sourceStep.stepId,
@@ -233,20 +198,13 @@ export class WorkflowComparator implements IWorkflowComparator {
       targetResourceName: targetStep.name,
       resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
-      workflowId,
-      workflowName,
-      action: DiffActionEnum.STEP_MOVED,
+      action: DiffActionEnum.MOVED,
       previousIndex: targetIndex,
       newIndex: sourceIndex,
     };
   }
 
-  private createStepDeletedDiff(
-    targetStep: INormalizedStep,
-    targetIndex: number,
-    workflowId: string,
-    workflowName: string
-  ): IResourceDiff {
+  private createStepDeletedDiff(targetStep: INormalizedStep, targetIndex: number): IResourceDiff {
     const normalizedStep = this.workflowNormalizer.normalizeStepForComparison(targetStep);
 
     return {
@@ -256,13 +214,11 @@ export class WorkflowComparator implements IWorkflowComparator {
       targetResourceName: targetStep.name,
       resourceType: ResourceTypeEnum.STEP,
       stepType: targetStep.type,
-      workflowId,
-      workflowName,
-      action: DiffActionEnum.STEP_DELETED,
+      action: DiffActionEnum.DELETED,
       previousIndex: targetIndex,
       changes: {
         previous: normalizedStep,
-        new: {},
+        new: null,
       },
     };
   }

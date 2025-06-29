@@ -27,8 +27,8 @@ export interface INormalizedStep {
 
 export interface IWorkflowComparison {
   workflowChanges: {
-    previous: Record<string, any>;
-    new: Record<string, any>;
+    previous: Record<string, any> | null;
+    new: Record<string, any> | null;
   } | null;
   stepDiffs: IResourceDiff[];
 }
@@ -44,10 +44,5 @@ export interface IWorkflowComparator {
     target: NotificationTemplateEntity,
     userContext: UserSessionData
   ): Promise<IWorkflowComparison>;
-  compareStepsAsEntities(
-    sourceSteps: INormalizedStep[],
-    targetSteps: INormalizedStep[],
-    workflowId: string,
-    workflowName: string
-  ): IResourceDiff[];
+  compareStepsAsEntities(sourceSteps: INormalizedStep[], targetSteps: INormalizedStep[]): IResourceDiff[];
 }
