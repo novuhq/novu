@@ -567,4 +567,19 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       }
     );
   }
+
+  private createSyncResult(
+    entityType: EntityTypeEnum,
+    successful: ISyncedEntity[] = [],
+    failed: IFailedEntity[] = [],
+    skipped: ISkippedEntity[] = []
+  ): ISyncResult {
+    return {
+      entityType,
+      successful,
+      failed,
+      skipped,
+      totalProcessed: successful.length + failed.length + skipped.length,
+    };
+  }
 }

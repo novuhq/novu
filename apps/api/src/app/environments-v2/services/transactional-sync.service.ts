@@ -29,22 +29,4 @@ export class TransactionalSyncService {
       throw error;
     }
   }
-
-  async executeWithoutTransaction<T>(
-    operation: () => Promise<T>,
-    operationName: string = 'sync operation'
-  ): Promise<T> {
-    this.logger.info(`Starting non-transactional ${operationName}`);
-
-    try {
-      const result = await operation();
-
-      this.logger.info(`Successfully completed ${operationName}`);
-
-      return result;
-    } catch (error) {
-      this.logger.error(`Operation failed for ${operationName}: ${error.message}`);
-      throw error;
-    }
-  }
 }
