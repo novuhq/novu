@@ -12,6 +12,7 @@ import {
   getErrorInterceptor,
   PinoLogger,
   RequestLogRepository,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
@@ -106,7 +107,9 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository)));
+  app.useGlobalFilters(
+    new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository), app.get(FeatureFlagsService))
+  );
 
   /*
    * Handle unhandled promise rejections

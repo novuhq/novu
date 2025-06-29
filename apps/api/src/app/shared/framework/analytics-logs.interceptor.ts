@@ -74,14 +74,10 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const shouldRun = await this.shouldRun(context);
-    const req = context.switchToHttp().getRequest();
-
-    // Set a flag on the request object that the exception filter (AllExceptionsFilter) can check
-    if (shouldLogAnalytics(context)) {
-      req._shouldLogAnalytics = true;
-    }
 
     if (!shouldRun) return next.handle();
+
+    const req = context.switchToHttp().getRequest();
 
     const user = req.user as UserSessionData;
 
