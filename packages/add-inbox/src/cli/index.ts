@@ -38,7 +38,7 @@ interface IPackageJson {
   name?: string;
 }
 
-async function promptUserConfiguration(): Promise<IUserConfig | null> {
+async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IUserConfig | null> {
   // Parse command line arguments
   const { appId, subscriberId, region } = parseCommandLineArgs();
 
@@ -175,7 +175,11 @@ function checkDependencyExists(packageName: string): boolean {
   return false;
 }
 
-async function installDependencies(framework: IFramework, packageManager: IPackageManager): Promise<void> {
+async function installDependencies(
+  framework: IFramework,
+  packageManager: IPackageManager,
+  analytics?: AnalyticsService
+): Promise<void> {
   logger.gray('• Installing required packages...');
 
   const packagesToInstall: string[] = [];
@@ -376,7 +380,7 @@ function validateProjectStructure() {
   return true;
 }
 
-async function performInstallation(config: IUserConfig) {
+async function performInstallation(config: IUserConfig, analytics?: AnalyticsService) {
   const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region } = config;
 
   try {
@@ -388,7 +392,7 @@ async function performInstallation(config: IUserConfig) {
     logger.success(`  ✓ Region: ${logger.bold(region)}`);
 
     logger.step(2, 'Installing dependencies');
-    await installDependencies(framework, packageManager);
+    await installDependencies(framework, packageManager, analytics);
 
     logger.step(3, 'Creating component structure');
     await createComponentStructure(
@@ -421,70 +425,132 @@ async function performInstallation(config: IUserConfig) {
   }
 }
 
+function getAnalyticsContext(config?: IUserConfig) {
+  if (!config) return {};
+
+  return {
+    framework: config.framework?.framework,
+    frameworkVersion: config.framework?.version,
+    packageManager: config.packageManager?.name,
+    region: config.region,
+    appId: config.appId,
+    subscriberId: config.subscriberId,
+  };
+}
+
+function trackCliError(
+  analytics: AnalyticsService,
+  error: unknown,
+  config?: IUserConfig,
+  context: Record<string, unknown> = {}
+) {
+  let errorMessage = '';
+  let stack = '';
+
+  if (error instanceof Error) {
+    errorMessage = error.message;
+    stack = error.stack || '';
+  } else {
+    errorMessage = String(error);
+  }
+
+  analytics.track({
+    event: AnalyticsEventEnum.CLI_ERROR,
+    data: {
+      error: errorMessage,
+      stack,
+      ...getAnalyticsContext(config),
+      ...context,
+    },
+  });
+}
+
+function trackCliCancelled(
+  analytics: AnalyticsService,
+  reason: string,
+  config?: IUserConfig,
+  context: Record<string, unknown> = {}
+) {
+  analytics.track({
+    event: AnalyticsEventEnum.CLI_USER_CANCELLED,
+    data: {
+      reason,
+      ...getAnalyticsContext(config),
+      ...context,
+    },
+  });
+}
+
+function trackCliCompleted(analytics: AnalyticsService, config: IUserConfig, context: Record<string, unknown> = {}) {
+  analytics.track({
+    event: AnalyticsEventEnum.CLI_COMPLETED,
+    data: {
+      ...getAnalyticsContext(config),
+      ...context,
+    },
+  });
+}
+
 async function init() {
   const { appId, subscriberId, region } = parseCommandLineArgs();
   const analytics = new AnalyticsService(subscriberId);
+  let config: IUserConfig | null = null;
+  let errorOrCancelled = false;
 
   try {
     logger.banner();
     analytics.track({ event: AnalyticsEventEnum.CLI_STARTED });
 
     // Parse and validate command line arguments
-    if (!validateAppId(appId) || !validateSubscriberId(subscriberId) || !validateRegion(region)) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'Invalid command line arguments' },
+    const argsValid = validateAppId(appId) && validateSubscriberId(subscriberId) && validateRegion(region);
+    if (!argsValid) {
+      trackCliError(analytics, 'Invalid command line arguments', undefined, {
+        step: 'validateArgs',
+        appId,
+        subscriberId,
+        region,
       });
+      errorOrCancelled = true;
       process.exit(1);
     }
 
     // Validate project structure
-    if (!validateProjectStructure()) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'Invalid project structure' },
-      });
+    const projectValid = validateProjectStructure();
+    if (!projectValid) {
+      trackCliError(analytics, 'Invalid project structure', undefined, { step: 'validateProjectStructure' });
+      errorOrCancelled = true;
       process.exit(1);
     }
 
     // Get user configuration
-    const config = await promptUserConfiguration();
+    config = await promptUserConfiguration(analytics);
     if (!config) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'User cancelled installation' },
-      });
+      // User cancellation
+      trackCliCancelled(analytics, 'User cancelled during promptUserConfiguration', undefined);
+      errorOrCancelled = true;
 
       return;
     }
 
     // Perform the installation
-    const success = await performInstallation(config);
+    const success = await performInstallation(config, analytics);
     if (!success) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'Installation failed' },
+      trackCliError(analytics, 'Installation failed', config ?? undefined, {
+        step: 'performInstallation',
       });
+      errorOrCancelled = true;
       process.exit(1);
     }
 
-    analytics.track({
-      event: AnalyticsEventEnum.CLI_COMPLETED,
-      data: {
-        framework: config.framework.framework,
-        packageManager: config.packageManager.name,
-        region: config.region,
-      },
-    });
+    // Only track completed if not error/cancelled
+    if (!errorOrCancelled) {
+      trackCliCompleted(analytics, config);
+    }
   } catch (error) {
-    analytics.track({
-      event: AnalyticsEventEnum.CLI_ERROR,
-      data: {
-        error: error instanceof Error ? error.message : String(error),
-      },
-    });
+    trackCliError(analytics, error, config ?? undefined, { step: 'init', appId, subscriberId, region });
     logger.error('\n❌ An unexpected error occurred:');
     logger.error(error instanceof Error ? error.message : String(error));
+    errorOrCancelled = true;
     process.exit(1);
   } finally {
     await analytics.flush();

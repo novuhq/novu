@@ -15,7 +15,7 @@ import {
   ChangeEntityTypeEnum,
   INotificationTemplateStep,
   isClerkEnabled,
-  WorkflowTypeEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 import {
   ChangeRepository,
@@ -733,7 +733,7 @@ const blueprintTemplateMock = {
       shouldStopOnFail: false,
       uuid: 'b6944995-a283-46bd-b55a-18625fd1d4fd',
       name: 'In-App',
-      type: WorkflowTypeEnum.REGULAR,
+      type: ResourceTypeEnum.REGULAR,
       filters: [
         {
           children: [],
@@ -799,7 +799,7 @@ const blueprintTemplateMock = {
       shouldStopOnFail: false,
       uuid: '642e42b5-51e6-4d3b-8a91-067c29e902d4',
       name: 'Digest',
-      type: WorkflowTypeEnum.REGULAR,
+      type: ResourceTypeEnum.REGULAR,
       filters: [],
       _templateId: '6485b92e2a50bb4986758662',
       _parentId: '6485b9052a50bb498675846d',
@@ -845,7 +845,7 @@ const blueprintTemplateMock = {
       shouldStopOnFail: false,
       uuid: '671d86ec-dc27-413c-a666-ec4aeb191691',
       name: 'Email',
-      type: WorkflowTypeEnum.REGULAR,
+      type: ResourceTypeEnum.REGULAR,
       filters: [
         {
           value: 'AND',

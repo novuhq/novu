@@ -8,23 +8,22 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  ChatControlDto,
+  ChatControlDto$inboundSchema,
+  ChatControlDto$Outbound,
+  ChatControlDto$outboundSchema,
+} from "./chatcontroldto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Chat step
+ * Control values for the Chat step.
  */
-export type ChatStepUpsertDtoControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * Content of the chat message.
-   */
-  body?: string | undefined;
+export type ChatStepUpsertDtoControlValues = ChatControlDto | {
+  [k: string]: any;
 };
 
 export type ChatStepUpsertDto = {
@@ -41,9 +40,9 @@ export type ChatStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Chat step
+   * Control values for the Chat step.
    */
-  controlValues?: ChatStepUpsertDtoControlValues | null | undefined;
+  controlValues?: ChatControlDto | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -51,26 +50,19 @@ export const ChatStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   ChatStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-});
+> = z.union([ChatControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type ChatStepUpsertDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  body?: string | undefined;
-};
+export type ChatStepUpsertDtoControlValues$Outbound =
+  | ChatControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
 export const ChatStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   ChatStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   ChatStepUpsertDtoControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-});
+> = z.union([ChatControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -114,9 +106,8 @@ export const ChatStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => ChatStepUpsertDtoControlValues$inboundSchema),
-  ).optional(),
+  controlValues: z.union([ChatControlDto$inboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -128,7 +119,7 @@ export type ChatStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: ChatStepUpsertDtoControlValues$Outbound | null | undefined;
+  controlValues?: ChatControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -140,9 +131,8 @@ export const ChatStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => ChatStepUpsertDtoControlValues$outboundSchema),
-  ).optional(),
+  controlValues: z.union([ChatControlDto$outboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

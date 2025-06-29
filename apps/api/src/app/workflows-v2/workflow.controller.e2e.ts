@@ -18,7 +18,7 @@ import {
   UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowStatusEnum,
 } from '@novu/api/models/components';
 import { WorkflowResponseDto } from '@novu/api/src/models/components';
@@ -263,7 +263,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
       const inAppControlValue = 'In-App Test';
       const emailControlValue = 'Email Test';
       const updateRequest: UpdateWorkflowDto = {
-        origin: WorkflowOriginEnum.NovuCloud,
+        origin: ResourceOriginEnum.NovuCloud,
         name: workflowCreated.name,
         preferences: {
           user: null,
@@ -1222,7 +1222,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     expect(workflowResponseDto.createdAt, stringify(workflowResponseDto)).to.be.ok;
     expect(workflowResponseDto.preferences, stringify(workflowResponseDto)).to.be.ok;
     expect(workflowResponseDto.status, stringify(workflowResponseDto)).to.be.ok;
-    expect(workflowResponseDto.origin, stringify(workflowResponseDto)).to.be.eq(WorkflowOriginEnum.NovuCloud);
+    expect(workflowResponseDto.origin, stringify(workflowResponseDto)).to.be.eq(ResourceOriginEnum.NovuCloud);
     expect(Object.keys(workflowResponseDto.issues || {}).length, stringify(workflowResponseDto)).to.be.equal(0);
   }
 

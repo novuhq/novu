@@ -40,7 +40,7 @@ services:
       retries: 5
 
   api:
-    image: 'ghcr.io/novuhq/novu/api:2.2.0'
+    image: 'ghcr.io/novuhq/novu/api:2.3.0'
     depends_on:
       - mongodb
       - redis
@@ -86,8 +86,9 @@ services:
       IS_V2_ENABLED: ${IS_V2_ENABLED}
     ports:
       - ${API_PORT}:${API_PORT}
+  
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:2.2.0'
+    image: 'ghcr.io/novuhq/novu/worker:2.3.0'
     depends_on:
       - mongodb
       - redis
@@ -124,8 +125,9 @@ services:
       API_ROOT_URL: http://api:${API_PORT}
       IS_EMAIL_INLINE_CSS_DISABLED: ${IS_EMAIL_INLINE_CSS_DISABLED}
       IS_USE_MERGED_DIGEST_ID_ENABLED: ${IS_USE_MERGED_DIGEST_ID_ENABLED}
+  
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:2.2.0'
+    image: 'ghcr.io/novuhq/novu/ws:2.3.0'
     depends_on:
       - mongodb
       - redis
@@ -153,7 +155,7 @@ services:
       - ${WS_PORT}:${WS_PORT}
 
   dashboard:
-    image: 'ghcr.io/novuhq/novu/dashboard:2.2.0'
+    image: 'ghcr.io/novuhq/novu/dashboard:2.3.0'
     depends_on:
       - api
       - worker

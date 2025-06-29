@@ -1,4 +1,4 @@
-import { INotificationTemplate, isBridgeWorkflow, WorkflowIntegrationStatus, WorkflowTypeEnum } from '@novu/shared';
+import { INotificationTemplate, isBridgeWorkflow, WorkflowIntegrationStatus, ResourceTypeEnum } from '@novu/shared';
 import { IUsePaginationQueryParamsStateOptions } from '@novu/design-system';
 
 import { useEnvironment } from './useEnvironment';

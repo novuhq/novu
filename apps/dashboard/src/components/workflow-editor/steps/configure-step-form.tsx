@@ -5,7 +5,7 @@ import {
   StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowResponseDto,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
@@ -104,7 +104,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   ];
 
   const isSupportedStep = supportedStepTypes.includes(step.type);
-  const isReadOnly = !isSupportedStep || workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isReadOnly = !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL;
 
   const isTemplateConfigurableStep = isSupportedStep && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type);
   const isInlineConfigurableStep = isSupportedStep && INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type);

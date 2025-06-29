@@ -12,7 +12,7 @@ import { BridgeModule } from '../bridge';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
 import { ExecutionDetailsModule } from '../execution-details/execution-details.module';
 import { IntegrationModule } from '../integrations/integrations.module';
-import { LayoutsModule } from '../layouts/layouts.module';
+import { LayoutsV1Module } from '../layouts-v1/layouts-v1.module';
 import { SharedModule } from '../shared/shared.module';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
 import { TenantModule } from '../tenant/tenant.module';
@@ -30,7 +30,7 @@ const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOr
     ContentTemplatesModule,
     IntegrationModule,
     ExecutionDetailsModule,
-    LayoutsModule,
+    LayoutsV1Module,
     TenantModule,
     BridgeModule,
   ],

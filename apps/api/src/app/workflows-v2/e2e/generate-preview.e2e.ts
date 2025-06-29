@@ -15,7 +15,7 @@ import {
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
 import { CronExpressionEnum, RedirectTargetEnum, slugify } from '@novu/shared';
@@ -2068,7 +2068,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         _id: _workflowId,
       },
       {
-        origin: WorkflowOriginEnum.External,
+        origin: ResourceOriginEnum.External,
       }
     );
 

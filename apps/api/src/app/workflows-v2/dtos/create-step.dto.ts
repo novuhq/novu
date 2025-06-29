@@ -1,7 +1,6 @@
-import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { StepTypeEnum } from '@novu/shared';
-import { Type } from 'class-transformer';
 import {
   InAppControlDto,
   EmailControlDto,
@@ -41,11 +40,13 @@ export class InAppStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'in_app' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: InAppControlDto, description: 'Control values for the In-App step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the In-App step.',
+    oneOf: [{ $ref: getSchemaPath(InAppControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => InAppControlDto)
-  controlValues?: InAppControlDto | null;
+  @IsObject()
+  controlValues?: InAppControlDto | Record<string, unknown> | null;
 }
 
 export class EmailStepUpsertDto extends BaseStepConfigDto {
@@ -58,11 +59,13 @@ export class EmailStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'email' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: EmailControlDto, description: 'Control values for the Email step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the Email step.',
+    oneOf: [{ $ref: getSchemaPath(EmailControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => EmailControlDto)
-  controlValues?: EmailControlDto | null;
+  @IsObject()
+  controlValues?: EmailControlDto | Record<string, unknown> | null;
 }
 
 export class SmsStepUpsertDto extends BaseStepConfigDto {
@@ -75,11 +78,13 @@ export class SmsStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'sms' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: SmsControlDto, description: 'Control values for the SMS step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the SMS step.',
+    oneOf: [{ $ref: getSchemaPath(SmsControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => SmsControlDto)
-  controlValues?: SmsControlDto | null;
+  @IsObject()
+  controlValues?: SmsControlDto | Record<string, unknown> | null;
 }
 
 export class PushStepUpsertDto extends BaseStepConfigDto {
@@ -92,11 +97,13 @@ export class PushStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'push' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: PushControlDto, description: 'Control values for the Push step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the Push step.',
+    oneOf: [{ $ref: getSchemaPath(PushControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => PushControlDto)
-  controlValues?: PushControlDto | null;
+  @IsObject()
+  controlValues?: PushControlDto | Record<string, unknown> | null;
 }
 
 export class ChatStepUpsertDto extends BaseStepConfigDto {
@@ -109,11 +116,13 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'chat' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: ChatControlDto, description: 'Control values for the Chat step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the Chat step.',
+    oneOf: [{ $ref: getSchemaPath(ChatControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => ChatControlDto)
-  controlValues?: ChatControlDto | null;
+  @IsObject()
+  controlValues?: ChatControlDto | Record<string, unknown> | null;
 }
 
 export class DelayStepUpsertDto extends BaseStepConfigDto {
@@ -126,11 +135,13 @@ export class DelayStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'delay' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: DelayControlDto, description: 'Control values for the Delay step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the Delay step.',
+    oneOf: [{ $ref: getSchemaPath(DelayControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => DelayControlDto)
-  controlValues?: DelayControlDto | null;
+  @IsObject()
+  controlValues?: DelayControlDto | Record<string, unknown> | null;
 }
 
 export class DigestStepUpsertDto extends BaseStepConfigDto {
@@ -143,11 +154,13 @@ export class DigestStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'digest' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: DigestControlDto, description: 'Control values for the Digest step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the Digest step.',
+    oneOf: [{ $ref: getSchemaPath(DigestControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => DigestControlDto)
-  controlValues?: DigestControlDto | null;
+  @IsObject()
+  controlValues?: DigestControlDto | Record<string, unknown> | null;
 }
 
 export class CustomStepUpsertDto extends BaseStepConfigDto {
@@ -160,11 +173,13 @@ export class CustomStepUpsertDto extends BaseStepConfigDto {
   @IsEnum(StepTypeEnum)
   readonly type: StepTypeEnum = 'custom' as StepTypeEnum;
 
-  @ApiPropertyOptional({ type: CustomControlDto, description: 'Control values for the Custom step' })
+  @ApiPropertyOptional({
+    description: 'Control values for the Custom step.',
+    oneOf: [{ $ref: getSchemaPath(CustomControlDto) }, { type: 'object', additionalProperties: true }],
+  })
   @IsOptional()
-  @ValidateNested()
-  @Type(() => CustomControlDto)
-  controlValues?: CustomControlDto | null;
+  @IsObject()
+  controlValues?: CustomControlDto | Record<string, unknown> | null;
 }
 
 /*

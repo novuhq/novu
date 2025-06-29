@@ -1,6 +1,6 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { IsString, IsObject, IsOptional } from 'class-validator';
-import { JSONSchemaDto } from '../../dtos';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
 export class CreateVariablesObjectCommand extends EnvironmentWithUserCommand {
   @IsString()

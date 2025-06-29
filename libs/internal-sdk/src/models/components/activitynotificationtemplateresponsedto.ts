@@ -14,10 +14,10 @@ import {
   NotificationTriggerDto$outboundSchema,
 } from "./notificationtriggerdto.js";
 import {
-  WorkflowOriginEnum,
-  WorkflowOriginEnum$inboundSchema,
-  WorkflowOriginEnum$outboundSchema,
-} from "./workfloworiginenum.js";
+  ResourceOriginEnum,
+  ResourceOriginEnum$inboundSchema,
+  ResourceOriginEnum$outboundSchema,
+} from "./resourceoriginenum.js";
 
 export type ActivityNotificationTemplateResponseDto = {
   /**
@@ -31,7 +31,7 @@ export type ActivityNotificationTemplateResponseDto = {
   /**
    * Origin of the workflow
    */
-  origin?: WorkflowOriginEnum | undefined;
+  origin?: ResourceOriginEnum | undefined;
   /**
    * Triggers of the template
    */
@@ -46,7 +46,7 @@ export const ActivityNotificationTemplateResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string().optional(),
   name: z.string(),
-  origin: WorkflowOriginEnum$inboundSchema.optional(),
+  origin: ResourceOriginEnum$inboundSchema.optional(),
   triggers: z.array(NotificationTriggerDto$inboundSchema),
 }).transform((v) => {
   return remap$(v, {
@@ -70,7 +70,7 @@ export const ActivityNotificationTemplateResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string().optional(),
   name: z.string(),
-  origin: WorkflowOriginEnum$outboundSchema.optional(),
+  origin: ResourceOriginEnum$outboundSchema.optional(),
   triggers: z.array(NotificationTriggerDto$outboundSchema),
 }).transform((v) => {
   return remap$(v, {

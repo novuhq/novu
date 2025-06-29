@@ -7,8 +7,6 @@ export * from './generate-preview-request.dto';
 export * from './generate-preview-response.dto';
 export * from './get-list-query-params';
 export * from './integration-issue.dto';
-export * from './json-schema.dto';
-export * from './limit-offset-pagination.dto';
 export * from './list-workflow.dto';
 export * from './preferences.request.dto';
 export * from './preferences.response.dto';

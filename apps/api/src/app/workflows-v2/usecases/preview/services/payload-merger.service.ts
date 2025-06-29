@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
+import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
@@ -43,8 +43,8 @@ export class PayloadMergerService {
     });
 
     const shouldUsePayloadSchema =
-      workflow.origin === WorkflowOriginEnum.EXTERNAL ||
-      (isPayloadSchemaEnabled && workflow.origin === WorkflowOriginEnum.NOVU_CLOUD);
+      workflow.origin === ResourceOriginEnum.EXTERNAL ||
+      (isPayloadSchemaEnabled && workflow.origin === ResourceOriginEnum.NOVU_CLOUD);
 
     if (shouldUsePayloadSchema && workflow.payloadSchema) {
       return this.mergeWithPayloadSchema(

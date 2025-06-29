@@ -117,7 +117,9 @@ export const InboxButton = () => {
        */
       backendUrl={API_HOSTNAME === 'https://api.novu-staging.co' && !isTestPage ? 'https://api.novu.co' : API_HOSTNAME}
       socketUrl={
-        WEBSOCKET_HOSTNAME === 'https://ws.novu-staging.co' && !isTestPage ? 'https://ws.novu.co' : WEBSOCKET_HOSTNAME
+        WEBSOCKET_HOSTNAME === 'https://socket.novu-staging.co' && !isTestPage
+          ? 'https://ws.novu.co'
+          : WEBSOCKET_HOSTNAME
       }
       localization={{
         'inbox.filters.labels.default': `Inbox${localizationTestSuffix}`,

@@ -15,7 +15,6 @@ export class TestBridgeServer {
   }
 
   private log(level: 'info' | 'error' | 'warn', message: string, ...args: any[]) {
-    // eslint-disable-next-line no-console
     console[level](`[BridgeServer] ${message}`, ...args);
   }
 

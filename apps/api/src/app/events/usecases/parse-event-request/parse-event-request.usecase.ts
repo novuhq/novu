@@ -32,7 +32,7 @@ import {
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
@@ -209,7 +209,7 @@ export class ParseEventRequest {
         statelessBridgeUrl: command.bridgeUrl,
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
-        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+        workflowOrigin: ResourceOriginEnum.EXTERNAL,
       })
     )) as ExecuteBridgeRequestDto<GetActionEnum.DISCOVER>;
 

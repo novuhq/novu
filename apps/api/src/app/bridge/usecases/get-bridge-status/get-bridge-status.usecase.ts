@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { HealthCheck, GetActionEnum } from '@novu/framework/internal';
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from '@novu/application-generic';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';
 
 export const LOG_CONTEXT = 'GetBridgeStatusUsecase';
@@ -15,7 +15,7 @@ export class GetBridgeStatus {
       ExecuteBridgeRequestCommand.create({
         environmentId: command.environmentId,
         action: GetActionEnum.HEALTH_CHECK,
-        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+        workflowOrigin: ResourceOriginEnum.EXTERNAL,
         statelessBridgeUrl: command.statelessBridgeUrl,
         retriesLimit: 1,
       })

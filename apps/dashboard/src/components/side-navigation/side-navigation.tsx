@@ -19,6 +19,7 @@ import {
   RiSignalTowerLine,
   RiStore3Line,
   RiUserAddLine,
+  RiTranslate2,
 } from 'react-icons/ri';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
@@ -110,6 +111,7 @@ export const SideNavigation = () => {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
+  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -153,9 +155,9 @@ export const SideNavigation = () => {
                 </Protect>
               )}
             </NavigationGroup>
-            {isEmailLayoutsPageActive && (
-              <Protect permission={PermissionsEnum.LAYOUT_READ}>
-                <NavigationGroup label="Resources">
+            {(isEmailLayoutsPageActive || isTranslationEnabled) && (
+              <NavigationGroup label="Resources">
+                {isEmailLayoutsPageActive && (
                   <Protect permission={PermissionsEnum.LAYOUT_READ}>
                     <NavigationLink
                       to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}
@@ -164,8 +166,16 @@ export const SideNavigation = () => {
                       <span>Email Layouts</span>
                     </NavigationLink>
                   </Protect>
-                </NavigationGroup>
-              </Protect>
+                )}
+                {isTranslationEnabled && (
+                  <NavigationLink
+                    to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                  >
+                    <RiTranslate2 className="size-4" />
+                    <span>Translations</span>
+                  </NavigationLink>
+                )}
+              </NavigationGroup>
             )}
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">

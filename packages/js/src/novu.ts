@@ -5,7 +5,8 @@ import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
 import type { NovuOptions, Subscriber } from './types';
-import { Socket } from './ws';
+import type { BaseSocketInterface } from './ws/base-socket';
+import { createSocket } from './ws';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
@@ -15,7 +16,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
-  public readonly socket: Socket;
+  public readonly socket: BaseSocketInterface;
 
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
   /**
@@ -62,7 +63,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
-    this.socket = new Socket({
+    this.socket = createSocket({
       socketUrl: options.socketUrl,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,

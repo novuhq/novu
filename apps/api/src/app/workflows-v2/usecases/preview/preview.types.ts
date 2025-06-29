@@ -1,6 +1,7 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { StepResponseDto, JSONSchemaDto } from '../../dtos';
+import { StepResponseDto } from '../../dtos';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
 export type PreviewContext = {
   stepData: StepResponseDto;

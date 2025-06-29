@@ -60,13 +60,26 @@ export class GetInboxPreferences {
       } satisfies InboxPreference;
     });
 
+    const sortedWorkflowPreferences = workflowPreferences.sort((a, b) => {
+      const aCreatedAt = subscriberWorkflowPreferences.find((preference) => preference.template._id === a.workflow?.id)
+        ?.template.createdAt;
+      const bCreatedAt = subscriberWorkflowPreferences.find((preference) => preference.template._id === b.workflow?.id)
+        ?.template.createdAt;
+
+      if (!aCreatedAt && !bCreatedAt) return 0;
+      if (!aCreatedAt) return 1;
+      if (!bCreatedAt) return -1;
+
+      return new Date(aCreatedAt).getTime() - new Date(bCreatedAt).getTime();
+    });
+
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.FETCH_PREFERENCES, '', {
       _organization: command.organizationId,
       subscriberId: command.subscriberId,
-      workflowSize: workflowPreferences.length,
+      workflowSize: sortedWorkflowPreferences.length,
       tags: command.tags || [],
     });
 
-    return [updatedGlobalPreference, ...workflowPreferences];
+    return [updatedGlobalPreference, ...sortedWorkflowPreferences];
   }
 }
