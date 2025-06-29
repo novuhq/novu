@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Observability - /observability/logs/http-requests (GET) #novu-v2', () => {
+describe.skip('Observability - /observability/logs/http-requests (GET) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {

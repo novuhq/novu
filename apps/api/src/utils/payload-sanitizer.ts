@@ -7,7 +7,7 @@ function maskSensitive(obj: any): any {
     return Object.fromEntries(
       Object.entries(obj).map(([key, value]) => {
         const lowerKey = key.toLowerCase();
-        const isSensitive = SENSITIVE_KEYS.some((s) => lowerKey.includes(s));
+        const isSensitive = SENSITIVE_KEYS.some((sensitiveKey) => lowerKey.includes(sensitiveKey));
         if (isSensitive) return [key, '***'];
 
         return [key, maskSensitive(value)];
@@ -39,7 +39,7 @@ export async function retryWithBackoff<T>(fn: () => Promise<T>, maxAttempts = 3,
     try {
       return await fn();
     } catch (err) {
-      attempt++;
+      attempt += 1;
       if (attempt >= maxAttempts) throw err;
       await new Promise((resolve) => setTimeout(resolve, delay));
       delay *= 2;
