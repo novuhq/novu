@@ -1,6 +1,4 @@
-import { UserSessionData } from '@novu/shared';
-import { NotificationTemplateEntity } from '@novu/dal';
-import { DiffActionEnum, IResourceDiff } from '../../../../types/sync.types';
+import { IResourceDiff } from '../../../../types/sync.types';
 import { WorkflowResponseDto } from '../../../../../workflows-v2/dtos/workflow-response.dto';
 import { StepResponseDto } from '../../../../../workflows-v2/dtos/step.response.dto';
 
@@ -15,7 +13,10 @@ export type INormalizedWorkflow = Omit<
   | 'issues' // Runtime issues, not part of definition
   | 'lastTriggeredAt' // Runtime data
   | 'payloadExample' // Auto-generated from schema
->;
+  | 'steps' // Override with normalized steps
+> & {
+  steps: INormalizedStep[];
+};
 
 export type INormalizedStep = Omit<
   StepResponseDto,
@@ -31,8 +32,8 @@ export type INormalizedStep = Omit<
 
 export interface IWorkflowComparison {
   workflowChanges: {
-    previous: Record<string, any> | null;
-    new: Record<string, any> | null;
+    previous: Partial<INormalizedWorkflow> | null;
+    new: Partial<INormalizedWorkflow> | null;
   } | null;
   stepDiffs: IResourceDiff[];
 }

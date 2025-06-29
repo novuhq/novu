@@ -84,7 +84,7 @@ export class EnvironmentsController {
   @ApiOperation({ summary: 'Compare workflows between source and target environments' })
   @ApiResponse(DiffEnvironmentResponseDto)
   @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.ENVIRONMENT_READ)
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async diffEnvironment(
     @UserSession() user: UserSessionData,
     @Body() body: DiffEnvironmentRequestDto

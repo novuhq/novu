@@ -8,7 +8,6 @@ import { TransactionalSyncService } from './services/transactional-sync.service'
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
 
-// Import workflow sync components
 import {
   WorkflowNormalizer,
   WorkflowComparator,
@@ -27,7 +26,6 @@ import {
     WorkflowSyncStrategy,
     TransactionalSyncService,
 
-    // Workflow sync components
     WorkflowNormalizer,
     WorkflowComparator,
     WorkflowRepositoryService,
