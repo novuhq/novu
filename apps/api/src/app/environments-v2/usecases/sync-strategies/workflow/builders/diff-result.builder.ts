@@ -23,7 +23,7 @@ export class DiffResultBuilder {
     const diff: IEntityDiff = {
       entityId,
       entityName,
-      entityType: 'workflow',
+      entityType: EntityTypeEnum.WORKFLOW,
       action: DiffActionEnum.ADDED,
     };
 
@@ -42,7 +42,7 @@ export class DiffResultBuilder {
     const diff: IEntityDiff = {
       entityId,
       entityName,
-      entityType: 'workflow',
+      entityType: EntityTypeEnum.WORKFLOW,
       action: DiffActionEnum.DELETED,
     };
 
