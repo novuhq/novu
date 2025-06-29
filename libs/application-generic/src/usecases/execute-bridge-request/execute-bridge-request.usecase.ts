@@ -20,7 +20,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { EnvironmentRepository } from '@novu/dal';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BRIDGE_EXECUTION_ERROR } from '../../utils';
@@ -245,7 +245,7 @@ export class ExecuteBridgeRequest {
   private getBridgeUrl(
     environmentBridgeUrl: string,
     environmentId: string,
-    workflowOrigin: WorkflowOriginEnum,
+    workflowOrigin: ResourceOriginEnum,
     statelessBridgeUrl?: string,
     action?: PostActionEnum | GetActionEnum
   ): string {
@@ -254,12 +254,12 @@ export class ExecuteBridgeRequest {
     }
 
     switch (workflowOrigin) {
-      case WorkflowOriginEnum.NOVU_CLOUD: {
+      case ResourceOriginEnum.NOVU_CLOUD: {
         const apiUrl = this.getApiUrl(action);
 
         return `${apiUrl}/v1/environments/${environmentId}/bridge`;
       }
-      case WorkflowOriginEnum.EXTERNAL: {
+      case ResourceOriginEnum.EXTERNAL: {
         if (!environmentBridgeUrl) {
           throw new BadRequestException({
             code: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.code,
@@ -275,17 +275,27 @@ export class ExecuteBridgeRequest {
   }
 
   private getApiUrl(action: PostActionEnum | GetActionEnum): string {
-    if (action === PostActionEnum.PREVIEW) {
-      return `http://localhost:${process.env.PORT}`;
+    const baseUrl = action === PostActionEnum.PREVIEW 
+      ? `http://localhost:${process.env.PORT}`
+      : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
+
+    if (!baseUrl) {
+      throw new Error('API URL is not properly configured');
     }
 
-    const apiUrl = process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
+    // Ensure the URL doesn't end with a slash
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    
+    // Add GLOBAL_CONTEXT_PATH and API_CONTEXT_PATH if they exist
+    const contextPath = [
+      process.env.GLOBAL_CONTEXT_PATH,
+      action === PostActionEnum.PREVIEW ? process.env.API_CONTEXT_PATH : undefined
+    ]
+      .filter(Boolean)
+      .join('/');
 
-    if (!apiUrl) {
-      throw new Error('API_ROOT_URL environment variable is not set');
-    }
-
-    return apiUrl;
+    // Only append context path if it's not empty
+    return contextPath ? `${cleanBaseUrl}/${contextPath}` : cleanBaseUrl;
   }
 
   @Instrument()

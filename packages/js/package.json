@@ -132,6 +132,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",
+    "partysocket": "^1.1.4",
     "socket.io-client": "4.7.2",
     "solid-floating-ui": "^0.3.1",
     "solid-js": "^1.9.4",

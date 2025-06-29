@@ -9,7 +9,7 @@ import {
   HttpQueryKeysEnum,
   PostActionEnum,
 } from '@novu/framework/internal';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { EnvironmentLevelCommand } from '../../commands';
 
 export type BridgeError = {
@@ -40,22 +40,21 @@ export class ExecuteBridgeRequestCommand extends EnvironmentLevelCommand {
   retriesLimit?: number;
 
   @IsDefined()
-  workflowOrigin: WorkflowOriginEnum;
+  workflowOrigin: ResourceOriginEnum;
 
   @IsOptional()
   statelessBridgeUrl?: string;
 }
 
 // will generate the output type based on the action
-export type ExecuteBridgeRequestDto<T extends PostActionEnum | GetActionEnum> =
-  T extends GetActionEnum.DISCOVER
-    ? DiscoverOutput
-    : T extends GetActionEnum.HEALTH_CHECK
-      ? HealthCheck
-      : T extends GetActionEnum.CODE
-        ? CodeResult
-        : T extends PostActionEnum.EXECUTE
+export type ExecuteBridgeRequestDto<T extends PostActionEnum | GetActionEnum> = T extends GetActionEnum.DISCOVER
+  ? DiscoverOutput
+  : T extends GetActionEnum.HEALTH_CHECK
+    ? HealthCheck
+    : T extends GetActionEnum.CODE
+      ? CodeResult
+      : T extends PostActionEnum.EXECUTE
+        ? ExecuteOutput
+        : T extends PostActionEnum.PREVIEW
           ? ExecuteOutput
-          : T extends PostActionEnum.PREVIEW
-            ? ExecuteOutput
-            : never;
+          : never;

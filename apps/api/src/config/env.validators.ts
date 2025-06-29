@@ -42,7 +42,7 @@ export const envValidators = {
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
-
+  INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {

@@ -6,7 +6,7 @@ import {
   ITemplateVariable,
   MessageTemplateContentType,
   StepTypeEnum,
-  WorkflowTypeEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema } from '../../../value-objects';
@@ -81,7 +81,7 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   code?: string;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  workflowType: WorkflowTypeEnum;
+  workflowType: ResourceTypeEnum;
 }

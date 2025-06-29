@@ -8,7 +8,7 @@ import { EnvironmentEntity, EnvironmentRepository, NotificationGroupRepository }
 import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts/usecases';
+import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts-v1/usecases';
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateEnvironmentCommand } from './create-environment.command';
 import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';

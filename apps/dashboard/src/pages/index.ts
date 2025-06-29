@@ -14,3 +14,4 @@ export * from './usecase-select-page';
 export * from './welcome-page';
 export * from './workflows';
 export * from './layouts';
+export * from './translations';

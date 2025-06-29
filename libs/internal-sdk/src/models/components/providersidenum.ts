@@ -79,6 +79,7 @@ export const ProvidersIdEnum = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  ChatWebhook: "chat-webhook",
 } as const;
 /**
  * Provider ID of the job

@@ -15,6 +15,7 @@ import {
   ApiKeysPage,
   CreateWorkflowPage,
   LayoutsPage,
+  TranslationsPage,
   ErrorPage,
   IntegrationsListPage,
   Logs,
@@ -235,6 +236,10 @@ const router = createBrowserRouter([
                     <LayoutsPage />
                   </ProtectedRoute>
                 ),
+              },
+              {
+                path: ROUTES.TRANSLATIONS,
+                element: <TranslationsPage />,
               },
               {
                 path: ROUTES.API_KEYS,

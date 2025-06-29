@@ -475,6 +475,7 @@
     "Paramtype",
     "parens",
     "partnerintegration",
+    "partysocket",
     "pepipost",
     "permerror",
     "permerrors",
@@ -701,6 +702,7 @@
     "truncatewords",
     "tsbuildinfo",
     "TSIG",
+    "tsndr",
     "tspan",
     "tsup",
     "TTFB",
@@ -829,6 +831,7 @@
     "angular.json",
     "apps/api/src/.env.test",
     "apps/api/src/app/analytics/usecases/hubspot-identify-form/hubspot-identify-form.usecase.ts",
+    "apps/api/src/app/translations/e2e/v2/**/*",
     "apps/api/src/app/workflows-v2/maily-test-data.ts",
     "apps/api/src/app/workflows-v2/usecases/validate-content/validate-placeholders/validate-placeholder.usecase.ts",
     "apps/dashboard/eslint.config.js",
@@ -859,6 +862,7 @@
     "apps/dashboard/src/hooks/use-plain-chat.ts",
     "apps/dashboard/src/components/variable/constants.ts",
     "apps/dashboard/src/utils/locales.ts",
-    "apps/dashboard/src/components/primitives/constants.ts"
+    "apps/dashboard/src/components/primitives/constants.ts",
+    "enterprise/workers/socket/worker-configuration.d.ts"
   ]
 }

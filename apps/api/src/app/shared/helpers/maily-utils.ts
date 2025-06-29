@@ -391,3 +391,30 @@ export const wrapMailyInLiquid = (content: string) => {
     },
   });
 };
+
+export const hasMailyVariable = (content: string, variable: string): boolean => {
+  const mailyJSONContent: MailyJSONContent = JSON.parse(content);
+  let result = false;
+
+  processMailyNodes({
+    node: mailyJSONContent,
+    shouldProcessAttr: ({ attrKey }) => attrKey === MailyAttrsEnum.ID,
+    processAttr: ({ attrValue }) => {
+      if (attrValue === variable) {
+        result = true;
+      }
+
+      return attrValue;
+    },
+    shouldProcessFlag: ({ flagKey }) => flagKey === MailyAttrsEnum.ID,
+    processFlag: ({ flagValue }) => {
+      if (flagValue === variable) {
+        result = true;
+      }
+
+      return flagValue;
+    },
+  });
+
+  return result;
+};

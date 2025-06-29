@@ -3,15 +3,23 @@ import { Test } from '@nestjs/testing';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { SocketWorkerService } from '../socket-worker';
 import { IWebSocketJobDto } from '../../dtos';
 
 let webSocketsQueueService: WebSocketsQueueService;
+
+// Mock SocketWorkerService
+const mockSocketWorkerService = {
+  isEnabled: jest.fn().mockResolvedValue(false),
+  sendMessage: jest.fn().mockResolvedValue(undefined),
+} as any;
 
 describe('WebSockets Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
+        mockSocketWorkerService
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -27,12 +35,7 @@ describe('WebSockets Queue service', () => {
     it('should be initialised properly', async () => {
       expect(webSocketsQueueService).toBeDefined();
       expect(Object.keys(webSocketsQueueService)).toEqual(
-        expect.arrayContaining([
-          'topic',
-          'DEFAULT_ATTEMPTS',
-          'instance',
-          'queue',
-        ]),
+        expect.arrayContaining(['topic', 'DEFAULT_ATTEMPTS', 'instance', 'queue'])
       );
       expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
@@ -77,7 +80,7 @@ describe('WebSockets Queue service', () => {
           name: jobId,
           data: jobData,
           attemptsMade: 0,
-        }),
+        })
       );
     });
 
@@ -117,7 +120,7 @@ describe('WebSockets Queue service', () => {
             _userId,
           },
           attemptsMade: 0,
-        }),
+        })
       );
     });
   });
@@ -128,6 +131,7 @@ describe('WebSockets Queue service', () => {
 
       webSocketsQueueService = new WebSocketsQueueService(
         new WorkflowInMemoryProviderService(),
+        mockSocketWorkerService
       );
       await webSocketsQueueService.queue.obliterate();
     });
@@ -138,9 +142,7 @@ describe('WebSockets Queue service', () => {
     });
 
     it('should have prefix in cluster mode', async () => {
-      expect(webSocketsQueueService.queue.opts.prefix).toEqual(
-        '{ws_socket_queue}',
-      );
+      expect(webSocketsQueueService.queue.opts.prefix).toEqual('{ws_socket_queue}');
     });
   });
 });

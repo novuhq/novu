@@ -7,7 +7,7 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export type Five = string | number | boolean | { [k: string]: any };
+export type Value5 = string | number | boolean | { [k: string]: any };
 
 export type Four = {};
 
@@ -40,40 +40,43 @@ export type ConstraintValidation = {
 };
 
 /** @internal */
-export const Five$inboundSchema: z.ZodType<Five, z.ZodTypeDef, unknown> = z
+export const Value5$inboundSchema: z.ZodType<Value5, z.ZodTypeDef, unknown> = z
   .union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /** @internal */
-export type Five$Outbound = string | number | boolean | { [k: string]: any };
+export type Value5$Outbound = string | number | boolean | { [k: string]: any };
 
 /** @internal */
-export const Five$outboundSchema: z.ZodType<Five$Outbound, z.ZodTypeDef, Five> =
-  z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Value5$outboundSchema: z.ZodType<
+  Value5$Outbound,
+  z.ZodTypeDef,
+  Value5
+> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Five$ {
-  /** @deprecated use `Five$inboundSchema` instead. */
-  export const inboundSchema = Five$inboundSchema;
-  /** @deprecated use `Five$outboundSchema` instead. */
-  export const outboundSchema = Five$outboundSchema;
-  /** @deprecated use `Five$Outbound` instead. */
-  export type Outbound = Five$Outbound;
+export namespace Value5$ {
+  /** @deprecated use `Value5$inboundSchema` instead. */
+  export const inboundSchema = Value5$inboundSchema;
+  /** @deprecated use `Value5$outboundSchema` instead. */
+  export const outboundSchema = Value5$outboundSchema;
+  /** @deprecated use `Value5$Outbound` instead. */
+  export type Outbound = Value5$Outbound;
 }
 
-export function fiveToJSON(five: Five): string {
-  return JSON.stringify(Five$outboundSchema.parse(five));
+export function value5ToJSON(value5: Value5): string {
+  return JSON.stringify(Value5$outboundSchema.parse(value5));
 }
 
-export function fiveFromJSON(
+export function value5FromJSON(
   jsonString: string,
-): SafeParseResult<Five, SDKValidationError> {
+): SafeParseResult<Value5, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Five$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Five' from JSON`,
+    (x) => Value5$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Value5' from JSON`,
   );
 }
 

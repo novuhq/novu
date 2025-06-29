@@ -1,13 +1,13 @@
 import { RiArrowRightSLine, RiGuideFill } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
-import { StepResponseDto, WorkflowOriginEnum } from '@novu/shared';
+import { StepResponseDto, ResourceOriginEnum } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
 
-export function SkipConditionsButton({ origin, step }: { origin: WorkflowOriginEnum; step: StepResponseDto }) {
-  const canEditStepConditions = origin === WorkflowOriginEnum.NOVU_CLOUD;
+export function SkipConditionsButton({ origin, step }: { origin: ResourceOriginEnum; step: StepResponseDto }) {
+  const canEditStepConditions = origin === ResourceOriginEnum.NOVU_CLOUD;
   const uiSchema = step.controls.uiSchema;
   const skip = uiSchema?.properties?.skip;
 
