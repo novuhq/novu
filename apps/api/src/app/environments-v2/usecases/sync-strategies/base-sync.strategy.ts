@@ -54,28 +54,20 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
       (acc, diffItem) => {
         switch (diffItem.action) {
           case 'added':
+          case 'stepAdded':
             acc.added += 1;
             break;
           case 'modified':
+          case 'stepModified':
+          case 'stepMoved':
             acc.modified += 1;
             break;
           case 'deleted':
+          case 'stepDeleted':
             acc.deleted += 1;
             break;
           case 'unchanged':
             acc.unchanged += 1;
-            break;
-          case 'stepAdded':
-            acc.stepAdded += 1;
-            break;
-          case 'stepModified':
-            acc.stepModified += 1;
-            break;
-          case 'stepDeleted':
-            acc.stepDeleted += 1;
-            break;
-          case 'stepMoved':
-            acc.stepMoved += 1;
             break;
           default:
             break;
@@ -88,10 +80,6 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
         modified: 0,
         deleted: 0,
         unchanged: 0,
-        stepAdded: 0,
-        stepModified: 0,
-        stepDeleted: 0,
-        stepMoved: 0,
       }
     );
 

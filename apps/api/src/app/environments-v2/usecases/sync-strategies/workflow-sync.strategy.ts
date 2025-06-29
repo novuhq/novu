@@ -489,28 +489,20 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       (acc, diffItem) => {
         switch (diffItem.action) {
           case DiffActionEnum.ADDED:
+          case DiffActionEnum.STEP_ADDED:
             acc.added += 1;
             break;
           case DiffActionEnum.MODIFIED:
+          case DiffActionEnum.STEP_MODIFIED:
+          case DiffActionEnum.STEP_MOVED:
             acc.modified += 1;
             break;
           case DiffActionEnum.DELETED:
+          case DiffActionEnum.STEP_DELETED:
             acc.deleted += 1;
             break;
           case DiffActionEnum.UNCHANGED:
             acc.unchanged += 1;
-            break;
-          case DiffActionEnum.STEP_ADDED:
-            acc.stepAdded += 1;
-            break;
-          case DiffActionEnum.STEP_MODIFIED:
-            acc.stepModified += 1;
-            break;
-          case DiffActionEnum.STEP_DELETED:
-            acc.stepDeleted += 1;
-            break;
-          case DiffActionEnum.STEP_MOVED:
-            acc.stepMoved += 1;
             break;
           default:
             break;
@@ -523,10 +515,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
         modified: 0,
         deleted: 0,
         unchanged: 0,
-        stepAdded: 0,
-        stepModified: 0,
-        stepDeleted: 0,
-        stepMoved: 0,
       }
     );
   }

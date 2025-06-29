@@ -95,37 +95,21 @@ export class EntityDiffDto {
 }
 
 export class DiffSummaryDto {
-  @ApiProperty({ description: 'Number of added workflows' })
+  @ApiProperty({ description: 'Number of added entities (workflows and steps)' })
   @IsNumber()
   added: number;
 
-  @ApiProperty({ description: 'Number of modified workflows' })
+  @ApiProperty({ description: 'Number of modified entities (workflows and steps)' })
   @IsNumber()
   modified: number;
 
-  @ApiProperty({ description: 'Number of deleted workflows' })
+  @ApiProperty({ description: 'Number of deleted entities (workflows and steps)' })
   @IsNumber()
   deleted: number;
 
-  @ApiProperty({ description: 'Number of unchanged workflows' })
+  @ApiProperty({ description: 'Number of unchanged entities (workflows and steps)' })
   @IsNumber()
   unchanged: number;
-
-  @ApiProperty({ description: 'Number of added steps' })
-  @IsNumber()
-  stepAdded: number;
-
-  @ApiProperty({ description: 'Number of modified steps' })
-  @IsNumber()
-  stepModified: number;
-
-  @ApiProperty({ description: 'Number of deleted steps' })
-  @IsNumber()
-  stepDeleted: number;
-
-  @ApiProperty({ description: 'Number of moved steps' })
-  @IsNumber()
-  stepMoved: number;
 }
 
 export class EntityDiffResultDto {

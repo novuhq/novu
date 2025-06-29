@@ -117,14 +117,7 @@ export class DiffEnvironmentUseCase {
 
       // Count all changes (both workflow and step level)
       const entitySummary = result.summary;
-      summary.totalChanges +=
-        entitySummary.added +
-        entitySummary.modified +
-        entitySummary.deleted +
-        entitySummary.stepAdded +
-        entitySummary.stepModified +
-        entitySummary.stepDeleted +
-        entitySummary.stepMoved;
+      summary.totalChanges += entitySummary.added + entitySummary.modified + entitySummary.deleted;
       // Note: We don't count 'unchanged' as changes
     }
 

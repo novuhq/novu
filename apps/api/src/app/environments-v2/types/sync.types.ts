@@ -102,10 +102,6 @@ export interface IDiffResult {
     modified: number;
     deleted: number;
     unchanged: number;
-    stepAdded: number;
-    stepModified: number;
-    stepDeleted: number;
-    stepMoved: number;
   };
 }
 
