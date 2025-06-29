@@ -64,7 +64,7 @@ export class SyncedWorkflowDto {
   entityName: string;
 
   @ApiProperty({ description: 'Sync action performed' })
-  action: 'created' | 'updated' | 'skipped';
+  action: 'created' | 'updated' | 'skipped' | 'deleted';
 
   @ApiProperty({ description: 'Duration in milliseconds' })
   duration: number;

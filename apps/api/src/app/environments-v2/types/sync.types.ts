@@ -22,7 +22,7 @@ export interface ISyncedEntity {
   entityType: EntityTypeEnum;
   entityId: string;
   entityName: string;
-  action: 'created' | 'updated' | 'skipped';
+  action: 'created' | 'updated' | 'skipped' | 'deleted';
   duration: number;
 }
 

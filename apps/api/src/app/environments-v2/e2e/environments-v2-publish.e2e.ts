@@ -531,6 +531,85 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         session.environment._id = originalEnvironmentId;
       }
     });
+
+    it('should delete workflows from target environment when they are removed from source', async () => {
+      // Create a workflow in source environment using the v2 API
+      const sourceWorkflow = await createWorkflow({
+        name: 'Test Workflow for Deletion',
+        workflowId: `test-deletion-${Date.now()}`,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: 'Email Step',
+            type: StepTypeEnum.EMAIL,
+            controlValues: {
+              subject: 'Test Email Subject',
+              body: 'Test email content',
+            },
+          },
+        ],
+      });
+
+      // First publish from source to target to create the workflow
+      const { body: firstPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Verify workflow was created in target environment
+      const targetWorkflowsAfterCreate = await workflowRepository.find({
+        _environmentId: targetEnv._id,
+        _organizationId: session.organization._id,
+        'triggers.identifier': sourceWorkflow.workflowId,
+      });
+
+      expect(targetWorkflowsAfterCreate).to.have.length(1);
+      expect(targetWorkflowsAfterCreate[0].name).to.equal('Test Workflow for Deletion');
+
+      // Delete the workflow from source environment
+      await novuClient.workflows.delete(sourceWorkflow.workflowId);
+
+      // Publish again - this should delete the workflow from target environment
+      const { body: secondPublish } = await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: sourceEnv._id,
+          targetEnvironmentId: targetEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
+
+      // Verify that the workflow result shows it was deleted
+      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      expect(workflowResult).to.exist;
+      expect(workflowResult.successful).to.have.length.greaterThan(0);
+
+      const deletedWorkflowResult = workflowResult.successful.find(
+        (item) => item.entityName === 'Test Workflow for Deletion'
+      );
+      expect(deletedWorkflowResult).to.exist;
+      expect(deletedWorkflowResult.action).to.equal('deleted');
+
+      // Verify workflow was deleted from target environment
+      const targetWorkflowsAfterDelete = await workflowRepository.find({
+        _environmentId: targetEnv._id,
+        _organizationId: session.organization._id,
+        'triggers.identifier': sourceWorkflow.workflowId,
+      });
+
+      expect(targetWorkflowsAfterDelete).to.have.length(0);
+    });
   });
 
   async function createWorkflow(workflow: CreateWorkflowDto): Promise<WorkflowResponseDto> {

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, DeleteWorkflowUseCase, DeleteWorkflowCommand } from '@novu/application-generic';
 import { NotificationTemplateRepository, PreferencesRepository } from '@novu/dal';
 import { ResourceOriginEnum, WorkflowStatusEnum, PreferencesTypeEnum } from '@novu/shared';
 import { diff } from 'deep-object-diff';
@@ -57,7 +57,8 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private preferencesRepository: PreferencesRepository,
     private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
-    private getWorkflowUseCase: GetWorkflowUseCase
+    private getWorkflowUseCase: GetWorkflowUseCase,
+    private deleteWorkflowUseCase: DeleteWorkflowUseCase
   ) {
     super(logger);
   }
@@ -172,6 +173,50 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           });
 
           this.logger.error(`Failed to sync workflow ${workflow.name}: ${error.message}`);
+        }
+      }
+
+      // Handle deleted workflows (exist in target but not in source)
+      const sourceWorkflowMap = new Map(
+        sourceWorkflows.map((workflow) => [workflow.triggers[0]?.identifier, workflow])
+      );
+
+      for (const targetWorkflow of targetWorkflows) {
+        try {
+          const targetIdentifier = targetWorkflow.triggers[0]?.identifier;
+          if (!sourceWorkflowMap.has(targetIdentifier) && targetWorkflow.active) {
+            // Workflow exists in target but not in source and is currently active - deactivate it
+            const deactivateStart = Date.now();
+
+            await this.deleteWorkflowUseCase.execute(
+              DeleteWorkflowCommand.create({
+                workflowIdOrInternalId: targetWorkflow._id,
+                environmentId: context.targetEnvironmentId,
+                organizationId: context.user.organizationId,
+                userId: context.user._id,
+              })
+            );
+
+            successful.push({
+              entityType: EntityTypeEnum.WORKFLOW,
+              entityId: targetWorkflow._id,
+              entityName: targetWorkflow.name,
+              action: 'deleted',
+              duration: Date.now() - deactivateStart,
+            });
+
+            this.logger.info(`Successfully deleted workflow: ${targetWorkflow.name} (removed from source)`);
+          }
+        } catch (error) {
+          failed.push({
+            entityType: EntityTypeEnum.WORKFLOW,
+            entityId: targetWorkflow._id,
+            entityName: targetWorkflow.name,
+            error: error.message,
+            stack: error.stack,
+          });
+
+          this.logger.error(`Failed to delete workflow ${targetWorkflow.name}: ${error.message}`);
         }
       }
 
