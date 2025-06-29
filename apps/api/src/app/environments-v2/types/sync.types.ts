@@ -51,10 +51,10 @@ export interface ISyncResult {
 export interface IPublishResult {
   results: ISyncResult[];
   summary: {
-    totalEntities: number;
-    totalSuccessful: number;
-    totalFailed: number;
-    totalSkipped: number;
+    entities: number;
+    successful: number;
+    failed: number;
+    skipped: number;
   };
 }
 

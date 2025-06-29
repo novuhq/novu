@@ -51,9 +51,9 @@ export class PublishEnvironmentUseCase {
       const summary = this.calculateSummary(results);
 
       this.logger.info(
-        `Environment publish completed. Processed: ${summary.totalEntities}, ` +
-          `Successful: ${summary.totalSuccessful}, Failed: ${summary.totalFailed}, ` +
-          `Skipped: ${summary.totalSkipped}`
+        `Environment publish completed. Processed: ${summary.entities}, ` +
+          `Successful: ${summary.successful}, Failed: ${summary.failed}, ` +
+          `Skipped: ${summary.skipped}`
       );
 
       return {
@@ -123,17 +123,17 @@ export class PublishEnvironmentUseCase {
 
   private calculateSummary(results: any[]) {
     const summary = {
-      totalEntities: 0,
-      totalSuccessful: 0,
-      totalFailed: 0,
-      totalSkipped: 0,
+      entities: 0,
+      successful: 0,
+      failed: 0,
+      skipped: 0,
     };
 
     for (const result of results) {
-      summary.totalEntities += result.totalProcessed;
-      summary.totalSuccessful += result.successful.length;
-      summary.totalFailed += result.failed.length;
-      summary.totalSkipped += result.skipped.length;
+      summary.entities += result.totalProcessed;
+      summary.successful += result.successful.length;
+      summary.failed += result.failed.length;
+      summary.skipped += result.skipped.length;
     }
 
     return summary;

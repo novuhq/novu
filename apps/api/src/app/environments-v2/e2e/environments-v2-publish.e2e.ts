@@ -64,7 +64,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
 
     expect(body.data).to.have.property('results');
     expect(body.data).to.have.property('summary');
-    expect(body.data.summary).to.have.property('totalEntities');
+    expect(body.data.summary).to.have.property('entities');
   });
 
   describe('Workflow Publishing Tests', () => {
@@ -115,7 +115,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(body.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(body.data.summary.entities).to.be.greaterThan(0);
       expect(body.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify workflow was created in target environment
@@ -164,7 +164,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(body.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(body.data.summary.entities).to.be.greaterThan(0);
       expect(body.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify both workflows were published to target
@@ -222,7 +222,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(body.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(body.data.summary.entities).to.be.greaterThan(0);
       expect(body.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify workflow structure is preserved
@@ -267,7 +267,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Second publish without any changes - should not report workflows as updated
@@ -284,7 +284,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
        * The issue: currently this fails because workflows are always reported as "updated"
        * even when no changes were made
        */
-      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.equal(0);
       expect(secondPublish.data.summary.totalSkipped).to.be.greaterThan(0);
 
@@ -332,7 +332,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify initial workflow was created in target environment
@@ -366,7 +366,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was updated, not skipped
@@ -431,7 +431,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify initial workflow was created in target environment
@@ -495,7 +495,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was updated, not skipped
@@ -560,7 +560,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify workflow was created in target environment
@@ -586,7 +586,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(secondPublish.data.summary.totalEntities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was deleted
