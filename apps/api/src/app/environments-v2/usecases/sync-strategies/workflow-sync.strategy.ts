@@ -68,7 +68,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
   }
 
   async execute(context: ISyncContext): Promise<ISyncResult> {
-    const startTime = Date.now();
     const successful: ISyncedEntity[] = [];
     const failed: IFailedEntity[] = [];
     const skipped: ISkippedEntity[] = [];
@@ -96,8 +95,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
             entityId: workflow._id,
             entityName: workflow.name,
             reason: 'Dry run mode',
-          })),
-          Date.now() - startTime
+          }))
         );
       }
 
@@ -114,7 +112,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
       for (const workflow of sourceWorkflows) {
         try {
-          const syncStart = Date.now();
           const sourceIdentifier = workflow.triggers[0]?.identifier;
           const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
@@ -156,7 +153,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
               entityId: workflow._id,
               entityName: workflow.name,
               action,
-              duration: Date.now() - syncStart,
             });
 
             this.logger.info(`Successfully synced workflow: ${workflow.name} (${action})`);
@@ -186,8 +182,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           const targetIdentifier = targetWorkflow.triggers[0]?.identifier;
           if (!sourceWorkflowMap.has(targetIdentifier) && targetWorkflow.active) {
             // Workflow exists in target but not in source and is currently active - deactivate it
-            const deactivateStart = Date.now();
-
             await this.deleteWorkflowUseCase.execute(
               DeleteWorkflowCommand.create({
                 workflowIdOrInternalId: targetWorkflow._id,
@@ -202,7 +196,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
               entityId: targetWorkflow._id,
               entityName: targetWorkflow.name,
               action: 'deleted',
-              duration: Date.now() - deactivateStart,
             });
 
             this.logger.info(`Successfully deleted workflow: ${targetWorkflow.name} (removed from source)`);
@@ -220,7 +213,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
         }
       }
 
-      return this.createSyncResult(EntityTypeEnum.WORKFLOW, successful, failed, skipped, Date.now() - startTime);
+      return this.createSyncResult(EntityTypeEnum.WORKFLOW, successful, failed, skipped);
     } catch (error) {
       this.logger.error(`Workflow sync failed: ${error.message}`);
       throw error;

@@ -19,8 +19,6 @@ export class PublishEnvironmentUseCase {
 
   @InstrumentUsecase()
   async execute(command: PublishEnvironmentCommand): Promise<IPublishResult> {
-    const startTime = Date.now();
-
     try {
       await this.validateEnvironments(command);
 
@@ -42,13 +40,15 @@ export class PublishEnvironmentUseCase {
         `Starting environment publish from ${command.sourceEnvironmentId} to ${command.targetEnvironmentId}`
       );
 
-      // For now, we only support workflow sync
-      // In the future, we can add more strategies here
+      /*
+       * For now, we only support workflow sync
+       * In the future, we can add more strategies here
+       */
       const strategies = [this.workflowSyncStrategy];
 
       const results = await this.executeSync(strategies, syncContext);
 
-      const summary = this.calculateSummary(results, Date.now() - startTime);
+      const summary = this.calculateSummary(results);
 
       this.logger.info(
         `Environment publish completed. Processed: ${summary.totalEntities}, ` +
@@ -121,13 +121,12 @@ export class PublishEnvironmentUseCase {
     return results;
   }
 
-  private calculateSummary(results: any[], totalDuration: number) {
+  private calculateSummary(results: any[]) {
     const summary = {
       totalEntities: 0,
       totalSuccessful: 0,
       totalFailed: 0,
       totalSkipped: 0,
-      totalDuration,
     };
 
     for (const result of results) {

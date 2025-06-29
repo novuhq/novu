@@ -36,8 +36,7 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
     entityType: EntityTypeEnum,
     successful: any[] = [],
     failed: any[] = [],
-    skipped: any[] = [],
-    totalTime: number = 0
+    skipped: any[] = []
   ): ISyncResult {
     return {
       entityType,
@@ -45,7 +44,6 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
       failed,
       skipped,
       totalProcessed: successful.length + failed.length + skipped.length,
-      totalTime,
     };
   }
 

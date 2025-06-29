@@ -65,9 +65,6 @@ export class SyncedWorkflowDto {
 
   @ApiProperty({ description: 'Sync action performed' })
   action: 'created' | 'updated' | 'skipped' | 'deleted';
-
-  @ApiProperty({ description: 'Duration in milliseconds' })
-  duration: number;
 }
 
 export class FailedWorkflowDto {
@@ -116,9 +113,6 @@ export class SyncResultDto {
 
   @ApiProperty({ description: 'Total number of workflows processed' })
   totalProcessed: number;
-
-  @ApiProperty({ description: 'Total time taken in milliseconds' })
-  totalTime: number;
 }
 
 export class PublishSummaryDto {
@@ -133,9 +127,6 @@ export class PublishSummaryDto {
 
   @ApiProperty({ description: 'Total number of skipped entities' })
   totalSkipped: number;
-
-  @ApiProperty({ description: 'Total duration in milliseconds' })
-  totalDuration: number;
 }
 
 export class PublishEnvironmentResponseDto {

@@ -65,7 +65,6 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
     expect(body.data).to.have.property('results');
     expect(body.data).to.have.property('summary');
     expect(body.data.summary).to.have.property('totalEntities');
-    expect(body.data.summary).to.have.property('totalDuration');
   });
 
   describe('Workflow Publishing Tests', () => {

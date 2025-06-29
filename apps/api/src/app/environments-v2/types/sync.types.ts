@@ -23,7 +23,6 @@ export interface ISyncedEntity {
   entityId: string;
   entityName: string;
   action: 'created' | 'updated' | 'skipped' | 'deleted';
-  duration: number;
 }
 
 export interface IFailedEntity {
@@ -47,7 +46,6 @@ export interface ISyncResult {
   failed: IFailedEntity[];
   skipped: ISkippedEntity[];
   totalProcessed: number;
-  totalTime: number;
 }
 
 export interface IPublishResult {
@@ -57,7 +55,6 @@ export interface IPublishResult {
     totalSuccessful: number;
     totalFailed: number;
     totalSkipped: number;
-    totalDuration: number;
   };
 }
 
