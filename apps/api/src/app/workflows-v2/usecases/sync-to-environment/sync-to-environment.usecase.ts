@@ -105,7 +105,7 @@ export class SyncToEnvironmentUseCase {
       workflowId: sourceWorkflow.workflowId,
       payloadSchema: sourceWorkflow.payloadSchema,
       validatePayload: sourceWorkflow.validatePayload,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       name: sourceWorkflow.name,
       active: sourceWorkflow.active,
       tags: sourceWorkflow.tags,
@@ -122,7 +122,7 @@ export class SyncToEnvironmentUseCase {
     preferencesToClone: PreferencesEntity[]
   ): Promise<UpsertWorkflowDataCommand> {
     return {
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       payloadSchema: sourceWorkflow.payloadSchema,
       validatePayload: sourceWorkflow.validatePayload,
       workflowId: sourceWorkflow.workflowId,

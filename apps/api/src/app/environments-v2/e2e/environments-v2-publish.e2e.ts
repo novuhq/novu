@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { StepTypeEnum, EmailBlockTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { StepTypeEnum, EmailBlockTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -479,7 +479,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
               },
             },
           },
-          origin: WorkflowOriginEnum.NOVU_CLOUD,
+          origin: ResourceOriginEnum.NOVU_CLOUD,
         },
         sourceWorkflow.workflowId
       );

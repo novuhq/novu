@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateRepository, PreferencesRepository } from '@novu/dal';
-import { WorkflowOriginEnum, WorkflowStatusEnum, PreferencesTypeEnum } from '@novu/shared';
+import { ResourceOriginEnum, WorkflowStatusEnum, PreferencesTypeEnum } from '@novu/shared';
 import { diff } from 'deep-object-diff';
 import { BaseSyncStrategy } from './base-sync.strategy';
 import {
@@ -318,6 +318,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       return changes;
     } catch (error) {
       this.logger.error(`Failed to compare workflows: ${error.message}`);
+
       return {}; // Return empty changes if comparison fails
     }
   }
