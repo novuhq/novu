@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe.only('Observability - /observability/logs/http-requests (GET) #novu-v2', () => {
+describe('Observability - /observability/logs/http-requests (GET) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
