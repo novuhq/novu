@@ -24,8 +24,10 @@ export class DiffEnvironmentUseCase {
         `Starting environment diff between ${command.sourceEnvironmentId} and ${command.targetEnvironmentId}`
       );
 
-      // For now, we only support workflow diff
-      // In the future, we can add more strategies here
+      /*
+       * For now, we only support workflow diff
+       * In the future, we can add more strategies here
+       */
       const strategies = [this.workflowSyncStrategy];
 
       const results = await this.executeDiff(
@@ -112,7 +114,18 @@ export class DiffEnvironmentUseCase {
 
     for (const result of results) {
       summary.totalEntities += result.diffs.length;
-      summary.totalChanges += result.summary.added + result.summary.modified + result.summary.deleted;
+
+      // Count all changes (both workflow and step level)
+      const entitySummary = result.summary;
+      summary.totalChanges +=
+        entitySummary.added +
+        entitySummary.modified +
+        entitySummary.deleted +
+        entitySummary.stepAdded +
+        entitySummary.stepModified +
+        entitySummary.stepDeleted +
+        entitySummary.stepMoved;
+      // Note: We don't count 'unchanged' as changes
     }
 
     summary.hasChanges = summary.totalChanges > 0;

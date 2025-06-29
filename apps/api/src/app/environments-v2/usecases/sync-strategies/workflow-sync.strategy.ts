@@ -122,8 +122,8 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
           if (targetWorkflow) {
             // Check if there are actual changes
-            const changes = await this.compareWorkflows(workflow, targetWorkflow);
-            if (Object.keys(changes).length === 0) {
+            const { workflowChanges } = await this.compareWorkflows(workflow, targetWorkflow);
+            if (Object.keys(workflowChanges).length === 0) {
               // No changes detected, skip this workflow
               skipped.push({
                 entityType: EntityTypeEnum.WORKFLOW,
@@ -199,27 +199,30 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
         const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
         if (!targetWorkflow) {
+          // Entire workflow was added
           diffs.push({
             entityId: sourceWorkflow._id,
             entityName: sourceWorkflow.name,
+            entityType: 'workflow',
             action: DiffActionEnum.ADDED,
           });
         } else {
-          const changes = await this.compareWorkflows(sourceWorkflow, targetWorkflow);
-          if (Object.keys(changes).length > 0) {
+          // Compare workflow and get both workflow changes and step diffs
+          const { workflowChanges, stepDiffs } = await this.compareWorkflows(sourceWorkflow, targetWorkflow);
+
+          // Add workflow-level changes if any
+          if (Object.keys(workflowChanges).length > 0) {
             diffs.push({
               entityId: sourceWorkflow._id,
               entityName: sourceWorkflow.name,
+              entityType: 'workflow',
               action: DiffActionEnum.MODIFIED,
-              changes,
-            });
-          } else {
-            diffs.push({
-              entityId: sourceWorkflow._id,
-              entityName: sourceWorkflow.name,
-              action: DiffActionEnum.UNCHANGED,
+              changes: workflowChanges,
             });
           }
+
+          // Add all step-level diffs
+          diffs.push(...stepDiffs);
         }
       }
 
@@ -234,6 +237,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           diffs.push({
             entityId: targetWorkflow._id,
             entityName: targetWorkflow.name,
+            entityType: 'workflow',
             action: DiffActionEnum.DELETED,
           });
         }
@@ -261,7 +265,10 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     return await this.notificationTemplateRepository.find(query);
   }
 
-  private async compareWorkflows(sourceWorkflow: any, targetWorkflow: any): Promise<Record<string, any>> {
+  private async compareWorkflows(
+    sourceWorkflow: any,
+    targetWorkflow: any
+  ): Promise<{ workflowChanges: Record<string, any>; stepDiffs: IEntityDiff[] }> {
     try {
       // Get proper WorkflowResponseDto for both workflows to ensure we have the correct structure
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
@@ -297,29 +304,204 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       const normalizedSource = normalizeWorkflowForComparison(sourceWorkflowDto);
       const normalizedTarget = normalizeWorkflowForComparison(targetWorkflowDto);
 
-      // Get differences using deep-object-diff
-      const differences = diff(normalizedTarget, normalizedSource);
+      // Separate steps from workflow fields
+      const { steps: sourceSteps, ...sourceWithoutSteps } = normalizedSource;
+      const { steps: targetSteps, ...targetWithoutSteps } = normalizedTarget;
 
-      // If no differences, return empty object
-      if (Object.keys(differences).length === 0) {
-        return {};
-      }
+      // Compare workflow-level fields (excluding steps)
+      const workflowDifferences = diff(targetWithoutSteps, sourceWithoutSteps);
+      const workflowChanges: Record<string, any> = {};
 
-      // Transform differences to match expected format
-      const changes: Record<string, any> = {};
-
-      for (const [field, value] of Object.entries(differences)) {
-        changes[field] = {
-          old: normalizedTarget[field],
-          new: normalizedSource[field],
+      for (const [field, value] of Object.entries(workflowDifferences)) {
+        workflowChanges[field] = {
+          old: targetWithoutSteps[field],
+          new: sourceWithoutSteps[field],
         };
       }
 
-      return changes;
+      // Compare steps and generate step-level diffs
+      const stepDiffs = this.compareStepsAsEntities(
+        sourceSteps,
+        targetSteps,
+        sourceWorkflowDto._id,
+        sourceWorkflowDto.name
+      );
+
+      return { workflowChanges, stepDiffs };
     } catch (error) {
       this.logger.error(`Failed to compare workflows: ${error.message}`);
 
-      return {}; // Return empty changes if comparison fails
+      return { workflowChanges: {}, stepDiffs: [] };
     }
+  }
+
+  private compareStepsAsEntities(
+    sourceSteps: any[],
+    targetSteps: any[],
+    workflowId: string,
+    workflowName: string
+  ): IEntityDiff[] {
+    const stepDiffs: IEntityDiff[] = [];
+
+    // Create maps for efficient lookup
+    const sourceStepMap = new Map(sourceSteps.map((step, index) => [step.stepId, { step, index }]));
+    const targetStepMap = new Map(targetSteps.map((step, index) => [step.stepId, { step, index }]));
+
+    const processedSteps = new Set<string>();
+
+    // Process source steps (added/modified/moved)
+    sourceSteps.forEach((sourceStep, sourceIndex) => {
+      const targetStepData = targetStepMap.get(sourceStep.stepId);
+
+      if (!targetStepData) {
+        // Step was added
+        stepDiffs.push({
+          entityId: sourceStep.stepId,
+          entityName: sourceStep.name,
+          entityType: 'step',
+          stepType: sourceStep.type,
+          workflowId,
+          workflowName,
+          action: DiffActionEnum.STEP_ADDED,
+          newIndex: sourceIndex,
+        });
+      } else {
+        const { step: targetStep, index: targetIndex } = targetStepData;
+        const stepChanges = this.compareIndividualStep(sourceStep, targetStep);
+
+        if (Object.keys(stepChanges).length > 0) {
+          stepDiffs.push({
+            entityId: sourceStep.stepId,
+            entityName: sourceStep.name,
+            entityType: 'step',
+            stepType: sourceStep.type,
+            workflowId,
+            workflowName,
+            action: DiffActionEnum.STEP_MODIFIED,
+            oldIndex: targetIndex,
+            newIndex: sourceIndex,
+            changes: stepChanges,
+          });
+        } else if (sourceIndex !== targetIndex) {
+          stepDiffs.push({
+            entityId: sourceStep.stepId,
+            entityName: sourceStep.name,
+            entityType: 'step',
+            stepType: sourceStep.type,
+            workflowId,
+            workflowName,
+            action: DiffActionEnum.STEP_MOVED,
+            oldIndex: targetIndex,
+            newIndex: sourceIndex,
+          });
+        }
+        // Note: We don't add UNCHANGED steps to keep the response clean
+      }
+
+      processedSteps.add(sourceStep.stepId);
+    });
+
+    // Process deleted steps
+    targetSteps.forEach((targetStep, targetIndex) => {
+      if (!processedSteps.has(targetStep.stepId)) {
+        stepDiffs.push({
+          entityId: targetStep.stepId,
+          entityName: targetStep.name,
+          entityType: 'step',
+          stepType: targetStep.type,
+          workflowId,
+          workflowName,
+          action: DiffActionEnum.STEP_DELETED,
+          oldIndex: targetIndex,
+        });
+      }
+    });
+
+    return stepDiffs;
+  }
+
+  private compareIndividualStep(sourceStep: any, targetStep: any): Record<string, { old: any; new: any }> {
+    // Normalize steps for comparison
+    const normalizedSource = this.normalizeStepForComparison(sourceStep);
+    const normalizedTarget = this.normalizeStepForComparison(targetStep);
+
+    // Use deep-object-diff for individual step comparison
+    const differences = diff(normalizedTarget, normalizedSource);
+
+    // Transform to expected format
+    const changes: Record<string, { old: any; new: any }> = {};
+    for (const [field, value] of Object.entries(differences)) {
+      changes[field] = {
+        old: normalizedTarget[field],
+        new: normalizedSource[field],
+      };
+    }
+
+    return changes;
+  }
+
+  private normalizeStepForComparison(step: any): any {
+    return {
+      stepId: step.stepId,
+      name: step.name,
+      type: step.type,
+      active: step.active,
+      shouldStopOnFail: step.shouldStopOnFail,
+      filters: step.filters,
+      controlValues: step.controlValues,
+    };
+  }
+
+  protected createDiffResult(entityType: EntityTypeEnum, diffs: IEntityDiff[]): IDiffResult {
+    const summary = diffs.reduce(
+      (acc, diffItem) => {
+        switch (diffItem.action) {
+          case DiffActionEnum.ADDED:
+            acc.added += 1;
+            break;
+          case DiffActionEnum.MODIFIED:
+            acc.modified += 1;
+            break;
+          case DiffActionEnum.DELETED:
+            acc.deleted += 1;
+            break;
+          case DiffActionEnum.UNCHANGED:
+            acc.unchanged += 1;
+            break;
+          case DiffActionEnum.STEP_ADDED:
+            acc.stepAdded += 1;
+            break;
+          case DiffActionEnum.STEP_MODIFIED:
+            acc.stepModified += 1;
+            break;
+          case DiffActionEnum.STEP_DELETED:
+            acc.stepDeleted += 1;
+            break;
+          case DiffActionEnum.STEP_MOVED:
+            acc.stepMoved += 1;
+            break;
+          default:
+            break;
+        }
+
+        return acc;
+      },
+      {
+        added: 0,
+        modified: 0,
+        deleted: 0,
+        unchanged: 0,
+        stepAdded: 0,
+        stepModified: 0,
+        stepDeleted: 0,
+        stepMoved: 0,
+      }
+    );
+
+    return {
+      entityType,
+      diffs,
+      summary,
+    };
   }
 }

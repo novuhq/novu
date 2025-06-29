@@ -66,11 +66,16 @@ export enum DiffActionEnum {
   MODIFIED = 'modified',
   DELETED = 'deleted',
   UNCHANGED = 'unchanged',
+  STEP_ADDED = 'stepAdded',
+  STEP_MODIFIED = 'stepModified',
+  STEP_DELETED = 'stepDeleted',
+  STEP_MOVED = 'stepMoved',
 }
 
 export interface IEntityDiff {
   entityId: string;
   entityName: string;
+  entityType: 'workflow' | 'step';
   action: DiffActionEnum;
   changes?: Record<
     string,
@@ -79,6 +84,12 @@ export interface IEntityDiff {
       new: any;
     }
   >;
+  // Step-specific fields
+  stepType?: string;
+  workflowId?: string;
+  workflowName?: string;
+  oldIndex?: number;
+  newIndex?: number;
 }
 
 export interface IDiffResult {
@@ -89,6 +100,10 @@ export interface IDiffResult {
     modified: number;
     deleted: number;
     unchanged: number;
+    stepAdded: number;
+    stepModified: number;
+    stepDeleted: number;
+    stepMoved: number;
   };
 }
 

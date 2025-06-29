@@ -51,12 +51,48 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
 
   protected createDiffResult(entityType: EntityTypeEnum, diffs: any[] = []): IDiffResult {
     const summary = diffs.reduce(
-      (acc, diff) => {
-        acc[diff.action] += 1;
+      (acc, diffItem) => {
+        switch (diffItem.action) {
+          case 'added':
+            acc.added += 1;
+            break;
+          case 'modified':
+            acc.modified += 1;
+            break;
+          case 'deleted':
+            acc.deleted += 1;
+            break;
+          case 'unchanged':
+            acc.unchanged += 1;
+            break;
+          case 'stepAdded':
+            acc.stepAdded += 1;
+            break;
+          case 'stepModified':
+            acc.stepModified += 1;
+            break;
+          case 'stepDeleted':
+            acc.stepDeleted += 1;
+            break;
+          case 'stepMoved':
+            acc.stepMoved += 1;
+            break;
+          default:
+            break;
+        }
 
         return acc;
       },
-      { added: 0, modified: 0, deleted: 0, unchanged: 0 }
+      {
+        added: 0,
+        modified: 0,
+        deleted: 0,
+        unchanged: 0,
+        stepAdded: 0,
+        stepModified: 0,
+        stepDeleted: 0,
+        stepMoved: 0,
+      }
     );
 
     return {

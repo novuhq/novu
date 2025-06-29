@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber } from 'class-validator';
 
 export class DiffEnvironmentRequestDto {
   @ApiProperty({
@@ -25,33 +25,32 @@ export class DiffEnvironmentRequestDto {
   includeInactive?: boolean;
 }
 
-export class WorkflowChangeDto {
-  @ApiProperty({ description: 'Field that changed' })
-  field: string;
-
-  @ApiProperty({ description: 'Old value' })
-  old: any;
-
-  @ApiProperty({ description: 'New value' })
-  new: any;
-}
-
-export class WorkflowDiffDto {
-  @ApiProperty({ description: 'Workflow ID' })
+export class EntityDiffDto {
+  @ApiProperty({ description: 'Entity ID (workflow ID or step ID)' })
+  @IsString()
   entityId: string;
 
-  @ApiProperty({ description: 'Workflow name' })
+  @ApiProperty({ description: 'Entity name (workflow name or step name)' })
+  @IsString()
   entityName: string;
 
   @ApiProperty({
-    description: 'Type of change',
-    enum: ['added', 'modified', 'deleted', 'unchanged'],
+    description: 'Type of entity',
+    enum: ['workflow', 'step'],
   })
-  action: 'added' | 'modified' | 'deleted' | 'unchanged';
+  @IsEnum(['workflow', 'step'])
+  entityType: 'workflow' | 'step';
+
+  @ApiProperty({
+    description: 'Type of change',
+    enum: ['added', 'modified', 'deleted', 'unchanged', 'stepAdded', 'stepModified', 'stepDeleted', 'stepMoved'],
+  })
+  @IsEnum(['added', 'modified', 'deleted', 'unchanged', 'stepAdded', 'stepModified', 'stepDeleted', 'stepMoved'])
+  action: 'added' | 'modified' | 'deleted' | 'unchanged' | 'stepAdded' | 'stepModified' | 'stepDeleted' | 'stepMoved';
 
   @ApiPropertyOptional({
     type: 'object',
-    description: 'Detailed changes (only for modified workflows)',
+    description: 'Detailed changes (only for modified entities)',
     additionalProperties: {
       type: 'object',
       properties: {
@@ -67,28 +66,75 @@ export class WorkflowDiffDto {
       new: any;
     }
   >;
+
+  // Step-specific fields
+  @ApiPropertyOptional({ description: 'Step type (only for step entities)' })
+  @IsOptional()
+  @IsString()
+  stepType?: string;
+
+  @ApiPropertyOptional({ description: 'Parent workflow ID (only for step entities)' })
+  @IsOptional()
+  @IsString()
+  workflowId?: string;
+
+  @ApiPropertyOptional({ description: 'Parent workflow name (only for step entities)' })
+  @IsOptional()
+  @IsString()
+  workflowName?: string;
+
+  @ApiPropertyOptional({ description: 'Previous index in steps array (for moved/deleted steps)' })
+  @IsOptional()
+  @IsNumber()
+  oldIndex?: number;
+
+  @ApiPropertyOptional({ description: 'New index in steps array (for moved/added steps)' })
+  @IsOptional()
+  @IsNumber()
+  newIndex?: number;
 }
 
 export class DiffSummaryDto {
   @ApiProperty({ description: 'Number of added workflows' })
+  @IsNumber()
   added: number;
 
   @ApiProperty({ description: 'Number of modified workflows' })
+  @IsNumber()
   modified: number;
 
   @ApiProperty({ description: 'Number of deleted workflows' })
+  @IsNumber()
   deleted: number;
 
   @ApiProperty({ description: 'Number of unchanged workflows' })
+  @IsNumber()
   unchanged: number;
+
+  @ApiProperty({ description: 'Number of added steps' })
+  @IsNumber()
+  stepAdded: number;
+
+  @ApiProperty({ description: 'Number of modified steps' })
+  @IsNumber()
+  stepModified: number;
+
+  @ApiProperty({ description: 'Number of deleted steps' })
+  @IsNumber()
+  stepDeleted: number;
+
+  @ApiProperty({ description: 'Number of moved steps' })
+  @IsNumber()
+  stepMoved: number;
 }
 
 export class EntityDiffResultDto {
   @ApiProperty({ description: 'Entity type' })
+  @IsString()
   entityType: string;
 
-  @ApiProperty({ type: [WorkflowDiffDto], description: 'List of workflow differences' })
-  diffs: WorkflowDiffDto[];
+  @ApiProperty({ type: [EntityDiffDto], description: 'List of entity differences (workflows and steps)' })
+  diffs: EntityDiffDto[];
 
   @ApiProperty({ type: DiffSummaryDto, description: 'Summary of changes' })
   summary: DiffSummaryDto;
@@ -96,20 +142,25 @@ export class EntityDiffResultDto {
 
 export class EnvironmentDiffSummaryDto {
   @ApiProperty({ description: 'Total number of entities compared' })
+  @IsNumber()
   totalEntities: number;
 
   @ApiProperty({ description: 'Total number of changes detected' })
+  @IsNumber()
   totalChanges: number;
 
   @ApiProperty({ description: 'Whether any changes were detected' })
+  @IsBoolean()
   hasChanges: boolean;
 }
 
 export class DiffEnvironmentResponseDto {
   @ApiProperty({ description: 'Source environment ID' })
+  @IsString()
   sourceEnvironmentId: string;
 
   @ApiProperty({ description: 'Target environment ID' })
+  @IsString()
   targetEnvironmentId: string;
 
   @ApiProperty({ type: [EntityDiffResultDto], description: 'Diff results by entity type' })
