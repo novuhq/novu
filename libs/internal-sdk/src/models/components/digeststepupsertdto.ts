@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Digest step. For NOVU_CLOUD workflows, this should match DigestControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the Digest step.
  */
 export type DigestStepUpsertDtoControlValues = DigestControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type DigestStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Digest step. For NOVU_CLOUD workflows, this should match DigestControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the Digest step.
    */
   controlValues?: DigestControlDto | { [k: string]: any } | undefined;
 };

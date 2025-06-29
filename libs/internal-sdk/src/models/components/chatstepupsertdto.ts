@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Chat step. For NOVU_CLOUD workflows, this should match ChatControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the Chat step.
  */
 export type ChatStepUpsertDtoControlValues = ChatControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type ChatStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Chat step. For NOVU_CLOUD workflows, this should match ChatControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the Chat step.
    */
   controlValues?: ChatControlDto | { [k: string]: any } | undefined;
 };

@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Push step. For NOVU_CLOUD workflows, this should match PushControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the Push step.
  */
 export type PushStepUpsertDtoControlValues = PushControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type PushStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Push step. For NOVU_CLOUD workflows, this should match PushControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the Push step.
    */
   controlValues?: PushControlDto | { [k: string]: any } | undefined;
 };

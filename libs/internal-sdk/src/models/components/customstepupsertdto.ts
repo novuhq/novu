@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Custom step. For NOVU_CLOUD workflows, this should match CustomControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the Custom step.
  */
 export type CustomStepUpsertDtoControlValues = CustomControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type CustomStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Custom step. For NOVU_CLOUD workflows, this should match CustomControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the Custom step.
    */
   controlValues?: CustomControlDto | { [k: string]: any } | undefined;
 };

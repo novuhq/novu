@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Email step. For NOVU_CLOUD workflows, this should match EmailControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the Email step.
  */
 export type EmailStepUpsertDtoControlValues = EmailControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type EmailStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Email step. For NOVU_CLOUD workflows, this should match EmailControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the Email step.
    */
   controlValues?: EmailControlDto | { [k: string]: any } | undefined;
 };

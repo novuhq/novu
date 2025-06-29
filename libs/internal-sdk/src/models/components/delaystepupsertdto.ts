@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Delay step. For NOVU_CLOUD workflows, this should match DelayControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the Delay step.
  */
 export type DelayStepUpsertDtoControlValues = DelayControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type DelayStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Delay step. For NOVU_CLOUD workflows, this should match DelayControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the Delay step.
    */
   controlValues?: DelayControlDto | { [k: string]: any } | undefined;
 };

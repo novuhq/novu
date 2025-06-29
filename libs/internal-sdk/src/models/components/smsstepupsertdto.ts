@@ -20,7 +20,7 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the SMS step. For NOVU_CLOUD workflows, this should match SmsControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+ * Control values for the SMS step.
  */
 export type SmsStepUpsertDtoControlValues = SmsControlDto | {
   [k: string]: any;
@@ -40,7 +40,7 @@ export type SmsStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the SMS step. For NOVU_CLOUD workflows, this should match SmsControlDto structure. For EXTERNAL workflows, this can be any JSON object.
+   * Control values for the SMS step.
    */
   controlValues?: SmsControlDto | { [k: string]: any } | undefined;
 };
