@@ -13,7 +13,6 @@ import { StepEditorProvider, useStepEditor } from '@/components/workflow-editor/
 import { PreviewContextContainer } from '@/components/workflow-editor/steps/context/preview-context-container';
 import { Button } from '@/components/primitives/button';
 import { TestWorkflowDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-drawer';
-import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { Protect } from '../../../utils/protect';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 
@@ -26,9 +25,7 @@ type StepEditorLayoutProps = {
 function StepEditorContent() {
   const { step, isSubsequentLoad, editorValue } = useStepEditor();
   const editorTitle = getEditorTitle(step.type);
-  const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
-  const { testData } = useFetchWorkflowTestData({ workflowSlug });
 
   const handleTestWorkflowClick = () => {
     setIsTestDrawerOpen(true);
@@ -98,7 +95,6 @@ function StepEditorContent() {
       <TestWorkflowDrawer
         isOpen={isTestDrawerOpen}
         onOpenChange={setIsTestDrawerOpen}
-        testData={testData}
         initialPayload={currentPayload}
       />
     </ResizableLayout>
