@@ -1,10 +1,12 @@
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { RiInformationLine, RiRefreshLine } from 'react-icons/ri';
+import { RiInformationLine, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
 import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
 import { PayloadSectionProps } from '../types/preview-context.types';
 import { ACCORDION_STYLES } from '../constants/preview-context.constants';
 import { Button } from '../../../primitives/button';
+import { Hint, HintIcon } from '../../../primitives/hint';
+import { ResourceOriginEnum } from '@novu/shared';
 
 export function PreviewPayloadSection({
   errors,
@@ -13,7 +15,8 @@ export function PreviewPayloadSection({
   onUpdate,
   onClearPersisted,
   hasDigestStep,
-}: PayloadSectionProps) {
+  onManageSchema,
+}: PayloadSectionProps & { onManageSchema?: () => void }) {
   return (
     <AccordionItem value="payload" className={ACCORDION_STYLES.item}>
       <AccordionTrigger className={ACCORDION_STYLES.trigger}>
@@ -34,7 +37,7 @@ export function PreviewPayloadSection({
               </Tooltip>
             </div>
           </div>
-          {onClearPersisted && (
+          {onClearPersisted && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
             <div className="mr-2">
               <Button
                 onClick={(e) => {
@@ -64,13 +67,26 @@ export function PreviewPayloadSection({
             schema={workflow?.payloadSchema}
             className={ACCORDION_STYLES.jsonViewer}
           />
-          {hasDigestStep && (
-            <p className="text-foreground-400 text-xs">
-              💡 To simulate digest event count and content, use the Digest Step Results section below.
-            </p>
-          )}
           {errors.payload && <p className="text-destructive text-xs">{errors.payload}</p>}
         </div>
+        {onManageSchema && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
+          <div className="text-text-soft flex items-center gap-1.5 text-[10px] font-normal leading-[13px]">
+            <RiInformationLine className="h-3 w-3 flex-shrink-0" />
+            <span>
+              Manage required fields and validations with{' '}
+              <b
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onManageSchema();
+                }}
+                className="text-foreground-600 cursor-pointer font-medium"
+              >
+                Payload schema ↗
+              </b>
+            </span>
+          </div>
+        )}
       </AccordionContent>
     </AccordionItem>
   );

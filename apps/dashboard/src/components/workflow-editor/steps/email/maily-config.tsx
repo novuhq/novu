@@ -58,6 +58,7 @@ import { MailyVariablesListView } from './views/maily-variables-list-view';
 import { createVariableNodeView } from './views/variable-view';
 import { createCards } from './blocks/cards';
 import { BubbleMenuVariablePill } from './views/variable-view';
+import { createTranslationExtension } from './translations';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -183,12 +184,14 @@ export const createExtensions = ({
   blocks,
   onCreateNewVariable,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
 }: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
   blocks: BlockGroupItem[];
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
 }) => {
   const extensions = [
     RepeatExtension.extend({
@@ -306,6 +309,7 @@ export const createExtensions = ({
         });
       },
     }),
+    createTranslationExtension(isTranslationEnabled),
   ];
 
   extensions.push(
@@ -408,7 +412,6 @@ export const createExtensions = ({
         };
       },
     }),
-    // @ts-expect-error - the core and core-digest collides
     LinkExtension.extend({
       addAttributes() {
         const attributes = this.parent?.();

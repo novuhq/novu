@@ -5,8 +5,8 @@ import prompts from 'prompts';
 import { Command } from 'commander';
 import logger from '../utils/logger';
 import fileUtils from '../utils/file';
-import { detectFramework, Framework } from '../config/framework';
-import { detectPackageManager, ensurePackageJson } from '../config/package-manager';
+import { detectFramework, IFramework } from '../config/framework';
+import { detectPackageManager } from '../config/package-manager';
 import { createComponentStructure } from '../generators/component';
 import { setupEnvExampleNextJs, setupEnvExampleReact } from '../generators/env';
 import { FRAMEWORKS } from '../constants';
@@ -18,7 +18,7 @@ interface IPackageManager {
 }
 
 interface IUserConfig {
-  framework: Framework;
+  framework: IFramework;
   appId?: string;
   subscriberId?: string;
   region: string;
@@ -38,7 +38,7 @@ interface IPackageJson {
   name?: string;
 }
 
-async function promptUserConfiguration(): Promise<IUserConfig | null> {
+async function promptUserConfiguration(analytics?: AnalyticsService): Promise<IUserConfig | null> {
   // Parse command line arguments
   const { appId, subscriberId, region } = parseCommandLineArgs();
 
@@ -98,10 +98,6 @@ async function promptUserConfiguration(): Promise<IUserConfig | null> {
   }
 
   const envExamplePath = fileUtils.joinPaths(process.cwd(), '.env.example');
-  const envPath = fileUtils.joinPaths(
-    process.cwd(),
-    initialResponses.framework?.framework === FRAMEWORKS.NEXTJS ? '.env.local' : '.env'
-  );
 
   // Check if environment files exist and need updating
   if (fileUtils.exists(envExamplePath)) {
@@ -179,7 +175,11 @@ function checkDependencyExists(packageName: string): boolean {
   return false;
 }
 
-async function installDependencies(framework: Framework, packageManager: IPackageManager): Promise<void> {
+async function installDependencies(
+  framework: IFramework,
+  packageManager: IPackageManager,
+  analytics?: AnalyticsService
+): Promise<void> {
   logger.gray('• Installing required packages...');
 
   const packagesToInstall: string[] = [];
@@ -291,51 +291,26 @@ async function installDependencies(framework: Framework, packageManager: IPackag
   }
 }
 
-function removeSelf(packageManager: IPackageManager) {
-  try {
-    // Check if we're running from the source directory by looking for package.json
-    const packageJsonPath = fileUtils.joinPaths(process.cwd(), 'package.json');
-    if (fileUtils.exists(packageJsonPath)) {
-      const packageJson = fileUtils.readJson(packageJsonPath) as IPackageJson;
-      // If we're in the source directory, the package.json will have the name "add-inbox"
-      if (packageJson.name === 'add-inbox') {
-        logger.blue('  • Running from source directory - skipping self-removal');
-        logger.gray('    This is expected when testing locally.');
-
-        return;
-      }
-    }
-
-    const command = `${packageManager.name} remove add-inbox`;
-    logger.gray(`  $ ${command}`);
-    execSync(command, { stdio: 'inherit' });
-    logger.success('  ✓ Removed add-inbox package');
-  } catch (error) {
-    logger.warning('  • Could not remove add-inbox package automatically.');
-    logger.gray('    You can manually remove it later if desired.');
-  }
-}
-
-function displayNextSteps(framework: Framework) {
+function displayNextSteps(framework: IFramework) {
   const componentImportPath = './components/ui/inbox/NovuInbox';
 
-  logger.blue('\n Next Steps');
+  logger.info(logger.blue('\n Next Steps'));
   logger.divider();
 
-  logger.blue('1. The Novu Inbox component has been created at:');
-  logger.cyan(`   src/${componentImportPath}.tsx\n`);
+  logger.info(logger.blue('1. The Novu Inbox component has been created at:'));
+  logger.info(logger.cyan(`   src/${componentImportPath}.tsx\n`));
 
-  logger.blue('2. Import the Inbox component in your app:');
-  logger.cyan(`   import NovuInbox from '${componentImportPath}';\n`);
+  logger.info(logger.blue('2. Import the Inbox component in your app:'));
+  logger.info(logger.cyan(`   import NovuInbox from '${componentImportPath}';\n`));
 
-  logger.blue('3. Use the component in your app:');
-  logger.cyan('   <NovuInbox />\n');
+  logger.info(logger.blue('3. Use the component in your app:'));
+  logger.info(logger.cyan('   <NovuInbox />\n'));
 
-  logger.blue('4. Get your Novu credentials:');
+  logger.info(logger.blue('4. Get your Novu credentials:'));
   logger.gray('   • Visit https://web.novu.co to create an account and application.');
   logger.gray('   • Find your Application Identifier in the Novu dashboard.\n');
 
-  logger.blue('5. Customize your Inbox & learn more:');
+  logger.info(logger.blue('5. Customize your Inbox & learn more:'));
   logger.gray(`   • Styling:     ${logger.cyan('https://docs.novu.co/platform/inbox/react/styling')}`);
   logger.gray(`   • Hooks:       ${logger.cyan('https://docs.novu.co/platform/inbox/react/hooks')}`);
   logger.gray(`   • Localization:${logger.cyan('https://docs.novu.co/platform/inbox/react/localization')}`);
@@ -405,7 +380,7 @@ function validateProjectStructure() {
   return true;
 }
 
-async function performInstallation(config: IUserConfig) {
+async function performInstallation(config: IUserConfig, analytics?: AnalyticsService) {
   const { framework, packageManager, overwriteComponents, updateEnvExample, appId, subscriberId, region } = config;
 
   try {
@@ -417,11 +392,11 @@ async function performInstallation(config: IUserConfig) {
     logger.success(`  ✓ Region: ${logger.bold(region)}`);
 
     logger.step(2, 'Installing dependencies');
-    await installDependencies(framework, packageManager);
+    await installDependencies(framework, packageManager, analytics);
 
     logger.step(3, 'Creating component structure');
     await createComponentStructure(
-      framework as Framework,
+      framework,
       overwriteComponents,
       subscriberId || null,
       region as 'us' | 'eu' | undefined
@@ -436,8 +411,7 @@ async function performInstallation(config: IUserConfig) {
       }
     }
 
-    logger.step(5, 'Cleaning up');
-    removeSelf(packageManager);
+    logger.step(4, "What's next?");
 
     displayNextSteps(framework);
 
@@ -451,70 +425,132 @@ async function performInstallation(config: IUserConfig) {
   }
 }
 
+function getAnalyticsContext(config?: IUserConfig) {
+  if (!config) return {};
+
+  return {
+    framework: config.framework?.framework,
+    frameworkVersion: config.framework?.version,
+    packageManager: config.packageManager?.name,
+    region: config.region,
+    appId: config.appId,
+    subscriberId: config.subscriberId,
+  };
+}
+
+function trackCliError(
+  analytics: AnalyticsService,
+  error: unknown,
+  config?: IUserConfig,
+  context: Record<string, unknown> = {}
+) {
+  let errorMessage = '';
+  let stack = '';
+
+  if (error instanceof Error) {
+    errorMessage = error.message;
+    stack = error.stack || '';
+  } else {
+    errorMessage = String(error);
+  }
+
+  analytics.track({
+    event: AnalyticsEventEnum.CLI_ERROR,
+    data: {
+      error: errorMessage,
+      stack,
+      ...getAnalyticsContext(config),
+      ...context,
+    },
+  });
+}
+
+function trackCliCancelled(
+  analytics: AnalyticsService,
+  reason: string,
+  config?: IUserConfig,
+  context: Record<string, unknown> = {}
+) {
+  analytics.track({
+    event: AnalyticsEventEnum.CLI_USER_CANCELLED,
+    data: {
+      reason,
+      ...getAnalyticsContext(config),
+      ...context,
+    },
+  });
+}
+
+function trackCliCompleted(analytics: AnalyticsService, config: IUserConfig, context: Record<string, unknown> = {}) {
+  analytics.track({
+    event: AnalyticsEventEnum.CLI_COMPLETED,
+    data: {
+      ...getAnalyticsContext(config),
+      ...context,
+    },
+  });
+}
+
 async function init() {
   const { appId, subscriberId, region } = parseCommandLineArgs();
   const analytics = new AnalyticsService(subscriberId);
+  let config: IUserConfig | null = null;
+  let errorOrCancelled = false;
 
   try {
     logger.banner();
     analytics.track({ event: AnalyticsEventEnum.CLI_STARTED });
 
     // Parse and validate command line arguments
-    if (!validateAppId(appId) || !validateSubscriberId(subscriberId) || !validateRegion(region)) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'Invalid command line arguments' },
+    const argsValid = validateAppId(appId) && validateSubscriberId(subscriberId) && validateRegion(region);
+    if (!argsValid) {
+      trackCliError(analytics, 'Invalid command line arguments', undefined, {
+        step: 'validateArgs',
+        appId,
+        subscriberId,
+        region,
       });
+      errorOrCancelled = true;
       process.exit(1);
     }
 
     // Validate project structure
-    if (!validateProjectStructure()) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'Invalid project structure' },
-      });
+    const projectValid = validateProjectStructure();
+    if (!projectValid) {
+      trackCliError(analytics, 'Invalid project structure', undefined, { step: 'validateProjectStructure' });
+      errorOrCancelled = true;
       process.exit(1);
     }
 
     // Get user configuration
-    const config = await promptUserConfiguration();
+    config = await promptUserConfiguration(analytics);
     if (!config) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'User cancelled installation' },
-      });
+      // User cancellation
+      trackCliCancelled(analytics, 'User cancelled during promptUserConfiguration', undefined);
+      errorOrCancelled = true;
 
       return;
     }
 
     // Perform the installation
-    const success = await performInstallation(config);
+    const success = await performInstallation(config, analytics);
     if (!success) {
-      analytics.track({
-        event: AnalyticsEventEnum.CLI_ERROR,
-        data: { error: 'Installation failed' },
+      trackCliError(analytics, 'Installation failed', config ?? undefined, {
+        step: 'performInstallation',
       });
+      errorOrCancelled = true;
       process.exit(1);
     }
 
-    analytics.track({
-      event: AnalyticsEventEnum.CLI_COMPLETED,
-      data: {
-        framework: config.framework.framework,
-        packageManager: config.packageManager.name,
-        region: config.region,
-      },
-    });
+    // Only track completed if not error/cancelled
+    if (!errorOrCancelled) {
+      trackCliCompleted(analytics, config);
+    }
   } catch (error) {
-    analytics.track({
-      event: AnalyticsEventEnum.CLI_ERROR,
-      data: {
-        error: error instanceof Error ? error.message : String(error),
-      },
-    });
+    trackCliError(analytics, error, config ?? undefined, { step: 'init', appId, subscriberId, region });
     logger.error('\n❌ An unexpected error occurred:');
     logger.error(error instanceof Error ? error.message : String(error));
+    errorOrCancelled = true;
     process.exit(1);
   } finally {
     await analytics.flush();

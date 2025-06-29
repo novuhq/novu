@@ -32,9 +32,7 @@ export const EmailEditor = (props: EmailEditorProps) => {
 
         <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
       </div>
-      <div className="relative h-full flex-1 overflow-y-auto bg-neutral-50 px-16 pt-8">
-        {getComponentByType({ component: body.component })}
-      </div>
+      {getComponentByType({ component: body.component })}
     </div>
   );
 };

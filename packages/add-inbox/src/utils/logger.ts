@@ -1,11 +1,11 @@
 import chalk from 'chalk';
 
-interface Logger {
-  info: (message: string, ...args: any[]) => void;
-  success: (message: string, ...args: any[]) => void;
-  warning: (message: string, ...args: any[]) => void;
-  error: (message: string, ...args: any[]) => void;
-  gray: (message: string, ...args: any[]) => void;
+interface ILogger {
+  info: (message: string, ...args: unknown[]) => void;
+  success: (message: string, ...args: unknown[]) => void;
+  warning: (message: string, ...args: unknown[]) => void;
+  error: (message: string, ...args: unknown[]) => void;
+  gray: (message: string, ...args: unknown[]) => void;
   cyan: (message: string) => string;
   blue: (message: string) => string;
   yellow: (message: string) => string;
@@ -15,7 +15,7 @@ interface Logger {
   banner: () => void;
 }
 
-const logger: Logger = {
+const logger: ILogger = {
   info: (message, ...args) => console.log(chalk.blue(message), ...args),
   success: (message, ...args) => console.log(chalk.green(message), ...args),
   warning: (message, ...args) => console.log(chalk.yellow(message), ...args),
@@ -27,7 +27,7 @@ const logger: Logger = {
   bold: (message) => chalk.bold(message),
 
   step: (number, title) => {
-    console.log('\n' + chalk.blue(`Step ${number}: ${title}`));
+    console.log(`\n${chalk.blue(`Step ${number}: ${title}`)}`);
   },
 
   divider: () => {

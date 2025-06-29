@@ -4,5 +4,7 @@
   "mochaExplorer.require": ["./swc-register.js"],
   "mochaExplorer.env": {
     "NODE_ENV": "test"
-  }
+  },
+  "jest.runMode": "on-demand",
+  "jest.enable": false
 }

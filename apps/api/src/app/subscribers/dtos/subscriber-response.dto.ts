@@ -13,38 +13,44 @@ export class SubscriberResponseDtoOptional {
   @ApiProperty({
     description: 'The first name of the subscriber.',
     type: String,
+    nullable: true,
   })
-  firstName?: string;
+  firstName?: string | null;
 
   @ApiProperty({
     description: 'The last name of the subscriber.',
     type: String,
+    nullable: true,
   })
-  lastName?: string;
+  lastName?: string | null;
 
   @ApiPropertyOptional({
     description: 'The email address of the subscriber.',
     type: String,
+    nullable: true,
   })
-  email?: string;
+  email?: string | null;
 
   @ApiPropertyOptional({
     description: 'The phone number of the subscriber.',
     type: String,
+    nullable: true,
   })
-  phone?: string;
+  phone?: string | null;
 
   @ApiPropertyOptional({
     description: "The URL of the subscriber's avatar image.",
     type: String,
+    nullable: true,
   })
-  avatar?: string;
+  avatar?: string | null;
 
   @ApiPropertyOptional({
     description: 'The locale setting of the subscriber, indicating their preferred language or region.',
     type: String,
+    nullable: true,
   })
-  locale?: string;
+  locale?: string | null;
 
   @ApiPropertyOptional({
     type: [ChannelSettingsDto],
@@ -62,14 +68,16 @@ export class SubscriberResponseDtoOptional {
   @ApiProperty({
     description: 'Indicates whether the subscriber is currently online.',
     type: Boolean,
+    nullable: true,
   })
-  isOnline?: boolean;
+  isOnline?: boolean | null;
 
   @ApiProperty({
     description: 'The timestamp indicating when the subscriber was last online, in ISO 8601 format.',
     type: String,
+    nullable: true,
   })
-  lastOnlineAt?: string;
+  lastOnlineAt?: string | null;
 
   @ApiPropertyOptional({
     description: 'The version of the subscriber document.',
@@ -83,13 +91,14 @@ export class SubscriberResponseDtoOptional {
     additionalProperties: true,
     nullable: true,
   })
-  data?: Record<string, unknown>;
+  data?: Record<string, unknown> | null;
 
   @ApiPropertyOptional({
     description: 'Timezone of the subscriber',
     type: String,
+    nullable: true,
   })
-  timezone?: string;
+  timezone?: string | null;
 }
 
 export class SubscriberResponseDto extends SubscriberResponseDtoOptional {

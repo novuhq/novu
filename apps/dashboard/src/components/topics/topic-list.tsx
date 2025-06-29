@@ -10,10 +10,10 @@ import { useSearchParams } from 'react-router-dom';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { TopicsFilter, TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
 import { TopicListBlank } from './topic-list-blank';
-import { TopicListNoResults } from './topic-list-no-results';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
 import { TopicsFilters } from './topics-filters';
 import { PermissionButton } from '@/components/primitives/permission-button';
+import { ListNoResults } from '../list-no-results';
 
 // Use type alias instead of interface for component props
 type TopicListProps = HTMLAttributes<HTMLDivElement>;
@@ -36,7 +36,7 @@ const TopicListWrapper = (
     ...rest
   } = props;
   return (
-    <div className={cn('flex flex-col p-2', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
+    <div className={cn('flex h-full flex-col p-2', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
       <div className="flex items-center justify-between">
         {isLoading || hasData || areFiltersApplied ? (
           <TopicsFilters
@@ -220,7 +220,11 @@ export const TopicList = (props: TopicListProps) => {
   if (!data?.data.length) {
     return (
       <TopicListWrapper {...wrapperProps}>
-        <TopicListNoResults />
+        <ListNoResults
+          title="No topics found"
+          description="We couldn't find any topics that match your search criteria. Try adjusting your filters or create a new topic."
+          onClearFilters={resetFilters}
+        />
       </TopicListWrapper>
     );
   }

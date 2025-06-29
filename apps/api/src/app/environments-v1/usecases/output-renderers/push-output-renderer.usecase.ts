@@ -1,14 +1,37 @@
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { PushRenderOutput } from '@novu/shared';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { RenderCommand } from './render-command';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+
+export class PushOutputRendererCommand extends RenderCommand {
+  dbWorkflow: NotificationTemplateEntity;
+  locale?: string;
+}
 
 @Injectable()
-export class PushOutputRendererUsecase {
+export class PushOutputRendererUsecase extends BaseTranslationRendererUsecase {
+  constructor(
+    protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
+    protected featureFlagsService: FeatureFlagsService
+  ) {
+    super(moduleRef, logger, featureFlagsService);
+  }
+
   @InstrumentUsecase()
-  execute(renderCommand: RenderCommand): PushRenderOutput {
+  async execute(renderCommand: PushOutputRendererCommand): Promise<PushRenderOutput> {
     const { skip, ...outputControls } = renderCommand.controlValues ?? {};
 
-    return outputControls as any;
+    const translatedControls = await this.processTranslations(
+      outputControls,
+      renderCommand.fullPayloadForRender,
+      renderCommand.dbWorkflow,
+      renderCommand.locale
+    );
+
+    return translatedControls as any;
   }
 }

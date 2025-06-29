@@ -110,16 +110,28 @@ export type Result5 = {
   preview?: SmsRenderOutput | undefined;
 };
 
-export const GeneratePreviewResponseDtoResultType = {
+export const GeneratePreviewResponseDtoResult4Type = {
   InApp: "in_app",
+} as const;
+export type GeneratePreviewResponseDtoResult4Type = ClosedEnum<
+  typeof GeneratePreviewResponseDtoResult4Type
+>;
+
+export type Result4 = {
+  type?: GeneratePreviewResponseDtoResult4Type | undefined;
+  preview?: InAppRenderOutput | undefined;
+};
+
+export const GeneratePreviewResponseDtoResultType = {
+  Email: "email",
 } as const;
 export type GeneratePreviewResponseDtoResultType = ClosedEnum<
   typeof GeneratePreviewResponseDtoResultType
 >;
 
-export type Result4 = {
+export type Three = {
   type?: GeneratePreviewResponseDtoResultType | undefined;
-  preview?: InAppRenderOutput | undefined;
+  preview?: EmailRenderOutput | undefined;
 };
 
 export const ResultType = {
@@ -127,20 +139,8 @@ export const ResultType = {
 } as const;
 export type ResultType = ClosedEnum<typeof ResultType>;
 
-export type Three = {
-  type?: ResultType | undefined;
-  preview?: EmailRenderOutput | undefined;
-};
-
-export const GeneratePreviewResponseDtoResult2Type = {
-  Email: "email",
-} as const;
-export type GeneratePreviewResponseDtoResult2Type = ClosedEnum<
-  typeof GeneratePreviewResponseDtoResult2Type
->;
-
 export type Two = {
-  type?: GeneratePreviewResponseDtoResult2Type | undefined;
+  type?: ResultType | undefined;
   preview?: EmailRenderOutput | undefined;
 };
 
@@ -540,33 +540,33 @@ export function result5FromJSON(
 }
 
 /** @internal */
-export const GeneratePreviewResponseDtoResultType$inboundSchema:
-  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResultType> = z.nativeEnum(
-    GeneratePreviewResponseDtoResultType,
+export const GeneratePreviewResponseDtoResult4Type$inboundSchema:
+  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResult4Type> = z.nativeEnum(
+    GeneratePreviewResponseDtoResult4Type,
   );
 
 /** @internal */
-export const GeneratePreviewResponseDtoResultType$outboundSchema:
-  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResultType> =
-    GeneratePreviewResponseDtoResultType$inboundSchema;
+export const GeneratePreviewResponseDtoResult4Type$outboundSchema:
+  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResult4Type> =
+    GeneratePreviewResponseDtoResult4Type$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace GeneratePreviewResponseDtoResultType$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResultType$inboundSchema` instead. */
+export namespace GeneratePreviewResponseDtoResult4Type$ {
+  /** @deprecated use `GeneratePreviewResponseDtoResult4Type$inboundSchema` instead. */
   export const inboundSchema =
-    GeneratePreviewResponseDtoResultType$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResultType$outboundSchema` instead. */
+    GeneratePreviewResponseDtoResult4Type$inboundSchema;
+  /** @deprecated use `GeneratePreviewResponseDtoResult4Type$outboundSchema` instead. */
   export const outboundSchema =
-    GeneratePreviewResponseDtoResultType$outboundSchema;
+    GeneratePreviewResponseDtoResult4Type$outboundSchema;
 }
 
 /** @internal */
 export const Result4$inboundSchema: z.ZodType<Result4, z.ZodTypeDef, unknown> =
   z.object({
-    type: GeneratePreviewResponseDtoResultType$inboundSchema.optional(),
+    type: GeneratePreviewResponseDtoResult4Type$inboundSchema.optional(),
     preview: InAppRenderOutput$inboundSchema.optional(),
   });
 
@@ -582,7 +582,7 @@ export const Result4$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Result4
 > = z.object({
-  type: GeneratePreviewResponseDtoResultType$outboundSchema.optional(),
+  type: GeneratePreviewResponseDtoResult4Type$outboundSchema.optional(),
   preview: InAppRenderOutput$outboundSchema.optional(),
 });
 
@@ -614,28 +614,33 @@ export function result4FromJSON(
 }
 
 /** @internal */
-export const ResultType$inboundSchema: z.ZodNativeEnum<typeof ResultType> = z
-  .nativeEnum(ResultType);
+export const GeneratePreviewResponseDtoResultType$inboundSchema:
+  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResultType> = z.nativeEnum(
+    GeneratePreviewResponseDtoResultType,
+  );
 
 /** @internal */
-export const ResultType$outboundSchema: z.ZodNativeEnum<typeof ResultType> =
-  ResultType$inboundSchema;
+export const GeneratePreviewResponseDtoResultType$outboundSchema:
+  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResultType> =
+    GeneratePreviewResponseDtoResultType$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ResultType$ {
-  /** @deprecated use `ResultType$inboundSchema` instead. */
-  export const inboundSchema = ResultType$inboundSchema;
-  /** @deprecated use `ResultType$outboundSchema` instead. */
-  export const outboundSchema = ResultType$outboundSchema;
+export namespace GeneratePreviewResponseDtoResultType$ {
+  /** @deprecated use `GeneratePreviewResponseDtoResultType$inboundSchema` instead. */
+  export const inboundSchema =
+    GeneratePreviewResponseDtoResultType$inboundSchema;
+  /** @deprecated use `GeneratePreviewResponseDtoResultType$outboundSchema` instead. */
+  export const outboundSchema =
+    GeneratePreviewResponseDtoResultType$outboundSchema;
 }
 
 /** @internal */
 export const Three$inboundSchema: z.ZodType<Three, z.ZodTypeDef, unknown> = z
   .object({
-    type: ResultType$inboundSchema.optional(),
+    type: GeneratePreviewResponseDtoResultType$inboundSchema.optional(),
     preview: EmailRenderOutput$inboundSchema.optional(),
   });
 
@@ -651,7 +656,7 @@ export const Three$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   Three
 > = z.object({
-  type: ResultType$outboundSchema.optional(),
+  type: GeneratePreviewResponseDtoResultType$outboundSchema.optional(),
   preview: EmailRenderOutput$outboundSchema.optional(),
 });
 
@@ -683,33 +688,28 @@ export function threeFromJSON(
 }
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult2Type$inboundSchema:
-  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResult2Type> = z.nativeEnum(
-    GeneratePreviewResponseDtoResult2Type,
-  );
+export const ResultType$inboundSchema: z.ZodNativeEnum<typeof ResultType> = z
+  .nativeEnum(ResultType);
 
 /** @internal */
-export const GeneratePreviewResponseDtoResult2Type$outboundSchema:
-  z.ZodNativeEnum<typeof GeneratePreviewResponseDtoResult2Type> =
-    GeneratePreviewResponseDtoResult2Type$inboundSchema;
+export const ResultType$outboundSchema: z.ZodNativeEnum<typeof ResultType> =
+  ResultType$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace GeneratePreviewResponseDtoResult2Type$ {
-  /** @deprecated use `GeneratePreviewResponseDtoResult2Type$inboundSchema` instead. */
-  export const inboundSchema =
-    GeneratePreviewResponseDtoResult2Type$inboundSchema;
-  /** @deprecated use `GeneratePreviewResponseDtoResult2Type$outboundSchema` instead. */
-  export const outboundSchema =
-    GeneratePreviewResponseDtoResult2Type$outboundSchema;
+export namespace ResultType$ {
+  /** @deprecated use `ResultType$inboundSchema` instead. */
+  export const inboundSchema = ResultType$inboundSchema;
+  /** @deprecated use `ResultType$outboundSchema` instead. */
+  export const outboundSchema = ResultType$outboundSchema;
 }
 
 /** @internal */
 export const Two$inboundSchema: z.ZodType<Two, z.ZodTypeDef, unknown> = z
   .object({
-    type: GeneratePreviewResponseDtoResult2Type$inboundSchema.optional(),
+    type: ResultType$inboundSchema.optional(),
     preview: EmailRenderOutput$inboundSchema.optional(),
   });
 
@@ -722,7 +722,7 @@ export type Two$Outbound = {
 /** @internal */
 export const Two$outboundSchema: z.ZodType<Two$Outbound, z.ZodTypeDef, Two> = z
   .object({
-    type: GeneratePreviewResponseDtoResult2Type$outboundSchema.optional(),
+    type: ResultType$outboundSchema.optional(),
     preview: EmailRenderOutput$outboundSchema.optional(),
   });
 

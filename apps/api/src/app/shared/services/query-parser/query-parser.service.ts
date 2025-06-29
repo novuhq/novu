@@ -29,6 +29,16 @@ type BooleanValidation =
       isValid: false;
     };
 
+type RelativeDateValidation =
+  | {
+      isValid: true;
+      amount: number;
+      unit: 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years';
+    }
+  | {
+      isValid: false;
+    };
+
 function validateStringInput(dataInput: unknown, ruleValue: unknown): StringValidation {
   if (typeof dataInput !== 'string' || typeof ruleValue !== 'string') {
     return { isValid: false };
@@ -58,6 +68,76 @@ function validateBooleanInput(dataInput: unknown): BooleanValidation {
   }
 
   return { isValid: true, input: typeof dataInput === 'boolean' ? dataInput : dataInput === 'true' };
+}
+
+function validateRelativeDateInput(ruleValue: unknown): RelativeDateValidation {
+  if (typeof ruleValue !== 'object' || ruleValue === null) {
+    return { isValid: false };
+  }
+
+  const value = ruleValue as { amount?: unknown; unit?: unknown };
+  if (typeof value.amount !== 'number' || value.amount <= 0) {
+    return { isValid: false };
+  }
+
+  const validUnits = ['minutes', 'hours', 'days', 'weeks', 'months', 'years'];
+  if (typeof value.unit !== 'string' || !validUnits.includes(value.unit)) {
+    return { isValid: false };
+  }
+
+  return {
+    isValid: true,
+    amount: value.amount,
+    unit: value.unit as 'minutes' | 'hours' | 'days' | 'weeks' | 'months' | 'years',
+  };
+}
+
+function calculateRelativeDate(amount: number, unit: string, fromDate = new Date()): Date {
+  const date = new Date(fromDate);
+
+  switch (unit) {
+    case 'minutes':
+      date.setMinutes(date.getMinutes() - amount);
+      break;
+    case 'hours':
+      date.setHours(date.getHours() - amount);
+      break;
+    case 'days':
+      date.setDate(date.getDate() - amount);
+      break;
+    case 'weeks':
+      date.setDate(date.getDate() - amount * 7);
+      break;
+    case 'months':
+      date.setMonth(date.getMonth() - amount);
+      break;
+    case 'years':
+      date.setFullYear(date.getFullYear() - amount);
+      break;
+    default:
+      // fallback to days if unit is not recognized
+      date.setDate(date.getDate() - amount);
+      break;
+  }
+
+  return date;
+}
+
+function getToleranceMs(unit: string): number {
+  switch (unit) {
+    case 'minutes':
+      return 60 * 1000; // ±1 minute tolerance
+    case 'hours':
+      return 60 * 60 * 1000; // ±1 hour tolerance
+    case 'days':
+    case 'weeks':
+    case 'months':
+      return 24 * 60 * 60 * 1000; // ±1 day tolerance
+    case 'years':
+      return 7 * 24 * 60 * 60 * 1000; // ±1 week tolerance
+    default:
+      return 24 * 60 * 60 * 1000; // default to 1 day
+  }
 }
 
 function validateComparison(
@@ -227,6 +307,68 @@ const initializeCustomOperators = (): void => {
     }
 
     return validation.a !== validation.b;
+  });
+
+  jsonLogic.add_operation('moreThanXAgo', (dataInput: unknown, ruleValue: unknown): boolean => {
+    const validation = validateRelativeDateInput(ruleValue);
+    if (!validation.isValid) return false;
+
+    const inputDate = new Date(dataInput as string);
+    if (Number.isNaN(inputDate.getTime())) return false;
+
+    const targetDate = calculateRelativeDate(validation.amount, validation.unit);
+
+    return inputDate < targetDate;
+  });
+
+  jsonLogic.add_operation('lessThanXAgo', (dataInput: unknown, ruleValue: unknown): boolean => {
+    const validation = validateRelativeDateInput(ruleValue);
+    if (!validation.isValid) return false;
+
+    const inputDate = new Date(dataInput as string);
+    if (Number.isNaN(inputDate.getTime())) return false;
+
+    const targetDate = calculateRelativeDate(validation.amount, validation.unit);
+
+    return inputDate >= targetDate;
+  });
+
+  jsonLogic.add_operation('withinLast', (dataInput: unknown, ruleValue: unknown): boolean => {
+    const validation = validateRelativeDateInput(ruleValue);
+    if (!validation.isValid) return false;
+
+    const inputDate = new Date(dataInput as string);
+    if (Number.isNaN(inputDate.getTime())) return false;
+
+    const targetDate = calculateRelativeDate(validation.amount, validation.unit);
+    const now = new Date();
+
+    return inputDate >= targetDate && inputDate <= now;
+  });
+
+  jsonLogic.add_operation('notWithinLast', (dataInput: unknown, ruleValue: unknown): boolean => {
+    const validation = validateRelativeDateInput(ruleValue);
+    if (!validation.isValid) return false;
+
+    const inputDate = new Date(dataInput as string);
+    if (Number.isNaN(inputDate.getTime())) return false;
+
+    const targetDate = calculateRelativeDate(validation.amount, validation.unit);
+
+    return inputDate < targetDate;
+  });
+
+  jsonLogic.add_operation('exactlyXAgo', (dataInput: unknown, ruleValue: unknown): boolean => {
+    const validation = validateRelativeDateInput(ruleValue);
+    if (!validation.isValid) return false;
+
+    const inputDate = new Date(dataInput as string);
+    if (Number.isNaN(inputDate.getTime())) return false;
+
+    const targetDate = calculateRelativeDate(validation.amount, validation.unit);
+    const tolerance = getToleranceMs(validation.unit);
+
+    return Math.abs(inputDate.getTime() - targetDate.getTime()) <= tolerance;
   });
 };
 

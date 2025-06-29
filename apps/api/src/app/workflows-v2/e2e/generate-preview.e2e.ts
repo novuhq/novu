@@ -11,14 +11,14 @@ import {
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   PreviewPayloadDto,
-  RedirectTargetEnum,
   StepTypeEnum,
   UpdateWorkflowDto,
+  UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { CronExpressionEnum, slugify } from '@novu/shared';
+import { CronExpressionEnum, RedirectTargetEnum, slugify } from '@novu/shared';
 import { EmailControlType } from '@novu/application-generic';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { buildWorkflow } from '../workflow.controller.e2e';
@@ -176,14 +176,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       primaryAction: {
         label: '{{payload.primaryUrlLabel}}',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/primary-action',
         },
       },
       secondaryAction: {
         label: 'Secondary Action',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/secondary-action',
         },
       },
@@ -191,7 +191,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         key: 'value',
       },
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/redirect',
       },
     };
@@ -272,14 +272,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       primaryAction: {
         label: '{{payload.primaryUrlLabel}}',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/primary-action',
         },
       },
       secondaryAction: {
         label: 'Secondary Action',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/secondary-action',
         },
       },
@@ -287,7 +287,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         key: 'value',
       },
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/redirect',
       },
     };
@@ -398,14 +398,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       primaryAction: {
         label: '{{payload.primaryUrlLabel}}',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/primary-action',
         },
       },
       secondaryAction: {
         label: 'Secondary Action',
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '/home/secondary-action',
         },
       },
@@ -413,7 +413,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         key: 'value',
       },
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: 'https://www.example.com/redirect',
       },
     };
@@ -1609,23 +1609,25 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         primaryAction: {
           label: '{{payload.secondaryUrl}}',
           redirect: {
-            target: RedirectTargetEnum.Blank,
+            target: RedirectTargetEnum.BLANK,
           },
         },
         secondaryAction: null,
         redirect: {
-          target: RedirectTargetEnum.Blank,
+          target: RedirectTargetEnum.BLANK,
           url: '   ',
         },
       };
       const workflowSlug = novuRestResult.result?.slug;
       const stepSlug = novuRestResult.result?.steps[0].slug;
       const stepDataDto = await updateWorkflow(workflowSlug, {
-        ...novuRestResult.result,
+        ...mapResponseToUpdateDto(novuRestResult.result),
         steps: [
           {
-            ...novuRestResult.result.steps[0],
-            controlValues,
+            type: novuRestResult.result.steps[0].type,
+            name: novuRestResult.result.steps[0].name,
+            id: novuRestResult.result.steps[0].id,
+            ...buildInAppControlValueWithAPlaceholderInTheUrl(),
           },
         ],
       });
@@ -1641,12 +1643,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             primaryAction: {
               label: '{{payload.secondaryUrl}}',
               redirect: {
-                target: RedirectTargetEnum.Blank,
+                target: RedirectTargetEnum.BLANK,
               },
             },
             secondaryAction: null,
             redirect: {
-              target: RedirectTargetEnum.Blank,
+              target: RedirectTargetEnum.BLANK,
               url: '   ',
             },
           }.body
@@ -1925,6 +1927,21 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     return res.result;
   }
 
+  function mapResponseToUpdateDto(workflowResponse: WorkflowResponseDto): UpdateWorkflowDto {
+    return {
+      ...workflowResponse,
+      steps: workflowResponse.steps.map(
+        (step) =>
+          ({
+            id: step.id,
+            type: step.type,
+            name: step.name,
+            controlValues: step.controls?.values || {},
+          }) as UpdateWorkflowDtoSteps
+      ),
+    };
+  }
+
   async function createWorkflowWithEmailLookingAtDigestResult() {
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
@@ -1937,10 +1954,19 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         {
           name: 'DigestStep',
           type: StepTypeEnum.Digest,
+          controlValues: {
+            amount: 1,
+            unit: 'hours',
+          },
         },
         {
           name: 'Email Test Step',
           type: StepTypeEnum.Email,
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+            disableOutputSanitization: false,
+          },
         },
       ],
     };
@@ -1965,10 +1991,17 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         {
           name: 'InAppStep',
           type: StepTypeEnum.InApp,
+          controlValues: {
+            subject: 'Test Subject',
+            body: 'Test Body',
+          },
         },
         {
           name: 'SmsStep',
           type: StepTypeEnum.Sms,
+          controlValues: {
+            body: 'Test SMS Body',
+          },
         },
       ],
     };
@@ -1992,10 +2025,18 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         {
           name: 'In-App Test Step',
           type: StepTypeEnum.InApp,
+          controlValues: {
+            subject: 'Test Subject',
+            body: 'Test Body',
+          },
         },
         {
           name: 'Email Test Step',
           type: StepTypeEnum.Email,
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Test Email Body',
+          },
         },
       ],
     };
@@ -2027,7 +2068,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         _id: _workflowId,
       },
       {
-        origin: WorkflowOriginEnum.External,
+        origin: ResourceOriginEnum.External,
       }
     );
 
@@ -2052,6 +2093,7 @@ function buildEmailControlValuesPayload(): EmailControlType {
   return {
     subject: `Hello, World! ${SUBJECT_TEST_PAYLOAD}`,
     body: JSON.stringify(fullCodeSnippet()),
+    disableOutputSanitization: false,
   };
 }
 
@@ -2063,13 +2105,13 @@ function buildInAppControlValues() {
     primaryAction: {
       label: '{{payload.primaryUrlLabel}}',
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
       },
     },
     secondaryAction: {
       label: 'Secondary Action',
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: '/home/secondary-action',
       },
     },
@@ -2077,7 +2119,7 @@ function buildInAppControlValues() {
       key: 'value',
     },
     redirect: {
-      target: RedirectTargetEnum.Blank,
+      target: RedirectTargetEnum.BLANK,
       url: 'https://www.example.com/redirect',
     },
   };
@@ -2092,18 +2134,18 @@ function buildInAppControlValueWithAPlaceholderInTheUrl() {
       label: '{{payload.secondaryUrlLabel}}',
       redirect: {
         url: '{{payload.secondaryUrl}}',
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
       },
     },
     secondaryAction: {
       label: 'Secondary Action',
       redirect: {
-        target: RedirectTargetEnum.Blank,
+        target: RedirectTargetEnum.BLANK,
         url: '',
       },
     },
     redirect: {
-      target: RedirectTargetEnum.Blank,
+      target: RedirectTargetEnum.BLANK,
       url: '   ',
     },
   };
@@ -2143,7 +2185,7 @@ export const getTestControlValues = (stepId?: string) => ({
 
 export async function createWorkflowAndReturnId(workflowsClient: Novu, type: StepTypeEnum) {
   const createWorkflowDto = buildWorkflow();
-  createWorkflowDto.steps[0].type = type;
+  createWorkflowDto.steps[0].type = type as any;
   const workflowResult = await workflowsClient.workflows.create(createWorkflowDto);
 
   return {

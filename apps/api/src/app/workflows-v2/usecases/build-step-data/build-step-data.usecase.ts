@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ControlValuesLevelEnum, ShortIsPrefixEnum, WorkflowOriginEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ShortIsPrefixEnum, ResourceOriginEnum } from '@novu/shared';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetWorkflowByIdsUseCase, Instrument, InstrumentUsecase } from '@novu/application-generic';
 
@@ -37,17 +37,18 @@ export class BuildStepDataUsecase {
         uiSchema: currentStep.template?.controls?.uiSchema,
         values: controlValues,
       },
+      controlValues,
       variables,
       name: stepName,
       slug,
       _id: currentStep._templateId,
       stepId: currentStep.stepId || 'Missing Step Id',
       type: currentStep.template?.type,
-      origin: workflow.origin || WorkflowOriginEnum.EXTERNAL,
+      origin: workflow.origin || ResourceOriginEnum.EXTERNAL,
       workflowId: workflow.triggers[0].identifier,
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
-    };
+    } as StepResponseDto;
   }
 
   private async buildAvailableVariableSchema(

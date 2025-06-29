@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { StepTypeEnum, WorkflowTypeEnum, isBridgeWorkflow } from '@novu/shared';
+import { StepTypeEnum, ResourceTypeEnum, isBridgeWorkflow } from '@novu/shared';
 
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';

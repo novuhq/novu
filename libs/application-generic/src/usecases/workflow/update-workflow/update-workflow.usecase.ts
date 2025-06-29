@@ -19,7 +19,7 @@ import {
   ControlValuesLevelEnum,
   isBridgeWorkflow,
   PreferencesTypeEnum,
-  WorkflowOriginEnum,
+  ResourceOriginEnum,
 } from '@novu/shared';
 
 import { AnalyticsService, ContentService, InvalidateCacheService } from '../../../services';
@@ -166,6 +166,10 @@ export class UpdateWorkflow {
         updatePayload.payloadSchema = command.payloadSchema;
       }
 
+      if (command.validatePayload !== undefined) {
+        updatePayload.validatePayload = command.validatePayload;
+      }
+
       if (command.status) {
         updatePayload.status = command.status;
       }
@@ -305,7 +309,7 @@ export class UpdateWorkflow {
     try {
       if (
         (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
-        notificationTemplateWithStepTemplate.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
+        notificationTemplateWithStepTemplate.origin === ResourceOriginEnum.NOVU_CLOUD_V1
       ) {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new PlatformException('Translation module is not loaded');

@@ -12,13 +12,30 @@ interface InboxPreviewContentProps {
   hasNotificationBeenSent?: boolean;
   primaryColor: string;
   foregroundColor: string;
+  enableTabs?: boolean;
 }
+
+const defaultTabs = [
+  {
+    label: 'All Notifications',
+    filter: { tags: [] },
+  },
+  {
+    label: 'Promotions',
+    filter: { tags: ['promotions'] },
+  },
+  {
+    label: 'Security Alerts',
+    filter: { tags: ['security', 'alert'] },
+  },
+];
 
 export function InboxPreviewContent({
   selectedStyle,
   hasNotificationBeenSent,
   primaryColor,
   foregroundColor,
+  enableTabs = true,
 }: InboxPreviewContentProps) {
   const navigate = useNavigate();
   const auth = useAuth();
@@ -61,6 +78,7 @@ export function InboxPreviewContent({
         },
       },
     },
+    ...(enableTabs ? { tabs: defaultTabs } : {}),
   };
 
   return (

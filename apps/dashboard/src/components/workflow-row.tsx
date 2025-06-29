@@ -21,13 +21,14 @@ import { IS_SELF_HOSTED, LEGACY_DASHBOARD_URL, SELF_HOSTED_UPGRADE_REDIRECT_URL 
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
-import { WorkflowOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
+import { ResourceOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { IEnvironment, PermissionsEnum, WorkflowListResponseDto } from '@novu/shared';
+import { IEnvironment, PermissionsEnum, WorkflowListResponseDto, FeatureFlagsKeysEnum } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
@@ -87,8 +88,9 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const has = useHasPermission();
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-  const isV0Workflow = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1;
-  const isDuplicable = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
+  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+  const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
+  const isDuplicable = workflow.origin === ResourceOriginEnum.NOVU_CLOUD;
   const workflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
         workflowId: workflow._id,
@@ -99,7 +101,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       });
   const triggerWorkflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId/test-workflow`, { workflowId: workflow._id })
-    : buildRoute(ROUTES.TEST_WORKFLOW, {
+    : buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: workflow.slug,
       });
@@ -239,7 +241,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
           </Tooltip>
         )}
         <WorkflowLinkTableCell className="flex items-center gap-2 font-medium">
-          {workflow.origin === WorkflowOriginEnum.EXTERNAL ? (
+          {workflow.origin === ResourceOriginEnum.EXTERNAL ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 <FaCode className="text-warning size-4" />
@@ -251,7 +253,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 </TooltipContent>
               </TooltipPortal>
             </Tooltip>
-          ) : workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1 ? (
+          ) : workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1 ? (
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 <CgBolt className="text-feature size-4" />
@@ -397,7 +399,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                         </TooltipTrigger>
                         <TooltipPortal>
                           <TooltipContent>
-                            {workflow.origin === WorkflowOriginEnum.NOVU_CLOUD_V1
+                            {workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1
                               ? 'V1 workflows cannot be duplicated using dashboard. Please visit the legacy portal.'
                               : 'External workflows cannot be duplicated using dashboard.'}
                           </TooltipContent>
@@ -429,7 +431,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive"
-                    disabled={workflow.origin === WorkflowOriginEnum.EXTERNAL}
+                    disabled={workflow.origin === ResourceOriginEnum.EXTERNAL}
                     onClick={() => {
                       setTimeout(() => setIsDeleteModalOpen(true), 0);
                     }}

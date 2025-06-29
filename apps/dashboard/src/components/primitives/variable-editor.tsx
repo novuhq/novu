@@ -41,6 +41,7 @@ type VariableEditorProps = {
   | 'placeholder'
   | 'value'
   | 'onChange'
+  | 'onBlur'
   | 'multiline'
   | 'size'
   | 'fontFamily'
@@ -53,6 +54,7 @@ type VariableEditorProps = {
 export function VariableEditor({
   value,
   onChange = () => {},
+  onBlur = () => {},
   variables,
   className,
   placeholder,
@@ -98,13 +100,6 @@ export function VariableEditor({
   } = useCreateVariable();
 
   const [triggerPosition, setTriggerPosition] = useState<{ top: number; left: number } | null>(null);
-
-  // Create a stable key based on schema properties to force editor re-render
-  const schemaKey = useMemo(() => {
-    if (!currentSchema?.properties) return 'no-schema';
-
-    return `schema-${Object.keys(currentSchema.properties).sort().join('-')}`;
-  }, [currentSchema]);
 
   // Create an enhanced isAllowedVariable that also checks the current schema
   const enhancedIsAllowedVariable = useCallback(
@@ -208,6 +203,7 @@ export function VariableEditor({
    */
   const handleContainerClick = useCallback(
     (event: React.MouseEvent) => {
+      event.preventDefault();
       // Don't focus if a variable popover is open or if clicking on interactive elements
       if (isVariablePopoverOpen) return;
 
@@ -218,6 +214,7 @@ export function VariableEditor({
         return;
       }
 
+      // Only programmatically focus if clicking directly on the container
       if (viewRef.current) {
         viewRef.current.focus();
       }
@@ -247,7 +244,6 @@ export function VariableEditor({
   return (
     <div ref={containerRef} className={className} onClick={handleContainerClick}>
       <Editor
-        key={schemaKey}
         fontFamily={fontFamily}
         multiline={multiline}
         indentWithTab={indentWithTab}
@@ -261,6 +257,7 @@ export function VariableEditor({
         foldGutter={foldGutter}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         tagStyles={tagStyles}
       />
       {isVariablePopoverOpen && (

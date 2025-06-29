@@ -20,7 +20,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { EnvironmentRepository } from '@novu/dal';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
 import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
 import { BRIDGE_EXECUTION_ERROR } from '../../utils';
@@ -245,7 +245,7 @@ export class ExecuteBridgeRequest {
   private getBridgeUrl(
     environmentBridgeUrl: string,
     environmentId: string,
-    workflowOrigin: WorkflowOriginEnum,
+    workflowOrigin: ResourceOriginEnum,
     statelessBridgeUrl?: string,
     action?: PostActionEnum | GetActionEnum
   ): string {
@@ -254,12 +254,12 @@ export class ExecuteBridgeRequest {
     }
 
     switch (workflowOrigin) {
-      case WorkflowOriginEnum.NOVU_CLOUD: {
+      case ResourceOriginEnum.NOVU_CLOUD: {
         const apiUrl = this.getApiUrl(action);
 
         return `${apiUrl}/v1/environments/${environmentId}/bridge`;
       }
-      case WorkflowOriginEnum.EXTERNAL: {
+      case ResourceOriginEnum.EXTERNAL: {
         if (!environmentBridgeUrl) {
           throw new BadRequestException({
             code: BRIDGE_EXECUTION_ERROR.INVALID_BRIDGE_URL.code,

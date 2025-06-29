@@ -43,7 +43,7 @@
     "@azure/storage-blob": "^12.11.0",
     "@google-cloud/storage": "^6.2.3",
     "@hokify/agenda": "^6.3.0",
-    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.4-render&path:/packages/render",
+    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.5-render&path:/packages/render",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/providers": "workspace:*",

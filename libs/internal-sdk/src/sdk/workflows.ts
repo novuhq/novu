@@ -5,10 +5,9 @@
 import { workflowsCreate } from "../funcs/workflowsCreate.js";
 import { workflowsDelete } from "../funcs/workflowsDelete.js";
 import { workflowsDuplicate } from "../funcs/workflowsDuplicate.js";
-import { workflowsGetTestData } from "../funcs/workflowsGetTestData.js";
+import { workflowsGet } from "../funcs/workflowsGet.js";
+import { workflowsList } from "../funcs/workflowsList.js";
 import { workflowsPatch } from "../funcs/workflowsPatch.js";
-import { workflowsRetrieve } from "../funcs/workflowsRetrieve.js";
-import { workflowsSearch } from "../funcs/workflowsSearch.js";
 import { workflowsSync } from "../funcs/workflowsSync.js";
 import { workflowsUpdate } from "../funcs/workflowsUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
@@ -24,7 +23,7 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Create a new workflow
+   * Create a workflow
    *
    * @remarks
    * Creates a new workflow in the Novu Cloud environment
@@ -43,16 +42,16 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Search workflows
+   * List all workflows
    *
    * @remarks
    * Retrieves a list of workflows with optional filtering and pagination
    */
-  async search(
+  async list(
     request: operations.WorkflowControllerSearchWorkflowsRequest,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerSearchWorkflowsResponse> {
-    return unwrapAsync(workflowsSearch(
+    return unwrapAsync(workflowsList(
       this,
       request,
       options,
@@ -60,10 +59,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Update an existing workflow
+   * Update a workflow
    *
    * @remarks
-   * Updates the details of an existing workflow
+   * Updates the details of an existing workflow, here **workflowId** is the identifier of the workflow
    */
   async update(
     updateWorkflowDto: components.UpdateWorkflowDto,
@@ -84,15 +83,15 @@ export class Workflows extends ClientSDK {
    * Retrieve a workflow
    *
    * @remarks
-   * Fetches details of a specific workflow
+   * Fetches details of a specific workflow by its unique identifier **workflowId**
    */
-  async retrieve(
+  async get(
     workflowId: string,
     environmentId?: string | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.WorkflowControllerGetWorkflowResponse> {
-    return unwrapAsync(workflowsRetrieve(
+    return unwrapAsync(workflowsGet(
       this,
       workflowId,
       environmentId,
@@ -105,7 +104,7 @@ export class Workflows extends ClientSDK {
    * Delete a workflow
    *
    * @remarks
-   * Removes a specific workflow
+   * Removes a specific workflow by its unique identifier **workflowId**
    */
   async delete(
     workflowId: string,
@@ -121,10 +120,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Patch workflow
+   * Update a workflow
    *
    * @remarks
-   * Partially updates a workflow
+   * Partially updates a workflow by its unique identifier **workflowId**
    */
   async patch(
     patchWorkflowDto: components.PatchWorkflowDto,
@@ -143,6 +142,9 @@ export class Workflows extends ClientSDK {
 
   /**
    * Duplicate a workflow
+   *
+   * @remarks
+   * Duplicates a workflow by its unique identifier **workflowId**. This will create a new workflow with the same steps and settings.
    */
   async duplicate(
     duplicateWorkflowDto: components.DuplicateWorkflowDto,
@@ -160,10 +162,10 @@ export class Workflows extends ClientSDK {
   }
 
   /**
-   * Sync workflow to another environment
+   * Sync a workflow
    *
    * @remarks
-   * Synchronizes a workflow to a target environment
+   * Synchronizes a workflow to the target environment
    */
   async sync(
     syncWorkflowDto: components.SyncWorkflowDto,
@@ -174,25 +176,6 @@ export class Workflows extends ClientSDK {
     return unwrapAsync(workflowsSync(
       this,
       syncWorkflowDto,
-      workflowId,
-      idempotencyKey,
-      options,
-    ));
-  }
-
-  /**
-   * Get workflow test data
-   *
-   * @remarks
-   * Retrieves test data for a specific workflow
-   */
-  async getTestData(
-    workflowId: string,
-    idempotencyKey?: string | undefined,
-    options?: RequestOptions,
-  ): Promise<operations.WorkflowControllerGetWorkflowTestDataResponse> {
-    return unwrapAsync(workflowsGetTestData(
-      this,
       workflowId,
       idempotencyKey,
       options,

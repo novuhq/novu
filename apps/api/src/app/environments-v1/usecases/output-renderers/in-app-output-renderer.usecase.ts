@@ -1,19 +1,42 @@
 import { InAppRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
-import { InstrumentUsecase, sanitizeHtmlInObject } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
+import { InstrumentUsecase, sanitizeHtmlInObject, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { RenderCommand } from './render-command';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+
+export class InAppOutputRendererCommand extends RenderCommand {
+  dbWorkflow: NotificationTemplateEntity;
+  locale?: string;
+}
 
 @Injectable()
-export class InAppOutputRendererUsecase {
+export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
+  constructor(
+    protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
+    protected featureFlagsService: FeatureFlagsService
+  ) {
+    super(moduleRef, logger, featureFlagsService);
+  }
+
   @InstrumentUsecase()
-  execute(renderCommand: RenderCommand): InAppRenderOutput {
+  async execute(renderCommand: InAppOutputRendererCommand): Promise<InAppRenderOutput> {
     const { skip, disableOutputSanitization, ...outputControls } = renderCommand.controlValues ?? {};
 
+    const translatedControls = await this.processTranslations(
+      outputControls,
+      renderCommand.fullPayloadForRender,
+      renderCommand.dbWorkflow,
+      renderCommand.locale
+    );
+
     if (disableOutputSanitization) {
-      return outputControls as any;
+      return translatedControls as any;
     }
 
-    const { data, ...restOutputControls } = outputControls;
+    const { data, ...restOutputControls } = translatedControls;
 
     return {
       ...sanitizeHtmlInObject(restOutputControls),

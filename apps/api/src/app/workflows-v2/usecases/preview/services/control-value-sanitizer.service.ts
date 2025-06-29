@@ -3,10 +3,11 @@ import _ from 'lodash';
 import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { dashboardSanitizeControlValues, PinoLogger } from '@novu/application-generic';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
-import { StepResponseDto, JSONSchemaDto } from '../../../dtos';
+import { StepResponseDto } from '../../../dtos';
+import { JSONSchemaDto } from '../../../../shared/dtos/json-schema.dto';
 import { buildLiquidParser } from '../../../util/template-parser/liquid-engine';
 import type { Variable } from '../../../util/template-parser/types';
 import { buildVariables } from '../../../util/build-variables';
@@ -26,9 +27,9 @@ export class ControlValueSanitizerService {
   sanitizeControlsForPreview(
     initialControlValues: Record<string, unknown>,
     stepData: StepResponseDto,
-    workflowOrigin: WorkflowOriginEnum
+    workflowOrigin: ResourceOriginEnum
   ): Record<string, unknown> {
-    if (workflowOrigin !== WorkflowOriginEnum.NOVU_CLOUD) {
+    if (workflowOrigin !== ResourceOriginEnum.NOVU_CLOUD) {
       return initialControlValues;
     }
 

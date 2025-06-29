@@ -6,6 +6,8 @@ import {
   NotificationTemplateRepository,
   CommunityOrganizationRepository,
   IntegrationRepository,
+  ControlValuesRepository,
+  LayoutRepository,
 } from '@novu/dal';
 import { GetDecryptedSecretKey, FeatureFlagsService } from '@novu/application-generic';
 import { NovuBridgeClient } from './novu-bridge-client';
@@ -44,6 +46,8 @@ export const featureFlagsService = {
     NotificationTemplateRepository,
     CommunityOrganizationRepository,
     IntegrationRepository,
+    ControlValuesRepository,
+    LayoutRepository,
     GetOrganizationSettings,
     ConstructFrameworkWorkflow,
     GetDecryptedSecretKey,

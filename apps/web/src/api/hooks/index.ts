@@ -13,3 +13,4 @@ export * from './useRenameOrganization';
 export * from './useUpdateOrganizationBranding';
 export * from './useUpdateUserProfile';
 export * from './useGetSignedUrl';
+export * from './useFetchOrganization';

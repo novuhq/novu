@@ -14,7 +14,8 @@ import {
 import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserObjectCommand, MAX_NAME_LENGTH } from '@novu/application-generic';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ChannelTypeEnum, WorkflowOriginEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowCreationSourceEnum, ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { IsValidJsonSchema } from '../../../shared/validators/json-schema.validator';
 
 export class ChannelPreferenceData {
   @IsBoolean()
@@ -79,9 +80,9 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   workflowId?: string;
 
-  @IsEnum(WorkflowOriginEnum)
+  @IsEnum(ResourceOriginEnum)
   @IsDefined()
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -115,6 +116,16 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsEnum(WorkflowCreationSourceEnum)
   __source?: WorkflowCreationSourceEnum;
+
+  @IsOptional()
+  @IsValidJsonSchema({
+    message: 'payloadSchema must be a valid JSON schema',
+  })
+  payloadSchema?: object;
+
+  @IsOptional()
+  @IsBoolean()
+  validatePayload?: boolean;
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {

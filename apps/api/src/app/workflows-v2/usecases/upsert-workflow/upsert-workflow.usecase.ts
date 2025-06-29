@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { format } from 'prettier';
 
 import {
   AnalyticsService,
@@ -16,6 +17,7 @@ import {
   UpsertControlValuesUseCase,
   SendWebhookMessage,
   EmailControlType,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -32,8 +34,8 @@ import {
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 
 import { stepTypeToControlSchema } from '../../shared';
@@ -46,6 +48,7 @@ import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-uti
 import { PreviewUsecase } from '../preview/preview.usecase';
 import { PreviewCommand } from '../preview';
 import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
+import { removeBrandingFromHtml } from '../../../shared/utils/html';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -60,6 +63,7 @@ export class UpsertWorkflowUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
     private analyticsService: AnalyticsService,
+    private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -148,8 +152,8 @@ export class UpsertWorkflowUseCase {
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
-      type: WorkflowTypeEnum.BRIDGE,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       steps,
       active: isWorkflowActive,
       description: workflowDto.description || '',
@@ -158,6 +162,8 @@ export class UpsertWorkflowUseCase {
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
       triggerIdentifier: preserveWorkflowId ? workflowDto.workflowId : slugify(workflowDto.name),
       status: computeWorkflowStatus(isWorkflowActive, steps),
+      payloadSchema: workflowDto.payloadSchema,
+      validatePayload: workflowDto.validatePayload,
     };
   }
 
@@ -177,13 +183,15 @@ export class UpsertWorkflowUseCase {
       name: workflowDto.name,
       steps,
       rawData: workflowDto as unknown as Record<string, unknown>,
-      type: WorkflowTypeEnum.BRIDGE,
+      type: ResourceTypeEnum.BRIDGE,
       description: workflowDto.description,
       userPreferences: workflowDto.preferences?.user ?? null,
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
       tags: workflowDto.tags,
       active: workflowActive,
       status: computeWorkflowStatus(workflowActive, steps),
+      payloadSchema: workflowDto.payloadSchema,
+      validatePayload: workflowDto.validatePayload,
     };
   }
 
@@ -341,7 +349,16 @@ export class UpsertWorkflowUseCase {
     }
 
     const newControlValues = controlValues || {};
-    if (step.template?.type === StepTypeEnum.EMAIL) {
+
+    /*
+     * Only apply email-specific processing for NOVU_CLOUD workflows
+     * For EXTERNAL workflows, preserve all custom fields as-is
+     */
+    if (
+      step.template?.type === StepTypeEnum.EMAIL &&
+      (command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD ||
+        command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
+    ) {
       const emailControlValues = newControlValues as EmailControlType;
       const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
       if (emailControlValues.editorType === 'html' && isMaily) {
@@ -355,8 +372,19 @@ export class UpsertWorkflowUseCase {
             },
           })
         );
-        let htmlBody = (result.preview as EmailRenderOutput).body;
-        htmlBody = this.removeBrandingFromHtml(htmlBody);
+        let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
+        try {
+          htmlBody = await format(htmlBody, {
+            parser: 'html',
+            printWidth: 120,
+            tabWidth: 2,
+            useTabs: false,
+            htmlWhitespaceSensitivity: 'css',
+          });
+        } catch (error) {
+          this.logger.warn({ err: error }, 'Failed to prettify HTML');
+        }
+
         emailControlValues.body = htmlBody;
       } else if (emailControlValues.editorType === 'block' && !isMaily) {
         emailControlValues.body = '';
@@ -367,8 +395,9 @@ export class UpsertWorkflowUseCase {
       UpsertControlValuesCommand.create({
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
-        notificationStepEntity: step,
+        stepId: step._templateId,
         workflowId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         newControlValues,
       })
     );
@@ -395,14 +424,6 @@ export class UpsertWorkflowUseCase {
     if (!commandStep) return null;
 
     return commandStep.controlValues;
-  }
-
-  private removeBrandingFromHtml(html: string): string {
-    try {
-      return html.replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>(\s*)/gi, '');
-    } catch (error) {
-      return html;
-    }
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {

@@ -27,6 +27,7 @@ const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
       md: 'text-sm',
       sm: 'text-xs',
       '2xs': 'text-xs',
+      '3xs': 'text-xs',
     },
   },
   defaultVariants: {
@@ -241,7 +242,7 @@ export type EditorProps = {
   height?: string;
   onChange?: (value: string) => void;
   fontFamily?: 'inherit';
-  size?: 'sm' | 'md' | '2xs';
+  size?: 'sm' | 'md' | '2xs' | '3xs';
   foldGutter?: boolean;
   lineNumbers?: boolean;
   tagStyles?: TagStyle[];

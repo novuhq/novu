@@ -13,7 +13,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { CustomDataType, WorkflowStatusEnum, WorkflowTypeEnum } from '@novu/shared';
+import { CustomDataType, WorkflowStatusEnum, ResourceTypeEnum } from '@novu/shared';
 
 import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
@@ -95,9 +95,13 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   payloadSchema?: JSONSchema;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsOptional()
+  @IsBoolean()
+  validatePayload?: boolean;
+
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  type: WorkflowTypeEnum;
+  type: ResourceTypeEnum;
 
   @IsString()
   @IsOptional()

@@ -82,6 +82,8 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
 
     if (lastStyleTag) {
       lastStyleTag.after(style);
+    } else {
+      doc.prepend(style);
     }
 
     // give a bit of time for the dom changes to be applied
@@ -110,9 +112,9 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
   }, [processBody, body]);
 
   return (
-    <div className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)} {...rest}>
+    <div {...rest} className={cn(`mx-auto flex w-full flex-col max-w-[${MAILY_EMAIL_WIDTH}px]`, className)}>
       <div
-        className={cn(`shadow-xs min-h-80 w-full overflow-auto p-2`)}
+        className={cn(`shadow-xs min-h-80 w-full overflow-auto p-0`)}
         ref={(node) => {
           refNode.current = node;
           attachShadow(node, body);

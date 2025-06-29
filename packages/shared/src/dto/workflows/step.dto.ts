@@ -1,16 +1,17 @@
 import type { JSONSchemaDto } from './json-schema-dto';
-import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
+import { Slug, StepTypeEnum, ResourceOriginEnum } from '../../types';
 import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
   controls: Controls;
+  controlValues?: Record<string, unknown>;
   variables: JSONSchemaDto;
   stepId: string;
   _id: string;
   name: string;
   slug: Slug;
   type: StepTypeEnum;
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   workflowId: string;
   workflowDatabaseId: string;
   issues?: StepIssuesDto;
@@ -63,10 +64,12 @@ export enum UiSchemaGroupEnum {
   CHAT = 'CHAT',
   PUSH = 'PUSH',
   SKIP = 'SKIP',
+  LAYOUT = 'LAYOUT',
 }
 
 export enum UiComponentEnum {
   EMAIL_EDITOR_SELECT = 'EMAIL_EDITOR_SELECT',
+  LAYOUT_SELECT = 'LAYOUT_SELECT',
   /** @deprecated use EMAIL_BODY instead  */
   BLOCK_EDITOR = 'BLOCK_EDITOR',
   EMAIL_BODY = 'EMAIL_BODY',
@@ -92,11 +95,13 @@ export enum UiComponentEnum {
   PUSH_SUBJECT = 'PUSH_SUBJECT',
   QUERY_EDITOR = 'QUERY_EDITOR',
   DATA = 'DATA',
+  LAYOUT_EMAIL = 'LAYOUT_EMAIL',
 }
 
 export class UiSchemaProperty {
   placeholder?: unknown;
   component: UiComponentEnum;
+  properties?: Record<string, UiSchemaProperty>;
 }
 
 export class UiSchema {

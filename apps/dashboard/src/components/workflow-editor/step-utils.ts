@@ -93,10 +93,20 @@ export const updateStepInWorkflow = (
     ...workflow,
     steps: workflow.steps.map((step) => {
       if (step.stepId === stepId) {
-        return { ...step, ...updateStep };
+        const existingControlValues = step.controls?.values || {};
+        const updatedControlValues = updateStep.controlValues || existingControlValues;
+
+        return {
+          ...step,
+          ...updateStep,
+          controlValues: updatedControlValues,
+        };
       }
 
-      return step;
+      return {
+        ...step,
+        controlValues: step.controls?.values || {},
+      };
     }),
   };
 };
