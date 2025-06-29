@@ -8,10 +8,7 @@ export const ActivityHeader = ({ title, className }: { title?: string; className
   return (
     <motion.header
       {...fadeIn}
-      className={cn(
-        'flex items-center gap-2 border-b border-t border-neutral-200 border-b-neutral-100 px-3 pb-2 pt-[7px]',
-        className
-      )}
+      className={cn('bg-bg-weak border-stroke-soft flex items-center gap-1.5 border-b px-2 py-1.5', className)}
     >
       <RiRouteFill className="h-3 w-3" />
       <span className="text-foreground-950 text-sm font-medium">{title || 'Deleted workflow'}</span>

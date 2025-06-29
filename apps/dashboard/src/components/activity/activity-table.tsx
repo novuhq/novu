@@ -106,8 +106,7 @@ export function ActivityTable({
                   key={activity._id}
                   className={cn(
                     'relative cursor-pointer hover:bg-neutral-50',
-                    selectedActivityId === activity._id &&
-                      'bg-neutral-50 after:absolute after:right-0 after:top-0 after:h-[calc(100%-1px)] after:w-[5px] after:bg-neutral-200'
+                    selectedActivityId === activity._id && 'bg-neutral-50'
                   )}
                   onClick={() => onActivitySelect(activity._id)}
                 >
@@ -120,6 +119,7 @@ export function ActivityTable({
                         {activity.template?.name || 'Deleted workflow'}
                       </span>
                       <span className="text-foreground-400 ml-[5px] text-[10px] leading-[14px]">
+                        {activity.transactionId} •{' '}
                         {getSubscriberDisplay(
                           activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
                         )}

@@ -121,7 +121,7 @@ export function ActivityFeedContent({
         hide={hideFilters}
       />
       <div className={`relative flex ${contentHeight}`}>
-        <ResizablePanelGroup direction="horizontal">
+        <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={70} minSize={50}>
             <ActivityTable
               selectedActivityId={activityItemId}
@@ -133,42 +133,39 @@ export function ActivityFeedContent({
             />
           </ResizablePanel>
 
-          <AnimatePresence mode="wait">
-            {activityItemId && (
-              <>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={35} minSize={35} maxSize={50}>
-                  <motion.div
-                    key={activityItemId}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{
-                      duration: 0.2,
-                    }}
-                    className="bg-background h-full overflow-auto"
-                  >
-                    <ActivityPanel>
-                      {isPending ? (
-                        <ActivitySkeleton />
-                      ) : error || !activity ? (
-                        <ActivityError />
-                      ) : (
-                        <>
-                          <ActivityHeader title={activity.template?.name} />
-                          <ActivityOverview activity={activity} />
-                          <ActivityLogs
-                            activity={activity}
-                            onActivitySelect={handleActivitySelect}
-                            onTransactionIdChange={handleTransactionIdChange}
-                          />
-                        </>
-                      )}
-                    </ActivityPanel>
-                  </motion.div>
-                </ResizablePanel>
-              </>
-            )}
-          </AnimatePresence>
+          <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activityItemId}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  duration: 0.2,
+                }}
+                className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
+              >
+                {activityItemId && (
+                  <ActivityPanel>
+                    {isPending ? (
+                      <ActivitySkeleton />
+                    ) : error || !activity ? (
+                      <ActivityError />
+                    ) : (
+                      <>
+                        <ActivityHeader title={activity.template?.name} />
+                        <ActivityOverview activity={activity} />
+                        <ActivityLogs
+                          activity={activity}
+                          onActivitySelect={handleActivitySelect}
+                          onTransactionIdChange={handleTransactionIdChange}
+                        />
+                      </>
+                    )}
+                  </ActivityPanel>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </ResizablePanel>
         </ResizablePanelGroup>
       </div>
     </div>
