@@ -5,7 +5,9 @@ import { ResourceTypeEnum, IDiffResult, IResourceDiff, DiffActionEnum } from '..
 export class DiffResultBuilder {
   private results: IDiffResult[] = [];
 
-  addWorkflowDiff(
+  constructor(private readonly resourceType: ResourceTypeEnum) {}
+
+  addResourceDiff(
     sourceResourceId: string | null,
     sourceResourceName: string | null,
     targetResourceId: string | null,
@@ -14,7 +16,7 @@ export class DiffResultBuilder {
   ): this {
     if (changes.length > 0) {
       this.results.push({
-        resourceType: ResourceTypeEnum.WORKFLOW,
+        resourceType: this.resourceType,
         sourceResourceId,
         sourceResourceName,
         targetResourceId,
@@ -27,18 +29,18 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addWorkflowAdded(sourceResourceId: string, sourceResourceName: string): this {
+  addResourceAdded(sourceResourceId: string, sourceResourceName: string): this {
     const diff: IResourceDiff = {
       sourceResourceId,
       sourceResourceName,
       targetResourceId: null,
       targetResourceName: null,
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       action: DiffActionEnum.ADDED,
     };
 
     this.results.push({
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       sourceResourceId,
       sourceResourceName,
       targetResourceId: null,
@@ -50,18 +52,18 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addWorkflowDeleted(targetResourceId: string, targetResourceName: string): this {
+  addResourceDeleted(targetResourceId: string, targetResourceName: string): this {
     const diff: IResourceDiff = {
       sourceResourceId: null,
       sourceResourceName: null,
       targetResourceId,
       targetResourceName,
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       action: DiffActionEnum.DELETED,
     };
 
     this.results.push({
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       sourceResourceId: null,
       sourceResourceName: null,
       targetResourceId,
@@ -71,6 +73,25 @@ export class DiffResultBuilder {
     });
 
     return this;
+  }
+
+  // Legacy methods for backward compatibility
+  addWorkflowDiff(
+    sourceResourceId: string | null,
+    sourceResourceName: string | null,
+    targetResourceId: string | null,
+    targetResourceName: string | null,
+    changes: IResourceDiff[]
+  ): this {
+    return this.addResourceDiff(sourceResourceId, sourceResourceName, targetResourceId, targetResourceName, changes);
+  }
+
+  addWorkflowAdded(sourceResourceId: string, sourceResourceName: string): this {
+    return this.addResourceAdded(sourceResourceId, sourceResourceName);
+  }
+
+  addWorkflowDeleted(targetResourceId: string, targetResourceName: string): this {
+    return this.addResourceDeleted(targetResourceId, targetResourceName);
   }
 
   build(): IDiffResult[] {

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData, WorkflowStatusEnum } from '@novu/shared';
@@ -14,7 +14,7 @@ export class WorkflowDiffOperation {
     private logger: PinoLogger,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private workflowComparator: WorkflowComparator,
-    private diffResultBuilder: DiffResultBuilder
+    @Inject('WorkflowDiffResultBuilder') private workflowDiffResultBuilder: DiffResultBuilder
   ) {}
 
   async execute(
@@ -25,7 +25,7 @@ export class WorkflowDiffOperation {
   ): Promise<IDiffResult[]> {
     this.logger.info(WORKFLOW_SYNC_MESSAGES.STARTING_DIFF(sourceEnvId, targetEnvId));
 
-    const resultBuilder = this.diffResultBuilder.reset();
+    const resultBuilder = this.workflowDiffResultBuilder.reset();
 
     try {
       const [sourceWorkflows, targetWorkflows] = await Promise.all([

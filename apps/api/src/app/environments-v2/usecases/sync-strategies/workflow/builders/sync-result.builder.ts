@@ -13,9 +13,11 @@ export class SyncResultBuilder {
   private failed: IFailedEntity[] = [];
   private skipped: ISkippedEntity[] = [];
 
+  constructor(private readonly resourceType: ResourceTypeEnum) {}
+
   addSuccess(resourceId: string, resourceName: string, action: 'created' | 'updated' | 'deleted'): this {
     this.successful.push({
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       resourceId,
       resourceName,
       action,
@@ -26,7 +28,7 @@ export class SyncResultBuilder {
 
   addFailure(resourceId: string, resourceName: string, error: string, stack?: string): this {
     this.failed.push({
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       resourceId,
       resourceName,
       error,
@@ -38,7 +40,7 @@ export class SyncResultBuilder {
 
   addSkipped(resourceId: string, resourceName: string, reason: string): this {
     this.skipped.push({
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       resourceId,
       resourceName,
       reason,
@@ -67,7 +69,7 @@ export class SyncResultBuilder {
 
   build(): ISyncResult {
     return {
-      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceType: this.resourceType,
       successful: [...this.successful],
       failed: [...this.failed],
       skipped: [...this.skipped],

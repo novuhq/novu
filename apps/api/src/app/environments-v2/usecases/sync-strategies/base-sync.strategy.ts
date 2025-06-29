@@ -28,13 +28,4 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
       await processor(batch);
     }
   }
-
-  protected measureTime<T>(fn: () => Promise<T>): Promise<{ result: T; duration: number }> {
-    const start = Date.now();
-
-    return fn().then((result) => ({
-      result,
-      duration: Date.now() - start,
-    }));
-  }
 }

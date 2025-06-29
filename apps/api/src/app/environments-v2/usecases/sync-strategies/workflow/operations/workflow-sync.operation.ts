@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PinoLogger, DeleteWorkflowUseCase, DeleteWorkflowCommand } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
 import { WorkflowStatusEnum } from '@novu/shared';
@@ -10,12 +10,7 @@ import { SyncToEnvironmentCommand } from '../../../../../workflows-v2/usecases/s
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { SyncResultBuilder } from '../builders/sync-result.builder';
 import { ISyncContext, ISyncResult } from '../../../../types/sync.types';
-import {
-  WORKFLOW_SYNC_CONSTANTS,
-  WORKFLOW_SYNC_MESSAGES,
-  WORKFLOW_SYNC_ACTIONS,
-  SKIP_REASONS,
-} from '../constants/workflow-sync.constants';
+import { WORKFLOW_SYNC_MESSAGES, WORKFLOW_SYNC_ACTIONS, SKIP_REASONS } from '../constants/workflow-sync.constants';
 
 @Injectable()
 export class WorkflowSyncOperation {
@@ -25,13 +20,13 @@ export class WorkflowSyncOperation {
     private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
     private workflowComparator: WorkflowComparator,
-    private syncResultBuilder: SyncResultBuilder
+    @Inject('WorkflowSyncResultBuilder') private workflowSyncResultBuilder: SyncResultBuilder
   ) {}
 
   async execute(context: ISyncContext): Promise<ISyncResult> {
     this.logger.info(WORKFLOW_SYNC_MESSAGES.STARTING_SYNC(context.sourceEnvironmentId, context.targetEnvironmentId));
 
-    const resultBuilder = this.syncResultBuilder.reset();
+    const resultBuilder = this.workflowSyncResultBuilder.reset();
 
     try {
       const sourceWorkflows = await this.fetchSyncableWorkflows(
@@ -44,16 +39,11 @@ export class WorkflowSyncOperation {
       if (context.options.dryRun) {
         this.logger.info(WORKFLOW_SYNC_MESSAGES.DRY_RUN_MODE);
 
-        return resultBuilder
-          .addSkippedEntities(
-            sourceWorkflows.map((workflow) => ({
-              resourceType: 'workflow' as any,
-              resourceId: this.getWorkflowIdentifier(workflow),
-              resourceName: workflow.name,
-              reason: SKIP_REASONS.DRY_RUN,
-            }))
-          )
-          .build();
+        sourceWorkflows.forEach((workflow) => {
+          resultBuilder.addSkipped(this.getWorkflowIdentifier(workflow), workflow.name, SKIP_REASONS.DRY_RUN);
+        });
+
+        return resultBuilder.build();
       }
 
       // Sync workflows

@@ -7,6 +7,7 @@ import { WorkflowSyncStrategy } from './usecases/sync-strategies/workflow-sync.s
 import { TransactionalSyncService } from './services/transactional-sync.service';
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
+import { ResourceTypeEnum } from './types/sync.types';
 
 // Import workflow sync components
 import {
@@ -31,8 +32,14 @@ import {
     // Workflow sync components
     WorkflowNormalizer,
     WorkflowComparator,
-    SyncResultBuilder,
-    DiffResultBuilder,
+    {
+      provide: 'WorkflowSyncResultBuilder',
+      useFactory: () => new SyncResultBuilder(ResourceTypeEnum.WORKFLOW),
+    },
+    {
+      provide: 'WorkflowDiffResultBuilder',
+      useFactory: () => new DiffResultBuilder(ResourceTypeEnum.WORKFLOW),
+    },
     WorkflowSyncOperation,
     WorkflowDiffOperation,
   ],
