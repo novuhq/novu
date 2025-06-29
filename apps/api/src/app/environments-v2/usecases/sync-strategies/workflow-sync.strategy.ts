@@ -394,7 +394,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
       for (const [field, value] of Object.entries(workflowDifferences)) {
         workflowChanges[field] = {
-          old: targetWithoutSteps[field],
+          previous: targetWithoutSteps[field],
           new: sourceWithoutSteps[field],
         };
       }
@@ -447,7 +447,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           newIndex: sourceIndex,
           changes: {
             step: {
-              old: null,
+              previous: null,
               new: normalizedStep,
             },
           },
@@ -465,7 +465,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
             workflowId,
             workflowName,
             action: DiffActionEnum.STEP_MODIFIED,
-            oldIndex: targetIndex,
+            previousIndex: targetIndex,
             newIndex: sourceIndex,
             changes: stepChanges,
           });
@@ -478,7 +478,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
             workflowId,
             workflowName,
             action: DiffActionEnum.STEP_MOVED,
-            oldIndex: targetIndex,
+            previousIndex: targetIndex,
             newIndex: sourceIndex,
           });
         }
@@ -500,10 +500,10 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           workflowId,
           workflowName,
           action: DiffActionEnum.STEP_DELETED,
-          oldIndex: targetIndex,
+          previousIndex: targetIndex,
           changes: {
             step: {
-              old: normalizedStep,
+              previous: normalizedStep,
               new: null,
             },
           },
@@ -514,7 +514,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     return stepDiffs;
   }
 
-  private compareIndividualStep(sourceStep: any, targetStep: any): Record<string, { old: any; new: any }> {
+  private compareIndividualStep(sourceStep: any, targetStep: any): Record<string, { previous: any; new: any }> {
     // Normalize steps for comparison
     const normalizedSource = this.normalizeStepForComparison(sourceStep);
     const normalizedTarget = this.normalizeStepForComparison(targetStep);
@@ -523,10 +523,10 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     const differences = diff(normalizedTarget, normalizedSource);
 
     // Transform to expected format
-    const changes: Record<string, { old: any; new: any }> = {};
+    const changes: Record<string, { previous: any; new: any }> = {};
     for (const [field, value] of Object.entries(differences)) {
       changes[field] = {
-        old: normalizedTarget[field],
+        previous: normalizedTarget[field],
         new: normalizedSource[field],
       };
     }

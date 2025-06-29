@@ -80,7 +80,7 @@ export interface IEntityDiff {
   changes?: Record<
     string,
     {
-      old: any;
+      previous: any;
       new: any;
     }
   >;
@@ -88,7 +88,7 @@ export interface IEntityDiff {
   stepType?: string;
   workflowId?: string;
   workflowName?: string;
-  oldIndex?: number;
+  previousIndex?: number;
   newIndex?: number;
 }
 

@@ -54,7 +54,7 @@ export class EntityDiffDto {
     additionalProperties: {
       type: 'object',
       properties: {
-        old: { description: 'Previous value' },
+        previous: { description: 'Previous value' },
         new: { description: 'New value' },
       },
     },
@@ -62,7 +62,7 @@ export class EntityDiffDto {
   changes?: Record<
     string,
     {
-      old: any;
+      previous: any;
       new: any;
     }
   >;
@@ -86,7 +86,7 @@ export class EntityDiffDto {
   @ApiPropertyOptional({ description: 'Previous index in steps array (for moved/deleted steps)' })
   @IsOptional()
   @IsNumber()
-  oldIndex?: number;
+  previousIndex?: number;
 
   @ApiPropertyOptional({ description: 'New index in steps array (for moved/added steps)' })
   @IsOptional()
