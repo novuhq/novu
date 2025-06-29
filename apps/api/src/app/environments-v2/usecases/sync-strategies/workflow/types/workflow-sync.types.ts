@@ -2,28 +2,22 @@ import { UserSessionData } from '@novu/shared';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { DiffActionEnum, IResourceDiff } from '../../../../types/sync.types';
 import { WorkflowResponseDto } from '../../../../../workflows-v2/dtos/workflow-response.dto';
+import { StepResponseDto } from '../../../../../workflows-v2/dtos/step.response.dto';
 
-export interface INormalizedWorkflow {
-  workflowId: string;
-  name: string;
-  active: boolean;
-  tags: string[];
-  description?: string;
-  payloadSchema?: Record<string, any>;
-  validatePayload?: boolean;
-  steps: INormalizedStep[];
-  preferences?: any;
-}
+export type INormalizedWorkflow = Pick<
+  WorkflowResponseDto,
+  | 'workflowId'
+  | 'name'
+  | 'active'
+  | 'tags'
+  | 'description'
+  | 'payloadSchema'
+  | 'validatePayload'
+  | 'steps'
+  | 'preferences'
+>;
 
-export interface INormalizedStep {
-  stepId: string;
-  name: string;
-  type: string;
-  active: boolean;
-  shouldStopOnFail?: boolean;
-  filters?: any;
-  controlValues?: Record<string, any>;
-}
+export type INormalizedStep = Pick<StepResponseDto, 'stepId' | 'name' | 'type' | 'controlValues'>;
 
 export interface IWorkflowComparison {
   workflowChanges: {
@@ -35,7 +29,7 @@ export interface IWorkflowComparison {
 
 export interface IWorkflowNormalizer {
   normalizeWorkflow(workflow: WorkflowResponseDto): INormalizedWorkflow;
-  normalizeStep(step: any): INormalizedStep;
+  normalizeStep(step: StepResponseDto): INormalizedStep;
 }
 
 export interface IWorkflowComparator {

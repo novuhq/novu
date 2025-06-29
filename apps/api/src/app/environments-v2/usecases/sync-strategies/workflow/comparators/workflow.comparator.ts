@@ -46,8 +46,8 @@ export class WorkflowComparator implements IWorkflowComparator {
       ]);
 
       // Normalize both workflows using the same logic as sync-to-environment
-      const normalizedSource = this.workflowNormalizer.normalizeWorkflowForComparison(sourceWorkflowDto);
-      const normalizedTarget = this.workflowNormalizer.normalizeWorkflowForComparison(targetWorkflowDto);
+      const normalizedSource = this.workflowNormalizer.normalizeWorkflow(sourceWorkflowDto);
+      const normalizedTarget = this.workflowNormalizer.normalizeWorkflow(targetWorkflowDto);
 
       // Separate steps from workflow fields
       const { steps: sourceSteps, ...sourceWithoutSteps } = normalizedSource;
