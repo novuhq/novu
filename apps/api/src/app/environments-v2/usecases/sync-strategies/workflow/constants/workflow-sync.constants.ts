@@ -1,5 +1,3 @@
-// Constants for workflow sync operations
-
 export const WORKFLOW_SYNC_CONSTANTS = {
   BATCH_SIZE: 100,
 } as const;
