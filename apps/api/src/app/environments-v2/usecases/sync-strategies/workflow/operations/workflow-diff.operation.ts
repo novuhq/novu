@@ -1,20 +1,19 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
-import { UserSessionData, WorkflowStatusEnum } from '@novu/shared';
-import { SYNCABLE_WORKFLOW_ORIGINS } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
 import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
+import { WorkflowRepositoryService } from './workflow-repository.service';
 
 @Injectable()
 export class WorkflowDiffOperation {
   constructor(
     private logger: PinoLogger,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private workflowComparator: WorkflowComparator,
-    @Inject('WorkflowDiffResultBuilder') private workflowDiffResultBuilder: DiffResultBuilder
+    private workflowRepositoryService: WorkflowRepositoryService,
+    private workflowComparator: WorkflowComparator
   ) {}
 
   async execute(
@@ -25,12 +24,12 @@ export class WorkflowDiffOperation {
   ): Promise<IDiffResult[]> {
     this.logger.info(WORKFLOW_SYNC_MESSAGES.STARTING_DIFF(sourceEnvId, targetEnvId));
 
-    const resultBuilder = this.workflowDiffResultBuilder.reset();
+    const resultBuilder = new DiffResultBuilder(ResourceTypeEnum.WORKFLOW);
 
     try {
       const [sourceWorkflows, targetWorkflows] = await Promise.all([
-        this.fetchSyncableWorkflows(sourceEnvId, organizationId),
-        this.fetchSyncableWorkflows(targetEnvId, organizationId),
+        this.workflowRepositoryService.fetchSyncableWorkflows(sourceEnvId, organizationId),
+        this.workflowRepositoryService.fetchSyncableWorkflows(targetEnvId, organizationId),
       ]);
 
       await this.processWorkflowDiffs(sourceWorkflows, targetWorkflows, resultBuilder, userContext);
@@ -49,20 +48,19 @@ export class WorkflowDiffOperation {
     resultBuilder: DiffResultBuilder,
     userContext: UserSessionData
   ): Promise<void> {
-    const targetWorkflowMap = new Map(
-      targetWorkflows.map((workflow) => [workflow.triggers?.[0]?.identifier, workflow])
-    );
+    const targetWorkflowMap = this.workflowRepositoryService.createWorkflowMap(targetWorkflows);
 
-    // Check for added and modified workflows
     for (const sourceWorkflow of sourceWorkflows) {
-      const sourceIdentifier = sourceWorkflow.triggers?.[0]?.identifier;
+      const sourceIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow);
       const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
       if (!targetWorkflow) {
         // Entire workflow was added
-        resultBuilder.addWorkflowAdded(this.getWorkflowIdentifier(sourceWorkflow), sourceWorkflow.name);
+        resultBuilder.addWorkflowAdded(
+          this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
+          sourceWorkflow.name
+        );
       } else {
-        // Compare workflow and get both workflow changes and step diffs
         const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
           sourceWorkflow,
           targetWorkflow,
@@ -71,12 +69,11 @@ export class WorkflowDiffOperation {
 
         const allDiffs = this.createWorkflowDiffs(sourceWorkflow, targetWorkflow, workflowChanges, stepDiffs);
 
-        // Only create a result if there are changes
         if (allDiffs.length > 0) {
           resultBuilder.addWorkflowDiff(
-            this.getWorkflowIdentifier(sourceWorkflow),
+            this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
             sourceWorkflow.name,
-            this.getWorkflowIdentifier(targetWorkflow),
+            this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
             targetWorkflow.name,
             allDiffs
           );
@@ -90,14 +87,15 @@ export class WorkflowDiffOperation {
     targetWorkflows: NotificationTemplateEntity[],
     resultBuilder: DiffResultBuilder
   ): Promise<void> {
-    const sourceWorkflowMap = new Map(
-      sourceWorkflows.map((workflow) => [workflow.triggers?.[0]?.identifier, workflow])
-    );
+    const sourceWorkflowMap = this.workflowRepositoryService.createWorkflowMap(sourceWorkflows);
 
     for (const targetWorkflow of targetWorkflows) {
-      const targetIdentifier = targetWorkflow.triggers?.[0]?.identifier;
+      const targetIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow);
       if (!sourceWorkflowMap.has(targetIdentifier)) {
-        resultBuilder.addWorkflowDeleted(this.getWorkflowIdentifier(targetWorkflow), targetWorkflow.name);
+        resultBuilder.addWorkflowDeleted(
+          this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
+          targetWorkflow.name
+        );
       }
     }
   }
@@ -116,9 +114,9 @@ export class WorkflowDiffOperation {
     // Add workflow-level changes if any
     if (workflowChanges) {
       allDiffs.push({
-        sourceResourceId: this.getWorkflowIdentifier(sourceWorkflow),
+        sourceResourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
         sourceResourceName: sourceWorkflow.name,
-        targetResourceId: this.getWorkflowIdentifier(targetWorkflow),
+        targetResourceId: this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
         targetResourceName: targetWorkflow.name,
         resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
@@ -130,21 +128,5 @@ export class WorkflowDiffOperation {
     allDiffs.push(...stepDiffs);
 
     return allDiffs;
-  }
-
-  private async fetchSyncableWorkflows(
-    environmentId: string,
-    organizationId: string
-  ): Promise<NotificationTemplateEntity[]> {
-    return await this.notificationTemplateRepository.find({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
-      status: { $ne: WorkflowStatusEnum.ERROR },
-    });
-  }
-
-  private getWorkflowIdentifier(workflow: NotificationTemplateEntity): string {
-    return workflow.triggers?.[0]?.identifier as string;
   }
 }

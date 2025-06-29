@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import {
   ResourceTypeEnum,
   ISyncResult,
@@ -7,7 +6,6 @@ import {
   ISkippedEntity,
 } from '../../../../types/sync.types';
 
-@Injectable()
 export class SyncResultBuilder {
   private successful: ISyncedEntity[] = [];
   private failed: IFailedEntity[] = [];
@@ -75,14 +73,6 @@ export class SyncResultBuilder {
       skipped: [...this.skipped],
       totalProcessed: this.successful.length + this.failed.length + this.skipped.length,
     };
-  }
-
-  reset(): this {
-    this.successful = [];
-    this.failed = [];
-    this.skipped = [];
-
-    return this;
   }
 
   getStats() {

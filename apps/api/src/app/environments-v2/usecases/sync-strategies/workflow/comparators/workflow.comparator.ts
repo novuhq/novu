@@ -5,12 +5,12 @@ import { UserSessionData } from '@novu/shared';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../../workflows-v2/usecases/get-workflow';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
-import { IWorkflowComparator, IWorkflowComparison, INormalizedStep } from '../types/workflow-sync.types';
+import { IWorkflowComparison, INormalizedStep, INormalizedWorkflow } from '../types/workflow-sync.types';
 import { IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
-import { WORKFLOW_SYNC_CONSTANTS, WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
+import { WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 
 @Injectable()
-export class WorkflowComparator implements IWorkflowComparator {
+export class WorkflowComparator {
   constructor(
     private logger: PinoLogger,
     private getWorkflowUseCase: GetWorkflowUseCase,
@@ -23,7 +23,6 @@ export class WorkflowComparator implements IWorkflowComparator {
     userContext: UserSessionData
   ): Promise<IWorkflowComparison> {
     try {
-      // Get proper WorkflowResponseDto for both workflows to ensure we have the correct structure
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -45,7 +44,6 @@ export class WorkflowComparator implements IWorkflowComparator {
         ),
       ]);
 
-      // Normalize both workflows using the same logic as sync-to-environment
       const normalizedSource = this.workflowNormalizer.normalizeWorkflow(sourceWorkflowDto);
       const normalizedTarget = this.workflowNormalizer.normalizeWorkflow(targetWorkflowDto);
 
@@ -53,12 +51,11 @@ export class WorkflowComparator implements IWorkflowComparator {
       const { steps: sourceSteps, ...sourceWithoutSteps } = normalizedSource;
       const { steps: targetSteps, ...targetWithoutSteps } = normalizedTarget;
 
-      // Compare workflow-level fields (excluding steps)
       const workflowDifferences = diff(targetWithoutSteps, sourceWithoutSteps);
 
       let workflowChanges: {
-        previous: Record<string, any> | null;
-        new: Record<string, any> | null;
+        previous: Partial<INormalizedWorkflow> | null;
+        new: Partial<INormalizedWorkflow> | null;
       } | null = null;
 
       if (Object.keys(workflowDifferences).length > 0) {
@@ -82,13 +79,10 @@ export class WorkflowComparator implements IWorkflowComparator {
   compareStepsAsEntities(sourceSteps: INormalizedStep[], targetSteps: INormalizedStep[]): IResourceDiff[] {
     const stepDiffs: IResourceDiff[] = [];
 
-    // Create maps for efficient lookup
-    const sourceStepMap = new Map(sourceSteps.map((step, index) => [step.stepId, { step, index }]));
     const targetStepMap = new Map(targetSteps.map((step, index) => [step.stepId, { step, index }]));
 
     const processedSteps = new Set<string>();
 
-    // Process source steps (added/modified/moved)
     sourceSteps.forEach((sourceStep, sourceIndex) => {
       const targetStepData = targetStepMap.get(sourceStep.stepId);
 
@@ -108,7 +102,6 @@ export class WorkflowComparator implements IWorkflowComparator {
       processedSteps.add(sourceStep.stepId);
     });
 
-    // Process deleted steps
     targetSteps.forEach((targetStep, targetIndex) => {
       if (!processedSteps.has(targetStep.stepId)) {
         stepDiffs.push(this.createStepDeletedDiff(targetStep, targetIndex));
@@ -122,29 +115,22 @@ export class WorkflowComparator implements IWorkflowComparator {
     sourceStep: INormalizedStep,
     targetStep: INormalizedStep
   ): {
-    previous: Record<string, any>;
-    new: Record<string, any>;
+    previous: Partial<INormalizedStep> | null;
+    new: Partial<INormalizedStep> | null;
   } | null {
-    // Normalize steps for comparison
-    const normalizedSource = this.workflowNormalizer.normalizeStepForComparison(sourceStep);
-    const normalizedTarget = this.workflowNormalizer.normalizeStepForComparison(targetStep);
-
-    // Use deep-object-diff for individual step comparison
-    const differences = diff(normalizedTarget, normalizedSource);
+    const differences = diff(targetStep, sourceStep);
 
     if (Object.keys(differences).length === 0) {
       return null;
     }
 
     return {
-      previous: normalizedTarget,
-      new: normalizedSource,
+      previous: targetStep,
+      new: sourceStep,
     };
   }
 
   private createStepAddedDiff(sourceStep: INormalizedStep, sourceIndex: number): IResourceDiff {
-    const normalizedStep = this.workflowNormalizer.normalizeStepForComparison(sourceStep);
-
     return {
       sourceResourceId: sourceStep.stepId,
       sourceResourceName: sourceStep.name,
@@ -156,7 +142,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       newIndex: sourceIndex,
       diffs: {
         previous: null,
-        new: normalizedStep,
+        new: sourceStep,
       },
     };
   }
@@ -167,8 +153,8 @@ export class WorkflowComparator implements IWorkflowComparator {
     sourceIndex: number,
     targetIndex: number,
     stepChanges: {
-      previous: Record<string, any>;
-      new: Record<string, any>;
+      previous: Partial<INormalizedStep> | null;
+      new: Partial<INormalizedStep> | null;
     }
   ): IResourceDiff {
     return {
@@ -205,8 +191,6 @@ export class WorkflowComparator implements IWorkflowComparator {
   }
 
   private createStepDeletedDiff(targetStep: INormalizedStep, targetIndex: number): IResourceDiff {
-    const normalizedStep = this.workflowNormalizer.normalizeStepForComparison(targetStep);
-
     return {
       sourceResourceId: null,
       sourceResourceName: null,
@@ -217,7 +201,7 @@ export class WorkflowComparator implements IWorkflowComparator {
       action: DiffActionEnum.DELETED,
       previousIndex: targetIndex,
       diffs: {
-        previous: normalizedStep,
+        previous: targetStep,
         new: null,
       },
     };

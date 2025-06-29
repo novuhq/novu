@@ -1,35 +1,31 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PinoLogger, DeleteWorkflowUseCase, DeleteWorkflowCommand } from '@novu/application-generic';
-import { NotificationTemplateRepository } from '@novu/dal';
-import { WorkflowStatusEnum } from '@novu/shared';
-import {
-  SyncToEnvironmentUseCase,
-  SYNCABLE_WORKFLOW_ORIGINS,
-} from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { SyncToEnvironmentUseCase } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { SyncToEnvironmentCommand } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.command';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { SyncResultBuilder } from '../builders/sync-result.builder';
-import { ISyncContext, ISyncResult } from '../../../../types/sync.types';
+import { ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_MESSAGES, WORKFLOW_SYNC_ACTIONS, SKIP_REASONS } from '../constants/workflow-sync.constants';
+import { WorkflowRepositoryService } from './workflow-repository.service';
 
 @Injectable()
 export class WorkflowSyncOperation {
   constructor(
     private logger: PinoLogger,
-    private notificationTemplateRepository: NotificationTemplateRepository,
+    private workflowRepositoryService: WorkflowRepositoryService,
     private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
-    private workflowComparator: WorkflowComparator,
-    @Inject('WorkflowSyncResultBuilder') private workflowSyncResultBuilder: SyncResultBuilder
+    private workflowComparator: WorkflowComparator
   ) {}
 
   async execute(context: ISyncContext): Promise<ISyncResult> {
     this.logger.info(WORKFLOW_SYNC_MESSAGES.STARTING_SYNC(context.sourceEnvironmentId, context.targetEnvironmentId));
 
-    const resultBuilder = this.workflowSyncResultBuilder.reset();
+    const resultBuilder = new SyncResultBuilder(ResourceTypeEnum.WORKFLOW);
 
     try {
-      const sourceWorkflows = await this.fetchSyncableWorkflows(
+      const sourceWorkflows = await this.workflowRepositoryService.fetchSyncableWorkflows(
         context.sourceEnvironmentId,
         context.user.organizationId
       );
@@ -40,16 +36,18 @@ export class WorkflowSyncOperation {
         this.logger.info(WORKFLOW_SYNC_MESSAGES.DRY_RUN_MODE);
 
         sourceWorkflows.forEach((workflow) => {
-          resultBuilder.addSkipped(this.getWorkflowIdentifier(workflow), workflow.name, SKIP_REASONS.DRY_RUN);
+          resultBuilder.addSkipped(
+            this.workflowRepositoryService.getWorkflowIdentifier(workflow),
+            workflow.name,
+            SKIP_REASONS.DRY_RUN
+          );
         });
 
         return resultBuilder.build();
       }
 
-      // Sync workflows
       await this.syncWorkflows(context, sourceWorkflows, resultBuilder);
 
-      // Handle deleted workflows
       await this.handleDeletedWorkflows(context, sourceWorkflows, resultBuilder);
 
       return resultBuilder.build();
@@ -61,17 +59,20 @@ export class WorkflowSyncOperation {
 
   private async syncWorkflows(
     context: ISyncContext,
-    sourceWorkflows: any[],
+    sourceWorkflows: NotificationTemplateEntity[],
     resultBuilder: SyncResultBuilder
   ): Promise<void> {
     // Fetch target workflows to compare for changes
-    const targetWorkflows = await this.fetchSyncableWorkflows(context.targetEnvironmentId, context.user.organizationId);
+    const targetWorkflows = await this.workflowRepositoryService.fetchSyncableWorkflows(
+      context.targetEnvironmentId,
+      context.user.organizationId
+    );
 
-    const targetWorkflowMap = new Map(targetWorkflows.map((workflow) => [workflow.triggers[0]?.identifier, workflow]));
+    const targetWorkflowMap = this.workflowRepositoryService.createWorkflowMap(targetWorkflows);
 
     for (const workflow of sourceWorkflows) {
       try {
-        const sourceIdentifier = workflow.triggers[0]?.identifier;
+        const sourceIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(workflow);
         const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
         const shouldSync = await this.shouldSyncWorkflow(context, workflow, targetWorkflow);
@@ -79,17 +80,26 @@ export class WorkflowSyncOperation {
         if (shouldSync.sync) {
           await this.syncWorkflowToTarget(context, workflow);
           resultBuilder.addSuccess(
-            this.getWorkflowIdentifier(workflow),
+            this.workflowRepositoryService.getWorkflowIdentifier(workflow),
             workflow.name,
             shouldSync.action as 'created' | 'updated'
           );
           this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SUCCESS(workflow.name, shouldSync.action));
         } else {
-          resultBuilder.addSkipped(this.getWorkflowIdentifier(workflow), workflow.name, shouldSync.reason!);
+          resultBuilder.addSkipped(
+            this.workflowRepositoryService.getWorkflowIdentifier(workflow),
+            workflow.name,
+            shouldSync.reason!
+          );
           this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SKIP(workflow.name, shouldSync.action));
         }
       } catch (error) {
-        resultBuilder.addFailure(this.getWorkflowIdentifier(workflow), workflow.name, error.message, error.stack);
+        resultBuilder.addFailure(
+          this.workflowRepositoryService.getWorkflowIdentifier(workflow),
+          workflow.name,
+          error.message,
+          error.stack
+        );
         this.logger.error(WORKFLOW_SYNC_MESSAGES.SYNC_FAILED(workflow.name, error.message));
       }
     }
@@ -97,20 +107,23 @@ export class WorkflowSyncOperation {
 
   private async handleDeletedWorkflows(
     context: ISyncContext,
-    sourceWorkflows: any[],
+    sourceWorkflows: NotificationTemplateEntity[],
     resultBuilder: SyncResultBuilder
   ): Promise<void> {
-    const targetWorkflows = await this.fetchSyncableWorkflows(context.targetEnvironmentId, context.user.organizationId);
+    const targetWorkflows = await this.workflowRepositoryService.fetchSyncableWorkflows(
+      context.targetEnvironmentId,
+      context.user.organizationId
+    );
 
-    const sourceWorkflowMap = new Map(sourceWorkflows.map((workflow) => [workflow.triggers[0]?.identifier, workflow]));
+    const sourceWorkflowMap = this.workflowRepositoryService.createWorkflowMap(sourceWorkflows);
 
     for (const targetWorkflow of targetWorkflows) {
       try {
-        const targetIdentifier = targetWorkflow.triggers[0]?.identifier;
+        const targetIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow);
         if (!sourceWorkflowMap.has(targetIdentifier) && targetWorkflow.active) {
           await this.deleteWorkflowFromTarget(context, targetWorkflow);
           resultBuilder.addSuccess(
-            this.getWorkflowIdentifier(targetWorkflow),
+            this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
             targetWorkflow.name,
             WORKFLOW_SYNC_ACTIONS.DELETED
           );
@@ -118,7 +131,7 @@ export class WorkflowSyncOperation {
         }
       } catch (error) {
         resultBuilder.addFailure(
-          this.getWorkflowIdentifier(targetWorkflow),
+          this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
           targetWorkflow.name,
           error.message,
           error.stack
@@ -130,8 +143,8 @@ export class WorkflowSyncOperation {
 
   private async shouldSyncWorkflow(
     context: ISyncContext,
-    workflow: any,
-    targetWorkflow?: any
+    workflow: NotificationTemplateEntity,
+    targetWorkflow?: NotificationTemplateEntity
   ): Promise<{ sync: boolean; action: 'created' | 'updated' | 'skipped'; reason?: string }> {
     if (!targetWorkflow) {
       return { sync: true, action: WORKFLOW_SYNC_ACTIONS.CREATED };
@@ -153,7 +166,7 @@ export class WorkflowSyncOperation {
     return { sync: true, action: WORKFLOW_SYNC_ACTIONS.UPDATED };
   }
 
-  private async syncWorkflowToTarget(context: ISyncContext, workflow: any): Promise<void> {
+  private async syncWorkflowToTarget(context: ISyncContext, workflow: NotificationTemplateEntity): Promise<void> {
     await this.syncToEnvironmentUseCase.execute(
       SyncToEnvironmentCommand.create({
         user: { ...context.user, environmentId: context.sourceEnvironmentId },
@@ -163,7 +176,7 @@ export class WorkflowSyncOperation {
     );
   }
 
-  private async deleteWorkflowFromTarget(context: ISyncContext, workflow: any): Promise<void> {
+  private async deleteWorkflowFromTarget(context: ISyncContext, workflow: NotificationTemplateEntity): Promise<void> {
     await this.deleteWorkflowUseCase.execute(
       DeleteWorkflowCommand.create({
         workflowIdOrInternalId: workflow._id,
@@ -172,18 +185,5 @@ export class WorkflowSyncOperation {
         userId: context.user._id,
       })
     );
-  }
-
-  private async fetchSyncableWorkflows(environmentId: string, organizationId: string) {
-    return await this.notificationTemplateRepository.find({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
-      status: { $ne: WorkflowStatusEnum.ERROR },
-    });
-  }
-
-  private getWorkflowIdentifier(workflow: any): string {
-    return workflow.triggers[0]?.identifier || workflow._id;
   }
 }

@@ -7,16 +7,14 @@ import { WorkflowSyncStrategy } from './usecases/sync-strategies/workflow-sync.s
 import { TransactionalSyncService } from './services/transactional-sync.service';
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
-import { ResourceTypeEnum } from './types/sync.types';
 
 // Import workflow sync components
 import {
   WorkflowNormalizer,
   WorkflowComparator,
-  SyncResultBuilder,
-  DiffResultBuilder,
   WorkflowSyncOperation,
   WorkflowDiffOperation,
+  WorkflowRepositoryService,
 } from './usecases/sync-strategies/workflow';
 
 @Module({
@@ -32,14 +30,7 @@ import {
     // Workflow sync components
     WorkflowNormalizer,
     WorkflowComparator,
-    {
-      provide: 'WorkflowSyncResultBuilder',
-      useFactory: () => new SyncResultBuilder(ResourceTypeEnum.WORKFLOW),
-    },
-    {
-      provide: 'WorkflowDiffResultBuilder',
-      useFactory: () => new DiffResultBuilder(ResourceTypeEnum.WORKFLOW),
-    },
+    WorkflowRepositoryService,
     WorkflowSyncOperation,
     WorkflowDiffOperation,
   ],

@@ -1,7 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { ResourceTypeEnum, IDiffResult, IResourceDiff, DiffActionEnum } from '../../../../types/sync.types';
 
-@Injectable()
 export class DiffResultBuilder {
   private results: IDiffResult[] = [];
 
@@ -96,12 +94,6 @@ export class DiffResultBuilder {
 
   build(): IDiffResult[] {
     return [...this.results];
-  }
-
-  reset(): this {
-    this.results = [];
-
-    return this;
   }
 
   getStats() {
