@@ -25,14 +25,6 @@ export class PublishEnvironmentRequestDto {
   dryRun?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Skip workflows that already exist in target environment',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  skipExisting?: boolean;
-
-  @ApiPropertyOptional({
     description: 'Batch size for processing workflows',
     default: 100,
     minimum: 1,

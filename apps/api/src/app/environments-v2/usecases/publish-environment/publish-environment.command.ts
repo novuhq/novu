@@ -13,10 +13,6 @@ export class PublishEnvironmentCommand extends EnvironmentWithUserObjectCommand 
   dryRun?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  skipExisting?: boolean;
-
-  @IsOptional()
   @IsNumber()
   @Min(1)
   @Max(500)
