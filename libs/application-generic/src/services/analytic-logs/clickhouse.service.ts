@@ -18,7 +18,7 @@ export class ClickHouseService implements OnModuleDestroy {
 
     if (Object.values(requiredConnectionConfig).some((value) => !value)) {
       this.logger.warn(
-        'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.',
+        'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
       );
       this.client = undefined;
 

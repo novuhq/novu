@@ -40,10 +40,10 @@ import {
   ExecuteBridgeRequest,
   featureFlagsService,
   GetDecryptedSecretKey,
-  HttpLogRepository,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
+  RequestLogRepository,
   storageService,
 } from '@novu/application-generic';
 
@@ -100,7 +100,6 @@ const DAL_MODELS = [
   WorkflowOverrideRepository,
   ControlValuesRepository,
   PreferencesRepository,
-  HttpLogRepository,
 ];
 
 const dalService = {
@@ -112,6 +111,8 @@ const dalService = {
     return service;
   },
 };
+
+const ANALYTICS_PROVIDERS = [ClickHouseService, RequestLogRepository];
 
 const PROVIDERS = [
   analyticsService,
@@ -127,8 +128,7 @@ const PROVIDERS = [
   CreateExecutionDetails,
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
-  ClickHouseService,
-  HttpLogRepository,
+  ...ANALYTICS_PROVIDERS,
 ];
 
 const IMPORTS = [

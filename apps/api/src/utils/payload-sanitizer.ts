@@ -1,27 +1,11 @@
 const SENSITIVE_KEYS = ['password', 'token', 'secret', 'apikey', 'email', 'phone', 'bearer'];
-const MAX_PAYLOAD_SIZE = 10240; // 10KB
+const MAX_PAYLOAD_SIZE = 51200; // 50KB
 
-function maskSensitive(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(maskSensitive);
-  if (obj && typeof obj === 'object') {
-    return Object.fromEntries(
-      Object.entries(obj).map(([key, value]) => {
-        const lowerKey = key.toLowerCase();
-        const isSensitive = SENSITIVE_KEYS.some((sensitiveKey) => lowerKey.includes(sensitiveKey));
-        if (isSensitive) return [key, '***'];
+export function sanitizePayload(payload: Record<string, unknown>): string {
+  if (!payload) return '';
 
-        return [key, maskSensitive(value)];
-      })
-    );
-  }
-
-  return obj;
-}
-
-export function sanitizePayload(payload: any): string {
   try {
-    const masked = maskSensitive(payload);
-    let str = JSON.stringify(masked);
+    let str = JSON.stringify(payload);
     if (str.length > MAX_PAYLOAD_SIZE) {
       str = `${str.slice(0, MAX_PAYLOAD_SIZE)}...`;
     }

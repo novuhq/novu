@@ -1,7 +1,7 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { OrganizationCommand } from '@novu/application-generic';
 
-export class GetHttpLogsCommand extends OrganizationCommand {
+export class GetRequestsCommand extends OrganizationCommand {
   @IsNumber()
   @IsOptional()
   public page?: number;
@@ -10,9 +10,10 @@ export class GetHttpLogsCommand extends OrganizationCommand {
   @IsOptional()
   public limit?: number;
 
-  @IsString()
   @IsOptional()
-  public statusCode?: string;
+  @IsArray()
+  @IsNumber({}, { each: true })
+  statusCodes?: number[];
 
   @IsString()
   @IsOptional()
@@ -22,7 +23,7 @@ export class GetHttpLogsCommand extends OrganizationCommand {
   @IsOptional()
   public transactionId?: string;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  public days?: string;
+  public hoursAgo?: number;
 }

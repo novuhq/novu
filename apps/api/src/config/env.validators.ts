@@ -60,10 +60,10 @@ export const envValidators = {
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
 
-      CLICK_HOUSE_URL: str(),
-      CLICK_HOUSE_DATABASE: str(),
-      CLICK_HOUSE_USER: str(),
-      CLICK_HOUSE_PASSWORD: str(),
+      CLICK_HOUSE_URL: str({ default: '' }),
+      CLICK_HOUSE_DATABASE: str({ default: '' }),
+      CLICK_HOUSE_USER: str({ default: '' }),
+      CLICK_HOUSE_PASSWORD: str({ default: '' }),
     }),
 
   // Feature Flags

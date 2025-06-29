@@ -10,7 +10,7 @@ describe.skip('Observability - /observability/logs/http-requests (GET) #novu-v2'
   });
 
   it('should return a list of http logs', async () => {
-    const { body } = await session.testAgent.get('/v1/observability/logs/http-requests').expect(200);
+    const { body } = await session.testAgent.get('/v1/logs/requests').expect(200);
 
     expect(body.data).to.be.an('array');
     expect(body.total).to.be.a('number');
