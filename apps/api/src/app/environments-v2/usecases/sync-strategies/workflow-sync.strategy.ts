@@ -322,14 +322,11 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
   }
 
   private async fetchSyncableWorkflows(environmentId: string, organizationId: string) {
-    const query: any = {
+    return await this.notificationTemplateRepository.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
-      status: { $ne: WorkflowStatusEnum.ERROR },
-    };
-
-    return await this.notificationTemplateRepository.find(query);
+    });
   }
 
   private async compareWorkflows(
