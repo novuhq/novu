@@ -41,8 +41,7 @@ export class InAppStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'in_app' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the In-App step. For NOVU_CLOUD workflows, this should match InAppControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the In-App step.',
     oneOf: [{ $ref: getSchemaPath(InAppControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -61,8 +60,7 @@ export class EmailStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'email' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the Email step. For NOVU_CLOUD workflows, this should match EmailControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the Email step.',
     oneOf: [{ $ref: getSchemaPath(EmailControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -81,8 +79,7 @@ export class SmsStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'sms' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the SMS step. For NOVU_CLOUD workflows, this should match SmsControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the SMS step.',
     oneOf: [{ $ref: getSchemaPath(SmsControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -101,8 +98,7 @@ export class PushStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'push' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the Push step. For NOVU_CLOUD workflows, this should match PushControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the Push step.',
     oneOf: [{ $ref: getSchemaPath(PushControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -121,8 +117,7 @@ export class ChatStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'chat' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the Chat step. For NOVU_CLOUD workflows, this should match ChatControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the Chat step.',
     oneOf: [{ $ref: getSchemaPath(ChatControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -141,8 +136,7 @@ export class DelayStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'delay' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the Delay step. For NOVU_CLOUD workflows, this should match DelayControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the Delay step.',
     oneOf: [{ $ref: getSchemaPath(DelayControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -161,8 +155,7 @@ export class DigestStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'digest' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the Digest step. For NOVU_CLOUD workflows, this should match DigestControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the Digest step.',
     oneOf: [{ $ref: getSchemaPath(DigestControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
@@ -181,8 +174,7 @@ export class CustomStepUpsertDto extends BaseStepConfigDto {
   readonly type: StepTypeEnum = 'custom' as StepTypeEnum;
 
   @ApiPropertyOptional({
-    description:
-      'Control values for the Custom step. For NOVU_CLOUD workflows, this should match CustomControlDto structure. For EXTERNAL workflows, this can be any JSON object.',
+    description: 'Control values for the Custom step.',
     oneOf: [{ $ref: getSchemaPath(CustomControlDto) }, { type: 'object', additionalProperties: true }],
   })
   @IsOptional()
