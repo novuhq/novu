@@ -23,6 +23,7 @@ import { RequestLog } from '../../types/logs';
 import { WorkflowRunsFilters } from './workflow-runs-filters';
 import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 import { type ActivityFilters } from '@/api/activity';
+import { formatDateSimple } from '../../utils/format-date';
 
 type WorkflowRunsContentProps = {
   log: RequestLog;
@@ -67,15 +68,6 @@ function getChannelIcon(channel: ChannelTypeEnum) {
     default:
       return <RiCodeBlock className="h-3 w-3 text-[#0e121b]" />;
   }
-}
-
-function formatTimestamp(timestamp: string): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
 }
 
 function StatusIcon({ status }: { status: WorkflowRunStatus }) {
@@ -146,35 +138,18 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
     }
   );
 
-  const filteredActivities = useMemo(() => {
-    if (!activities || activities.length === 0) {
-      return [];
-    }
-
-    const filtered = [...activities];
-
-    // Apply default sorting by timestamp (newest first)
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime();
-      const dateB = new Date(b.createdAt).getTime();
-      return dateB - dateA; // Newest first
-    });
-
-    return filtered;
-  }, [activities]);
-
   useMemo(() => {
     setDisplayedItemsCount(ITEMS_PER_PAGE);
   }, []);
 
-  const displayedActivities = filteredActivities.slice(0, displayedItemsCount);
-  const hasMoreItems = displayedItemsCount < filteredActivities.length;
+  const displayedActivities = activities.slice(0, displayedItemsCount);
+  const hasMoreItems = displayedItemsCount < activities.length;
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
     // Simulate loading delay for better UX
     await new Promise((resolve) => setTimeout(resolve, 500));
-    setDisplayedItemsCount((prev) => Math.min(prev + ITEMS_PER_PAGE, filteredActivities.length));
+    setDisplayedItemsCount((prev) => Math.min(prev + ITEMS_PER_PAGE, activities.length));
     setIsLoadingMore(false);
   };
 
@@ -213,7 +188,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
             <div className="flex w-full flex-col items-start gap-0.5 text-left font-['Inter'] font-medium">
               <div className="flex flex-col justify-center text-[14px] tracking-[-0.084px] text-[#525866]">
                 <p className="leading-[20px]">
-                  <span className="text-[#525866]">{filteredActivities.length}</span>
+                  <span className="text-[#525866]">{activities.length}</span>
                   <span className="text-[#99a0ae]"> workflow triggers</span>
                 </p>
               </div>
@@ -259,7 +234,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                   </div>
                 ))}
               </div>
-            ) : filteredActivities.length === 0 ? (
+            ) : activities.length === 0 ? (
               <div className="flex h-48 items-center justify-center">
                 <div className="flex flex-col items-center gap-2 text-center">
                   <p className="text-foreground-600 text-sm">No workflow runs found</p>
@@ -288,7 +263,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                         <TableRow key={activity._id} className="h-[50px] hover:bg-neutral-50">
                           <TableCell className="px-3 py-1.5">
                             <div className="flex w-full flex-col items-end gap-0.5">
-                              {/* Top row: Status icon, workflow name, and date */}
                               <div className="w-full">
                                 <div className="flex w-full flex-row items-center gap-1">
                                   <StatusIcon status={getWorkflowRunStatus(activity)} />
@@ -298,12 +272,11 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                                     </div>
                                   </div>
                                   <div className="text-left font-['JetBrains_Mono'] text-[11px] font-normal leading-normal text-[#99a0ae]">
-                                    {formatTimestamp(activity.createdAt)}
+                                    {formatDateSimple(activity.createdAt)}
                                   </div>
                                 </div>
                               </div>
 
-                              {/* Bottom row: Transaction ID and step indicators */}
                               <div className="w-full">
                                 <div className="flex w-full flex-row items-center gap-1">
                                   <div className="flex-1">
@@ -351,7 +324,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                         ) : (
                           <>
                             <RiArrowDownSLine className="h-4 w-4" />
-                            Load more ({filteredActivities.length - displayedItemsCount} remaining)
+                            Load more ({activities.length - displayedItemsCount} remaining)
                           </>
                         )}
                       </Button>
