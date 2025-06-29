@@ -179,7 +179,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     }
   }
 
-  async diff(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult> {
+  async diff(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult[]> {
     try {
       this.logger.info(`Starting workflow diff between ${sourceEnvId} and ${targetEnvId}`);
 
@@ -188,7 +188,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
         this.fetchSyncableWorkflows(targetEnvId, organizationId, true),
       ]);
 
-      const diffs: IEntityDiff[] = [];
+      const results: IDiffResult[] = [];
       const targetWorkflowMap = new Map(
         targetWorkflows.map((workflow) => [workflow.triggers[0]?.identifier, workflow])
       );
@@ -200,19 +200,30 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
         if (!targetWorkflow) {
           // Entire workflow was added
-          diffs.push({
+          const workflowDiffs: IEntityDiff[] = [
+            {
+              entityId: sourceWorkflow._id,
+              entityName: sourceWorkflow.name,
+              entityType: 'workflow',
+              action: DiffActionEnum.ADDED,
+            },
+          ];
+
+          results.push({
+            entityType: EntityTypeEnum.WORKFLOW,
             entityId: sourceWorkflow._id,
             entityName: sourceWorkflow.name,
-            entityType: 'workflow',
-            action: DiffActionEnum.ADDED,
+            diffs: workflowDiffs,
+            summary: this.calculateWorkflowSummary(workflowDiffs),
           });
         } else {
           // Compare workflow and get both workflow changes and step diffs
           const { workflowChanges, stepDiffs } = await this.compareWorkflows(sourceWorkflow, targetWorkflow);
+          const allDiffs: IEntityDiff[] = [];
 
           // Add workflow-level changes if any
           if (Object.keys(workflowChanges).length > 0) {
-            diffs.push({
+            allDiffs.push({
               entityId: sourceWorkflow._id,
               entityName: sourceWorkflow.name,
               entityType: 'workflow',
@@ -222,7 +233,18 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           }
 
           // Add all step-level diffs
-          diffs.push(...stepDiffs);
+          allDiffs.push(...stepDiffs);
+
+          // Only create a result if there are changes
+          if (allDiffs.length > 0) {
+            results.push({
+              entityType: EntityTypeEnum.WORKFLOW,
+              entityId: sourceWorkflow._id,
+              entityName: sourceWorkflow.name,
+              diffs: allDiffs,
+              summary: this.calculateWorkflowSummary(allDiffs),
+            });
+          }
         }
       }
 
@@ -234,16 +256,26 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       for (const targetWorkflow of targetWorkflows) {
         const targetIdentifier = targetWorkflow.triggers[0]?.identifier;
         if (!sourceWorkflowMap.has(targetIdentifier)) {
-          diffs.push({
+          const workflowDiffs: IEntityDiff[] = [
+            {
+              entityId: targetWorkflow._id,
+              entityName: targetWorkflow.name,
+              entityType: 'workflow',
+              action: DiffActionEnum.DELETED,
+            },
+          ];
+
+          results.push({
+            entityType: EntityTypeEnum.WORKFLOW,
             entityId: targetWorkflow._id,
             entityName: targetWorkflow.name,
-            entityType: 'workflow',
-            action: DiffActionEnum.DELETED,
+            diffs: workflowDiffs,
+            summary: this.calculateWorkflowSummary(workflowDiffs),
           });
         }
       }
 
-      return this.createDiffResult(EntityTypeEnum.WORKFLOW, diffs);
+      return results;
     } catch (error) {
       this.logger.error(`Workflow diff failed: ${error.message}`);
       throw error;
@@ -452,8 +484,8 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     };
   }
 
-  protected createDiffResult(entityType: EntityTypeEnum, diffs: IEntityDiff[]): IDiffResult {
-    const summary = diffs.reduce(
+  private calculateWorkflowSummary(diffs: IEntityDiff[]) {
+    return diffs.reduce(
       (acc, diffItem) => {
         switch (diffItem.action) {
           case DiffActionEnum.ADDED:
@@ -497,11 +529,5 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
         stepMoved: 0,
       }
     );
-
-    return {
-      entityType,
-      diffs,
-      summary,
-    };
   }
 }

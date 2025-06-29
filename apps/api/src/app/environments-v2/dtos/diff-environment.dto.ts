@@ -129,14 +129,38 @@ export class DiffSummaryDto {
 }
 
 export class EntityDiffResultDto {
-  @ApiProperty({ description: 'Entity type' })
-  @IsString()
+  @ApiProperty({
+    description: 'Type of entity being compared',
+    enum: ['workflow'],
+    example: 'workflow',
+  })
+  @IsEnum(['workflow'])
   entityType: string;
 
-  @ApiProperty({ type: [EntityDiffDto], description: 'List of entity differences (workflows and steps)' })
+  @ApiProperty({
+    description: 'ID of the entity being compared',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @IsString()
+  entityId: string;
+
+  @ApiProperty({
+    description: 'Name of the entity being compared',
+    example: 'Welcome Email Workflow',
+  })
+  @IsString()
+  entityName: string;
+
+  @ApiProperty({
+    description: 'List of specific changes for this entity',
+    type: [EntityDiffDto],
+  })
   diffs: EntityDiffDto[];
 
-  @ApiProperty({ type: DiffSummaryDto, description: 'Summary of changes' })
+  @ApiProperty({
+    description: 'Summary of changes for this entity',
+    type: DiffSummaryDto,
+  })
   summary: DiffSummaryDto;
 }
 

@@ -94,6 +94,8 @@ export interface IEntityDiff {
 
 export interface IDiffResult {
   entityType: EntityTypeEnum;
+  entityId: string;
+  entityName: string;
   diffs: IEntityDiff[];
   summary: {
     added: number;
@@ -121,7 +123,7 @@ export interface IEnvironmentDiffResult {
 export interface ISyncStrategy {
   getEntityType(): EntityTypeEnum;
   execute(context: ISyncContext): Promise<ISyncResult>;
-  diff(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult>;
+  diff(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult[]>;
 }
 
 export interface ISyncProgress {

@@ -98,8 +98,8 @@ export class DiffEnvironmentUseCase {
     const results: any[] = [];
 
     for (const strategy of strategies) {
-      const result = await strategy.diff(sourceEnvId, targetEnvId, organizationId);
-      results.push(result);
+      const strategyResults = await strategy.diff(sourceEnvId, targetEnvId, organizationId);
+      results.push(...strategyResults);
     }
 
     return results;
@@ -113,7 +113,7 @@ export class DiffEnvironmentUseCase {
     };
 
     for (const result of results) {
-      summary.totalEntities += result.diffs.length;
+      summary.totalEntities += 1; // Each result is now a single entity (workflow)
 
       // Count all changes (both workflow and step level)
       const entitySummary = result.summary;
