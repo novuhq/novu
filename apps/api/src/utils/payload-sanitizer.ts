@@ -33,16 +33,18 @@ export function sanitizePayload(payload: any): string {
 }
 
 export async function retryWithBackoff<T>(fn: () => Promise<T>, maxAttempts = 3, initialDelayMs = 100): Promise<T> {
-  let attempt = 0;
   let delay = initialDelayMs;
-  while (true) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     try {
       return await fn();
     } catch (err) {
-      attempt += 1;
-      if (attempt >= maxAttempts) throw err;
-      await new Promise((resolve) => setTimeout(resolve, delay));
+      if (attempt === maxAttempts - 1) throw err;
+      const currentDelay = delay;
+      await new Promise<void>((resolve) => {
+        setTimeout(() => resolve(), currentDelay);
+      });
       delay *= 2;
     }
   }
+  throw new Error('Max attempts reached');
 }
