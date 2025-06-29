@@ -5,7 +5,6 @@ import { LogsDetailContent } from './logs-detail-content';
 import { LogsDetailSkeleton } from './logs-detail-skeleton';
 import { LogsDetailError } from './logs-detail-error';
 import { RequestLogDetailEmptyState } from './logs-detail-empty';
-import { WorkflowRunsTabs } from './workflow-runs-tabs';
 import { WorkflowRunsContent } from './workflow-runs-content';
 
 type LogsDetailPanelProps = {
@@ -36,7 +35,6 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
     >
       <LogsDetailHeader />
       <LogsDetailContent log={log} />
-      <WorkflowRunsTabs />
       <WorkflowRunsContent log={log} />
     </motion.div>
   );
