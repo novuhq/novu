@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, DeleteWorkflowUseCase, DeleteWorkflowCommand } from '@novu/application-generic';
 import { NotificationTemplateRepository } from '@novu/dal';
+import { WorkflowStatusEnum } from '@novu/shared';
 import {
   SyncToEnvironmentUseCase,
   SYNCABLE_WORKFLOW_ORIGINS,
@@ -83,7 +84,7 @@ export class WorkflowSyncOperation {
         const sourceIdentifier = workflow.triggers[0]?.identifier;
         const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
-        const shouldSync = await this.shouldSyncWorkflow(workflow, targetWorkflow);
+        const shouldSync = await this.shouldSyncWorkflow(context, workflow, targetWorkflow);
 
         if (shouldSync.sync) {
           await this.syncWorkflowToTarget(context, workflow);
@@ -125,6 +126,7 @@ export class WorkflowSyncOperation {
   }
 
   private async shouldSyncWorkflow(
+    context: ISyncContext,
     workflow: any,
     targetWorkflow?: any
   ): Promise<{ sync: boolean; action: 'created' | 'updated' | 'skipped'; reason?: string }> {
@@ -133,7 +135,11 @@ export class WorkflowSyncOperation {
     }
 
     // Check if there are actual changes (both workflow and step level)
-    const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(workflow, targetWorkflow);
+    const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
+      workflow,
+      targetWorkflow,
+      context.user
+    );
     const hasWorkflowChanges = Object.keys(workflowChanges).length > 0;
     const hasStepChanges = stepDiffs.length > 0;
 
@@ -170,6 +176,7 @@ export class WorkflowSyncOperation {
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
+      status: { $ne: WorkflowStatusEnum.ERROR },
     });
   }
 }

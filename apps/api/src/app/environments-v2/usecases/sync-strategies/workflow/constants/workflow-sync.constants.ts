@@ -1,11 +1,7 @@
-import { ApiAuthSchemeEnum, MemberRoleEnum, PermissionsEnum } from '@novu/shared';
+// Constants for workflow sync operations
 
 export const WORKFLOW_SYNC_CONSTANTS = {
   BATCH_SIZE: 100,
-  DEFAULT_USER_ID: 'system',
-  DEFAULT_SCHEME: ApiAuthSchemeEnum.BEARER,
-  EMPTY_ROLES: [] as MemberRoleEnum[],
-  EMPTY_PERMISSIONS: [] as PermissionsEnum[],
 } as const;
 
 export const WORKFLOW_SYNC_ACTIONS = {

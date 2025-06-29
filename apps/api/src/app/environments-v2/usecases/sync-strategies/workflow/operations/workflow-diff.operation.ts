@@ -16,7 +16,12 @@ export class WorkflowDiffOperation {
     private diffResultBuilder: DiffResultBuilder
   ) {}
 
-  async execute(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult[]> {
+  async execute(
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string,
+    userContext: any
+  ): Promise<IDiffResult[]> {
     this.logger.info(WORKFLOW_SYNC_MESSAGES.STARTING_DIFF(sourceEnvId, targetEnvId));
 
     const resultBuilder = this.diffResultBuilder.reset();
@@ -27,7 +32,7 @@ export class WorkflowDiffOperation {
         this.fetchSyncableWorkflows(targetEnvId, organizationId),
       ]);
 
-      await this.processWorkflowDiffs(sourceWorkflows, targetWorkflows, resultBuilder);
+      await this.processWorkflowDiffs(sourceWorkflows, targetWorkflows, resultBuilder, userContext);
       await this.processDeletedWorkflows(sourceWorkflows, targetWorkflows, resultBuilder);
 
       return resultBuilder.build();
@@ -40,7 +45,8 @@ export class WorkflowDiffOperation {
   private async processWorkflowDiffs(
     sourceWorkflows: any[],
     targetWorkflows: any[],
-    resultBuilder: DiffResultBuilder
+    resultBuilder: DiffResultBuilder,
+    userContext: any
   ): Promise<void> {
     const targetWorkflowMap = new Map(targetWorkflows.map((workflow) => [workflow.triggers[0]?.identifier, workflow]));
 
@@ -56,7 +62,8 @@ export class WorkflowDiffOperation {
         // Compare workflow and get both workflow changes and step diffs
         const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
           sourceWorkflow,
-          targetWorkflow
+          targetWorkflow,
+          userContext
         );
 
         const allDiffs = this.createWorkflowDiffs(sourceWorkflow, workflowChanges, stepDiffs);

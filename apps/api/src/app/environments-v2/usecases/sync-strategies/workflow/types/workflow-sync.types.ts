@@ -1,4 +1,3 @@
-import { WorkflowStatusEnum } from '@novu/shared';
 import { DiffActionEnum, IEntityDiff } from '../../../../types/sync.types';
 
 export interface INormalizedWorkflow {
@@ -33,36 +32,13 @@ export interface IFieldChange {
   new: any;
 }
 
-export interface IStepComparisonData {
-  step: INormalizedStep;
-  index: number;
-}
-
-export interface IWorkflowFetchOptions {
-  environmentId: string;
-  organizationId: string;
-}
-
-export interface IWorkflowSyncContext {
-  sourceEnvironmentId: string;
-  targetEnvironmentId: string;
-  organizationId: string;
-  userId: string;
-  dryRun?: boolean;
-}
-
-export interface IWorkflowProcessor {
-  processWorkflow(workflow: any, targetWorkflow?: any): Promise<'created' | 'updated' | 'skipped'>;
-  deleteWorkflow(workflow: any): Promise<void>;
-}
-
 export interface IWorkflowNormalizer {
   normalizeWorkflow(workflow: any): INormalizedWorkflow;
   normalizeStep(step: any): INormalizedStep;
 }
 
 export interface IWorkflowComparator {
-  compareWorkflows(source: any, target: any): Promise<IWorkflowComparison>;
+  compareWorkflows(source: any, target: any, userContext: any): Promise<IWorkflowComparison>;
   compareStepsAsEntities(
     sourceSteps: INormalizedStep[],
     targetSteps: INormalizedStep[],

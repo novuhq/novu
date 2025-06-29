@@ -10,7 +10,12 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
 
   abstract getEntityType(): EntityTypeEnum;
   abstract execute(context: ISyncContext): Promise<ISyncResult>;
-  abstract diff(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult[]>;
+  abstract diff(
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string,
+    userContext: any
+  ): Promise<IDiffResult[]>;
 
   protected async processBatch<T>(
     entities: T[],

@@ -3,13 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { diff } from 'deep-object-diff';
 import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../../workflows-v2/usecases/get-workflow';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
-import {
-  IWorkflowComparator,
-  IWorkflowComparison,
-  INormalizedStep,
-  IStepComparisonData,
-  IFieldChange,
-} from '../types/workflow-sync.types';
+import { IWorkflowComparator, IWorkflowComparison, INormalizedStep, IFieldChange } from '../types/workflow-sync.types';
 import { IEntityDiff, DiffActionEnum } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_CONSTANTS, WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 
@@ -21,19 +15,15 @@ export class WorkflowComparator implements IWorkflowComparator {
     private workflowNormalizer: WorkflowNormalizer
   ) {}
 
-  async compareWorkflows(sourceWorkflow: any, targetWorkflow: any): Promise<IWorkflowComparison> {
+  async compareWorkflows(sourceWorkflow: any, targetWorkflow: any, userContext: any): Promise<IWorkflowComparison> {
     try {
       // Get proper WorkflowResponseDto for both workflows to ensure we have the correct structure
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
             user: {
-              _id: WORKFLOW_SYNC_CONSTANTS.DEFAULT_USER_ID,
+              ...userContext,
               environmentId: sourceWorkflow._environmentId,
-              organizationId: sourceWorkflow._organizationId,
-              roles: WORKFLOW_SYNC_CONSTANTS.EMPTY_ROLES,
-              permissions: WORKFLOW_SYNC_CONSTANTS.EMPTY_PERMISSIONS,
-              scheme: WORKFLOW_SYNC_CONSTANTS.DEFAULT_SCHEME,
             },
             workflowIdOrInternalId: sourceWorkflow._id,
           })
@@ -41,12 +31,8 @@ export class WorkflowComparator implements IWorkflowComparator {
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
             user: {
-              _id: WORKFLOW_SYNC_CONSTANTS.DEFAULT_USER_ID,
+              ...userContext,
               environmentId: targetWorkflow._environmentId,
-              organizationId: targetWorkflow._organizationId,
-              roles: WORKFLOW_SYNC_CONSTANTS.EMPTY_ROLES,
-              permissions: WORKFLOW_SYNC_CONSTANTS.EMPTY_PERMISSIONS,
-              scheme: WORKFLOW_SYNC_CONSTANTS.DEFAULT_SCHEME,
             },
             workflowIdOrInternalId: targetWorkflow._id,
           })

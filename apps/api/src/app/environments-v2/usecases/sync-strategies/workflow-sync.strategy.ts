@@ -23,7 +23,12 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     return this.workflowSyncOperation.execute(context);
   }
 
-  async diff(sourceEnvId: string, targetEnvId: string, organizationId: string): Promise<IDiffResult[]> {
-    return this.workflowDiffOperation.execute(sourceEnvId, targetEnvId, organizationId);
+  async diff(
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string,
+    userContext: any
+  ): Promise<IDiffResult[]> {
+    return this.workflowDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
   }
 }
