@@ -4,6 +4,8 @@ import { AuthMechanism } from './types';
 
 const MONGODB_CONTEXT = '[@novu/dal]';
 
+export { mongoose };
+
 export class DalService {
   connection: Connection;
 

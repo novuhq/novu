@@ -1,5 +1,6 @@
 import { IntegrationEntity } from '@novu/dal';
 import { IChatFactory, IChatHandler } from './interfaces';
+import { ChatWebhookHandler } from './handlers/chat-webhook.handler';
 import { SlackHandler } from './handlers/slack.handler';
 import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
@@ -13,6 +14,7 @@ import { WhatsAppBusinessHandler } from './handlers/whatsapp-business.handler';
 
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
+    new ChatWebhookHandler(),
     new SlackHandler(),
     new DiscordHandler(),
     new MSTeamsHandler(),

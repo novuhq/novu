@@ -21,8 +21,8 @@ import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
   UserSessionData,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -127,7 +127,7 @@ export class WorkflowControllerV1 {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         data: body.data,
-        type: WorkflowTypeEnum.REGULAR,
+        type: ResourceTypeEnum.REGULAR,
       })
     );
   }
@@ -149,7 +149,7 @@ export class WorkflowControllerV1 {
         organizationId: user.organizationId,
         userId: user._id,
         templateId: workflowId,
-        type: WorkflowTypeEnum.REGULAR,
+        type: ResourceTypeEnum.REGULAR,
       })
     );
   }
@@ -227,8 +227,8 @@ export class WorkflowControllerV1 {
         blueprintId: body.blueprintId,
         data: body.data,
         __source: query?.__source,
-        type: WorkflowTypeEnum.REGULAR,
-        origin: WorkflowOriginEnum.NOVU_CLOUD_V1,
+        type: ResourceTypeEnum.REGULAR,
+        origin: ResourceOriginEnum.NOVU_CLOUD_V1,
       })
     );
   }

@@ -2,7 +2,7 @@ import { StepEditorProps } from '@/components/workflow-editor/steps/configure-st
 import { InAppEditor } from '@/components/workflow-editor/steps/in-app/in-app-editor';
 import { InAppEditorPreview } from '@/components/workflow-editor/steps/in-app/in-app-editor-preview';
 import { TemplateTabs } from '@/components/workflow-editor/steps/template-tabs';
-import { WorkflowOriginEnum } from '@/utils/enums';
+import { ResourceOriginEnum } from '@/utils/enums';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { CustomStepControls } from '../controls/custom-step-controls';
@@ -14,8 +14,8 @@ export const InAppTabs = (props: StepEditorProps) => {
   const form = useFormContext();
   const [tabsValue, setTabsValue] = useState('editor');
 
-  const isNovuCloud = workflow.origin === WorkflowOriginEnum.NOVU_CLOUD && uiSchema;
-  const isExternal = workflow.origin === WorkflowOriginEnum.EXTERNAL;
+  const isNovuCloud = workflow.origin === ResourceOriginEnum.NOVU_CLOUD && uiSchema;
+  const isExternal = workflow.origin === ResourceOriginEnum.EXTERNAL;
 
   const controlValues = form.watch();
   const { editorValue, setEditorValue, previewStep, previewData, isPreviewPending } = useEditorPreview({

@@ -1,3 +1,4 @@
+export * from './base62';
 export * from './buildBridgeEndpointUrl';
 export * from './digest';
 export * from './email-normalization';

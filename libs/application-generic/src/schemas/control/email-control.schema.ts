@@ -11,6 +11,7 @@ export const emailControlZodSchema = z
     editorType: z.enum(['block', 'html']).optional().default('block'),
     subject: z.string().min(1),
     disableOutputSanitization: z.boolean().optional(),
+    layoutId: z.string().nullable().optional(),
   })
   .strict();
 
@@ -35,6 +36,10 @@ export const emailUiSchema: UiSchema = {
     disableOutputSanitization: {
       component: UiComponentEnum.DISABLE_SANITIZATION_SWITCH,
       placeholder: false,
+    },
+    layoutId: {
+      component: UiComponentEnum.LAYOUT_SELECT,
+      placeholder: '',
     },
   },
 };

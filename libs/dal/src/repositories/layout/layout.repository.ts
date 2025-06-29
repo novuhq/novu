@@ -31,6 +31,9 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       _creatorId,
       _environmentId,
       _organizationId,
+      type,
+      origin,
+      controls,
     } = entity;
 
     return await this.create({
@@ -46,6 +49,9 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       name,
       variables,
       channel,
+      type,
+      origin,
+      controls,
     });
   }
 

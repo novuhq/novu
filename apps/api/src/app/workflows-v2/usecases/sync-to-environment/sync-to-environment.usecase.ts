@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
@@ -13,7 +13,7 @@ import {
 import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 
-export const SYNCABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
+export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
 /**
  * This usecase is used to sync a workflow from one environment to another.

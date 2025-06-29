@@ -1,6 +1,6 @@
 import { RiCloseLine, RiGuideFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { WorkflowOriginEnum } from '@novu/shared';
+import { ResourceOriginEnum } from '@novu/shared';
 
 import { CompactButton } from '@/components/primitives/button-compact';
 import { EditStepConditionsForm } from '@/components/workflow-editor/steps/conditions/edit-step-conditions-form';
@@ -19,7 +19,7 @@ export const EditStepConditions = () => {
   const { uiSchema } = step.controls ?? {};
   const { skip } = uiSchema?.properties ?? {};
 
-  if (!skip || workflow.origin !== WorkflowOriginEnum.NOVU_CLOUD) {
+  if (!skip || workflow.origin !== ResourceOriginEnum.NOVU_CLOUD) {
     navigate('..', { relative: 'path' });
     return null;
   }

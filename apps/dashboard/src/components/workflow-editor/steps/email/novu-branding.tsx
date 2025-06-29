@@ -4,7 +4,7 @@ import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Switch } from '@/components/primitives/switch';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, WorkflowOriginEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, ResourceOriginEnum } from '@novu/shared';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { Separator } from '@/components/primitives/separator';
@@ -29,7 +29,7 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
   const removeNovuBranding = organizationSettings?.data?.removeNovuBranding;
   const isUpdating = updateOrganizationSettings.isPending;
 
-  const showBranding = workflow?.origin === WorkflowOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings;
+  const showBranding = workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings;
 
   // Don't render anything while loading or if branding should be removed
   if (!showBranding) return null;

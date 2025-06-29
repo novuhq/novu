@@ -8,17 +8,11 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  ActionDto,
-  ActionDto$inboundSchema,
-  ActionDto$Outbound,
-  ActionDto$outboundSchema,
-} from "./actiondto.js";
-import {
-  RedirectDto,
-  RedirectDto$inboundSchema,
-  RedirectDto$Outbound,
-  RedirectDto$outboundSchema,
-} from "./redirectdto.js";
+  InAppControlDto,
+  InAppControlDto$inboundSchema,
+  InAppControlDto$Outbound,
+  InAppControlDto$outboundSchema,
+} from "./inappcontroldto.js";
 import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
@@ -26,46 +20,9 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Control values for the In-App step
+ * Control values for the In-App step.
  */
-export type ControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * Content/body of the in-app message. Required if subject is empty.
-   */
-  body?: string | undefined;
-  /**
-   * Subject/title of the in-app message. Required if body is empty.
-   */
-  subject?: string | undefined;
-  /**
-   * URL for an avatar image. Must be a valid URL or start with / or {{"{{"}} variable }}.
-   */
-  avatar?: string | undefined;
-  /**
-   * Primary action button details.
-   */
-  primaryAction?: ActionDto | undefined;
-  /**
-   * Secondary action button details.
-   */
-  secondaryAction?: ActionDto | undefined;
-  /**
-   * Redirection URL configuration for the main content click (if no actions defined/clicked)..
-   */
-  redirect?: RedirectDto | undefined;
-  /**
-   * Disable sanitization of the output.
-   */
-  disableOutputSanitization?: boolean | undefined;
-  /**
-   * Additional data payload for the step.
-   */
-  data?: { [k: string]: any } | undefined;
-};
+export type ControlValues = InAppControlDto | { [k: string]: any };
 
 export type InAppStepUpsertDto = {
   /**
@@ -81,9 +38,9 @@ export type InAppStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the In-App step
+   * Control values for the In-App step.
    */
-  controlValues?: ControlValues | null | undefined;
+  controlValues?: InAppControlDto | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -91,29 +48,11 @@ export const ControlValues$inboundSchema: z.ZodType<
   ControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-  subject: z.string().optional(),
-  avatar: z.string().optional(),
-  primaryAction: ActionDto$inboundSchema.optional(),
-  secondaryAction: ActionDto$inboundSchema.optional(),
-  redirect: RedirectDto$inboundSchema.optional(),
-  disableOutputSanitization: z.boolean().default(false),
-  data: z.record(z.any()).optional(),
-});
+> = z.union([InAppControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type ControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  body?: string | undefined;
-  subject?: string | undefined;
-  avatar?: string | undefined;
-  primaryAction?: ActionDto$Outbound | undefined;
-  secondaryAction?: ActionDto$Outbound | undefined;
-  redirect?: RedirectDto$Outbound | undefined;
-  disableOutputSanitization: boolean;
-  data?: { [k: string]: any } | undefined;
+export type ControlValues$Outbound = InAppControlDto$Outbound | {
+  [k: string]: any;
 };
 
 /** @internal */
@@ -121,17 +60,7 @@ export const ControlValues$outboundSchema: z.ZodType<
   ControlValues$Outbound,
   z.ZodTypeDef,
   ControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-  subject: z.string().optional(),
-  avatar: z.string().optional(),
-  primaryAction: ActionDto$outboundSchema.optional(),
-  secondaryAction: ActionDto$outboundSchema.optional(),
-  redirect: RedirectDto$outboundSchema.optional(),
-  disableOutputSanitization: z.boolean().default(false),
-  data: z.record(z.any()).optional(),
-});
+> = z.union([InAppControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -169,7 +98,7 @@ export const InAppStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(z.lazy(() => ControlValues$inboundSchema))
+  controlValues: z.union([InAppControlDto$inboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -182,7 +111,7 @@ export type InAppStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: ControlValues$Outbound | null | undefined;
+  controlValues?: InAppControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -194,7 +123,7 @@ export const InAppStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(z.lazy(() => ControlValues$outboundSchema))
+  controlValues: z.union([InAppControlDto$outboundSchema, z.record(z.any())])
     .optional(),
 }).transform((v) => {
   return remap$(v, {

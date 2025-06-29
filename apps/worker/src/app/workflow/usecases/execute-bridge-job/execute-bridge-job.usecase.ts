@@ -15,8 +15,8 @@ import {
   ExecutionDetailsStatusEnum,
   ITriggerPayload,
   JobStatusEnum,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
 } from '@novu/shared';
 import {
   DigestResult,
@@ -69,7 +69,7 @@ export class ExecuteBridgeJob {
           _id: command.job._templateId,
           _environmentId: command.environmentId,
           type: {
-            $in: [WorkflowTypeEnum.ECHO, WorkflowTypeEnum.BRIDGE],
+            $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
           },
         },
         '_id triggers type origin'
@@ -96,7 +96,7 @@ export class ExecuteBridgeJob {
       throw new Error(`Environment id ${command.environmentId} is not found`);
     }
 
-    if (!environment?.echo?.url && isStateful && workflow?.origin === WorkflowOriginEnum.EXTERNAL) {
+    if (!environment?.echo?.url && isStateful && workflow?.origin === ResourceOriginEnum.EXTERNAL) {
       throw new Error(`Bridge URL is not set for environment id: ${environment._id}`);
     }
 
@@ -126,7 +126,7 @@ export class ExecuteBridgeJob {
        * TODO: We fallback to external due to lack of backfilling origin for existing Workflows.
        * Once we backfill the origin field for existing Workflows, we should remove the fallback.
        */
-      workflowOrigin: workflow?.origin || WorkflowOriginEnum.EXTERNAL,
+      workflowOrigin: workflow?.origin || ResourceOriginEnum.EXTERNAL,
       statelessBridgeUrl: command.job.step.bridgeUrl,
       event: bridgeEvent,
       job: command.job,
@@ -159,7 +159,7 @@ export class ExecuteBridgeJob {
       level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
-    if (workflow?.origin === WorkflowOriginEnum.NOVU_CLOUD) {
+    if (workflow?.origin === ResourceOriginEnum.NOVU_CLOUD) {
       return controls?.controls
         ? dashboardSanitizeControlValues(this.logger, controls.controls, command.job?.step?.template?.type)
         : {};

@@ -4,6 +4,7 @@ import { genericProviderSchemas } from '../generic.schema';
 import { slackProviderSchemas } from './slack.schema';
 
 export const chatProviderSchemas = {
+  'chat-webhook': genericProviderSchemas,
   discord: genericProviderSchemas,
   getstream: genericProviderSchemas,
   'grafana-on-call': genericProviderSchemas,

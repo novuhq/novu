@@ -22,7 +22,7 @@ export type Type = ClosedEnum<typeof Type>;
 /**
  * Unit of time for the delay amount.
  */
-export const DelayControlDtoUnit = {
+export const Unit = {
   Seconds: "seconds",
   Minutes: "minutes",
   Hours: "hours",
@@ -33,7 +33,7 @@ export const DelayControlDtoUnit = {
 /**
  * Unit of time for the delay amount.
  */
-export type DelayControlDtoUnit = ClosedEnum<typeof DelayControlDtoUnit>;
+export type Unit = ClosedEnum<typeof Unit>;
 
 export type DelayControlDto = {
   /**
@@ -51,7 +51,7 @@ export type DelayControlDto = {
   /**
    * Unit of time for the delay amount.
    */
-  unit: DelayControlDtoUnit;
+  unit: Unit;
 };
 
 /** @internal */
@@ -75,24 +75,23 @@ export namespace Type$ {
 }
 
 /** @internal */
-export const DelayControlDtoUnit$inboundSchema: z.ZodNativeEnum<
-  typeof DelayControlDtoUnit
-> = z.nativeEnum(DelayControlDtoUnit);
+export const Unit$inboundSchema: z.ZodNativeEnum<typeof Unit> = z.nativeEnum(
+  Unit,
+);
 
 /** @internal */
-export const DelayControlDtoUnit$outboundSchema: z.ZodNativeEnum<
-  typeof DelayControlDtoUnit
-> = DelayControlDtoUnit$inboundSchema;
+export const Unit$outboundSchema: z.ZodNativeEnum<typeof Unit> =
+  Unit$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace DelayControlDtoUnit$ {
-  /** @deprecated use `DelayControlDtoUnit$inboundSchema` instead. */
-  export const inboundSchema = DelayControlDtoUnit$inboundSchema;
-  /** @deprecated use `DelayControlDtoUnit$outboundSchema` instead. */
-  export const outboundSchema = DelayControlDtoUnit$outboundSchema;
+export namespace Unit$ {
+  /** @deprecated use `Unit$inboundSchema` instead. */
+  export const inboundSchema = Unit$inboundSchema;
+  /** @deprecated use `Unit$outboundSchema` instead. */
+  export const outboundSchema = Unit$outboundSchema;
 }
 
 /** @internal */
@@ -104,7 +103,7 @@ export const DelayControlDto$inboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   type: Type$inboundSchema.default("regular"),
   amount: z.number(),
-  unit: DelayControlDtoUnit$inboundSchema,
+  unit: Unit$inboundSchema,
 });
 
 /** @internal */
@@ -124,7 +123,7 @@ export const DelayControlDto$outboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   type: Type$outboundSchema.default("regular"),
   amount: z.number(),
-  unit: DelayControlDtoUnit$outboundSchema,
+  unit: Unit$outboundSchema,
 });
 
 /**
