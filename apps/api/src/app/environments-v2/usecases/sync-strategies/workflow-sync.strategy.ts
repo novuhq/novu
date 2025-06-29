@@ -435,6 +435,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
       if (!targetStepData) {
         // Step was added
+        const normalizedStep = this.normalizeStepForComparison(sourceStep);
         stepDiffs.push({
           entityId: sourceStep.stepId,
           entityName: sourceStep.name,
@@ -444,6 +445,12 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           workflowName,
           action: DiffActionEnum.STEP_ADDED,
           newIndex: sourceIndex,
+          changes: {
+            step: {
+              old: null,
+              new: normalizedStep,
+            },
+          },
         });
       } else {
         const { step: targetStep, index: targetIndex } = targetStepData;
@@ -484,6 +491,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     // Process deleted steps
     targetSteps.forEach((targetStep, targetIndex) => {
       if (!processedSteps.has(targetStep.stepId)) {
+        const normalizedStep = this.normalizeStepForComparison(targetStep);
         stepDiffs.push({
           entityId: targetStep.stepId,
           entityName: targetStep.name,
@@ -493,6 +501,12 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           workflowName,
           action: DiffActionEnum.STEP_DELETED,
           oldIndex: targetIndex,
+          changes: {
+            step: {
+              old: normalizedStep,
+              new: null,
+            },
+          },
         });
       }
     });
