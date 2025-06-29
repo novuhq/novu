@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
 import { BaseSyncStrategy } from './base-sync.strategy';
 import { EntityTypeEnum, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
 import { WorkflowSyncOperation } from './workflow/operations/workflow-sync.operation';
@@ -27,7 +28,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
-    userContext: any
+    userContext: UserSessionData
   ): Promise<IDiffResult[]> {
     return this.workflowDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
   }

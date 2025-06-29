@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { EnvironmentRepository, BaseRepository } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
 import { DiffEnvironmentCommand } from './diff-environment.command';
-import { EntityTypeEnum, ISyncStrategy, IEnvironmentDiffResult } from '../../types/sync.types';
+import { EntityTypeEnum, ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 
 @Injectable()
@@ -34,7 +35,8 @@ export class DiffEnvironmentUseCase {
         strategies,
         command.sourceEnvironmentId,
         command.targetEnvironmentId,
-        command.user.organizationId
+        command.user.organizationId,
+        command.user
       );
 
       const summary = this.calculateSummary(results);
@@ -93,19 +95,20 @@ export class DiffEnvironmentUseCase {
     strategies: ISyncStrategy[],
     sourceEnvId: string,
     targetEnvId: string,
-    organizationId: string
-  ) {
-    const results: any[] = [];
+    organizationId: string,
+    userContext: UserSessionData
+  ): Promise<IDiffResult[]> {
+    const results: IDiffResult[] = [];
 
     for (const strategy of strategies) {
-      const strategyResults = await strategy.diff(sourceEnvId, targetEnvId, organizationId);
+      const strategyResults = await strategy.diff(sourceEnvId, targetEnvId, organizationId, userContext);
       results.push(...strategyResults);
     }
 
     return results;
   }
 
-  private calculateSummary(results: any[]) {
+  private calculateSummary(results: IDiffResult[]) {
     const summary = {
       totalEntities: 0,
       totalChanges: 0,
@@ -118,7 +121,6 @@ export class DiffEnvironmentUseCase {
       // Count all changes (both workflow and step level)
       const entitySummary = result.summary;
       summary.totalChanges += entitySummary.added + entitySummary.modified + entitySummary.deleted;
-      // Note: We don't count 'unchanged' as changes
     }
 
     summary.hasChanges = summary.totalChanges > 0;

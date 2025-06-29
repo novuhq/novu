@@ -1,4 +1,5 @@
 import { PinoLogger } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
 import { EntityTypeEnum, ISyncStrategy, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
 
 export abstract class BaseSyncStrategy implements ISyncStrategy {
@@ -14,7 +15,7 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
     sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
-    userContext: any
+    userContext: UserSessionData
   ): Promise<IDiffResult[]>;
 
   protected async processBatch<T>(

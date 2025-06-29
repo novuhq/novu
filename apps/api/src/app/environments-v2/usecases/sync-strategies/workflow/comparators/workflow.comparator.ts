@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { diff } from 'deep-object-diff';
+import { UserSessionData } from '@novu/shared';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../../workflows-v2/usecases/get-workflow';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
 import { IWorkflowComparator, IWorkflowComparison, INormalizedStep, IFieldChange } from '../types/workflow-sync.types';
-import { IEntityDiff, DiffActionEnum } from '../../../../types/sync.types';
+import { IEntityDiff, DiffActionEnum, EntityTypeEnum } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_CONSTANTS, WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 
 @Injectable()
@@ -15,7 +17,11 @@ export class WorkflowComparator implements IWorkflowComparator {
     private workflowNormalizer: WorkflowNormalizer
   ) {}
 
-  async compareWorkflows(sourceWorkflow: any, targetWorkflow: any, userContext: any): Promise<IWorkflowComparison> {
+  async compareWorkflows(
+    sourceWorkflow: NotificationTemplateEntity,
+    targetWorkflow: NotificationTemplateEntity,
+    userContext: UserSessionData
+  ): Promise<IWorkflowComparison> {
     try {
       // Get proper WorkflowResponseDto for both workflows to ensure we have the correct structure
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
@@ -154,7 +160,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     return {
       entityId: sourceStep.stepId,
       entityName: sourceStep.name,
-      entityType: 'step',
+      entityType: EntityTypeEnum.STEP,
       stepType: sourceStep.type,
       workflowId,
       workflowName,
@@ -180,7 +186,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     return {
       entityId: sourceStep.stepId,
       entityName: sourceStep.name,
-      entityType: 'step',
+      entityType: EntityTypeEnum.STEP,
       stepType: sourceStep.type,
       workflowId,
       workflowName,
@@ -201,7 +207,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     return {
       entityId: sourceStep.stepId,
       entityName: sourceStep.name,
-      entityType: 'step',
+      entityType: EntityTypeEnum.STEP,
       stepType: sourceStep.type,
       workflowId,
       workflowName,
@@ -222,7 +228,7 @@ export class WorkflowComparator implements IWorkflowComparator {
     return {
       entityId: targetStep.stepId,
       entityName: targetStep.name,
-      entityType: 'step',
+      entityType: EntityTypeEnum.STEP,
       stepType: targetStep.type,
       workflowId,
       workflowName,

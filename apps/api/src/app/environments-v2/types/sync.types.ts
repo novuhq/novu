@@ -2,6 +2,7 @@ import { UserSessionData } from '@novu/shared';
 
 export enum EntityTypeEnum {
   WORKFLOW = 'workflow',
+  STEP = 'step',
 }
 
 export interface ISyncOptions {
@@ -70,7 +71,7 @@ export enum DiffActionEnum {
 export interface IEntityDiff {
   entityId: string;
   entityName: string;
-  entityType: 'workflow' | 'step';
+  entityType: EntityTypeEnum;
   action: DiffActionEnum;
   changes?: Record<
     string,
@@ -114,7 +115,12 @@ export interface IEnvironmentDiffResult {
 export interface ISyncStrategy {
   getEntityType(): EntityTypeEnum;
   execute(context: ISyncContext): Promise<ISyncResult>;
-  diff(sourceEnvId: string, targetEnvId: string, organizationId: string, userContext: any): Promise<IDiffResult[]>;
+  diff(
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string,
+    userContext: UserSessionData
+  ): Promise<IDiffResult[]>;
 }
 
 export interface ISyncProgress {

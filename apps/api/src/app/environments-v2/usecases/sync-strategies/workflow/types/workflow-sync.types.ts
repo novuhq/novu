@@ -1,4 +1,7 @@
+import { UserSessionData } from '@novu/shared';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { DiffActionEnum, IEntityDiff } from '../../../../types/sync.types';
+import { WorkflowResponseDto } from '../../../../../workflows-v2/dtos/workflow-response.dto';
 
 export interface INormalizedWorkflow {
   workflowId: string;
@@ -33,12 +36,16 @@ export interface IFieldChange {
 }
 
 export interface IWorkflowNormalizer {
-  normalizeWorkflow(workflow: any): INormalizedWorkflow;
+  normalizeWorkflow(workflow: WorkflowResponseDto): INormalizedWorkflow;
   normalizeStep(step: any): INormalizedStep;
 }
 
 export interface IWorkflowComparator {
-  compareWorkflows(source: any, target: any, userContext: any): Promise<IWorkflowComparison>;
+  compareWorkflows(
+    source: NotificationTemplateEntity,
+    target: NotificationTemplateEntity,
+    userContext: UserSessionData
+  ): Promise<IWorkflowComparison>;
   compareStepsAsEntities(
     sourceSteps: INormalizedStep[],
     targetSteps: INormalizedStep[],

@@ -2,7 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
-import { EntityTypeEnum, ISyncStrategy, IPublishResult, ISyncContext, ISyncOptions } from '../../types/sync.types';
+import {
+  EntityTypeEnum,
+  ISyncStrategy,
+  IPublishResult,
+  ISyncContext,
+  ISyncOptions,
+  ISyncResult,
+} from '../../types/sync.types';
 import { TransactionalSyncService } from '../../services/transactional-sync.service';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 
@@ -97,8 +104,8 @@ export class PublishEnvironmentUseCase {
     }
   }
 
-  private async executeSync(strategies: ISyncStrategy[], context: ISyncContext) {
-    const results: any[] = [];
+  private async executeSync(strategies: ISyncStrategy[], context: ISyncContext): Promise<ISyncResult[]> {
+    const results: ISyncResult[] = [];
 
     if (context.options.dryRun) {
       // For dry runs, we don't need transactions
@@ -119,7 +126,7 @@ export class PublishEnvironmentUseCase {
     return results;
   }
 
-  private calculateSummary(results: any[]) {
+  private calculateSummary(results: ISyncResult[]) {
     const summary = {
       entities: 0,
       successful: 0,
