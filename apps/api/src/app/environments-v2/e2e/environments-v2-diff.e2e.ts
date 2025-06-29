@@ -142,16 +142,16 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary.hasChanges).to.be.true;
       expect(body.data.summary.totalChanges).to.be.greaterThan(0);
       expect(body.data.results).to.have.length(1);
-      expect(body.data.results[0].entityType).to.equal('workflow');
-      expect(body.data.results[0].entityName).to.equal('New Workflow for Diff');
+      expect(body.data.results[0].resourceType).to.equal('workflow');
+      expect(body.data.results[0].resourceName).to.equal('New Workflow for Diff');
       expect(body.data.results[0].summary.added).to.be.greaterThan(0);
 
       // Find the added workflow in the diff
       const addedWorkflow = body.data.results[0].diffs.find(
-        (diff: any) => diff.action === 'added' && diff.entityName === 'New Workflow for Diff'
+        (diff: any) => diff.action === 'added' && diff.resourceName === 'New Workflow for Diff'
       );
       expect(addedWorkflow).to.exist;
-      expect(addedWorkflow.entityId).to.exist;
+      expect(addedWorkflow.resourceId).to.exist;
     });
 
     it('should detect modified workflows', async () => {
@@ -198,7 +198,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       // Find the modified workflow in the diff - now each workflow has its own result
       const modifiedWorkflowResult = body.data.results.find(
-        (result: any) => result.entityName === 'Modified Workflow Name'
+        (result: any) => result.resourceName === 'Modified Workflow Name'
       );
       expect(modifiedWorkflowResult).to.exist;
 
@@ -244,7 +244,9 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary.totalChanges).to.be.greaterThan(0);
 
       // Find the deleted workflow in the diff - now each workflow has its own result
-      const deletedWorkflowResult = body.data.results.find((result: any) => result.entityName === 'Workflow to Delete');
+      const deletedWorkflowResult = body.data.results.find(
+        (result: any) => result.resourceName === 'Workflow to Delete'
+      );
       expect(deletedWorkflowResult).to.exist;
 
       const deletedWorkflow = deletedWorkflowResult.diffs.find((diff: any) => diff.action === 'deleted');
@@ -271,7 +273,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         })
         .expect(200);
 
-      expect(body.data).to.have.property('results');
+      expect(body.data).to.have.property('resources');
       expect(body.data).to.have.property('summary');
     });
 
@@ -286,19 +288,19 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         })
         .expect(200);
 
-      // Each workflow gets its own result entry now
-      expect(body.data.results).to.be.an('array');
-      if (body.data.results.length > 0) {
-        const workflowResult = body.data.results[0];
-        expect(workflowResult).to.have.property('entityType');
-        expect(workflowResult).to.have.property('entityId');
-        expect(workflowResult).to.have.property('entityName');
-        expect(workflowResult).to.have.property('diffs');
-        expect(workflowResult).to.have.property('summary');
-        expect(workflowResult.summary).to.have.property('added');
-        expect(workflowResult.summary).to.have.property('modified');
-        expect(workflowResult.summary).to.have.property('deleted');
-        expect(workflowResult.summary).to.have.property('unchanged');
+      // Each workflow gets its own resource entry now
+      expect(body.data.resources).to.be.an('array');
+      if (body.data.resources.length > 0) {
+        const workflowResource = body.data.resources[0];
+        expect(workflowResource).to.have.property('resourceType');
+        expect(workflowResource).to.have.property('resourceId');
+        expect(workflowResource).to.have.property('resourceName');
+        expect(workflowResource).to.have.property('diffs');
+        expect(workflowResource).to.have.property('summary');
+        expect(workflowResource.summary).to.have.property('added');
+        expect(workflowResource.summary).to.have.property('modified');
+        expect(workflowResource.summary).to.have.property('deleted');
+        expect(workflowResource.summary).to.have.property('unchanged');
       }
     });
 
@@ -360,13 +362,13 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary.hasChanges).to.be.true;
       expect(body.data.summary.totalChanges).to.be.greaterThan(1);
 
-      // Now each workflow has its own result entry, so we need to check across all results
-      const allResults = body.data.results;
-      const addedWorkflows = allResults.filter((result: any) =>
-        result.diffs.some((diff: any) => diff.action === 'added')
+      // Now each workflow has its own resource entry, so we need to check across all resources
+      const allResources = body.data.resources;
+      const addedWorkflows = allResources.filter((resource: any) =>
+        resource.diffs.some((diff: any) => diff.action === 'added')
       );
-      const modifiedWorkflows = allResults.filter((result: any) =>
-        result.diffs.some((diff: any) => diff.action === 'modified')
+      const modifiedWorkflows = allResources.filter((resource: any) =>
+        resource.diffs.some((diff: any) => diff.action === 'modified')
       );
 
       expect(addedWorkflows.length).to.be.greaterThan(0);
@@ -389,7 +391,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       // Verify top-level structure
       expect(body.data).to.have.property('sourceEnvironmentId');
       expect(body.data).to.have.property('targetEnvironmentId');
-      expect(body.data).to.have.property('results');
+      expect(body.data).to.have.property('resources');
       expect(body.data).to.have.property('summary');
 
       // Verify summary structure
@@ -397,17 +399,17 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary).to.have.property('totalChanges');
       expect(body.data.summary).to.have.property('hasChanges');
 
-      // Verify results structure
-      expect(body.data.results).to.be.an('array');
-      if (body.data.results.length > 0) {
-        const result = body.data.results[0];
-        expect(result).to.have.property('entityType');
-        expect(result).to.have.property('diffs');
-        expect(result).to.have.property('summary');
-        expect(result.summary).to.have.property('added');
-        expect(result.summary).to.have.property('modified');
-        expect(result.summary).to.have.property('deleted');
-        expect(result.summary).to.have.property('unchanged');
+      // Verify resources structure
+      expect(body.data.resources).to.be.an('array');
+      if (body.data.resources.length > 0) {
+        const resource = body.data.resources[0];
+        expect(resource).to.have.property('resourceType');
+        expect(resource).to.have.property('diffs');
+        expect(resource).to.have.property('summary');
+        expect(resource.summary).to.have.property('added');
+        expect(resource.summary).to.have.property('modified');
+        expect(resource.summary).to.have.property('deleted');
+        expect(resource.summary).to.have.property('unchanged');
       }
     });
 
@@ -431,10 +433,10 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         })
         .expect(200);
 
-      if (body.data.results.length > 0 && body.data.results[0].diffs.length > 0) {
-        const diff = body.data.results[0].diffs[0];
-        expect(diff).to.have.property('entityId');
-        expect(diff).to.have.property('entityName');
+      if (body.data.resources.length > 0 && body.data.resources[0].diffs.length > 0) {
+        const diff = body.data.resources[0].diffs[0];
+        expect(diff).to.have.property('resourceId');
+        expect(diff).to.have.property('resourceName');
         expect(diff).to.have.property('action');
         expect(['added', 'modified', 'deleted', 'unchanged']).to.include(diff.action);
 

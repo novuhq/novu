@@ -1,6 +1,6 @@
 import { UserSessionData } from '@novu/shared';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { DiffActionEnum, IEntityDiff } from '../../../../types/sync.types';
+import { DiffActionEnum, IResourceDiff } from '../../../../types/sync.types';
 import { WorkflowResponseDto } from '../../../../../workflows-v2/dtos/workflow-response.dto';
 
 export interface INormalizedWorkflow {
@@ -27,7 +27,7 @@ export interface INormalizedStep {
 
 export interface IWorkflowComparison {
   workflowChanges: Record<string, IFieldChange>;
-  stepDiffs: IEntityDiff[];
+  stepDiffs: IResourceDiff[];
 }
 
 export interface IFieldChange {
@@ -51,5 +51,5 @@ export interface IWorkflowComparator {
     targetSteps: INormalizedStep[],
     workflowId: string,
     workflowName: string
-  ): IEntityDiff[];
+  ): IResourceDiff[];
 }

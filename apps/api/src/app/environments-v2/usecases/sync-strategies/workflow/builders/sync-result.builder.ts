@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
-  EntityTypeEnum,
+  ResourceTypeEnum,
   ISyncResult,
   ISyncedEntity,
   IFailedEntity,
@@ -13,22 +13,22 @@ export class SyncResultBuilder {
   private failed: IFailedEntity[] = [];
   private skipped: ISkippedEntity[] = [];
 
-  addSuccess(entityId: string, entityName: string, action: 'created' | 'updated' | 'deleted'): this {
+  addSuccess(resourceId: string, resourceName: string, action: 'created' | 'updated' | 'deleted'): this {
     this.successful.push({
-      entityType: EntityTypeEnum.WORKFLOW,
-      entityId,
-      entityName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceId,
+      resourceName,
       action,
     });
 
     return this;
   }
 
-  addFailure(entityId: string, entityName: string, error: string, stack?: string): this {
+  addFailure(resourceId: string, resourceName: string, error: string, stack?: string): this {
     this.failed.push({
-      entityType: EntityTypeEnum.WORKFLOW,
-      entityId,
-      entityName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceId,
+      resourceName,
       error,
       stack,
     });
@@ -36,11 +36,11 @@ export class SyncResultBuilder {
     return this;
   }
 
-  addSkipped(entityId: string, entityName: string, reason: string): this {
+  addSkipped(resourceId: string, resourceName: string, reason: string): this {
     this.skipped.push({
-      entityType: EntityTypeEnum.WORKFLOW,
-      entityId,
-      entityName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceId,
+      resourceName,
       reason,
     });
 
@@ -67,7 +67,7 @@ export class SyncResultBuilder {
 
   build(): ISyncResult {
     return {
-      entityType: EntityTypeEnum.WORKFLOW,
+      resourceType: ResourceTypeEnum.WORKFLOW,
       successful: [...this.successful],
       failed: [...this.failed],
       skipped: [...this.skipped],

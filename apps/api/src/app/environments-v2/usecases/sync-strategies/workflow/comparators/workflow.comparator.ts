@@ -6,7 +6,7 @@ import { NotificationTemplateEntity } from '@novu/dal';
 import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../../workflows-v2/usecases/get-workflow';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
 import { IWorkflowComparator, IWorkflowComparison, INormalizedStep, IFieldChange } from '../types/workflow-sync.types';
-import { IEntityDiff, DiffActionEnum, EntityTypeEnum } from '../../../../types/sync.types';
+import { IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_CONSTANTS, WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 
 @Injectable()
@@ -85,8 +85,8 @@ export class WorkflowComparator implements IWorkflowComparator {
     targetSteps: INormalizedStep[],
     workflowId: string,
     workflowName: string
-  ): IEntityDiff[] {
-    const stepDiffs: IEntityDiff[] = [];
+  ): IResourceDiff[] {
+    const stepDiffs: IResourceDiff[] = [];
 
     // Create maps for efficient lookup
     const sourceStepMap = new Map(sourceSteps.map((step, index) => [step.stepId, { step, index }]));
@@ -154,13 +154,13 @@ export class WorkflowComparator implements IWorkflowComparator {
     sourceIndex: number,
     workflowId: string,
     workflowName: string
-  ): IEntityDiff {
+  ): IResourceDiff {
     const normalizedStep = this.workflowNormalizer.normalizeStepForComparison(sourceStep);
 
     return {
-      entityId: sourceStep.stepId,
-      entityName: sourceStep.name,
-      entityType: EntityTypeEnum.STEP,
+      resourceId: sourceStep.stepId,
+      resourceName: sourceStep.name,
+      resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
       workflowId,
       workflowName,
@@ -182,11 +182,11 @@ export class WorkflowComparator implements IWorkflowComparator {
     stepChanges: Record<string, IFieldChange>,
     workflowId: string,
     workflowName: string
-  ): IEntityDiff {
+  ): IResourceDiff {
     return {
-      entityId: sourceStep.stepId,
-      entityName: sourceStep.name,
-      entityType: EntityTypeEnum.STEP,
+      resourceId: sourceStep.stepId,
+      resourceName: sourceStep.name,
+      resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
       workflowId,
       workflowName,
@@ -203,11 +203,11 @@ export class WorkflowComparator implements IWorkflowComparator {
     targetIndex: number,
     workflowId: string,
     workflowName: string
-  ): IEntityDiff {
+  ): IResourceDiff {
     return {
-      entityId: sourceStep.stepId,
-      entityName: sourceStep.name,
-      entityType: EntityTypeEnum.STEP,
+      resourceId: sourceStep.stepId,
+      resourceName: sourceStep.name,
+      resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
       workflowId,
       workflowName,
@@ -222,13 +222,13 @@ export class WorkflowComparator implements IWorkflowComparator {
     targetIndex: number,
     workflowId: string,
     workflowName: string
-  ): IEntityDiff {
+  ): IResourceDiff {
     const normalizedStep = this.workflowNormalizer.normalizeStepForComparison(targetStep);
 
     return {
-      entityId: targetStep.stepId,
-      entityName: targetStep.name,
-      entityType: EntityTypeEnum.STEP,
+      resourceId: targetStep.stepId,
+      resourceName: targetStep.name,
+      resourceType: ResourceTypeEnum.STEP,
       stepType: targetStep.type,
       workflowId,
       workflowName,

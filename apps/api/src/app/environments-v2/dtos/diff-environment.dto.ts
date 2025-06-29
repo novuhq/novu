@@ -17,21 +17,21 @@ export class DiffEnvironmentRequestDto {
   targetEnvironmentId: string;
 }
 
-export class EntityDiffDto {
-  @ApiProperty({ description: 'Entity ID (workflow ID or step ID)' })
+export class ResourceDiffDto {
+  @ApiProperty({ description: 'Resource ID (workflow ID or step ID)' })
   @IsString()
-  entityId: string;
+  resourceId: string;
 
-  @ApiProperty({ description: 'Entity name (workflow name or step name)' })
+  @ApiProperty({ description: 'Resource name (workflow name or step name)' })
   @IsString()
-  entityName: string;
+  resourceName: string;
 
   @ApiProperty({
-    description: 'Type of entity',
+    description: 'Type of resource',
     enum: ['workflow', 'step'],
   })
   @IsEnum(['workflow', 'step'])
-  entityType: 'workflow' | 'step';
+  resourceType: 'workflow' | 'step';
 
   @ApiProperty({
     description: 'Type of change',
@@ -42,7 +42,7 @@ export class EntityDiffDto {
 
   @ApiPropertyOptional({
     type: 'object',
-    description: 'Detailed changes (only for modified entities)',
+    description: 'Detailed changes (only for modified resources)',
     additionalProperties: {
       type: 'object',
       properties: {
@@ -60,17 +60,17 @@ export class EntityDiffDto {
   >;
 
   // Step-specific fields
-  @ApiPropertyOptional({ description: 'Step type (only for step entities)' })
+  @ApiPropertyOptional({ description: 'Step type (only for step resources)' })
   @IsOptional()
   @IsString()
   stepType?: string;
 
-  @ApiPropertyOptional({ description: 'Parent workflow ID (only for step entities)' })
+  @ApiPropertyOptional({ description: 'Parent workflow ID (only for step resources)' })
   @IsOptional()
   @IsString()
   workflowId?: string;
 
-  @ApiPropertyOptional({ description: 'Parent workflow name (only for step entities)' })
+  @ApiPropertyOptional({ description: 'Parent workflow name (only for step resources)' })
   @IsOptional()
   @IsString()
   workflowName?: string;
@@ -87,54 +87,54 @@ export class EntityDiffDto {
 }
 
 export class DiffSummaryDto {
-  @ApiProperty({ description: 'Number of added entities (workflows and steps)' })
+  @ApiProperty({ description: 'Number of added resources (workflows and steps)' })
   @IsNumber()
   added: number;
 
-  @ApiProperty({ description: 'Number of modified entities (workflows and steps)' })
+  @ApiProperty({ description: 'Number of modified resources (workflows and steps)' })
   @IsNumber()
   modified: number;
 
-  @ApiProperty({ description: 'Number of deleted entities (workflows and steps)' })
+  @ApiProperty({ description: 'Number of deleted resources (workflows and steps)' })
   @IsNumber()
   deleted: number;
 
-  @ApiProperty({ description: 'Number of unchanged entities (workflows and steps)' })
+  @ApiProperty({ description: 'Number of unchanged resources (workflows and steps)' })
   @IsNumber()
   unchanged: number;
 }
 
-export class EntityDiffResultDto {
+export class ResourceDiffResultDto {
   @ApiProperty({
-    description: 'Type of entity being compared',
+    description: 'Type of resource being compared',
     enum: ['workflow'],
     example: 'workflow',
   })
   @IsEnum(['workflow'])
-  entityType: string;
+  resourceType: string;
 
   @ApiProperty({
-    description: 'ID of the entity being compared',
+    description: 'ID of the resource being compared',
     example: '507f1f77bcf86cd799439011',
   })
   @IsString()
-  entityId: string;
+  resourceId: string;
 
   @ApiProperty({
-    description: 'Name of the entity being compared',
+    description: 'Name of the resource being compared',
     example: 'Welcome Email Workflow',
   })
   @IsString()
-  entityName: string;
+  resourceName: string;
 
   @ApiProperty({
-    description: 'List of specific changes for this entity',
-    type: [EntityDiffDto],
+    description: 'List of specific changes for this resource',
+    type: [ResourceDiffDto],
   })
-  diffs: EntityDiffDto[];
+  diffs: ResourceDiffDto[];
 
   @ApiProperty({
-    description: 'Summary of changes for this entity',
+    description: 'Summary of changes for this resource',
     type: DiffSummaryDto,
   })
   summary: DiffSummaryDto;
@@ -163,8 +163,8 @@ export class DiffEnvironmentResponseDto {
   @IsString()
   targetEnvironmentId: string;
 
-  @ApiProperty({ type: [EntityDiffResultDto], description: 'Diff results by entity type' })
-  results: EntityDiffResultDto[];
+  @ApiProperty({ type: [ResourceDiffResultDto], description: 'Diff resources by resource type' })
+  resources: ResourceDiffResultDto[];
 
   @ApiProperty({ type: EnvironmentDiffSummaryDto, description: 'Overall summary' })
   summary: EnvironmentDiffSummaryDto;

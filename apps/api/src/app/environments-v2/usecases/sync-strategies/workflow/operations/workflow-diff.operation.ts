@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
-import { UserSessionData } from '@novu/shared';
+import { UserSessionData, WorkflowStatusEnum } from '@novu/shared';
 import { SYNCABLE_WORKFLOW_ORIGINS } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
-import { IDiffResult, IEntityDiff, DiffActionEnum, EntityTypeEnum } from '../../../../types/sync.types';
+import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
 import { IFieldChange } from '../types/workflow-sync.types';
 import { WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 
@@ -100,16 +100,16 @@ export class WorkflowDiffOperation {
   private createWorkflowDiffs(
     sourceWorkflow: NotificationTemplateEntity,
     workflowChanges: Record<string, IFieldChange>,
-    stepDiffs: IEntityDiff[]
-  ): IEntityDiff[] {
-    const allDiffs: IEntityDiff[] = [];
+    stepDiffs: IResourceDiff[]
+  ): IResourceDiff[] {
+    const allDiffs: IResourceDiff[] = [];
 
     // Add workflow-level changes if any
     if (Object.keys(workflowChanges).length > 0) {
       allDiffs.push({
-        entityId: sourceWorkflow._id,
-        entityName: sourceWorkflow.name,
-        entityType: EntityTypeEnum.WORKFLOW,
+        resourceId: sourceWorkflow._id,
+        resourceName: sourceWorkflow.name,
+        resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
         changes: workflowChanges,
       });
@@ -129,6 +129,7 @@ export class WorkflowDiffOperation {
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
+      status: { $ne: WorkflowStatusEnum.ERROR },
     });
   }
 }

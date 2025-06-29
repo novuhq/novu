@@ -1,6 +1,6 @@
 import { UserSessionData } from '@novu/shared';
 
-export enum EntityTypeEnum {
+export enum ResourceTypeEnum {
   WORKFLOW = 'workflow',
   STEP = 'step',
 }
@@ -18,29 +18,29 @@ export interface ISyncContext {
 }
 
 export interface ISyncedEntity {
-  entityType: EntityTypeEnum;
-  entityId: string;
-  entityName: string;
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+  resourceName: string;
   action: 'created' | 'updated' | 'skipped' | 'deleted';
 }
 
 export interface IFailedEntity {
-  entityType: EntityTypeEnum;
-  entityId: string;
-  entityName: string;
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+  resourceName: string;
   error: string;
   stack?: string;
 }
 
 export interface ISkippedEntity {
-  entityType: EntityTypeEnum;
-  entityId: string;
-  entityName: string;
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+  resourceName: string;
   reason: string;
 }
 
 export interface ISyncResult {
-  entityType: EntityTypeEnum;
+  resourceType: ResourceTypeEnum;
   successful: ISyncedEntity[];
   failed: IFailedEntity[];
   skipped: ISkippedEntity[];
@@ -50,7 +50,7 @@ export interface ISyncResult {
 export interface IPublishResult {
   results: ISyncResult[];
   summary: {
-    entities: number;
+    resources: number;
     successful: number;
     failed: number;
     skipped: number;
@@ -68,10 +68,10 @@ export enum DiffActionEnum {
   STEP_MOVED = 'stepMoved',
 }
 
-export interface IEntityDiff {
-  entityId: string;
-  entityName: string;
-  entityType: EntityTypeEnum;
+export interface IResourceDiff {
+  resourceId: string;
+  resourceName: string;
+  resourceType: ResourceTypeEnum;
   action: DiffActionEnum;
   changes?: Record<
     string,
@@ -89,10 +89,10 @@ export interface IEntityDiff {
 }
 
 export interface IDiffResult {
-  entityType: EntityTypeEnum;
-  entityId: string;
-  entityName: string;
-  diffs: IEntityDiff[];
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+  resourceName: string;
+  diffs: IResourceDiff[];
   summary: {
     added: number;
     modified: number;
@@ -104,7 +104,7 @@ export interface IDiffResult {
 export interface IEnvironmentDiffResult {
   sourceEnvironmentId: string;
   targetEnvironmentId: string;
-  results: IDiffResult[];
+  resources: IDiffResult[];
   summary: {
     totalEntities: number;
     totalChanges: number;
@@ -113,7 +113,7 @@ export interface IEnvironmentDiffResult {
 }
 
 export interface ISyncStrategy {
-  getEntityType(): EntityTypeEnum;
+  getResourceType(): ResourceTypeEnum;
   execute(context: ISyncContext): Promise<ISyncResult>;
   diff(
     sourceEnvId: string,
@@ -124,7 +124,7 @@ export interface ISyncStrategy {
 }
 
 export interface ISyncProgress {
-  entityType: EntityTypeEnum;
+  resourceType: ResourceTypeEnum;
   total: number;
   processed: number;
   failed: number;

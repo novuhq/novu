@@ -26,28 +26,28 @@ export class PublishEnvironmentRequestDto {
 }
 
 export class SyncedWorkflowDto {
-  @ApiProperty({ description: 'Entity type' })
-  entityType: string;
+  @ApiProperty({ description: 'Resource type' })
+  resourceType: string;
 
   @ApiProperty({ description: 'Workflow ID' })
-  entityId: string;
+  resourceId: string;
 
   @ApiProperty({ description: 'Workflow name' })
-  entityName: string;
+  resourceName: string;
 
   @ApiProperty({ description: 'Sync action performed' })
   action: 'created' | 'updated' | 'skipped' | 'deleted';
 }
 
 export class FailedWorkflowDto {
-  @ApiProperty({ description: 'Entity type' })
-  entityType: string;
+  @ApiProperty({ description: 'Resource type' })
+  resourceType: string;
 
   @ApiProperty({ description: 'Workflow ID' })
-  entityId: string;
+  resourceId: string;
 
   @ApiProperty({ description: 'Workflow name' })
-  entityName: string;
+  resourceName: string;
 
   @ApiProperty({ description: 'Error message' })
   error: string;
@@ -57,22 +57,22 @@ export class FailedWorkflowDto {
 }
 
 export class SkippedWorkflowDto {
-  @ApiProperty({ description: 'Entity type' })
-  entityType: string;
+  @ApiProperty({ description: 'Resource type' })
+  resourceType: string;
 
   @ApiProperty({ description: 'Workflow ID' })
-  entityId: string;
+  resourceId: string;
 
   @ApiProperty({ description: 'Workflow name' })
-  entityName: string;
+  resourceName: string;
 
   @ApiProperty({ description: 'Reason for skipping' })
   reason: string;
 }
 
 export class SyncResultDto {
-  @ApiProperty({ description: 'Entity type that was synced' })
-  entityType: string;
+  @ApiProperty({ description: 'Resource type that was synced' })
+  resourceType: string;
 
   @ApiProperty({ type: [SyncedWorkflowDto], description: 'Successfully synced workflows' })
   successful: SyncedWorkflowDto[];
@@ -88,8 +88,8 @@ export class SyncResultDto {
 }
 
 export class PublishSummaryDto {
-  @ApiProperty({ description: 'Number of entities processed' })
-  entities: number;
+  @ApiProperty({ description: 'Number of resources processed' })
+  resources: number;
 
   @ApiProperty({ description: 'Number of successful syncs' })
   successful: number;
@@ -97,12 +97,12 @@ export class PublishSummaryDto {
   @ApiProperty({ description: 'Number of failed syncs' })
   failed: number;
 
-  @ApiProperty({ description: 'Number of skipped entities' })
+  @ApiProperty({ description: 'Number of skipped resources' })
   skipped: number;
 }
 
 export class PublishEnvironmentResponseDto {
-  @ApiProperty({ type: [SyncResultDto], description: 'Sync results by entity type' })
+  @ApiProperty({ type: [SyncResultDto], description: 'Sync results by resource type' })
   results: SyncResultDto[];
 
   @ApiProperty({ type: PublishSummaryDto, description: 'Summary of the sync operation' })

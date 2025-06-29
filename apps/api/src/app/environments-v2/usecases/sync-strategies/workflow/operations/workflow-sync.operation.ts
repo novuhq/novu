@@ -47,9 +47,9 @@ export class WorkflowSyncOperation {
         return resultBuilder
           .addSkippedEntities(
             sourceWorkflows.map((workflow) => ({
-              entityType: 'workflow' as any,
-              entityId: workflow._id,
-              entityName: workflow.name,
+              resourceType: 'workflow' as any,
+              resourceId: workflow._id,
+              resourceName: workflow.name,
               reason: SKIP_REASONS.DRY_RUN,
             }))
           )

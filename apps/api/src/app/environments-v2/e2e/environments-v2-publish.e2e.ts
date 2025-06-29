@@ -64,7 +64,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
 
     expect(body.data).to.have.property('results');
     expect(body.data).to.have.property('summary');
-    expect(body.data.summary).to.have.property('entities');
+    expect(body.data.summary).to.have.property('resources');
   });
 
   describe('Workflow Publishing Tests', () => {
@@ -115,7 +115,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(body.data.summary.entities).to.be.greaterThan(0);
+      expect(body.data.summary.resources).to.be.greaterThan(0);
       expect(body.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify workflow was created in target environment
@@ -164,7 +164,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(body.data.summary.entities).to.be.greaterThan(0);
+      expect(body.data.summary.resources).to.be.greaterThan(0);
       expect(body.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify both workflows were published to target
@@ -222,7 +222,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(body.data.summary.entities).to.be.greaterThan(0);
+      expect(body.data.summary.resources).to.be.greaterThan(0);
       expect(body.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify workflow structure is preserved
@@ -267,7 +267,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.resources).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Second publish without any changes - should not report workflows as updated
@@ -284,18 +284,18 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
        * The issue: currently this fails because workflows are always reported as "updated"
        * even when no changes were made
        */
-      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.resources).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.equal(0);
       expect(secondPublish.data.summary.totalSkipped).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was skipped, not updated
-      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      const workflowResult = secondPublish.data.results.find((result) => result.resourceType === 'workflow');
       expect(workflowResult).to.exist;
       expect(workflowResult.successful).to.have.length(0);
       expect(workflowResult.skipped).to.have.length.greaterThan(0);
 
       const skippedWorkflow = workflowResult.skipped.find(
-        (item) => item.entityName === 'Test Workflow for Duplicate Publish'
+        (item) => item.resourceName === 'Test Workflow for Duplicate Publish'
       );
       expect(skippedWorkflow).to.exist;
       expect(skippedWorkflow.reason).to.contain('No changes detected');
@@ -332,7 +332,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.resources).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify initial workflow was created in target environment
@@ -366,16 +366,16 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.resources).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was updated, not skipped
-      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      const workflowResult = secondPublish.data.results.find((result) => result.resourceType === 'workflow');
       expect(workflowResult).to.exist;
       expect(workflowResult.successful).to.have.length.greaterThan(0);
 
       const updatedWorkflowResult = workflowResult.successful.find(
-        (item) => item.entityName === 'Test Workflow for Control Values Update - Modified'
+        (item) => item.resourceName === 'Test Workflow for Control Values Update - Modified'
       );
       expect(updatedWorkflowResult).to.exist;
       expect(updatedWorkflowResult.action).to.equal('updated');
@@ -431,7 +431,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.resources).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify initial workflow was created in target environment
@@ -495,16 +495,16 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.resources).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was updated, not skipped
-      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      const workflowResult = secondPublish.data.results.find((result) => result.resourceType === 'workflow');
       expect(workflowResult).to.exist;
       expect(workflowResult.successful).to.have.length.greaterThan(0);
 
       const updatedWorkflowResult = workflowResult.successful.find(
-        (item) => item.entityName === 'Test Workflow for Control Values Update'
+        (item) => item.resourceName === 'Test Workflow for Control Values Update'
       );
       expect(updatedWorkflowResult).to.exist;
       expect(updatedWorkflowResult.action).to.equal('updated');
@@ -560,7 +560,7 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(firstPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(firstPublish.data.summary.resources).to.be.greaterThan(0);
       expect(firstPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify workflow was created in target environment
@@ -586,16 +586,16 @@ describe('Environment Publish - /v2/environments/publish (POST) #novu-v2', async
         })
         .expect(200);
 
-      expect(secondPublish.data.summary.entities).to.be.greaterThan(0);
+      expect(secondPublish.data.summary.resources).to.be.greaterThan(0);
       expect(secondPublish.data.summary.totalSuccessful).to.be.greaterThan(0);
 
       // Verify that the workflow result shows it was deleted
-      const workflowResult = secondPublish.data.results.find((result) => result.entityType === 'workflow');
+      const workflowResult = secondPublish.data.results.find((result) => result.resourceType === 'workflow');
       expect(workflowResult).to.exist;
       expect(workflowResult.successful).to.have.length.greaterThan(0);
 
       const deletedWorkflowResult = workflowResult.successful.find(
-        (item) => item.entityName === 'Test Workflow for Deletion'
+        (item) => item.resourceName === 'Test Workflow for Deletion'
       );
       expect(deletedWorkflowResult).to.exist;
       expect(deletedWorkflowResult.action).to.equal('deleted');

@@ -3,7 +3,7 @@ import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
 import {
-  EntityTypeEnum,
+  ResourceTypeEnum,
   ISyncStrategy,
   IPublishResult,
   ISyncContext,
@@ -56,7 +56,7 @@ export class PublishEnvironmentUseCase {
       const summary = this.calculateSummary(results);
 
       this.logger.info(
-        `Environment publish completed. Processed: ${summary.entities}, ` +
+        `Environment publish completed. Processed: ${summary.resources}, ` +
           `Successful: ${summary.successful}, Failed: ${summary.failed}, ` +
           `Skipped: ${summary.skipped}`
       );
@@ -128,14 +128,14 @@ export class PublishEnvironmentUseCase {
 
   private calculateSummary(results: ISyncResult[]) {
     const summary = {
-      entities: 0,
+      resources: 0,
       successful: 0,
       failed: 0,
       skipped: 0,
     };
 
     for (const result of results) {
-      summary.entities += result.totalProcessed;
+      summary.resources += result.totalProcessed;
       summary.successful += result.successful.length;
       summary.failed += result.failed.length;
       summary.skipped += result.skipped.length;

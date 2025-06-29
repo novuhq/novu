@@ -1,6 +1,6 @@
 import { PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { EntityTypeEnum, ISyncStrategy, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
+import { ResourceTypeEnum, ISyncStrategy, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
 
 export abstract class BaseSyncStrategy implements ISyncStrategy {
   protected readonly BATCH_SIZE = 100;
@@ -9,7 +9,7 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
     this.logger.setContext(this.constructor.name);
   }
 
-  abstract getEntityType(): EntityTypeEnum;
+  abstract getResourceType(): ResourceTypeEnum;
   abstract execute(context: ISyncContext): Promise<ISyncResult>;
   abstract diff(
     sourceEnvId: string,

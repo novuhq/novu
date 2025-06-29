@@ -3,7 +3,7 @@ import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { EnvironmentRepository, BaseRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { DiffEnvironmentCommand } from './diff-environment.command';
-import { EntityTypeEnum, ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
+import { ResourceTypeEnum, ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 
 @Injectable()
@@ -31,7 +31,7 @@ export class DiffEnvironmentUseCase {
        */
       const strategies = [this.workflowSyncStrategy];
 
-      const results = await this.executeDiff(
+      const resources = await this.executeDiff(
         strategies,
         command.sourceEnvironmentId,
         command.targetEnvironmentId,
@@ -39,7 +39,7 @@ export class DiffEnvironmentUseCase {
         command.user
       );
 
-      const summary = this.calculateSummary(results);
+      const summary = this.calculateSummary(resources);
 
       this.logger.info(
         `Environment diff completed. Total entities: ${summary.totalEntities}, ` +
@@ -49,7 +49,7 @@ export class DiffEnvironmentUseCase {
       return {
         sourceEnvironmentId: command.sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
-        results,
+        resources,
         summary,
       };
     } catch (error) {
@@ -108,18 +108,18 @@ export class DiffEnvironmentUseCase {
     return results;
   }
 
-  private calculateSummary(results: IDiffResult[]) {
+  private calculateSummary(resources: IDiffResult[]) {
     const summary = {
       totalEntities: 0,
       totalChanges: 0,
       hasChanges: false,
     };
 
-    for (const result of results) {
-      summary.totalEntities += 1; // Each result is now a single entity (workflow)
+    for (const resource of resources) {
+      summary.totalEntities += 1; // Each resource is now a single entity (workflow)
 
       // Count all changes (both workflow and step level)
-      const entitySummary = result.summary;
+      const entitySummary = resource.summary;
       summary.totalChanges += entitySummary.added + entitySummary.modified + entitySummary.deleted;
     }
 

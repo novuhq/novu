@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { EntityTypeEnum, IDiffResult, IEntityDiff, DiffActionEnum } from '../../../../types/sync.types';
+import { ResourceTypeEnum, IDiffResult, IResourceDiff, DiffActionEnum } from '../../../../types/sync.types';
 
 @Injectable()
 export class DiffResultBuilder {
   private results: IDiffResult[] = [];
 
-  addWorkflowDiff(entityId: string, entityName: string, diffs: IEntityDiff[]): this {
+  addWorkflowDiff(resourceId: string, resourceName: string, diffs: IResourceDiff[]): this {
     if (diffs.length > 0) {
       this.results.push({
-        entityType: EntityTypeEnum.WORKFLOW,
-        entityId,
-        entityName,
+        resourceType: ResourceTypeEnum.WORKFLOW,
+        resourceId,
+        resourceName,
         diffs,
         summary: this.calculateSummary(diffs),
       });
@@ -19,18 +19,18 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addWorkflowAdded(entityId: string, entityName: string): this {
-    const diff: IEntityDiff = {
-      entityId,
-      entityName,
-      entityType: EntityTypeEnum.WORKFLOW,
+  addWorkflowAdded(resourceId: string, resourceName: string): this {
+    const diff: IResourceDiff = {
+      resourceId,
+      resourceName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
       action: DiffActionEnum.ADDED,
     };
 
     this.results.push({
-      entityType: EntityTypeEnum.WORKFLOW,
-      entityId,
-      entityName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceId,
+      resourceName,
       diffs: [diff],
       summary: this.calculateSummary([diff]),
     });
@@ -38,18 +38,18 @@ export class DiffResultBuilder {
     return this;
   }
 
-  addWorkflowDeleted(entityId: string, entityName: string): this {
-    const diff: IEntityDiff = {
-      entityId,
-      entityName,
-      entityType: EntityTypeEnum.WORKFLOW,
+  addWorkflowDeleted(resourceId: string, resourceName: string): this {
+    const diff: IResourceDiff = {
+      resourceId,
+      resourceName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
       action: DiffActionEnum.DELETED,
     };
 
     this.results.push({
-      entityType: EntityTypeEnum.WORKFLOW,
-      entityId,
-      entityName,
+      resourceType: ResourceTypeEnum.WORKFLOW,
+      resourceId,
+      resourceName,
       diffs: [diff],
       summary: this.calculateSummary([diff]),
     });
@@ -86,7 +86,7 @@ export class DiffResultBuilder {
     };
   }
 
-  private calculateSummary(diffs: IEntityDiff[]) {
+  private calculateSummary(diffs: IResourceDiff[]) {
     return diffs.reduce(
       (acc, diffItem) => {
         switch (diffItem.action) {
