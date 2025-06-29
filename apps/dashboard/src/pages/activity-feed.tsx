@@ -55,23 +55,6 @@ export function ActivityFeed() {
     }
   }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
 
-  if (!isHttpLogsPageEnabled) {
-    return (
-      <>
-        <PageMeta title="Activity Feed" />
-        <DashboardLayout
-          headerStartItems={
-            <h1 className="text-foreground-950 flex items-center gap-1">
-              <span>Activity Feed</span>
-            </h1>
-          }
-        >
-          <ActivityFeedContent contentHeight="h-[calc(100vh-98px)]" />
-        </DashboardLayout>
-      </>
-    );
-  }
-
   return (
     <>
       <PageMeta title="Activity Feed" />
@@ -87,9 +70,11 @@ export function ActivityFeed() {
             <TabsTrigger value="workflow-runs" variant="regular" size="lg">
               Workflow Runs
             </TabsTrigger>
-            <TabsTrigger value="logs" variant="regular" size="lg">
-              Logs
-            </TabsTrigger>
+            {isHttpLogsPageEnabled && (
+              <TabsTrigger value="logs" variant="regular" size="lg">
+                Logs
+              </TabsTrigger>
+            )}
           </TabsList>
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-140px)]" />
