@@ -121,9 +121,12 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
           let shouldSync = true;
 
           if (targetWorkflow) {
-            // Check if there are actual changes
-            const { workflowChanges } = await this.compareWorkflows(workflow, targetWorkflow);
-            if (Object.keys(workflowChanges).length === 0) {
+            // Check if there are actual changes (both workflow and step level)
+            const { workflowChanges, stepDiffs } = await this.compareWorkflows(workflow, targetWorkflow);
+            const hasWorkflowChanges = Object.keys(workflowChanges).length > 0;
+            const hasStepChanges = stepDiffs.length > 0;
+
+            if (!hasWorkflowChanges && !hasStepChanges) {
               // No changes detected, skip this workflow
               skipped.push({
                 entityType: EntityTypeEnum.WORKFLOW,
