@@ -1,21 +1,28 @@
 import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus, PayloadTooLargeException } from '@nestjs/common';
 import { Response } from 'express';
-import { CommandValidationException, PinoLogger } from '@novu/application-generic';
+import { CommandValidationException, PinoLogger, RequestLogRepository } from '@novu/application-generic';
 import { randomUUID } from 'node:crypto';
 import { captureException } from '@sentry/node';
 import { ZodError } from 'zod';
 import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception';
+import { UserSessionData } from '@novu/shared';
+import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
+import { retryWithBackoff } from './utils/payload-sanitizer';
+import { buildLog } from './app/shared/utils/mappers';
 
-const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
+export const ERROR_MSG_500 = `Internal server error, contact support and provide them with the errorId`;
 
 class ValidationPipeError {
   response: { message: string[] | string };
 }
 
 export class AllExceptionsFilter implements ExceptionFilter {
-  constructor(private readonly logger: PinoLogger) {}
-  catch(exception: unknown, host: ArgumentsHost) {
+  constructor(
+    private readonly logger: PinoLogger,
+    private readonly requestLogRepository: RequestLogRepository
+  ) {}
+  async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -29,7 +36,37 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     // This is for backwards compatibility for clients waiting for the context elements to appear flat
     const finalResponse = { ...errorDto.ctx, ...errorDto };
+
+    await this.createAnalyticsLog(ctx, request, statusCode, errorDto);
+
     response.status(statusCode).json(finalResponse);
+  }
+
+  private async createAnalyticsLog(ctx: HttpArgumentsHost, request: Request, statusCode: number, errorDto: ErrorDto) {
+    const shouldRun = await this.shouldRun(ctx);
+
+    if (!shouldRun) return;
+
+    const req = ctx.getRequest();
+    const user = req.user as UserSessionData;
+    const basicLog = buildLog(request, statusCode, errorDto, user);
+
+    try {
+      if (basicLog) {
+        await retryWithBackoff(() => this.requestLogRepository.insert(basicLog));
+      }
+    } catch (err) {
+      this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
+    }
+  }
+
+  private async shouldRun(ctx: HttpArgumentsHost): Promise<boolean> {
+    const req = ctx.getRequest();
+
+    // Check if the analytics metadata was set by the interceptor (AnalyticsLogsInterceptor)
+    const shouldLog = req._shouldLogAnalytics === true;
+
+    return shouldLog;
   }
 
   private logError(errorDto: ErrorDto, exception: unknown) {

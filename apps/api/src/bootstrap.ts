@@ -5,8 +5,14 @@ import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common
 import { NestFactory } from '@nestjs/core';
 import bodyParser from 'body-parser';
 
-// eslint-disable-next-line no-restricted-imports
-import { BullMqService, getErrorInterceptor, Logger, PinoLogger } from '@novu/application-generic';
+import {
+  // eslint-disable-next-line no-restricted-imports
+  Logger,
+  BullMqService,
+  getErrorInterceptor,
+  PinoLogger,
+  RequestLogRepository,
+} from '@novu/application-generic';
 import { AppModule } from './app.module';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
@@ -100,7 +106,7 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository)));
 
   /*
    * Handle unhandled promise rejections

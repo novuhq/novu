@@ -36,6 +36,8 @@ function getStatusText(statusCode: number): string {
       return '404 Not Found';
     case 408:
       return '408 Request Timeout';
+    case 422:
+      return '422 Unprocessable Entity';
     case 429:
       return '429 Too Many Requests';
     case 500:
