@@ -25,6 +25,8 @@ describe('EmailOutputRendererUsecase', () => {
     getOrganizationSettingsMock = sinon.createStubInstance(GetOrganizationSettings);
     getOrganizationSettingsMock.execute.resolves({
       removeNovuBranding: false,
+      defaultLocale: 'en_US',
+      translationsEnabled: false,
     });
     pinoLoggerMock = sinon.createStubInstance(PinoLogger);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
@@ -1572,6 +1574,8 @@ describe('EmailOutputRendererUsecase', () => {
     it('should add Novu branding when removeNovuBranding is false', async () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
+        defaultLocale: 'en_US',
+        translationsEnabled: false,
       });
 
       const renderCommand = {
@@ -1595,6 +1599,8 @@ describe('EmailOutputRendererUsecase', () => {
     it('should not add Novu branding when removeNovuBranding is true', async () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: true,
+        defaultLocale: 'en_US',
+        translationsEnabled: false,
       });
 
       const renderCommand = {
@@ -1616,6 +1622,8 @@ describe('EmailOutputRendererUsecase', () => {
     it('should properly insert branding into HTML with body tag', async () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
+        defaultLocale: 'en_US',
+        translationsEnabled: false,
       });
 
       const htmlWithBodyTag = '<html><body><p>Content</p></body></html>';

@@ -275,9 +275,10 @@ export class ExecuteBridgeRequest {
   }
 
   private getApiUrl(action: PostActionEnum | GetActionEnum): string {
-    const baseUrl = action === PostActionEnum.PREVIEW 
-      ? `http://localhost:${process.env.PORT}`
-      : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
+    const baseUrl =
+      action === PostActionEnum.PREVIEW
+        ? `http://localhost:${process.env.PORT}`
+        : process.env.API_INTERNAL_ORIGIN || process.env.API_ROOT_URL;
 
     if (!baseUrl) {
       throw new Error('API URL is not properly configured');
@@ -285,11 +286,11 @@ export class ExecuteBridgeRequest {
 
     // Ensure the URL doesn't end with a slash
     const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    
+
     // Add GLOBAL_CONTEXT_PATH and API_CONTEXT_PATH if they exist
     const contextPath = [
       process.env.GLOBAL_CONTEXT_PATH,
-      action === PostActionEnum.PREVIEW ? process.env.API_CONTEXT_PATH : undefined
+      action === PostActionEnum.PREVIEW ? process.env.API_CONTEXT_PATH : undefined,
     ]
       .filter(Boolean)
       .join('/');

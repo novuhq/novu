@@ -1,5 +1,5 @@
 import { PhoneInput } from '@/components/primitives/phone-input';
-import { LocaleSelect } from '@/components/subscribers/locale-select';
+import { LocaleSelect } from '@/components/primitives/locale-select';
 import { useDeleteSubscriber } from '@/hooks/use-delete-subscriber';
 import { usePatchSubscriber } from '@/hooks/use-patch-subscriber';
 import { useTelemetry } from '@/hooks/use-telemetry';

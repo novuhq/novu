@@ -21,7 +21,6 @@ import { UpdateOrganizationSettings } from './usecases/update-organization-setti
 import { UpdateOrganizationSettingsCommand } from './usecases/update-organization-settings/update-organization-settings.command';
 import { UpdateOrganizationSettingsDto } from './dtos/update-organization-settings.dto';
 import { GetOrganizationSettingsDto } from './dtos/get-organization-settings.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -100,7 +99,6 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Get organization settings',
   })
-  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
   async getSettings(@UserSession() user: UserSessionData) {
     return await this.getOrganizationSettingsUsecase.execute(
@@ -122,6 +120,8 @@ export class EEOrganizationController {
         userId: user._id,
         organizationId: user.organizationId,
         removeNovuBranding: body.removeNovuBranding,
+        translationsEnabled: body.translationsEnabled,
+        defaultLocale: body.defaultLocale,
       })
     );
   }

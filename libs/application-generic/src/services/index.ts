@@ -27,4 +27,5 @@ export * from './cron';
 export * from './content.service';
 export * from './sanitize/sanitizer.service';
 export * from './sanitize/sanitizer-v0.service';
+export * from './analytic-logs';
 export * from './socket-worker';
