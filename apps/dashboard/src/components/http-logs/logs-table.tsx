@@ -41,7 +41,6 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
   const logsData = logsResponse?.data || [];
   const totalCount = logsResponse?.total || 0;
 
-  // Create pagination state with total count
   const paginationState = useMemo(() => {
     const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
     const hasNext = totalCount > 0 && currentPage < totalPages;

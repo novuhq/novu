@@ -130,66 +130,71 @@ export function ActivityLogs({
         {...fadeIn}
         className={cn('flex items-center justify-between border-b border-t border-neutral-100 p-2 px-3', className)}
       >
-        <div className="flex items-center gap-2">
-          <RiPlayCircleLine className="h-3 w-3" />
-          <span className="text-foreground-950 text-sm font-medium">Logs</span>
+        <div className="flex w-full flex-col items-start gap-0.5 text-left font-['Inter'] font-medium">
+          <div className="flex flex-col justify-center">
+            <p className="leading-[20px]">
+              <span className="text-label-sm text-text-sub"> Execution details</span>
+            </p>
+          </div>
+          <div className="text-label-xs text-text-soft">
+            <p>Notifications have been dispatched to the processing queue.</p>
+          </div>
         </div>
-
-        <Popover modal={true} open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
-          <PopoverTrigger asChild>
-            <div className="flex items-center gap-1">
-              <RiCodeBlock className="size-3" />
-              <button
-                className="text-foreground-600 hover:text-foreground-950 text-xs underline transition-colors"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setIsPopoverOpen(true);
-                }}
-              >
-                View request payload
-              </button>
-            </div>
-          </PopoverTrigger>
-          <PopoverContent className="w-[400px] p-0" align="center" side="left">
-            <div className="flex items-center justify-between border-b border-neutral-100 p-3">
-              <h3 className="text-foreground-950 text-sm font-medium">Request payload</h3>
-              <div className="flex items-center gap-2">
-                {workflowExists && (
-                  <Button
-                    variant="secondary"
-                    mode="ghost"
-                    size="sm"
-                    onClick={() => handleResend()}
-                    className="text-xs"
-                    disabled={isPending}
-                    type="button"
-                  >
-                    <RepeatPlay className={cn('size-3', { 'text-text-disabled opacity-50': isPending })} />
-                    Resend
-                  </Button>
-                )}
-                <PopoverClose asChild ref={popoverCloseRef}>
-                  <CompactButton size="md" variant="ghost" icon={RiCloseFill} type="button">
-                    <span className="sr-only">Close</span>
-                  </CompactButton>
-                </PopoverClose>
-              </div>
-            </div>
-            <div className="flex flex-col p-3">
-              <CodeBlock
-                code={formattedPayload}
-                language="json"
-                theme="light"
-                className="h-[400px]"
-                actionButtons={
-                  <ActionButtons formattedPayload={formattedPayload} setIsFullscreenOpen={setIsFullscreenOpen} />
-                }
-              />
-            </div>
-          </PopoverContent>
-        </Popover>
       </motion.div>
 
+      <Popover modal={true} open={isPopoverOpen} onOpenChange={(open) => setIsPopoverOpen(open)}>
+        <PopoverTrigger asChild>
+          <div className="flex items-center gap-1">
+            <RiCodeBlock className="size-3" />
+            <button
+              className="text-foreground-600 hover:text-foreground-950 text-xs underline transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                setIsPopoverOpen(true);
+              }}
+            >
+              View request payload
+            </button>
+          </div>
+        </PopoverTrigger>
+        <PopoverContent className="w-[400px] p-0" align="center" side="left">
+          <div className="flex items-center justify-between border-b border-neutral-100 p-3">
+            <h3 className="text-foreground-950 text-sm font-medium">Request payload</h3>
+            <div className="flex items-center gap-2">
+              {workflowExists && (
+                <Button
+                  variant="secondary"
+                  mode="ghost"
+                  size="sm"
+                  onClick={() => handleResend()}
+                  className="text-xs"
+                  disabled={isPending}
+                  type="button"
+                >
+                  <RepeatPlay className={cn('size-3', { 'text-text-disabled opacity-50': isPending })} />
+                  Resend
+                </Button>
+              )}
+              <PopoverClose asChild ref={popoverCloseRef}>
+                <CompactButton size="md" variant="ghost" icon={RiCloseFill} type="button">
+                  <span className="sr-only">Close</span>
+                </CompactButton>
+              </PopoverClose>
+            </div>
+          </div>
+          <div className="flex flex-col p-3">
+            <CodeBlock
+              code={formattedPayload}
+              language="json"
+              theme="light"
+              className="h-[400px]"
+              actionButtons={
+                <ActionButtons formattedPayload={formattedPayload} setIsFullscreenOpen={setIsFullscreenOpen} />
+              }
+            />
+          </div>
+        </PopoverContent>
+      </Popover>
       {isMerged && (
         <motion.div {...fadeIn} className="px-3 py-3">
           <InlineToast

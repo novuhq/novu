@@ -15,6 +15,7 @@ import { useActivityUrlState } from '@/hooks/use-activity-url-state';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
 import { cn } from '../../utils/ui';
+import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 
 type ActivityFeedContentProps = {
   initialFilters?: Partial<ActivityFiltersData>;
@@ -144,7 +145,7 @@ export function ActivityFeedContent({
                 }}
                 className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
               >
-                {activityItemId && (
+                {activityItemId ? (
                   <ActivityPanel>
                     {isPending ? (
                       <ActivitySkeleton />
@@ -162,6 +163,15 @@ export function ActivityFeedContent({
                       </>
                     )}
                   </ActivityPanel>
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-6 text-center">
+                    <EmptyTopicsIllustration />
+                    <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+                      Nothing to show,
+                      <br />
+                      Select an log on the left to view detailed info here
+                    </p>
+                  </div>
                 )}
               </motion.div>
             </AnimatePresence>
