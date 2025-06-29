@@ -13,7 +13,6 @@ import { CodeBlock } from '@/components/primitives/code-block';
 import { Dialog, DialogContent, DialogTitle, DialogClose, DialogHeader } from '@/components/primitives/dialog';
 import { CopyToClipboard } from '../primitives/copy-to-clipboard';
 import { Button } from '@/components/primitives/button';
-import { toast } from 'sonner';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { triggerWorkflow } from '../../api/workflows';
 import { QueryKeys } from '@/utils/query-keys';

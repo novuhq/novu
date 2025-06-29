@@ -40,6 +40,7 @@ import { API_HOSTNAME } from '@/config';
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  testData?: WorkflowTestDataResponseDto;
   initialPayload?: PayloadData;
 };
 
@@ -68,7 +69,7 @@ const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: s
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
-  const { isOpen, onOpenChange, initialPayload } = props;
+  const { isOpen, onOpenChange, testData, initialPayload } = props;
   const [transactionId, setTransactionId] = useState<string>();
   const { currentEnvironment } = useEnvironment();
 
@@ -138,7 +139,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     setSubscriberData(subscriber);
   }, []);
 
-  const to = useMemo(() => createMockObjectFromSchema({}), []);
+  const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
 
   const payload = useMemo(() => {
     // Priority: initialPayload (from step editor) > persisted > payloadExample > empty
@@ -152,7 +153,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
   const form = useForm<TestWorkflowFormType>({
     mode: 'onSubmit',
-    resolver: zodResolver(buildDynamicFormSchema({ to: {} })),
+    resolver: zodResolver(buildDynamicFormSchema({ to: testData?.to ?? {} })),
     values: { to, payload: JSON.stringify(payload, null, 2) },
   });
 

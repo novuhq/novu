@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { ApiServiceLevelEnum, DEFAULT_LOCALE, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 import { UpdateOrganizationSettingsCommand } from './update-organization-settings.command';
 import { GetOrganizationSettingsDto } from '../../dtos/get-organization-settings.dto';
@@ -70,12 +70,22 @@ export class UpdateOrganizationSettings {
       updateFields.removeNovuBranding = command.removeNovuBranding;
     }
 
+    if (command.translationsEnabled !== undefined) {
+      updateFields.translationsEnabled = command.translationsEnabled;
+    }
+
+    if (command.defaultLocale !== undefined) {
+      updateFields.defaultLocale = command.defaultLocale;
+    }
+
     return updateFields;
   }
 
   private buildSettingsResponse(organization: OrganizationEntity): GetOrganizationSettingsDto {
     return {
       removeNovuBranding: organization.removeNovuBranding || false,
+      translationsEnabled: organization.translationsEnabled || false,
+      defaultLocale: organization.defaultLocale || DEFAULT_LOCALE,
     };
   }
 }

@@ -52,7 +52,14 @@ const request = async <T>(
     };
 
     if (body) {
-      config.body = JSON.stringify(body);
+      if (body instanceof FormData) {
+        // For FormData, don't stringify and don't set Content-Type (let browser handle it)
+        config.body = body;
+        // Remove Content-Type header for FormData
+        delete (config.headers as Record<string, string>)['Content-Type'];
+      } else {
+        config.body = JSON.stringify(body);
+      }
     }
 
     const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
