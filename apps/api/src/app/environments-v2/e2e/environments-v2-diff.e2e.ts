@@ -251,7 +251,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(deletedWorkflow).to.exist;
     });
 
-    it('should handle diff with includeInactive option', async () => {
+    it('should handle diff with inactive workflows', async () => {
       const prodEnv = await getProductionEnvironment();
 
       // Create an inactive workflow
@@ -268,7 +268,6 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         .send({
           sourceEnvironmentId: session.environment._id,
           targetEnvironmentId: prodEnv._id,
-          includeInactive: true,
         })
         .expect(200);
 

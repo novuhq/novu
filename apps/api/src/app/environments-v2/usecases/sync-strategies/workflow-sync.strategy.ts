@@ -77,8 +77,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
 
       const sourceWorkflows = await this.fetchSyncableWorkflows(
         context.sourceEnvironmentId,
-        context.user.organizationId,
-        context.options.includeInactive
+        context.user.organizationId
       );
 
       this.logger.info(`Found ${sourceWorkflows.length} workflows to sync`);
@@ -102,8 +101,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       // Fetch target workflows to compare for changes
       const targetWorkflows = await this.fetchSyncableWorkflows(
         context.targetEnvironmentId,
-        context.user.organizationId,
-        true // include inactive for comparison
+        context.user.organizationId
       );
 
       const targetWorkflowMap = new Map(
@@ -225,8 +223,8 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
       this.logger.info(`Starting workflow diff between ${sourceEnvId} and ${targetEnvId}`);
 
       const [sourceWorkflows, targetWorkflows] = await Promise.all([
-        this.fetchSyncableWorkflows(sourceEnvId, organizationId, true),
-        this.fetchSyncableWorkflows(targetEnvId, organizationId, true),
+        this.fetchSyncableWorkflows(sourceEnvId, organizationId),
+        this.fetchSyncableWorkflows(targetEnvId, organizationId),
       ]);
 
       const results: IDiffResult[] = [];
@@ -323,17 +321,13 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     }
   }
 
-  private async fetchSyncableWorkflows(environmentId: string, organizationId: string, includeInactive = false) {
+  private async fetchSyncableWorkflows(environmentId: string, organizationId: string) {
     const query: any = {
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: SYNCABLE_WORKFLOW_ORIGINS },
       status: { $ne: WorkflowStatusEnum.ERROR },
     };
-
-    if (!includeInactive) {
-      query.active = true;
-    }
 
     return await this.notificationTemplateRepository.find(query);
   }

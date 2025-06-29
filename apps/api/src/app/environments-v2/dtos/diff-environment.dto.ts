@@ -15,14 +15,6 @@ export class DiffEnvironmentRequestDto {
   })
   @IsString()
   targetEnvironmentId: string;
-
-  @ApiPropertyOptional({
-    description: 'Include inactive workflows in the comparison',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  includeInactive?: boolean;
 }
 
 export class EntityDiffDto {

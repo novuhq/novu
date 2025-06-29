@@ -97,7 +97,6 @@ export class EnvironmentsController {
         user,
         sourceEnvironmentId: body.sourceEnvironmentId,
         targetEnvironmentId: body.targetEnvironmentId,
-        includeInactive: body.includeInactive,
       })
     );
   }
