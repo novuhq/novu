@@ -2618,6 +2618,9 @@ importers:
       '@hokify/agenda':
         specifier: ^6.3.0
         version: 6.3.0
+      '@launchdarkly/node-server-sdk':
+        specifier: ^9.7.3
+        version: 9.10.0
       '@maily-to/render':
         specifier: github:novuhq/maily.to#release/v0.1.3-novu.5-render&path:/packages/render
         version: https://codeload.github.com/novuhq/maily.to/tar.gz/035d166347dcc0082113c8ae5fad3dec33b47863#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -8808,6 +8811,15 @@ packages:
 
   '@juggle/resize-observer@3.4.0':
     resolution: {integrity: sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==}
+
+  '@launchdarkly/js-sdk-common@2.18.0':
+    resolution: {integrity: sha512-ojfkS8H92qkSmnMkJoIRjL1uh7iLLthVWDiZv4oxHduVurpNP+Eq4ByteaRlfyX1PpXZAgDvnELTyNKU1ZG9mA==}
+
+  '@launchdarkly/js-server-sdk-common@2.16.0':
+    resolution: {integrity: sha512-CnCRv/qCwNVpVItxZdqq+jzL3LWy1VsApMIgcMWL5ddozZvfSwu2eHGxjnMadRqTE1gGCsgzQyZsFL127YpLgQ==}
+
+  '@launchdarkly/node-server-sdk@9.10.0':
+    resolution: {integrity: sha512-0keHXmzRjY4Q3Bg0MqMilepgQcg/h2VD6lT7PEYIoa2BNYKX05l31xOINd/5ll24zUXIXDluTdPrS4deR2DgcQ==}
 
   '@leichtgewicht/ip-codec@2.0.4':
     resolution: {integrity: sha512-Hcv+nVC0kZnQ3tD9GVu5xSMR4VVYOteQIr/hwFPVEvPdlXqgGEuRjiheChHgdM+JyqdgNcmzZOX/tnl0JOiI7A==}
@@ -18454,6 +18466,7 @@ packages:
 
   clickhouse@2.6.0:
     resolution: {integrity: sha512-HC5OV99GJOup4qZsTuWWPpXlj+847Z0OeygDU2x22rNYost0V/vWapzFWYZdV/5iRbGMrhFQPOyQEzmGvoaWRQ==}
+    bundledDependencies: []
 
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
@@ -23926,6 +23939,10 @@ packages:
   languagedetect@1.3.0:
     resolution: {integrity: sha512-51kYBPdkA43WX6UwutmjV0ekmInJcqnS17Lk3SLTDzWwXHdgCeuDJjpkKY0FZvEmAR0p5nnjdmDttkR2p26ucQ==}
     engines: {node: '>= 0.4.8'}
+
+  launchdarkly-eventsource@2.2.0:
+    resolution: {integrity: sha512-u38fYlLSq/m6oFz0MS1/76Sj2xzlYhTKZ+sf/vju6PA86PMc6fPlY5k8CdU79edLXjNwsvIQTDvDNy3llDqB8A==}
+    engines: {node: '>=0.12.0'}
 
   launchdarkly-js-client-sdk@3.3.0:
     resolution: {integrity: sha512-Hb+EF/5m43jsKrkXLPrdklX5g+XUJiwJQlVfa4y+ZPEqSnP4w4GrFp+Iv5ftWCcRhhpQuw/rygoNZlL1e1vmgg==}
@@ -40304,6 +40321,21 @@ snapshots:
       jsep: 1.4.0
 
   '@juggle/resize-observer@3.4.0': {}
+
+  '@launchdarkly/js-sdk-common@2.18.0': {}
+
+  '@launchdarkly/js-server-sdk-common@2.16.0':
+    dependencies:
+      '@launchdarkly/js-sdk-common': 2.18.0
+      semver: 7.5.4
+
+  '@launchdarkly/node-server-sdk@9.10.0':
+    dependencies:
+      '@launchdarkly/js-server-sdk-common': 2.16.0
+      https-proxy-agent: 5.0.1
+      launchdarkly-eventsource: 2.2.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@leichtgewicht/ip-codec@2.0.4': {}
 
@@ -61755,6 +61787,8 @@ snapshots:
       language-subtag-registry: 0.3.23
 
   languagedetect@1.3.0: {}
+
+  launchdarkly-eventsource@2.2.0: {}
 
   launchdarkly-js-client-sdk@3.3.0:
     dependencies:
