@@ -17,10 +17,6 @@ export class PublishEnvironmentCommand extends EnvironmentWithUserObjectCommand 
   skipExisting?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  includeInactive?: boolean;
-
-  @IsOptional()
   @IsNumber()
   @Min(1)
   @Max(500)

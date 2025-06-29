@@ -7,7 +7,6 @@ export enum EntityTypeEnum {
 export interface ISyncOptions {
   dryRun?: boolean;
   skipExisting?: boolean;
-  includeInactive?: boolean;
   batchSize?: number;
 }
 

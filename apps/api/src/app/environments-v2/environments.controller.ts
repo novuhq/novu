@@ -75,7 +75,6 @@ export class EnvironmentsController {
       targetEnvironmentId: body.targetEnvironmentId,
       dryRun: body.dryRun,
       skipExisting: body.skipExisting,
-      includeInactive: body.includeInactive,
       batchSize: body.batchSize,
     });
 

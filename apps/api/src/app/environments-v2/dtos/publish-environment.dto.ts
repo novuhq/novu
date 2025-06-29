@@ -33,14 +33,6 @@ export class PublishEnvironmentRequestDto {
   skipExisting?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Include inactive workflows in the sync',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  includeInactive?: boolean;
-
-  @ApiPropertyOptional({
     description: 'Batch size for processing workflows',
     default: 100,
     minimum: 1,

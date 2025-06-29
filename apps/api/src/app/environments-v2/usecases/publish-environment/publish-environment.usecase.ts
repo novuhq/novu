@@ -25,7 +25,6 @@ export class PublishEnvironmentUseCase {
       const options: ISyncOptions = {
         dryRun: command.dryRun || false,
         skipExisting: command.skipExisting || false,
-        includeInactive: command.includeInactive || false,
         batchSize: command.batchSize || 100,
       };
 
