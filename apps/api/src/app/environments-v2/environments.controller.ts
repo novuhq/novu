@@ -9,7 +9,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { UserSessionData, PermissionsEnum } from '@novu/shared';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
 import { SkipPermissionsCheck, RequirePermissions } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -64,6 +64,7 @@ export class EnvironmentsController {
   @ApiOperation({ summary: 'Publish all workflows from source to target environment' })
   @ApiResponse(PublishEnvironmentResponseDto)
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async publishEnvironment(
     @UserSession() user: UserSessionData,
@@ -84,6 +85,7 @@ export class EnvironmentsController {
   @ApiOperation({ summary: 'Compare workflows between source and target environments' })
   @ApiResponse(DiffEnvironmentResponseDto)
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async diffEnvironment(
     @UserSession() user: UserSessionData,
