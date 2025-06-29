@@ -23,18 +23,6 @@ export class PublishEnvironmentRequestDto {
   @IsOptional()
   @IsBoolean()
   dryRun?: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Batch size for processing workflows',
-    default: 100,
-    minimum: 1,
-    maximum: 500,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(500)
-  batchSize?: number;
 }
 
 export class SyncedWorkflowDto {

@@ -1,5 +1,5 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { IsString, IsOptional, IsBoolean, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class PublishEnvironmentCommand extends EnvironmentWithUserObjectCommand {
   @IsString()
@@ -11,10 +11,4 @@ export class PublishEnvironmentCommand extends EnvironmentWithUserObjectCommand 
   @IsOptional()
   @IsBoolean()
   dryRun?: boolean;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(500)
-  batchSize?: number;
 }

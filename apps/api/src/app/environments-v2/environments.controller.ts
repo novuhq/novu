@@ -74,7 +74,6 @@ export class EnvironmentsController {
       sourceEnvironmentId: body.sourceEnvironmentId,
       targetEnvironmentId: body.targetEnvironmentId,
       dryRun: body.dryRun,
-      batchSize: body.batchSize,
     });
 
     return await this.publishEnvironmentUseCase.execute(command);
