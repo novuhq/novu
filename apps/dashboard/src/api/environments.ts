@@ -1,5 +1,33 @@
 import { IApiKey, IEnvironment, ITagsResponse } from '@novu/shared';
-import { del, get, getV2, post, put } from './api.client';
+import { del, get, getV2, post, postV2, put } from './api.client';
+
+export interface IDiffSummary {
+  added: number;
+  modified: number;
+  deleted: number;
+  unchanged: number;
+}
+
+export interface IResourceDiffResult {
+  resourceType: string;
+  sourceResourceId: string | null;
+  sourceResourceName: string | null;
+  targetResourceId: string | null;
+  targetResourceName: string | null;
+  changes: any[];
+  summary: IDiffSummary;
+}
+
+export interface IEnvironmentDiffResponse {
+  sourceEnvironmentId: string;
+  targetEnvironmentId: string;
+  resources: IResourceDiffResult[];
+  summary: {
+    totalEntities: number;
+    totalChanges: number;
+    hasChanges: boolean;
+  };
+}
 
 export async function getEnvironments() {
   const { data } = await get<{ data: IEnvironment[] }>('/environments');
@@ -45,4 +73,17 @@ export async function deleteEnvironment({ environment }: { environment: IEnviron
 
 export async function regenerateApiKeys({ environment }: { environment: IEnvironment }): Promise<{ data: IApiKey[] }> {
   return post<{ data: IApiKey[] }>(`/environments/api-keys/regenerate`, { environment });
+}
+
+export async function diffEnvironments({
+  sourceEnvironmentId,
+  targetEnvironmentId,
+}: {
+  sourceEnvironmentId: string;
+  targetEnvironmentId: string;
+}): Promise<IEnvironmentDiffResponse> {
+  const { data } = await postV2<{ data: IEnvironmentDiffResponse }>('/environments/diff', {
+    body: { sourceEnvironmentId, targetEnvironmentId },
+  });
+  return data;
 }
