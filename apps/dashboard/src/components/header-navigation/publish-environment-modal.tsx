@@ -2,6 +2,18 @@ import { Button } from '../primitives/button';
 import { Dialog, DialogContent } from '../primitives/dialog';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { useDiffEnvironments } from '@/hooks/use-environments';
+import { TreeView, TreeDataItem } from '../tree-view';
+import {
+  RiArrowDownSLine,
+  RiArrowRightSLine,
+  RiRouteFill,
+  RiListView,
+  RiPencilRuler2Line,
+  RiSettings3Line,
+  RiTranslate2,
+  RiLayout5Line,
+  RiDashboardLine,
+} from 'react-icons/ri';
 
 type PublishEnvironmentModalProps = {
   open: boolean;
@@ -44,6 +56,76 @@ export const PublishEnvironmentModal = ({
   const warnings = aggregatedSummary?.modified || 0;
   const safeChanges = aggregatedSummary?.added || 0;
 
+  // Create tree data structure from diff data
+  const treeData: TreeDataItem[] = [
+    {
+      id: 'workflows',
+      name: `Workflows (2)`,
+      icon: <RiRouteFill className="text-text-strong size-4" />,
+      openIcon: <RiArrowDownSLine className="text-text-sub size-4" />,
+      selectedIcon: <RiArrowRightSLine className="text-text-sub size-4" />,
+      children: [
+        {
+          id: 'password-reset',
+          name: 'Password reset workflow',
+          icon: <RiRouteFill className="text-text-strong size-4" />,
+          openIcon: <RiArrowDownSLine className="text-text-sub size-4" />,
+          selectedIcon: <RiArrowRightSLine className="text-text-sub size-4" />,
+          children: [
+            {
+              id: 'payload-schema',
+              name: 'Payload schema',
+              icon: <RiListView className="text-text-sub size-4" />,
+            },
+            {
+              id: 'step-changes',
+              name: 'Step changes',
+              icon: <RiPencilRuler2Line className="text-text-sub size-4" />,
+            },
+            {
+              id: 'channel-preferences',
+              name: 'Channel preferences',
+              icon: <RiSettings3Line className="text-text-sub size-4" />,
+            },
+            {
+              id: 'translations',
+              name: 'Translations',
+              icon: <RiTranslate2 className="text-text-sub size-4" />,
+            },
+          ],
+        },
+        {
+          id: 'otp-flow',
+          name: 'OTP flow',
+          icon: <RiRouteFill className="text-text-sub size-4" />,
+          selectedIcon: <RiArrowRightSLine className="text-text-sub size-4" />,
+          children: [],
+        },
+        {
+          id: 'email-confirmation',
+          name: 'Email confirmation',
+          icon: <RiRouteFill className="text-text-sub size-4" />,
+          selectedIcon: <RiArrowRightSLine className="text-text-sub size-4" />,
+          children: [],
+        },
+      ],
+    },
+    {
+      id: 'layouts',
+      name: 'Layouts (2)',
+      icon: <RiLayout5Line className="text-text-sub size-4" />,
+      selectedIcon: <RiArrowRightSLine className="text-text-sub size-4" />,
+      children: [],
+    },
+    {
+      id: 'shared-components',
+      name: 'Shared components (2)',
+      icon: <RiDashboardLine className="text-text-sub size-4" />,
+      selectedIcon: <RiArrowRightSLine className="text-text-sub size-4" />,
+      children: [],
+    },
+  ];
+
   if (!environment) return null;
 
   return (
@@ -71,35 +153,15 @@ export const PublishEnvironmentModal = ({
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
-          <div className="w-80 border-r border-neutral-200 bg-white">
-            <div className="p-4">
-              {diffData?.resources?.map((resource, index) => (
-                <div key={index} className="mb-4">
-                  <div className="flex items-center gap-2 py-2">
-                    <span className="text-sm">📋</span>
-                    <span className="text-sm font-medium">{resource.resourceType}</span>
-                    <span className="text-xs text-neutral-500">({resource.changes?.length || 0})</span>
-                  </div>
-                  <div className="ml-6 space-y-1">
-                    {resource.changes?.slice(0, 5).map((change, changeIndex) => (
-                      <div key={changeIndex} className="flex items-center justify-between py-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs">📄</span>
-                          <span className="text-sm text-neutral-700">
-                            {change.sourceResourceName || change.targetResourceName || `Item ${changeIndex + 1}`}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {change.action === 'added' && <span className="text-xs text-green-600">+1</span>}
-                          {change.action === 'modified' && <span className="text-xs text-orange-600">~1</span>}
-                          {change.action === 'deleted' && <span className="text-xs text-red-600">-1</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div className="border-stroke-soft bg-bg-white w-80 border-r">
+            <TreeView
+              data={treeData}
+              className="p-2"
+              initialSelectedItemId="password-reset"
+              expandAll={false}
+              defaultNodeIcon={<RiArrowRightSLine className="text-text-sub size-4" />}
+              defaultLeafIcon={null}
+            />
           </div>
 
           {/* Main Content Area */}
