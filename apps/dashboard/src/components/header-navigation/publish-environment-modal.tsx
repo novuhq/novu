@@ -13,6 +13,8 @@ import {
   RiTranslate2,
   RiLayout5Line,
   RiDashboardLine,
+  RiAlertFill,
+  RiExpandUpDownLine,
 } from 'react-icons/ri';
 
 type PublishEnvironmentModalProps = {
@@ -22,6 +24,196 @@ type PublishEnvironmentModalProps = {
   currentEnvironment: any;
   onConfirm: () => void;
   isLoading?: boolean;
+};
+
+type ChangeItem = {
+  type: 'added' | 'modified' | 'removed';
+  description: string;
+};
+
+type WorkflowSection = {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  added: number;
+  removed: number;
+  changes: ChangeItem[];
+};
+
+const PublishWorkflowCard = () => {
+  const sections: WorkflowSection[] = [
+    {
+      id: 'payload-schema',
+      name: 'Payload schema',
+      icon: <RiListView className="text-text-strong size-3.5" />,
+      added: 7,
+      removed: 2,
+      changes: [],
+    },
+    {
+      id: 'steps',
+      name: 'Steps',
+      icon: <RiPencilRuler2Line className="text-text-strong size-3.5" />,
+      added: 12,
+      removed: 21,
+      changes: [],
+    },
+    {
+      id: 'channel-preferences',
+      name: 'Channel preferences',
+      icon: <RiSettings3Line className="text-text-strong size-3.5" />,
+      added: 1,
+      removed: 0,
+      changes: [],
+    },
+    {
+      id: 'translations',
+      name: 'Translations',
+      icon: <RiTranslate2 className="text-text-strong size-3.5" />,
+      added: 1,
+      removed: 1,
+      changes: [],
+    },
+  ];
+
+  const changes: ChangeItem[] = [
+    { type: 'added', description: 'Email step added' },
+    { type: 'modified', description: 'Inapp step content changed' },
+    { type: 'modified', description: 'Delay: 2h → 30m' },
+    { type: 'modified', description: 'Layout: Transactional layout' },
+    { type: 'removed', description: 'Email step: step conditions step removed' },
+  ];
+
+  const renderDiffBars = (added: number, removed: number) => {
+    const total = added + removed;
+    const maxBars = 5;
+    const addedBars = Math.round((added / total) * maxBars);
+    const removedBars = maxBars - addedBars;
+
+    return (
+      <div className="flex h-2.5 items-center gap-px">
+        {Array.from({ length: addedBars }).map((_, i) => (
+          <div key={`added-${i}`} className="bg-success-base/40 h-full w-[3px]" />
+        ))}
+        {Array.from({ length: removedBars }).map((_, i) => (
+          <div key={`removed-${i}`} className="bg-error-base/40 h-full w-[3px]" />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="border-stroke-soft flex flex-col gap-3 rounded-xl border bg-white p-3">
+      {/* Header */}
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1">
+            <RiRouteFill className="text-text-strong size-4" />
+            <span className="text-label-sm text-text-strong font-medium">Password reset workflow</span>
+            <div className="bg-warning-lighter flex items-center gap-0.5 rounded-full px-1 py-0.5 pr-1.5">
+              <RiAlertFill className="text-warning-base size-3" />
+              <span className="text-label-2xs text-warning-base font-medium">Breaking</span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-black/41 size-6 overflow-hidden rounded-[18px]">
+                  <div className="size-6 bg-gradient-to-br from-purple-400 to-pink-400" />
+                </div>
+              </div>
+              <span className="text-paragraph-xs text-text-sub font-medium">Naveen</span>
+              <div className="bg-bg-weak border-stroke-soft rounded border px-1.5 py-[0.25px] pb-[1.04px]">
+                <span className="text-text-sub text-[10px] font-medium leading-[14px]">You</span>
+              </div>
+            </div>
+            <div className="bg-text-sub size-0.5 rounded-full" />
+            <span className="text-paragraph-xs text-text-sub font-medium">5 hours ago</span>
+            <div className="bg-text-sub size-0.5 rounded-full" />
+            <div className="flex items-center gap-0.5">
+              <span className="text-paragraph-xs font-medium">
+                <span className="text-success-base">+12</span>
+                <span className="text-error-base"> -21</span>
+              </span>
+              {renderDiffBars(12, 21)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Changes Grid */}
+      <div className="flex gap-1.5">
+        <div className="flex flex-1 flex-col gap-1.5">
+          <div className="bg-bg-weak flex items-center gap-1.5 rounded p-1">
+            <div className="bg-success-lighter flex size-[15px] items-center justify-center rounded-sm">
+              <span className="text-success-base font-mono text-[11px]">+</span>
+            </div>
+            <span className="text-text-sub font-mono text-[11px]">Email step added</span>
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <div className="bg-bg-weak flex items-center gap-1.5 rounded p-1">
+            <div className="bg-warning-lighter flex size-[15px] items-center justify-center rounded-sm">
+              <span className="text-warning-base text-[11px]">~</span>
+            </div>
+            <span className="text-text-sub font-mono text-[11px]">Inapp step content changed</span>
+          </div>
+          <div className="bg-bg-weak flex items-center gap-1.5 rounded p-1">
+            <div className="bg-warning-lighter flex size-[15px] items-center justify-center rounded-sm">
+              <span className="text-warning-base text-[11px]">~</span>
+            </div>
+            <span className="text-text-sub font-mono text-[11px]">
+              Delay: <span className="text-text-strong">2h</span> → <span className="text-text-strong">30m</span>
+            </span>
+          </div>
+          <div className="bg-bg-weak flex items-center gap-1.5 rounded p-1">
+            <div className="bg-warning-lighter flex size-[15px] items-center justify-center rounded-sm">
+              <span className="text-warning-base text-[11px]">~</span>
+            </div>
+            <span className="text-text-sub font-mono text-[11px]">Layout: Transactional layout</span>
+          </div>
+        </div>
+        <div className="flex flex-1 flex-col gap-1.5">
+          <div className="bg-bg-weak flex items-center gap-1.5 rounded p-1">
+            <div className="bg-error-lighter flex size-[15px] items-center justify-center rounded-sm">
+              <span className="text-error-base font-mono text-[11px]">-</span>
+            </div>
+            <span className="text-text-sub font-mono text-[11px]">Email step: step conditions step removed</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Separator */}
+      <div className="bg-stroke-soft h-px" />
+
+      {/* Sections */}
+      <div className="flex flex-col gap-2">
+        {sections.map((section) => (
+          <div key={section.id} className="bg-bg-weak border-stroke-soft rounded-lg border">
+            <div className="p-1.5 px-2 py-1.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex size-4 items-center justify-center">{section.icon}</div>
+                  <span className="text-paragraph-xs text-text-strong font-medium">{section.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-0.5">
+                    <span className="text-paragraph-xs font-medium">
+                      {section.added > 0 && <span className="text-success-base">+{section.added}</span>}
+                      {section.added > 0 && section.removed > 0 && ' '}
+                      {section.removed > 0 && <span className="text-error-base">-{section.removed}</span>}
+                    </span>
+                    {(section.added > 0 || section.removed > 0) && renderDiffBars(section.added, section.removed)}
+                  </div>
+                  <RiExpandUpDownLine className="text-text-sub size-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export const PublishEnvironmentModal = ({
@@ -154,9 +346,7 @@ export const PublishEnvironmentModal = ({
           </div>
         </div>
 
-        {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
           <div className="border-stroke-soft bg-bg-white w-80 border-r">
             <TreeView
               data={treeData}
@@ -222,18 +412,10 @@ export const PublishEnvironmentModal = ({
               </div>
             </div>
 
-            {/* Content Area */}
             <div className="flex-1 p-6">
-              <div className="text-center text-neutral-500">
-                <div className="mb-4">
-                  <span className="text-4xl">📊</span>
-                </div>
-                <h3 className="mb-2 text-lg font-medium">Select an item to view changes</h3>
-                <p className="text-sm">Choose a workflow or component from the sidebar to see detailed changes</p>
-              </div>
+              <PublishWorkflowCard />
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 p-4">
               <div className="text-sm text-neutral-600">
                 Last Published 2 days ago by <span className="font-medium">Dima</span>
