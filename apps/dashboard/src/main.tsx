@@ -18,7 +18,6 @@ import {
   TranslationsPage,
   ErrorPage,
   IntegrationsListPage,
-  Logs,
   OrganizationListPage,
   QuestionnairePage,
   SettingsPage,
