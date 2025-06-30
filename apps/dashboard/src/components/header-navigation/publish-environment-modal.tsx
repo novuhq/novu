@@ -130,7 +130,7 @@ export const PublishEnvironmentModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-[1380px] p-0">
+      <DialogContent className="w-full max-w-[1380px] gap-0 p-0">
         <div className="border-stroke-soft border-b p-3">
           <div className="flex items-start justify-between">
             <div className="flex flex-col gap-1">
@@ -164,44 +164,58 @@ export const PublishEnvironmentModal = ({
             />
           </div>
 
-          {/* Main Content Area */}
           <div className="flex-1 bg-white">
-            {/* Warning Banner */}
-            <div className="border-l-4 border-orange-400 bg-orange-50 p-3">
-              <div className="flex items-center gap-2">
-                <span className="text-orange-600">⚠️</span>
-                <span className="text-sm text-orange-800">
-                  Publishing may cause breaking behavior. Please review before proceeding.
-                </span>
-              </div>
-            </div>
+            <div className="border-stroke-soft bg-bg-weak border-b px-3 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-8">
+                  <div className="flex items-end gap-1">
+                    <span className="text-label-sm text-text-strong relative top-[1px]">{totalChanges}</span>
 
-            {/* Stats Bar */}
-            <div className="flex items-center gap-6 border-b border-neutral-200 bg-neutral-50 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold">{totalChanges}</span>
-                <span className="text-sm text-neutral-600">total changes</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-red-600">{breakingChanges}</span>
-                <span className="text-sm text-red-600">breaking</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-orange-600">{warnings}</span>
-                <span className="text-sm text-orange-600">warnings</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-green-600">{safeChanges}</span>
-                <span className="text-sm text-green-600">safe</span>
-              </div>
-              {breakingChanges > 0 && (
-                <div className="ml-auto flex items-center gap-2 rounded-md bg-red-100 px-3 py-1">
-                  <span className="text-red-600">🚨</span>
-                  <span className="text-sm font-medium text-red-700">
-                    {breakingChanges} breaking changes require immediate attention
-                  </span>
+                    <span className="text-paragraph-xs text-text-soft whitespace-nowrap">total changes</span>
+                  </div>
+                  <div className="flex items-end gap-1">
+                    <span className="text-label-sm text-error-base relative top-[1px]">{breakingChanges}</span>
+
+                    <span className="text-paragraph-xs text-text-soft whitespace-nowrap">breaking</span>
+                  </div>
+                  <div className="flex items-end gap-1">
+                    <span className="text-label-sm text-warning-base relative top-[1px]">{warnings}</span>
+
+                    <span className="text-paragraph-xs text-text-soft whitespace-nowrap">warnings</span>
+                  </div>
+                  <div className="flex items-end gap-1">
+                    <span className="text-label-sm text-success-base relative top-[1px]">{safeChanges}</span>
+
+                    <span className="text-paragraph-xs text-text-soft whitespace-nowrap">safe</span>
+                  </div>
                 </div>
-              )}
+                {breakingChanges > 0 && (
+                  <div className="border-error-light bg-error-lighter flex items-center gap-2 rounded-md border px-2 py-1.5">
+                    <div className="flex size-3.5 items-center justify-center">
+                      <div className="size-3.5 p-[2px]">
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 10 10"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-full w-full"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                            d="M5 1.25C2.93 1.25 1.25 2.93 1.25 5C1.25 7.07 2.93 8.75 5 8.75C7.07 8.75 8.75 7.07 8.75 5C8.75 2.93 7.07 1.25 5 1.25ZM0.25 5C0.25 2.38 2.38 0.25 5 0.25C7.62 0.25 9.75 2.38 9.75 5C9.75 7.62 7.62 9.75 5 9.75C2.38 9.75 0.25 7.62 0.25 5ZM5 2.5C5.28 2.5 5.5 2.72 5.5 3V5.5C5.5 5.78 5.28 6 5 6C4.72 6 4.5 5.78 4.5 5.5V3C4.5 2.72 4.72 2.5 5 2.5ZM5 7.75C5.41 7.75 5.75 7.41 5.75 7C5.75 6.59 5.41 6.25 5 6.25C4.59 6.25 4.25 6.59 4.25 7C4.25 7.41 4.59 7.75 5 7.75Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="text-paragraph-xs text-error-base whitespace-nowrap font-medium">
+                      {breakingChanges} breaking changes require immediate attention
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Content Area */}
