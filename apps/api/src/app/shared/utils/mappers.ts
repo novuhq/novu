@@ -34,6 +34,3 @@ export function buildLog(
     duration_ms: duration,
   };
 }
-
-
- 
