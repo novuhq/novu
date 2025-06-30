@@ -17,7 +17,7 @@ import { InlineToast } from '../primitives/inline-toast';
 import { Input, InputRoot } from '../primitives/input';
 import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
-import { LocaleSelect } from './locale-select';
+import { LocaleSelect } from '../primitives/locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 

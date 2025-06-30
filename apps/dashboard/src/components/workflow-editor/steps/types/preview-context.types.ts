@@ -10,6 +10,8 @@ export type PreviewContextPanelProps = {
   onChange: (value: string) => Error | null;
   subscriberData?: Record<string, unknown>;
   currentStepId?: string;
+  selectedLocale?: string;
+  onLocaleChange?: (locale: string) => void;
 };
 
 export type ParsedData = {

@@ -1,6 +1,6 @@
 import { Accordion } from '@/components/primitives/accordion';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useEnvironment } from '@/context/environment/hooks';
 import {
   PreviewContextPanelProps,
@@ -16,18 +16,26 @@ import { usePreviewDataInitialization } from './hooks/use-preview-data-initializ
 import { StepTypeEnum } from '@/utils/enums';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
+import { DEFAULT_LOCALE } from '@novu/shared';
 
-const DEFAULT_SUBSCRIBER_DATA: PreviewSubscriberData = {
+const createDefaultSubscriberData = (locale: string = DEFAULT_LOCALE): PreviewSubscriberData => ({
   subscriberId: '123456',
   firstName: 'John',
   lastName: 'Doe',
   email: 'user@example.com',
   phone: '+1234567890',
   avatar: 'https://example.com/avatar.png',
-  locale: 'en-US',
-};
+  locale,
+});
 
-export function PreviewContextPanel({ workflow, value, onChange, currentStepId }: PreviewContextPanelProps) {
+export function PreviewContextPanel({
+  workflow,
+  value,
+  onChange,
+  currentStepId,
+  selectedLocale,
+  onLocaleChange,
+}: PreviewContextPanelProps) {
   const { currentEnvironment } = useEnvironment();
   const isPayloadSchemaEnabled = useIsPayloadSchemaEnabled();
   const { isPayloadSchemaDrawerOpen, highlightedVariableKey, openSchemaDrawer, closeSchemaDrawer } =
@@ -81,6 +89,23 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
     loadPersistedSubscriber,
   });
 
+  // Sync subscriber locale with selected locale
+  useEffect(() => {
+    if (selectedLocale && localParsedData.subscriber.locale !== selectedLocale) {
+      updateJsonSection('subscriber', {
+        ...localParsedData.subscriber,
+        locale: selectedLocale,
+      });
+    }
+  }, [selectedLocale, localParsedData.subscriber, updateJsonSection]);
+
+  // Sync selected locale with subscriber locale when subscriber locale changes
+  useEffect(() => {
+    if (localParsedData.subscriber.locale && localParsedData.subscriber.locale !== selectedLocale && onLocaleChange) {
+      onLocaleChange(localParsedData.subscriber.locale);
+    }
+  }, [localParsedData.subscriber.locale, selectedLocale, onLocaleChange]);
+
   const handleClearPersistedPayload = () => {
     clearPersistedPayload();
 
@@ -94,7 +119,7 @@ export function PreviewContextPanel({ workflow, value, onChange, currentStepId }
   const handleClearPersistedSubscriber = () => {
     clearPersistedSubscriber();
 
-    updateJsonSection('subscriber', DEFAULT_SUBSCRIBER_DATA);
+    updateJsonSection('subscriber', createDefaultSubscriberData(selectedLocale));
   };
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);
