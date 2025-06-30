@@ -44,7 +44,7 @@ export const ActivityHeader = ({ title, className, activity, onTransactionIdChan
         name: activity.template?.triggers[0].identifier ?? '',
         to: activity.subscriber?.subscriberId,
         payload: resentPayload,
-        environment: { _id: activity._environmentId } as IEnvironment,
+        environment: currentEnvironment!,
       });
 
       if (!newTransactionId) {
@@ -111,7 +111,7 @@ export const ActivityHeader = ({ title, className, activity, onTransactionIdChan
           size="2xs"
           onClick={() => handleResend()}
           className="h-[20px]"
-          disabled={isPending}
+          isLoading={isPending}
           type="button"
           trailingIcon={RepeatPlay}
         >
