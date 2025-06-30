@@ -49,15 +49,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
   const parsedVariables = useParseVariables(schemaToUse, digestStepBeforeCurrent?.stepId, isPayloadSchemaEnabled);
 
-  // Create a key that changes when variables change to force extension recreation
-  const variablesKey = useMemo(() => {
-    const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
-      .map((v) => v.name)
-      .sort()
-      .join(',');
-    return `vars-${variableNames.length}-${variableNames.slice(0, 100)}`; // Truncate to avoid overly long keys
-  }, [parsedVariables.primitives, parsedVariables.arrays, parsedVariables.namespaces]);
-
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
     [parsedVariables.primitives]
@@ -111,6 +102,35 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     enabled: isTranslationEnabled && !!workflow?._id,
   });
 
+  const handleCreateNewTranslationKey = useCallback(async (translationKey: string) => {
+    // TODO: Implement actual API call to create translation key
+    console.log('Creating new translation key:', translationKey);
+
+    // For now, just show a notification that the key would be created
+    // In the future, this should call an API to create the translation key
+    // and refresh the translation keys list
+  }, []);
+
+  // Create a key that changes when variables or translation state changes to force extension recreation
+  const variablesKey = useMemo(() => {
+    const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
+      .map((v) => v.name)
+      .sort()
+      .join(',');
+
+    // Include translation state to force re-mount when translation extension becomes ready
+    const translationState = `translation-${isTranslationEnabled ? 'enabled' : 'disabled'}-${isTranslationKeysLoading ? 'loading' : 'loaded'}-${translationKeys.length}`;
+
+    return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
+  }, [
+    parsedVariables.primitives,
+    parsedVariables.arrays,
+    parsedVariables.namespaces,
+    isTranslationEnabled,
+    isTranslationKeysLoading,
+    translationKeys.length,
+  ]);
+
   const extensions = useMemo(
     () =>
       createExtensions({
@@ -121,6 +141,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         isPayloadSchemaEnabled,
         isTranslationEnabled: isTranslationEnabled && !isTranslationKeysLoading,
         translationKeys,
+        onCreateNewTranslationKey: handleCreateNewTranslationKey,
       }),
     [
       handleCalculateVariables,
@@ -131,6 +152,7 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       isTranslationEnabled,
       isTranslationKeysLoading,
       translationKeys,
+      handleCreateNewTranslationKey,
     ]
   );
 

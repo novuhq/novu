@@ -2,13 +2,19 @@ import { InlineDecoratorExtension, getInlineDecoratorSuggestionsReact } from '@m
 import { TranslationPill } from './translation-pill';
 import { AnyExtension } from '@tiptap/core';
 import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
+import { TranslationSuggestionsListView, TranslationKeyItem } from './translation-suggestions-list-view';
+import React from 'react';
 
 const TRANSLATION_TRIGGER = '{t.';
 
 /**
  * Creates the translation decorator extension configured for translation keys
  */
-export const createTranslationExtension = (isTranslationEnabled: boolean, translationKeys: { name: string }[] = []) => {
+export const createTranslationExtension = (
+  isTranslationEnabled: boolean,
+  translationKeys: { name: string }[] = [],
+  onCreateNewTranslationKey?: (translationKey: string) => Promise<void>
+) => {
   if (!isTranslationEnabled) {
     return {} as AnyExtension;
   }
@@ -26,6 +32,50 @@ export const createTranslationExtension = (isTranslationEnabled: boolean, transl
       return value.startsWith('{') && value.endsWith('}');
     },
     decoratorComponent: TranslationPill,
-    suggestion: getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, translationKeys),
+    suggestion: {
+      ...getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, translationKeys),
+      items: ({ query }) => {
+        const existingKeys = translationKeys.map((key) => key.name);
+        const filteredKeys = translationKeys.filter((key) => key.name.toLowerCase().includes(query.toLowerCase()));
+
+        // If query doesn't match any existing keys and is not empty, offer to create new key
+        const shouldOfferNewKey =
+          query.trim() && !existingKeys.some((key) => key.toLowerCase() === query.toLowerCase());
+
+        const items: TranslationKeyItem[] = filteredKeys.map((key) => ({
+          name: key.name,
+          id: key.name,
+        }));
+
+        if (shouldOfferNewKey) {
+          items.push({
+            name: query.trim(),
+            id: query.trim(),
+            type: 'new-translation-key',
+            displayLabel: `Create "${query.trim()}"`,
+          });
+        }
+
+        return items;
+      },
+      command: ({ editor, range, props }) => {
+        const query = `{t.${props.id}}`;
+
+        // Check if this is a new translation key that doesn't exist
+        const existingKeys = translationKeys.map((key) => key.name);
+        const isNewTranslationKey = !existingKeys.includes(props.id);
+
+        if (isNewTranslationKey && onCreateNewTranslationKey) {
+          // For new translation keys, we still insert them but also trigger creation
+          onCreateNewTranslationKey(props.id);
+        }
+
+        // Insert the translation key
+        editor.chain().focus().insertContentAt(range, query).run();
+      },
+    },
+    variableSuggestionsPopover: React.forwardRef((props: any, ref: any) => (
+      <TranslationSuggestionsListView {...props} ref={ref} translationKeys={translationKeys} />
+    )),
   });
 };

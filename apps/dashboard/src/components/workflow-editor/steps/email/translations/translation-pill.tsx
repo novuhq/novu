@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { cn } from '@/utils/ui';
-import { TranslateVariable } from '@/components/icons/translate-variable';
+import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { EditTranslationPopover } from './edit-translation-popover';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
@@ -65,7 +65,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
         onPointerDown={handlePointerDown}
         ref={buttonRef}
       >
-        <TranslateVariable />
+        <TranslateVariableIcon />
         <span className="text-text-sub max-w-[24ch] truncate leading-[1.2] antialiased" title={displayTranslationKey}>
           {displayTranslationKey}
         </span>

@@ -8,7 +8,7 @@ import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
 import { ControlInput } from '@/components/primitives/control-input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { TranslateVariable } from '@/components/icons/translate-variable';
+import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -183,7 +183,7 @@ function TranslationInput({
           </div>
           <InputRoot size="2xs" hasError={hasError && !isLoading}>
             <InputWrapper>
-              <TranslateVariable className="h-4 w-4 shrink-0 text-gray-500" />
+              <TranslateVariableIcon className="h-4 w-4 shrink-0 text-gray-500" />
               <InputPure
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
