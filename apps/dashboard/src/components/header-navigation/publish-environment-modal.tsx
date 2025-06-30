@@ -76,21 +76,25 @@ export const PublishEnvironmentModal = ({
               id: 'payload-schema',
               name: 'Payload schema',
               icon: <RiListView className="text-text-sub size-4" />,
+              children: [],
             },
             {
               id: 'step-changes',
               name: 'Step changes',
               icon: <RiPencilRuler2Line className="text-text-sub size-4" />,
+              children: [],
             },
             {
               id: 'channel-preferences',
               name: 'Channel preferences',
               icon: <RiSettings3Line className="text-text-sub size-4" />,
+              children: [],
             },
             {
               id: 'translations',
               name: 'Translations',
               icon: <RiTranslate2 className="text-text-sub size-4" />,
+              children: [],
             },
           ],
         },
@@ -165,7 +169,7 @@ export const PublishEnvironmentModal = ({
           </div>
 
           <div className="flex-1 bg-white">
-            <div className="border-stroke-soft bg-bg-weak border-b px-3 py-3">
+            <div className="border-stroke-soft bg-bg-weak border-b px-3 py-3 pb-3.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-8">
                   <div className="flex items-end gap-1">
