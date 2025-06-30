@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Body, Controller, Delete, Param, Post, Scope } from '@nestjs/common';
+import { Body, Controller, Delete, InternalServerErrorException, Param, Post, Scope } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AddressingTypeEnum,
