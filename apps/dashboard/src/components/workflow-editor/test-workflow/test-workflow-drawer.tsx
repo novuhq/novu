@@ -175,19 +175,24 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   // Update form 'to' field when subscriber data changes
   useEffect(() => {
     if (subscriberData && testData?.to?.properties) {
-      // Map subscriber data to only the fields that exist in the schema
-      const toValue: Record<string, unknown> = {};
+      // Get current form values and merge with subscriber data
+      const currentToValue = form.getValues('to') || {};
+      const updatedToValue = { ...currentToValue };
       
       Object.keys(testData.to.properties).forEach((key) => {
         if (key in subscriberData) {
-          toValue[key] = subscriberData[key as keyof typeof subscriberData];
+          const value = subscriberData[key as keyof typeof subscriberData];
+          // Only override if we have a valid value
+          if (value !== null && value !== undefined && value !== '') {
+            updatedToValue[key] = value;
+          }
         }
       });
       
-      console.log('Setting form to value:', toValue);
-      setValue('to', toValue);
+      console.log('Setting form to value:', updatedToValue);
+      setValue('to', updatedToValue);
     }
-  }, [subscriberData, testData?.to, setValue]);
+  }, [subscriberData, testData?.to, setValue, form]);
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
