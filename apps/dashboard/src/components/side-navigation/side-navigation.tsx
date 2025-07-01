@@ -11,6 +11,7 @@ import {
   RiChat1Line,
   RiDatabase2Line,
   RiDiscussLine,
+  RiFileTextLine,
   RiGroup2Line,
   RiKey2Line,
   RiLayout5Line,
@@ -111,6 +112,7 @@ export const SideNavigation = () => {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
+  const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
@@ -187,6 +189,14 @@ export const SideNavigation = () => {
                     <span>Activity Feed</span>
                   </NavigationLink>
                 </Protect>
+                {isHttpLogsPageEnabled && (
+                  <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <NavigationLink to={buildRoute(ROUTES.LOGS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                      <RiFileTextLine className="size-4" />
+                      <span>Logs</span>
+                    </NavigationLink>
+                  </Protect>
+                )}
               </NavigationGroup>
             </Protect>
             <Protect

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Body, Controller, Delete, Param, Post, Scope } from '@nestjs/common';
+import { Body, Controller, Delete, InternalServerErrorException, Param, Post, Scope } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AddressingTypeEnum,
@@ -38,6 +38,7 @@ import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
+import { AnalyticsStrategyEnum, LogAnalytics } from '../shared/framework/analytics-logs.interceptor';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
@@ -60,6 +61,7 @@ export class EventsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @Post('/trigger')
+  @LogAnalytics(AnalyticsStrategyEnum.EVENTS)
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {
     description: 'Payload validation failed - returned when payload does not match the workflow schema',

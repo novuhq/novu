@@ -8,23 +8,22 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  SmsControlDto,
+  SmsControlDto$inboundSchema,
+  SmsControlDto$Outbound,
+  SmsControlDto$outboundSchema,
+} from "./smscontroldto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
 
 /**
- * Control values for the SMS step
+ * Control values for the SMS step.
  */
-export type SmsStepUpsertDtoControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * Content of the SMS message.
-   */
-  body?: string | undefined;
+export type SmsStepUpsertDtoControlValues = SmsControlDto | {
+  [k: string]: any;
 };
 
 export type SmsStepUpsertDto = {
@@ -41,9 +40,9 @@ export type SmsStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the SMS step
+   * Control values for the SMS step.
    */
-  controlValues?: SmsStepUpsertDtoControlValues | null | undefined;
+  controlValues?: SmsControlDto | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -51,15 +50,11 @@ export const SmsStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   SmsStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-});
+> = z.union([SmsControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type SmsStepUpsertDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  body?: string | undefined;
+export type SmsStepUpsertDtoControlValues$Outbound = SmsControlDto$Outbound | {
+  [k: string]: any;
 };
 
 /** @internal */
@@ -67,10 +62,7 @@ export const SmsStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   SmsStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   SmsStepUpsertDtoControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  body: z.string().optional(),
-});
+> = z.union([SmsControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -114,9 +106,8 @@ export const SmsStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => SmsStepUpsertDtoControlValues$inboundSchema),
-  ).optional(),
+  controlValues: z.union([SmsControlDto$inboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -128,7 +119,7 @@ export type SmsStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: SmsStepUpsertDtoControlValues$Outbound | null | undefined;
+  controlValues?: SmsControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -140,9 +131,8 @@ export const SmsStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => SmsStepUpsertDtoControlValues$outboundSchema),
-  ).optional(),
+  controlValues: z.union([SmsControlDto$outboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

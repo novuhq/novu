@@ -1696,6 +1696,252 @@ contexts.forEach((context: Context) => {
         expect(failedExecDetailsNoSkip.length).to.equal(0, 'Scenario 1: Should have no failed execution details');
       }
     });
+
+    describe('External workflow control values validation', () => {
+      it(`should accept flexible JSON objects in control values for external workflows [${context.name}]`, async () => {
+        const workflowId = `external-flexible-controls-${context.name}`;
+        const stepId = 'send-email';
+
+        const newWorkflow = workflow(workflowId, async ({ step }) => {
+          await step.email(
+            stepId,
+            async (controls) => {
+              return {
+                subject: `${controls.customSubject || 'Default Subject'}`,
+                body: `${controls.customBody || 'Default Body'}`,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  customSubject: { type: 'string', default: 'Default Subject' },
+                  customBody: { type: 'string', default: 'Default Body' },
+                },
+              } as const,
+            }
+          );
+        });
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        if (context.isStateful) {
+          await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+          // Update with flexible control values that wouldn't be allowed in NOVU_CLOUD workflows
+          const flexibleControlValues = {
+            variables: {
+              // Standard fields
+              customSubject: 'External workflow subject',
+              customBody: 'External workflow body',
+              // Custom fields that wouldn't be in EmailControlDto
+              customField: 'This is allowed in external workflows',
+              nestedObject: {
+                key1: 'value1',
+                key2: 42,
+                key3: true,
+              },
+              arrayField: ['item1', 'item2', 'item3'],
+              metadata: {
+                source: 'external-system',
+                timestamp: new Date().toISOString(),
+                version: '1.0',
+              },
+            },
+          };
+
+          const updateResponse = await saveControlValues(session, workflowId, stepId, flexibleControlValues);
+          expect(updateResponse.status).to.equal(200);
+        }
+
+        await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+        await session.waitForJobCompletion();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.EMAIL,
+        });
+
+        expect(sentMessages.length).to.be.eq(1);
+        if (context.isStateful) {
+          expect(sentMessages[0].subject).to.include('External workflow subject');
+        } else {
+          // Stateless workflows use defaults when no controls are saved
+          expect(sentMessages[0].subject).to.include('Default Subject');
+        }
+      });
+
+      it(`should accept completely arbitrary JSON structure for external workflows [${context.name}]`, async () => {
+        const workflowId = `external-arbitrary-controls-${context.name}`;
+        const stepId = 'send-email';
+
+        const newWorkflow = workflow(workflowId, async ({ step }) => {
+          await step.email(
+            stepId,
+            async (controls) => {
+              return {
+                subject: `Framework: ${controls.customFramework?.name || 'Unknown'}`,
+                body: `Features: ${Array.isArray(controls.externalConfig?.features) ? controls.externalConfig.features.join(', ') : 'None'}`,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  customFramework: { type: 'object' },
+                  externalConfig: { type: 'object' },
+                },
+              } as const,
+            }
+          );
+        });
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        if (context.isStateful) {
+          await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+          // Update with completely arbitrary data structure
+          const arbitraryControlValues = {
+            variables: {
+              customFramework: {
+                name: 'CustomNotificationFramework',
+                version: '2.0.0',
+                plugins: [
+                  { name: 'validator', config: { strict: false } },
+                  { name: 'renderer', config: { cache: true } },
+                ],
+              },
+              userDefinedFields: {
+                field1: 'string value',
+                field2: 12345,
+                field3: [1, 2, 3, 4, 5],
+                field4: {
+                  nested: {
+                    deeply: {
+                      value: 'deep nesting is allowed',
+                    },
+                  },
+                },
+              },
+              flags: {
+                enableFeatureA: true,
+                enableFeatureB: false,
+                experimentalFeatures: ['feature1', 'feature2'],
+              },
+              externalConfig: {
+                templateEngine: 'handlebars',
+                features: ['responsive', 'dark-mode'],
+              },
+            },
+          };
+
+          const updateResponse = await saveControlValues(session, workflowId, stepId, arbitraryControlValues);
+          expect(updateResponse.status).to.equal(200);
+        }
+
+        await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+        await session.waitForJobCompletion();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.EMAIL,
+        });
+
+        expect(sentMessages.length).to.be.eq(1);
+        if (context.isStateful) {
+          expect(sentMessages[0].subject).to.include('CustomNotificationFramework');
+          expect(sentMessages[0].content).to.include('responsive, dark-mode');
+        } else {
+          // Stateless workflows use defaults when no controls are saved
+          expect(sentMessages[0].subject).to.include('Unknown');
+        }
+      });
+
+      it(`should handle mixed standard and custom fields for external workflows [${context.name}]`, async () => {
+        const workflowId = `external-mixed-controls-${context.name}`;
+        const stepId = 'send-in-app';
+
+        const newWorkflow = workflow(workflowId, async ({ step }) => {
+          await step.inApp(
+            stepId,
+            async (controls) => {
+              return {
+                subject: `${controls.subject || 'Default Subject'}`,
+                body: `${controls.body || 'Default Body'} - Priority: ${controls.customPriority || 'normal'}`,
+                avatar: controls.avatar,
+              };
+            },
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  subject: { type: 'string', default: 'Default Subject' },
+                  body: { type: 'string', default: 'Default Body' },
+                  avatar: { type: 'string' },
+                  customPriority: { type: 'string', default: 'normal' },
+                },
+              } as const,
+            }
+          );
+        });
+
+        await bridgeServer.start({ workflows: [newWorkflow] });
+
+        if (context.isStateful) {
+          await discoverAndSyncBridge(session, workflowsRepository, workflowId, bridgeServer);
+
+          // Update with mixed standard and custom fields
+          const mixedControlValues = {
+            variables: {
+              // Standard in-app fields
+              subject: 'Mixed workflow subject',
+              body: 'Mixed workflow body',
+              avatar: 'https://example.com/avatar.png',
+              // Custom fields that wouldn't be in standard InAppControlDto
+              customPriority: 'high',
+              customNotificationType: 'alert',
+              customMetadata: {
+                source: 'external-system',
+                timestamp: new Date().toISOString(),
+                version: '1.0',
+              },
+              customActions: [
+                { id: 'action1', label: 'Custom Action 1', type: 'button' },
+                { id: 'action2', label: 'Custom Action 2', type: 'link' },
+              ],
+            },
+          };
+
+          const updateResponse = await saveControlValues(session, workflowId, stepId, mixedControlValues);
+          expect(updateResponse.status).to.equal(200);
+        }
+
+        await triggerEvent(session, workflowId, subscriber.subscriberId, {}, bridge);
+        await session.waitForJobCompletion();
+
+        const sentMessages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          templateIdentifier: workflowId,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(sentMessages.length).to.be.eq(1);
+        if (context.isStateful) {
+          expect(sentMessages[0].subject).to.include('Mixed workflow subject');
+          expect(sentMessages[0].content).to.include('Priority: high');
+        } else {
+          // Stateless workflows use defaults when no controls are saved
+          expect(sentMessages[0].subject).to.include('Default Subject');
+          expect(sentMessages[0].content).to.include('Priority: normal');
+        }
+      });
+    });
   });
 });
 

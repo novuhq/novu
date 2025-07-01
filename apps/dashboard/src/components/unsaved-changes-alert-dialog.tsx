@@ -40,12 +40,10 @@ export const UnsavedChangesAlertDialog = (props: UnsavedChangesAlertDialogProps)
         <Separator />
 
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onProceed} asChild>
-            <Button trailingIcon={RiArrowRightSLine} variant="error" mode="ghost" size="xs">
-              Proceed anyway
-            </Button>
-          </AlertDialogAction>
+          <AlertDialogCancel onClick={onProceed} asChild>
+            <Button size="xs">Proceed anyway</Button>
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={onCancel}>Cancel</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

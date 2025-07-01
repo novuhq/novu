@@ -13,7 +13,9 @@
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "lint:fix": "pnpm lint --fix",
     "test": "vitest",
-    "test:debug": "vitest --inspect-brk --no-file-parallelism"
+    "test:debug": "vitest --inspect-brk --no-file-parallelism",
+    "start:studio": "npx novu@latest dev --port 4000 --dashboard-url http://localhost:4201",
+    "sync:studio": "npx novu@latest sync -s SECRET_KEY -b TUNNEL_URL -a http://localhost:3000"
   },
   "dependencies": {
     "@nestjs/common": "10.4.18",

@@ -354,7 +354,16 @@ export class UpsertWorkflowUseCase {
     }
 
     const newControlValues = controlValues || {};
-    if (step.template?.type === StepTypeEnum.EMAIL) {
+
+    /*
+     * Only apply email-specific processing for NOVU_CLOUD workflows
+     * For EXTERNAL workflows, preserve all custom fields as-is
+     */
+    if (
+      step.template?.type === StepTypeEnum.EMAIL &&
+      (command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD ||
+        command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
+    ) {
       const emailControlValues = newControlValues as EmailControlType;
 
       const isLayoutsPageActive = await this.featureFlagsService.getFlag({

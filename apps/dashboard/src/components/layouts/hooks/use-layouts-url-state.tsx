@@ -1,43 +1,39 @@
 import { useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { createSearchParams, useSearchParams } from 'react-router-dom';
 import { DirectionEnum } from '@novu/shared';
 
-export type LayoutsSortableColumn = 'createdAt' | 'updatedAt';
+export type LayoutsSortableColumn = 'name' | 'createdAt' | 'updatedAt';
 
 export type LayoutsFilter = {
   query: string;
-  orderBy?: LayoutsSortableColumn;
-  orderDirection?: DirectionEnum;
-  before?: string;
-  after?: string;
+  orderBy: LayoutsSortableColumn;
+  orderDirection: DirectionEnum;
+  offset: number;
+  limit: number;
 };
 
 export const defaultLayoutsFilter: LayoutsFilter = {
   query: '',
   orderBy: 'createdAt',
   orderDirection: DirectionEnum.DESC,
+  offset: 0,
+  limit: 12,
 };
 
 export type LayoutsUrlState = {
   filterValues: LayoutsFilter;
+  hrefFromOffset: (offset: number) => string;
   handleFiltersChange: (newFilters: Partial<LayoutsFilter>) => void;
   toggleSort: (column: LayoutsSortableColumn) => void;
   resetFilters: () => void;
-  handleNext: () => void;
-  handlePrevious: () => void;
-  handleFirst: () => void;
-  handleNavigationAfterDelete: (afterCursor: string) => void;
 };
 
-type UseLayoutsUrlStateProps = {
-  after?: string;
-  before?: string;
-};
-
-export const useLayoutsUrlState = ({ after, before }: UseLayoutsUrlStateProps): LayoutsUrlState => {
+export const useLayoutsUrlState = (): LayoutsUrlState => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const filterValues = useMemo(() => {
+    const offset = parseInt(searchParams.get('offset') || defaultLayoutsFilter.offset.toString());
+    const limit = parseInt(searchParams.get('limit') || defaultLayoutsFilter.limit.toString());
     const query = searchParams.get('query') || '';
     const orderBy = searchParams.get('orderBy') as LayoutsSortableColumn;
     const orderDirection = searchParams.get('orderDirection') as DirectionEnum;
@@ -46,8 +42,8 @@ export const useLayoutsUrlState = ({ after, before }: UseLayoutsUrlStateProps): 
       query,
       orderBy: orderBy || defaultLayoutsFilter.orderBy,
       orderDirection: orderDirection || defaultLayoutsFilter.orderDirection,
-      before: searchParams.get('before') || undefined,
-      after: searchParams.get('after') || undefined,
+      offset,
+      limit,
     };
   }, [searchParams]);
 
@@ -97,57 +93,18 @@ export const useLayoutsUrlState = ({ after, before }: UseLayoutsUrlStateProps): 
     setSearchParams({});
   }, [setSearchParams]);
 
-  const handleNext = useCallback(() => {
-    if (after) {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.set('after', after);
-        newParams.delete('before');
-        return newParams;
-      });
-    }
-  }, [after, setSearchParams]);
-
-  const handlePrevious = useCallback(() => {
-    if (before) {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.set('before', before);
-        newParams.delete('after');
-        return newParams;
-      });
-    }
-  }, [before, setSearchParams]);
-
-  const handleFirst = useCallback(() => {
-    setSearchParams((prev) => {
-      const newParams = new URLSearchParams(prev);
-      newParams.delete('after');
-      newParams.delete('before');
-      return newParams;
-    });
-  }, [setSearchParams]);
-
-  const handleNavigationAfterDelete = useCallback(
-    (afterCursor: string) => {
-      setSearchParams((prev) => {
-        const newParams = new URLSearchParams(prev);
-        newParams.set('after', afterCursor);
-        newParams.delete('before');
-        return newParams;
-      });
-    },
-    [setSearchParams]
-  );
+  const hrefFromOffset = (offset: number) => {
+    return `${location.pathname}?${createSearchParams({
+      ...searchParams,
+      offset: offset.toString(),
+    })}`;
+  };
 
   return {
     filterValues,
+    hrefFromOffset,
     handleFiltersChange,
     toggleSort,
     resetFilters,
-    handleNext,
-    handlePrevious,
-    handleFirst,
-    handleNavigationAfterDelete,
   };
 };
