@@ -109,28 +109,21 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   useEffect(() => {
     if (fetchedSubscriberData) {
       setSubscriberData({
-        subscriberId: fetchedSubscriberData.subscriberId || '',
-        firstName: fetchedSubscriberData.firstName || '',
-        lastName: fetchedSubscriberData.lastName || '',
-        email: fetchedSubscriberData.email || '',
-        phone: fetchedSubscriberData.phone || '',
-        avatar: fetchedSubscriberData.avatar || '',
-        locale: fetchedSubscriberData.locale || undefined,
-        timezone: fetchedSubscriberData.timezone || undefined,
-        data: fetchedSubscriberData.data,
+        subscriberId: fetchedSubscriberData.subscriberId,
+        firstName: fetchedSubscriberData.firstName ?? undefined,
+        lastName: fetchedSubscriberData.lastName ?? undefined,
+        email: fetchedSubscriberData.email ?? undefined,
+        phone: fetchedSubscriberData.phone ?? undefined,
+        avatar: fetchedSubscriberData.avatar ?? undefined,
+        locale: fetchedSubscriberData.locale ?? undefined,
       });
     } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
       // If no subscriber found but we have current user, use user data as fallback
       setSubscriberData({
         subscriberId: currentUser._id,
-        firstName: currentUser.firstName || '',
-        lastName: currentUser.lastName || '',
-        email: currentUser.email || '',
-        phone: '',
-        avatar: '',
-        locale: '',
-        timezone: '',
-        data: {},
+        firstName: currentUser.firstName ?? undefined,
+        lastName: currentUser.lastName ?? undefined,
+        email: currentUser.email ?? undefined,
       });
     }
   }, [fetchedSubscriberData, currentUser, subscriberData?.subscriberId, isLoadingSubscriber]);
