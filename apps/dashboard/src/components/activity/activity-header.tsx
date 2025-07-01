@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { RiRouteFill } from 'react-icons/ri';
+import { RiRouteFill, RiCloseLine } from 'react-icons/ri';
 import { IActivity, IEnvironment } from '@novu/shared';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 
@@ -17,9 +17,10 @@ type ActivityHeaderProps = {
   className?: string;
   activity?: IActivity;
   onTransactionIdChange?: (transactionId: string, activityId: string) => void;
+  onClose?: () => void;
 };
 
-export const ActivityHeader = ({ className, activity, onTransactionIdChange }: ActivityHeaderProps) => {
+export const ActivityHeader = ({ className, activity, onTransactionIdChange, onClose }: ActivityHeaderProps) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
@@ -103,20 +104,33 @@ export const ActivityHeader = ({ className, activity, onTransactionIdChange }: A
         <span className="text-foreground-950 text-sm font-medium">Workflow run</span>
       </div>
 
-      {activity && workflowExists && (
-        <Button
-          variant="secondary"
-          mode="ghost"
-          size="2xs"
-          onClick={() => handleResend()}
-          className="h-[20px]"
-          isLoading={isPending}
-          type="button"
-          trailingIcon={RepeatPlay}
-        >
-          Resend
-        </Button>
-      )}
+      <div className="flex items-center gap-1.5">
+        {activity && workflowExists && (
+          <Button
+            variant="secondary"
+            mode="ghost"
+            size="2xs"
+            onClick={() => handleResend()}
+            className="h-[20px]"
+            isLoading={isPending}
+            type="button"
+            trailingIcon={RepeatPlay}
+          >
+            Resend
+          </Button>
+        )}
+        {onClose && (
+          <Button
+            variant="secondary"
+            mode="ghost"
+            size="2xs"
+            onClick={onClose}
+            className="h-[20px]"
+            type="button"
+            trailingIcon={RiCloseLine}
+          ></Button>
+        )}
+      </div>
     </motion.header>
   );
 };

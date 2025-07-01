@@ -1,7 +1,7 @@
 import React, { forwardRef } from 'react';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
-import { SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { SheetClose, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { Sheet } from '@/components/primitives/sheet';
 import { cn } from '@/utils/ui';
@@ -45,7 +45,7 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
         ref={ref}
         className={
           // to make the drawers stacking effect, we need to make sure the width is a bit smaller than the normal sidebar width
-          'w-3/4 sm:max-w-[540px] [&_[data-close-button="true"]]:right-3 [&_[data-close-button="true"]]:top-[calc(0.75rem+2px)]'
+          'w-3/4 sm:max-w-[540px] [&_[data-close-button="true"]]:hidden'
         }
       >
         <VisuallyHidden>
@@ -63,6 +63,7 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
                 className="h-12 py-3"
                 activity={activity}
                 onTransactionIdChange={handleTransactionIdChange}
+                onClose={() => onActivitySelect('')}
               />
               <ActivityOverview activity={activity} />
               <ActivityLogs activity={activity} onActivitySelect={onActivitySelect} />

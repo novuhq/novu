@@ -199,12 +199,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                     <Table>
                       <TableBody>
                         {displayedActivities.map((activity) => (
-                          <ActivityTableRow
-                            key={activity._id}
-                            activity={activity}
-                            onClick={handleActivityClick}
-                            variant="compact"
-                          />
+                          <ActivityTableRow key={activity._id} activity={activity} onClick={handleActivityClick} />
                         ))}
                       </TableBody>
                     </Table>
