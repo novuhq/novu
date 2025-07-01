@@ -251,7 +251,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return this.cleanupRenderedHtml(renderedHtml);
     } else {
       // For simple text body, apply translations directly
-      return await this.processTextTranslations(body, payload, dbWorkflow, locale);
+      const processedHtml = await this.processTextTranslations(body, payload, dbWorkflow, locale);
+
+      return this.cleanupRenderedHtml(processedHtml);
     }
   }
 
@@ -633,6 +635,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
      * Gmail's clipping algorithm detects trailing whitespace content and marks emails as "message clipped".
      * This preserves the intended spacing while removing the problematic whitespace content.
      */
-    return html.replace(/<p([^>]*)>[\s\u00A0\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+<\/p>/g, '<p$1></p>');
+    return html.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
   }
 }
