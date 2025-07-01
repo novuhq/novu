@@ -13,67 +13,25 @@ The issue was in `apps/dashboard/src/components/workflow-editor/test-workflow/te
 When a subscriber was selected via the autocomplete, it updated the UI state but **did not update the form's `to` field**. This meant the form submission continued to use the original placeholder values like `{{subscriberId}}`, `{{email}}`, etc., instead of the actual selected subscriber data.
 
 ## Solution
-Added a `useEffect` hook that watches for changes to `subscriberData` and automatically updates the form's `to` field with the actual subscriber information:
+Added a simple `useEffect` hook that watches for changes to `subscriberData` and directly updates the form's `to` field with the subscriber data:
 
 ```typescript
 // Update form 'to' field when subscriber data changes
 useEffect(() => {
   if (subscriberData) {
-    // Create the 'to' object using actual subscriber data instead of mock placeholders
-    const toValue: Record<string, unknown> = {};
-    const toSchema = testData?.to;
-    
-    if (toSchema?.properties) {
-      Object.keys(toSchema.properties).forEach((key) => {
-        switch (key) {
-          case 'subscriberId':
-            toValue[key] = subscriberData.subscriberId || '';
-            break;
-          case 'email':
-            toValue[key] = subscriberData.email || '';
-            break;
-          case 'firstName':
-            toValue[key] = subscriberData.firstName || '';
-            break;
-          case 'lastName':
-            toValue[key] = subscriberData.lastName || '';
-            break;
-          case 'phone':
-            toValue[key] = subscriberData.phone || '';
-            break;
-          case 'avatar':
-            toValue[key] = subscriberData.avatar || '';
-            break;
-          case 'locale':
-            toValue[key] = subscriberData.locale || '';
-            break;
-          case 'timezone':
-            toValue[key] = subscriberData.timezone || '';
-            break;
-          case 'data':
-            toValue[key] = subscriberData.data || {};
-            break;
-          default:
-            // For any other fields defined in the schema, use empty values
-            toValue[key] = '';
-            break;
-        }
-      });
-    }
-    
-    setValue('to', toValue);
+    setValue('to', subscriberData);
   }
-}, [subscriberData, testData?.to, setValue]);
+}, [subscriberData, setValue]);
 ```
 
 ## Changes Made
 1. Added `setValue` to the destructured form methods: `const { handleSubmit, watch, setValue } = form;`
-2. Added the `useEffect` hook that maps subscriber data to form fields based on the schema
-3. The effect runs whenever `subscriberData`, `testData?.to`, or `setValue` changes
+2. Added the `useEffect` hook that directly applies the subscriber data to the form's `to` field
+3. The effect runs whenever `subscriberData` or `setValue` changes
 
 ## How It Works
 1. When a user selects a subscriber from the autocomplete, `handleSubscriberSelect` updates `subscriberData`
-2. The new `useEffect` detects the change and maps the subscriber data to the appropriate form fields
+2. The new `useEffect` detects the change and directly applies the subscriber data to the form's `to` field
 3. When the form is submitted, `data.to` now contains the actual subscriber data instead of mock placeholders
 4. The `triggerWorkflow` function receives the correct subscriber information
 

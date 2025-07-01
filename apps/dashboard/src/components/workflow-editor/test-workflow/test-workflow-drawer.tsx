@@ -175,51 +175,9 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   // Update form 'to' field when subscriber data changes
   useEffect(() => {
     if (subscriberData) {
-      // Create the 'to' object using actual subscriber data instead of mock placeholders
-      const toValue: Record<string, unknown> = {};
-      const toSchema = testData?.to;
-      
-      if (toSchema?.properties) {
-        Object.keys(toSchema.properties).forEach((key) => {
-          switch (key) {
-            case 'subscriberId':
-              toValue[key] = subscriberData.subscriberId || '';
-              break;
-            case 'email':
-              toValue[key] = subscriberData.email || '';
-              break;
-            case 'firstName':
-              toValue[key] = subscriberData.firstName || '';
-              break;
-            case 'lastName':
-              toValue[key] = subscriberData.lastName || '';
-              break;
-            case 'phone':
-              toValue[key] = subscriberData.phone || '';
-              break;
-            case 'avatar':
-              toValue[key] = subscriberData.avatar || '';
-              break;
-            case 'locale':
-              toValue[key] = subscriberData.locale || '';
-              break;
-            case 'timezone':
-              toValue[key] = subscriberData.timezone || '';
-              break;
-            case 'data':
-              toValue[key] = subscriberData.data || {};
-              break;
-            default:
-              // For any other fields defined in the schema, use empty values
-              toValue[key] = '';
-              break;
-          }
-        });
-      }
-      
-      setValue('to', toValue);
+      setValue('to', subscriberData);
     }
-  }, [subscriberData, testData?.to, setValue]);
+  }, [subscriberData, setValue]);
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
