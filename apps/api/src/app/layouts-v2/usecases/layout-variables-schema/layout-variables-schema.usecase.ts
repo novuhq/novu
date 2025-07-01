@@ -19,9 +19,8 @@ export class LayoutVariablesSchemaUseCase {
 
     const { subscriber } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
-        userId: command.user._id,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
         controlValues: Object.values(controlValues),
       })
     );
