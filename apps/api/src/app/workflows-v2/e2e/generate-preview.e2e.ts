@@ -142,7 +142,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       result: {
         preview: {
           subject: 'Welcome John',
-          body: 'Hello John Doe, Welcome to ORGANIZATIONNAME!',
+          body: 'Hello John Doe, Welcome to !',
         },
         type: 'in_app',
       },
@@ -156,9 +156,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           locale: 'en-US',
           data: {},
         },
-        payload: {
-          organizationName: 'organizationName',
-        },
+        payload: {},
         steps: {},
       },
     });
@@ -580,7 +578,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   it('should gracefully handle undefined variables that are not present in payload schema', async () => {
-    const pay = {
+    const payloadSchema = {
       type: 'object',
       properties: {
         /*
@@ -596,7 +594,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       },
     };
-    const workflow = await createWorkflow({ payloadSchema: pay });
+    const workflow = await createWorkflow({ payloadSchema });
     await emulateExternalOrigin(workflow.id);
 
     const stepId = workflow.steps[0].id;
@@ -622,8 +620,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       result: {
         preview: {
           subject: 'Welcome John',
-          // missing orderId will be replaced with placeholder "{{payload.orderId}}"
-          body: 'Hello John, your order #orderId is ready!',
+          body: 'Hello John, your order # is ready!',
         },
         type: 'in_app',
       },
@@ -716,7 +713,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           lastName: '{{payload.lastName}}',
           organizationName: '{{payload.organizationName}}',
           firstName: 'John',
-          orderId: 'orderId',
         },
         steps: {},
       },

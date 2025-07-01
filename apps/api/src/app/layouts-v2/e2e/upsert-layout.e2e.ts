@@ -104,7 +104,7 @@ describe('Upsert Layout #novu-v2', () => {
       expect(updatedLayout.id).to.equal(existingLayout.id);
       expect(updatedLayout.layoutId).to.equal(existingLayout.layoutId);
       expect(updatedLayout.name).to.equal(updateData.name);
-      expect(updatedLayout.controls.values.email?.content).to.contain(updateData.controlValues?.email?.body);
+      expect(updatedLayout.controls.values.email?.body).to.contain(updateData.controlValues?.email?.body);
       expect(updatedLayout.controls.values.email?.editorType).to.equal(updateData.controlValues?.email?.editorType);
     });
 
@@ -230,7 +230,7 @@ describe('Upsert Layout #novu-v2', () => {
       const { result: updatedLayout } = await novuClient.layouts.update(updateData, existingLayout.layoutId);
 
       expect(updatedLayout.name).to.equal(updateData.name);
-      expect(updatedLayout.controls.values.email?.content).to.eq(validHtmlContent);
+      expect(updatedLayout.controls.values.email?.body).to.eq(validHtmlContent);
       expect(updatedLayout.controls.values.email?.editorType).to.equal('html');
     });
 
@@ -267,7 +267,7 @@ describe('Upsert Layout #novu-v2', () => {
       const { result: updatedLayout } = await novuClient.layouts.update(updateData, existingLayout.layoutId);
 
       expect(updatedLayout.name).to.equal(updateData.name);
-      expect(updatedLayout.controls.values.email?.content).to.equal(validMailyContent);
+      expect(updatedLayout.controls.values.email?.body).to.equal(validMailyContent);
       expect(updatedLayout.controls.values.email?.editorType).to.equal('block');
     });
 

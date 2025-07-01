@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { JsonSchemaTypeEnum, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import {
+  ControlValuesRepository,
+  JsonSchemaTypeEnum,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+} from '@novu/dal';
 import { Instrument } from '@novu/application-generic';
+import { ControlValuesLevelEnum } from '@novu/shared';
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
@@ -12,7 +18,10 @@ import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
-  constructor(private readonly createVariablesObject: CreateVariablesObject) {}
+  constructor(
+    private readonly createVariablesObject: CreateVariablesObject,
+    private readonly controlValuesRepository: ControlValuesRepository
+  ) {}
 
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId } = command;
@@ -20,12 +29,37 @@ export class BuildVariableSchemaUsecase {
       0,
       workflow?.steps.findIndex((stepItem) => stepItem._id === stepInternalId)
     );
+
+    let workflowControlValues: unknown[] = [];
+    if (workflow) {
+      const controls = await this.controlValuesRepository.find(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _workflowId: workflow._id,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+          controls: { $ne: null },
+        },
+        {
+          controls: 1,
+          _id: 0,
+        }
+      );
+
+      workflowControlValues = controls
+        .map((item) => item.controls)
+        .flat()
+        .flatMap((obj) => Object.values(obj));
+    }
+
+    const optimisticControlValues = Object.values(command.optimisticControlValues || {});
+
     const { payload, subscriber } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-        controlValues: Object.values(command.optimisticControlValues || {}),
+        controlValues: optimisticControlValues.length > 0 ? optimisticControlValues : workflowControlValues,
       })
     );
 
