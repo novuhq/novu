@@ -147,9 +147,12 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return { subject: translatedSubject, body: htmlWithBranding };
     }
 
+    const sanitizedSubject = sanitizeHTML(translatedSubject);
+    const sanitizedBody = sanitizeHTML(htmlWithBranding);
+
     return {
-      subject: sanitizeHTML(translatedSubject),
-      body: sanitizeHTML(htmlWithBranding),
+      subject: sanitizedSubject,
+      body: sanitizedBody,
     };
   }
 
@@ -263,12 +266,12 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale,
       });
 
-      const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
+      const renderedHtml = await mailyRender(translatedMaily, { noHtmlWrappingTags });
 
-      return await mailyRender(strippedMaily, { noHtmlWrappingTags });
+      return this.cleanupRenderedHtml(renderedHtml);
     } else {
       // For simple text body, apply translations directly
-      return await this.processTextTranslations({
+      const processedHtml = await this.processTextTranslations({
         text: body,
         variables: payload,
         environmentId,
@@ -276,6 +279,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         workflowId,
         locale,
       });
+
+      return this.cleanupRenderedHtml(processedHtml);
     }
   }
 
@@ -362,30 +367,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return await this.liquidEngine.parseAndRender(text, variables);
     }
-  }
-
-  private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
-    if (!node.content || node.content.length === 0) return node;
-
-    // Iterate from the end of the content and find the first non-empty node
-    let lastIndex = node.content.length;
-    // eslint-disable-next-line no-plusplus
-    for (let i = node.content.length - 1; i >= 0; i--) {
-      const childNode = node.content[i];
-
-      const isEmptyParagraph =
-        childNode.type === 'paragraph' && !childNode.text && (!childNode.content || childNode.content.length === 0);
-
-      if (!isEmptyParagraph) {
-        lastIndex = i + 1; // Include this node in the result
-        break;
-      }
-    }
-
-    // Slice the content to remove trailing empty nodes
-    const filteredContent = node.content.slice(0, lastIndex);
-
-    return { ...node, content: filteredContent };
   }
 
   private async parseMailyContentByLiquid(
@@ -714,5 +695,14 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/\n/g, '\\n') // Escape newlines
       .replace(/\r/g, '\\r') // Escape carriage returns
       .replace(/\t/g, '\\t'); // Escape tabs
+  }
+
+  private cleanupRenderedHtml(html: string): string {
+    /*
+     * Convert paragraphs that contain only whitespace characters to empty paragraphs to prevent Gmail clipping.
+     * Gmail's clipping algorithm detects trailing whitespace content and marks emails as "message clipped".
+     * This preserves the intended spacing while removing the problematic whitespace content.
+     */
+    return html.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
   }
 }
