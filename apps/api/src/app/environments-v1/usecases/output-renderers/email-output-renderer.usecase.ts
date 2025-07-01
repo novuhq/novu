@@ -310,30 +310,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/\t/g, '\\t'); // tab
   }
 
-  private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
-    if (!node.content || node.content.length === 0) return node;
-
-    // Iterate from the end of the content and find the first non-empty node
-    let lastIndex = node.content.length;
-    // eslint-disable-next-line no-plusplus
-    for (let i = node.content.length - 1; i >= 0; i--) {
-      const childNode = node.content[i];
-
-      const isEmptyParagraph =
-        childNode.type === 'paragraph' && !childNode.text && (!childNode.content || childNode.content.length === 0);
-
-      if (!isEmptyParagraph) {
-        lastIndex = i + 1; // Include this node in the result
-        break;
-      }
-    }
-
-    // Slice the content to remove trailing empty nodes
-    const filteredContent = node.content.slice(0, lastIndex);
-
-    return { ...node, content: filteredContent };
-  }
-
   private async parseMailyContentByLiquid(
     mailyContent: MailyJSONContent,
     variables: FullPayloadForRender
