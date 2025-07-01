@@ -20,6 +20,7 @@ import {
   UpsertControlValuesUseCase,
   UpsertControlValuesCommand,
   FeatureFlagsService,
+  generateTimestampHex,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -359,7 +360,7 @@ export class Session {
     const encryptedApiKey = encryptApiKey(key);
     const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
-    const encodedDate = dateToTimestampHex(new Date());
+    const encodedDate = generateTimestampHex();
     const identifier = `${this.KEYLESS_ENVIRONMENT_PREFIX}${encodedDate}_${shortId(4)}`;
     const environment = await this.environmentRepository.create({
       _organizationId: organization._id,
@@ -709,14 +710,6 @@ export class Session {
 
     return dto;
   }
-}
-
-function dateToTimestampHex(date) {
-  const timeInSeconds = Math.floor(date.getTime() / 1000);
-  const buffer = Buffer.alloc(4);
-  buffer.writeUInt32BE(timeInSeconds, 0);
-
-  return buffer.toString('hex');
 }
 
 function timestampHexToDate(timestampHex) {

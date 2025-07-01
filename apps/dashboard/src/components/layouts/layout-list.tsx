@@ -1,5 +1,6 @@
 import { HTMLAttributes } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 
 import { cn } from '@/utils/ui';
@@ -26,7 +27,6 @@ import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Skeleton } from '../primitives/skeleton';
 import { DefaultPagination } from '../default-pagination';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 

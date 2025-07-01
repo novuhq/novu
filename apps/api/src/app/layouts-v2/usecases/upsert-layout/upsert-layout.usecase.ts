@@ -61,6 +61,8 @@ export class UpsertLayoutUseCase {
 
     let upsertedLayout: LayoutDto;
     if (existingLayout) {
+      this.mixpanelTrack(command, 'Layout Update - [Layouts]');
+
       upsertedLayout = await this.updateLayoutUseCaseV0.execute(
         UpdateLayoutCommand.create({
           environmentId: command.user.environmentId,
@@ -72,8 +74,9 @@ export class UpsertLayoutUseCase {
           origin: existingLayout.origin ?? ResourceOriginEnum.NOVU_CLOUD,
         })
       );
-      this.mixpanelTrack(command, 'Layout Update - [API]');
     } else {
+      this.mixpanelTrack(command, 'Layout Create - [Layouts]');
+
       const defaultLayout = await this.layoutRepository.findOne({
         _organizationId: command.user.organizationId,
         _environmentId: command.user.environmentId,
@@ -94,7 +97,6 @@ export class UpsertLayoutUseCase {
           isDefault: !defaultLayout,
         })
       );
-      this.mixpanelTrack(command, 'Layout Created - [API]');
     }
 
     const upsertedControlValues = await this.upsertControlValues(command, upsertedLayout._id!);

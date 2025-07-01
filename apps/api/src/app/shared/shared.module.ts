@@ -32,6 +32,7 @@ import {
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
+  ClickHouseService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
@@ -42,6 +43,7 @@ import {
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
+  RequestLogRepository,
   storageService,
 } from '@novu/application-generic';
 
@@ -110,6 +112,8 @@ const dalService = {
   },
 };
 
+const ANALYTICS_PROVIDERS = [ClickHouseService, RequestLogRepository];
+
 const PROVIDERS = [
   analyticsService,
   cacheService,
@@ -124,6 +128,7 @@ const PROVIDERS = [
   CreateExecutionDetails,
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
+  ...ANALYTICS_PROVIDERS,
 ];
 
 const IMPORTS = [

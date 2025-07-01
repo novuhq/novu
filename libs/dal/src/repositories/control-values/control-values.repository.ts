@@ -23,6 +23,7 @@ export interface FindControlValuesQuery {
   _stepId?: string;
   _layoutId?: string;
   level?: ControlValuesLevelEnum;
+  [key: string]: unknown;
 }
 
 export class ControlValuesRepository extends BaseRepository<

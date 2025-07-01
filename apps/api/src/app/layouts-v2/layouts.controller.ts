@@ -142,6 +142,7 @@ export class LayoutsController {
   }
 
   @Post(':layoutId/duplicate')
+  @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Duplicate a layout',
     description:

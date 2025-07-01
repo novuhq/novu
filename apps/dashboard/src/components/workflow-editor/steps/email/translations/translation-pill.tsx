@@ -1,13 +1,15 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { cn } from '@/utils/ui';
-import { TranslateVariable } from '@/components/icons/translate-variable';
 import { EditTranslationPopover } from './edit-translation-popover';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { TranslationTooltip } from './translation-tooltip';
+import { VariableIcon } from '@/components/variable/components/variable-icon';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 
 interface TranslationPillProps {
   decoratorKey: string; // "common.submit"
-  onUpdate?: (newKey: string) => void;
+  onUpdate?: (key: string) => void;
   onDelete?: () => void;
 }
 
@@ -15,8 +17,14 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+
+  // Fetch translation keys to validate if the current key exists
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    workflowId: workflow?._id || '',
+    enabled: !!workflow?._id,
+  });
 
   const displayTranslationKey = useMemo(() => {
     if (!decoratorKey) return '';
@@ -24,6 +32,16 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
 
     return keyParts.length >= 2 ? '..' + keyParts.slice(-2).join('.') : decoratorKey;
   }, [decoratorKey]);
+
+  // Check if translation key exists in available keys
+  const translationKeyExists = useMemo(() => {
+    if (isTranslationKeysLoading || !decoratorKey) return true; // Don't show error while loading or if no key
+    const existingKeys = translationKeys.map((key) => key.name);
+    return existingKeys.includes(decoratorKey);
+  }, [decoratorKey, translationKeys, isTranslationKeysLoading]);
+
+  const hasError = !translationKeyExists;
+  const errorMessage = hasError ? 'Translation key not found' : undefined;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -44,42 +62,39 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
     }
   };
 
-  const handleUpdate = (newKey: string) => {
-    if (onUpdate) {
-      onUpdate(newKey);
-      setIsOpen(false);
-    }
-  };
-
   return (
     <>
-      <button
-        type="button"
-        contentEditable={false}
-        className={cn(
-          'bg-bg-white border-stroke-soft font-code',
-          'relative m-0 box-border inline-flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-px align-middle font-medium leading-[inherit] text-inherit',
-          'text-text-sub h-[max(18px,calc(1em+2px))] text-[max(12px,calc(1em-3px))]'
-        )}
-        onClick={handleClick}
-        onPointerDown={handlePointerDown}
-        ref={buttonRef}
-      >
-        <TranslateVariable />
-        <span className="text-text-sub max-w-[24ch] truncate leading-[1.2] antialiased" title={displayTranslationKey}>
-          {displayTranslationKey}
-        </span>
-      </button>
+      <TranslationTooltip hasError={hasError} errorMessage={errorMessage}>
+        <button
+          type="button"
+          contentEditable={false}
+          className={cn(
+            'bg-bg-white border-stroke-soft font-code',
+            'relative m-0 box-border inline-flex cursor-pointer items-center gap-1 rounded-lg border px-1.5 py-px align-middle font-medium leading-[inherit] text-inherit',
+            'text-text-sub h-[max(18px,calc(1em+2px))] text-[max(12px,calc(1em-3px))]',
+            { 'hover:bg-error-base/2.5': hasError }
+          )}
+          onClick={handleClick}
+          onPointerDown={handlePointerDown}
+          ref={buttonRef}
+        >
+          <VariableIcon variableName={decoratorKey} hasError={hasError} context="translations" />
+          <span className="text-text-sub max-w-[24ch] truncate leading-[1.2] antialiased" title={displayTranslationKey}>
+            {displayTranslationKey}
+          </span>
+        </button>
+      </TranslationTooltip>
 
       <EditTranslationPopover
         open={isOpen}
         onOpenChange={setIsOpen}
         translationKey={decoratorKey}
-        onUpdate={handleUpdate}
         onDelete={handleDelete}
+        onReplaceKey={onUpdate}
         triggerRef={buttonRef}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
+        workflowId={workflow?._id || ''}
       />
     </>
   );

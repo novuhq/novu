@@ -1,49 +1,67 @@
-import { HTMLAttributes } from 'react';
+import { HTMLAttributes, useState, useCallback } from 'react';
 
 import { cn } from '@/utils/ui';
 import { DefaultPagination } from '@/components/default-pagination';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import {
-  TranslationsFilter,
-  TranslationsUrlState,
-  useTranslationsUrlState,
-} from '@/components/translations/hooks/use-translations-url-state';
-import { TranslationListBlank } from '@/components/translations/translation-list-blank';
-import { ListNoResults } from '@/components/list-no-results';
-import { TranslationRow, TranslationRowSkeleton } from '@/components/translations/translation-row';
-import { TranslationsFilters } from '@/components/translations/translations-filters';
-import { useFetchTranslations } from '@/hooks/use-fetch-translations';
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+  TableCell,
+} from '@/components/primitives/table';
+import { TranslationGroup } from '@/api/translations';
+import { useFetchTranslationList } from '@/hooks/use-fetch-translation-list';
+import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 
-type TranslationListFiltersProps = HTMLAttributes<HTMLDivElement> &
+import { TranslationsFilter, TranslationsUrlState, useTranslationsUrlState } from './hooks/use-translations-url-state';
+import { TranslationListBlank } from './translation-list-blank';
+import { ListNoResults } from '../list-no-results';
+import { TranslationRow, TranslationRowSkeleton } from './translation-row';
+import { TranslationsFilters } from './translations-filters';
+import { TranslationDrawer } from './translation-drawer/translation-drawer';
+
+type TranslationListHeaderProps = HTMLAttributes<HTMLDivElement> &
   Pick<TranslationsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
     isFetching?: boolean;
   };
 
-const TranslationListWrapper = (props: TranslationListFiltersProps) => {
-  const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
-
+function TranslationListHeader({
+  className,
+  filterValues,
+  handleFiltersChange,
+  resetFilters,
+  isFetching,
+  ...props
+}: TranslationListHeaderProps) {
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
-      <div className="flex items-center justify-between">
-        <TranslationsFilters
-          onFiltersChange={handleFiltersChange}
-          filterValues={filterValues}
-          onReset={resetFilters}
-          isFetching={isFetching}
-          className="py-2.5"
-        />
-      </div>
-      {children}
+    <div className={cn('flex items-center justify-between py-2.5', className)} {...props}>
+      <TranslationsFilters
+        onFiltersChange={handleFiltersChange}
+        filterValues={filterValues}
+        onReset={resetFilters}
+        isFetching={isFetching}
+      />
     </div>
   );
+}
+
+type TranslationTableProps = HTMLAttributes<HTMLTableElement> & {
+  children: React.ReactNode;
+  data?: {
+    total: number;
+    limit: number;
+    offset: number;
+  };
 };
 
-type TranslationListTableProps = HTMLAttributes<HTMLTableElement>;
+function TranslationTable({ children, data, ...props }: TranslationTableProps) {
+  const currentPage = data ? Math.floor(data.offset / data.limit) + 1 : 1;
+  const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
 
-const TranslationListTable = (props: TranslationListTableProps) => {
-  const { children, ...rest } = props;
   return (
-    <Table {...rest}>
+    <Table {...props}>
       <TableHeader>
         <TableRow>
           <TableHead>Resource</TableHead>
@@ -54,41 +72,193 @@ const TranslationListTable = (props: TranslationListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
+      {data && data.limit < data.total && (
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={3}>
+              <div className="flex items-center justify-between">
+                <span className="text-foreground-600 block text-sm font-normal">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <DefaultPagination
+                  hrefFromOffset={(offset) => {
+                    const params = new URLSearchParams(window.location.search);
+
+                    if (offset === 0) {
+                      params.delete('offset');
+                    } else {
+                      params.set('offset', offset.toString());
+                    }
+
+                    return `${window.location.pathname}?${params.toString()}`;
+                  }}
+                  totalCount={data.total}
+                  limit={data.limit}
+                  offset={data.offset}
+                />
+              </div>
+            </TableCell>
+            <TableCell colSpan={2} />
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
+}
+
+type TranslationSkeletonListProps = {
+  count: number;
 };
+
+function TranslationSkeletonList({ count }: TranslationSkeletonListProps) {
+  return (
+    <>
+      {Array.from({ length: count }, (_, index) => (
+        <TranslationRowSkeleton key={index} />
+      ))}
+    </>
+  );
+}
+
+type TranslationListContentProps = {
+  translations: TranslationGroup[];
+  onTranslationClick: (translation: TranslationGroup) => void;
+  onImportSuccess?: () => void;
+};
+
+function TranslationListContent({ translations, onTranslationClick, onImportSuccess }: TranslationListContentProps) {
+  return (
+    <>
+      {translations.map((translation) => (
+        <TranslationRow
+          key={translation.resourceId}
+          translation={translation}
+          onTranslationClick={onTranslationClick}
+          onImportSuccess={onImportSuccess}
+        />
+      ))}
+    </>
+  );
+}
+
+type TranslationListContainerProps = HTMLAttributes<HTMLDivElement> & {
+  children: React.ReactNode;
+  filterValues: TranslationsFilter;
+  handleFiltersChange: (filters: Partial<TranslationsFilter>) => void;
+  resetFilters: () => void;
+  isFetching?: boolean;
+};
+
+function TranslationListContainer({
+  className,
+  children,
+  filterValues,
+  handleFiltersChange,
+  resetFilters,
+  isFetching,
+  ...props
+}: TranslationListContainerProps) {
+  return (
+    <div className={cn('flex h-full flex-col p-2', className)} {...props}>
+      <TranslationListHeader
+        filterValues={filterValues}
+        handleFiltersChange={handleFiltersChange}
+        resetFilters={resetFilters}
+        isFetching={isFetching}
+      />
+      <div className="flex-1">{children}</div>
+    </div>
+  );
+}
+
+function useTranslationListLogic() {
+  const [selectedTranslationGroup, setSelectedTranslationGroup] = useState<TranslationGroup | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  const { filterValues, handleFiltersChange, resetFilters } = useTranslationsUrlState({
+    total: 0,
+  });
+
+  const { data, isPending, isFetching, refetch } = useFetchTranslationList(filterValues);
+
+  const handleTranslationClick = useCallback((translationGroup: TranslationGroup) => {
+    setSelectedTranslationGroup(translationGroup);
+    setIsDrawerOpen(true);
+  }, []);
+
+  const handleDrawerClose = useCallback((isOpen: boolean) => {
+    setIsDrawerOpen(isOpen);
+
+    if (!isOpen) {
+      setSelectedTranslationGroup(null);
+    }
+  }, []);
+
+  const handleTranslationGroupUpdated = useCallback(
+    async (resourceId: string) => {
+      const result = await refetch();
+      const updatedGroup = result.data?.data.find((group) => group.resourceId === resourceId);
+
+      if (updatedGroup) {
+        setSelectedTranslationGroup({ ...updatedGroup });
+      }
+    },
+    [refetch]
+  );
+
+  const areFiltersApplied = filterValues.query !== '';
+
+  return {
+    selectedTranslationGroup,
+    isDrawerOpen,
+    filterValues,
+    handleFiltersChange,
+    resetFilters,
+    data,
+    isPending,
+    isFetching,
+    refetch,
+    handleTranslationClick,
+    handleDrawerClose,
+    handleTranslationGroupUpdated,
+    areFiltersApplied,
+  };
+}
 
 type TranslationListProps = HTMLAttributes<HTMLDivElement>;
 
-export const TranslationList = (props: TranslationListProps) => {
-  const { filterValues, handleFiltersChange, resetFilters } = useTranslationsUrlState({
-    total: 0,
-    limit: 50,
-  });
+export function TranslationList(props: TranslationListProps) {
+  const {
+    selectedTranslationGroup,
+    isDrawerOpen,
+    filterValues,
+    handleFiltersChange,
+    resetFilters,
+    data,
+    isPending,
+    isFetching,
+    refetch,
+    handleTranslationClick,
+    handleDrawerClose,
+    handleTranslationGroupUpdated,
+    areFiltersApplied,
+  } = useTranslationListLogic();
 
-  const { data, isPending, isFetching } = useFetchTranslations(filterValues);
-
-  const areFiltersApplied = (Object.keys(filterValues) as (keyof TranslationsFilter)[]).some(
-    (key) => key === 'query' && filterValues[key] !== ''
-  );
-
-  const limit = data?.limit || 50;
+  const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
 
   if (isPending) {
     return (
-      <TranslationListWrapper
+      <TranslationListContainer
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}
         resetFilters={resetFilters}
         isFetching={isFetching}
         {...props}
       >
-        <TranslationListTable>
-          {new Array(limit).fill(0).map((_, index) => (
-            <TranslationRowSkeleton key={index} />
-          ))}
-        </TranslationListTable>
-      </TranslationListWrapper>
+        <TranslationTable>
+          <TranslationSkeletonList count={limit} />
+        </TranslationTable>
+      </TranslationListContainer>
     );
   }
 
@@ -98,7 +268,7 @@ export const TranslationList = (props: TranslationListProps) => {
 
   if (!data?.data.length) {
     return (
-      <TranslationListWrapper
+      <TranslationListContainer
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}
         resetFilters={resetFilters}
@@ -110,42 +280,32 @@ export const TranslationList = (props: TranslationListProps) => {
           description="We couldn't find any translations that match your search criteria. Try adjusting your filters."
           onClearFilters={resetFilters}
         />
-      </TranslationListWrapper>
+      </TranslationListContainer>
     );
   }
 
   return (
-    <TranslationListWrapper
+    <TranslationListContainer
       filterValues={filterValues}
       handleFiltersChange={handleFiltersChange}
       resetFilters={resetFilters}
       isFetching={isFetching}
       {...props}
     >
-      <TranslationListTable>
-        {data.data.map((translation) => (
-          <TranslationRow key={translation._id} translation={translation} />
-        ))}
-      </TranslationListTable>
-
-      {data.total > data.limit && (
-        <DefaultPagination
-          offset={data.offset}
-          limit={data.limit}
-          totalCount={data.total}
-          hrefFromOffset={(offset) => {
-            const params = new URLSearchParams(window.location.search);
-
-            if (offset === 0) {
-              params.delete('offset');
-            } else {
-              params.set('offset', offset.toString());
-            }
-
-            return `${window.location.pathname}?${params.toString()}`;
-          }}
+      <TranslationTable data={data}>
+        <TranslationListContent
+          translations={data.data}
+          onTranslationClick={handleTranslationClick}
+          onImportSuccess={() => refetch()}
         />
-      )}
-    </TranslationListWrapper>
+      </TranslationTable>
+
+      <TranslationDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={handleDrawerClose}
+        translationGroup={selectedTranslationGroup}
+        onTranslationGroupUpdated={handleTranslationGroupUpdated}
+      />
+    </TranslationListContainer>
   );
-};
+}
