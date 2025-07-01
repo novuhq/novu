@@ -22,45 +22,8 @@ import {
 /**
  * Control values for the Email step.
  */
-export const EmailStepUpsertDtoEditorType = {
-  Block: "block",
-  Html: "html",
-} as const;
-/**
- * Type of editor to use for the body.
- */
-export type EmailStepUpsertDtoEditorType = ClosedEnum<
-  typeof EmailStepUpsertDtoEditorType
->;
-
-/**
- * Control values for the Email step
- */
-export type EmailStepUpsertDtoControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * Subject of the email.
-   */
-  subject: string;
-  /**
-   * Body content of the email, either a valid Maily JSON object, or html string.
-   */
-  body?: string | undefined;
-  /**
-   * Type of editor to use for the body.
-   */
-  editorType?: EmailStepUpsertDtoEditorType | undefined;
-  /**
-   * Disable sanitization of the output.
-   */
-  disableOutputSanitization?: boolean | undefined;
-  /**
-   * Layout ID to use for the email. Null means no layout, undefined means default layout.
-   */
-  layoutId?: string | null | undefined;
+export type EmailStepUpsertDtoControlValues = EmailControlDto | {
+  [k: string]: any;
 };
 
 export type EmailStepUpsertDto = {
@@ -87,38 +50,19 @@ export const EmailStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   EmailStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  subject: z.string(),
-  body: z.string().default(""),
-  editorType: EmailStepUpsertDtoEditorType$inboundSchema.default("block"),
-  disableOutputSanitization: z.boolean().default(false),
-  layoutId: z.nullable(z.string()).optional(),
-});
+> = z.union([EmailControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type EmailStepUpsertDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  subject: string;
-  body: string;
-  editorType: string;
-  disableOutputSanitization: boolean;
-  layoutId?: string | null | undefined;
-};
+export type EmailStepUpsertDtoControlValues$Outbound =
+  | EmailControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
 export const EmailStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   EmailStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   EmailStepUpsertDtoControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  subject: z.string(),
-  body: z.string().default(""),
-  editorType: EmailStepUpsertDtoEditorType$outboundSchema.default("block"),
-  disableOutputSanitization: z.boolean().default(false),
-  layoutId: z.nullable(z.string()).optional(),
-});
+> = z.union([EmailControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
