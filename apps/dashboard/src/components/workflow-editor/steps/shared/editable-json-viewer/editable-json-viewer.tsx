@@ -190,10 +190,10 @@ export function EditableJsonViewer({
         enableClipboard={!isReadOnly}
         restrictEdit={isReadOnly}
         restrictDelete
-        restrictAdd={isReadOnly}
+        restrictAdd
         rootName={'nv-root-node'}
         defaultValue={undefined}
-        restrictTypeSelection={isReadOnly}
+        restrictTypeSelection
         collapseAnimationTime={100}
       />
     </div>
