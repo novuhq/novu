@@ -22,6 +22,7 @@ type ControlInputProps = {
   className?: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   placeholder?: string;
@@ -35,6 +36,7 @@ type ControlInputProps = {
 export function ControlInput({
   value,
   onChange,
+  onBlur,
   variables,
   className,
   placeholder,
@@ -50,6 +52,7 @@ export function ControlInput({
       className={cn(variants({ size }), className)}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       variables={variables}
       isAllowedVariable={isAllowedVariable}
       placeholder={placeholder}
