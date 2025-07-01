@@ -60,7 +60,6 @@ export const ActivityDetailsDrawer = forwardRef<HTMLDivElement, ActivityPanelDra
           ) : (
             <React.Fragment key={activityId}>
               <ActivityHeader
-                title={activity.template?.name}
                 className="h-12 py-3"
                 activity={activity}
                 onTransactionIdChange={handleTransactionIdChange}

@@ -14,13 +14,12 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { RepeatPlay } from '../icons/repeat-play';
 
 type ActivityHeaderProps = {
-  title?: string;
   className?: string;
   activity?: IActivity;
   onTransactionIdChange?: (transactionId: string, activityId: string) => void;
 };
 
-export const ActivityHeader = ({ title, className, activity, onTransactionIdChange }: ActivityHeaderProps) => {
+export const ActivityHeader = ({ className, activity, onTransactionIdChange }: ActivityHeaderProps) => {
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
 
@@ -101,7 +100,7 @@ export const ActivityHeader = ({ title, className, activity, onTransactionIdChan
     >
       <div className="flex items-center gap-1.5">
         <RiRouteFill className="h-3 w-3" />
-        <span className="text-foreground-950 text-sm font-medium">{title || 'Deleted workflow'}</span>
+        <span className="text-foreground-950 text-sm font-medium">Workflow run</span>
       </div>
 
       {activity && workflowExists && (

@@ -67,9 +67,6 @@ export function ActivityLogs({
               <span className="text-label-sm text-text-sub"> Execution details</span>
             </p>
           </div>
-          <div className="text-label-xs text-text-soft">
-            <p>Notifications have been dispatched to the processing queue.</p>
-          </div>
         </div>
       </motion.div>
 

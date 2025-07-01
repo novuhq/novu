@@ -153,11 +153,7 @@ export function ActivityFeedContent({
                       <ActivityError />
                     ) : (
                       <>
-                        <ActivityHeader
-                          title={activity.template?.name}
-                          activity={activity}
-                          onTransactionIdChange={handleTransactionIdChange}
-                        />
+                        <ActivityHeader activity={activity} onTransactionIdChange={handleTransactionIdChange} />
                         <ActivityOverview activity={activity} />
                         <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
                       </>

@@ -82,7 +82,6 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
             ) : (
               <React.Fragment key={activityId}>
                 <ActivityHeader
-                  title={activity.template?.name}
                   className="h-[49px] border-t-0"
                   activity={activity}
                   onTransactionIdChange={handleTransactionIdChange}
