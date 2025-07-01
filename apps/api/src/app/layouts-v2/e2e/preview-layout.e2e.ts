@@ -696,7 +696,7 @@ describe('Preview Layout #novu-v2', () => {
           <html>
             <body>
               <h1>Special Characters: &amp; &lt; &gt; &quot; &#39;</h1>
-              <p>Unicode: 🎉 ✨ 🚀 émojis and açcénts</p>
+              <p>Unicode: 🎉 ✨ 🚀 emojis and accents</p>
               {{content}}
             </body>
           </html>
