@@ -157,7 +157,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     values: { to, payload: JSON.stringify(payload, null, 2) },
   });
 
-  const { handleSubmit, watch, setValue } = form;
+  const { handleSubmit, watch, setValue, formState } = form;
 
   // Watch for payload changes and persist them (only when not from step editor)
   const watchedPayload = watch('payload');
@@ -203,6 +203,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
   const onSubmit = async (data: TestWorkflowFormType) => {
     console.log('Form submission data:', data);
+    console.log('Form errors:', formState.errors);
+    console.log('Form is valid:', formState.isValid);
     try {
       const {
         data: { transactionId: newTransactionId },
@@ -386,6 +388,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
                       variant="secondary"
                       size="xs"
                       isLoading={isPending}
+                      onClick={() => console.log('Test workflow button clicked')}
                     >
                       Test workflow
                     </Button>
