@@ -5,6 +5,7 @@ import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/res
 import { CursorPagination } from '@/components/cursor-pagination';
 import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
+import { LogsTableSkeletonRow } from './logs-table-skeleton-row';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { LogsFilters } from './logs-filters';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
@@ -79,7 +80,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
           <ResizablePanel defaultSize={50} minSize={50}>
             <div className="flex h-full flex-col">
               <div className="flex-1">
-                <Table isLoading={isLoading}>
+                <Table isLoading={isLoading} loadingRow={<LogsTableSkeletonRow />} loadingRowsCount={8}>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-text-strong h-8 px-2 py-0">Logs</TableHead>
