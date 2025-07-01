@@ -7,7 +7,6 @@ import { useForm } from 'react-hook-form';
 import { RiLoader4Line } from 'react-icons/ri';
 import { defaultWorkflowRunsFilter } from './hooks/use-workflow-runs-url-state';
 import { ActivityFilters } from '@/api/activity';
-import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
 
 export type WorkflowRunsFiltersProps = HTMLAttributes<HTMLDivElement> & {
   onFiltersChange: (filter: ActivityFilters) => void;
@@ -18,7 +17,6 @@ export type WorkflowRunsFiltersProps = HTMLAttributes<HTMLDivElement> & {
 
 export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
   const { onFiltersChange, filterValues, onReset, className, isFetching, ...rest } = props;
-  const { data: workflowTemplates } = useFetchWorkflows({ limit: 100 });
 
   const form = useForm<ActivityFilters>({
     values: filterValues,
@@ -42,38 +40,12 @@ export function WorkflowRunsFilters(props: WorkflowRunsFiltersProps) {
     onReset?.();
   };
 
-  const isResetButtonVisible =
-    formState.isDirty ||
-    filterValues.channels?.length ||
-    filterValues.workflows?.length ||
-    filterValues.subscriberId !== '';
+  const isResetButtonVisible = formState.isDirty || filterValues.channels?.length || filterValues.subscriberId !== '';
 
   return (
     <div className={cn('flex items-center gap-2 px-2.5 py-1.5', className)} {...rest}>
       <Form {...form}>
         <FormRoot className="flex items-center gap-2">
-          <FormField
-            control={form.control}
-            name="workflows"
-            render={({ field }) => (
-              <FormItem className="relative">
-                <FacetedFormFilter
-                  type="multi"
-                  size="small"
-                  title="Workflows"
-                  options={
-                    workflowTemplates?.workflows?.map((workflow) => ({
-                      label: workflow.name,
-                      value: workflow._id,
-                    })) || []
-                  }
-                  selected={field.value || []}
-                  onSelect={field.onChange}
-                />
-              </FormItem>
-            )}
-          />
-
           <FormField
             control={form.control}
             name="channels"

@@ -128,11 +128,8 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                 <div className="flex flex-col justify-center text-[14px] tracking-[-0.084px] text-[#525866]">
                   <p className="leading-[20px]">
                     <span className="text-[#525866]">{activities.length}</span>
-                    <span className="text-[#99a0ae]"> workflow triggers</span>
+                    <span className="text-[#99a0ae]"> workflow runs created</span>
                   </p>
-                </div>
-                <div className="flex min-w-full flex-col justify-center text-[12px] text-[#99a0ae]">
-                  <p className="leading-[16px]">Trigger received — workflow runs queued.</p>
                 </div>
               </div>
 
