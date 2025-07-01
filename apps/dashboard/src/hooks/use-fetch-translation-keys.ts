@@ -87,5 +87,6 @@ export const useFetchTranslationKeys = ({ workflowId, enabled = true }: FetchTra
     error,
     defaultLocale,
     hasTranslations: translationKeys.length > 0,
+    translationData,
   };
 };

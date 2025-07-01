@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useId, RefObject, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useId, RefObject, useMemo, useRef } from 'react';
 import { RiDeleteBin2Line, RiListView, RiQuestionLine, RiErrorWarningLine } from 'react-icons/ri';
 
 import { Popover, PopoverContent, PopoverAnchor } from '@/components/primitives/popover';
@@ -13,97 +13,119 @@ import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority'
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
+import { useUpdateTranslationValue } from '@/hooks/use-update-translation-value';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useParams } from 'react-router-dom';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 interface EditTranslationPopoverProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   translationKey: string;
   translationValue?: string;
-  onUpdate?: (newKey: string, newValue?: string) => void;
   onDelete: () => void;
+  onReplaceKey?: (newKey: string) => void;
   triggerRef?: RefObject<HTMLButtonElement>;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   workflowId: string;
 }
 
-function useTranslationEditor(
-  translationKey: string,
-  translationValue: string = '',
-  onUpdate?: (newKey: string, newValue?: string) => void
-) {
-  const [editKey, setEditKey] = useState(translationKey);
-  const [editValue, setEditValue] = useState(translationValue);
+const getTranslationValue = (content: Record<string, unknown> | undefined, key: string): string => {
+  if (!content || !key) return '';
+
+  const keys = key.split('.');
+  let current: any = content;
+
+  for (const keyPart of keys) {
+    if (current && typeof current === 'object' && keyPart in current) {
+      current = current[keyPart];
+    } else {
+      return '';
+    }
+  }
+
+  return typeof current === 'string' ? current : '';
+};
+
+const useTranslationEditor = (
+  initialKey: string,
+  initialValue: string,
+  workflowId: string,
+  translationData: any,
+  onReplaceKey?: (newKey: string) => void
+) => {
+  const [editKey, setEditKey] = useState(initialKey);
+  const [editValue, setEditValue] = useState(initialValue);
+  const updateTranslationValue = useUpdateTranslationValue();
+  const lastSavedValueRef = useRef<string>('');
+  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
+
+  const actualTranslationValue = useMemo(() => {
+    return getTranslationValue(translationData?.content, editKey.trim());
+  }, [translationData?.content, editKey]);
 
   useEffect(() => {
-    setEditKey(translationKey);
-    setEditValue(translationValue);
-  }, [translationKey, translationValue]);
+    setEditKey(initialKey);
+  }, [initialKey]);
 
-  const hasChanges = editKey.trim() !== translationKey || editValue !== translationValue;
+  useEffect(() => {
+    const newValue = actualTranslationValue || initialValue;
+    setEditValue(newValue);
+    lastSavedValueRef.current = newValue;
+  }, [actualTranslationValue, initialValue]);
 
-  const save = useCallback(() => {
-    if (hasChanges && onUpdate && editKey.trim() !== '') {
-      // TODO: Implement actual save logic/API call here
-      console.log('Saving translation:', { key: editKey.trim(), value: editValue });
-      onUpdate(editKey.trim(), editValue);
+  useEffect(() => {
+    if (editKey.trim() !== initialKey && onReplaceKey) {
+      onReplaceKey(editKey.trim());
     }
-  }, [hasChanges, onUpdate, editKey, editValue]);
+  }, [editKey, initialKey, onReplaceKey]);
+
+  // Debounced save effect - triggers when editValue changes
+  useEffect(() => {
+    const trimmedKey = editKey.trim();
+
+    if (editValue !== lastSavedValueRef.current && trimmedKey) {
+      // Clear existing timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Set new timeout for debounced save
+      debounceTimeoutRef.current = setTimeout(() => {
+        updateTranslationValue.mutate({
+          workflowId,
+          translationKey: trimmedKey,
+          translationValue: editValue,
+        });
+        lastSavedValueRef.current = editValue;
+      }, 500); // 500ms debounce
+    }
+
+    // Cleanup timeout on unmount
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [editValue, editKey, workflowId, updateTranslationValue]);
 
   return {
     editKey,
     editValue,
-    hasChanges,
     setEditKey,
     setEditValue,
-    save,
+    isSaving: updateTranslationValue.isPending,
   };
-}
+};
 
-function usePopoverHandlers(
-  onOpenChange: (open: boolean) => void,
-  onDelete: () => void,
-  editor: ReturnType<typeof useTranslationEditor>
-) {
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        // Auto-save when closing the popover
-        // TODO: Implement actual save logic/API call here
-        editor.save();
-      }
-
-      onOpenChange(open);
-    },
-    [onOpenChange, editor]
-  );
-
-  const handleClose = useCallback(() => {
-    handleOpenChange(false);
-  }, [handleOpenChange]);
-
-  const handleDelete = useCallback(() => {
-    onDelete();
-    handleClose();
-  }, [onDelete, handleClose]);
-
-  return {
-    handleOpenChange,
-    handleClose,
-    handleDelete,
-  };
-}
-
-function useTranslationKeyValidation(translationKey: string, availableKeys: { name: string }[]) {
+const useTranslationValidation = (translationKey: string, availableKeys: { name: string }[]) => {
   return useMemo(() => {
     const trimmedKey = translationKey.trim();
 
     if (!trimmedKey) {
-      return {
-        hasError: false,
-        errorMessage: '',
-        isValidKey: false,
-      };
+      return { hasError: false, errorMessage: '', isValidKey: false };
     }
 
     const existingKeys = availableKeys.map((key) => key.name);
@@ -115,22 +137,37 @@ function useTranslationKeyValidation(translationKey: string, availableKeys: { na
       isValidKey,
     };
   }, [translationKey, availableKeys]);
-}
+};
 
-function PopoverHeader({ onDelete }: { onDelete: () => void }) {
-  return (
-    <div className="bg-bg-weak border-b border-b-neutral-100 px-1.5 py-1">
-      <div className="flex items-center justify-between">
-        <span className="text-subheading-2xs text-text-soft">CONFIGURE TRANSLATION</span>
-        <Button variant="secondary" mode="ghost" className="h-5 p-1" onClick={onDelete}>
-          <RiDeleteBin2Line className="size-3.5 text-neutral-400" />
-        </Button>
-      </div>
+const useVirtualAnchor = (open: boolean, triggerRef?: RefObject<HTMLButtonElement>) => {
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    if (open && triggerRef?.current && !anchorRect) {
+      setAnchorRect(triggerRef.current.getBoundingClientRect());
+    } else if (!open) {
+      setAnchorRect(null);
+    }
+  }, [open, triggerRef, anchorRect]);
+
+  return useMemo(() => {
+    if (!anchorRect) return null;
+    return { getBoundingClientRect: () => anchorRect };
+  }, [anchorRect]);
+};
+
+const PopoverHeader = ({ onDelete }: { onDelete: () => void }) => (
+  <div className="bg-bg-weak border-b border-b-neutral-100 px-1.5 py-1">
+    <div className="flex items-center justify-between">
+      <span className="text-subheading-2xs text-text-soft">CONFIGURE TRANSLATION</span>
+      <Button variant="secondary" mode="ghost" className="h-5 p-1" onClick={onDelete}>
+        <RiDeleteBin2Line className="size-3.5 text-neutral-400" />
+      </Button>
     </div>
-  );
-}
+  </div>
+);
 
-function TranslationInput({
+const TranslationKeyInput = ({
   value,
   onChange,
   onKeyDown,
@@ -138,6 +175,7 @@ function TranslationInput({
   errorMessage,
   onAddTranslationKey,
   isLoading,
+  isCreatingKey,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -146,11 +184,18 @@ function TranslationInput({
   errorMessage: string;
   onAddTranslationKey: () => void;
   isLoading: boolean;
-}) {
-  const handleManageTranslations = useCallback(() => {
-    // TODO: Add navigation to translations management page
-    console.log('Navigate to translations management');
-  }, []);
+  isCreatingKey: boolean;
+}) => {
+  const { environmentSlug } = useParams();
+  const { workflow } = useWorkflow();
+
+  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
+    environmentSlug: environmentSlug ?? '',
+  });
+
+  const translationsUrlWithSearch = workflow?.name
+    ? `${translationsUrl}?query=${encodeURIComponent(workflow.name)}`
+    : translationsUrl;
 
   return (
     <FormItem>
@@ -176,7 +221,7 @@ function TranslationInput({
               size="sm"
               className="text-label-2xs text-xs"
               leadingIcon={RiListView}
-              onClick={handleManageTranslations}
+              onClick={() => window.open(translationsUrlWithSearch, '_blank')}
             >
               View & manage translations ↗
             </LinkButton>
@@ -198,8 +243,14 @@ function TranslationInput({
             <FormMessagePure hasError={true} className="text-label-2xs mb-0.5 mt-0.5">
               <RiErrorWarningLine className="h-3 w-3" />
               {errorMessage}{' '}
-              <LinkButton variant="modifiable" size="sm" className="text-label-2xs" onClick={onAddTranslationKey}>
-                <span className="underline">Add translation key ↗</span>
+              <LinkButton
+                variant="modifiable"
+                size="sm"
+                className="text-label-2xs"
+                onClick={onAddTranslationKey}
+                disabled={isCreatingKey}
+              >
+                <span className="underline">{isCreatingKey ? 'Adding...' : 'Add translation key ↗'}</span>
               </LinkButton>
             </FormMessagePure>
           )}
@@ -207,23 +258,25 @@ function TranslationInput({
       </FormControl>
     </FormItem>
   );
-}
+};
 
-function TranslationValueInput({
+const TranslationValueInput = ({
   value,
   onChange,
   variables,
   isAllowedVariable,
+  isSaving,
 }: {
   value: string;
   onChange: (value: string) => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
-}) {
-  return (
-    <FormItem>
-      <FormControl>
-        <div className="space-y-1">
+  isSaving: boolean;
+}) => (
+  <FormItem>
+    <FormControl>
+      <div className="space-y-1">
+        <div className="flex items-center justify-between">
           <label className="text-text-sub text-label-xs flex items-center gap-1">
             Value
             <Tooltip>
@@ -238,80 +291,102 @@ function TranslationValueInput({
               </TooltipContent>
             </Tooltip>
           </label>
-          <InputRoot size="2xs" className="min-h-[4rem] overflow-visible">
-            <ControlInput
-              value={value}
-              onChange={onChange}
-              variables={variables}
-              isAllowedVariable={isAllowedVariable}
-              placeholder="Type your translation text here."
-              multiline={true}
-              size="2xs"
-              className="resize-none [&_.cm-scroller]:max-h-[8rem] [&_.cm-scroller]:overflow-y-auto"
-            />
-          </InputRoot>
+          {isSaving && (
+            <span className="text-text-soft text-label-2xs flex items-center gap-1">
+              <div className="h-2 w-2 animate-spin rounded-full border border-gray-300 border-t-gray-600" />
+              Saving...
+            </span>
+          )}
         </div>
-      </FormControl>
-    </FormItem>
-  );
-}
+        <InputRoot size="2xs" className="min-h-[4rem] overflow-visible">
+          <ControlInput
+            value={value}
+            onChange={onChange}
+            variables={variables}
+            isAllowedVariable={isAllowedVariable}
+            placeholder="Type your translation text here."
+            multiline={true}
+            size="2xs"
+            className="resize-none [&_.cm-scroller]:max-h-[8rem] [&_.cm-scroller]:overflow-y-auto"
+          />
+        </InputRoot>
+      </div>
+    </FormControl>
+  </FormItem>
+);
 
 export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
   open,
   onOpenChange,
   translationKey,
   translationValue = '',
-  onUpdate,
   onDelete,
+  onReplaceKey,
   triggerRef,
   variables,
   isAllowedVariable,
   workflowId,
 }) => {
   const id = useId();
-  const editor = useTranslationEditor(translationKey, translationValue, onUpdate);
-  const handlers = usePopoverHandlers(onOpenChange, onDelete, editor);
-
-  const { translationKeys, isLoading } = useFetchTranslationKeys({
+  const { translationKeys, isLoading, translationData } = useFetchTranslationKeys({
     workflowId,
     enabled: open,
   });
 
-  const validation = useTranslationKeyValidation(editor.editKey, translationKeys);
+  const editor = useTranslationEditor(translationKey, translationValue, workflowId, translationData, onReplaceKey);
+  const createTranslationKeyMutation = useCreateTranslationKey();
+  const validation = useTranslationValidation(editor.editKey, translationKeys);
+  const virtualAnchor = useVirtualAnchor(open, triggerRef);
 
-  useEscapeKeyManager(id, handlers.handleClose, EscapeKeyManagerPriority.POPOVER, open);
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+  }, [onOpenChange]);
+
+  const handleDelete = useCallback(() => {
+    onDelete();
+    handleClose();
+  }, [onDelete, handleClose]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key === 'Escape') {
-        handlers.handleClose();
+        handleClose();
       }
     },
-    [handlers]
+    [handleClose]
   );
 
   const handleAddTranslationKey = useCallback(async () => {
-    try {
-      // TODO: Implement actual API call to add translation key
-      console.log('Adding translation key:', editor.editKey);
+    const newKey = editor.editKey.trim();
+    const oldKey = translationKey;
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    const result = await createTranslationKeyMutation.mutateAsync({
+      workflowId,
+      translationKey: newKey,
+      defaultValue: editor.editValue || `[${newKey}]`,
+    });
 
-      // TODO: Refresh translation keys after successful addition
-      // For now, just close the popover
-      handlers.handleClose();
-    } catch (error) {
-      console.error('Failed to add translation key:', error);
+    if (result) {
+      if (onReplaceKey && newKey !== oldKey) {
+        onReplaceKey(newKey);
+      }
+
+      handleClose();
     }
-  }, [editor.editKey, handlers]);
+  }, [
+    editor.editKey,
+    editor.editValue,
+    workflowId,
+    createTranslationKeyMutation,
+    handleClose,
+    translationKey,
+    onReplaceKey,
+  ]);
 
-  const virtualAnchor = triggerRef?.current
-    ? { getBoundingClientRect: () => triggerRef.current!.getBoundingClientRect() }
-    : undefined;
+  useEscapeKeyManager(id, handleClose, EscapeKeyManagerPriority.POPOVER, open);
 
   return (
-    <Popover open={open} onOpenChange={handlers.handleOpenChange}>
+    <Popover open={open} onOpenChange={onOpenChange}>
       {virtualAnchor && <PopoverAnchor virtualRef={{ current: virtualAnchor }} />}
       <PopoverContent
         className="w-[460px] overflow-visible p-0 [&[data-state=closed]]:animate-none [&[data-state=open]]:animate-none"
@@ -320,17 +395,11 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
         sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handlers.handleClose();
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <PopoverHeader onDelete={handlers.handleDelete} />
+        <div onClick={(e) => e.stopPropagation()}>
+          <PopoverHeader onDelete={handleDelete} />
 
           <div className="space-y-3 p-2">
-            <TranslationInput
+            <TranslationKeyInput
               value={editor.editKey}
               onChange={editor.setEditKey}
               onKeyDown={handleKeyDown}
@@ -338,6 +407,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               errorMessage={validation.errorMessage}
               onAddTranslationKey={handleAddTranslationKey}
               isLoading={isLoading}
+              isCreatingKey={createTranslationKeyMutation.isPending}
             />
 
             <TranslationValueInput
@@ -345,9 +415,10 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               onChange={editor.setEditValue}
               variables={variables}
               isAllowedVariable={isAllowedVariable}
+              isSaving={editor.isSaving}
             />
           </div>
-        </form>
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -3,7 +3,7 @@ import { TranslationPill } from './translation-pill';
 import { AnyExtension } from '@tiptap/core';
 import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
 import { TranslationSuggestionsListView, TranslationKeyItem } from './translation-suggestions-list-view';
-import React from 'react';
+import { forwardRef } from 'react';
 
 const TRANSLATION_TRIGGER = '{t.';
 
@@ -34,6 +34,9 @@ export const createTranslationExtension = (
     decoratorComponent: TranslationPill,
     suggestion: {
       ...getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, translationKeys),
+      allowToIncludeChar: true,
+      decorationTag: 'span',
+      allowedPrefixes: null,
       items: ({ query }) => {
         const existingKeys = translationKeys.map((key) => key.name);
         const filteredKeys = translationKeys.filter((key) => key.name.toLowerCase().includes(query.toLowerCase()));
@@ -59,7 +62,7 @@ export const createTranslationExtension = (
         return items;
       },
       command: ({ editor, range, props }) => {
-        const query = `{t.${props.id}}`;
+        const query = `{t.${props.id}} `; // Added space after the closing brace
 
         // Check if this is a new translation key that doesn't exist
         const existingKeys = translationKeys.map((key) => key.name);
@@ -74,7 +77,7 @@ export const createTranslationExtension = (
         editor.chain().focus().insertContentAt(range, query).run();
       },
     },
-    variableSuggestionsPopover: React.forwardRef((props: any, ref: any) => (
+    variableSuggestionsPopover: forwardRef((props: any, ref: any) => (
       <TranslationSuggestionsListView {...props} ref={ref} translationKeys={translationKeys} />
     )),
   });

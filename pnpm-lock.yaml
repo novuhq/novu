@@ -729,8 +729,8 @@ importers:
         specifier: ^1.2.1
         version: 1.2.1
       '@maily-to/core':
-        specifier: github:novuhq/maily.to.git#release/v0.2.7-novu.14-core&path:/packages/core
-        version: https://codeload.github.com/novuhq/maily.to/tar.gz/142d6a97475bbd3cfd2c5489d912fc23d2728b48#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)
+        specifier: github:novuhq/maily.to.git#release/v0.2.7-novu.15-core&path:/packages/core
+        version: https://codeload.github.com/novuhq/maily.to/tar.gz/0b5408c7b9139075eb4910a45e8d9582330b34b6#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)
       '@novu/api':
         specifier: workspace:*
         version: link:../../libs/internal-sdk
@@ -8744,9 +8744,9 @@ packages:
     resolution: {integrity: sha512-jjTMZ78rxpYCKqO4888lSA+XMWzQ3Xcn+V+06aZJi8JDIeiY+VWNR7f2Ntyt389uN63W2TMDUu0I4Si1li7Z6g==}
     engines: {node: '>=10.0.0'}
 
-  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/142d6a97475bbd3cfd2c5489d912fc23d2728b48#path:/packages/core':
-    resolution: {path: /packages/core, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/142d6a97475bbd3cfd2c5489d912fc23d2728b48}
-    version: 0.2.7-novu.14-core
+  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/0b5408c7b9139075eb4910a45e8d9582330b34b6#path:/packages/core':
+    resolution: {path: /packages/core, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/0b5408c7b9139075eb4910a45e8d9582330b34b6}
+    version: 0.2.7-novu.15-core
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^18.3.1
@@ -40175,7 +40175,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/142d6a97475bbd3cfd2c5489d912fc23d2728b48#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)':
+  '@maily-to/core@https://codeload.github.com/novuhq/maily.to/tar.gz/0b5408c7b9139075eb4910a45e8d9582330b34b6#path:/packages/core(@tiptap/extension-code-block@2.11.5(@tiptap/core@2.11.5(@tiptap/pm@2.11.5))(@tiptap/pm@2.11.5))(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(prosemirror-model@1.22.3)(prosemirror-state@1.4.3)(prosemirror-view@1.38.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2))(y-protocols@1.0.6(yjs@13.6.24))(yjs@13.6.24)':
     dependencies:
       '@radix-ui/react-dropdown-menu': 2.1.6(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-popover': 1.1.6(@types/react-dom@18.3.5(@types/react@18.3.18))(@types/react@18.3.18)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)

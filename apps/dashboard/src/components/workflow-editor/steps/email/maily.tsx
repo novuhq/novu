@@ -16,6 +16,7 @@ import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
@@ -102,14 +103,20 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
     enabled: isTranslationEnabled && !!workflow?._id,
   });
 
-  const handleCreateNewTranslationKey = useCallback(async (translationKey: string) => {
-    // TODO: Implement actual API call to create translation key
-    console.log('Creating new translation key:', translationKey);
+  const createTranslationKeyMutation = useCreateTranslationKey();
 
-    // For now, just show a notification that the key would be created
-    // In the future, this should call an API to create the translation key
-    // and refresh the translation keys list
-  }, []);
+  const handleCreateNewTranslationKey = useCallback(
+    async (translationKey: string) => {
+      if (!workflow?._id) return;
+
+      await createTranslationKeyMutation.mutateAsync({
+        workflowId: workflow._id,
+        translationKey,
+        defaultValue: `[${translationKey}]`, // Placeholder value to indicate missing translation
+      });
+    },
+    [workflow?._id, createTranslationKeyMutation]
+  );
 
   // Create a key that changes when variables or translation state changes to force extension recreation
   const variablesKey = useMemo(() => {
