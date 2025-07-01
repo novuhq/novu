@@ -95,7 +95,7 @@ export function ActivityTable({
           <Table isLoading={isLoading} loadingRow={<SkeletonRow />}>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-text-strong h-8 px-2 py-0">Activity</TableHead>
+                <TableHead className="text-text-strong h-8 px-2 py-0">Workflow runs</TableHead>
                 <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
               </TableRow>
             </TableHeader>
