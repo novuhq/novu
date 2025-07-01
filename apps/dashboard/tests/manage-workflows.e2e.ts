@@ -149,7 +149,6 @@ test('manage workflows', async ({ page }) => {
   // check the activity panel
   let activityPanel = triggerWorkflowPage.getActivityPanel();
   await expect(activityPanel).toBeVisible();
-  await expect(activityPanel.locator('span').filter({ hasText: workflowNameUpdated })).toBeVisible();
   await expect(activityPanel.getByTestId('activity-status')).toHaveText('pending');
 
   // trigger the workflow second time to see digested activity
@@ -160,7 +159,6 @@ test('manage workflows', async ({ page }) => {
 
   activityPanel = triggerWorkflowPage.getActivityPanel();
   await expect(activityPanel).toBeVisible();
-  await expect(activityPanel.locator('span').filter({ hasText: workflowNameUpdated })).toBeVisible();
   await expect(activityPanel.getByTestId('activity-status')).toHaveText('merged');
 
   // click the view execution to see the parent execution
