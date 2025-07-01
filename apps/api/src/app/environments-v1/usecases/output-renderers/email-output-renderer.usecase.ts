@@ -174,7 +174,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
           layoutIdOrInternalId: layoutId,
           environmentId,
           organizationId,
-          userId: dbWorkflow._creatorId,
           skipAdditionalFields: true,
         })
       );
@@ -191,7 +190,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         GetLayoutCommand.create({
           environmentId,
           organizationId,
-          userId: dbWorkflow._creatorId,
           skipAdditionalFields: true,
         })
       );

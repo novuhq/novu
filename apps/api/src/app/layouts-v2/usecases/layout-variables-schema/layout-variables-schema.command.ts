@@ -1,7 +1,7 @@
 import { IsObject } from 'class-validator';
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { EnvironmentCommand } from '@novu/application-generic';
 
-export class LayoutVariablesSchemaCommand extends EnvironmentWithUserCommand {
+export class LayoutVariablesSchemaCommand extends EnvironmentCommand {
   @IsObject()
   controlValues: Record<string, unknown>;
 }
