@@ -373,7 +373,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
                       variant="secondary"
                       size="xs"
                       isLoading={isPending}
-                      onClick={() => console.log('Test workflow button clicked')}
                     >
                       Test workflow
                     </Button>
