@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 
 import { ActivityPanel } from '@/components/activity/activity-panel';
 import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
@@ -18,7 +18,13 @@ export const WorkflowRunActivityDrawer = forwardRef<HTMLDivElement, WorkflowRunA
   (props, forwardedRef) => {
     const { isOpen, onOpenChange, activityId } = props;
 
-    const { activity, isPending, error } = usePullActivity(activityId);
+    const [currentActivityId, setCurrentActivityId] = useState<string | undefined>(activityId);
+
+    useEffect(() => {
+      setCurrentActivityId(activityId);
+    }, [activityId]);
+
+    const { activity, isPending, error } = usePullActivity(currentActivityId);
 
     return (
       <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -26,16 +32,16 @@ export const WorkflowRunActivityDrawer = forwardRef<HTMLDivElement, WorkflowRunA
           <SheetTitle className="text-label-sm text-text-strong border-b border-neutral-200 p-3">Event Logs</SheetTitle>
 
           <div className="flex h-full max-h-full flex-1 flex-col overflow-auto">
-            {activityId ? (
+            {currentActivityId ? (
               <ActivityPanel>
                 {isPending ? (
                   <ActivitySkeleton />
                 ) : error || !activity ? (
                   <ActivityError />
                 ) : (
-                  <React.Fragment key={activityId}>
+                  <React.Fragment key={currentActivityId}>
                     <ActivityOverview activity={activity} />
-                    <ActivityLogs activity={activity} />
+                    <ActivityLogs activity={activity} onActivitySelect={setCurrentActivityId} />
                   </React.Fragment>
                 )}
               </ActivityPanel>
