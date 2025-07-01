@@ -83,7 +83,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                 <Table isLoading={isLoading} loadingRow={<LogsTableSkeletonRow />} loadingRowsCount={8}>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-text-strong h-8 px-2 py-0">Logs</TableHead>
+                      <TableHead className="text-text-strong h-8 px-2 py-0">Requests</TableHead>
                       <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -115,7 +115,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
               {!isLoading && logsData.length === 0 && hasActiveFilters && (
                 <div className="flex flex-1 items-center justify-center">
                   <div className="text-center">
-                    <p className="text-foreground-600 mb-2">No logs found matching your filters</p>
+                    <p className="text-foreground-600 mb-2">No requests found matching your filters</p>
                     <button
                       onClick={clearFilters}
                       className="text-foreground-950 hover:text-foreground-600 text-sm font-medium underline"

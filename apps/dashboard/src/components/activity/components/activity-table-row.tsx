@@ -48,7 +48,7 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
             {activity.template?.name || 'Deleted workflow'}
           </span>
           <span className="text-foreground-400 text-[10px] leading-[14px]">
-            <div className="bg-bg-weak inline-block rounded-sm px-1.5">
+            <div className="bg-bg-weak font-code inline-block rounded-sm px-1.5">
               {activity.transactionId} •{' '}
               {getSubscriberDisplay(
                 activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
@@ -59,7 +59,7 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
       </TableCell>
 
       <TableCell className="flex flex-col p-1.5 text-right">
-        <span className="text-text-soft text-xs font-normal leading-normal">
+        <span className="text-text-soft font-code mb-0.5 text-xs font-normal leading-normal">
           {formatDateSimple(activity.createdAt)}
         </span>
         <div className="ml-auto gap-1 text-right">

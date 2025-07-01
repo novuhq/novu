@@ -19,8 +19,8 @@ export function ActivityFeed() {
 
   // Determine current tab based on URL
   const getCurrentTab = () => {
-    if (location.pathname.includes('/activity/logs')) {
-      return 'logs';
+    if (location.pathname.includes('/activity/requests')) {
+      return 'requests';
     }
 
     if (location.pathname.includes('/activity/runs')) {
@@ -43,7 +43,7 @@ export function ActivityFeed() {
 
     if (value === 'workflow-runs') {
       navigate(buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug }));
-    } else if (value === 'logs') {
+    } else if (value === 'requests') {
       navigate(buildRoute(ROUTES.ACTIVITY_LOGS, { environmentSlug: currentEnvironment.slug }));
     }
   };
@@ -71,15 +71,15 @@ export function ActivityFeed() {
               Workflow Runs
             </TabsTrigger>
             {isHttpLogsPageEnabled && (
-              <TabsTrigger value="logs" variant="regular" size="lg">
-                Logs
+              <TabsTrigger value="requests" variant="regular" size="lg">
+                Requests
               </TabsTrigger>
             )}
           </TabsList>
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-140px)]" />
           </TabsContent>
-          <TabsContent value="logs" className="h-[calc(100vh-140px)]">
+          <TabsContent value="requests" className="h-[calc(100vh-140px)]">
             <LogsTable />
           </TabsContent>
         </Tabs>

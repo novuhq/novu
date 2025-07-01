@@ -2,6 +2,9 @@ import { cn } from '@/utils/ui';
 import { STATUS_STYLES } from '../constants';
 import { IActivityJob, JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
+import { useEffect, useRef, useState } from 'react';
+import { StatusPreviewCard } from './status-preview-card';
 
 export interface StepIndicatorsProps {
   jobs: IActivityJob[];
@@ -9,6 +12,37 @@ export interface StepIndicatorsProps {
 }
 
 export function StepIndicators({ jobs, size = 'md' }: StepIndicatorsProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(true);
+    }, 200);
+  };
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      setIsOpen(false);
+    }, 150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   const visibleJobs = jobs.slice(0, 4);
   const remainingJobs = jobs.slice(4);
   const hasRemainingJobs = remainingJobs.length > 0;
@@ -25,31 +59,44 @@ export function StepIndicators({ jobs, size = 'md' }: StepIndicatorsProps) {
   };
 
   return (
-    <div className="flex items-center">
-      {visibleJobs.map((job) => (
-        <div
-          key={job._id}
-          className={cn(
-            '-ml-2 flex items-center justify-center rounded-full border first:ml-0',
-            sizeClasses[size],
-            STATUS_STYLES[job.status as keyof typeof STATUS_STYLES] ?? STATUS_STYLES.default
+    <Popover open={isOpen}>
+      <PopoverTrigger onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+        <div className="flex items-center">
+          {visibleJobs.map((job) => (
+            <div
+              key={job._id}
+              className={cn(
+                '-ml-2 flex items-center justify-center rounded-full border first:ml-0',
+                sizeClasses[size],
+                STATUS_STYLES[job.status as keyof typeof STATUS_STYLES] ?? STATUS_STYLES.default
+              )}
+            >
+              {getStepIcon(job.type, size)}
+            </div>
+          ))}
+          {hasRemainingJobs && (
+            <div
+              className={cn(
+                '-ml-2 flex items-center justify-center rounded-full px-1 text-xs font-medium',
+                remainingSizeClasses[size],
+                STATUS_STYLES[remainingJobsStatus]
+              )}
+            >
+              +{remainingJobs.length}
+            </div>
           )}
-        >
-          {getStepIcon(job.type, size)}
         </div>
-      ))}
-      {hasRemainingJobs && (
-        <div
-          className={cn(
-            '-ml-2 flex items-center justify-center rounded-full px-1 text-xs font-medium',
-            remainingSizeClasses[size],
-            STATUS_STYLES[remainingJobsStatus]
-          )}
-        >
-          +{remainingJobs.length}
-        </div>
-      )}
-    </div>
+      </PopoverTrigger>
+      <PopoverContent
+        className="w-64"
+        align="end"
+        sideOffset={5}
+        onMouseEnter={() => setIsOpen(true)}
+        onMouseLeave={handleMouseLeave}
+      >
+        <StatusPreviewCard jobs={jobs} />
+      </PopoverContent>
+    </Popover>
   );
 }
 
