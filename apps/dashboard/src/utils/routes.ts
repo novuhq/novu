@@ -52,6 +52,7 @@ export const ROUTES = {
   TOPICS_CREATE: '/env/:environmentSlug/topics/create',
   TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
   LAYOUTS: '/env/:environmentSlug/layouts',
+  LAYOUTS_CREATE: '/env/:environmentSlug/layouts/create',
   TRANSLATIONS: '/env/:environmentSlug/translations',
 } as const;
 

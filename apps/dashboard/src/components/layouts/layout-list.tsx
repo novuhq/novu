@@ -1,5 +1,6 @@
 import { HTMLAttributes } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 
 import { cn } from '@/utils/ui';
@@ -26,6 +27,8 @@ import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { Skeleton } from '../primitives/skeleton';
 import { DefaultPagination } from '../default-pagination';
+import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<LayoutsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -34,6 +37,13 @@ type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
 
 const LayoutListWrapper = (props: LayoutListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const { search } = useLocation();
+
+  const handleCreateLayout = () => {
+    navigate(`${buildRoute(ROUTES.LAYOUTS_CREATE, { environmentSlug: currentEnvironment?.slug ?? '' })}${search}`);
+  };
 
   return (
     <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
@@ -46,15 +56,13 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
           className="py-2.5"
         />
         <PermissionButton
-          permission={PermissionsEnum.WORKFLOW_WRITE}
+          permission={PermissionsEnum.LAYOUT_WRITE}
           mode="gradient"
           className="rounded-l-lg border-none px-1.5 py-2 text-white"
           variant="primary"
           size="xs"
           leadingIcon={RiAddCircleLine}
-          onClick={() => {
-            // TODO: Implement create layout drawer
-          }}
+          onClick={handleCreateLayout}
         >
           Create layout
         </PermissionButton>
