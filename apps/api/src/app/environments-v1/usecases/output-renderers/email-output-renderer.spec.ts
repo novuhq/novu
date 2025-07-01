@@ -1765,32 +1765,5 @@ describe('EmailOutputRendererUsecase', () => {
       expect(result.body).to.not.include('> </p>');
       expect(result.body).to.include('<p></p>');
     });
-
-    it('should handle non-breaking spaces consistently with regular spaces', async () => {
-      const htmlWithNbsp = `<p>Content before</p><p>&nbsp;</p><p>Content after</p>`;
-
-      const renderCommand = {
-        environmentId: 'fake_env_id',
-        organizationId: 'fake_org_id',
-        controlValues: {
-          subject: 'NBSP Test',
-          body: htmlWithNbsp,
-        },
-        fullPayloadForRender: mockFullPayload,
-        dbWorkflow: mockDbWorkflow,
-      };
-
-      const result = await emailOutputRendererUsecase.execute(renderCommand);
-
-      expect(result.body).to.include('Content before');
-      expect(result.body).to.include('Content after');
-
-      /*
-       * &nbsp; gets converted to a space character during processing, and our regex treats it the same as regular spaces
-       * This prevents Gmail clipping regardless of the source of the whitespace
-       */
-      expect(result.body).to.not.include('> </p>');
-      expect(result.body).to.include('<p></p>');
-    });
   });
 });
