@@ -157,9 +157,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     values: { to, payload: JSON.stringify(payload, null, 2) },
   });
 
-  const { handleSubmit, watch, setValue, formState } = form;
+  const { handleSubmit, watch, setValue } = form;
 
-  // Watch for payload changes and persist them (only when not from step editor)
   const watchedPayload = watch('payload');
   useEffect(() => {
     if (!initialPayload && watchedPayload) {
@@ -172,27 +171,11 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   }, [watchedPayload, initialPayload, savePersistedPayload]);
 
-  // Update form 'to' field when subscriber data changes
   useEffect(() => {
-    if (subscriberData && testData?.to?.properties) {
-      // Get current form values and merge with subscriber data
-      const currentToValue = form.getValues('to') || {};
-      const updatedToValue = { ...currentToValue };
-      
-      Object.keys(testData.to.properties).forEach((key) => {
-        if (key in subscriberData) {
-          const value = subscriberData[key as keyof typeof subscriberData];
-          // Only override if we have a valid value
-          if (value !== null && value !== undefined && value !== '') {
-            updatedToValue[key] = value;
-          }
-        }
-      });
-      
-      console.log('Setting form to value:', updatedToValue);
-      setValue('to', updatedToValue);
+    if (subscriberData) {
+      setValue('to', subscriberData);
     }
-  }, [subscriberData, testData?.to, setValue, form]);
+  }, [subscriberData, setValue, form]);
 
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
@@ -207,9 +190,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   );
 
   const onSubmit = async (data: TestWorkflowFormType) => {
-    console.log('Form submission data:', data);
-    console.log('Form errors:', formState.errors);
-    console.log('Form is valid:', formState.isValid);
     try {
       const {
         data: { transactionId: newTransactionId },
