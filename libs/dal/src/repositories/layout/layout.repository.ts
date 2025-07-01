@@ -1,6 +1,7 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { LayoutEntity, LayoutDBModel } from './layout.entity';
 import { Layout } from './layout.schema';
 import { EnvironmentId, OrderDirectionEnum, OrganizationId, LayoutId } from './types';
@@ -179,5 +180,67 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
     }
 
     return updatedEntity;
+  }
+
+  public async getV2List({
+    organizationId,
+    environmentId,
+    skip = 0,
+    limit = 10,
+    searchQuery,
+    orderBy = 'createdAt',
+    orderDirection = DirectionEnum.DESC,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    skip: number;
+    limit: number;
+    searchQuery?: string;
+    orderBy: string;
+    orderDirection: DirectionEnum;
+  }) {
+    const dbQuery: LayoutQuery = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+    };
+
+    if (searchQuery) {
+      dbQuery.$or = [
+        { name: { $regex: this.regExpEscape(searchQuery), $options: 'i' } },
+        { identifier: { $regex: this.regExpEscape(searchQuery), $options: 'i' } },
+      ];
+    }
+
+    const [layouts, totalCount] = await Promise.all([
+      this.paginate(dbQuery, {
+        limit,
+        skip,
+        orderBy,
+        orderDirection,
+      }),
+      this.count(dbQuery),
+    ]);
+
+    return {
+      data: layouts,
+      totalCount,
+    };
+  }
+
+  private async paginate(
+    query: LayoutQuery,
+    pagination: { limit: number; skip: number; orderBy: string; orderDirection: DirectionEnum }
+  ) {
+    const items = await this.MongooseModel.find({
+      ...query,
+    })
+      .sort({ [pagination.orderBy]: pagination.orderDirection === DirectionEnum.ASC ? 1 : -1 })
+      .skip(pagination.skip)
+      .limit(pagination.limit)
+      .lean();
+
+    return this.mapEntities(items);
   }
 }

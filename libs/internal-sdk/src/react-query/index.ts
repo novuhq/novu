@@ -27,6 +27,7 @@ export * from "./messagesDeleteByTransactionId.js";
 export * from "./messagesRetrieve.js";
 export * from "./notificationsList.js";
 export * from "./notificationsRetrieve.js";
+export * from "./retrieve.js";
 export * from "./subscribersCreate.js";
 export * from "./subscribersCreateBulk.js";
 export * from "./subscribersCredentialsAppend.js";

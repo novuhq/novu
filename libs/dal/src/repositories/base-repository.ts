@@ -535,6 +535,10 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       previous: prevCursor,
     };
   }
+
+  protected regExpEscape(literalString: string): string {
+    return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
+  }
 }
 
 interface IOptions {

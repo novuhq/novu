@@ -1,4 +1,5 @@
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
 
 import { MAILY_FIRST_CITIZEN_VARIABLE_KEY, MailyAttrsEnum, MailyContentTypeEnum } from './maily.types';
 
@@ -379,7 +380,18 @@ export const wrapMailyInLiquid = (content: string) => {
 
   return processMailyNodes({
     node: mailyJSONContent,
-    shouldProcessAttr: () => true,
+    shouldProcessAttr: ({ attrValue, attrKey, attrs }) => {
+      // Don't process button variable by Liquid if it's a translation key
+      if (
+        attrKey === MailyAttrsEnum.TEXT &&
+        attrs.isTextVariable === true &&
+        TRANSLATION_KEY_SINGLE_REGEX.test(attrValue)
+      ) {
+        return false;
+      }
+
+      return true;
+    },
     processAttr: ({ attrValue, attrs }) => {
       const { fallback, aliasFor } = attrs;
 

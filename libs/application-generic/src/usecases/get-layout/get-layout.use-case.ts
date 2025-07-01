@@ -10,19 +10,27 @@ export class GetLayoutUseCase {
   constructor(private layoutRepository: LayoutRepository) {}
 
   async execute(command: GetLayoutCommand): Promise<LayoutDto> {
-    const isInternalId = LayoutRepository.isInternalId(command.layoutIdOrInternalId);
-
     let layout: LayoutEntity;
-    if (isInternalId) {
+    if (typeof command.layoutIdOrInternalId === 'undefined') {
+      layout = await this.layoutRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        isDefault: true,
+        type: command.type,
+        origin: command.origin,
+      });
+    } else if (LayoutRepository.isInternalId(command.layoutIdOrInternalId)) {
       layout = await this.layoutRepository.findOne({
         _id: command.layoutIdOrInternalId,
         _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
         type: command.type,
         origin: command.origin,
       });
     } else {
       layout = await this.layoutRepository.findOne({
         _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
         identifier: command.layoutIdOrInternalId,
         type: command.type,
         origin: command.origin,
@@ -31,7 +39,9 @@ export class GetLayoutUseCase {
 
     if (!layout) {
       throw new NotFoundException(
-        `Layout not found for id ${command.layoutIdOrInternalId} in the environment ${command.environmentId}`
+        command.layoutIdOrInternalId
+          ? `Layout not found for id ${command.layoutIdOrInternalId} in the environment ${command.environmentId}`
+          : `Default layout not found in the environment ${command.environmentId}`
       );
     }
 
