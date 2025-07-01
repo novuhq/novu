@@ -13,7 +13,10 @@ import { EditableJsonViewer } from '@/components/workflow-editor/steps/shared/ed
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/preview-context.constants';
 import { cn } from '@/utils/ui';
-import { TestWorkflowFormType } from '../schema';
+
+type TestWorkflowFormType = {
+  payload: string; // This is the raw JSON string in the form
+};
 
 type TestWorkflowContentProps = {
   workflow?: WorkflowResponseDto;
