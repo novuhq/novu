@@ -42,7 +42,7 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
       <TableCell className="p-1.5">
         <div className="flex flex-col">
           <span className="text-foreground-950 text-label-xs flex items-center gap-1">
-            <div className="relative top-[2px] flex items-center justify-center gap-0.5">
+            <div className="relative flex items-center justify-center gap-0.5">
               <ActivityStatusBadge jobs={activity.jobs} />
             </div>
             {activity.template?.name || 'Deleted workflow'}
@@ -59,7 +59,7 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
       </TableCell>
 
       <TableCell className="flex flex-col p-1.5 text-right">
-        <span className="text-text-soft font-code mb-0.5 text-xs font-normal leading-normal">
+        <span className="text-text-soft font-code mb-0.5 text-[11px] font-normal leading-normal">
           {formatDateSimple(activity.createdAt)}
         </span>
         <div className="ml-auto gap-1 text-right">

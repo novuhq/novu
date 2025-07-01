@@ -88,9 +88,9 @@ export function StepIndicators({ jobs, size = 'md' }: StepIndicatorsProps) {
         </div>
       </PopoverTrigger>
       <PopoverContent
-        className="w-64"
+        className="w-fit p-0 shadow-lg"
         align="end"
-        sideOffset={5}
+        sideOffset={8}
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={handleMouseLeave}
       >
