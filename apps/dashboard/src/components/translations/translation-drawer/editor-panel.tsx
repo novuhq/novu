@@ -6,7 +6,7 @@ import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { formatTranslationDate, formatTranslationTime } from '../utils';
 import { EditorActions } from './editor-actions';
-import { TranslationResource } from './types';
+import { TranslationResource } from '@/components/translations/types';
 
 type JSONEditorProps = {
   content: string;
