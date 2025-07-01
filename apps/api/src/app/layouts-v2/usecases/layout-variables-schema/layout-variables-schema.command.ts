@@ -1,3 +1,3 @@
-import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { EnvironmentCommand } from '@novu/application-generic';
 
-export class LayoutVariablesSchemaCommand extends EnvironmentWithUserCommand {}
+export class LayoutVariablesSchemaCommand extends EnvironmentCommand {}

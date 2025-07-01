@@ -9,7 +9,7 @@ import {
 
 import { GenerateLayoutPreviewResponseDto } from '../../dtos/generate-layout-preview-response.dto';
 import { PreviewLayoutCommand } from './preview-layout.command';
-import { GetLayoutUseCase } from '../get-layout';
+import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
 import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
@@ -29,7 +29,14 @@ export class PreviewLayoutUsecase {
 
   @InstrumentUsecase()
   async execute(command: PreviewLayoutCommand): Promise<GenerateLayoutPreviewResponseDto> {
-    const layout = await this.getLayoutUseCase.execute(command);
+    const layout = await this.getLayoutUseCase.execute(
+      GetLayoutCommand.create({
+        layoutIdOrInternalId: command.layoutIdOrInternalId,
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
+        userId: command.user._id,
+      })
+    );
 
     try {
       const controlValues = command.layoutPreviewRequestDto.controlValues || layout.controls.values || {};

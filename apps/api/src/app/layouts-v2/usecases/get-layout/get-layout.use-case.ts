@@ -33,7 +33,7 @@ export class GetLayoutUseCase {
       })
     );
 
-    this.analyticsService.track('Get layout - [Layouts]', command.userId, {
+    this.analyticsService.track('Get layout - [Layouts]', command.userId ?? command.environmentId, {
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       layoutId: layout._id!,
@@ -56,7 +56,6 @@ export class GetLayoutUseCase {
       LayoutVariablesSchemaCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        userId: command.userId,
       })
     );
 
