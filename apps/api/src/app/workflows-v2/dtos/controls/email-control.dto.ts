@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsBoolean, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, MinLength, ValidateIf } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class EmailControlDto extends SkipControlDto {
@@ -28,4 +28,15 @@ export class EmailControlDto extends SkipControlDto {
   @IsBoolean()
   @IsOptional()
   disableOutputSanitization?: boolean = false;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Layout ID to use for the email. Null means no layout, undefined means default layout.',
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateIf((obj) => obj.layoutId !== null)
+  @IsString()
+  @MinLength(1)
+  layoutId?: string | null;
 }

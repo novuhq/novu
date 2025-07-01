@@ -1,0 +1,22 @@
+<html>
+    <head>
+        <title>Operation Logs</title>
+        <style>
+            {{ template "style" }}
+        </style>
+    </head>
+    <body>
+        <h1>// Speakeasy</h1>
+        <h2>Operation Logs</h2>
+        <table>
+            <tr><th>Operation</th><th>Request</th><th>Calls</th></tr>
+            {{ range $idx, $o := .Operations }}
+            <tr class="{{ if (mod $idx 2) }}even{{ else }}odd{{ end }}">
+                <td><a href="{{ .LogURL }}">{{ .ID }}</a></td>
+                <td>{{ .Method }} {{ .Path }}</td>
+                <td>{{ .CallCount }}</td>
+            </tr>
+            {{ end }}
+        </table>
+    </body>
+</html>
