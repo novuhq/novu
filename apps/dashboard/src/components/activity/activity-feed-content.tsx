@@ -123,7 +123,7 @@ export function ActivityFeedContent({
       />
       <div className={`relative flex ${contentHeight}`}>
         <ResizablePanelGroup direction="horizontal" className="gap-2">
-          <ResizablePanel defaultSize={70} minSize={50}>
+          <ResizablePanel defaultSize={50} minSize={35}>
             <ActivityTable
               selectedActivityId={activityItemId}
               onActivitySelect={handleActivitySelect}

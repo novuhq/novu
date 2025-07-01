@@ -14,8 +14,7 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
 import { ArrowPagination } from './components/arrow-pagination';
-import { ActivityStatusBadge } from './components/status-badge';
-import { StepIndicators } from './components/step-indicators';
+import { ActivityTableRow } from './components/activity-table-row';
 
 export interface ActivityTableProps {
   selectedActivityId: string | null;
@@ -102,40 +101,12 @@ export function ActivityTable({
             </TableHeader>
             <TableBody>
               {activities.map((activity) => (
-                <TableRow
+                <ActivityTableRow
                   key={activity._id}
-                  className={cn(
-                    'relative cursor-pointer hover:bg-neutral-50',
-                    selectedActivityId === activity._id && 'bg-neutral-50'
-                  )}
-                  onClick={() => onActivitySelect(activity._id)}
-                >
-                  <TableCell className="p-1.5">
-                    <div className="flex flex-col">
-                      <span className="text-foreground-950 text-label-xs flex items-center gap-1">
-                        <div className="relative top-[2px] flex items-center justify-center gap-0.5">
-                          <ActivityStatusBadge jobs={activity.jobs} />
-                        </div>
-                        {activity.template?.name || 'Deleted workflow'}
-                      </span>
-                      <span className="text-foreground-400 ml-[5px] text-[10px] leading-[14px]">
-                        {activity.transactionId} •{' '}
-                        {getSubscriberDisplay(
-                          activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
-                        )}
-                      </span>
-                    </div>
-                  </TableCell>
-
-                  <TableCell className="flex flex-col p-1.5 text-right">
-                    <span className="text-text-soft text-xs font-normal leading-normal">
-                      {formatDateSimple(activity.createdAt)}
-                    </span>
-                    <div className="ml-auto gap-1 text-right">
-                      <StepIndicators jobs={activity.jobs} size="sm" />
-                    </div>
-                  </TableCell>
-                </TableRow>
+                  activity={activity}
+                  isSelected={selectedActivityId === activity._id}
+                  onClick={onActivitySelect}
+                />
               ))}
             </TableBody>
           </Table>
@@ -181,14 +152,4 @@ function SkeletonRow() {
       </TableCell>
     </TableRow>
   );
-}
-
-function getSubscriberDisplay(subscriber?: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>) {
-  if (!subscriber) return '';
-
-  if (subscriber.firstName || subscriber.lastName) {
-    return `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
-  }
-
-  return '';
 }

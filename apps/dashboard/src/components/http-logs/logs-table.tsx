@@ -100,6 +100,15 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                     })}
                   </TableBody>
                 </Table>
+                {(paginationState.hasNext || paginationState.hasPrevious) && (
+                  <CursorPagination
+                    hasNext={paginationState.hasNext}
+                    hasPrevious={paginationState.hasPrevious}
+                    onNext={handleNext}
+                    onPrevious={handlePrevious}
+                    onFirst={handleFirst}
+                  />
+                )}
               </div>
 
               {!isLoading && logsData.length === 0 && hasActiveFilters && (
@@ -113,18 +122,6 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                       Clear filters
                     </button>
                   </div>
-                </div>
-              )}
-
-              {(paginationState.hasNext || paginationState.hasPrevious) && (
-                <div className="border-t border-neutral-200">
-                  <CursorPagination
-                    hasNext={paginationState.hasNext}
-                    hasPrevious={paginationState.hasPrevious}
-                    onNext={handleNext}
-                    onPrevious={handlePrevious}
-                    onFirst={handleFirst}
-                  />
                 </div>
               )}
             </div>
