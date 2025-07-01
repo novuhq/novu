@@ -327,8 +327,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         workflowId,
         locale,
       });
+      const escapedContent = this.escapeJsonStringValues(translatedContent);
 
-      return JSON.parse(translatedContent);
+      return JSON.parse(escapedContent);
     } catch (error) {
       this.logger.error('Maily translation processing failed, falling back to original content', error);
 
@@ -367,6 +368,14 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return await this.liquidEngine.parseAndRender(text, variables);
     }
+  }
+
+  private escapeJsonStringValues(jsonString: string): string {
+    // Escape literal control characters that break JSON parsing
+    return jsonString
+      .replace(/\n/g, '\\n') // newline
+      .replace(/\r/g, '\\r') // carriage return
+      .replace(/\t/g, '\\t'); // tab
   }
 
   private async parseMailyContentByLiquid(
