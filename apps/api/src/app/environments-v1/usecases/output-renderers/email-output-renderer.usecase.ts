@@ -43,7 +43,9 @@ import { removeBrandingFromHtml } from '../../../shared/utils/html';
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
-  dbWorkflow: NotificationTemplateEntity;
+  environmentId: string;
+  organizationId: string;
+  workflowId?: string;
   locale?: string;
 }
 
@@ -95,8 +97,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       };
     }
 
-    const { fullPayloadForRender, dbWorkflow, locale } = renderCommand;
-    const { _environmentId: environmentId, _organizationId: organizationId } = renderCommand.dbWorkflow;
+    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale } = renderCommand;
 
     const isLayoutsPageActive = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
@@ -109,7 +110,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const translatedSubject = await this.processSubjectTranslations(
       controlSubject as string,
       fullPayloadForRender,
-      dbWorkflow,
+      environmentId,
+      organizationId,
+      workflowId,
       locale
     );
 
@@ -120,20 +123,24 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         body,
         layoutId,
         payload: fullPayloadForRender,
-        dbWorkflow,
+        environmentId,
+        organizationId,
+        workflowId,
         locale,
       });
     } else {
       renderedHtml = await this.processBodyContent({
         body,
         payload: fullPayloadForRender,
-        dbWorkflow,
+        environmentId,
+        organizationId,
+        workflowId,
         locale,
       });
     }
 
     // Step 3: Add Novu branding
-    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, dbWorkflow._organizationId);
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
@@ -150,16 +157,19 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     body,
     layoutId,
     payload,
-    dbWorkflow,
+    environmentId,
+    organizationId,
+    workflowId,
     locale,
   }: {
     body: string;
-    layoutId?: string;
+    layoutId?: string | null;
     payload: FullPayloadForRender;
-    dbWorkflow: NotificationTemplateEntity;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
     locale?: string;
   }): Promise<string> {
-    const { _environmentId: environmentId, _organizationId: organizationId } = dbWorkflow;
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
     if (layoutId) {
@@ -193,7 +203,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const stepBodyHtml = await this.processBodyContent({
       body,
       payload,
-      dbWorkflow,
+      environmentId,
+      organizationId,
+      workflowId,
       locale,
       noHtmlWrappingTags: !!layoutControlsEntity,
     });
@@ -206,12 +218,14 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
 
     return this.processBodyContent({
-      body: layoutControlValues.email?.content ?? '',
+      body: layoutControlValues.email?.body ?? '',
       payload: {
         ...payload,
         [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),
       },
-      dbWorkflow,
+      environmentId,
+      organizationId,
+      workflowId,
       locale,
     });
   }
@@ -219,13 +233,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   private async processBodyContent({
     body,
     payload,
-    dbWorkflow,
+    environmentId,
+    organizationId,
+    workflowId,
     locale,
     noHtmlWrappingTags,
   }: {
     body: string;
     payload: FullPayloadForRender;
-    dbWorkflow: NotificationTemplateEntity;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
     locale?: string;
     noHtmlWrappingTags?: boolean;
   }): Promise<string> {
@@ -236,40 +254,74 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, escapedPayloadForJson);
 
       // Apply translations to the liquid-processed Maily JSON before rendering
-      const translatedMaily = await this.processMailyTranslations(
-        parsedMaily,
-        escapedPayloadForJson,
-        dbWorkflow,
-        locale
-      );
+      const translatedMaily = await this.processMailyTranslations({
+        mailyContent: parsedMaily,
+        variables: escapedPayloadForJson,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
 
       const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
 
       return await mailyRender(strippedMaily, { noHtmlWrappingTags });
     } else {
       // For simple text body, apply translations directly
-      return await this.processTextTranslations(body, payload, dbWorkflow, locale);
+      return await this.processTextTranslations({
+        text: body,
+        variables: payload,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
     }
   }
 
   private async processSubjectTranslations(
     subject: string,
     variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
+    environmentId: string,
+    organizationId: string,
+    workflowId?: string,
     locale?: string
   ): Promise<string> {
-    return this.processStringTranslations(subject, variables, dbWorkflow, locale);
+    return this.processStringTranslations({
+      content: subject,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+    });
   }
 
-  private async processMailyTranslations(
-    mailyContent: MailyJSONContent,
-    variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): Promise<MailyJSONContent> {
+  private async processMailyTranslations({
+    mailyContent,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    mailyContent: MailyJSONContent;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<MailyJSONContent> {
     try {
       const contentString = JSON.stringify(mailyContent);
-      const translatedContent = await this.processStringTranslations(contentString, variables, dbWorkflow, locale);
+      const translatedContent = await this.processStringTranslations({
+        content: contentString,
+        variables,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
 
       return JSON.parse(translatedContent);
     } catch (error) {
@@ -279,14 +331,30 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     }
   }
 
-  private async processTextTranslations(
-    text: string,
-    variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): Promise<string> {
+  private async processTextTranslations({
+    text,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    text: string;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<string> {
     try {
-      const translatedText = await this.processStringTranslations(text, variables, dbWorkflow, locale);
+      const translatedText = await this.processStringTranslations({
+        content: text,
+        variables,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
 
       return await this.liquidEngine.parseAndRender(translatedText, variables);
     } catch (error) {

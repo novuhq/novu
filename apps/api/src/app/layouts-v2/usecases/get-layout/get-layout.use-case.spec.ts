@@ -51,7 +51,7 @@ describe('GetLayoutUseCase', () => {
     level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     controls: {
       email: {
-        content: '<html><body>{{content}}</body></html>',
+        body: '<html><body>{{content}}</body></html>',
       },
     },
   };
@@ -59,7 +59,7 @@ describe('GetLayoutUseCase', () => {
   const mockVariablesSchema = {
     type: 'object',
     properties: {
-      content: {
+      body: {
         type: 'string',
       },
     },

@@ -8,7 +8,7 @@ import {
   UseMutationResult,
 } from "@tanstack/react-query";
 import { NovuCore } from "../core.js";
-import { layoutsLayoutsControllerDuplicate } from "../funcs/layoutsLayoutsControllerDuplicate.js";
+import { layoutsDuplicate } from "../funcs/layoutsDuplicate.js";
 import { combineSignals } from "../lib/primitives.js";
 import { RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
@@ -17,14 +17,14 @@ import { unwrapAsync } from "../types/fp.js";
 import { useNovuContext } from "./_context.js";
 import { MutationHookOptions } from "./_types.js";
 
-export type LayoutsLayoutsControllerDuplicateMutationVariables = {
+export type LayoutsDuplicateMutationVariables = {
   duplicateLayoutDto: components.DuplicateLayoutDto;
   layoutId: string;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
 
-export type LayoutsLayoutsControllerDuplicateMutationData =
+export type LayoutsDuplicateMutationData =
   operations.LayoutsControllerDuplicateResponse;
 
 /**
@@ -33,45 +33,45 @@ export type LayoutsLayoutsControllerDuplicateMutationData =
  * @remarks
  * Duplicates a layout by its unique identifier **layoutId**. This will create a new layout with the content of the original layout.
  */
-export function useLayoutsLayoutsControllerDuplicateMutation(
+export function useLayoutsDuplicateMutation(
   options?: MutationHookOptions<
-    LayoutsLayoutsControllerDuplicateMutationData,
+    LayoutsDuplicateMutationData,
     Error,
-    LayoutsLayoutsControllerDuplicateMutationVariables
+    LayoutsDuplicateMutationVariables
   >,
 ): UseMutationResult<
-  LayoutsLayoutsControllerDuplicateMutationData,
+  LayoutsDuplicateMutationData,
   Error,
-  LayoutsLayoutsControllerDuplicateMutationVariables
+  LayoutsDuplicateMutationVariables
 > {
   const client = useNovuContext();
   return useMutation({
-    ...buildLayoutsLayoutsControllerDuplicateMutation(client, options),
+    ...buildLayoutsDuplicateMutation(client, options),
     ...options,
   });
 }
 
-export function mutationKeyLayoutsLayoutsControllerDuplicate(): MutationKey {
-  return ["@novu/api", "Layouts", "layoutsControllerDuplicate"];
+export function mutationKeyLayoutsDuplicate(): MutationKey {
+  return ["@novu/api", "Layouts", "duplicate"];
 }
 
-export function buildLayoutsLayoutsControllerDuplicateMutation(
+export function buildLayoutsDuplicateMutation(
   client$: NovuCore,
   hookOptions?: RequestOptions,
 ): {
   mutationKey: MutationKey;
   mutationFn: (
-    variables: LayoutsLayoutsControllerDuplicateMutationVariables,
-  ) => Promise<LayoutsLayoutsControllerDuplicateMutationData>;
+    variables: LayoutsDuplicateMutationVariables,
+  ) => Promise<LayoutsDuplicateMutationData>;
 } {
   return {
-    mutationKey: mutationKeyLayoutsLayoutsControllerDuplicate(),
-    mutationFn: function layoutsLayoutsControllerDuplicateMutationFn({
+    mutationKey: mutationKeyLayoutsDuplicate(),
+    mutationFn: function layoutsDuplicateMutationFn({
       duplicateLayoutDto,
       layoutId,
       idempotencyKey,
       options,
-    }): Promise<LayoutsLayoutsControllerDuplicateMutationData> {
+    }): Promise<LayoutsDuplicateMutationData> {
       const mergedOptions = {
         ...hookOptions,
         ...options,
@@ -84,7 +84,7 @@ export function buildLayoutsLayoutsControllerDuplicateMutation(
           ),
         },
       };
-      return unwrapAsync(layoutsLayoutsControllerDuplicate(
+      return unwrapAsync(layoutsDuplicate(
         client$,
         duplicateLayoutDto,
         layoutId,

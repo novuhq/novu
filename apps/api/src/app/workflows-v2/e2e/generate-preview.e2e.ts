@@ -23,7 +23,7 @@ import { EmailControlType } from '@novu/application-generic';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { buildWorkflow } from '../workflow.controller.e2e';
 import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
-import { DEFAULT_ARRAY_ELEMENTS } from '../usecases/create-variables-object/create-variables-object.usecase';
+import { DEFAULT_ARRAY_ELEMENTS } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 
 const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
@@ -908,6 +908,49 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       },
       previewPayloadExample: {},
     });
+  });
+
+  it('should generate preview for email step with subscriber variables', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      source: WorkflowCreationSourceEnum.Editor,
+      name: 'Email Test Workflow',
+      workflowId: `email-test-workflow-${randomUUID()}`,
+      description: 'This is a test workflow',
+      active: true,
+      steps: [
+        {
+          name: 'Email Test Step',
+          type: StepTypeEnum.Email,
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Hello, {{subscriber.firstName}}!',
+            disableOutputSanitization: false,
+          },
+        },
+      ],
+    };
+    const { result: workflow } = await novuClient.workflows.create(createWorkflowDto);
+    const stepId = workflow.steps[0].id;
+    const controlValues = {
+      subject: 'Test Email Subject',
+      body: 'Hello, {{subscriber.firstName}}!',
+      disableOutputSanitization: false,
+    };
+    const previewPayload: PreviewPayloadDto = {
+      subscriber: {
+        firstName: 'John',
+      },
+    };
+
+    const { result } = await novuClient.workflows.steps.generatePreview({
+      workflowId: workflow.id,
+      stepId,
+      generatePreviewRequestDto: { controlValues, previewPayload },
+    });
+
+    expect(result.result.preview.subject).to.contain('Test Email Subject');
+    expect(result.result.preview.body).to.contain('Hello, John!');
   });
 
   it('should generate preview for the email step with digest variables', async () => {

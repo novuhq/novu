@@ -31,12 +31,12 @@ import {
   UpsertWorkflowUseCase,
 } from './usecases';
 import { PatchWorkflowUsecase } from './usecases/patch-workflow';
-import { CreateVariablesObject } from './usecases/create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObject } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from './usecases/build-step-issues/build-step-issues.usecase';
 import { WorkflowController } from './workflow.controller';
 import { DuplicateWorkflowUseCase } from './usecases/duplicate-workflow/duplicate-workflow.usecase';
 import { WebhooksModule } from '../webhooks/webhooks.module';
-import { ControlValueSanitizerService } from './usecases/preview/services/control-value-sanitizer.service';
+import { ControlValueSanitizerService } from '../shared/services/control-value-sanitizer.service';
 import { PayloadMergerService } from './usecases/preview/services/payload-merger.service';
 import { SchemaBuilderService } from './usecases/preview/services/schema-builder.service';
 import { PreviewPayloadProcessorService } from './usecases/preview/services/preview-payload-processor.service';

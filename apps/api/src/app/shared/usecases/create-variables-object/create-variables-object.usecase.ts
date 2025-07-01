@@ -1,15 +1,15 @@
 import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
-import { ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { FeatureFlagsService, Instrument, InstrumentUsecase, GetWorkflowByIdsUseCase } from '@novu/application-generic';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 
-import { collectKeys, keysToObject } from '../../util/utils';
-import { buildVariables } from '../../util/build-variables';
+import { collectKeys, keysToObject } from '../../../workflows-v2/util/utils';
+import { buildVariables } from '../../../workflows-v2/util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
-import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
-import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
-import { JsonSchemaMock } from '../../util/json-schema-mock';
+import { MailyAttrsEnum } from '../../helpers/maily.types';
+import { isStringifiedMailyJSONContent } from '../../helpers/maily-utils';
+import { JsonSchemaMock } from '../../../workflows-v2/util/json-schema-mock';
+import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 
 export type ArrayVariable = {
   path: string;
@@ -18,15 +18,11 @@ export type ArrayVariable = {
 
 export const DEFAULT_ARRAY_ELEMENTS = 3;
 /**
- * Extracts all the variables used in the step control values.
- * Then it creates the object representation of those variables.
+ * Creates the object representation of variables from the values.
  */
 @Injectable()
 export class CreateVariablesObject {
-  constructor(
-    private readonly controlValuesRepository: ControlValuesRepository,
-    private readonly featureFlagService: FeatureFlagsService
-  ) {}
+  constructor(private readonly featureFlagService: FeatureFlagsService) {}
 
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
@@ -38,11 +34,13 @@ export class CreateVariablesObject {
       defaultValue: false,
     });
 
-    const controlValues = await this.getControlValues(command);
-
-    const variables = this.extractAllVariables(controlValues, isHtmlEditorEnabled);
-    const arrayVariables = this.extractArrayVariables(controlValues);
-    const showIfVariables = this.extractMailyAttribute(controlValues, MailyAttrsEnum.SHOW_IF_KEY);
+    const variables = this.extractAllVariables({
+      controlValues: command.controlValues,
+      isHtmlEditorEnabled,
+      variableSchema: command.variableSchema,
+    });
+    const arrayVariables = this.extractArrayVariables(command.controlValues);
+    const showIfVariables = this.extractMailyAttribute(command.controlValues, MailyAttrsEnum.SHOW_IF_KEY);
 
     const variablesObject = keysToObject(variables, arrayVariables, showIfVariables);
 
@@ -171,49 +169,28 @@ export class CreateVariablesObject {
     return _.merge(obj, val);
   }
 
-  private async getControlValues(command: CreateVariablesObjectCommand) {
-    if (command.controlValues) {
-      return [command.controlValues].flat().flatMap((obj) => Object.values(obj));
-    }
-
-    if (command.workflowId) {
-      const controls = await this.controlValuesRepository.find(
-        {
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          _workflowId: command.workflowId,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
-          controls: { $ne: null },
-        },
-        {
-          controls: 1,
-          _id: 0,
-        }
-      );
-
-      return controls
-        .map((item) => item.controls)
-        .flat()
-        .flatMap((obj) => Object.values(obj));
-    }
-
-    return [];
-  }
-
   /**
    * Extracts all variables from control values by parsing handlebars syntax {{variable}}.
    * Removes duplicates from the final result.
    *
    * @example
-   * controlValues = [ "John {{name}}", "Address {{address}} {{address}}", "nothing", 123, true ]
+   * values = [ "John {{name}}", "Address {{address}} {{address}}", "nothing", 123, true ]
    * returns = [ "name", "address" ]
    */
   @Instrument()
-  private extractAllVariables(controlValues: unknown[], isHtmlEditorEnabled: boolean): string[] {
+  private extractAllVariables({
+    controlValues,
+    isHtmlEditorEnabled,
+    variableSchema,
+  }: {
+    controlValues: unknown[];
+    isHtmlEditorEnabled: boolean;
+    variableSchema?: JSONSchemaDto;
+  }): string[] {
     const variables = controlValues.flatMap((value) => {
       const templateVariables = buildVariables({
         useNewLiquidParser: isHtmlEditorEnabled,
-        variableSchema: undefined,
+        variableSchema,
         controlValue: value,
       });
 

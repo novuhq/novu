@@ -4,10 +4,11 @@ import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { JSONSchemaEntity } from '@novu/dal';
 import { defaultOptions } from './shared';
 
+// email layout schema is a subset of the email control schema
 const layoutZodSchema = z.object({
   email: z
     .object({
-      content: z.string().min(1),
+      body: z.string().min(1),
       editorType: z.enum(['block', 'html']).optional().default('block'),
     })
     .optional(),
@@ -21,7 +22,7 @@ export const layoutUiSchema: UiSchema = {
     email: {
       component: UiComponentEnum.LAYOUT_EMAIL,
       properties: {
-        content: {
+        body: {
           component: UiComponentEnum.EMAIL_BODY,
           placeholder: '',
         },

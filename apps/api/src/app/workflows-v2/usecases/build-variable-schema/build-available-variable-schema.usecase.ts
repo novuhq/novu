@@ -1,21 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { JsonSchemaTypeEnum, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { FeatureFlagsService, Instrument } from '@novu/application-generic';
+import { Instrument } from '@novu/application-generic';
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { buildSubscriberSchema, buildVariablesSchema } from '../../../shared/utils/create-schema';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
-  constructor(
-    private readonly createVariablesObject: CreateVariablesObject,
-    private readonly featureFlagService: FeatureFlagsService
-  ) {}
+  constructor(private readonly createVariablesObject: CreateVariablesObject) {}
 
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId } = command;
@@ -28,8 +25,7 @@ export class BuildVariableSchemaUsecase {
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
-        workflowId: workflow?._id,
-        ...(command.optimisticControlValues ? { controlValues: command.optimisticControlValues } : {}),
+        controlValues: Object.values(command.optimisticControlValues || {}),
       })
     );
 

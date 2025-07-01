@@ -3,22 +3,22 @@ import _ from 'lodash';
 import get from 'lodash/get';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { dashboardSanitizeControlValues, PinoLogger } from '@novu/application-generic';
-import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
-import { StepResponseDto } from '../../../dtos';
-import { JSONSchemaDto } from '../../../../shared/dtos/json-schema.dto';
-import { buildLiquidParser } from '../../../util/template-parser/liquid-engine';
-import type { Variable } from '../../../util/template-parser/types';
-import { buildVariables } from '../../../util/build-variables';
+import { ResourceOriginEnum } from '@novu/shared';
 import {
-  isStringifiedMailyJSONContent,
-  isObjectMailyJSONContent,
-  replaceMailyVariables,
-} from '../../../../shared/helpers/maily-utils';
-import { previewControlValueDefault } from '../preview.constants';
-import { replaceAll } from '../utils/variable-helpers';
-import { PreviewTemplateData, ControlValueProcessingResult } from '../preview.types';
+  dashboardSanitizeControlValues,
+  layoutControlSchema,
+  PinoLogger,
+  SanitizationType,
+} from '@novu/application-generic';
+import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
+import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { buildLiquidParser } from '../../workflows-v2/util/template-parser/liquid-engine';
+import type { Variable } from '../../workflows-v2/util/template-parser/types';
+import { buildVariables } from '../../workflows-v2/util/build-variables';
+import { isStringifiedMailyJSONContent, isObjectMailyJSONContent, replaceMailyVariables } from '../helpers/maily-utils';
+import { previewControlValueDefault } from '../../workflows-v2/usecases/preview/preview.constants';
+import { replaceAll } from '../../workflows-v2/usecases/preview/utils/variable-helpers';
+import { PreviewTemplateData, ControlValueProcessingResult } from '../../workflows-v2/usecases/preview/preview.types';
 
 @Injectable()
 export class ControlValueSanitizerService {
@@ -26,15 +26,15 @@ export class ControlValueSanitizerService {
 
   sanitizeControlsForPreview(
     initialControlValues: Record<string, unknown>,
-    stepData: StepResponseDto,
-    workflowOrigin: ResourceOriginEnum
+    type: SanitizationType,
+    resourceOrigin: ResourceOriginEnum
   ): Record<string, unknown> {
-    if (workflowOrigin !== ResourceOriginEnum.NOVU_CLOUD) {
+    if (resourceOrigin !== ResourceOriginEnum.NOVU_CLOUD) {
       return initialControlValues;
     }
 
-    const sanitizedValues = dashboardSanitizeControlValues(this.logger, initialControlValues, stepData.type);
-    const sanitizedByOutputSchema = this.sanitizeControlValuesByOutputSchema(sanitizedValues || {}, stepData.type);
+    const sanitizedValues = dashboardSanitizeControlValues(this.logger, initialControlValues, type);
+    const sanitizedByOutputSchema = this.sanitizeControlValuesByOutputSchema(sanitizedValues || {}, type);
 
     if (!sanitizedByOutputSchema) {
       throw new Error(
@@ -94,9 +94,12 @@ export class ControlValueSanitizerService {
 
   private sanitizeControlValuesByOutputSchema(
     controlValues: Record<string, unknown>,
-    type: StepTypeEnum
+    type: SanitizationType
   ): Record<string, unknown> {
-    const outputSchema = channelStepSchemas[type]?.output || actionStepSchemas[type]?.output;
+    let outputSchema = channelStepSchemas[type]?.output || actionStepSchemas[type]?.output;
+    if (type === 'layout') {
+      outputSchema = layoutControlSchema;
+    }
 
     if (!outputSchema || !controlValues) {
       return controlValues;

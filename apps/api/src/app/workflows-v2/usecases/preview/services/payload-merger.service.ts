@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import _ from 'lodash';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
+import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum, UserSessionData } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { mergeCommonObjectKeys } from '../../../util/utils';
-import { PreviewCommand } from '../preview.command';
 import { MockDataGeneratorService } from './mock-data-generator.service';
 import { BuildStepDataUsecase } from '../../build-step-data';
 
@@ -22,52 +21,75 @@ export class PayloadMergerService {
    * Merges workflow payload schema with user-provided payload, handling feature flags
    * for schema-based generation vs legacy merging strategies.
    */
-  async mergePayloadExample(
-    workflow: NotificationTemplateEntity,
-    payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayloadDto | undefined,
-    command: PreviewCommand
-  ): Promise<Record<string, unknown>> {
+  async mergePayloadExample({
+    workflow,
+    payloadExample,
+    userPayloadExample,
+    stepIdOrInternalId,
+    user,
+  }: {
+    workflow?: NotificationTemplateEntity;
+    payloadExample: Record<string, unknown>;
+    userPayloadExample: PreviewPayloadDto | undefined;
+    stepIdOrInternalId?: string;
+    user: UserSessionData;
+  }): Promise<Record<string, unknown>> {
     const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
       defaultValue: false,
-      organization: { _id: workflow._organizationId },
-      environment: { _id: workflow._environmentId },
+      organization: { _id: user.organizationId },
+      environment: { _id: user.environmentId },
     });
 
     const isV2TemplateEditorEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
       defaultValue: false,
-      organization: { _id: workflow._organizationId },
-      environment: { _id: workflow._environmentId },
+      organization: { _id: user.organizationId },
+      environment: { _id: user.environmentId },
     });
 
     const shouldUsePayloadSchema =
-      workflow.origin === ResourceOriginEnum.EXTERNAL ||
-      (isPayloadSchemaEnabled && workflow.origin === ResourceOriginEnum.NOVU_CLOUD);
+      workflow?.origin === ResourceOriginEnum.EXTERNAL ||
+      (isPayloadSchemaEnabled && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD);
 
-    if (shouldUsePayloadSchema && workflow.payloadSchema) {
-      return this.mergeWithPayloadSchema(
+    if (shouldUsePayloadSchema && workflow?.payloadSchema) {
+      return this.mergeWithPayloadSchema({
         workflow,
         payloadExample,
         userPayloadExample,
-        command,
+        stepIdOrInternalId,
+        user,
         isPayloadSchemaEnabled,
-        isV2TemplateEditorEnabled
-      );
+        isV2TemplateEditorEnabled,
+      });
     }
 
-    return this.mergeWithoutPayloadSchema(payloadExample, userPayloadExample, workflow, command);
+    return this.mergeWithoutPayloadSchema({
+      payloadExample,
+      userPayloadExample,
+      workflow,
+      stepIdOrInternalId,
+      user,
+    });
   }
 
-  private async mergeWithPayloadSchema(
-    workflow: NotificationTemplateEntity,
-    payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayloadDto | undefined,
-    command: PreviewCommand,
-    isPayloadSchemaEnabled: boolean,
-    isV2TemplateEditorEnabled: boolean
-  ): Promise<Record<string, unknown>> {
+  private async mergeWithPayloadSchema({
+    workflow,
+    payloadExample,
+    userPayloadExample,
+    stepIdOrInternalId,
+    user,
+    isPayloadSchemaEnabled,
+    isV2TemplateEditorEnabled,
+  }: {
+    workflow: NotificationTemplateEntity;
+    payloadExample: Record<string, unknown>;
+    userPayloadExample: PreviewPayloadDto | undefined;
+    stepIdOrInternalId?: string;
+    user: UserSessionData;
+    isPayloadSchemaEnabled: boolean;
+    isV2TemplateEditorEnabled: boolean;
+  }): Promise<Record<string, unknown>> {
     let schemaBasedPayloadExample: Record<string, unknown>;
 
     if (isPayloadSchemaEnabled) {
@@ -133,41 +155,55 @@ export class PayloadMergerService {
 
     mergedPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
 
-    /*
-     * Preserve steps from payloadExample (which contains correctly generated digest events)
-     * and merge with user-provided steps and mock data for missing steps
-     */
-    const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
-    const generatedStepsObject = await this.createFullStepsObject(workflow, command, userPayloadExample);
+    if (workflow && stepIdOrInternalId) {
+      /*
+       * Preserve steps from payloadExample (which contains correctly generated digest events)
+       * and merge with user-provided steps and mock data for missing steps
+       */
+      const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
+      const generatedStepsObject = await this.createFullStepsObject({
+        workflow,
+        stepIdOrInternalId,
+        user,
+        userPayloadExample,
+      });
 
-    /*
-     * Merge with priority: user steps > payloadExample steps > generated mock steps
-     * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
-     */
-    mergedPayload.steps = _.mergeWith(
-      {},
-      generatedStepsObject,
-      stepsFromPayloadExample,
-      (userPayloadExample?.steps as Record<string, unknown>) || {},
-      (objValue, srcValue) => {
-        // If source value is provided by user, always use it (even if it's an empty object)
-        if (srcValue !== undefined) {
-          return srcValue;
+      /*
+       * Merge with priority: user steps > payloadExample steps > generated mock steps
+       * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
+       */
+      mergedPayload.steps = _.mergeWith(
+        {},
+        generatedStepsObject,
+        stepsFromPayloadExample,
+        (userPayloadExample?.steps as Record<string, unknown>) || {},
+        (objValue, srcValue) => {
+          // If source value is provided by user, always use it (even if it's an empty object)
+          if (srcValue !== undefined) {
+            return srcValue;
+          }
+
+          return undefined; // Let lodash handle the merge
         }
-
-        return undefined; // Let lodash handle the merge
-      }
-    );
+      );
+    }
 
     return mergedPayload;
   }
 
-  private async mergeWithoutPayloadSchema(
-    payloadExample: Record<string, unknown>,
-    userPayloadExample: PreviewPayloadDto | undefined,
-    workflow: NotificationTemplateEntity,
-    command: PreviewCommand
-  ): Promise<Record<string, unknown>> {
+  private async mergeWithoutPayloadSchema({
+    payloadExample,
+    userPayloadExample,
+    workflow,
+    stepIdOrInternalId,
+    user,
+  }: {
+    payloadExample: Record<string, unknown>;
+    userPayloadExample: PreviewPayloadDto | undefined;
+    workflow?: NotificationTemplateEntity;
+    user: UserSessionData;
+    stepIdOrInternalId?: string;
+  }): Promise<Record<string, unknown>> {
     let finalPayload: Record<string, unknown>;
 
     if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
@@ -185,31 +221,38 @@ export class PayloadMergerService {
 
     finalPayload.subscriber = _.merge({}, fullSubscriberSchema, userSubscriberData);
 
-    /*
-     * Preserve steps from payloadExample (which contains correctly generated digest events)
-     * and merge with user-provided steps and mock data for missing steps
-     */
-    const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
-    const generatedStepsObject = await this.createFullStepsObject(workflow, command, userPayloadExample);
+    if (workflow && stepIdOrInternalId) {
+      /*
+       * Preserve steps from payloadExample (which contains correctly generated digest events)
+       * and merge with user-provided steps and mock data for missing steps
+       */
 
-    /*
-     * Merge with priority: user steps > payloadExample steps > generated mock steps
-     * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
-     */
-    finalPayload.steps = _.mergeWith(
-      {},
-      generatedStepsObject,
-      stepsFromPayloadExample,
-      (userPayloadExample?.steps as Record<string, unknown>) || {},
-      (objValue, srcValue) => {
-        // If source value is provided by user, always use it (even if it's an empty object)
-        if (srcValue !== undefined) {
-          return srcValue;
+      const stepsFromPayloadExample = (payloadExample.steps as Record<string, unknown>) || {};
+      const generatedStepsObject = await this.createFullStepsObject({
+        workflow,
+        stepIdOrInternalId,
+        user,
+        userPayloadExample,
+      });
+      /*
+       * Merge with priority: user steps > payloadExample steps > generated mock steps
+       * Use mergeWith to ensure user-provided data (including empty objects) takes precedence
+       */
+      finalPayload.steps = _.mergeWith(
+        {},
+        generatedStepsObject,
+        stepsFromPayloadExample,
+        (userPayloadExample?.steps as Record<string, unknown>) || {},
+        (objValue, srcValue) => {
+          // If source value is provided by user, always use it (even if it's an empty object)
+          if (srcValue !== undefined) {
+            return srcValue;
+          }
+
+          return undefined; // Let lodash handle the merge
         }
-
-        return undefined; // Let lodash handle the merge
-      }
-    );
+      );
+    }
 
     return finalPayload;
   }
@@ -218,14 +261,23 @@ export class PayloadMergerService {
    * Generates mock step results for all workflow steps preceding the current step,
    * enabling preview of step-dependent data in templates.
    */
-  private async createFullStepsObject(
-    workflow: NotificationTemplateEntity,
-    command: PreviewCommand,
-    userPayloadExample?: PreviewPayloadDto
-  ): Promise<Record<string, unknown>> {
+  private async createFullStepsObject({
+    workflow,
+    stepIdOrInternalId,
+    user,
+    userPayloadExample,
+  }: {
+    workflow: NotificationTemplateEntity;
+    stepIdOrInternalId: string;
+    user: UserSessionData;
+    userPayloadExample?: PreviewPayloadDto;
+  }): Promise<Record<string, unknown>> {
     const stepsObject: Record<string, unknown> = {};
-
-    const currentStepData = await this.getStepData(command);
+    const currentStepData = await this.getStepData({
+      workflowIdOrInternalId: workflow._id,
+      stepIdOrInternalId,
+      user,
+    });
     const currentStepId = currentStepData._id;
 
     const currentStepIndex = workflow.steps.findIndex(
@@ -260,11 +312,19 @@ export class PayloadMergerService {
     return stepsObject;
   }
 
-  private async getStepData(command: PreviewCommand): Promise<StepResponseDto> {
+  private async getStepData({
+    workflowIdOrInternalId,
+    stepIdOrInternalId,
+    user,
+  }: {
+    workflowIdOrInternalId: string;
+    stepIdOrInternalId: string;
+    user: UserSessionData;
+  }): Promise<StepResponseDto> {
     return await this.buildStepDataUsecase.execute({
-      workflowIdOrInternalId: command.workflowIdOrInternalId,
-      stepIdOrInternalId: command.stepIdOrInternalId,
-      user: command.user,
+      workflowIdOrInternalId,
+      stepIdOrInternalId,
+      user,
     });
   }
 

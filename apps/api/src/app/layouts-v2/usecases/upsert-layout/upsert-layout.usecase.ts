@@ -116,7 +116,7 @@ export class UpsertLayoutUseCase {
 
   private validateLayout(command: UpsertLayoutCommand) {
     if (command.layoutDto.controlValues?.email) {
-      const { content, editorType } = command.layoutDto.controlValues.email;
+      const { body: content, editorType } = command.layoutDto.controlValues.email;
       const isMailyContent = isStringifiedMailyJSONContent(content);
       const isHtmlContent =
         content.includes('<html') &&

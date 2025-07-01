@@ -3,6 +3,7 @@
  */
 
 import { cancel } from "../funcs/cancel.js";
+import { retrieve } from "../funcs/retrieve.js";
 import { trigger } from "../funcs/trigger.js";
 import { triggerBroadcast } from "../funcs/triggerBroadcast.js";
 import { triggerBulk } from "../funcs/triggerBulk.js";
@@ -140,6 +141,24 @@ export class Novu extends ClientSDK {
       this,
       bulkTriggerEventDto,
       idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Retrieve a subscriber
+   *
+   * @remarks
+   * Retrieve a subscriber by its unique key identifier **subscriberId**.
+   *     **subscriberId** field is required.
+   */
+  async retrieve(
+    request: operations.LogsControllerGetLogsRequest,
+    options?: RequestOptions,
+  ): Promise<operations.LogsControllerGetLogsResponseBody> {
+    return unwrapAsync(retrieve(
+      this,
+      request,
       options,
     ));
   }

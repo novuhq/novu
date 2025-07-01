@@ -1042,7 +1042,7 @@ describe('EmailOutputRendererUsecase', () => {
       mockControlValuesEntity = {
         controls: {
           email: {
-            content: layoutContent,
+            body: layoutContent,
           },
         },
       };
@@ -1279,7 +1279,7 @@ describe('EmailOutputRendererUsecase', () => {
           priority: 0,
           controls: {
             email: {
-              content: layoutWithVariables,
+              body: layoutWithVariables,
             },
           },
         });
@@ -1338,7 +1338,7 @@ describe('EmailOutputRendererUsecase', () => {
           priority: 0,
           controls: {
             email: {
-              content: mailyLayoutContent,
+              body: mailyLayoutContent,
             },
           },
         });

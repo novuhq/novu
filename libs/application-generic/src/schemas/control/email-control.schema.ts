@@ -11,11 +11,13 @@ export const emailControlZodSchema = z
     editorType: z.enum(['block', 'html']).optional().default('block'),
     subject: z.string().min(1),
     disableOutputSanitization: z.boolean().optional(),
-    layoutId: z.string().nullable().optional(),
+    layoutId: z.string().nullish(),
   })
   .strict();
 
-export type EmailControlType = z.infer<typeof emailControlZodSchema>;
+export type EmailControlType = Omit<z.infer<typeof emailControlZodSchema>, 'layoutId'> & {
+  layoutId?: string | null;
+};
 
 export const emailControlSchema = zodToJsonSchema(emailControlZodSchema, defaultOptions) as JSONSchemaEntity;
 

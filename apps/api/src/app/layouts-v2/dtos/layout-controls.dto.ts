@@ -3,10 +3,10 @@ import { IsOptional, IsString, ValidateNested, IsEnum } from 'class-validator';
 
 export class EmailControlsDto {
   @ApiProperty({
-    description: 'Content of the layout.',
+    description: 'Body of the layout.',
   })
   @IsString()
-  content: string;
+  body: string;
 
   @ApiProperty({
     description: 'Editor type of the layout.',

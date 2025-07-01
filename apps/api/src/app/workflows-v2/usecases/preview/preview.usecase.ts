@@ -10,11 +10,11 @@ import {
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { BuildStepDataUsecase } from '../build-step-data';
 import { PreviewCommand } from './preview.command';
-import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
 // Import new services
-import { ControlValueSanitizerService } from './services/control-value-sanitizer.service';
+import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { PayloadMergerService } from './services/payload-merger.service';
 import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
@@ -42,7 +42,7 @@ export class PreviewUsecase {
 
       const sanitizedControls = this.controlValueSanitizer.sanitizeControlsForPreview(
         context.controlValues,
-        context.stepData,
+        context.stepData.type,
         context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
       );
 
@@ -61,12 +61,13 @@ export class PreviewUsecase {
         context.variablesObject
       );
 
-      let payloadExample = await this.payloadMerger.mergePayloadExample(
-        context.workflow,
-        previewTemplateData.payloadExample,
-        command.generatePreviewRequestDto.previewPayload,
-        command
-      );
+      let payloadExample = await this.payloadMerger.mergePayloadExample({
+        workflow: context.workflow,
+        stepIdOrInternalId: command.stepIdOrInternalId,
+        payloadExample: previewTemplateData.payloadExample,
+        userPayloadExample: command.generatePreviewRequestDto.previewPayload,
+        user: command.user,
+      });
 
       payloadExample = this.payloadProcessor.enhanceEventCountValue(payloadExample);
 
@@ -125,8 +126,8 @@ export class PreviewUsecase {
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         userId: command.user._id,
-        workflowId: command.workflowIdOrInternalId,
-        controlValues,
+        controlValues: Object.values(controlValues),
+        variableSchema: stepData.variables,
         payloadSchema: workflow.payloadSchema,
       })
     );
