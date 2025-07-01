@@ -140,9 +140,12 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       return { subject: translatedSubject, body: htmlWithBranding };
     }
 
+    const sanitizedSubject = sanitizeHTML(translatedSubject);
+    const sanitizedBody = sanitizeHTML(htmlWithBranding);
+
     return {
-      subject: sanitizeHTML(translatedSubject),
-      body: sanitizeHTML(htmlWithBranding),
+      subject: sanitizedSubject,
+      body: sanitizedBody,
     };
   }
 
@@ -243,9 +246,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale
       );
 
-      const strippedMaily = this.removeTrailingEmptyLines(translatedMaily);
+      const renderedHtml = await mailyRender(translatedMaily, { noHtmlWrappingTags });
 
-      return await mailyRender(strippedMaily, { noHtmlWrappingTags });
+      return this.cleanupRenderedHtml(renderedHtml);
     } else {
       // For simple text body, apply translations directly
       return await this.processTextTranslations(body, payload, dbWorkflow, locale);
@@ -294,89 +297,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return await this.liquidEngine.parseAndRender(text, variables);
     }
-  }
-
-  private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
-    if (!node.content || node.content.length === 0) return node;
-
-    // First, recursively process nested content to remove trailing empty elements from children
-    const processedContent = node.content.map((childNode) => this.removeTrailingEmptyLines(childNode));
-
-    // Then remove trailing empty elements from the current level
-    let lastIndex = processedContent.length;
-    for (let i = processedContent.length - 1; i >= 0; i--) {
-      const childNode = processedContent[i];
-
-      if (this.isEmptyElement(childNode)) {
-        continue; // This element is empty, keep looking backwards
-      } else {
-        lastIndex = i + 1; // Include this non-empty element and stop
-        break;
-      }
-    }
-
-    // Log when we're removing trailing empty elements for debugging
-    const removedCount = processedContent.length - lastIndex;
-    if (removedCount > 0) {
-      this.logger.debug(`Removed ${removedCount} trailing empty elements from email content to prevent Gmail clipping`);
-    }
-
-    // Return node with filtered content
-    return { ...node, content: processedContent.slice(0, lastIndex) };
-  }
-
-  private isEmptyElement(node: MailyJSONContent): boolean {
-    // Handle text nodes
-    if (node.type === 'text') {
-      return !node.text || (typeof node.text === 'string' && node.text.trim() === '');
-    }
-
-    // Ensure node.type is defined before using string methods
-    if (!node.type) {
-      return true; // Consider nodes without type as empty
-    }
-
-    // Handle elements that are inherently content-bearing but might be empty
-    const contentElements = ['paragraph', 'heading', 'blockquote', 'listItem', 'codeBlock'];
-    if (contentElements.includes(node.type)) {
-      return !node.content || 
-             node.content.length === 0 || 
-             node.content.every((child) => this.isEmptyElement(child));
-    }
-
-    // Handle spacer elements - these are often empty but functional, so we only remove them if they're truly trailing
-    if (node.type === 'spacer') {
-      return true; // Consider spacers as removable empty elements
-    }
-
-    // Handle other structural elements that might contain only empty content
-    const structuralElements = ['div', 'section', 'container'];
-    if (structuralElements.includes(node.type)) {
-      return !node.content || 
-             node.content.length === 0 || 
-             node.content.every((child) => this.isEmptyElement(child));
-    }
-
-    // Handle elements with text content in attributes (like buttons, links)
-    if (node.type === 'button') {
-      const hasText = node.attrs?.text && typeof node.attrs.text === 'string' && node.attrs.text.trim() !== '';
-      const hasContent = node.content && node.content.length > 0 && !node.content.every((child) => this.isEmptyElement(child));
-      return !hasText && !hasContent;
-    }
-
-    // Handle hard breaks and similar elements - these can be considered empty for trailing removal
-    if (['hardBreak', 'br'].includes(node.type)) {
-      return true;
-    }
-
-    // For other element types (images, videos, etc.), they have intrinsic content so not empty
-    // unless they specifically have empty content arrays
-    if (node.content) {
-      return node.content.length === 0 || node.content.every((child) => this.isEmptyElement(child));
-    }
-
-    // Elements without content arrays are generally not empty (images, buttons with attrs, etc.)
-    return false;
   }
 
   private async parseMailyContentByLiquid(
@@ -705,5 +625,14 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       .replace(/\n/g, '\\n') // Escape newlines
       .replace(/\r/g, '\\r') // Escape carriage returns
       .replace(/\t/g, '\\t'); // Escape tabs
+  }
+
+  private cleanupRenderedHtml(html: string): string {
+    /*
+     * Convert paragraphs that contain only whitespace characters to empty paragraphs to prevent Gmail clipping.
+     * Gmail's clipping algorithm detects trailing whitespace content and marks emails as "message clipped".
+     * This preserves the intended spacing while removing the problematic whitespace content.
+     */
+    return html.replace(/<p([^>]*)>[\s\u00A0\u2000-\u200B\u2028\u2029\u202F\u205F\u3000\uFEFF]+<\/p>/g, '<p$1></p>');
   }
 }
