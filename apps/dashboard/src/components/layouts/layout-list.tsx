@@ -1,10 +1,17 @@
-import { HTMLAttributes, useEffect, useState } from 'react';
+import { HTMLAttributes } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 
 import { cn } from '@/utils/ui';
-import { CursorPagination } from '@/components/cursor-pagination';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/primitives/table';
 import {
   LayoutsFilter,
   LayoutsSortableColumn,
@@ -17,6 +24,8 @@ import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
 import { LayoutsFilters } from '@/components/layouts/layouts-filters';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { PermissionButton } from '@/components/primitives/permission-button';
+import { Skeleton } from '../primitives/skeleton';
+import { DefaultPagination } from '../default-pagination';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<LayoutsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -57,17 +66,44 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
 
 type LayoutListTableProps = HTMLAttributes<HTMLTableElement> & {
   toggleSort: ReturnType<typeof useLayoutsUrlState>['toggleSort'];
-  orderBy?: LayoutsSortableColumn;
+  hrefFromOffset: ReturnType<typeof useLayoutsUrlState>['hrefFromOffset'];
+  orderBy: LayoutsSortableColumn;
   orderDirection?: DirectionEnum;
+  limit: number;
+  offset: number;
+  hasData: boolean;
+  totalCount: number;
+  currentPage: number;
+  totalPages: number;
 };
 
 const LayoutListTable = (props: LayoutListTableProps) => {
-  const { children, orderBy, orderDirection, toggleSort, ...rest } = props;
+  const {
+    toggleSort,
+    hrefFromOffset,
+    children,
+    orderBy,
+    orderDirection,
+    limit,
+    offset,
+    hasData,
+    totalCount,
+    currentPage,
+    totalPages,
+    ...rest
+  } = props;
+
   return (
     <Table {...rest}>
       <TableHeader>
         <TableRow>
-          <TableHead>Layout</TableHead>
+          <TableHead
+            sortable
+            sortDirection={orderBy === 'name' ? orderDirection : false}
+            onSort={() => toggleSort('name')}
+          >
+            Layout
+          </TableHead>
           <TableHead
             sortable
             sortDirection={orderBy === 'createdAt' ? orderDirection : false}
@@ -86,6 +122,33 @@ const LayoutListTable = (props: LayoutListTableProps) => {
         </TableRow>
       </TableHeader>
       <TableBody>{children}</TableBody>
+      {hasData && limit < totalCount && (
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={5}>
+              <div className="flex items-center justify-between">
+                {hasData ? (
+                  <span className="text-foreground-600 block text-sm font-normal">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                ) : (
+                  <Skeleton className="h-5 w-[20ch]" />
+                )}
+                {hasData ? (
+                  <DefaultPagination
+                    hrefFromOffset={hrefFromOffset}
+                    totalCount={totalCount}
+                    limit={limit}
+                    offset={offset}
+                  />
+                ) : (
+                  <Skeleton className="h-5 w-32" />
+                )}
+              </div>
+            </TableCell>
+          </TableRow>
+        </TableFooter>
+      )}
     </Table>
   );
 };
@@ -93,29 +156,21 @@ const LayoutListTable = (props: LayoutListTableProps) => {
 type LayoutListProps = HTMLAttributes<HTMLDivElement>;
 
 export const LayoutList = (props: LayoutListProps) => {
-  const [nextPageAfter, setNextPageAfter] = useState<string | undefined>(undefined);
-  const [previousPageBefore, setPreviousPageBefore] = useState<string | undefined>(undefined);
-  const { filterValues, handleFiltersChange, toggleSort, resetFilters, handleNext, handlePrevious, handleFirst } =
-    useLayoutsUrlState({
-      after: nextPageAfter,
-      before: previousPageBefore,
-    });
+  const { filterValues, hrefFromOffset, handleFiltersChange, toggleSort, resetFilters } = useLayoutsUrlState();
   const areFiltersApplied = (Object.keys(filterValues) as (keyof LayoutsFilter)[]).some(
     (key) => ['query', 'before', 'after'].includes(key) && filterValues[key] !== ''
   );
-  const limit = 10;
 
-  const { data, isPending, isFetching } = useFetchLayouts(filterValues);
+  const { data, isPending, isFetching } = useFetchLayouts({
+    limit: filterValues.limit,
+    offset: filterValues.offset,
+    orderBy: filterValues.orderBy,
+    orderDirection: filterValues.orderDirection,
+    query: filterValues.query,
+  });
 
-  useEffect(() => {
-    if (data?.next) {
-      setNextPageAfter(data.next);
-    }
-
-    if (data?.previous) {
-      setPreviousPageBefore(data.previous);
-    }
-  }, [data]);
+  const currentPage = Math.floor(filterValues.offset / filterValues.limit) + 1;
+  const totalPages = Math.ceil((data?.totalCount || 0) / filterValues.limit);
 
   if (isPending) {
     return (
@@ -130,8 +185,15 @@ export const LayoutList = (props: LayoutListProps) => {
           orderBy={filterValues.orderBy}
           orderDirection={filterValues.orderDirection}
           toggleSort={toggleSort}
+          hrefFromOffset={hrefFromOffset}
+          limit={12}
+          totalCount={0}
+          currentPage={1}
+          totalPages={1}
+          hasData={false}
+          offset={0}
         >
-          {new Array(limit).fill(0).map((_, index) => (
+          {new Array(12).fill(0).map((_, index) => (
             <LayoutRowSkeleton key={index} />
           ))}
         </LayoutListTable>
@@ -139,7 +201,7 @@ export const LayoutList = (props: LayoutListProps) => {
     );
   }
 
-  if (!areFiltersApplied && !data?.data.length) {
+  if (!areFiltersApplied && !data?.layouts.length) {
     return (
       <LayoutListWrapper
         filterValues={filterValues}
@@ -153,7 +215,7 @@ export const LayoutList = (props: LayoutListProps) => {
     );
   }
 
-  if (!data?.data.length) {
+  if (!data?.layouts.length) {
     return (
       <LayoutListWrapper
         filterValues={filterValues}
@@ -182,21 +244,18 @@ export const LayoutList = (props: LayoutListProps) => {
         orderBy={filterValues.orderBy}
         orderDirection={filterValues.orderDirection}
         toggleSort={toggleSort}
+        hrefFromOffset={hrefFromOffset}
+        limit={filterValues.limit}
+        totalCount={data.totalCount}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        offset={filterValues.offset}
+        hasData={!!data.layouts.length}
       >
-        {data.data.map((layout) => (
+        {data.layouts.map((layout) => (
           <LayoutRow key={layout._id} layout={layout} />
         ))}
       </LayoutListTable>
-
-      {!!(data.next || data.previous) && (
-        <CursorPagination
-          hasNext={!!data.next}
-          hasPrevious={!!data.previous}
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onFirst={handleFirst}
-        />
-      )}
     </LayoutListWrapper>
   );
 };

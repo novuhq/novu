@@ -32,10 +32,14 @@ function getStatusText(statusCode: number): string {
       return '400 Bad Request';
     case 401:
       return '401 Unauthorized';
+    case 402:
+      return '402 Payment Required';
     case 404:
       return '404 Not Found';
     case 408:
       return '408 Request Timeout';
+    case 422:
+      return '422 Unprocessable Entity';
     case 429:
       return '429 Too Many Requests';
     case 500:
