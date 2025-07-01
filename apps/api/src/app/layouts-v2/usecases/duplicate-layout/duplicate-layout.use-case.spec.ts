@@ -1,19 +1,16 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
-import {
-  AnalyticsService,
-  GetLayoutCommand as GetLayoutCommandV1,
-  GetLayoutUseCase as GetLayoutUseCaseV1,
-} from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 
 import { DuplicateLayoutUseCase } from './duplicate-layout.use-case';
 import { DuplicateLayoutCommand } from './duplicate-layout.command';
 import { UpsertLayoutUseCase } from '../upsert-layout';
+import { GetLayoutUseCase } from '../get-layout';
 
 describe('DuplicateLayoutUseCase', () => {
-  let getLayoutUseCaseV1Mock: sinon.SinonStubbedInstance<GetLayoutUseCaseV1>;
+  let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;
   let upsertLayoutUseCaseMock: sinon.SinonStubbedInstance<UpsertLayoutUseCase>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
@@ -77,20 +74,20 @@ describe('DuplicateLayoutUseCase', () => {
   };
 
   beforeEach(() => {
-    getLayoutUseCaseV1Mock = sinon.createStubInstance(GetLayoutUseCaseV1);
+    getLayoutUseCaseMock = sinon.createStubInstance(GetLayoutUseCase);
     upsertLayoutUseCaseMock = sinon.createStubInstance(UpsertLayoutUseCase);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
 
     duplicateLayoutUseCase = new DuplicateLayoutUseCase(
-      getLayoutUseCaseV1Mock as any,
+      getLayoutUseCaseMock as any,
       upsertLayoutUseCaseMock as any,
       controlValuesRepositoryMock as any,
       analyticsServiceMock as any
     );
 
     // Default mocks
-    getLayoutUseCaseV1Mock.execute.resolves(mockOriginalLayout as any);
+    getLayoutUseCaseMock.execute.resolves(mockOriginalLayout as any);
     controlValuesRepositoryMock.findOne.resolves(mockOriginalControlValues as any);
     upsertLayoutUseCaseMock.execute.resolves(mockDuplicatedLayout as any);
   });
@@ -112,13 +109,12 @@ describe('DuplicateLayoutUseCase', () => {
       expect(result).to.deep.equal(mockDuplicatedLayout);
 
       // Verify v1 use case was called with correct parameters
-      expect(getLayoutUseCaseV1Mock.execute.calledOnce).to.be.true;
-      const v1Command = getLayoutUseCaseV1Mock.execute.firstCall.args[0];
+      expect(getLayoutUseCaseMock.execute.calledOnce).to.be.true;
+      const v1Command = getLayoutUseCaseMock.execute.firstCall.args[0];
       expect(v1Command.layoutIdOrInternalId).to.equal('original_layout_identifier');
       expect(v1Command.environmentId).to.equal('env_id');
       expect(v1Command.organizationId).to.equal('org_id');
-      expect(v1Command.type).to.equal(ResourceTypeEnum.BRIDGE);
-      expect(v1Command.origin).to.equal(ResourceOriginEnum.NOVU_CLOUD);
+      expect(v1Command.skipAdditionalFields).to.be.true;
 
       // Verify control values repository was called
       expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
@@ -222,7 +218,7 @@ describe('DuplicateLayoutUseCase', () => {
 
     it('should propagate error from v1 use case', async () => {
       const error = new Error('Layout not found');
-      getLayoutUseCaseV1Mock.execute.rejects(error);
+      getLayoutUseCaseMock.execute.rejects(error);
 
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'non_existent',
@@ -284,7 +280,7 @@ describe('DuplicateLayoutUseCase', () => {
       await duplicateLayoutUseCase.execute(command);
 
       // Verify original layout was fetched before duplication
-      expect(getLayoutUseCaseV1Mock.execute.calledBefore(upsertLayoutUseCaseMock.execute)).to.be.true;
+      expect(getLayoutUseCaseMock.execute.calledBefore(upsertLayoutUseCaseMock.execute)).to.be.true;
       expect(controlValuesRepositoryMock.findOne.calledBefore(upsertLayoutUseCaseMock.execute)).to.be.true;
     });
 

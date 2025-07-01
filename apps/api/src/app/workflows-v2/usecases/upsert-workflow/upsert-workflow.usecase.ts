@@ -18,6 +18,7 @@ import {
   SendWebhookMessage,
   EmailControlType,
   PinoLogger,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -36,6 +37,7 @@ import {
   WorkflowCreationSourceEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 
 import { stepTypeToControlSchema } from '../../shared';
@@ -49,6 +51,7 @@ import { PreviewUsecase } from '../preview/preview.usecase';
 import { PreviewCommand } from '../preview';
 import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -62,7 +65,9 @@ export class UpsertWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
+    private getLayoutUseCase: GetLayoutUseCase,
     private analyticsService: AnalyticsService,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
@@ -360,6 +365,38 @@ export class UpsertWorkflowUseCase {
         command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
     ) {
       const emailControlValues = newControlValues as EmailControlType;
+
+      const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+        defaultValue: false,
+        environment: { _id: command.user.environmentId },
+        organization: { _id: command.user.organizationId },
+      });
+
+      // Assign default layoutId if undefined (but not if null)
+      if (isLayoutsPageActive && emailControlValues.layoutId === undefined) {
+        const defaultLayout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            userId: command.user._id,
+            skipAdditionalFields: true,
+          })
+        );
+        emailControlValues.layoutId = defaultLayout.layoutId;
+      } else if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
+        // Check if the layout exists
+        await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: emailControlValues.layoutId,
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            userId: command.user._id,
+            skipAdditionalFields: true,
+          })
+        );
+      }
+
       const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
       if (emailControlValues.editorType === 'html' && isMaily) {
         const { result } = await this.previewUsecase.execute(

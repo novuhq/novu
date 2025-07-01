@@ -26,31 +26,39 @@ export class GetLayoutUseCase {
     const layout = await this.getLayoutUseCaseV1.execute(
       GetLayoutCommandV1.create({
         layoutIdOrInternalId: command.layoutIdOrInternalId,
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
         type: ResourceTypeEnum.BRIDGE,
         origin: ResourceOriginEnum.NOVU_CLOUD,
       })
     );
 
+    this.analyticsService.track('Get layout - [Layouts]', command.userId, {
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      layoutId: layout._id!,
+    });
+
+    if (command.skipAdditionalFields) {
+      return mapToResponseDto({
+        layout,
+      });
+    }
+
     const controlValues = await this.controlValuesRepository.findOne({
-      _environmentId: command.user.environmentId,
-      _organizationId: command.user.organizationId,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
       _layoutId: layout._id!,
       level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     });
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
-        user: command.user,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
       })
     );
-
-    this.analyticsService.track('Get layout - [Layouts]', command.user._id, {
-      _organizationId: command.user.organizationId,
-      _environmentId: command.user.environmentId,
-      layoutId: layout._id!,
-    });
 
     return mapToResponseDto({
       layout,

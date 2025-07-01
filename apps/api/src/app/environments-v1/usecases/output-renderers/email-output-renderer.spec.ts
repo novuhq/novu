@@ -2,12 +2,13 @@ import sinon from 'sinon';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
-import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
+import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
-import { EmailOutputRendererUsecase } from './email-output-renderer.usecase';
+import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 
 describe('EmailOutputRendererUsecase', () => {
   let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;
@@ -15,7 +16,7 @@ describe('EmailOutputRendererUsecase', () => {
   let getOrganizationSettingsMock: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
-  let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;
+  let getLayoutUseCase: sinon.SinonStubbedInstance<GetLayoutUseCase>;
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
   beforeEach(async () => {
@@ -30,7 +31,7 @@ describe('EmailOutputRendererUsecase', () => {
     });
     pinoLoggerMock = sinon.createStubInstance(PinoLogger);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
-    layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
+    getLayoutUseCase = sinon.createStubInstance(GetLayoutUseCase);
 
     emailOutputRendererUsecase = new EmailOutputRendererUsecase(
       getOrganizationSettingsMock as any,
@@ -38,7 +39,7 @@ describe('EmailOutputRendererUsecase', () => {
       pinoLoggerMock as any,
       featureFlagsServiceMock as any,
       controlValuesRepositoryMock as any,
-      layoutRepositoryMock as any
+      getLayoutUseCase as any
     );
   });
 
@@ -56,6 +57,7 @@ describe('EmailOutputRendererUsecase', () => {
     _id: 'fake_workflow_id',
     _organizationId: 'fake_org_id',
     _environmentId: 'fake_env_id',
+    _creatorId: 'fake_creator_id',
   } as any;
 
   describe('general flow', () => {
@@ -1035,7 +1037,7 @@ describe('EmailOutputRendererUsecase', () => {
     const layoutContent = '<html><body><div class="layout">{{content}}</div></body></html>';
 
     let mockControlValuesEntity: any;
-    let mockLayoutEntity: any;
+    let mockLayoutDto: any;
 
     beforeEach(() => {
       // Reset mocks
@@ -1047,16 +1049,14 @@ describe('EmailOutputRendererUsecase', () => {
         },
       };
 
-      mockLayoutEntity = {
+      mockLayoutDto = {
         _id: 'default_layout_id',
-        _organizationId: 'fake_org_id',
-        _environmentId: 'fake_env_id',
         isDefault: true,
       };
 
       // Set default stub returns
       controlValuesRepositoryMock.findOne.resolves(mockControlValuesEntity as any);
-      layoutRepositoryMock.findOne.resolves(mockLayoutEntity as any);
+      getLayoutUseCase.execute.resolves(mockLayoutDto as any);
     });
 
     afterEach(() => {
@@ -1092,7 +1092,7 @@ describe('EmailOutputRendererUsecase', () => {
 
         // Verify that repository methods were not called when feature flag is disabled
         expect(controlValuesRepositoryMock.findOne.called).to.be.false;
-        expect(layoutRepositoryMock.findOne.called).to.be.false;
+        expect(getLayoutUseCase.execute.called).to.be.false;
       });
     });
 
@@ -1102,9 +1102,7 @@ describe('EmailOutputRendererUsecase', () => {
       });
 
       it('should render with specified layout when layoutId is provided', async () => {
-        const renderCommand = {
-          environmentId: 'fake_env_id',
-          organizationId: 'fake_org_id',
+        const renderCommand: EmailOutputRendererCommand = {
           controlValues: {
             subject: 'Layout Test',
             body: simpleBodyContent,
@@ -1116,6 +1114,7 @@ describe('EmailOutputRendererUsecase', () => {
           },
           dbWorkflow: mockDbWorkflow,
         };
+        getLayoutUseCase.execute.resolves({ _id: 'test_layout_id', isDefault: false } as any);
 
         const result = await emailOutputRendererUsecase.execute(renderCommand);
 
@@ -1133,8 +1132,7 @@ describe('EmailOutputRendererUsecase', () => {
           level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
         });
 
-        // Layout repository should not be called when layoutId is provided
-        expect(layoutRepositoryMock.findOne.called).to.be.false;
+        expect(getLayoutUseCase.execute.called).to.be.true;
       });
 
       it('should use default layout when layoutId is undefined', async () => {
@@ -1160,14 +1158,12 @@ describe('EmailOutputRendererUsecase', () => {
         expect(result.body).to.include('<html>');
 
         // Verify layout repository was called first to find default layout
-        expect(layoutRepositoryMock.findOne.calledOnce).to.be.true;
-        expect(layoutRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
-          _organizationId: 'fake_org_id',
-          _environmentId: 'fake_env_id',
-          origin: ResourceOriginEnum.NOVU_CLOUD,
-          type: ResourceTypeEnum.BRIDGE,
-          isDefault: true,
-          channel: ChannelTypeEnum.EMAIL,
+        expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+        expect(getLayoutUseCase.execute.firstCall.args[0]).to.deep.eq({
+          organizationId: 'fake_org_id',
+          environmentId: 'fake_env_id',
+          skipAdditionalFields: true,
+          userId: 'fake_creator_id',
         });
 
         // Then control values repository should be called with the default layout ID
@@ -1180,9 +1176,9 @@ describe('EmailOutputRendererUsecase', () => {
         });
       });
 
-      it('should render without layout when no layout is found', async () => {
+      it('should render without layout when no layout controls are found', async () => {
         controlValuesRepositoryMock.findOne.resolves(null);
-        layoutRepositoryMock.findOne.resolves(null);
+        getLayoutUseCase.execute.resolves({ _id: 'non_existent_layout_id' } as any);
 
         const renderCommand = {
           environmentId: 'fake_env_id',
@@ -1210,7 +1206,7 @@ describe('EmailOutputRendererUsecase', () => {
       });
 
       it('should render without layout when default layout does not exist', async () => {
-        layoutRepositoryMock.findOne.resolves(null);
+        getLayoutUseCase.execute.resolves(undefined);
 
         const renderCommand = {
           environmentId: 'fake_env_id',
@@ -1234,7 +1230,7 @@ describe('EmailOutputRendererUsecase', () => {
         expect(result.body).to.not.include('<html>');
 
         // Verify layout repository was called but returned null
-        expect(layoutRepositoryMock.findOne.calledOnce).to.be.true;
+        expect(getLayoutUseCase.execute.calledOnce).to.be.true;
         // Control values repository should not be called when default layout is not found
         expect(controlValuesRepositoryMock.findOne.called).to.be.false;
       });
@@ -1431,6 +1427,8 @@ describe('EmailOutputRendererUsecase', () => {
           dbWorkflow: mockDbWorkflow,
         };
 
+        getLayoutUseCase.execute.resolves({ _id: 'specific_layout_id', isDefault: false } as any);
+
         await emailOutputRendererUsecase.execute(renderCommand);
 
         expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
@@ -1460,14 +1458,12 @@ describe('EmailOutputRendererUsecase', () => {
 
         await emailOutputRendererUsecase.execute(renderCommand);
 
-        expect(layoutRepositoryMock.findOne.calledOnce).to.be.true;
-        expect(layoutRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
-          _organizationId: 'fake_org_id',
-          _environmentId: 'fake_env_id',
-          origin: ResourceOriginEnum.NOVU_CLOUD,
-          type: ResourceTypeEnum.BRIDGE,
-          isDefault: true,
-          channel: ChannelTypeEnum.EMAIL,
+        expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+        expect(getLayoutUseCase.execute.firstCall.args[0]).to.deep.eq({
+          organizationId: 'fake_org_id',
+          environmentId: 'fake_env_id',
+          skipAdditionalFields: true,
+          userId: 'fake_creator_id',
         });
 
         expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
@@ -1497,7 +1493,7 @@ describe('EmailOutputRendererUsecase', () => {
 
         const result = await emailOutputRendererUsecase.execute(renderCommand);
 
-        expect(layoutRepositoryMock.findOne.called).to.be.false;
+        expect(getLayoutUseCase.execute.called).to.be.false;
         expect(controlValuesRepositoryMock.findOne.called).to.be.false;
         expect(result.body).to.include('Step content John');
         expect(result.body).to.not.include('class="layout"');
@@ -1558,7 +1554,7 @@ describe('EmailOutputRendererUsecase', () => {
         await emailOutputRendererUsecase.execute(renderCommand);
 
         // Verify call order: layout repository should be called before control values repository
-        expect(layoutRepositoryMock.findOne.calledBefore(controlValuesRepositoryMock.findOne)).to.be.true;
+        expect(getLayoutUseCase.execute.calledBefore(controlValuesRepositoryMock.findOne)).to.be.true;
       });
     });
   });

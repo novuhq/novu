@@ -1,19 +1,16 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { ConflictException } from '@nestjs/common';
-import {
-  AnalyticsService,
-  GetLayoutCommand as GetLayoutCommandV1,
-  GetLayoutUseCase as GetLayoutUseCaseV1,
-} from '@novu/application-generic';
+import { AnalyticsService } from '@novu/application-generic';
 import { LayoutRepository, ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 
 import { DeleteLayoutUseCase } from './delete-layout.use-case';
 import { DeleteLayoutCommand } from './delete-layout.command';
+import { GetLayoutUseCase } from '../get-layout';
 
 describe('DeleteLayoutUseCase', () => {
-  let getLayoutUseCaseV1Mock: sinon.SinonStubbedInstance<GetLayoutUseCaseV1>;
+  let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;
   let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
@@ -73,20 +70,20 @@ describe('DeleteLayoutUseCase', () => {
   ];
 
   beforeEach(() => {
-    getLayoutUseCaseV1Mock = sinon.createStubInstance(GetLayoutUseCaseV1);
+    getLayoutUseCaseMock = sinon.createStubInstance(GetLayoutUseCase);
     layoutRepositoryMock = sinon.createStubInstance(LayoutRepository);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
 
     deleteLayoutUseCase = new DeleteLayoutUseCase(
-      getLayoutUseCaseV1Mock as any,
+      getLayoutUseCaseMock as any,
       layoutRepositoryMock as any,
       controlValuesRepositoryMock as any,
       analyticsServiceMock as any
     );
 
     // Default mocks
-    getLayoutUseCaseV1Mock.execute.resolves(mockLayout as any);
+    getLayoutUseCaseMock.execute.resolves(mockLayout as any);
     controlValuesRepositoryMock.findMany.resolves(mockStepControlValues as any);
     controlValuesRepositoryMock.updateOne.resolves({} as any);
     controlValuesRepositoryMock.delete.resolves({} as any);
@@ -107,13 +104,12 @@ describe('DeleteLayoutUseCase', () => {
       await deleteLayoutUseCase.execute(command);
 
       // Verify v1 use case was called with correct parameters
-      expect(getLayoutUseCaseV1Mock.execute.calledOnce).to.be.true;
-      const v1Command = getLayoutUseCaseV1Mock.execute.firstCall.args[0];
-      expect(v1Command.layoutIdOrInternalId).to.equal('layout_identifier');
-      expect(v1Command.environmentId).to.equal('env_id');
-      expect(v1Command.organizationId).to.equal('org_id');
-      expect(v1Command.type).to.equal(ResourceTypeEnum.BRIDGE);
-      expect(v1Command.origin).to.equal(ResourceOriginEnum.NOVU_CLOUD);
+      expect(getLayoutUseCaseMock.execute.calledOnce).to.be.true;
+      const getLayoutCommand = getLayoutUseCaseMock.execute.firstCall.args[0];
+      expect(getLayoutCommand.layoutIdOrInternalId).to.equal('layout_identifier');
+      expect(getLayoutCommand.environmentId).to.equal('env_id');
+      expect(getLayoutCommand.organizationId).to.equal('org_id');
+      expect(getLayoutCommand.skipAdditionalFields).to.be.true;
 
       // Verify layout was deleted from repository
       expect(layoutRepositoryMock.deleteLayout.calledOnce).to.be.true;
@@ -130,7 +126,7 @@ describe('DeleteLayoutUseCase', () => {
     });
 
     it('should throw ConflictException when trying to delete default layout', async () => {
-      getLayoutUseCaseV1Mock.execute.resolves(mockDefaultLayout as any);
+      getLayoutUseCaseMock.execute.resolves(mockDefaultLayout as any);
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'default_layout',
@@ -230,7 +226,7 @@ describe('DeleteLayoutUseCase', () => {
 
     it('should propagate error from v1 use case', async () => {
       const error = new Error('Layout not found');
-      getLayoutUseCaseV1Mock.execute.rejects(error);
+      getLayoutUseCaseMock.execute.rejects(error);
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'non_existent',
