@@ -2,15 +2,7 @@
 import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import {
-  ChannelTypeEnum,
-  ControlValuesLevelEnum,
-  EmailRenderOutput,
-  FeatureFlagsKeysEnum,
-  ResourceOriginEnum,
-  ResourceTypeEnum,
-  LAYOUT_CONTENT_VARIABLE,
-} from '@novu/shared';
+import { ControlValuesLevelEnum, EmailRenderOutput, FeatureFlagsKeysEnum, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import {
   InstrumentUsecase,
   sanitizeHTML,
@@ -22,7 +14,7 @@ import {
 import { createLiquidEngine } from '@novu/framework/internal';
 
 import { Liquid } from 'liquidjs';
-import { ControlValuesEntity, ControlValuesRepository, LayoutRepository, NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, NotificationTemplateEntity } from '@novu/dal';
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import {
