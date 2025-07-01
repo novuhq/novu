@@ -43,6 +43,7 @@ export class GetLayoutUseCase {
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
         user: command.user,
+        controlValues: controlValues?.controls ?? {},
       })
     );
 

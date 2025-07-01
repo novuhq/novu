@@ -104,6 +104,7 @@ export class UpsertLayoutUseCase {
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
         user: command.user,
+        controlValues: upsertedControlValues?.controls ?? {},
       })
     );
 
