@@ -39,7 +39,6 @@ export const emailUiSchema: UiSchema = {
     },
     layoutId: {
       component: UiComponentEnum.LAYOUT_SELECT,
-      placeholder: '',
     },
   },
 };

@@ -175,7 +175,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         _layoutId: layout._id,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
-    } else if (typeof layoutId === 'undefined') {
+    } else if (layoutId === null) {
       // otherwise find the default layout controls
       const defaultEmailLayout = await this.getLayoutUseCase.execute(
         GetLayoutCommand.create({

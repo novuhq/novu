@@ -194,7 +194,62 @@ describe('Upsert Workflow #novu-v2', function () {
         process.env.IS_LAYOUTS_PAGE_ACTIVE = 'false';
       });
 
-      it('should assign default v2 layout when creating email step with undefined layoutId', async () => {
+      it('should assign default v2 layout when creating email step with null layoutId', async () => {
+        const layout = await createLayout({
+          name: 'Test Layout',
+          layoutId: 'test-layout',
+          source: LayoutCreationSourceEnum.Dashboard,
+        });
+
+        const workflow = await createWorkflow({
+          name: 'Test Email Workflow',
+          workflowId: `test-email-workflow-${Date.now()}`,
+          source: WorkflowCreationSourceEnum.Editor,
+          active: true,
+          steps: [
+            {
+              name: `Email Step`,
+              type: StepTypeEnum.Email,
+              controlValues: {
+                subject: 'Test Subject',
+                body: 'Test Body',
+                layoutId: null,
+              },
+            },
+          ],
+        });
+
+        const emailStep = workflow.steps[0] as EmailStepResponseDto;
+        expect(emailStep.type).to.equal(StepTypeEnum.Email);
+
+        // should get default layoutId
+        expect(emailStep.controls.values.layoutId).to.equal(layout.layoutId);
+      });
+
+      it('should keep layoutId as undefined when not specified and there is no default layout', async () => {
+        const workflow = await createWorkflow({
+          name: 'Test Email Workflow',
+          workflowId: `test-email-workflow-${Date.now()}`,
+          source: WorkflowCreationSourceEnum.Editor,
+          active: true,
+          steps: [
+            {
+              name: `Email Step`,
+              type: StepTypeEnum.Email,
+              controlValues: {
+                subject: 'Test Subject',
+                body: 'Test Body',
+              },
+            },
+          ],
+        });
+
+        const emailStep = workflow.steps[0] as EmailStepResponseDto;
+        expect(emailStep.type).to.equal(StepTypeEnum.Email);
+        expect(emailStep.controls.values.layoutId).to.be.undefined;
+      });
+
+      it('should keep layoutId as undefined when not specified and there is a default layout', async () => {
         await createLayout({
           name: 'Test Layout',
           layoutId: 'test-layout-id',
@@ -213,7 +268,6 @@ describe('Upsert Workflow #novu-v2', function () {
               controlValues: {
                 subject: 'Test Subject',
                 body: 'Test Body',
-                // layoutId is undefined, should get default
               },
             },
           ],
@@ -221,33 +275,7 @@ describe('Upsert Workflow #novu-v2', function () {
 
         const emailStep = workflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.Email);
-
-        // Should have some layoutId assigned (either a default layout ID or null if no default exists)
-        expect(emailStep.controls.values).to.have.property('layoutId');
-      });
-
-      it('should keep layoutId as null when explicitly set to null', async () => {
-        const workflow = await createWorkflow({
-          name: 'Test Email Workflow',
-          workflowId: `test-email-workflow-${Date.now()}`,
-          source: WorkflowCreationSourceEnum.Editor,
-          active: true,
-          steps: [
-            {
-              name: `Email Step`,
-              type: StepTypeEnum.Email,
-              controlValues: {
-                subject: 'Test Subject',
-                body: 'Test Body',
-                layoutId: null, // explicitly set to null
-              },
-            },
-          ],
-        });
-
-        const emailStep = workflow.steps[0] as EmailStepResponseDto;
-        expect(emailStep.type).to.equal(StepTypeEnum.Email);
-        expect(emailStep.controls.values.layoutId).to.be.null;
+        expect(emailStep.controls.values.layoutId).to.be.undefined;
       });
 
       it('should throw error when creating email step with invalid layoutId', async () => {
@@ -314,12 +342,18 @@ describe('Upsert Workflow #novu-v2', function () {
           // Should not reach this point
           expect.fail('Expected BadRequestException to be thrown');
         } catch (error) {
-          expect(error.message).to.contain('Default layout not found in the environment');
+          expect(error.message).to.contain('Layout not found for id');
         }
       });
     });
 
     it('should allow updating layoutId to specific value', async () => {
+      const layout = await createLayout({
+        name: 'Custom Layout',
+        layoutId: 'custom-layout',
+        source: LayoutCreationSourceEnum.Dashboard,
+      });
+
       const workflow = await createWorkflow({
         name: 'Test Email Workflow',
         workflowId: `test-email-workflow-${Date.now()}`,
@@ -347,7 +381,7 @@ describe('Upsert Workflow #novu-v2', function () {
             controlValues: {
               subject: 'Test Subject',
               body: 'Test Body',
-              layoutId: 'custom-layout-id',
+              layoutId: layout.layoutId,
             },
           },
         ],
@@ -355,10 +389,16 @@ describe('Upsert Workflow #novu-v2', function () {
 
       const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
       expect(emailStep.type).to.equal(StepTypeEnum.Email);
-      expect(emailStep.controls.values.layoutId).to.equal('custom-layout-id');
+      expect(emailStep.controls.values.layoutId).to.equal(layout.layoutId);
     });
 
-    it('should allow updating layoutId to null to remove layout', async () => {
+    it('should allow updating layoutId to undefined to remove layout', async () => {
+      const layout = await createLayout({
+        name: 'Custom Layout',
+        layoutId: 'custom-layout',
+        source: LayoutCreationSourceEnum.Dashboard,
+      });
+
       const workflow = await createWorkflow({
         name: 'Test Email Workflow',
         workflowId: `test-email-workflow-${Date.now()}`,
@@ -371,7 +411,7 @@ describe('Upsert Workflow #novu-v2', function () {
             controlValues: {
               subject: 'Test Subject',
               body: 'Test Body',
-              layoutId: 'some-layout-id',
+              layoutId: layout.layoutId,
             },
           },
         ],
@@ -387,7 +427,7 @@ describe('Upsert Workflow #novu-v2', function () {
             controlValues: {
               subject: 'Test Subject',
               body: 'Test Body',
-              layoutId: null,
+              layoutId: undefined,
             },
           },
         ],
@@ -395,7 +435,7 @@ describe('Upsert Workflow #novu-v2', function () {
 
       const emailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
       expect(emailStep.type).to.equal(StepTypeEnum.Email);
-      expect(emailStep.controls.values.layoutId).to.be.null;
+      expect(emailStep.controls.values.layoutId).to.be.undefined;
     });
 
     it('when switching the editor type it should convert the body value', async () => {

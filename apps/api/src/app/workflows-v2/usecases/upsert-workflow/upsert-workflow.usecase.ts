@@ -381,8 +381,8 @@ export class UpsertWorkflowUseCase {
         organization: { _id: command.user.organizationId },
       });
 
-      // Assign default layoutId if undefined (but not if null)
-      if (isLayoutsPageActive && emailControlValues.layoutId === undefined) {
+      // Assign default layoutId if null (but not if undefined)
+      if (isLayoutsPageActive && emailControlValues.layoutId === null) {
         const defaultLayout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
             environmentId: command.user.environmentId,
@@ -393,8 +393,7 @@ export class UpsertWorkflowUseCase {
         );
         emailControlValues.layoutId = defaultLayout.layoutId;
       } else if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
-        // Check if the layout exists
-        await this.getLayoutUseCase.execute(
+        const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: emailControlValues.layoutId,
             environmentId: command.user.environmentId,
@@ -403,6 +402,7 @@ export class UpsertWorkflowUseCase {
             skipAdditionalFields: true,
           })
         );
+        emailControlValues.layoutId = layout.layoutId;
       }
 
       const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
