@@ -15,6 +15,8 @@ import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
@@ -47,15 +49,6 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
   );
 
   const parsedVariables = useParseVariables(schemaToUse, digestStepBeforeCurrent?.stepId, isPayloadSchemaEnabled);
-
-  // Create a key that changes when variables change to force extension recreation
-  const variablesKey = useMemo(() => {
-    const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
-      .map((v) => v.name)
-      .sort()
-      .join(',');
-    return `vars-${variableNames.length}-${variableNames.slice(0, 100)}`; // Truncate to avoid overly long keys
-  }, [parsedVariables.primitives, parsedVariables.arrays, parsedVariables.namespaces]);
 
   const primitives = useMemo(
     () => parsedVariables.primitives.map((v) => ({ name: v.name, required: false })),
@@ -105,6 +98,46 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
 
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
 
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    workflowId: workflow?._id || '',
+    enabled: isTranslationEnabled && !!workflow?._id,
+  });
+
+  const createTranslationKeyMutation = useCreateTranslationKey();
+
+  const handleCreateNewTranslationKey = useCallback(
+    async (translationKey: string) => {
+      if (!workflow?._id) return;
+
+      await createTranslationKeyMutation.mutateAsync({
+        workflowId: workflow._id,
+        translationKey,
+        defaultValue: `[${translationKey}]`, // Placeholder value to indicate missing translation
+      });
+    },
+    [workflow?._id, createTranslationKeyMutation]
+  );
+
+  // Create a key that changes when variables or translation state changes to force extension recreation
+  const variablesKey = useMemo(() => {
+    const variableNames = [...parsedVariables.primitives, ...parsedVariables.arrays, ...parsedVariables.namespaces]
+      .map((v) => v.name)
+      .sort()
+      .join(',');
+
+    // Include translation state to force re-mount when translation extension becomes ready
+    const translationState = `translation-${isTranslationEnabled ? 'enabled' : 'disabled'}-${isTranslationKeysLoading ? 'loading' : 'loaded'}-${translationKeys.length}`;
+
+    return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
+  }, [
+    parsedVariables.primitives,
+    parsedVariables.arrays,
+    parsedVariables.namespaces,
+    isTranslationEnabled,
+    isTranslationKeysLoading,
+    translationKeys.length,
+  ]);
+
   const extensions = useMemo(
     () =>
       createExtensions({
@@ -113,7 +146,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
         blocks,
         onCreateNewVariable: handleCreateNewVariable,
         isPayloadSchemaEnabled,
-        isTranslationEnabled,
+        isTranslationEnabled: isTranslationEnabled && !isTranslationKeysLoading,
+        translationKeys,
+        onCreateNewTranslationKey: handleCreateNewTranslationKey,
       }),
     [
       handleCalculateVariables,
@@ -122,6 +157,9 @@ export const Maily = ({ value, onChange, className, ...rest }: MailyProps) => {
       isPayloadSchemaEnabled,
       handleCreateNewVariable,
       isTranslationEnabled,
+      isTranslationKeysLoading,
+      translationKeys,
+      handleCreateNewTranslationKey,
     ]
   );
 

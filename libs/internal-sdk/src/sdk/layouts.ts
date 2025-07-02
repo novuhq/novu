@@ -4,7 +4,8 @@
 
 import { layoutsCreate } from "../funcs/layoutsCreate.js";
 import { layoutsDelete } from "../funcs/layoutsDelete.js";
-import { layoutsLayoutsControllerDuplicate } from "../funcs/layoutsLayoutsControllerDuplicate.js";
+import { layoutsDuplicate } from "../funcs/layoutsDuplicate.js";
+import { layoutsGeneratePreview } from "../funcs/layoutsGeneratePreview.js";
 import { layoutsList } from "../funcs/layoutsList.js";
 import { layoutsRetrieve } from "../funcs/layoutsRetrieve.js";
 import { layoutsUpdate } from "../funcs/layoutsUpdate.js";
@@ -115,15 +116,36 @@ export class Layouts extends ClientSDK {
    * @remarks
    * Duplicates a layout by its unique identifier **layoutId**. This will create a new layout with the content of the original layout.
    */
-  async layoutsControllerDuplicate(
+  async duplicate(
     duplicateLayoutDto: components.DuplicateLayoutDto,
     layoutId: string,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.LayoutsControllerDuplicateResponse> {
-    return unwrapAsync(layoutsLayoutsControllerDuplicate(
+    return unwrapAsync(layoutsDuplicate(
       this,
       duplicateLayoutDto,
+      layoutId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Generate layout preview
+   *
+   * @remarks
+   * Generates a preview for a layout by its unique identifier **layoutId**
+   */
+  async generatePreview(
+    layoutPreviewRequestDto: components.LayoutPreviewRequestDto,
+    layoutId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.LayoutsControllerGeneratePreviewResponse> {
+    return unwrapAsync(layoutsGeneratePreview(
+      this,
+      layoutPreviewRequestDto,
       layoutId,
       idempotencyKey,
       options,

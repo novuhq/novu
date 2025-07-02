@@ -11,8 +11,8 @@ export const mapToResponseDto = ({
   variables,
 }: {
   layout: LayoutDto;
-  controlValues: Record<string, unknown> | null;
-  variables: JSONSchemaDto;
+  controlValues?: Record<string, unknown> | null;
+  variables?: JSONSchemaDto;
 }): LayoutResponseDto => {
   const isEmailLayout = layout.channel === ChannelTypeEnum.EMAIL && controlValues?.email;
 

@@ -17,7 +17,7 @@ export const RequestLogsEmptyState = () => {
       <div className="flex flex-col items-center gap-2 text-center">
         <span className="text-text-sub text-label-md block font-medium">No activity in past 90 days</span>
         <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
-          Your HTTP logs are empty. Once they start appearing, you’ll be able to track notifications, troubleshoot
+          Your HTTP requests are empty. Once they start appearing, you'll be able to track notifications, troubleshoot
           issues, and view delivery details.
         </p>
       </div>

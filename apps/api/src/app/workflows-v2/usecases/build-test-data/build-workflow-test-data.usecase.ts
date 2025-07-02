@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
+  ControlValuesRepository,
   JsonSchemaFormatEnum,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { StepTypeEnum, UserSessionData } from '@novu/shared';
+import { ControlValuesLevelEnum, StepTypeEnum, UserSessionData } from '@novu/shared';
 import {
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
@@ -15,8 +16,8 @@ import {
 import { WorkflowTestDataCommand } from './build-workflow-test-data.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { mockSchemaDefaults } from '../../util/utils';
-import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
-import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { buildVariablesSchema } from '../../../shared/utils/create-schema';
 import { WorkflowTestDataResponseDto } from '../../dtos';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
@@ -25,7 +26,8 @@ import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 export class BuildWorkflowTestDataUseCase {
   constructor(
     private readonly getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    private readonly createVariablesObject: CreateVariablesObject
+    private readonly createVariablesObject: CreateVariablesObject,
+    private readonly controlValuesRepository: ControlValuesRepository
   ) {}
 
   @InstrumentUsecase()
@@ -50,12 +52,31 @@ export class BuildWorkflowTestDataUseCase {
       return parsePayloadSchema(workflow.payloadSchema, { safe: true }) || {};
     }
 
+    const controls = await this.controlValuesRepository.find(
+      {
+        _environmentId: command.user.environmentId,
+        _organizationId: command.user.organizationId,
+        _workflowId: workflow._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+        controls: { $ne: null },
+      },
+      {
+        controls: 1,
+        _id: 0,
+      }
+    );
+
+    const allControlValuesFlat = controls
+      .map((item) => item.controls)
+      .flat()
+      .flatMap((obj) => Object.values(obj));
+
     const { payload } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         userId: command.user._id,
-        workflowId: workflow._id,
+        controlValues: allControlValuesFlat,
       })
     );
 

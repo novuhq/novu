@@ -5,7 +5,7 @@ import { extractFieldsFromRules, isValidRule } from '../../shared/services/query
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { extractLiquidTemplateVariables } from './template-parser/liquid-parser';
 import { extractLiquidTemplateVariables as newExtractLiquidTemplateVariables } from './template-parser/new-liquid-parser';
-import type { TemplateVariables } from './template-parser/types';
+import type { VariableDetails } from './template-parser/types';
 import { isStringifiedMailyJSONContent, wrapMailyInLiquid } from '../../shared/helpers/maily-utils';
 
 export function buildVariables({
@@ -18,7 +18,7 @@ export function buildVariables({
   variableSchema: JSONSchemaDto | undefined;
   controlValue: unknown | Record<string, unknown>;
   logger?: PinoLogger;
-}): TemplateVariables {
+}): VariableDetails {
   let variableControlValue = controlValue;
 
   if (isStringifiedMailyJSONContent(variableControlValue)) {

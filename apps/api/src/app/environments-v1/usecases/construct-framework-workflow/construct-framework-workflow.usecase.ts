@@ -1,9 +1,25 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import { NotificationStepEntity, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import { Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  EnvironmentRepository,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import {
+  FeatureFlagsKeysEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+} from '@novu/shared';
+import {
+  emailControlSchema,
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
@@ -27,17 +43,29 @@ export class ConstructFrameworkWorkflow {
   constructor(
     private logger: PinoLogger,
     private workflowsRepository: NotificationTemplateRepository,
+    private environmentRepository: EnvironmentRepository,
     private inAppOutputRendererUseCase: InAppOutputRendererUsecase,
     private emailOutputRendererUseCase: EmailOutputRendererUsecase,
     private smsOutputRendererUseCase: SmsOutputRendererUsecase,
     private chatOutputRendererUseCase: ChatOutputRendererUsecase,
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
-    private digestOutputRendererUseCase: DigestOutputRendererUsecase
+    private digestOutputRendererUseCase: DigestOutputRendererUsecase,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
+    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+    });
+
+    if (isLayoutsPageActive && command.workflowId === LAYOUT_PREVIEW_WORKFLOW_ID) {
+      return this.constructLayoutPreviewWorkflow(command);
+    }
+
     const dbWorkflow = await this.getDbWorkflow(command.environmentId, command.workflowId);
     if (command.controlValues) {
       for (const step of dbWorkflow.steps) {
@@ -46,6 +74,36 @@ export class ConstructFrameworkWorkflow {
     }
 
     return this.constructFrameworkWorkflow(dbWorkflow);
+  }
+
+  private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
+    const environment = await this.environmentRepository.findOne({
+      _id: command.environmentId,
+    });
+    if (!environment) {
+      throw new InternalServerErrorException(`Environment ${command.environmentId} not found`);
+    }
+
+    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber }) => {
+      await step.email(
+        LAYOUT_PREVIEW_EMAIL_STEP,
+        async (controlValues) => {
+          return this.emailOutputRendererUseCase.execute({
+            controlValues,
+            fullPayloadForRender: { payload, subscriber, steps: {} },
+            environmentId: environment._id,
+            organizationId: environment._organizationId,
+            locale: subscriber.locale ?? undefined,
+          });
+        },
+        {
+          skip: () => false,
+          controlSchema: emailControlSchema as unknown as Schema,
+          disableOutputSanitization: true,
+          providers: {},
+        }
+      );
+    });
   }
 
   @Instrument()
@@ -128,7 +186,9 @@ export class ConstructFrameworkWorkflow {
             return this.emailOutputRendererUseCase.execute({
               controlValues,
               fullPayloadForRender,
-              dbWorkflow,
+              environmentId: dbWorkflow._environmentId,
+              organizationId: dbWorkflow._organizationId,
+              workflowId: dbWorkflow._id,
               locale,
             });
           },

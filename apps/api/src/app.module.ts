@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
 import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { cacheService, TracingModule } from '@novu/application-generic';
 import { Client, NovuModule } from '@novu/framework/nest';
 
@@ -57,6 +57,7 @@ import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overr
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { WorkflowModule } from './app/workflows-v2/workflow.module';
 import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.interceptor';
+import { AnalyticsLogsGuard } from './app/shared/framework/analytics-logs.guard';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -140,6 +141,10 @@ if (!isClerkEnabled()) {
 const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [
+  {
+    provide: APP_GUARD,
+    useClass: AnalyticsLogsGuard,
+  },
   {
     provide: APP_INTERCEPTOR,
     useClass: ApiRateLimitInterceptor,

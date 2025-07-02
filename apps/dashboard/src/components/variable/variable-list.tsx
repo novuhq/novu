@@ -24,6 +24,7 @@ export type VariablesListProps = {
   selectedValue?: string;
   title: string;
   className?: string;
+  context?: 'variables' | 'translations';
 };
 
 export type VariableListRef = {
@@ -34,9 +35,9 @@ export type VariableListRef = {
 };
 
 export const VariableList = React.forwardRef<VariableListRef, VariablesListProps>(
-  ({ options, onSelect, selectedValue, title, className }, ref) => {
+  ({ options, onSelect, selectedValue, title, className, context = 'variables' }, ref) => {
     const variablesListRef = useRef<HTMLUListElement>(null);
-    const [hoveredOptionIndex, setHoveredOptionIndex] = useState(0);
+    const [hoveredOptionIndex, setHoveredOptionIndex] = useState(options.length > 0 ? 0 : -1);
     const maxIndex = options.length - 1;
 
     const scrollToOption = useCallback((index: number) => {
@@ -125,6 +126,7 @@ export const VariableList = React.forwardRef<VariableListRef, VariablesListProps
               hoveredOptionIndex={hoveredOptionIndex}
               setHoveredOptionIndex={setHoveredOptionIndex}
               onSelect={onSelect}
+              context={context}
             />
           ))}
         </ul>
@@ -148,6 +150,7 @@ const VariableListItem = ({
   hoveredOptionIndex,
   setHoveredOptionIndex,
   onSelect,
+  context = 'variables',
 }: {
   option: VariablesListProps['options'][number];
   index: number;
@@ -155,15 +158,35 @@ const VariableListItem = ({
   hoveredOptionIndex: number;
   setHoveredOptionIndex: (index: number) => void;
   onSelect: (value: string) => void;
+  context?: 'variables' | 'translations';
 }) => {
   const hasPreview = !!option.preview;
+  const isHovered = hoveredOptionIndex === index;
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseLeave = () => {
+    // Small delay to allow moving to tooltip
+    timeoutRef.current = setTimeout(() => {
+      setHoveredOptionIndex(-1);
+    }, 150);
+  };
+
+  const handleMouseEnter = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    setHoveredOptionIndex(index);
+  };
+
   return (
-    <Tooltip open={hoveredOptionIndex === index && hasPreview} key={option.value}>
+    <Tooltip open={isHovered && hasPreview} key={option.value}>
       <TooltipTrigger asChild>
         <li
           className={cn(
             'text-paragraph-xs font-code text-foreground-950 flex cursor-pointer items-center gap-1 rounded-sm p-1 hover:bg-neutral-100',
-            hoveredOptionIndex === index ? 'bg-neutral-100' : ''
+            isHovered ? 'bg-neutral-100' : ''
           )}
           value={option.value}
           onClick={(e) => {
@@ -172,18 +195,30 @@ const VariableListItem = ({
 
             onSelect(option.value ?? '');
           }}
-          onMouseEnter={() => setHoveredOptionIndex(index)}
-          onMouseLeave={() => setHoveredOptionIndex(-1)}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
         >
           <div className="flex size-3 items-center justify-center">
-            <VariableIcon variableName={option.value} />
+            <VariableIcon variableName={option.value} context={context} />
           </div>
           <TruncatedText>{option.label}</TruncatedText>
           <CheckIcon className={cn('ml-auto size-4', selectedValue === option.value ? 'opacity-50' : 'opacity-0')} />
         </li>
       </TooltipTrigger>
       <TooltipPortal>
-        <TooltipContent side="right" className="bg-bg-weak border-0 p-0.5" sideOffset={10} hideWhenDetached>
+        <TooltipContent
+          side="right"
+          className="bg-bg-weak border-0 p-0.5"
+          sideOffset={5}
+          hideWhenDetached
+          onMouseEnter={() => {
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+          }}
+          onMouseLeave={() => setHoveredOptionIndex(-1)}
+        >
           {option.preview}
         </TooltipContent>
       </TooltipPortal>

@@ -237,6 +237,7 @@ const ConfigureActionPopover = (
                       placeholder={title}
                       value={field.value}
                       onChange={field.onChange}
+                      enableTranslations
                     />
                   </InputRoot>
                 </FormControl>

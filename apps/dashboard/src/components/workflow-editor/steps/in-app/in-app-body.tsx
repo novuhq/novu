@@ -32,6 +32,7 @@ export const InAppBody = () => {
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
                 multiline
+                enableTranslations
               />
             </InputRoot>
           </FormControl>

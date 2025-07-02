@@ -14,11 +14,11 @@ import {
   ActivityFeed,
   ApiKeysPage,
   CreateWorkflowPage,
+  CreateLayoutPage,
   LayoutsPage,
   TranslationsPage,
   ErrorPage,
   IntegrationsListPage,
-  Logs,
   OrganizationListPage,
   QuestionnairePage,
   SettingsPage,
@@ -237,6 +237,16 @@ const router = createBrowserRouter([
                     <LayoutsPage />
                   </ProtectedRoute>
                 ),
+                children: [
+                  {
+                    path: ROUTES.LAYOUTS_CREATE,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.LAYOUT_WRITE} isDrawerRoute>
+                        <CreateLayoutPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.TRANSLATIONS,
@@ -269,10 +279,18 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.LOGS,
+                path: ROUTES.ACTIVITY_RUNS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
-                    <Logs />
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ACTIVITY_LOGS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
                   </ProtectedRoute>
                 ),
               },

@@ -131,7 +131,6 @@ test('sync workflow', async ({ page }) => {
   await triggerWorkflowPage.triggerWorkflowBtnClick();
   const activityPanel = triggerWorkflowPage.getActivityPanel();
   await expect(activityPanel).toBeVisible();
-  await expect(activityPanel.locator('span').filter({ hasText: workflowId })).toBeVisible();
 
   // go to the workflows page
   await workflowEditorPage.clickWorkflowsBreadcrumb();

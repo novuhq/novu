@@ -5,7 +5,6 @@ import { LogsDetailContent } from './logs-detail-content';
 import { LogsDetailSkeleton } from './logs-detail-skeleton';
 import { LogsDetailError } from './logs-detail-error';
 import { RequestLogDetailEmptyState } from './logs-detail-empty';
-import { WorkflowRunsTabs } from './workflow-runs-tabs';
 import { WorkflowRunsContent } from './workflow-runs-content';
 
 type LogsDetailPanelProps = {
@@ -27,17 +26,18 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
     return <RequestLogDetailEmptyState />;
   }
 
+  const shouldShowWorkflowRuns = log.path === '/v1/events/trigger' || log.path === '/v1/events/trigger/bulk';
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.2 }}
-      className="border-stroke-soft flex h-full flex-col overflow-hidden rounded-lg border bg-white"
+      className="flex h-full flex-col overflow-hidden"
     >
-      <LogsDetailHeader log={log} />
+      <LogsDetailHeader />
       <LogsDetailContent log={log} />
-      <WorkflowRunsTabs />
-      <WorkflowRunsContent log={log} />
+      {shouldShowWorkflowRuns && <WorkflowRunsContent log={log} />}
     </motion.div>
   );
 }

@@ -1,6 +1,6 @@
 import { ComponentProps } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
-import { PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum, LayoutResponseDto } from '@novu/shared';
 
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -19,17 +19,8 @@ import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
 import { cn } from '@/utils/ui';
 
-type LayoutData = {
-  _id: string;
-  name: string;
-  identifier: string;
-  createdAt: string;
-  updatedAt: string;
-  isDefault?: boolean;
-};
-
 type LayoutRowProps = {
-  layout: LayoutData;
+  layout: LayoutResponseDto;
 };
 
 const LayoutTableCell = ({ className, children, ...rest }: ComponentProps<typeof TableCell>) => (
@@ -57,7 +48,7 @@ export const LayoutRowSkeleton = () => (
       <Skeleton className="h-4 w-24" />
     </LayoutTableCell>
     <LayoutTableCell>
-      <Skeleton className="h-8 w-8" />
+      <Skeleton className="ml-auto h-8 w-8" />
     </LayoutTableCell>
   </TableRow>
 );
@@ -87,11 +78,11 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
             </div>
             <div className="flex items-center gap-1 transition-opacity duration-200">
               <TruncatedText className="text-text-soft font-code block max-w-[40ch] text-xs">
-                {layout.identifier}
+                {layout.layoutId}
               </TruncatedText>
               <CopyButton
                 className="z-10 flex size-2 p-0 px-1 opacity-0 group-hover:opacity-100"
-                valueToCopy={layout.identifier}
+                valueToCopy={layout.layoutId}
                 size="2xs"
               />
             </div>
@@ -109,29 +100,27 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
         </TimeDisplayHoverCard>
       </LayoutTableCell>
       <Protect permission={PermissionsEnum.LAYOUT_WRITE}>
-        <LayoutTableCell>
-          <div className="flex justify-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild onClick={stopPropagation}>
-                <CompactButton variant="ghost" icon={RiMore2Fill} className="z-10 h-8 w-8 p-0" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuGroup>
-                  <DropdownMenuItem onClick={stopPropagation} className="flex cursor-pointer items-center gap-2">
-                    <RiFileCopyLine className="h-4 w-4" />
-                    <span>Duplicate layout</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={stopPropagation}
-                    className="text-destructive flex cursor-pointer items-center gap-2"
-                  >
-                    <RiDeleteBin2Line className="h-4 w-4" />
-                    <span>Delete layout</span>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+        <LayoutTableCell className="w-1">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild onClick={stopPropagation}>
+              <CompactButton variant="ghost" icon={RiMore2Fill} className="z-10 h-8 w-8 p-0" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={stopPropagation} className="flex cursor-pointer items-center gap-2">
+                  <RiFileCopyLine className="h-4 w-4" />
+                  <span>Duplicate layout</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={stopPropagation}
+                  className="text-destructive flex cursor-pointer items-center gap-2"
+                >
+                  <RiDeleteBin2Line className="h-4 w-4" />
+                  <span>Delete layout</span>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </LayoutTableCell>
       </Protect>
     </TableRow>

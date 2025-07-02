@@ -1,12 +1,7 @@
 import { forwardRef, useMemo, useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  createMockObjectFromSchema,
-  type WorkflowTestDataResponseDto,
-  type ISubscriberResponseDto,
-  PermissionsEnum,
-} from '@novu/shared';
+import { type WorkflowTestDataResponseDto, type ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
@@ -15,7 +10,6 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
-import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
 import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
 import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
@@ -36,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { API_HOSTNAME } from '@/config';
+import * as z from 'zod';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;
@@ -44,10 +39,27 @@ type TestWorkflowDrawerProps = {
   initialPayload?: PayloadData;
 };
 
+// Extract only the payload part from the original schema
+const buildPayloadOnlyFormSchema = () => {
+  return z.object({
+    payload: z.string().transform((str, ctx) => {
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        ctx.addIssue({ code: 'custom', message: 'Payload must be valid JSON' });
+        return z.NEVER;
+      }
+    }),
+  });
+};
+
+type TestWorkflowFormType = {
+  payload: any; // This will be the parsed JSON payload
+};
+
 const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: string; apiKey: string }) => {
   const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
 
-  // Parse payload if it's a string, otherwise use as-is
   let parsedPayload = {};
 
   try {
@@ -69,10 +81,14 @@ const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: s
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
-  const { isOpen, onOpenChange, testData, initialPayload } = props;
+  const { isOpen, onOpenChange, initialPayload } = props;
   const [transactionId, setTransactionId] = useState<string>();
-  const { currentEnvironment } = useEnvironment();
+  const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
+  const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
+  const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
+  const [currentFormData, setCurrentFormData] = useState<{ to: unknown; payload: string } | null>(null);
 
+  const { currentEnvironment } = useEnvironment();
   const { workflow } = useWorkflow();
   const { currentUser } = useAuth();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
@@ -83,16 +99,13 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   const { data: apiKeysResponse } = useFetchApiKeys({ enabled: canReadApiKeys });
   const apiKey = canReadApiKeys ? (apiKeysResponse?.data?.[0]?.key ?? 'your-api-key-here') : 'your-api-key-here';
 
-  // Add workflow-level payload persistence
+  // Workflow-level payload persistence
   const { getInitialPayload, savePersistedPayload } = useWorkflowPayloadPersistence({
     workflowId: workflow?.workflowId || '',
     environmentId: currentEnvironment?._id || '',
   });
-  const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
-  const [currentFormData, setCurrentFormData] = useState<TestWorkflowFormType | null>(null);
-  const [isSubscriberDrawerOpen, setIsSubscriberDrawerOpen] = useState(false);
-  const [subscriberData, setSubscriberData] = useState<Partial<ISubscriberResponseDto> | null>(null);
 
+  // Subscriber management - single source of truth
   const subscriberIdToFetch = subscriberData?.subscriberId || currentUser?._id || '';
   const {
     data: fetchedSubscriberData,
@@ -105,61 +118,44 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     },
   });
 
-  // Set subscriber data when fetched subscriber data is loaded
+  // Initialize subscriber data
   useEffect(() => {
     if (fetchedSubscriberData) {
       setSubscriberData({
-        subscriberId: fetchedSubscriberData.subscriberId || '',
-        firstName: fetchedSubscriberData.firstName || '',
-        lastName: fetchedSubscriberData.lastName || '',
-        email: fetchedSubscriberData.email || '',
-        phone: fetchedSubscriberData.phone || '',
-        avatar: fetchedSubscriberData.avatar || '',
-        locale: fetchedSubscriberData.locale || undefined,
-        timezone: fetchedSubscriberData.timezone || undefined,
-        data: fetchedSubscriberData.data,
+        subscriberId: fetchedSubscriberData.subscriberId,
+        firstName: fetchedSubscriberData.firstName ?? undefined,
+        lastName: fetchedSubscriberData.lastName ?? undefined,
+        email: fetchedSubscriberData.email ?? undefined,
+        phone: fetchedSubscriberData.phone ?? undefined,
+        avatar: fetchedSubscriberData.avatar ?? undefined,
+        locale: fetchedSubscriberData.locale ?? undefined,
       });
     } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
-      // If no subscriber found but we have current user, use user data as fallback
       setSubscriberData({
         subscriberId: currentUser._id,
-        firstName: currentUser.firstName || '',
-        lastName: currentUser.lastName || '',
-        email: currentUser.email || '',
-        phone: '',
-        avatar: '',
-        locale: '',
-        timezone: '',
-        data: {},
+        firstName: currentUser.firstName ?? undefined,
+        lastName: currentUser.lastName ?? undefined,
+        email: currentUser.email ?? undefined,
       });
     }
   }, [fetchedSubscriberData, currentUser, subscriberData?.subscriberId, isLoadingSubscriber]);
 
-  const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
-    setSubscriberData(subscriber);
-  }, []);
-
-  const to = useMemo(() => createMockObjectFromSchema(testData?.to ?? {}), [testData]);
-
   const payload = useMemo(() => {
-    // Priority: initialPayload (from step editor) > persisted > payloadExample > empty
     if (initialPayload && Object.keys(initialPayload).length > 0) {
       return initialPayload;
     }
 
-    // Use workflow-level persistence when no initialPayload
     return getInitialPayload(workflow);
   }, [initialPayload, workflow, getInitialPayload]);
 
   const form = useForm<TestWorkflowFormType>({
     mode: 'onSubmit',
-    resolver: zodResolver(buildDynamicFormSchema({ to: testData?.to ?? {} })),
-    values: { to, payload: JSON.stringify(payload, null, 2) },
+    resolver: zodResolver(buildPayloadOnlyFormSchema()),
+    values: { payload: JSON.stringify(payload, null, 2) },
   });
 
   const { handleSubmit, watch } = form;
 
-  // Watch for payload changes and persist them (only when not from step editor)
   const watchedPayload = watch('payload');
   useEffect(() => {
     if (!initialPayload && watchedPayload) {
@@ -172,11 +168,14 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     }
   }, [watchedPayload, initialPayload, savePersistedPayload]);
 
+  const handleSubscriberSelect = useCallback((subscriber: ISubscriberResponseDto) => {
+    setSubscriberData(subscriber);
+  }, []);
+
   const handleSubscriberDrawerClose = useCallback(
     (open: boolean) => {
       setIsSubscriberDrawerOpen(open);
 
-      // Refetch subscriber data when drawer closes to get latest updates
       if (!open && subscriberData?.subscriberId) {
         refetchSubscriber();
       }
@@ -185,10 +184,19 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   );
 
   const onSubmit = async (data: TestWorkflowFormType) => {
+    if (!subscriberData) {
+      showErrorToast('Please select a subscriber first');
+      return;
+    }
+
     try {
       const {
         data: { transactionId: newTransactionId },
-      } = await triggerWorkflow({ name: workflow?.workflowId ?? '', to: data.to, payload: data.payload });
+      } = await triggerWorkflow({
+        name: workflow?.workflowId ?? '',
+        to: subscriberData,
+        payload: data.payload,
+      });
 
       if (!newTransactionId) {
         return showToast({
@@ -213,7 +221,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       }
 
       setTransactionId(newTransactionId);
-      setCurrentFormData(data);
+      setCurrentFormData({ to: subscriberData, payload: JSON.stringify(data.payload, null, 2) });
       setIsActivityDrawerOpen(true);
     } catch (e) {
       showErrorToast(
@@ -224,8 +232,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
   };
 
   const handleCopyCurl = useCallback(async () => {
-    if (!workflow?.workflowId) {
-      showErrorToast('Workflow information is missing');
+    if (!workflow?.workflowId || !subscriberData) {
+      showErrorToast('Workflow information or subscriber is missing');
       return;
     }
 
@@ -233,7 +241,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
       const formData = form.getValues();
       const curlCommand = generateCurlCommand({
         workflowId: workflow.workflowId,
-        to: formData.to,
+        to: subscriberData,
         payload: formData.payload,
         apiKey: apiKey,
       });
@@ -254,18 +262,17 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy cURL command', 'Copy Error');
     }
-  }, [workflow?.workflowId, apiKey, form]);
+  }, [workflow?.workflowId, subscriberData, apiKey, form]);
 
   const handleOpenInPostman = useCallback(async () => {
-    if (!workflow?.workflowId) {
-      showErrorToast('Workflow information is missing');
+    if (!workflow?.workflowId || !subscriberData) {
+      showErrorToast('Workflow information or subscriber is missing');
       return;
     }
 
     try {
       const formData = form.getValues();
 
-      // Parse payload if it's a string, otherwise use as-is
       let parsedPayload = {};
 
       try {
@@ -276,7 +283,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
       const body = {
         name: workflow.workflowId,
-        to: formData.to,
+        to: subscriberData,
         payload: { ...parsedPayload, __source: 'dashboard' },
       };
 
@@ -336,7 +343,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     } catch {
       showErrorToast('Failed to copy Postman collection', 'Postman Error');
     }
-  }, [workflow?.workflowId, apiKey, form]);
+  }, [workflow?.workflowId, subscriberData, apiKey, form]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -356,7 +363,6 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
               onSubscriberSelect={handleSubscriberSelect}
             />
 
-            {/* Footer */}
             <div className="border-t border-neutral-200 bg-white">
               <div className="flex items-center justify-end px-3 py-1.5">
                 <ButtonGroupRoot size="xs">
@@ -407,7 +413,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         onOpenChange={setIsActivityDrawerOpen}
         transactionId={transactionId}
         workflow={workflow}
-        to={currentFormData?.to}
+        to={currentFormData?.to as Record<string, string>}
         payload={currentFormData?.payload}
       />
 

@@ -1,0 +1,93 @@
+<html>
+    <head>
+        <title>Operation Logs: {{ .ID }}</title>
+        <style>
+            {{ template "style" }}
+        </style>
+    </head>
+    <body>
+        <h1>// Speakeasy</h1>
+        <h2>Operation Logs: {{ .ID }}</h2>
+        <p>{{ .RequestMethod }} {{ .RequestPath }}</p>
+        <p><a href="{{ .LogIndexURL }}">Back to All Operation Logs</a></p>
+        <div class="operation">
+            {{ range $idx, $c := .Calls }}
+                <div class="operation-call {{ if (mod $idx 2) }}even{{ else }}odd{{ end }}">
+                    {{ if (ne (len $.Calls) 1) }}
+                    <h2>Call {{ .Call }}</h2>
+                    {{ end }}
+                    <div class="operation-call-request">
+                        <h3>Request</h3>
+                        
+                        {{ if (gt (len .RequestQueryParameters) 0) }}
+                        <div class="operation-call-request-query-parameters">
+                            <h4>Query Parameters</h4>
+                            <table>
+                                <tr><th>Key</th><th>Value</th></tr>
+                                {{ range $idx, $p := .RequestQueryParameters }}
+                                <tr class="{{ if (mod $idx 2) }}even{{ else }}odd{{ end }}">
+                                    <td>{{ .Key }}</td>
+                                    <td>{{ .Values }}</td>
+                                </tr>
+                                {{ end }}
+                            </table>
+                        </div>
+                        {{ end }}
+                        <div class="operation-call-request-headers">
+                            <h4>Headers</h4>
+                            <table>
+                                <tr><th>Key</th><th>Value(s)</th></tr>
+                                {{ range $idx, $h := .RequestHeaders }}
+                                <tr class="{{ if (mod $idx 2) }}even{{ else }}odd{{ end }}">
+                                    <td>{{ .Key }}</td>
+                                    <td>{{ .Values }}</td>
+                                </tr>
+                                {{ end }}
+                            </table>
+                        </div>
+                        {{ if (gt (len .RequestBody) 0) }}
+                        <div class="operation-call-request-body">
+                            <h4>Body</h4>
+                            <p><code>{{ .RequestBody }}</code></p>
+                        </div>
+                        {{ end }}
+                        <p>
+                            <details>
+                                <summary>Raw Request</summary>
+                                <div><code>{{ .RawRequest }}</code></div>
+                            </details>
+                        </p>
+                    </div>
+                    <div class="operation-call-response">
+                        <h3>Response</h3>
+                        <p>{{ .ResponseStatus }}</p>
+                        <div class="operation-call-response-headers">
+                            <h4>Headers</h4>
+                            <table>
+                                <tr><th>Key</th><th>Value(s)</th></tr>
+                                {{ range $idx, $h := .ResponseHeaders }}
+                                <tr class="{{ if (mod $idx 2) }}even{{ else }}odd{{ end }}">
+                                    <td>{{ .Key }}</td>
+                                    <td>{{ .Values }}</td>
+                                </tr>
+                                {{ end }}
+                            </table>
+                        </div>
+                        {{ if (gt (len .ResponseBody) 0) }}
+                        <div class="operation-call-response-body">
+                            <h4>Body</h4>
+                            <p><code>{{ .ResponseBody }}</code></p>
+                        </div>
+                        {{ end }}
+                        <p>
+                            <details>
+                                <summary>Raw Response</summary>
+                                <div><code>{{ .RawResponse }}</code></div>
+                            </details>
+                        </p>
+                    </div>
+                </div>
+            {{ end }}
+        </div>
+    </body>
+</html>

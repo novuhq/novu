@@ -59,6 +59,7 @@ import { createVariableNodeView } from './views/variable-view';
 import { createCards } from './blocks/cards';
 import { BubbleMenuVariablePill } from './views/variable-view';
 import { createTranslationExtension } from './translations';
+import { TranslationKey } from '@/types/translations';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -185,6 +186,8 @@ export const createExtensions = ({
   onCreateNewVariable,
   isPayloadSchemaEnabled = false,
   isTranslationEnabled = false,
+  translationKeys = [],
+  onCreateNewTranslationKey,
 }: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
@@ -192,6 +195,8 @@ export const createExtensions = ({
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   isPayloadSchemaEnabled?: boolean;
   isTranslationEnabled?: boolean;
+  translationKeys?: TranslationKey[];
+  onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
 }) => {
   const extensions = [
     RepeatExtension.extend({
@@ -309,7 +314,7 @@ export const createExtensions = ({
         });
       },
     }),
-    createTranslationExtension(isTranslationEnabled),
+    createTranslationExtension(isTranslationEnabled, translationKeys, onCreateNewTranslationKey),
   ];
 
   extensions.push(

@@ -1,8 +1,11 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+
 import { cn } from '@/utils/ui';
 import { cva } from 'class-variance-authority';
 
 import { VariableEditor } from '@/components/primitives/variable-editor';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -22,6 +25,7 @@ type ControlInputProps = {
   className?: string;
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   placeholder?: string;
@@ -30,11 +34,13 @@ type ControlInputProps = {
   id?: string;
   multiline?: boolean;
   indentWithTab?: boolean;
+  enableTranslations?: boolean;
 };
 
 export function ControlInput({
   value,
   onChange,
+  onBlur,
   variables,
   className,
   placeholder,
@@ -44,12 +50,18 @@ export function ControlInput({
   size = 'sm',
   indentWithTab,
   isAllowedVariable,
+  enableTranslations = false,
 }: ControlInputProps) {
+  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+
+  const shouldEnableTranslations = isTranslationEnabled && enableTranslations;
+
   return (
     <VariableEditor
       className={cn(variants({ size }), className)}
       value={value}
       onChange={onChange}
+      onBlur={onBlur}
       variables={variables}
       isAllowedVariable={isAllowedVariable}
       placeholder={placeholder}
@@ -58,6 +70,7 @@ export function ControlInput({
       multiline={multiline}
       indentWithTab={indentWithTab}
       size={size}
+      enableTranslations={shouldEnableTranslations}
     />
   );
 }

@@ -220,7 +220,9 @@ export function PayloadSchemaDrawer({
                 </SheetTitle>
                 <SheetDescription className="text-paragraph-xs mt-0">
                   Manage workflow schema for reliable notifications.{' '}
-                  <ExternalLink href="https://docs.novu.co/platform/workflow/build-a-workflow#manage-payload-schema">Learn more</ExternalLink>
+                  <ExternalLink href="https://docs.novu.co/platform/workflow/build-a-workflow#manage-payload-schema">
+                    Learn more
+                  </ExternalLink>
                 </SheetDescription>
               </SheetHeader>
               <Separator />
@@ -306,7 +308,10 @@ export function PayloadSchemaDrawer({
               </SheetMain>
               <SheetFooter className="border-neutral-content-weak space-between flex border-t px-3 py-1.5">
                 <div className="flex w-full flex-row items-center justify-between gap-2">
-                  <Link to="https://docs.novu.co/platform/workflow/build-a-workflow#manage-payload-schema" target="_blank">
+                  <Link
+                    to="https://docs.novu.co/platform/workflow/build-a-workflow#manage-payload-schema"
+                    target="_blank"
+                  >
                     <Button variant="secondary" mode="ghost" size="xs" leadingIcon={RiFileMarkedLine}>
                       View Docs
                     </Button>
@@ -318,14 +323,7 @@ export function PayloadSchemaDrawer({
                     onClick={handleSaveWithValidation}
                     isLoading={isSaving}
                     data-test-id="save-payload-schema-btn"
-                    disabled={
-                      !isSchemaValid ||
-                      !formState.isValid ||
-                      isSaving ||
-                      isLoadingWorkflow ||
-                      isImportMode ||
-                      fields.length === 0
-                    }
+                    disabled={!isSchemaValid || !formState.isValid || isSaving || isLoadingWorkflow || isImportMode}
                   >
                     Save Changes
                   </Button>

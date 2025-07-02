@@ -5,6 +5,7 @@ import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/res
 import { CursorPagination } from '@/components/cursor-pagination';
 import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
+import { LogsTableSkeletonRow } from './logs-table-skeleton-row';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { LogsFilters } from './logs-filters';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
@@ -41,7 +42,6 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
   const logsData = logsResponse?.data || [];
   const totalCount = logsResponse?.total || 0;
 
-  // Create pagination state with total count
   const paginationState = useMemo(() => {
     const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
     const hasNext = totalCount > 0 && currentPage < totalPages;
@@ -65,7 +65,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col p-2.5">
       <div className="flex items-center justify-between">
         <LogsFilters
           filters={filters}
@@ -75,15 +75,15 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
         />
       </div>
 
-      <div className="relative flex flex-1 pt-2">
+      <div className="relative flex h-full min-h-full flex-1 pt-2.5">
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={50}>
-            <div className="flex h-full flex-col rounded-lg border border-neutral-200 bg-white">
+            <div className="flex h-full flex-col">
               <div className="flex-1">
-                <Table isLoading={isLoading}>
+                <Table isLoading={isLoading} loadingRow={<LogsTableSkeletonRow />} loadingRowsCount={8}>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="text-text-strong h-8 px-2 py-0">Logs</TableHead>
+                      <TableHead className="text-text-strong h-8 px-2 py-0">Requests</TableHead>
                       <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -101,24 +101,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                     })}
                   </TableBody>
                 </Table>
-              </div>
-
-              {!isLoading && logsData.length === 0 && hasActiveFilters && (
-                <div className="flex flex-1 items-center justify-center">
-                  <div className="text-center">
-                    <p className="text-foreground-600 mb-2">No logs found matching your filters</p>
-                    <button
-                      onClick={clearFilters}
-                      className="text-foreground-950 hover:text-foreground-600 text-sm font-medium underline"
-                    >
-                      Clear filters
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {(paginationState.hasNext || paginationState.hasPrevious) && (
-                <div className="border-t border-neutral-200">
+                {(paginationState.hasNext || paginationState.hasPrevious) && (
                   <CursorPagination
                     hasNext={paginationState.hasNext}
                     hasPrevious={paginationState.hasPrevious}
@@ -126,6 +109,20 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                     onPrevious={handlePrevious}
                     onFirst={handleFirst}
                   />
+                )}
+              </div>
+
+              {!isLoading && logsData.length === 0 && hasActiveFilters && (
+                <div className="flex flex-1 items-center justify-center">
+                  <div className="text-center">
+                    <p className="text-foreground-600 mb-2">No requests found matching your filters</p>
+                    <button
+                      onClick={clearFilters}
+                      className="text-foreground-950 hover:text-foreground-600 text-sm font-medium underline"
+                    >
+                      Clear filters
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -137,7 +134,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.2 }}
-              className="h-full overflow-auto rounded-lg border border-neutral-200 bg-white"
+              className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
             >
               <LogsDetailPanel log={selectedLog} />
             </motion.div>
