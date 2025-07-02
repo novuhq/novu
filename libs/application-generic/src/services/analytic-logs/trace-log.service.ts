@@ -6,34 +6,6 @@ import { MessageEntity } from '@novu/dal';
 import { TraceLogRepository } from './trace-log/trace-log.repository';
 import { Trace } from './trace-log/trace-log.schema';
 
-export interface IProviderEngagementEventData {
-  providerMessageId: string;
-  eventType: 'provider_delivered' | 'provider_opened' | 'provider_clicked' | 'provider_bounced' | 'provider_failed';
-  providerId: string;
-  timestamp: Date;
-  stepRunId?: string;
-  organizationId: string;
-  environmentId: string;
-  transactionId?: string;
-  workflowRunId?: string;
-  metadata?: Record<string, any>;
-}
-
-export interface ITraceEventData {
-  organizationId: string;
-  environmentId: string;
-  subscriberId?: string;
-  userId?: string;
-  eventType: string;
-  title: string;
-  message?: string;
-  rawData?: Record<string, any>;
-  status?: 'success' | 'error' | 'timeout';
-  entityType: 'request' | 'workflow_run' | 'step_run';
-  entityId: string;
-  timestamp?: Date;
-}
-
 type TraceEvent =
   | 'message_seen'
   | 'message_unseen'
