@@ -75,12 +75,43 @@ export function PublishModal({
   };
 
   const getResourceDisplayName = (resource: any) => {
-    return resource.targetResourceName || resource.sourceResourceName || 'Unnamed Resource';
+    return resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
   };
 
   const getResourceIdentifier = (resource: any) => {
     const name = getResourceDisplayName(resource);
     return name.toLowerCase().replace(/\s+/g, '-');
+  };
+
+  const getResourceUpdatedBy = (resource: any) => {
+    const sourceUpdatedBy = resource.sourceResource?.updatedBy;
+    const targetUpdatedBy = resource.targetResource?.updatedBy;
+    return sourceUpdatedBy || targetUpdatedBy || currentUser;
+  };
+
+  const getResourceUpdatedAt = (resource: any) => {
+    const sourceUpdatedAt = resource.sourceResource?.updatedAt;
+    const targetUpdatedAt = resource.targetResource?.updatedAt;
+    return sourceUpdatedAt || targetUpdatedAt;
+  };
+
+  const formatTimeAgo = (dateString?: string | null) => {
+    if (!dateString) return 'Unknown';
+
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+
+    if (diffInMinutes < 1) return 'Just now';
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays}d ago`;
+
+    return date.toLocaleDateString();
   };
 
   return (
@@ -169,6 +200,8 @@ export function PublishModal({
                       const IconComponent = getResourceIcon(resource.resourceType);
                       const displayName = getResourceDisplayName(resource);
                       const identifier = getResourceIdentifier(resource);
+                      const updatedBy = getResourceUpdatedBy(resource);
+                      const updatedAt = getResourceUpdatedAt(resource);
 
                       return (
                         <div
@@ -190,17 +223,19 @@ export function PublishModal({
                             <div className="text-paragraph-2xs text-text-soft font-medium">Last updated by</div>
                             <div className="flex items-center gap-1">
                               <Avatar className="size-4">
-                                <AvatarImage src={currentUser?.profilePicture || undefined} />
+                                <AvatarImage src={updatedBy?.profilePicture || undefined} />
                                 <AvatarFallback className="text-[8px] font-medium">
-                                  {currentUser?.firstName?.[0]}
-                                  {currentUser?.lastName?.[0]}
+                                  {updatedBy?.firstName?.[0]}
+                                  {updatedBy?.lastName?.[0]}
                                 </AvatarFallback>
                               </Avatar>
                               <span className="text-paragraph-2xs text-text-sub font-medium">
-                                {currentUser?.firstName || 'User'}
+                                {updatedBy?.firstName || 'User'}
                               </span>
                               <div className="size-0.5 rounded-full bg-neutral-400" />
-                              <span className="text-paragraph-2xs text-text-sub font-medium">5h ago</span>
+                              <span className="text-paragraph-2xs text-text-sub font-medium">
+                                {formatTimeAgo(updatedAt)}
+                              </span>
                             </div>
                           </div>
                         </div>

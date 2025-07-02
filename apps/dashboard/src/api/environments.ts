@@ -8,12 +8,24 @@ export interface IDiffSummary {
   unchanged: number;
 }
 
+export interface IUserInfo {
+  _id: string;
+  firstName: string;
+  lastName?: string | null;
+  externalId?: string;
+}
+
+export interface IResourceInfo {
+  id: string | null;
+  name: string | null;
+  updatedBy?: IUserInfo | null;
+  updatedAt?: string | null;
+}
+
 export interface IResourceDiffResult {
   resourceType: string;
-  sourceResourceId: string | null;
-  sourceResourceName: string | null;
-  targetResourceId: string | null;
-  targetResourceName: string | null;
+  sourceResource?: IResourceInfo | null;
+  targetResource?: IResourceInfo | null;
   changes: any[];
   summary: IDiffSummary;
 }
