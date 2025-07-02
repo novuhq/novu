@@ -12,6 +12,8 @@ import {
   TraceLogRepository,
   TraceEvent,
   PinoLogger,
+  LogRepository,
+  mapEventTypeToTitle,
 } from '@novu/application-generic';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -80,7 +82,20 @@ export class MarkMessageAs {
     for (const message of messages) {
       try {
         if (message._jobId) {
-          await this.traceLogRepository.create(message, eventType, userId);
+          await this.traceLogRepository.create({
+            created_at: LogRepository.formatDateTime64(new Date()),
+            organization_id: message._organizationId,
+            environment_id: message._environmentId,
+            user_id: userId,
+            subscriber_id: message._subscriberId,
+            event_type: eventType,
+            title: mapEventTypeToTitle(eventType),
+            message: `Message ${eventType.replace('message_', '')} for subscriber ${message._subscriberId}`,
+            raw_data: null,
+            status: 'success',
+            entity_type: 'step_run',
+            entity_id: message._jobId,
+          });
         }
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement trace for message ${message._id}`);

@@ -6,8 +6,12 @@ import {
   WebSocketsQueueService,
   TraceLogRepository,
   PinoLogger,
+  mapEventTypeToTitle,
+  LogRepository,
+  Trace,
+  TraceEvent,
 } from '@novu/application-generic';
-import { MessageRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -85,21 +89,17 @@ export class MarkManyNotificationsAs {
 
         if (command.read !== undefined) {
           await this.traceLogRepository.create(
-            message,
-            command.read ? 'message_read' : 'message_unread',
-            command.subscriberId
+            createTraceLog(message, command, command.read ? 'message_read' : 'message_unread')
           );
         }
 
         if (command.snoozedUntil !== undefined) {
-          await this.traceLogRepository.create(message, 'message_snoozed', command.subscriberId);
+          await this.traceLogRepository.create(createTraceLog(message, command, 'message_snoozed'));
         }
 
         if (command.archived !== undefined) {
           await this.traceLogRepository.create(
-            message,
-            command.archived ? 'message_archived' : 'message_unarchived',
-            command.subscriberId
+            createTraceLog(message, command, command.archived ? 'message_archived' : 'message_unarchived')
           );
         }
       } catch (error) {
@@ -107,4 +107,25 @@ export class MarkManyNotificationsAs {
       }
     }
   }
+}
+
+function createTraceLog(
+  message: MessageEntity,
+  command: MarkManyNotificationsAsCommand,
+  eventType: TraceEvent
+): Omit<Trace, 'id' | 'expires_at'> {
+  return {
+    created_at: LogRepository.formatDateTime64(new Date()),
+    organization_id: message._organizationId,
+    environment_id: message._environmentId,
+    user_id: command.subscriberId,
+    subscriber_id: message._subscriberId,
+    event_type: eventType,
+    title: mapEventTypeToTitle(eventType),
+    message: `Message ${eventType.replace('message_', '')} for subscriber ${message._subscriberId}`,
+    raw_data: null,
+    status: 'success',
+    entity_type: 'step_run',
+    entity_id: message._jobId,
+  };
 }
