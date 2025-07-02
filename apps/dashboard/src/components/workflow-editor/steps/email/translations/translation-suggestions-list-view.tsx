@@ -1,7 +1,7 @@
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
-import { VariablePreview } from '@/components/variable/components/variable-preview';
-import { Badge } from '@/components/primitives/badge';
+import { TranslationKey } from '@/types/translations';
+import { NewTranslationKeyPreview } from './new-translation-key-preview';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useParams } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -26,7 +26,10 @@ type TranslationSuggestionsPopoverRef = {
   select: () => void;
 };
 
-function NewTranslationKeyPreview() {
+export const TranslationSuggestionsListView = React.forwardRef<
+  TranslationSuggestionsPopoverRef,
+  TranslationSuggestionsPopoverProps & { translationKeys?: TranslationKey[] }
+>(({ items, onSelectItem, translationKeys = [] }, ref) => {
   const { environmentSlug } = useParams();
   const { workflow } = useWorkflow();
   const { data: organizationSettings } = useFetchOrganizationSettings();
@@ -41,38 +44,6 @@ function NewTranslationKeyPreview() {
     ? `${translationsUrl}?query=${encodeURIComponent(workflow.name)}`
     : translationsUrl;
 
-  return (
-    <VariablePreview className="min-w-[300px]">
-      <VariablePreview.Content>
-        <div className="text-text-sub text-paragraph-2xs font-medium leading-normal">
-          <Badge variant="lighter" color="orange" size="sm" className="mb-2">
-            💡 TIP
-          </Badge>
-          <p>
-            Adds a new translation key to {defaultLocale}.json. This makes the translations outdated, update the
-            translations by:
-          </p>
-          <ul className="mt-1 list-disc pl-3">
-            <li>Exporting the updated {defaultLocale}.json</li>
-            <li>Translating the new key(s)</li>
-            <li>Re-uploading each localized file</li>
-          </ul>
-          <a
-            href={translationsUrlWithSearch}
-            className="text-text-sub mt-2 block text-[10px] font-medium leading-normal underline"
-          >
-            Insert & manage translations ↗
-          </a>
-        </div>
-      </VariablePreview.Content>
-    </VariablePreview>
-  );
-}
-
-export const TranslationSuggestionsListView = React.forwardRef<
-  TranslationSuggestionsPopoverRef,
-  TranslationSuggestionsPopoverProps & { translationKeys?: { name: string }[] }
->(({ items, onSelectItem, translationKeys = [] }, ref) => {
   const options = useMemo(() => {
     return items.map((item: TranslationKeyItem): { label: string; value: string; preview?: React.ReactNode } => {
       // Check if this item is a new translation key by seeing if it exists in translationKeys
@@ -85,7 +56,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
         return {
           label: displayLabel,
           value: item.name,
-          preview: <NewTranslationKeyPreview />,
+          preview: <NewTranslationKeyPreview locale={defaultLocale} translationsUrl={translationsUrlWithSearch} />,
         };
       }
 
@@ -94,7 +65,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
         value: item.name,
       };
     });
-  }, [items, translationKeys]);
+  }, [items, translationKeys, defaultLocale, translationsUrlWithSearch]);
 
   const variablesListRef = useRef<VariableListRef>(null);
 
@@ -127,7 +98,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
   return (
     <VariableList
       ref={variablesListRef}
-      className="rounded-md border shadow-md outline-none"
+      className="min-w-[250px] rounded-md border shadow-md outline-none"
       options={options}
       onSelect={onSelect}
       title="Translation Keys"

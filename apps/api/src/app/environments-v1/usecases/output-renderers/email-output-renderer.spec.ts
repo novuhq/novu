@@ -1137,14 +1137,14 @@ describe('EmailOutputRendererUsecase', () => {
         expect(getLayoutUseCase.execute.called).to.be.true;
       });
 
-      it('should use default layout when layoutId is undefined', async () => {
+      it('should use default layout when layoutId is null', async () => {
         const renderCommand: EmailOutputRendererCommand = {
           environmentId: 'fake_env_id',
           organizationId: 'fake_org_id',
           controlValues: {
             subject: 'Layout Test',
             body: simpleBodyContent,
-            // layoutId is undefined
+            layoutId: null,
           },
           fullPayloadForRender: {
             ...mockFullPayload,
@@ -1215,7 +1215,7 @@ describe('EmailOutputRendererUsecase', () => {
           controlValues: {
             subject: 'Layout Test',
             body: simpleBodyContent,
-            // layoutId is undefined, should look for default
+            layoutId: null,
           },
           fullPayloadForRender: {
             ...mockFullPayload,
@@ -1448,7 +1448,7 @@ describe('EmailOutputRendererUsecase', () => {
           controlValues: {
             subject: 'Layout Test',
             body: simpleBodyContent,
-            // layoutId is undefined
+            layoutId: null,
           },
           fullPayloadForRender: {
             ...mockFullPayload,
@@ -1475,14 +1475,13 @@ describe('EmailOutputRendererUsecase', () => {
         });
       });
 
-      it('should not call layout repository when layoutId is explicitly set to null', async () => {
+      it('should not call layout repository when layoutId is undefined', async () => {
         const renderCommand: EmailOutputRendererCommand = {
           environmentId: 'fake_env_id',
           organizationId: 'fake_org_id',
           controlValues: {
             subject: 'Layout Test',
             body: simpleBodyContent,
-            layoutId: null, // explicitly set to null
           },
           fullPayloadForRender: {
             ...mockFullPayload,
@@ -1542,7 +1541,7 @@ describe('EmailOutputRendererUsecase', () => {
           controlValues: {
             subject: 'Layout Test',
             body: simpleBodyContent,
-            // layoutId is undefined
+            layoutId: null,
           },
           fullPayloadForRender: {
             ...mockFullPayload,

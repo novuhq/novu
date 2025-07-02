@@ -2,12 +2,12 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { saveTranslation, getTranslation } from '@/api/translations';
-import { LocalizationResourceEnum } from '@/components/translations/types';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 import { DEFAULT_LOCALE } from '@novu/shared';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
-type UpdateTranslationValueParams = {
+export type UpdateTranslationValueParams = {
   workflowId: string;
   translationKey: string;
   translationValue: string;

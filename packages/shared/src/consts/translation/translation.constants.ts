@@ -13,3 +13,5 @@ export const TRANSLATION_KEY_REGEX = /\{t\.([^}]+)\}/g;
  * (non-global version for single matches)
  */
 export const TRANSLATION_KEY_SINGLE_REGEX = /\{t\.([^}]+)\}/;
+
+export const TRANSLATION_TRIGGER_CHARACTER = '{t.';

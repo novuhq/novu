@@ -31,6 +31,7 @@ export const BaseBody = () => {
                 value={field.value}
                 multiline
                 onChange={field.onChange}
+                enableTranslations
               />
             </InputRoot>
           </FormControl>

@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getTranslations } from '@/api/translations';
 import { QueryKeys } from '@/utils/query-keys';
-import { LocalizationResourceEnum } from '@/components/translations/types';
+import { LocalizationResourceEnum } from '@/types/translations';
 
 export type FetchTranslationsParams = {
   resourceId: string;
