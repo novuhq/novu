@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LocalizationResourceEnum } from '@/components/translations/types';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { getTranslation } from '@/api/translations';

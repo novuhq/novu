@@ -8,7 +8,7 @@ import { TranslationImportTrigger } from '../translation-import-trigger';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { getLocaleDisplayName } from '../utils';
 import { useTranslationFileOperations } from './hooks';
-import { TranslationResource } from '@/components/translations/types';
+import { TranslationResource } from '@/types/translations';
 
 type EditorActionsProps = {
   selectedLocale: string;
