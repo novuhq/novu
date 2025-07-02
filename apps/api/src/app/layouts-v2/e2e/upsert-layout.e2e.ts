@@ -93,7 +93,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Updated Layout Name',
         controlValues: {
           email: {
-            content: '<html><body><div>{{content}}</div></body></html>',
+            body: '<html><body><div>{{content}}</div></body></html>',
             editorType: 'html',
           },
         },
@@ -104,7 +104,7 @@ describe('Upsert Layout #novu-v2', () => {
       expect(updatedLayout.id).to.equal(existingLayout.id);
       expect(updatedLayout.layoutId).to.equal(existingLayout.layoutId);
       expect(updatedLayout.name).to.equal(updateData.name);
-      expect(updatedLayout.controls.values.email?.content).to.contain(updateData.controlValues?.email?.content);
+      expect(updatedLayout.controls.values.email?.body).to.contain(updateData.controlValues?.email?.body);
       expect(updatedLayout.controls.values.email?.editorType).to.equal(updateData.controlValues?.email?.editorType);
     });
 
@@ -113,7 +113,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'HTML Layout',
         controlValues: {
           email: {
-            content: 'Invalid HTML content without proper structure',
+            body: 'Invalid HTML content without proper structure',
             editorType: 'html',
           },
         },
@@ -133,7 +133,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Block Layout',
         controlValues: {
           email: {
-            content: 'Invalid JSON content',
+            body: 'Invalid JSON content',
             editorType: 'block',
           },
         },
@@ -163,7 +163,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Block Layout',
         controlValues: {
           email: {
-            content: validMailyContent,
+            body: validMailyContent,
             editorType: 'block',
           },
         },
@@ -191,7 +191,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Block Layout',
         controlValues: {
           email: {
-            content: validHtmlContent,
+            body: validHtmlContent,
             editorType: 'html',
           },
         },
@@ -221,7 +221,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Valid HTML Layout',
         controlValues: {
           email: {
-            content: validHtmlContent,
+            body: validHtmlContent,
             editorType: 'html',
           },
         },
@@ -230,7 +230,7 @@ describe('Upsert Layout #novu-v2', () => {
       const { result: updatedLayout } = await novuClient.layouts.update(updateData, existingLayout.layoutId);
 
       expect(updatedLayout.name).to.equal(updateData.name);
-      expect(updatedLayout.controls.values.email?.content).to.eq(validHtmlContent);
+      expect(updatedLayout.controls.values.email?.body).to.eq(validHtmlContent);
       expect(updatedLayout.controls.values.email?.editorType).to.equal('html');
     });
 
@@ -258,7 +258,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Valid Block Layout',
         controlValues: {
           email: {
-            content: validMailyContent,
+            body: validMailyContent,
             editorType: 'block',
           },
         },
@@ -267,7 +267,7 @@ describe('Upsert Layout #novu-v2', () => {
       const { result: updatedLayout } = await novuClient.layouts.update(updateData, existingLayout.layoutId);
 
       expect(updatedLayout.name).to.equal(updateData.name);
-      expect(updatedLayout.controls.values.email?.content).to.equal(validMailyContent);
+      expect(updatedLayout.controls.values.email?.body).to.equal(validMailyContent);
       expect(updatedLayout.controls.values.email?.editorType).to.equal('block');
     });
 
@@ -290,7 +290,7 @@ describe('Upsert Layout #novu-v2', () => {
         name: 'Non-existent Layout',
         controlValues: {
           email: {
-            content: '<html><body><div>Content: {{content}}</div></body></html>',
+            body: '<html><body><div>Content: {{content}}</div></body></html>',
             editorType: 'html',
           },
         },

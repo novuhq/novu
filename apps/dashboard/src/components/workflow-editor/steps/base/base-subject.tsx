@@ -31,6 +31,7 @@ export const BaseSubject = () => {
                 onChange={field.onChange}
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
+                enableTranslations
               />
             </InputRoot>
           </FormControl>

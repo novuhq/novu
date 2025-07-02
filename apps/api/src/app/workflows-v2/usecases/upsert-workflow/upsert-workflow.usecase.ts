@@ -18,6 +18,7 @@ import {
   SendWebhookMessage,
   EmailControlType,
   PinoLogger,
+  FeatureFlagsService,
 } from '@novu/application-generic';
 import {
   ControlSchemas,
@@ -36,6 +37,7 @@ import {
   WorkflowCreationSourceEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 
 import { stepTypeToControlSchema } from '../../shared';
@@ -43,12 +45,14 @@ import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
+import { IOptimisticStepInfo } from '../build-variable-schema/build-available-variable-schema.command';
 import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import { PreviewUsecase } from '../preview/preview.usecase';
 import { PreviewCommand } from '../preview';
 import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -62,7 +66,9 @@ export class UpsertWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
+    private getLayoutUseCase: GetLayoutUseCase,
     private analyticsService: AnalyticsService,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
@@ -149,6 +155,7 @@ export class UpsertWorkflowUseCase {
       notificationGroupId,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
+      updatedBy: user._id,
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
@@ -178,6 +185,7 @@ export class UpsertWorkflowUseCase {
     return {
       id: existingWorkflow._id,
       environmentId: existingWorkflow._environmentId,
+      updatedBy: user._id,
       organizationId: user.organizationId,
       userId: user._id,
       name: workflowDto.name,
@@ -201,6 +209,12 @@ export class UpsertWorkflowUseCase {
   ): Promise<NotificationStep[]> {
     const steps: NotificationStep[] = [];
 
+    // Build optimistic step information for sync scenarios
+    const optimisticSteps = command.workflowDto.steps.map((step) => ({
+      stepId: step.stepId || this.generateUniqueStepId(step, command.workflowDto.steps),
+      type: step.type,
+    }));
+
     for (const step of command.workflowDto.steps) {
       const existingStep: NotificationStepEntity | null | undefined =
         // eslint-disable-next-line id-length
@@ -220,6 +234,7 @@ export class UpsertWorkflowUseCase {
         stepType: step.type,
         controlSchema: controlSchemas.schema,
         controlsDto: step.controlValues,
+        optimisticSteps, // Pass optimistic steps for variable schema building
       });
 
       const updateStepId = existingStep?.stepId;
@@ -360,6 +375,38 @@ export class UpsertWorkflowUseCase {
         command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
     ) {
       const emailControlValues = newControlValues as EmailControlType;
+
+      const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+        defaultValue: false,
+        environment: { _id: command.user.environmentId },
+        organization: { _id: command.user.organizationId },
+      });
+
+      // Assign default layoutId if null (but not if undefined)
+      if (isLayoutsPageActive && emailControlValues.layoutId === null) {
+        const defaultLayout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            userId: command.user._id,
+            skipAdditionalFields: true,
+          })
+        );
+        emailControlValues.layoutId = defaultLayout.layoutId;
+      } else if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
+        const layout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: emailControlValues.layoutId,
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            userId: command.user._id,
+            skipAdditionalFields: true,
+          })
+        );
+        emailControlValues.layoutId = layout.layoutId;
+      }
+
       const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
       if (emailControlValues.editorType === 'html' && isMaily) {
         const { result } = await this.previewUsecase.execute(

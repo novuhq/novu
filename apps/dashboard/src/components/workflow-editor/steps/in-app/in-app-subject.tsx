@@ -32,6 +32,7 @@ export const InAppSubject = () => {
                 variables={variables}
                 isAllowedVariable={isAllowedVariable}
                 autoFocus
+                enableTranslations
               />
             </InputRoot>
           </FormControl>

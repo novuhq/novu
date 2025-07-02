@@ -3,7 +3,7 @@ import {
   InferClickhouseSchemaType,
   CHUInt16,
   CHString,
-  CHDateTime,
+  CHDateTime64,
   CHLowCardinality,
   CHNullable,
   CHUInt32,
@@ -13,7 +13,7 @@ import { TABLE_NAME } from './request-log.repository';
 export const requestLogSchema = new ClickhouseSchema(
   {
     id: { type: CHString() },
-    created_at: { type: CHDateTime('UTC') },
+    created_at: { type: CHDateTime64(3, 'UTC') },
     path: { type: CHString() },
     url: { type: CHString() },
     url_pattern: { type: CHString() },

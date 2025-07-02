@@ -1,10 +1,13 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { getMaxAvailableLogsDateRange } from '@/utils/logs-filters.utils';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { useOrganization } from '@clerk/clerk-react';
 
 export interface LogsFilters {
   status: string[];
   transactionId: string;
-  created?: string; // Hours value for creation time filter
+  created: string; // Hours value for creation time filter, defaults to '24'
 }
 
 export interface LogsUrlState {
@@ -23,7 +26,18 @@ export interface LogsUrlState {
 
 export function useLogsUrlState(): LogsUrlState {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { organization } = useOrganization();
+  const { subscription } = useFetchSubscription();
   const selectedLogId = searchParams.get('selectedLogId');
+
+  const maxAvailableLogsDateRange = useMemo(
+    () =>
+      getMaxAvailableLogsDateRange({
+        organization,
+        subscription,
+      }),
+    [organization, subscription]
+  );
 
   const handleLogSelect = useCallback(
     (logId: string) => {
@@ -70,9 +84,9 @@ export function useLogsUrlState(): LogsUrlState {
     (): LogsFilters => ({
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
-      created: searchParams.get('created') || undefined,
+      created: searchParams.get('created') || maxAvailableLogsDateRange, // Default to max available for user's tier
     }),
-    [searchParams]
+    [searchParams, maxAvailableLogsDateRange]
   );
 
   const handleFiltersChange = useCallback(
@@ -109,15 +123,17 @@ export function useLogsUrlState(): LogsUrlState {
     setSearchParams((prev) => {
       prev.delete('status');
       prev.delete('transactionId');
-      prev.delete('created');
+      prev.delete('created'); // Remove from URL so it defaults to '24'
       prev.delete('page');
       return prev;
     });
   }, [setSearchParams]);
 
   const hasActiveFilters = useMemo(() => {
-    return filters.status.length > 0 || filters.transactionId.trim() !== '' || !!filters.created;
-  }, [filters]);
+    return (
+      filters.status.length > 0 || filters.transactionId.trim() !== '' || filters.created !== maxAvailableLogsDateRange
+    );
+  }, [filters, maxAvailableLogsDateRange]);
 
   return useMemo(
     () => ({

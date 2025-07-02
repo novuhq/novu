@@ -1,4 +1,4 @@
-import { DEFAULT_ARRAY_ELEMENTS } from './usecases/create-variables-object/create-variables-object.usecase';
+import { DEFAULT_ARRAY_ELEMENTS } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
 
 export function fullCodeSnippet() {
   return {

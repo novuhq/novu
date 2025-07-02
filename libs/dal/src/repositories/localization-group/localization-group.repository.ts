@@ -113,8 +113,4 @@ export class LocalizationGroupRepository extends BaseRepository<
 
     return { data, totalCount };
   }
-
-  private regExpEscape(literalString: string): string {
-    return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
-  }
 }

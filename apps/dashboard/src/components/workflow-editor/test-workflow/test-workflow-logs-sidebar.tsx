@@ -81,13 +81,13 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
               <ActivityError />
             ) : (
               <React.Fragment key={activityId}>
-                <ActivityHeader title={activity.template?.name} className="h-[49px] border-t-0" />
-                <ActivityOverview activity={activity} />
-                <ActivityLogs
+                <ActivityHeader
+                  className="h-[49px] border-t-0"
                   activity={activity}
-                  onActivitySelect={setParentActivityId}
                   onTransactionIdChange={handleTransactionIdChange}
                 />
+                <ActivityOverview activity={activity} />
+                <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
               </React.Fragment>
             )}
             {!props.workflow?.lastTriggeredAt && (

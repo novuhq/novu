@@ -1,0 +1,64 @@
+{{ define "style" }}
+a {
+    color: rgba(251, 227, 50, 1.0);
+}
+body {
+    background: black;
+    font-family: Arial, Helvetica, sans-serif;
+}
+code {
+    color: white;
+}
+details > div {
+    border-left: 1px solid gray;
+    margin-left: 10px;
+    padding: 10px;
+}
+div {
+    width: fit-content;
+}
+div.operation-call.odd {
+    background-color: rgba(251, 227, 50, 0.1);
+}
+h1 {
+    color: hsl(53, 96%, 59%);
+}
+h2 {
+    color: rgba(255, 255, 255, 1.0);
+}
+h3 {
+    color: rgba(255, 255, 255, 0.75);
+}
+h4 {
+    color: rgba(255, 255, 255, 0.50);
+}
+p {
+    color: white;
+    padding-left: 10px;
+}
+summary {
+    color: gray;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+table {
+    border-collapse: collapse;
+    margin: 5px;
+}
+th {
+    border-bottom: 1px solid gray;
+    color: white;
+    padding: 10px;
+    text-align: left;
+}
+td {
+    color: white;
+    padding: 10px;
+}
+tr.even {
+    background-color: rgba(255, 255, 255, 0.0);
+}
+tr.odd {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+{{ end }}

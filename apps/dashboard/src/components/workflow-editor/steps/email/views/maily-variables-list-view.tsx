@@ -128,6 +128,7 @@ export const MailyVariablesListView = React.forwardRef(
         options={options}
         onSelect={onSelect}
         title="Variables"
+        context="variables"
       />
     );
   }

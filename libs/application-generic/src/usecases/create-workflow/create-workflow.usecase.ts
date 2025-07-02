@@ -301,6 +301,7 @@ export class CreateWorkflow {
       origin: command.origin,
       status: command.status,
       issues: command.issues,
+      ...(command.updatedBy ? { _updatedBy: command.updatedBy } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),
       ...(command.validatePayload !== undefined ? { validatePayload: command.validatePayload } : {}),

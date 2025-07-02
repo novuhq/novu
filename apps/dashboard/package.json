@@ -29,7 +29,7 @@
     "@codemirror/language": "^6.11.1",
     "@hookform/resolvers": "^3.9.0",
     "@lezer/highlight": "^1.2.1",
-    "@maily-to/core": "github:novuhq/maily.to.git#release/v0.2.7-novu.14-core&path:/packages/core",
+    "@maily-to/core": "github:novuhq/maily.to.git#release/v0.2.7-novu.15-core&path:/packages/core",
     "@novu/api": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/js": "workspace:*",

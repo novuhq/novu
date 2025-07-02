@@ -34,39 +34,68 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
     }));
   });
 
-  const updateFormField = (pairs: Array<{ key: string; value: string }>) => {
-    setCurrentPairs(pairs);
-    const uniquePairLength = new Set<string>(pairs.map((pair) => pair.key)).size;
-    const hasNoDuplicates = uniquePairLength === pairs.length;
+  // Update parent form when current pairs change (called on blur and explicit actions)
+  const updateParentForm = () => {
+    const uniquePairLength = new Set<string>(currentPairs.map((pair) => pair.key)).size;
+    const hasNoDuplicates = uniquePairLength === currentPairs.length;
 
     if (hasNoDuplicates) {
-      field.onChange(
-        pairs.reduce(
-          (acc, { key, value }) => {
+      const dataObject = currentPairs.reduce(
+        (acc, { key, value }) => {
+          if (key.trim()) {
+            // Only include pairs with non-empty keys
             acc[key] = value;
-            return acc;
-          },
-          {} as Record<string, string>
-        )
+          }
+
+          return acc;
+        },
+        {} as Record<string, string>
       );
+
+      field.onChange(dataObject);
     }
   };
 
   const handleAddPair = () => {
     const newPairs = [...currentPairs, { key: '', value: '' }];
-    updateFormField(newPairs);
+    setCurrentPairs(newPairs);
     saveForm();
   };
 
-  const handleUpdatePair = (index: number, field: 'key' | 'value', newValue: string) => {
-    const newPairs = currentPairs.map((pair, i) => (i === index ? { ...pair, [field]: newValue } : pair));
-    updateFormField(newPairs);
+  const handleUpdatePair = (index: number, fieldType: 'key' | 'value', newValue: string) => {
+    const newPairs = currentPairs.map((pair, i) => (i === index ? { ...pair, [fieldType]: newValue } : pair));
+    setCurrentPairs(newPairs);
   };
 
   const handleRemovePair = (index: number) => {
     const newPairs = currentPairs.filter((_, i) => i !== index);
-    updateFormField(newPairs);
+    setCurrentPairs(newPairs);
+    // Update immediately on remove since we're changing the structure
+    setTimeout(() => {
+      const updatedPairs = currentPairs.filter((_, i) => i !== index);
+      const uniquePairLength = new Set<string>(updatedPairs.map((pair) => pair.key)).size;
+      const hasNoDuplicates = uniquePairLength === updatedPairs.length;
+
+      if (hasNoDuplicates) {
+        const dataObject = updatedPairs.reduce(
+          (acc, { key, value }) => {
+            if (key.trim()) {
+              acc[key] = value;
+            }
+
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+
+        field.onChange(dataObject);
+      }
+    }, 0);
     saveForm();
+  };
+
+  const handleBlur = () => {
+    updateParentForm();
   };
 
   return (
@@ -103,6 +132,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                       type="text"
                       value={pair.key}
                       onChange={(e) => handleUpdatePair(index, 'key', e.target.value)}
+                      onBlur={handleBlur}
                     />
                     <InputRoot>
                       <ControlInput
@@ -114,6 +144,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                         onChange={(newValue) => {
                           handleUpdatePair(index, 'value', typeof newValue === 'string' ? newValue : '');
                         }}
+                        onBlur={handleBlur}
                         variables={variables}
                       />
                     </InputRoot>

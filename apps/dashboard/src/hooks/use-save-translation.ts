@@ -3,6 +3,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { saveTranslation } from '@/api/translations';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
+import { showSuccessToast, showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type SaveTranslationParameters = OmitEnvironmentFromParameters<typeof saveTranslation>;
 
@@ -26,6 +27,16 @@ export const useSaveTranslation = () => {
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
       });
+
+      // Also invalidate translation keys if this is a default locale update
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, variables.locale, currentEnvironment?._id],
+      });
+
+      showSuccessToast('Translation saved successfully');
+    },
+    onError: (error) => {
+      showErrorToast(error instanceof Error ? error.message : 'Failed to save translation', 'Save failed');
     },
   });
 };

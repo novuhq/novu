@@ -23,7 +23,7 @@ import { EmailControlType } from '@novu/application-generic';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { buildWorkflow } from '../workflow.controller.e2e';
 import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
-import { DEFAULT_ARRAY_ELEMENTS } from '../usecases/create-variables-object/create-variables-object.usecase';
+import { DEFAULT_ARRAY_ELEMENTS } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 
 const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';
@@ -142,7 +142,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       result: {
         preview: {
           subject: 'Welcome John',
-          body: 'Hello John Doe, Welcome to ORGANIZATIONNAME!',
+          body: 'Hello John Doe, Welcome to !',
         },
         type: 'in_app',
       },
@@ -156,9 +156,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           locale: 'en-US',
           data: {},
         },
-        payload: {
-          organizationName: 'organizationName',
-        },
+        payload: {},
         steps: {},
       },
     });
@@ -580,7 +578,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
   });
 
   it('should gracefully handle undefined variables that are not present in payload schema', async () => {
-    const pay = {
+    const payloadSchema = {
       type: 'object',
       properties: {
         /*
@@ -596,7 +594,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       },
     };
-    const workflow = await createWorkflow({ payloadSchema: pay });
+    const workflow = await createWorkflow({ payloadSchema });
     await emulateExternalOrigin(workflow.id);
 
     const stepId = workflow.steps[0].id;
@@ -622,8 +620,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       result: {
         preview: {
           subject: 'Welcome John',
-          // missing orderId will be replaced with placeholder "{{payload.orderId}}"
-          body: 'Hello John, your order #orderId is ready!',
+          body: 'Hello John, your order # is ready!',
         },
         type: 'in_app',
       },
@@ -716,7 +713,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           lastName: '{{payload.lastName}}',
           organizationName: '{{payload.organizationName}}',
           firstName: 'John',
-          orderId: 'orderId',
         },
         steps: {},
       },
@@ -908,6 +904,49 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       },
       previewPayloadExample: {},
     });
+  });
+
+  it('should generate preview for email step with subscriber variables', async () => {
+    const createWorkflowDto: CreateWorkflowDto = {
+      tags: [],
+      source: WorkflowCreationSourceEnum.Editor,
+      name: 'Email Test Workflow',
+      workflowId: `email-test-workflow-${randomUUID()}`,
+      description: 'This is a test workflow',
+      active: true,
+      steps: [
+        {
+          name: 'Email Test Step',
+          type: StepTypeEnum.Email,
+          controlValues: {
+            subject: 'Test Email Subject',
+            body: 'Hello, {{subscriber.firstName}}!',
+            disableOutputSanitization: false,
+          },
+        },
+      ],
+    };
+    const { result: workflow } = await novuClient.workflows.create(createWorkflowDto);
+    const stepId = workflow.steps[0].id;
+    const controlValues = {
+      subject: 'Test Email Subject',
+      body: 'Hello, {{subscriber.firstName}}!',
+      disableOutputSanitization: false,
+    };
+    const previewPayload: PreviewPayloadDto = {
+      subscriber: {
+        firstName: 'John',
+      },
+    };
+
+    const { result } = await novuClient.workflows.steps.generatePreview({
+      workflowId: workflow.id,
+      stepId,
+      generatePreviewRequestDto: { controlValues, previewPayload },
+    });
+
+    expect(result.result.preview.subject).to.contain('Test Email Subject');
+    expect(result.result.preview.body).to.contain('Hello, John!');
   });
 
   it('should generate preview for the email step with digest variables', async () => {

@@ -1,14 +1,16 @@
 import { Button } from '@/components/primitives/button';
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { cn } from '../../../utils/ui';
 interface ArrowPaginationProps {
   page: number;
   hasMore: boolean;
   onPageChange: (newPage: number) => void;
+  className?: string;
 }
 
-export function ArrowPagination({ page, hasMore, onPageChange }: ArrowPaginationProps) {
+export function ArrowPagination({ page, hasMore, onPageChange, className }: ArrowPaginationProps) {
   return (
-    <div className="bottom-0 mt-auto border-t border-t-neutral-200 bg-white py-3">
+    <div className={cn('bottom-0 mt-auto border-t border-t-neutral-200 bg-white py-3', className)}>
       <div className="flex items-center justify-center px-6">
         <div className="border-input inline-flex items-center rounded-lg border bg-transparent">
           <Button

@@ -61,7 +61,7 @@ export class UpsertLayoutUseCase {
 
     let upsertedLayout: LayoutDto;
     if (existingLayout) {
-      this.mixpanelTrack(command, 'Layout Update - [API]');
+      this.mixpanelTrack(command, 'Layout Update - [Layouts]');
 
       upsertedLayout = await this.updateLayoutUseCaseV0.execute(
         UpdateLayoutCommand.create({
@@ -75,7 +75,7 @@ export class UpsertLayoutUseCase {
         })
       );
     } else {
-      this.mixpanelTrack(command, 'Layout Created - [API]');
+      this.mixpanelTrack(command, 'Layout Create - [Layouts]');
 
       const defaultLayout = await this.layoutRepository.findOne({
         _organizationId: command.user.organizationId,
@@ -103,7 +103,8 @@ export class UpsertLayoutUseCase {
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
-        user: command.user,
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
       })
     );
 
@@ -116,7 +117,7 @@ export class UpsertLayoutUseCase {
 
   private validateLayout(command: UpsertLayoutCommand) {
     if (command.layoutDto.controlValues?.email) {
-      const { content, editorType } = command.layoutDto.controlValues.email;
+      const { body: content, editorType } = command.layoutDto.controlValues.email;
       const isMailyContent = isStringifiedMailyJSONContent(content);
       const isHtmlContent =
         content.includes('<html') &&

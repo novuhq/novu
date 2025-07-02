@@ -14,6 +14,7 @@ import { getClientIp } from 'request-ip';
 import { sanitizePayload, retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
 import { generateTransactionId } from '../helpers';
+import { buildLog } from '../utils/mappers';
 
 const LOG_ANALYTICS_KEY = 'logAnalytics';
 
@@ -72,8 +73,42 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   }
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+    const shouldRun = await this.shouldRun(context);
+
+    if (!shouldRun) return next.handle();
+
+    const req = context.switchToHttp().getRequest();
+
+    const user = req.user as UserSessionData;
+
+    const start = Date.now();
+
+    const res = context.switchToHttp().getResponse();
+
+    return next.handle().pipe(
+      tap(async (data) => {
+        const duration = Date.now() - start;
+        const basicLog = buildLog(req, res.statusCode, data, user, duration);
+        if (!basicLog) {
+          this.logger.warn('Analytics log construction failed - unable to track request metrics');
+
+          return;
+        }
+
+        const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
+
+        try {
+          await retryWithBackoff(() => this.requestLogRepository.insert(analyticsLog));
+        } catch (err) {
+          this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
+        }
+      })
+    );
+  }
+
+  private async shouldRun(context: ExecutionContext): Promise<boolean> {
     const shouldLog = shouldLogAnalytics(context);
-    if (!shouldLog) return next.handle();
+    if (!shouldLog) return false;
 
     const req = context.switchToHttp().getRequest();
     const user = req.user as UserSessionData;
@@ -86,25 +121,9 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
       defaultValue: false,
     });
 
-    if (!isEnabled) return next.handle();
+    if (!isEnabled) return false;
 
-    const start = Date.now();
-
-    const res = context.switchToHttp().getResponse();
-
-    return next.handle().pipe(
-      tap(async (data) => {
-        const duration = Date.now() - start;
-        const basicLog = this.buildLog(req, res, data, user, duration);
-        const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
-
-        try {
-          await retryWithBackoff(() => this.requestLogRepository.insert(analyticsLog));
-        } catch (err) {
-          this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
-        }
-      })
-    );
+    return true;
   }
 
   private buildLogByStrategy(context: ExecutionContext, analyticsLog: CreateHttpLog, res: unknown): CreateHttpLog {
@@ -122,27 +141,5 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     }
 
     return analyticsLog;
-  }
-
-  private buildLog(req: any, res: any, data: any, user: UserSessionData, duration: number): CreateHttpLog {
-    return {
-      created_at: new Date(),
-      path: req.path,
-      url: req.originalUrl,
-      url_pattern: req.route.path,
-      hostname: req.hostname,
-      status_code: res.statusCode,
-      method: req.method,
-      transaction_id: generateTransactionId(),
-      ip: getClientIp(req) || '',
-      user_agent: req.headers['user-agent'] || '',
-      request_body: sanitizePayload(req.body),
-      response_body: sanitizePayload(data),
-      user_id: user._id,
-      organization_id: user.organizationId,
-      environment_id: user.environmentId,
-      schema_type: user.scheme,
-      duration_ms: duration,
-    };
   }
 }

@@ -24,13 +24,16 @@ export class InAppOutputRendererUsecase extends BaseTranslationRendererUsecase {
   @InstrumentUsecase()
   async execute(renderCommand: InAppOutputRendererCommand): Promise<InAppRenderOutput> {
     const { skip, disableOutputSanitization, ...outputControls } = renderCommand.controlValues ?? {};
+    const { _environmentId, _organizationId, _id: workflowId } = renderCommand.dbWorkflow;
 
-    const translatedControls = await this.processTranslations(
-      outputControls,
-      renderCommand.fullPayloadForRender,
-      renderCommand.dbWorkflow,
-      renderCommand.locale
-    );
+    const translatedControls = await this.processTranslations({
+      controls: outputControls,
+      variables: renderCommand.fullPayloadForRender,
+      environmentId: _environmentId,
+      organizationId: _organizationId,
+      workflowId,
+      locale: renderCommand.locale,
+    });
 
     if (disableOutputSanitization) {
       return translatedControls as any;

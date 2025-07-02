@@ -7,13 +7,6 @@ on:
       - edited
       - synchronize
 
-  # Use the following event if you want edit and test setting regarding conventional commits
-  # pull_request:
-  #   types:
-  #     - opened
-  #     - edited
-  #     - synchronize
-
 permissions:
   pull-requests: write
 
@@ -36,6 +29,98 @@ jobs:
           echo "$scopes" >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
+      - name: Check if PR author is team member
+        id: check_team_member
+        run: |
+          # Check if the PR author has write access to the repository (indicating team membership)
+          author="${{ github.event.pull_request.user.login }}"
+          echo "Checking if $author is a team member..."
+
+          # Use GitHub API to check user permissions
+          response=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/repos/${{ github.repository }}/collaborators/$author/permission")
+
+          permission=$(echo "$response" | jq -r '.permission // "none"')
+          echo "Permission level: $permission"
+
+          if [[ "$permission" == "admin" || "$permission" == "write" ]]; then
+            echo "is_team_member=true" >> $GITHUB_OUTPUT
+            echo "$author is a team member"
+          else
+            echo "is_team_member=false" >> $GITHUB_OUTPUT
+            echo "$author is not a team member"
+          fi
+
+      - name: Extract Linear ticket from branch and auto-fix PR title
+        id: auto_fix_linear_ticket
+        if: steps.check_team_member.outputs.is_team_member == 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          branch_name="$BRANCH_NAME"
+          pr_title="$PR_TITLE"
+
+          echo "Branch name: $branch_name"
+          echo "Current PR title: $pr_title"
+
+          # Extract ticket ID from branch name (e.g., nv-6051 from nv-6051-bug-steps-liquidjs...)
+          if [[ "$branch_name" =~ ^([a-zA-Z]+-[0-9]+) ]]; then
+            ticket_id="${BASH_REMATCH[1]^^}"  # Convert to uppercase
+            echo "Found ticket ID in branch: $ticket_id"
+            
+            # Check if PR title already has the Linear ticket format
+            if [[ "$pr_title" =~ fixes\ [A-Z]+-[0-9]+$ ]]; then
+              echo "PR title already contains Linear ticket ID"
+              echo "needs_update=false" >> $GITHUB_OUTPUT
+              echo "linear_ticket_valid=true" >> $GITHUB_OUTPUT
+            else
+              # Auto-append the Linear ticket ID
+              new_title="$pr_title fixes $ticket_id"
+              echo "Auto-fixing PR title to: $new_title"
+              
+              # Update PR title using GitHub API
+              curl -X PATCH \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}" \
+                -d "$(jq -n --arg title "$new_title" '{title: $title}')"
+              
+              echo "needs_update=true" >> $GITHUB_OUTPUT
+              echo "linear_ticket_valid=true" >> $GITHUB_OUTPUT
+              echo "updated_title=$new_title" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "No Linear ticket ID found in branch name"
+            # Check if title has Linear ticket format manually added
+            if [[ "$pr_title" =~ fixes\ [A-Z]+-[0-9]+$ ]]; then
+              echo "linear_ticket_valid=true" >> $GITHUB_OUTPUT
+            else
+              echo "linear_ticket_valid=false" >> $GITHUB_OUTPUT
+              echo "linear_error_message=PR title must end with 'fixes TICKET-ID' (e.g., 'fixes NOV-123') or include ticket ID in branch name" >> $GITHUB_OUTPUT
+            fi
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate Linear ticket ID for team members (fallback)
+        id: validate_linear_ticket
+        if: steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          pr_title="$PR_TITLE"
+          echo "Validating Linear ticket ID in PR title: $pr_title"
+
+          # Check if title ends with "fixes TICKET-ID" pattern
+          if [[ "$pr_title" =~ fixes\ [A-Z]+-[0-9]+$ ]]; then
+            echo "linear_ticket_valid=true" >> $GITHUB_OUTPUT
+            echo "Linear ticket ID format is valid"
+          else
+            echo "linear_ticket_valid=false" >> $GITHUB_OUTPUT
+            echo "Linear ticket ID format is invalid"
+            echo "linear_error_message=PR title must end with 'fixes TICKET-ID' (e.g., 'fixes NOV-123') or include ticket ID in branch name" >> $GITHUB_OUTPUT
+          fi
+
       - uses: amannn/action-semantic-pull-request@v5
         id: lint_pr_title
         env:
@@ -46,26 +131,49 @@ jobs:
             ${{ env.SCOPES }}
 
       - uses: marocchino/sticky-pull-request-comment@v2
-        # When the previous steps fails, the workflow would stop. By adding this
-        # condition you can continue the execution with the populated error message.
-        if: always() && (steps.lint_pr_title.outputs.error_message != null)
+        # Show success message when PR title was auto-fixed
+        if: steps.auto_fix_linear_ticket.outputs.needs_update == 'true'
+        with:
+          header: pr-title-auto-fixed
+          message: |
+            ✅ **PR title automatically updated!**
+
+            I found the Linear ticket ID `${{ steps.auto_fix_linear_ticket.outputs.updated_title }}` in your branch name and automatically added it to your PR title.
+
+            **Updated title:** `${{ steps.auto_fix_linear_ticket.outputs.updated_title }}`
+
+      - uses: marocchino/sticky-pull-request-comment@v2
+        # Show error if either conventional commit validation fails OR Linear ticket validation fails (for team members)
+        if: always() && (steps.lint_pr_title.outputs.error_message != null || (steps.check_team_member.outputs.is_team_member == 'true' && steps.auto_fix_linear_ticket.outputs.linear_ticket_valid != 'true' && steps.validate_linear_ticket.outputs.linear_ticket_valid != 'true'))
         with:
           header: pr-title-lint-error
           message: |
             Hey there and thank you for opening this pull request! 👋
 
-            We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) and it looks like your proposed title needs to be adjusted.
+            We require pull request titles to follow specific formatting rules and it looks like your proposed title needs to be adjusted.
 
             Your PR title is: `${{ github.event.pull_request.title }}`
-            It should be something like: `feat(scope): Add fancy new feature`
+
+            **Requirements:**
+            1. Follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
+            2. ${{ steps.check_team_member.outputs.is_team_member == 'true' && 'As a team member, include Linear ticket ID at the end: `fixes TICKET-ID` or include it in your branch name' || '' }}
+
+            **Expected format:** `feat(scope): Add fancy new feature${{ steps.check_team_member.outputs.is_team_member == 'true' && ' fixes NOV-123' || '' }}`
 
             **Details:**
+            ${{ steps.lint_pr_title.outputs.error_message != null && steps.lint_pr_title.outputs.error_message || '' }}
+            ${{ steps.validate_linear_ticket.outputs.linear_error_message != null && steps.validate_linear_ticket.outputs.linear_error_message || '' }}
 
-            ${{ steps.lint_pr_title.outputs.error_message }}
-
-      # Delete a previous comment when the issue has been resolved
-      - if: ${{ steps.lint_pr_title.outputs.error_message == null }}
+      # Delete previous comments when all issues have been resolved
+      - if: ${{ steps.lint_pr_title.outputs.error_message == null && (steps.check_team_member.outputs.is_team_member != 'true' || steps.auto_fix_linear_ticket.outputs.linear_ticket_valid == 'true' || steps.validate_linear_ticket.outputs.linear_ticket_valid == 'true') }}
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: pr-title-lint-error
+          delete: true
+
+      # Delete auto-fix comment after a while (on subsequent updates)
+      - if: ${{ steps.auto_fix_linear_ticket.outputs.needs_update != 'true' }}
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: pr-title-auto-fixed
           delete: true

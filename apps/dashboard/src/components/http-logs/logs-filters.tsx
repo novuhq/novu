@@ -1,8 +1,16 @@
 import { useForm } from 'react-hook-form';
-import { useEffect } from 'react';
-import { RiCalendarLine } from 'react-icons/ri';
+import { useEffect, useMemo } from 'react';
+import { CalendarIcon } from 'lucide-react';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
+import { Badge } from '@/components/primitives/badge';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { buildLogsDateFilters } from '@/utils/logs-filters.utils';
+import { ROUTES } from '@/utils/routes';
+import { useOrganization } from '@clerk/clerk-react';
+import { Link } from 'react-router-dom';
 import type { LogsFilters } from '@/hooks/use-logs-url-state';
+import { IS_SELF_HOSTED } from '../../config';
 
 interface LogsFiltersProps {
   filters: LogsFilters;
@@ -26,15 +34,30 @@ const STATUS_OPTIONS = [
   { label: '503 Service Unavailable', value: '503' },
 ];
 
-const CREATED_OPTIONS = [
-  { label: 'Last 24 Hours', value: '24' },
-  { label: '7 Days', value: '168' }, // 7 * 24
-  { label: '30 Days', value: '720' }, // 30 * 24
-  { label: '60 Days', value: '1440' }, // 60 * 24
-  { label: '90 Days', value: '2160' }, // 90 * 24
-];
+const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={ROUTES.SETTINGS_BILLING + '?utm_source=logs-retention'}
+          className="block flex items-center justify-center transition-all duration-200 hover:scale-105"
+        >
+          <Badge color="purple" size="sm" variant="lighter">
+            Upgrade
+          </Badge>
+        </Link>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent>Upgrade your plan to unlock extended retention periods</TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
+  );
+};
 
 export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiveFilters }: LogsFiltersProps) {
+  const { organization } = useOrganization();
+  const { subscription } = useFetchSubscription();
+
   const form = useForm<LogsFilters>({
     defaultValues: filters,
   });
@@ -42,6 +65,22 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
   useEffect(() => {
     form.reset(filters);
   }, [filters, form]);
+
+  const maxLogsRetentionOptions = useMemo(() => {
+    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+
+    if (!organization || missingSubscription) {
+      return [];
+    }
+
+    return buildLogsDateFilters({
+      organization,
+      apiServiceLevel: subscription?.apiServiceLevel,
+    }).map((option) => ({
+      ...option,
+      icon: option.disabled ? UpgradeCtaIcon : undefined,
+    }));
+  }, [organization, subscription]);
 
   const handleStatusChange = (values: string[]) => {
     form.setValue('status', values);
@@ -71,24 +110,19 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     });
   };
 
-  const getCreatedTitle = () => {
-    if (!filters.created) return '60D';
-    const selectedOption = CREATED_OPTIONS.find((option) => option.value === filters.created);
-    return selectedOption
-      ? selectedOption.label.replace(' Days', 'D').replace(' Day', 'D').replace('Last ', '')
-      : '60D';
-  };
-
   return (
-    <div className="flex items-center gap-2 py-2.5">
+    <div className="flex items-center gap-2">
       <FacetedFormFilter
         size="small"
         type="single"
-        title={getCreatedTitle()}
-        icon={RiCalendarLine}
-        options={CREATED_OPTIONS}
+        hideClear
+        hideSearch
+        hideTitle
+        title="Time period"
+        options={maxLogsRetentionOptions}
         selected={filters.created ? [filters.created] : []}
         onSelect={handleCreatedChange}
+        icon={CalendarIcon}
       />
       <FacetedFormFilter
         type="text"

@@ -1,24 +1,7 @@
-import { IsNumber, IsOptional, IsString, IsEnum } from 'class-validator';
-import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { DirectionEnum } from '@novu/shared';
+import { IsOptional, IsString } from 'class-validator';
+import { PaginatedListCommand } from '@novu/application-generic';
 
-export class ListLayoutsCommand extends EnvironmentWithUserObjectCommand {
-  @IsNumber()
-  @IsOptional()
-  offset?: number;
-
-  @IsNumber()
-  @IsOptional()
-  limit?: number;
-
-  @IsEnum(DirectionEnum)
-  @IsOptional()
-  orderDirection?: DirectionEnum;
-
-  @IsString()
-  @IsOptional()
-  orderBy?: string;
-
+export class ListLayoutsCommand extends PaginatedListCommand {
   @IsString()
   @IsOptional()
   searchQuery?: string;

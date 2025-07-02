@@ -27,7 +27,7 @@ export type Variable = {
   outputEnd: number;
 };
 
-export type TemplateVariables = {
+export type VariableDetails = {
   validVariables: Array<Variable>;
   invalidVariables: Array<Variable>;
 };
