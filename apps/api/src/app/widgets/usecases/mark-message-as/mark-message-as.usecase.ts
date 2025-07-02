@@ -10,6 +10,7 @@ import {
   InvalidateCacheService,
   WebSocketsQueueService,
   TraceLogService,
+  PinoLogger,
 } from '@novu/application-generic';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -22,8 +23,11 @@ export class MarkMessageAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private traceLogService: TraceLogService
-  ) {}
+    private traceLogService: TraceLogService,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
     await this.invalidateCache.invalidateQuery({
@@ -71,11 +75,13 @@ export class MarkMessageAs {
     return messages;
   }
 
-  private async logTraces(messages: MessageEntity[], eventType: string, userId: string): Promise<void> {
-    // Create trace entries for each message engagement event
+  private async logTraces(
+    messages: MessageEntity[],
+    eventType: 'message_seen' | 'message_unseen' | 'message_read' | 'message_unread',
+    userId: string
+  ): Promise<void> {
     for (const message of messages) {
       try {
-        // Only create traces for messages that have job IDs (step runs)
         if (message._jobId) {
           await this.traceLogService.run(message, eventType, userId);
         }

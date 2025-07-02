@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { BaseRepository } from '../base.repository';
 import { ClickHouseService } from '../clickhouse.service';
-import { traceSchema, ORDER_BY, TABLE_NAME } from './trace.schema';
+import { traceLogSchema, ORDER_BY, TABLE_NAME } from './trace-log.schema';
 
 @Injectable()
-export class TraceLogRepository extends BaseRepository<typeof traceSchema> {
+export class TraceLogRepository extends BaseRepository<typeof traceLogSchema> {
   public readonly table = TABLE_NAME;
   public readonly identifierPrefix = 'trc_';
 
@@ -13,7 +13,7 @@ export class TraceLogRepository extends BaseRepository<typeof traceSchema> {
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger
   ) {
-    super(clickhouseService, logger, traceSchema, ORDER_BY);
+    super(clickhouseService, logger, traceLogSchema, ORDER_BY);
     this.logger.setContext(this.constructor.name);
   }
 }
