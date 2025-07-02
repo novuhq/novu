@@ -25,7 +25,7 @@ export function LogsTableRow({ log, onClick, isSelected }: LogsTableRowProps) {
         </div>
       </TableCell>
       <TableCell className="text-text-soft text-label-xs font-code w-[175px] px-2 py-1.5">
-        <TimeDisplayHoverCard date={new Date(log.createdAt)} className="block w-full">
+        <TimeDisplayHoverCard date={new Date(log.createdAt)} className="block w-full text-right">
           {formatDateSimple(log.createdAt, {
             year: 'numeric',
             month: 'short',

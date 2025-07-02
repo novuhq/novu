@@ -76,7 +76,7 @@ export function ActivityOverview({ activity }: ActivityOverviewProps) {
 
   return (
     <motion.div {...fadeIn} className="px-3 py-2">
-      <div className="mb-2 flex flex-col gap-[14px]">
+      <div className="mb-2 flex flex-col gap-[12px]">
         <OverviewItem label="Workflow Identifier" value={activity.template?.name || 'Deleted workflow'}>
           <Link
             to={activity.template?._id ? workflowPath : '#'}

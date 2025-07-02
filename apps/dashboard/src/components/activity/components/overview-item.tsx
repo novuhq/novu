@@ -39,7 +39,7 @@ export function OverviewItem({
 
   return (
     <div className={cn('group flex items-center justify-between', className)}>
-      <span className="text-foreground-950 text-xs font-medium">{label}</span>
+      <span className="text-text-soft font-code text-xs font-medium">{label}</span>
       <div className="relative flex items-center gap-2">
         {isCopyable && value && <CopyButton valueToCopy={value} size="2xs" className="h-1 p-0.5" />}
         {wrappedChildren}

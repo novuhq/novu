@@ -33,7 +33,7 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
       <TooltipTrigger asChild>
         <Link
           to={ROUTES.SETTINGS_BILLING + '?utm_source=activity-feed-retention'}
-          className="block transition-all duration-200 hover:scale-110"
+          className="block flex items-center justify-center transition-all duration-200 hover:scale-105"
         >
           <Badge color="purple" size="sm" variant="lighter">
             Upgrade
@@ -76,7 +76,7 @@ export function ActivityFilters({
   }, [organization, subscription]);
 
   return (
-    <div className={cn('flex items-center gap-2 p-2 py-[11px]', className)}>
+    <div className={cn('flex items-center gap-2 pb-2.5', className)}>
       {!hide.includes('dateRange') && (
         <FacetedFormFilter
           size="small"
