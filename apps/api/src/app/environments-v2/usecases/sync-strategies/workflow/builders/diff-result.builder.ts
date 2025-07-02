@@ -1,4 +1,4 @@
-import { ResourceTypeEnum, IDiffResult, IResourceDiff, DiffActionEnum } from '../../../../types/sync.types';
+import { ResourceTypeEnum, IDiffResult, IResourceDiff, DiffActionEnum, IUserInfo } from '../../../../types/sync.types';
 
 export class DiffResultBuilder {
   private results: IDiffResult[] = [];
@@ -10,7 +10,9 @@ export class DiffResultBuilder {
     sourceResourceName: string | null,
     targetResourceId: string | null,
     targetResourceName: string | null,
-    changes: IResourceDiff[]
+    changes: IResourceDiff[],
+    sourceResourceUpdatedBy?: IUserInfo | null,
+    targetResourceUpdatedBy?: IUserInfo | null
   ): this {
     if (changes.length > 0) {
       this.results.push({
@@ -21,13 +23,19 @@ export class DiffResultBuilder {
         targetResourceName,
         changes,
         summary: this.calculateSummary(changes),
+        sourceResourceUpdatedBy,
+        targetResourceUpdatedBy,
       });
     }
 
     return this;
   }
 
-  addResourceAdded(sourceResourceId: string, sourceResourceName: string): this {
+  addResourceAdded(
+    sourceResourceId: string,
+    sourceResourceName: string,
+    sourceResourceUpdatedBy?: IUserInfo | null
+  ): this {
     const diff: IResourceDiff = {
       sourceResourceId,
       sourceResourceName,
@@ -35,6 +43,8 @@ export class DiffResultBuilder {
       targetResourceName: null,
       resourceType: this.resourceType,
       action: DiffActionEnum.ADDED,
+      sourceResourceUpdatedBy,
+      targetResourceUpdatedBy: null,
     };
 
     this.results.push({
@@ -45,12 +55,18 @@ export class DiffResultBuilder {
       targetResourceName: null,
       changes: [diff],
       summary: this.calculateSummary([diff]),
+      sourceResourceUpdatedBy,
+      targetResourceUpdatedBy: null,
     });
 
     return this;
   }
 
-  addResourceDeleted(targetResourceId: string, targetResourceName: string): this {
+  addResourceDeleted(
+    targetResourceId: string,
+    targetResourceName: string,
+    targetResourceUpdatedBy?: IUserInfo | null
+  ): this {
     const diff: IResourceDiff = {
       sourceResourceId: null,
       sourceResourceName: null,
@@ -58,6 +74,8 @@ export class DiffResultBuilder {
       targetResourceName,
       resourceType: this.resourceType,
       action: DiffActionEnum.DELETED,
+      sourceResourceUpdatedBy: null,
+      targetResourceUpdatedBy,
     };
 
     this.results.push({
@@ -68,6 +86,8 @@ export class DiffResultBuilder {
       targetResourceName,
       changes: [diff],
       summary: this.calculateSummary([diff]),
+      sourceResourceUpdatedBy: null,
+      targetResourceUpdatedBy,
     });
 
     return this;
@@ -79,17 +99,35 @@ export class DiffResultBuilder {
     sourceResourceName: string | null,
     targetResourceId: string | null,
     targetResourceName: string | null,
-    changes: IResourceDiff[]
+    changes: IResourceDiff[],
+    sourceResourceUpdatedBy?: IUserInfo | null,
+    targetResourceUpdatedBy?: IUserInfo | null
   ): this {
-    return this.addResourceDiff(sourceResourceId, sourceResourceName, targetResourceId, targetResourceName, changes);
+    return this.addResourceDiff(
+      sourceResourceId,
+      sourceResourceName,
+      targetResourceId,
+      targetResourceName,
+      changes,
+      sourceResourceUpdatedBy,
+      targetResourceUpdatedBy
+    );
   }
 
-  addWorkflowAdded(sourceResourceId: string, sourceResourceName: string): this {
-    return this.addResourceAdded(sourceResourceId, sourceResourceName);
+  addWorkflowAdded(
+    sourceResourceId: string,
+    sourceResourceName: string,
+    sourceResourceUpdatedBy?: IUserInfo | null
+  ): this {
+    return this.addResourceAdded(sourceResourceId, sourceResourceName, sourceResourceUpdatedBy);
   }
 
-  addWorkflowDeleted(targetResourceId: string, targetResourceName: string): this {
-    return this.addResourceDeleted(targetResourceId, targetResourceName);
+  addWorkflowDeleted(
+    targetResourceId: string,
+    targetResourceName: string,
+    targetResourceUpdatedBy?: IUserInfo | null
+  ): this {
+    return this.addResourceDeleted(targetResourceId, targetResourceName, targetResourceUpdatedBy);
   }
 
   build(): IDiffResult[] {

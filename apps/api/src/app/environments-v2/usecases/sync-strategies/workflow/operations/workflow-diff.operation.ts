@@ -4,7 +4,7 @@ import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
-import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
+import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum, IUserInfo } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
 import { WorkflowRepositoryService } from './workflow-repository.service';
 
@@ -58,7 +58,8 @@ export class WorkflowDiffOperation {
         // Entire workflow was added
         resultBuilder.addWorkflowAdded(
           this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
-          sourceWorkflow.name
+          sourceWorkflow.name,
+          this.extractUpdatedByInfo(sourceWorkflow)
         );
       } else {
         const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
@@ -75,7 +76,9 @@ export class WorkflowDiffOperation {
             sourceWorkflow.name,
             this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
             targetWorkflow.name,
-            allDiffs
+            allDiffs,
+            this.extractUpdatedByInfo(sourceWorkflow),
+            this.extractUpdatedByInfo(targetWorkflow)
           );
         }
       }
@@ -94,7 +97,8 @@ export class WorkflowDiffOperation {
       if (!sourceWorkflowMap.has(targetIdentifier)) {
         resultBuilder.addWorkflowDeleted(
           this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
-          targetWorkflow.name
+          targetWorkflow.name,
+          this.extractUpdatedByInfo(targetWorkflow)
         );
       }
     }
@@ -121,12 +125,33 @@ export class WorkflowDiffOperation {
         resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
         diffs: workflowChanges,
+        sourceResourceUpdatedBy: this.extractUpdatedByInfo(sourceWorkflow),
+        targetResourceUpdatedBy: this.extractUpdatedByInfo(targetWorkflow),
       });
     }
 
-    // Add all step-level diffs
-    allDiffs.push(...stepDiffs);
+    // Add all step-level diffs with updatedBy information
+    const enrichedStepDiffs = stepDiffs.map((stepDiff) => ({
+      ...stepDiff,
+      sourceResourceUpdatedBy: this.extractUpdatedByInfo(sourceWorkflow),
+      targetResourceUpdatedBy: this.extractUpdatedByInfo(targetWorkflow),
+    }));
+
+    allDiffs.push(...enrichedStepDiffs);
 
     return allDiffs;
+  }
+
+  private extractUpdatedByInfo(workflow: NotificationTemplateEntity): IUserInfo | null {
+    if (!workflow.updatedBy) {
+      return null;
+    }
+
+    return {
+      _id: workflow.updatedBy._id,
+      firstName: workflow.updatedBy.firstName,
+      lastName: workflow.updatedBy.lastName,
+      externalId: workflow.updatedBy.externalId,
+    };
   }
 }

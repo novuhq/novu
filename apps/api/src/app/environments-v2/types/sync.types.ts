@@ -65,6 +65,13 @@ export enum DiffActionEnum {
   MOVED = 'moved',
 }
 
+export interface IUserInfo {
+  _id: string;
+  firstName: string;
+  lastName?: string | null;
+  externalId?: string;
+}
+
 export interface IResourceDiff {
   sourceResourceId: string | null;
   sourceResourceName: string | null;
@@ -80,6 +87,9 @@ export interface IResourceDiff {
   stepType?: string;
   previousIndex?: number;
   newIndex?: number;
+  // User information fields
+  sourceResourceUpdatedBy?: IUserInfo | null;
+  targetResourceUpdatedBy?: IUserInfo | null;
 }
 
 export interface IDiffResult {
@@ -95,6 +105,9 @@ export interface IDiffResult {
     deleted: number;
     unchanged: number;
   };
+  // User information fields
+  sourceResourceUpdatedBy?: IUserInfo | null;
+  targetResourceUpdatedBy?: IUserInfo | null;
 }
 
 export interface IEnvironmentDiffResult {

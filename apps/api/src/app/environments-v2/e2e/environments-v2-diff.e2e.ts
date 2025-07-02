@@ -37,8 +37,8 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
     return createWorkflowBody;
   }
 
-  describe('Validation Tests', () => {
-    it('should return validation error for same source and target environment', async () => {
+  describe('Error Handling', () => {
+    it('should return 400 when source and target environments are the same', async () => {
       const { body } = await session.testAgent
         .post('/v2/environments/diff')
         .send({
@@ -47,69 +47,63 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
         })
         .expect(400);
 
-      expect(body.message).to.contain('Source and target environments cannot be the same');
+      expect(body.message).to.equal('Source and target environments cannot be the same');
     });
 
-    it('should return validation error for invalid environment IDs', async () => {
+    it('should return 400 when source environment ID is invalid', async () => {
+      const prodEnv = await getProductionEnvironment();
+
       const { body } = await session.testAgent
         .post('/v2/environments/diff')
         .send({
           sourceEnvironmentId: 'invalid-id',
-          targetEnvironmentId: 'another-invalid-id',
+          targetEnvironmentId: prodEnv._id,
         })
         .expect(400);
 
-      expect(body.message).to.contain('Invalid environment ID format');
+      expect(body.message).to.equal('Invalid environment ID format');
     });
 
-    it('should return validation error for non-existent source environment', async () => {
+    it('should return 400 when target environment ID is invalid', async () => {
+      const { body } = await session.testAgent
+        .post('/v2/environments/diff')
+        .send({
+          sourceEnvironmentId: session.environment._id,
+          targetEnvironmentId: 'invalid-id',
+        })
+        .expect(400);
+
+      expect(body.message).to.equal('Invalid environment ID format');
+    });
+
+    it('should return 400 when source environment does not exist', async () => {
       const prodEnv = await getProductionEnvironment();
 
       const { body } = await session.testAgent
         .post('/v2/environments/diff')
         .send({
-          sourceEnvironmentId: '60a5f2f2f2f2f2f2f2f2f2f2',
+          sourceEnvironmentId: '507f1f77bcf86cd799439011',
           targetEnvironmentId: prodEnv._id,
         })
         .expect(400);
 
-      expect(body.message).to.contain('Source environment not found');
+      expect(body.message).to.equal('Source environment not found');
     });
 
-    it('should return validation error for non-existent target environment', async () => {
+    it('should return 400 when target environment does not exist', async () => {
       const { body } = await session.testAgent
         .post('/v2/environments/diff')
         .send({
           sourceEnvironmentId: session.environment._id,
-          targetEnvironmentId: '60a5f2f2f2f2f2f2f2f2f2f2',
+          targetEnvironmentId: '507f1f77bcf86cd799439011',
         })
         .expect(400);
 
-      expect(body.message).to.contain('Target environment not found');
+      expect(body.message).to.equal('Target environment not found');
     });
   });
 
   describe('Diff Detection Tests', () => {
-    it('should detect no changes when environments are identical', async () => {
-      const prodEnv = await getProductionEnvironment();
-
-      const { body } = await session.testAgent
-        .post('/v2/environments/diff')
-        .send({
-          sourceEnvironmentId: session.environment._id,
-          targetEnvironmentId: prodEnv._id,
-        })
-        .expect(200);
-
-      expect(body.data).to.have.property('resources');
-      expect(body.data).to.have.property('summary');
-      expect(body.data.summary).to.have.property('totalEntities');
-      expect(body.data.summary).to.have.property('totalChanges');
-      expect(body.data.summary).to.have.property('hasChanges');
-      expect(body.data.sourceEnvironmentId).to.equal(session.environment._id);
-      expect(body.data.targetEnvironmentId).to.equal(prodEnv._id);
-    });
-
     it('should detect added workflows', async () => {
       const prodEnv = await getProductionEnvironment();
 
@@ -375,6 +369,91 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       expect(addedWorkflows.length).to.be.greaterThan(0);
       expect(modifiedWorkflows.length).to.be.greaterThan(0);
+    });
+
+    it('should include updatedBy information in diff results', async () => {
+      const prodEnv = await getProductionEnvironment();
+      const workflowId = `updatedby-diff-workflow-${Date.now()}`;
+
+      // Create and publish a workflow
+      const workflow = await createWorkflow({
+        name: 'Workflow with UpdatedBy',
+        workflowId,
+        source: WorkflowCreationSourceEnum.Editor,
+        active: true,
+        steps: [
+          {
+            name: 'Email Step',
+            type: StepTypeEnum.EMAIL,
+            controlValues: {
+              subject: 'Test subject',
+              body: 'Test body',
+            },
+          },
+        ],
+      });
+
+      await session.testAgent
+        .post('/v2/environments/publish')
+        .send({
+          sourceEnvironmentId: session.environment._id,
+          targetEnvironmentId: prodEnv._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      // Update the workflow in source to change the updatedBy field
+      await novuClient.workflows.patch(
+        {
+          name: 'Updated Workflow with UpdatedBy',
+          description: 'Updated description to test updatedBy',
+        },
+        workflow.id
+      );
+
+      const { body } = await session.testAgent
+        .post('/v2/environments/diff')
+        .send({
+          sourceEnvironmentId: session.environment._id,
+          targetEnvironmentId: prodEnv._id,
+        })
+        .expect(200);
+
+      expect(body.data.summary.hasChanges).to.be.true;
+
+      // Find the modified workflow result
+      const modifiedWorkflowResult = body.data.resources.find(
+        (result: any) => result.sourceResourceName === 'Updated Workflow with UpdatedBy'
+      );
+      expect(modifiedWorkflowResult).to.exist;
+
+      // Check that updatedBy information is included at the resource level
+      expect(modifiedWorkflowResult).to.have.property('sourceResourceUpdatedBy');
+      expect(modifiedWorkflowResult).to.have.property('targetResourceUpdatedBy');
+
+      if (modifiedWorkflowResult.sourceResourceUpdatedBy) {
+        expect(modifiedWorkflowResult.sourceResourceUpdatedBy).to.have.property('_id');
+        expect(modifiedWorkflowResult.sourceResourceUpdatedBy).to.have.property('firstName');
+        expect(modifiedWorkflowResult.sourceResourceUpdatedBy._id).to.equal(session.user._id);
+      }
+
+      if (modifiedWorkflowResult.targetResourceUpdatedBy) {
+        expect(modifiedWorkflowResult.targetResourceUpdatedBy).to.have.property('_id');
+        expect(modifiedWorkflowResult.targetResourceUpdatedBy).to.have.property('firstName');
+        expect(modifiedWorkflowResult.targetResourceUpdatedBy._id).to.equal(session.user._id);
+      }
+
+      // Check that updatedBy information is also included in individual changes
+      const modifiedWorkflow = modifiedWorkflowResult.changes.find((diff: any) => diff.action === 'modified');
+      expect(modifiedWorkflow).to.exist;
+      expect(modifiedWorkflow).to.have.property('sourceResourceUpdatedBy');
+      expect(modifiedWorkflow).to.have.property('targetResourceUpdatedBy');
+
+      if (modifiedWorkflow.sourceResourceUpdatedBy) {
+        expect(modifiedWorkflow.sourceResourceUpdatedBy).to.have.property('_id');
+        expect(modifiedWorkflow.sourceResourceUpdatedBy).to.have.property('firstName');
+        expect(modifiedWorkflow.sourceResourceUpdatedBy._id).to.equal(session.user._id);
+      }
     });
   });
 
