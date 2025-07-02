@@ -1,4 +1,10 @@
-import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
+import {
+  createClient,
+  ClickHouseClient,
+  ClickHouseClientConfigOptions,
+  PingResult,
+  DataFormat,
+} from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
@@ -88,6 +94,17 @@ export class ClickHouseService implements OnModuleDestroy {
       table,
       values,
       format: 'JSONEachRow',
+    });
+  }
+
+  public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
+    if (!this.client) {
+      throw new Error('ClickHouse client not initialized');
+    }
+
+    await this.client.exec({
+      query,
+      query_params: params,
     });
   }
 }

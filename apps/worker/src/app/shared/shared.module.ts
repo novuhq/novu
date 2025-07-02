@@ -25,6 +25,9 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateTenant,
+  TraceLogService,
+  ClickHouseService,
+  TraceLogRepository,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -81,6 +84,15 @@ const dalService = {
   },
 };
 
+const ANALYTICS_PROVIDERS = [
+  // Repositories
+  TraceLogRepository,
+
+  // Services
+  ClickHouseService,
+  TraceLogService,
+];
+
 const PROVIDERS = [
   analyticsService,
   BulkCreateExecutionDetails,
@@ -106,6 +118,7 @@ const PROVIDERS = [
   ActiveJobsMetricService,
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
+  ...ANALYTICS_PROVIDERS,
 ];
 
 @Module({

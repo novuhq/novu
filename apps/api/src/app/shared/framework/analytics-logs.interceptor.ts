@@ -10,10 +10,8 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { FeatureFlagsService, PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
 import { UserSessionData, FeatureFlagsKeysEnum } from '@novu/shared';
-import { getClientIp } from 'request-ip';
-import { sanitizePayload, retryWithBackoff } from '../../../utils/payload-sanitizer';
+import { retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
-import { generateTransactionId } from '../helpers';
 import { buildLog } from '../utils/mappers';
 
 const LOG_ANALYTICS_KEY = 'logAnalytics';

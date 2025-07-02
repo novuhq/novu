@@ -34,6 +34,7 @@ export const requestLogSchema = new ClickhouseSchema(
     duration_ms: { type: CHUInt32() },
   },
   {
+    order_by: 'ORDER_BY_X_LIST' as any,
     table_name: TABLE_NAME,
     engine: 'MergeTree',
   }

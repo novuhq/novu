@@ -1,6 +1,7 @@
 import { UserSessionData } from '@novu/shared';
 import { getClientIp } from 'request-ip';
 import { RequestLog } from '@novu/application-generic';
+import { format } from 'date-fns';
 import { sanitizePayload } from '../../../utils/payload-sanitizer';
 import { generateTransactionId } from '../helpers';
 
@@ -15,7 +16,7 @@ export function buildLog(
   if (!user?._id || !user?.organizationId || !user?.environmentId || !user?.scheme) return null;
 
   return {
-    created_at: new Date(),
+    created_at: format(new Date(), "yyyy-MM-dd'T'HH:mm:ss.SSS") as unknown as Date,
     path: req.path,
     url: req.originalUrl,
     url_pattern: req.route.path,

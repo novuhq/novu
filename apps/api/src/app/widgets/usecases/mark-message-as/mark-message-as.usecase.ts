@@ -9,6 +9,7 @@ import {
   CachedResponse,
   InvalidateCacheService,
   WebSocketsQueueService,
+  TraceLogService,
 } from '@novu/application-generic';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -20,7 +21,8 @@ export class MarkMessageAs {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private traceLogService: TraceLogService
   ) {}
 
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
@@ -53,15 +55,34 @@ export class MarkMessageAs {
         $in: command.messageIds,
       },
     });
+
     if (command.mark.seen != null) {
       await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
+
+      await this.logTraces(messages, command.mark.seen ? 'message_seen' : 'message_unseen', command.subscriberId);
     }
 
     if (command.mark.read != null) {
       await this.updateServices(command, subscriber, messages, MarkEnum.READ);
+
+      await this.logTraces(messages, command.mark.read ? 'message_read' : 'message_unread', command.subscriberId);
     }
 
     return messages;
+  }
+
+  private async logTraces(messages: MessageEntity[], eventType: string, userId: string): Promise<void> {
+    // Create trace entries for each message engagement event
+    for (const message of messages) {
+      try {
+        // Only create traces for messages that have job IDs (step runs)
+        if (message._jobId) {
+          await this.traceLogService.run(message, eventType, userId);
+        }
+      } catch (error) {
+        this.logger.warn({ err: error }, `Failed to create engagement trace for message ${message._id}`);
+      }
+    }
   }
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {

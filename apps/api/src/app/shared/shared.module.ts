@@ -44,7 +44,9 @@ import {
   LoggerModule,
   QueuesModule,
   RequestLogRepository,
+  TraceLogService,
   storageService,
+  TraceLogRepository,
 } from '@novu/application-generic';
 
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
@@ -112,7 +114,15 @@ const dalService = {
   },
 };
 
-const ANALYTICS_PROVIDERS = [ClickHouseService, RequestLogRepository];
+const ANALYTICS_PROVIDERS = [
+  // Repositories
+  RequestLogRepository,
+  TraceLogRepository,
+
+  // Services
+  ClickHouseService,
+  TraceLogService,
+];
 
 const PROVIDERS = [
   analyticsService,

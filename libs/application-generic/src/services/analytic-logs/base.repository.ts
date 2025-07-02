@@ -38,15 +38,26 @@ export type Where<T> = {
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
 export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
-  abstract readonly table: string;
-  abstract readonly schema: T;
-  abstract readonly schemaOrderBy: SchemaKeys<T>[];
-  abstract readonly identifierPrefix: string;
+  readonly table: string;
+  readonly identifierPrefix: string;
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
-    protected readonly logger: PinoLogger
-  ) {}
+    protected readonly logger: PinoLogger,
+    protected readonly schema: T,
+    protected readonly schemaOrderBy: SchemaKeys<T>[]
+  ) {
+    this.initialize();
+  }
+
+  private initialize() {
+    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
+      return;
+    }
+
+    const query = this.schema.GetCreateTableQuery().replace('ORDER_BY_X_LIST', `(${this.schemaOrderBy.join(', ')})`);
+    this.clickhouseService.exec({ query });
+  }
 
   private getColumnType(column: string): string {
     const columnSchema = this.schema.schema[column];
