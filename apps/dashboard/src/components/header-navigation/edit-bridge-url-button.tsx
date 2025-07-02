@@ -60,6 +60,8 @@ export const EditBridgeUrlButton = () => {
     }
   };
 
+  if (!envBridgeUrl) return null;
+
   return (
     <Popover
       open={isPopoverOpen}
