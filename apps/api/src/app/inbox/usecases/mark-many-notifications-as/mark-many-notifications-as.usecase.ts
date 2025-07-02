@@ -4,7 +4,7 @@ import {
   buildMessageCountKey,
   InvalidateCacheService,
   WebSocketsQueueService,
-  TraceLogService,
+  TraceLogRepository,
   PinoLogger,
 } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
@@ -20,7 +20,7 @@ export class MarkManyNotificationsAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private getSubscriber: GetSubscriber,
     private messageRepository: MessageRepository,
-    private traceLogService: TraceLogService,
+    private traceLogRepository: TraceLogRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -84,7 +84,7 @@ export class MarkManyNotificationsAs {
         if (!message._jobId) continue;
 
         if (command.read !== undefined) {
-          await this.traceLogService.run(
+          await this.traceLogRepository.create(
             message,
             command.read ? 'message_read' : 'message_unread',
             command.subscriberId
@@ -92,11 +92,11 @@ export class MarkManyNotificationsAs {
         }
 
         if (command.snoozedUntil !== undefined) {
-          await this.traceLogService.run(message, 'message_snoozed', command.subscriberId);
+          await this.traceLogRepository.create(message, 'message_snoozed', command.subscriberId);
         }
 
         if (command.archived !== undefined) {
-          await this.traceLogService.run(
+          await this.traceLogRepository.create(
             message,
             command.archived ? 'message_archived' : 'message_unarchived',
             command.subscriberId

@@ -44,7 +44,6 @@ import {
   LoggerModule,
   QueuesModule,
   RequestLogRepository,
-  TraceLogService,
   storageService,
   TraceLogRepository,
 } from '@novu/application-generic';
@@ -121,7 +120,6 @@ const ANALYTICS_PROVIDERS = [
 
   // Services
   ClickHouseService,
-  TraceLogService,
 ];
 
 const PROVIDERS = [

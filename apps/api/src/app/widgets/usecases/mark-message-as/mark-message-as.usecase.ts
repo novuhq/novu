@@ -9,7 +9,8 @@ import {
   CachedResponse,
   InvalidateCacheService,
   WebSocketsQueueService,
-  TraceLogService,
+  TraceLogRepository,
+  TraceEvent,
   PinoLogger,
 } from '@novu/application-generic';
 
@@ -23,7 +24,7 @@ export class MarkMessageAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private traceLogService: TraceLogService,
+    private traceLogRepository: TraceLogRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -75,15 +76,11 @@ export class MarkMessageAs {
     return messages;
   }
 
-  private async logTraces(
-    messages: MessageEntity[],
-    eventType: 'message_seen' | 'message_unseen' | 'message_read' | 'message_unread',
-    userId: string
-  ): Promise<void> {
+  private async logTraces(messages: MessageEntity[], eventType: TraceEvent, userId: string): Promise<void> {
     for (const message of messages) {
       try {
         if (message._jobId) {
-          await this.traceLogService.run(message, eventType, userId);
+          await this.traceLogRepository.create(message, eventType, userId);
         }
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement trace for message ${message._id}`);
