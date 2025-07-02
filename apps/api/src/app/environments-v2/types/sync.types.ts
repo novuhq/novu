@@ -72,11 +72,16 @@ export interface IUserInfo {
   externalId?: string;
 }
 
+export interface IResourceInfo {
+  id: string | null;
+  name: string | null;
+  updatedBy?: IUserInfo | null;
+  updatedAt?: string | null;
+}
+
 export interface IResourceDiff {
-  sourceResourceId: string | null;
-  sourceResourceName: string | null;
-  targetResourceId: string | null;
-  targetResourceName: string | null;
+  sourceResource?: IResourceInfo | null;
+  targetResource?: IResourceInfo | null;
   resourceType: ResourceTypeEnum;
   action: DiffActionEnum;
   diffs?: {
@@ -87,17 +92,12 @@ export interface IResourceDiff {
   stepType?: string;
   previousIndex?: number;
   newIndex?: number;
-  // User information fields
-  sourceResourceUpdatedBy?: IUserInfo | null;
-  targetResourceUpdatedBy?: IUserInfo | null;
 }
 
 export interface IDiffResult {
   resourceType: ResourceTypeEnum;
-  sourceResourceId: string | null;
-  sourceResourceName: string | null;
-  targetResourceId: string | null;
-  targetResourceName: string | null;
+  sourceResource?: IResourceInfo | null;
+  targetResource?: IResourceInfo | null;
   changes: IResourceDiff[];
   summary: {
     added: number;
@@ -105,9 +105,6 @@ export interface IDiffResult {
     deleted: number;
     unchanged: number;
   };
-  // User information fields
-  sourceResourceUpdatedBy?: IUserInfo | null;
-  targetResourceUpdatedBy?: IUserInfo | null;
 }
 
 export interface IEnvironmentDiffResult {
