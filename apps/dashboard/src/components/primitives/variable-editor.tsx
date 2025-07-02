@@ -43,6 +43,7 @@ type VariableEditorProps = {
   id?: string;
   indentWithTab?: boolean;
   completionSources?: CompletionSource[];
+  enableTranslations?: boolean;
 } & Pick<
   EditorProps,
   | 'className'
@@ -78,6 +79,7 @@ export function VariableEditor({
   extensions,
   tagStyles,
   completionSources,
+  enableTranslations = true,
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const viewRef = useRef<EditorView | null>(null);
@@ -87,6 +89,8 @@ export function VariableEditor({
     viewRef,
     onChange
   );
+
+  // Always call the hook, but it will be ignored if translations are disabled
   const {
     selectedTranslation,
     setSelectedTranslation,
@@ -96,7 +100,7 @@ export function VariableEditor({
   } = useTranslations(viewRef, onChange);
 
   const isVariablePopoverOpen = !!selectedVariable;
-  const isTranslationPopoverOpen = !!selectedTranslation;
+  const isTranslationPopoverOpen = enableTranslations && !!selectedTranslation;
   const variable: LiquidVariable | undefined = selectedVariable
     ? {
         name: selectedVariable.value,
@@ -106,10 +110,10 @@ export function VariableEditor({
   const { digestStepBeforeCurrent, workflow } = useWorkflow();
   const track = useTelemetry();
 
-  // Translation keys for autocompletion
+  // Translation keys for autocompletion - only fetch if translations are enabled
   const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
     workflowId: workflow?._id || '',
-    enabled: !!workflow?._id,
+    enabled: enableTranslations && !!workflow?._id,
   });
 
   const createTranslationKeyMutation = useCreateTranslationKey();
@@ -173,6 +177,8 @@ export function VariableEditor({
   }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
 
   const translationCompletionSource = useMemo(() => {
+    if (!enableTranslations) return null;
+
     return createTranslationAutocompleteSource({
       translationKeys,
       onCreateNewTranslationKey: async (translationKey: string) => {
@@ -189,23 +195,31 @@ export function VariableEditor({
         }
       },
     });
-  }, [translationKeys, createTranslationKeyMutation, workflow?._id]);
+  }, [translationKeys, createTranslationKeyMutation, workflow?._id, enableTranslations]);
 
-  const autocompletionExtension = useMemo(
-    () =>
-      autocompletion({
-        override: [variableCompletionSource, translationCompletionSource, ...(completionSources ?? [])],
-        closeOnBlur: true,
-        defaultKeymap: true,
-        activateOnTyping: true,
-        optionClass: (completion) => {
-          if (completion.type === 'new-variable') return 'cm-new-variable-option';
-          if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
-          return '';
-        },
-      }),
-    [variableCompletionSource, translationCompletionSource, completionSources]
-  );
+  const autocompletionExtension = useMemo(() => {
+    const sources = [variableCompletionSource];
+
+    if (enableTranslations && translationCompletionSource) {
+      sources.push(translationCompletionSource);
+    }
+
+    if (completionSources) {
+      sources.push(...completionSources);
+    }
+
+    return autocompletion({
+      override: sources,
+      closeOnBlur: true,
+      defaultKeymap: true,
+      activateOnTyping: true,
+      optionClass: (completion) => {
+        if (completion.type === 'new-variable') return 'cm-new-variable-option';
+        if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
+        return '';
+      },
+    });
+  }, [variableCompletionSource, translationCompletionSource, completionSources, enableTranslations]);
 
   const isDigestEventsVariable = useCallback(
     (variableName: string) => {
@@ -234,6 +248,8 @@ export function VariableEditor({
   }, [isCustomHtmlEditorEnabled, handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
 
   const translationPluginExtension = useMemo(() => {
+    if (!enableTranslations) return null;
+
     return createTranslationExtension({
       viewRef,
       lastCompletionRef,
@@ -241,18 +257,29 @@ export function VariableEditor({
       translationKeys,
       isTranslationKeysLoading,
     });
-  }, [handleTranslationSelect, translationKeys, isTranslationKeysLoading]);
+  }, [handleTranslationSelect, translationKeys, isTranslationKeysLoading, enableTranslations]);
 
   const editorExtensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-    return [
-      ...baseExtensions,
-      autocompletionExtension,
-      variablePluginExtension,
-      translationPluginExtension,
-      ...(extensions ?? []),
-    ];
-  }, [autocompletionExtension, variablePluginExtension, translationPluginExtension, multiline, extensions]);
+    const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
+
+    if (enableTranslations && translationPluginExtension) {
+      allExtensions.push(translationPluginExtension);
+    }
+
+    if (extensions) {
+      allExtensions.push(...extensions);
+    }
+
+    return allExtensions;
+  }, [
+    autocompletionExtension,
+    variablePluginExtension,
+    translationPluginExtension,
+    multiline,
+    extensions,
+    enableTranslations,
+  ]);
 
   const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
@@ -266,12 +293,14 @@ export function VariableEditor({
 
   const handleTranslationPopoverOpenChange = useCallback(
     (open: boolean) => {
+      if (!enableTranslations) return;
+
       if (!open) {
         setTimeout(() => setSelectedTranslation(null), 0);
         viewRef.current?.focus();
       }
     },
-    [setSelectedTranslation]
+    [setSelectedTranslation, enableTranslations]
   );
 
   /**
@@ -325,7 +354,7 @@ export function VariableEditor({
 
   useEffect(() => {
     // Calculate translation popover position when translation is selected
-    if (selectedTranslation && viewRef.current) {
+    if (enableTranslations && selectedTranslation && viewRef.current) {
       const coords = viewRef.current.coordsAtPos(selectedTranslation.from);
 
       if (coords) {
@@ -338,7 +367,7 @@ export function VariableEditor({
     } else {
       setTranslationTriggerPosition(null);
     }
-  }, [selectedTranslation]);
+  }, [selectedTranslation, enableTranslations]);
 
   return (
     <div ref={containerRef} className={className} onClick={handleContainerClick}>
@@ -401,7 +430,7 @@ export function VariableEditor({
           />
         </EditVariablePopover>
       )}
-      {isTranslationPopoverOpen && selectedTranslation && workflow?._id && (
+      {isTranslationPopoverOpen && selectedTranslation && workflow?._id && enableTranslations && (
         <EditTranslationPopover
           open={isTranslationPopoverOpen}
           onOpenChange={handleTranslationPopoverOpenChange}

@@ -32,6 +32,7 @@ export const EmailSubject = () => {
                 isAllowedVariable={isAllowedVariable}
                 value={field.value}
                 onChange={(val) => field.onChange(val)}
+                enableTranslations
               />
             </FormControl>
             <FormMessage className="mb-2">
