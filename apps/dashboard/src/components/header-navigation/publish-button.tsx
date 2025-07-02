@@ -6,8 +6,10 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Skeleton } from '../primitives/skeleton';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
-import { useDiffEnvironments } from '@/hooks/use-environments';
-import { PublishEnvironmentModal } from './publish-environment-modal';
+import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
+import { showSuccessToast, showErrorToast } from '@/components/primitives/sonner-helpers';
+import { PublishModal } from './publish-modal';
+import { PublishSuccessModal } from './publish-success-modal';
 
 type EnvironmentDiffCardProps = {
   environment: any;
@@ -72,10 +74,15 @@ const EnvironmentDiffCard = ({
 export const PublishButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [selectedEnvironment, setSelectedEnvironment] = useState<any>(null);
+  const [publishResult, setPublishResult] = useState<any>(null);
+
   const { currentOrganization } = useAuth();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, switchEnvironment } = useEnvironment();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
+
+  const publishMutation = usePublishEnvironments();
 
   const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
 
@@ -85,11 +92,49 @@ export const PublishButton = () => {
     setPublishModalOpen(true);
   };
 
-  const handleConfirmPublish = () => {
-    // TODO: Implement actual publish functionality
-    console.log(`Publishing to ${selectedEnvironment?.name} (${selectedEnvironment?._id})`);
+  const handleConfirmPublish = async () => {
+    if (!selectedEnvironment || !currentEnvironment?._id) return;
+
+    try {
+      const result = await publishMutation.mutateAsync({
+        sourceEnvironmentId: currentEnvironment._id,
+        targetEnvironmentId: selectedEnvironment._id,
+      });
+
+      setPublishResult(result);
+      setPublishModalOpen(false);
+      setSuccessModalOpen(true);
+
+      // Show success toast
+      const workflowCount = result?.results?.find((r: any) => r.resourceType === 'workflow')?.successful || 0;
+      const layoutCount = result?.results?.find((r: any) => r.resourceType === 'layout')?.successful || 0;
+
+      showSuccessToast(
+        `Successfully published ${workflowCount} workflows and ${layoutCount} layouts to ${selectedEnvironment.name}`,
+        'Environment Published'
+      );
+    } catch (error: any) {
+      // Show error toast
+      showErrorToast(error?.message || 'Failed to publish environment. Please try again.', 'Publishing Failed');
+      console.error('Publish failed:', error);
+    }
+  };
+
+  const handleCloseModals = () => {
     setPublishModalOpen(false);
+    setSuccessModalOpen(false);
     setSelectedEnvironment(null);
+    setPublishResult(null);
+    publishMutation.reset();
+  };
+
+  const handleSwitchEnvironment = () => {
+    if (selectedEnvironment) {
+      switchEnvironment(selectedEnvironment.slug);
+      setSuccessModalOpen(false);
+      setSelectedEnvironment(null);
+      setPublishResult(null);
+    }
   };
 
   return (
@@ -127,12 +172,22 @@ export const PublishButton = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <PublishEnvironmentModal
-        open={publishModalOpen}
-        onOpenChange={setPublishModalOpen}
+      <PublishModal
+        isOpen={publishModalOpen}
+        onClose={handleCloseModals}
         environment={selectedEnvironment}
-        currentEnvironment={currentEnvironment}
+        currentEnvironmentId={currentEnvironment?._id}
         onConfirm={handleConfirmPublish}
+        isPublishing={publishMutation.isPending}
+        publishError={publishMutation.error?.message || null}
+      />
+
+      <PublishSuccessModal
+        isOpen={successModalOpen}
+        onClose={handleCloseModals}
+        environment={selectedEnvironment}
+        publishResult={publishResult}
+        onSwitchEnvironment={handleSwitchEnvironment}
       />
     </>
   );

@@ -29,6 +29,23 @@ export interface IEnvironmentDiffResponse {
   };
 }
 
+export interface IEnvironmentPublishResponse {
+  sourceEnvironmentId: string;
+  targetEnvironmentId: string;
+  results: Array<{
+    resourceType: string;
+    successful: number;
+    failed: number;
+    skipped: number;
+  }>;
+  summary: {
+    resources: number;
+    successful: number;
+    failed: number;
+    skipped: number;
+  };
+}
+
 export async function getEnvironments() {
   const { data } = await get<{ data: IEnvironment[] }>('/environments');
   return data;
@@ -84,6 +101,19 @@ export async function diffEnvironments({
 }): Promise<IEnvironmentDiffResponse> {
   const { data } = await postV2<{ data: IEnvironmentDiffResponse }>('/environments/diff', {
     body: { sourceEnvironmentId, targetEnvironmentId },
+  });
+  return data;
+}
+
+export async function publishEnvironments({
+  sourceEnvironmentId,
+  targetEnvironmentId,
+}: {
+  sourceEnvironmentId: string;
+  targetEnvironmentId: string;
+}): Promise<IEnvironmentPublishResponse> {
+  const { data } = await postV2<{ data: IEnvironmentPublishResponse }>('/environments/publish', {
+    body: { sourceEnvironmentId, targetEnvironmentId, dryRun: false },
   });
   return data;
 }
