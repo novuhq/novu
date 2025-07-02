@@ -28,6 +28,7 @@ import {
   simpleTextingConfig,
   sms77Config,
   smsCentralConfig,
+  smsmodeProviderConfig,
   snsConfig,
   telnyxConfig,
   termiiConfig,
@@ -295,5 +296,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: afroSmsConfig,
     docReference: 'https://afromessage.com/developers',
     logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Smsmode,
+    displayName: 'smsmode',
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsmodeProviderConfig,
+    docReference: 'https://dev.smsmode.com/sms/v1/#tag/Message/operation/send-message',
+    logoFileName: { light: 'smsmode.svg', dark: 'smsmode.svg' },
   },
 ];

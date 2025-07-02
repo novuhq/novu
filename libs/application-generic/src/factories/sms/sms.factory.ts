@@ -33,6 +33,7 @@ import {
   TwilioHandler,
 } from './handlers';
 import { ISmsFactory, ISmsHandler } from './interfaces';
+import { SmsmodeHandler } from './handlers/smsmode.handler';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -67,6 +68,7 @@ export class SmsFactory implements ISmsFactory {
     new EazySmsHandler(),
     new MobishastraHandler(),
     new AfroSmsHandler(),
+    new SmsmodeHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
