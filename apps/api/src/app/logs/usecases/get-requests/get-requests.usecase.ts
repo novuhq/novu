@@ -67,7 +67,7 @@ export class GetRequests {
       userId: log.user_id,
       organizationId: log.organization_id,
       environmentId: log.environment_id,
-      schemaType: log.schema_type,
+      authType: log.auth_type,
       durationMs: log.duration_ms,
     }));
 

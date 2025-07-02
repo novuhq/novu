@@ -30,8 +30,9 @@ export const requestLogSchema = new ClickhouseSchema(
     user_id: { type: CHString() },
     organization_id: { type: CHString() },
     environment_id: { type: CHString() },
-    schema_type: { type: CHString() },
+    auth_type: { type: CHString() },
     duration_ms: { type: CHUInt32() },
+    expires_at: { type: CHDateTime64(3, 'UTC') },
   },
   {
     order_by: 'ORDER_BY_X_LIST' as any,

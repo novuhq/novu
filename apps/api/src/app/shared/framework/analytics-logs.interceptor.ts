@@ -21,8 +21,6 @@ export enum AnalyticsStrategyEnum {
   EVENTS = 'events',
 }
 
-type CreateHttpLog = Omit<RequestLog, 'id'>;
-
 /**
  * Analytics Logs Decorator & Interceptor
  *
@@ -76,11 +74,8 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     if (!shouldRun) return next.handle();
 
     const req = context.switchToHttp().getRequest();
-
     const user = req.user as UserSessionData;
-
     const start = Date.now();
-
     const res = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
@@ -96,7 +91,13 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
 
         try {
-          await retryWithBackoff(() => this.requestLogRepository.insert(analyticsLog));
+          await retryWithBackoff(() =>
+            this.requestLogRepository.insert(analyticsLog, {
+              organizationId: user?.organizationId,
+              environmentId: user?.environmentId,
+              userId: user?._id,
+            })
+          );
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
         }
@@ -124,7 +125,11 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     return true;
   }
 
-  private buildLogByStrategy(context: ExecutionContext, analyticsLog: CreateHttpLog, res: unknown): CreateHttpLog {
+  private buildLogByStrategy(
+    context: ExecutionContext,
+    analyticsLog: Omit<RequestLog, 'id' | 'expires_at'>,
+    res: unknown
+  ): Omit<RequestLog, 'id' | 'expires_at'> {
     const strategy = getAnalyticsStrategy(context);
 
     if (strategy === AnalyticsStrategyEnum.EVENTS) {

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
-import { addYears, format } from 'date-fns';
 import { MessageEntity } from '@novu/dal';
 import { TraceLogRepository } from './trace-log/trace-log.repository';
 import { Trace } from './trace-log/trace-log.schema';
+import { LogRepository } from './base.repository';
 
 type TraceEvent =
   | 'message_seen'
@@ -26,8 +26,8 @@ export class TraceLogService {
   }
 
   async run(message: MessageEntity, eventType: TraceEvent, userId?: string): Promise<void> {
-    const traceData: Omit<Trace, 'id'> = {
-      created_at: this.formatDateTime64(new Date()),
+    const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+      created_at: LogRepository.formatDateTime64(new Date()),
       organization_id: message._organizationId,
       environment_id: message._environmentId,
       user_id: userId || null,
@@ -39,10 +39,13 @@ export class TraceLogService {
       status: 'success',
       entity_type: 'step_run',
       entity_id: message._jobId,
-      expires_at: this.formatDateTime64(addYears(new Date(), 1)),
     };
     try {
-      await this.traceLogRepository.insert(traceData);
+      await this.traceLogRepository.insert(traceData, {
+        organizationId: message._organizationId,
+        environmentId: message._environmentId,
+        userId,
+      });
 
       this.logger.debug(
         {
@@ -66,10 +69,6 @@ export class TraceLogService {
       );
       // Don't rethrow to avoid breaking the main flow
     }
-  }
-
-  private formatDateTime64(date: Date) {
-    return format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS") as unknown as Date;
   }
 
   private mapEventTypeToTitle(eventType: TraceEvent): string {
