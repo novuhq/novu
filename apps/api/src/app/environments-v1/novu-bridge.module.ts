@@ -30,6 +30,7 @@ import { DigestOutputRendererUsecase } from './usecases/output-renderers/digest-
 import { GetOrganizationSettings } from '../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { GetLayoutUseCase } from '../layouts-v2/usecases/get-layout';
 import { LayoutVariablesSchemaUseCase } from '../layouts-v2/usecases/layout-variables-schema';
+import { CreateVariablesObject } from '../shared/usecases/create-variables-object';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -68,6 +69,7 @@ export const featureFlagsService = {
     AnalyticsService,
     GetLayoutUseCaseV1,
     LayoutVariablesSchemaUseCase,
+    CreateVariablesObject,
     GetLayoutUseCase,
     featureFlagsService,
   ],

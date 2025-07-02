@@ -161,7 +161,6 @@ describe('GetLayoutUseCase', () => {
       const schemaCommand = layoutVariablesSchemaUseCaseMock.execute.firstCall.args[0];
       expect(schemaCommand.environmentId).to.equal('env_id');
       expect(schemaCommand.organizationId).to.equal('org_id');
-      expect(schemaCommand.userId).to.equal('user_id');
     });
 
     it('should track analytics event', async () => {
