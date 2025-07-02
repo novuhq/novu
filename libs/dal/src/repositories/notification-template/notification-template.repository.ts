@@ -30,7 +30,9 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': identifier,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const query = this.MongooseModel.findOne(requestQuery).populate('steps.template').populate('updatedBy');
+
+    const item = await query;
 
     return this.mapEntity(item);
   }
@@ -47,12 +49,15 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   async findById(id: string, environmentId: string) {
-    const item = await this.MongooseModel.findOne({
+    const query = this.MongooseModel.findOne({
       _id: id,
       _environmentId: environmentId,
     })
       .populate('steps.template')
-      .populate('steps.variants.template');
+      .populate('steps.variants.template')
+      .populate('updatedBy');
+
+    const item = await query;
 
     return this.mapEntity(item);
   }
@@ -234,7 +239,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       ...searchQuery,
     });
 
-    const items = await this.MongooseModel.find({
+    const mongoQuery = this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
       ...searchQuery,
@@ -245,7 +250,9 @@ export class NotificationTemplateRepository extends BaseRepository<
       .populate({ path: 'notificationGroup' })
       .populate('steps.template', { type: 1 })
       .select('-steps.variants')
-      .lean();
+      .populate('updatedBy');
+
+    const items = await mongoQuery.lean();
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }

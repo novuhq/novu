@@ -178,6 +178,8 @@ export class UpdateWorkflow {
         updatePayload.issues = command.issues;
       }
 
+      updatePayload._updatedBy = command.updatedBy;
+
       // defaultPreferences is required, so we always call the upsert
       await this.upsertPreferences.upsertWorkflowPreferences(
         UpsertWorkflowPreferencesCommand.create({

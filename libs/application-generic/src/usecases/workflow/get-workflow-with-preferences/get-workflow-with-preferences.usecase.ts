@@ -1,6 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
 import { GetPreferences, GetPreferencesCommand } from '../../get-preferences';
 
@@ -20,13 +20,12 @@ export class GetWorkflowWithPreferencesUseCase {
 
   @InstrumentUsecase()
   async execute(command: GetWorkflowWithPreferencesCommand): Promise<WorkflowWithPreferencesResponseDto> {
-    const workflowEntity = await this.getWorkflowByIdsUseCase.execute(
-      GetWorkflowByIdsCommand.create({
-        workflowIdOrInternalId: command.workflowIdOrInternalId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    const workflowEntity = await this.getWorkflowByIdsUseCase.execute({
+      workflowIdOrInternalId: command.workflowIdOrInternalId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      userId: command.userId,
+    });
 
     const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity);
 

@@ -21,6 +21,7 @@ import { DelayStepResponseDto } from './step-responses/delay-step.response.dto';
 import { DigestStepResponseDto } from './step-responses/digest-step.response.dto';
 import { CustomStepResponseDto } from './step-responses/custom-step.response.dto';
 import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto';
+import { UserResponseDto } from './user-response.dto';
 
 @ApiExtraModels(
   RuntimeIssueDto,
@@ -32,7 +33,8 @@ import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto'
   DelayStepResponseDto,
   DigestStepResponseDto,
   CustomStepResponseDto,
-  InAppStepResponseDto
+  InAppStepResponseDto,
+  UserResponseDto
 )
 export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier of the workflow' })
@@ -54,6 +56,16 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Creation timestamp' })
   @IsString()
   createdAt: string;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the workflow',
+    type: () => UserResponseDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  updatedBy?: UserResponseDto;
 
   @ApiProperty({
     description: 'Steps of the workflow',

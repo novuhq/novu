@@ -149,6 +149,7 @@ export class UpsertWorkflowUseCase {
       notificationGroupId,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
+      updatedBy: user._id,
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
@@ -178,6 +179,7 @@ export class UpsertWorkflowUseCase {
     return {
       id: existingWorkflow._id,
       environmentId: existingWorkflow._environmentId,
+      updatedBy: user._id,
       organizationId: user.organizationId,
       userId: user._id,
       name: workflowDto.name,
