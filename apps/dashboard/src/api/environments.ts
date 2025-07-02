@@ -30,13 +30,29 @@ export interface IEnvironmentDiffResponse {
 }
 
 export interface IEnvironmentPublishResponse {
-  sourceEnvironmentId: string;
-  targetEnvironmentId: string;
+  sourceEnvironmentId?: string;
+  targetEnvironmentId?: string;
   results: Array<{
     resourceType: string;
-    successful: number;
-    failed: number;
-    skipped: number;
+    successful: Array<{
+      resourceType: string;
+      resourceId: string;
+      resourceName: string;
+      action: string;
+    }>;
+    failed: Array<{
+      resourceType: string;
+      resourceId: string;
+      resourceName: string;
+      error: string;
+    }>;
+    skipped: Array<{
+      resourceType: string;
+      resourceId: string;
+      resourceName: string;
+      reason: string;
+    }>;
+    totalProcessed: number;
   }>;
   summary: {
     resources: number;

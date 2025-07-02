@@ -7,7 +7,7 @@ import { Skeleton } from '../primitives/skeleton';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
-import { showSuccessToast, showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
 
@@ -104,15 +104,6 @@ export const PublishButton = () => {
       setPublishResult(result);
       setPublishModalOpen(false);
       setSuccessModalOpen(true);
-
-      // Show success toast
-      const workflowCount = result?.results?.find((r: any) => r.resourceType === 'workflow')?.successful || 0;
-      const layoutCount = result?.results?.find((r: any) => r.resourceType === 'layout')?.successful || 0;
-
-      showSuccessToast(
-        `Successfully published ${workflowCount} workflows and ${layoutCount} layouts to ${selectedEnvironment.name}`,
-        'Environment Published'
-      );
     } catch (error: any) {
       // Show error toast
       showErrorToast(error?.message || 'Failed to publish environment. Please try again.', 'Publishing Failed');

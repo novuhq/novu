@@ -10,10 +10,21 @@ type PublishSuccessModalProps = {
   publishResult?: {
     results: Array<{
       resourceType: string;
-      successful: number;
+      successful: Array<{
+        resourceType: string;
+        resourceId: string;
+        resourceName: string;
+        action: string;
+      }>;
+      failed: Array<any>;
+      skipped: Array<any>;
+      totalProcessed: number;
     }>;
     summary: {
+      resources: number;
       successful: number;
+      failed: number;
+      skipped: number;
     };
   };
   onSwitchEnvironment?: () => void;
@@ -28,9 +39,10 @@ export function PublishSuccessModal({
 }: PublishSuccessModalProps) {
   const { currentEnvironment } = useEnvironment();
 
-  const workflowCount = publishResult?.results?.find((r) => r.resourceType === 'workflow')?.successful || 0;
-  const layoutCount = publishResult?.results?.find((r) => r.resourceType === 'layout')?.successful || 0;
-  const translationCount = publishResult?.results?.find((r) => r.resourceType === 'translation')?.successful || 0;
+  const workflowCount = publishResult?.results?.find((r) => r.resourceType === 'workflow')?.successful?.length || 0;
+  const layoutCount = publishResult?.results?.find((r) => r.resourceType === 'layout')?.successful?.length || 0;
+  const translationCount =
+    publishResult?.results?.find((r) => r.resourceType === 'translation')?.successful?.length || 0;
 
   const buildSummaryText = () => {
     const parts: string[] = [];
