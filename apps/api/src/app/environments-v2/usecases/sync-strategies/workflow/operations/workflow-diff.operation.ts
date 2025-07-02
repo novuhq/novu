@@ -122,27 +122,41 @@ export class WorkflowDiffOperation {
     // Add workflow-level changes if any
     if (workflowChanges) {
       allDiffs.push({
-        sourceResourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
-        sourceResourceName: sourceWorkflow.name,
-        targetResourceId: this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
-        targetResourceName: targetWorkflow.name,
+        sourceResource: {
+          id: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
+          name: sourceWorkflow.name,
+          updatedBy: this.extractUpdatedByInfo(sourceWorkflow),
+          updatedAt: this.extractUpdatedAtInfo(sourceWorkflow),
+        },
+        targetResource: {
+          id: this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
+          name: targetWorkflow.name,
+          updatedBy: this.extractUpdatedByInfo(targetWorkflow),
+          updatedAt: this.extractUpdatedAtInfo(targetWorkflow),
+        },
         resourceType: ResourceTypeEnum.WORKFLOW,
         action: DiffActionEnum.MODIFIED,
         diffs: workflowChanges,
-        sourceResourceUpdatedBy: this.extractUpdatedByInfo(sourceWorkflow),
-        targetResourceUpdatedBy: this.extractUpdatedByInfo(targetWorkflow),
-        sourceResourceUpdatedAt: this.extractUpdatedAtInfo(sourceWorkflow),
-        targetResourceUpdatedAt: this.extractUpdatedAtInfo(targetWorkflow),
       });
     }
 
     // Add all step-level diffs with updatedBy and updatedAt information
     const enrichedStepDiffs = stepDiffs.map((stepDiff) => ({
       ...stepDiff,
-      sourceResourceUpdatedBy: this.extractUpdatedByInfo(sourceWorkflow),
-      targetResourceUpdatedBy: this.extractUpdatedByInfo(targetWorkflow),
-      sourceResourceUpdatedAt: this.extractUpdatedAtInfo(sourceWorkflow),
-      targetResourceUpdatedAt: this.extractUpdatedAtInfo(targetWorkflow),
+      sourceResource: stepDiff.sourceResource
+        ? {
+            ...stepDiff.sourceResource,
+            updatedBy: this.extractUpdatedByInfo(sourceWorkflow),
+            updatedAt: this.extractUpdatedAtInfo(sourceWorkflow),
+          }
+        : null,
+      targetResource: stepDiff.targetResource
+        ? {
+            ...stepDiff.targetResource,
+            updatedBy: this.extractUpdatedByInfo(targetWorkflow),
+            updatedAt: this.extractUpdatedAtInfo(targetWorkflow),
+          }
+        : null,
     }));
 
     allDiffs.push(...enrichedStepDiffs);

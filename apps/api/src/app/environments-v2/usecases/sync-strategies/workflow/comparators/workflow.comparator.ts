@@ -132,10 +132,13 @@ export class WorkflowComparator {
 
   private createStepAddedDiff(sourceStep: INormalizedStep, sourceIndex: number): IResourceDiff {
     return {
-      sourceResourceId: sourceStep.stepId,
-      sourceResourceName: sourceStep.name,
-      targetResourceId: null,
-      targetResourceName: null,
+      sourceResource: {
+        id: sourceStep.stepId,
+        name: sourceStep.name,
+        updatedBy: null,
+        updatedAt: null,
+      },
+      targetResource: null,
       resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
       action: DiffActionEnum.ADDED,
@@ -158,10 +161,18 @@ export class WorkflowComparator {
     }
   ): IResourceDiff {
     return {
-      sourceResourceId: sourceStep.stepId,
-      sourceResourceName: sourceStep.name,
-      targetResourceId: targetStep.stepId,
-      targetResourceName: targetStep.name,
+      sourceResource: {
+        id: sourceStep.stepId,
+        name: sourceStep.name,
+        updatedBy: null,
+        updatedAt: null,
+      },
+      targetResource: {
+        id: targetStep.stepId,
+        name: targetStep.name,
+        updatedBy: null,
+        updatedAt: null,
+      },
       resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
       action: DiffActionEnum.MODIFIED,
@@ -178,10 +189,18 @@ export class WorkflowComparator {
     targetIndex: number
   ): IResourceDiff {
     return {
-      sourceResourceId: sourceStep.stepId,
-      sourceResourceName: sourceStep.name,
-      targetResourceId: targetStep.stepId,
-      targetResourceName: targetStep.name,
+      sourceResource: {
+        id: sourceStep.stepId,
+        name: sourceStep.name,
+        updatedBy: null,
+        updatedAt: null,
+      },
+      targetResource: {
+        id: targetStep.stepId,
+        name: targetStep.name,
+        updatedBy: null,
+        updatedAt: null,
+      },
       resourceType: ResourceTypeEnum.STEP,
       stepType: sourceStep.type,
       action: DiffActionEnum.MOVED,
@@ -192,10 +211,13 @@ export class WorkflowComparator {
 
   private createStepDeletedDiff(targetStep: INormalizedStep, targetIndex: number): IResourceDiff {
     return {
-      sourceResourceId: null,
-      sourceResourceName: null,
-      targetResourceId: targetStep.stepId,
-      targetResourceName: targetStep.name,
+      sourceResource: null,
+      targetResource: {
+        id: targetStep.stepId,
+        name: targetStep.name,
+        updatedBy: null,
+        updatedAt: null,
+      },
       resourceType: ResourceTypeEnum.STEP,
       stepType: targetStep.type,
       action: DiffActionEnum.DELETED,

@@ -38,42 +38,67 @@ export class UserInfoDto {
   externalId?: string;
 }
 
+export class ResourceInfoDto {
+  @ApiPropertyOptional({
+    description: 'Resource ID (workflow ID or step ID)',
+    nullable: true,
+    example: 'welcome-email-workflow',
+  })
+  @IsOptional()
+  @IsString()
+  id: string | null;
+
+  @ApiPropertyOptional({
+    description: 'Resource name (workflow name or step name)',
+    nullable: true,
+    example: 'Welcome Email Workflow',
+  })
+  @IsOptional()
+  @IsString()
+  name: string | null;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the resource',
+    type: () => UserInfoDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserInfoDto)
+  updatedBy?: UserInfoDto | null;
+
+  @ApiPropertyOptional({
+    description: 'When the resource was last updated',
+    type: 'string',
+    format: 'date-time',
+    nullable: true,
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  updatedAt?: string | null;
+}
+
 export class ResourceDiffDto {
   @ApiPropertyOptional({
-    description: 'Source resource ID (workflow ID or step ID)',
+    description: 'Source resource information',
+    type: () => ResourceInfoDto,
     nullable: true,
-    example: 'welcome-email-workflow',
   })
   @IsOptional()
-  @IsString()
-  sourceResourceId: string | null;
+  @ValidateNested()
+  @Type(() => ResourceInfoDto)
+  sourceResource?: ResourceInfoDto | null;
 
   @ApiPropertyOptional({
-    description: 'Source resource name (workflow name or step name)',
+    description: 'Target resource information',
+    type: () => ResourceInfoDto,
     nullable: true,
-    example: 'Welcome Email Workflow',
   })
   @IsOptional()
-  @IsString()
-  sourceResourceName: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Target resource ID (workflow ID or step ID)',
-    nullable: true,
-    example: 'welcome-email-workflow',
-  })
-  @IsOptional()
-  @IsString()
-  targetResourceId: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Target resource name (workflow name or step name)',
-    nullable: true,
-    example: 'Welcome Email Workflow',
-  })
-  @IsOptional()
-  @IsString()
-  targetResourceName: string | null;
+  @ValidateNested()
+  @Type(() => ResourceInfoDto)
+  targetResource?: ResourceInfoDto | null;
 
   @ApiProperty({
     description: 'Type of resource',
@@ -127,48 +152,6 @@ export class ResourceDiffDto {
   @IsOptional()
   @IsNumber()
   newIndex?: number;
-
-  @ApiPropertyOptional({
-    description: 'User who last updated the source resource',
-    type: () => UserInfoDto,
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UserInfoDto)
-  sourceResourceUpdatedBy?: UserInfoDto | null;
-
-  @ApiPropertyOptional({
-    description: 'User who last updated the target resource',
-    type: () => UserInfoDto,
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UserInfoDto)
-  targetResourceUpdatedBy?: UserInfoDto | null;
-
-  @ApiPropertyOptional({
-    description: 'When the source resource was last updated',
-    type: 'string',
-    format: 'date-time',
-    nullable: true,
-    example: '2024-01-15T10:30:00.000Z',
-  })
-  @IsOptional()
-  @IsDateString()
-  sourceResourceUpdatedAt?: string | null;
-
-  @ApiPropertyOptional({
-    description: 'When the target resource was last updated',
-    type: 'string',
-    format: 'date-time',
-    nullable: true,
-    example: '2024-01-15T10:30:00.000Z',
-  })
-  @IsOptional()
-  @IsDateString()
-  targetResourceUpdatedAt?: string | null;
 }
 
 export class DiffSummaryDto {
@@ -199,40 +182,24 @@ export class ResourceDiffResultDto {
   resourceType: string;
 
   @ApiPropertyOptional({
-    description: 'Source resource ID',
+    description: 'Source resource information',
+    type: () => ResourceInfoDto,
     nullable: true,
-    example: 'welcome-email-workflow',
   })
   @IsOptional()
-  @IsString()
-  sourceResourceId: string | null;
+  @ValidateNested()
+  @Type(() => ResourceInfoDto)
+  sourceResource?: ResourceInfoDto | null;
 
   @ApiPropertyOptional({
-    description: 'Source resource name',
+    description: 'Target resource information',
+    type: () => ResourceInfoDto,
     nullable: true,
-    example: 'Welcome Email Workflow',
   })
   @IsOptional()
-  @IsString()
-  sourceResourceName: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Target resource ID',
-    nullable: true,
-    example: 'welcome-email-workflow',
-  })
-  @IsOptional()
-  @IsString()
-  targetResourceId: string | null;
-
-  @ApiPropertyOptional({
-    description: 'Target resource name',
-    nullable: true,
-    example: 'Welcome Email Workflow',
-  })
-  @IsOptional()
-  @IsString()
-  targetResourceName: string | null;
+  @ValidateNested()
+  @Type(() => ResourceInfoDto)
+  targetResource?: ResourceInfoDto | null;
 
   @ApiProperty({
     description: 'List of specific changes for this resource',
@@ -245,48 +212,6 @@ export class ResourceDiffResultDto {
     type: DiffSummaryDto,
   })
   summary: DiffSummaryDto;
-
-  @ApiPropertyOptional({
-    description: 'User who last updated the source resource',
-    type: () => UserInfoDto,
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UserInfoDto)
-  sourceResourceUpdatedBy?: UserInfoDto | null;
-
-  @ApiPropertyOptional({
-    description: 'User who last updated the target resource',
-    type: () => UserInfoDto,
-    nullable: true,
-  })
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => UserInfoDto)
-  targetResourceUpdatedBy?: UserInfoDto | null;
-
-  @ApiPropertyOptional({
-    description: 'When the source resource was last updated',
-    type: 'string',
-    format: 'date-time',
-    nullable: true,
-    example: '2024-01-15T10:30:00.000Z',
-  })
-  @IsOptional()
-  @IsDateString()
-  sourceResourceUpdatedAt?: string | null;
-
-  @ApiPropertyOptional({
-    description: 'When the target resource was last updated',
-    type: 'string',
-    format: 'date-time',
-    nullable: true,
-    example: '2024-01-15T10:30:00.000Z',
-  })
-  @IsOptional()
-  @IsDateString()
-  targetResourceUpdatedAt?: string | null;
 }
 
 export class EnvironmentDiffSummaryDto {

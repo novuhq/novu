@@ -137,15 +137,15 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       expect(body.data.summary.totalChanges).to.be.greaterThan(0);
       expect(body.data.resources).to.have.length(1);
       expect(body.data.resources[0].resourceType).to.equal('workflow');
-      expect(body.data.resources[0].sourceResourceName).to.equal('New Workflow for Diff');
+      expect(body.data.resources[0].sourceResource.name).to.equal('New Workflow for Diff');
       expect(body.data.resources[0].summary.added).to.be.greaterThan(0);
 
       // Find the added workflow in the diff
       const addedWorkflow = body.data.resources[0].changes.find(
-        (diff: any) => diff.action === 'added' && diff.sourceResourceName === 'New Workflow for Diff'
+        (diff: any) => diff.action === 'added' && diff.sourceResource?.name === 'New Workflow for Diff'
       );
       expect(addedWorkflow).to.exist;
-      expect(addedWorkflow.sourceResourceId).to.exist;
+      expect(addedWorkflow.sourceResource.id).to.exist;
     });
 
     it('should detect modified workflows', async () => {
@@ -192,7 +192,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       // Find the modified workflow in the diff - now each workflow has its own result
       const modifiedWorkflowResult = body.data.resources.find(
-        (result: any) => result.sourceResourceName === 'Modified Workflow Name'
+        (result: any) => result.sourceResource?.name === 'Modified Workflow Name'
       );
       expect(modifiedWorkflowResult).to.exist;
 
@@ -239,7 +239,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       // Find the deleted workflow in the diff - now each workflow has its own result
       const deletedWorkflowResult = body.data.resources.find(
-        (result: any) => result.targetResourceName === 'Workflow to Delete'
+        (result: any) => result.targetResource?.name === 'Workflow to Delete'
       );
       expect(deletedWorkflowResult).to.exist;
 
@@ -287,10 +287,8 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
       if (body.data.resources.length > 0) {
         const workflowResource = body.data.resources[0];
         expect(workflowResource).to.have.property('resourceType');
-        expect(workflowResource).to.have.property('sourceResourceId');
-        expect(workflowResource).to.have.property('sourceResourceName');
-        expect(workflowResource).to.have.property('targetResourceId');
-        expect(workflowResource).to.have.property('targetResourceName');
+        expect(workflowResource).to.have.property('sourceResource');
+        expect(workflowResource).to.have.property('targetResource');
         expect(workflowResource).to.have.property('changes');
         expect(workflowResource).to.have.property('summary');
         expect(workflowResource.summary).to.have.property('added');
@@ -423,73 +421,67 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       // Find the modified workflow result
       const modifiedWorkflowResult = body.data.resources.find(
-        (result: any) => result.sourceResourceName === 'Updated Workflow with UpdatedBy'
+        (result: any) => result.sourceResource?.name === 'Updated Workflow with UpdatedBy'
       );
       expect(modifiedWorkflowResult).to.exist;
 
       // Check that updatedBy information is included at the resource level
-      expect(modifiedWorkflowResult).to.have.property('sourceResourceUpdatedBy');
-      expect(modifiedWorkflowResult).to.have.property('targetResourceUpdatedBy');
+      expect(modifiedWorkflowResult.sourceResource).to.exist;
+      expect(modifiedWorkflowResult.targetResource).to.exist;
 
-      if (modifiedWorkflowResult.sourceResourceUpdatedBy) {
-        expect(modifiedWorkflowResult.sourceResourceUpdatedBy).to.have.property('_id');
-        expect(modifiedWorkflowResult.sourceResourceUpdatedBy._id).to.equal(session.user._id);
+      if (modifiedWorkflowResult.sourceResource?.updatedBy) {
+        expect(modifiedWorkflowResult.sourceResource.updatedBy).to.have.property('_id');
+        expect(modifiedWorkflowResult.sourceResource.updatedBy._id).to.equal(session.user._id);
         // firstName might not be set in test environment, so check if it exists
-        if (modifiedWorkflowResult.sourceResourceUpdatedBy.firstName) {
-          expect(modifiedWorkflowResult.sourceResourceUpdatedBy.firstName).to.be.a('string');
+        if (modifiedWorkflowResult.sourceResource.updatedBy.firstName) {
+          expect(modifiedWorkflowResult.sourceResource.updatedBy.firstName).to.be.a('string');
         }
       }
 
-      if (modifiedWorkflowResult.targetResourceUpdatedBy) {
-        expect(modifiedWorkflowResult.targetResourceUpdatedBy).to.have.property('_id');
-        expect(modifiedWorkflowResult.targetResourceUpdatedBy._id).to.equal(session.user._id);
+      if (modifiedWorkflowResult.targetResource?.updatedBy) {
+        expect(modifiedWorkflowResult.targetResource.updatedBy).to.have.property('_id');
+        expect(modifiedWorkflowResult.targetResource.updatedBy._id).to.equal(session.user._id);
         // firstName might not be set in test environment, so check if it exists
-        if (modifiedWorkflowResult.targetResourceUpdatedBy.firstName) {
-          expect(modifiedWorkflowResult.targetResourceUpdatedBy.firstName).to.be.a('string');
+        if (modifiedWorkflowResult.targetResource.updatedBy.firstName) {
+          expect(modifiedWorkflowResult.targetResource.updatedBy.firstName).to.be.a('string');
         }
       }
 
       // Check that updatedAt information is included at the resource level
-      expect(modifiedWorkflowResult).to.have.property('sourceResourceUpdatedAt');
-      expect(modifiedWorkflowResult).to.have.property('targetResourceUpdatedAt');
-
-      if (modifiedWorkflowResult.sourceResourceUpdatedAt) {
-        expect(modifiedWorkflowResult.sourceResourceUpdatedAt).to.be.a('string');
-        expect(new Date(modifiedWorkflowResult.sourceResourceUpdatedAt)).to.be.a('date');
+      if (modifiedWorkflowResult.sourceResource?.updatedAt) {
+        expect(modifiedWorkflowResult.sourceResource.updatedAt).to.be.a('string');
+        expect(new Date(modifiedWorkflowResult.sourceResource.updatedAt)).to.be.a('date');
       }
 
-      if (modifiedWorkflowResult.targetResourceUpdatedAt) {
-        expect(modifiedWorkflowResult.targetResourceUpdatedAt).to.be.a('string');
-        expect(new Date(modifiedWorkflowResult.targetResourceUpdatedAt)).to.be.a('date');
+      if (modifiedWorkflowResult.targetResource?.updatedAt) {
+        expect(modifiedWorkflowResult.targetResource.updatedAt).to.be.a('string');
+        expect(new Date(modifiedWorkflowResult.targetResource.updatedAt)).to.be.a('date');
       }
 
       // Check that updatedBy information is also included in individual changes
       const modifiedWorkflow = modifiedWorkflowResult.changes.find((diff: any) => diff.action === 'modified');
       expect(modifiedWorkflow).to.exist;
-      expect(modifiedWorkflow).to.have.property('sourceResourceUpdatedBy');
-      expect(modifiedWorkflow).to.have.property('targetResourceUpdatedBy');
+      expect(modifiedWorkflow.sourceResource).to.exist;
+      expect(modifiedWorkflow.targetResource).to.exist;
 
-      if (modifiedWorkflow.sourceResourceUpdatedBy) {
-        expect(modifiedWorkflow.sourceResourceUpdatedBy).to.have.property('_id');
-        expect(modifiedWorkflow.sourceResourceUpdatedBy._id).to.equal(session.user._id);
+      if (modifiedWorkflow.sourceResource?.updatedBy) {
+        expect(modifiedWorkflow.sourceResource.updatedBy).to.have.property('_id');
+        expect(modifiedWorkflow.sourceResource.updatedBy._id).to.equal(session.user._id);
         // firstName might not be set in test environment, so check if it exists
-        if (modifiedWorkflow.sourceResourceUpdatedBy.firstName) {
-          expect(modifiedWorkflow.sourceResourceUpdatedBy.firstName).to.be.a('string');
+        if (modifiedWorkflow.sourceResource.updatedBy.firstName) {
+          expect(modifiedWorkflow.sourceResource.updatedBy.firstName).to.be.a('string');
         }
       }
 
       // Check that updatedAt information is also included in individual changes
-      expect(modifiedWorkflow).to.have.property('sourceResourceUpdatedAt');
-      expect(modifiedWorkflow).to.have.property('targetResourceUpdatedAt');
-
-      if (modifiedWorkflow.sourceResourceUpdatedAt) {
-        expect(modifiedWorkflow.sourceResourceUpdatedAt).to.be.a('string');
-        expect(new Date(modifiedWorkflow.sourceResourceUpdatedAt)).to.be.a('date');
+      if (modifiedWorkflow.sourceResource?.updatedAt) {
+        expect(modifiedWorkflow.sourceResource.updatedAt).to.be.a('string');
+        expect(new Date(modifiedWorkflow.sourceResource.updatedAt)).to.be.a('date');
       }
 
-      if (modifiedWorkflow.targetResourceUpdatedAt) {
-        expect(modifiedWorkflow.targetResourceUpdatedAt).to.be.a('string');
-        expect(new Date(modifiedWorkflow.targetResourceUpdatedAt)).to.be.a('date');
+      if (modifiedWorkflow.targetResource?.updatedAt) {
+        expect(modifiedWorkflow.targetResource.updatedAt).to.be.a('string');
+        expect(new Date(modifiedWorkflow.targetResource.updatedAt)).to.be.a('date');
       }
     });
   });
@@ -553,10 +545,8 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
 
       if (body.data.resources.length > 0 && body.data.resources[0].changes.length > 0) {
         const diff = body.data.resources[0].changes[0];
-        expect(diff).to.have.property('sourceResourceId');
-        expect(diff).to.have.property('sourceResourceName');
-        expect(diff).to.have.property('targetResourceId');
-        expect(diff).to.have.property('targetResourceName');
+        expect(diff).to.have.property('sourceResource');
+        expect(diff).to.have.property('targetResource');
         expect(diff).to.have.property('action');
         expect(['added', 'modified', 'deleted', 'unchanged']).to.include(diff.action);
 
