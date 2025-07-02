@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class DiffEnvironmentRequestDto {
   @ApiProperty({
@@ -15,6 +16,26 @@ export class DiffEnvironmentRequestDto {
   })
   @IsString()
   targetEnvironmentId: string;
+}
+
+export class UserInfoDto {
+  @ApiProperty({ description: 'User ID' })
+  @IsString()
+  _id: string;
+
+  @ApiProperty({ description: 'User first name' })
+  @IsString()
+  firstName: string;
+
+  @ApiPropertyOptional({ description: 'User last name' })
+  @IsOptional()
+  @IsString()
+  lastName?: string | null;
+
+  @ApiPropertyOptional({ description: 'User external ID' })
+  @IsOptional()
+  @IsString()
+  externalId?: string;
 }
 
 export class ResourceDiffDto {
@@ -106,6 +127,26 @@ export class ResourceDiffDto {
   @IsOptional()
   @IsNumber()
   newIndex?: number;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the source resource',
+    type: () => UserInfoDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserInfoDto)
+  sourceResourceUpdatedBy?: UserInfoDto | null;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the target resource',
+    type: () => UserInfoDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserInfoDto)
+  targetResourceUpdatedBy?: UserInfoDto | null;
 }
 
 export class DiffSummaryDto {
@@ -182,6 +223,26 @@ export class ResourceDiffResultDto {
     type: DiffSummaryDto,
   })
   summary: DiffSummaryDto;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the source resource',
+    type: () => UserInfoDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserInfoDto)
+  sourceResourceUpdatedBy?: UserInfoDto | null;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the target resource',
+    type: () => UserInfoDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserInfoDto)
+  targetResourceUpdatedBy?: UserInfoDto | null;
 }
 
 export class EnvironmentDiffSummaryDto {
