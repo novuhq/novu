@@ -1,11 +1,12 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { cn } from '@/utils/ui';
-import { EditTranslationPopover } from './edit-translation-popover';
+import { EditTranslationPopover } from './edit-translation-popover/edit-translation-popover';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { TranslationTooltip } from './translation-tooltip';
 import { VariableIcon } from '@/components/variable/components/variable-icon';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useTranslationValidation } from '@/hooks/use-translation-validation';
 
 interface TranslationPillProps {
   decoratorKey: string; // "common.submit"
@@ -15,6 +16,7 @@ interface TranslationPillProps {
 
 export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, onUpdate, onDelete }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | undefined>();
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
@@ -33,25 +35,45 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
     return keyParts.length >= 2 ? '..' + keyParts.slice(-2).join('.') : decoratorKey;
   }, [decoratorKey]);
 
-  // Check if translation key exists in available keys
-  const translationKeyExists = useMemo(() => {
-    if (isTranslationKeysLoading || !decoratorKey) return true; // Don't show error while loading or if no key
-    const existingKeys = translationKeys.map((key) => key.name);
-    return existingKeys.includes(decoratorKey);
-  }, [decoratorKey, translationKeys, isTranslationKeysLoading]);
+  const validation = useTranslationValidation({
+    translationKey: decoratorKey,
+    availableKeys: translationKeys,
+    isLoading: isTranslationKeysLoading,
+    allowEmpty: false, // Pills should always have a key
+  });
 
-  const hasError = !translationKeyExists;
-  const errorMessage = hasError ? 'Translation key not found' : undefined;
+  const hasError = validation.hasError;
+  const errorMessage = validation.errorMessage;
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Calculate position for popover
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoverPosition({
+        top: rect.bottom + 4, // Small offset below the button
+        left: rect.left,
+      });
+    }
+
     setIsOpen(true);
   };
 
   const handlePointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    // Calculate position for popover
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setPopoverPosition({
+        top: rect.bottom + 4, // Small offset below the button
+        left: rect.left,
+      });
+    }
+
     setIsOpen(true);
   };
 
@@ -91,7 +113,7 @@ export const TranslationPill: React.FC<TranslationPillProps> = ({ decoratorKey, 
         translationKey={decoratorKey}
         onDelete={handleDelete}
         onReplaceKey={onUpdate}
-        triggerRef={buttonRef}
+        position={popoverPosition}
         variables={variables}
         isAllowedVariable={isAllowedVariable}
         workflowId={workflow?._id || ''}

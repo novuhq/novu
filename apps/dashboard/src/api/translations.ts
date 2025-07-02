@@ -1,6 +1,6 @@
 import { delV2, getV2, postV2 } from './api.client';
 import { IEnvironment } from '@novu/shared';
-import { LocalizationResourceEnum } from '@/components/translations/types';
+import { LocalizationResourceEnum } from '@/types/translations';
 
 export type TranslationsFilter = {
   query?: string;

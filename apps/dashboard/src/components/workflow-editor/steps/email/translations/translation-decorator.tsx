@@ -1,18 +1,14 @@
 import { InlineDecoratorExtension, getInlineDecoratorSuggestionsReact } from '@maily-to/core/extensions';
 import { TranslationPill } from './translation-pill';
 import { AnyExtension } from '@tiptap/core';
-import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
+import { TRANSLATION_KEY_SINGLE_REGEX, TRANSLATION_TRIGGER_CHARACTER } from '@novu/shared';
 import { TranslationSuggestionsListView, TranslationKeyItem } from './translation-suggestions-list-view';
+import { TranslationKey } from '@/types/translations';
 import { forwardRef } from 'react';
 
-const TRANSLATION_TRIGGER = '{t.';
-
-/**
- * Creates the translation decorator extension configured for translation keys
- */
 export const createTranslationExtension = (
   isTranslationEnabled: boolean,
-  translationKeys: { name: string }[] = [],
+  translationKeys: TranslationKey[] = [],
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>
 ) => {
   if (!isTranslationEnabled) {
@@ -20,7 +16,7 @@ export const createTranslationExtension = (
   }
 
   return InlineDecoratorExtension.configure({
-    triggerPattern: TRANSLATION_TRIGGER,
+    triggerPattern: TRANSLATION_TRIGGER_CHARACTER,
     closingPattern: '}',
     openingPattern: '{',
     extractKey: (text: string) => {
@@ -33,7 +29,7 @@ export const createTranslationExtension = (
     },
     decoratorComponent: TranslationPill,
     suggestion: {
-      ...getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER, translationKeys),
+      ...getInlineDecoratorSuggestionsReact(TRANSLATION_TRIGGER_CHARACTER, translationKeys),
       allowToIncludeChar: true,
       decorationTag: 'span',
       allowedPrefixes: null,

@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect, useId, RefObject, useMemo, useRef } from 'react';
+import React, { useCallback, useId } from 'react';
 import { RiDeleteBin2Line, RiListView, RiQuestionLine, RiErrorWarningLine } from 'react-icons/ri';
 
 import { Popover, PopoverContent, PopoverAnchor } from '@/components/primitives/popover';
@@ -13,11 +13,13 @@ import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority'
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useUpdateTranslationValue } from '@/hooks/use-update-translation-value';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useParams } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useTranslationEditor } from './use-translation-editor';
+import { useTranslationForm } from './use-translation-form';
+import { useVirtualAnchor } from './use-virtual-anchor';
 
 interface EditTranslationPopoverProps {
   open: boolean;
@@ -26,135 +28,11 @@ interface EditTranslationPopoverProps {
   translationValue?: string;
   onDelete: () => void;
   onReplaceKey?: (newKey: string) => void;
-  triggerRef?: RefObject<HTMLButtonElement>;
+  position?: { top: number; left: number };
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   workflowId: string;
 }
-
-const getTranslationValue = (content: Record<string, unknown> | undefined, key: string): string => {
-  if (!content || !key) return '';
-
-  const keys = key.split('.');
-  let current: any = content;
-
-  for (const keyPart of keys) {
-    if (current && typeof current === 'object' && keyPart in current) {
-      current = current[keyPart];
-    } else {
-      return '';
-    }
-  }
-
-  return typeof current === 'string' ? current : '';
-};
-
-const useTranslationEditor = (
-  initialKey: string,
-  initialValue: string,
-  workflowId: string,
-  translationData: any,
-  onReplaceKey?: (newKey: string) => void
-) => {
-  const [editKey, setEditKey] = useState(initialKey);
-  const [editValue, setEditValue] = useState(initialValue);
-  const updateTranslationValue = useUpdateTranslationValue();
-  const lastSavedValueRef = useRef<string>('');
-  const debounceTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const actualTranslationValue = useMemo(() => {
-    return getTranslationValue(translationData?.content, editKey.trim());
-  }, [translationData?.content, editKey]);
-
-  useEffect(() => {
-    setEditKey(initialKey);
-  }, [initialKey]);
-
-  useEffect(() => {
-    const newValue = actualTranslationValue || initialValue;
-    setEditValue(newValue);
-    lastSavedValueRef.current = newValue;
-  }, [actualTranslationValue, initialValue]);
-
-  useEffect(() => {
-    if (editKey.trim() !== initialKey && onReplaceKey) {
-      onReplaceKey(editKey.trim());
-    }
-  }, [editKey, initialKey, onReplaceKey]);
-
-  // Debounced save effect - triggers when editValue changes
-  useEffect(() => {
-    const trimmedKey = editKey.trim();
-
-    if (editValue !== lastSavedValueRef.current && trimmedKey) {
-      // Clear existing timeout
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-
-      // Set new timeout for debounced save
-      debounceTimeoutRef.current = setTimeout(() => {
-        updateTranslationValue.mutate({
-          workflowId,
-          translationKey: trimmedKey,
-          translationValue: editValue,
-        });
-        lastSavedValueRef.current = editValue;
-      }, 500); // 500ms debounce
-    }
-
-    // Cleanup timeout on unmount
-    return () => {
-      if (debounceTimeoutRef.current) {
-        clearTimeout(debounceTimeoutRef.current);
-      }
-    };
-  }, [editValue, editKey, workflowId, updateTranslationValue]);
-
-  return {
-    editKey,
-    editValue,
-    setEditKey,
-    setEditValue,
-    isSaving: updateTranslationValue.isPending,
-  };
-};
-
-const useTranslationValidation = (translationKey: string, availableKeys: { name: string }[]) => {
-  return useMemo(() => {
-    const trimmedKey = translationKey.trim();
-
-    if (!trimmedKey) {
-      return { hasError: false, errorMessage: '', isValidKey: false };
-    }
-
-    const existingKeys = availableKeys.map((key) => key.name);
-    const isValidKey = existingKeys.includes(trimmedKey);
-
-    return {
-      hasError: !isValidKey,
-      errorMessage: isValidKey ? '' : 'Translation key not found in available keys',
-      isValidKey,
-    };
-  }, [translationKey, availableKeys]);
-};
-
-const useVirtualAnchor = (open: boolean, triggerRef?: RefObject<HTMLButtonElement>) => {
-  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
-
-  useEffect(() => {
-    if (open && triggerRef?.current && !anchorRect) {
-      setAnchorRect(triggerRef.current.getBoundingClientRect());
-    } else if (!open) {
-      setAnchorRect(null);
-    }
-  }, [open, triggerRef, anchorRect]);
-
-  return useMemo(() => {
-    if (!anchorRect) return null;
-    return { getBoundingClientRect: () => anchorRect };
-  }, [anchorRect]);
-};
 
 const PopoverHeader = ({ onDelete }: { onDelete: () => void }) => (
   <div className="bg-bg-weak border-b border-b-neutral-100 px-1.5 py-1">
@@ -322,7 +200,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
   translationValue = '',
   onDelete,
   onReplaceKey,
-  triggerRef,
+  position,
   variables,
   isAllowedVariable,
   workflowId,
@@ -333,14 +211,80 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
     enabled: open,
   });
 
-  const editor = useTranslationEditor(translationKey, translationValue, workflowId, translationData, onReplaceKey);
-  const createTranslationKeyMutation = useCreateTranslationKey();
-  const validation = useTranslationValidation(editor.editKey, translationKeys);
-  const virtualAnchor = useVirtualAnchor(open, triggerRef);
+  const updateTranslationValue = useUpdateTranslationValue();
+  const editor = useTranslationEditor(
+    translationKey,
+    translationValue,
+    translationData || null,
+    workflowId,
+    updateTranslationValue,
+    onReplaceKey
+  );
+  const virtualAnchor = useVirtualAnchor(position);
 
   const handleClose = useCallback(() => {
+    // Save any pending changes and trigger key replacement before closing
+    const trimmedKey = editor.editKey.trim();
+
+    // Save the translation value if it changed and we have a valid key
+    if (editor.editValue !== editor.lastSavedValueRef.current && trimmedKey) {
+      // Clear any pending debounced save
+      if (editor.debounceTimeoutRef.current) {
+        clearTimeout(editor.debounceTimeoutRef.current);
+        editor.debounceTimeoutRef.current = undefined;
+      }
+
+      updateTranslationValue.mutate({
+        workflowId,
+        translationKey: trimmedKey,
+        translationValue: editor.editValue,
+      });
+      editor.lastSavedValueRef.current = editor.editValue;
+    }
+
+    // Replace the key in the editor if it was manually edited and changed
+    if (editor.hasUserEditedKey && onReplaceKey && trimmedKey && trimmedKey !== editor.initialKeyOnOpen) {
+      onReplaceKey(trimmedKey);
+    }
+
     onOpenChange(false);
-  }, [onOpenChange]);
+  }, [editor, workflowId, updateTranslationValue, onReplaceKey, onOpenChange]);
+
+  const form = useTranslationForm(
+    editor.editKey,
+    editor.editValue,
+    workflowId,
+    translationKey,
+    translationKeys,
+    onReplaceKey,
+    handleClose
+  );
+
+  // Combined function to save value and replace key immediately
+  const saveAndReplaceImmediately = useCallback(() => {
+    const trimmedKey = editor.editKey.trim();
+
+    // Save the translation value if it changed and we have a valid key
+    if (editor.editValue !== editor.lastSavedValueRef.current && trimmedKey) {
+      // Clear any pending debounced save
+      if (editor.debounceTimeoutRef.current) {
+        clearTimeout(editor.debounceTimeoutRef.current);
+        editor.debounceTimeoutRef.current = undefined;
+      }
+
+      updateTranslationValue.mutate({
+        workflowId,
+        translationKey: trimmedKey,
+        translationValue: editor.editValue,
+      });
+      editor.lastSavedValueRef.current = editor.editValue;
+    }
+
+    // Replace the key in the editor if it was manually edited and changed
+    if (editor.hasUserEditedKey && onReplaceKey && trimmedKey && trimmedKey !== editor.initialKeyOnOpen) {
+      onReplaceKey(trimmedKey);
+    }
+  }, [editor, workflowId, updateTranslationValue, onReplaceKey]);
 
   const handleDelete = useCallback(() => {
     onDelete();
@@ -356,40 +300,25 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
     [handleClose]
   );
 
-  const handleAddTranslationKey = useCallback(async () => {
-    const newKey = editor.editKey.trim();
-    const oldKey = translationKey;
-
-    const result = await createTranslationKeyMutation.mutateAsync({
-      workflowId,
-      translationKey: newKey,
-      defaultValue: editor.editValue || `[${newKey}]`,
-    });
-
-    if (result) {
-      if (onReplaceKey && newKey !== oldKey) {
-        onReplaceKey(newKey);
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      if (!newOpen) {
+        // Save any pending changes and trigger key replacement before closing
+        saveAndReplaceImmediately();
       }
 
-      handleClose();
-    }
-  }, [
-    editor.editKey,
-    editor.editValue,
-    workflowId,
-    createTranslationKeyMutation,
-    handleClose,
-    translationKey,
-    onReplaceKey,
-  ]);
+      onOpenChange(newOpen);
+    },
+    [onOpenChange, saveAndReplaceImmediately]
+  );
 
   useEscapeKeyManager(id, handleClose, EscapeKeyManagerPriority.POPOVER, open);
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       {virtualAnchor && <PopoverAnchor virtualRef={{ current: virtualAnchor }} />}
       <PopoverContent
-        className="w-[460px] overflow-visible p-0 [&[data-state=closed]]:animate-none [&[data-state=open]]:animate-none"
+        className="w-[460px] overflow-visible p-0"
         align="start"
         side="bottom"
         sideOffset={4}
@@ -403,11 +332,11 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               value={editor.editKey}
               onChange={editor.setEditKey}
               onKeyDown={handleKeyDown}
-              hasError={validation.hasError}
-              errorMessage={validation.errorMessage}
-              onAddTranslationKey={handleAddTranslationKey}
+              hasError={form.validation.hasError}
+              errorMessage={form.validation.errorMessage}
+              onAddTranslationKey={form.handleAddTranslationKey}
               isLoading={isLoading}
-              isCreatingKey={createTranslationKeyMutation.isPending}
+              isCreatingKey={form.isCreatingKey}
             />
 
             <TranslationValueInput

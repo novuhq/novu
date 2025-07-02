@@ -6,10 +6,13 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { Editor, EditorProps } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import { EditTranslationPopover } from '@/components/workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { useVariables } from './control-input/hooks/use-variables';
+import { useTranslations } from './control-input/hooks/use-translations';
 import { createVariableExtension } from './control-input/variable-plugin';
+import { createTranslationExtension } from './control-input/translation-plugin';
 import { variablePillTheme } from './control-input/variable-plugin/variable-theme';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
@@ -21,6 +24,11 @@ import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema
 import { useCreateVariable } from '../variable/hooks/use-create-variable';
 import { DEFAULT_SIDE_OFFSET } from './popover';
 import { DEFAULT_VARIABLE_PILL_HEIGHT } from './control-input/variable-plugin/variable-pill-widget';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
+import { createTranslationAutocompleteSource } from './control-input/translation-plugin/autocomplete';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { TRANSLATION_PILL_HEIGHT } from './control-input/translation-plugin/constants';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type CompletionRange = {
@@ -79,7 +87,16 @@ export function VariableEditor({
     viewRef,
     onChange
   );
+  const {
+    selectedTranslation,
+    setSelectedTranslation,
+    handleTranslationSelect,
+    handleTranslationDelete,
+    handleTranslationReplaceKey,
+  } = useTranslations(viewRef, onChange);
+
   const isVariablePopoverOpen = !!selectedVariable;
+  const isTranslationPopoverOpen = !!selectedTranslation;
   const variable: LiquidVariable | undefined = selectedVariable
     ? {
         name: selectedVariable.value,
@@ -88,6 +105,14 @@ export function VariableEditor({
 
   const { digestStepBeforeCurrent, workflow } = useWorkflow();
   const track = useTelemetry();
+
+  // Translation keys for autocompletion
+  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
+    workflowId: workflow?._id || '',
+    enabled: !!workflow?._id,
+  });
+
+  const createTranslationKeyMutation = useCreateTranslationKey();
 
   const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
 
@@ -99,7 +124,10 @@ export function VariableEditor({
     closeSchemaDrawer,
   } = useCreateVariable();
 
-  const [triggerPosition, setTriggerPosition] = useState<{ top: number; left: number } | null>(null);
+  const [variableTriggerPosition, setVariableTriggerPosition] = useState<{ top: number; left: number } | null>(null);
+  const [translationTriggerPosition, setTranslationTriggerPosition] = useState<{ top: number; left: number } | null>(
+    null
+  );
 
   // Create an enhanced isAllowedVariable that also checks the current schema
   const enhancedIsAllowedVariable = useCallback(
@@ -144,16 +172,39 @@ export function VariableEditor({
     return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled);
   }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
 
+  const translationCompletionSource = useMemo(() => {
+    return createTranslationAutocompleteSource({
+      translationKeys,
+      onCreateNewTranslationKey: async (translationKey: string) => {
+        if (!workflow?._id) return;
+
+        try {
+          await createTranslationKeyMutation.mutateAsync({
+            workflowId: workflow._id,
+            translationKey,
+            defaultValue: `[${translationKey}]`,
+          });
+        } catch {
+          showErrorToast('Failed to create translation key');
+        }
+      },
+    });
+  }, [translationKeys, createTranslationKeyMutation, workflow?._id]);
+
   const autocompletionExtension = useMemo(
     () =>
       autocompletion({
-        override: [variableCompletionSource, ...(completionSources ?? [])],
+        override: [variableCompletionSource, translationCompletionSource, ...(completionSources ?? [])],
         closeOnBlur: true,
         defaultKeymap: true,
         activateOnTyping: true,
-        optionClass: (completion) => (completion.type === 'new-variable' ? 'cm-new-variable-option' : ''),
+        optionClass: (completion) => {
+          if (completion.type === 'new-variable') return 'cm-new-variable-option';
+          if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
+          return '';
+        },
       }),
-    [variableCompletionSource, completionSources]
+    [variableCompletionSource, translationCompletionSource, completionSources]
   );
 
   const isDigestEventsVariable = useCallback(
@@ -182,12 +233,28 @@ export function VariableEditor({
     });
   }, [isCustomHtmlEditorEnabled, handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
 
+  const translationPluginExtension = useMemo(() => {
+    return createTranslationExtension({
+      viewRef,
+      lastCompletionRef,
+      onSelect: handleTranslationSelect,
+      translationKeys,
+      isTranslationKeysLoading,
+    });
+  }, [handleTranslationSelect, translationKeys, isTranslationKeysLoading]);
+
   const editorExtensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-    return [...baseExtensions, autocompletionExtension, variablePluginExtension, ...(extensions ?? [])];
-  }, [autocompletionExtension, variablePluginExtension, multiline, extensions]);
+    return [
+      ...baseExtensions,
+      autocompletionExtension,
+      variablePluginExtension,
+      translationPluginExtension,
+      ...(extensions ?? []),
+    ];
+  }, [autocompletionExtension, variablePluginExtension, translationPluginExtension, multiline, extensions]);
 
-  const handleOpenChange = useCallback(
+  const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
         setTimeout(() => setSelectedVariable(null), 0);
@@ -195,6 +262,16 @@ export function VariableEditor({
       }
     },
     [setSelectedVariable]
+  );
+
+  const handleTranslationPopoverOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) {
+        setTimeout(() => setSelectedTranslation(null), 0);
+        viewRef.current?.focus();
+      }
+    },
+    [setSelectedTranslation]
   );
 
   /**
@@ -205,12 +282,17 @@ export function VariableEditor({
     (event: React.MouseEvent) => {
       event.preventDefault();
       // Don't focus if a variable popover is open or if clicking on interactive elements
-      if (isVariablePopoverOpen) return;
+      if (isVariablePopoverOpen || isTranslationPopoverOpen) return;
 
       const target = event.target as HTMLElement;
 
-      // Don't focus if clicking on variable pills or other interactive elements
-      if (target.closest('.cm-variable-pill') || target.closest('[role="button"]') || target.closest('button')) {
+      // Don't focus if clicking on variable pills, translation pills, or other interactive elements
+      if (
+        target.closest('.cm-variable-pill') ||
+        target.closest('.cm-translation-pill') ||
+        target.closest('[role="button"]') ||
+        target.closest('button')
+      ) {
         return;
       }
 
@@ -219,11 +301,11 @@ export function VariableEditor({
         viewRef.current.focus();
       }
     },
-    [isVariablePopoverOpen]
+    [isVariablePopoverOpen, isTranslationPopoverOpen]
   );
 
   useEffect(() => {
-    // calculate popover trigger position when variable is selected
+    // calculate variable popover trigger position when variable is selected
     if (selectedVariable && viewRef.current && containerRef.current) {
       const coords = viewRef.current.coordsAtPos(selectedVariable.from);
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -231,15 +313,32 @@ export function VariableEditor({
       const topOffset = DEFAULT_VARIABLE_PILL_HEIGHT - DEFAULT_SIDE_OFFSET + 2;
 
       if (coords) {
-        setTriggerPosition({
+        setVariableTriggerPosition({
           top: coords.top - containerRect.top + topOffset,
           left: coords.left - containerRect.left,
         });
       }
     } else {
-      setTriggerPosition(null);
+      setVariableTriggerPosition(null);
     }
   }, [selectedVariable]);
+
+  useEffect(() => {
+    // Calculate translation popover position when translation is selected
+    if (selectedTranslation && viewRef.current) {
+      const coords = viewRef.current.coordsAtPos(selectedTranslation.from);
+
+      if (coords) {
+        const topOffset = TRANSLATION_PILL_HEIGHT + 4; // Small offset below the pill
+        setTranslationTriggerPosition({
+          top: coords.top + topOffset,
+          left: coords.left,
+        });
+      }
+    } else {
+      setTranslationTriggerPosition(null);
+    }
+  }, [selectedTranslation]);
 
   return (
     <div ref={containerRef} className={className} onClick={handleContainerClick}>
@@ -265,7 +364,7 @@ export function VariableEditor({
           isPayloadSchemaEnabled={isPayloadSchemaEnabled}
           variables={variables}
           open={isVariablePopoverOpen}
-          onOpenChange={handleOpenChange}
+          onOpenChange={handleVariablePopoverOpenChange}
           variable={variable}
           isAllowedVariable={enhancedIsAllowedVariable}
           onUpdate={(newValue) => {
@@ -290,10 +389,10 @@ export function VariableEditor({
           <div
             className="pointer-events-none absolute z-10"
             style={
-              triggerPosition
+              variableTriggerPosition
                 ? {
-                    top: triggerPosition.top,
-                    left: triggerPosition.left,
+                    top: variableTriggerPosition.top,
+                    left: variableTriggerPosition.left,
                     width: '1px',
                     height: '1px',
                   }
@@ -302,6 +401,20 @@ export function VariableEditor({
           />
         </EditVariablePopover>
       )}
+      {isTranslationPopoverOpen && selectedTranslation && workflow?._id && (
+        <EditTranslationPopover
+          open={isTranslationPopoverOpen}
+          onOpenChange={handleTranslationPopoverOpenChange}
+          translationKey={selectedTranslation.translationKey}
+          onDelete={handleTranslationDelete}
+          onReplaceKey={handleTranslationReplaceKey}
+          variables={variables}
+          isAllowedVariable={enhancedIsAllowedVariable}
+          workflowId={workflow._id}
+          position={translationTriggerPosition || undefined}
+        />
+      )}
+
       <PayloadSchemaDrawer
         isOpen={isPayloadSchemaDrawerOpen}
         onOpenChange={(isOpen) => {
