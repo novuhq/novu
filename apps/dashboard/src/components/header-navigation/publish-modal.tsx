@@ -7,6 +7,7 @@ import {
   RiTranslate2,
   RiArrowRightSLine,
   RiErrorWarningLine,
+  RiCheckboxCircleFill,
 } from 'react-icons/ri';
 import { Dialog, DialogContent, DialogClose } from '../primitives/dialog';
 import { Button } from '../primitives/button';
@@ -87,9 +88,13 @@ export function PublishModal({
       <DialogContent className="max-w-md gap-4 p-3">
         {/* Header */}
         <div className="flex items-start justify-between">
-          <div className={`rounded-10 p-2 ${publishError ? 'bg-error-lighter' : 'bg-warning-lighter'}`}>
+          <div
+            className={`rounded-10 p-2 ${publishError ? 'bg-error-lighter' : totalChanges === 0 ? 'bg-success-lighter' : 'bg-warning-lighter'}`}
+          >
             {publishError ? (
               <RiErrorWarningLine className="text-error-base size-6" />
+            ) : totalChanges === 0 ? (
+              <RiCheckboxCircleFill className="text-success-base size-6" />
             ) : (
               <RiAlertFill className="text-warning-base size-6" />
             )}
@@ -108,10 +113,16 @@ export function PublishModal({
               ? 'Publishing Failed'
               : isPublishing
                 ? 'Publishing Changes...'
-                : `Publishing ${totalChanges} Changes to ${environment?.name}`}
+                : totalChanges === 0
+                  ? `No Changes to Publish to ${environment?.name}`
+                  : `Publishing ${totalChanges} Changes to ${environment?.name}`}
           </h2>
           {publishError ? (
             <p className="text-paragraph-xs text-error-base">{publishError}</p>
+          ) : totalChanges === 0 ? (
+            <p className="text-paragraph-xs text-text-soft">
+              Your environments are already in sync. There are no changes to publish to {environment?.name}.
+            </p>
           ) : (
             <p className="text-paragraph-xs text-text-soft">
               {isPublishing ? (
@@ -129,8 +140,8 @@ export function PublishModal({
           )}
         </div>
 
-        {/* Changes Section - Only show if not publishing and no error */}
-        {!isPublishing && !publishError && (
+        {/* Changes Section - Only show if not publishing, no error, and has changes */}
+        {!isPublishing && !publishError && totalChanges > 0 && (
           <div className="bg-bg-weak border-stroke-soft-100 rounded-lg border">
             <div className="p-1">
               {/* Section Header */}
@@ -202,6 +213,17 @@ export function PublishModal({
           </div>
         )}
 
+        {/* No changes message */}
+        {totalChanges === 0 && !isPublishing && !publishError && (
+          <div className="bg-success-lighter border-success-base/20 rounded-lg border p-4 text-center">
+            <RiCheckboxCircleFill className="text-success-base mx-auto mb-2 size-8" />
+            <p className="text-paragraph-sm text-success-dark font-medium">Environments are in sync</p>
+            <p className="text-paragraph-xs text-success-base mt-1">
+              All workflows and configurations are identical between environments.
+            </p>
+          </div>
+        )}
+
         {/* Loading indicator during publishing */}
         {isPublishing && (
           <div className="flex items-center justify-center py-8">
@@ -215,9 +237,9 @@ export function PublishModal({
         {/* Actions */}
         <div className="flex items-center justify-end gap-3">
           <Button variant="secondary" mode="outline" size="2xs" onClick={onClose} disabled={isPublishing}>
-            {publishError ? 'Close' : 'Cancel'}
+            {totalChanges === 0 ? 'Close' : publishError ? 'Close' : 'Cancel'}
           </Button>
-          {!publishError && (
+          {!publishError && totalChanges > 0 && (
             <Button
               variant="error"
               size="2xs"

@@ -1,15 +1,18 @@
 import { useState } from 'react';
 import { RiGitPullRequestFill, RiArrowDownSLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '../primitives/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Skeleton } from '../primitives/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 type EnvironmentDiffCardProps = {
   environment: any;
@@ -45,8 +48,18 @@ const EnvironmentDiffCard = ({
     aggregatedSummary &&
     (aggregatedSummary.added > 0 || aggregatedSummary.modified > 0 || aggregatedSummary.deleted > 0);
 
-  return (
-    <DropdownMenuItem onClick={onClick} className="cursor-pointer p-1">
+  const handleClick = () => {
+    if (hasChanges && !isLoading) {
+      onClick();
+    }
+  };
+
+  const cardContent = (
+    <DropdownMenuItem
+      onClick={handleClick}
+      className={`cursor-pointer p-1 ${!hasChanges && !isLoading ? 'cursor-not-allowed opacity-60' : ''}`}
+      disabled={!hasChanges && !isLoading}
+    >
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           <EnvironmentBranchIcon environment={environment} size="sm" />
@@ -63,12 +76,28 @@ const EnvironmentDiffCard = ({
               {aggregatedSummary.deleted > 0 && <span className="text-red-600">-{aggregatedSummary.deleted}</span>}
             </div>
           ) : (
-            <div className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">0</div>
+            <div className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+              No changes
+            </div>
           )}
         </div>
       </div>
     </DropdownMenuItem>
   );
+
+  // Wrap with tooltip when there are no changes
+  if (!hasChanges && !isLoading) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
+        <TooltipContent>
+          <p>No changes to publish to {environment.name}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return cardContent;
 };
 
 export const PublishButton = () => {
@@ -81,6 +110,7 @@ export const PublishButton = () => {
   const { currentOrganization } = useAuth();
   const { currentEnvironment, switchEnvironment } = useEnvironment();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
+  const navigate = useNavigate();
 
   const publishMutation = usePublishEnvironments();
 
@@ -122,6 +152,10 @@ export const PublishButton = () => {
   const handleSwitchEnvironment = () => {
     if (selectedEnvironment) {
       switchEnvironment(selectedEnvironment.slug);
+
+      // Navigate to workflows page in the new environment
+      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: selectedEnvironment.slug }));
+
       setSuccessModalOpen(false);
       setSelectedEnvironment(null);
       setPublishResult(null);

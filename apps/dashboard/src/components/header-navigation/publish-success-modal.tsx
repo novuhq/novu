@@ -96,7 +96,6 @@ export function PublishSuccessModal({
             size="2xs"
             onClick={onSwitchEnvironment}
             trailingIcon={RiArrowRightSLine}
-            className="bg-strong-950 hover:bg-strong-950/90 text-white"
           >
             Switch to {environment?.name}
           </Button>
