@@ -26,8 +26,15 @@ import { InlineToast } from '@/components/primitives/inline-toast';
  * @param onChange - Callback when data changes (only called with valid data if schema provided)
  * @param className - Additional CSS classes
  * @param schema - Optional JSON Schema for validation (JSONSchema7 format)
+ * @param isReadOnly - When true, disables all editing functionality
  */
-export function EditableJsonViewer({ value, onChange, className, schema }: EditableJsonViewerProps) {
+export function EditableJsonViewer({
+  value,
+  onChange,
+  className,
+  schema,
+  isReadOnly = false,
+}: EditableJsonViewerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -104,6 +111,11 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
   useHideRootNode(containerRef, value);
 
   const customNodeDefinitions = useMemo(() => {
+    // Don't show custom editable components in read-only mode
+    if (isReadOnly) {
+      return [];
+    }
+
     const components: CustomNodeDefinition<Record<string, any>, Record<string, any>>[] = [
       {
         condition: ({ value }) => typeof value === 'string',
@@ -129,7 +141,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
     ];
 
     return components;
-  }, []);
+  }, [isReadOnly]);
 
   return (
     <div
@@ -139,6 +151,7 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         'mx-0 mt-0 rounded-lg border border-dashed',
         'max-h-[400px] min-h-[100px] overflow-auto',
         'font-mono text-xs',
+        isReadOnly && 'pointer-events-none',
         className
       )}
     >
@@ -172,9 +185,10 @@ export function EditableJsonViewer({ value, onChange, className, schema }: Edita
         icons={JSON_EDITOR_ICONS}
         showErrorMessages={false}
         showStringQuotes={true}
+        showCollectionCount={!isReadOnly}
         showArrayIndices={false}
-        enableClipboard={true}
-        restrictEdit={false}
+        enableClipboard={!isReadOnly}
+        restrictEdit={isReadOnly}
         restrictDelete
         restrictAdd
         rootName={'nv-root-node'}

@@ -90,11 +90,7 @@ export const TestWorkflowActivityDrawer = forwardRef<HTMLDivElement, TestWorkflo
                   ) : (
                     <React.Fragment key={activityId}>
                       <ActivityOverview activity={activity} />
-                      <ActivityLogs
-                        activity={activity}
-                        onActivitySelect={setParentActivityId}
-                        onTransactionIdChange={handleTransactionIdChange}
-                      />
+                      <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
                     </React.Fragment>
                   )}
                   {!workflow?.lastTriggeredAt && (

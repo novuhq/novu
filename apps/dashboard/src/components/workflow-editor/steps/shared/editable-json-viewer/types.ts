@@ -5,6 +5,7 @@ export type EditableJsonViewerProps = {
   onChange: (updatedData: any) => void;
   className?: string;
   schema?: JSONSchema7;
+  isReadOnly?: boolean;
 };
 
 export type SingleClickEditableValueProps = {

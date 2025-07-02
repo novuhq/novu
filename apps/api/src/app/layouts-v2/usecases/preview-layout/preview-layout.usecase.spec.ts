@@ -209,14 +209,20 @@ describe('PreviewLayoutUsecase', () => {
       await previewLayoutUsecase.execute(command);
 
       // Verify getLayoutUseCase call
-      expect(getLayoutUseCaseMock.execute.calledOnceWith(command)).to.be.true;
+      expect(getLayoutUseCaseMock.execute.calledOnce).to.be.true;
+      const getLayoutCall = getLayoutUseCaseMock.execute.firstCall.args[0];
+      expect(getLayoutCall).to.deep.equal({
+        layoutIdOrInternalId: 'layout_id',
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
+        userId: mockUser._id,
+      });
 
       // Verify createVariablesObject call
       expect(createVariablesObjectMock.execute.calledOnce).to.be.true;
       const createVariablesCall = createVariablesObjectMock.execute.firstCall.args[0];
       expect(createVariablesCall.environmentId).to.equal(mockUser.environmentId);
       expect(createVariablesCall.organizationId).to.equal(mockUser.organizationId);
-      expect(createVariablesCall.userId).to.equal(mockUser._id);
       expect(createVariablesCall.variableSchema).to.deep.equal(mockLayout.variables);
 
       // Verify controlValueSanitizer calls

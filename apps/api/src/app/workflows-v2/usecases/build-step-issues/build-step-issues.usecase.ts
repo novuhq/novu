@@ -75,6 +75,7 @@ export class BuildStepIssuesUsecase {
         stepInternalId,
         workflow: persistedWorkflow,
         ...(controlValuesDto ? { optimisticControlValues: controlValuesDto } : {}),
+        ...(command.optimisticSteps ? { optimisticSteps: command.optimisticSteps } : {}),
       })
     );
 

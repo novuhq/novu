@@ -45,6 +45,7 @@ import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
+import { IOptimisticStepInfo } from '../build-variable-schema/build-available-variable-schema.command';
 import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import { PreviewUsecase } from '../preview/preview.usecase';
@@ -206,6 +207,12 @@ export class UpsertWorkflowUseCase {
   ): Promise<NotificationStep[]> {
     const steps: NotificationStep[] = [];
 
+    // Build optimistic step information for sync scenarios
+    const optimisticSteps = command.workflowDto.steps.map((step) => ({
+      stepId: step.stepId || this.generateUniqueStepId(step, command.workflowDto.steps),
+      type: step.type,
+    }));
+
     for (const step of command.workflowDto.steps) {
       const existingStep: NotificationStepEntity | null | undefined =
         // eslint-disable-next-line id-length
@@ -225,6 +232,7 @@ export class UpsertWorkflowUseCase {
         stepType: step.type,
         controlSchema: controlSchemas.schema,
         controlsDto: step.controlValues,
+        optimisticSteps, // Pass optimistic steps for variable schema building
       });
 
       const updateStepId = existingStep?.stepId;
