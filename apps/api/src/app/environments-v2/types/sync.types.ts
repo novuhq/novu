@@ -90,6 +90,9 @@ export interface IResourceDiff {
   // User information fields
   sourceResourceUpdatedBy?: IUserInfo | null;
   targetResourceUpdatedBy?: IUserInfo | null;
+  // Timestamp fields
+  sourceResourceUpdatedAt?: string | null;
+  targetResourceUpdatedAt?: string | null;
 }
 
 export interface IDiffResult {
@@ -108,6 +111,9 @@ export interface IDiffResult {
   // User information fields
   sourceResourceUpdatedBy?: IUserInfo | null;
   targetResourceUpdatedBy?: IUserInfo | null;
+  // Timestamp fields
+  sourceResourceUpdatedAt?: string | null;
+  targetResourceUpdatedAt?: string | null;
 }
 
 export interface IEnvironmentDiffResult {

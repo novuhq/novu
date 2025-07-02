@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DiffEnvironmentRequestDto {
@@ -147,6 +147,28 @@ export class ResourceDiffDto {
   @ValidateNested()
   @Type(() => UserInfoDto)
   targetResourceUpdatedBy?: UserInfoDto | null;
+
+  @ApiPropertyOptional({
+    description: 'When the source resource was last updated',
+    type: 'string',
+    format: 'date-time',
+    nullable: true,
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  sourceResourceUpdatedAt?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'When the target resource was last updated',
+    type: 'string',
+    format: 'date-time',
+    nullable: true,
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  targetResourceUpdatedAt?: string | null;
 }
 
 export class DiffSummaryDto {
@@ -243,6 +265,28 @@ export class ResourceDiffResultDto {
   @ValidateNested()
   @Type(() => UserInfoDto)
   targetResourceUpdatedBy?: UserInfoDto | null;
+
+  @ApiPropertyOptional({
+    description: 'When the source resource was last updated',
+    type: 'string',
+    format: 'date-time',
+    nullable: true,
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  sourceResourceUpdatedAt?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'When the target resource was last updated',
+    type: 'string',
+    format: 'date-time',
+    nullable: true,
+    example: '2024-01-15T10:30:00.000Z',
+  })
+  @IsOptional()
+  @IsDateString()
+  targetResourceUpdatedAt?: string | null;
 }
 
 export class EnvironmentDiffSummaryDto {

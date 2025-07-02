@@ -1,7 +1,7 @@
 import { FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -22,6 +22,17 @@ export class NotificationTemplateRepository extends BaseRepository<
   constructor() {
     super(NotificationTemplate, NotificationTemplateEntity);
     this.notificationTemplate = NotificationTemplate;
+  }
+
+  async findPublishable(environmentId: string, organizationId: string): Promise<NotificationTemplateEntity[]> {
+    const items = await this.MongooseModel.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
+      status: { $ne: WorkflowStatusEnum.ERROR },
+    }).populate('updatedBy');
+
+    return this.mapEntities(items);
   }
 
   async findByTriggerIdentifier(environmentId: string, identifier: string) {

@@ -59,7 +59,8 @@ export class WorkflowDiffOperation {
         resultBuilder.addWorkflowAdded(
           this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
           sourceWorkflow.name,
-          this.extractUpdatedByInfo(sourceWorkflow)
+          this.extractUpdatedByInfo(sourceWorkflow),
+          this.extractUpdatedAtInfo(sourceWorkflow)
         );
       } else {
         const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
@@ -78,7 +79,9 @@ export class WorkflowDiffOperation {
             targetWorkflow.name,
             allDiffs,
             this.extractUpdatedByInfo(sourceWorkflow),
-            this.extractUpdatedByInfo(targetWorkflow)
+            this.extractUpdatedByInfo(targetWorkflow),
+            this.extractUpdatedAtInfo(sourceWorkflow),
+            this.extractUpdatedAtInfo(targetWorkflow)
           );
         }
       }
@@ -98,7 +101,8 @@ export class WorkflowDiffOperation {
         resultBuilder.addWorkflowDeleted(
           this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
           targetWorkflow.name,
-          this.extractUpdatedByInfo(targetWorkflow)
+          this.extractUpdatedByInfo(targetWorkflow),
+          this.extractUpdatedAtInfo(targetWorkflow)
         );
       }
     }
@@ -127,14 +131,18 @@ export class WorkflowDiffOperation {
         diffs: workflowChanges,
         sourceResourceUpdatedBy: this.extractUpdatedByInfo(sourceWorkflow),
         targetResourceUpdatedBy: this.extractUpdatedByInfo(targetWorkflow),
+        sourceResourceUpdatedAt: this.extractUpdatedAtInfo(sourceWorkflow),
+        targetResourceUpdatedAt: this.extractUpdatedAtInfo(targetWorkflow),
       });
     }
 
-    // Add all step-level diffs with updatedBy information
+    // Add all step-level diffs with updatedBy and updatedAt information
     const enrichedStepDiffs = stepDiffs.map((stepDiff) => ({
       ...stepDiff,
       sourceResourceUpdatedBy: this.extractUpdatedByInfo(sourceWorkflow),
       targetResourceUpdatedBy: this.extractUpdatedByInfo(targetWorkflow),
+      sourceResourceUpdatedAt: this.extractUpdatedAtInfo(sourceWorkflow),
+      targetResourceUpdatedAt: this.extractUpdatedAtInfo(targetWorkflow),
     }));
 
     allDiffs.push(...enrichedStepDiffs);
@@ -153,5 +161,14 @@ export class WorkflowDiffOperation {
       lastName: workflow.updatedBy.lastName,
       externalId: workflow.updatedBy.externalId,
     };
+  }
+
+  private extractUpdatedAtInfo(workflow: NotificationTemplateEntity): string | null {
+    if (!workflow.updatedAt) {
+      return null;
+    }
+
+    // updatedAt is already a string in ISO format, return it directly
+    return workflow.updatedAt;
   }
 }
