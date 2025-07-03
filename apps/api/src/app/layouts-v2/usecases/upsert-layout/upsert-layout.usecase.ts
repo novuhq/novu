@@ -105,6 +105,7 @@ export class UpsertLayoutUseCase {
       LayoutVariablesSchemaCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
+        controlValues: upsertedControlValues?.controls ?? {},
       })
     );
 

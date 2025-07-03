@@ -56,6 +56,7 @@ export class GetLayoutUseCase {
       LayoutVariablesSchemaCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
+        controlValues: controlValues?.controls ?? {},
       })
     );
 
