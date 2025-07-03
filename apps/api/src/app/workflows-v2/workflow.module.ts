@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import {
-  CreateWorkflow,
   DeletePreferencesUseCase,
   DeleteWorkflowUseCase,
   GetPreferences,
@@ -43,6 +42,7 @@ import { PreviewPayloadProcessorService } from './usecases/preview/services/prev
 import { MockDataGeneratorService } from './usecases/preview/services/mock-data-generator.service';
 import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
 import { LayoutsV2Module } from '../layouts-v2/layouts.module';
+import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 

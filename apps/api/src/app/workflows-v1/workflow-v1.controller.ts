@@ -11,12 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  CreateWorkflow,
-  CreateWorkflowCommand,
-  UpdateWorkflow,
-  UpdateWorkflowCommand,
-} from '@novu/application-generic';
+import { UpdateWorkflow, UpdateWorkflowCommand } from '@novu/application-generic';
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -54,6 +49,8 @@ import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-work
 import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
 import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { CreateWorkflow } from './usecases/create-workflow/create-workflow.usecase';
+import { CreateWorkflowCommand } from './usecases/create-workflow/create-workflow.command';
 
 /**
  * @deprecated use controllers in /workflows directory

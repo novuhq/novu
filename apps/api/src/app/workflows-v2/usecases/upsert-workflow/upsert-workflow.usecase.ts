@@ -3,8 +3,6 @@ import { format } from 'prettier';
 
 import {
   AnalyticsService,
-  CreateWorkflow as CreateWorkflowV0Usecase,
-  CreateWorkflowCommand,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
@@ -53,6 +51,8 @@ import { PreviewCommand } from '../preview';
 import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
 
 @Injectable()
 export class UpsertWorkflowUseCase {

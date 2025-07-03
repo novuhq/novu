@@ -1,5 +1,4 @@
 import {
-  CreateWorkflow,
   DeleteWorkflowUseCase,
   GetWorkflowByIdsUseCase,
   GetWorkflowWithPreferencesUseCase,
@@ -14,6 +13,7 @@ import { GetNotificationTemplates } from './get-notification-templates/get-notif
 import { GetNotificationTemplate } from './get-notification-template/get-notification-template.usecase';
 import { DeleteNotificationTemplate } from './delete-notification-template/delete-notification-template.usecase';
 import { GetWorkflowVariables } from './get-workflow-variables/get-workflow-variables.usecase';
+import { CreateWorkflow } from './create-workflow/create-workflow.usecase';
 
 export const USE_CASES = [
   GetActiveIntegrationsStatus,

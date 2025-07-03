@@ -9,8 +9,6 @@ import {
 } from '@novu/dal';
 import {
   AnalyticsService,
-  CreateWorkflow,
-  CreateWorkflowCommand,
   DeleteWorkflowCommand,
   DeleteWorkflowUseCase,
   ExecuteBridgeRequest,
@@ -36,6 +34,8 @@ import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-ste
 import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
 import { StepIssuesDto } from '../../../workflows-v2/dtos';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
 
 @Injectable()
 export class Sync {

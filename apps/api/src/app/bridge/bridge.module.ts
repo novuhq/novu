@@ -2,7 +2,6 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import {
   CreateChange,
   CreateMessageTemplate,
-  CreateWorkflow,
   DeleteMessageTemplate,
   DeletePreferencesUseCase,
   DeleteWorkflowUseCase,
@@ -25,6 +24,7 @@ import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
 import { CreateVariablesObject } from '../workflows-v2/usecases/create-variables-object/create-variables-object.usecase';
 import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 
 const PROVIDERS = [
   CreateWorkflow,
