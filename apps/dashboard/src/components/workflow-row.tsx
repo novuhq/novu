@@ -28,7 +28,13 @@ import { ResourceOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { IEnvironment, PermissionsEnum, WorkflowListResponseDto, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  IEnvironment,
+  PermissionsEnum,
+  WorkflowListResponseDto,
+  FeatureFlagsKeysEnum,
+  EnvironmentTypeEnum,
+} from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
@@ -328,6 +334,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 disabled={
                   !has({ permission: PermissionsEnum.EVENT_WRITE }) &&
                   !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) &&
+                  currentEnvironment?.type !== EnvironmentTypeEnum.DEV &&
                   !has({ permission: PermissionsEnum.NOTIFICATION_READ })
                 }
                 variant="ghost"
@@ -340,6 +347,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 condition={(has) =>
                   has({ permission: PermissionsEnum.EVENT_WRITE }) ||
                   has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+                  currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
                   has({ permission: PermissionsEnum.NOTIFICATION_READ })
                 }
               >

@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { ComponentProps } from 'react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
@@ -115,7 +115,9 @@ const StepNode = (props: StepNodeProps) => {
 
   const hasConditions = conditionsCount > 0;
   const isReadOnly =
-    currentWorkflow?.origin === ResourceOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    currentWorkflow?.origin === ResourceOriginEnum.EXTERNAL ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
@@ -560,7 +562,9 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   }
 
   const isReadOnly =
-    workflow.origin === ResourceOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    workflow.origin === ResourceOriginEnum.EXTERNAL ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   if (isReadOnly) {
     return null;
