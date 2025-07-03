@@ -1,13 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 
 import { UserSessionData } from '@novu/shared';
-import {
-  GetWorkflowWithPreferencesCommand,
-  GetWorkflowWithPreferencesUseCase,
-  InstrumentUsecase,
-  PinoLogger,
-  FeatureFlagsService,
-} from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 
 import { GetWorkflowCommand } from './get-workflow.command';
@@ -15,6 +9,8 @@ import { toResponseWorkflowDto } from '../../mappers/notification-template-mappe
 import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
 import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
 import { generatePayloadExample } from '../../util/generate-payload-example';
+import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { GetWorkflowWithPreferencesCommand } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.command';
 
 @Injectable()
 export class GetWorkflowUseCase {

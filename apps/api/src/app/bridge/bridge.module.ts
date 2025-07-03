@@ -6,7 +6,6 @@ import {
   DeletePreferencesUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
-  GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
   UpdateChange,
@@ -25,6 +24,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
+import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 
 const PROVIDERS = [
   CreateWorkflow,

@@ -36,9 +36,6 @@ import {
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
-  GetWorkflowWithPreferencesCommand,
-  GetWorkflowWithPreferencesUseCase,
-  WorkflowWithPreferencesResponseDto,
   NotificationStep,
   NotificationStepVariantCommand,
   DeleteMessageTemplate,
@@ -51,6 +48,9 @@ import {
   isVariantEmpty,
   PlatformException,
 } from '@novu/application-generic';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead

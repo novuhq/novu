@@ -3,7 +3,6 @@ import {
   DeletePreferencesUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
-  GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
   UpsertControlValuesUseCase,
@@ -43,6 +42,7 @@ import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
+import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 

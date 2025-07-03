@@ -1,16 +1,14 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import {
-  GetWorkflowWithPreferencesUseCase,
-  SendWebhookMessage,
-  WorkflowWithPreferencesResponseDto,
-} from '@novu/application-generic';
+import { SendWebhookMessage } from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { stepTypeToControlSchema } from '../../shared';
+import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 @Injectable()
 export class PatchWorkflowUsecase {

@@ -10,13 +10,13 @@ import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@n
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 import {
   GetWorkflowByIdsUseCase,
-  GetWorkflowWithPreferencesCommand,
   DeletePreferencesUseCase,
   DeletePreferencesCommand,
   Instrument,
   InstrumentUsecase,
   SendWebhookMessage,
 } from '@novu/application-generic';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 
 @Injectable()
 export class DeleteWorkflowUseCase {

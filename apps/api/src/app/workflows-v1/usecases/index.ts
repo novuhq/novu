@@ -1,8 +1,4 @@
-import {
-  GetWorkflowByIdsUseCase,
-  GetWorkflowWithPreferencesUseCase,
-  ResourceValidatorService,
-} from '@novu/application-generic';
+import { GetWorkflowByIdsUseCase, ResourceValidatorService } from '@novu/application-generic';
 
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { GetActiveIntegrationsStatus } from './get-active-integrations-status/get-active-integrations-status.usecase';
@@ -14,6 +10,7 @@ import { GetWorkflowVariables } from './get-workflow-variables/get-workflow-vari
 import { CreateWorkflow } from './create-workflow/create-workflow.usecase';
 import { UpdateWorkflow } from './update-workflow/update-workflow.usecase';
 import { DeleteWorkflowUseCase } from './delete-workflow/delete-workflow.usecase';
+import { GetWorkflowWithPreferencesUseCase } from './get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 
 export const USE_CASES = [
   GetActiveIntegrationsStatus,

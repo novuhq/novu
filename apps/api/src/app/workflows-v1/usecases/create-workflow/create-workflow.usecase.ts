@@ -37,9 +37,6 @@ import {
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
   GetPreferences,
-  GetWorkflowWithPreferencesCommand,
-  GetWorkflowWithPreferencesUseCase,
-  type WorkflowWithPreferencesResponseDto,
   Instrument,
   InstrumentUsecase,
   ResourceValidatorService,
@@ -48,6 +45,9 @@ import {
   NotificationStepVariantCommand,
 } from '@novu/application-generic';
 import { CreateWorkflowCommand } from './create-workflow.command';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
