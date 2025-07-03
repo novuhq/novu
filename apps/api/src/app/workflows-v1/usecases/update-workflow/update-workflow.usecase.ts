@@ -22,7 +22,6 @@ import {
   ResourceOriginEnum,
 } from '@novu/shared';
 
-import { UpdateWorkflowCommand } from './update-workflow.command';
 import {
   AnalyticsService,
   ContentService,
@@ -48,6 +47,7 @@ import {
   isVariantEmpty,
   PlatformException,
 } from '@novu/application-generic';
+import { UpdateWorkflowCommand } from './update-workflow.command';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
