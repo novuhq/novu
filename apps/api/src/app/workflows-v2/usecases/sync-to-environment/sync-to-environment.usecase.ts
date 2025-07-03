@@ -114,8 +114,6 @@ export class SyncToEnvironmentUseCase {
       __source: WorkflowCreationSourceEnum.DASHBOARD,
       steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps),
       preferences: this.mapPreferences(preferences),
-      payloadSchema: sourceWorkflow.payloadSchema,
-      validatePayload: sourceWorkflow.validatePayload,
     };
   }
 
@@ -135,8 +133,6 @@ export class SyncToEnvironmentUseCase {
       description: sourceWorkflow.description,
       steps: await this.mapStepsToCreateOrUpdateDto(sourceWorkflow.steps, existingTargetEnvWorkflow?.steps),
       preferences: this.mapPreferences(preferencesToClone),
-      payloadSchema: sourceWorkflow.payloadSchema,
-      validatePayload: sourceWorkflow.validatePayload,
     };
   }
 
