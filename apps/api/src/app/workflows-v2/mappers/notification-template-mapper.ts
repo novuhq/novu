@@ -47,6 +47,7 @@ export function toResponseWorkflowDto(
     payloadSchema: workflow.payloadSchema,
     payloadExample,
     validatePayload: workflow.validatePayload,
+    isTranslationEnabled: workflow.isTranslationEnabled,
   };
 }
 

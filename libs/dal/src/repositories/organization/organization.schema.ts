@@ -37,7 +37,6 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       select: false,
     },
     defaultLocale: Schema.Types.String,
-    translationsEnabled: Schema.Types.Boolean,
     domain: Schema.Types.String,
     language: [Schema.Types.String],
     removeNovuBranding: Schema.Types.Boolean,

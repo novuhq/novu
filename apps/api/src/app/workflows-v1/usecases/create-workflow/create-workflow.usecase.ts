@@ -4,6 +4,7 @@ import { ModuleRef } from '@nestjs/core';
 
 import {
   JsonSchemaTypeEnum,
+  LocalizationResourceEnum,
   NotificationGroupEntity,
   NotificationGroupRepository,
   NotificationTemplateRepository,
@@ -102,6 +103,10 @@ export class CreateWorkflow {
 
       storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
 
+      if (command.isTranslationEnabled !== undefined) {
+        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command);
+      }
+
       await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
     });
 
@@ -138,6 +143,41 @@ export class CreateWorkflow {
     });
 
     return storedWorkflow;
+  }
+
+  private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: CreateWorkflowCommand) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+    if (!isEnterprise) {
+      return;
+    }
+
+    try {
+      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
+        strict: false,
+      });
+
+      await manageTranslations.execute({
+        enabled: command.isTranslationEnabled,
+        resourceId: workflowIdentifier,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to ${command.isTranslationEnabled ? 'enable' : 'disable'} V2 translations for workflow`,
+        {
+          workflowIdentifier,
+          enabled: command.isTranslationEnabled,
+          organizationId: command.organizationId,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
+
+      throw error;
+    }
   }
 
   private generateTriggerIdentifier(command: CreateWorkflowCommand) {
@@ -180,10 +220,6 @@ export class CreateWorkflow {
           `Variant conditions are required, variant name ${variant.name} id ${variant._id}`
         );
       }
-    }
-
-    if (command.isTranslationEnabled) {
-      await this.resourceValidatorService.validateTranslationFeatureAvailability(command.organizationId);
     }
   }
 
