@@ -9,8 +9,6 @@ import {
   InstrumentUsecase,
   NotificationStep,
   shortId,
-  UpdateWorkflow as UpdateWorkflowV0Usecase,
-  UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   SendWebhookMessage,
@@ -53,6 +51,8 @@ import { removeBrandingFromHtml } from '../../../shared/utils/html';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow as UpdateWorkflowV0Usecase } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 
 @Injectable()
 export class UpsertWorkflowUseCase {

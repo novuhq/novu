@@ -22,9 +22,10 @@ import {
   ResourceOriginEnum,
 } from '@novu/shared';
 
-import { AnalyticsService, ContentService, InvalidateCacheService } from '../../../services';
 import { UpdateWorkflowCommand } from './update-workflow.command';
 import {
+  AnalyticsService,
+  ContentService,
   CreateChange,
   CreateChangeCommand,
   CreateMessageTemplate,
@@ -35,20 +36,21 @@ import {
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
-} from '../..';
-import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
-import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { WorkflowWithPreferencesResponseDto } from '../get-workflow-with-preferences/get-workflow-with-preferences.dto';
-import {
+  GetWorkflowWithPreferencesCommand,
+  GetWorkflowWithPreferencesUseCase,
+  WorkflowWithPreferencesResponseDto,
+  NotificationStep,
+  NotificationStepVariantCommand,
   DeleteMessageTemplate,
   DeleteMessageTemplateCommand,
   UpdateMessageTemplate,
   UpdateMessageTemplateCommand,
-} from '../../message-template';
-import { Instrument, InstrumentUsecase } from '../../../instrumentation';
-import { ResourceValidatorService } from '../../../services/resource-validator.service';
-import { NotificationStep, NotificationStepVariantCommand } from '../../../value-objects';
-import { isVariantEmpty, PlatformException } from '../../../utils';
+  Instrument,
+  InstrumentUsecase,
+  ResourceValidatorService,
+  isVariantEmpty,
+  PlatformException,
+} from '@novu/application-generic';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -66,8 +68,6 @@ export class UpdateWorkflow {
     private updateMessageTemplate: UpdateMessageTemplate,
     private deleteMessageTemplate: DeleteMessageTemplate,
     private createChange: CreateChange,
-    @Inject(forwardRef(() => InvalidateCacheService))
-    private invalidateCache: InvalidateCacheService,
     @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
     protected moduleRef: ModuleRef,
@@ -140,7 +140,7 @@ export class UpdateWorkflow {
       existingTemplate._id
     );
 
-    let notificationTemplateWithStepTemplate: WorkflowWithPreferencesResponseDto;
+    let notificationTemplateWithStepTemplate!: WorkflowWithPreferencesResponseDto;
     await this.notificationTemplateRepository.withTransaction(async () => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
@@ -237,7 +237,7 @@ export class UpdateWorkflow {
                 readOnly: defaultCritical,
               },
             },
-            defaultUserPreferences
+            defaultUserPreferences ?? undefined
           );
           await this.upsertPreferences.upsertUserWorkflowPreferences(
             UpsertUserWorkflowPreferencesCommand.create({

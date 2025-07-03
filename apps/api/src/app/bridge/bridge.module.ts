@@ -12,7 +12,6 @@ import {
   TierRestrictionsValidateUsecase,
   UpdateChange,
   UpdateMessageTemplate,
-  UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
 } from '@novu/application-generic';
@@ -25,6 +24,7 @@ import { CreateVariablesObject } from '../workflows-v2/usecases/create-variables
 import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 
 const PROVIDERS = [
   CreateWorkflow,

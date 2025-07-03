@@ -7,7 +7,6 @@ import {
   GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
   TierRestrictionsValidateUsecase,
-  UpdateWorkflow,
   UpsertControlValuesUseCase,
   UpsertPreferences,
 } from '@novu/application-generic';
@@ -43,6 +42,7 @@ import { MockDataGeneratorService } from './usecases/preview/services/mock-data-
 import { PreviewErrorHandler } from './usecases/preview/utils/preview-error-handler';
 import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 
 const DAL_REPOSITORIES = [CommunityOrganizationRepository];
 

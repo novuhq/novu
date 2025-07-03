@@ -3,7 +3,6 @@ import {
   GetWorkflowByIdsUseCase,
   GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
-  UpdateWorkflow,
 } from '@novu/application-generic';
 
 import { CommunityOrganizationRepository } from '@novu/dal';
@@ -14,6 +13,7 @@ import { GetNotificationTemplate } from './get-notification-template/get-notific
 import { DeleteNotificationTemplate } from './delete-notification-template/delete-notification-template.usecase';
 import { GetWorkflowVariables } from './get-workflow-variables/get-workflow-variables.usecase';
 import { CreateWorkflow } from './create-workflow/create-workflow.usecase';
+import { UpdateWorkflow } from './update-workflow/update-workflow.usecase';
 
 export const USE_CASES = [
   GetActiveIntegrationsStatus,

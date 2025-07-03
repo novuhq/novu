@@ -13,21 +13,29 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { CustomDataType, WorkflowStatusEnum, ResourceTypeEnum } from '@novu/shared';
+import {
+  CustomDataType,
+  INotificationGroup,
+  ResourceOriginEnum,
+  WorkflowStatusEnum,
+  ResourceTypeEnum,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_TAG_LENGTH,
+} from '@novu/shared';
 
 import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
-import { EnvironmentWithUserCommand } from '../../../commands';
-import { PreferencesRequired } from '../../upsert-preferences';
-import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from './upsert-validation-constants';
-import { ContentIssue, IStepControl, JSONSchema, NotificationStep } from '../../../value-objects';
+import {
+  EnvironmentWithUserCommand,
+  ContentIssue,
+  JSONSchema,
+  NotificationStep,
+  PreferencesRequired,
+} from '@novu/application-generic';
 
-export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
+export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
-  @IsMongoId()
-  id: string;
-
-  @IsOptional()
   @IsString()
   @Length(1, MAX_NAME_LENGTH)
   name: string;
@@ -44,17 +52,23 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   tags?: string[];
 
   @IsBoolean()
-  @IsOptional()
-  active?: boolean;
+  active: boolean;
 
+  @IsDefined()
   @IsArray()
   @ValidateNested()
+  steps: NotificationStep[];
+
+  @IsBoolean()
   @IsOptional()
-  steps?: NotificationStep[];
+  draft?: boolean;
+
+  @IsMongoId()
+  @IsDefined()
+  notificationGroupId?: string;
 
   @IsOptional()
-  @IsMongoId()
-  notificationGroupId?: string;
+  notificationGroup?: INotificationGroup;
 
   @IsObject()
   @ValidateNested()
@@ -73,21 +87,24 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @Type(() => PreferencesRequired)
   defaultPreferences: PreferencesRequired;
 
-  @ValidateNested()
   @IsOptional()
-  replyCallback?: {
-    active: boolean;
-    url: string;
-  };
+  blueprintId?: string;
+
+  @IsOptional()
+  @IsString()
+  __source?: string;
 
   @IsOptional()
   data?: CustomDataType;
 
   @IsOptional()
-  inputs?: IStepControl;
-
+  inputs?: {
+    schema: JSONSchema;
+  };
   @IsOptional()
-  controls?: IStepControl;
+  controls?: {
+    schema: JSONSchema;
+  };
 
   @IsOptional()
   rawData?: Record<string, unknown>;
@@ -103,15 +120,24 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   type: ResourceTypeEnum;
 
-  @IsString()
-  @IsOptional()
-  workflowId?: string;
+  @IsEnum(ResourceOriginEnum)
+  @IsDefined()
+  origin: ResourceOriginEnum;
 
+  /**
+   * Optional identifier for the workflow trigger.
+   * This allows overriding the default trigger identifier generation strategy in the use case.
+   * If provided, the use case will use this value instead of generating one.
+   * If not provided, the use case will generate a trigger identifier based on its internal logic.
+   */
+  @IsOptional()
+  @IsString()
+  triggerIdentifier?: string;
   @IsObject()
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => Array<ContentIssue>)
-  issues?: Record<string, RuntimeIssue[]>;
+  @Type(() => ContentIssue)
+  issues?: Record<string, RuntimeIssue>;
 
   @IsEnum(WorkflowStatusEnum)
   @IsOptional()

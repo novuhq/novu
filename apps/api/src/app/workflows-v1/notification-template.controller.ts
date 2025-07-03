@@ -18,7 +18,6 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
-import { UpdateWorkflow, UpdateWorkflowCommand } from '@novu/application-generic';
 
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -42,6 +41,8 @@ import { DeleteNotificationTemplateCommand } from './usecases/delete-notificatio
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateWorkflow } from './usecases/create-workflow/create-workflow.usecase';
 import { CreateWorkflowCommand } from './usecases/create-workflow/create-workflow.command';
+import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.usecase';
+import { UpdateWorkflowCommand } from './usecases/update-workflow/update-workflow.command';
 
 /**
  * @deprecated use controller in /workflows directory
