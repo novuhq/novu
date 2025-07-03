@@ -70,10 +70,6 @@ export class UpdateOrganizationSettings {
       updateFields.removeNovuBranding = command.removeNovuBranding;
     }
 
-    if (command.translationsEnabled !== undefined) {
-      updateFields.translationsEnabled = command.translationsEnabled;
-    }
-
     if (command.defaultLocale !== undefined) {
       updateFields.defaultLocale = command.defaultLocale;
     }
@@ -84,7 +80,6 @@ export class UpdateOrganizationSettings {
   private buildSettingsResponse(organization: OrganizationEntity): GetOrganizationSettingsDto {
     return {
       removeNovuBranding: organization.removeNovuBranding || false,
-      translationsEnabled: organization.translationsEnabled || false,
       defaultLocale: organization.defaultLocale || DEFAULT_LOCALE,
     };
   }
