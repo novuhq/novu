@@ -165,14 +165,6 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsOptional()
   payloadExample?: object;
-
-  @ApiPropertyOptional({
-    description: 'Whether payload schema validation is enabled',
-    type: 'boolean',
-  })
-  @IsOptional()
-  @IsBoolean()
-  validatePayload?: boolean;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

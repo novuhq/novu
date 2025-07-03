@@ -1,7 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { SendWebhookMessage } from '@novu/application-generic';
+import { SendWebhookMessage, ResourceValidatorService } from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
@@ -17,12 +17,18 @@ export class PatchWorkflowUsecase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
+    private resourceValidatorService: ResourceValidatorService,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
     const persistedWorkflow = await this.fetchWorkflow(command);
+
+    if (command.isTranslationEnabled) {
+      await this.resourceValidatorService.validateTranslationFeatureAvailability(command.user.organizationId);
+    }
+
     const transientWorkflow = this.patchWorkflowFields(persistedWorkflow, command);
 
     const hasPayloadSchemaChanged = this.hasPayloadSchemaChanged(persistedWorkflow, command);
@@ -102,6 +108,10 @@ export class PatchWorkflowUsecase {
 
     if (command.validatePayload !== undefined && command.validatePayload !== null) {
       transientWorkflow.validatePayload = command.validatePayload;
+    }
+
+    if (command.isTranslationEnabled !== undefined && command.isTranslationEnabled !== null) {
+      transientWorkflow.isTranslationEnabled = command.isTranslationEnabled;
     }
 
     if (command.name !== undefined && command.name !== null) {

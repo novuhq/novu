@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -6,7 +6,14 @@ import {
   NotificationTemplateRepository,
   OrganizationEntity,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsNumber, UNLIMITED_VALUE } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  getFeatureForTierAsNumber,
+  UNLIMITED_VALUE,
+} from '@novu/shared';
 
 import { FeatureFlagsService } from './feature-flags';
 import { NotificationStep } from '../value-objects/notification.step';
@@ -87,6 +94,25 @@ export class ResourceValidatorService {
         currentCount: workflowsCount,
         limit: maxWorkflowLimit,
       });
+    }
+  }
+
+  async validateTranslationFeatureAvailability(organizationId: string) {
+    const organization = await this.getOrganization(organizationId);
+    const isTranslationFeatureAvailable = getFeatureForTierAsBoolean(
+      FeatureNameEnum.AUTO_TRANSLATIONS,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE
+    );
+
+    if (!isTranslationFeatureAvailable) {
+      throw new HttpException(
+        {
+          error: 'Payment Required',
+          message:
+            'Translation feature is not available on your plan. Please upgrade your plan to access this feature.',
+        },
+        HttpStatus.PAYMENT_REQUIRED
+      );
     }
   }
 

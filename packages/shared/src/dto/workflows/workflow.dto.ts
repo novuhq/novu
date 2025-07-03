@@ -34,6 +34,8 @@ export type WorkflowCommonsFields = {
   description?: string;
   tags?: string[];
   active?: boolean;
+  validatePayload?: boolean;
+  isTranslationEnabled?: boolean;
 };
 
 export type PreferencesResponseDto = {
@@ -60,7 +62,6 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   lastTriggeredAt?: string;
   payloadSchema?: Record<string, any>;
   payloadExample?: object;
-  validatePayload?: boolean;
 };
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
@@ -106,8 +107,6 @@ export type UpdateWorkflowDto = WorkflowCommonsFields & {
   origin: ResourceOriginEnum;
 
   payloadSchema?: object;
-
-  validatePayload?: boolean;
 };
 
 export type UpsertWorkflowBody = Omit<UpdateWorkflowDto, 'steps'> & {

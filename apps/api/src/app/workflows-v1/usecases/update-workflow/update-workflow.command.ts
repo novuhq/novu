@@ -110,6 +110,10 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsBoolean()
   validatePayload?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
+
   @IsEnum(ResourceTypeEnum)
   @IsDefined()
   type: ResourceTypeEnum;

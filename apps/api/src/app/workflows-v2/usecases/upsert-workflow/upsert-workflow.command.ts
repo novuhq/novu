@@ -132,6 +132,10 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsBoolean()
   validatePayload?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {

@@ -121,12 +121,4 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
     message: 'payloadSchema must be a valid JSON schema',
   })
   payloadSchema?: object;
-
-  @ApiPropertyOptional({
-    description: 'Enable or disable payload schema validation',
-    type: 'boolean',
-  })
-  @IsOptional()
-  @IsBoolean()
-  validatePayload?: boolean;
 }

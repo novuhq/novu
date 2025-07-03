@@ -343,6 +343,10 @@ export class UpdateWorkflow {
         throw new BadRequestException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
+
+    if (command.isTranslationEnabled) {
+      await this.resourceValidatorService.validateTranslationFeatureAvailability(command.organizationId);
+    }
   }
 
   @Instrument()

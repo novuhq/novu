@@ -55,4 +55,12 @@ export class PatchWorkflowDto {
   @IsOptional()
   @IsBoolean()
   validatePayload?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Enable or disable translations for this workflow',
+    type: 'boolean',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }

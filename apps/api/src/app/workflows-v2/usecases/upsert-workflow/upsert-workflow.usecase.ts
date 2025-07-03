@@ -170,6 +170,7 @@ export class UpsertWorkflowUseCase {
       status: computeWorkflowStatus(isWorkflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
+      isTranslationEnabled: workflowDto.isTranslationEnabled,
     };
   }
 
@@ -198,6 +199,7 @@ export class UpsertWorkflowUseCase {
       status: computeWorkflowStatus(workflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
+      isTranslationEnabled: workflowDto.isTranslationEnabled,
     };
   }
 

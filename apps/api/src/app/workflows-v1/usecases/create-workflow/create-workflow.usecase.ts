@@ -181,6 +181,10 @@ export class CreateWorkflow {
         );
       }
     }
+
+    if (command.isTranslationEnabled) {
+      await this.resourceValidatorService.validateTranslationFeatureAvailability(command.organizationId);
+    }
   }
 
   @Instrument()

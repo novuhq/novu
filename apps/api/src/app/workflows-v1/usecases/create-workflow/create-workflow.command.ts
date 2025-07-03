@@ -116,6 +116,10 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsBoolean()
   validatePayload?: boolean;
 
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
+
   @IsEnum(ResourceTypeEnum)
   @IsDefined()
   type: ResourceTypeEnum;
