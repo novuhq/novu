@@ -62,20 +62,14 @@ export class UpdateWorkflow {
     private messageTemplateRepository: MessageTemplateRepository,
     private changeRepository: ChangeRepository,
     private notificationGroupRepository: NotificationGroupRepository,
-    @Inject(forwardRef(() => CreateMessageTemplate))
     private createMessageTemplate: CreateMessageTemplate,
-    @Inject(forwardRef(() => UpdateMessageTemplate))
     private updateMessageTemplate: UpdateMessageTemplate,
     private deleteMessageTemplate: DeleteMessageTemplate,
     private createChange: CreateChange,
-    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
     protected moduleRef: ModuleRef,
-    @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
-    @Inject(forwardRef(() => DeletePreferencesUseCase))
     private deletePreferencesUsecase: DeletePreferencesUseCase,
-    @Inject(forwardRef(() => GetWorkflowWithPreferencesUseCase))
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private resourceValidatorService: ResourceValidatorService

@@ -59,11 +59,9 @@ export class CreateWorkflow {
     private notificationGroupRepository: NotificationGroupRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private createChange: CreateChange,
-    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
     private logger: PinoLogger,
     protected moduleRef: ModuleRef,
-    @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private resourceValidatorService: ResourceValidatorService,
