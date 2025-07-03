@@ -1,4 +1,4 @@
-import { IApiRateLimitMaximum } from '../../types';
+import { IApiRateLimitMaximum, EnvironmentTypeEnum } from '../../types';
 
 export interface IEnvironment {
   _id: string;
@@ -11,6 +11,7 @@ export interface IEnvironment {
   dns?: IDnsSettings;
   apiRateLimits?: IApiRateLimitMaximum;
   color: string;
+  type: EnvironmentTypeEnum;
   branding?: {
     color: string;
     logo: string;

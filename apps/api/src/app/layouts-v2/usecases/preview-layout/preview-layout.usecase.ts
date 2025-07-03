@@ -47,7 +47,6 @@ export class PreviewLayoutUsecase {
         CreateVariablesObjectCommand.create({
           environmentId: command.user.environmentId,
           organizationId: command.user.organizationId,
-          userId: command.user._id,
           controlValues: Object.values(controlValues.email ?? {}),
           variableSchema,
         })

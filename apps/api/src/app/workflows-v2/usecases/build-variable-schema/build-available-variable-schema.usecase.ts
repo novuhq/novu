@@ -54,7 +54,6 @@ export class BuildVariableSchemaUsecase {
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        userId: command.userId,
         controlValues: optimisticControlValues.length > 0 ? optimisticControlValues : workflowControlValues,
       })
     );

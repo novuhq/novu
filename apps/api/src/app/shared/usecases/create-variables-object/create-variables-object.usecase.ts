@@ -30,7 +30,6 @@ export class CreateVariablesObject {
       key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
       organization: { _id: command.organizationId },
       environment: { _id: command.environmentId },
-      user: { _id: command.userId },
       defaultValue: false,
     });
 
