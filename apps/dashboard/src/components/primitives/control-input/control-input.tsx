@@ -1,11 +1,9 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-
 import { cn } from '@/utils/ui';
 import { cva } from 'class-variance-authority';
 
 import { VariableEditor } from '@/components/primitives/variable-editor';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -52,9 +50,7 @@ export function ControlInput({
   isAllowedVariable,
   enableTranslations = false,
 }: ControlInputProps) {
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
-
-  const shouldEnableTranslations = isTranslationEnabled && enableTranslations;
+  const isTranslationEnabled = useIsTranslationEnabled() && enableTranslations;
 
   return (
     <VariableEditor
@@ -70,7 +66,7 @@ export function ControlInput({
       multiline={multiline}
       indentWithTab={indentWithTab}
       size={size}
-      enableTranslations={shouldEnableTranslations}
+      enableTranslations={isTranslationEnabled}
     />
   );
 }

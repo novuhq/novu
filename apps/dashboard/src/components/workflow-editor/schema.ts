@@ -1,10 +1,13 @@
 import * as z from 'zod';
-import { type JSONSchemaDefinition, ChannelTypeEnum, VALID_ID_REGEX } from '@novu/shared';
-
-export const MAX_TAG_ELEMENTS = 16;
-export const MAX_TAG_LENGTH = 32;
-export const MAX_NAME_LENGTH = 64;
-export const MAX_DESCRIPTION_LENGTH = 256;
+import {
+  type JSONSchemaDefinition,
+  ChannelTypeEnum,
+  VALID_ID_REGEX,
+  MAX_TAG_ELEMENTS,
+  MAX_TAG_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_DESCRIPTION_LENGTH,
+} from '@novu/shared';
 
 export const workflowSchema = z.object({
   active: z.boolean().optional(),
@@ -21,6 +24,7 @@ export const workflowSchema = z.object({
       message: 'Duplicate tags are not allowed',
     }),
   description: z.string().max(MAX_DESCRIPTION_LENGTH).optional(),
+  isTranslationEnabled: z.boolean().optional(),
 });
 
 export const stepSchema = z.object({

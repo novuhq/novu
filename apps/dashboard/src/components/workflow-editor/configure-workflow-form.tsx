@@ -44,7 +44,7 @@ import { Textarea } from '@/components/primitives/textarea';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { usePromotionalBanner } from '@/components/promotional/coming-soon-banner';
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
-import { MAX_DESCRIPTION_LENGTH, workflowSchema } from '@/components/workflow-editor/schema';
+import { workflowSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
@@ -71,8 +71,8 @@ import { Link } from 'react-router-dom';
 import { Protect } from '@/utils/protect';
 
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
-import { ResourceOriginEnum, WorkflowResponseDto, UpdateWorkflowDto } from '@novu/shared';
-import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { TranslationToggleSection } from './translation-toggle-section';
+import { ResourceOriginEnum, WorkflowResponseDto, UpdateWorkflowDto, MAX_DESCRIPTION_LENGTH } from '@novu/shared';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 
 interface ConfigureWorkflowFormProps {
@@ -156,6 +156,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
       workflowId: workflow.workflowId,
       description: workflow.description,
       tags: workflow.tags,
+      isTranslationEnabled: workflow.isTranslationEnabled,
     },
     resolver: zodResolver(workflowSchema),
     shouldFocusError: false,
@@ -469,6 +470,19 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
               <span className="ml-auto" />
             </Button>
           )}
+          <TranslationToggleSection
+            control={form.control}
+            fieldName="isTranslationEnabled"
+            onChange={(checked) => {
+              form.setValue('isTranslationEnabled', checked, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              saveForm();
+            }}
+            isReadOnly={isReadOnly}
+            workflowId={workflow.workflowId}
+          />
         </SidebarContent>
         <Separator />
       </motion.div>
