@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { MessageEntity } from '@novu/dal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { LogRepository } from '../base.repository';
 import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
@@ -32,6 +32,18 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
 
   async create(traceData: Omit<Trace, 'id' | 'expires_at'>): Promise<void> {
     try {
+      const isTraceLogsEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
+        defaultValue: false,
+        organization: { _id: traceData.organization_id },
+        user: { _id: traceData.user_id },
+        environment: { _id: traceData.environment_id },
+      });
+
+      if (!isTraceLogsEnabled) {
+        return;
+      }
+
       await this.insert(traceData, {
         organizationId: traceData.organization_id,
         environmentId: traceData.environment_id,

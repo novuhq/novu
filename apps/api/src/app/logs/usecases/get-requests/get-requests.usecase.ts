@@ -35,7 +35,7 @@ export class GetRequests {
     if (command.hoursAgo) {
       where.created_at = {
         operator: '>=',
-        value: subHours(new Date(), command.hoursAgo).toISOString().slice(0, 19).replace('T', ' ') as any,
+        value: subHours(new Date(), command.hoursAgo).toISOString().slice(0, -1) as any,
       };
     }
 

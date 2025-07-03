@@ -44,8 +44,8 @@ export const requestLogSchema = new ClickhouseSchema(
 export const ORDER_BY: (keyof typeof requestLogSchema.schema)[] = [
   'organization_id',
   'environment_id',
+  'transaction_id',
   'created_at',
-  'id',
 ];
 
 export type RequestLog = InferClickhouseSchemaType<typeof requestLogSchema>;

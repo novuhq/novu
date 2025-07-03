@@ -1,6 +1,6 @@
 import { PinoLogger } from 'nestjs-pino';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
 
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
@@ -276,6 +276,10 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
   }
 
   static formatDateTime64(date: Date) {
-    return format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS") as unknown as Date;
+    // Use toISOString() to get UTC time, then format for ClickHouse
+    const isoString = date.toISOString();
+
+    // Remove the 'Z' suffix since ClickHouse DateTime64 with UTC timezone handles it
+    return isoString.slice(0, -1) as unknown as Date;
   }
 }

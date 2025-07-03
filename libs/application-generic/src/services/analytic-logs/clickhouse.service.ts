@@ -1,10 +1,4 @@
-import {
-  createClient,
-  ClickHouseClient,
-  ClickHouseClientConfigOptions,
-  PingResult,
-  DataFormat,
-} from '@clickhouse/client';
+import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
