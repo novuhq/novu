@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid';
 import { encryptApiKey } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 
-import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
+import { EnvironmentEnum, EnvironmentTypeEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts-v1/usecases';
@@ -63,12 +63,15 @@ export class CreateEnvironment {
       throw new BadRequestException('Color property is required');
     }
 
+    const type = this.getEnvironmentType(command.name, command.type);
+
     const environment = await this.environmentRepository.create({
       _organizationId: command.organizationId,
       name: normalizedName,
       identifier: nanoid(12),
       _parentId: command.parentEnvironmentId,
       color,
+      type,
       apiKeys: [
         {
           key: encryptedApiKey,
@@ -128,6 +131,7 @@ export class CreateEnvironment {
     dto._organizationId = environment._organizationId;
     dto.identifier = environment.identifier;
     dto._parentId = environment._parentId;
+    dto.type = environment.type;
 
     if (environment.apiKeys && environment.apiKeys.length > 0 && returnApiKeys) {
       dto.apiKeys = environment.apiKeys.map((apiKey) => ({
@@ -139,10 +143,20 @@ export class CreateEnvironment {
 
     return dto;
   }
+
   private getEnvironmentColor(name: string, commandColor?: string): string | undefined {
     if (name === EnvironmentEnum.DEVELOPMENT) return '#ff8547';
     if (name === EnvironmentEnum.PRODUCTION) return '#7e52f4';
 
     return commandColor;
+  }
+
+  private getEnvironmentType(name: string, commandType?: EnvironmentTypeEnum): EnvironmentTypeEnum {
+    if (commandType) return commandType;
+
+    if (name === EnvironmentEnum.DEVELOPMENT) return EnvironmentTypeEnum.DEV;
+    if (name === EnvironmentEnum.PRODUCTION) return EnvironmentTypeEnum.PROD;
+
+    return EnvironmentTypeEnum.PROD;
   }
 }
