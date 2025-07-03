@@ -1,6 +1,6 @@
 /* eslint-disable global-require */
 // eslint-ignore max-len
-import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -46,6 +46,7 @@ import {
   ResourceValidatorService,
   isVariantEmpty,
   PlatformException,
+  PinoLogger,
 } from '@novu/application-generic';
 import { UpdateWorkflowCommand } from './update-workflow.command';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
@@ -67,6 +68,7 @@ export class UpdateWorkflow {
     private deleteMessageTemplate: DeleteMessageTemplate,
     private createChange: CreateChange,
     private analyticsService: AnalyticsService,
+    private logger: PinoLogger,
     protected moduleRef: ModuleRef,
     private upsertPreferences: UpsertPreferences,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
@@ -319,7 +321,7 @@ export class UpdateWorkflow {
         });
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+      this.logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
     }
 
     return notificationTemplateWithStepTemplate;

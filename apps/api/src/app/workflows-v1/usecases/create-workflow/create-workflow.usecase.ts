@@ -1,5 +1,5 @@
 /* eslint-disable global-require */
-import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -125,7 +125,7 @@ export class CreateWorkflow {
         });
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+      this.logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
     }
 
     this.analyticsService.track('Workflow created', command.userId, {
