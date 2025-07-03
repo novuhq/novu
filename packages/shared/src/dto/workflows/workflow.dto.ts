@@ -90,8 +90,6 @@ export type CreateWorkflowDto = WorkflowCommonsFields & {
   preferences?: PreferencesRequestDto;
 
   payloadSchema?: object;
-
-  validatePayload?: boolean;
 };
 
 export type UpdateWorkflowDto = WorkflowCommonsFields & {
@@ -117,7 +115,7 @@ export type UpsertStepBody = StepCreateBody | UpdateStepBody;
 export type StepCreateBody = StepCreateDto;
 export type UpdateStepBody = StepUpdateDto;
 
-export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description'>;
+export type DuplicateWorkflowDto = Pick<CreateWorkflowDto, 'name' | 'tags' | 'description' | 'isTranslationEnabled'>;
 
 export function isStepCreateBody(step: UpsertStepBody): step is StepCreateDto {
   return step && typeof step === 'object' && !(step as UpdateStepBody)._id;
