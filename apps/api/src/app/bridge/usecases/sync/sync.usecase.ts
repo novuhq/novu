@@ -7,14 +7,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import {
-  AnalyticsService,
-  DeleteWorkflowCommand,
-  DeleteWorkflowUseCase,
-  ExecuteBridgeRequest,
-  JSONSchema,
-  NotificationStep,
-} from '@novu/application-generic';
+import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
 import {
   buildWorkflowPreferences,
   StepTypeEnum,
@@ -36,6 +29,8 @@ import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/c
 import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
 import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
+import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 
 @Injectable()
 export class Sync {

@@ -1,5 +1,4 @@
 import {
-  DeleteWorkflowUseCase,
   GetWorkflowByIdsUseCase,
   GetWorkflowWithPreferencesUseCase,
   ResourceValidatorService,
@@ -14,6 +13,7 @@ import { DeleteNotificationTemplate } from './delete-notification-template/delet
 import { GetWorkflowVariables } from './get-workflow-variables/get-workflow-variables.usecase';
 import { CreateWorkflow } from './create-workflow/create-workflow.usecase';
 import { UpdateWorkflow } from './update-workflow/update-workflow.usecase';
+import { DeleteWorkflowUseCase } from './delete-workflow/delete-workflow.usecase';
 
 export const USE_CASES = [
   GetActiveIntegrationsStatus,

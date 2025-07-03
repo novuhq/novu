@@ -4,7 +4,6 @@ import {
   CreateMessageTemplate,
   DeleteMessageTemplate,
   DeletePreferencesUseCase,
-  DeleteWorkflowUseCase,
   GetPreferences,
   GetWorkflowByIdsUseCase,
   GetWorkflowWithPreferencesUseCase,
@@ -25,6 +24,7 @@ import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issu
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 
 const PROVIDERS = [
   CreateWorkflow,
