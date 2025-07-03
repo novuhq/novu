@@ -1,6 +1,6 @@
 import { HTMLAttributes, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiDownloadLine, RiLoader4Line, RiSettings4Line } from 'react-icons/ri';
+import { RiDownloadLine, RiLoader4Line } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
@@ -92,11 +92,6 @@ function ActionButtons() {
       </Button>
 
       <DefaultLocaleButton locale={defaultLocale} onClick={handleConfigure} />
-
-      <Button variant="secondary" mode="lighter" size="xs" onClick={handleConfigure}>
-        <RiSettings4Line className="mr-2 h-4 w-4" />
-        Configure translations
-      </Button>
     </div>
   );
 }
