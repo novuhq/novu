@@ -14,6 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { useDiffEnvironments } from '@/hooks/use-environments';
 import { useAuth } from '@/context/auth/hooks';
 import { formatDateSimple } from '@/utils/format-date';
+import { ResourceRow } from '../resource-row';
 
 type PublishModalProps = {
   isOpen: boolean;
@@ -34,7 +35,6 @@ export function PublishModal({
   isPublishing = false,
   publishError = null,
 }: PublishModalProps) {
-  const [isExpanded, setIsExpanded] = useState(true);
   const { currentUser } = useAuth();
 
   const { data: diffData, isLoading } = useDiffEnvironments({
@@ -77,14 +77,7 @@ export function PublishModal({
           layoutResources={layoutResources}
         />
 
-        {!isPublishing && !publishError && totalChanges > 0 && (
-          <ChangesSummary
-            isExpanded={isExpanded}
-            onToggleExpanded={() => setIsExpanded(!isExpanded)}
-            resources={allResources}
-            currentUser={currentUser}
-          />
-        )}
+        {!isPublishing && !publishError && totalChanges > 0 && <ChangesSummary resources={allResources} />}
 
         {totalChanges === 0 && !isPublishing && !publishError && <NoChangesMessage />}
 
@@ -181,20 +174,37 @@ function PublishModalContent({
     }
 
     if (isPublishing) {
+      const resourceCounts = [];
+
+      if (workflowResources.length > 0) {
+        resourceCounts.push(`${workflowResources.length} workflow${workflowResources.length === 1 ? '' : 's'}`);
+      }
+
+      if (layoutResources.length > 0) {
+        resourceCounts.push(`${layoutResources.length} layout${layoutResources.length === 1 ? '' : 's'}`);
+      }
+
       return (
         <p className="text-paragraph-xs text-text-soft">
-          Publishing {workflowResources.length} workflows, {layoutResources.length} layouts to {environment?.name}...
+          Publishing {resourceCounts.join(', ')} to {environment?.name}...
         </p>
       );
     }
 
+    const resourceCounts = [];
+
+    if (workflowResources.length > 0) {
+      resourceCounts.push(`${workflowResources.length} workflow${workflowResources.length === 1 ? '' : 's'}`);
+    }
+
+    if (layoutResources.length > 0) {
+      resourceCounts.push(`${layoutResources.length} layout${layoutResources.length === 1 ? '' : 's'}`);
+    }
+
     return (
       <p className="text-paragraph-xs text-text-soft">
-        You're about to publish{' '}
-        <span className="text-text-sub">
-          {workflowResources.length} workflows, {layoutResources.length} layouts
-        </span>{' '}
-        to {environment?.name}. This may cause breaking behavior. Please review all changes before proceeding.
+        You're about to publish <span className="text-text-sub">{resourceCounts.join(', ')}</span> to{' '}
+        {environment?.name}. This may cause breaking behavior. Please review all changes before proceeding.
       </p>
     );
   };
@@ -207,120 +217,22 @@ function PublishModalContent({
   );
 }
 
-function ChangesSummary({
-  isExpanded,
-  onToggleExpanded,
-  resources,
-  currentUser,
-}: {
-  isExpanded: boolean;
-  onToggleExpanded: () => void;
-  resources: any[];
-  currentUser: any;
-}) {
+function ChangesSummary({ resources }: { resources: any[] }) {
   return (
-    <div className="bg-bg-weak border-stroke-soft-100 rounded-lg border">
+    <div className="bg-bg-weak rounded-lg">
       <div className="p-1">
         <div className="flex items-center justify-between p-1">
           <span className="text-label-xs text-text-sub">Changes included in this publish</span>
-          <button onClick={onToggleExpanded} className="hover:bg-neutral-alpha-100 rounded p-0.5 transition-colors">
-            <div className="flex size-4 items-center justify-center">
-              <div className="h-2.5 w-2.5 opacity-60">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 8l-6 6 1.41 1.41L12 10.83l4.59 4.58L18 14z" />
-                </svg>
-              </div>
-            </div>
-          </button>
         </div>
 
-        {isExpanded && (
-          <div className="bg-bg-white border-stroke-soft-100 rounded-md border">
+        <div className="bg-bg-white border-stroke-soft-100 rounded-md border">
+          <div className="max-h-64 overflow-y-auto">
             <div className="space-y-0.5 p-0.5">
               {resources.map((resource, index) => (
-                <ResourceItem key={`${resource.resourceType}-${index}`} resource={resource} currentUser={currentUser} />
+                <ResourceRow key={`${resource.resourceType}-${index}`} resource={resource} />
               ))}
             </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function ResourceItem({ resource, currentUser }: { resource: any; currentUser: any }) {
-  const getResourceIcon = (resourceType: string) => {
-    switch (resourceType) {
-      case 'workflow':
-        return RiRouteFill;
-      case 'layout':
-        return RiDashboardLine;
-      case 'translation':
-        return RiTranslate2;
-      default:
-        return RiRouteFill;
-    }
-  };
-
-  const getResourceDisplayName = (resource: any) => {
-    return resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
-  };
-
-  const getResourceIdentifier = (resource: any) => {
-    const name = getResourceDisplayName(resource);
-    return name.toLowerCase().replace(/\s+/g, '-');
-  };
-
-  const getResourceUpdatedBy = (resource: any) => {
-    const sourceUpdatedBy = resource.sourceResource?.updatedBy;
-    const targetUpdatedBy = resource.targetResource?.updatedBy;
-    return sourceUpdatedBy || targetUpdatedBy || currentUser;
-  };
-
-  const getResourceUpdatedAt = (resource: any) => {
-    const sourceUpdatedAt = resource.sourceResource?.updatedAt;
-    const targetUpdatedAt = resource.targetResource?.updatedAt;
-    return sourceUpdatedAt || targetUpdatedAt;
-  };
-
-  const IconComponent = getResourceIcon(resource.resourceType);
-  const displayName = getResourceDisplayName(resource);
-  const identifier = getResourceIdentifier(resource);
-  const updatedBy = getResourceUpdatedBy(resource);
-  const updatedAt = getResourceUpdatedAt(resource);
-
-  return (
-    <div className="border-stroke-soft-100 flex items-center gap-1 border-b p-1 last:border-b-0">
-      <div className="flex size-5 items-center justify-center">
-        <IconComponent className="size-3.5 text-neutral-600" />
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="text-label-xs text-text-strong truncate">{displayName}</div>
-        <div className="text-paragraph-2xs text-text-soft font-mono tracking-tight">{identifier}</div>
-      </div>
-
-      <div className="text-right">
-        <div className="text-paragraph-2xs text-text-soft font-medium">
-          {updatedBy?.firstName && updatedBy?.lastName ? 'Last updated by' : 'Last updated'}
-        </div>
-        <div className="flex items-center gap-1">
-          {updatedBy?.firstName && updatedBy?.lastName && (
-            <>
-              <Avatar className="size-4">
-                <AvatarImage src={updatedBy?.profilePicture || undefined} />
-                <AvatarFallback className="text-[8px] font-medium">
-                  {updatedBy?.firstName?.[0]}
-                  {updatedBy?.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-paragraph-2xs text-text-sub font-medium">{updatedBy?.firstName}</span>
-              <div className="size-0.5 rounded-full bg-neutral-400" />
-            </>
-          )}
-          <span className="text-paragraph-2xs text-text-sub font-medium">
-            {updatedAt ? formatDateSimple(updatedAt) : 'Unknown'}
-          </span>
         </div>
       </div>
     </div>
@@ -379,7 +291,8 @@ function PublishModalActions({
 
       {!publishError && totalChanges > 0 && (
         <Button
-          variant="error"
+          variant="primary"
+          mode="gradient"
           size="2xs"
           trailingIcon={!isPublishing ? RiArrowRightSLine : undefined}
           onClick={onConfirm}
