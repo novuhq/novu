@@ -115,7 +115,7 @@ environmentSchema.post(['find', 'findOne', 'findOneAndUpdate'], function (docs) 
       } else if (document.name === EnvironmentEnum.PRODUCTION) {
         defaultType = EnvironmentTypeEnum.PROD;
       }
-      document.set('type', defaultType);
+      Object.assign(document, { type: defaultType });
     }
   };
 
