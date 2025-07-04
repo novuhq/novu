@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
@@ -14,19 +14,23 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
 
   beforeEach(async () => {
     // Enable translation feature for testing
-    // @ts-ignore - Setting environment variable for testing
-    process.env.IS_TRANSLATION_ENABLED = 'true';
+    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
 
     session = new UserSession();
     await session.initialize();
+
+    // Set organization service level to business to avoid payment required errors
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
     novuClient = initNovuClassSdkInternalAuth(session);
 
-    // Create multiple workflows for testing
+    // Create first workflow
     const { result: workflow1 } = await novuClient.workflows.create({
       name: 'User Onboarding Workflow',
       workflowId: `user-onboarding-workflow-${Date.now()}`,
       source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
+      isTranslationEnabled: true,
       steps: [
         {
           name: 'Welcome Email',
@@ -40,11 +44,13 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
     });
     workflowId1 = workflow1.workflowId;
 
+    // Create second workflow
     const { result: workflow2 } = await novuClient.workflows.create({
       name: 'Order Confirmation Workflow',
       workflowId: `order-confirmation-workflow-${Date.now()}`,
       source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
+      isTranslationEnabled: true,
       steps: [
         {
           name: 'Order Email',
@@ -58,11 +64,13 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
     });
     workflowId2 = workflow2.workflowId;
 
+    // Create third workflow
     const { result: workflow3 } = await novuClient.workflows.create({
       name: 'Password Reset Workflow',
       workflowId: `password-reset-workflow-${Date.now()}`,
       source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
+      isTranslationEnabled: true,
       steps: [
         {
           name: 'Reset Email',
@@ -151,8 +159,7 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
 
   afterEach(() => {
     // Disable translation feature after each test
-    // @ts-ignore - Setting environment variable for testing
-    process.env.IS_TRANSLATION_ENABLED = 'false';
+    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should get paginated list of translation groups without query', async () => {
@@ -278,6 +285,7 @@ describe('Get translations list - /v2/translations/list (GET) #novu-v2', async (
       workflowId: `user-onboarding-advanced-${Date.now()}`,
       source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
+      isTranslationEnabled: true,
       steps: [
         {
           name: 'Advanced Welcome',

@@ -4,13 +4,11 @@ import { post, get, patch } from './api.client';
 export type GetOrganizationSettingsDto = {
   removeNovuBranding: boolean;
   defaultLocale: string;
-  translationsEnabled: boolean;
 };
 
 export type UpdateOrganizationSettingsDto = {
   removeNovuBranding?: boolean;
   defaultLocale?: string;
-  translationsEnabled?: boolean;
 };
 
 export function updateClerkOrgMetadata({

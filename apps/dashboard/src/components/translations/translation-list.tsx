@@ -21,6 +21,10 @@ import { ListNoResults } from '../list-no-results';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
 import { TranslationsFilters } from './translations-filters';
 import { TranslationDrawer } from './translation-drawer/translation-drawer';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
+import { IS_SELF_HOSTED } from '@/config';
 
 type TranslationListHeaderProps = HTMLAttributes<HTMLDivElement> &
   Pick<TranslationsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -244,7 +248,19 @@ export function TranslationList(props: TranslationListProps) {
     areFiltersApplied,
   } = useTranslationListLogic();
 
+  const { subscription } = useFetchSubscription();
+
+  const canUseTranslationFeature =
+    getFeatureForTierAsBoolean(
+      FeatureNameEnum.AUTO_TRANSLATIONS,
+      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    ) && !IS_SELF_HOSTED;
+
   const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
+
+  if (!canUseTranslationFeature) {
+    return <TranslationListUpgradeCta />;
+  }
 
   if (isPending) {
     return (

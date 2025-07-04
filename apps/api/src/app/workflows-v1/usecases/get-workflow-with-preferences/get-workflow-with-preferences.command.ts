@@ -1,5 +1,5 @@
 import { IsDefined, IsString } from 'class-validator';
-import { EnvironmentCommand } from '../../../commands';
+import { EnvironmentCommand } from '@novu/application-generic';
 
 export class GetWorkflowWithPreferencesCommand extends EnvironmentCommand {
   @IsString()

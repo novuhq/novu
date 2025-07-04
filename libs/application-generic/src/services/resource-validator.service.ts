@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -6,7 +6,14 @@ import {
   NotificationTemplateRepository,
   OrganizationEntity,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, FeatureNameEnum, getFeatureForTierAsNumber, UNLIMITED_VALUE } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
+  getFeatureForTierAsNumber,
+  UNLIMITED_VALUE,
+} from '@novu/shared';
 
 import { FeatureFlagsService } from './feature-flags';
 import { NotificationStep } from '../value-objects/notification.step';

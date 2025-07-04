@@ -1,11 +1,12 @@
 /* eslint-disable global-require */
 // eslint-ignore max-len
-import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
   ChangeRepository,
   ControlValuesRepository,
+  LocalizationResourceEnum,
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationStepData,
@@ -22,9 +23,9 @@ import {
   ResourceOriginEnum,
 } from '@novu/shared';
 
-import { AnalyticsService, ContentService, InvalidateCacheService } from '../../../services';
-import { UpdateWorkflowCommand } from './update-workflow.command';
 import {
+  AnalyticsService,
+  ContentService,
   CreateChange,
   CreateChangeCommand,
   CreateMessageTemplate,
@@ -35,20 +36,23 @@ import {
   UpsertPreferences,
   UpsertUserWorkflowPreferencesCommand,
   UpsertWorkflowPreferencesCommand,
-} from '../..';
-import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
-import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { WorkflowWithPreferencesResponseDto } from '../get-workflow-with-preferences/get-workflow-with-preferences.dto';
-import {
+  NotificationStep,
+  NotificationStepVariantCommand,
   DeleteMessageTemplate,
   DeleteMessageTemplateCommand,
   UpdateMessageTemplate,
   UpdateMessageTemplateCommand,
-} from '../../message-template';
-import { Instrument, InstrumentUsecase } from '../../../instrumentation';
-import { ResourceValidatorService } from '../../../services/resource-validator.service';
-import { NotificationStep, NotificationStepVariantCommand } from '../../../value-objects';
-import { isVariantEmpty, PlatformException } from '../../../utils';
+  Instrument,
+  InstrumentUsecase,
+  ResourceValidatorService,
+  isVariantEmpty,
+  PlatformException,
+  PinoLogger,
+} from '@novu/application-generic';
+import { UpdateWorkflowCommand } from './update-workflow.command';
+import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -60,22 +64,15 @@ export class UpdateWorkflow {
     private messageTemplateRepository: MessageTemplateRepository,
     private changeRepository: ChangeRepository,
     private notificationGroupRepository: NotificationGroupRepository,
-    @Inject(forwardRef(() => CreateMessageTemplate))
     private createMessageTemplate: CreateMessageTemplate,
-    @Inject(forwardRef(() => UpdateMessageTemplate))
     private updateMessageTemplate: UpdateMessageTemplate,
     private deleteMessageTemplate: DeleteMessageTemplate,
     private createChange: CreateChange,
-    @Inject(forwardRef(() => InvalidateCacheService))
-    private invalidateCache: InvalidateCacheService,
-    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
+    private logger: PinoLogger,
     protected moduleRef: ModuleRef,
-    @Inject(forwardRef(() => UpsertPreferences))
     private upsertPreferences: UpsertPreferences,
-    @Inject(forwardRef(() => DeletePreferencesUseCase))
     private deletePreferencesUsecase: DeletePreferencesUseCase,
-    @Inject(forwardRef(() => GetWorkflowWithPreferencesUseCase))
     private getWorkflowWithPreferencesUseCase: GetWorkflowWithPreferencesUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private resourceValidatorService: ResourceValidatorService
@@ -140,7 +137,7 @@ export class UpdateWorkflow {
       existingTemplate._id
     );
 
-    let notificationTemplateWithStepTemplate: WorkflowWithPreferencesResponseDto;
+    let notificationTemplateWithStepTemplate!: WorkflowWithPreferencesResponseDto;
     await this.notificationTemplateRepository.withTransaction(async () => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
@@ -176,6 +173,10 @@ export class UpdateWorkflow {
 
       if (command.issues) {
         updatePayload.issues = command.issues;
+      }
+
+      if (command.isTranslationEnabled !== undefined) {
+        await this.toggleV2TranslationsForWorkflow(existingTemplate.triggers[0].identifier, command);
       }
 
       // defaultPreferences is required, so we always call the upsert
@@ -237,7 +238,7 @@ export class UpdateWorkflow {
                 readOnly: defaultCritical,
               },
             },
-            defaultUserPreferences
+            defaultUserPreferences ?? undefined
           );
           await this.upsertPreferences.upsertUserWorkflowPreferences(
             UpsertUserWorkflowPreferencesCommand.create({
@@ -325,7 +326,7 @@ export class UpdateWorkflow {
         });
       }
     } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+      this.logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
     }
 
     return notificationTemplateWithStepTemplate;
@@ -346,6 +347,41 @@ export class UpdateWorkflow {
       if (isVariantEmpty(variant)) {
         throw new BadRequestException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
+    }
+  }
+
+  private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: UpdateWorkflowCommand) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+    if (!isEnterprise) {
+      return;
+    }
+
+    try {
+      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
+        strict: false,
+      });
+
+      await manageTranslations.execute({
+        enabled: command.isTranslationEnabled,
+        resourceId: workflowIdentifier,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to ${command.isTranslationEnabled ? 'enable' : 'disable'} V2 translations for workflow`,
+        {
+          workflowIdentifier,
+          enabled: command.isTranslationEnabled,
+          organizationId: command.organizationId,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
+
+      throw error;
     }
   }
 

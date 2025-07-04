@@ -4,6 +4,7 @@ import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
 import { isTypingTranslation, parseTranslation } from './utils';
 import { TranslationPillWidget } from './pill-widget';
 import { validateTranslationKey } from '@/hooks/use-translation-validation';
+import { TranslationKey } from '@/types/translations';
 
 export class TranslationPluginView {
   decorations: DecorationSet;
@@ -15,7 +16,7 @@ export class TranslationPluginView {
     private viewRef: MutableRefObject<EditorView | null>,
     private lastCompletionRef: MutableRefObject<{ from: number; to: number } | null>,
     private onSelect?: (translationKey: string, from: number, to: number) => void,
-    private translationKeys?: Array<{ name: string }>,
+    private translationKeys?: TranslationKey[],
     private isTranslationKeysLoading?: boolean
   ) {
     this.decorations = this.createDecorations(view);

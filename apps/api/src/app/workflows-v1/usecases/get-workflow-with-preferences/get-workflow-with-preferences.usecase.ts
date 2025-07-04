@@ -1,20 +1,23 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 import { NotificationTemplateEntity } from '@novu/dal';
 import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
-import { GetPreferences, GetPreferencesCommand } from '../../get-preferences';
+import {
+  GetPreferences,
+  GetPreferencesCommand,
+  Instrument,
+  InstrumentUsecase,
+  GetWorkflowByIdsUseCase,
+  GetWorkflowByIdsCommand,
+} from '@novu/application-generic';
 
 import { GetWorkflowWithPreferencesCommand } from './get-workflow-with-preferences.command';
-import { WorkflowWithPreferencesResponseDto } from './get-workflow-with-preferences.dto';
-import { Instrument, InstrumentUsecase } from '../../../instrumentation';
-import { GetWorkflowByIdsUseCase } from '../get-workflow-by-ids/get-workflow-by-ids.usecase';
-import { GetWorkflowByIdsCommand } from '../get-workflow-by-ids/get-workflow-by-ids.command';
+import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 
 @Injectable()
 export class GetWorkflowWithPreferencesUseCase {
   constructor(
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
-    @Inject(forwardRef(() => GetPreferences))
     private getPreferences: GetPreferences
   ) {}
 

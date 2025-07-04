@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { LocalizationResourceEnum } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
@@ -12,11 +12,14 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
   beforeEach(async () => {
     // Enable translation feature for testing
-    // @ts-ignore - Setting environment variable for testing
-    process.env.IS_TRANSLATION_ENABLED = 'true';
+    (process.env as any).IS_TRANSLATION_ENABLED = 'true';
 
     session = new UserSession();
     await session.initialize();
+
+    // Set organization service level to business to avoid payment required errors
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
     novuClient = initNovuClassSdkInternalAuth(session);
 
     const { result: workflow } = await novuClient.workflows.create({
@@ -24,6 +27,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       workflowId: `test-workflow-${Date.now()}`,
       source: WorkflowCreationSourceEnum.EDITOR,
       active: true,
+      isTranslationEnabled: true,
       steps: [
         {
           name: 'In-App Step',
@@ -39,8 +43,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
   afterEach(() => {
     // Disable translation feature after each test
-    // @ts-ignore - Setting environment variable for testing
-    process.env.IS_TRANSLATION_ENABLED = 'false';
+    (process.env as any).IS_TRANSLATION_ENABLED = 'false';
   });
 
   it('should delete existing translation successfully', async () => {

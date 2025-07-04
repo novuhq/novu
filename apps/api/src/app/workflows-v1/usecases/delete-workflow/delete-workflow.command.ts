@@ -1,5 +1,5 @@
 import { IsDefined, IsString } from 'class-validator';
-import { EnvironmentWithUserCommand } from '../../../commands';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
 export class DeleteWorkflowCommand extends EnvironmentWithUserCommand {
   @IsString()

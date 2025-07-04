@@ -2,23 +2,19 @@ import { forwardRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/primitives/form/form';
-import { Switch } from '@/components/primitives/switch';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Button } from '@/components/primitives/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { RiSettings4Line } from 'react-icons/ri';
 import TruncatedText from '@/components/truncated-text';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
-import { cn } from '@/utils/ui';
 import { DEFAULT_LOCALE } from '@novu/shared';
 
 interface TranslationSettingsFormData {
-  translationsEnabled: boolean;
   defaultLocale: string;
 }
 
@@ -35,18 +31,14 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
 
     const form = useForm<TranslationSettingsFormData>({
       defaultValues: {
-        translationsEnabled: false,
         defaultLocale: DEFAULT_LOCALE,
       },
     });
-
-    const translationsEnabled = form.watch('translationsEnabled');
 
     // Update form when organization settings are loaded
     useEffect(() => {
       if (organizationSettings?.data) {
         form.reset({
-          translationsEnabled: organizationSettings.data.translationsEnabled,
           defaultLocale: organizationSettings.data.defaultLocale,
         });
       }
@@ -57,17 +49,13 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     const hasUnsavedChanges = useMemo(() => {
       if (!organizationSettings?.data) return false;
 
-      return (
-        formValues.translationsEnabled !== organizationSettings.data.translationsEnabled ||
-        formValues.defaultLocale !== organizationSettings.data.defaultLocale
-      );
+      return formValues.defaultLocale !== organizationSettings.data.defaultLocale;
     }, [formValues, organizationSettings?.data]);
 
     const handleSave = () => {
       const values = form.getValues();
       updateSettings.mutate(
         {
-          translationsEnabled: values.translationsEnabled,
           defaultLocale: values.defaultLocale,
         },
         {
@@ -137,26 +125,9 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                     <Form {...form}>
                       <FormField
                         control={form.control}
-                        name="translationsEnabled"
-                        render={({ field }) => (
-                          <FormItem className="mb-5 flex w-full items-center justify-between space-y-0">
-                            <FormLabel
-                              className="text-text-sub cursor-pointer gap-1"
-                              tooltip="Enable translations for all workflows"
-                            >
-                              Enable translations
-                            </FormLabel>
-                            <FormControl>
-                              <Switch checked={field.value} onCheckedChange={field.onChange} />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
                         name="defaultLocale"
                         render={({ field }) => (
-                          <FormItem className={cn('space-y-1', !translationsEnabled && 'cursor-not-allowed')}>
+                          <FormItem className="space-y-1">
                             <FormLabel
                               className="text-text-sub gap-1"
                               tooltip="The fallback locale used when translations are not available for a user's preferred language"
@@ -164,28 +135,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                               Default locale
                             </FormLabel>
                             <FormControl>
-                              {!translationsEnabled ? (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <div className="cursor-not-allowed">
-                                      <LocaleSelect
-                                        value={field.value}
-                                        onChange={field.onChange}
-                                        disabled={!translationsEnabled}
-                                        className="w-full"
-                                      />
-                                    </div>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Enable translations first to select a default locale</TooltipContent>
-                                </Tooltip>
-                              ) : (
-                                <LocaleSelect
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  disabled={!translationsEnabled}
-                                  className="w-full"
-                                />
-                              )}
+                              <LocaleSelect value={field.value} onChange={field.onChange} className="w-full" />
                             </FormControl>
                           </FormItem>
                         )}

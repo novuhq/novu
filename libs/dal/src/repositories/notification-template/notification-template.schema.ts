@@ -231,6 +231,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    isTranslationEnabled: {
+      type: Schema.Types.Boolean,
+      default: false,
+    },
     issues: Schema.Types.Mixed,
   },
   { ...schemaOptions, minimize: false }
