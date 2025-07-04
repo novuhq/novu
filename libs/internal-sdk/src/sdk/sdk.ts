@@ -140,10 +140,11 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Check topic subscriber
+   * Retrieve a subscriber
    *
    * @remarks
-   * Check if a subscriber belongs to a certain topic
+   * Retrieve a subscriber by its unique key identifier **subscriberId**.
+   *     **subscriberId** field is required.
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,

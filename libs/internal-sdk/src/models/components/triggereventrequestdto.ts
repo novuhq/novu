@@ -76,7 +76,7 @@ export type Overrides = {
   layoutIdentifier?: string | undefined;
 };
 
-export type To1 = TopicPayloadDto | SubscriberPayloadDto | string;
+export type One = TopicPayloadDto | SubscriberPayloadDto | string;
 
 /**
  * The recipients list of people who will receive the notification.
@@ -217,7 +217,7 @@ export function overridesFromJSON(
 }
 
 /** @internal */
-export const To1$inboundSchema: z.ZodType<To1, z.ZodTypeDef, unknown> = z.union(
+export const One$inboundSchema: z.ZodType<One, z.ZodTypeDef, unknown> = z.union(
   [
     TopicPayloadDto$inboundSchema,
     SubscriberPayloadDto$inboundSchema,
@@ -226,13 +226,13 @@ export const To1$inboundSchema: z.ZodType<To1, z.ZodTypeDef, unknown> = z.union(
 );
 
 /** @internal */
-export type To1$Outbound =
+export type One$Outbound =
   | TopicPayloadDto$Outbound
   | SubscriberPayloadDto$Outbound
   | string;
 
 /** @internal */
-export const To1$outboundSchema: z.ZodType<To1$Outbound, z.ZodTypeDef, To1> = z
+export const One$outboundSchema: z.ZodType<One$Outbound, z.ZodTypeDef, One> = z
   .union([
     TopicPayloadDto$outboundSchema,
     SubscriberPayloadDto$outboundSchema,
@@ -243,26 +243,26 @@ export const To1$outboundSchema: z.ZodType<To1$Outbound, z.ZodTypeDef, To1> = z
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace To1$ {
-  /** @deprecated use `To1$inboundSchema` instead. */
-  export const inboundSchema = To1$inboundSchema;
-  /** @deprecated use `To1$outboundSchema` instead. */
-  export const outboundSchema = To1$outboundSchema;
-  /** @deprecated use `To1$Outbound` instead. */
-  export type Outbound = To1$Outbound;
+export namespace One$ {
+  /** @deprecated use `One$inboundSchema` instead. */
+  export const inboundSchema = One$inboundSchema;
+  /** @deprecated use `One$outboundSchema` instead. */
+  export const outboundSchema = One$outboundSchema;
+  /** @deprecated use `One$Outbound` instead. */
+  export type Outbound = One$Outbound;
 }
 
-export function to1ToJSON(to1: To1): string {
-  return JSON.stringify(To1$outboundSchema.parse(to1));
+export function oneToJSON(one: One): string {
+  return JSON.stringify(One$outboundSchema.parse(one));
 }
 
-export function to1FromJSON(
+export function oneFromJSON(
   jsonString: string,
-): SafeParseResult<To1, SDKValidationError> {
+): SafeParseResult<One, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => To1$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'To1' from JSON`,
+    (x) => One$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'One' from JSON`,
   );
 }
 
