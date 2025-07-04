@@ -4,7 +4,7 @@ import { useValueEditor, ValueEditorProps } from 'react-querybuilder';
 import { InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { ControlInput } from '../primitives/control-input/control-input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
 import { shouldUseRelativeDateEditor } from '@/components/conditions-editor/field-type-editors';
 import { HelpIcon } from '@/components/conditions-editor/help-icon';

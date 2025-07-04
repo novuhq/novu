@@ -33,7 +33,7 @@ export type StepDto = {
 };
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-interface Issue<T> {
+export interface Issue<T> {
   issueType: T;
   variableName?: string;
   message: string;

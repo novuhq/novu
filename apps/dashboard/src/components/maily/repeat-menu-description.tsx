@@ -3,7 +3,7 @@ import { Editor } from '@tiptap/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Lightbulb } from 'lucide-react';
 import { Separator } from '@/components/primitives/separator';
-import { REPEAT_BLOCK_ITERABLE_ALIAS } from '../variables/repeat-block-aliases';
+import { REPEAT_BLOCK_ITERABLE_ALIAS } from './repeat-block-aliases';
 
 export function RepeatMenuDescription({ editor }: { editor: Editor }) {
   const [currentProperty, setCurrentProperty] = useState('\u00A0}}');

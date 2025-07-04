@@ -7,7 +7,6 @@ import {
   DIGEST_VARIABLES_FILTER_MAP,
   getDynamicDigestVariable,
 } from '@/components/variable/utils/digest-variables';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
@@ -17,13 +16,13 @@ interface ExtendedVariable extends Variable {
   displayLabel?: string;
 }
 
-type VariableSuggestionsPopoverProps = {
+export type VariableSuggestionsPopoverProps = {
+  digestStepName?: string;
   items: Variable[];
   onSelectItem: (item: Variable) => void;
-  onCreateNewVariable?: (variableName: string) => Promise<void>;
 };
 
-type VariableSuggestionsPopoverRef = {
+export type VariableSuggestionsPopoverRef = {
   moveUp: () => void;
   moveDown: () => void;
   select: () => void;
@@ -31,10 +30,9 @@ type VariableSuggestionsPopoverRef = {
 
 export const MailyVariablesListView = React.forwardRef(
   (
-    { items, onSelectItem, onCreateNewVariable }: VariableSuggestionsPopoverProps,
+    { digestStepName, items, onSelectItem }: VariableSuggestionsPopoverProps,
     ref: React.Ref<VariableSuggestionsPopoverRef>
   ) => {
-    const { digestStepBeforeCurrent } = useWorkflow();
     const track = useTelemetry();
 
     const options = useMemo(
@@ -46,7 +44,7 @@ export const MailyVariablesListView = React.forwardRef(
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
               type: item.name as DIGEST_VARIABLES_ENUM,
-              digestStepName: digestStepBeforeCurrent?.stepId,
+              digestStepName,
             });
             return {
               label,
@@ -73,7 +71,7 @@ export const MailyVariablesListView = React.forwardRef(
             value: item.name,
           };
         }),
-      [digestStepBeforeCurrent?.stepId, items, onCreateNewVariable]
+      [digestStepName, items]
     );
     const variablesListRef = useRef<VariableListRef>(null);
 
@@ -93,7 +91,7 @@ export const MailyVariablesListView = React.forwardRef(
       if (selectedItem.name in DIGEST_VARIABLES_FILTER_MAP) {
         const { value } = getDynamicDigestVariable({
           type: item.name as DIGEST_VARIABLES_ENUM,
-          digestStepName: digestStepBeforeCurrent?.stepId,
+          digestStepName,
         });
         selectedItem = { ...selectedItem, name: value };
 

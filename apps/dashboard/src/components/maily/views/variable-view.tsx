@@ -1,20 +1,18 @@
+import { useCallback, useMemo, useState } from 'react';
+import type { Editor as TiptapEditor } from '@tiptap/core';
+import { NodeViewProps } from '@tiptap/core';
+import { NodeViewWrapper } from '@tiptap/react';
+import { JSONSchema7 } from 'json-schema';
+
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
 import { validateEnhancedDigestFilters } from '@/components/variable/utils';
 import { VariablePill } from '@/components/variable/variable-pill';
 import { useVariableValidation } from '@/components/variable/hooks/use-variable-validation';
 import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { NodeViewProps } from '@tiptap/core';
-import { NodeViewWrapper } from '@tiptap/react';
-import { useCallback, useMemo, useState } from 'react';
-import { VariableFrom } from '../variables/variables';
-import { resolveRepeatBlockAlias } from '../variables/repeat-block-aliases';
+import { resolveRepeatBlockAlias } from '../repeat-block-aliases';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
-import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
-import type { Editor as TiptapEditor } from '@tiptap/core';
+import { VariableFrom } from '@/components/maily/types';
 
 interface ParsedVariableData {
   name: string;
@@ -62,29 +60,39 @@ function createLiquidVariable(fullLiquidExpression: string, aliasFor?: string | 
 }
 
 // Component for TipTap editor nodes (inline variables in content)
-function NodeVariablePill(
+export function NodeVariablePill(
   props: NodeViewProps & {
+    digestStepName?: string;
     variables: LiquidVariable[];
     isAllowedVariable: IsAllowedVariable;
+    children?: React.ReactNode;
+    isPayloadSchemaEnabled?: boolean;
+    getSchemaPropertyByKey?: (keyPath: string) => JSONSchema7 | undefined;
+    openSchemaDrawer?: (variableName: string) => void;
+    handleCreateNewVariable?: (variableName: string) => void;
   }
 ) {
-  const { node, updateAttributes, editor, isAllowedVariable, deleteNode, variables } = props;
+  const {
+    node,
+    updateAttributes,
+    editor,
+    isAllowedVariable,
+    deleteNode,
+    variables,
+    children,
+    digestStepName,
+    isPayloadSchemaEnabled = false,
+    getSchemaPropertyByKey = () => undefined,
+    openSchemaDrawer = () => {},
+    handleCreateNewVariable = () => {},
+  } = props;
   const { id, aliasFor } = node.attrs;
   const [variableValue, setVariableValue] = useState(`{{${id}}}`);
   const [isOpen, setIsOpen] = useState(false);
-  const { digestStepBeforeCurrent, workflow } = useWorkflow();
-  const { getSchemaPropertyByKey, isPayloadSchemaEnabled } = useWorkflowSchema();
-  const {
-    handleCreateNewVariable,
-    isPayloadSchemaDrawerOpen,
-    highlightedVariableKey,
-    openSchemaDrawer,
-    closeSchemaDrawer,
-  } = useCreateVariable();
 
   const parsedData = useMemo(
-    () => parseVariableWithFallback(variableValue, undefined, digestStepBeforeCurrent?.stepId),
-    [variableValue, digestStepBeforeCurrent?.stepId]
+    () => parseVariableWithFallback(variableValue, undefined, digestStepName),
+    [variableValue, digestStepName]
   );
 
   const variable = useMemo(
@@ -102,7 +110,7 @@ function NodeVariablePill(
 
   const handleUpdate = useCallback(
     (newValue: string) => {
-      const newParsedData = parseVariableWithFallback(newValue, undefined, digestStepBeforeCurrent?.stepId);
+      const newParsedData = parseVariableWithFallback(newValue, undefined, digestStepName);
       const newAliasFor = resolveRepeatBlockAlias(newParsedData.fullLiquidExpression, editor);
 
       if (newParsedData.fullLiquidExpression) {
@@ -114,7 +122,7 @@ function NodeVariablePill(
 
       setVariableValue(newValue);
     },
-    [editor, updateAttributes, digestStepBeforeCurrent?.stepId]
+    [editor, updateAttributes, digestStepName]
   );
 
   return (
@@ -142,47 +150,45 @@ function NodeVariablePill(
           isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         />
       </EditVariablePopover>
-      <PayloadSchemaDrawer
-        isOpen={isPayloadSchemaDrawerOpen}
-        onOpenChange={(isOpen) => !isOpen && closeSchemaDrawer()}
-        workflow={workflow}
-        highlightedPropertyKey={highlightedVariableKey}
-      />
+      {children}
     </NodeViewWrapper>
   );
 }
 
 // Component for bubble menus and button component in email editor
 export function BubbleMenuVariablePill({
+  isPayloadSchemaEnabled = false,
+  digestStepName,
   variableName,
   className,
   from,
   variables,
   isAllowedVariable,
   editor,
+  children,
+  getSchemaPropertyByKey = () => undefined,
+  openSchemaDrawer = () => {},
+  handleCreateNewVariable = () => {},
 }: {
+  isPayloadSchemaEnabled?: boolean;
+  digestStepName?: string;
   variableName: string;
   className?: string;
   from?: VariableFrom;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   editor?: TiptapEditor;
+  children?: React.ReactNode;
+  getSchemaPropertyByKey?: (keyPath: string) => JSONSchema7 | undefined;
+  openSchemaDrawer?: (variableName: string) => void;
+  handleCreateNewVariable?: (variableName: string) => void;
 }) {
   const [variableValue, setVariableValue] = useState(`{{${variableName || ''}}}`);
   const [isOpen, setIsOpen] = useState(false);
-  const { digestStepBeforeCurrent, workflow } = useWorkflow();
-  const { getSchemaPropertyByKey, isPayloadSchemaEnabled: workflowSchemaEnabled } = useWorkflowSchema();
-  const {
-    handleCreateNewVariable,
-    isPayloadSchemaDrawerOpen,
-    highlightedVariableKey,
-    openSchemaDrawer,
-    closeSchemaDrawer,
-  } = useCreateVariable();
 
   const parsedData = useMemo(
-    () => parseVariableWithFallback(variableValue, variableName || '', digestStepBeforeCurrent?.stepId),
-    [variableValue, variableName, digestStepBeforeCurrent?.stepId]
+    () => parseVariableWithFallback(variableValue, variableName || '', digestStepName),
+    [variableValue, variableName, digestStepName]
   );
 
   const aliasFor = useMemo(() => {
@@ -203,14 +209,14 @@ export function BubbleMenuVariablePill({
     aliasFor,
     isAllowedVariable,
     getSchemaPropertyByKey,
-    workflowSchemaEnabled
+    isPayloadSchemaEnabled
   );
 
   const handleUpdate = useCallback(
     (newValue: string) => {
       if (!editor || from !== VariableFrom.Button) return;
 
-      const newParsedData = parseVariableWithFallback(newValue, variableName || '', digestStepBeforeCurrent?.stepId);
+      const newParsedData = parseVariableWithFallback(newValue, variableName || '', digestStepName);
       if (!newParsedData.fullLiquidExpression) return;
 
       editor.commands.updateButtonAttributes({
@@ -220,7 +226,7 @@ export function BubbleMenuVariablePill({
 
       setVariableValue(newValue);
     },
-    [editor, variableName, digestStepBeforeCurrent?.stepId, from]
+    [editor, variableName, digestStepName, from]
   );
 
   const handleDelete = useCallback(() => {
@@ -250,7 +256,7 @@ export function BubbleMenuVariablePill({
   return (
     <>
       <EditVariablePopover
-        isPayloadSchemaEnabled={workflowSchemaEnabled}
+        isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
         open={isOpen}
         onOpenChange={setIsOpen}
@@ -270,15 +276,10 @@ export function BubbleMenuVariablePill({
           className={className}
           from={from}
           isNotInSchema={!validation.isInSchema}
-          isPayloadSchemaEnabled={workflowSchemaEnabled}
+          isPayloadSchemaEnabled={isPayloadSchemaEnabled}
         />
       </EditVariablePopover>
-      <PayloadSchemaDrawer
-        isOpen={isPayloadSchemaDrawerOpen}
-        onOpenChange={(isOpen) => !isOpen && closeSchemaDrawer()}
-        workflow={workflow}
-        highlightedPropertyKey={highlightedVariableKey}
-      />
+      {children}
     </>
   );
 }
@@ -286,6 +287,13 @@ export function BubbleMenuVariablePill({
 // HOC factory for creating TipTap node views
 export function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) {
   return function VariableView(props: NodeViewProps) {
-    return <NodeVariablePill {...props} variables={variables} isAllowedVariable={isAllowedVariable} />;
+    return (
+      <NodeVariablePill
+        {...props}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
+        isPayloadSchemaEnabled={false}
+      />
+    );
   };
 }

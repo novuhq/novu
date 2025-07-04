@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef } from 'react';
-import { Completion, CompletionContext } from '@codemirror/autocomplete';
-import { EditorView } from '@uiw/react-codemirror';
+import { MutableRefObject, useCallback, useMemo, useRef } from 'react';
+import { Completion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
+import { EditorView, Extension } from '@uiw/react-codemirror';
 import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { html, htmlCompletionSource } from '@codemirror/lang-html';
 import { tags as t } from '@lezer/highlight';
@@ -8,30 +8,61 @@ import { format } from 'prettier/standalone';
 import * as parserHtml from 'prettier/plugins/html';
 import * as parserLiquid from '@shopify/prettier-plugin-liquid/standalone';
 import { RiCodeSSlashFill } from 'react-icons/ri';
+import { JSONSchema7 } from 'json-schema';
 
-import { VariableEditor } from '@/components/primitives/variable-editor';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useParseVariables } from '@/hooks/use-parse-variables';
+import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
 import { cn } from '@/utils/ui';
 import { CompletionOption } from '@/utils/liquid-autocomplete';
 import { Tooltip } from '@/components/primitives/tooltip';
 import { TooltipContent } from '@/components/primitives/tooltip';
 import { TooltipTrigger } from '@/components/primitives/tooltip';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { LiquidVariable } from '@/utils/parseStepVariables';
 
 type HtmlEditorProps = {
+  viewRef: MutableRefObject<EditorView | null>;
+  lastCompletionRef: MutableRefObject<CompletionRange | null>;
   value: string;
+  variables: LiquidVariable[];
+  isAllowedVariable: (variable: LiquidVariable) => boolean;
   onChange: (value: string) => void;
+  saveForm?: () => void;
+  completionSources?: CompletionSource[];
+  extensions?: Extension[];
+  children?: React.ReactNode;
+  isPayloadSchemaEnabled?: boolean;
+  digestStepName?: string;
+  getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
+  onManageSchemaClick?: (variableName: string) => void;
+  skipContainerClick?: boolean;
 };
 
 const gutterElementClassName =
   '[&_.cm-gutterElement]:flex [&_.cm-gutterElement]:items-center [&_.cm-gutterElement]:justify-end [&_.cm-gutterElement]:text-text-soft [&_.cm-gutterElement]:font-code [&_.cm-gutterElement]:text-code-sm [&_.cm-gutterElement>span]:h-full';
 
-export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
-  const { step, digestStepBeforeCurrent } = useWorkflow();
-  const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
-  const { saveForm } = useSaveForm();
+/**
+ * The HtmlEditor component is a wrapper around the VariableEditor and adds the formatting, html and liquid syntax highlighting.
+ * Note: Please keep it pure and don't add any additional logic to it, for example workflows related logic.
+ */
+export function HtmlEditor({
+  viewRef,
+  lastCompletionRef,
+  value,
+  variables,
+  completionSources = [],
+  children,
+  extensions,
+  isAllowedVariable,
+  onChange,
+  saveForm,
+  isPayloadSchemaEnabled = false,
+  digestStepName,
+  skipContainerClick = false,
+  getSchemaPropertyByKey = () => undefined,
+  onCreateNewVariable = () => Promise.resolve(),
+  onManageSchemaClick = () => {},
+}: HtmlEditorProps) {
   const formatButtonRef = useRef<HTMLButtonElement>(null);
 
   const enhancedLiquidCompletionSource = useCallback((context: CompletionContext) => {
@@ -76,13 +107,13 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
     };
   }, []);
 
-  const extensions = useMemo(() => {
-    return [liquid({ base: html() })];
-  }, []);
+  const allExtensions = useMemo(() => {
+    return [liquid({ base: html() }), ...(extensions || [])];
+  }, [extensions]);
 
-  const completionSources = useMemo(() => {
-    return [enhancedLiquidCompletionSource, htmlCompletionSource];
-  }, [enhancedLiquidCompletionSource]);
+  const allCompletionSources = useMemo(() => {
+    return [enhancedLiquidCompletionSource, htmlCompletionSource, ...completionSources];
+  }, [completionSources, enhancedLiquidCompletionSource]);
 
   const tagStyles = useMemo(() => {
     return [
@@ -129,7 +160,7 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
         });
 
         onChange(formattedValue);
-        saveForm();
+        saveForm?.();
       } catch (error) {
         showErrorToast(
           <>
@@ -171,6 +202,8 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
       </Tooltip>
 
       <VariableEditor
+        viewRef={viewRef}
+        lastCompletionRef={lastCompletionRef}
         className={cn(
           'bg-background h-full w-full overflow-y-auto rounded-lg px-2 py-3 [&_.cm-gutters]:mr-2 [&_.cm-scroller]:overflow-auto',
           gutterElementClassName
@@ -185,10 +218,18 @@ export function HtmlEditor({ value, onChange }: HtmlEditorProps) {
         foldGutter
         size="sm"
         fontFamily="inherit"
-        extensions={extensions}
-        completionSources={completionSources}
         tagStyles={tagStyles}
-      />
+        completionSources={allCompletionSources}
+        isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+        getSchemaPropertyByKey={getSchemaPropertyByKey}
+        extensions={allExtensions}
+        digestStepName={digestStepName}
+        skipContainerClick={skipContainerClick}
+        onManageSchemaClick={onManageSchemaClick}
+        onCreateNewVariable={onCreateNewVariable}
+      >
+        {children}
+      </VariableEditor>
     </div>
   );
 }

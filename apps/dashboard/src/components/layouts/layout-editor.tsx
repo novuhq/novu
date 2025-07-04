@@ -8,17 +8,22 @@ import { Form, FormRoot } from '../primitives/form/form';
 import { ResizableLayout } from '../workflow-editor/steps/layout/resizable-layout';
 import { PanelHeader } from '../workflow-editor/steps/layout/panel-header';
 import { LayoutPreviewContextPanel } from './layout-preview-context-panel';
+import { IssuesPanel } from '../issues-panel';
+import { Button } from '../primitives/button';
 import { LayoutEditorSettingsDrawer } from './layout-editor-settings-drawer';
 import { CompactButton } from '../primitives/button-compact';
+import { LayoutEditorFactory } from './layout-editor-factory';
 
 export const LayoutEditor = () => {
-  const { layout, isLayoutPreviewLoading } = useLayoutEditor();
+  const { layout, isLayoutPreviewLoading, isPending } = useLayoutEditor();
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
+
   const defaultValues = useMemo(() => (layout ? getControlsDefaultValues(layout) : {}), [layout]);
+  const values = useMemo(() => (layout?.controls.values.email ?? {}) as Record<string, unknown>, [layout]);
 
   const form = useForm({
     defaultValues,
-    values: layout?.controls.values,
+    values,
     shouldFocusError: false,
     resetOptions: {
       keepDirtyValues: true,
@@ -68,7 +73,7 @@ export const LayoutEditor = () => {
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       <div className="h-full p-3">
-                        <div>Editor</div>
+                        <LayoutEditorFactory />
                       </div>
                     </div>
                   </ResizableLayout.EditorPanel>
@@ -93,7 +98,18 @@ export const LayoutEditor = () => {
                 </ResizableLayout>
               </div>
 
-              {/* <LayoutIssuesPanel step={step} /> */}
+              <IssuesPanel issues={layout?.issues}>
+                <div className="ml-auto">
+                  <Button
+                    type="submit"
+                    variant="secondary"
+                    disabled={!form.formState.isDirty}
+                    isLoading={form.formState.isSubmitting || isPending}
+                  >
+                    Save changes
+                  </Button>
+                </div>
+              </IssuesPanel>
             </ResizableLayout.MainContentPanel>
           </ResizableLayout>
         </FormRoot>

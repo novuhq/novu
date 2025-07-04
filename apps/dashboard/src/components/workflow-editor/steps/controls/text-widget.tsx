@@ -1,4 +1,4 @@
-import { ControlInput } from '@/components/primitives/control-input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Input, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';

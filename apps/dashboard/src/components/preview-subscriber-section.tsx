@@ -6,7 +6,8 @@ import { EditableJsonViewer } from './workflow-editor/steps/shared/editable-json
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
 import { SubscriberSectionProps } from './workflow-editor/steps/types/preview-context.types';
 import { ACCORDION_STYLES } from './workflow-editor/steps/constants/preview-context.constants';
-import { Button } from './primitives/button';
+import { buttonVariants } from './primitives/button';
+import { cn } from '@/utils/ui';
 
 export function PreviewSubscriberSection({
   error,
@@ -38,22 +39,23 @@ export function PreviewSubscriberSection({
           </div>
           {onClearPersisted && (
             <div className="mr-2">
-              <Button
+              <div
                 onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
 
                   onClearPersisted();
                 }}
-                type="button"
-                variant="secondary"
-                mode="ghost"
-                size="2xs"
-                className="text-foreground-600 gap-1"
+                className={cn(
+                  buttonVariants({ variant: 'secondary', mode: 'ghost', size: '2xs' }),
+                  'text-foreground-600 flex items-center gap-1'
+                )}
+                aria-label="Reset defaults"
+                role="button"
               >
                 <RiRefreshLine className="h-3 w-3" />
-                Reset defaults
-              </Button>
+                <span className="text-xs leading-none">Reset defaults</span>
+              </div>
             </div>
           )}
         </div>

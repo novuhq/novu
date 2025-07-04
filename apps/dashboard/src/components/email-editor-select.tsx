@@ -5,13 +5,15 @@ import { Tabs, TabsTrigger, TabsList } from '@/components/primitives/tabs';
 import { FormField } from '@/components/primitives/form/form';
 import { RiCodeSSlashFill, RiDashboardLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
-import { useSaveForm } from '../save-form-context';
-import { useWorkflow } from '../../workflow-provider';
-import { isEmptyMailyJson } from './maily-utils';
+import { isEmptyMailyJson } from './maily/maily-utils';
 
-export const EmailEditorSelect = () => {
-  const { isUpdatePatchPending } = useWorkflow();
-  const { saveForm } = useSaveForm();
+export const EmailEditorSelect = ({
+  isLoading,
+  saveForm,
+}: {
+  isLoading: boolean;
+  saveForm?: (options?: { forceSubmit?: boolean; onSuccess?: () => void }) => Promise<void>;
+}) => {
   const { control } = useFormContext();
   const [isSwitchingToHtml, setIsSwitchingToHtml] = useState(false);
   const [isSwitchingToBlock, setIsSwitchingToBlock] = useState(false);
@@ -59,24 +61,24 @@ export const EmailEditorSelect = () => {
               onOpenChange={setIsSwitchingToHtml}
               onConfirm={async () => {
                 field.onChange('html');
-                saveForm({ onSuccess: () => setIsSwitchingToHtml(false) });
+                saveForm?.({ onSuccess: () => setIsSwitchingToHtml(false) });
               }}
               title="Are you sure?"
               description="You’re switching to code editor. Once you do, you can’t go back to blocks unless you reset the template. Ready to get your hands dirty?"
               confirmButtonText="Proceed"
-              isLoading={isUpdatePatchPending}
+              isLoading={isLoading}
             />
             <ConfirmationModal
               open={isSwitchingToBlock}
               onOpenChange={setIsSwitchingToBlock}
               onConfirm={() => {
                 field.onChange('block');
-                saveForm({ onSuccess: () => setIsSwitchingToBlock(false) });
+                saveForm?.({ onSuccess: () => setIsSwitchingToBlock(false) });
               }}
               title="Are you sure?"
               description="Switching to visual mode will reset your code. You’ll start fresh with blocks. Sure you want to do that?"
               confirmButtonText="Proceed"
-              isLoading={isUpdatePatchPending}
+              isLoading={isLoading}
             />
           </>
         );

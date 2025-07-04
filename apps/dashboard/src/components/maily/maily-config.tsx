@@ -1,4 +1,4 @@
-import { searchSlashCommands } from '@maily-to/core/extensions';
+import { searchSlashCommands, Variable } from '@maily-to/core/extensions';
 import {
   BlockGroupItem,
   blockquote,
@@ -28,8 +28,6 @@ import {
   LogoAttributes as MailyLogoAttributes,
   LinkExtension,
   LinkAttributes as MailyLinkAttributes,
-} from '@maily-to/core/extensions';
-import {
   getSlashCommandSuggestions,
   getVariableSuggestions,
   HTMLCodeBlockExtension,
@@ -38,28 +36,24 @@ import {
   VariableExtension,
   Variables,
 } from '@maily-to/core/extensions';
-
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import type { Editor as TiptapEditor } from '@tiptap/core';
+import type { Editor, Editor as TiptapEditor, NodeViewProps } from '@tiptap/core';
 import { StepResponseDto } from '@novu/shared';
 
-import { createFooters } from '@/components/workflow-editor/steps/email/blocks/footers';
-import { createHeaders } from '@/components/workflow-editor/steps/email/blocks/headers';
-import { createHtmlCodeBlock } from '@/components/workflow-editor/steps/email/blocks/html';
+import { createFooters } from '@/components/maily/blocks/footers';
+import { createHeaders } from '@/components/maily/blocks/headers';
+import { createHtmlCodeBlock } from '@/components/maily/blocks/html';
+import { createDigestBlock } from '@/components/maily//blocks/digest';
+import { createCards } from '@/components/maily//blocks/cards';
+import { ForView } from '@/components/maily/views/for-view';
+import { HTMLCodeBlockView } from '@/components/maily/views/html-view';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { createDigestBlock } from './blocks/digest';
-
-import { CalculateVariablesProps, insertVariableToEditor, VariableFrom } from './variables/variables';
-import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './variables/repeat-block-aliases';
-import { ForView } from './views/for-view';
-import { HTMLCodeBlockView } from './views/html-view';
-import { ParsedVariables } from '@/utils/parseStepVariables';
-import { MailyVariablesListView } from './views/maily-variables-list-view';
-import { createVariableNodeView } from './views/variable-view';
-import { createCards } from './blocks/cards';
-import { BubbleMenuVariablePill } from './views/variable-view';
-import { createTranslationExtension } from './translations';
+import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './repeat-block-aliases';
+import { IsAllowedVariable, LiquidVariable, ParsedVariables } from '@/utils/parseStepVariables';
 import { TranslationKey } from '@/types/translations';
+import { CalculateVariablesProps, insertVariableToEditor } from './variables';
+import { createTranslationExtension } from '../workflow-editor/steps/email/translations';
+import { ForwardRefExoticComponent } from 'react';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
@@ -188,6 +182,9 @@ export const createExtensions = ({
   isTranslationEnabled = false,
   translationKeys = [],
   onCreateNewTranslationKey,
+  variableSuggestionsPopover,
+  renderVariable,
+  createVariableNodeView,
 }: {
   handleCalculateVariables: (props: CalculateVariablesProps) => Variables | undefined;
   parsedVariables: ParsedVariables;
@@ -197,6 +194,20 @@ export const createExtensions = ({
   isTranslationEnabled?: boolean;
   translationKeys?: TranslationKey[];
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
+  variableSuggestionsPopover?: ForwardRefExoticComponent<{
+    items: Variable[];
+    onSelectItem: (item: Variable) => void;
+  }>;
+  renderVariable: (opts: {
+    variable: Variable;
+    fallback?: string;
+    editor: Editor;
+    from: 'content-variable' | 'bubble-variable' | 'button-variable';
+  }) => JSX.Element | null;
+  createVariableNodeView: (
+    variables: LiquidVariable[],
+    isAllowedVariable: IsAllowedVariable
+  ) => (props: NodeViewProps) => JSX.Element;
 }) => {
   const extensions = [
     RepeatExtension.extend({
@@ -292,20 +303,9 @@ export const createExtensions = ({
         },
       },
       // variable pills inside buttons and bubble menus (repeat, showIf...)
-      renderVariable: (opts) => {
-        return (
-          <BubbleMenuVariablePill
-            variableName={opts.variable.name}
-            className="h-5 text-xs"
-            editor={opts.editor}
-            from={opts.from as VariableFrom}
-            variables={parsedVariables.variables}
-            isAllowedVariable={parsedVariables.isAllowedVariable}
-          />
-        );
-      },
+      renderVariable,
       variables: handleCalculateVariables as Variables,
-      variableSuggestionsPopover: MailyVariablesListView,
+      variableSuggestionsPopover,
     }),
     HTMLCodeBlockExtension.extend({
       addNodeView() {

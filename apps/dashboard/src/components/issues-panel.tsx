@@ -1,21 +1,26 @@
-import { StepResponseDto } from '@novu/shared';
 import { RiErrorWarningLine, RiErrorWarningFill } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'motion/react';
-import { countStepIssues, getFirstErrorMessage, getAllStepIssues } from '@/components/workflow-editor/step-utils';
+import { Issue } from '@novu/shared';
+
+import { countIssues, getFirstErrorMessage, getAllStepIssues } from '@/components/workflow-editor/step-utils';
 import { cn } from '@/utils/ui';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 
-type StepIssuesPanelProps = {
-  step: StepResponseDto;
+type IssuesPanelProps<T, D> = {
+  issues?: {
+    controls?: Record<string, Issue<T>[]>;
+    integration?: Record<string, Issue<D>[]>;
+  };
   className?: string;
+  children?: React.ReactNode;
 };
 
-export function StepIssuesPanel({ step, className }: StepIssuesPanelProps) {
-  const issueCount = countStepIssues(step.issues);
+export function IssuesPanel<T, D = T>({ issues, className, children }: IssuesPanelProps<T, D>) {
+  const issueCount = countIssues(issues);
 
   // Get the first control error message
-  const firstControlError = getFirstErrorMessage(step.issues || {}, 'controls');
-  const firstIntegrationError = getFirstErrorMessage(step.issues || {}, 'integration');
+  const firstControlError = getFirstErrorMessage(issues || {}, 'controls');
+  const firstIntegrationError = getFirstErrorMessage(issues || {}, 'integration');
   const firstError = firstControlError || firstIntegrationError;
 
   const displayText =
@@ -24,7 +29,7 @@ export function StepIssuesPanel({ step, className }: StepIssuesPanelProps) {
       : `${firstError?.message || 'Issues found'} & ${issueCount - 1}+ errors`;
 
   // Get all issues for the detailed view
-  const allIssues = getAllStepIssues(step.issues);
+  const allIssues = getAllStepIssues(issues);
 
   return (
     <AnimatePresence>
@@ -69,6 +74,7 @@ export function StepIssuesPanel({ step, className }: StepIssuesPanelProps) {
             </div>
           </HoverCardContent>
         </HoverCard>
+        {children}
       </motion.div>
     </AnimatePresence>
   );

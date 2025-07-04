@@ -6,7 +6,7 @@ import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/
 import { InputRoot, InputPure, InputWrapper } from '@/components/primitives/input';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { ControlInput } from '@/components/primitives/control-input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
