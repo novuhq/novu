@@ -16,7 +16,7 @@ import {
 import { CustomDataType, WorkflowStatusEnum, ResourceTypeEnum } from '@novu/shared';
 
 import { Type } from 'class-transformer';
-import { RuntimeIssue } from '@novu/dal';
+import { ClientSession, RuntimeIssue } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { PreferencesRequired } from '../../upsert-preferences';
 import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from './upsert-validation-constants';
@@ -120,4 +120,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   updatedBy?: string;
+
+  @IsOptional()
+  session?: ClientSession;
 }

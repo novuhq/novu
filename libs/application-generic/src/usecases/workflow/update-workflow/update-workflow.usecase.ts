@@ -12,6 +12,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
+  ClientSession,
 } from '@novu/dal';
 import {
   buildWorkflowPreferences,
@@ -141,7 +142,8 @@ export class UpdateWorkflow {
     );
 
     let notificationTemplateWithStepTemplate: WorkflowWithPreferencesResponseDto;
-    await this.notificationTemplateRepository.withTransaction(async () => {
+
+    const workflowUpdate = async (session?: ClientSession) => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
 
@@ -274,7 +276,8 @@ export class UpdateWorkflow {
         },
         {
           $set: updatePayload,
-        }
+        },
+        { session }
       );
 
       notificationTemplateWithStepTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
@@ -299,7 +302,17 @@ export class UpdateWorkflow {
           })
         );
       }
-    });
+    };
+
+    if (command.session) {
+      // If session is provided, use it (we're already in a transaction)
+      await workflowUpdate(command.session);
+    } else {
+      // If no session, create our own transaction
+      await this.notificationTemplateRepository.withTransaction(async (session) => {
+        await workflowUpdate(session);
+      });
+    }
 
     this.analyticsService.track('Update Notification Template - [Platform]', command.userId, {
       _organization: command.organizationId,

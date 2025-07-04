@@ -7,6 +7,7 @@ import {
   NotificationGroupEntity,
   NotificationGroupRepository,
   NotificationTemplateRepository,
+  ClientSession,
 } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
@@ -71,12 +72,13 @@ export class CreateWorkflow {
     await this.resourceValidatorService.validateWorkflowLimit(command.environmentId);
 
     let storedWorkflow: WorkflowWithPreferencesResponseDto;
-    await this.notificationTemplateRepository.withTransaction(async () => {
+
+    const workflowCreation = async (session?: ClientSession) => {
       const triggerIdentifier = this.generateTriggerIdentifier(command);
 
       const parentChangeId: string = NotificationTemplateRepository.createObjectId();
 
-      const templateSteps = await this.storeTemplateSteps(command, parentChangeId);
+      const templateSteps = await this.storeTemplateSteps(command, parentChangeId, session);
       const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
       const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
@@ -95,10 +97,20 @@ export class CreateWorkflow {
         command.validatePayload = command.validatePayload ?? true;
       }
 
-      storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
+      storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier, session);
 
       await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
-    });
+    };
+
+    if (command.session) {
+      // If session is provided, use it (we're already in a transaction)
+      await workflowCreation(command.session);
+    } else {
+      // If no session, create our own transaction
+      await this.notificationTemplateRepository.withTransaction(async (session) => {
+        await workflowCreation(session);
+      });
+    }
 
     try {
       if (
@@ -275,7 +287,8 @@ export class CreateWorkflow {
     command: CreateWorkflowCommand,
     templateSteps: INotificationTemplateStep[],
     trigger: INotificationTrigger,
-    triggerIdentifier: string
+    triggerIdentifier: string,
+    session?: ClientSession
   ): Promise<WorkflowWithPreferencesResponseDto> {
     this.logger.info(`Creating workflow ${JSON.stringify(command)}`);
 
@@ -308,7 +321,7 @@ export class CreateWorkflow {
       ...(command.data ? { data: command.data } : {}),
     };
 
-    const savedWorkflow = await this.notificationTemplateRepository.create(workflowData);
+    const savedWorkflow = await this.notificationTemplateRepository.create(workflowData, { session });
 
     // defaultPreferences is required, so we always call the upsert
     await this.upsertPreferences.upsertWorkflowPreferences(
@@ -350,7 +363,8 @@ export class CreateWorkflow {
   @Instrument()
   private async storeTemplateSteps(
     command: CreateWorkflowCommand,
-    parentChangeId: string
+    parentChangeId: string,
+    session?: ClientSession
   ): Promise<INotificationTemplateStep[]> {
     let parentStepId: string | null = null;
     const templateSteps: INotificationTemplateStep[] = [];
@@ -384,14 +398,17 @@ export class CreateWorkflow {
         })
       );
 
-      const storedVariants = await this.storeVariantSteps({
-        variants: step.variants,
-        parentChangeId,
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        workflowType: command.type,
-      });
+      const storedVariants = await this.storeVariantSteps(
+        {
+          variants: step.variants,
+          parentChangeId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          workflowType: command.type,
+        },
+        session
+      );
 
       const stepId = createdMessageTemplate._id;
       const templateStep: Partial<INotificationTemplateStep> = {
@@ -423,21 +440,24 @@ export class CreateWorkflow {
     return templateSteps;
   }
 
-  private async storeVariantSteps({
-    variants,
-    parentChangeId,
-    organizationId,
-    environmentId,
-    userId,
-    workflowType,
-  }: {
-    variants: NotificationStepVariantCommand[] | undefined;
-    parentChangeId: string;
-    organizationId: string;
-    environmentId: string;
-    userId: string;
-    workflowType: ResourceTypeEnum;
-  }): Promise<IStepVariant[]> {
+  private async storeVariantSteps(
+    {
+      variants,
+      parentChangeId,
+      organizationId,
+      environmentId,
+      userId,
+      workflowType,
+    }: {
+      variants: NotificationStepVariantCommand[] | undefined;
+      parentChangeId: string;
+      organizationId: string;
+      environmentId: string;
+      userId: string;
+      workflowType: ResourceTypeEnum;
+    },
+    session?: ClientSession
+  ): Promise<IStepVariant[]> {
     if (!variants?.length) return [];
 
     const variantsList: IStepVariant[] = [];

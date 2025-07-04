@@ -11,6 +11,8 @@ import {
   Length,
   ValidateIf,
   ValidateNested,
+  ArrayMaxSize,
+  IsNotEmpty,
 } from 'class-validator';
 
 import {
@@ -19,13 +21,16 @@ import {
   ResourceOriginEnum,
   WorkflowStatusEnum,
   ResourceTypeEnum,
+  PreferencesTypeEnum,
+  StepTypeEnum,
+  WorkflowCreationSourceEnum,
 } from '@novu/shared';
 
 import { Type } from 'class-transformer';
-import { RuntimeIssue } from '@novu/dal';
+import { RuntimeIssue, ClientSession } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '../../commands';
 import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from '../workflow';
-import { ContentIssue, JSONSchema, NotificationStep } from '../../value-objects';
+import { ContentIssue, NotificationStep, NotificationStepVariantCommand, JSONSchema } from '../../value-objects';
 import { PreferencesRequired } from '../upsert-preferences';
 
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
@@ -140,4 +145,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   updatedBy?: string;
+
+  @IsOptional()
+  session?: ClientSession;
 }

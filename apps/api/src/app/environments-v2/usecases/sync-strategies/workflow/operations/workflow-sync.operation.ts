@@ -101,6 +101,8 @@ export class WorkflowSyncOperation {
           error.stack
         );
         this.logger.error(WORKFLOW_SYNC_MESSAGES.SYNC_FAILED(workflow.name, error.message));
+
+        throw error;
       }
     }
   }
@@ -172,6 +174,7 @@ export class WorkflowSyncOperation {
         user: { ...context.user, environmentId: context.sourceEnvironmentId },
         workflowIdOrInternalId: workflow._id,
         targetEnvironmentId: context.targetEnvironmentId,
+        session: context.session,
       })
     );
   }

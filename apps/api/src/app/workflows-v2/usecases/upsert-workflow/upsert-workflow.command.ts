@@ -15,6 +15,7 @@ import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserObjectCommand, MAX_NAME_LENGTH } from '@novu/application-generic';
 import { StepTypeEnum, WorkflowCreationSourceEnum, ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { ClientSession } from '@novu/dal';
 import { IsValidJsonSchema } from '../../../shared/validators/json-schema.validator';
 
 export class ChannelPreferenceData {
@@ -140,4 +141,7 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsOptional()
   @IsString()
   workflowIdOrInternalId?: string;
+
+  @IsOptional()
+  session?: ClientSession;
 }

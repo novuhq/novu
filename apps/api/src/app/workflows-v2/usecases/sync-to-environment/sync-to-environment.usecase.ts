@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import { PreferencesEntity, PreferencesRepository, ClientSession } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
@@ -50,7 +50,11 @@ export class SyncToEnvironmentUseCase {
       throw new WorkflowNotSyncableException(sourceWorkflow);
     }
 
-    const preferencesToClone = await this.getWorkflowPreferences(sourceWorkflow._id, command.user.environmentId);
+    const preferencesToClone = await this.getWorkflowPreferences(
+      sourceWorkflow._id,
+      command.user.environmentId,
+      command.session
+    );
     const externalId = sourceWorkflow.workflowId;
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
     const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
@@ -61,6 +65,7 @@ export class SyncToEnvironmentUseCase {
         user: { ...command.user, environmentId: command.targetEnvironmentId },
         workflowIdOrInternalId: targetWorkflow?._id,
         workflowDto,
+        session: command.session,
       })
     );
   }
@@ -174,13 +179,21 @@ export class SyncToEnvironmentUseCase {
     };
   }
 
-  private async getWorkflowPreferences(workflowId: string, environmentId: string): Promise<PreferencesEntity[]> {
-    return await this.preferencesRepository.find({
-      _templateId: workflowId,
-      _environmentId: environmentId,
-      type: {
-        $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW],
+  private async getWorkflowPreferences(
+    workflowId: string,
+    environmentId: string,
+    session?: ClientSession
+  ): Promise<PreferencesEntity[]> {
+    return await this.preferencesRepository.find(
+      {
+        _templateId: workflowId,
+        _environmentId: environmentId,
+        type: {
+          $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW],
+        },
       },
-    });
+      '',
+      { session }
+    );
   }
 }
