@@ -9,7 +9,7 @@ import {
   isValidTemplate,
 } from './parser-utils';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import type { TemplateVariables, Variable } from './types';
+import type { VariableDetails, Variable } from './types';
 import { buildLiquidParser } from './liquid-engine';
 
 const parserEngine = buildLiquidParser();
@@ -50,7 +50,7 @@ export function extractLiquidTemplateVariables({
 }: {
   template: string;
   variableSchema?: JSONSchemaDto;
-}): TemplateVariables {
+}): VariableDetails {
   if (!isValidTemplate(template)) {
     return { validVariables: [], invalidVariables: [] };
   }
@@ -69,7 +69,7 @@ function processLiquidRawOutput({
 }: {
   rawOutputs: string[];
   variableSchema?: JSONSchemaDto;
-}): TemplateVariables {
+}): VariableDetails {
   const validVariables: Array<Variable> = [];
   const invalidVariables: Array<Variable> = [];
   const processedVariables = new Set<string>();
@@ -170,7 +170,7 @@ function parseByLiquid({
 }: {
   rawOutput: string;
   variableSchema?: JSONSchemaDto;
-}): TemplateVariables {
+}): VariableDetails {
   const validVariables: Array<Variable> = [];
   const invalidVariables: Array<Variable> = [];
   const parsed = parserEngine.parse(rawOutput);

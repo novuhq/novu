@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
-import { NotificationTemplateEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FullPayloadForRender } from './render-command';
 
@@ -14,34 +13,66 @@ export abstract class BaseTranslationRendererUsecase {
     protected featureFlagsService: FeatureFlagsService
   ) {}
 
-  protected async processTranslations(
-    controls: Record<string, unknown>,
-    variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): Promise<Record<string, unknown>> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(dbWorkflow._organizationId);
+  protected async processTranslations({
+    controls,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    controls: Record<string, unknown>;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<Record<string, unknown>> {
+    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
 
     if (!isTranslationEnabled) {
       return controls;
     }
 
-    return this.executeTranslation(controls, variables, dbWorkflow, locale) as Promise<Record<string, unknown>>;
+    return this.executeTranslation({
+      content: controls,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+    }) as Promise<Record<string, unknown>>;
   }
 
-  protected async processStringTranslations(
-    content: string,
-    variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): Promise<string> {
-    const isTranslationEnabled = await this.isTranslationFeatureEnabled(dbWorkflow._organizationId);
+  protected async processStringTranslations({
+    content,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    content: string;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<string> {
+    const isTranslationEnabled = await this.isTranslationFeatureEnabled(organizationId);
 
     if (!isTranslationEnabled) {
       return content;
     }
 
-    return this.executeTranslation(content, variables, dbWorkflow, locale) as Promise<string>;
+    return this.executeTranslation({
+      content,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+    }) as Promise<string>;
   }
 
   private async isTranslationFeatureEnabled(organizationId: string): Promise<boolean> {
@@ -52,12 +83,25 @@ export abstract class BaseTranslationRendererUsecase {
     });
   }
 
-  private async executeTranslation(
-    content: string | Record<string, unknown>,
-    variables: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): Promise<string | Record<string, unknown>> {
+  private async executeTranslation({
+    content,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    content: string | Record<string, unknown>;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<string | Record<string, unknown>> {
+    if (!workflowId) {
+      return content;
+    }
+
     try {
       const translate = this.getTranslationModule();
 
@@ -71,9 +115,9 @@ export abstract class BaseTranslationRendererUsecase {
       const liquidEngine = createLiquidEngine();
 
       const translatedContent = await translate.execute({
-        workflowIdOrInternalId: dbWorkflow._id,
-        organizationId: dbWorkflow._organizationId,
-        environmentId: dbWorkflow._environmentId,
+        workflowIdOrInternalId: workflowId,
+        organizationId,
+        environmentId,
         userId: 'system',
         locale,
         content: contentString,

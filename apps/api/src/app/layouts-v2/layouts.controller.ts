@@ -36,6 +36,10 @@ import { GetLayoutCommand, GetLayoutUseCase } from './usecases/get-layout';
 import { DeleteLayoutCommand, DeleteLayoutUseCase } from './usecases/delete-layout';
 import { DuplicateLayoutCommand, DuplicateLayoutUseCase } from './usecases/duplicate-layout';
 import { ListLayoutsCommand, ListLayoutsUseCase } from './usecases/list-layouts';
+import { LayoutPreviewRequestDto } from './dtos/layout-preview-request.dto';
+import { GenerateLayoutPreviewResponseDto } from './dtos/generate-layout-preview-response.dto';
+import { PreviewLayoutCommand, PreviewLayoutUsecase } from './usecases/preview-layout';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -50,7 +54,8 @@ export class LayoutsController {
     private getLayoutUseCase: GetLayoutUseCase,
     private deleteLayoutUseCase: DeleteLayoutUseCase,
     private duplicateLayoutUseCase: DuplicateLayoutUseCase,
-    private listLayoutsUseCase: ListLayoutsUseCase
+    private listLayoutsUseCase: ListLayoutsUseCase,
+    private previewLayoutUsecase: PreviewLayoutUsecase
   ) {}
 
   @Post('')
@@ -153,6 +158,7 @@ export class LayoutsController {
   @ApiBody({ type: DuplicateLayoutDto })
   @ApiResponse(LayoutResponseDto, 201)
   @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @SdkMethodName('duplicate')
   async duplicate(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string,
@@ -187,6 +193,30 @@ export class LayoutsController {
         orderBy: query.orderBy ?? 'createdAt',
         searchQuery: query.query,
         user,
+      })
+    );
+  }
+
+  @Post(':layoutId/preview')
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Generate layout preview',
+    description: 'Generates a preview for a layout by its unique identifier **layoutId**',
+  })
+  @ApiBody({ type: LayoutPreviewRequestDto, description: 'Layout preview generation details' })
+  @ApiResponse(GenerateLayoutPreviewResponseDto, 201)
+  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @SdkMethodName('generatePreview')
+  async generatePreview(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string,
+    @Body() layoutPreviewRequestDto: LayoutPreviewRequestDto
+  ): Promise<GenerateLayoutPreviewResponseDto> {
+    return await this.previewLayoutUsecase.execute(
+      PreviewLayoutCommand.create({
+        user,
+        layoutIdOrInternalId,
+        layoutPreviewRequestDto,
       })
     );
   }

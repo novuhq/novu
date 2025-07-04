@@ -12,6 +12,7 @@ import {
   LookBackWindowType,
   DelayControlType,
   ChatControlType,
+  LayoutControlType,
 } from '../schemas/control';
 import { PinoLogger } from '../logging';
 
@@ -179,6 +180,15 @@ function sanitizeDelay(controlValues: DelayControlType) {
   return filterNullishValues(mappedValues);
 }
 
+function sanitizeLayout(controlValues: LayoutControlType) {
+  return {
+    email: filterNullishValues({
+      body: controlValues.email?.body,
+      editorType: controlValues.email?.editorType,
+    }),
+  };
+}
+
 function parseAmount(amount?: unknown) {
   try {
     if (!isNumber(amount)) {
@@ -200,6 +210,8 @@ function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
 
   return obj;
 }
+
+export type SanitizationType = StepTypeEnum | 'layout';
 
 /**
  * Sanitizes control values received from client-side forms into a clean minimal object.
@@ -224,7 +236,7 @@ function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
 export function dashboardSanitizeControlValues(
   logger: PinoLogger,
   controlValues: Record<string, unknown>,
-  stepType: StepTypeEnum | unknown
+  type?: StepTypeEnum | 'layout'
 ): (Record<string, unknown> & { skip?: Record<string, unknown> }) | null {
   try {
     if (!controlValues) {
@@ -232,7 +244,7 @@ export function dashboardSanitizeControlValues(
     }
 
     let normalizedValues: Record<string, unknown>;
-    switch (stepType) {
+    switch (type) {
       case StepTypeEnum.IN_APP:
         normalizedValues = sanitizeInApp(controlValues as InAppControlType);
         break;
@@ -253,6 +265,9 @@ export function dashboardSanitizeControlValues(
         break;
       case StepTypeEnum.DELAY:
         normalizedValues = sanitizeDelay(controlValues as DelayControlType);
+        break;
+      case 'layout':
+        normalizedValues = sanitizeLayout(controlValues as LayoutControlType);
         break;
       default:
         normalizedValues = filterNullishValues(controlValues);

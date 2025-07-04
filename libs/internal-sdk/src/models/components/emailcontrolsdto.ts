@@ -22,9 +22,9 @@ export type EditorType = ClosedEnum<typeof EditorType>;
 
 export type EmailControlsDto = {
   /**
-   * Content of the layout.
+   * Body of the layout.
    */
-  content: string;
+  body: string;
   /**
    * Editor type of the layout.
    */
@@ -56,13 +56,13 @@ export const EmailControlsDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  content: z.string(),
+  body: z.string(),
   editorType: EditorType$inboundSchema,
 });
 
 /** @internal */
 export type EmailControlsDto$Outbound = {
-  content: string;
+  body: string;
   editorType: string;
 };
 
@@ -72,7 +72,7 @@ export const EmailControlsDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   EmailControlsDto
 > = z.object({
-  content: z.string(),
+  body: z.string(),
   editorType: EditorType$outboundSchema,
 });
 

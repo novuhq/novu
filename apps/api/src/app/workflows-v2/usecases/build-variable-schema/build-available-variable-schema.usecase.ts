@@ -1,12 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { JsonSchemaTypeEnum, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { FeatureFlagsService, Instrument } from '@novu/application-generic';
-import { StepTypeEnum } from '@novu/shared';
+import {
+  ControlValuesRepository,
+  JsonSchemaTypeEnum,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+} from '@novu/dal';
+import { Instrument } from '@novu/application-generic';
+import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
+
 import { computeResultSchema } from '../../shared';
 import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
-import { CreateVariablesObjectCommand } from '../create-variables-object/create-variables-object.command';
-import { CreateVariablesObject } from '../create-variables-object/create-variables-object.usecase';
+import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
+import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { buildSubscriberSchema, buildVariablesSchema } from '../../../shared/utils/create-schema';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
@@ -15,26 +21,47 @@ import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 export class BuildVariableSchemaUsecase {
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
-    private readonly featureFlagService: FeatureFlagsService
+    private readonly controlValuesRepository: ControlValuesRepository
   ) {}
 
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId, optimisticSteps } = command;
 
-    // Build effective steps by combining persisted steps with optimistic steps
-    const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
+    let workflowControlValues: unknown[] = [];
+    if (workflow) {
+      const controls = await this.controlValuesRepository.find(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _workflowId: workflow._id,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+          controls: { $ne: null },
+        },
+        {
+          controls: 1,
+          _id: 0,
+        }
+      );
 
-    const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
+      workflowControlValues = controls
+        .map((item) => item.controls)
+        .flat()
+        .flatMap((obj) => Object.values(obj));
+    }
 
+    const optimisticControlValues = Object.values(command.optimisticControlValues || {});
     const { payload, subscriber } = await this.createVariablesObject.execute(
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        userId: command.userId,
-        workflowId: workflow?._id,
-        ...(command.optimisticControlValues ? { controlValues: command.optimisticControlValues } : {}),
+        controlValues: optimisticControlValues.length > 0 ? optimisticControlValues : workflowControlValues,
       })
     );
+
+    // Build effective steps by combining persisted steps with optimistic steps
+    const effectiveSteps = this.buildEffectiveSteps(workflow, optimisticSteps);
+
+    const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
     return {
       type: JsonSchemaTypeEnum.OBJECT,

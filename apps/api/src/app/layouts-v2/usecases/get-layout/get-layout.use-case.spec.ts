@@ -51,7 +51,7 @@ describe('GetLayoutUseCase', () => {
     level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     controls: {
       email: {
-        content: '<html><body>{{content}}</body></html>',
+        body: '<html><body>{{content}}</body></html>',
       },
     },
   };
@@ -59,7 +59,7 @@ describe('GetLayoutUseCase', () => {
   const mockVariablesSchema = {
     type: 'object',
     properties: {
-      content: {
+      body: {
         type: 'string',
       },
     },
@@ -161,7 +161,6 @@ describe('GetLayoutUseCase', () => {
       const schemaCommand = layoutVariablesSchemaUseCaseMock.execute.firstCall.args[0];
       expect(schemaCommand.environmentId).to.equal('env_id');
       expect(schemaCommand.organizationId).to.equal('org_id');
-      expect(schemaCommand.userId).to.equal('user_id');
     });
 
     it('should track analytics event', async () => {

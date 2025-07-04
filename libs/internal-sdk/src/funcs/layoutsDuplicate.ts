@@ -32,7 +32,7 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Duplicates a layout by its unique identifier **layoutId**. This will create a new layout with the content of the original layout.
  */
-export function layoutsLayoutsControllerDuplicate(
+export function layoutsDuplicate(
   client: NovuCore,
   duplicateLayoutDto: components.DuplicateLayoutDto,
   layoutId: string,

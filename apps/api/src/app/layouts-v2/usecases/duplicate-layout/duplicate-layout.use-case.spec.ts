@@ -44,7 +44,7 @@ describe('DuplicateLayoutUseCase', () => {
     level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
     controls: {
       email: {
-        content: '<html><body>{{content}}</body></html>',
+        body: '<html><body>{{content}}</body></html>',
         subject: 'Original Subject',
       },
     },
@@ -289,7 +289,7 @@ describe('DuplicateLayoutUseCase', () => {
         ...mockOriginalControlValues,
         controls: {
           email: {
-            content: '<html><head><style>body { margin: 0; }</style></head><body>{{content}}</body></html>',
+            body: '<html><head><style>body { margin: 0; }</style></head><body>{{content}}</body></html>',
             subject: 'Complex Subject {{payload.name}}',
             preheader: 'Preview text',
             customField: 'custom value',
