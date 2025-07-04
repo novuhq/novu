@@ -1,5 +1,5 @@
-import { ListLayoutsResponse, IEnvironment, CreateLayoutDto, LayoutResponseDto } from '@novu/shared';
-import { getV2, postV2 } from './api.client';
+import { ListLayoutsResponse, IEnvironment, CreateLayoutDto, LayoutResponseDto, UpdateLayoutDto } from '@novu/shared';
+import { getV2, postV2, putV2, delV2 } from './api.client';
 
 export const getLayouts = async ({
   environment,
@@ -45,4 +45,22 @@ export const getLayout = async ({ environment, layoutSlug }: { environment: IEnv
   const { data } = await getV2<{ data: LayoutResponseDto }>(`/layouts/${layoutSlug}`, { environment });
 
   return data;
+};
+
+export const updateLayout = async ({
+  environment,
+  layout,
+  layoutSlug,
+}: {
+  environment: IEnvironment;
+  layout: UpdateLayoutDto;
+  layoutSlug: string;
+}) => {
+  const { data } = await putV2<{ data: LayoutResponseDto }>(`/layouts/${layoutSlug}`, { environment, body: layout });
+
+  return data;
+};
+
+export const deleteLayout = async ({ environment, layoutSlug }: { environment: IEnvironment; layoutSlug: string }) => {
+  await delV2(`/layouts/${layoutSlug}`, { environment });
 };
