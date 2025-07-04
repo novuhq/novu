@@ -11,16 +11,14 @@ import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 /**
  * Type of editor to use for the body.
  */
-export const EmailControlDtoEditorType = {
+export const EditorType = {
   Block: "block",
   Html: "html",
 } as const;
 /**
  * Type of editor to use for the body.
  */
-export type EmailControlDtoEditorType = ClosedEnum<
-  typeof EmailControlDtoEditorType
->;
+export type EditorType = ClosedEnum<typeof EditorType>;
 
 export type EmailControlDto = {
   /**
@@ -38,7 +36,7 @@ export type EmailControlDto = {
   /**
    * Type of editor to use for the body.
    */
-  editorType?: EmailControlDtoEditorType | undefined;
+  editorType?: EditorType | undefined;
   /**
    * Disable sanitization of the output.
    */
@@ -50,24 +48,22 @@ export type EmailControlDto = {
 };
 
 /** @internal */
-export const EmailControlDtoEditorType$inboundSchema: z.ZodNativeEnum<
-  typeof EmailControlDtoEditorType
-> = z.nativeEnum(EmailControlDtoEditorType);
+export const EditorType$inboundSchema: z.ZodNativeEnum<typeof EditorType> = z
+  .nativeEnum(EditorType);
 
 /** @internal */
-export const EmailControlDtoEditorType$outboundSchema: z.ZodNativeEnum<
-  typeof EmailControlDtoEditorType
-> = EmailControlDtoEditorType$inboundSchema;
+export const EditorType$outboundSchema: z.ZodNativeEnum<typeof EditorType> =
+  EditorType$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace EmailControlDtoEditorType$ {
-  /** @deprecated use `EmailControlDtoEditorType$inboundSchema` instead. */
-  export const inboundSchema = EmailControlDtoEditorType$inboundSchema;
-  /** @deprecated use `EmailControlDtoEditorType$outboundSchema` instead. */
-  export const outboundSchema = EmailControlDtoEditorType$outboundSchema;
+export namespace EditorType$ {
+  /** @deprecated use `EditorType$inboundSchema` instead. */
+  export const inboundSchema = EditorType$inboundSchema;
+  /** @deprecated use `EditorType$outboundSchema` instead. */
+  export const outboundSchema = EditorType$outboundSchema;
 }
 
 /** @internal */
@@ -79,7 +75,7 @@ export const EmailControlDto$inboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
-  editorType: EmailControlDtoEditorType$inboundSchema.default("block"),
+  editorType: EditorType$inboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
   layoutId: z.nullable(z.string()).optional(),
 });
@@ -103,7 +99,7 @@ export const EmailControlDto$outboundSchema: z.ZodType<
   skip: z.record(z.any()).optional(),
   subject: z.string(),
   body: z.string().default(""),
-  editorType: EmailControlDtoEditorType$outboundSchema.default("block"),
+  editorType: EditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
   layoutId: z.nullable(z.string()).optional(),
 });

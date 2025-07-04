@@ -159,7 +159,7 @@ export class PatchWorkflowUsecase {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      // eslint-disable-next-line global-require
       const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
         strict: false,
       });
