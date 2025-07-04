@@ -13,6 +13,7 @@ import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 import { Environments } from "./environments.js";
 import { Integrations } from "./integrations.js";
+import { Layouts } from "./layouts.js";
 import { Messages } from "./messages.js";
 import { Notifications } from "./notifications.js";
 import { Subscribers } from "./subscribers.js";
@@ -20,6 +21,11 @@ import { Topics } from "./topics.js";
 import { Workflows } from "./workflows.js";
 
 export class Novu extends ClientSDK {
+  private _layouts?: Layouts;
+  get layouts(): Layouts {
+    return (this._layouts ??= new Layouts(this._options));
+  }
+
   private _subscribers?: Subscribers;
   get subscribers(): Subscribers {
     return (this._subscribers ??= new Subscribers(this._options));
@@ -140,11 +146,10 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Retrieve a subscriber
+   * Retrieve workflow step
    *
    * @remarks
-   * Retrieve a subscriber by its unique key identifier **subscriberId**.
-   *     **subscriberId** field is required.
+   * Retrieves data for a specific step in a workflow
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,
