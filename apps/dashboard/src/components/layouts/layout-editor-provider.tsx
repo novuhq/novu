@@ -1,6 +1,6 @@
 import { createContext, useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { LayoutResponseDto } from '@novu/shared';
+import { LayoutResponseDto, ResourceOriginEnum } from '@novu/shared';
 
 import { useFetchLayout } from '@/hooks/use-fetch-layout';
 import { createContextHook } from '@/utils/context';
@@ -11,6 +11,7 @@ export type LayoutContextType = {
   isPending: boolean;
   isLayoutPreviewLoading: boolean;
   previewContextValue: string;
+  isLayoutEditable: boolean;
   setPreviewContextValue: (value: string) => Error | null;
 };
 
@@ -24,6 +25,9 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
   const isLayoutPreviewLoading = false;
 
   const { layout, isPending } = useFetchLayout({ layoutSlug });
+  const isNovuCloud = layout?.origin === ResourceOriginEnum.NOVU_CLOUD && Boolean(layout?.controls.uiSchema);
+  const isExternal = layout?.origin === ResourceOriginEnum.EXTERNAL;
+  const isLayoutEditable = isExternal || (isNovuCloud && Boolean(layout?.controls.uiSchema));
 
   const setPreviewContextValueSafe = useCallback((value: string): Error | null => {
     const { error } = parse(value);
@@ -39,9 +43,10 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
       isPending,
       isLayoutPreviewLoading,
       previewContextValue,
+      isLayoutEditable,
       setPreviewContextValue: setPreviewContextValueSafe,
     }),
-    [layout, isPending, isLayoutPreviewLoading, previewContextValue, setPreviewContextValueSafe]
+    [layout, isPending, isLayoutPreviewLoading, previewContextValue, setPreviewContextValueSafe, isLayoutEditable]
   );
 
   return <LayoutEditorContext.Provider value={value}>{children}</LayoutEditorContext.Provider>;

@@ -26,7 +26,7 @@ import { ComponentProps } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiEdit2Line, RiExpandUpDownLine, RiForbid2Line } from 'react-icons/ri';
 import { CompactButton } from './primitives/button-compact';
-import { ControlInput } from './primitives/control-input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { InputRoot } from './primitives/input';
 
 const primaryActionKey = 'primaryAction';

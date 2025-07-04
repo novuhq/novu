@@ -1,5 +1,5 @@
 import { Avatar, AvatarImage } from '@/components/primitives/avatar';
-import { MAILY_EMAIL_WIDTH } from '@/components/workflow-editor/steps/email/maily-config';
+import { MAILY_EMAIL_WIDTH } from '@/components/maily/maily-config';
 import { cn } from '@/utils/ui';
 import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
