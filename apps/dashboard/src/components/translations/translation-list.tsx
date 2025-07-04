@@ -198,6 +198,14 @@ export function TranslationList(props: TranslationListProps) {
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
     ) && !IS_SELF_HOSTED;
 
+  const { subscription } = useFetchSubscription();
+
+  const canUseTranslationFeature =
+    getFeatureForTierAsBoolean(
+      FeatureNameEnum.AUTO_TRANSLATIONS,
+      subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
+    ) && !IS_SELF_HOSTED;
+
   const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
 
   if (!canUseTranslationFeature) {

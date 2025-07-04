@@ -1,5 +1,5 @@
 import { AnimatedOutlet } from '@/components/animated-outlet';
-import { EditWorkflowLayout } from '@/components/edit-workflow-layout';
+import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
@@ -66,7 +66,7 @@ export const EditWorkflowPage = () => {
 
   return (
     <WorkflowProvider>
-      <EditWorkflowLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</EditWorkflowLayout>
+      <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>{getLayoutContent()}</FullPageLayout>
     </WorkflowProvider>
   );
 };

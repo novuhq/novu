@@ -48,6 +48,7 @@ export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayo
 
 export type LayoutResponseDto = {
   _id: string;
+  slug: string;
   layoutId: string;
   name: string;
   isDefault: boolean;

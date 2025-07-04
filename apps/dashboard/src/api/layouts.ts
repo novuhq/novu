@@ -40,3 +40,9 @@ export const createLayout = async ({ environment, layout }: { environment: IEnvi
 
   return data;
 };
+
+export const getLayout = async ({ environment, layoutSlug }: { environment: IEnvironment; layoutSlug: string }) => {
+  const { data } = await getV2<{ data: LayoutResponseDto }>(`/layouts/${layoutSlug}`, { environment });
+
+  return data;
+};
