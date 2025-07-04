@@ -283,3 +283,17 @@ export function BubbleMenuVariablePill({
     </>
   );
 }
+
+// HOC factory for creating TipTap node views
+export function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) {
+  return function VariableView(props: NodeViewProps) {
+    return (
+      <NodeVariablePill
+        {...props}
+        variables={variables}
+        isAllowedVariable={isAllowedVariable}
+        isPayloadSchemaEnabled={false}
+      />
+    );
+  };
+}

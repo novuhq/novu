@@ -1,36 +1,21 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { EditorView } from '@uiw/react-codemirror';
 import { Variable } from '@maily-to/core/extensions';
-import { Editor, NodeViewProps } from '@tiptap/core';
+import { Editor } from '@tiptap/core';
 
 import { FormField } from '@/components/primitives/form/form';
 import { Maily } from '@/components/maily/maily';
 import { HtmlEditor } from '@/components/html-editor';
 import { isMailyJson } from '@/components/maily/maily-utils';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { createEditorBlocks } from '../maily/maily-config';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { BubbleMenuVariablePill, NodeVariablePill } from '../maily/views/variable-view';
+import { BubbleMenuVariablePill, createVariableNodeView } from '../maily/views/variable-view';
 import { VariableFrom } from '../maily/types';
 import { useLayoutEditor } from './layout-editor-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { CompletionRange } from '../primitives/variable-editor';
 import { MailyVariablesListView, VariableSuggestionsPopoverRef } from '../maily/views/maily-variables-list-view';
-
-// HOC factory for creating TipTap node views
-function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: IsAllowedVariable) {
-  return function VariableView(props: NodeViewProps) {
-    return (
-      <NodeVariablePill
-        {...props}
-        variables={variables}
-        isAllowedVariable={isAllowedVariable}
-        isPayloadSchemaEnabled={false}
-      />
-    );
-  };
-}
 
 const MailyVariablesListViewForLayouts = React.forwardRef<
   VariableSuggestionsPopoverRef,

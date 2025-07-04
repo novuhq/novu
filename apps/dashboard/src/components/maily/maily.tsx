@@ -14,31 +14,32 @@ import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/ut
 import { TranslationKey } from '@/types/translations';
 import { VariableFrom } from './types';
 import { MailyVariablesListView } from './views/maily-variables-list-view';
+import { createVariableNodeView as defaultCreateVariableNodeView } from './views/variable-view';
 
 type MailyProps = HTMLAttributes<HTMLDivElement> & {
   value: string;
   onChange?: (value: string) => void;
   className?: string;
   children?: React.ReactNode;
-  variables: EnhancedParsedVariables;
-  blocks: BlockGroupItem[];
-  addDigestVariables: boolean;
+  variables?: EnhancedParsedVariables;
+  blocks?: BlockGroupItem[];
+  addDigestVariables?: boolean;
   onCreateNewVariable?: (variable: string) => Promise<void>;
   onCreateNewTranslationKey?: (translationKey: string) => Promise<void>;
-  isPayloadSchemaEnabled: boolean;
-  isTranslationEnabled: boolean;
+  isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
   translationKeys?: TranslationKey[];
   variableSuggestionsPopover?: ForwardRefExoticComponent<{
     items: Variable[];
     onSelectItem: (item: Variable) => void;
   }>;
-  renderVariable: (opts: {
+  renderVariable?: (opts: {
     variable: Variable;
     fallback?: string;
     editor: Editor;
     from: 'content-variable' | 'bubble-variable' | 'button-variable';
   }) => JSX.Element | null;
-  createVariableNodeView: (
+  createVariableNodeView?: (
     variables: LiquidVariable[],
     isAllowedVariable: IsAllowedVariable
   ) => (props: NodeViewProps) => JSX.Element;
@@ -53,7 +54,14 @@ export const Maily = ({
   onChange,
   className,
   children,
-  variables,
+  variables = {
+    primitives: [],
+    arrays: [],
+    namespaces: [],
+    enhancedVariables: [],
+    variables: [],
+    isAllowedVariable: () => false,
+  },
   blocks,
   isPayloadSchemaEnabled,
   isTranslationEnabled,
@@ -62,18 +70,21 @@ export const Maily = ({
   onCreateNewTranslationKey = () => Promise.resolve(),
   translationKeys,
   variableSuggestionsPopover = MailyVariablesListView,
-  renderVariable,
-  createVariableNodeView,
+  renderVariable = () => null,
+  createVariableNodeView = defaultCreateVariableNodeView,
   ...rest
 }: MailyProps) => {
   const primitives = useMemo(
-    () => variables.primitives.map((v) => ({ name: v.name, required: false })),
-    [variables.primitives]
+    () => variables?.primitives.map((v) => ({ name: v.name, required: false })) ?? [],
+    [variables?.primitives]
   );
-  const arrays = useMemo(() => variables.arrays.map((v) => ({ name: v.name, required: false })), [variables.arrays]);
+  const arrays = useMemo(
+    () => variables?.arrays.map((v) => ({ name: v.name, required: false })) ?? [],
+    [variables?.arrays]
+  );
   const namespaces = useMemo(
-    () => variables.namespaces.map((v) => ({ name: v.name, required: false })),
-    [variables.namespaces]
+    () => variables?.namespaces.map((v) => ({ name: v.name, required: false })) ?? [],
+    [variables?.namespaces]
   );
 
   const editorParentRef = useRemoveGrammarly<HTMLDivElement>();
@@ -87,12 +98,12 @@ export const Maily = ({
         primitives,
         arrays,
         namespaces,
-        isAllowedVariable: variables.isAllowedVariable,
+        isAllowedVariable: variables?.isAllowedVariable ?? (() => false),
         addDigestVariables,
         isPayloadSchemaEnabled,
       });
     },
-    [primitives, arrays, namespaces, variables.isAllowedVariable, addDigestVariables, isPayloadSchemaEnabled]
+    [primitives, arrays, namespaces, variables?.isAllowedVariable, addDigestVariables, isPayloadSchemaEnabled]
   );
 
   const extensions = useMemo(
@@ -100,7 +111,7 @@ export const Maily = ({
       createExtensions({
         handleCalculateVariables,
         parsedVariables: variables,
-        blocks,
+        blocks: blocks ?? [],
         onCreateNewVariable,
         isPayloadSchemaEnabled,
         isTranslationEnabled,
