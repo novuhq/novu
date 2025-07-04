@@ -1,4 +1,5 @@
 import { Injectable, Optional } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { SendWebhookMessage, PinoLogger } from '@novu/application-generic';
@@ -9,7 +10,6 @@ import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.u
 import { stepTypeToControlSchema } from '../../shared';
 import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
-import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class PatchWorkflowUsecase {
@@ -159,6 +159,7 @@ export class PatchWorkflowUsecase {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
         strict: false,
       });
