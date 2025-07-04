@@ -11,10 +11,17 @@ import {
 import { Separator } from '@/components/primitives/separator';
 import { TagInput } from '@/components/primitives/tag-input';
 import { Textarea } from '@/components/primitives/textarea';
-import { MAX_DESCRIPTION_LENGTH, MAX_TAG_ELEMENTS, workflowSchema } from '@/components/workflow-editor/schema';
+import { workflowSchema } from '@/components/workflow-editor/schema';
+import { TranslationToggleSection } from '@/components/workflow-editor/translation-toggle-section';
 import { useTags } from '@/hooks/use-tags';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type CreateWorkflowDto, DuplicateWorkflowDto, slugify } from '@novu/shared';
+import {
+  type CreateWorkflowDto,
+  DuplicateWorkflowDto,
+  slugify,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TAG_ELEMENTS,
+} from '@novu/shared';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -31,6 +38,7 @@ export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormPro
       workflowId: slugify(template?.name ?? ''),
       name: template?.name ?? '',
       tags: template?.tags ?? [],
+      isTranslationEnabled: template?.isTranslationEnabled ?? false,
     },
   });
 
@@ -128,6 +136,17 @@ export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormPro
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        <TranslationToggleSection
+          control={form.control}
+          fieldName="isTranslationEnabled"
+          onChange={(checked) => {
+            form.setValue('isTranslationEnabled', checked, {
+              shouldValidate: true,
+              shouldDirty: true,
+            });
+          }}
         />
       </FormRoot>
     </Form>

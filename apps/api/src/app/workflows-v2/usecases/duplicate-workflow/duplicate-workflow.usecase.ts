@@ -66,6 +66,7 @@ export class DuplicateWorkflowUseCase {
       __source: WorkflowCreationSourceEnum.DASHBOARD,
       steps: this.mapStepsToDuplicate(originWorkflow.steps),
       preferences: this.mapPreferences(preferences),
+      isTranslationEnabled: overrides.isTranslationEnabled ?? originWorkflow.isTranslationEnabled,
     };
   }
 

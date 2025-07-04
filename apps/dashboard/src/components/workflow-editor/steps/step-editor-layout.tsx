@@ -1,4 +1,4 @@
-import { WorkflowResponseDto, StepResponseDto, PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { WorkflowResponseDto, StepResponseDto, PermissionsEnum } from '@novu/shared';
 import { cn } from '@/utils/ui';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine } from 'react-icons/ri';
 import { useState } from 'react';
@@ -18,7 +18,7 @@ import { Protect } from '../../../utils/protect';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { useFetchTranslations, type FetchTranslationsParams } from '@/hooks/use-fetch-translations';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -32,7 +32,7 @@ function StepEditorContent() {
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
-  const isTranslationsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+  const isTranslationsEnabled = useIsTranslationEnabled();
 
   // Fetch translations for the current workflow
   const { data: translationsData } = useFetchTranslations({

@@ -11,7 +11,6 @@ export * from './create-notification-jobs';
 export * from './create-or-update-subscriber';
 export * from './create-tenant';
 export * from './delete-preferences';
-export * from './create-workflow';
 export * from './digest-filter-steps';
 export * from './execute-bridge-request';
 export * from './get-decrypted-integrations';

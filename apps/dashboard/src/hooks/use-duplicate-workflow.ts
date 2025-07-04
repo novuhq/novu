@@ -51,6 +51,7 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
       name: values.name,
       description: values.description || undefined,
       tags: values.tags || [],
+      isTranslationEnabled: values.isTranslationEnabled,
     });
   };
 

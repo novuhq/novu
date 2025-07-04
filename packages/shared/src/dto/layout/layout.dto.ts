@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, IEmailBlock, ITemplateVariable, ResourceOriginEnum, ResourceTypeEnum } from '../../types';
 import { Controls, Issue, JSONSchemaDto } from '../workflows';
-import { RuntimeIssueDto, WorkflowIssueTypeEnum } from '../workflows/workflow.dto';
+import { WorkflowIssueTypeEnum } from '../workflows/workflow.dto';
 
 export class LayoutDto {
   _id?: string;

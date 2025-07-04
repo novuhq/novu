@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { RiArrowLeftSLine } from 'react-icons/ri';
 
 import { useEnvironment } from '@/context/environment/hooks';

@@ -16,11 +16,4 @@ export class GetOrganizationSettingsDto {
   })
   @IsValidLocale()
   defaultLocale: string;
-
-  @ApiProperty({
-    description: 'Whether translations are enabled for the organization',
-    example: false,
-  })
-  @IsBoolean()
-  translationsEnabled: boolean;
 }

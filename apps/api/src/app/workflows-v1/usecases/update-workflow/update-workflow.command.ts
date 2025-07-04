@@ -13,14 +13,25 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { CustomDataType, WorkflowStatusEnum, ResourceTypeEnum } from '@novu/shared';
+import {
+  CustomDataType,
+  WorkflowStatusEnum,
+  ResourceTypeEnum,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_TAG_LENGTH,
+} from '@novu/shared';
 
 import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
-import { EnvironmentWithUserCommand } from '../../../commands';
-import { PreferencesRequired } from '../../upsert-preferences';
-import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from './upsert-validation-constants';
-import { ContentIssue, IStepControl, JSONSchema, NotificationStep } from '../../../value-objects';
+import {
+  EnvironmentWithUserCommand,
+  PreferencesRequired,
+  ContentIssue,
+  IStepControl,
+  JSONSchema,
+  NotificationStep,
+} from '@novu/application-generic';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -98,6 +109,10 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoolean()
   validatePayload?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 
   @IsEnum(ResourceTypeEnum)
   @IsDefined()

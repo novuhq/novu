@@ -10,10 +10,6 @@ export class UpdateOrganizationSettingsCommand extends AuthenticatedCommand {
   removeNovuBranding?: boolean;
 
   @IsOptional()
-  @IsBoolean()
-  translationsEnabled?: boolean;
-
-  @IsOptional()
   @IsValidLocale()
   defaultLocale?: string;
 }

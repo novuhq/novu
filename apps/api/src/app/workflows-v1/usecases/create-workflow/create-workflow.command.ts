@@ -19,14 +19,20 @@ import {
   ResourceOriginEnum,
   WorkflowStatusEnum,
   ResourceTypeEnum,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_TAG_LENGTH,
 } from '@novu/shared';
 
 import { Type } from 'class-transformer';
 import { RuntimeIssue } from '@novu/dal';
-import { EnvironmentWithUserCommand } from '../../commands';
-import { MAX_DESCRIPTION_LENGTH, MAX_NAME_LENGTH, MAX_TAG_LENGTH } from '../workflow';
-import { ContentIssue, JSONSchema, NotificationStep } from '../../value-objects';
-import { PreferencesRequired } from '../upsert-preferences';
+import {
+  EnvironmentWithUserCommand,
+  ContentIssue,
+  JSONSchema,
+  NotificationStep,
+  PreferencesRequired,
+} from '@novu/application-generic';
 
 export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -109,6 +115,10 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsBoolean()
   validatePayload?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 
   @IsEnum(ResourceTypeEnum)
   @IsDefined()

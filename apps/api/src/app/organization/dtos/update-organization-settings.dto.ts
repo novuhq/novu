@@ -12,14 +12,6 @@ export class UpdateOrganizationSettingsDto {
   removeNovuBranding?: boolean;
 
   @ApiProperty({
-    description: 'Enable or disable translations',
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean()
-  translationsEnabled?: boolean;
-
-  @ApiProperty({
     description: 'Default locale',
     example: 'en-US',
   })

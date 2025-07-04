@@ -109,23 +109,4 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
   })
   @IsEnum(ResourceOriginEnum)
   origin: ResourceOriginEnum;
-
-  @ApiPropertyOptional({
-    description: 'The payload JSON Schema for the workflow',
-    type: 'object',
-    additionalProperties: true,
-  })
-  @IsOptional()
-  @IsValidJsonSchema({
-    message: 'payloadSchema must be a valid JSON schema',
-  })
-  payloadSchema?: object;
-
-  @ApiPropertyOptional({
-    description: 'Enable or disable payload schema validation',
-    type: 'boolean',
-  })
-  @IsOptional()
-  @IsBoolean()
-  validatePayload?: boolean;
 }
