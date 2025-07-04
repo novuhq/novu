@@ -149,15 +149,6 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   lastTriggeredAt?: string;
 
   @ApiPropertyOptional({
-    description: 'The payload JSON Schema for the workflow',
-    type: 'object',
-    nullable: true,
-    additionalProperties: true,
-  })
-  @IsOptional()
-  payloadSchema?: object;
-
-  @ApiPropertyOptional({
     description: 'Generated payload example based on the payload schema',
     type: 'object',
     nullable: true,
