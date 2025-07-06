@@ -13,8 +13,14 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { EnvironmentWithUserObjectCommand, MAX_NAME_LENGTH } from '@novu/application-generic';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import {
+  StepTypeEnum,
+  WorkflowCreationSourceEnum,
+  ChannelTypeEnum,
+  ResourceOriginEnum,
+  MAX_NAME_LENGTH,
+} from '@novu/shared';
 import { ClientSession } from '@novu/dal';
 import { IsValidJsonSchema } from '../../../shared/validators/json-schema.validator';
 
@@ -127,6 +133,10 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsBoolean()
   validatePayload?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {

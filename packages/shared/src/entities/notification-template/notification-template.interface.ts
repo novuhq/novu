@@ -39,6 +39,7 @@ export interface INotificationTemplate {
   rawData?: any;
   data?: CustomDataType;
   origin?: ResourceOriginEnum;
+  isTranslationEnabled?: boolean;
 }
 
 export class IGroupedBlueprint {

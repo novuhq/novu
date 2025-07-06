@@ -13,8 +13,6 @@ import {
 } from '@nestjs/common/decorators';
 import { ApiBody, ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
-  DeleteWorkflowCommand,
-  DeleteWorkflowUseCase,
   ExternalApiAccessible,
   UserSession,
   RequirePermissions,
@@ -67,6 +65,8 @@ import {
   StepUpsertDto,
 } from './dtos';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { DeleteWorkflowCommand } from '../workflows-v1/usecases/delete-workflow/delete-workflow.command';
+import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()

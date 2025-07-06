@@ -1,16 +1,11 @@
 import { ArgumentsHost, ExceptionFilter, HttpException, HttpStatus, PayloadTooLargeException } from '@nestjs/common';
 import { Response } from 'express';
-import {
-  CommandValidationException,
-  FeatureFlagsService,
-  PinoLogger,
-  RequestLogRepository,
-} from '@novu/application-generic';
+import { CommandValidationException, PinoLogger, RequestLogRepository } from '@novu/application-generic';
 import { randomUUID } from 'node:crypto';
 import { captureException } from '@sentry/node';
 import { ZodError } from 'zod';
 import { InternalServerErrorException } from '@nestjs/common/exceptions/internal-server-error.exception';
-import { FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import { HttpArgumentsHost } from '@nestjs/common/interfaces';
 import { ErrorDto, ValidationErrorDto } from './error-dto';
 import { retryWithBackoff } from './utils/payload-sanitizer';
@@ -25,8 +20,7 @@ class ValidationPipeError {
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(
     private readonly logger: PinoLogger,
-    private readonly requestLogRepository: RequestLogRepository,
-    private readonly featureFlagsService: FeatureFlagsService
+    private readonly requestLogRepository: RequestLogRepository
   ) {}
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
@@ -72,19 +66,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Check if the analytics metadata was set by the guard (AnalyticsLogsGuard)
     if (req._shouldLogAnalytics !== true) return false;
 
-    const user = req.user as UserSessionData;
+    const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
 
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_ANALYTICS_LOGS_ENABLED,
-      user: { _id: user._id },
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-      defaultValue: false,
-    });
-
-    if (!isEnabled) return false;
-
-    return true;
+    return isEnabled;
   }
 
   private logError(errorDto: ErrorDto, exception: unknown) {

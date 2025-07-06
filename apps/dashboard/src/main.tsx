@@ -59,6 +59,7 @@ import { IS_SELF_HOSTED } from './config';
 import { ProtectedRoute } from './routes/protected-route';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
+import { EditLayoutPage } from './pages/edit-layout';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -247,6 +248,14 @@ const router = createBrowserRouter([
                     ),
                   },
                 ],
+              },
+              {
+                path: ROUTES.LAYOUTS_EDIT,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                    <EditLayoutPage />
+                  </ProtectedRoute>
+                ),
               },
               {
                 path: ROUTES.TRANSLATIONS,

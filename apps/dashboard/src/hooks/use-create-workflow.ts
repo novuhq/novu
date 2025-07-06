@@ -52,6 +52,7 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
       workflowId: values.workflowId,
       description: values.description || undefined,
       tags: values.tags || [],
+      isTranslationEnabled: values.isTranslationEnabled || false,
     });
   };
 

@@ -1,7 +1,7 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ResourceOriginEnum, ResourceTypeEnum, Slug } from '@novu/shared';
 
 import { RuntimeIssueDto } from '../../workflows-v2/dtos/runtime-issue.dto';
 import { CreateLayoutDto } from './create-layout.dto';
@@ -26,6 +26,10 @@ export class LayoutResponseDto {
   @ApiProperty({ description: 'Unique identifier for the layout' })
   @IsString()
   layoutId: string;
+
+  @ApiProperty({ description: 'Slug of the layout' })
+  @IsString()
+  slug: Slug;
 
   @ApiProperty({ description: 'Name of the layout' })
   @IsString()

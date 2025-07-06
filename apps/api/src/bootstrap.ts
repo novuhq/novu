@@ -107,9 +107,7 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(
-    new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository), app.get(FeatureFlagsService))
-  );
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository)));
 
   /*
    * Handle unhandled promise rejections

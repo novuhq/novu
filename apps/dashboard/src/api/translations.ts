@@ -168,6 +168,21 @@ export const deleteTranslation = async ({
   await delV2(endpoint, { environment });
 };
 
+export type DeleteTranslationGroupRequest = {
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+};
+
+export const deleteTranslationGroup = async ({
+  environment,
+  resourceId,
+  resourceType,
+}: DeleteTranslationGroupRequest & { environment: IEnvironment }): Promise<void> => {
+  const endpoint = `/translations/${resourceType}/${resourceId}`;
+
+  await delV2(endpoint, { environment });
+};
+
 export const uploadTranslations = async ({
   environment,
   resourceId,

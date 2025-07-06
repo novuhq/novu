@@ -29,4 +29,8 @@ export class PatchWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsBoolean()
   @IsOptional()
   validatePayload?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  isTranslationEnabled?: boolean;
 }

@@ -106,6 +106,18 @@ export type WorkflowResponseDto = {
    */
   active?: boolean | undefined;
   /**
+   * Enable or disable payload schema validation
+   */
+  validatePayload?: boolean | undefined;
+  /**
+   * The payload JSON Schema for the workflow
+   */
+  payloadSchema?: { [k: string]: any } | undefined;
+  /**
+   * Enable or disable translations for this workflow
+   */
+  isTranslationEnabled?: boolean | undefined;
+  /**
    * Unique identifier of the workflow
    */
   id: string;
@@ -159,17 +171,9 @@ export type WorkflowResponseDto = {
    */
   lastTriggeredAt?: string | null | undefined;
   /**
-   * The payload JSON Schema for the workflow
-   */
-  payloadSchema?: { [k: string]: any } | null | undefined;
-  /**
    * Generated payload example based on the payload schema
    */
   payloadExample?: { [k: string]: any } | null | undefined;
-  /**
-   * Whether payload schema validation is enabled
-   */
-  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -300,6 +304,9 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
+  validatePayload: z.boolean().optional(),
+  payloadSchema: z.record(z.any()).optional(),
+  isTranslationEnabled: z.boolean().default(false),
   _id: z.string(),
   workflowId: z.string(),
   slug: z.string(),
@@ -354,9 +361,7 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   status: WorkflowStatusEnum$inboundSchema,
   issues: z.record(RuntimeIssueDto$inboundSchema).optional(),
   lastTriggeredAt: z.nullable(z.string()).optional(),
-  payloadSchema: z.nullable(z.record(z.any())).optional(),
   payloadExample: z.nullable(z.record(z.any())).optional(),
-  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -369,6 +374,9 @@ export type WorkflowResponseDto$Outbound = {
   description?: string | undefined;
   tags?: Array<string> | undefined;
   active: boolean;
+  validatePayload?: boolean | undefined;
+  payloadSchema?: { [k: string]: any } | undefined;
+  isTranslationEnabled: boolean;
   _id: string;
   workflowId: string;
   slug: string;
@@ -389,9 +397,7 @@ export type WorkflowResponseDto$Outbound = {
   status: string;
   issues?: { [k: string]: RuntimeIssueDto$Outbound } | undefined;
   lastTriggeredAt?: string | null | undefined;
-  payloadSchema?: { [k: string]: any } | null | undefined;
   payloadExample?: { [k: string]: any } | null | undefined;
-  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -404,6 +410,9 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
+  validatePayload: z.boolean().optional(),
+  payloadSchema: z.record(z.any()).optional(),
+  isTranslationEnabled: z.boolean().default(false),
   id: z.string(),
   workflowId: z.string(),
   slug: z.string(),
@@ -458,9 +467,7 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   status: WorkflowStatusEnum$outboundSchema,
   issues: z.record(RuntimeIssueDto$outboundSchema).optional(),
   lastTriggeredAt: z.nullable(z.string()).optional(),
-  payloadSchema: z.nullable(z.record(z.any())).optional(),
   payloadExample: z.nullable(z.record(z.any())).optional(),
-  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

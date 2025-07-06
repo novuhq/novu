@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, IEmailBlock, ITemplateVariable, ResourceOriginEnum, ResourceTypeEnum } from '../../types';
-import { RuntimeIssueDto } from '../workflows/workflow.dto';
+import { Controls, Issue, JSONSchemaDto } from '../workflows';
+import { WorkflowIssueTypeEnum } from '../workflows/workflow.dto';
 
 export class LayoutDto {
   _id?: string;
@@ -48,6 +49,7 @@ export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayo
 
 export type LayoutResponseDto = {
   _id: string;
+  slug: string;
   layoutId: string;
   name: string;
   isDefault: boolean;
@@ -55,7 +57,11 @@ export type LayoutResponseDto = {
   createdAt: string;
   origin: ResourceOriginEnum;
   type: ResourceTypeEnum;
-  issues?: Record<LayoutCreateAndUpdateKeys, RuntimeIssueDto>;
+  issues?: {
+    controls?: Record<LayoutCreateAndUpdateKeys, Issue<WorkflowIssueTypeEnum>[]>;
+  };
+  controls: Controls;
+  variables?: JSONSchemaDto;
 };
 
 export type ListLayoutsResponse = {

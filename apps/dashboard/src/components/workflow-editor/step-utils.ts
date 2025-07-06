@@ -11,16 +11,21 @@ import {
 import type {
   StepContentIssue,
   StepCreateDto,
-  StepIssuesDto,
   StepUpdateDto,
   UpdateWorkflowDto,
   WorkflowResponseDto,
-  StepIntegrationIssue,
+  Issue,
 } from '@novu/shared';
 import { StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 
-export const getFirstErrorMessage = (issues: StepIssuesDto, type: 'controls' | 'integration') => {
+export const getFirstErrorMessage = <T, D = T>(
+  issues?: {
+    controls?: Record<string, Issue<T>[]>;
+    integration?: Record<string, Issue<D>[]>;
+  },
+  type: 'controls' | 'integration' = 'controls'
+) => {
   const issuesArray = Object.entries({ ...issues?.[type] });
 
   if (issuesArray.length > 0) {
@@ -30,7 +35,10 @@ export const getFirstErrorMessage = (issues: StepIssuesDto, type: 'controls' | '
   }
 };
 
-export const countStepIssues = (issues?: StepIssuesDto): number => {
+export const countIssues = <T, D = T>(issues?: {
+  controls?: Record<string, Issue<T>[]>;
+  integration?: Record<string, Issue<D>[]>;
+}): number => {
   if (!issues) return 0;
 
   let count = 0;
@@ -50,10 +58,13 @@ export const countStepIssues = (issues?: StepIssuesDto): number => {
   return count;
 };
 
-export const getAllStepIssues = (issues?: StepIssuesDto): (StepContentIssue | StepIntegrationIssue)[] => {
+export const getAllStepIssues = <T, D = T>(issues?: {
+  controls?: Record<string, Issue<T>[]>;
+  integration?: Record<string, Issue<D>[]>;
+}): Issue<T | D>[] => {
   if (!issues) return [];
 
-  const allIssues: (StepContentIssue | StepIntegrationIssue)[] = [];
+  const allIssues: Issue<T | D>[] = [];
 
   if (issues.controls) {
     Object.values(issues.controls).forEach((issueArray) => {

@@ -106,7 +106,7 @@ export const TopicActivity = ({ topicKey }: { topicKey: string }) => {
             onFiltersChange={setFilters}
             onReset={handleClearFilters}
             hide={['dateRange', 'topicKey']}
-            className="min-h-max overflow-x-auto"
+            className="min-h-max overflow-x-auto px-2.5 pt-2.5"
           />
           <SubscriberActivityList
             isLoading={isLoading}

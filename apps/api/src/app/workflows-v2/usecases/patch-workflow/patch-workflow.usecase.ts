@@ -1,16 +1,15 @@
 import { Injectable, Optional } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import {
-  GetWorkflowWithPreferencesUseCase,
-  SendWebhookMessage,
-  WorkflowWithPreferencesResponseDto,
-} from '@novu/application-generic';
+import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { SendWebhookMessage, PinoLogger } from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { stepTypeToControlSchema } from '../../shared';
+import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 @Injectable()
 export class PatchWorkflowUsecase {
@@ -19,18 +18,25 @@ export class PatchWorkflowUsecase {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getWorkflowUseCase: GetWorkflowUseCase,
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
     const persistedWorkflow = await this.fetchWorkflow(command);
+
     const transientWorkflow = this.patchWorkflowFields(persistedWorkflow, command);
 
     const hasPayloadSchemaChanged = this.hasPayloadSchemaChanged(persistedWorkflow, command);
 
     if (hasPayloadSchemaChanged) {
       await this.recalculateStepIssues(transientWorkflow, command.user);
+    }
+
+    if (command.isTranslationEnabled !== undefined) {
+      await this.toggleV2TranslationsForWorkflow(persistedWorkflow.triggers[0].identifier, command);
     }
 
     await this.persistWorkflow(transientWorkflow, command.user);
@@ -143,5 +149,41 @@ export class PatchWorkflowUsecase {
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
     });
+  }
+
+  private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: PatchWorkflowCommand) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+    if (!isEnterprise) {
+      return;
+    }
+
+    try {
+      // eslint-disable-next-line global-require
+      const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
+        strict: false,
+      });
+
+      await manageTranslations.execute({
+        enabled: command.isTranslationEnabled,
+        resourceId: workflowIdentifier,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+        userId: command.user._id,
+      });
+    } catch (error) {
+      this.logger.error(
+        `Failed to ${command.isTranslationEnabled ? 'enable' : 'disable'} V2 translations for workflow`,
+        {
+          workflowIdentifier,
+          enabled: command.isTranslationEnabled,
+          organizationId: command.user.organizationId,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
+
+      throw error;
+    }
   }
 }

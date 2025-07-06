@@ -1,5 +1,5 @@
 import { Form, FormRoot } from '@/components/primitives/form/form';
-import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
+import { getControlsDefaultValues } from '@/utils/default-values';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ChatTabs } from '@/components/workflow-editor/steps/chat/chat-tabs';
 import { CommonCustomControlValues } from '@/components/workflow-editor/steps/common/common-custom-control-values';
@@ -38,7 +38,7 @@ type ConfigureStepTemplateFormProps = StepEditorProps & {
 
 export const ConfigureStepTemplateForm = (props: ConfigureStepTemplateFormProps) => {
   const { workflow, step, update } = props;
-  const defaultValues = useMemo(() => getStepDefaultValues(step), [step]);
+  const defaultValues = useMemo(() => getControlsDefaultValues(step), [step]);
 
   const form = useForm({
     defaultValues,
