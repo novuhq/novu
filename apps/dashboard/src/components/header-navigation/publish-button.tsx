@@ -13,9 +13,11 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import type { IEnvironment } from '@novu/shared';
+import type { IEnvironmentPublishResponse } from '@/api/environments';
 
 type EnvironmentDiffCardProps = {
-  environment: any;
+  environment: IEnvironment;
   currentEnvironmentId?: string;
   isDropdownOpen: boolean;
   onClick: () => void;
@@ -104,8 +106,8 @@ export const PublishButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [selectedEnvironment, setSelectedEnvironment] = useState<any>(null);
-  const [publishResult, setPublishResult] = useState<any>(null);
+  const [selectedEnvironment, setSelectedEnvironment] = useState<IEnvironment | null>(null);
+  const [publishResult, setPublishResult] = useState<IEnvironmentPublishResponse | null>(null);
 
   const { currentOrganization } = useAuth();
   const { currentEnvironment, switchEnvironment } = useEnvironment();
@@ -116,7 +118,7 @@ export const PublishButton = () => {
 
   const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
 
-  const handlePublishToEnvironment = (environment: any) => {
+  const handlePublishToEnvironment = (environment: IEnvironment) => {
     setSelectedEnvironment(environment);
     setIsOpen(false);
     setPublishModalOpen(true);
@@ -134,9 +136,10 @@ export const PublishButton = () => {
       setPublishResult(result);
       setPublishModalOpen(false);
       setSuccessModalOpen(true);
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Show error toast
-      showErrorToast(error?.message || 'Failed to publish environment. Please try again.', 'Publishing Failed');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to publish environment. Please try again.';
+      showErrorToast(errorMessage, 'Publishing Failed');
       console.error('Publish failed:', error);
     }
   };
@@ -151,10 +154,10 @@ export const PublishButton = () => {
 
   const handleSwitchEnvironment = () => {
     if (selectedEnvironment) {
-      switchEnvironment(selectedEnvironment.slug);
+      switchEnvironment(selectedEnvironment.slug || '');
 
       // Navigate to workflows page in the new environment
-      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: selectedEnvironment.slug }));
+      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: selectedEnvironment.slug || '' }));
 
       setSuccessModalOpen(false);
       setSelectedEnvironment(null);
@@ -197,23 +200,27 @@ export const PublishButton = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <PublishModal
-        isOpen={publishModalOpen}
-        onClose={handleCloseModals}
-        environment={selectedEnvironment}
-        currentEnvironmentId={currentEnvironment?._id}
-        onConfirm={handleConfirmPublish}
-        isPublishing={publishMutation.isPending}
-        publishError={publishMutation.error?.message || null}
-      />
+      {selectedEnvironment && (
+        <PublishModal
+          isOpen={publishModalOpen}
+          onClose={handleCloseModals}
+          environment={selectedEnvironment}
+          currentEnvironmentId={currentEnvironment?._id}
+          onConfirm={handleConfirmPublish}
+          isPublishing={publishMutation.isPending}
+          publishError={publishMutation.error?.message || null}
+        />
+      )}
 
-      <PublishSuccessModal
-        isOpen={successModalOpen}
-        onClose={handleCloseModals}
-        environment={selectedEnvironment}
-        publishResult={publishResult}
-        onSwitchEnvironment={handleSwitchEnvironment}
-      />
+      {selectedEnvironment && (
+        <PublishSuccessModal
+          isOpen={successModalOpen}
+          onClose={handleCloseModals}
+          environment={selectedEnvironment}
+          publishResult={publishResult || undefined}
+          onSwitchEnvironment={handleSwitchEnvironment}
+        />
+      )}
     </>
   );
 };

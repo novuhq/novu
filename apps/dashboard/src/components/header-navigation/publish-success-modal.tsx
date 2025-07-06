@@ -2,31 +2,14 @@ import { RiCheckboxCircleFill, RiCloseFill, RiArrowRightSLine } from 'react-icon
 import { Dialog, DialogContent, DialogClose } from '../primitives/dialog';
 import { Button } from '../primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
+import type { IEnvironment } from '@novu/shared';
+import type { IEnvironmentPublishResponse } from '@/api/environments';
 
 type PublishSuccessModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  environment: any;
-  publishResult?: {
-    results: Array<{
-      resourceType: string;
-      successful: Array<{
-        resourceType: string;
-        resourceId: string;
-        resourceName: string;
-        action: string;
-      }>;
-      failed: Array<any>;
-      skipped: Array<any>;
-      totalProcessed: number;
-    }>;
-    summary: {
-      resources: number;
-      successful: number;
-      failed: number;
-      skipped: number;
-    };
-  };
+  environment: IEnvironment | null;
+  publishResult?: IEnvironmentPublishResponse;
   onSwitchEnvironment?: () => void;
 };
 

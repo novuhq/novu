@@ -1,9 +1,10 @@
 import { RiRouteFill, RiDashboardLine, RiTranslate2 } from 'react-icons/ri';
-import { Avatar, AvatarFallback, AvatarImage } from './primitives/avatar';
+import { Avatar, AvatarFallback } from './primitives/avatar';
 import { formatDateSimple } from '@/utils/format-date';
+import type { IResourceDiffResult } from '@/api/environments';
 
 type ResourceRowProps = {
-  resource: any;
+  resource: IResourceDiffResult;
 };
 
 export function ResourceRow({ resource }: ResourceRowProps) {
@@ -33,22 +34,22 @@ export function ResourceRow({ resource }: ResourceRowProps) {
     }
   };
 
-  const getResourceDisplayName = (resource: any) => {
+  const getResourceDisplayName = (resource: IResourceDiffResult) => {
     return resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
   };
 
-  const getResourceIdentifier = (resource: any) => {
+  const getResourceIdentifier = (resource: IResourceDiffResult) => {
     const name = getResourceDisplayName(resource);
     return name.toLowerCase().replace(/\s+/g, '-');
   };
 
-  const getResourceUpdatedBy = (resource: any) => {
+  const getResourceUpdatedBy = (resource: IResourceDiffResult) => {
     const sourceUpdatedBy = resource.sourceResource?.updatedBy;
     const targetUpdatedBy = resource.targetResource?.updatedBy;
     return sourceUpdatedBy || targetUpdatedBy;
   };
 
-  const getResourceUpdatedAt = (resource: any) => {
+  const getResourceUpdatedAt = (resource: IResourceDiffResult) => {
     const sourceUpdatedAt = resource.sourceResource?.updatedAt;
     const targetUpdatedAt = resource.targetResource?.updatedAt;
     return sourceUpdatedAt || targetUpdatedAt;
@@ -80,7 +81,6 @@ export function ResourceRow({ resource }: ResourceRowProps) {
           {updatedBy?.firstName && updatedBy?.lastName && (
             <>
               <Avatar className="size-4">
-                <AvatarImage src={updatedBy?.profilePicture || undefined} />
                 <AvatarFallback className="text-[8px] font-medium">
                   {updatedBy?.firstName?.[0]}
                   {updatedBy?.lastName?.[0]}

@@ -1,25 +1,15 @@
-import { useState } from 'react';
-import {
-  RiAlertFill,
-  RiRouteFill,
-  RiDashboardLine,
-  RiTranslate2,
-  RiArrowRightSLine,
-  RiErrorWarningLine,
-  RiCheckboxCircleFill,
-} from 'react-icons/ri';
+import { RiAlertFill, RiArrowRightSLine, RiErrorWarningLine, RiCheckboxCircleFill } from 'react-icons/ri';
 import { Dialog, DialogContent } from '../primitives/dialog';
 import { Button } from '../primitives/button';
-import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { useDiffEnvironments } from '@/hooks/use-environments';
-import { useAuth } from '@/context/auth/hooks';
-import { formatDateSimple } from '@/utils/format-date';
 import { ResourceRow } from '../resource-row';
+import type { IEnvironment } from '@novu/shared';
+import type { IResourceDiffResult } from '@/api/environments';
 
 type PublishModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  environment: any;
+  environment: IEnvironment;
   currentEnvironmentId?: string;
   onConfirm: () => void;
   isPublishing?: boolean;
@@ -35,9 +25,7 @@ export function PublishModal({
   isPublishing = false,
   publishError = null,
 }: PublishModalProps) {
-  const { currentUser } = useAuth();
-
-  const { data: diffData, isLoading } = useDiffEnvironments({
+  const { data: diffData } = useDiffEnvironments({
     sourceEnvironmentId: currentEnvironmentId,
     targetEnvironmentId: environment?._id,
     enabled: isOpen,
@@ -99,7 +87,6 @@ export function PublishModal({
 function PublishModalHeader({
   publishError,
   totalChanges,
-  isPublishing,
 }: {
   publishError?: string | null;
   totalChanges: number;
@@ -148,9 +135,9 @@ function PublishModalContent({
   publishError?: string | null;
   isPublishing: boolean;
   totalChanges: number;
-  environment: any;
-  workflowResources: any[];
-  layoutResources: any[];
+  environment: IEnvironment;
+  workflowResources: IResourceDiffResult[];
+  layoutResources: IResourceDiffResult[];
 }) {
   const getTitle = () => {
     if (publishError) return 'Publishing Failed';
@@ -217,7 +204,7 @@ function PublishModalContent({
   );
 }
 
-function ChangesSummary({ resources }: { resources: any[] }) {
+function ChangesSummary({ resources }: { resources: IResourceDiffResult[] }) {
   return (
     <div className="bg-bg-weak rounded-lg">
       <div className="p-1">
@@ -273,7 +260,7 @@ function PublishModalActions({
   totalChanges: number;
   publishError?: string | null;
   isPublishing: boolean;
-  environment: any;
+  environment: IEnvironment;
   onClose: () => void;
   onConfirm: () => void;
 }) {

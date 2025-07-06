@@ -140,6 +140,24 @@ export const SideNavigation = () => {
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
+              {isEmailLayoutsPageActive && (
+                <Protect permission={PermissionsEnum.LAYOUT_READ}>
+                  <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                    <RiLayout5Line className="size-4" />
+                    <span>Email Layouts</span>
+                  </NavigationLink>
+                </Protect>
+              )}
+              {isTranslationEnabled && (
+                <NavigationLink
+                  to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                >
+                  <RiTranslate2 className="size-4" />
+                  <span>Translations</span>
+                </NavigationLink>
+              )}
+            </NavigationGroup>
+            <NavigationGroup label="Data">
               <Protect permission={PermissionsEnum.SUBSCRIBER_READ}>
                 <NavigationLink
                   to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}
@@ -157,28 +175,6 @@ export const SideNavigation = () => {
                 </Protect>
               )}
             </NavigationGroup>
-            {(isEmailLayoutsPageActive || isTranslationEnabled) && (
-              <NavigationGroup label="Resources">
-                {isEmailLayoutsPageActive && (
-                  <Protect permission={PermissionsEnum.LAYOUT_READ}>
-                    <NavigationLink
-                      to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}
-                    >
-                      <RiLayout5Line className="size-4" />
-                      <span>Email Layouts</span>
-                    </NavigationLink>
-                  </Protect>
-                )}
-                {isTranslationEnabled && (
-                  <NavigationLink
-                    to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
-                  >
-                    <RiTranslate2 className="size-4" />
-                    <span>Translations</span>
-                  </NavigationLink>
-                )}
-              </NavigationGroup>
-            )}
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
