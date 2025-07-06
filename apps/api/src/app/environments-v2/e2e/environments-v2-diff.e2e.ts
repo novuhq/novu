@@ -12,7 +12,7 @@ describe('Environment Diff - /v2/environments/diff (POST) #novu-v2', async () =>
   const environmentRepository = new EnvironmentRepository();
   const workflowRepository = new NotificationTemplateRepository();
 
-  before(async () => {
+  beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);

@@ -23,6 +23,10 @@ export class WorkflowComparator {
     userContext: UserSessionData
   ): Promise<IWorkflowComparison> {
     try {
+      if (!sourceWorkflow || !targetWorkflow) {
+        throw new Error('Source and target workflows must not be null');
+      }
+
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({

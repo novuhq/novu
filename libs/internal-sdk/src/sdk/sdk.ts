@@ -146,10 +146,10 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Retrieve workflow step
+   * Check topic subscriber
    *
    * @remarks
-   * Retrieves data for a specific step in a workflow
+   * Check if a subscriber belongs to a certain topic
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,

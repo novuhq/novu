@@ -31,10 +31,11 @@ export class EnvironmentResponseDto {
   })
   identifier: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: EnvironmentTypeEnum,
     description: 'Type of the environment',
     example: EnvironmentTypeEnum.PROD,
+    nullable: true,
   })
   type: EnvironmentTypeEnum;
 
