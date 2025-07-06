@@ -10,7 +10,7 @@ import { Separator } from '@/components/primitives/separator';
 import TextSeparator from '@/components/primitives/text-separator';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { ControlInput } from '../control-input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { InputRoot } from '../input';
 import { useFormField } from './form-context';
 

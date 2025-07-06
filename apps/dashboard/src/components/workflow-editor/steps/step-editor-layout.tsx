@@ -2,14 +2,17 @@ import {
   WorkflowResponseDto,
   StepResponseDto,
   PermissionsEnum,
-  FeatureFlagsKeysEnum,
   EnvironmentTypeEnum,
+  WorkflowResponseDto,
+  StepResponseDto,
+  PermissionsEnum,
 } from '@novu/shared';
 import { cn } from '@/utils/ui';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine, RiLockLine, RiArrowRightSLine } from 'react-icons/ri';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { StepIssuesPanel } from '@/components/workflow-editor/steps/step-issues-panel';
+import { useParams } from 'react-router-dom';
+import { IssuesPanel } from '@/components/issues-panel';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
@@ -24,9 +27,9 @@ import { Protect } from '../../../utils/protect';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { useFetchTranslations, type FetchTranslationsParams } from '@/hooks/use-fetch-translations';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -42,7 +45,7 @@ function StepEditorContent() {
   const navigate = useNavigate();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
-  const isTranslationsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+  const isTranslationsEnabled = useIsTranslationEnabled();
 
   // Fetch translations for the current workflow
   const { data: translationsData } = useFetchTranslations({
@@ -167,7 +170,7 @@ function StepEditorContent() {
           </ResizableLayout>
         </div>
 
-        <StepIssuesPanel step={step} />
+        <IssuesPanel issues={step.issues} />
       </ResizableLayout.MainContentPanel>
 
       <TestWorkflowDrawer

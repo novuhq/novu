@@ -2,10 +2,10 @@ import { BadRequestException, Injectable, UnprocessableEntityException } from '@
 import { createHash } from 'crypto';
 import { nanoid } from 'nanoid';
 
-import { encryptApiKey } from '@novu/application-generic';
+import { encryptApiKey, FeatureFlagsService } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository, NotificationGroupRepository } from '@novu/dal';
 
-import { EnvironmentEnum, EnvironmentTypeEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
+import { EnvironmentEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { CreateDefaultLayout, CreateDefaultLayoutCommand } from '../../../layouts-v1/usecases';
@@ -20,7 +20,8 @@ export class CreateEnvironment {
     private notificationGroupRepository: NotificationGroupRepository,
     private generateUniqueApiKey: GenerateUniqueApiKey,
     private createDefaultLayoutUsecase: CreateDefaultLayout,
-    private createNovuIntegrationsUsecase: CreateNovuIntegrations
+    private createNovuIntegrationsUsecase: CreateNovuIntegrations,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: CreateEnvironmentCommand): Promise<EnvironmentResponseDto> {
@@ -63,7 +64,7 @@ export class CreateEnvironment {
       throw new BadRequestException('Color property is required');
     }
 
-    const type = this.getEnvironmentType(command.name, command.type);
+    const type = await this.getEnvironmentType(command.name, command.organizationId, command.type);
 
     const environment = await this.environmentRepository.create({
       _organizationId: command.organizationId,
@@ -151,8 +152,22 @@ export class CreateEnvironment {
     return commandColor;
   }
 
-  private getEnvironmentType(name: string, commandType?: EnvironmentTypeEnum): EnvironmentTypeEnum {
+  private async getEnvironmentType(
+    name: string,
+    organizationId: string,
+    commandType?: EnvironmentTypeEnum
+  ): Promise<EnvironmentTypeEnum> {
     if (commandType) return commandType;
+
+    const isNewChangeMechanismEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED,
+      organization: { _id: organizationId },
+      defaultValue: false,
+    });
+
+    if (!isNewChangeMechanismEnabled) {
+      return EnvironmentTypeEnum.DEV;
+    }
 
     if (name === EnvironmentEnum.DEVELOPMENT) return EnvironmentTypeEnum.DEV;
     if (name === EnvironmentEnum.PRODUCTION) return EnvironmentTypeEnum.PROD;

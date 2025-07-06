@@ -15,7 +15,6 @@ type EditorActionsProps = {
   contentToCopy: string;
   content: Record<string, unknown>;
   resource: TranslationResource;
-  onImportSuccess?: () => void;
   onDelete: (locale: string) => void | Promise<void>;
   isDeleting?: boolean;
 };
@@ -25,7 +24,6 @@ export function EditorActions({
   contentToCopy,
   content,
   resource,
-  onImportSuccess,
   onDelete,
   isDeleting = false,
 }: EditorActionsProps) {
@@ -51,7 +49,7 @@ export function EditorActions({
               <span className="text-sm text-neutral-400">({displayName})</span>
             </div>
           </div>
-          <TranslationImportTrigger resource={resource} onSuccess={onImportSuccess}>
+          <TranslationImportTrigger resource={resource}>
             <Button variant="secondary" mode="outline" size="xs" leadingIcon={RiFileUploadLine}>
               Import locale(s)
             </Button>
@@ -67,7 +65,7 @@ export function EditorActions({
               className="rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-neutral-700 hover:border-neutral-300 hover:bg-neutral-50"
             />
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="secondary"
                   mode="outline"
@@ -81,7 +79,7 @@ export function EditorActions({
               <TooltipContent>Export translation JSON</TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger asChild>
                 <Button
                   variant="secondary"
                   mode="outline"

@@ -17,6 +17,7 @@ export enum ShortIsPrefixEnum {
   WORKFLOW = 'wf_',
   STEP = 'st_',
   ENVIRONMENT = 'env_',
+  LAYOUT = 'lt_',
 }
 
 export type Slug = `${WorkflowName}_${ShortIsPrefixEnum}${Base62Id}`;

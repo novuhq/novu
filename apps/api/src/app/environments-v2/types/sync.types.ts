@@ -1,4 +1,5 @@
 import { UserSessionData } from '@novu/shared';
+import { ClientSession } from '@novu/dal';
 
 export enum ResourceTypeEnum {
   WORKFLOW = 'workflow',
@@ -15,6 +16,7 @@ export interface ISyncContext {
   targetEnvironmentId: string;
   user: UserSessionData;
   options: ISyncOptions;
+  session?: ClientSession;
 }
 
 export interface ISyncedEntity {

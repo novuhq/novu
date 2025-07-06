@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, ClientSession } from '@novu/dal';
 
 @Injectable()
 export class TransactionalSyncService {
@@ -11,14 +11,17 @@ export class TransactionalSyncService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async executeWithTransaction<T>(operation: () => Promise<T>, operationName: string = 'sync operation'): Promise<T> {
+  async executeWithTransaction<T>(
+    operation: (session: ClientSession) => Promise<T>,
+    operationName: string = 'sync operation'
+  ): Promise<T> {
     this.logger.info(`Starting transactional ${operationName}`);
 
     try {
-      return await this.environmentRepository.withTransaction(async () => {
+      return await this.environmentRepository.withTransaction(async (session) => {
         this.logger.debug(`Executing ${operationName} within transaction`);
 
-        const result = await operation();
+        const result = await operation(session);
 
         this.logger.debug(`Successfully completed ${operationName} within transaction`);
 

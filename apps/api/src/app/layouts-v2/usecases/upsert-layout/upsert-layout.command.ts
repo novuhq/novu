@@ -1,7 +1,8 @@
 import { IsOptional, IsString, ValidateNested, IsBoolean, IsEnum, IsNotEmpty, Length } from 'class-validator';
 import { Type } from 'class-transformer';
 
-import { EnvironmentWithUserObjectCommand, MAX_NAME_LENGTH } from '@novu/application-generic';
+import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { MAX_NAME_LENGTH } from '@novu/shared';
 import { LayoutCreationSourceEnum } from '../../types';
 import { LayoutControlValuesDto } from '../../dtos/layout-controls.dto';
 

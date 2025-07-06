@@ -3,7 +3,7 @@ import { UiComponentEnum } from '@novu/shared';
 import { DelayAmount } from '@/components/workflow-editor/steps/delay/delay-amount';
 import { DigestKey } from '@/components/workflow-editor/steps/digest/digest-key';
 import { DigestWindow } from '@/components/workflow-editor/steps/digest/digest-window';
-import { EmailEditorSelect } from '@/components/workflow-editor/steps/email/email-editor-select';
+import { EmailEditorSelect } from '@/components/email-editor-select';
 import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
 import { EmailSubject } from '@/components/workflow-editor/steps/email/email-subject';
 import { InAppAction } from '@/components/workflow-editor/steps/in-app/in-app-action';
@@ -15,6 +15,15 @@ import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
 import { DataObject } from './base/data-object';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
+import { useWorkflow } from '../workflow-provider';
+import { useSaveForm } from './save-form-context';
+
+const EmailEditorSelectInternal = () => {
+  const { isUpdatePatchPending } = useWorkflow();
+  const { saveForm } = useSaveForm();
+
+  return <EmailEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} />;
+};
 
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {
   switch (component) {
@@ -51,7 +60,7 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
       return <DelayAmount />;
 
     case UiComponentEnum.EMAIL_EDITOR_SELECT: {
-      return <EmailEditorSelect />;
+      return <EmailEditorSelectInternal />;
     }
 
     case UiComponentEnum.EMAIL_BODY:

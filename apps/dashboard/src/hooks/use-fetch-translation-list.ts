@@ -7,7 +7,7 @@ export const useFetchTranslationList = (filterValues: TranslationsFilter) => {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery({
-    queryKey: [QueryKeys.fetchTranslations, filterValues, currentEnvironment?._id],
+    queryKey: [QueryKeys.fetchTranslationGroups, filterValues, currentEnvironment?._id],
     queryFn: async () => {
       if (!currentEnvironment) {
         throw new Error('Environment is required');

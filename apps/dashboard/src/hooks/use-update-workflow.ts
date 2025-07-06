@@ -1,4 +1,4 @@
-import { getWorkflowIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/step';
+import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 import { QueryKeys } from '@/utils/query-keys';
 import { updateWorkflow } from '@/api/workflows';
@@ -45,7 +45,7 @@ export const useUpdateWorkflow = (
     mutationFn: (args: UpdateWorkflowParameters) => updateWorkflow({ environment: currentEnvironment!, ...args }),
     ...options,
     onSuccess: async (data, variables, context) => {
-      const workflowId = getWorkflowIdFromSlug({ slug: data.slug, divider: WORKFLOW_DIVIDER });
+      const workflowId = getIdFromSlug({ slug: data.slug, divider: WORKFLOW_DIVIDER });
       const previousData = await queryClient.getQueryData<WorkflowResponseDto>([
         QueryKeys.fetchWorkflow,
         currentEnvironment?._id,

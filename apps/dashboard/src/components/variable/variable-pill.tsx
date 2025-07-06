@@ -1,10 +1,10 @@
 import { cn } from '@/utils/ui';
 import React, { useMemo } from 'react';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
-import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
 import { getFirstFilterAndItsArgs, validateEnhancedDigestFilters } from './utils';
 import { VariableTooltip } from './variable-tooltip';
+import { VariableFrom } from '@/components/maily/types';
 
 export const VariablePill = React.forwardRef<
   HTMLSpanElement,

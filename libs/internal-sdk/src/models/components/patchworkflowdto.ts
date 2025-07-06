@@ -32,6 +32,10 @@ export type PatchWorkflowDto = {
    * Enable or disable payload schema validation
    */
   validatePayload?: boolean | undefined;
+  /**
+   * Enable or disable translations for this workflow
+   */
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -46,6 +50,7 @@ export const PatchWorkflowDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   payloadSchema: z.record(z.any()).optional(),
   validatePayload: z.boolean().optional(),
+  isTranslationEnabled: z.boolean().optional(),
 });
 
 /** @internal */
@@ -56,6 +61,7 @@ export type PatchWorkflowDto$Outbound = {
   tags?: Array<string> | undefined;
   payloadSchema?: { [k: string]: any } | undefined;
   validatePayload?: boolean | undefined;
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -70,6 +76,7 @@ export const PatchWorkflowDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   payloadSchema: z.record(z.any()).optional(),
   validatePayload: z.boolean().optional(),
+  isTranslationEnabled: z.boolean().optional(),
 });
 
 /**

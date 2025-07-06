@@ -1,16 +1,16 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { EnvironmentRepository, BaseRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { DiffEnvironmentCommand } from './diff-environment.command';
 import { ResourceTypeEnum, ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
+import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 
 @Injectable()
 export class DiffEnvironmentUseCase {
   constructor(
     private logger: PinoLogger,
-    private environmentRepository: EnvironmentRepository,
+    private environmentValidationService: EnvironmentValidationService,
     private workflowSyncStrategy: WorkflowSyncStrategy
   ) {
     this.logger.setContext(this.constructor.name);
@@ -19,7 +19,11 @@ export class DiffEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: DiffEnvironmentCommand): Promise<IEnvironmentDiffResult> {
     try {
-      await this.validateEnvironments(command);
+      await this.environmentValidationService.validateEnvironments({
+        sourceEnvironmentId: command.sourceEnvironmentId,
+        targetEnvironmentId: command.targetEnvironmentId,
+        user: command.user,
+      });
 
       this.logger.info(
         `Starting environment diff between ${command.sourceEnvironmentId} and ${command.targetEnvironmentId}`
@@ -55,39 +59,6 @@ export class DiffEnvironmentUseCase {
     } catch (error) {
       this.logger.error(`Environment diff failed: ${error.message}`);
       throw error;
-    }
-  }
-
-  private async validateEnvironments(command: DiffEnvironmentCommand): Promise<void> {
-    if (command.sourceEnvironmentId === command.targetEnvironmentId) {
-      throw new BadRequestException('Source and target environments cannot be the same');
-    }
-
-    // Validate ObjectId format
-    if (
-      !BaseRepository.isInternalId(command.sourceEnvironmentId) ||
-      !BaseRepository.isInternalId(command.targetEnvironmentId)
-    ) {
-      throw new BadRequestException('Invalid environment ID format');
-    }
-
-    const [sourceEnv, targetEnv] = await Promise.all([
-      this.environmentRepository.findOne({
-        _id: command.sourceEnvironmentId,
-        _organizationId: command.user.organizationId,
-      }),
-      this.environmentRepository.findOne({
-        _id: command.targetEnvironmentId,
-        _organizationId: command.user.organizationId,
-      }),
-    ]);
-
-    if (!sourceEnv) {
-      throw new BadRequestException('Source environment not found');
-    }
-
-    if (!targetEnv) {
-      throw new BadRequestException('Target environment not found');
     }
   }
 

@@ -1,5 +1,5 @@
 import { ComponentProps, useCallback } from 'react';
-import { RiDeleteBin2Line, RiDownloadLine, RiMore2Fill, RiRouteFill, RiUploadLine } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiDownloadLine, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -22,7 +22,6 @@ import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/compon
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
 import { StackedFlagCircles } from '@/components/flag-circle';
-import { TranslationImportTrigger } from './translation-import-trigger';
 
 type TranslationTableCellProps = ComponentProps<typeof TableCell>;
 
@@ -73,25 +72,14 @@ function ResourceInfo({ resourceId, resourceName }: ResourceInfoProps) {
 }
 
 type TranslationActionsMenuProps = {
-  translation: TranslationGroup;
   onGoToWorkflow: (e: React.MouseEvent) => void;
   onStopPropagation: (e: React.MouseEvent) => void;
-  onImportSuccess?: () => void;
+  onDeleteClick: (e: React.MouseEvent) => void;
 };
 
-function TranslationActionsMenu({
-  translation,
-  onGoToWorkflow,
-  onStopPropagation,
-  onImportSuccess,
-}: TranslationActionsMenuProps) {
-  const resource = {
-    resourceId: translation.resourceId,
-    resourceType: translation.resourceType,
-  };
-
+function TranslationActionsMenu({ onGoToWorkflow, onStopPropagation, onDeleteClick }: TranslationActionsMenuProps) {
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild onClick={onStopPropagation}>
         <CompactButton variant="ghost" icon={RiMore2Fill} className="z-10 h-8 w-8 p-0" />
       </DropdownMenuTrigger>
@@ -101,20 +89,11 @@ function TranslationActionsMenu({
             <RiRouteFill className="h-4 w-4" />
             <span>Go to workflow</span>
           </DropdownMenuItem>
-          <TranslationImportTrigger resource={resource} onSuccess={onImportSuccess}>
-            <DropdownMenuItem onClick={onStopPropagation} className="flex cursor-pointer items-center gap-2">
-              <RiUploadLine className="h-4 w-4" />
-              <span>Import translations</span>
-            </DropdownMenuItem>
-          </TranslationImportTrigger>
           <DropdownMenuItem onClick={onStopPropagation} className="flex cursor-pointer items-center gap-2">
             <RiDownloadLine className="h-4 w-4" />
             <span>Export translations</span>
           </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={onStopPropagation}
-            className="text-destructive flex cursor-pointer items-center gap-2"
-          >
+          <DropdownMenuItem onClick={onDeleteClick} className="text-destructive flex cursor-pointer items-center gap-2">
             <RiDeleteBin2Line className="h-4 w-4" />
             <span>Disable & delete translation</span>
           </DropdownMenuItem>
@@ -189,15 +168,23 @@ export function TranslationRowSkeleton() {
 type TranslationRowProps = {
   translation: TranslationGroup;
   onTranslationClick?: (translation: TranslationGroup) => void;
-  onImportSuccess?: () => void;
+  onDeleteClick?: (translation: TranslationGroup) => void;
 };
 
-export function TranslationRow({ translation, onTranslationClick, onImportSuccess }: TranslationRowProps) {
+export function TranslationRow({ translation, onTranslationClick, onDeleteClick }: TranslationRowProps) {
   const { stopPropagation, handleGoToWorkflow } = useTranslationRowLogic(translation);
 
   const handleRowClick = useCallback(() => {
     onTranslationClick?.(translation);
   }, [onTranslationClick, translation]);
+
+  const handleDeleteClick = useCallback(
+    (e: React.MouseEvent) => {
+      stopPropagation(e);
+      onDeleteClick?.(translation);
+    },
+    [stopPropagation, onDeleteClick, translation]
+  );
 
   return (
     <TableRow key={translation.resourceId} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
@@ -224,10 +211,9 @@ export function TranslationRow({ translation, onTranslationClick, onImportSucces
       <TranslationTableCell>
         <div className="flex justify-end">
           <TranslationActionsMenu
-            translation={translation}
             onGoToWorkflow={handleGoToWorkflow}
             onStopPropagation={stopPropagation}
-            onImportSuccess={onImportSuccess}
+            onDeleteClick={handleDeleteClick}
           />
         </div>
       </TranslationTableCell>

@@ -12,7 +12,7 @@ import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { getWorkflowIdFromSlug, STEP_DIVIDER } from '@/utils/step';
+import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
@@ -108,8 +108,8 @@ const StepNode = (props: StepNodeProps) => {
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
 
   const isSelected =
-    getWorkflowIdFromSlug({ slug: stepSlug ?? '', divider: STEP_DIVIDER }) ===
-      getWorkflowIdFromSlug({ slug: data.stepSlug ?? '', divider: STEP_DIVIDER }) &&
+    getIdFromSlug({ slug: stepSlug ?? '', divider: STEP_DIVIDER }) ===
+      getIdFromSlug({ slug: data.stepSlug ?? '', divider: STEP_DIVIDER }) &&
     !!stepSlug &&
     !!data.stepSlug;
 

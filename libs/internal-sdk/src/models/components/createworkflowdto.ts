@@ -95,6 +95,18 @@ export type CreateWorkflowDto = {
    */
   active?: boolean | undefined;
   /**
+   * Enable or disable payload schema validation
+   */
+  validatePayload?: boolean | undefined;
+  /**
+   * The payload JSON Schema for the workflow
+   */
+  payloadSchema?: { [k: string]: any } | undefined;
+  /**
+   * Enable or disable translations for this workflow
+   */
+  isTranslationEnabled?: boolean | undefined;
+  /**
    * Unique identifier for the workflow
    */
   workflowId: string;
@@ -119,14 +131,6 @@ export type CreateWorkflowDto = {
    * Workflow preferences
    */
   preferences?: PreferencesRequestDto | undefined;
-  /**
-   * The payload JSON Schema for the workflow
-   */
-  payloadSchema?: { [k: string]: any } | undefined;
-  /**
-   * Enable or disable payload schema validation
-   */
-  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -258,6 +262,9 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
+  validatePayload: z.boolean().optional(),
+  payloadSchema: z.record(z.any()).optional(),
+  isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string(),
   steps: z.array(
     z.union([
@@ -305,8 +312,6 @@ export const CreateWorkflowDto$inboundSchema: z.ZodType<
   ),
   __source: WorkflowCreationSourceEnum$inboundSchema.default("editor"),
   preferences: PreferencesRequestDto$inboundSchema.optional(),
-  payloadSchema: z.record(z.any()).optional(),
-  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "__source": "source",
@@ -319,6 +324,9 @@ export type CreateWorkflowDto$Outbound = {
   description?: string | undefined;
   tags?: Array<string> | undefined;
   active: boolean;
+  validatePayload?: boolean | undefined;
+  payloadSchema?: { [k: string]: any } | undefined;
+  isTranslationEnabled: boolean;
   workflowId: string;
   steps: Array<
     | (InAppStepUpsertDto$Outbound & { type: "in_app" })
@@ -332,8 +340,6 @@ export type CreateWorkflowDto$Outbound = {
   >;
   __source: string;
   preferences?: PreferencesRequestDto$Outbound | undefined;
-  payloadSchema?: { [k: string]: any } | undefined;
-  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -346,6 +352,9 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
+  validatePayload: z.boolean().optional(),
+  payloadSchema: z.record(z.any()).optional(),
+  isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string(),
   steps: z.array(
     z.union([
@@ -393,8 +402,6 @@ export const CreateWorkflowDto$outboundSchema: z.ZodType<
   ),
   source: WorkflowCreationSourceEnum$outboundSchema.default("editor"),
   preferences: PreferencesRequestDto$outboundSchema.optional(),
-  payloadSchema: z.record(z.any()).optional(),
-  validatePayload: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     source: "__source",

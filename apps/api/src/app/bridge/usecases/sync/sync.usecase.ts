@@ -7,18 +7,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import {
-  AnalyticsService,
-  CreateWorkflow,
-  CreateWorkflowCommand,
-  DeleteWorkflowCommand,
-  DeleteWorkflowUseCase,
-  ExecuteBridgeRequest,
-  JSONSchema,
-  NotificationStep,
-  UpdateWorkflow,
-  UpdateWorkflowCommand,
-} from '@novu/application-generic';
+import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
 import {
   buildWorkflowPreferences,
   StepTypeEnum,
@@ -36,6 +25,12 @@ import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-ste
 import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
 import { StepIssuesDto } from '../../../workflows-v2/dtos';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
+import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
+import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 
 @Injectable()
 export class Sync {

@@ -1,4 +1,3 @@
-import { WorkflowWithPreferencesResponseDto } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   ShortIsPrefixEnum,
@@ -16,6 +15,7 @@ import {
   WorkflowPreferencesResponseDto,
   WorkflowResponseDto,
 } from '../dtos';
+import { WorkflowWithPreferencesResponseDto } from '../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 export function toResponseWorkflowDto(
   workflow: WorkflowWithPreferencesResponseDto,
@@ -55,6 +55,7 @@ export function toResponseWorkflowDto(
     payloadSchema: workflow.payloadSchema,
     payloadExample,
     validatePayload: workflow.validatePayload,
+    isTranslationEnabled: workflow.isTranslationEnabled,
   };
 }
 

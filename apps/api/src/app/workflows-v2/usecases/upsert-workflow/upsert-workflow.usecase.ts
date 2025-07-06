@@ -3,16 +3,12 @@ import { format } from 'prettier';
 
 import {
   AnalyticsService,
-  CreateWorkflow as CreateWorkflowV0Usecase,
-  CreateWorkflowCommand,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
   NotificationStep,
   shortId,
-  UpdateWorkflow as UpdateWorkflowV0Usecase,
-  UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
   SendWebhookMessage,
@@ -26,6 +22,7 @@ import {
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
+  ClientSession,
 } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
@@ -53,6 +50,10 @@ import { PreviewCommand } from '../preview';
 import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
 import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow as UpdateWorkflowV0Usecase } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -94,13 +95,19 @@ export class UpsertWorkflowUseCase {
       this.mixpanelTrack(command, 'Workflow Update - [API]');
 
       upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
-        UpdateWorkflowCommand.create(await this.buildUpdateWorkflowCommand(command, existingWorkflow))
+        UpdateWorkflowCommand.create({
+          ...(await this.buildUpdateWorkflowCommand(command, existingWorkflow)),
+          session: command.session,
+        })
       );
     } else {
       this.mixpanelTrack(command, 'Workflow Created - [API]');
 
       upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
-        CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
+        CreateWorkflowCommand.create({
+          ...(await this.buildCreateWorkflowCommand(command)),
+          session: command.session,
+        })
       );
     }
 
@@ -144,7 +151,7 @@ export class UpsertWorkflowUseCase {
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
     const { user, workflowDto, preserveWorkflowId } = command;
     const isWorkflowActive = workflowDto?.active ?? true;
-    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId);
+    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId, command.session);
 
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
@@ -171,6 +178,7 @@ export class UpsertWorkflowUseCase {
       status: computeWorkflowStatus(isWorkflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
+      isTranslationEnabled: workflowDto.isTranslationEnabled,
     };
   }
 
@@ -200,6 +208,7 @@ export class UpsertWorkflowUseCase {
       status: computeWorkflowStatus(workflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
+      isTranslationEnabled: workflowDto.isTranslationEnabled,
     };
   }
 
@@ -304,14 +313,15 @@ export class UpsertWorkflowUseCase {
     return finalStepId;
   }
 
-  private async getNotificationGroup(environmentId: string): Promise<string | undefined> {
+  private async getNotificationGroup(environmentId: string, session?: ClientSession): Promise<string | undefined> {
     return (
       await this.notificationGroupRepository.findOne(
         {
           name: 'General',
           _environmentId: environmentId,
         },
-        '_id'
+        '_id',
+        { session }
       )
     )?._id;
   }
@@ -354,13 +364,16 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      return this.controlValuesRepository.delete({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
-        _workflowId: workflowId,
-        _stepId: step._templateId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
+      return this.controlValuesRepository.delete(
+        {
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          _workflowId: workflowId,
+          _stepId: step._templateId,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+        },
+        { session: command.session }
+      );
     }
 
     const newControlValues = controlValues || {};

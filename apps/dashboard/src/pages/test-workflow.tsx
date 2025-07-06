@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { EditWorkflowLayout } from '@/components/edit-workflow-layout';
+import { FullPageLayout } from '@/components/full-page-layout';
 import { Toaster } from '@/components/primitives/sonner';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { TestWorkflowTabs } from '@/components/workflow-editor/test-workflow/test-workflow-tabs';
@@ -19,10 +19,10 @@ export const TestWorkflowPage = () => {
     <>
       <PageMeta title={`Trigger ${workflow?.name}`} />
       <WorkflowProvider>
-        <EditWorkflowLayout headerStartItems={<EditorBreadcrumbs />}>
+        <FullPageLayout headerStartItems={<EditorBreadcrumbs />}>
           <TestWorkflowTabs testData={testData} />
           <Toaster />
-        </EditWorkflowLayout>
+        </FullPageLayout>
       </WorkflowProvider>
     </>
   );
