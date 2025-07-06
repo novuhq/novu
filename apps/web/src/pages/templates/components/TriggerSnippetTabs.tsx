@@ -3,80 +3,130 @@ import { useMemo } from 'react';
 import set from 'lodash.set';
 import get from 'lodash.get';
 
-import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
+import {
+  INotificationTrigger,
+  INotificationTriggerVariable,
+  TemplateVariableTypeEnum,
+} from '@novu/shared';
 
 import { colors, Tabs } from '@novu/design-system';
-import { CodeSnippetProps, createCurlSnippet, createNodeSnippet } from '../../../utils/codeSnippets';
+import {
+  CodeSnippetProps,
+  createCurlSnippet,
+  createNodeSnippet,
+} from '../../../utils/codeSnippets';
 
 const NODE_JS = 'Node.js';
 const CURL = 'Curl';
 
 export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger }) {
-  const { subscriberVariables: triggerSubscriberVariables = [], reservedVariables: triggerSnippetVariables = [] } =
-    trigger || {};
-  const isPassingSubscriberId = triggerSubscriberVariables?.find((el) => el.name === 'subscriberId');
-  const subscriberVariables = isPassingSubscriberId
-    ? [...triggerSubscriberVariables]
-    : [{ name: 'subscriberId' }, ...triggerSubscriberVariables];
-
-  const toValue = getSubscriberValue(subscriberVariables, (variable) => variable.value || '<REPLACE_WITH_DATA>');
-  const payloadValue = getPayloadValue(trigger.variables);
+  const {
+    subscriberVariables: triggerSubscriberVariables = [],
+    reservedVariables: triggerSnippetVariables = [],
+  } = trigger || {};
 
   const reservedValue = useMemo(() => {
     return triggerSnippetVariables.reduce((prev, variable) => {
       prev[variable.type] = getPayloadValue(variable.variables);
-
       return prev;
     }, {});
   }, [triggerSnippetVariables]);
 
-  const prismTabs = [
+  const prismTabs = useMemo(() => {
+    return createTriggerSnippetTabs({
+      identifier: trigger.identifier,
+      subscriberVariables: triggerSubscriberVariables,
+      triggerVariables: trigger.variables,
+      reservedVariables: reservedValue,
+    });
+  }, [trigger.identifier, triggerSubscriberVariables, trigger.variables, reservedValue]);
+
+  return (
+    <Tabs defaultValue={NODE_JS} data-test-id="trigger-code-snippet" menuTabs={prismTabs} />
+  );
+}
+
+// 🔧 Abstracted helper function for creating tabs
+const createTriggerSnippetTabs = ({
+  identifier,
+  subscriberVariables,
+  triggerVariables,
+  reservedVariables,
+}: {
+  identifier: string;
+  subscriberVariables: INotificationTriggerVariable[];
+  triggerVariables: INotificationTriggerVariable[];
+  reservedVariables: Record<string, unknown>;
+}) => {
+  const isPassingSubscriberId = subscriberVariables?.find((el) => el.name === 'subscriberId');
+
+  const subs = isPassingSubscriberId
+    ? [...subscriberVariables]
+    : [{ name: 'subscriberId' }, ...subscriberVariables];
+
+  const toValue = getSubscriberValue(subs, (variable) => variable.value || '<REPLACE_WITH_DATA>');
+  const payloadValue = getPayloadValue(triggerVariables);
+
+  return [
     {
       value: NODE_JS,
       content: getNodeTriggerSnippet({
-        identifier: trigger.identifier,
+        identifier,
         to: toValue,
         payload: payloadValue,
-        snippet: reservedValue,
+        snippet: reservedVariables,
       }),
     },
     {
       value: CURL,
       content: getCurlTriggerSnippet({
-        identifier: trigger.identifier,
+        identifier,
         to: toValue,
         payload: payloadValue,
-        snippet: reservedValue,
+        snippet: reservedVariables,
       }),
     },
   ];
+};
 
-  return <Tabs defaultValue={NODE_JS} data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
-}
-
-export const getNodeTriggerSnippet = (props: CodeSnippetProps) => {
+// ✅ Snippet rendering logic
+const getNodeTriggerSnippet = (props: CodeSnippetProps) => {
   return (
-    <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
+    <Prism
+      mt={5}
+      styles={prismStyles}
+      data-test-id="trigger-code-snippet"
+      language="javascript"
+    >
       {createNodeSnippet(props)}
     </Prism>
   );
 };
 
-export const getCurlTriggerSnippet = (props: CodeSnippetProps) => {
+const getCurlTriggerSnippet = (props: CodeSnippetProps) => {
   return (
-    <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">
+    <Prism
+      mt={5}
+      styles={prismStyles}
+      language="bash"
+      key="2"
+      data-test-id="trigger-curl-snippet"
+    >
       {createCurlSnippet(props)}
     </Prism>
   );
 };
 
-export const getPayloadValue = (variables: INotificationTriggerVariable[]) => {
+// ✅ Payload variable processing
+const getPayloadValue = (variables: INotificationTriggerVariable[]) => {
   const varsObj: Record<string, any> = {};
+
   variables
     .filter((variable) => variable?.type !== TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
       set(varsObj, variable.name, variable.value || '<REPLACE_WITH_DATA>');
     });
+
   variables
     .filter((variable) => variable?.type === TemplateVariableTypeEnum.ARRAY)
     .forEach((variable) => {
@@ -85,7 +135,9 @@ export const getPayloadValue = (variables: INotificationTriggerVariable[]) => {
 
   return varsObj;
 };
-export const getSubscriberValue = (
+
+// ✅ Subscriber variable processor
+const getSubscriberValue = (
   variables: INotificationTriggerVariable[],
   getValue: (variable: INotificationTriggerVariable) => any
 ) => {
@@ -97,9 +149,12 @@ export const getSubscriberValue = (
   return varsObj;
 };
 
+// ✅ Prism style configuration
 const prismStyles = (theme) => ({
   scrollArea: {
-    border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+    border: `1px solid ${
+      theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]
+    }`,
     borderRadius: '7px',
   },
   code: {
