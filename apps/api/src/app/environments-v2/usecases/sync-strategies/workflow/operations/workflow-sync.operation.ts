@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, DeleteWorkflowUseCase, DeleteWorkflowCommand } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { SyncToEnvironmentUseCase } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { SyncToEnvironmentCommand } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.command';
@@ -8,6 +8,8 @@ import { SyncResultBuilder } from '../builders/sync-result.builder';
 import { ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_MESSAGES, WORKFLOW_SYNC_ACTIONS, SKIP_REASONS } from '../constants/workflow-sync.constants';
 import { WorkflowRepositoryService } from './workflow-repository.service';
+import { DeleteWorkflowUseCase } from '../../../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
+import { DeleteWorkflowCommand } from '../../../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 
 @Injectable()
 export class WorkflowSyncOperation {
