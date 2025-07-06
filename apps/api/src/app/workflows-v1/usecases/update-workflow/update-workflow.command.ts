@@ -137,5 +137,5 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   updatedBy?: string;
 
   @IsOptional()
-  session?: ClientSession;
+  session?: ClientSession | null;
 }

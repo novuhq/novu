@@ -182,7 +182,7 @@ export class SyncToEnvironmentUseCase {
   private async getWorkflowPreferences(
     workflowId: string,
     environmentId: string,
-    session?: ClientSession
+    session?: ClientSession | null
   ): Promise<PreferencesEntity[]> {
     return await this.preferencesRepository.find(
       {

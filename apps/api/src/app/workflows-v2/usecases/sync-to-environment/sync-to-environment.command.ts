@@ -1,5 +1,6 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
 import { IsDefined, IsString, IsOptional } from 'class-validator';
+import { Exclude } from 'class-transformer';
 import { ClientSession } from '@novu/dal';
 
 export class SyncToEnvironmentCommand extends EnvironmentWithUserObjectCommand {
@@ -12,5 +13,6 @@ export class SyncToEnvironmentCommand extends EnvironmentWithUserObjectCommand {
   targetEnvironmentId: string;
 
   @IsOptional()
-  session?: ClientSession;
+  @Exclude()
+  session?: ClientSession | null;
 }

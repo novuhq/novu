@@ -12,18 +12,26 @@ export class TransactionalSyncService {
   }
 
   async executeWithTransaction<T>(
-    operation: (session: ClientSession) => Promise<T>,
+    operation: (session: ClientSession | null) => Promise<T>,
     operationName: string = 'sync operation'
   ): Promise<T> {
     this.logger.info(`Starting transactional ${operationName}`);
 
     try {
       return await this.environmentRepository.withTransaction(async (session) => {
-        this.logger.debug(`Executing ${operationName} within transaction`);
+        if (session) {
+          this.logger.debug(`Executing ${operationName} within transaction`);
+        } else {
+          this.logger.debug(`Executing ${operationName} without transaction (non-replica set mode)`);
+        }
 
         const result = await operation(session);
 
-        this.logger.debug(`Successfully completed ${operationName} within transaction`);
+        if (session) {
+          this.logger.debug(`Successfully completed ${operationName} within transaction`);
+        } else {
+          this.logger.debug(`Successfully completed ${operationName} without transaction`);
+        }
 
         return result;
       });

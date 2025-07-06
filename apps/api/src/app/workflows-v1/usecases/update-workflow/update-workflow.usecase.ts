@@ -140,7 +140,7 @@ export class UpdateWorkflow {
 
     let notificationTemplateWithStepTemplate!: WorkflowWithPreferencesResponseDto;
 
-    const workflowUpdate = async (session?: ClientSession) => {
+    const workflowUpdate = async (session?: ClientSession | null) => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
 

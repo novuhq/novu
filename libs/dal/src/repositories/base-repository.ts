@@ -65,7 +65,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     options: {
       readPreference?: 'secondaryPreferred' | 'primary';
       query?: QueryOptions<T_DBModel>;
-      session?: ClientSession;
+      session?: ClientSession | null;
     } = {}
   ): Promise<T_MappedEntity | null> {
     const { session, ...queryOptions } = options;
@@ -87,7 +87,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async findOneAndUpdate(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     update: UpdateQuery<T_DBModel>,
-    options: QueryOptions<T_DBModel> & { session?: ClientSession } = {}
+    options: QueryOptions<T_DBModel> & { session?: ClientSession | null } = {}
   ): Promise<T_MappedEntity | null> {
     const { session, ...updateOptions } = options;
 
@@ -105,7 +105,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
 
   async delete(
     query: FilterQuery<T_DBModel> & T_Enforcement,
-    options: { session?: ClientSession } = {}
+    options: { session?: ClientSession | null } = {}
   ): Promise<{
     /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
     acknowledged: boolean;
@@ -128,7 +128,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async find(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
-    options: { limit?: number; sort?: any; skip?: number; session?: ClientSession } = {}
+    options: { limit?: number; sort?: any; skip?: number; session?: ClientSession | null } = {}
   ): Promise<T_MappedEntity[]> {
     const { session, ...queryOptions } = options;
 
@@ -275,7 +275,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
 
   async create(
     data: FilterQuery<T_DBModel> & T_Enforcement,
-    options: IOptions & { session?: ClientSession } = {}
+    options: IOptions & { session?: ClientSession | null } = {}
   ): Promise<T_MappedEntity> {
     const { session, ...saveOptions } = options;
     const newEntity = new this.MongooseModel(data);
@@ -317,7 +317,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async update(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     updateBody: UpdateQuery<T_DBModel>,
-    options: QueryOptions<T_DBModel> & { session?: ClientSession } = {}
+    options: QueryOptions<T_DBModel> & { session?: ClientSession | null } = {}
   ): Promise<{
     matched: number;
     modified: number;
@@ -388,8 +388,25 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
    *
    * Refer to https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
    */
-  async withTransaction(fn: Parameters<ClientSession['withTransaction']>[0]) {
-    return (await this._model.db.startSession()).withTransaction(fn);
+  async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
+    try {
+      return await (await this._model.db.startSession()).withTransaction(fn);
+    } catch (error) {
+      // Check if the error is related to replica set requirement
+      if (
+        error.message?.includes('replica set') ||
+        error.message?.includes('transaction') ||
+        error.codeName === 'IllegalOperation'
+      ) {
+        // eslint-disable-next-line no-console
+        console.warn('MongoDB is not running in replica set mode, execute without transaction');
+
+        // MongoDB is not running in replica set mode, execute without transaction
+        return await fn(null);
+      }
+
+      throw error;
+    }
   }
 
   async findWithCursorBasedPagination({
