@@ -16,7 +16,7 @@ export interface ISyncContext {
   targetEnvironmentId: string;
   user: UserSessionData;
   options: ISyncOptions;
-  session?: ClientSession;
+  session?: ClientSession | null;
 }
 
 export interface ISyncedEntity {

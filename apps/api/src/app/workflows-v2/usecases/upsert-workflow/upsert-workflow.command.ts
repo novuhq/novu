@@ -11,7 +11,7 @@ import {
   IsObject,
   IsDefined,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Exclude } from 'class-transformer';
 
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
 import {
@@ -153,5 +153,6 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   workflowIdOrInternalId?: string;
 
   @IsOptional()
-  session?: ClientSession;
+  @Exclude()
+  session?: ClientSession | null;
 }

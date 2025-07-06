@@ -79,7 +79,7 @@ export class CreateWorkflow {
 
     let storedWorkflow!: WorkflowWithPreferencesResponseDto;
 
-    const workflowCreation = async (session?: ClientSession) => {
+    const workflowCreation = async (session?: ClientSession | null) => {
       const triggerIdentifier = this.generateTriggerIdentifier(command);
 
       const parentChangeId: string = NotificationTemplateRepository.createObjectId();
@@ -333,7 +333,7 @@ export class CreateWorkflow {
     templateSteps: INotificationTemplateStep[],
     trigger: INotificationTrigger,
     triggerIdentifier: string,
-    session?: ClientSession
+    session?: ClientSession | null
   ): Promise<WorkflowWithPreferencesResponseDto> {
     this.logger.info(`Creating workflow ${JSON.stringify(command)}`);
 
@@ -409,7 +409,7 @@ export class CreateWorkflow {
   private async storeTemplateSteps(
     command: CreateWorkflowCommand,
     parentChangeId: string,
-    session?: ClientSession
+    session?: ClientSession | null
   ): Promise<INotificationTemplateStep[]> {
     let parentStepId: string | null = null;
     const templateSteps: INotificationTemplateStep[] = [];
@@ -417,30 +417,33 @@ export class CreateWorkflow {
     for (const step of command.steps) {
       if (!step.template) throw new BadRequestException(`Unexpected error: message template is missing`);
 
+      const messageTemplateCommand = {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+        type: step.template.type,
+        name: step.template.name,
+        content: step.template.content,
+        variables: step.template.variables,
+        contentType: step.template.contentType,
+        cta: step.template.cta,
+        subject: step.template.subject,
+        title: step.template.title,
+        feedId: step.template.feedId,
+        layoutId: step.template.layoutId,
+        preheader: step.template.preheader,
+        senderName: step.template.senderName,
+        actor: step.template.actor,
+        controls: step.template.controls,
+        output: step.template.output,
+        stepId: step.template.stepId,
+        parentChangeId,
+        workflowType: command.type,
+        ...(session ? { session } : {}),
+      };
+
       const createdMessageTemplate = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          type: step.template.type,
-          name: step.template.name,
-          content: step.template.content,
-          variables: step.template.variables,
-          contentType: step.template.contentType,
-          cta: step.template.cta,
-          subject: step.template.subject,
-          title: step.template.title,
-          feedId: step.template.feedId,
-          layoutId: step.template.layoutId,
-          preheader: step.template.preheader,
-          senderName: step.template.senderName,
-          actor: step.template.actor,
-          controls: step.template.controls,
-          output: step.template.output,
-          stepId: step.template.stepId,
-          parentChangeId,
-          workflowType: command.type,
-        })
+        CreateMessageTemplateCommand.create(messageTemplateCommand)
       );
 
       const storedVariants = await this.storeVariantSteps(
@@ -501,7 +504,7 @@ export class CreateWorkflow {
       userId: string;
       workflowType: ResourceTypeEnum;
     },
-    session?: ClientSession
+    session?: ClientSession | null
   ): Promise<IStepVariant[]> {
     if (!variants?.length) return [];
 
@@ -511,27 +514,30 @@ export class CreateWorkflow {
     for (const variant of variants) {
       if (!variant.template) throw new BadRequestException(`Unexpected error: variants message template is missing`);
 
+      const variantTemplateCommand = {
+        organizationId,
+        environmentId,
+        userId,
+        type: variant.template.type,
+        name: variant.template.name,
+        content: variant.template.content,
+        variables: variant.template.variables,
+        contentType: variant.template.contentType,
+        cta: variant.template.cta,
+        subject: variant.template.subject,
+        title: variant.template.title,
+        feedId: variant.template.feedId,
+        layoutId: variant.template.layoutId,
+        preheader: variant.template.preheader,
+        senderName: variant.template.senderName,
+        actor: variant.template.actor,
+        parentChangeId,
+        workflowType,
+        ...(session ? { session } : {}),
+      };
+
       const variantTemplate = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
-          organizationId,
-          environmentId,
-          userId,
-          type: variant.template.type,
-          name: variant.template.name,
-          content: variant.template.content,
-          variables: variant.template.variables,
-          contentType: variant.template.contentType,
-          cta: variant.template.cta,
-          subject: variant.template.subject,
-          title: variant.template.title,
-          feedId: variant.template.feedId,
-          layoutId: variant.template.layoutId,
-          preheader: variant.template.preheader,
-          senderName: variant.template.senderName,
-          actor: variant.template.actor,
-          parentChangeId,
-          workflowType,
-        })
+        CreateMessageTemplateCommand.create(variantTemplateCommand)
       );
 
       variantsList.push({

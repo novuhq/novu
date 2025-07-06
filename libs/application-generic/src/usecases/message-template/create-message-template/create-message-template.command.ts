@@ -9,6 +9,7 @@ import {
   StepTypeEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
+import { ClientSession } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema } from '../../../value-objects';
@@ -84,4 +85,7 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsEnum(ResourceTypeEnum)
   @IsDefined()
   workflowType: ResourceTypeEnum;
+
+  @IsOptional()
+  session?: ClientSession | null;
 }

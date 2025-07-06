@@ -77,8 +77,6 @@ export class UpsertWorkflowUseCase {
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    // TODO: use transaction to ensure that the workflows, steps and controls are upserted atomically
-
     const existingWorkflow = command.workflowIdOrInternalId
       ? await this.getWorkflowByIdsUseCase.execute(
           GetWorkflowByIdsCommand.create({
@@ -313,7 +311,10 @@ export class UpsertWorkflowUseCase {
     return finalStepId;
   }
 
-  private async getNotificationGroup(environmentId: string, session?: ClientSession): Promise<string | undefined> {
+  private async getNotificationGroup(
+    environmentId: string,
+    session?: ClientSession | null
+  ): Promise<string | undefined> {
     return (
       await this.notificationGroupRepository.findOne(
         {
