@@ -24,7 +24,7 @@ import {
   MAX_TAG_LENGTH,
 } from '@novu/shared';
 
-import { Type } from 'class-transformer';
+import { Exclude, Type } from 'class-transformer';
 import { RuntimeIssue, ClientSession } from '@novu/dal';
 import {
   EnvironmentWithUserCommand,
@@ -151,6 +151,10 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsString()
   updatedBy?: string;
 
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
   @IsOptional()
+  @Exclude()
   session?: ClientSession | null;
 }

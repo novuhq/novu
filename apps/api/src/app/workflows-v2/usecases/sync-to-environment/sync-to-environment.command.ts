@@ -12,6 +12,9 @@ export class SyncToEnvironmentCommand extends EnvironmentWithUserObjectCommand {
   @IsDefined()
   targetEnvironmentId: string;
 
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
   @IsOptional()
   @Exclude()
   session?: ClientSession | null;

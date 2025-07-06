@@ -152,6 +152,9 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsString()
   workflowIdOrInternalId?: string;
 
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
   @IsOptional()
   @Exclude()
   session?: ClientSession | null;
