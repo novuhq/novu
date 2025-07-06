@@ -46,7 +46,6 @@ import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 @Controller({ path: `/layouts`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
-@ApiExcludeController()
 @ApiTags('Layouts')
 export class LayoutsController {
   constructor(
