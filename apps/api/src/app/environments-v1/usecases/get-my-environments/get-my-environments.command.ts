@@ -12,5 +12,5 @@ export class GetMyEnvironmentsCommand extends BaseCommand {
   readonly returnApiKeys: boolean;
 
   @IsOptional()
-  readonly userId?: string;
+  readonly userId: string;
 }
