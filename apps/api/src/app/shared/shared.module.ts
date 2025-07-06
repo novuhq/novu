@@ -32,7 +32,7 @@ import {
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
-  ClickHouseService,
+  clickHouseService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
@@ -112,7 +112,7 @@ const dalService = {
   },
 };
 
-const ANALYTICS_PROVIDERS = [ClickHouseService, RequestLogRepository];
+const ANALYTICS_PROVIDERS = [clickHouseService, RequestLogRepository];
 
 const PROVIDERS = [
   analyticsService,
