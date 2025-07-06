@@ -1,6 +1,5 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { EnvironmentRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
 import {
   ResourceTypeEnum,
@@ -10,14 +9,14 @@ import {
   ISyncOptions,
   ISyncResult,
 } from '../../types/sync.types';
-import { TransactionalSyncService } from '../../services/transactional-sync.service';
+import { TransactionalSyncService, EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 
 @Injectable()
 export class PublishEnvironmentUseCase {
   constructor(
     private logger: PinoLogger,
-    private environmentRepository: EnvironmentRepository,
+    private environmentValidationService: EnvironmentValidationService,
     private transactionalSyncService: TransactionalSyncService,
     private workflowSyncStrategy: WorkflowSyncStrategy
   ) {
@@ -27,7 +26,11 @@ export class PublishEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: PublishEnvironmentCommand): Promise<IPublishResult> {
     try {
-      await this.validateEnvironments(command);
+      await this.environmentValidationService.validateEnvironments({
+        sourceEnvironmentId: command.sourceEnvironmentId,
+        targetEnvironmentId: command.targetEnvironmentId,
+        user: command.user,
+      });
 
       const options: ISyncOptions = {
         dryRun: command.dryRun || false,
@@ -67,39 +70,6 @@ export class PublishEnvironmentUseCase {
       };
     } catch (error) {
       this.logger.error(`Environment publish failed: ${error.message}`);
-      throw error;
-    }
-  }
-
-  private async validateEnvironments(command: PublishEnvironmentCommand): Promise<void> {
-    if (command.sourceEnvironmentId === command.targetEnvironmentId) {
-      throw new BadRequestException('Source and target environments cannot be the same');
-    }
-
-    try {
-      const [sourceEnv, targetEnv] = await Promise.all([
-        this.environmentRepository.findOne({
-          _id: command.sourceEnvironmentId,
-          _organizationId: command.user.organizationId,
-        }),
-        this.environmentRepository.findOne({
-          _id: command.targetEnvironmentId,
-          _organizationId: command.user.organizationId,
-        }),
-      ]);
-
-      if (!sourceEnv) {
-        throw new BadRequestException('Source environment not found');
-      }
-
-      if (!targetEnv) {
-        throw new BadRequestException('Target environment not found');
-      }
-    } catch (error) {
-      // Handle MongoDB cast errors for invalid ObjectIds
-      if (error.name === 'CastError') {
-        throw new BadRequestException('Invalid environment ID format');
-      }
       throw error;
     }
   }
