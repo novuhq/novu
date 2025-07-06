@@ -1,17 +1,8 @@
-import {
-  WorkflowResponseDto,
-  StepResponseDto,
-  PermissionsEnum,
-  EnvironmentTypeEnum,
-  WorkflowResponseDto,
-  StepResponseDto,
-  PermissionsEnum,
-} from '@novu/shared';
+import { WorkflowResponseDto, EnvironmentTypeEnum, StepResponseDto, PermissionsEnum } from '@novu/shared';
 import { cn } from '@/utils/ui';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine, RiLockLine, RiArrowRightSLine } from 'react-icons/ri';
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useParams } from 'react-router-dom';
 import { IssuesPanel } from '@/components/issues-panel';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
