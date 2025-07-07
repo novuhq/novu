@@ -8,7 +8,9 @@ export class ClickHouseService implements OnModuleDestroy {
 
   constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(this.constructor.name);
+  }
 
+  async init() {
     const requiredConnectionConfig = {
       url: process.env.CLICK_HOUSE_URL,
       username: process.env.CLICK_HOUSE_USER,

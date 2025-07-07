@@ -17,7 +17,7 @@ import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
 import { useUpdateWorkflow } from '@/hooks/use-update-workflow';
 import { createContextHook } from '@/utils/context';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { getWorkflowIdFromSlug, STEP_DIVIDER } from '@/utils/step';
+import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { CheckCircleIcon } from 'lucide-react';
 import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
 import { toast } from 'sonner';
@@ -56,8 +56,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const getStep = useCallback(() => {
     return workflow?.steps.find(
       (step) =>
-        getWorkflowIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
-        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+        getIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
+        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
     );
   }, [workflow, stepSlug]);
 
@@ -67,8 +67,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
     const index = workflow?.steps.findIndex(
       (current) =>
-        getWorkflowIdFromSlug({ slug: current.slug, divider: STEP_DIVIDER }) ===
-        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+        getIdFromSlug({ slug: current.slug, divider: STEP_DIVIDER }) ===
+        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
     );
     /**
      * < 1 means that the step is the first step in the workflow
@@ -85,8 +85,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
     const index = workflow.steps.findIndex(
       (step) =>
-        getWorkflowIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
-        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+        getIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
+        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
     );
 
     if (index === -1) return undefined;

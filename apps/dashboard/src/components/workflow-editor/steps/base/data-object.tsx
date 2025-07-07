@@ -3,7 +3,7 @@ import { FieldError, FieldValues, useFormContext } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
 import { Card, CardContent } from '@/components/primitives/card';
-import { ControlInput } from '@/components/primitives/control-input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { FormField, FormItem, FormMessagePure } from '@/components/primitives/form/form';
 import { useFormField } from '@/components/primitives/form/form-context';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';

@@ -1,49 +1,46 @@
 import { cn } from '@/utils/ui';
 import { autocompletion, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
-import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { useCallback, useMemo, useRef, useState, useEffect, MutableRefObject } from 'react';
+import { JSONSchema7 } from 'json-schema';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { Editor, EditorProps } from '@/components/primitives/editor';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { EditTranslationPopover } from '@/components/workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useVariables } from './control-input/hooks/use-variables';
-import { useTranslations } from './control-input/hooks/use-translations';
-import { createVariableExtension } from './control-input/variable-plugin';
-import { createTranslationExtension } from './control-input/translation-plugin';
-import { variablePillTheme } from './control-input/variable-plugin/variable-theme';
+import { useVariables } from '../../hooks/use-variables';
+import { createVariableExtension } from '@/components/primitives/variable-plugin';
+import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
+import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
 import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
-import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
-import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { useCreateVariable } from '../variable/hooks/use-create-variable';
 import { DEFAULT_SIDE_OFFSET } from './popover';
-import { DEFAULT_VARIABLE_PILL_HEIGHT } from './control-input/variable-plugin/variable-pill-widget';
-import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
-import { createTranslationAutocompleteSource } from './control-input/translation-plugin/autocomplete';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { TRANSLATION_PILL_HEIGHT } from './control-input/translation-plugin/constants';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
-type CompletionRange = {
+export type CompletionRange = {
   from: number;
   to: number;
 };
 
 type VariableEditorProps = {
+  viewRef: MutableRefObject<EditorView | null>;
+  lastCompletionRef: MutableRefObject<CompletionRange | null>;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   autoFocus?: boolean;
   id?: string;
   indentWithTab?: boolean;
   completionSources?: CompletionSource[];
-  enableTranslations?: boolean;
+  isPayloadSchemaEnabled?: boolean;
+  digestStepName?: string;
+  getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
+  onManageSchemaClick?: (variableName: string) => void;
+  skipContainerClick?: boolean;
+  children?: React.ReactNode;
 } & Pick<
   EditorProps,
   | 'className'
@@ -60,7 +57,13 @@ type VariableEditorProps = {
   | 'tagStyles'
 >;
 
+/**
+ * The VariableEditor is a wrapper around the Editor component that adds variable pill support.
+ * Note: Please keep it pure and don't add any module specific logic to it, for example workflows related logic.
+ */
 export function VariableEditor({
+  viewRef,
+  lastCompletionRef,
   value,
   onChange = () => {},
   onBlur = () => {},
@@ -79,83 +82,35 @@ export function VariableEditor({
   extensions,
   tagStyles,
   completionSources,
-  enableTranslations = true,
+  isPayloadSchemaEnabled = false,
+  digestStepName,
+  skipContainerClick = false,
+  getSchemaPropertyByKey = () => undefined,
+  onCreateNewVariable = () => Promise.resolve(),
+  onManageSchemaClick = () => {},
+  children,
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
-  const viewRef = useRef<EditorView | null>(null);
-  const lastCompletionRef = useRef<CompletionRange | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
   );
 
-  // Always call the hook, but it will be ignored if translations are disabled
-  const {
-    selectedTranslation,
-    setSelectedTranslation,
-    handleTranslationSelect,
-    handleTranslationDelete,
-    handleTranslationReplaceKey,
-  } = useTranslations(viewRef, onChange);
-
   const isVariablePopoverOpen = !!selectedVariable;
-  const isTranslationPopoverOpen = enableTranslations && !!selectedTranslation;
   const variable: LiquidVariable | undefined = selectedVariable
     ? {
         name: selectedVariable.value,
       }
     : undefined;
-
-  const { digestStepBeforeCurrent, workflow } = useWorkflow();
   const track = useTelemetry();
 
-  // Translation keys for autocompletion - only fetch if translations are enabled
-  const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
-    workflowId: workflow?._id || '',
-    enabled: enableTranslations && !!workflow?._id,
-  });
-
-  const createTranslationKeyMutation = useCreateTranslationKey();
-
-  const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
-
-  const {
-    handleCreateNewVariable,
-    isPayloadSchemaDrawerOpen,
-    highlightedVariableKey,
-    openSchemaDrawer,
-    closeSchemaDrawer,
-  } = useCreateVariable();
-
   const [variableTriggerPosition, setVariableTriggerPosition] = useState<{ top: number; left: number } | null>(null);
-  const [translationTriggerPosition, setTranslationTriggerPosition] = useState<{ top: number; left: number } | null>(
-    null
-  );
-
-  // Create an enhanced isAllowedVariable that also checks the current schema
-  const enhancedIsAllowedVariable = useCallback(
-    (variable: LiquidVariable): boolean => {
-      // First check with the original isAllowedVariable
-      if (isAllowedVariable(variable)) {
-        return true;
-      }
-
-      // If not allowed by original function, check if it exists in the current schema
-      if (variable.name.startsWith('payload.') && currentSchema) {
-        const propertyKey = variable.name.replace('payload.', '');
-        return !!getSchemaPropertyByKey(propertyKey);
-      }
-
-      return false;
-    },
-    [isAllowedVariable, currentSchema, getSchemaPropertyByKey]
-  );
 
   const onVariableSelect = useCallback(
     (completion: CompletionOption) => {
       if (completion.isNewVariable && completion.label.startsWith('payload.')) {
-        handleCreateNewVariable(completion.label.replace('payload.', ''));
+        onCreateNewVariable(completion.label.replace('payload.', ''));
       }
 
       if (completion.type === 'digest') {
@@ -169,40 +124,15 @@ export function VariableEditor({
         }
       }
     },
-    [track, handleCreateNewVariable]
+    [track, onCreateNewVariable]
   );
 
   const variableCompletionSource = useMemo(() => {
-    return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled);
-  }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
-
-  const translationCompletionSource = useMemo(() => {
-    if (!enableTranslations) return null;
-
-    return createTranslationAutocompleteSource({
-      translationKeys,
-      onCreateNewTranslationKey: async (translationKey: string) => {
-        if (!workflow?._id) return;
-
-        try {
-          await createTranslationKeyMutation.mutateAsync({
-            workflowId: workflow._id,
-            translationKey,
-            defaultValue: `[${translationKey}]`,
-          });
-        } catch {
-          showErrorToast('Failed to create translation key');
-        }
-      },
-    });
-  }, [translationKeys, createTranslationKeyMutation, workflow?._id, enableTranslations]);
+    return createAutocompleteSource(variables, onVariableSelect, onCreateNewVariable, isPayloadSchemaEnabled);
+  }, [variables, onVariableSelect, onCreateNewVariable, isPayloadSchemaEnabled]);
 
   const autocompletionExtension = useMemo(() => {
     const sources = [variableCompletionSource];
-
-    if (enableTranslations && translationCompletionSource) {
-      sources.push(translationCompletionSource);
-    }
 
     if (completionSources) {
       sources.push(...completionSources);
@@ -219,13 +149,13 @@ export function VariableEditor({
         return '';
       },
     });
-  }, [variableCompletionSource, translationCompletionSource, completionSources, enableTranslations]);
+  }, [variableCompletionSource, completionSources]);
 
   const isDigestEventsVariable = useCallback(
     (variableName: string) => {
       const { value } = getDynamicDigestVariable({
         type: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
-        digestStepName: digestStepBeforeCurrent?.stepId,
+        digestStepName,
       });
 
       if (!value) return false;
@@ -233,7 +163,7 @@ export function VariableEditor({
       const valueWithoutFilters = value.split('|')[0].trim();
       return variableName === valueWithoutFilters;
     },
-    [digestStepBeforeCurrent?.stepId]
+    [digestStepName]
   );
 
   const variablePluginExtension = useMemo(() => {
@@ -241,45 +171,29 @@ export function VariableEditor({
       viewRef,
       lastCompletionRef,
       onSelect: handleVariableSelect,
-      isAllowedVariable: enhancedIsAllowedVariable,
+      isAllowedVariable,
       isDigestEventsVariable,
       isCustomHtmlEditorEnabled,
     });
-  }, [isCustomHtmlEditorEnabled, handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
-
-  const translationPluginExtension = useMemo(() => {
-    if (!enableTranslations) return null;
-
-    return createTranslationExtension({
-      viewRef,
-      lastCompletionRef,
-      onSelect: handleTranslationSelect,
-      translationKeys,
-      isTranslationKeysLoading,
-    });
-  }, [handleTranslationSelect, translationKeys, isTranslationKeysLoading, enableTranslations]);
+  }, [
+    viewRef,
+    lastCompletionRef,
+    isCustomHtmlEditorEnabled,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+  ]);
 
   const editorExtensions = useMemo(() => {
     const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
     const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
-
-    if (enableTranslations && translationPluginExtension) {
-      allExtensions.push(translationPluginExtension);
-    }
 
     if (extensions) {
       allExtensions.push(...extensions);
     }
 
     return allExtensions;
-  }, [
-    autocompletionExtension,
-    variablePluginExtension,
-    translationPluginExtension,
-    multiline,
-    extensions,
-    enableTranslations,
-  ]);
+  }, [autocompletionExtension, variablePluginExtension, multiline, extensions]);
 
   const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
@@ -288,19 +202,7 @@ export function VariableEditor({
         viewRef.current?.focus();
       }
     },
-    [setSelectedVariable]
-  );
-
-  const handleTranslationPopoverOpenChange = useCallback(
-    (open: boolean) => {
-      if (!enableTranslations) return;
-
-      if (!open) {
-        setTimeout(() => setSelectedTranslation(null), 0);
-        viewRef.current?.focus();
-      }
-    },
-    [setSelectedTranslation, enableTranslations]
+    [setSelectedVariable, viewRef]
   );
 
   /**
@@ -311,7 +213,7 @@ export function VariableEditor({
     (event: React.MouseEvent) => {
       event.preventDefault();
       // Don't focus if a variable popover is open or if clicking on interactive elements
-      if (isVariablePopoverOpen || isTranslationPopoverOpen) return;
+      if (isVariablePopoverOpen || skipContainerClick) return;
 
       const target = event.target as HTMLElement;
 
@@ -330,7 +232,7 @@ export function VariableEditor({
         viewRef.current.focus();
       }
     },
-    [isVariablePopoverOpen, isTranslationPopoverOpen]
+    [isVariablePopoverOpen, skipContainerClick, viewRef]
   );
 
   useEffect(() => {
@@ -350,24 +252,7 @@ export function VariableEditor({
     } else {
       setVariableTriggerPosition(null);
     }
-  }, [selectedVariable]);
-
-  useEffect(() => {
-    // Calculate translation popover position when translation is selected
-    if (enableTranslations && selectedTranslation && viewRef.current) {
-      const coords = viewRef.current.coordsAtPos(selectedTranslation.from);
-
-      if (coords) {
-        const topOffset = TRANSLATION_PILL_HEIGHT + 4; // Small offset below the pill
-        setTranslationTriggerPosition({
-          top: coords.top + topOffset,
-          left: coords.left,
-        });
-      }
-    } else {
-      setTranslationTriggerPosition(null);
-    }
-  }, [selectedTranslation, enableTranslations]);
+  }, [selectedVariable, viewRef, containerRef]);
 
   return (
     <div ref={containerRef} className={className} onClick={handleContainerClick}>
@@ -395,7 +280,7 @@ export function VariableEditor({
           open={isVariablePopoverOpen}
           onOpenChange={handleVariablePopoverOpenChange}
           variable={variable}
-          isAllowedVariable={enhancedIsAllowedVariable}
+          isAllowedVariable={isAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
             // Focus back to the editor after updating the variable
@@ -408,11 +293,9 @@ export function VariableEditor({
             setTimeout(() => viewRef.current?.focus(), 0);
           }}
           getSchemaPropertyByKey={getSchemaPropertyByKey}
-          onManageSchemaClick={(variableName) => {
-            openSchemaDrawer(variableName);
-          }}
+          onManageSchemaClick={onManageSchemaClick}
           onAddToSchemaClick={(variableName) => {
-            handleCreateNewVariable(variableName);
+            onCreateNewVariable(variableName);
           }}
         >
           <div
@@ -430,30 +313,7 @@ export function VariableEditor({
           />
         </EditVariablePopover>
       )}
-      {isTranslationPopoverOpen && selectedTranslation && workflow?._id && enableTranslations && (
-        <EditTranslationPopover
-          open={isTranslationPopoverOpen}
-          onOpenChange={handleTranslationPopoverOpenChange}
-          translationKey={selectedTranslation.translationKey}
-          onDelete={handleTranslationDelete}
-          onReplaceKey={handleTranslationReplaceKey}
-          variables={variables}
-          isAllowedVariable={enhancedIsAllowedVariable}
-          workflowId={workflow._id}
-          position={translationTriggerPosition || undefined}
-        />
-      )}
-
-      <PayloadSchemaDrawer
-        isOpen={isPayloadSchemaDrawerOpen}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            closeSchemaDrawer();
-          }
-        }}
-        workflow={workflow}
-        highlightedPropertyKey={highlightedVariableKey}
-      />
+      {children}
     </div>
   );
 }

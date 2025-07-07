@@ -1,5 +1,6 @@
 import { ComponentProps } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { PermissionsEnum, LayoutResponseDto } from '@novu/shared';
 
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -18,6 +19,8 @@ import TruncatedText from '@/components/truncated-text';
 import { formatDateSimple } from '@/utils/format-date';
 import { Protect } from '@/utils/protect';
 import { cn } from '@/utils/ui';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useEnvironment } from '@/context/environment/hooks';
 
 type LayoutRowProps = {
   layout: LayoutResponseDto;
@@ -54,6 +57,9 @@ export const LayoutRowSkeleton = () => (
 );
 
 export const LayoutRow = ({ layout }: LayoutRowProps) => {
+  const { currentEnvironment } = useEnvironment();
+  const navigate = useNavigate();
+
   const stopPropagation = (e: React.MouseEvent) => {
     // don't propagate the click event to the row
     e.stopPropagation();
@@ -64,7 +70,9 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
       key={layout._id}
       className="group relative isolate cursor-pointer"
       onClick={() => {
-        // TODO: Navigate to edit layout page
+        navigate(
+          buildRoute(ROUTES.LAYOUTS_EDIT, { environmentSlug: currentEnvironment?.slug ?? '', layoutSlug: layout.slug })
+        );
       }}
     >
       <LayoutTableCell>

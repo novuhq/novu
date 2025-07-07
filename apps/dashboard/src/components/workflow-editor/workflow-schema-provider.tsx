@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
 import { useWorkflowSchemaManager, type UseWorkflowSchemaManagerReturn } from './use-workflow-schema-manager';
 import { useWorkflow } from './workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';

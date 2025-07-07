@@ -186,7 +186,6 @@ describe('Session', () => {
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
       defaultLocale: 'en_US',
-      translationsEnabled: false,
     });
 
     const validateHmacEncryptionStub = sinon.stub(encryption, 'validateHmacEncryption');
@@ -221,7 +220,6 @@ describe('Session', () => {
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
       defaultLocale: 'en_US',
-      translationsEnabled: false,
     });
     const response: SubscriberSessionResponseDto = await session.execute(command);
     expect(response.removeNovuBranding).to.equal(false);
@@ -229,7 +227,6 @@ describe('Session', () => {
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: true,
       defaultLocale: 'en_US',
-      translationsEnabled: false,
     });
     const responseWithRemoveNovuBranding: SubscriberSessionResponseDto = await session.execute(command);
     expect(responseWithRemoveNovuBranding.removeNovuBranding).to.equal(true);
@@ -261,7 +258,6 @@ describe('Session', () => {
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
       defaultLocale: 'en_US',
-      translationsEnabled: false,
     });
 
     const response: SubscriberSessionResponseDto = await session.execute(command);
@@ -301,7 +297,6 @@ describe('Session', () => {
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
       defaultLocale: 'en_US',
-      translationsEnabled: false,
     });
 
     // FREE plan should have 24 hours max snooze duration

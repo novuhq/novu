@@ -32,7 +32,7 @@ import {
   analyticsService,
   cacheService,
   CacheServiceHealthIndicator,
-  ClickHouseService,
+  clickHouseService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
@@ -119,7 +119,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
 
   // Services
-  ClickHouseService,
+  clickHouseService,
 ];
 
 const PROVIDERS = [

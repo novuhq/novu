@@ -9444,7 +9444,7 @@ packages:
 
   '@novu/notification-center@2.0.0':
     resolution: {integrity: sha512-jzhk+KebehYkc2XSUMnkp+Zd18lfPLCSMBwnsYy5V+yE2QIRM1Lb73LQyNhRw71LfriSFFfAown7xlD1+L4/Vw==}
-    deprecated: April 3, 2025 marks the end of support for @novu/notification-center. Users can migrate to the new @novu/js package. For more information, visit https://docs.novu.co/platform/inbox/overview. To migrate to the new Novu <Inbox /> refer to https://docs.novu.co/platform/inbox/react/migration-guide
+    deprecated: April 3, 2025 marks the end of support for @novu/notification-center. Users can migrate to the new @novu/react or @novu/js package. For more information, visit https://docs.novu.co/platform/inbox/overview. To migrate to the new Novu <Inbox /> refer to https://docs.novu.co/platform/inbox/react/migration-guide
     peerDependencies:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'

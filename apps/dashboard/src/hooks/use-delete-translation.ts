@@ -12,20 +12,13 @@ export const useDeleteTranslation = () => {
 
   return useMutation({
     mutationFn: (args: DeleteTranslationParameters) => deleteTranslation({ environment: currentEnvironment!, ...args }),
-    onSuccess: async (_, variables) => {
-      // Invalidate and refetch all translation-related queries
+    onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslation, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslationGroups],
         exact: false,
       });
 
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-        exact: false,
-      });
-
-      // Force refetch to ensure data is fresh
-      await queryClient.refetchQueries({
         queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
         exact: false,
       });

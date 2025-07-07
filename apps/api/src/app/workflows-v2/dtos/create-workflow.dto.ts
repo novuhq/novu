@@ -1,9 +1,8 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import {
-  StepUpsertDto,
   BaseStepConfigDto,
   InAppStepUpsertDto,
   EmailStepUpsertDto,
@@ -16,7 +15,6 @@ import {
 } from './create-step.dto';
 import { PreferencesRequestDto } from './preferences.request.dto';
 import { WorkflowCommonsFields } from './workflow-commons.dto';
-import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
 
 @ApiExtraModels(
   InAppStepUpsertDto,
@@ -110,23 +108,4 @@ export class CreateWorkflowDto extends WorkflowCommonsFields {
   @IsOptional()
   @Type(() => PreferencesRequestDto)
   preferences?: PreferencesRequestDto;
-
-  @ApiPropertyOptional({
-    description: 'The payload JSON Schema for the workflow',
-    type: 'object',
-    additionalProperties: true,
-  })
-  @IsOptional()
-  @IsValidJsonSchema({
-    message: 'payloadSchema must be a valid JSON schema',
-  })
-  payloadSchema?: object;
-
-  @ApiPropertyOptional({
-    description: 'Enable or disable payload schema validation',
-    type: 'boolean',
-  })
-  @IsOptional()
-  @IsBoolean()
-  validatePayload?: boolean;
 }

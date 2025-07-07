@@ -58,6 +58,7 @@ export function NewWorkflowDrawer({ mode, workflowId }: NewWorkflowDrawerProps) 
           name: `${workflow.name} (Copy)`,
           description: workflow.description,
           tags: workflow.tags,
+          isTranslationEnabled: workflow.isTranslationEnabled,
         }
       : undefined;
 

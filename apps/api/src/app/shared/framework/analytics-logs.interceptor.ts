@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { FeatureFlagsService, PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
-import { UserSessionData, FeatureFlagsKeysEnum } from '@novu/shared';
+import { PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
 import { retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
 import { buildLog } from '../utils/mappers';
@@ -61,7 +61,6 @@ function shouldLogAnalytics(context: ExecutionContext): boolean {
 @Injectable()
 export class AnalyticsLogsInterceptor implements NestInterceptor {
   constructor(
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly requestLogRepository: RequestLogRepository,
     private readonly logger: PinoLogger
   ) {
@@ -71,7 +70,9 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const shouldRun = await this.shouldRun(context);
 
-    if (!shouldRun) return next.handle();
+    if (!shouldRun) {
+      return next.handle();
+    }
 
     const req = context.switchToHttp().getRequest();
     const user = req.user as UserSessionData;
@@ -109,16 +110,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     const shouldLog = shouldLogAnalytics(context);
     if (!shouldLog) return false;
 
-    const req = context.switchToHttp().getRequest();
-    const user = req.user as UserSessionData;
-
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_ANALYTICS_LOGS_ENABLED,
-      user: { _id: user._id },
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-      defaultValue: false,
-    });
+    const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
 
     if (!isEnabled) return false;
 

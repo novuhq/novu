@@ -27,7 +27,6 @@ describe('EmailOutputRendererUsecase', () => {
     getOrganizationSettingsMock.execute.resolves({
       removeNovuBranding: false,
       defaultLocale: 'en_US',
-      translationsEnabled: false,
     });
     pinoLoggerMock = sinon.createStubInstance(PinoLogger);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
@@ -1570,7 +1569,6 @@ describe('EmailOutputRendererUsecase', () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
         defaultLocale: 'en_US',
-        translationsEnabled: false,
       });
 
       const renderCommand: EmailOutputRendererCommand = {
@@ -1595,7 +1593,6 @@ describe('EmailOutputRendererUsecase', () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: true,
         defaultLocale: 'en_US',
-        translationsEnabled: false,
       });
 
       const renderCommand: EmailOutputRendererCommand = {
@@ -1618,7 +1615,6 @@ describe('EmailOutputRendererUsecase', () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
         defaultLocale: 'en_US',
-        translationsEnabled: false,
       });
 
       const htmlWithBodyTag = '<html><body><p>Content</p></body></html>';
@@ -1652,7 +1648,6 @@ describe('EmailOutputRendererUsecase', () => {
       getOrganizationSettingsMock.execute.resolves({
         removeNovuBranding: false,
         defaultLocale: 'en_US',
-        translationsEnabled: false,
       });
     });
 
