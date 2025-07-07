@@ -1,4 +1,5 @@
 import { Injectable, Optional } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import {
   ControlValuesRepository,
   LocalizationResourceEnum,
@@ -19,7 +20,6 @@ import {
 } from '@novu/application-generic';
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
-import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class DeleteWorkflowUseCase {
@@ -116,6 +116,7 @@ export class DeleteWorkflowUseCase {
     }
 
     try {
+      // eslint-disable-next-line global-require
       const deleteTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.DeleteTranslationGroup, {
         strict: false,
       });
@@ -134,7 +135,7 @@ export class DeleteWorkflowUseCase {
         error: error instanceof Error ? error.message : String(error),
       });
 
-      throw error;
+      // translation group might not be present, so we can ignore the error
     }
   }
 }
