@@ -95,7 +95,7 @@ export class ClickHouseService implements OnModuleDestroy {
 
   public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
     if (!this.client) {
-      throw new Error('ClickHouse client not initialized');
+      return;
     }
 
     await this.client.exec({
