@@ -8,6 +8,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
   StorageHelperService,
+  StepRunRepository,
 } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
@@ -32,6 +33,7 @@ export class RunJob {
     private storageHelperService: StorageHelperService,
     private notificationRepository: NotificationRepository,
     private processUnsnoozeJob: ProcessUnsnoozeJob,
+    private stepRunRepository: StepRunRepository,
     private logger?: PinoLogger
   ) {}
 
@@ -48,12 +50,15 @@ export class RunJob {
       throw new PlatformException(`Job with id ${command.jobId} not found`);
     }
 
+    const startTime = Date.now();
+
     this.assignLogger(job);
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
 
     if (canceled && !activeDigestFollower) {
       Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
+      await this.stepRunRepository.create(job, { status: JobStatusEnum.CANCELED, duration: Date.now() - startTime });
 
       return;
     }
@@ -124,6 +129,11 @@ export class RunJob {
 
       if (sendMessageResult.status === 'success') {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
+
+        await this.stepRunRepository.create(job, {
+          duration: Date.now() - startTime,
+          status: JobStatusEnum.COMPLETED,
+        });
       } else if (sendMessageResult.status === 'failed') {
         await this.jobRepository.update(
           {
@@ -138,6 +148,13 @@ export class RunJob {
           }
         );
 
+        await this.stepRunRepository.create(job, {
+          duration: Date.now() - startTime,
+          status: JobStatusEnum.FAILED,
+          errorCode: 'send_message_failed',
+          errorMessage: sendMessageResult.reason,
+        });
+
         if (shouldHaltOnStepFailure(job)) {
           shouldQueueNextJob = false;
           await this.jobRepository.cancelPendingJobs({
@@ -147,8 +164,20 @@ export class RunJob {
             _templateId: job._templateId,
           });
         }
+      } else if (sendMessageResult.status === 'canceled') {
+        await this.stepRunRepository.create(job, {
+          duration: Date.now() - startTime,
+          status: JobStatusEnum.CANCELED,
+        });
       }
     } catch (error: any) {
+      await this.stepRunRepository.create(job, {
+        duration: Date.now() - startTime,
+        status: JobStatusEnum.FAILED,
+        errorCode: 'execution_error',
+        errorMessage: error.message,
+      });
+
       if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
         await this.jobRepository.cancelPendingJobs({
           transactionId: job.transactionId,

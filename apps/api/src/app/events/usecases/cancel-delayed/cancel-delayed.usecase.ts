@@ -2,31 +2,29 @@ import { Injectable } from '@nestjs/common';
 
 import { JobStatusEnum, JobRepository, JobEntity } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { isActionStepType, isMainDigest } from '@novu/application-generic';
+import { isActionStepType, isMainDigest, StepRunRepository } from '@novu/application-generic';
 
 import { CancelDelayedCommand } from './cancel-delayed.command';
 
-type PartialJob = Pick<JobEntity, '_id' | 'type' | 'status' | '_environmentId' | '_subscriberId'>;
-
 @Injectable()
 export class CancelDelayed {
-  constructor(private jobRepository: JobRepository) {}
+  constructor(
+    private jobRepository: JobRepository,
+    private stepRunRepository: StepRunRepository
+  ) {}
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
-    let transactionJobs: PartialJob[] = await this.jobRepository.find(
-      {
-        _environmentId: command.environmentId,
-        transactionId: command.transactionId,
-        status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED],
-      },
-      '_id type status _environmentId _subscriberId'
-    );
+    let jobs: JobEntity[] = await this.jobRepository.find({
+      _environmentId: command.environmentId,
+      transactionId: command.transactionId,
+      status: [JobStatusEnum.DELAYED, JobStatusEnum.MERGED],
+    });
 
-    if (!transactionJobs?.length) {
+    if (!jobs?.length) {
       return false;
     }
 
-    if (transactionJobs.find((job) => job.type && isActionStepType(job.type))) {
+    if (jobs.find((job) => job.type && isActionStepType(job.type))) {
       const possiblePendingJobs: PartialJob[] = await this.jobRepository.find(
         {
           _environmentId: command.environmentId,
@@ -36,14 +34,14 @@ export class CancelDelayed {
         '_id type status _environmentId _subscriberId'
       );
 
-      transactionJobs = [...transactionJobs, ...possiblePendingJobs];
+      jobs = [...jobs, ...possiblePendingJobs];
     }
 
     await this.jobRepository.update(
       {
         _environmentId: command.environmentId,
         _id: {
-          $in: transactionJobs.map((job) => job._id),
+          $in: jobs.map((job) => job._id),
         },
       },
       {
@@ -53,7 +51,13 @@ export class CancelDelayed {
       }
     );
 
-    const mainDigestJob = transactionJobs.find((job) => isMainDigest(job.type, job.status));
+    for (const job of jobs) {
+      await this.stepRunRepository.create(job, {
+        status: JobStatusEnum.CANCELED,
+      });
+    }
+
+    const mainDigestJob = jobs.find((job) => isMainDigest(job.type, job.status));
 
     if (!mainDigestJob) {
       return true;
@@ -62,7 +66,7 @@ export class CancelDelayed {
     return await this.assignNextDigestJob(mainDigestJob);
   }
 
-  private async assignNextDigestJob(job: PartialJob) {
+  private async assignNextDigestJob(job: JobEntity) {
     const mainFollowerDigestJob = await this.jobRepository.findOne(
       {
         _mergedDigestId: job._id,
@@ -82,6 +86,9 @@ export class CancelDelayed {
       return true;
     }
 
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.DELAYED,
+    });
     // update new main follower from Merged to Delayed
     await this.jobRepository.update(
       {

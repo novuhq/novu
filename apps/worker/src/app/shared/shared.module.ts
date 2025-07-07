@@ -3,6 +3,7 @@ import {
   analyticsService,
   BulkCreateExecutionDetails,
   cacheService,
+  ClickHouseService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
@@ -20,6 +21,7 @@ import {
   MetricsModule,
   ProcessTenant,
   QueuesModule,
+  StepRunRepository,
   StorageHelperService,
   storageService,
   UpdateSubscriber,
@@ -81,6 +83,8 @@ const dalService = {
   },
 };
 
+const ANALYTICS_PROVIDERS = [ClickHouseService, StepRunRepository];
+
 const PROVIDERS = [
   analyticsService,
   BulkCreateExecutionDetails,
@@ -106,6 +110,7 @@ const PROVIDERS = [
   ActiveJobsMetricService,
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
+  ...ANALYTICS_PROVIDERS,
 ];
 
 @Module({

@@ -35,6 +35,7 @@ import {
   NormalizeVariables,
   NormalizeVariablesCommand,
   StandardQueueService,
+  StepRunRepository,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
@@ -68,7 +69,8 @@ export class AddJob {
     private conditionsFilter: ConditionsFilter,
     private normalizeVariablesUsecase: NormalizeVariables,
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
-    private executeBridgeJob: ExecuteBridgeJob
+    private executeBridgeJob: ExecuteBridgeJob,
+    private stepRunRepository: StepRunRepository
   ) {}
 
   @InstrumentUsecase()
@@ -219,6 +221,9 @@ export class AddJob {
 
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.QUEUED,
+    });
 
     await this.queueJob(job, 0);
   }
@@ -235,6 +240,9 @@ export class AddJob {
       metadata = command.job.step.metadata as IWorkflowStepMetadata;
     }
 
+    await this.stepRunRepository.create(command.job, {
+      status: JobStatusEnum.DELAYED,
+    });
     const delayAmount = await this.addDelayJob.execute(
       AddJobCommand.create({
         ...command,
