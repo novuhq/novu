@@ -9,7 +9,7 @@ import {
   mapEventTypeToTitle,
   LogRepository,
   Trace,
-  TraceEvent,
+  EventType,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
@@ -148,7 +148,7 @@ function createTraceLog({
 }: {
   message: MessageEntity;
   command: MarkManyNotificationsAsCommand;
-  eventType: TraceEvent;
+  eventType: EventType;
   subscriberId: string;
   _subscriberId: string;
 }): Omit<Trace, 'id' | 'expires_at'> {

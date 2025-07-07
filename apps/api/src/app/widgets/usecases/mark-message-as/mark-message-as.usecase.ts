@@ -10,7 +10,7 @@ import {
   InvalidateCacheService,
   WebSocketsQueueService,
   TraceLogRepository,
-  TraceEvent,
+  EventType,
   Trace,
   PinoLogger,
   LogRepository,
@@ -101,7 +101,7 @@ export class MarkMessageAs {
 
   private prepareTrace(
     messages: MessageEntity[],
-    eventType: TraceEvent,
+    eventType: EventType,
     userId: string
   ): Omit<Trace, 'id' | 'expires_at'>[] {
     const traceDataArray: Omit<Trace, 'id' | 'expires_at'>[] = [];

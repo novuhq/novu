@@ -50,4 +50,66 @@ export const ORDER_BY: (keyof typeof traceLogSchema.schema)[] = [
   'created_at',
 ];
 
-export type Trace = InferClickhouseSchemaType<typeof traceLogSchema>;
+export type EventType =
+  | 'message_seen'
+  | 'message_unseen'
+  | 'message_read'
+  | 'message_unread'
+  | 'message_archived'
+  | 'message_unarchived'
+  | 'message_snoozed'
+  | 'message_unsnoozed'
+  | 'step_created'
+  | 'step_queued'
+  | 'step_delayed'
+  | 'step_digested'
+  | 'step_filtered'
+  | 'step_filter_processing'
+  | 'step_filter_failed'
+  | 'message_created'
+  | 'message_sent'
+  | 'message_snoozed'
+  | 'message_unsnoozed'
+  | 'message_unsnooze_failed'
+  | 'message_content_failed'
+  | 'message_sending_started'
+  | 'subscriber_integration_missing'
+  | 'subscriber_channel_missing'
+  | 'subscriber_validation_failed'
+  | 'provider_error'
+  | 'provider_limit_exceeded'
+  | 'digest_merged'
+  | 'digest_skipped'
+  | 'digest_triggered'
+  | 'digest_started'
+  | 'delay_completed'
+  | 'delay_misconfigured'
+  | 'delay_limit_exceeded'
+  | 'bridge_response_received'
+  | 'bridge_execution_failed'
+  | 'webhook_filter_retrying'
+  | 'webhook_filter_failed'
+  | 'integration_selected'
+  | 'layout_not_found'
+  | 'tenant_selected'
+  | 'tenant_not_found'
+  | 'variant_selected'
+  | 'notification_error'
+  | 'chat_webhook_missing'
+  | 'chat_all_channels_failed'
+  | 'chat_phone_missing'
+  | 'push_tokens_missing'
+  | 'reply_callback_missing'
+  | 'reply_callback_misconfigured'
+  | 'reply_mx_record_missing'
+  | 'reply_mx_domain_missing'
+  | 'execution_detail';
+
+export type EntityType = 'request' | 'step_run';
+
+type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
+
+export type Trace = Omit<NativeTrace, 'event_type' | 'entity_type'> & {
+  event_type: EventType;
+  entity_type: EntityType;
+};
