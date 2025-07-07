@@ -11,6 +11,7 @@ import {
   WebSocketsQueueService,
   TraceLogRepository,
   TraceEvent,
+  Trace,
   PinoLogger,
   LogRepository,
   mapEventTypeToTitle,
@@ -63,44 +64,69 @@ export class MarkMessageAs {
       },
     });
 
+    const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
+
     if (command.mark.seen != null) {
       await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
 
-      await this.logTraces(messages, command.mark.seen ? 'message_seen' : 'message_unseen', command.subscriberId);
+      const seenTraces = this.prepareTrace(
+        messages,
+        command.mark.seen ? 'message_seen' : 'message_unseen',
+        command.subscriberId
+      );
+      allTraceData.push(...seenTraces);
     }
 
     if (command.mark.read != null) {
       await this.updateServices(command, subscriber, messages, MarkEnum.READ);
 
-      await this.logTraces(messages, command.mark.read ? 'message_read' : 'message_unread', command.subscriberId);
+      const readTraces = this.prepareTrace(
+        messages,
+        command.mark.read ? 'message_read' : 'message_unread',
+        command.subscriberId
+      );
+      allTraceData.push(...readTraces);
+    }
+
+    if (allTraceData.length > 0) {
+      try {
+        await this.traceLogRepository.createMany(allTraceData);
+      } catch (error) {
+        this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
+      }
     }
 
     return messages;
   }
 
-  private async logTraces(messages: MessageEntity[], eventType: TraceEvent, userId: string): Promise<void> {
+  private prepareTrace(
+    messages: MessageEntity[],
+    eventType: TraceEvent,
+    userId: string
+  ): Omit<Trace, 'id' | 'expires_at'>[] {
+    const traceDataArray: Omit<Trace, 'id' | 'expires_at'>[] = [];
+
     for (const message of messages) {
-      try {
-        if (message._jobId) {
-          await this.traceLogRepository.create({
-            created_at: LogRepository.formatDateTime64(new Date()),
-            organization_id: message._organizationId,
-            environment_id: message._environmentId,
-            user_id: userId,
-            subscriber_id: message._subscriberId,
-            event_type: eventType,
-            title: mapEventTypeToTitle(eventType),
-            message: `Message ${eventType.replace('message_', '')} for subscriber ${message._subscriberId}`,
-            raw_data: null,
-            status: 'success',
-            entity_type: 'step_run',
-            entity_id: message._jobId,
-          });
-        }
-      } catch (error) {
-        this.logger.warn({ err: error }, `Failed to create engagement trace for message ${message._id}`);
+      if (message._jobId) {
+        traceDataArray.push({
+          created_at: LogRepository.formatDateTime64(new Date()),
+          organization_id: message._organizationId,
+          environment_id: message._environmentId,
+          user_id: userId,
+          subscriber_id: message._subscriberId,
+          event_type: eventType,
+          title: mapEventTypeToTitle(eventType),
+          message: `Message ${eventType.replace('message_', '')} for subscriber ${message._subscriberId}`,
+          raw_data: null,
+          status: 'success',
+          entity_type: 'step_run',
+          entity_id: message._jobId,
+          external_subscriber_id: message._subscriberId,
+        });
       }
     }
+
+    return traceDataArray;
   }
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {

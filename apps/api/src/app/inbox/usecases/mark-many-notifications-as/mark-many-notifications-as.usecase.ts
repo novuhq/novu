@@ -87,47 +87,53 @@ export class MarkManyNotificationsAs {
       _id: { $in: command.ids },
     });
 
+    const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
+
     for (const message of messages) {
+      if (!message._jobId) continue;
+
+      if (command.read !== undefined) {
+        allTraceData.push(
+          createTraceLog({
+            message,
+            command,
+            eventType: command.read ? 'message_read' : 'message_unread',
+            subscriberId,
+            _subscriberId,
+          })
+        );
+      }
+
+      if (command.snoozedUntil !== undefined) {
+        allTraceData.push(
+          createTraceLog({
+            message,
+            command,
+            eventType: 'message_snoozed',
+            subscriberId,
+            _subscriberId,
+          })
+        );
+      }
+
+      if (command.archived !== undefined) {
+        allTraceData.push(
+          createTraceLog({
+            message,
+            command,
+            eventType: command.archived ? 'message_archived' : 'message_unarchived',
+            subscriberId,
+            _subscriberId,
+          })
+        );
+      }
+    }
+
+    if (allTraceData.length > 0) {
       try {
-        if (!message._jobId) continue;
-
-        if (command.read !== undefined) {
-          await this.traceLogRepository.create(
-            createTraceLog({
-              message,
-              command,
-              eventType: command.read ? 'message_read' : 'message_unread',
-              subscriberId,
-              _subscriberId,
-            })
-          );
-        }
-
-        if (command.snoozedUntil !== undefined) {
-          await this.traceLogRepository.create(
-            createTraceLog({
-              message,
-              command,
-              eventType: 'message_snoozed',
-              subscriberId,
-              _subscriberId,
-            })
-          );
-        }
-
-        if (command.archived !== undefined) {
-          await this.traceLogRepository.create(
-            createTraceLog({
-              message,
-              command,
-              eventType: command.archived ? 'message_archived' : 'message_unarchived',
-              subscriberId,
-              _subscriberId,
-            })
-          );
-        }
+        await this.traceLogRepository.createMany(allTraceData);
       } catch (error) {
-        this.logger.warn({ err: error }, `Failed to create engagement trace for message ${message._id}`);
+        this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
       }
     }
   }

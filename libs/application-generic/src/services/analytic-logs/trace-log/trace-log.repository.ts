@@ -73,6 +73,56 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
       // Don't rethrow to avoid breaking the main flow
     }
   }
+
+  async createMany(traceDataArray: Omit<Trace, 'id' | 'expires_at'>[]): Promise<void> {
+    if (traceDataArray.length === 0) {
+      return;
+    }
+
+    try {
+      const firstTraceData = traceDataArray[0];
+      const isTraceLogsEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
+        defaultValue: false,
+        organization: { _id: firstTraceData.organization_id },
+        user: { _id: firstTraceData.user_id },
+        environment: { _id: firstTraceData.environment_id },
+      });
+
+      if (!isTraceLogsEnabled) {
+        return;
+      }
+
+      await this.insertMany(traceDataArray, {
+        organizationId: firstTraceData.organization_id,
+        environmentId: firstTraceData.environment_id,
+        userId: firstTraceData.user_id,
+      });
+
+      this.logger.debug(
+        {
+          count: traceDataArray.length,
+          entityIds: traceDataArray.map((trace) => trace.entity_id),
+          entityTypes: [...new Set(traceDataArray.map((trace) => trace.entity_type))],
+          eventTypes: [...new Set(traceDataArray.map((trace) => trace.event_type))],
+        },
+        'Trace events logged in batch'
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          count: traceDataArray.length,
+          entityIds: traceDataArray.map((trace) => trace.entity_id),
+          entityTypes: [...new Set(traceDataArray.map((trace) => trace.entity_type))],
+          eventTypes: [...new Set(traceDataArray.map((trace) => trace.event_type))],
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorStack: error instanceof Error ? error.stack : undefined,
+        },
+        'Failed to log trace events in batch'
+      );
+    }
+  }
 }
 
 export function mapEventTypeToTitle(eventType: TraceEvent): string {
