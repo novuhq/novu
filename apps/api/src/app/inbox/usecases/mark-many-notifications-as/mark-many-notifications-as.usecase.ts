@@ -49,7 +49,11 @@ export class MarkManyNotificationsAs {
       snoozedUntil: command.snoozedUntil,
     });
 
-    await this.logTraces(command, subscriber._id, subscriber.subscriberId);
+    await this.logTraces({
+      command,
+      subscriberId: subscriber.subscriberId,
+      _subscriberId: subscriber._id,
+    });
 
     await this.invalidateCacheService.invalidateQuery({
       key: buildFeedKey().invalidate({
@@ -76,11 +80,15 @@ export class MarkManyNotificationsAs {
     });
   }
 
-  private async logTraces(
-    command: MarkManyNotificationsAsCommand,
-    subscriberId: string,
-    _subscriberId: string
-  ): Promise<void> {
+  private async logTraces({
+    command,
+    subscriberId,
+    _subscriberId,
+  }: {
+    command: MarkManyNotificationsAsCommand;
+    subscriberId: string;
+    _subscriberId: string;
+  }): Promise<void> {
     const messages = await this.messageRepository.find({
       _environmentId: command.environmentId,
       _subscriberId,

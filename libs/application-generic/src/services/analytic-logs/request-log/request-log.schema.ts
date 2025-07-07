@@ -20,9 +20,7 @@ export const requestLogSchema = new ClickhouseSchema(
     hostname: { type: CHString() },
     status_code: { type: CHUInt16() },
     method: { type: CHLowCardinality(CHString()) },
-    transaction_id: {
-      type: CHNullable(CHString()),
-    },
+    transaction_id: { type: CHString() },
     ip: { type: CHString() },
     user_agent: { type: CHString() },
     request_body: { type: CHString() },

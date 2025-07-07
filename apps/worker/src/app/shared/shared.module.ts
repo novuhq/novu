@@ -25,7 +25,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateTenant,
-  ClickHouseService,
+  clickHouseService,
   TraceLogRepository,
 } from '@novu/application-generic';
 import {
@@ -88,7 +88,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
 
   // Services
-  ClickHouseService,
+  clickHouseService,
 ];
 
 const PROVIDERS = [
