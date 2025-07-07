@@ -43,6 +43,11 @@ export const traceLogSchema = new ClickhouseSchema(
   }
 );
 
-export const ORDER_BY: (keyof typeof traceLogSchema.schema)[] = ['organization_id', 'created_at', 'entity_type'];
+export const ORDER_BY: (keyof typeof traceLogSchema.schema)[] = [
+  'entity_type',
+  'organization_id',
+  'entity_id',
+  'created_at',
+];
 
 export type Trace = InferClickhouseSchemaType<typeof traceLogSchema>;
