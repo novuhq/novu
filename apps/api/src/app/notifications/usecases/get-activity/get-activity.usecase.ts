@@ -22,16 +22,13 @@ export class GetActivity {
       _organization: command.organizationId,
     });
 
-    const cutoffDateString = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.TRACE_LOG_CUTOFF_DATE_STRING,
-      defaultValue: '2025-07-03T12:00:00.000Z',
+    const tracesEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
+      defaultValue: false,
       organization: { _id: command.organizationId },
       user: { _id: command.userId },
       environment: { _id: command.environmentId },
     });
-
-    const cutoffDate = new Date(cutoffDateString);
-    const tracesEnabled = new Date() >= cutoffDate;
 
     let feedItem;
 

@@ -18,6 +18,7 @@ export const traceLogSchema = new ClickhouseSchema(
     organization_id: { type: CHString() },
     environment_id: { type: CHString() },
     user_id: { type: CHNullable(CHString()) },
+    external_subscriber_id: { type: CHNullable(CHString()) },
     subscriber_id: { type: CHNullable(CHString()) },
 
     // Trace metadata

@@ -49,7 +49,7 @@ export class MarkManyNotificationsAs {
       snoozedUntil: command.snoozedUntil,
     });
 
-    await this.logTraces(command, subscriber._id);
+    await this.logTraces(command, subscriber._id, subscriber.subscriberId);
 
     await this.invalidateCacheService.invalidateQuery({
       key: buildFeedKey().invalidate({
@@ -76,7 +76,11 @@ export class MarkManyNotificationsAs {
     });
   }
 
-  private async logTraces(command: MarkManyNotificationsAsCommand, _subscriberId: string): Promise<void> {
+  private async logTraces(
+    command: MarkManyNotificationsAsCommand,
+    subscriberId: string,
+    _subscriberId: string
+  ): Promise<void> {
     const messages = await this.messageRepository.find({
       _environmentId: command.environmentId,
       _subscriberId,
@@ -89,17 +93,37 @@ export class MarkManyNotificationsAs {
 
         if (command.read !== undefined) {
           await this.traceLogRepository.create(
-            createTraceLog(message, command, command.read ? 'message_read' : 'message_unread')
+            createTraceLog({
+              message,
+              command,
+              eventType: command.read ? 'message_read' : 'message_unread',
+              subscriberId,
+              _subscriberId,
+            })
           );
         }
 
         if (command.snoozedUntil !== undefined) {
-          await this.traceLogRepository.create(createTraceLog(message, command, 'message_snoozed'));
+          await this.traceLogRepository.create(
+            createTraceLog({
+              message,
+              command,
+              eventType: 'message_snoozed',
+              subscriberId,
+              _subscriberId,
+            })
+          );
         }
 
         if (command.archived !== undefined) {
           await this.traceLogRepository.create(
-            createTraceLog(message, command, command.archived ? 'message_archived' : 'message_unarchived')
+            createTraceLog({
+              message,
+              command,
+              eventType: command.archived ? 'message_archived' : 'message_unarchived',
+              subscriberId,
+              _subscriberId,
+            })
           );
         }
       } catch (error) {
@@ -109,17 +133,26 @@ export class MarkManyNotificationsAs {
   }
 }
 
-function createTraceLog(
-  message: MessageEntity,
-  command: MarkManyNotificationsAsCommand,
-  eventType: TraceEvent
-): Omit<Trace, 'id' | 'expires_at'> {
+function createTraceLog({
+  message,
+  command,
+  eventType,
+  subscriberId,
+  _subscriberId,
+}: {
+  message: MessageEntity;
+  command: MarkManyNotificationsAsCommand;
+  eventType: TraceEvent;
+  subscriberId: string;
+  _subscriberId: string;
+}): Omit<Trace, 'id' | 'expires_at'> {
   return {
     created_at: LogRepository.formatDateTime64(new Date()),
     organization_id: message._organizationId,
     environment_id: message._environmentId,
     user_id: command.subscriberId,
-    subscriber_id: message._subscriberId,
+    subscriber_id: _subscriberId,
+    external_subscriber_id: subscriberId,
     event_type: eventType,
     title: mapEventTypeToTitle(eventType),
     message: `Message ${eventType.replace('message_', '')} for subscriber ${message._subscriberId}`,

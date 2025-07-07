@@ -4,17 +4,10 @@
 
 export type BooleanFlagKey = `IS_${Uppercase<string>}_ENABLED` | `IS_${Uppercase<string>}_DISABLED`;
 export type NumericFlagKey = `${Uppercase<string>}_NUMBER`;
-export type StringFlagKey = `${Uppercase<string>}_STRING`;
 
-export type FlagKey = BooleanFlagKey | NumericFlagKey | StringFlagKey;
+export type FlagKey = BooleanFlagKey | NumericFlagKey;
 
-export type FlagType<T> = T extends BooleanFlagKey
-  ? boolean
-  : T extends NumericFlagKey
-    ? number
-    : T extends StringFlagKey
-      ? string
-      : never;
+export type FlagType<T> = T extends BooleanFlagKey ? boolean : T extends NumericFlagKey ? number : never;
 
 /**
  * Helper function to test that enum keys and values match correct format.
@@ -72,11 +65,8 @@ export enum FeatureFlagsKeysEnum {
   MAX_STEPS_PER_WORKFLOW_LIMIT_NUMBER = 'MAX_STEPS_PER_WORKFLOW_LIMIT_NUMBER',
   MAX_DEFER_DURATION_IN_MS_NUMBER = 'MAX_DEFER_DURATION_IN_MS_NUMBER',
   LOG_EXPIRATION_DAYS_NUMBER = 'LOG_EXPIRATION_DAYS_NUMBER',
-
-  // String flags
-  TRACE_LOG_CUTOFF_DATE_STRING = 'TRACE_LOG_CUTOFF_DATE_STRING',
 }
 
 export type FeatureFlags = {
-  [key in FeatureFlagsKeysEnum]: boolean | number | string | undefined;
+  [key in FeatureFlagsKeysEnum]: boolean | number | undefined;
 };
