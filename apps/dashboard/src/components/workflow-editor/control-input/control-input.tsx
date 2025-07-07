@@ -78,6 +78,7 @@ export function ControlInput({
     handleTranslationPopoverOpenChange,
     translationTriggerPosition,
     isTranslationPopoverOpen,
+    shouldEnableTranslations,
   } = useEditorTranslationOverlay({
     viewRef,
     lastCompletionRef,
@@ -140,7 +141,7 @@ export function ControlInput({
           }
         }}
         highlightedVariableKey={highlightedVariableKey}
-        enableTranslations={enableTranslations}
+        enableTranslations={shouldEnableTranslations}
       />
     </VariableEditor>
   );
