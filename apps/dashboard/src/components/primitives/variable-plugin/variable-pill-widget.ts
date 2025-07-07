@@ -123,8 +123,6 @@ export class VariablePillWidget extends WidgetType {
   toDOM() {
     const span = document.createElement('span');
     const content = document.createElement('span');
-    content.textContent = this.variableName;
-    content.title = this.variableName;
     const before = document.createElement('span');
 
     const pillStyles = this.createPillStyles();
@@ -136,6 +134,9 @@ export class VariablePillWidget extends WidgetType {
     const contentStyles = this.createContentStyles();
     Object.assign(content.style, contentStyles);
 
+    content.textContent = this.getDisplayVariableName();
+    content.title = this.variableName;
+
     span.setAttribute('data-variable', this.fullVariableName);
     span.setAttribute('data-start', this.start.toString());
     span.setAttribute('data-end', this.end.toString());
@@ -145,8 +146,6 @@ export class VariablePillWidget extends WidgetType {
     span.appendChild(content);
 
     span.addEventListener('mousedown', this.clickHandler);
-
-    content.textContent = this.getDisplayVariableName();
 
     const hasIssues = !!this.getVariableIssues();
 

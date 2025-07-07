@@ -1,6 +1,8 @@
 import { Injectable, Optional } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import {
   ControlValuesRepository,
+  LocalizationResourceEnum,
   MessageTemplateRepository,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
@@ -14,6 +16,7 @@ import {
   Instrument,
   InstrumentUsecase,
   SendWebhookMessage,
+  PinoLogger,
 } from '@novu/application-generic';
 import { DeleteWorkflowCommand } from './delete-workflow.command';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
@@ -26,6 +29,8 @@ export class DeleteWorkflowUseCase {
     private getWorkflowByIdsUseCase: GetWorkflowByIdsUseCase,
     private controlValuesRepository: ControlValuesRepository,
     private deletePreferencesUsecase: DeletePreferencesUseCase,
+    private moduleRef: ModuleRef,
+    private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
@@ -92,11 +97,45 @@ export class DeleteWorkflowUseCase {
         })
       );
 
+      await this.deleteTranslationGroup(command);
+
       await this.notificationTemplateRepository.delete({
         _id: workflow._id,
         _organizationId: command.organizationId,
         _environmentId: command.environmentId,
       });
     });
+  }
+
+  private async deleteTranslationGroup(command: DeleteWorkflowCommand) {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    try {
+      // eslint-disable-next-line global-require
+      const deleteTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.DeleteTranslationGroup, {
+        strict: false,
+      });
+
+      await deleteTranslationGroup.execute({
+        resourceId: command.workflowIdOrInternalId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userId: command.userId,
+      });
+    } catch (error) {
+      this.logger.error(`Failed to delete translations for workflow`, {
+        workflowIdentifier: command.workflowIdOrInternalId,
+        organizationId: command.organizationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      // translation group might not be present, so we can ignore the error
+    }
   }
 }

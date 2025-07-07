@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { EditorView } from '@uiw/react-codemirror';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { CompletionRange } from '@/components/primitives/variable-editor';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTranslationCompletionSource } from '@/hooks/use-translation-completion-source';
 import { useTranslationPluginExtension } from '@/hooks/use-translation-plugin-extension';
 import { TRANSLATION_PILL_HEIGHT } from '@/components/primitives/translation-plugin/constants';
 import { WorkflowResponseDto } from '@novu/shared';
+import { useIsTranslationEnabled } from './use-is-translation-enabled';
 
 type UseTranslationEditorProps = {
   viewRef: React.MutableRefObject<EditorView | null>;
@@ -22,9 +21,9 @@ export function useEditorTranslationOverlay({
   lastCompletionRef,
   onChange,
   workflow,
-  enableTranslations = false,
+  enableTranslations = true,
 }: UseTranslationEditorProps) {
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+  const isTranslationEnabled = useIsTranslationEnabled();
   const shouldEnableTranslations = isTranslationEnabled && enableTranslations;
 
   const [translationTriggerPosition, setTranslationTriggerPosition] = useState<{ top: number; left: number } | null>(

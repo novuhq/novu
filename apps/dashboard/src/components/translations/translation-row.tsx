@@ -1,5 +1,5 @@
 import { ComponentProps, useCallback } from 'react';
-import { RiDeleteBin2Line, RiDownloadLine, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -88,10 +88,6 @@ function TranslationActionsMenu({ onGoToWorkflow, onStopPropagation, onDeleteCli
           <DropdownMenuItem onClick={onGoToWorkflow} className="flex cursor-pointer items-center gap-2">
             <RiRouteFill className="h-4 w-4" />
             <span>Go to workflow</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onStopPropagation} className="flex cursor-pointer items-center gap-2">
-            <RiDownloadLine className="h-4 w-4" />
-            <span>Export translations</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={onDeleteClick} className="text-destructive flex cursor-pointer items-center gap-2">
             <RiDeleteBin2Line className="h-4 w-4" />

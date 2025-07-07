@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Variable } from '@maily-to/core/extensions';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { FormField } from '@/components/primitives/form/form';
 import { Maily } from '../../../maily/maily';
@@ -14,7 +13,6 @@ import { useCreateVariable } from '@/components/variable/hooks/use-create-variab
 import { useWorkflowSchema } from '../../workflow-schema-provider';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { createEditorBlocks } from '../../../maily/maily-config';
 import {
@@ -130,7 +128,6 @@ function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: 
 }
 
 export const EmailBody = () => {
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
   const { control, setValue } = useFormContext();
@@ -139,6 +136,13 @@ export const EmailBody = () => {
   const { isPayloadSchemaEnabled, currentSchema, getSchemaPropertyByKey } = useWorkflowSchema();
   const { saveForm } = useSaveForm();
   const track = useTelemetry();
+
+  const onChange = useCallback(
+    (value: string) => {
+      setValue('body', value);
+    },
+    [setValue]
+  );
 
   const blocks = useMemo(() => {
     return createEditorBlocks({ track, digestStepBeforeCurrent });
@@ -160,6 +164,23 @@ export const EmailBody = () => {
 
   const parsedVariables = useParseVariables(variablesSchema, digestStepBeforeCurrent?.stepId, isPayloadSchemaEnabled);
 
+  const {
+    translationCompletionSource,
+    translationPluginExtension,
+    selectedTranslation,
+    handleTranslationDelete,
+    handleTranslationReplaceKey,
+    handleTranslationPopoverOpenChange,
+    translationTriggerPosition,
+    isTranslationPopoverOpen,
+    shouldEnableTranslations,
+  } = useEditorTranslationOverlay({
+    viewRef,
+    lastCompletionRef,
+    onChange,
+    workflow,
+  });
+
   const createTranslationKeyMutation = useCreateTranslationKey();
 
   const handleCreateNewTranslationKey = useCallback(
@@ -177,7 +198,7 @@ export const EmailBody = () => {
 
   const { translationKeys, isLoading: isTranslationKeysLoading } = useFetchTranslationKeys({
     workflowId: workflow?._id || '',
-    enabled: isTranslationEnabled && !!workflow?._id,
+    enabled: shouldEnableTranslations && !!workflow?._id,
   });
 
   // Create a key that changes when variables or translation state changes to force extension recreation
@@ -188,14 +209,14 @@ export const EmailBody = () => {
       .join(',');
 
     // Include translation state to force re-mount when translation extension becomes ready
-    const translationState = `translation-${isTranslationEnabled ? 'enabled' : 'disabled'}-${isTranslationKeysLoading ? 'loading' : 'loaded'}-${translationKeys.length}`;
+    const translationState = `translation-${shouldEnableTranslations ? 'enabled' : 'disabled'}-${isTranslationKeysLoading ? 'loading' : 'loaded'}-${translationKeys.length}`;
 
     return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
   }, [
     parsedVariables.primitives,
     parsedVariables.arrays,
     parsedVariables.namespaces,
-    isTranslationEnabled,
+    shouldEnableTranslations,
     isTranslationKeysLoading,
     translationKeys.length,
   ]);
@@ -211,30 +232,6 @@ export const EmailBody = () => {
     },
     [parsedVariables]
   );
-
-  const onChange = useCallback(
-    (value: string) => {
-      setValue('body', value);
-    },
-    [setValue]
-  );
-
-  const {
-    translationCompletionSource,
-    translationPluginExtension,
-    selectedTranslation,
-    handleTranslationDelete,
-    handleTranslationReplaceKey,
-    handleTranslationPopoverOpenChange,
-    translationTriggerPosition,
-    isTranslationPopoverOpen,
-  } = useEditorTranslationOverlay({
-    viewRef,
-    lastCompletionRef,
-    onChange,
-    workflow,
-    enableTranslations: isTranslationEnabled,
-  });
 
   const { enhancedIsAllowedVariable } = useEnhancedVariableValidation({
     isAllowedVariable: parsedVariables.isAllowedVariable,
@@ -293,7 +290,7 @@ export const EmailBody = () => {
                   }
                 }}
                 highlightedVariableKey={highlightedVariableKey}
-                enableTranslations={isTranslationEnabled}
+                enableTranslations={shouldEnableTranslations}
               />
             </HtmlEditor>
           );
@@ -307,7 +304,7 @@ export const EmailBody = () => {
             variables={parsedVariables}
             blocks={blocks}
             isPayloadSchemaEnabled={isPayloadSchemaEnabled}
-            isTranslationEnabled={isTranslationEnabled && !isTranslationKeysLoading}
+            isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
             translationKeys={translationKeys}
             addDigestVariables={!!digestStepBeforeCurrent?.stepId}
             onCreateNewTranslationKey={handleCreateNewTranslationKey}
