@@ -47,6 +47,10 @@ runs:
         version: 'latest'
         bind_native: 9000
         bind_http: 8123
+      env:
+        CLICKHOUSE_DB: test_logs
+        CLICKHOUSE_USER: test
+        CLICKHOUSE_PASSWORD: test
 
     - name: 🛟 Install dependencies
       shell: bash
