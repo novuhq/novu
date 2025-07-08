@@ -3,6 +3,7 @@ import { subHours } from 'date-fns';
 import { RequestLog, RequestLogRepository, Where } from '@novu/application-generic';
 import { GetRequestsCommand } from './get-requests.command';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
+import { mapRequestLogToResponseDto } from '../../shared/mappers';
 
 @Injectable()
 export class GetRequests {
@@ -50,26 +51,7 @@ export class GetRequests {
       this.requestLogRepository.count({ where }),
     ]);
 
-    const mappedData: RequestLogResponseDto[] = findResult.data.map((log) => ({
-      id: log.id,
-      createdAt: new Date(`${log.created_at} UTC`).toISOString(),
-      url: log.url,
-      urlPattern: log.url_pattern,
-      method: log.method,
-      path: log.path,
-      statusCode: log.status_code,
-      hostname: log.hostname,
-      transactionId: log.transaction_id,
-      ip: log.ip,
-      userAgent: log.user_agent,
-      requestBody: log.request_body,
-      responseBody: log.response_body,
-      userId: log.user_id,
-      organizationId: log.organization_id,
-      environmentId: log.environment_id,
-      authType: log.auth_type,
-      durationMs: log.duration_ms,
-    }));
+    const mappedData: RequestLogResponseDto[] = findResult.data.map(mapRequestLogToResponseDto);
 
     return {
       data: mappedData,

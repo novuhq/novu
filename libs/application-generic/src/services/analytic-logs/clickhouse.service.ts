@@ -2,9 +2,11 @@ import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResu
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
+export { ClickHouseClient };
+
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
-  private client: ClickHouseClient | undefined;
+  private _client: ClickHouseClient | undefined;
 
   constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(this.constructor.name);
@@ -22,31 +24,35 @@ export class ClickHouseService implements OnModuleDestroy {
       this.logger.warn(
         'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
       );
-      this.client = undefined;
+      this._client = undefined;
 
       return;
     }
 
-    this.client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
+    this._client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
 
     this.logger.info('ClickHouse client created');
   }
 
+  get client(): ClickHouseClient | undefined {
+    return this._client;
+  }
+
   async onModuleDestroy() {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
-    await this.client.close();
+    await this._client.close();
     this.logger.info('ClickHouse client closed');
   }
 
   async ping(): Promise<PingResult> {
-    if (!this.client) {
+    if (!this._client) {
       return { success: false, error: new Error('ClickHouse client not initialized') };
     }
 
     try {
-      const isAlive = await this.client.ping();
+      const isAlive = await this._client.ping();
       this.logger.info('ClickHouse server ping successful');
 
       return isAlive;
@@ -63,11 +69,11 @@ export class ClickHouseService implements OnModuleDestroy {
     query: string;
     params: Record<string, unknown>;
   }): Promise<{ data: T[]; rows: number }> {
-    if (!this.client) {
+    if (!this._client) {
       throw new Error('ClickHouse client not initialized');
     }
 
-    const resultSet = await this.client.query({
+    const resultSet = await this._client.query({
       query,
       query_params: params,
       format: 'JSON',
@@ -82,11 +88,11 @@ export class ClickHouseService implements OnModuleDestroy {
   }
 
   public async insert<T extends Record<string, unknown>>(table: string, values: T[]) {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
 
-    await this.client.insert({
+    await this._client.insert({
       table,
       values,
       format: 'JSONEachRow',
@@ -94,11 +100,11 @@ export class ClickHouseService implements OnModuleDestroy {
   }
 
   public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
 
-    await this.client.exec({
+    await this._client.exec({
       query,
       query_params: params,
     });
