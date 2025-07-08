@@ -6,6 +6,8 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
+  PinoLogger,
+  TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 
@@ -37,18 +39,24 @@ describe('MarkManyNotificationsAs', () => {
   let webSocketsQueueServiceMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
   let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
+  let traceLogRepositoryMock: sinon.SinonStubbedInstance<TraceLogRepository>;
+  let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
     webSocketsQueueServiceMock = sinon.createStubInstance(WebSocketsQueueService);
     getSubscriberMock = sinon.createStubInstance(GetSubscriber);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
+    traceLogRepositoryMock = sinon.createStubInstance(TraceLogRepository);
+    loggerMock = sinon.createStubInstance(PinoLogger);
 
     markManyNotificationsAs = new MarkManyNotificationsAs(
       invalidateCacheMock as any,
       webSocketsQueueServiceMock as any,
       getSubscriberMock as any,
-      messageRepositoryMock as any
+      messageRepositoryMock as any,
+      traceLogRepositoryMock as any,
+      loggerMock as any
     );
   });
 
