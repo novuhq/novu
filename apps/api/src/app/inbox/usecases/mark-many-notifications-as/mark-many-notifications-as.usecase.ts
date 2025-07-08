@@ -95,6 +95,10 @@ export class MarkManyNotificationsAs {
       _id: { $in: command.ids },
     });
 
+    if (!messages || !Array.isArray(messages)) {
+      return;
+    }
+
     const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
 
     for (const message of messages) {
