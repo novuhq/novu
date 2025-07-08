@@ -40,6 +40,14 @@ runs:
       with:
         mongodb-version: 8.0
 
+    - name: 🔍 Start ClickHouse
+      if: ${{ inputs.slim == 'false' }}
+      uses: EpicStep/clickhouse-github-action@v1.1.1
+      with:
+        version: 'latest'
+        bind_native: 9000
+        bind_http: 8123
+
     - name: 🛟 Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
