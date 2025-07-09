@@ -41,19 +41,12 @@ runs:
         mongodb-version: 8.0
 
     - name: 🔍 Start ClickHouse
-    if: ${{ inputs.slim == 'false' }}
-    image: clickhouse/clickhouse-server:24.3
-    container_name: clickhouse_main
-    ports:
-      - '8123:8123'
-      - '9000:9000'
-    environment:
-      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
-    healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:8123/ping']
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      if: ${{ inputs.slim == 'false' }}
+      uses: praneeth527/clickhouse-server-action@v1.0.0
+      env:
+        CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      with:
+        tag: '24.3-alpine'
 
     - name: 🛟 Install dependencies
       shell: bash
