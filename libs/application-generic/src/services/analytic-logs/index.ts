@@ -2,3 +2,5 @@ export { RequestLogRepository, requestLogSchema, RequestLog } from './request-lo
 export { TraceLogRepository, traceLogSchema, Trace, EventType, mapEventTypeToTitle } from './trace-log';
 export * from './clickhouse.service';
 export * from './base.repository';
+
+export { createClient as createClickHouseClient } from '@clickhouse/client';

@@ -20,9 +20,10 @@ export class ClickHouseService implements OnModuleDestroy {
       database: process.env.CLICK_HOUSE_DATABASE,
     };
 
-    if (Object.values(requiredConnectionConfig).some((value) => !value)) {
+    if (!process.env.CLICK_HOUSE_URL || !process.env.CLICK_HOUSE_DATABASE) {
       this.logger.warn(
-        'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
+        'ClickHouse client is not initialized due to missing environment configuration. ' +
+          'Please provide CLICK_HOUSE_URL and CLICK_HOUSE_DATABASE.'
       );
       this._client = undefined;
 
@@ -48,7 +49,7 @@ export class ClickHouseService implements OnModuleDestroy {
 
   async ping(): Promise<PingResult> {
     if (!this._client) {
-      return { success: false, error: new Error('ClickHouse client not initialized') };
+      return { success: false, error: new Error('Ping failed: ClickHouse client not initialized') };
     }
 
     try {
@@ -70,7 +71,7 @@ export class ClickHouseService implements OnModuleDestroy {
     params: Record<string, unknown>;
   }): Promise<{ data: T[]; rows: number }> {
     if (!this._client) {
-      throw new Error('ClickHouse client not initialized');
+      throw new Error('Query failed: ClickHouse client not initialized');
     }
 
     const resultSet = await this._client.query({
