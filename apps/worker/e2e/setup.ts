@@ -140,7 +140,7 @@ before(async () => {
 
   await dropDatabase();
   await cleanupClickHouseDatabase();
-  await testServer.create((await bootstrap()).app);
+  await testServer.create(await bootstrap());
 });
 
 after(async () => {
