@@ -13,22 +13,11 @@ import { Button } from '../primitives/button';
 import { LayoutEditorSettingsDrawer } from './layout-editor-settings-drawer';
 import { CompactButton } from '../primitives/button-compact';
 import { LayoutEditorFactory } from './layout-editor-factory';
+import { LayoutPreviewFactory } from './layout-preview-factory';
 
 export const LayoutEditor = () => {
-  const { layout, isLayoutPreviewLoading, isPending } = useLayoutEditor();
+  const { form, layout, isPreviewPending, isPending } = useLayoutEditor();
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
-
-  const defaultValues = useMemo(() => (layout ? getControlsDefaultValues(layout) : {}), [layout]);
-  const values = useMemo(() => (layout?.controls.values.email ?? {}) as Record<string, unknown>, [layout]);
-
-  const form = useForm({
-    defaultValues,
-    values,
-    shouldFocusError: false,
-    resetOptions: {
-      keepDirtyValues: true,
-    },
-  });
 
   const onSubmit = async (formData: Record<string, unknown>) => {
     console.log(formData);
@@ -81,7 +70,7 @@ export const LayoutEditor = () => {
                   <ResizableLayout.Handle />
 
                   <ResizableLayout.PreviewPanel>
-                    <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isLayoutPreviewLoading} />
+                    <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isPreviewPending} />
                     <div className="flex-1 overflow-hidden">
                       <div
                         className="bg-bg-weak relative h-full overflow-y-auto p-3"
@@ -91,7 +80,7 @@ export const LayoutEditor = () => {
                           backgroundSize: '20px 20px',
                         }}
                       >
-                        <div>Preview</div>
+                        <LayoutPreviewFactory />
                       </div>
                     </div>
                   </ResizableLayout.PreviewPanel>
