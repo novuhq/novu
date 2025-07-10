@@ -30,6 +30,7 @@ import {
   SnsHandler,
   TelnyxHandler,
   TermiiSmsHandler,
+  TnzSmsHandler,
   TwilioHandler,
 } from './handlers';
 import { ISmsFactory, ISmsHandler } from './interfaces';
@@ -67,6 +68,7 @@ export class SmsFactory implements ISmsFactory {
     new EazySmsHandler(),
     new MobishastraHandler(),
     new AfroSmsHandler(),
+    new TnzSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

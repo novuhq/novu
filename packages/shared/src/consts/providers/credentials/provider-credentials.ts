@@ -1212,3 +1212,14 @@ export const afroSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const tnzSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Auth Token',
+    description: 'Your TNZ API authentication token (can be provided with or without the "Basic " prefix)',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

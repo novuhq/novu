@@ -31,6 +31,7 @@ import {
   snsConfig,
   telnyxConfig,
   termiiConfig,
+  tnzSmsConfig,
   twilioConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
@@ -295,5 +296,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: afroSmsConfig,
     docReference: 'https://afromessage.com/developers',
     logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.Tnz,
+    displayName: 'TNZ SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: tnzSmsConfig,
+    docReference: 'https://www.tnz.co.nz/docs/RESTAPI/',
+    logoFileName: { light: 'tnz-sms.svg', dark: 'tnz-sms.svg' },
   },
 ];
