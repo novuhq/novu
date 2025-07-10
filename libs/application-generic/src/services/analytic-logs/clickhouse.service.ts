@@ -30,6 +30,24 @@ export class ClickHouseService implements OnModuleDestroy {
       return;
     }
 
+    if (process.env.NODE_ENV === 'local') {
+      const defaultClient = createClient({
+        host: 'http://localhost:8123',
+        username: 'default',
+        password: '',
+        database: 'default',
+      });
+
+      try {
+        await defaultClient.query({
+          query: `CREATE DATABASE IF NOT EXISTS ${process.env.CLICK_HOUSE_DATABASE}`,
+        });
+        this.logger.info(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+      } catch (error) {
+        this.logger.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
+      }
+    }
+
     this._client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
 
     this.logger.info('ClickHouse client created');
