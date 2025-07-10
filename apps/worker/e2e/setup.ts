@@ -100,14 +100,14 @@ async function cleanupClickHouseDatabase(): Promise<void> {
 before(async () => {
   await testServer.create(await bootstrap());
   await dalService.connect(process.env.MONGO_URL);
-  // await cleanupClickHouseDatabase();
+  await cleanupClickHouseDatabase();
 });
 
 after(async () => {
   try {
     await testServer.teardown();
     await dalService.destroy();
-    // await cleanupClickHouseDatabase();
+    await cleanupClickHouseDatabase();
   } catch (e) {
     if (e.code !== 12586) {
       throw e;
