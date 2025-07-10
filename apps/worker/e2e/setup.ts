@@ -1,51 +1,13 @@
 /* eslint-disable no-console */
+import { DalService } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import sinon from 'sinon';
-import chai from 'chai';
-import { Connection } from 'mongoose';
-import { DalService } from '@novu/dal';
 import { ClickHouseClient, ClickHouseService, createClickHouseClient, PinoLogger } from '@novu/application-generic';
 import { bootstrap } from '../src/bootstrap';
 
-let databaseConnection: Connection;
+const dalService = new DalService();
 let analyticsConnection: ClickHouseClient | undefined;
 let clickHouseService: ClickHouseService | undefined;
-const dalService = new DalService();
-
-async function getDatabaseConnection(): Promise<Connection> {
-  if (!databaseConnection) {
-    databaseConnection = await dalService.connect(process.env.MONGO_URL);
-  }
-
-  return databaseConnection;
-}
-
-async function dropDatabase(): Promise<void> {
-  try {
-    const conn = await getDatabaseConnection();
-    await conn.db.dropDatabase();
-  } catch (error) {
-    console.error('Error dropping the database:', error);
-  }
-}
-
-async function closeDatabaseConnection(): Promise<void> {
-  if (databaseConnection) {
-    await databaseConnection.close();
-  }
-}
-
-async function getClickHouseConnection(): Promise<ClickHouseClient | undefined> {
-  if (!analyticsConnection) {
-    if (!clickHouseService) {
-      clickHouseService = new ClickHouseService(new PinoLogger({}));
-      await clickHouseService.init();
-    }
-    analyticsConnection = clickHouseService?.client;
-  }
-
-  return analyticsConnection;
-}
 
 function createClickHouseTestClient(database?: string): ClickHouseClient {
   return createClickHouseClient({
@@ -68,6 +30,30 @@ async function ensureClickHouseDatabase(databaseName: string): Promise<void> {
   }
 }
 
+async function getClickHouseConnection(): Promise<ClickHouseClient | undefined> {
+  if (!analyticsConnection) {
+    if (!clickHouseService) {
+      clickHouseService = new ClickHouseService(new PinoLogger({}));
+      await clickHouseService.init();
+    }
+    analyticsConnection = clickHouseService?.client;
+  }
+
+  return analyticsConnection;
+}
+
+async function truncateClickHouseTable(databaseName: string, tableName: string): Promise<void> {
+  try {
+    const conn = await getClickHouseConnection();
+    if (!conn) return;
+
+    await conn.exec({ query: `TRUNCATE TABLE IF EXISTS ${databaseName}.${tableName}` });
+    console.log(`Successfully cleaned table ${tableName}`);
+  } catch (error) {
+    console.log(`Failed to clean table ${tableName}:`, error.message);
+  }
+}
+
 async function getClickHouseTables(databaseName: string): Promise<string[]> {
   try {
     const conn = await getClickHouseConnection();
@@ -85,18 +71,6 @@ async function getClickHouseTables(databaseName: string): Promise<string[]> {
     console.log(`Could not query tables in ${databaseName}: ${error.message}`);
 
     return [];
-  }
-}
-
-async function truncateClickHouseTable(databaseName: string, tableName: string): Promise<void> {
-  try {
-    const conn = await getClickHouseConnection();
-    if (!conn) return;
-
-    await conn.exec({ query: `TRUNCATE TABLE IF EXISTS ${databaseName}.${tableName}` });
-    console.log(`Successfully cleaned table ${tableName}`);
-  } catch (error) {
-    console.log(`Failed to clean table ${tableName}:`, error.message);
   }
 }
 
@@ -123,34 +97,24 @@ async function cleanupClickHouseDatabase(): Promise<void> {
   }
 }
 
-async function closeClickHouseConnection(): Promise<void> {
-  if (analyticsConnection) {
-    await analyticsConnection.close();
-  }
-  if (clickHouseService) {
-    await clickHouseService.onModuleDestroy();
-  }
-}
-
 before(async () => {
-  /**
-   * disable truncating for better error messages - https://www.chaijs.com/guide/styles/#configtruncatethreshold
-   */
-  chai.config.truncateThreshold = 0;
-
-  await dropDatabase();
-  await cleanupClickHouseDatabase();
   await testServer.create(await bootstrap());
+  await dalService.connect(process.env.MONGO_URL);
+  await cleanupClickHouseDatabase();
 });
 
 after(async () => {
-  await testServer.teardown();
-  await dropDatabase();
-  await cleanupClickHouseDatabase();
-  await closeDatabaseConnection();
-  await closeClickHouseConnection();
+  try {
+    await testServer.teardown();
+    await dalService.destroy();
+    await cleanupClickHouseDatabase();
+  } catch (e) {
+    if (e.code !== 12586) {
+      throw e;
+    }
+  }
 });
 
-afterEach(async () => {
+afterEach(() => {
   sinon.restore();
 });
