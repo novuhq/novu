@@ -71,8 +71,8 @@ export class TimedDigestDelayService {
     timezone,
   }: ICalculateArgs): number {
     const [hours, minutes, seconds] = atTime ? atTime.split(':').map((part) => parseInt(part, 10)) : [];
-    const timezonedDateStart = timezone ? toZonedTime(dateStart, timezone) : dateStart;
-    const currentTime = timezone ? toZonedTime(new Date(), timezone) : new Date();
+    const dateStartTz = timezone ? toZonedTime(dateStart, timezone) : dateStart;
+    const currentTimeTz = timezone ? toZonedTime(new Date(), timezone) : new Date();
 
     const { bysetpos, byweekday, bymonthday } = this.calculateByFields({
       weekDays,
@@ -83,8 +83,8 @@ export class TimedDigestDelayService {
     });
 
     const rule = new RRule({
-      dtstart: timezonedDateStart,
-      until: this.getUntilDate(timezonedDateStart, unit, amount, timezone),
+      dtstart: dateStartTz,
+      until: this.getUntilDate(dateStartTz, unit, amount, timezone),
       freq: UNIT_TO_RRULE_FREQUENCY[unit],
       interval: amount,
       bysetpos,
@@ -95,14 +95,14 @@ export class TimedDigestDelayService {
       bysecond: seconds,
     });
 
-    const next = rule.after(timezonedDateStart);
+    const next = rule.after(dateStartTz);
 
     if (next === null) {
       throw new Error('Delay for next digest could not be calculated');
     }
 
     const nextUtc = timezone ? fromZonedTime(next, timezone) : next;
-    const currentUtc = timezone ? fromZonedTime(currentTime, timezone) : currentTime;
+    const currentUtc = timezone ? fromZonedTime(currentTimeTz, timezone) : currentTimeTz;
 
     return differenceInMilliseconds(nextUtc, currentUtc);
   }
