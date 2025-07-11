@@ -45,4 +45,8 @@ export interface ICredentials {
   phoneNumberIdentification?: string;
   channelId?: string;
   apiVersion?: string;
+  AppIOBaseUrl?: string;
+  AppIOSubscriptionId?: string;
+  AppIOBearerToken?: string;
+  AppIOOriginalSignature?: string;
 }

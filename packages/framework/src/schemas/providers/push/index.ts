@@ -14,4 +14,5 @@ export const pushProviderSchemas = {
   'pusher-beams': genericProviderSchemas,
   pushpad: genericProviderSchemas,
   'push-webhook': genericProviderSchemas,
+  appio: genericProviderSchemas,
 } as const satisfies Record<PushProviderIdEnum, { output: JsonSchema }>;

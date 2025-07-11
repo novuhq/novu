@@ -47,6 +47,7 @@ export enum CredentialsKeyEnum {
   channelId = 'channelId',
   phoneNumberIdentification = 'phoneNumberIdentification',
   ApiVersion = 'apiVersion',
+  AppIOBaseUrl = 'AppIOBaseUrl',
 }
 
 export enum EmailProviderIdEnum {
@@ -130,6 +131,7 @@ export enum PushProviderIdEnum {
   Pushpad = 'pushpad',
   PushWebhook = 'push-webhook',
   PusherBeams = 'pusher-beams',
+  AppIO = 'appio',
 }
 
 export enum InAppProviderIdEnum {

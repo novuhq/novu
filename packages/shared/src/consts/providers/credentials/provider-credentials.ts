@@ -1212,3 +1212,14 @@ export const afroSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const appIOConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AppIOBaseUrl,
+    displayName: 'Base URL',
+    description: 'Base URL of the App IO API (e.g., https://api.io.italia.it/api/v1)',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];

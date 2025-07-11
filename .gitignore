@@ -112,3 +112,4 @@ nx-cloud.env
 # @TODO - find a way to remove the symlinks without breaking the build
 !enterprise/packages/**/src
 /.idea/jsLinters/eslint.xml
+.vscode/mcp.json
