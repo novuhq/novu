@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
-import { Subscriber, StandardNovuOptions } from '@novu/js';
+import { StandardNovuOptions } from '@novu/js';
+import { buildSubscriber } from '@novu/js/internal';
+
 import { DefaultProps, DefaultInboxProps, WithChildrenProps } from '../utils/types';
 import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
@@ -82,7 +84,7 @@ const DefaultInbox = (props: DefaultInboxProps) => {
 
 export const Inbox = React.memo((props: InboxProps) => {
   const { subscriberId, ...propsWithoutSubscriberId } = props;
-  const subscriber = buildSubscriber(props.subscriber, props.subscriberId);
+  const subscriber = buildSubscriber({ subscriberId: props.subscriberId, subscriber: props.subscriber });
   const applicationIdentifier = props.applicationIdentifier ? props.applicationIdentifier : ''; // for keyless we provide an empty string, the api will generate a identifier
   const novu = useUnsafeNovu();
 
@@ -138,7 +140,7 @@ const InboxChild = withRenderer(
           subscriberHash,
           backendUrl,
           socketUrl,
-          subscriber: buildSubscriber(subscriber, subscriberId),
+          subscriber: buildSubscriber({ subscriberId, subscriber }),
         },
       };
     }, [
@@ -197,19 +199,4 @@ const InboxChild = withRenderer(
 
 function isWithChildrenProps(props: InboxProps): props is WithChildrenProps {
   return 'children' in props;
-}
-
-function buildSubscriber(subscriber?: string | Subscriber | undefined, subscriberId?: string): Subscriber {
-  // subscriber object
-  if (subscriber) {
-    return typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
-  }
-
-  // subscriberId
-  if (subscriberId) {
-    return { subscriberId };
-  }
-
-  // missing - keyless subscriber, the api will generate a subscriberId
-  return { subscriberId: '' };
 }
