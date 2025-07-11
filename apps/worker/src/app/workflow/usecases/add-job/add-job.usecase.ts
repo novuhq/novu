@@ -385,7 +385,7 @@ export class AddJob {
     if (bridgeResponse) {
       metadata = await this.updateMetadata(bridgeResponse, command);
     } else {
-      // @ts-expect-error
+      // @ts-expect-error - job.digest is not typed
       metadata = job.digest;
     }
 
