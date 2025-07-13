@@ -50,6 +50,10 @@ export class RunJob {
       throw new PlatformException(`Job with id ${command.jobId} not found`);
     }
 
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.RUNNING,
+    });
+
     const startTime = Date.now();
 
     this.assignLogger(job);
@@ -58,7 +62,10 @@ export class RunJob {
 
     if (canceled && !activeDigestFollower) {
       Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
-      await this.stepRunRepository.create(job, { status: JobStatusEnum.CANCELED, duration: Date.now() - startTime });
+      await this.stepRunRepository.create(job, {
+        status: JobStatusEnum.CANCELED,
+        executionDurationMs: Date.now() - startTime,
+      });
 
       return;
     }
@@ -131,7 +138,7 @@ export class RunJob {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
 
         await this.stepRunRepository.create(job, {
-          duration: Date.now() - startTime,
+          executionDurationMs: Date.now() - startTime,
           status: JobStatusEnum.COMPLETED,
         });
       } else if (sendMessageResult.status === 'failed') {
@@ -149,7 +156,7 @@ export class RunJob {
         );
 
         await this.stepRunRepository.create(job, {
-          duration: Date.now() - startTime,
+          executionDurationMs: Date.now() - startTime,
           status: JobStatusEnum.FAILED,
           errorCode: 'send_message_failed',
           errorMessage: sendMessageResult.reason,
@@ -166,13 +173,13 @@ export class RunJob {
         }
       } else if (sendMessageResult.status === 'canceled') {
         await this.stepRunRepository.create(job, {
-          duration: Date.now() - startTime,
+          executionDurationMs: Date.now() - startTime,
           status: JobStatusEnum.CANCELED,
         });
       }
     } catch (error: any) {
       await this.stepRunRepository.create(job, {
-        duration: Date.now() - startTime,
+        executionDurationMs: Date.now() - startTime,
         status: JobStatusEnum.FAILED,
         errorCode: 'execution_error',
         errorMessage: error.message,

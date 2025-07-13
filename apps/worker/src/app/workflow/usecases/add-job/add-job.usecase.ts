@@ -176,6 +176,11 @@ export class AddJob {
       throw new Error('Defer duration limit exceeded');
     }
 
+    await this.stepRunRepository.create(command.job, {
+      status: JobStatusEnum.DELAYED,
+      deferredMs: delay,
+    });
+
     await this.queueJob(job, delay);
   }
 
@@ -221,9 +226,6 @@ export class AddJob {
 
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
-    await this.stepRunRepository.create(job, {
-      status: JobStatusEnum.QUEUED,
-    });
 
     await this.queueJob(job, 0);
   }
@@ -240,9 +242,6 @@ export class AddJob {
       metadata = command.job.step.metadata as IWorkflowStepMetadata;
     }
 
-    await this.stepRunRepository.create(command.job, {
-      status: JobStatusEnum.DELAYED,
-    });
     const delayAmount = await this.addDelayJob.execute(
       AddJobCommand.create({
         ...command,
@@ -499,6 +498,10 @@ export class AddJob {
     };
 
     Logger.verbose(jobData, 'Going to add a minimal job in Standard Queue', LOG_CONTEXT);
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.QUEUED,
+    });
 
     await this.standardQueueService.add({
       name: job._id,

@@ -83,9 +83,10 @@ export class CancelDelayed {
       return true;
     }
 
-    await this.stepRunRepository.create(job, {
+    await this.stepRunRepository.create(mainFollowerDigestJob, {
       status: JobStatusEnum.DELAYED,
     });
+
     // update new main follower from Merged to Delayed
     await this.jobRepository.update(
       {

@@ -13,9 +13,10 @@ type StepRunInsertData = Omit<StepRun, 'id'>;
 type StepOptions = {
   status?: JobStatusEnum;
   message?: MessageEntity;
-  duration?: number;
+  executionDurationMs?: number;
   errorCode?: string;
   errorMessage?: string;
+  deferredMs?: number;
 };
 
 @Injectable()
@@ -61,7 +62,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
         `Step run ${job.status}`
       );
     } catch (error) {
-      this.logger.error({ error, jobId: job._id, status: job.status }, `Failed to log step ${job.status}`);
+      this.logger.error({ err: error, jobId: job._id, status: job.status }, `Failed to log step ${job.status}`);
     }
   }
 
@@ -94,8 +95,8 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
       status: options?.status || job.status,
 
       // Performance metrics
-      duration_ms: options?.duration || null,
-      deferred_ms: job.delay ? parseInt(job.delay.toString(), 10) : null,
+      duration_ms: options?.executionDurationMs || null,
+      deferred_ms: options?.deferredMs || null,
 
       // Error handling
       error_code: options?.errorCode || null,
