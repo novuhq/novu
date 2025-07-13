@@ -25,14 +25,11 @@ export class CancelDelayed {
     }
 
     if (jobs.find((job) => job.type && isActionStepType(job.type))) {
-      const possiblePendingJobs: PartialJob[] = await this.jobRepository.find(
-        {
-          _environmentId: command.environmentId,
-          transactionId: command.transactionId,
-          status: [JobStatusEnum.PENDING],
-        },
-        '_id type status _environmentId _subscriberId'
-      );
+      const possiblePendingJobs: JobEntity[] = await this.jobRepository.find({
+        _environmentId: command.environmentId,
+        transactionId: command.transactionId,
+        status: [JobStatusEnum.PENDING],
+      });
 
       jobs = [...jobs, ...possiblePendingJobs];
     }

@@ -3,7 +3,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { addYears, format } from 'date-fns';
-import { BaseRepository, SchemaKeys } from '../base.repository';
+import { LogRepository, SchemaKeys } from '../log.repository';
 import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { stepRunSchema, ORDER_BY, TABLE_NAME, StepRun } from './step-run.schema';
@@ -19,7 +19,7 @@ type StepOptions = {
 };
 
 @Injectable()
-export class StepRunRepository extends BaseRepository<typeof stepRunSchema> {
+export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
   public readonly table = TABLE_NAME;
   public readonly schema = stepRunSchema;
   public readonly schemaOrderBy: SchemaKeys<typeof stepRunSchema>[] = ORDER_BY;
@@ -28,9 +28,9 @@ export class StepRunRepository extends BaseRepository<typeof stepRunSchema> {
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    private readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService
   ) {
-    super(clickhouseService, logger);
+    super(clickhouseService, logger, stepRunSchema, ORDER_BY, featureFlagsService);
     this.logger.setContext(this.constructor.name);
   }
 
