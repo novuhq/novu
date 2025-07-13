@@ -4,7 +4,7 @@ import { Code2 } from '@/components/icons/code-2';
 import { DigestVariableIcon } from '@/components/icons/digest-variable-icon';
 import { RepeatVariable } from '@/components/icons/repeat-variable';
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
-import { REPEAT_BLOCK_ITERABLE_ALIAS } from '@/components/workflow-editor/steps/email/variables/repeat-block-aliases';
+import { REPEAT_BLOCK_ITERABLE_ALIAS } from '@/components/maily/repeat-block-aliases';
 import { DIGEST_PREVIEW_MAP } from '@/components/variable/utils/digest-variables';
 
 export const VariableIcon = ({

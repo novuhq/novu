@@ -8,7 +8,9 @@ export class ClickHouseService implements OnModuleDestroy {
 
   constructor(private readonly logger: PinoLogger) {
     this.logger.setContext(this.constructor.name);
+  }
 
+  async init() {
     const requiredConnectionConfig = {
       url: process.env.CLICK_HOUSE_URL,
       username: process.env.CLICK_HOUSE_USER,
@@ -88,6 +90,17 @@ export class ClickHouseService implements OnModuleDestroy {
       table,
       values,
       format: 'JSONEachRow',
+    });
+  }
+
+  public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
+    if (!this.client) {
+      return;
+    }
+
+    await this.client.exec({
+      query,
+      query_params: params,
     });
   }
 }

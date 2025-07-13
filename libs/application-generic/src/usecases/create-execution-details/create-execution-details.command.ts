@@ -47,6 +47,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   @IsString()
+  // todo check if this can required
   _subscriberId?: string;
 
   @IsOptional()

@@ -42,7 +42,10 @@ export type StepResultsSectionProps = AccordionSectionProps & {
   currentStepId?: string;
 };
 
-export type SubscriberSectionProps = AccordionSectionProps & {
+export type SubscriberSectionProps = Omit<AccordionSectionProps, 'errors' | 'localParsedData' | 'onUpdate'> & {
+  error: string | null;
+  subscriber: Partial<SubscriberDto>;
+  onUpdate: (section: 'subscriber', data: PreviewSubscriberData) => void;
   onSubscriberSelect: (subscriber: ISubscriberResponseDto) => void;
   onClearPersisted?: () => void;
 };

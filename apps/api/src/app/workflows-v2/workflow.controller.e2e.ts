@@ -954,13 +954,13 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
 
       it('should respond with 400 when a tag is too long', async () => {
         const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
-          tags: ['tag1', Array.from({ length: 50 }).join('X')],
+          tags: ['tag1', Array.from({ length: 70 }).join('X')],
         });
 
         await createWorkflowAndExpectValidationError(
           apiClient,
           createWorkflowDto,
-          'each value in tags must be longer than or equal to 1 and shorter than or equal to 32 characters'
+          'each value in tags must be longer than or equal to 1 and shorter than or equal to 64 characters'
         );
       });
 
@@ -972,7 +972,7 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         await createWorkflowAndExpectValidationError(
           apiClient,
           createWorkflowDto,
-          'each value in tags must be longer than or equal to 1 and shorter than or equal to 32 characters'
+          'each value in tags must be longer than or equal to 1 and shorter than or equal to 64 characters'
         );
       });
 

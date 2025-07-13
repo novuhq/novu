@@ -1,6 +1,6 @@
 import { HTMLAttributes, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiDownloadLine, RiLoader4Line } from 'react-icons/ri';
+import { RiLoader4Line } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
@@ -87,10 +87,6 @@ function ActionButtons() {
 
   return (
     <div className="ml-auto flex items-center gap-2">
-      <Button variant="secondary" mode="lighter" size="xs" className="!w-8" onClick={() => {}}>
-        <RiDownloadLine className="h-3 w-3" />
-      </Button>
-
       <DefaultLocaleButton locale={defaultLocale} onClick={handleConfigure} />
     </div>
   );

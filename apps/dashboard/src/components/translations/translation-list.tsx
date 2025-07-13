@@ -1,4 +1,4 @@
-import { HTMLAttributes, useState, useCallback } from 'react';
+import { HTMLAttributes } from 'react';
 
 import { cn } from '@/utils/ui';
 import { DefaultPagination } from '@/components/default-pagination';
@@ -12,10 +12,12 @@ import {
   TableCell,
 } from '@/components/primitives/table';
 import { TranslationGroup } from '@/api/translations';
-import { useFetchTranslationList } from '@/hooks/use-fetch-translation-list';
 import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 
-import { TranslationsFilter, TranslationsUrlState, useTranslationsUrlState } from './hooks/use-translations-url-state';
+import { TranslationsFilter, TranslationsUrlState } from './hooks/use-translations-url-state';
+import { useTranslationListLogic } from './hooks/use-translation-list-logic';
+import { useTranslationDrawerState } from './hooks/use-translation-drawer-state';
+import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
 import { TranslationListBlank } from './translation-list-blank';
 import { ListNoResults } from '../list-no-results';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
@@ -25,6 +27,7 @@ import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
 import { IS_SELF_HOSTED } from '@/config';
+import { DeleteTranslationGroupDialog } from './delete-translation-modal';
 
 type TranslationListHeaderProps = HTMLAttributes<HTMLDivElement> &
   Pick<TranslationsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -127,10 +130,10 @@ function TranslationSkeletonList({ count }: TranslationSkeletonListProps) {
 type TranslationListContentProps = {
   translations: TranslationGroup[];
   onTranslationClick: (translation: TranslationGroup) => void;
-  onImportSuccess?: () => void;
+  onDeleteClick: (translation: TranslationGroup) => void;
 };
 
-function TranslationListContent({ translations, onTranslationClick, onImportSuccess }: TranslationListContentProps) {
+function TranslationListContent({ translations, onTranslationClick, onDeleteClick }: TranslationListContentProps) {
   return (
     <>
       {translations.map((translation) => (
@@ -138,7 +141,7 @@ function TranslationListContent({ translations, onTranslationClick, onImportSucc
           key={translation.resourceId}
           translation={translation}
           onTranslationClick={onTranslationClick}
-          onImportSuccess={onImportSuccess}
+          onDeleteClick={onDeleteClick}
         />
       ))}
     </>
@@ -175,78 +178,17 @@ function TranslationListContainer({
   );
 }
 
-function useTranslationListLogic() {
-  const [selectedTranslationGroup, setSelectedTranslationGroup] = useState<TranslationGroup | null>(null);
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-  const { filterValues, handleFiltersChange, resetFilters } = useTranslationsUrlState({
-    total: 0,
-  });
-
-  const { data, isPending, isFetching, refetch } = useFetchTranslationList(filterValues);
-
-  const handleTranslationClick = useCallback((translationGroup: TranslationGroup) => {
-    setSelectedTranslationGroup(translationGroup);
-    setIsDrawerOpen(true);
-  }, []);
-
-  const handleDrawerClose = useCallback((isOpen: boolean) => {
-    setIsDrawerOpen(isOpen);
-
-    if (!isOpen) {
-      setSelectedTranslationGroup(null);
-    }
-  }, []);
-
-  const handleTranslationGroupUpdated = useCallback(
-    async (resourceId: string) => {
-      const result = await refetch();
-      const updatedGroup = result.data?.data.find((group) => group.resourceId === resourceId);
-
-      if (updatedGroup) {
-        setSelectedTranslationGroup({ ...updatedGroup });
-      }
-    },
-    [refetch]
-  );
-
-  const areFiltersApplied = filterValues.query !== '';
-
-  return {
-    selectedTranslationGroup,
-    isDrawerOpen,
-    filterValues,
-    handleFiltersChange,
-    resetFilters,
-    data,
-    isPending,
-    isFetching,
-    refetch,
-    handleTranslationClick,
-    handleDrawerClose,
-    handleTranslationGroupUpdated,
-    areFiltersApplied,
-  };
-}
-
 type TranslationListProps = HTMLAttributes<HTMLDivElement>;
 
 export function TranslationList(props: TranslationListProps) {
-  const {
-    selectedTranslationGroup,
-    isDrawerOpen,
-    filterValues,
-    handleFiltersChange,
-    resetFilters,
-    data,
-    isPending,
-    isFetching,
-    refetch,
-    handleTranslationClick,
-    handleDrawerClose,
-    handleTranslationGroupUpdated,
-    areFiltersApplied,
-  } = useTranslationListLogic();
+  const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
+    useTranslationListLogic();
+
+  const { selectedTranslationGroup, isDrawerOpen, handleTranslationClick, handleDrawerClose } =
+    useTranslationDrawerState(data?.data);
+
+  const { deleteModalTranslation, isDeletePending, handleDeleteClick, handleDeleteConfirm, handleDeleteCancel } =
+    useDeleteTranslationModal();
 
   const { subscription } = useFetchSubscription();
 
@@ -301,27 +243,38 @@ export function TranslationList(props: TranslationListProps) {
   }
 
   return (
-    <TranslationListContainer
-      filterValues={filterValues}
-      handleFiltersChange={handleFiltersChange}
-      resetFilters={resetFilters}
-      isFetching={isFetching}
-      {...props}
-    >
-      <TranslationTable data={data}>
-        <TranslationListContent
-          translations={data.data}
-          onTranslationClick={handleTranslationClick}
-          onImportSuccess={() => refetch()}
-        />
-      </TranslationTable>
+    <>
+      <TranslationListContainer
+        filterValues={filterValues}
+        handleFiltersChange={handleFiltersChange}
+        resetFilters={resetFilters}
+        isFetching={isFetching}
+        {...props}
+      >
+        <TranslationTable data={data}>
+          <TranslationListContent
+            translations={data.data}
+            onTranslationClick={handleTranslationClick}
+            onDeleteClick={handleDeleteClick}
+          />
+        </TranslationTable>
 
-      <TranslationDrawer
-        isOpen={isDrawerOpen}
-        onOpenChange={handleDrawerClose}
-        translationGroup={selectedTranslationGroup}
-        onTranslationGroupUpdated={handleTranslationGroupUpdated}
-      />
-    </TranslationListContainer>
+        <TranslationDrawer
+          isOpen={isDrawerOpen}
+          onOpenChange={handleDrawerClose}
+          translationGroup={selectedTranslationGroup}
+        />
+      </TranslationListContainer>
+
+      {deleteModalTranslation && (
+        <DeleteTranslationGroupDialog
+          translationGroup={deleteModalTranslation}
+          open={!!deleteModalTranslation}
+          onOpenChange={(open) => !open && handleDeleteCancel()}
+          onConfirm={handleDeleteConfirm}
+          isLoading={isDeletePending}
+        />
+      )}
+    </>
   );
 }

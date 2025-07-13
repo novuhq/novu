@@ -2,7 +2,7 @@ import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { PageMeta } from '@/components/page-meta';
 import { Form, FormRoot } from '@/components/primitives/form/form';
-import { getStepDefaultValues } from '@/components/workflow-editor/step-default-values';
+import { getControlsDefaultValues } from '@/utils/default-values';
 import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
 import { useDataRef } from '@/hooks/use-data-ref';
@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 export function EditStepTemplateV2Page() {
   const { workflow, update, step } = useWorkflow();
 
-  const defaultValues = useMemo(() => (step ? getStepDefaultValues(step) : {}), [step]);
+  const defaultValues = useMemo(() => (step ? getControlsDefaultValues(step) : {}), [step]);
 
   const form = useForm({
     defaultValues,

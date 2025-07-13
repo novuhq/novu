@@ -3,6 +3,7 @@ import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
+import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { DIGEST_EVENTS_VARIABLE_PATTERN } from './template-parser/parser-utils';
@@ -118,7 +119,7 @@ export function keysToObject(
   showIfVariablesPaths?: string[]
 ): Record<string, unknown> {
   const validPaths = paths
-    .filter(hasNamespace)
+    .filter((path) => hasNamespace(path) || path === LAYOUT_CONTENT_VARIABLE)
     // remove paths that are a prefix of another path
     .filter((path) => !paths.some((otherPath) => otherPath !== path && otherPath.startsWith(`${path}.`)));
 

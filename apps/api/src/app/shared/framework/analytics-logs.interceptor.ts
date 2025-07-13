@@ -8,12 +8,10 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { FeatureFlagsService, PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
-import { UserSessionData, FeatureFlagsKeysEnum } from '@novu/shared';
-import { getClientIp } from 'request-ip';
-import { sanitizePayload, retryWithBackoff } from '../../../utils/payload-sanitizer';
+import { PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
+import { retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
-import { generateTransactionId } from '../helpers';
 import { buildLog } from '../utils/mappers';
 
 const LOG_ANALYTICS_KEY = 'logAnalytics';
@@ -22,8 +20,6 @@ export enum AnalyticsStrategyEnum {
   BASIC = 'basic',
   EVENTS = 'events',
 }
-
-type CreateHttpLog = Omit<RequestLog, 'id'>;
 
 /**
  * Analytics Logs Decorator & Interceptor
@@ -65,7 +61,6 @@ function shouldLogAnalytics(context: ExecutionContext): boolean {
 @Injectable()
 export class AnalyticsLogsInterceptor implements NestInterceptor {
   constructor(
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly requestLogRepository: RequestLogRepository,
     private readonly logger: PinoLogger
   ) {
@@ -75,14 +70,13 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const shouldRun = await this.shouldRun(context);
 
-    if (!shouldRun) return next.handle();
+    if (!shouldRun) {
+      return next.handle();
+    }
 
     const req = context.switchToHttp().getRequest();
-
     const user = req.user as UserSessionData;
-
     const start = Date.now();
-
     const res = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
@@ -98,7 +92,13 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
 
         try {
-          await retryWithBackoff(() => this.requestLogRepository.insert(analyticsLog));
+          await retryWithBackoff(() =>
+            this.requestLogRepository.insert(analyticsLog, {
+              organizationId: user?.organizationId,
+              environmentId: user?.environmentId,
+              userId: user?._id,
+            })
+          );
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
         }
@@ -110,23 +110,18 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     const shouldLog = shouldLogAnalytics(context);
     if (!shouldLog) return false;
 
-    const req = context.switchToHttp().getRequest();
-    const user = req.user as UserSessionData;
-
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_ANALYTICS_LOGS_ENABLED,
-      user: { _id: user._id },
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-      defaultValue: false,
-    });
+    const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
 
     if (!isEnabled) return false;
 
     return true;
   }
 
-  private buildLogByStrategy(context: ExecutionContext, analyticsLog: CreateHttpLog, res: unknown): CreateHttpLog {
+  private buildLogByStrategy(
+    context: ExecutionContext,
+    analyticsLog: Omit<RequestLog, 'id' | 'expires_at'>,
+    res: unknown
+  ): Omit<RequestLog, 'id' | 'expires_at'> {
     const strategy = getAnalyticsStrategy(context);
 
     if (strategy === AnalyticsStrategyEnum.EVENTS) {

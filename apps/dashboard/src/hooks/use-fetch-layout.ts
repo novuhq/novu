@@ -12,7 +12,7 @@ export const useFetchLayout = ({ layoutSlug }: { layoutSlug: string }) => {
 
   const {
     data: layout,
-    isLoading,
+    isPending,
     error,
   } = useQuery({
     queryKey: [QueryKeys.fetchLayout, currentEnvironment?._id, layoutId],
@@ -22,7 +22,7 @@ export const useFetchLayout = ({ layoutSlug }: { layoutSlug: string }) => {
 
   return {
     layout,
-    isLoading,
+    isPending,
     error,
   };
 };

@@ -352,8 +352,9 @@ export class UpdateWorkflow {
 
   private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: UpdateWorkflowCommand) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
 
-    if (!isEnterprise) {
+    if (!isEnterprise || isSelfHosted) {
       return;
     }
 

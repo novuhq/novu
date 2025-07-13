@@ -3,7 +3,7 @@ import { cn } from '@/utils/ui';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine } from 'react-icons/ri';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { StepIssuesPanel } from '@/components/workflow-editor/steps/step-issues-panel';
+import { IssuesPanel } from '@/components/issues-panel';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
 import { ResizableLayout } from '@/components/workflow-editor/steps/layout/resizable-layout';
@@ -115,7 +115,7 @@ function StepEditorContent() {
           </ResizableLayout>
         </div>
 
-        <StepIssuesPanel step={step} />
+        <IssuesPanel issues={step.issues} />
       </ResizableLayout.MainContentPanel>
 
       <TestWorkflowDrawer

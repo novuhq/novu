@@ -61,6 +61,7 @@ export class EventsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @Post('/trigger')
+  @LogAnalytics(AnalyticsStrategyEnum.EVENTS)
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {
     description: 'Payload validation failed - returned when payload does not match the workflow schema',

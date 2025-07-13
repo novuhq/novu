@@ -1,6 +1,6 @@
 import { Completion } from '@codemirror/autocomplete';
 
-import { isAllowedAlias } from '@/components/workflow-editor/steps/email/variables/repeat-block-aliases';
+import { isAllowedAlias } from '@/components/maily/repeat-block-aliases';
 
 import type { JSONSchemaDefinition } from '@novu/shared';
 import {

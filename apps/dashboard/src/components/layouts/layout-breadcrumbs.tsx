@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { RiArrowLeftSLine } from 'react-icons/ri';
 
 import { useEnvironment } from '@/context/environment/hooks';
@@ -15,7 +15,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { CompactButton } from '../primitives/button-compact';
 import { LayoutIcon } from '../icons/layout';
 import TruncatedText from '../truncated-text';
-import { useFetchLayout } from '@/hooks/use-fetch-layout';
+import { useLayoutEditor } from './layout-editor-provider';
 
 type BreadcrumbData = {
   label: string;
@@ -23,12 +23,9 @@ type BreadcrumbData = {
 };
 
 export const LayoutBreadcrumbs = () => {
-  const { layoutSlug = '' } = useParams<{
-    layoutSlug?: string;
-  }>();
+  const { layout } = useLayoutEditor();
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
-  const { layout } = useFetchLayout({ layoutSlug });
 
   const layoutsRoute = buildRoute(ROUTES.LAYOUTS, {
     environmentSlug: currentEnvironment?.slug ?? '',

@@ -22,7 +22,7 @@ import {
   UserSessionData,
 } from '@novu/shared';
 
-import { SubscriberDto, SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
+import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { SessionCommand } from './usecases/session/session.command';
 import { Session } from './usecases/session/session.usecase';
