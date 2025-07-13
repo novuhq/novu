@@ -58,23 +58,39 @@ export const createTranslationExtension = (
         return items;
       },
       command: ({ editor, range, props }) => {
+        /**
+         * This is called when you select/create a translation key from the suggestion
+         * list in the editor (not in the bubble menu). It calls the onSelectItem
+         * callback with the selected item.
+         */
         const query = `{t.${props.id}} `; // Added space after the closing brace
-
-        // Check if this is a new translation key that doesn't exist
-        const existingKeys = translationKeys.map((key) => key.name);
-        const isNewTranslationKey = !existingKeys.includes(props.id);
-
-        if (isNewTranslationKey && onCreateNewTranslationKey) {
-          // For new translation keys, we still insert them but also trigger creation
-          onCreateNewTranslationKey(props.id);
-        }
 
         // Insert the translation key
         editor.chain().focus().insertContentAt(range, query).run();
       },
     },
     variableSuggestionsPopover: forwardRef((props: any, ref: any) => (
-      <TranslationSuggestionsListView {...props} ref={ref} translationKeys={translationKeys} />
+      <TranslationSuggestionsListView
+        {...props}
+        ref={ref}
+        translationKeys={translationKeys}
+        onSelectItem={(item) => {
+          /*
+           * This is called when you select/create a translation key from the suggestion
+           * list. It's called in both editor and bubble menu contexts.
+           */
+
+          // Check if this is a new translation key that doesn't exist
+          const existingKeys = translationKeys.map((key) => key.name);
+          const isNewTranslationKey = !existingKeys.includes(item.name);
+
+          if (isNewTranslationKey && onCreateNewTranslationKey) {
+            onCreateNewTranslationKey(item.name);
+          }
+
+          props.onSelectItem(item);
+        }}
+      />
     )),
   });
 };

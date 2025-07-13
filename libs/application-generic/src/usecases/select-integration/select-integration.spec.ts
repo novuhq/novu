@@ -15,6 +15,7 @@ import { SelectIntegrationCommand } from './select-integration.command';
 import { ConditionsFilter } from '../conditions-filter';
 import { CompileTemplate } from '../compile-template';
 import { CreateExecutionDetails } from '../create-execution-details';
+import { TraceLogRepository } from '../../services';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -95,7 +96,7 @@ describe('select integration', function () {
     executionDetailsRepository,
     new JobRepository(),
     new EnvironmentRepository(),
-    new CreateExecutionDetails(new ExecutionDetailsRepository()),
+    new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any),
     new CompileTemplate()
   );
   beforeEach(async function () {

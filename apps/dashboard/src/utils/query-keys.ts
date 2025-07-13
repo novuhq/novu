@@ -21,6 +21,7 @@ export const QueryKeys = Object.freeze({
   fetchLayouts: 'fetchLayouts',
   fetchLayout: 'fetchLayout',
   fetchTranslations: 'fetchTranslations',
+  fetchTranslationGroups: 'fetchTranslationGroups',
   fetchTranslation: 'fetchTranslation',
   fetchTranslationKeys: 'fetchTranslationKeys',
 });

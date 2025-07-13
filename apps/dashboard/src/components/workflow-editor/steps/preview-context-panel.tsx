@@ -107,7 +107,6 @@ export function PreviewContextPanel({
     loadPersistedSubscriber,
   });
 
-  // Sync subscriber locale with selected locale
   useEffect(() => {
     if (selectedLocale && localParsedData.subscriber.locale !== selectedLocale) {
       updateJsonSection('subscriber', {
@@ -115,14 +114,7 @@ export function PreviewContextPanel({
         locale: selectedLocale,
       });
     }
-  }, [selectedLocale, localParsedData.subscriber, updateJsonSection]);
-
-  // Sync selected locale with subscriber locale when subscriber locale changes
-  useEffect(() => {
-    if (localParsedData.subscriber.locale && localParsedData.subscriber.locale !== selectedLocale && onLocaleChange) {
-      onLocaleChange(localParsedData.subscriber.locale);
-    }
-  }, [localParsedData.subscriber.locale, selectedLocale, onLocaleChange]);
+  }, [localParsedData.subscriber, selectedLocale, updateJsonSection]);
 
   const handleClearPersistedPayload = () => {
     clearPersistedPayload();
@@ -137,7 +129,7 @@ export function PreviewContextPanel({
   const handleClearPersistedSubscriber = () => {
     clearPersistedSubscriber();
 
-    updateJsonSection('subscriber', createDefaultSubscriberData(selectedLocale));
+    updateJsonSection('subscriber', createDefaultSubscriberData(selectedLocale || DEFAULT_LOCALE));
   };
 
   const canClearPersisted = !!(workflow?.workflowId && currentStepId && currentEnvironment?._id);

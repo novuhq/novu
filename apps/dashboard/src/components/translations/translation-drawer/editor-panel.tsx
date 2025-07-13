@@ -60,7 +60,6 @@ type EditorPanelProps = {
   onContentChange: (content: string) => void;
   onDelete: (locale: string) => void | Promise<void>;
   resource: TranslationResource;
-  onImportSuccess?: () => void;
   isDeleting?: boolean;
 };
 
@@ -74,7 +73,6 @@ export function EditorPanel({
   onContentChange,
   onDelete,
   resource,
-  onImportSuccess,
   isDeleting = false,
 }: EditorPanelProps) {
   if (!selectedLocale) {
@@ -98,7 +96,6 @@ export function EditorPanel({
         contentToCopy={contentToCopy}
         content={contentToUse}
         resource={resource}
-        onImportSuccess={onImportSuccess}
         onDelete={onDelete}
         isDeleting={isDeleting}
       />

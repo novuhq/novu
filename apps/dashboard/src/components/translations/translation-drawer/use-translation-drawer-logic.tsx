@@ -5,11 +5,7 @@ import { useSaveTranslation } from '@/hooks/use-save-translation';
 import { useDeleteTranslation } from '@/hooks/use-delete-translation';
 import { useTranslationEditor } from './hooks';
 
-export function useTranslationDrawerLogic(
-  translationGroup: TranslationGroup,
-  onTranslationGroupUpdated?: (resourceId: string) => void | Promise<void>,
-  defaultLocale?: string
-) {
+export function useTranslationDrawerLogic(translationGroup: TranslationGroup, defaultLocale?: string) {
   const [selectedLocale, setSelectedLocale] = useState<string | null>(null);
 
   const resource = useMemo(
@@ -66,7 +62,7 @@ export function useTranslationDrawerLogic(
         locale,
       });
 
-      onTranslationGroupUpdated?.(resource.resourceId);
+      // React Query will automatically refetch and useEffect will handle the update
 
       const remainingLocales = translationGroup.locales.filter((l) => l !== locale);
       // Prioritize default locale if it exists in remaining locales
@@ -74,7 +70,7 @@ export function useTranslationDrawerLogic(
         defaultLocale && remainingLocales.includes(defaultLocale) ? defaultLocale : remainingLocales[0] || null;
       setSelectedLocale(nextLocale);
     },
-    [deleteTranslationMutation, resource, onTranslationGroupUpdated, translationGroup.locales, defaultLocale]
+    [deleteTranslationMutation, resource, translationGroup.locales, defaultLocale]
   );
 
   return {

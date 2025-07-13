@@ -9,15 +9,9 @@ type TranslationDrawerProps = {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   translationGroup: TranslationGroup | null;
-  onTranslationGroupUpdated?: (resourceId: string) => void | Promise<void>;
 };
 
-export function TranslationDrawer({
-  isOpen,
-  onOpenChange,
-  translationGroup,
-  onTranslationGroupUpdated,
-}: TranslationDrawerProps) {
+export function TranslationDrawer({ isOpen, onOpenChange, translationGroup }: TranslationDrawerProps) {
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const drawerContentRef = useRef<TranslationDrawerContentRef>(null);
 
@@ -56,7 +50,6 @@ export function TranslationDrawer({
             <TranslationDrawerContent
               key={`${translationGroup.resourceId}-${translationGroup.updatedAt}`}
               translationGroup={translationGroup}
-              onTranslationGroupUpdated={onTranslationGroupUpdated}
               ref={drawerContentRef}
             />
           ) : (

@@ -11,7 +11,6 @@ import { forwardRef, useImperativeHandle, useState, useCallback } from 'react';
 
 type TranslationDrawerContentProps = {
   translationGroup: TranslationGroup;
-  onTranslationGroupUpdated?: (resourceId: string) => void | Promise<void>;
 };
 
 export interface TranslationDrawerContentRef {
@@ -19,7 +18,7 @@ export interface TranslationDrawerContentRef {
 }
 
 export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, TranslationDrawerContentProps>(
-  ({ translationGroup, onTranslationGroupUpdated }, ref) => {
+  ({ translationGroup }, ref) => {
     const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
@@ -38,7 +37,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
       handleLocaleSelect,
       handleSave,
       handleDelete,
-    } = useTranslationDrawerLogic(translationGroup, onTranslationGroupUpdated, defaultLocale);
+    } = useTranslationDrawerLogic(translationGroup, defaultLocale);
 
     const canSave = selectedLocale && editor.modifiedContent && !saveTranslationMutation.isPending && !editor.jsonError;
 
@@ -97,7 +96,6 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             onContentChange={editor.handleContentChange}
             onDelete={handleDelete}
             resource={resource}
-            onImportSuccess={() => onTranslationGroupUpdated?.(resource.resourceId)}
             isDeleting={deleteTranslationMutation.isPending}
           />
         </div>

@@ -3,7 +3,6 @@ import {
   analyticsService,
   BulkCreateExecutionDetails,
   cacheService,
-  ClickHouseService,
   ComputeJobWaitDurationService,
   CreateExecutionDetails,
   createNestLoggingModuleOptions,
@@ -27,6 +26,8 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateTenant,
+  clickHouseService,
+  TraceLogRepository,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -83,7 +84,14 @@ const dalService = {
   },
 };
 
-const ANALYTICS_PROVIDERS = [ClickHouseService, StepRunRepository];
+const ANALYTICS_PROVIDERS = [
+  // Repositories
+  TraceLogRepository,
+  StepRunRepository,
+
+  // Services
+  clickHouseService,
+];
 
 const PROVIDERS = [
   analyticsService,

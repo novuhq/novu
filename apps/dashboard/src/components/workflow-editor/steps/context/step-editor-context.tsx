@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useMemo, useState } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useState, useEffect, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   WorkflowResponseDto,
@@ -8,6 +8,7 @@ import {
   DEFAULT_LOCALE,
 } from '@novu/shared';
 import { useEditorPreview } from '@/components/workflow-editor/steps/use-editor-preview';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 
 type StepEditorContextType = {
   workflow: WorkflowResponseDto;
@@ -36,7 +37,17 @@ type StepEditorProviderProps = {
 export function StepEditorProvider({ children, workflow, step }: StepEditorProviderProps) {
   const form = useFormContext();
   const controlValues = form.watch();
+  const { data: organizationSettings } = useFetchOrganizationSettings();
   const [selectedLocale, setSelectedLocale] = useState<string>(DEFAULT_LOCALE);
+  const hasInitialized = useRef(false);
+
+  // Set to organization default when settings load (only once)
+  useEffect(() => {
+    if (organizationSettings?.data?.defaultLocale && !hasInitialized.current) {
+      setSelectedLocale(organizationSettings.data.defaultLocale);
+      hasInitialized.current = true;
+    }
+  }, [organizationSettings?.data?.defaultLocale]);
 
   const { editorValue, setEditorValue, previewData, isPreviewPending, isFetching } = useEditorPreview({
     workflowSlug: workflow.workflowId,

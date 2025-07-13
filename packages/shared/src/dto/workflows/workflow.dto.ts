@@ -15,6 +15,7 @@ export type PatchWorkflowDto = {
   tags?: string[];
   payloadSchema?: object;
   validatePayload?: boolean;
+  isTranslationEnabled?: boolean;
 };
 
 export type ListWorkflowResponse = {

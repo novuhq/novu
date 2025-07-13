@@ -1,6 +1,6 @@
 import { cn } from '@/utils/ui';
-import { autocompletion, CompletionSource } from '@codemirror/autocomplete';
-import { EditorView } from '@uiw/react-codemirror';
+import { autocompletion, CompletionSource, CompletionContext } from '@codemirror/autocomplete';
+import { EditorView, Extension } from '@uiw/react-codemirror';
 import { useCallback, useMemo, useRef, useState, useEffect, MutableRefObject } from 'react';
 import { JSONSchema7 } from 'json-schema';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -92,6 +92,8 @@ export function VariableEditor({
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const containerRef = useRef<HTMLDivElement>(null);
+  const track = useTelemetry();
+
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
@@ -103,7 +105,6 @@ export function VariableEditor({
         name: selectedVariable.value,
       }
     : undefined;
-  const track = useTelemetry();
 
   const [variableTriggerPosition, setVariableTriggerPosition] = useState<{ top: number; left: number } | null>(null);
 
@@ -127,30 +128,6 @@ export function VariableEditor({
     [track, onCreateNewVariable]
   );
 
-  const variableCompletionSource = useMemo(() => {
-    return createAutocompleteSource(variables, onVariableSelect, onCreateNewVariable, isPayloadSchemaEnabled);
-  }, [variables, onVariableSelect, onCreateNewVariable, isPayloadSchemaEnabled]);
-
-  const autocompletionExtension = useMemo(() => {
-    const sources = [variableCompletionSource];
-
-    if (completionSources) {
-      sources.push(...completionSources);
-    }
-
-    return autocompletion({
-      override: sources,
-      closeOnBlur: true,
-      defaultKeymap: true,
-      activateOnTyping: true,
-      optionClass: (completion) => {
-        if (completion.type === 'new-variable') return 'cm-new-variable-option';
-        if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
-        return '';
-      },
-    });
-  }, [variableCompletionSource, completionSources]);
-
   const isDigestEventsVariable = useCallback(
     (variableName: string) => {
       const { value } = getDynamicDigestVariable({
@@ -166,34 +143,105 @@ export function VariableEditor({
     [digestStepName]
   );
 
+  // Create extensions only once and never recreate them
+  const extensionsRef = useRef<Extension[]>();
+  const callbacksRef = useRef({
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    multiline,
+    extensions,
+  });
+
+  // Update callbacks without triggering re-renders
+  callbacksRef.current = {
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    multiline,
+    extensions,
+  };
+
+  const variableCompletionSource = useMemo(() => {
+    return (context: CompletionContext) => {
+      return createAutocompleteSource(
+        callbacksRef.current.variables,
+        (completion: CompletionOption) => callbacksRef.current.onVariableSelect(completion),
+        async (variableName: string) => callbacksRef.current.onCreateNewVariable(variableName),
+        callbacksRef.current.isPayloadSchemaEnabled
+      )(context);
+    };
+  }, []);
+
+  const autocompletionExtension = useMemo(() => {
+    const dynamicCompletionSource: CompletionSource = (context) => {
+      const sources = [variableCompletionSource];
+
+      if (callbacksRef.current.completionSources) {
+        sources.push(...callbacksRef.current.completionSources);
+      }
+
+      for (const source of sources) {
+        const result = source(context);
+        if (result) return result;
+      }
+
+      return null;
+    };
+
+    return autocompletion({
+      override: [dynamicCompletionSource],
+      closeOnBlur: true,
+      defaultKeymap: true,
+      activateOnTyping: true,
+      optionClass: (completion) => {
+        if (completion.type === 'new-variable') return 'cm-new-variable-option';
+        if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
+        return '';
+      },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const variablePluginExtension = useMemo(() => {
     return createVariableExtension({
       viewRef,
       lastCompletionRef,
-      onSelect: handleVariableSelect,
-      isAllowedVariable,
-      isDigestEventsVariable,
+      onSelect: (value: string, from: number, to: number) => callbacksRef.current.handleVariableSelect(value, from, to),
+      isAllowedVariable: (variable: LiquidVariable) => callbacksRef.current.isAllowedVariable(variable),
+      isDigestEventsVariable: (variableName: string) => callbacksRef.current.isDigestEventsVariable(variableName),
       isCustomHtmlEditorEnabled,
     });
-  }, [
-    viewRef,
-    lastCompletionRef,
-    isCustomHtmlEditorEnabled,
-    handleVariableSelect,
-    isAllowedVariable,
-    isDigestEventsVariable,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const editorExtensions = useMemo(() => {
-    const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-    const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
+    if (!extensionsRef.current) {
+      // For props that rarely change, we can check them dynamically
+      const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
+      const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
 
-    if (extensions) {
-      allExtensions.push(...extensions);
+      // Handle external extensions
+      if (callbacksRef.current.extensions) {
+        allExtensions.push(...callbacksRef.current.extensions);
+      }
+
+      extensionsRef.current = allExtensions;
     }
 
-    return allExtensions;
-  }, [autocompletionExtension, variablePluginExtension, multiline, extensions]);
+    return extensionsRef.current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
