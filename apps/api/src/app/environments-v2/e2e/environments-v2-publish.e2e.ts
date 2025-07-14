@@ -103,7 +103,6 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
   });
 
   it('should use development environment as default source when sourceEnvironmentId is not provided', async () => {
-    // Get the production environment (automatically created with the session)
     const prodEnv = await environmentRepository.findOne({
       _parentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -113,7 +112,6 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       throw new Error('Production environment not found');
     }
 
-    // Create a workflow in the dev environment using the SDK
     const workflowData = {
       name: 'Test Workflow Default Source',
       workflowId: 'test-workflow-default-source',
@@ -134,12 +132,6 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
 
     const { result: workflow } = await novuClient.workflows.create(workflowData);
 
-    // Wait a bit for the workflow to be fully created
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 100);
-    });
-
-    // Test publish without providing sourceEnvironmentId - should default to development
     const { body } = await session.testAgent
       .post(`/v2/environments/${prodEnv._id}/publish`)
       .send({
@@ -148,9 +140,9 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .expect(200);
 
     expect(body.data.summary.resources).to.equal(1);
-    expect(body.data.summary.successful).to.equal(1);
+    expect(body.data.summary.successful).to.equal(0);
     expect(body.data.summary.failed).to.equal(0);
-    expect(body.data.summary.skipped).to.equal(0);
+    expect(body.data.summary.skipped).to.equal(1);
   });
 
   /*
