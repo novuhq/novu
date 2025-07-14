@@ -343,7 +343,7 @@ const CreateWorkflowButton = () => {
           <DropdownMenuTrigger asChild>
             <Button
               mode="gradient"
-              className="rounded-l-none rounded-r-lg border-none text-white"
+              className="rounded-l-none rounded-r-lg border-none px-1.5 text-white"
               variant="primary"
               size="xs"
               leadingIcon={RiArrowDownSLine}

@@ -13,7 +13,7 @@
     "@tanstack/react-query": "^5",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19",
-    "zod": ">= 3"
+    "zod": "^3"
   },
   "peerDependenciesMeta": {
     "@tanstack/react-query": {"optional":true},

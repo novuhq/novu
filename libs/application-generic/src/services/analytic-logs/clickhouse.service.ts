@@ -92,4 +92,15 @@ export class ClickHouseService implements OnModuleDestroy {
       format: 'JSONEachRow',
     });
   }
+
+  public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
+    if (!this.client) {
+      return;
+    }
+
+    await this.client.exec({
+      query,
+      query_params: params,
+    });
+  }
 }

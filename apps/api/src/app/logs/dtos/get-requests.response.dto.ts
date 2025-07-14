@@ -15,7 +15,7 @@ export type RequestLogResponseDto = {
   userId: string;
   organizationId: string;
   environmentId: string;
-  schemaType: string;
+  authType: string;
   durationMs: number;
 };
 

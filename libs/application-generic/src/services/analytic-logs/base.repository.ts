@@ -1,6 +1,11 @@
 import { PinoLogger } from 'nestjs-pino';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
+import { addDays } from 'date-fns';
+
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+
 import { ClickHouseService } from './clickhouse.service';
+import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { generateObjectId } from '../../utils/generate-id';
 
 // Define operators as const assertion to maintain literal types
@@ -37,16 +42,28 @@ export type Where<T> = {
 
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
-export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
-  abstract readonly table: string;
-  abstract readonly schema: T;
-  abstract readonly schemaOrderBy: SchemaKeys<T>[];
-  abstract readonly identifierPrefix: string;
+export abstract class LogRepository<T extends ClickhouseSchema<any>> {
+  readonly table: string;
+  readonly identifierPrefix: string;
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
-    protected readonly logger: PinoLogger
-  ) {}
+    protected readonly logger: PinoLogger,
+    protected readonly schema: T,
+    protected readonly schemaOrderBy: SchemaKeys<T>[],
+    protected readonly featureFlagsService: FeatureFlagsService
+  ) {
+    this.initialize();
+  }
+
+  private initialize() {
+    if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
+      return;
+    }
+
+    const query = this.schema.GetCreateTableQuery().replace('ORDER_BY_X_LIST', `(${this.schemaOrderBy.join(', ')})`);
+    this.clickhouseService.exec({ query });
+  }
 
   private getColumnType(column: string): string {
     const columnSchema = this.schema.schema[column];
@@ -74,6 +91,31 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
   private validateOperator(operator: ClickhouseOperator): void {
     if (!ALLOWED_OPERATORS.includes(operator)) {
       throw new Error(`Invalid operator: ${operator}. Allowed operators: ${ALLOWED_OPERATORS.join(', ')}`);
+    }
+  }
+
+  private async getExpirationDate(context?: {
+    organizationId?: string;
+    environmentId?: string;
+    userId?: string;
+  }): Promise<Date> {
+    try {
+      const expirationDays = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.LOG_EXPIRATION_DAYS_NUMBER,
+        defaultValue: 100,
+        organization: context?.organizationId ? { _id: context.organizationId } : undefined,
+        environment: context?.environmentId ? { _id: context.environmentId } : undefined,
+        user: context?.userId ? { _id: context.userId } : undefined,
+      });
+
+      return addDays(new Date(), expirationDays);
+    } catch (error) {
+      this.logger.warn(
+        { error: error instanceof Error ? error.message : 'Unknown error' },
+        'Failed to fetch log expiration days from LaunchDarkly, falling back to 100 days'
+      );
+
+      return addDays(new Date(), 100);
     }
   }
 
@@ -131,16 +173,36 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }
 
-  async insert(data: Omit<InferClickhouseSchemaType<T>, 'id'>): Promise<void> {
+  async insert(
+    data: Omit<InferClickhouseSchemaType<T>, 'id' | 'expires_at'>,
+    context?: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
     const id = `${this.identifierPrefix}${generateObjectId()}`;
-    await this.clickhouseService.insert(this.table, [{ ...data, id }]);
+    const expirationDate = await this.getExpirationDate(context);
+    const expiresAt = LogRepository.formatDateTime64(expirationDate);
+
+    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }]);
   }
 
-  async insertMany(data: Omit<InferClickhouseSchemaType<T>, 'id'>[]): Promise<void> {
+  async insertMany(
+    data: Omit<InferClickhouseSchemaType<T>, 'id' | 'expires_at'>[],
+    context?: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
     const ids = data.map((item) => `${this.identifierPrefix}${generateObjectId()}`);
+    const expirationDate = await this.getExpirationDate(context);
+    const expiresAt = LogRepository.formatDateTime64(expirationDate);
+
     await this.clickhouseService.insert(
       this.table,
-      data.map((item, index) => ({ ...item, id: ids[index] }))
+      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt }))
     );
   }
 
@@ -211,5 +273,13 @@ export abstract class BaseRepository<T extends ClickhouseSchema<any>> {
     const total = result.data[0]?.total;
 
     return Number(total || 0);
+  }
+
+  static formatDateTime64(date: Date) {
+    // Use toISOString() to get UTC time, then format for ClickHouse
+    const isoString = date.toISOString();
+
+    // Remove the 'Z' suffix since ClickHouse DateTime64 with UTC timezone handles it
+    return isoString.slice(0, -1) as unknown as Date;
   }
 }

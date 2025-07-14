@@ -58,7 +58,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
         <PermissionButton
           permission={PermissionsEnum.LAYOUT_WRITE}
           mode="gradient"
-          className="rounded-l-lg border-none px-1.5 py-2 text-white"
+          className="rounded-l-lg border-none text-white"
           variant="primary"
           size="xs"
           leadingIcon={RiAddCircleLine}

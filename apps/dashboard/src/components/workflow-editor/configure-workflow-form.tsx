@@ -399,7 +399,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel optional>Description</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea
                         className="min-h-36"
@@ -420,7 +420,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 render={({ field }) => (
                   <FormItem className="group" tabIndex={-1}>
                     <div className="flex items-center gap-1">
-                      <FormLabel optional>Tags</FormLabel>
+                      <FormLabel>Tags</FormLabel>
                     </div>
                     <FormControl className="text-xs text-neutral-600">
                       <TagInput
