@@ -1,4 +1,4 @@
-import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo } from 'react';
+import { ForwardRefExoticComponent, HTMLAttributes, useCallback, useMemo, useRef } from 'react';
 import { Editor as MailyEditor } from '@maily-to/core';
 import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
 import { Editor as TiptapEditorReact } from '@tiptap/react';
@@ -198,6 +198,7 @@ export const Maily = ({
         {...rest}
       >
         <MailyEditor
+          key={value ? 'has-content' : 'empty'}
           config={DEFAULT_EDITOR_CONFIG}
           blocks={blocks}
           extensions={extensions}

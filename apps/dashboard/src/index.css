@@ -263,6 +263,7 @@
 
     --stroke-strong: var(--neutral-950);
     --stroke-sub: var(--neutral-300);
+    --stroke-weak: var(--neutral-100);
     --stroke-soft: var(--neutral-200);
     --stroke-white: var(--neutral-0);
 
