@@ -124,7 +124,9 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
     const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
 
-    this.logger.debug(`Analytics logs should run IS_ANALYTICS_LOGS_ENABLED: ${process.env.IS_ANALYTICS_LOGS_ENABLED}`);
+    this.logger.debug(
+      `Analytics logs should run IS_ANALYTICS_LOGS_ENABLED: ${process.env.IS_ANALYTICS_LOGS_ENABLED}, isEnabled: ${isEnabled}`
+    );
 
     if (!isEnabled) return false;
 
