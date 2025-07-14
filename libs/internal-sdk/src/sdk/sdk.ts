@@ -146,10 +146,10 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Retrieve workflow step
+   * Retrieve a layout
    *
    * @remarks
-   * Retrieves data for a specific step in a workflow
+   * Fetches details of a specific layout by its unique identifier **layoutId**
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,

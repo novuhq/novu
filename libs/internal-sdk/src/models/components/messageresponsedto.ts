@@ -65,7 +65,7 @@ export type MessageResponseDto = {
   /**
    * Template ID associated with the message
    */
-  templateId: string;
+  templateId?: string | null | undefined;
   /**
    * Environment ID where the message is sent
    */
@@ -73,7 +73,7 @@ export type MessageResponseDto = {
   /**
    * Message template ID
    */
-  messageTemplateId: string;
+  messageTemplateId?: string | null | undefined;
   /**
    * Organization ID associated with the message
    */
@@ -117,7 +117,7 @@ export type MessageResponseDto = {
   /**
    * Content of the message, can be an email block or a string
    */
-  content: Array<EmailBlock> | string;
+  content?: Array<EmailBlock> | string | null | undefined;
   /**
    * Transaction ID associated with the message
    */
@@ -342,9 +342,9 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   _id: z.string().optional(),
-  _templateId: z.string(),
+  _templateId: z.nullable(z.string()).optional(),
   _environmentId: z.string(),
-  _messageTemplateId: z.string(),
+  _messageTemplateId: z.nullable(z.string()).optional(),
   _organizationId: z.string(),
   _notificationId: z.string(),
   _subscriberId: z.string(),
@@ -355,7 +355,8 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
   deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
-  content: z.union([z.array(EmailBlock$inboundSchema), z.string()]),
+  content: z.nullable(z.union([z.array(EmailBlock$inboundSchema), z.string()]))
+    .optional(),
   transactionId: z.string(),
   subject: z.string().optional(),
   channel: ChannelTypeEnum$inboundSchema,
@@ -391,9 +392,9 @@ export const MessageResponseDto$inboundSchema: z.ZodType<
 /** @internal */
 export type MessageResponseDto$Outbound = {
   _id?: string | undefined;
-  _templateId: string;
+  _templateId?: string | null | undefined;
   _environmentId: string;
-  _messageTemplateId: string;
+  _messageTemplateId?: string | null | undefined;
   _organizationId: string;
   _notificationId: string;
   _subscriberId: string;
@@ -404,7 +405,7 @@ export type MessageResponseDto$Outbound = {
   deliveredAt?: Array<string> | undefined;
   lastSeenDate?: string | undefined;
   lastReadDate?: string | undefined;
-  content: Array<EmailBlock$Outbound> | string;
+  content?: Array<EmailBlock$Outbound> | string | null | undefined;
   transactionId: string;
   subject?: string | undefined;
   channel: string;
@@ -433,9 +434,9 @@ export const MessageResponseDto$outboundSchema: z.ZodType<
   MessageResponseDto
 > = z.object({
   id: z.string().optional(),
-  templateId: z.string(),
+  templateId: z.nullable(z.string()).optional(),
   environmentId: z.string(),
-  messageTemplateId: z.string(),
+  messageTemplateId: z.nullable(z.string()).optional(),
   organizationId: z.string(),
   notificationId: z.string(),
   subscriberId: z.string(),
@@ -446,7 +447,8 @@ export const MessageResponseDto$outboundSchema: z.ZodType<
   deliveredAt: z.array(z.string()).optional(),
   lastSeenDate: z.string().optional(),
   lastReadDate: z.string().optional(),
-  content: z.union([z.array(EmailBlock$outboundSchema), z.string()]),
+  content: z.nullable(z.union([z.array(EmailBlock$outboundSchema), z.string()]))
+    .optional(),
   transactionId: z.string(),
   subject: z.string().optional(),
   channel: ChannelTypeEnum$outboundSchema,
