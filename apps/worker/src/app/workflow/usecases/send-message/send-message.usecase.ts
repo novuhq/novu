@@ -138,10 +138,20 @@ export class SendMessage {
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
+      let detail = DetailEnum.START_SENDING;
+
+      if (stepType === StepTypeEnum.TRIGGER) {
+        detail = DetailEnum.STEP_COMPLETED;
+      }
+
+      if (stepType === StepTypeEnum.DIGEST) {
+        detail = DetailEnum.START_DIGESTING;
+      }
+
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
+          detail,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,

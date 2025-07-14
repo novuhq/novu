@@ -49,7 +49,14 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
         return;
       }
 
-      const stepRunData = this.mapJobToStepRun(job, options);
+      // Preserve existing deferredMs if not explicitly provided
+      const existingDeferredMs = await this.getExistingDeferredMs(job._organizationId, job._id);
+      const finalOptions = {
+        ...options,
+        deferredMs: options.deferredMs ?? existingDeferredMs,
+      };
+
+      const stepRunData = this.mapJobToStepRun(job, finalOptions);
       await this.insert(stepRunData);
 
       this.logger.debug(
@@ -63,6 +70,38 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
       );
     } catch (error) {
       this.logger.error({ err: error, jobId: job._id, status: job.status }, `Failed to log step ${job.status}`);
+    }
+  }
+
+  private async getExistingDeferredMs(organizationId: string, stepRunId: string): Promise<number | null> {
+    if (!this.clickhouseService.client) {
+      return null;
+    }
+
+    try {
+      const query = `
+        SELECT deferred_ms 
+        FROM ${this.table} 
+        WHERE organization_id = {organizationId:String} 
+          AND step_run_id = {stepRunId:String}
+          AND deferred_ms IS NOT NULL
+        ORDER BY updated_at DESC
+        LIMIT 1
+      `;
+
+      const result = await this.clickhouseService.query({
+        query,
+        params: {
+          organizationId,
+          stepRunId,
+        },
+      });
+
+      return (result.data?.[0] as { deferred_ms?: number })?.deferred_ms || null;
+    } catch (error) {
+      this.logger.warn({ err: error, stepRunId }, 'Failed to query existing deferredMs');
+
+      return null;
     }
   }
 

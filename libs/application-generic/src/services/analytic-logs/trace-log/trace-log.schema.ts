@@ -103,7 +103,8 @@ export type EventType =
   | 'reply_callback_misconfigured'
   | 'reply_mx_record_missing'
   | 'reply_mx_domain_missing'
-  | 'execution_detail';
+  | 'execution_detail'
+  | 'step_completed';
 
 export type EntityType = 'request' | 'step_run';
 

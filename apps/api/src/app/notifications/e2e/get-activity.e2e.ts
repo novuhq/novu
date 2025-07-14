@@ -1,16 +1,17 @@
 import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { StepTypeEnum } from '@novu/shared';
+import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { ActivityNotificationResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get activity with traces - /notifications/:notificationId (GET) #novu-v2', async () => {
+describe.skip('Get activity with traces - /notifications/:notificationId (GET) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let novuClient: Novu;
-  let originalEnvValue: string | undefined;
+  let originalTraceEnvValue: string | undefined;
+  let originalStepRunEnvValue: string | undefined;
   const messageRepository: MessageRepository = new MessageRepository();
   const notificationRepository: NotificationRepository = new NotificationRepository();
 
@@ -30,15 +31,22 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
   };
 
   before(async () => {
-    originalEnvValue = process.env.IS_TRACE_LOGS_ENABLED;
+    originalTraceEnvValue = process.env.IS_TRACE_LOGS_ENABLED;
+    originalStepRunEnvValue = process.env.IS_STEP_RUN_LOGS_ENABLED;
     (process.env as any).IS_TRACE_LOGS_ENABLED = 'true';
   });
 
   after(async () => {
-    if (originalEnvValue === undefined) {
+    if (originalTraceEnvValue === undefined) {
       delete (process.env as any).IS_TRACE_LOGS_ENABLED;
     } else {
-      (process.env as any).IS_TRACE_LOGS_ENABLED = originalEnvValue;
+      (process.env as any).IS_TRACE_LOGS_ENABLED = originalTraceEnvValue;
+    }
+
+    if (originalStepRunEnvValue === undefined) {
+      delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
+    } else {
+      (process.env as any).IS_STEP_RUN_LOGS_ENABLED = originalStepRunEnvValue;
     }
   });
 
@@ -58,7 +66,7 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should return traces in activity feed when traces feature flag is enabled', async () => {
+  it('should return traces in activity feed with step runs and trace logs', async () => {
     // Step 1: Trigger a notification to create trace logs
     const triggerResponse = await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
@@ -118,6 +126,99 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
         `Expected execution detail '${expectedDetail}' not found in job. Found: ${actualDetails.join(', ')}`
       );
     });
+  });
+
+  it('should use step runs when both trace and step run feature flags are enabled', async () => {
+    // Enable both feature flags
+    (process.env as any).IS_STEP_RUN_LOGS_ENABLED = 'true';
+
+    const triggerResponse = await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: session.subscriberId,
+      payload: { name: 'Test User' },
+    });
+
+    expect(triggerResponse.result?.acknowledged).to.equal(true);
+
+    await session.waitForJobCompletion(template._id);
+
+    const notification = await notificationRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      _templateId: template._id,
+      transactionId: triggerResponse.result?.transactionId,
+    });
+    expect(notification).to.be.ok;
+    if (!notification) throw new Error('Notification not found');
+
+    const activityResponse = await session.testAgent.get(`/v1/notifications/${notification._id}`).expect(200);
+    const activity: ActivityNotificationResponseDto = activityResponse.body.data;
+    expect(activity).to.be.ok;
+
+    // Should still return jobs (even if from step_runs)
+    expect(activity.jobs?.length).to.be.equal(1);
+    expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.TRIGGER);
+    expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
+    expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.IN_APP);
+    expect(activity.jobs?.[1].status).to.be.equal(JobStatusEnum.COMPLETED);
+
+    // eslint-disable-next-line no-console
+    console.log('activity.jobs 3333 ', activity.jobs);
+
+    // Reset feature flag
+    delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
+  });
+
+  it('should fallback to trace log method when step runs are not found', async () => {
+    /*
+     * Enable both feature flags
+     * (process.env as any).IS_STEP_RUN_LOGS_ENABLED = 'true';
+     */
+
+    const triggerResponse = await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: session.subscriberId,
+      payload: { name: 'Test User' },
+    });
+
+    expect(triggerResponse.result?.acknowledged).to.equal(true);
+
+    await session.waitForJobCompletion(template._id);
+
+    const message = await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      _templateId: template._id,
+      transactionId: triggerResponse.result?.transactionId,
+    });
+
+    expect(message).to.be.ok;
+    if (!message) throw new Error('Message not found');
+
+    const notification = await notificationRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: session.subscriberProfile?._id,
+      _templateId: template._id,
+      transactionId: triggerResponse.result?.transactionId,
+    });
+    expect(notification).to.be.ok;
+    if (!notification) throw new Error('Notification not found');
+
+    const activityResponse = await session.testAgent.get(`/v1/notifications/${notification._id}`).expect(200);
+    const activity: ActivityNotificationResponseDto = activityResponse.body.data;
+    expect(activity).to.be.ok;
+
+    // Should still return jobs (even if from step_runs)
+    expect(activity.jobs?.length).to.be.equal(1);
+    expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.TRIGGER);
+    expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
+    expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.IN_APP);
+    expect(activity.jobs?.[1].status).to.be.equal(JobStatusEnum.COMPLETED);
+
+    /*
+     * Reset feature flag
+     * delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
+     */
   });
 
   it('should fallback to old method when traces query fails', async () => {

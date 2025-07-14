@@ -132,6 +132,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step Filter Processing';
     case 'step_filter_failed':
       return 'Step Filter Failed';
+    case 'step_completed':
+      return 'Step Completed';
 
     // Message events
     case 'message_created':
