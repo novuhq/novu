@@ -127,8 +127,8 @@ export async function diffEnvironments({
   sourceEnvironmentId: string;
   targetEnvironmentId: string;
 }): Promise<IEnvironmentDiffResponse> {
-  const { data } = await postV2<{ data: IEnvironmentDiffResponse }>('/environments/diff', {
-    body: { sourceEnvironmentId, targetEnvironmentId },
+  const { data } = await postV2<{ data: IEnvironmentDiffResponse }>(`/environments/${targetEnvironmentId}/diff`, {
+    body: { sourceEnvironmentId },
   });
   return data;
 }
@@ -140,8 +140,8 @@ export async function publishEnvironments({
   sourceEnvironmentId: string;
   targetEnvironmentId: string;
 }): Promise<IEnvironmentPublishResponse> {
-  const { data } = await postV2<{ data: IEnvironmentPublishResponse }>('/environments/publish', {
-    body: { sourceEnvironmentId, targetEnvironmentId, dryRun: false },
+  const { data } = await postV2<{ data: IEnvironmentPublishResponse }>(`/environments/${targetEnvironmentId}/publish`, {
+    body: { sourceEnvironmentId, dryRun: false },
   });
   return data;
 }
