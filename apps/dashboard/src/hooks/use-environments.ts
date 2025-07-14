@@ -1,7 +1,13 @@
 import { createEnvironment, deleteEnvironment, updateEnvironment } from '@/api/environments';
 import { QueryKeys } from '@/utils/query-keys';
 import { IEnvironment } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import {
+  diffEnvironments,
+  publishEnvironments,
+  type IEnvironmentDiffResponse,
+  type IEnvironmentPublishResponse,
+} from '@/api/environments';
 
 export function useCreateEnvironment() {
   const queryClient = useQueryClient();
@@ -35,3 +41,32 @@ export function useDeleteEnvironment() {
     },
   });
 }
+
+export const useDiffEnvironments = ({
+  sourceEnvironmentId,
+  targetEnvironmentId,
+  enabled = true,
+}: {
+  sourceEnvironmentId?: string;
+  targetEnvironmentId?: string;
+  enabled?: boolean;
+}) => {
+  return useQuery<IEnvironmentDiffResponse>({
+    queryKey: ['diff-environments', sourceEnvironmentId, targetEnvironmentId],
+    queryFn: () =>
+      diffEnvironments({ sourceEnvironmentId: sourceEnvironmentId!, targetEnvironmentId: targetEnvironmentId! }),
+    enabled: enabled && !!sourceEnvironmentId && !!targetEnvironmentId && sourceEnvironmentId !== targetEnvironmentId,
+    staleTime: 0, // Always refetch to get latest diff
+  });
+};
+
+export const usePublishEnvironments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<IEnvironmentPublishResponse, Error, { sourceEnvironmentId: string; targetEnvironmentId: string }>({
+    mutationFn: publishEnvironments,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+    },
+  });
+};

@@ -3,7 +3,11 @@ import { UserProfile } from '@/components/user-profile';
 import { InboxButton } from '@/components/inbox-button';
 import { CustomerSupportButton } from './customer-support-button';
 import { EditBridgeUrlButton } from './edit-bridge-url-button';
+import { PublishButton } from './publish-button';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { cn } from '@/utils/ui';
+import { useEnvironment } from '../../context/environment/hooks';
 
 type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;
@@ -12,6 +16,9 @@ type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
 
 export const HeaderNavigation = (props: HeaderNavigationProps) => {
   const { startItems, hideBridgeUrl = false, className, ...rest } = props;
+  const { currentEnvironment } = useEnvironment();
+  const isNewChangeMechanismEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED, false);
+
   return (
     <div
       className={cn(
@@ -27,6 +34,11 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
             <EditBridgeUrlButton />
           </div>
         ) : null}
+        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+          <div className="pr-1">
+            <PublishButton />
+          </div>
+        )}
         <CustomerSupportButton />
         <div className="flex pr-0.5">
           <InboxButton />

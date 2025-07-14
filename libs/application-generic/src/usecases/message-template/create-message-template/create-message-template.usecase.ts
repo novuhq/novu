@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { MessageTemplateEntity, MessageTemplateRepository, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, IMessageAction, isBridgeWorkflow, StepTypeEnum } from '@novu/shared';
 
@@ -7,7 +7,6 @@ import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContentV0 } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
-import { BadRequestException } from '@nestjs/common';
 import { shouldSanitize } from '../shared';
 
 @Injectable()
@@ -32,29 +31,32 @@ export class CreateMessageTemplate {
       layoutId = command.layoutId;
     }
 
-    let item: MessageTemplateEntity = await this.messageTemplateRepository.create({
-      cta: command.cta,
-      name: command.name,
-      variables: command.variables ? normalizeVariantDefault(command.variables) : undefined,
-      content: shouldSanitize(command.type, command.contentType)
-        ? sanitizeMessageContentV0(command.content)
-        : command.content,
-      contentType: command.contentType,
-      subject: command.subject,
-      title: command.title,
-      type: command.type,
-      _feedId: command.feedId ? command.feedId : null,
-      _layoutId: layoutId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-      _creatorId: command.userId,
-      preheader: command.preheader,
-      senderName: command.senderName,
-      controls: command.controls,
-      output: command.output,
-      actor: command.actor,
-      code: command.code,
-    });
+    let item: MessageTemplateEntity = await this.messageTemplateRepository.create(
+      {
+        cta: command.cta,
+        name: command.name,
+        variables: command.variables ? normalizeVariantDefault(command.variables) : undefined,
+        content: shouldSanitize(command.type, command.contentType)
+          ? sanitizeMessageContentV0(command.content)
+          : command.content,
+        contentType: command.contentType,
+        subject: command.subject,
+        title: command.title,
+        type: command.type,
+        _feedId: command.feedId ? command.feedId : null,
+        _layoutId: layoutId,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
+        _creatorId: command.userId,
+        preheader: command.preheader,
+        senderName: command.senderName,
+        controls: command.controls,
+        output: command.output,
+        actor: command.actor,
+        code: command.code,
+      },
+      command.session ? { session: command.session } : {}
+    );
 
     if (item?._id) {
       item = (await this.messageTemplateRepository.findOne({

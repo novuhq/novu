@@ -25,7 +25,7 @@ export const LayoutListBlank = () => {
             Create your first email layout to define reusable templates for your email notifications.
           </p>
         </div>
-        <Button variant="primary" size="md" leadingIcon={RiLayout2Line} onClick={handleCreateLayout}>
+        <Button variant="primary" leadingIcon={RiLayout2Line} onClick={handleCreateLayout}>
           Create your first layout
         </Button>
       </div>

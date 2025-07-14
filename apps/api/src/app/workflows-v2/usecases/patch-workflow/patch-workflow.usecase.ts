@@ -9,6 +9,7 @@ import { WorkflowResponseDto } from '../../dtos';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { stepTypeToControlSchema } from '../../shared';
 import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { GetWorkflowWithPreferencesCommand } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 @Injectable()
@@ -148,6 +149,7 @@ export class PatchWorkflowUsecase {
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
+      session: command.session,
     });
   }
 
@@ -172,6 +174,7 @@ export class PatchWorkflowUsecase {
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
         userId: command.user._id,
+        session: command.session,
       });
     } catch (error) {
       this.logger.error(

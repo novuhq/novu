@@ -16,12 +16,14 @@ export class GetWorkflowByIdsUseCase {
     if (isInternalId) {
       workflowEntity = await this.notificationTemplateRepository.findById(
         command.workflowIdOrInternalId,
-        command.environmentId
+        command.environmentId,
+        command.session
       );
     } else {
       workflowEntity = await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
-        command.workflowIdOrInternalId
+        command.workflowIdOrInternalId,
+        command.session
       );
     }
 

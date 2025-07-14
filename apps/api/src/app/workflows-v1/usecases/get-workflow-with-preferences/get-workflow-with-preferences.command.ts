@@ -1,8 +1,17 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
+import { ClientSession } from '@novu/dal';
+import { Exclude } from 'class-transformer';
 
 export class GetWorkflowWithPreferencesCommand extends EnvironmentCommand {
-  @IsString()
   @IsDefined()
+  @IsString()
   workflowIdOrInternalId: string;
+
+  @IsOptional()
+  @IsString()
+  userId?: string;
+
+  @Exclude()
+  session?: ClientSession | null;
 }

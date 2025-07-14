@@ -192,12 +192,22 @@ export const texts = {
       fontWeight: '500',
     },
   ],
-  'code-sm': [
+  'code-xs': [
     '0.75rem',
     {
       lineHeight: '1rem',
-      letterSpacing: '-0.015em',
+      letterSpacing: '-0.0125em',
       fontWeight: '500',
+      fontFamily: 'var(--font-code)',
+    },
+  ],
+  'code-2xs': [
+    '0.625rem',
+    {
+      lineHeight: '0.9375rem',
+      letterSpacing: '-0.0125em',
+      fontWeight: '400',
+      fontFamily: 'var(--font-code)',
     },
   ],
 };
@@ -462,10 +472,18 @@ export default {
         weak: 'hsl(var(--bg-weak))',
         white: 'hsl(var(--bg-white))',
       },
+      icon: {
+        strong: 'hsl(var(--icon-strong))',
+        sub: 'hsl(var(--icon-sub))',
+        soft: 'hsl(var(--icon-soft))',
+        disabled: 'hsl(var(--icon-disabled))',
+        white: 'hsl(var(--icon-white))',
+      },
       stroke: {
         strong: 'hsl(var(--stroke-strong))',
         sub: 'hsl(var(--stroke-sub))',
         soft: 'hsl(var(--stroke-soft))',
+        weak: 'hsl(var(--stroke-weak))',
         white: 'hsl(var(--stroke-white))',
       },
       text: {

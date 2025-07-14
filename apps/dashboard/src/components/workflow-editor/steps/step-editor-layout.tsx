@@ -1,8 +1,8 @@
-import { WorkflowResponseDto, StepResponseDto, PermissionsEnum } from '@novu/shared';
+import { WorkflowResponseDto, EnvironmentTypeEnum, StepResponseDto, PermissionsEnum } from '@novu/shared';
 import { cn } from '@/utils/ui';
-import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine } from 'react-icons/ri';
+import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiPlayCircleLine, RiLockLine, RiArrowRightSLine } from 'react-icons/ri';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { IssuesPanel } from '@/components/issues-panel';
 import { StepEditorFactory } from '@/components/workflow-editor/steps/editor/step-editor-factory';
 import { StepPreviewFactory } from '@/components/workflow-editor/steps/preview/step-preview-factory';
@@ -18,6 +18,8 @@ import { Protect } from '../../../utils/protect';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { useFetchTranslations, type FetchTranslationsParams } from '@/hooks/use-fetch-translations';
+import { useEnvironment } from '../../../context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 
 type StepEditorLayoutProps = {
@@ -27,9 +29,11 @@ type StepEditorLayoutProps = {
 };
 
 function StepEditorContent() {
+  const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
   const { step, isSubsequentLoad, editorValue, workflow, selectedLocale, setSelectedLocale } = useStepEditor();
   const editorTitle = getEditorTitle(step.type);
   const { workflowSlug = '' } = useParams<{ workflowSlug: string }>();
+  const navigate = useNavigate();
   const [isTestDrawerOpen, setIsTestDrawerOpen] = useState(false);
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
   const isTranslationsEnabled = useIsTranslationEnabled();
@@ -48,7 +52,17 @@ function StepEditorContent() {
     setIsTestDrawerOpen(true);
   };
 
+  const handleSwitchToDevelopment = () => {
+    const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;
+
+    if (developmentEnvironment?.slug) {
+      switchEnvironment(developmentEnvironment.slug);
+      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: developmentEnvironment.slug }));
+    }
+  };
+
   const currentPayload = parseJsonValue(editorValue).payload;
+  const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;
 
   return (
     <ResizableLayout autoSaveId="step-editor-main-layout">
@@ -82,7 +96,39 @@ function StepEditorContent() {
               <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} />
               <div className="flex-1 overflow-y-auto">
                 <div className="h-full p-3">
-                  <StepEditorFactory />
+                  {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (
+                    <StepEditorFactory />
+                  ) : (
+                    <div className="flex h-full items-center justify-center p-6">
+                      <div className="max-w-md space-y-4 text-center">
+                        <div className="flex justify-center">
+                          <div className="bg-neutral-alpha-50 rounded-full p-3">
+                            <RiLockLine className="text-neutral-alpha-400 h-8 w-8" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <h3 className="text-base font-medium text-neutral-600">Step editor unavailable</h3>
+                          <p className="text-sm leading-relaxed text-neutral-500">
+                            Step editing is only available in development environments. Switch to a development
+                            environment to modify this step.
+                          </p>
+                        </div>
+                        {developmentEnvironment && (
+                          <div className="flex justify-center pt-2">
+                            <Button
+                              variant="secondary"
+                              size="xs"
+                              mode="gradient"
+                              onClick={handleSwitchToDevelopment}
+                              trailingIcon={RiArrowRightSLine}
+                            >
+                              Switch to {developmentEnvironment.name}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </ResizableLayout.EditorPanel>
