@@ -463,6 +463,24 @@ export const twilioConfig: IConfigCredentials[] = [
   ...smsConfigBase,
 ];
 
+export const unifonicConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AppSid,
+    displayName: 'App SID',
+    description: 'Authentication string that uniquely identifies your application.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SenderId,
+    displayName: 'Sender ID',
+    description: 'The SenderID identifies who has sent the SMS message, typically a brand name',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
 export const messagebirdConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.AccessKey,

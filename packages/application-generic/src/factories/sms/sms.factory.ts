@@ -1,36 +1,37 @@
 import { IntegrationEntity } from '@novu/dal';
-import { ISmsFactory, ISmsHandler } from './interfaces';
 import {
-  SnsHandler,
-  TelnyxHandler,
-  TwilioHandler,
-  Sms77Handler,
-  TermiiSmsHandler,
-  PlivoHandler,
-  GupshupSmsHandler,
-  FiretextSmsHandler,
-  InfobipSmsHandler,
+  AfricasTalkingSmsHandler,
+  AzureSmsHandler,
+  BandwidthHandler,
+  BrevoSmsHandler,
   BurstSmsHandler,
   ClickatellHandler,
+  ClicksendSmsHandler,
+  EazySmsHandler,
+  FiretextSmsHandler,
   FortySixElksHandler,
+  GenericSmsHandler,
+  GupshupSmsHandler,
+  InfobipSmsHandler,
+  ISendSmsHandler,
   KannelSmsHandler,
   MaqsamHandler,
-  SmsCentralHandler,
-  AfricasTalkingSmsHandler,
-  SendchampSmsHandler,
-  ClicksendSmsHandler,
-  SimpletextingSmsHandler,
-  BandwidthHandler,
-  GenericSmsHandler,
   MessageBirdHandler,
-  AzureSmsHandler,
-  NovuSmsHandler,
   NexmoHandler,
-  ISendSmsHandler,
+  NovuSmsHandler,
+  PlivoHandler,
   RingCentralHandler,
-  BrevoSmsHandler,
-  EazySmsHandler,
+  SendchampSmsHandler,
+  SimpletextingSmsHandler,
+  Sms77Handler,
+  SmsCentralHandler,
+  SnsHandler,
+  TelnyxHandler,
+  TermiiSmsHandler,
+  TwilioHandler,
+  UnifonicHandler,
 } from './handlers';
+import { ISmsFactory, ISmsHandler } from './interfaces';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -63,6 +64,7 @@ export class SmsFactory implements ISmsFactory {
     new RingCentralHandler(),
     new BrevoSmsHandler(),
     new EazySmsHandler(),
+    new UnifonicHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

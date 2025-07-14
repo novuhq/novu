@@ -211,4 +211,14 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   phoneNumberIdentification?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  appSid?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  senderId?: string;
 }

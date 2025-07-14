@@ -60,6 +60,8 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       apiToken: Schema.Types.String,
       channelId: Schema.Types.String,
       phoneNumberIdentification: Schema.Types.String,
+      appSid: Schema.Types.String,
+      senderId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
