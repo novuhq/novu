@@ -4,7 +4,7 @@ import { GetEnvironmentTags } from './usecases/get-environment-tags';
 import { PublishEnvironmentUseCase } from './usecases/publish-environment/publish-environment.usecase';
 import { DiffEnvironmentUseCase } from './usecases/diff-environment/diff-environment.usecase';
 import { WorkflowSyncStrategy } from './usecases/sync-strategies/workflow-sync.strategy';
-import { TransactionalSyncService, EnvironmentValidationService } from './services';
+import { EnvironmentValidationService } from './services';
 import { SharedModule } from '../shared/shared.module';
 import { WorkflowModule } from '../workflows-v2/workflow.module';
 
@@ -24,7 +24,6 @@ import {
     PublishEnvironmentUseCase,
     DiffEnvironmentUseCase,
     WorkflowSyncStrategy,
-    TransactionalSyncService,
     EnvironmentValidationService,
 
     WorkflowNormalizer,
