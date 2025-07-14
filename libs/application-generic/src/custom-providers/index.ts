@@ -67,5 +67,5 @@ export const clickHouseService = {
 
     return service;
   },
-  inject: [forwardRef(() => PinoLogger)],
+  inject: [forwardRef(() => PinoLogger) as any],
 };
