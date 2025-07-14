@@ -117,18 +117,11 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
       expect(body.data.summary.hasChanges).to.equal(false);
     });
 
-    it.skip('should use development environment as default source when sourceEnvironmentId is not provided', async () => {
-      /*
-       * SKIPPED: Workflow creation is currently failing in the test environment
-       * This test requires fixing the workflow creation SDK/API issue first
-       */
-    });
-
     it('should use development environment as default source when sourceEnvironmentId is not provided', async () => {
       const prodEnv = await getProductionEnvironment();
 
-      // Create a workflow in the development environment
-      const workflow = await createWorkflow({
+      // Create a workflow in the development environment using the SDK
+      const workflowData = {
         name: 'Test Workflow for Diff',
         workflowId: 'test-workflow-diff',
         description: 'This is a test workflow for diff',
@@ -136,7 +129,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         steps: [
           {
             name: 'Email Step',
-            type: StepTypeEnum.EMAIL,
+            type: 'email' as const,
             controlValues: {
               subject: 'Test Subject',
               body: 'Test email content',
@@ -144,6 +137,13 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
           },
         ],
         source: WorkflowCreationSourceEnum.Editor,
+      };
+
+      const { result: workflow } = await novuClient.workflows.create(workflowData);
+
+      // Wait a bit for the workflow to be fully created
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 100);
       });
 
       // Test diff without providing sourceEnvironmentId - should default to development

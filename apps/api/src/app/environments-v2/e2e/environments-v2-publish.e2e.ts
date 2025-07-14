@@ -40,114 +40,6 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     expect(body.message).to.contain('Invalid environment ID format');
   });
 
-  it.skip('should perform dry run successfully', async () => {
-    /*
-     * SKIPPED: Workflow creation is currently failing in the test environment
-     * This test requires fixing the workflow creation SDK/API issue first
-     * Get the production environment (automatically created with the session)
-     */
-    const prodEnv = await environmentRepository.findOne({
-      _parentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    if (!prodEnv) {
-      throw new Error('Production environment not found');
-    }
-
-    // Create a workflow in the dev environment
-    const workflow = await createWorkflow({
-      name: 'Test Workflow',
-      workflowId: 'test-workflow',
-      description: 'This is a test workflow',
-      active: true,
-      steps: [
-        {
-          name: 'Email Step',
-          type: StepTypeEnum.EMAIL,
-          controlValues: {
-            subject: 'Test Subject',
-            body: 'Test email content',
-          },
-        },
-      ],
-      source: WorkflowCreationSourceEnum.Editor,
-    });
-
-    // Test dry run
-    const { body } = await session.testAgent
-      .post(`/v2/environments/${prodEnv._id}/publish`)
-      .send({
-        sourceEnvironmentId: session.environment._id,
-        dryRun: true,
-      })
-      .expect(200);
-
-    expect(body.data.summary.resources).to.equal(1);
-    expect(body.data.summary.successful).to.equal(1);
-    expect(body.data.summary.failed).to.equal(0);
-    expect(body.data.summary.skipped).to.equal(0);
-  });
-
-  it.skip('should publish workflows successfully', async () => {
-    /*
-     * SKIPPED: Workflow creation is currently failing in the test environment
-     * This test requires fixing the workflow creation SDK/API issue first
-     */
-  });
-
-  it.skip('should use development environment as default source when sourceEnvironmentId is not provided', async () => {
-    /*
-     * SKIPPED: Workflow creation is currently failing in the test environment
-     * This test requires fixing the workflow creation SDK/API issue first
-     */
-  });
-
-  it('should perform dry run successfully', async () => {
-    // Get the production environment (automatically created with the session)
-    const prodEnv = await environmentRepository.findOne({
-      _parentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    if (!prodEnv) {
-      throw new Error('Production environment not found');
-    }
-
-    // Create a workflow in the dev environment
-    const workflow = await createWorkflow({
-      name: 'Test Workflow',
-      workflowId: 'test-workflow',
-      description: 'This is a test workflow',
-      active: true,
-      steps: [
-        {
-          name: 'Email Step',
-          type: StepTypeEnum.EMAIL,
-          controlValues: {
-            subject: 'Test Subject',
-            body: 'Test email content',
-          },
-        },
-      ],
-      source: WorkflowCreationSourceEnum.Editor,
-    });
-
-    // Test dry run
-    const { body } = await session.testAgent
-      .post(`/v2/environments/${prodEnv._id}/publish`)
-      .send({
-        sourceEnvironmentId: session.environment._id,
-        dryRun: true,
-      })
-      .expect(200);
-
-    expect(body.data.summary.resources).to.equal(1);
-    expect(body.data.summary.successful).to.equal(1);
-    expect(body.data.summary.failed).to.equal(0);
-    expect(body.data.summary.skipped).to.equal(0);
-  });
-
   it('should publish workflows successfully', async () => {
     // Get the production environment (automatically created with the session)
     const prodEnv = await environmentRepository.findOne({
@@ -159,8 +51,8 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       throw new Error('Production environment not found');
     }
 
-    // Create a workflow in the dev environment
-    const workflow = await createWorkflow({
+    // Create a workflow in the dev environment using the SDK
+    const workflowData = {
       name: 'Test Workflow Publish',
       workflowId: 'test-workflow-publish',
       description: 'This is a test workflow for publishing',
@@ -168,7 +60,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       steps: [
         {
           name: 'Email Step',
-          type: StepTypeEnum.EMAIL,
+          type: 'email' as const,
           controlValues: {
             subject: 'Test Subject for Publish',
             body: 'Test email content for publish',
@@ -176,6 +68,13 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
         },
       ],
       source: WorkflowCreationSourceEnum.Editor,
+    };
+
+    const { result: workflow } = await novuClient.workflows.create(workflowData);
+
+    // Wait a bit for the workflow to be fully created
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 100);
     });
 
     // Test actual publish (not dry run)
@@ -214,8 +113,8 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       throw new Error('Production environment not found');
     }
 
-    // Create a workflow in the dev environment
-    const workflow = await createWorkflow({
+    // Create a workflow in the dev environment using the SDK
+    const workflowData = {
       name: 'Test Workflow Default Source',
       workflowId: 'test-workflow-default-source',
       description: 'This is a test workflow for default source',
@@ -223,7 +122,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       steps: [
         {
           name: 'Email Step',
-          type: StepTypeEnum.EMAIL,
+          type: 'email' as const,
           controlValues: {
             subject: 'Test Subject Default',
             body: 'Test email content default',
@@ -231,6 +130,13 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
         },
       ],
       source: WorkflowCreationSourceEnum.Editor,
+    };
+
+    const { result: workflow } = await novuClient.workflows.create(workflowData);
+
+    // Wait a bit for the workflow to be fully created
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, 100);
     });
 
     // Test publish without providing sourceEnvironmentId - should default to development
