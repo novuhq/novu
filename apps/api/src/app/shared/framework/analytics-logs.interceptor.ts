@@ -70,6 +70,8 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const shouldRun = await this.shouldRun(context);
 
+    this.logger.debug({ shouldRun }, 'Analytics logs should run');
+
     if (!shouldRun) {
       return next.handle();
     }
@@ -79,11 +81,14 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     const start = Date.now();
     const res = context.switchToHttp().getResponse();
 
+    this.logger.debug('Analytics logs interceptor started');
+
     return next.handle().pipe(
       tap(async (data) => {
         const duration = Date.now() - start;
         const basicLog = buildLog(req, res.statusCode, data, user, duration);
         if (!basicLog) {
+          this.logger.debug('Analytics log construction failed - unable to track request metrics');
           this.logger.warn('Analytics log construction failed - unable to track request metrics');
 
           return;
@@ -92,6 +97,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
 
         try {
+          this.logger.debug({ analyticsLog }, 'Analytics log Inserting');
           await retryWithBackoff(() =>
             this.requestLogRepository.insert(analyticsLog, {
               organizationId: user?.organizationId,
@@ -99,6 +105,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
               userId: user?._id,
             })
           );
+          this.logger.debug('Analytics log Inserted');
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
         }
