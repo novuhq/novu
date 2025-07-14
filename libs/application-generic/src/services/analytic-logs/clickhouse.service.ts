@@ -6,10 +6,6 @@ import { PinoLogger } from 'nestjs-pino';
 export class ClickHouseService implements OnModuleDestroy {
   private client: ClickHouseClient | undefined;
 
-  constructor(@Inject(forwardRef(() => PinoLogger)) private readonly logger: PinoLogger) {
-    this.logger.setContext(this.constructor.name);
-  }
-
   async init() {
     const requiredConnectionConfig = {
       url: process.env.CLICK_HOUSE_URL,
@@ -19,9 +15,11 @@ export class ClickHouseService implements OnModuleDestroy {
     };
 
     if (Object.values(requiredConnectionConfig).some((value) => !value)) {
-      this.logger.warn(
-        'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
-      );
+      /*
+       * this.logger.warn(
+       *   'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
+       * );
+       */
       this.client = undefined;
 
       return;
@@ -29,7 +27,7 @@ export class ClickHouseService implements OnModuleDestroy {
 
     this.client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
 
-    this.logger.info('ClickHouse client created');
+    // this.logger.info('ClickHouse client created');
   }
 
   async onModuleDestroy() {
@@ -37,7 +35,7 @@ export class ClickHouseService implements OnModuleDestroy {
       return;
     }
     await this.client.close();
-    this.logger.info('ClickHouse client closed');
+    // this.logger.info('ClickHouse client closed');
   }
 
   async ping(): Promise<PingResult> {
@@ -45,13 +43,14 @@ export class ClickHouseService implements OnModuleDestroy {
       return { success: false, error: new Error('ClickHouse client not initialized') };
     }
 
+    // eslint-disable-next-line no-useless-catch
     try {
       const isAlive = await this.client.ping();
-      this.logger.info('ClickHouse server ping successful');
+      // this.logger.info('ClickHouse server ping successful');
 
       return isAlive;
     } catch (error) {
-      this.logger.error('ClickHouse server ping failed', error);
+      // this.logger.error('ClickHouse server ping failed', error);
       throw error;
     }
   }
