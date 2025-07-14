@@ -144,7 +144,8 @@ export class MessageResponseDto implements IMessage {
   })
   _id: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    nullable: true,
     type: String,
     description: 'Template ID associated with the message',
   })
@@ -156,7 +157,8 @@ export class MessageResponseDto implements IMessage {
   })
   _environmentId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    nullable: true,
     type: String,
     description: 'Message template ID',
   })
@@ -223,7 +225,8 @@ export class MessageResponseDto implements IMessage {
   })
   lastReadDate?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
+    nullable: true,
     oneOf: [
       {
         type: 'array',
