@@ -82,6 +82,7 @@ export class UpsertWorkflowUseCase {
             environmentId: command.user.environmentId,
             organizationId: command.user.organizationId,
             workflowIdOrInternalId: command.workflowIdOrInternalId,
+            session: command.session,
           })
         )
       : null;

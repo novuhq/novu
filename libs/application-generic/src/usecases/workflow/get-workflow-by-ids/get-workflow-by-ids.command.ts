@@ -1,4 +1,6 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { ClientSession } from '@novu/dal';
+import { Exclude } from 'class-transformer';
 import { EnvironmentCommand } from '../../../commands';
 
 export class GetWorkflowByIdsCommand extends EnvironmentCommand {
@@ -9,4 +11,9 @@ export class GetWorkflowByIdsCommand extends EnvironmentCommand {
   @IsOptional()
   @IsString()
   userId?: string;
+
+  @IsOptional()
+  @IsString()
+  @Exclude()
+  session?: ClientSession | null;
 }

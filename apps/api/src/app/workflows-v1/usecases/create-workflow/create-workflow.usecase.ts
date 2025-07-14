@@ -106,7 +106,7 @@ export class CreateWorkflow {
       storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier, session);
 
       if (command.isTranslationEnabled !== undefined) {
-        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command);
+        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command, session);
       }
 
       await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
@@ -157,7 +157,11 @@ export class CreateWorkflow {
     return storedWorkflow;
   }
 
-  private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: CreateWorkflowCommand) {
+  private async toggleV2TranslationsForWorkflow(
+    workflowIdentifier: string,
+    command: CreateWorkflowCommand,
+    session?: ClientSession | null
+  ) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
     const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
 
@@ -177,6 +181,7 @@ export class CreateWorkflow {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        session,
       });
     } catch (error) {
       this.logger.error(
@@ -392,18 +397,17 @@ export class CreateWorkflow {
       );
     }
 
-    const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId);
+    const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId, session);
     if (!item) throw new NotFoundException(`Workflow ${savedWorkflow._id} is not found`);
 
     this.sendTemplateCreationEvent(command, triggerIdentifier);
 
-    return this.getWorkflowWithPreferencesUseCase.execute(
-      GetWorkflowWithPreferencesCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        workflowIdOrInternalId: savedWorkflow._id,
-      })
-    );
+    return this.getWorkflowWithPreferencesUseCase.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      workflowIdOrInternalId: savedWorkflow._id,
+      session,
+    });
   }
 
   @Instrument()

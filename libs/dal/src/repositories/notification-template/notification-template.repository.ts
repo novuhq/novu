@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose';
+import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
 import { DirectionEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
@@ -35,35 +35,45 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntities(items);
   }
 
-  async findByTriggerIdentifier(environmentId: string, identifier: string) {
+  async findByTriggerIdentifier(environmentId: string, identifier: string, session?: ClientSession | null) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
     };
 
-    const query = this.MongooseModel.findOne(requestQuery).populate('steps.template').populate('updatedBy');
+    const query = this.MongooseModel.findOne(requestQuery, undefined, { session })
+      .populate('steps.template')
+      .populate('updatedBy');
 
     const item = await query;
 
     return this.mapEntity(item);
   }
 
-  async findAllByTriggerIdentifier(environmentId: string, identifier: string): Promise<NotificationTemplateEntity[]> {
+  async findAllByTriggerIdentifier(
+    environmentId: string,
+    identifier: string,
+    session?: ClientSession | null
+  ): Promise<NotificationTemplateEntity[]> {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       'triggers.identifier': identifier,
     };
 
-    const query = await this._model.find(requestQuery, { _id: 1, 'triggers.identifier': 1 });
+    const query = await this._model.find(requestQuery, { _id: 1, 'triggers.identifier': 1 }, { session });
 
     return this.mapEntities(query);
   }
 
-  async findById(id: string, environmentId: string) {
-    const query = this.MongooseModel.findOne({
-      _id: id,
-      _environmentId: environmentId,
-    })
+  async findById(id: string, environmentId: string, session?: ClientSession | null) {
+    const query = this.MongooseModel.findOne(
+      {
+        _id: id,
+        _environmentId: environmentId,
+      },
+      undefined,
+      { session }
+    )
       .populate('steps.template')
       .populate('steps.variants.template')
       .populate('updatedBy');
