@@ -54,10 +54,6 @@ function getAnalyticsStrategy(context: ExecutionContext): AnalyticsStrategyEnum 
   return context.getHandler && Reflect.getMetadata(LOG_ANALYTICS_KEY, context.getHandler());
 }
 
-function shouldLogAnalytics(context: ExecutionContext): boolean {
-  return getAnalyticsStrategy(context) !== undefined;
-}
-
 @Injectable()
 export class AnalyticsLogsInterceptor implements NestInterceptor {
   constructor(
@@ -67,10 +63,18 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     this.logger.setContext(this.constructor.name);
   }
 
+  private shouldLogAnalytics(context: ExecutionContext): boolean {
+    const strategy = getAnalyticsStrategy(context);
+
+    this.logger.debug(`Analytics logs should log strategy: ${strategy}`);
+
+    return strategy !== undefined;
+  }
+
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const shouldRun = await this.shouldRun(context);
 
-    this.logger.debug({ shouldRun }, 'Analytics logs should run');
+    this.logger.debug(`Analytics logs should run LOG_ANALYTICS_KEY: ${shouldRun}`);
 
     if (!shouldRun) {
       return next.handle();
@@ -114,10 +118,13 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   }
 
   private async shouldRun(context: ExecutionContext): Promise<boolean> {
-    const shouldLog = shouldLogAnalytics(context);
+    const shouldLog = this.shouldLogAnalytics(context);
+
     if (!shouldLog) return false;
 
     const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
+
+    this.logger.debug(`Analytics logs should run IS_ANALYTICS_LOGS_ENABLED: ${process.env.IS_ANALYTICS_LOGS_ENABLED}`);
 
     if (!isEnabled) return false;
 
