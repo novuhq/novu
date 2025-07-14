@@ -60,11 +60,11 @@ export const analyticsService = {
 
 export const clickHouseService = {
   provide: ClickHouseService,
-  useFactory: async () => {
-    const service = new ClickHouseService();
+  useFactory: async (logger: PinoLogger) => {
+    const service = new ClickHouseService(logger);
     await service.init();
 
     return service;
   },
-  inject: [],
+  inject: [PinoLogger],
 };

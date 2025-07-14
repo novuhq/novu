@@ -1,22 +1,16 @@
 import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Inject, forwardRef, OnModuleDestroy } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { createNestLoggingModuleOptions } from '../../logging';
 
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
   private client: ClickHouseClient | undefined;
-  private logger: PinoLogger;
+
+  constructor(@Inject(forwardRef(() => PinoLogger)) private readonly logger: PinoLogger) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async init() {
-    this.logger = new PinoLogger(
-      createNestLoggingModuleOptions({
-        serviceName: 'test',
-        version: '1.0.0',
-      })
-    );
-    this.logger.setContext(this.constructor.name);
-
     const requiredConnectionConfig = {
       url: process.env.CLICK_HOUSE_URL,
       username: process.env.CLICK_HOUSE_USER,
