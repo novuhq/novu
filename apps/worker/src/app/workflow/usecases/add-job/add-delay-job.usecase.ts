@@ -1,6 +1,6 @@
 import { BadRequestException, forwardRef, Inject, Injectable } from '@nestjs/common';
 
-import { JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
+import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import {
   ComputeJobWaitDurationService,
@@ -19,8 +19,7 @@ export class AddDelayJob {
     @Inject(forwardRef(() => ComputeJobWaitDurationService))
     private computeJobWaitDurationService: ComputeJobWaitDurationService,
     @Inject(forwardRef(() => CreateExecutionDetails))
-    private createExecutionDetails: CreateExecutionDetails,
-    private subscriberRepository: SubscriberRepository
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   @InstrumentUsecase()
@@ -37,17 +36,11 @@ export class AddDelayJob {
 
     let delay;
 
-    const subscriber = await this.subscriberRepository.findOne({
-      _id: data._subscriberId,
-      _environmentId: data._environmentId,
-    });
-
     try {
       delay = this.computeJobWaitDurationService.calculateDelay({
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        timezone: subscriber?.timezone,
       });
 
       await this.jobRepository.updateStatus(command.environmentId, data._id, JobStatusEnum.DELAYED);

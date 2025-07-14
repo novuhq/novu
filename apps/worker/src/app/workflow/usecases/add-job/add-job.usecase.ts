@@ -385,7 +385,7 @@ export class AddJob {
     if (bridgeResponse) {
       metadata = await this.updateMetadata(bridgeResponse, command);
     } else {
-      // @ts-expect-error - job.digest is not typed
+      // @ts-ignore - job.digest is not typed
       metadata = job.digest;
     }
 
@@ -393,10 +393,14 @@ export class AddJob {
     // eslint-disable-next-line no-param-reassign
     command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
 
-    const subscriber = await this.subscriberRepository.findOne({
-      _id: job._subscriberId,
-      _environmentId: job._environmentId,
-    });
+    const subscriber = await this.subscriberRepository.findOne(
+      {
+        _id: job._subscriberId,
+        _environmentId: job._environmentId,
+      },
+      'timezone',
+      { readPreference: 'secondaryPreferred' }
+    );
 
     const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse, subscriber?.timezone);
 
