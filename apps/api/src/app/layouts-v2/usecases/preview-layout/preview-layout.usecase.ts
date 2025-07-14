@@ -15,6 +15,7 @@ import { ControlValueSanitizerService } from '../../../shared/services/control-v
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
 import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
+import { enhanceBodyForPreview } from './preview-utils';
 
 @Injectable()
 export class PreviewLayoutUsecase {
@@ -74,6 +75,9 @@ export class PreviewLayoutUsecase {
       const cleanedPayloadExample = this.payloadProcessor.cleanPreviewExamplePayload(payloadExample);
 
       const { email } = previewTemplateData.controlValues as LayoutControlType;
+      const editorType = email?.editorType ?? 'block';
+      const body = email?.body ?? (editorType === 'block' ? '{}' : '');
+
       const executeOutput = await this.previewStepUsecase.execute(
         PreviewStepCommand.create({
           payload: (cleanedPayloadExample.payload ?? {}) as Record<string, unknown>,
@@ -81,9 +85,8 @@ export class PreviewLayoutUsecase {
           // mapping the email layout controls to the email step controls
           controls: {
             subject: 'email-layout-preview',
-            body: email?.body,
-            editorType: email?.editorType,
-            layoutId: null,
+            body: enhanceBodyForPreview(editorType, body),
+            editorType,
           } as EmailControlType,
           environmentId: command.user.environmentId,
           organizationId: command.user.organizationId,
@@ -95,11 +98,11 @@ export class PreviewLayoutUsecase {
         })
       );
 
-      const { body } = executeOutput.outputs as any;
+      const { body: previewBody } = executeOutput.outputs as any;
 
       return {
         result: {
-          preview: { body },
+          preview: { body: previewBody },
           type: ChannelTypeEnum.EMAIL,
         },
         previewPayloadExample: payloadExample,

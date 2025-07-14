@@ -308,6 +308,86 @@ const processMailyNodes = ({
 };
 
 /**
+ * Replaces Maily nodes based on a condition function.
+ *
+ * @param content - The stringified Maily JSON content
+ * @param conditionFn - Function that determines which nodes to replace
+ * @param replacementFn - Function that returns the replacement node or nodes
+ * @returns The modified Maily JSON content
+ *
+ * @example
+ * Input:
+ * {
+ *   type: "doc",
+ *   content: [
+ *     { type: "variable", attrs: { id: "user.name" } },
+ *     { type: "paragraph", content: [{ type: "text", text: "Hello" }] }
+ *   ]
+ * }
+ *
+ * replaceMailyNodesByCondition(
+ *   content,
+ *   (node) => node.type === "variable" && node.attrs?.id === "user.name",
+ *   (node) => ({ type: "text", text: "John Doe" })
+ * )
+ *
+ * Output:
+ * {
+ *   type: "doc",
+ *   content: [
+ *     { type: "text", text: "John Doe" },
+ *     { type: "paragraph", content: [{ type: "text", text: "Hello" }] }
+ *   ]
+ * }
+ */
+export const replaceMailyNodesByCondition = (
+  content: string,
+  conditionFn: (node: MailyJSONContent) => boolean,
+  replacementFn: (node: MailyJSONContent) => MailyJSONContent | MailyJSONContent[] | null
+): MailyJSONContent => {
+  const mailyJSONContent: MailyJSONContent = JSON.parse(content);
+
+  const processNodes = (node: MailyJSONContent): MailyJSONContent | MailyJSONContent[] | null => {
+    // Check if this node should be replaced
+    if (conditionFn(node)) {
+      return replacementFn(node);
+    }
+
+    // Process children if they exist
+    if (node.content && Array.isArray(node.content)) {
+      const processedContent: MailyJSONContent[] = [];
+
+      for (const child of node.content) {
+        const processedChild = processNodes(child);
+
+        if (processedChild === null) {
+          // Skip null nodes (deletion)
+          continue;
+        } else if (Array.isArray(processedChild)) {
+          // Handle multiple replacement nodes
+          processedContent.push(...processedChild);
+        } else {
+          // Handle single replacement node
+          processedContent.push(processedChild);
+        }
+      }
+
+      return {
+        ...node,
+        content: processedContent,
+      };
+    }
+
+    return node;
+  };
+
+  const result = processNodes(mailyJSONContent);
+
+  // Ensure we always return a single node (should be the root doc)
+  return Array.isArray(result) ? result[0] : result || mailyJSONContent;
+};
+
+/**
  * Replaces Maily variables in the content with a replacement string.
  *
  * @example

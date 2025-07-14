@@ -16,7 +16,7 @@ export class Credentials extends ClientSDK {
    *
    * @remarks
    * Update credentials for a provider such as slack and push tokens.
-   *       **providerId** is required field. This API appends the **deviceTokens** to the existing ones.
+   *       **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.
    */
   async update(
     updateSubscriberChannelRequestDto:
@@ -41,7 +41,7 @@ export class Credentials extends ClientSDK {
    *
    * @remarks
    * Update credentials for a provider such as **slack** and **FCM**.
-   *       **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.
+   *       **providerId** is required field. This API appends the **deviceTokens** to the existing ones.
    */
   async append(
     updateSubscriberChannelRequestDto:

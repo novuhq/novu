@@ -17,6 +17,7 @@ import { ControlValueSanitizerService } from '../../../shared/services/control-v
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
 import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
+import { enhanceBodyForPreview } from './preview-utils';
 
 describe('PreviewLayoutUsecase', () => {
   let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;
@@ -256,9 +257,11 @@ describe('PreviewLayoutUsecase', () => {
       expect(previewCall.subscriber).to.deep.equal(mockCleanedPayloadExample.subscriber);
       expect(previewCall.controls).to.deep.equal({
         subject: 'email-layout-preview',
-        body: mockPreviewTemplateData.controlValues.email?.body,
+        body: enhanceBodyForPreview(
+          mockPreviewTemplateData.controlValues.email?.editorType ?? 'block',
+          mockPreviewTemplateData.controlValues.email?.body ?? ''
+        ),
         editorType: mockPreviewTemplateData.controlValues.email?.editorType,
-        layoutId: null,
       });
       expect(previewCall.environmentId).to.equal(mockUser.environmentId);
       expect(previewCall.organizationId).to.equal(mockUser.organizationId);
@@ -325,9 +328,10 @@ describe('PreviewLayoutUsecase', () => {
 
       await previewLayoutUsecase.execute(command);
 
+      expect(previewStepUsecaseMock.execute.calledOnce).to.be.true;
       const previewCall = previewStepUsecaseMock.execute.firstCall.args[0];
-      expect(previewCall.controls.body).to.be.undefined;
-      expect(previewCall.controls.editorType).to.be.undefined;
+      expect(previewCall.controls.body).to.eq('{}');
+      expect(previewCall.controls.editorType).to.eq('block');
     });
 
     it('should handle missing payload in cleaned payload example', async () => {

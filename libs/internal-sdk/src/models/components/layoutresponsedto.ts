@@ -40,6 +40,10 @@ export type LayoutResponseDto = {
    */
   layoutId: string;
   /**
+   * Slug of the layout
+   */
+  slug: string;
+  /**
    * Name of the layout
    */
   name: string;
@@ -85,6 +89,7 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<
 > = z.object({
   _id: z.string(),
   layoutId: z.string(),
+  slug: z.string(),
   name: z.string(),
   isDefault: z.boolean(),
   updatedAt: z.string(),
@@ -104,6 +109,7 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<
 export type LayoutResponseDto$Outbound = {
   _id: string;
   layoutId: string;
+  slug: string;
   name: string;
   isDefault: boolean;
   updatedAt: string;
@@ -123,6 +129,7 @@ export const LayoutResponseDto$outboundSchema: z.ZodType<
 > = z.object({
   id: z.string(),
   layoutId: z.string(),
+  slug: z.string(),
   name: z.string(),
   isDefault: z.boolean(),
   updatedAt: z.string(),
