@@ -39,7 +39,7 @@ type HtmlEditorProps = {
 };
 
 const gutterElementClassName =
-  '[&_.cm-gutterElement]:flex [&_.cm-gutterElement]:items-center [&_.cm-gutterElement]:justify-end [&_.cm-gutterElement]:text-text-soft [&_.cm-gutterElement]:font-code [&_.cm-gutterElement]:text-code-sm [&_.cm-gutterElement>span]:h-full';
+  '[&_.cm-gutterElement]:flex [&_.cm-gutterElement]:items-center [&_.cm-gutterElement]:justify-end [&_.cm-gutterElement]:text-text-soft [&_.cm-gutterElement]:font-code [&_.cm-gutterElement]:text-code-xs [&_.cm-gutterElement>span]:h-full';
 
 /**
  * The HtmlEditor component is a wrapper around the VariableEditor and adds the formatting, html and liquid syntax highlighting.

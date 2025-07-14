@@ -33,7 +33,10 @@ export function createSubscriberData(subscriber: ISubscriberResponseDto): Previe
   };
 }
 
-export function createSubscriberDataFromUser(user: IUserEntity): PreviewSubscriberData {
+export function createSubscriberDataFromUser(
+  user: IUserEntity,
+  locale: string = DEFAULT_LOCALE
+): PreviewSubscriberData {
   return {
     subscriberId: user.email || user._id,
     firstName: user.firstName || '',
@@ -41,7 +44,7 @@ export function createSubscriberDataFromUser(user: IUserEntity): PreviewSubscrib
     email: user.email || '',
     phone: '',
     avatar: user.profilePicture || '',
-    locale: DEFAULT_LOCALE,
+    locale,
   };
 }
 

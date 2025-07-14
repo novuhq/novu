@@ -1,4 +1,11 @@
-import { ListLayoutsResponse, IEnvironment, CreateLayoutDto, LayoutResponseDto, UpdateLayoutDto } from '@novu/shared';
+import {
+  ListLayoutsResponse,
+  IEnvironment,
+  CreateLayoutDto,
+  LayoutResponseDto,
+  UpdateLayoutDto,
+  GeneratePreviewResponseDto,
+} from '@novu/shared';
 import { getV2, postV2, putV2, delV2 } from './api.client';
 
 export const getLayouts = async ({
@@ -63,4 +70,21 @@ export const updateLayout = async ({
 
 export const deleteLayout = async ({ environment, layoutSlug }: { environment: IEnvironment; layoutSlug: string }) => {
   await delV2(`/layouts/${layoutSlug}`, { environment });
+};
+
+export const previewLayout = async ({
+  environment,
+  layoutSlug,
+  previewData,
+}: {
+  environment: IEnvironment;
+  layoutSlug: string;
+  previewData: { controlValues: Record<string, unknown>; previewPayload: Record<string, unknown> };
+}) => {
+  const { data } = await postV2<{ data: GeneratePreviewResponseDto }>(`/layouts/${layoutSlug}/preview`, {
+    environment,
+    body: previewData,
+  });
+
+  return data;
 };

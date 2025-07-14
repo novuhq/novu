@@ -42,7 +42,6 @@ import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
-import { IOptimisticStepInfo } from '../build-variable-schema/build-available-variable-schema.command';
 import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
 import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import { PreviewUsecase } from '../preview/preview.usecase';
@@ -83,6 +82,7 @@ export class UpsertWorkflowUseCase {
             environmentId: command.user.environmentId,
             organizationId: command.user.organizationId,
             workflowIdOrInternalId: command.workflowIdOrInternalId,
+            session: command.session,
           })
         )
       : null;

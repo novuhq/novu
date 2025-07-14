@@ -21,7 +21,7 @@ export class LayoutVariablesSchemaUseCase {
       CreateVariablesObjectCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        controlValues: Object.values(controlValues),
+        controlValues: Object.values(controlValues?.email ?? {}),
       })
     );
 

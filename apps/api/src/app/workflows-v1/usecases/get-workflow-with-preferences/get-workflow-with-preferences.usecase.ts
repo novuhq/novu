@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { ClientSession, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
 import {
   GetPreferences,
@@ -28,6 +28,7 @@ export class GetWorkflowWithPreferencesUseCase {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       userId: command.userId,
+      session: command.session,
     });
 
     const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity);

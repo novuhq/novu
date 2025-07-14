@@ -2,19 +2,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsOptional, IsNumber, Min, Max } from 'class-validator';
 
 export class PublishEnvironmentRequestDto {
-  @ApiProperty({
-    description: 'Source environment ID to sync from',
+  @ApiPropertyOptional({
+    description: 'Source environment ID to sync from. Defaults to the Development environment if not provided.',
     example: '507f1f77bcf86cd799439011',
   })
+  @IsOptional()
   @IsString()
-  sourceEnvironmentId: string;
-
-  @ApiProperty({
-    description: 'Target environment ID to sync to',
-    example: '507f1f77bcf86cd799439012',
-  })
-  @IsString()
-  targetEnvironmentId: string;
+  sourceEnvironmentId?: string;
 
   @ApiPropertyOptional({
     description: 'Perform a dry run without making actual changes',

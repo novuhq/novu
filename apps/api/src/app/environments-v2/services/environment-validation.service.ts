@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { EnvironmentRepository, BaseRepository } from '@novu/dal';
-import { UserSessionData } from '@novu/shared';
+import { UserSessionData, EnvironmentEnum } from '@novu/shared';
 
 export interface IEnvironmentValidationParams {
   sourceEnvironmentId: string;
@@ -48,5 +48,18 @@ export class EnvironmentValidationService {
       }
       throw error;
     }
+  }
+
+  async getDevelopmentEnvironmentId(organizationId: string): Promise<string> {
+    const developmentEnvironment = await this.environmentRepository.findOne({
+      _organizationId: organizationId,
+      name: EnvironmentEnum.DEVELOPMENT,
+    });
+
+    if (!developmentEnvironment) {
+      throw new BadRequestException('Development environment not found');
+    }
+
+    return developmentEnvironment._id;
   }
 }

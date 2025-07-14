@@ -59,7 +59,7 @@ export class EnvironmentsController {
     );
   }
 
-  @Post('/publish')
+  @Post('/:targetEnvironmentId/publish')
   @HttpCode(200)
   @ApiOperation({ summary: 'Publish all workflows from source to target environment' })
   @ApiResponse(PublishEnvironmentResponseDto)
@@ -68,19 +68,20 @@ export class EnvironmentsController {
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async publishEnvironment(
     @UserSession() user: UserSessionData,
+    @Param('targetEnvironmentId') targetEnvironmentId: string,
     @Body() body: PublishEnvironmentRequestDto
   ): Promise<PublishEnvironmentResponseDto> {
     const command = PublishEnvironmentCommand.create({
       user,
       sourceEnvironmentId: body.sourceEnvironmentId,
-      targetEnvironmentId: body.targetEnvironmentId,
+      targetEnvironmentId,
       dryRun: body.dryRun,
     });
 
     return await this.publishEnvironmentUseCase.execute(command);
   }
 
-  @Post('/diff')
+  @Post('/:targetEnvironmentId/diff')
   @HttpCode(200)
   @ApiOperation({ summary: 'Compare workflows between source and target environments' })
   @ApiResponse(DiffEnvironmentResponseDto)
@@ -89,13 +90,14 @@ export class EnvironmentsController {
   @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   async diffEnvironment(
     @UserSession() user: UserSessionData,
+    @Param('targetEnvironmentId') targetEnvironmentId: string,
     @Body() body: DiffEnvironmentRequestDto
   ): Promise<DiffEnvironmentResponseDto> {
     return await this.diffEnvironmentUseCase.execute(
       DiffEnvironmentCommand.create({
         user,
         sourceEnvironmentId: body.sourceEnvironmentId,
-        targetEnvironmentId: body.targetEnvironmentId,
+        targetEnvironmentId,
       })
     );
   }

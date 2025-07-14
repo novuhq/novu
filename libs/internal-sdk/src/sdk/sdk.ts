@@ -146,10 +146,10 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Check topic subscriber
+   * Retrieve a layout
    *
    * @remarks
-   * Check if a subscriber belongs to a certain topic
+   * Fetches details of a specific layout by its unique identifier **layoutId**
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,

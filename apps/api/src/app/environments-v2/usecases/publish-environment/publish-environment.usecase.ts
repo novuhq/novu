@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
+import { EnvironmentRepository, ClientSession, BaseRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
 import {
   ResourceTypeEnum,
@@ -9,7 +10,7 @@ import {
   ISyncOptions,
   ISyncResult,
 } from '../../types/sync.types';
-import { TransactionalSyncService, EnvironmentValidationService } from '../../services';
+import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 
 @Injectable()
@@ -17,7 +18,7 @@ export class PublishEnvironmentUseCase {
   constructor(
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
-    private transactionalSyncService: TransactionalSyncService,
+    private environmentRepository: EnvironmentRepository,
     private workflowSyncStrategy: WorkflowSyncStrategy
   ) {
     this.logger.setContext(this.constructor.name);
@@ -26,8 +27,18 @@ export class PublishEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: PublishEnvironmentCommand): Promise<IPublishResult> {
     try {
+      // First validate the target environment ID format
+      if (!BaseRepository.isInternalId(command.targetEnvironmentId)) {
+        throw new BadRequestException('Invalid environment ID format');
+      }
+
+      // If sourceEnvironmentId is not provided, default to development environment
+      const sourceEnvironmentId =
+        command.sourceEnvironmentId ||
+        (await this.environmentValidationService.getDevelopmentEnvironmentId(command.user.organizationId));
+
       await this.environmentValidationService.validateEnvironments({
-        sourceEnvironmentId: command.sourceEnvironmentId,
+        sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
         user: command.user,
       });
@@ -38,15 +49,13 @@ export class PublishEnvironmentUseCase {
       };
 
       const syncContext: ISyncContext = {
-        sourceEnvironmentId: command.sourceEnvironmentId,
+        sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
         user: command.user,
         options,
       };
 
-      this.logger.info(
-        `Starting environment publish from ${command.sourceEnvironmentId} to ${command.targetEnvironmentId}`
-      );
+      this.logger.info(`Starting environment publish from ${sourceEnvironmentId} to ${command.targetEnvironmentId}`);
 
       /*
        * For now, we only support workflow sync
@@ -85,7 +94,7 @@ export class PublishEnvironmentUseCase {
       }
     } else {
       // For actual sync, use transactions for atomicity
-      await this.transactionalSyncService.executeWithTransaction(async (session) => {
+      await this.executeWithTransaction(async (session) => {
         // Add session to context for transactional operations
         const transactionalContext = { ...context, session };
 
@@ -98,6 +107,36 @@ export class PublishEnvironmentUseCase {
     }
 
     return results;
+  }
+
+  private async executeWithTransaction<T>(
+    operation: (session: ClientSession | null) => Promise<T>,
+    operationName: string = 'sync operation'
+  ): Promise<T> {
+    this.logger.info(`Starting transactional ${operationName}`);
+
+    try {
+      return await this.environmentRepository.withTransaction(async (session) => {
+        if (session) {
+          this.logger.debug(`Executing ${operationName} within transaction`);
+        } else {
+          this.logger.debug(`Executing ${operationName} without transaction (non-replica set mode)`);
+        }
+
+        const result = await operation(session);
+
+        if (session) {
+          this.logger.debug(`Successfully completed ${operationName} within transaction`);
+        } else {
+          this.logger.debug(`Successfully completed ${operationName} without transaction`);
+        }
+
+        return result;
+      });
+    } catch (error) {
+      this.logger.error(`Transaction failed for ${operationName}: ${error.message}`);
+      throw error;
+    }
   }
 
   private calculateSummary(results: ISyncResult[]) {

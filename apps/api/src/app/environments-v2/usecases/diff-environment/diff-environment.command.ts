@@ -1,9 +1,10 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { IsString } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 
 export class DiffEnvironmentCommand extends EnvironmentWithUserObjectCommand {
+  @IsOptional()
   @IsString()
-  sourceEnvironmentId: string;
+  sourceEnvironmentId?: string;
 
   @IsString()
   targetEnvironmentId: string;

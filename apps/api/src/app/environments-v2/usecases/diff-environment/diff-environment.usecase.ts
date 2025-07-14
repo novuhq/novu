@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
+import { BaseRepository } from '@novu/dal';
 import { DiffEnvironmentCommand } from './diff-environment.command';
 import { ResourceTypeEnum, ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
 import { EnvironmentValidationService } from '../../services';
@@ -19,15 +20,23 @@ export class DiffEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: DiffEnvironmentCommand): Promise<IEnvironmentDiffResult> {
     try {
+      // First validate the target environment ID format
+      if (!BaseRepository.isInternalId(command.targetEnvironmentId)) {
+        throw new BadRequestException('Invalid environment ID format');
+      }
+
+      // If sourceEnvironmentId is not provided, default to development environment
+      const sourceEnvironmentId =
+        command.sourceEnvironmentId ||
+        (await this.environmentValidationService.getDevelopmentEnvironmentId(command.user.organizationId));
+
       await this.environmentValidationService.validateEnvironments({
-        sourceEnvironmentId: command.sourceEnvironmentId,
+        sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
         user: command.user,
       });
 
-      this.logger.info(
-        `Starting environment diff between ${command.sourceEnvironmentId} and ${command.targetEnvironmentId}`
-      );
+      this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
       /*
        * For now, we only support workflow diff
@@ -37,7 +46,7 @@ export class DiffEnvironmentUseCase {
 
       const resources = await this.executeDiff(
         strategies,
-        command.sourceEnvironmentId,
+        sourceEnvironmentId,
         command.targetEnvironmentId,
         command.user.organizationId,
         command.user
@@ -51,13 +60,13 @@ export class DiffEnvironmentUseCase {
       );
 
       return {
-        sourceEnvironmentId: command.sourceEnvironmentId,
+        sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
         resources,
         summary,
       };
     } catch (error) {
-      this.logger.error(`Environment diff failed: ${error.message}`);
+      this.logger.error('Environment diff failed', error);
       throw error;
     }
   }
