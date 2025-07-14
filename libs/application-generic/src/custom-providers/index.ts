@@ -1,4 +1,5 @@
 import { DalService } from '@novu/dal';
+import { forwardRef } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import {
   AnalyticsService,
@@ -66,5 +67,5 @@ export const clickHouseService = {
 
     return service;
   },
-  inject: [PinoLogger],
+  inject: [forwardRef(() => PinoLogger)],
 };
