@@ -6,6 +6,7 @@ import {
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
+import { Prettify } from '../../../utils/prettify.type';
 
 export const TABLE_NAME = 'traces';
 
@@ -110,7 +111,9 @@ export type EntityType = 'request' | 'step_run';
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 
-export type Trace = Omit<NativeTrace, 'event_type' | 'entity_type'> & {
+export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type'> & {
   event_type: EventType;
   entity_type: EntityType;
 };
+
+export type Trace = Prettify<TraceLogComplex>;

@@ -1,5 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationRepository, ExecutionDetailFeedItem, JobStatusEnum } from '@novu/dal';
+import {
+  NotificationRepository,
+  ExecutionDetailFeedItem,
+  JobStatusEnum,
+  NotificationFeedItemEntity,
+  JobFeedItem,
+  NotificationStepEntity,
+} from '@novu/dal';
 import {
   AnalyticsService,
   TraceLogRepository,
@@ -11,6 +18,7 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   FeatureFlagsKeysEnum,
+  ProvidersIdEnum,
   StepTypeEnum,
 } from '@novu/shared';
 
@@ -93,35 +101,8 @@ export class GetActivity {
     }
   }
 
-  private mapStepRunStatusToJobStatus(stepRunStatus: string): JobStatusEnum {
-    switch (stepRunStatus.toLowerCase()) {
-      case 'completed':
-        return JobStatusEnum.COMPLETED;
-      case 'failed':
-        return JobStatusEnum.FAILED;
-      case 'pending':
-        return JobStatusEnum.PENDING;
-      case 'queued':
-        return JobStatusEnum.QUEUED;
-      case 'running':
-        return JobStatusEnum.RUNNING;
-      case 'delayed':
-        return JobStatusEnum.DELAYED;
-      case 'canceled':
-      case 'cancelled':
-        return JobStatusEnum.CANCELED;
-      case 'skipped':
-        return JobStatusEnum.SKIPPED;
-      case 'merged':
-        return JobStatusEnum.MERGED;
-      default:
-        return JobStatusEnum.PENDING;
-    }
-  }
-
-  private async getFeedItemFromStepRuns(command: GetActivityCommand) {
+  private async getFeedItemFromStepRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
-      // Get notification metadata only (no jobs population for efficiency)
       const feedItem = await this.notificationRepository.findNotificationMetadataOnly(
         command.notificationId,
         command.environmentId,
@@ -132,7 +113,6 @@ export class GetActivity {
         return null;
       }
 
-      // Get step runs from ClickHouse
       const stepRunsResult = await this.stepRunRepository.find({
         where: {
           organization_id: command.organizationId,
@@ -178,7 +158,6 @@ export class GetActivity {
       }
 
       if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
-        // If no step runs found, return the feedItem without jobs
         feedItem.jobs = [];
 
         return feedItem;
@@ -216,7 +195,7 @@ export class GetActivity {
         const traces = traceLogsByStepRunId.get(stepRun.step_run_id) || [];
         const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace) => ({
           _id: trace.id,
-          providerId: stepRun.provider_id || undefined,
+          providerId: stepRun.provider_id as ProvidersIdEnum,
           detail: trace.title,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           _jobId: stepRun.step_run_id,
@@ -227,28 +206,29 @@ export class GetActivity {
           raw: trace.raw_data,
         }));
 
-        // Map step run to job format - using type assertion due to migration from step_runs to jobs
-        return {
+        const stepRunDto: NotificationStepEntity = {
+          _id: stepRun.step_id,
+          _templateId: stepRun.step_id,
+          active: true,
+          filters: [],
+        };
+
+        const jobDto: JobFeedItem = {
           _id: stepRun.step_run_id,
-          status: this.mapStepRunStatusToJobStatus(stepRun.status),
+          status: stepRun.status as JobStatusEnum,
           overrides: {}, // Step runs don't have overrides, use empty object
           payload: {}, // Step runs don't have payload, use empty object
-          step: {
-            _id: stepRun.step_id,
-            _templateId: stepRun.step_id, // Use step_id as templateId for now
-            template: {
-              type: stepRun.step_type as StepTypeEnum,
-              name: stepRun.step_name,
-            },
-          } as any, // Type assertion for migration compatibility
+          step: stepRunDto,
           type: stepRun.step_type as StepTypeEnum,
-          providerId: stepRun.provider_id || undefined,
+          providerId: stepRun.provider_id as ProvidersIdEnum,
           createdAt: new Date(stepRun.created_at).toISOString(),
           updatedAt: new Date(stepRun.updated_at).toISOString(),
-          digest: null, // Step runs don't have digest info
+          digest: undefined, // Step runs don't have digest info
           executionDetails,
-        } as any; // Type assertion for migration compatibility
-      }) as any; // Type assertion for migration compatibility
+        };
+
+        return jobDto;
+      });
 
       return feedItem;
     } catch (error) {

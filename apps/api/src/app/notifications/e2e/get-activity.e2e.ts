@@ -6,7 +6,7 @@ import { Novu } from '@novu/api';
 import { ActivityNotificationResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe.skip('Get activity with traces - /notifications/:notificationId (GET) #novu-v2', async () => {
+describe('Get activity with traces - /notifications/:notificationId (GET) #novu-v2', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let novuClient: Novu;
@@ -155,15 +155,11 @@ describe.skip('Get activity with traces - /notifications/:notificationId (GET) #
     const activity: ActivityNotificationResponseDto = activityResponse.body.data;
     expect(activity).to.be.ok;
 
-    // Should still return jobs (even if from step_runs)
-    expect(activity.jobs?.length).to.be.equal(1);
+    expect(activity.jobs?.length).to.be.equal(2);
     expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.TRIGGER);
     expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
-    expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.IN_APP);
+    expect(activity.jobs?.[1].type).to.be.equal(StepTypeEnum.IN_APP);
     expect(activity.jobs?.[1].status).to.be.equal(JobStatusEnum.COMPLETED);
-
-    // eslint-disable-next-line no-console
-    console.log('activity.jobs 3333 ', activity.jobs);
 
     // Reset feature flag
     delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
@@ -171,7 +167,7 @@ describe.skip('Get activity with traces - /notifications/:notificationId (GET) #
 
   it('should fallback to trace log method when step runs are not found', async () => {
     /*
-     * Enable both feature flags
+     *  Enable both feature flags
      * (process.env as any).IS_STEP_RUN_LOGS_ENABLED = 'true';
      */
 
@@ -210,10 +206,8 @@ describe.skip('Get activity with traces - /notifications/:notificationId (GET) #
 
     // Should still return jobs (even if from step_runs)
     expect(activity.jobs?.length).to.be.equal(1);
-    expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.TRIGGER);
-    expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
     expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.IN_APP);
-    expect(activity.jobs?.[1].status).to.be.equal(JobStatusEnum.COMPLETED);
+    expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
 
     /*
      * Reset feature flag

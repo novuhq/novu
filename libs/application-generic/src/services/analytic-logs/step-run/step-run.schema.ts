@@ -7,6 +7,7 @@ import {
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
+import { Prettify } from '../../../utils/prettify.type';
 
 export const TABLE_NAME = 'step_runs';
 
@@ -60,4 +61,24 @@ export const stepRunSchema = new ClickhouseSchema(
 
 export const ORDER_BY: (keyof typeof stepRunSchema.schema)[] = ['organization_id', 'step_run_id'];
 
-export type StepRun = InferClickhouseSchemaType<typeof stepRunSchema>;
+export type StepType = 'email' | 'sms' | 'in_app' | 'push' | 'chat' | 'digest' | 'trigger' | 'delay' | 'custom';
+
+export type StepRunStatus =
+  | 'pending'
+  | 'queued'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'delayed'
+  | 'canceled'
+  | 'merged'
+  | 'skipped';
+
+type NativeStepRun = InferClickhouseSchemaType<typeof stepRunSchema>;
+
+type StepRunComplex = Omit<NativeStepRun, 'status' | 'step_type'> & {
+  status: StepRunStatus;
+  step_type: StepType;
+};
+
+export type StepRun = Prettify<StepRunComplex>;

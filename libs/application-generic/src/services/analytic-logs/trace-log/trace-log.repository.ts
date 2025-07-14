@@ -7,7 +7,7 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
 
 @Injectable()
-export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
+export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Trace> {
   public readonly table = TABLE_NAME;
   public readonly identifierPrefix = 'trc_';
 

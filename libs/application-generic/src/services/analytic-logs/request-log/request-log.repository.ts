@@ -3,12 +3,12 @@ import { PinoLogger } from 'nestjs-pino';
 import { LogRepository } from '../log.repository';
 import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { requestLogSchema, ORDER_BY } from './request-log.schema';
+import { requestLogSchema, ORDER_BY, RequestLog } from './request-log.schema';
 
 export const TABLE_NAME = 'requests';
 
 @Injectable()
-export class RequestLogRepository extends LogRepository<typeof requestLogSchema> {
+export class RequestLogRepository extends LogRepository<typeof requestLogSchema, RequestLog> {
   public readonly table = TABLE_NAME;
   public readonly identifierPrefix = 'req_';
 

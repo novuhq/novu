@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { addYears, format } from 'date-fns';
 import { LogRepository, SchemaKeys } from '../log.repository';
 import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { stepRunSchema, ORDER_BY, TABLE_NAME, StepRun } from './step-run.schema';
+import { stepRunSchema, ORDER_BY, TABLE_NAME, StepRun, StepType } from './step-run.schema';
 
 type StepRunInsertData = Omit<StepRun, 'id'>;
 
@@ -20,7 +20,7 @@ type StepOptions = {
 };
 
 @Injectable()
-export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
+export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepRun> {
   public readonly table = TABLE_NAME;
   public readonly schema = stepRunSchema;
   public readonly schemaOrderBy: SchemaKeys<typeof stepRunSchema>[] = ORDER_BY;
@@ -33,6 +33,31 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
   ) {
     super(clickhouseService, logger, stepRunSchema, ORDER_BY, featureFlagsService);
     this.logger.setContext(this.constructor.name);
+  }
+
+  private mapStepTypeEnumToStepType(stepType: StepTypeEnum | undefined): StepType | null {
+    switch (stepType) {
+      case StepTypeEnum.EMAIL:
+        return 'email';
+      case StepTypeEnum.SMS:
+        return 'sms';
+      case StepTypeEnum.IN_APP:
+        return 'in_app';
+      case StepTypeEnum.PUSH:
+        return 'push';
+      case StepTypeEnum.CHAT:
+        return 'chat';
+      case StepTypeEnum.DIGEST:
+        return 'digest';
+      case StepTypeEnum.TRIGGER:
+        return 'trigger';
+      case StepTypeEnum.DELAY:
+        return 'delay';
+      case StepTypeEnum.CUSTOM:
+        return 'custom';
+      default:
+        return null;
+    }
   }
 
   async create(job: JobEntity, options: StepOptions = {}): Promise<void> {
@@ -126,7 +151,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema> {
       message_id: options?.message?._id || null,
 
       // Step metadata
-      step_type: job.type || job.step.template?.type || 'unknown',
+      step_type: this.mapStepTypeEnumToStepType(job.type || job.step.template?.type),
       step_name: job.step.template?.name || job.step.stepId || 'unnamed_step',
       provider_id: job.providerId || null,
 

@@ -9,6 +9,7 @@ import {
   CHUInt32,
 } from 'clickhouse-schema';
 import { TABLE_NAME } from './request-log.repository';
+import { Prettify } from '../../../utils/prettify.type';
 
 export const requestLogSchema = new ClickhouseSchema(
   {
@@ -46,4 +47,6 @@ export const ORDER_BY: (keyof typeof requestLogSchema.schema)[] = [
   'created_at',
 ];
 
-export type RequestLog = InferClickhouseSchemaType<typeof requestLogSchema>;
+export type RequestLogComplex = InferClickhouseSchemaType<typeof requestLogSchema>;
+
+export type RequestLog = Prettify<RequestLogComplex>;
