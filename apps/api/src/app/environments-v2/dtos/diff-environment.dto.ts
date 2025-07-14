@@ -3,19 +3,13 @@ import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested, IsDa
 import { Type } from 'class-transformer';
 
 export class DiffEnvironmentRequestDto {
-  @ApiProperty({
-    description: 'Source environment ID to compare from',
+  @ApiPropertyOptional({
+    description: 'Source environment ID to compare from. Defaults to the Development environment if not provided.',
     example: '507f1f77bcf86cd799439011',
   })
+  @IsOptional()
   @IsString()
-  sourceEnvironmentId: string;
-
-  @ApiProperty({
-    description: 'Target environment ID to compare to',
-    example: '507f1f77bcf86cd799439012',
-  })
-  @IsString()
-  targetEnvironmentId: string;
+  sourceEnvironmentId?: string;
 }
 
 export class UserInfoDto {

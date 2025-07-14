@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { EnvironmentRepository, ClientSession } from '@novu/dal';
+import { EnvironmentRepository, ClientSession, BaseRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
 import {
   ResourceTypeEnum,
@@ -27,8 +27,18 @@ export class PublishEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: PublishEnvironmentCommand): Promise<IPublishResult> {
     try {
+      // First validate the target environment ID format
+      if (!BaseRepository.isInternalId(command.targetEnvironmentId)) {
+        throw new BadRequestException('Invalid environment ID format');
+      }
+
+      // If sourceEnvironmentId is not provided, default to development environment
+      const sourceEnvironmentId =
+        command.sourceEnvironmentId ||
+        (await this.environmentValidationService.getDevelopmentEnvironmentId(command.user.organizationId));
+
       await this.environmentValidationService.validateEnvironments({
-        sourceEnvironmentId: command.sourceEnvironmentId,
+        sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
         user: command.user,
       });
@@ -39,15 +49,13 @@ export class PublishEnvironmentUseCase {
       };
 
       const syncContext: ISyncContext = {
-        sourceEnvironmentId: command.sourceEnvironmentId,
+        sourceEnvironmentId,
         targetEnvironmentId: command.targetEnvironmentId,
         user: command.user,
         options,
       };
 
-      this.logger.info(
-        `Starting environment publish from ${command.sourceEnvironmentId} to ${command.targetEnvironmentId}`
-      );
+      this.logger.info(`Starting environment publish from ${sourceEnvironmentId} to ${command.targetEnvironmentId}`);
 
       /*
        * For now, we only support workflow sync
