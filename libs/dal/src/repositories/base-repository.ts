@@ -62,11 +62,23 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,
-    options: { readPreference?: 'secondaryPreferred' | 'primary'; query?: QueryOptions<T_DBModel> } = {}
+    options: {
+      readPreference?: 'secondaryPreferred' | 'primary';
+      query?: QueryOptions<T_DBModel>;
+      session?: ClientSession | null;
+    } = {}
   ): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findOne(query, select, options.query).read(
-      options.readPreference || 'primary'
+    const { session, ...queryOptions } = options;
+
+    const queryBuilder = this.MongooseModel.findOne(query, select, queryOptions.query).read(
+      queryOptions.readPreference || 'primary'
     );
+
+    if (session) {
+      queryBuilder.session(session);
+    }
+
+    const data = await queryBuilder;
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
@@ -75,12 +87,15 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async findOneAndUpdate(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     update: UpdateQuery<T_DBModel>,
-    options: QueryOptions<T_DBModel> = {}
+    options: QueryOptions<T_DBModel> & { session?: ClientSession | null } = {}
   ): Promise<T_MappedEntity | null> {
+    const { session, ...updateOptions } = options;
+
     const data = await this.MongooseModel.findOneAndUpdate(query, update, {
-      ...options,
-      upsert: options.upsert || false,
-      new: options.new || false,
+      ...updateOptions,
+      upsert: updateOptions.upsert || false,
+      new: updateOptions.new || false,
+      ...(session && { session }),
     });
 
     if (!data) return null;
@@ -88,13 +103,19 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return this.mapEntity(data.toObject());
   }
 
-  async delete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<{
+  async delete(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    options: { session?: ClientSession | null } = {}
+  ): Promise<{
     /** Indicates whether this writes result was acknowledged. If not, then all other members of this result will be undefined. */
     acknowledged: boolean;
     /** The number of documents that were deleted */
     deletedCount: number;
   }> {
-    return await this.MongooseModel.deleteMany(query);
+    const { session } = options;
+    const deleteOptions = session ? { session } : {};
+
+    return await this.MongooseModel.deleteMany(query, deleteOptions);
   }
 
   async findOneAndDelete(query: FilterQuery<T_DBModel> & T_Enforcement): Promise<T_MappedEntity | null> {
@@ -107,15 +128,22 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async find(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
-    options: { limit?: number; sort?: any; skip?: number } = {}
+    options: { limit?: number; sort?: any; skip?: number; session?: ClientSession | null } = {}
   ): Promise<T_MappedEntity[]> {
-    const data = await this.MongooseModel.find(query, select, {
-      sort: options.sort || null,
+    const { session, ...queryOptions } = options;
+
+    const queryBuilder = this.MongooseModel.find(query, select, {
+      sort: queryOptions.sort || null,
     })
-      .skip(options.skip as number)
-      .limit(options.limit as number)
-      .lean()
-      .exec();
+      .skip(queryOptions.skip as number)
+      .limit(queryOptions.limit as number)
+      .lean();
+
+    if (session) {
+      queryBuilder.session(session);
+    }
+
+    const data = await queryBuilder.exec();
 
     return this.mapEntities(data);
   }
@@ -245,12 +273,19 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     };
   }
 
-  async create(data: FilterQuery<T_DBModel> & T_Enforcement, options: IOptions = {}): Promise<T_MappedEntity> {
+  async create(
+    data: FilterQuery<T_DBModel> & T_Enforcement,
+    options: IOptions & { session?: ClientSession | null } = {}
+  ): Promise<T_MappedEntity> {
+    const { session, ...saveOptions } = options;
     const newEntity = new this.MongooseModel(data);
 
-    const saveOptions = options?.writeConcern ? { w: options?.writeConcern } : {};
+    const mongooseOptions = saveOptions?.writeConcern ? { w: saveOptions?.writeConcern } : {};
+    if (session) {
+      Object.assign(mongooseOptions, { session });
+    }
 
-    const saved = await newEntity.save(saveOptions);
+    const saved = await newEntity.save(mongooseOptions);
 
     return this.mapEntity(saved);
   }
@@ -282,14 +317,17 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async update(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     updateBody: UpdateQuery<T_DBModel>,
-    options: QueryOptions<T_DBModel> = {}
+    options: QueryOptions<T_DBModel> & { session?: ClientSession | null } = {}
   ): Promise<{
     matched: number;
     modified: number;
   }> {
+    const { session, ...updateOptions } = options;
+
     const saved = await this.MongooseModel.updateMany(query, updateBody, {
       multi: true,
-      ...options,
+      ...updateOptions,
+      ...(session && { session }),
     });
 
     return {
@@ -350,8 +388,25 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
    *
    * Refer to https://mongoosejs.com/docs/transactions.html#note-about-parallelism-in-transactions
    */
-  async withTransaction(fn: Parameters<ClientSession['withTransaction']>[0]) {
-    return (await this._model.db.startSession()).withTransaction(fn);
+  async withTransaction(fn: (session: ClientSession | null) => Promise<any>) {
+    try {
+      return await (await this._model.db.startSession()).withTransaction(fn);
+    } catch (error) {
+      // Check if the error is related to replica set requirement
+      if (
+        error.message?.includes('replica set') ||
+        error.message?.includes('transaction') ||
+        error.codeName === 'IllegalOperation'
+      ) {
+        // eslint-disable-next-line no-console
+        console.warn('MongoDB is not running in replica set mode, execute without transaction');
+
+        // MongoDB is not running in replica set mode, execute without transaction
+        return await fn(null);
+      }
+
+      throw error;
+    }
   }
 
   async findWithCursorBasedPagination({

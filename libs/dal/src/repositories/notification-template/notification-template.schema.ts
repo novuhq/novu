@@ -220,6 +220,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    _updatedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     _parentId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
@@ -265,6 +269,14 @@ notificationTemplateSchema.virtual('notificationGroup', {
   localField: '_notificationGroupId',
   foreignField: '_id',
   justOne: true,
+});
+
+notificationTemplateSchema.virtual('updatedBy', {
+  ref: 'User',
+  localField: '_updatedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
 });
 
 notificationTemplateSchema.index({

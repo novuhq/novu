@@ -41,6 +41,14 @@ export function toResponseWorkflowDto(
     origin: computeOrigin(workflow),
     updatedAt: workflow.updatedAt || 'Missing Updated At',
     createdAt: workflow.createdAt || 'Missing Create At',
+    updatedBy: workflow.updatedBy
+      ? {
+          _id: workflow.updatedBy._id,
+          firstName: workflow.updatedBy.firstName,
+          lastName: workflow.updatedBy.lastName,
+          externalId: workflow.updatedBy.externalId,
+        }
+      : undefined,
     status: workflow.status || WorkflowStatusEnum.ACTIVE,
     issues: workflow.issues as unknown as Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>,
     lastTriggeredAt: workflow.lastTriggeredAt,
@@ -64,6 +72,14 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     updatedAt: template.updatedAt || 'Missing Updated At',
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
     createdAt: template.createdAt || 'Missing Create At',
+    updatedBy: template.updatedBy
+      ? {
+          _id: template.updatedBy._id,
+          firstName: template.updatedBy.firstName,
+          lastName: template.updatedBy.lastName,
+          externalId: template.updatedBy.externalId,
+        }
+      : undefined,
     status: template.status || WorkflowStatusEnum.ACTIVE,
     lastTriggeredAt: template.lastTriggeredAt,
   };

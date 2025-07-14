@@ -1,4 +1,5 @@
 import { DalService } from '@novu/dal';
+import { forwardRef } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import {
   AnalyticsService,
@@ -60,11 +61,10 @@ export const analyticsService = {
 
 export const clickHouseService = {
   provide: ClickHouseService,
-  useFactory: async (logger: PinoLogger) => {
-    const service = new ClickHouseService(logger);
+  useFactory: async () => {
+    const service = new ClickHouseService();
     await service.init();
 
     return service;
   },
-  inject: [PinoLogger],
 };

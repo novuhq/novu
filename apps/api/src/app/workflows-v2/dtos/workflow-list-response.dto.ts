@@ -1,7 +1,9 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { StepTypeEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { WorkflowResponseDto } from './workflow-response.dto';
+import { UserResponseDto } from './user-response.dto';
 
 export class WorkflowListResponseDto {
   @ApiProperty({ description: 'Name of the workflow' })
@@ -26,6 +28,17 @@ export class WorkflowListResponseDto {
   @ApiProperty({ description: 'Creation timestamp' })
   @IsString()
   createdAt: string;
+
+  @ApiProperty({
+    description: 'User who last updated the workflow',
+    type: () => UserResponseDto,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  updatedBy?: UserResponseDto;
 
   @ApiProperty({ description: 'Unique database identifier' })
   @IsString()

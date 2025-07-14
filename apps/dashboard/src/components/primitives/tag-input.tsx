@@ -88,6 +88,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
               <Tag
                 key={index}
                 variant="stroke"
+                className="max-w-[12rem] shrink-0"
                 onDismiss={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -96,7 +97,12 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 }}
                 dismissTestId={`tags-badge-remove-${tag}`}
               >
-                <span style={{ wordBreak: 'break-all' }} data-testid="tags-badge-value">
+                <span 
+                  className="truncate max-w-full block" 
+                  style={{ wordBreak: 'break-all' }} 
+                  data-testid="tags-badge-value"
+                  title={tag}
+                >
                   {tag}
                 </span>
               </Tag>
@@ -131,7 +137,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                     className="gap-1"
                     disabled={inputValue === '' || tags.includes(inputValue)}
                   >
-                    {inputValue}
+                    <span className="truncate">{inputValue}</span>
                   </CommandItem>
                 )}
 
@@ -145,7 +151,7 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                       addTag(tag);
                     }}
                   >
-                    {tag}
+                    <span className="truncate">{tag}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>

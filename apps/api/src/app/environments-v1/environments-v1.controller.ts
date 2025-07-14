@@ -135,6 +135,7 @@ export class EnvironmentsControllerV1 {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         returnApiKeys: canAccessApiKeys,
+        userId: user._id,
       })
     );
   }
