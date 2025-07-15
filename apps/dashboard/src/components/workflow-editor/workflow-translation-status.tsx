@@ -55,13 +55,12 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
         <TooltipTrigger asChild>{statusBadge}</TooltipTrigger>
         <TooltipContent>
           <div className="max-w-xs">
-            <p className="font-medium">Locales are out of sync</p>
+            <p className="font-medium">Locales out of sync</p>
             <p className="mt-1 text-xs text-neutral-400">
-              Translation keys were added or removed from the default locale. Update other locales to keep translations
-              in sync.
+              Translation keys were added or removed from the default locale. Update other locales to stay up to date.
             </p>
             <a href={translationsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block underline">
-              View & manage translations ↗
+              Manage translations ↗
             </a>
           </div>
         </TooltipContent>
