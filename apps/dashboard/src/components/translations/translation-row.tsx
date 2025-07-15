@@ -22,6 +22,7 @@ import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/compon
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
 import { StackedFlagCircles } from '@/components/flag-circle';
+import { TranslationStatus } from './translation-status';
 
 type TranslationTableCellProps = ComponentProps<typeof TableCell>;
 
@@ -186,6 +187,10 @@ export function TranslationRow({ translation, onTranslationClick, onDeleteClick 
     <TableRow key={translation.resourceId} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
       <TranslationTableCell className="font-medium">
         <ResourceInfo resourceId={translation.resourceId} resourceName={translation.resourceName} />
+      </TranslationTableCell>
+
+      <TranslationTableCell>
+        <TranslationStatus outdatedLocales={translation.outdatedLocales} />
       </TranslationTableCell>
 
       <TranslationTableCell>

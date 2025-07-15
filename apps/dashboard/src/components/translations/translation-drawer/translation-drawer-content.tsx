@@ -5,12 +5,12 @@ import { TranslationHeader } from './translation-header';
 import { LocaleList } from './locale-list';
 import { EditorPanel } from './editor-panel';
 import { useTranslationDrawerLogic } from './use-translation-drawer-logic';
-import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { DEFAULT_LOCALE } from '@novu/shared';
 import { forwardRef, useImperativeHandle, useState, useCallback } from 'react';
 
 type TranslationDrawerContentProps = {
   translationGroup: TranslationGroup;
+  initialLocale?: string;
+  onLocaleChange?: (locale: string) => void;
 };
 
 export interface TranslationDrawerContentRef {
@@ -18,12 +18,9 @@ export interface TranslationDrawerContentRef {
 }
 
 export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, TranslationDrawerContentProps>(
-  ({ translationGroup }, ref) => {
+  ({ translationGroup, initialLocale, onLocaleChange }, ref) => {
     const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
-
-    const { data: organizationSettings } = useFetchOrganizationSettings();
-    const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
 
     const {
       selectedLocale,
@@ -37,7 +34,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
       handleLocaleSelect,
       handleSave,
       handleDelete,
-    } = useTranslationDrawerLogic(translationGroup, defaultLocale);
+    } = useTranslationDrawerLogic(translationGroup, initialLocale, onLocaleChange);
 
     const canSave = selectedLocale && editor.modifiedContent && !saveTranslationMutation.isPending && !editor.jsonError;
 
@@ -81,9 +78,9 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             selectedLocale={selectedLocale}
             onLocaleSelect={handleLocaleSelect}
             updatedAt={translationGroup.updatedAt}
-            defaultLocale={defaultLocale}
             hasUnsavedChanges={editor.hasUnsavedChanges}
             onUnsavedChangesCheck={checkUnsavedChanges}
+            outdatedLocales={translationGroup.outdatedLocales}
           />
 
           <EditorPanel
@@ -97,6 +94,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             onDelete={handleDelete}
             resource={resource}
             isDeleting={deleteTranslationMutation.isPending}
+            outdatedLocales={translationGroup.outdatedLocales}
           />
         </div>
 

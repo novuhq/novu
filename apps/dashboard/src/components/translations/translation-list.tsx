@@ -16,13 +16,17 @@ import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 
 import { TranslationsFilter, TranslationsUrlState } from './hooks/use-translations-url-state';
 import { useTranslationListLogic } from './hooks/use-translation-list-logic';
-import { useTranslationDrawerState } from './hooks/use-translation-drawer-state';
 import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
+import { useNavigate } from 'react-router-dom';
+import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { TranslationListBlank } from './translation-list-blank';
 import { ListNoResults } from '../list-no-results';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
 import { TranslationsFilters } from './translations-filters';
-import { TranslationDrawer } from './translation-drawer/translation-drawer';
+
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
@@ -72,6 +76,7 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
       <TableHeader>
         <TableRow>
           <TableHead>Resource</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>Locales</TableHead>
           <TableHead>Created at</TableHead>
           <TableHead>Updated at</TableHead>
@@ -184,8 +189,25 @@ export function TranslationList(props: TranslationListProps) {
   const { filterValues, handleFiltersChange, resetFilters, data, isPending, isFetching, areFiltersApplied } =
     useTranslationListLogic();
 
-  const { selectedTranslationGroup, isDrawerOpen, handleTranslationClick, handleDrawerClose } =
-    useTranslationDrawerState(data?.data);
+  const navigate = useNavigate();
+  const { currentEnvironment } = useEnvironment();
+  const { data: organizationSettings } = useFetchOrganizationSettings();
+
+  const handleTranslationClick = (translation: TranslationGroup) => {
+    if (currentEnvironment?.slug) {
+      const orgDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+      const selectedLocale = translation.locales.includes(orgDefaultLocale) ? orgDefaultLocale : translation.locales[0];
+
+      navigate(
+        buildRoute(ROUTES.TRANSLATIONS_EDIT, {
+          environmentSlug: currentEnvironment.slug,
+          resourceType: translation.resourceType,
+          resourceId: translation.resourceId,
+          locale: selectedLocale,
+        })
+      );
+    }
+  };
 
   const { deleteModalTranslation, isDeletePending, handleDeleteClick, handleDeleteConfirm, handleDeleteCancel } =
     useDeleteTranslationModal();
@@ -258,12 +280,6 @@ export function TranslationList(props: TranslationListProps) {
             onDeleteClick={handleDeleteClick}
           />
         </TranslationTable>
-
-        <TranslationDrawer
-          isOpen={isDrawerOpen}
-          onOpenChange={handleDrawerClose}
-          translationGroup={selectedTranslationGroup}
-        />
       </TranslationListContainer>
 
       {deleteModalTranslation && (

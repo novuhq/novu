@@ -60,6 +60,7 @@ import { ProtectedRoute } from './routes/protected-route';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { EditLayoutPage } from './pages/edit-layout';
+import { EditTranslationPage } from './pages/edit-translation';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -264,6 +265,10 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.TRANSLATION_SETTINGS,
                     element: <TranslationSettingsPage />,
+                  },
+                  {
+                    path: ROUTES.TRANSLATIONS_EDIT,
+                    element: <EditTranslationPage />,
                   },
                 ],
               },

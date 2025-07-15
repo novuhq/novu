@@ -1,6 +1,7 @@
 import { RiFileTextLine } from 'react-icons/ri';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Editor } from '@/components/primitives/editor';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { cn } from '@/utils/ui';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
@@ -13,9 +14,10 @@ type JSONEditorProps = {
   onChange: (value: string) => void;
   error: string | null;
   updatedAt: string;
+  isOutdated?: boolean;
 };
 
-function JSONEditor({ content, onChange, error, updatedAt }: JSONEditorProps) {
+function JSONEditor({ content, onChange, error, updatedAt, isOutdated }: JSONEditorProps) {
   return (
     <div className="flex-1 px-3 pb-3">
       <div
@@ -40,6 +42,17 @@ function JSONEditor({ content, onChange, error, updatedAt }: JSONEditorProps) {
           </div>
         )}
       </div>
+
+      {isOutdated && (
+        <div className="mt-3 px-1">
+          <InlineToast
+            variant="warning"
+            title="Warning:"
+            description="Some keys in this locale don't match the default locale. Add missing keys or remove extra ones to sync translations."
+          />
+        </div>
+      )}
+
       <div className="mt-2 px-1">
         <span className="text-2xs text-neutral-400">
           Last updated at {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
@@ -61,6 +74,7 @@ type EditorPanelProps = {
   onDelete: (locale: string) => void | Promise<void>;
   resource: TranslationResource;
   isDeleting?: boolean;
+  outdatedLocales?: string[];
 };
 
 export function EditorPanel({
@@ -74,6 +88,7 @@ export function EditorPanel({
   onDelete,
   resource,
   isDeleting = false,
+  outdatedLocales,
 }: EditorPanelProps) {
   if (!selectedLocale) {
     return (
@@ -88,6 +103,7 @@ export function EditorPanel({
 
   const contentToUse = modifiedContent || selectedTranslation?.content || {};
   const contentToCopy = JSON.stringify(contentToUse, null, 2);
+  const isOutdated = outdatedLocales?.includes(selectedLocale);
 
   return (
     <div className="flex flex-1 flex-col bg-neutral-50">
@@ -119,6 +135,7 @@ export function EditorPanel({
           onChange={onContentChange}
           error={jsonError}
           updatedAt={selectedTranslation.updatedAt}
+          isOutdated={isOutdated}
         />
       ) : null}
     </div>

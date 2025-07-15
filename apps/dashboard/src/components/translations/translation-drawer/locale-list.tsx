@@ -1,31 +1,27 @@
 import { useMemo } from 'react';
-import { RiArrowRightSLine } from 'react-icons/ri';
+import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
-import { StatusBadge } from '@/components/primitives/status-badge';
 import { Badge } from '@/components/primitives/badge';
 import { FlagCircle } from '@/components/flag-circle';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { getLocaleDisplayName, formatTranslationDate, formatTranslationTime } from '../utils';
+import { TranslationStatus } from '../translation-status';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { DEFAULT_LOCALE } from '@novu/shared';
 
-type TranslationStatusProps = {
+type TranslationStatusSectionProps = {
   updatedAt: string;
+  outdatedLocales?: string[];
 };
 
-function TranslationStatus({ updatedAt }: TranslationStatusProps) {
+function TranslationStatusSection({ updatedAt, outdatedLocales }: TranslationStatusSectionProps) {
   return (
     <div className="flex flex-col items-start gap-3 self-stretch border-b border-neutral-100 p-4">
       <div className="flex w-full items-center justify-between">
         <span className="text-sm text-neutral-600">Status</span>
-        <StatusBadge variant="light" status="completed" className="text-xs">
-          <div
-            className={cn(
-              'relative size-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
-              'bg-success [--pulse-color:var(--success)]'
-            )}
-          />
-          Up-to-date
-        </StatusBadge>
+        <TranslationStatus outdatedLocales={outdatedLocales} className="text-xs" />
       </div>
       <div className="flex w-full items-center justify-between">
         <span className="text-sm text-neutral-600">Last updated at</span>
@@ -42,10 +38,11 @@ type LocaleButtonProps = {
   locale: string;
   isSelected: boolean;
   isDefault?: boolean;
+  isOutdated?: boolean;
   onClick: () => void;
 };
 
-function LocaleButton({ locale, isSelected, isDefault, onClick }: LocaleButtonProps) {
+function LocaleButton({ locale, isSelected, isDefault, isOutdated, onClick }: LocaleButtonProps) {
   const displayName = getLocaleDisplayName(locale);
 
   return (
@@ -64,11 +61,31 @@ function LocaleButton({ locale, isSelected, isDefault, onClick }: LocaleButtonPr
         <span className="text-sm font-medium text-neutral-900">{locale}</span>
         <span className="truncate text-xs text-neutral-500">({displayName})</span>
       </div>
-      {isDefault && (
-        <Badge variant="lighter" color="orange" size="md">
-          DEFAULT
-        </Badge>
-      )}
+      <div className="flex items-center gap-2">
+        {isOutdated && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                className="inline-flex cursor-help items-center justify-center"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <RiAlertFill className="text-warning-base size-4" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span className="text-xs">
+                Some keys in this locale don't match the default locale. Add missing keys or remove extra ones to sync
+                translations.
+              </span>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {isDefault && (
+          <Badge variant="lighter" color="orange" size="md">
+            DEFAULT
+          </Badge>
+        )}
+      </div>
     </Button>
   );
 }
@@ -78,9 +95,9 @@ type LocaleListProps = {
   selectedLocale: string | null;
   onLocaleSelect: (locale: string) => void;
   updatedAt: string;
-  defaultLocale?: string;
   hasUnsavedChanges?: boolean;
   onUnsavedChangesCheck?: (action: () => void) => void;
+  outdatedLocales?: string[];
 };
 
 export function LocaleList({
@@ -88,10 +105,13 @@ export function LocaleList({
   selectedLocale,
   onLocaleSelect,
   updatedAt,
-  defaultLocale,
   hasUnsavedChanges = false,
   onUnsavedChangesCheck,
+  outdatedLocales,
 }: LocaleListProps) {
+  const { data: organizationSettings } = useFetchOrganizationSettings();
+  const actualDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+
   const handleLocaleClick = (locale: string) => {
     if (hasUnsavedChanges && onUnsavedChangesCheck) {
       onUnsavedChangesCheck(() => onLocaleSelect(locale));
@@ -102,18 +122,19 @@ export function LocaleList({
 
   // Sort locales to put default locale first
   const sortedLocales = useMemo(() => {
-    if (!defaultLocale) return locales;
+    if (!locales || !Array.isArray(locales)) return [];
+    if (!actualDefaultLocale) return locales;
 
-    const defaultIndex = locales.indexOf(defaultLocale);
+    const defaultIndex = locales.indexOf(actualDefaultLocale);
     if (defaultIndex === -1) return locales;
 
     // Move default locale to the front
-    return [defaultLocale, ...locales.filter((locale) => locale !== defaultLocale)];
-  }, [locales, defaultLocale]);
+    return [actualDefaultLocale, ...locales.filter((locale) => locale !== actualDefaultLocale)];
+  }, [locales, actualDefaultLocale]);
 
   return (
     <div className="w-[400px] border-r border-neutral-200">
-      <TranslationStatus updatedAt={updatedAt} />
+      <TranslationStatusSection updatedAt={updatedAt} outdatedLocales={outdatedLocales} />
 
       <div className="p-4">
         {!locales.length ? (
@@ -125,7 +146,8 @@ export function LocaleList({
                 key={locale}
                 locale={locale}
                 isSelected={selectedLocale === locale}
-                isDefault={locale === defaultLocale}
+                isDefault={locale === actualDefaultLocale}
+                isOutdated={outdatedLocales?.includes(locale)}
                 onClick={() => handleLocaleClick(locale)}
               />
             ))}
