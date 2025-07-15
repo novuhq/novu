@@ -146,7 +146,23 @@ export class InboxService {
   }
 
   archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive/read`, {
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  markAsSeen({
+    notificationIds,
+    tags,
+    data,
+  }: {
+    notificationIds?: string[];
+    tags?: string[];
+    data?: Record<string, unknown>;
+  }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/seen`, {
+      notificationIds,
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });

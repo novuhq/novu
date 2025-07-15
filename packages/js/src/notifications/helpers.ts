@@ -507,3 +507,31 @@ export const archiveAllRead = async ({
     return { error: new NovuError('Failed to archive all read notifications', error) };
   }
 };
+
+export const markAsSeen = async ({
+  emitter,
+  inboxService,
+  notificationIds,
+  tags,
+  data,
+}: {
+  emitter: NovuEventEmitter;
+  inboxService: InboxService;
+  notificationIds?: string[];
+  tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
+}): Result<void> => {
+  try {
+    emitter.emit('notifications.mark_as_seen.pending', { args: { notificationIds, tags, data } });
+
+    await inboxService.markAsSeen({ notificationIds, tags, data });
+
+    emitter.emit('notifications.mark_as_seen.resolved', { args: { notificationIds, tags, data } });
+
+    return {};
+  } catch (error) {
+    emitter.emit('notifications.mark_as_seen.resolved', { args: { notificationIds, tags, data }, error });
+
+    return { error: new NovuError('Failed to mark notifications as seen', error) };
+  }
+};

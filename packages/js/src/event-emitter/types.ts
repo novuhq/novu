@@ -64,6 +64,11 @@ type NotificationsReadArchivedAllEvents = BaseEvents<
   { tags?: string[]; data?: Record<string, unknown> },
   Notification[]
 >;
+type NotificationsMarkAsSeenEvents = BaseEvents<
+  'notifications.mark_as_seen',
+  { notificationIds?: string[]; tags?: string[]; data?: Record<string, unknown> },
+  undefined
+>;
 type PreferencesFetchEvents = BaseEvents<'preferences.list', ListPreferencesArgs, Preference[]>;
 type PreferenceUpdateEvents = BaseEvents<'preference.update', UpdatePreferenceArgs, Preference>;
 type PreferencesBulkUpdateEvents = BaseEvents<'preferences.bulk_update', Array<UpdatePreferenceArgs>, Preference[]>;
@@ -111,7 +116,8 @@ export type Events = SessionInitializeEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &
   NotificationsArchivedAllEvents &
-  NotificationsReadArchivedAllEvents;
+  NotificationsReadArchivedAllEvents &
+  NotificationsMarkAsSeenEvents;
 
 export type EventNames = keyof Events;
 export type SocketEventNames = keyof SocketEvents;
@@ -125,7 +131,8 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &
   NotificationsArchivedAllEvents &
-  NotificationsReadArchivedAllEvents);
+  NotificationsReadArchivedAllEvents &
+  NotificationsMarkAsSeenEvents);
 export type PreferenceEvents = keyof (PreferenceUpdateEvents & PreferencesBulkUpdateEvents);
 
 export type EventHandler<T = unknown> = (event: T) => void;

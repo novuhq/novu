@@ -7,6 +7,7 @@ import {
   archiveAll,
   archiveAllRead,
   completeAction,
+  markAsSeen,
   read,
   readAll,
   revertAction,
@@ -61,6 +62,10 @@ export class Notifications extends BaseModule {
       emitter: eventEmitterInstance,
     });
     this.#useCache = useCache;
+  }
+
+  get inboxService(): InboxService {
+    return this._inboxService;
   }
 
   async list({ limit = 10, ...restOptions }: ListNotificationsArgs = {}): Result<ListNotificationsResponse> {
@@ -284,12 +289,35 @@ export class Notifications extends BaseModule {
   async archiveAllRead({
     tags,
     data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
+  }: {
+    tags?: string[];
+    data?: Record<string, unknown>;
+  } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAllRead({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
+        tags,
+        data,
+      })
+    );
+  }
+
+  async markAsSeen({
+    notificationIds,
+    tags,
+    data,
+  }: {
+    notificationIds?: string[];
+    tags?: string[];
+    data?: Record<string, unknown>;
+  } = {}): Result<void> {
+    return this.callWithSession(async () =>
+      markAsSeen({
+        emitter: this._emitter,
+        inboxService: this._inboxService,
+        notificationIds,
         tags,
         data,
       })
