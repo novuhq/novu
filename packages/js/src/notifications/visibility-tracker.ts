@@ -19,12 +19,18 @@ const DEFAULT_OPTIONS: VisibilityOptions = {
 };
 
 export class NotificationVisibilityTracker {
+  /*
+   * Session-based tracking: notifications marked as seen in current session won't be marked again
+   * Only resets when tracker is destroyed (inbox closes)
+   */
   private seenNotifications = new Set<string>();
   private pendingNotifications = new Map<string, number>();
   private pendingBatch = new Set<string>();
   private batchTimer: number | null = null;
+  private visibilityTimer: number | null = null;
   private observer: IntersectionObserver | null = null;
   private elementToNotificationMap = new WeakMap<Element, string>();
+  private observedElements = new Set<Element>();
   private options: VisibilityOptions;
 
   constructor(
@@ -33,6 +39,7 @@ export class NotificationVisibilityTracker {
   ) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
     this.initializeObserver();
+    this.startVisibilityTimer();
   }
 
   private initializeObserver(): void {
@@ -44,6 +51,72 @@ export class NotificationVisibilityTracker {
       threshold: this.options.intersectionThreshold,
       rootMargin: this.options.rootMargin,
     });
+  }
+
+  private startVisibilityTimer(): void {
+    if (!this.options.enabled || typeof window === 'undefined') {
+      return;
+    }
+
+    /*
+     * Do an immediate check to update tracking state for any already-visible notifications
+     * This won't mark them as seen yet, just starts tracking their visibility duration
+     */
+    this.checkAllElementsVisibility();
+
+    // Continue checking every second to track visibility duration
+    this.visibilityTimer = window.setInterval(() => {
+      this.checkAllElementsVisibility();
+    }, 1000);
+  }
+
+  private checkAllElementsVisibility(): void {
+    // Check all observed elements manually
+    this.observedElements.forEach((element) => {
+      const notificationId = this.elementToNotificationMap.get(element);
+      // Skip if already marked as seen in this session
+      if (!notificationId || this.seenNotifications.has(notificationId)) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      const isVisible = this.isElementVisible(rect);
+
+      if (isVisible) {
+        // If not already tracking, start tracking
+        if (!this.pendingNotifications.has(notificationId)) {
+          this.pendingNotifications.set(notificationId, Date.now());
+        }
+      } else {
+        // Not visible anymore, stop tracking
+        this.pendingNotifications.delete(notificationId);
+      }
+    });
+
+    // Process notifications that have been visible long enough
+    this.processVisibleNotifications();
+  }
+
+  private isElementVisible(rect: DOMRect): boolean {
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+    // Check if element is in viewport
+    const verticalInView = rect.top < viewportHeight && rect.bottom > 0;
+    const horizontalInView = rect.left < viewportWidth && rect.right > 0;
+
+    if (!verticalInView || !horizontalInView) {
+      return false;
+    }
+
+    // Calculate how much of the element is visible
+    const visibleHeight = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+    const visibleWidth = Math.min(rect.right, viewportWidth) - Math.max(rect.left, 0);
+    const visibleArea = visibleHeight * visibleWidth;
+    const totalArea = rect.height * rect.width;
+
+    // Check if visible area meets threshold
+    return totalArea > 0 && visibleArea / totalArea >= this.options.intersectionThreshold;
   }
 
   private handleIntersection(entries: IntersectionObserverEntry[]): void {
@@ -70,17 +143,14 @@ export class NotificationVisibilityTracker {
     const now = Date.now();
     const notificationsToMark: string[] = [];
 
-    console.log('processVisibleNotifications', this.pendingNotifications);
-
     this.pendingNotifications.forEach((startTime, notificationId) => {
-      console.log(now - startTime, this.options.visibilityDuration);
       if (now - startTime >= this.options.visibilityDuration) {
         notificationsToMark.push(notificationId);
+        // Add to session tracking - won't be marked as seen again until inbox reopens
         this.seenNotifications.add(notificationId);
       }
     });
 
-    console.log('notificationsToMark', notificationsToMark);
     // Remove processed notifications from pending
     notificationsToMark.forEach((id) => {
       this.pendingNotifications.delete(id);
@@ -102,13 +172,11 @@ export class NotificationVisibilityTracker {
   }
 
   private scheduleBatchProcessing(): void {
-    console.log('scheduleBatchProcessing', this.batchTimer);
     if (this.batchTimer !== null) {
       return; // Already scheduled
     }
 
     this.batchTimer = window.setTimeout(() => {
-      console.log('processBatch');
       this.processBatch();
     }, this.options.batchDelay);
   }
@@ -153,6 +221,7 @@ export class NotificationVisibilityTracker {
     }
 
     this.elementToNotificationMap.set(element, notificationId);
+    this.observedElements.add(element);
     this.observer.observe(element);
   }
 
@@ -166,6 +235,7 @@ export class NotificationVisibilityTracker {
       this.pendingNotifications.delete(notificationId);
       this.pendingBatch.delete(notificationId);
       this.elementToNotificationMap.delete(element);
+      this.observedElements.delete(element);
     }
 
     this.observer.unobserve(element);
@@ -182,9 +252,15 @@ export class NotificationVisibilityTracker {
       this.batchTimer = null;
     }
 
+    if (this.visibilityTimer !== null) {
+      window.clearInterval(this.visibilityTimer);
+      this.visibilityTimer = null;
+    }
+
     this.seenNotifications.clear();
     this.pendingNotifications.clear();
     this.pendingBatch.clear();
+    this.observedElements.clear();
   }
 
   // Force process any pending batches (useful for cleanup)
