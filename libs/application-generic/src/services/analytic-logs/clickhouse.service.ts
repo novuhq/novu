@@ -8,13 +8,6 @@ export class ClickHouseService implements OnModuleDestroy {
   private _client: ClickHouseClient | undefined;
 
   async init() {
-    const requiredConnectionConfig = {
-      url: process.env.CLICK_HOUSE_URL,
-      username: process.env.CLICK_HOUSE_USER,
-      password: process.env.CLICK_HOUSE_PASSWORD,
-      database: process.env.CLICK_HOUSE_DATABASE,
-    };
-
     if (!process.env.CLICK_HOUSE_URL || !process.env.CLICK_HOUSE_DATABASE) {
       /*
        * this.logger.warn(
@@ -45,7 +38,13 @@ export class ClickHouseService implements OnModuleDestroy {
       }
     }
 
-    this._client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
+    this._client = createClient({
+      url: process.env.CLICK_HOUSE_URL,
+      username: process.env.CLICK_HOUSE_USER,
+      password: process.env.CLICK_HOUSE_PASSWORD,
+      database: process.env.CLICK_HOUSE_DATABASE,
+      clickhouse_settings: { async_insert: 1 },
+    });
 
     // this.logger.info('ClickHouse client created');
   }
