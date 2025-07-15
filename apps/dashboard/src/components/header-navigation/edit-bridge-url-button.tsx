@@ -90,12 +90,30 @@ export const EditBridgeUrlButton = () => {
             <button className="text-foreground-600 flex h-5 w-5 items-center justify-center rounded-md text-xs leading-4 hover:bg-neutral-50 focus:bg-neutral-50">
               <div
                 className={cn(
-                  'h-1.5 w-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
-                  status === ConnectionStatus.DISCONNECTED
-                    ? 'bg-destructive [--pulse-color:var(--destructive)]'
-                    : 'bg-success [--pulse-color:var(--success)]'
+                  'relative flex size-4 items-center justify-center rounded-lg',
+                  status === ConnectionStatus.DISCONNECTED ? 'bg-[rgba(220,38,38,0.1)]' : 'bg-[rgba(31,193,107,0.1)]'
                 )}
-              />
+              >
+                <div
+                  className={cn(
+                    'flex size-full items-center justify-center rounded-lg p-1',
+                    status === ConnectionStatus.DISCONNECTED
+                      ? 'bg-[rgba(220,38,38,0.16)]'
+                      : 'bg-[rgba(31,193,107,0.16)]'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'size-1.5 rounded-[3px]',
+                      status === ConnectionStatus.DISCONNECTED
+                        ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(220,38,38,0.6)] [--pulse-color:rgba(220,38,38,1)]'
+                        : status === ConnectionStatus.LOADING
+                          ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(31,193,107,0.6)] [--pulse-color:rgba(31,193,107,1)]'
+                          : 'bg-[rgba(31,193,107,0.6)]'
+                    )}
+                  />
+                </div>
+              </div>
             </button>
           </PopoverTrigger>
         </TooltipTrigger>
