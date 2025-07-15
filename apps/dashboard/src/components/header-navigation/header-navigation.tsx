@@ -34,11 +34,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
             <EditBridgeUrlButton />
           </div>
         ) : null}
-        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
-          <div className="pr-1">
-            <PublishButton />
-          </div>
-        )}
+        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && <PublishButton />}
         <CustomerSupportButton />
         <div className="flex pr-0.5">
           <InboxButton />

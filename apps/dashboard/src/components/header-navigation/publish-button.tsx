@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { RiGitPullRequestFill, RiArrowDownSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../primitives/button';
 import { Badge } from '../primitives/badge';
@@ -17,387 +17,132 @@ import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
 import { NoChangesModal } from './no-changes-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { diffEnvironments, type IEnvironmentDiffResponse } from '@/api/environments';
 import { QueryKeys } from '@/utils/query-keys';
 import type { IEnvironment } from '@novu/shared';
 import type { IEnvironmentPublishResponse } from '@/api/environments';
 
-type EnvironmentDiffCardProps = {
-  environment: IEnvironment;
-  currentEnvironmentId?: string;
-  isDropdownOpen: boolean;
-  onClick: (hasChanges: boolean) => void;
-};
+type ModalState = 'closed' | 'publish' | 'success' | 'no-changes';
 
-// Custom hook for single environment diff with smart caching
-const useSingleEnvironmentDiff = (
-  sourceEnvironmentId?: string,
-  targetEnvironment?: IEnvironment | null,
-  enabled: boolean = true
-) => {
-  return useQuery<IEnvironmentDiffResponse>({
-    queryKey: ['diff-environments', sourceEnvironmentId, targetEnvironment?._id],
-    queryFn: () =>
-      diffEnvironments({
-        sourceEnvironmentId: sourceEnvironmentId!,
-        targetEnvironmentId: targetEnvironment!._id,
-      }),
-    enabled:
-      enabled && !!sourceEnvironmentId && !!targetEnvironment?._id && sourceEnvironmentId !== targetEnvironment._id,
-    refetchOnWindowFocus: true,
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 5 * 60 * 1000, // 5 minutes background refresh
-  });
-};
-
-// Custom hook to listen for workflow changes and invalidate diff cache
-const useWorkflowChangeListener = (
-  queryClient: ReturnType<typeof useQueryClient>,
-  currentEnvironmentId?: string,
-  enabled: boolean = true
-) => {
-  useEffect(() => {
-    if (!enabled || !currentEnvironmentId) return;
-
-    // Set up a listener for workflow-related query invalidations
-    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
-      if (event.type === 'updated' && event.query.queryKey.includes(QueryKeys.fetchWorkflows)) {
-        // When workflows are updated, invalidate diff environment cache
-        queryClient.invalidateQueries({
-          queryKey: ['diff-environments'],
-          exact: false,
-        });
-      }
-    });
-
-    return unsubscribe;
-  }, [queryClient, currentEnvironmentId, enabled]);
-};
-
-// Helper function to calculate aggregated summary
-const calculateAggregatedSummary = (diffData: any) => {
-  return diffData?.resources?.reduce(
-    (acc: any, resource: any) => ({
-      added: acc.added + resource.summary.added,
-      modified: acc.modified + resource.summary.modified,
-      deleted: acc.deleted + resource.summary.deleted,
-      unchanged: acc.unchanged + resource.summary.unchanged,
-    }),
-    { added: 0, modified: 0, deleted: 0, unchanged: 0 }
-  );
-};
-
-// Change indicator component for single environment
-type ChangeIndicatorProps = {
-  aggregatedSummary: any;
-  isLoading: boolean;
-};
-
-const ChangeIndicator = ({ aggregatedSummary, isLoading }: ChangeIndicatorProps) => {
-  if (isLoading) {
-    return <Skeleton className="h-4 w-6 rounded-full" />;
-  }
-
-  if (!aggregatedSummary) return null;
-
-  const totalChanges = aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted;
-
-  if (totalChanges === 0) return null;
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={totalChanges}
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        transition={{
-          duration: 0.2,
-          ease: [0.4, 0.0, 0.2, 1],
-        }}
-        className="ml-1"
-      >
-        <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
-          {totalChanges}
-        </Badge>
-      </motion.div>
-    </AnimatePresence>
-  );
-};
-
-const EnvironmentDiffCard = ({
-  environment,
-  currentEnvironmentId,
-  isDropdownOpen,
-  onClick,
-}: EnvironmentDiffCardProps) => {
-  const { data: diffData, isLoading } = useDiffEnvironments({
-    sourceEnvironmentId: currentEnvironmentId,
-    targetEnvironmentId: environment._id,
-    enabled: isDropdownOpen,
-  });
-
-  // Aggregate the summary from all resources
-  const aggregatedSummary = calculateAggregatedSummary(diffData);
-
-  const hasChanges =
-    aggregatedSummary &&
-    (aggregatedSummary.added > 0 || aggregatedSummary.modified > 0 || aggregatedSummary.deleted > 0);
-
-  const handleClick = () => {
-    if (isLoading) return;
-
-    if (hasChanges) {
-      onClick(true);
-    } else {
-      // Handle no changes case - this could trigger a no changes modal
-      // For now, we'll let the parent handle it through onClick
-      onClick(false);
-    }
-  };
-
-  const cardContent = (
-    <DropdownMenuItem onClick={handleClick} className="cursor-pointer p-1">
-      <div className="flex w-full items-center justify-between">
-        <div className="flex items-center gap-2">
-          <EnvironmentBranchIcon environment={environment} size="sm" />
-          <span className="text-text-sub font-medium">
-            Publish to{' '}
-            <TruncatedText className="text-text-strong max-w-[20ch] font-bold" asChild>
-              <b>{environment.name}</b>
-            </TruncatedText>
-          </span>
-        </div>
-
-        <div className="ml-auto">
-          {isLoading ? (
-            <Skeleton className="h-5 w-8 rounded-full" />
-          ) : hasChanges ? (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-                transition={{
-                  duration: 0.2,
-                  ease: [0.4, 0.0, 0.2, 1],
-                }}
-              >
-                <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
-                  {aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted}
-                </Badge>
-              </motion.div>
-            </AnimatePresence>
-          ) : (
-            <Badge variant="lighter" color="gray" size="sm">
-              No changes
-            </Badge>
-          )}
-        </div>
-      </div>
-    </DropdownMenuItem>
-  );
-
-  return cardContent;
-};
-
-type PublishModalsProps = {
+type PublishState = {
+  modalState: ModalState;
   selectedEnvironment: IEnvironment | null;
-  publishModalOpen: boolean;
-  successModalOpen: boolean;
-  currentEnvironmentId?: string;
   publishResult: IEnvironmentPublishResponse | null;
-  isPublishing: boolean;
-  publishError: string | null;
-  onClose: () => void;
-  onConfirm: () => Promise<void>;
-  onSwitchEnvironment: () => void;
 };
 
-const PublishModals = ({
-  selectedEnvironment,
-  publishModalOpen,
-  successModalOpen,
-  currentEnvironmentId,
-  publishResult,
-  isPublishing,
-  publishError,
-  onClose,
-  onConfirm,
-  onSwitchEnvironment,
-}: PublishModalsProps) => {
-  if (!selectedEnvironment) return null;
-
-  return (
-    <>
-      <PublishModal
-        isOpen={publishModalOpen}
-        onClose={onClose}
-        environment={selectedEnvironment}
-        currentEnvironmentId={currentEnvironmentId}
-        onConfirm={onConfirm}
-        isPublishing={isPublishing}
-        publishError={publishError}
-      />
-
-      <PublishSuccessModal
-        isOpen={successModalOpen}
-        onClose={onClose}
-        environment={selectedEnvironment}
-        publishResult={publishResult || undefined}
-        onSwitchEnvironment={onSwitchEnvironment}
-      />
-    </>
-  );
+type ChangesSummary = {
+  total: number;
+  added: number;
+  modified: number;
+  deleted: number;
+  unchanged: number;
 };
 
 export const PublishButton = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [publishModalOpen, setPublishModalOpen] = useState(false);
-  const [successModalOpen, setSuccessModalOpen] = useState(false);
-  const [noChangesModalOpen, setNoChangesModalOpen] = useState(false);
-  const [selectedEnvironment, setSelectedEnvironment] = useState<IEnvironment | null>(null);
-  const [publishResult, setPublishResult] = useState<IEnvironmentPublishResponse | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { state, actions } = usePublishState();
 
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { currentOrganization } = useAuth();
   const { currentEnvironment, switchEnvironment } = useEnvironment();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-
   const publishMutation = usePublishEnvironments();
 
   const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
-  const singleEnvironment = otherEnvironments.length === 1 ? otherEnvironments[0] : null;
+  const isSingleEnvironment = otherEnvironments.length === 1;
+  const targetEnvironment = isSingleEnvironment ? otherEnvironments[0] : null;
 
-  // Fetch diff data for single environment case
-  const { data: singleEnvDiffData, isLoading: isSingleEnvDiffLoading } = useSingleEnvironmentDiff(
-    currentEnvironment?._id,
-    singleEnvironment,
-    !!singleEnvironment
-  );
+  // Fetch diff for single environment
+  const { data: diffData, isLoading: isDiffLoading } = useDiffEnvironments({
+    sourceEnvironmentId: currentEnvironment?._id,
+    targetEnvironmentId: targetEnvironment?._id,
+    enabled: !!targetEnvironment,
+  });
 
-  // Listen for workflow changes and invalidate diff cache
-  useWorkflowChangeListener(queryClient, currentEnvironment?._id, !!singleEnvironment);
+  const changesSummary = calculateChangesSummary(diffData);
 
-  const singleEnvAggregatedSummary = calculateAggregatedSummary(singleEnvDiffData);
-  const hasChangesForSingleEnv =
-    singleEnvAggregatedSummary &&
-    (singleEnvAggregatedSummary.added > 0 ||
-      singleEnvAggregatedSummary.modified > 0 ||
-      singleEnvAggregatedSummary.deleted > 0);
+  // Invalidate diff cache when workflows change
+  useInvalidateDiffOnWorkflowChange(!!targetEnvironment);
 
-  const handlePublishToEnvironment = (environment: IEnvironment, hasChanges: boolean = true) => {
-    setSelectedEnvironment(environment);
-    setIsOpen(false);
+  const handleEnvironmentSelect = (environment: IEnvironment, hasChanges: boolean) => {
+    setIsDropdownOpen(false);
+
+    // Force refetch diff data to get latest changes
+    queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
 
     if (hasChanges) {
-      setPublishModalOpen(true);
+      actions.openPublishModal(environment);
     } else {
-      setNoChangesModalOpen(true);
+      actions.openNoChangesModal(environment);
     }
   };
 
-  const handleDirectPublish = () => {
-    if (isSingleEnvDiffLoading) return;
-
-    if (singleEnvironment && hasChangesForSingleEnv) {
-      handlePublishToEnvironment(singleEnvironment);
-    } else {
-      setSelectedEnvironment(singleEnvironment);
-      setNoChangesModalOpen(true);
-    }
-  };
-
-  const handleConfirmPublish = async () => {
-    if (!selectedEnvironment || !currentEnvironment?._id) return;
+  const handlePublish = async () => {
+    if (!state.selectedEnvironment || !currentEnvironment?._id) return;
 
     try {
       const result = await publishMutation.mutateAsync({
         sourceEnvironmentId: currentEnvironment._id,
-        targetEnvironmentId: selectedEnvironment._id,
+        targetEnvironmentId: state.selectedEnvironment._id,
       });
 
-      // Invalidate diff caches after successful publish
-      await queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
-      });
-
-      setPublishResult(result);
-      setPublishModalOpen(false);
-      setSuccessModalOpen(true);
-    } catch (error: unknown) {
-      // Show error toast
-      const errorMessage = error instanceof Error ? error.message : 'Failed to publish environment. Please try again.';
-      showErrorToast(errorMessage, 'Publishing Failed');
-      console.error('Publish failed:', error);
+      await queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+      actions.showSuccess(result);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to publish environment';
+      showErrorToast(message, 'Publishing Failed');
     }
-  };
-
-  const handleCloseModals = () => {
-    setPublishModalOpen(false);
-    setSuccessModalOpen(false);
-    setNoChangesModalOpen(false);
-    setSelectedEnvironment(null);
-    setPublishResult(null);
-    publishMutation.reset();
   };
 
   const handleSwitchEnvironment = () => {
-    if (selectedEnvironment) {
-      switchEnvironment(selectedEnvironment.slug || '');
+    if (!state.selectedEnvironment) return;
 
-      // Navigate to workflows page in the new environment
-      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: selectedEnvironment.slug || '' }));
-
-      setSuccessModalOpen(false);
-      setSelectedEnvironment(null);
-      setPublishResult(null);
-    }
+    switchEnvironment(state.selectedEnvironment.slug || '');
+    navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: state.selectedEnvironment.slug || '' }));
+    actions.close();
   };
 
-  if (singleEnvironment) {
-    const buttonContent = (
-      <Button
-        variant="secondary"
-        className="h-[26px]"
-        mode="outline"
-        size="2xs"
-        leadingIcon={RiGitPullRequestFill}
-        onClick={handleDirectPublish}
-      >
-        <div className="flex items-center">
-          Publish changes
-          <ChangeIndicator aggregatedSummary={singleEnvAggregatedSummary} isLoading={isSingleEnvDiffLoading} />
-        </div>
-      </Button>
-    );
-
-    // Remove tooltip wrapping since we now show modal for no changes
-    const buttonWithTooltip = buttonContent;
-
+  // Render single environment button
+  if (isSingleEnvironment && targetEnvironment) {
     return (
       <>
-        {buttonWithTooltip}
+        <Button
+          variant="secondary"
+          className="h-[26px]"
+          mode="outline"
+          size="2xs"
+          leadingIcon={RiGitPullRequestFill}
+          onClick={() => handleEnvironmentSelect(targetEnvironment, changesSummary.total > 0)}
+          disabled={isDiffLoading}
+        >
+          <div className="flex items-center">
+            Publish changes
+            <ChangeIndicator summary={changesSummary} isLoading={isDiffLoading} />
+          </div>
+        </Button>
 
-        <PublishModals
-          selectedEnvironment={selectedEnvironment}
-          publishModalOpen={publishModalOpen}
-          successModalOpen={successModalOpen}
+        <PublishModal
+          isOpen={state.modalState === 'publish'}
+          onClose={actions.close}
+          environment={state.selectedEnvironment!}
           currentEnvironmentId={currentEnvironment?._id}
-          publishResult={publishResult}
+          onConfirm={handlePublish}
           isPublishing={publishMutation.isPending}
           publishError={publishMutation.error?.message || null}
-          onClose={handleCloseModals}
-          onConfirm={handleConfirmPublish}
+        />
+
+        <PublishSuccessModal
+          isOpen={state.modalState === 'success'}
+          onClose={actions.close}
+          environment={state.selectedEnvironment!}
+          publishResult={state.publishResult || undefined}
           onSwitchEnvironment={handleSwitchEnvironment}
         />
 
         <NoChangesModal
-          isOpen={noChangesModalOpen}
-          onClose={handleCloseModals}
-          targetEnvironment={selectedEnvironment || undefined}
+          isOpen={state.modalState === 'no-changes'}
+          onClose={actions.close}
+          targetEnvironment={state.selectedEnvironment || undefined}
         />
       </>
     );
@@ -405,7 +150,7 @@ export const PublishButton = () => {
 
   return (
     <>
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="secondary"
@@ -426,38 +171,183 @@ export const PublishButton = () => {
             </DropdownMenuItem>
           ) : (
             otherEnvironments.map((environment) => (
-              <EnvironmentDiffCard
+              <EnvironmentOption
                 key={environment._id}
                 environment={environment}
                 currentEnvironmentId={currentEnvironment?._id}
-                isDropdownOpen={isOpen}
-                onClick={(hasChanges) => {
-                  handlePublishToEnvironment(environment, hasChanges);
-                }}
+                onSelect={(hasChanges) => handleEnvironmentSelect(environment, hasChanges)}
+                isDropdownOpen={isDropdownOpen}
               />
             ))
           )}
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <PublishModals
-        selectedEnvironment={selectedEnvironment}
-        publishModalOpen={publishModalOpen}
-        successModalOpen={successModalOpen}
-        currentEnvironmentId={currentEnvironment?._id}
-        publishResult={publishResult}
-        isPublishing={publishMutation.isPending}
-        publishError={publishMutation.error?.message || null}
-        onClose={handleCloseModals}
-        onConfirm={handleConfirmPublish}
-        onSwitchEnvironment={handleSwitchEnvironment}
-      />
+      {/* Modals */}
+      {state.selectedEnvironment && (
+        <>
+          <PublishModal
+            isOpen={state.modalState === 'publish'}
+            onClose={actions.close}
+            environment={state.selectedEnvironment}
+            currentEnvironmentId={currentEnvironment?._id}
+            onConfirm={handlePublish}
+            isPublishing={publishMutation.isPending}
+            publishError={publishMutation.error?.message || null}
+          />
 
-      <NoChangesModal
-        isOpen={noChangesModalOpen}
-        onClose={handleCloseModals}
-        targetEnvironment={selectedEnvironment || undefined}
-      />
+          <PublishSuccessModal
+            isOpen={state.modalState === 'success'}
+            onClose={actions.close}
+            environment={state.selectedEnvironment}
+            publishResult={state.publishResult || undefined}
+            onSwitchEnvironment={handleSwitchEnvironment}
+          />
+
+          <NoChangesModal
+            isOpen={state.modalState === 'no-changes'}
+            onClose={actions.close}
+            targetEnvironment={state.selectedEnvironment}
+          />
+        </>
+      )}
     </>
+  );
+};
+
+const calculateChangesSummary = (diffData: any): ChangesSummary => {
+  const initial = { added: 0, modified: 0, deleted: 0, unchanged: 0, total: 0 };
+
+  if (!diffData?.resources) return initial;
+
+  const summary = diffData.resources.reduce(
+    (acc: any, resource: any) => ({
+      added: acc.added + resource.summary.added,
+      modified: acc.modified + resource.summary.modified,
+      deleted: acc.deleted + resource.summary.deleted,
+      unchanged: acc.unchanged + resource.summary.unchanged,
+    }),
+    initial
+  );
+
+  summary.total = summary.added + summary.modified + summary.deleted;
+
+  return summary;
+};
+
+const usePublishState = () => {
+  const [state, setState] = useState<PublishState>({
+    modalState: 'closed',
+    selectedEnvironment: null,
+    publishResult: null,
+  });
+
+  const actions = {
+    openPublishModal: (environment: IEnvironment) =>
+      setState({ modalState: 'publish', selectedEnvironment: environment, publishResult: null }),
+
+    openNoChangesModal: (environment: IEnvironment) =>
+      setState({ modalState: 'no-changes', selectedEnvironment: environment, publishResult: null }),
+
+    showSuccess: (result: IEnvironmentPublishResponse) =>
+      setState((prev) => ({ ...prev, modalState: 'success', publishResult: result })),
+
+    close: () => setState({ modalState: 'closed', selectedEnvironment: null, publishResult: null }),
+  };
+
+  return { state, actions };
+};
+
+const useInvalidateDiffOnWorkflowChange = (enabled: boolean = true) => {
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const unsubscribe = queryClient.getQueryCache().subscribe((event) => {
+      if (event.type === 'updated' && event.query.queryKey.includes(QueryKeys.fetchWorkflows)) {
+        queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+      }
+    });
+
+    return unsubscribe;
+  }, [queryClient, enabled]);
+};
+
+type ChangeIndicatorProps = {
+  summary: ChangesSummary | null;
+  isLoading: boolean;
+  variant?: 'inline' | 'badge';
+};
+
+const ChangeIndicator = ({ summary, isLoading, variant = 'inline' }: ChangeIndicatorProps) => {
+  if (isLoading && !summary) {
+    return <Skeleton className="ml-1 h-4 w-6 rounded-full" />;
+  }
+
+  if (!summary || summary.total === 0) {
+    return variant === 'badge' ? (
+      <Badge variant="lighter" color="gray" size="sm">
+        No changes
+      </Badge>
+    ) : null;
+  }
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={summary.total}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{ duration: 0.2, ease: [0.4, 0.0, 0.2, 1] }}
+        className={variant === 'inline' ? 'ml-1' : ''}
+      >
+        <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
+          {summary.total}
+        </Badge>
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+type EnvironmentOptionProps = {
+  environment: IEnvironment;
+  currentEnvironmentId?: string;
+  onSelect: (hasChanges: boolean) => void;
+  isDropdownOpen: boolean;
+};
+
+const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDropdownOpen }: EnvironmentOptionProps) => {
+  const { data: diffData, isLoading } = useDiffEnvironments({
+    sourceEnvironmentId: currentEnvironmentId,
+    targetEnvironmentId: environment._id,
+    enabled: isDropdownOpen,
+  });
+
+  const summary = calculateChangesSummary(diffData);
+  const hasChanges = summary.total > 0;
+
+  const handleClick = () => {
+    if (!isLoading) {
+      onSelect(hasChanges);
+    }
+  };
+
+  return (
+    <DropdownMenuItem onClick={handleClick} className="cursor-pointer p-1">
+      <div className="flex w-full items-center justify-between">
+        <div className="flex items-center gap-2">
+          <EnvironmentBranchIcon environment={environment} size="sm" />
+          <span className="text-text-sub font-medium">
+            Publish to{' '}
+            <TruncatedText className="text-text-strong max-w-[20ch] font-bold" asChild>
+              <b>{environment.name}</b>
+            </TruncatedText>
+          </span>
+        </div>
+        <ChangeIndicator summary={summary} isLoading={isLoading} variant="badge" />
+      </div>
+    </DropdownMenuItem>
   );
 };
