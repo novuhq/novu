@@ -61,7 +61,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       return;
     }
 
-    const query = this.schema.GetCreateTableQuery().replace('ORDER_BY_X_LIST', `(${this.schemaOrderBy.join(', ')})`);
+    const query = this.schema.GetCreateTableQuery();
     this.clickhouseService.exec({ query });
   }
 
