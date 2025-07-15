@@ -40,6 +40,16 @@ import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framewor
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { AnalyticsStrategyEnum, LogAnalytics } from '../shared/framework/analytics-logs.interceptor';
 
+function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    // Set analytics strategy as a property on the method
+    const originalMethod = descriptor.value;
+    originalMethod._analyticsStrategy = strategy;
+
+    return descriptor;
+  };
+}
+
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
 @RequireAuthentication()
@@ -61,6 +71,7 @@ export class EventsController {
   @KeylessAccessible()
   @ExternalApiAccessible()
   @Post('/trigger')
+  @RequestAnalytics(AnalyticsStrategyEnum.EVENTS)
   @LogAnalytics(AnalyticsStrategyEnum.EVENTS)
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {

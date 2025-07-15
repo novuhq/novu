@@ -33,6 +33,11 @@ export function useUpdateOrganizationSettings() {
       }
     },
     onSuccess: async (response) => {
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTranslationGroups],
+        exact: false,
+      });
+
       const queryKey = [QueryKeys.organizationSettings, currentEnvironment?._id];
 
       // Update with the actual server response

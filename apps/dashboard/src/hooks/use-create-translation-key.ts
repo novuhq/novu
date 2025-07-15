@@ -92,9 +92,10 @@ export const useCreateTranslationKey = () => {
         ],
       });
 
-      // Invalidate the translations list
+      // Invalidate the translation group
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslationGroup],
+        exact: false,
       });
 
       showSuccessToast(`Translation key "${variables.translationKey}" created successfully`);

@@ -23,6 +23,7 @@ export const QueryKeys = Object.freeze({
   previewLayout: 'previewLayout',
   fetchTranslations: 'fetchTranslations',
   fetchTranslationGroups: 'fetchTranslationGroups',
+  fetchTranslationGroup: 'fetchTranslationGroup',
   fetchTranslation: 'fetchTranslation',
   fetchTranslationKeys: 'fetchTranslationKeys',
 });
