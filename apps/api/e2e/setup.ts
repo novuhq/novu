@@ -38,7 +38,7 @@ async function closeDatabaseConnection(): Promise<void> {
 async function getClickHouseConnection(): Promise<ClickHouseClient | undefined> {
   if (!analyticsConnection) {
     if (!clickHouseService) {
-      clickHouseService = new ClickHouseService(new PinoLogger({}));
+      clickHouseService = new ClickHouseService();
       await clickHouseService.init();
     }
     analyticsConnection = clickHouseService?.client;
