@@ -2,9 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { LogRepository } from '../base.repository';
-import { ClickHouseService } from '../clickhouse.service';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
+
+const TRACE_INSERT_OPTIONS: InsertOptions = {
+  asyncInsert: true,
+  waitForAsyncInsert: false,
+};
 
 @Injectable()
 export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
@@ -112,6 +117,30 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
         'Failed to log trace events in batch'
       );
     }
+  }
+
+  // Override insert to ensure insert methods always apply trace-optimized ClickHouse settings, even if called directly
+  async insert(
+    data: Omit<Trace, 'id' | 'expires_at'>,
+    context: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
+    await super.insert(data, context, TRACE_INSERT_OPTIONS);
+  }
+
+  // Override insert to ensure insert methods always apply trace-optimized ClickHouse settings, even if called directly
+  async insertMany(
+    data: Omit<Trace, 'id' | 'expires_at'>[],
+    context: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
+    await super.insertMany(data, context, TRACE_INSERT_OPTIONS);
   }
 }
 
