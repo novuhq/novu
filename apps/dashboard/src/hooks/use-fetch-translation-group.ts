@@ -7,9 +7,11 @@ import { LocalizationResourceEnum } from '@/types/translations';
 export const useFetchTranslationGroup = ({
   resourceId,
   resourceType,
+  enabled = true,
 }: {
   resourceId: string;
   resourceType: LocalizationResourceEnum;
+  enabled?: boolean;
 }) => {
   const { currentEnvironment } = useEnvironment();
 
@@ -26,6 +28,6 @@ export const useFetchTranslationGroup = ({
         resourceType,
       });
     },
-    enabled: !!currentEnvironment && !!resourceId && !!resourceType,
+    enabled: !!currentEnvironment && !!resourceId && !!resourceType && enabled,
   });
 };
