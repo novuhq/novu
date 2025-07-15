@@ -23,6 +23,7 @@ import type { EnvironmentId } from '../environment';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
 import { MessageTemplateEntity } from '../message-template';
+import { UserEntity } from '../user';
 
 export class NotificationTemplateEntity {
   _id: string;
@@ -67,7 +68,11 @@ export class NotificationTemplateEntity {
 
   updatedAt?: string;
 
+  _updatedBy?: string;
+
   readonly notificationGroup?: NotificationGroupEntity;
+
+  readonly updatedBy?: UserEntity;
 
   isBlueprint: boolean;
 
@@ -101,7 +106,7 @@ export class RuntimeIssue {
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
   Omit<NotificationTemplateEntity, '_parentId'>,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId'
+  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId' | '_updatedBy'
 > & {
   _parentId?: Types.ObjectId;
 };

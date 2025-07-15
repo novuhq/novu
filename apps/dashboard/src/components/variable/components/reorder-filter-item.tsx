@@ -112,7 +112,7 @@ export const ReorderFilterItem = (props: ReorderFilterItemProps) => {
             onClick={preventClick}
           />
 
-          <span className="text-code-sm select-none">{filterDef?.label}</span>
+          <span className="text-code-xs select-none">{filterDef?.label}</span>
           <Tooltip>
             <TooltipTrigger className="cursor-pointer" asChild>
               <span>

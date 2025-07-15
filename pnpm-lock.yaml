@@ -373,8 +373,8 @@ importers:
         specifier: ^6.2.3
         version: 6.12.0(encoding@0.1.13)
       '@maily-to/render':
-        specifier: github:novuhq/maily.to#release/v0.1.3-novu.5-render&path:/packages/render
-        version: https://codeload.github.com/novuhq/maily.to/tar.gz/035d166347dcc0082113c8ae5fad3dec33b47863#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: github:novuhq/maily.to#release/v0.1.3-novu.6-render&path:/packages/render
+        version: https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@nestjs/axios':
         specifier: 3.0.3
         version: 3.0.3(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(axios@1.9.0)(rxjs@7.8.1)
@@ -495,6 +495,9 @@ importers:
       date-fns:
         specifier: ^2.29.2
         version: 2.29.3
+      deep-object-diff:
+        specifier: ^1.1.9
+        version: 1.1.9
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
@@ -614,7 +617,7 @@ importers:
         specifier: ^6.15.0
         version: 6.15.0(encoding@0.1.13)
       '@swc-node/register':
-        specifier: ^1.10.10
+        specifier: 1.10.10
         version: 1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2)
       '@types/async':
         specifier: ^3.2.1
@@ -2628,8 +2631,8 @@ importers:
         specifier: ^9.7.3
         version: 9.7.3
       '@maily-to/render':
-        specifier: github:novuhq/maily.to#release/v0.1.3-novu.5-render&path:/packages/render
-        version: https://codeload.github.com/novuhq/maily.to/tar.gz/035d166347dcc0082113c8ae5fad3dec33b47863#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: github:novuhq/maily.to#release/v0.1.3-novu.6-render&path:/packages/render
+        version: https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@nestjs/common':
         specifier: 10.4.18
         version: 10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -8757,9 +8760,9 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
-  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/035d166347dcc0082113c8ae5fad3dec33b47863#path:/packages/render':
-    resolution: {path: /packages/render, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/035d166347dcc0082113c8ae5fad3dec33b47863}
-    version: 0.1.3-novu.5-render
+  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render':
+    resolution: {path: /packages/render, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c}
+    version: 0.1.3-novu.6-render
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^18.3.1
@@ -19401,6 +19404,9 @@ packages:
 
   deep-is@0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
+
+  deep-object-diff@1.1.9:
+    resolution: {integrity: sha512-Rn+RuwkmkDwCi2/oXOFS9Gsr5lJZu/yTGpK7wAaAIE75CC+LCGEZHpY6VQJa/RoJcrmaA/docWJZvYohlNkWPA==}
 
   deepmerge-ts@7.1.0:
     resolution: {integrity: sha512-q6bNsfNBtgr8ZOQqmZbl94MmYWm+QcDNIkqCxVWiw1vKvf+y/N2dZQKdnDXn4c5Ygt/y63tDof6OCN+2YwWVEg==}
@@ -40235,7 +40241,7 @@ snapshots:
       - y-protocols
       - yjs
 
-  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/035d166347dcc0082113c8ae5fad3dec33b47863#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@react-email/components': 0.0.25(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@react-email/render': 1.0.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -55178,6 +55184,8 @@ snapshots:
   deep-freeze@0.0.1: {}
 
   deep-is@0.1.4: {}
+
+  deep-object-diff@1.1.9: {}
 
   deepmerge-ts@7.1.0: {}
 

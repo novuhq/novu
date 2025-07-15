@@ -28,7 +28,13 @@ import { ResourceOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { IEnvironment, PermissionsEnum, WorkflowListResponseDto, FeatureFlagsKeysEnum } from '@novu/shared';
+import {
+  IEnvironment,
+  PermissionsEnum,
+  WorkflowListResponseDto,
+  FeatureFlagsKeysEnum,
+  EnvironmentTypeEnum,
+} from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
@@ -89,8 +95,10 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+  const isNewChangeManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
-  const isDuplicable = workflow.origin === ResourceOriginEnum.NOVU_CLOUD;
+  const isDuplicable =
+    workflow.origin === ResourceOriginEnum.NOVU_CLOUD && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
   const workflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId`, {
         workflowId: workflow._id,
@@ -328,6 +336,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 disabled={
                   !has({ permission: PermissionsEnum.EVENT_WRITE }) &&
                   !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) &&
+                  currentEnvironment?.type !== EnvironmentTypeEnum.DEV &&
                   !has({ permission: PermissionsEnum.NOTIFICATION_READ })
                 }
                 variant="ghost"
@@ -340,6 +349,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 condition={(has) =>
                   has({ permission: PermissionsEnum.EVENT_WRITE }) ||
                   has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+                  currentEnvironment?.type !== EnvironmentTypeEnum.DEV ||
                   has({ permission: PermissionsEnum.NOTIFICATION_READ })
                 }
               >
@@ -355,8 +365,12 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                   <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                     <SyncWorkflowMenuItem
                       currentEnvironment={currentEnvironment}
-                      isSyncable={isSyncable}
-                      tooltipContent={tooltipContent}
+                      isSyncable={isNewChangeManagementEnabled ? false : isSyncable}
+                      tooltipContent={
+                        isNewChangeManagementEnabled
+                          ? 'Syncing workflows is now performed in the top right corner of the navigation bar as Publish changes.'
+                          : tooltipContent
+                      }
                       onSync={safeSync}
                     />
                   </Protect>
@@ -376,37 +390,39 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                       </DropdownMenuItem>
                     </Link>
                   </Protect>
-                  <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
-                    {isDuplicable ? (
-                      <Link
-                        to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
-                          environmentSlug: currentEnvironment?.slug ?? '',
-                          workflowId: workflow.workflowId,
-                        })}
-                      >
-                        <DropdownMenuItem className="cursor-pointer">
-                          <FilesIcon />
-                          Duplicate workflow
-                        </DropdownMenuItem>
-                      </Link>
-                    ) : (
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <DropdownMenuItem className="cursor-not-allowed opacity-60">
+                  {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+                    <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
+                      {isDuplicable ? (
+                        <Link
+                          to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
+                            environmentSlug: currentEnvironment?.slug ?? '',
+                            workflowId: workflow.workflowId,
+                          })}
+                        >
+                          <DropdownMenuItem className="cursor-pointer">
                             <FilesIcon />
                             Duplicate workflow
                           </DropdownMenuItem>
-                        </TooltipTrigger>
-                        <TooltipPortal>
-                          <TooltipContent>
-                            {workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1
-                              ? 'V1 workflows cannot be duplicated using dashboard. Please visit the legacy portal.'
-                              : 'External workflows cannot be duplicated using dashboard.'}
-                          </TooltipContent>
-                        </TooltipPortal>
-                      </Tooltip>
-                    )}
-                  </Protect>
+                        </Link>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <DropdownMenuItem className="cursor-not-allowed opacity-60">
+                              <FilesIcon />
+                              Duplicate workflow
+                            </DropdownMenuItem>
+                          </TooltipTrigger>
+                          <TooltipPortal>
+                            <TooltipContent>
+                              {workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1
+                                ? 'V1 workflows cannot be duplicated using dashboard. Please visit the legacy portal.'
+                                : 'External workflows cannot be duplicated using dashboard.'}
+                            </TooltipContent>
+                          </TooltipPortal>
+                        </Tooltip>
+                      )}
+                    </Protect>
+                  )}
                 </DropdownMenuGroup>
               </Protect>
               <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
@@ -429,17 +445,19 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                       </>
                     )}
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    disabled={workflow.origin === ResourceOriginEnum.EXTERNAL}
-                    onClick={() => {
-                      setTimeout(() => setIsDeleteModalOpen(true), 0);
-                    }}
-                    data-testid="delete-workflow"
-                  >
-                    <RiDeleteBin2Line />
-                    Delete workflow
-                  </DropdownMenuItem>
+                  {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      disabled={workflow.origin === ResourceOriginEnum.EXTERNAL}
+                      onClick={() => {
+                        setTimeout(() => setIsDeleteModalOpen(true), 0);
+                      }}
+                      data-testid="delete-workflow"
+                    >
+                      <RiDeleteBin2Line />
+                      Delete workflow
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuGroup>
               </Protect>
             </DropdownMenuContent>

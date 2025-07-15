@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { ApiKeyDto } from './api-key.dto';
 
 export class EnvironmentResponseDto {
@@ -29,6 +30,14 @@ export class EnvironmentResponseDto {
     example: 'prod-env-01',
   })
   identifier: string;
+
+  @ApiPropertyOptional({
+    enum: EnvironmentTypeEnum,
+    description: 'Type of the environment',
+    example: EnvironmentTypeEnum.PROD,
+    nullable: true,
+  })
+  type: EnvironmentTypeEnum;
 
   @ApiPropertyOptional({
     type: ApiKeyDto,

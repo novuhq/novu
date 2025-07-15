@@ -1,6 +1,6 @@
 import { UserSessionData } from '@novu/shared';
 import { getClientIp } from 'request-ip';
-import { RequestLog } from '@novu/application-generic';
+import { LogRepository, RequestLog } from '@novu/application-generic';
 import { sanitizePayload } from '../../../utils/payload-sanitizer';
 import { generateTransactionId } from '../helpers';
 
@@ -10,12 +10,12 @@ export function buildLog(
   data: any,
   user: UserSessionData | null,
   duration: number = 0
-): Omit<RequestLog, 'id'> | null {
+): Omit<RequestLog, 'id' | 'expires_at'> | null {
   // Skip logging when user data is incomplete to prevent orphaned log entries
   if (!user?._id || !user?.organizationId || !user?.environmentId || !user?.scheme) return null;
 
   return {
-    created_at: new Date(),
+    created_at: LogRepository.formatDateTime64(new Date()),
     path: req.path,
     url: req.originalUrl,
     url_pattern: req.route.path,
@@ -30,7 +30,7 @@ export function buildLog(
     user_id: user._id,
     organization_id: user.organizationId,
     environment_id: user.environmentId,
-    schema_type: user.scheme,
+    auth_type: user.scheme,
     duration_ms: duration,
   };
 }
