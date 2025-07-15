@@ -652,6 +652,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     const isUpdatingSnoozed = snoozedUntil !== undefined;
 
     let updatePayload: FilterQuery<MessageEntity> = {};
+
     if (isUpdatingArchived) {
       updatePayload = {
         seen: true,
@@ -679,6 +680,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         archived: !seen ? false : undefined,
         archivedAt: !seen ? null : undefined,
       };
+
+      // If unseen, clear firstSeenDate
+      if (!seen) {
+        updatePayload.firstSeenDate = null;
+      }
     } else if (isUpdatingSnoozed) {
       updatePayload = {
         snoozedUntil,
@@ -689,9 +695,29 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
-    await this.update(query, {
-      $set: updatePayload,
-    });
+    // Handle firstSeenDate logic separately for operations that mark as seen
+    const shouldMarkAsSeen = isUpdatingArchived || isUpdatingRead || (isUpdatingSeen && seen) || isUpdatingSnoozed;
+
+    if (shouldMarkAsSeen) {
+      // First, update all matching documents with the main update
+      await this.update(query, { $set: updatePayload });
+
+      // Then, set firstSeenDate only for documents that don't already have it
+      await this.update(
+        {
+          ...query,
+          firstSeenDate: { $exists: false },
+        },
+        {
+          $set: { firstSeenDate: new Date() },
+        }
+      );
+    } else {
+      // For non-seen operations, just do the regular update
+      await this.update(query, { $set: updatePayload });
+    }
+
+    return this.find(query);
   }
 
   async updateActionStatus({
