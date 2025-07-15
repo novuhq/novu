@@ -125,11 +125,18 @@ export const PublishButton = () => {
   const publishMutation = usePublishEnvironments();
 
   const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
+  const singleEnvironment = otherEnvironments.length === 1 ? otherEnvironments[0] : null;
 
   const handlePublishToEnvironment = (environment: IEnvironment) => {
     setSelectedEnvironment(environment);
     setIsOpen(false);
     setPublishModalOpen(true);
+  };
+
+  const handleDirectPublish = () => {
+    if (singleEnvironment) {
+      handlePublishToEnvironment(singleEnvironment);
+    }
   };
 
   const handleConfirmPublish = async () => {
@@ -173,6 +180,36 @@ export const PublishButton = () => {
     }
   };
 
+  if (singleEnvironment) {
+    return (
+      <>
+        <Button
+          variant="secondary"
+          className="h-[26px]"
+          mode="outline"
+          size="2xs"
+          leadingIcon={RiGitPullRequestFill}
+          onClick={handleDirectPublish}
+        >
+          Publish changes
+        </Button>
+
+        <PublishModals
+          selectedEnvironment={selectedEnvironment}
+          publishModalOpen={publishModalOpen}
+          successModalOpen={successModalOpen}
+          currentEnvironmentId={currentEnvironment?._id}
+          publishResult={publishResult}
+          isPublishing={publishMutation.isPending}
+          publishError={publishMutation.error?.message || null}
+          onClose={handleCloseModals}
+          onConfirm={handleConfirmPublish}
+          onSwitchEnvironment={handleSwitchEnvironment}
+        />
+      </>
+    );
+  }
+
   return (
     <>
       <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -208,27 +245,68 @@ export const PublishButton = () => {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {selectedEnvironment && (
-        <PublishModal
-          isOpen={publishModalOpen}
-          onClose={handleCloseModals}
-          environment={selectedEnvironment}
-          currentEnvironmentId={currentEnvironment?._id}
-          onConfirm={handleConfirmPublish}
-          isPublishing={publishMutation.isPending}
-          publishError={publishMutation.error?.message || null}
-        />
-      )}
+      <PublishModals
+        selectedEnvironment={selectedEnvironment}
+        publishModalOpen={publishModalOpen}
+        successModalOpen={successModalOpen}
+        currentEnvironmentId={currentEnvironment?._id}
+        publishResult={publishResult}
+        isPublishing={publishMutation.isPending}
+        publishError={publishMutation.error?.message || null}
+        onClose={handleCloseModals}
+        onConfirm={handleConfirmPublish}
+        onSwitchEnvironment={handleSwitchEnvironment}
+      />
+    </>
+  );
+};
 
-      {selectedEnvironment && (
-        <PublishSuccessModal
-          isOpen={successModalOpen}
-          onClose={handleCloseModals}
-          environment={selectedEnvironment}
-          publishResult={publishResult || undefined}
-          onSwitchEnvironment={handleSwitchEnvironment}
-        />
-      )}
+type PublishModalsProps = {
+  selectedEnvironment: IEnvironment | null;
+  publishModalOpen: boolean;
+  successModalOpen: boolean;
+  currentEnvironmentId?: string;
+  publishResult: IEnvironmentPublishResponse | null;
+  isPublishing: boolean;
+  publishError: string | null;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+  onSwitchEnvironment: () => void;
+};
+
+const PublishModals = ({
+  selectedEnvironment,
+  publishModalOpen,
+  successModalOpen,
+  currentEnvironmentId,
+  publishResult,
+  isPublishing,
+  publishError,
+  onClose,
+  onConfirm,
+  onSwitchEnvironment,
+}: PublishModalsProps) => {
+  if (!selectedEnvironment) return null;
+
+  return (
+    <>
+      <PublishModal
+        isOpen={publishModalOpen}
+        onClose={onClose}
+        environment={selectedEnvironment}
+        currentEnvironmentId={currentEnvironmentId}
+        onConfirm={onConfirm}
+        isPublishing={isPublishing}
+        publishError={publishError}
+      />
+
+      <PublishSuccessModal
+        isOpen={successModalOpen}
+        onClose={onClose}
+        environment={selectedEnvironment}
+        publishResult={publishResult || undefined}
+        onSwitchEnvironment={onSwitchEnvironment}
+      />
     </>
   );
 };
