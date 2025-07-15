@@ -3,10 +3,10 @@ import { RiGitPullRequestFill, RiArrowDownSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Button } from '../primitives/button';
+import { Badge } from '../primitives/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Skeleton } from '../primitives/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import TruncatedText from '../truncated-text';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
@@ -103,7 +103,11 @@ const ChangeIndicator = ({ aggregatedSummary, isLoading }: ChangeIndicatorProps)
 
   if (totalChanges === 0) return null;
 
-  return <span className="text-2xs text-text-soft text-code-xs ml-1">({totalChanges})</span>;
+  return (
+    <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs ml-1 h-4 min-w-4 p-0">
+      {totalChanges}
+    </Badge>
+  );
 };
 
 const EnvironmentDiffCard = ({
@@ -154,13 +158,13 @@ const EnvironmentDiffCard = ({
           {isLoading ? (
             <Skeleton className="h-5 w-8 rounded-full" />
           ) : hasChanges ? (
-            <span className="text-2xs text-text-soft text-code-xs">
-              ({aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted})
-            </span>
+            <Badge variant="lighter" color="blue" size="sm">
+              {aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted}
+            </Badge>
           ) : (
-            <div className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
+            <Badge variant="lighter" color="gray" size="sm">
               No changes
-            </div>
+            </Badge>
           )}
         </div>
       </div>
