@@ -43,7 +43,7 @@ export function NoChangesModal({ isOpen, onClose }: NoChangesModalProps) {
         <div className="">
           <h2 className="text-label-sm text-text-sub">No changes to publish</h2>
           <p className="text-text-soft text-paragraph-xs mt-1">
-            You're all caught up! There are no workflows or layouts pending for production right now.
+            You're all caught up! There are no workflows or layouts pending for publishing right now.
           </p>
         </div>
 
