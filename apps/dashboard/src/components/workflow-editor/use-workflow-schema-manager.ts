@@ -192,6 +192,11 @@ export function useWorkflowSchemaManager({
         queryKey: [QueryKeys.fetchWorkflow],
       });
 
+      // Invalidate diff environment queries when workflow schema is updated
+      await queryClient.invalidateQueries({
+        queryKey: ['diff-environments'],
+      });
+
       onSaveSuccess?.(schemaToSave);
     } catch (error: any) {
       console.error('Failed to save payload schema due to API error:', error);
