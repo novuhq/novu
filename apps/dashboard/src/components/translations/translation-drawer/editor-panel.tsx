@@ -48,7 +48,7 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated }: JSONEdi
           <InlineToast
             variant="warning"
             title="Warning:"
-            description="Some keys in this locale don't match the default locale. Add missing keys or remove extra ones to sync translations."
+            description="Some keys in this target locale don't match the default locale. Add missing keys or remove extra ones to sync translations."
           />
         </div>
       )}
@@ -129,7 +129,7 @@ export function EditorPanel({
         <div className="flex h-32 items-center justify-center">
           <p className="text-sm text-red-500">Failed to load translation for {selectedLocale}</p>
         </div>
-      ) : selectedTranslation?.content ? (
+      ) : selectedTranslation ? (
         <JSONEditor
           content={JSON.stringify(contentToUse, null, 2)}
           onChange={onContentChange}

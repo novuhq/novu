@@ -101,6 +101,15 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
   });
 
   it('should include outdatedLocales when present', async () => {
+    // First, set organization default locale and target locales
+    await session.testAgent
+      .patch('/v1/organizations/settings')
+      .send({
+        defaultLocale: 'en_US',
+        targetLocales: ['es_ES', 'fr_FR', 'de_DE'], // Configure target locales
+      })
+      .expect(200);
+
     const translations = [
       {
         resourceId: workflowId,
@@ -122,12 +131,15 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
       },
     ];
 
-    // Create translations
+    /*
+     * Create translations for en_US (default) and es_ES only
+     * fr_FR and de_DE are configured as targets but missing = outdated
+     */
     for (const translation of translations) {
       await session.testAgent.post('/v2/translations').send(translation).expect(200);
     }
 
-    // Update the default locale (en_US) to make es_ES outdated
+    // Update the default locale (en_US) to add new keys, making es_ES out of sync
     await session.testAgent
       .post('/v2/translations')
       .send({
@@ -137,7 +149,7 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
         content: {
           'welcome.title': 'Welcome Updated',
           'welcome.message': 'Hello there, updated!',
-          'new.key': 'New content',
+          'new.key': 'New content', // This key is missing in es_ES
         },
       })
       .expect(200);
@@ -150,11 +162,59 @@ describe('Get single translation group - /v2/translations/group/:resourceType/:r
     expect(body.data.resourceId).to.equal(workflowId);
     expect(body.data.locales).to.include.members(['en_US', 'es_ES']);
 
-    // Should include outdatedLocales if there are any
-    if (body.data.outdatedLocales) {
-      expect(body.data.outdatedLocales).to.be.an('array');
-      expect(body.data.outdatedLocales).to.include('es_ES');
-    }
+    // Should include outdatedLocales: es_ES (out of sync), fr_FR (missing), de_DE (missing)
+    expect(body.data.outdatedLocales).to.be.an('array');
+    expect(body.data.outdatedLocales).to.have.lengthOf(3);
+    expect(body.data.outdatedLocales).to.include.members(['es_ES', 'fr_FR', 'de_DE']);
+  });
+
+  it('should not include outdatedLocales when no target locales are configured', async () => {
+    // Ensure no target locales are configured (only default locale)
+    await session.testAgent
+      .patch('/v1/organizations/settings')
+      .send({
+        defaultLocale: 'en_US',
+        // No targetLocales specified
+      })
+      .expect(200);
+
+    // Create some translations
+    await session.testAgent
+      .post('/v2/translations')
+      .send({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale: 'en_US',
+        content: {
+          'welcome.title': 'Welcome',
+          'welcome.message': 'Hello there!',
+        },
+      })
+      .expect(200);
+
+    // Even if we have other locales not in target list
+    await session.testAgent
+      .post('/v2/translations')
+      .send({
+        resourceId: workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale: 'es_ES',
+        content: {
+          'welcome.title': 'Bienvenido',
+        },
+      })
+      .expect(200);
+
+    // Get the translation group
+    const { body } = await session.testAgent
+      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
+      .expect(200);
+
+    expect(body.data.resourceId).to.equal(workflowId);
+    expect(body.data.locales).to.include.members(['en_US', 'es_ES']);
+
+    // Should not include outdatedLocales since no target locales are configured
+    expect(body.data).to.not.have.property('outdatedLocales');
   });
 
   it('should return 404 for non-existent translation group', async () => {
