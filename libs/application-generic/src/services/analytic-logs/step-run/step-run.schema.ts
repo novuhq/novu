@@ -60,7 +60,7 @@ const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'ReplacingMergeTree(updated_at)',
   order_by: `(${ORDER_BY.join(', ')})` as any,
-  additional_options: [`TTL ${TTL}`],
+  additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL ${TTL}`],
 };
 
 export const stepRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);

@@ -45,7 +45,7 @@ const clickhouseSchemaOptions = {
   table_name: TABLE_NAME,
   engine: 'MergeTree',
   order_by: `(${ORDER_BY.join(', ')})` as any,
-  additional_options: [`TTL ${TTL}`],
+  additional_options: ['PARTITION BY toYYYYMM(created_at)', `TTL ${TTL}`],
 };
 
 export const requestLogSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
