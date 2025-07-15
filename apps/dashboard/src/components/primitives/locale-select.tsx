@@ -4,17 +4,30 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowDownSLine, RiCheckLine } from 'react-icons/ri';
 import { Button, ButtonProps } from './button';
 import { Input } from './input';
-import { FlagCircle } from '../flag-circle';
+import { FlagCircle, StackedFlagCircles } from '../flag-circle';
 import TruncatedText from '../truncated-text';
 
-type LocaleSelectProps = Omit<ButtonProps, 'onChange'> & {
-  value?: string;
+type BaseLocaleSelectProps = {
   disabled?: boolean;
   readOnly?: boolean;
-  onChange: (val: string) => void;
   placeholder?: string;
   availableLocales?: string[];
+  className?: string;
+} & Omit<ButtonProps, 'onChange'>;
+
+type SingleSelectProps = BaseLocaleSelectProps & {
+  value?: string;
+  onChange: (val: string) => void;
+  multiSelect?: false;
 };
+
+type MultiSelectProps = BaseLocaleSelectProps & {
+  value?: string[];
+  onChange: (val: string[]) => void;
+  multiSelect: true;
+};
+
+type LocaleSelectProps = SingleSelectProps | MultiSelectProps;
 
 // Get most common locales for better performance
 const COMMON_LOCALES = [
@@ -44,27 +57,8 @@ const COMMON_LOCALES = [
   'ro_RO',
 ];
 
-export function LocaleSelect(props: LocaleSelectProps) {
-  const {
-    value,
-    disabled,
-    readOnly,
-    onChange,
-    className,
-    placeholder = 'Select locale',
-    availableLocales,
-    ...rest
-  } = props;
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
-  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>('left');
-  const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-
-  const currentLocale = locales.find((locale) => locale.langIso === value);
-
-  // Get the base locales list - either all locales or filtered by availableLocales
+// Shared hook for locale filtering logic
+function useLocaleFiltering(availableLocales?: string[], searchValue: string = '') {
   const baseLocales = useMemo(() => {
     if (availableLocales && availableLocales.length > 0) {
       return locales.filter((locale) => availableLocales.includes(locale.langIso));
@@ -73,15 +67,12 @@ export function LocaleSelect(props: LocaleSelectProps) {
     return locales;
   }, [availableLocales]);
 
-  // Optimize locale filtering with memoization
   const filteredLocales = useMemo(() => {
     if (!searchValue.trim()) {
-      // If we have availableLocales, show them in order, otherwise show common locales first
       if (availableLocales && availableLocales.length > 0) {
         return baseLocales.slice(0, 100);
       }
 
-      // Show common locales first, then others
       const common = baseLocales.filter((locale) => COMMON_LOCALES.includes(locale.langIso));
       const others = baseLocales.filter((locale) => !COMMON_LOCALES.includes(locale.langIso));
       return [...common, ...others].slice(0, 100);
@@ -98,10 +89,100 @@ export function LocaleSelect(props: LocaleSelectProps) {
       .slice(0, 100);
   }, [searchValue, baseLocales, availableLocales]);
 
+  const showSearchLimitMessage =
+    searchValue &&
+    baseLocales.filter(
+      (locale) =>
+        locale.langIso.toLowerCase().includes(searchValue.toLowerCase()) ||
+        locale.langName.toLowerCase().includes(searchValue.toLowerCase()) ||
+        locale.name.toLowerCase().includes(searchValue.toLowerCase())
+    ).length > 100;
+
+  return { filteredLocales, showSearchLimitMessage };
+}
+
+// Single select trigger content
+function SingleSelectTrigger({ value, placeholder }: { value?: string; placeholder: string }) {
+  const currentLocale = locales.find((locale) => locale.langIso === value);
+
+  return (
+    <div className="flex max-w-full flex-1 items-center gap-2 overflow-hidden">
+      {value && <FlagCircle locale={value} size="sm" />}
+      <span className="text-xs font-normal text-neutral-950">
+        {currentLocale ? (
+          <TruncatedText>
+            {currentLocale.langIso} - {currentLocale.langName}
+          </TruncatedText>
+        ) : (
+          <span className="text-neutral-400">{placeholder}</span>
+        )}
+      </span>
+    </div>
+  );
+}
+
+// Multi select trigger content
+function MultiSelectTrigger({ value, placeholder }: { value?: string[]; placeholder: string }) {
+  const selectedLocales = value ? locales.filter((locale) => value.includes(locale.langIso)) : [];
+
+  if (selectedLocales.length === 0) {
+    return <span className="text-xs font-normal text-neutral-400">{placeholder}</span>;
+  }
+
+  if (selectedLocales.length <= 4) {
+    return (
+      <div className="flex items-center gap-1.5 overflow-hidden">
+        {selectedLocales.map((locale, index) => (
+          <div key={locale.langIso} className="flex shrink-0 items-center gap-1">
+            <FlagCircle locale={locale.langIso} size="sm" />
+            <span className="text-xs font-normal text-neutral-950">{locale.langIso}</span>
+            {index < selectedLocales.length - 1 && <span className="text-neutral-400">•</span>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <StackedFlagCircles locales={selectedLocales.map((locale) => locale.langIso)} maxVisible={10} size="md" />
+      <span className="text-xs font-normal text-neutral-950">{selectedLocales.length} locales selected</span>
+    </div>
+  );
+}
+
+export function LocaleSelect(props: LocaleSelectProps) {
+  const {
+    value,
+    disabled,
+    readOnly,
+    onChange,
+    className,
+    placeholder = 'Select locale',
+    availableLocales,
+    multiSelect = false,
+    ...rest
+  } = props;
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const [dropdownPosition, setDropdownPosition] = useState<'left' | 'right'>('left');
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const { filteredLocales, showSearchLimitMessage } = useLocaleFiltering(availableLocales, searchValue);
+
   const handleSelect = (localeValue: string) => {
-    onChange(localeValue);
-    setIsOpen(false);
-    setSearchValue('');
+    if (multiSelect && Array.isArray(value)) {
+      const newValue = value.includes(localeValue) ? value.filter((v) => v !== localeValue) : [...value, localeValue];
+      (onChange as (val: string[]) => void)(newValue);
+      // Don't close for multi-select
+    } else {
+      (onChange as (val: string) => void)(localeValue);
+      setIsOpen(false);
+      setSearchValue('');
+    }
   };
 
   const handleToggle = () => {
@@ -114,7 +195,6 @@ export function LocaleSelect(props: LocaleSelectProps) {
         const spaceOnRight = viewportWidth - rect.right;
         const spaceOnLeft = rect.left;
 
-        // If there's not enough space on the right but enough on the left, position left
         if (spaceOnRight < dropdownWidth && spaceOnLeft >= dropdownWidth) {
           setDropdownPosition('right');
         } else {
@@ -136,7 +216,6 @@ export function LocaleSelect(props: LocaleSelectProps) {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      // Focus the search input when dropdown opens
       setTimeout(() => inputRef.current?.focus(), 0);
     }
 
@@ -145,22 +224,12 @@ export function LocaleSelect(props: LocaleSelectProps) {
     };
   }, [isOpen]);
 
-  // Handle keyboard navigation
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
       setIsOpen(false);
       setSearchValue('');
     }
   };
-
-  const showSearchLimitMessage =
-    searchValue &&
-    baseLocales.filter(
-      (locale) =>
-        locale.langIso.toLowerCase().includes(searchValue.toLowerCase()) ||
-        locale.langName.toLowerCase().includes(searchValue.toLowerCase()) ||
-        locale.name.toLowerCase().includes(searchValue.toLowerCase())
-    ).length > 100;
 
   return (
     <div ref={containerRef} className="relative">
@@ -173,22 +242,15 @@ export function LocaleSelect(props: LocaleSelectProps) {
         type="button"
         {...rest}
       >
-        <div className="flex max-w-full flex-1 items-center gap-2 overflow-hidden">
-          {value && <FlagCircle locale={value} size="sm" />}
-          <span className="text-xs font-normal text-neutral-950">
-            {currentLocale ? (
-              <TruncatedText>
-                {currentLocale.langIso} - {currentLocale.langName}
-              </TruncatedText>
-            ) : (
-              <span className="text-neutral-400">{placeholder}</span>
-            )}
-          </span>
+        {multiSelect ? (
+          <MultiSelectTrigger value={value as string[]} placeholder={placeholder} />
+        ) : (
+          <SingleSelectTrigger value={value as string} placeholder={placeholder} />
+        )}
 
-          <RiArrowDownSLine
-            className={cn('ml-auto size-4 opacity-50', disabled || readOnly ? 'hidden' : 'opacity-100')}
-          />
-        </div>
+        <RiArrowDownSLine
+          className={cn('ml-auto size-4 opacity-50', disabled || readOnly ? 'hidden' : 'opacity-100')}
+        />
       </Button>
 
       {isOpen && (
@@ -216,7 +278,9 @@ export function LocaleSelect(props: LocaleSelectProps) {
             ) : (
               <>
                 {filteredLocales.map((locale) => {
-                  const isSelected = locale.langIso === value;
+                  const isSelected = multiSelect
+                    ? (value as string[])?.includes(locale.langIso)
+                    : locale.langIso === value;
 
                   return (
                     <button
@@ -227,7 +291,7 @@ export function LocaleSelect(props: LocaleSelectProps) {
                         isSelected && 'bg-accent'
                       )}
                       onClick={() => handleSelect(locale.langIso)}
-                      onMouseDown={(e) => e.preventDefault()} // Prevent blur on click
+                      onMouseDown={(e) => e.preventDefault()}
                     >
                       <FlagCircle locale={locale.langIso} size="sm" className="shrink-0" />
                       <div className="flex-1 overflow-hidden text-left">

@@ -1,4 +1,4 @@
-import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsArray, IsString } from 'class-validator';
 import { AuthenticatedCommand, IsValidLocale } from '@novu/application-generic';
 
 export class UpdateOrganizationSettingsCommand extends AuthenticatedCommand {
@@ -12,4 +12,9 @@ export class UpdateOrganizationSettingsCommand extends AuthenticatedCommand {
   @IsOptional()
   @IsValidLocale()
   defaultLocale?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetLocales?: string[];
 }
