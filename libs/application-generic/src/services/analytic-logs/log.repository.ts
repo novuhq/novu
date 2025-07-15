@@ -56,13 +56,18 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     this.initialize();
   }
 
-  private initialize() {
+  private async initialize() {
     if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
       return;
     }
 
     const query = this.schema.GetCreateTableQuery();
-    this.clickhouseService.exec({ query });
+
+    try {
+      await this.clickhouseService.exec({ query });
+    } catch (error) {
+      this.logger.error('Failed to create ClickHouse table', error);
+    }
   }
 
   private getColumnType(column: string): string {

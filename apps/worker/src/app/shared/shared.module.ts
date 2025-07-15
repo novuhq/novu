@@ -28,6 +28,7 @@ import {
   UpdateTenant,
   clickHouseService,
   TraceLogRepository,
+  WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -88,6 +89,7 @@ const ANALYTICS_PROVIDERS = [
   // Repositories
   TraceLogRepository,
   StepRunRepository,
+  WorkflowRunRepository,
 
   // Services
   clickHouseService,

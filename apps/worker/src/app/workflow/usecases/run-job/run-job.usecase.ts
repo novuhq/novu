@@ -9,6 +9,8 @@ import {
   PinoLogger,
   StorageHelperService,
   StepRunRepository,
+  WorkflowRunRepository,
+  WorkflowRunStatus,
 } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
@@ -34,8 +36,11 @@ export class RunJob {
     private notificationRepository: NotificationRepository,
     private processUnsnoozeJob: ProcessUnsnoozeJob,
     private stepRunRepository: StepRunRepository,
-    private logger?: PinoLogger
-  ) {}
+    private workflowRunRepository: WorkflowRunRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   public async execute(command: RunJobCommand): Promise<JobEntity | undefined> {
@@ -238,6 +243,8 @@ export class RunJob {
         });
 
         if (!nextJob) {
+          await this.updateWorkflowRunStatusToComplete(currentJob, 'completed');
+
           return;
         }
 
@@ -266,6 +273,7 @@ export class RunJob {
         );
 
         if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error)) {
+          await this.updateWorkflowRunStatusToComplete(nextJob, 'failed');
           await this.jobRepository.cancelPendingJobs({
             transactionId: nextJob.transactionId,
             _environmentId: nextJob._environmentId,
@@ -359,6 +367,34 @@ export class RunJob {
     }
 
     return await this.jobRepository.findOne(jobQuery);
+  }
+
+  private async updateWorkflowRunStatusToComplete(job: JobEntity, status: WorkflowRunStatus): Promise<void> {
+    try {
+      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, status, {
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+      });
+
+      this.logger.debug(
+        {
+          jobId: job._id,
+          notificationId: job._notificationId,
+          organizationId: job._organizationId,
+          environmentId: job._environmentId,
+        },
+        'Updated workflow run status to completed'
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          jobId: job._id,
+          notificationId: job._notificationId,
+        },
+        'Failed to update workflow run status to completed'
+      );
+    }
   }
 
   public shouldBackoff(error: Error): boolean {
