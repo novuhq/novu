@@ -1,6 +1,5 @@
 import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
-import { Injectable, Inject, forwardRef, OnModuleDestroy } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
 
 export { ClickHouseClient };
 
@@ -40,9 +39,9 @@ export class ClickHouseService implements OnModuleDestroy {
         await defaultClient.query({
           query: `CREATE DATABASE IF NOT EXISTS ${process.env.CLICK_HOUSE_DATABASE}`,
         });
-        this.logger.info(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        // this.logger.info(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
       } catch (error) {
-        this.logger.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
+        // this.logger.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
       }
     }
 
