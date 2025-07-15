@@ -32,7 +32,7 @@ export type CreateLayoutDto = {
 };
 
 export type EmailControlsDto = {
-  content: string;
+  body: string;
   editorType: 'html' | 'block';
 };
 

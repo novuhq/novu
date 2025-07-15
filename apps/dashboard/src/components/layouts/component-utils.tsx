@@ -1,15 +1,36 @@
-import { UiComponentEnum } from '@novu/shared';
+import { useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { ChannelTypeEnum, UiComponentEnum } from '@novu/shared';
 
 import { EmailEditorSelect } from '@/components/email-editor-select';
 import { LayoutEmailBody } from './layout-email-body';
+import { useLayoutEditor } from './layout-editor-provider';
+import { formatHtml } from '@/utils/formatter';
 
 const EmailEditorSelectInternal = () => {
+  const { setValue } = useFormContext();
+  const { previewData } = useLayoutEditor();
+
+  const previewBody = useMemo(() => {
+    if (!previewData?.result || previewData.result.type !== ChannelTypeEnum.EMAIL) {
+      return '';
+    }
+
+    return previewData.result.preview?.body || '';
+  }, [previewData?.result]);
+
   return (
     <EmailEditorSelect
       isLoading={false}
-      saveForm={() => {
-        // TODO: preview the layout and save it's html in the form
-        return Promise.resolve();
+      saveForm={async ({ editorType, onSuccess }) => {
+        if (editorType === 'html') {
+          const formattedValue = await formatHtml(previewBody);
+          setValue('body', formattedValue);
+        } else {
+          setValue('body', '{"type":"doc","content":[]}');
+        }
+
+        onSuccess?.();
       }}
     />
   );
