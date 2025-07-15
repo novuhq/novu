@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { RiGitPullRequestFill, RiArrowDownSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../primitives/button';
 import { Badge } from '../primitives/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../primitives/dropdown-menu';
@@ -104,9 +105,23 @@ const ChangeIndicator = ({ aggregatedSummary, isLoading }: ChangeIndicatorProps)
   if (totalChanges === 0) return null;
 
   return (
-    <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs ml-1 h-4 min-w-4 p-0">
-      {totalChanges}
-    </Badge>
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={totalChanges}
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        transition={{
+          duration: 0.2,
+          ease: [0.4, 0.0, 0.2, 1],
+        }}
+        className="ml-1"
+      >
+        <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
+          {totalChanges}
+        </Badge>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
@@ -158,9 +173,22 @@ const EnvironmentDiffCard = ({
           {isLoading ? (
             <Skeleton className="h-5 w-8 rounded-full" />
           ) : hasChanges ? (
-            <Badge variant="lighter" color="blue" size="sm">
-              {aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted}
-            </Badge>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{
+                  duration: 0.2,
+                  ease: [0.4, 0.0, 0.2, 1],
+                }}
+              >
+                <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
+                  {aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted}
+                </Badge>
+              </motion.div>
+            </AnimatePresence>
           ) : (
             <Badge variant="lighter" color="gray" size="sm">
               No changes
