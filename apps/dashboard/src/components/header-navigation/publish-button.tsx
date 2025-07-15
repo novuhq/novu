@@ -14,6 +14,7 @@ import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environ
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
+import { NoChangesModal } from './no-changes-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { diffEnvironments, type IEnvironmentDiffResponse } from '@/api/environments';
 import { QueryKeys } from '@/utils/query-keys';
@@ -24,7 +25,7 @@ type EnvironmentDiffCardProps = {
   environment: IEnvironment;
   currentEnvironmentId?: string;
   isDropdownOpen: boolean;
-  onClick: () => void;
+  onClick: (hasChanges: boolean) => void;
 };
 
 // Custom hook for single environment diff with smart caching
@@ -98,17 +99,11 @@ const ChangeIndicator = ({ aggregatedSummary, isLoading }: ChangeIndicatorProps)
 
   if (!aggregatedSummary) return null;
 
-  const hasChanges = aggregatedSummary.added > 0 || aggregatedSummary.modified > 0 || aggregatedSummary.deleted > 0;
+  const totalChanges = aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted;
 
-  if (!hasChanges) return null;
+  if (totalChanges === 0) return null;
 
-  return (
-    <div className="ml-2 flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
-      {aggregatedSummary.added > 0 && <span className="text-green-600">+{aggregatedSummary.added}</span>}
-      {aggregatedSummary.modified > 0 && <span className="text-orange-600">{aggregatedSummary.modified}</span>}
-      {aggregatedSummary.deleted > 0 && <span className="text-red-600">-{aggregatedSummary.deleted}</span>}
-    </div>
-  );
+  return <span className="text-2xs text-text-soft text-code-xs ml-1">({totalChanges})</span>;
 };
 
 const EnvironmentDiffCard = ({
@@ -131,17 +126,19 @@ const EnvironmentDiffCard = ({
     (aggregatedSummary.added > 0 || aggregatedSummary.modified > 0 || aggregatedSummary.deleted > 0);
 
   const handleClick = () => {
-    if (hasChanges && !isLoading) {
-      onClick();
+    if (isLoading) return;
+
+    if (hasChanges) {
+      onClick(true);
+    } else {
+      // Handle no changes case - this could trigger a no changes modal
+      // For now, we'll let the parent handle it through onClick
+      onClick(false);
     }
   };
 
   const cardContent = (
-    <DropdownMenuItem
-      onClick={handleClick}
-      className={`cursor-pointer p-1 ${!hasChanges && !isLoading ? 'cursor-not-allowed opacity-60' : ''}`}
-      disabled={!hasChanges && !isLoading}
-    >
+    <DropdownMenuItem onClick={handleClick} className="cursor-pointer p-1">
       <div className="flex w-full items-center justify-between">
         <div className="flex items-center gap-2">
           <EnvironmentBranchIcon environment={environment} size="sm" />
@@ -157,11 +154,9 @@ const EnvironmentDiffCard = ({
           {isLoading ? (
             <Skeleton className="h-5 w-8 rounded-full" />
           ) : hasChanges ? (
-            <div className="flex items-center gap-1 rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700">
-              {aggregatedSummary.added > 0 && <span className="text-green-600">+{aggregatedSummary.added}</span>}
-              {aggregatedSummary.modified > 0 && <span className="text-orange-600">{aggregatedSummary.modified}</span>}
-              {aggregatedSummary.deleted > 0 && <span className="text-red-600">-{aggregatedSummary.deleted}</span>}
-            </div>
+            <span className="text-2xs text-text-soft text-code-xs">
+              ({aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted})
+            </span>
           ) : (
             <div className="rounded-full bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-500">
               No changes
@@ -171,20 +166,6 @@ const EnvironmentDiffCard = ({
       </div>
     </DropdownMenuItem>
   );
-
-  // Wrap with tooltip when there are no changes
-  if (!hasChanges && !isLoading) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{cardContent}</TooltipTrigger>
-        <TooltipContent>
-          <p className="font-normal">
-            No changes to publish to <b>{environment.name}</b>
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    );
-  }
 
   return cardContent;
 };
@@ -243,6 +224,7 @@ export const PublishButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [publishModalOpen, setPublishModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [noChangesModalOpen, setNoChangesModalOpen] = useState(false);
   const [selectedEnvironment, setSelectedEnvironment] = useState<IEnvironment | null>(null);
   const [publishResult, setPublishResult] = useState<IEnvironmentPublishResponse | null>(null);
 
@@ -274,15 +256,25 @@ export const PublishButton = () => {
       singleEnvAggregatedSummary.modified > 0 ||
       singleEnvAggregatedSummary.deleted > 0);
 
-  const handlePublishToEnvironment = (environment: IEnvironment) => {
+  const handlePublishToEnvironment = (environment: IEnvironment, hasChanges: boolean = true) => {
     setSelectedEnvironment(environment);
     setIsOpen(false);
-    setPublishModalOpen(true);
+
+    if (hasChanges) {
+      setPublishModalOpen(true);
+    } else {
+      setNoChangesModalOpen(true);
+    }
   };
 
   const handleDirectPublish = () => {
-    if (singleEnvironment && hasChangesForSingleEnv && !isSingleEnvDiffLoading) {
+    if (isSingleEnvDiffLoading) return;
+
+    if (singleEnvironment && hasChangesForSingleEnv) {
       handlePublishToEnvironment(singleEnvironment);
+    } else {
+      setSelectedEnvironment(singleEnvironment);
+      setNoChangesModalOpen(true);
     }
   };
 
@@ -314,6 +306,7 @@ export const PublishButton = () => {
   const handleCloseModals = () => {
     setPublishModalOpen(false);
     setSuccessModalOpen(false);
+    setNoChangesModalOpen(false);
     setSelectedEnvironment(null);
     setPublishResult(null);
     publishMutation.reset();
@@ -341,7 +334,6 @@ export const PublishButton = () => {
         size="2xs"
         leadingIcon={RiGitPullRequestFill}
         onClick={handleDirectPublish}
-        disabled={!hasChangesForSingleEnv && !isSingleEnvDiffLoading}
       >
         <div className="flex items-center">
           Publish changes
@@ -350,20 +342,8 @@ export const PublishButton = () => {
       </Button>
     );
 
-    // Wrap with tooltip when there are no changes
-    const buttonWithTooltip =
-      !hasChangesForSingleEnv && !isSingleEnvDiffLoading ? (
-        <Tooltip>
-          <TooltipTrigger asChild>{buttonContent}</TooltipTrigger>
-          <TooltipContent>
-            <p className="font-normal">
-              No changes to publish to <b>{singleEnvironment.name}</b>
-            </p>
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        buttonContent
-      );
+    // Remove tooltip wrapping since we now show modal for no changes
+    const buttonWithTooltip = buttonContent;
 
     return (
       <>
@@ -380,6 +360,12 @@ export const PublishButton = () => {
           onClose={handleCloseModals}
           onConfirm={handleConfirmPublish}
           onSwitchEnvironment={handleSwitchEnvironment}
+        />
+
+        <NoChangesModal
+          isOpen={noChangesModalOpen}
+          onClose={handleCloseModals}
+          targetEnvironment={selectedEnvironment || undefined}
         />
       </>
     );
@@ -413,7 +399,9 @@ export const PublishButton = () => {
                 environment={environment}
                 currentEnvironmentId={currentEnvironment?._id}
                 isDropdownOpen={isOpen}
-                onClick={() => handlePublishToEnvironment(environment)}
+                onClick={(hasChanges) => {
+                  handlePublishToEnvironment(environment, hasChanges);
+                }}
               />
             ))
           )}
@@ -431,6 +419,12 @@ export const PublishButton = () => {
         onClose={handleCloseModals}
         onConfirm={handleConfirmPublish}
         onSwitchEnvironment={handleSwitchEnvironment}
+      />
+
+      <NoChangesModal
+        isOpen={noChangesModalOpen}
+        onClose={handleCloseModals}
+        targetEnvironment={selectedEnvironment || undefined}
       />
     </>
   );
