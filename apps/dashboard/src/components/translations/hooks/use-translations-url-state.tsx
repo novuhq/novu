@@ -1,12 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DEFAULT_TRANSLATIONS_LIMIT, DEFAULT_TRANSLATIONS_OFFSET } from '../constants';
-
-export type TranslationsFilter = {
-  query: string;
-  limit?: number;
-  offset?: number;
-};
+import { TranslationsFilter } from '@/api/translations';
 
 export const defaultTranslationsFilter: TranslationsFilter = {
   query: '',

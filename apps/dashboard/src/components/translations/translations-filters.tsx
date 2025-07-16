@@ -1,18 +1,22 @@
 import { HTMLAttributes, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiLoader4Line, RiSettingsLine } from 'react-icons/ri';
+import { RiLoader4Line, RiSettingsLine, RiUploadLine, RiDownloadLine } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { FlagCircle } from '@/components/flag-circle';
 import { cn } from '@/utils/ui';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { DEFAULT_LOCALE } from '@novu/shared';
 
-import { defaultTranslationsFilter, TranslationsFilter } from './hooks/use-translations-url-state';
+import { defaultTranslationsFilter } from './hooks/use-translations-url-state';
+import { useExportMasterJson } from '@/hooks/use-export-master-json';
+import { useUploadMasterJson } from '@/hooks/use-upload-master-json';
+import { TranslationsFilter } from '@/api/translations';
 
 type SearchFilterProps = {
   value: string;
@@ -79,14 +83,79 @@ function ActionButtons() {
 
   const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
 
+  const exportMutation = useExportMasterJson();
+  const uploadMutation = useUploadMasterJson();
+
   const handleConfigure = () => {
     if (environmentSlug) {
       navigate(buildRoute(ROUTES.TRANSLATION_SETTINGS, { environmentSlug }));
     }
   };
 
+  const handleExport = () => {
+    exportMutation.mutate({ locale: defaultLocale });
+  };
+
+  const handleImport = () => {
+    uploadMutation.triggerFileUpload(defaultLocale);
+  };
+
   return (
     <div className="ml-auto flex items-center gap-2">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            mode="lighter"
+            className="px-2.5 py-1.5"
+            onClick={handleExport}
+            disabled={exportMutation.isPending}
+          >
+            {exportMutation.isPending ? (
+              <RiLoader4Line className="h-3 w-3 animate-spin" />
+            ) : (
+              <RiDownloadLine className="h-3 w-3" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="max-w-xs">
+            <p className="font-medium">Export Master JSON</p>
+            <p className="mt-1 text-xs text-neutral-400">
+              Download a JSON file containing all translation resources for {defaultLocale} (default locale). Send this
+              to translation services or translators, then import the translated version back.
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            mode="lighter"
+            className="px-2.5 py-1.5"
+            onClick={handleImport}
+            disabled={uploadMutation.isPending}
+          >
+            {uploadMutation.isPending ? (
+              <RiLoader4Line className="h-3 w-3 animate-spin" />
+            ) : (
+              <RiUploadLine className="h-3 w-3" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="max-w-xs">
+            <p className="font-medium">Import Master JSON</p>
+            <p className="mt-1 text-xs text-neutral-400">
+              Upload a translated JSON file to import or update translations for any locale. The system will match
+              resources by ID and create new ones or update existing translations. Invalid resources will be skipped.
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
+
       <DefaultLocaleButton locale={defaultLocale} onClick={handleConfigure} />
       <Button variant="secondary" mode="lighter" onClick={handleConfigure} leadingIcon={RiSettingsLine}>
         Configure translations
@@ -108,8 +177,8 @@ function useTranslationsFiltersLogic(
   const { formState, watch } = form;
 
   useEffect(() => {
-    const subscription = watch((value) => {
-      onFiltersChange(value as TranslationsFilter);
+    const subscription = watch((value: TranslationsFilter) => {
+      onFiltersChange(value);
     });
 
     return () => subscription.unsubscribe();
@@ -160,7 +229,7 @@ export function TranslationsFilters({
             name="query"
             render={({ field }) => (
               <FormItem className="relative">
-                <SearchFilter value={field.value} onChange={field.onChange} />
+                <SearchFilter value={field.value || ''} onChange={field.onChange} />
               </FormItem>
             )}
           />
