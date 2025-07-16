@@ -11,8 +11,10 @@ import {
   AnalyticsService,
   TraceLogRepository,
   StepRunRepository,
+  WorkflowRunRepository,
   PinoLogger,
   FeatureFlagsService,
+  StepRun,
 } from '@novu/application-generic';
 import {
   ExecutionDetailsSourceEnum,
@@ -20,6 +22,7 @@ import {
   FeatureFlagsKeysEnum,
   ProvidersIdEnum,
   StepTypeEnum,
+  TriggerTypeEnum,
 } from '@novu/shared';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
@@ -33,6 +36,7 @@ export class GetActivity {
     private analyticsService: AnalyticsService,
     private traceLogRepository: TraceLogRepository,
     private stepRunRepository: StepRunRepository,
+    private workflowRunRepository: WorkflowRunRepository,
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
   ) {}
@@ -50,22 +54,30 @@ export class GetActivity {
       environment: { _id: command.environmentId },
     });
 
+    const stepRunsEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      user: { _id: command.userId },
+      environment: { _id: command.environmentId },
+    });
+
+    const workflowRunsEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_LOGS_READ_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      user: { _id: command.userId },
+      environment: { _id: command.environmentId },
+    });
+
     let feedItem;
 
-    if (tracesEnabled) {
-      const stepRunsEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        user: { _id: command.userId },
-        environment: { _id: command.environmentId },
-      });
-
-      if (stepRunsEnabled) {
-        feedItem = await this.getFeedItemFromStepRuns(command);
-      } else {
-        feedItem = await this.getFeedItemFromTraceLog(command);
-      }
+    if (workflowRunsEnabled && stepRunsEnabled && tracesEnabled) {
+      feedItem = await this.getFeedItemFromWorkflowRuns(command);
+    } else if (tracesEnabled && stepRunsEnabled) {
+      feedItem = await this.getFeedItemFromStepRuns(command);
+    } else if (tracesEnabled) {
+      feedItem = await this.getFeedItemFromTraceLog(command);
     } else {
       feedItem = await this.notificationRepository.getFeedItem(
         command.notificationId,
@@ -101,6 +113,107 @@ export class GetActivity {
     }
   }
 
+  private async getExecutionDetailsByEntityId(
+    entityIds: string[],
+    command: GetActivityCommand
+  ): Promise<Map<string, ExecutionDetailFeedItem[]>> {
+    if (entityIds.length === 0) {
+      return new Map();
+    }
+
+    // Get traces for these entities
+    const traceResult = await this.traceLogRepository.find({
+      where: {
+        entity_id: { operator: 'IN', value: entityIds },
+        entity_type: 'step_run',
+        environment_id: command.environmentId,
+        organization_id: command.organizationId,
+      },
+    });
+
+    const executionDetailsByEntityId = new Map<string, ExecutionDetailFeedItem[]>();
+
+    // Group traces by entity ID
+    const traceLogsByEntityId = new Map<string, typeof traceResult.data>();
+    for (const trace of traceResult.data) {
+      if (!traceLogsByEntityId.has(trace.entity_id)) {
+        traceLogsByEntityId.set(trace.entity_id, []);
+      }
+      traceLogsByEntityId.get(trace.entity_id)!.push(trace);
+    }
+
+    // Convert traces to execution details for each entity
+    for (const [entityId, traces] of traceLogsByEntityId) {
+      const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace) => ({
+        _id: trace.id,
+        // TODO: add providerId from traces
+        providerId: undefined, // Will be overridden by step runs if available
+        detail: trace.title,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        _jobId: entityId,
+        status: this.mapTraceStatusToExecutionStatus(trace.status),
+        isTest: false,
+        isRetry: false,
+        createdAt: new Date(trace.created_at).toISOString(),
+        raw: trace.raw_data,
+      }));
+
+      executionDetailsByEntityId.set(entityId, executionDetails);
+    }
+
+    return executionDetailsByEntityId;
+  }
+
+  private async processStepRunsForFeedItem(
+    feedItem: NotificationFeedItemEntity,
+    command: GetActivityCommand
+  ): Promise<JobFeedItem[]> {
+    // Get step runs for this workflow run
+    const stepRunsResult = await this.stepRunRepository.find({
+      where: {
+        organization_id: command.organizationId,
+        environment_id: command.environmentId,
+        transaction_id: feedItem.transactionId,
+      },
+    });
+
+    if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
+      return [];
+    }
+
+    // Sort and deduplicate step runs
+    stepRunsResult.data.sort((a, b) => {
+      const updatedAtA = new Date(a.updated_at).getTime();
+      const updatedAtB = new Date(b.updated_at).getTime();
+
+      return updatedAtB - updatedAtA; // Descending order (newest first)
+    });
+
+    // Deduplicate by organization_id and step_run_id, keeping the most recent
+    const seenKeys = new Set<string>();
+    stepRunsResult.data = stepRunsResult.data.filter((stepRun) => {
+      const dedupeKey = `${stepRun.organization_id}:${stepRun.step_run_id}`;
+      if (seenKeys.has(dedupeKey)) {
+        return false;
+      }
+      seenKeys.add(dedupeKey);
+
+      return true;
+    });
+
+    stepRunsResult.data.sort((a, b) => {
+      const updatedAtA = new Date(a.updated_at).getTime();
+      const updatedAtB = new Date(b.updated_at).getTime();
+
+      return updatedAtA - updatedAtB;
+    });
+
+    const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
+    const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
+
+    return stepRunsResult.data.map((stepRun) => mapStepRunToJob(stepRun, executionDetailsByStepRunId));
+  }
+
   private async getFeedItemFromStepRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
       const feedItem = await this.notificationRepository.findNotificationMetadataOnly(
@@ -113,122 +226,8 @@ export class GetActivity {
         return null;
       }
 
-      const stepRunsResult = await this.stepRunRepository.find({
-        where: {
-          organization_id: command.organizationId,
-          environment_id: command.environmentId,
-          // Query by notification's transaction ID to get all related step runs
-          transaction_id: feedItem.transactionId,
-        },
-        limit: 1000,
-        /*
-         * ClickHouse only supports ordering by organization_id and step_run_id
-         * We'll sort by updated_at and created_at after getting the results
-         */
-      });
-
-      // Deduplicate step runs
-      if (stepRunsResult.data && stepRunsResult.data.length > 0) {
-        // Sort by updated_at in descending order (newest first)
-        stepRunsResult.data.sort((a, b) => {
-          const updatedAtA = new Date(a.updated_at).getTime();
-          const updatedAtB = new Date(b.updated_at).getTime();
-
-          return updatedAtB - updatedAtA; // Descending order (newest first)
-        });
-
-        // Deduplicate by organization_id and step_run_id, keeping the most recent (first occurrence after sorting)
-        const seenKeys = new Set<string>();
-        stepRunsResult.data = stepRunsResult.data.filter((stepRun) => {
-          const dedupeKey = `${stepRun.organization_id}:${stepRun.step_run_id}`;
-          if (seenKeys.has(dedupeKey)) {
-            return false;
-          }
-          seenKeys.add(dedupeKey);
-
-          return true;
-        });
-
-        stepRunsResult.data.sort((a, b) => {
-          const updatedAtA = new Date(a.updated_at).getTime();
-          const updatedAtB = new Date(b.updated_at).getTime();
-
-          return updatedAtA - updatedAtB;
-        });
-      }
-
-      if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
-        feedItem.jobs = [];
-
-        return feedItem;
-      }
-
-      // Get step run IDs for trace queries
-      const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
-
-      // Get traces for these step runs
-      const traceResult = await this.traceLogRepository.find({
-        where: {
-          entity_id: { operator: 'IN', value: stepRunIds },
-          entity_type: 'step_run',
-          environment_id: command.environmentId,
-          organization_id: command.organizationId,
-        },
-        limit: 1000,
-        /*
-         * Column 'created_at' cannot be used for ordering. Available columns: organization_id, step_run_id
-         * orderBy: 'created_at',
-         * orderDirection: 'ASC',
-         */
-      });
-
-      const traceLogsByStepRunId = new Map<string, typeof traceResult.data>();
-      for (const trace of traceResult.data) {
-        if (!traceLogsByStepRunId.has(trace.entity_id)) {
-          traceLogsByStepRunId.set(trace.entity_id, []);
-        }
-        traceLogsByStepRunId.get(trace.entity_id)!.push(trace);
-      }
-
-      // Map step runs to job format
-      feedItem.jobs = stepRunsResult.data.map((stepRun) => {
-        const traces = traceLogsByStepRunId.get(stepRun.step_run_id) || [];
-        const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace) => ({
-          _id: trace.id,
-          providerId: stepRun.provider_id as ProvidersIdEnum,
-          detail: trace.title,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          _jobId: stepRun.step_run_id,
-          status: this.mapTraceStatusToExecutionStatus(trace.status),
-          isTest: false,
-          isRetry: false,
-          createdAt: new Date(trace.created_at).toISOString(),
-          raw: trace.raw_data,
-        }));
-
-        const stepRunDto: NotificationStepEntity = {
-          _id: stepRun.step_id,
-          _templateId: stepRun.step_id,
-          active: true,
-          filters: [],
-        };
-
-        const jobDto: JobFeedItem = {
-          _id: stepRun.step_run_id,
-          status: stepRun.status as JobStatusEnum,
-          overrides: {}, // Step runs don't have overrides, use empty object
-          payload: {}, // Step runs don't have payload, use empty object
-          step: stepRunDto,
-          type: stepRun.step_type as StepTypeEnum,
-          providerId: stepRun.provider_id as ProvidersIdEnum,
-          createdAt: new Date(stepRun.created_at).toISOString(),
-          updatedAt: new Date(stepRun.updated_at).toISOString(),
-          digest: undefined, // Step runs don't have digest info
-          executionDetails,
-        };
-
-        return jobDto;
-      });
+      // Process step runs and add them to the feed item
+      feedItem.jobs = await this.processStepRunsForFeedItem(feedItem, command);
 
       return feedItem;
     } catch (error) {
@@ -244,6 +243,98 @@ export class GetActivity {
 
       // Fall back to the current stage 1 method (traces + jobs from MongoDB)
       return await this.getFeedItemFromTraceLog(command);
+    }
+  }
+
+  private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
+    try {
+      // First, get the workflow run from ClickHouse
+      const workflowRunsResult = await this.workflowRunRepository.find({
+        where: {
+          organization_id: command.organizationId,
+          environment_id: command.environmentId,
+          workflow_run_id: command.notificationId,
+        },
+        /*
+         * ClickHouse only supports ordering by organization_id and workflow_run_id
+         * We'll sort by updated_at after getting the results
+         */
+      });
+
+      if (!workflowRunsResult.data || workflowRunsResult.data.length === 0) {
+        this.logger.warn(
+          {
+            notificationId: command.notificationId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+          },
+          'No workflow run found in ClickHouse, falling back to step runs'
+        );
+
+        // Fall back to step runs method
+        return await this.getFeedItemFromStepRuns(command);
+      }
+
+      workflowRunsResult.data.sort((a, b) => {
+        const updatedAtA = new Date(a.updated_at).getTime();
+        const updatedAtB = new Date(b.updated_at).getTime();
+
+        return updatedAtB - updatedAtA; // Descending order (newest first)
+      });
+      const mostRecentWorkflowRun = workflowRunsResult.data[0];
+
+      // Create the base feed item from workflow run data
+      const feedItem: NotificationFeedItemEntity = {
+        _id: mostRecentWorkflowRun.workflow_run_id,
+        _organizationId: mostRecentWorkflowRun.organization_id,
+        _environmentId: mostRecentWorkflowRun.environment_id,
+        _templateId: mostRecentWorkflowRun.workflow_id,
+        _subscriberId: mostRecentWorkflowRun.subscriber_id,
+        transactionId: mostRecentWorkflowRun.transaction_id,
+        template: {
+          _id: mostRecentWorkflowRun.workflow_id,
+          name: mostRecentWorkflowRun.workflow_name,
+          triggers: [
+            {
+              identifier: mostRecentWorkflowRun.trigger_identifier,
+              type: TriggerTypeEnum.EVENT,
+              variables: [],
+            },
+          ],
+        },
+        subscriber: {
+          _id: mostRecentWorkflowRun.subscriber_id,
+          subscriberId: mostRecentWorkflowRun.external_subscriber_id || '',
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: undefined,
+        },
+        jobs: [],
+        to: mostRecentWorkflowRun.subscriber_to ? JSON.parse(mostRecentWorkflowRun.subscriber_to) : {},
+        payload: mostRecentWorkflowRun.payload ? JSON.parse(mostRecentWorkflowRun.payload) : {},
+        createdAt: new Date(mostRecentWorkflowRun.created_at).toISOString(),
+        updatedAt: new Date(mostRecentWorkflowRun.updated_at).toISOString(),
+        channels: mostRecentWorkflowRun.channels ? JSON.parse(mostRecentWorkflowRun.channels) : [],
+        topics: mostRecentWorkflowRun.topics ? JSON.parse(mostRecentWorkflowRun.topics) : [],
+      };
+
+      feedItem.jobs = await this.processStepRunsForFeedItem(feedItem, command);
+
+      return feedItem;
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          notificationId: command.notificationId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        },
+        'Failed to get feed item from workflow runs'
+      );
+
+      // Fall back to step runs method
+      return await this.getFeedItemFromStepRuns(command);
     }
   }
 
@@ -265,40 +356,10 @@ export class GetActivity {
         return feedItem;
       }
 
-      const traceResult = await this.traceLogRepository.find({
-        where: {
-          entity_id: { operator: 'IN', value: jobIds },
-          entity_type: 'step_run',
-          environment_id: command.environmentId,
-          organization_id: command.organizationId,
-        },
-        limit: 1000,
-        orderBy: 'created_at',
-        orderDirection: 'ASC',
-      });
-
-      const traceLogsByJobId = new Map<string, typeof traceResult.data>();
-      for (const trace of traceResult.data) {
-        if (!traceLogsByJobId.has(trace.entity_id)) {
-          traceLogsByJobId.set(trace.entity_id, []);
-        }
-        traceLogsByJobId.get(trace.entity_id)!.push(trace);
-      }
+      const executionDetailsByJobId = await this.getExecutionDetailsByEntityId(jobIds, command);
 
       feedItem.jobs = feedItem.jobs.map((job) => {
-        const traces = traceLogsByJobId.get(job._id) || [];
-        const executionDetails: ExecutionDetailFeedItem[] = traces.map((trace) => ({
-          _id: trace.id,
-          providerId: undefined,
-          detail: trace.title,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          _jobId: job._id,
-          status: this.mapTraceStatusToExecutionStatus(trace.status),
-          isTest: false,
-          isRetry: false,
-          createdAt: new Date(trace.created_at).toISOString(),
-          raw: trace.raw_data,
-        }));
+        const executionDetails = executionDetailsByJobId.get(job._id) || [];
 
         return {
           ...job,
@@ -326,4 +387,39 @@ export class GetActivity {
       );
     }
   }
+}
+
+function mapStepRunToJob(
+  stepRun: StepRun,
+  executionDetailsByStepRunId: Map<string, ExecutionDetailFeedItem[]>
+): JobFeedItem {
+  const baseExecutionDetails = executionDetailsByStepRunId.get(stepRun.step_run_id) || [];
+  // Create execution details with provider ID from step run data
+  const executionDetails: ExecutionDetailFeedItem[] = baseExecutionDetails.map((detail) => ({
+    ...detail,
+    providerId: stepRun.provider_id as ProvidersIdEnum,
+  }));
+
+  const stepRunDto: NotificationStepEntity = {
+    _id: stepRun.step_id,
+    _templateId: stepRun.step_id,
+    active: true,
+    filters: [],
+  };
+
+  const jobDto: JobFeedItem = {
+    _id: stepRun.step_run_id,
+    status: stepRun.status as JobStatusEnum,
+    overrides: {}, // Step runs don't have overrides, use empty object
+    payload: {}, // Step runs don't have payload, use empty object
+    step: stepRunDto,
+    type: stepRun.step_type as StepTypeEnum,
+    providerId: stepRun.provider_id as ProvidersIdEnum,
+    createdAt: new Date(stepRun.created_at).toISOString(),
+    updatedAt: new Date(stepRun.updated_at).toISOString(),
+    digest: undefined, // Step runs don't have digest info
+    executionDetails,
+  };
+
+  return jobDto;
 }

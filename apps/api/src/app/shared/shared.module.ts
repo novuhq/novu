@@ -47,6 +47,7 @@ import {
   storageService,
   TraceLogRepository,
   StepRunRepository,
+  WorkflowRunRepository,
 } from '@novu/application-generic';
 
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
@@ -119,6 +120,7 @@ const ANALYTICS_PROVIDERS = [
   RequestLogRepository,
   TraceLogRepository,
   StepRunRepository,
+  WorkflowRunRepository,
 
   // Services
   clickHouseService,
