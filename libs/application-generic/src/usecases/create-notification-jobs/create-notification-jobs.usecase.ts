@@ -19,7 +19,7 @@ import { InstrumentUsecase } from '../../instrumentation';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
 import { getNestedValue } from '../../utils';
-import { WorkflowRunRepository, TriggerSource } from '../../services/analytic-logs';
+import { WorkflowRunRepository } from '../../services/analytic-logs';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -97,15 +97,7 @@ export class CreateNotificationJobs {
   }
 
   private async createWorkflowRun(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
-    // eslint-disable-next-line no-console
-    console.error('Creating workflow run', { notificationId: notification._id });
     try {
-      // Determine trigger source based on available information
-      let triggerSource: TriggerSource = 'api';
-      if (command.bridgeUrl) {
-        triggerSource = 'bridge';
-      }
-
       await this.workflowRunRepository.create(notification, command.template, {
         status: 'pending',
         userId: command.userId,
