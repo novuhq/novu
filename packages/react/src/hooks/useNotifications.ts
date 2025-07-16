@@ -47,6 +47,10 @@ export type UseNotificationsResult = {
     data?: void | undefined;
     error?: NovuError | undefined;
   }>;
+  seenAll: () => Promise<{
+    data?: void | undefined;
+    error?: NovuError | undefined;
+  }>;
   archiveAll: () => Promise<{
     data?: void | undefined;
     error?: NovuError | undefined;
@@ -153,6 +157,10 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     return await notifications.readAll({ tags, data: dataFilter });
   };
 
+  const seenAll = async () => {
+    return await notifications.seenAll({ tags, data: dataFilter });
+  };
+
   const archiveAll = async () => {
     return await notifications.archiveAll({ tags, data: dataFilter });
   };
@@ -163,6 +171,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
 
   return {
     readAll,
+    seenAll,
     archiveAll,
     archiveAllRead,
     notifications: data,

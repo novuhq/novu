@@ -180,6 +180,10 @@ export class InboxService {
     });
   }
 
+  seen(notificationId: string): Promise<void> {
+    return this.markAsSeen({ notificationIds: [notificationId] });
+  }
+
   completeAction({
     actionType,
     notificationId,

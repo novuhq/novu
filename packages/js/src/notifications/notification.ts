@@ -1,7 +1,7 @@
 import { InboxService } from '../api';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
-import { archive, completeAction, read, revertAction, unarchive, unread, snooze, unsnooze } from './helpers';
+import { archive, completeAction, read, revertAction, unarchive, unread, snooze, unsnooze, seen } from './helpers';
 
 export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;
@@ -70,6 +70,16 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
 
   unread(): Result<Notification> {
     return unread({
+      emitter: this.#emitter,
+      apiService: this.#inboxService,
+      args: {
+        notification: this,
+      },
+    });
+  }
+
+  seen(): Result<Notification> {
+    return seen({
       emitter: this.#emitter,
       apiService: this.#inboxService,
       args: {

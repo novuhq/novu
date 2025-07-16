@@ -12,6 +12,7 @@ import type {
   UnreadArgs,
   SnoozeArgs,
   UnsnoozeArgs,
+  SeenArgs,
 } from '../notifications';
 import { Preference } from '../preferences/preference';
 import { ListPreferencesArgs, UpdatePreferenceArgs } from '../preferences/types';
@@ -43,6 +44,7 @@ type NotificationsFetchEvents = BaseEvents<'notifications.list', ListNotificatio
 type NotificationsFetchCountEvents = BaseEvents<'notifications.count', CountArgs, CountResponse>;
 type NotificationReadEvents = BaseEvents<'notification.read', ReadArgs, Notification>;
 type NotificationUnreadEvents = BaseEvents<'notification.unread', UnreadArgs, Notification>;
+type NotificationSeenEvents = BaseEvents<'notification.seen', SeenArgs, Notification>;
 type NotificationArchiveEvents = BaseEvents<'notification.archive', ArchivedArgs, Notification>;
 type NotificationUnarchiveEvents = BaseEvents<'notification.unarchive', UnarchivedArgs, Notification>;
 type NotificationSnoozeEvents = BaseEvents<'notification.snooze', SnoozeArgs, Notification>;
@@ -51,6 +53,11 @@ type NotificationCompleteActionEvents = BaseEvents<'notification.complete_action
 type NotificationRevertActionEvents = BaseEvents<'notification.revert_action', RevertArgs, Notification>;
 type NotificationsReadAllEvents = BaseEvents<
   'notifications.read_all',
+  { tags?: string[]; data?: Record<string, unknown> },
+  Notification[]
+>;
+type NotificationsSeenAllEvents = BaseEvents<
+  'notifications.seen_all',
   { tags?: string[]; data?: Record<string, unknown> },
   Notification[]
 >;
@@ -108,6 +115,7 @@ export type Events = SessionInitializeEvents &
   SocketEvents &
   NotificationReadEvents &
   NotificationUnreadEvents &
+  NotificationSeenEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
   NotificationSnoozeEvents &
@@ -115,6 +123,7 @@ export type Events = SessionInitializeEvents &
   NotificationCompleteActionEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &
+  NotificationsSeenAllEvents &
   NotificationsArchivedAllEvents &
   NotificationsReadArchivedAllEvents &
   NotificationsMarkAsSeenEvents;
@@ -123,6 +132,7 @@ export type EventNames = keyof Events;
 export type SocketEventNames = keyof SocketEvents;
 export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationUnreadEvents &
+  NotificationSeenEvents &
   NotificationArchiveEvents &
   NotificationUnarchiveEvents &
   NotificationSnoozeEvents &
@@ -130,6 +140,7 @@ export type NotificationEvents = keyof (NotificationReadEvents &
   NotificationCompleteActionEvents &
   NotificationRevertActionEvents &
   NotificationsReadAllEvents &
+  NotificationsSeenAllEvents &
   NotificationsArchivedAllEvents &
   NotificationsReadArchivedAllEvents &
   NotificationsMarkAsSeenEvents);

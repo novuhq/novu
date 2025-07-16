@@ -11,6 +11,8 @@ import {
   read,
   readAll,
   revertAction,
+  seen,
+  seenAll,
   snooze,
   unarchive,
   unread,
@@ -36,6 +38,7 @@ import type {
   BaseArgs,
   SnoozeArgs,
   UnsnoozeArgs,
+  SeenArgs,
 } from './types';
 import { NovuError } from '../utils/errors';
 import { NotificationsCache } from '../cache';
@@ -158,6 +161,18 @@ export class Notifications extends BaseModule {
     );
   }
 
+  async seen(args: BaseArgs): Result<Notification>;
+  async seen(args: InstanceArgs): Result<Notification>;
+  async seen(args: SeenArgs): Result<Notification> {
+    return this.callWithSession(async () =>
+      seen({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
   async archive(args: BaseArgs): Result<Notification>;
   async archive(args: InstanceArgs): Result<Notification>;
   async archive(args: ArchivedArgs): Result<Notification> {
@@ -262,6 +277,21 @@ export class Notifications extends BaseModule {
   }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       readAll({
+        emitter: this._emitter,
+        inboxService: this._inboxService,
+        notificationsCache: this.cache,
+        tags,
+        data,
+      })
+    );
+  }
+
+  async seenAll({
+    tags,
+    data,
+  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
+    return this.callWithSession(async () =>
+      seenAll({
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
