@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
+import { merge, mergeWith } from 'es-toolkit/compat';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum, UserSessionData } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
@@ -116,8 +116,8 @@ export class PayloadMergerService {
     }
 
     let mergedPayload = isV2TemplateEditorEnabled
-      ? _.merge({}, schemaBasedPayloadExample)
-      : _.merge({}, payloadExample, schemaBasedPayloadExample);
+      ? merge({}, schemaBasedPayloadExample)
+      : merge({}, payloadExample, schemaBasedPayloadExample);
 
     if (isV2TemplateEditorEnabled) {
       if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
@@ -127,7 +127,7 @@ export class PayloadMergerService {
           schemaBasedPayloadExample
         );
 
-        mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+        mergedPayload = mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
           if (Array.isArray(srcValue)) {
             return srcValue;
           }
@@ -136,17 +136,13 @@ export class PayloadMergerService {
         });
       }
     } else if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-      mergedPayload = _.mergeWith(
-        mergedPayload,
-        userPayloadExample as Record<string, unknown>,
-        (objValue, srcValue) => {
-          if (Array.isArray(srcValue)) {
-            return srcValue;
-          }
-
-          return undefined;
+      mergedPayload = mergeWith(mergedPayload, userPayloadExample as Record<string, unknown>, (objValue, srcValue) => {
+        if (Array.isArray(srcValue)) {
+          return srcValue;
         }
-      );
+
+        return undefined;
+      });
     }
 
     const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
@@ -183,7 +179,7 @@ export class PayloadMergerService {
             return srcValue;
           }
 
-          return undefined; // Let lodash handle the merge
+          return undefined; // Let es-toolkit handle the merge
         }
       );
     }
@@ -249,7 +245,7 @@ export class PayloadMergerService {
             return srcValue;
           }
 
-          return undefined; // Let lodash handle the merge
+          return undefined; // Let es-toolkit handle the merge
         }
       );
     }
@@ -335,7 +331,7 @@ export class PayloadMergerService {
     userPayload: Record<string, unknown>,
     schemaPayload: Record<string, unknown>
   ): Record<string, unknown> {
-    // Use lodash pick to only include keys that exist in the schema
+    // Use es-toolkit pick to only include keys that exist in the schema
     const filtered = _.pick(userPayload, _.keys(schemaPayload));
 
     // Recursively filter nested objects and arrays

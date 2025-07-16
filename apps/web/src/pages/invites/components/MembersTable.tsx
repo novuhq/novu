@@ -1,6 +1,6 @@
 import { Avatar, Divider, Container, LoadingOverlay, Stack, Text } from '@mantine/core';
 import styled from '@emotion/styled';
-import capitalize from 'lodash.capitalize';
+import { capitalize } from 'es-toolkit/compat';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
@@ -129,6 +129,7 @@ export function MembersTable({
     </Container>
   );
 }
+
 const ActionsSider = styled.div`
   margin-left: auto;
 `;

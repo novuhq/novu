@@ -5,7 +5,7 @@ import { useWatch } from 'react-hook-form';
 
 import { useMutation } from '@tanstack/react-query';
 import { captureException } from '@sentry/react';
-import capitalize from 'lodash.capitalize';
+import { capitalize } from 'es-toolkit/compat';
 import { useDisclosure } from '@mantine/hooks';
 import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors, inputStyles } from '@novu/design-system';
@@ -189,6 +189,7 @@ export function TestWorkflow({ trigger }) {
               loading={isLoading}
               onClick={() => {
                 onTrigger(form.values);
+
                 if (tagsIncludesOnboarding) {
                   segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                     action: 'Workflow - Run trigger',

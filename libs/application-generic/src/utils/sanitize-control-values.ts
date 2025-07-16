@@ -1,5 +1,5 @@
 import { StepTypeEnum, TimeUnitEnum } from '@novu/shared';
-import { isEmpty } from 'lodash';
+import { isEmpty } from 'es-toolkit/compat';
 import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 import {
   EmailControlType,

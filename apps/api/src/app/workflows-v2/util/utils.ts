@@ -1,8 +1,4 @@
-import difference from 'lodash/difference';
-import isArray from 'lodash/isArray';
-import isObject from 'lodash/isObject';
-import reduce from 'lodash/reduce';
-import set from 'lodash/set';
+import { difference, isArray, isObject, reduce, set } from 'es-toolkit/compat';
 import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';

@@ -17,7 +17,7 @@ import {
   ResourceEnum,
   FeatureFlagsKeysEnum,
 } from '@novu/shared';
-import _ from 'lodash';
+import { chunk } from 'es-toolkit/compat';
 
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
@@ -64,7 +64,7 @@ export abstract class TriggerBase {
     });
 
     return await Promise.all(
-      _.chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
+      chunk(jobs, this.queueChunkSize).map(async (chunk: IProcessSubscriberBulkJobDto[]) => {
         try {
           await this.subscriberProcessQueueService.addBulk(chunk);
         } catch (error) {

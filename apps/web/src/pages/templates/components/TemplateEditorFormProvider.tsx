@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { FieldErrors, FormProvider, useFieldArray, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
-import cloneDeep from 'lodash.clonedeep';
+import { cloneDeep } from 'es-toolkit/compat';
 import {
   ActorTypeEnum,
   DelayTypeEnum,
@@ -192,6 +192,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     if (!template?.triggers[0].identifier.includes('untitled')) {
       return;
     }
+
     const newIdentifier = slugify(name);
 
     if (newIdentifier === identifier) {
@@ -199,6 +200,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
 
     methods.setValue('identifier', newIdentifier);
+
     if (trigger) {
       setTrigger({
         ...trigger,
@@ -227,6 +229,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   const onSubmit = useCallback(
     async (form: IForm, showMessage = true) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(form);
+
       try {
         const response = await updateNotificationTemplate({
           id: templateId,
@@ -279,9 +282,11 @@ const TemplateEditorFormProvider = ({ children }) => {
       const workflowSteps = methods.getValues('steps');
       const stepToVariant = workflowSteps.find((step) => step.uuid === stepUuid);
       const index = workflowSteps.findIndex((item) => item.uuid === stepUuid);
+
       if (!stepToVariant) {
         return;
       }
+
       // remove the variant with the variantUuid
       const newVariants = stepToVariant?.variants?.filter((variant) => variant.uuid !== variantUuid);
 

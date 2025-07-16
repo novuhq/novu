@@ -1,5 +1,5 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { isEqual } from 'lodash';
+import { forwardRef, Inject, Injectable, BadRequestException } from '@nestjs/common';
+import { isEqual } from 'es-toolkit/compat';
 import {
   IChannelSettings,
   SubscriberRepository,
@@ -9,7 +9,6 @@ import {
 } from '@novu/dal';
 
 import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { BadRequestException } from '@nestjs/common';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../../services';
 
 @Injectable()

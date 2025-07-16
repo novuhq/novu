@@ -4,7 +4,7 @@ import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title
 import { Bar, getElementAtEvent } from 'react-chartjs-2';
 import { useEffect, useState, useRef, useMemo } from 'react';
 import { useMantineTheme } from '@mantine/core';
-import cloneDeep from 'lodash.clonedeep';
+import { capitalize } from 'es-toolkit/compat';
 import { differenceInDays, format, isSameDay, subDays } from 'date-fns';
 
 import { MessageContainer } from './MessageContainer';
@@ -45,6 +45,7 @@ export function ActivityGraph({ onBarClick }: { onBarClick: (item: IActivityGrap
 
   const onClick = (event) => {
     const [barItem] = getElementAtEvent(chartRef.current as any, event);
+
     if (barItem) {
       const { datasetIndex } = barItem;
       const item = data.datasets[datasetIndex].data[barItem.index];

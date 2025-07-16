@@ -1,7 +1,7 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { isObject, isArray } from 'lodash';
+import { isObject, isArray } from 'es-toolkit/compat';
 import { instanceToPlain } from 'class-transformer';
 
 // eslint-disable-next-line

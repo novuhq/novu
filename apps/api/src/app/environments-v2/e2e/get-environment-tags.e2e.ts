@@ -73,8 +73,10 @@ describe('Get Environment Tags - /v2/environments/:environmentIdOrIdentifier/tag
     expect(response.result).to.deep.include({ name: 'identifier-tag3' });
   });
 
-  // Note: Testing empty tags scenarios is covered by the error cases,
-  // so we don't need separate tests that create new environments
+  /*
+   * Note: Testing empty tags scenarios is covered by the error cases,
+   * so we don't need separate tests that create new environments
+   */
 
   it('should throw NotFoundException for non-existent environment ID', async () => {
     const nonExistentId = '60a5f2f2f2f2f2f2f2f2f2f2';

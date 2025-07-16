@@ -1,7 +1,7 @@
 import { useWatch } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
-import set from 'lodash.set';
+import { set } from 'es-toolkit/compat';
 import styled from '@emotion/styled';
 import { Group, useMantineColorScheme } from '@mantine/core';
 
@@ -246,6 +246,7 @@ export const VariableSectionItem = ({
     </>
   );
 };
+
 const TranslationsGetStartedText = () => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';

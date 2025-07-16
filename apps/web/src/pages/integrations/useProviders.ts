@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import cloneDeep from 'lodash.clonedeep';
+import { cloneDeep } from 'es-toolkit/compat';
 import {
   ChannelTypeEnum,
   IConfigCredentials,
@@ -24,7 +24,6 @@ function fcmFallback(integration: IntegrationEntity | undefined, clonedCredentia
 
     clonedCredentials?.forEach((cred) => {
       if (cred.key === 'serviceAccount') {
-        // eslint-disable-next-line no-param-reassign
         cred.value = serviceAccount;
       }
     });
@@ -52,13 +51,11 @@ function initializeProvidersByIntegration(integrations: IntegrationEntity[]): II
       ) {
         clonedCredentials.forEach((credential) => {
           if (credential.type === 'boolean' || credential.type === 'switch') {
-            // eslint-disable-next-line no-param-reassign
             credential.value = integrationItem.credentials[credential.key];
 
             return;
           }
 
-          // eslint-disable-next-line
           credential.value = integrationItem.credentials[credential.key]?.toString();
         });
       }

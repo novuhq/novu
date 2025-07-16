@@ -1,4 +1,4 @@
-import _get from 'lodash.get';
+import { get } from 'es-toolkit/compat';
 import { EventEmitter } from 'events';
 
 import { IContentEngine } from '../content/content.engine';
@@ -107,7 +107,7 @@ export class TriggerEngine {
     const missingVariables: string[] = [];
 
     for (const variable of variables) {
-      if (!_get(data, variable)) {
+      if (!get(data, variable)) {
         missingVariables.push(variable);
       }
     }

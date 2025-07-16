@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
-import _ from 'lodash';
+import { uniq } from 'es-toolkit/compat';
 
 import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
 import {
@@ -194,7 +194,7 @@ export class AddJob {
     );
 
     if (errors.length > 0) {
-      const uniqueErrors = _.uniq(errors.map((error) => error.message));
+      const uniqueErrors = uniq(errors.map((error) => error.message));
       Logger.warn({ errors, jobId: job._id }, uniqueErrors, LOG_CONTEXT);
 
       await this.createExecutionDetails.execute(

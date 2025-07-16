@@ -6,7 +6,7 @@ import cronParser, {
   MonthRange,
   SixtyRange,
 } from 'cron-parser';
-import isEqual from 'lodash.isequal';
+import { isEqual } from 'es-toolkit/compat';
 
 import { dedup, range, sort } from '@/utils/arrays';
 

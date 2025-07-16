@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 
 import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity, JobEntity } from '@novu/dal';
 import {

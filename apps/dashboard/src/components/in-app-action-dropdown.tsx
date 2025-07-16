@@ -21,7 +21,7 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import { inboxButtonVariants } from '@/utils/inbox';
 import { cn } from '@/utils/ui';
 import { urlTargetTypes } from '@/utils/url';
-import merge from 'lodash.merge';
+import { merge } from 'es-toolkit/compat';
 import { ComponentProps } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiEdit2Line, RiExpandUpDownLine, RiForbid2Line } from 'react-icons/ri';

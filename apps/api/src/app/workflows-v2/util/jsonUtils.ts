@@ -1,7 +1,7 @@
-import _ from 'lodash';
+import { isArray } from 'es-toolkit/compat';
 
 export function flattenJson(obj?: Object, parentKey = '', result = {}) {
-  if (!obj || typeof obj !== 'object' || _.isArray(obj)) {
+  if (!obj || typeof obj !== 'object' || isArray(obj)) {
     return result; // Return the result as is if obj is not a valid object
   }
 
@@ -9,9 +9,9 @@ export function flattenJson(obj?: Object, parentKey = '', result = {}) {
     if (obj.hasOwnProperty(key)) {
       const newKey = parentKey ? `${parentKey}.${key}` : key;
 
-      if (typeof obj[key] === 'object' && obj[key] !== null && !_.isArray(obj[key])) {
+      if (typeof obj[key] === 'object' && obj[key] !== null && !isArray(obj[key])) {
         flattenJson(obj[key], newKey, result);
-      } else if (_.isArray(obj[key])) {
+      } else if (isArray(obj[key])) {
         obj[key].forEach((item, index) => {
           const arrayKey = `${newKey}[${index}]`;
           if (typeof item === 'object' && item !== null) {

@@ -36,7 +36,7 @@ import {
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { randomBytes } from 'crypto';
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 import { v4 as uuidv4 } from 'uuid';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';

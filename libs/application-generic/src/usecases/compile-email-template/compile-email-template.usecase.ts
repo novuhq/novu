@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 import { readFile } from 'fs/promises';
 import { ModuleRef } from '@nestjs/core';
 

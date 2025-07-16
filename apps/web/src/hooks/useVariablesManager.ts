@@ -1,7 +1,7 @@
 import { useLayoutEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { parse } from '@handlebars/parser';
-import isEqual from 'lodash.isequal';
+import { isEqual } from 'es-toolkit/compat';
 import { getTemplateVariables } from '@novu/shared';
 
 import { IForm, ITemplates } from '../pages/templates/components/formTypes';
@@ -33,6 +33,7 @@ export const useVariablesManager = (contents: string[]) => {
 
       const step = steps[stepIndex];
       let template = step?.template;
+
       if (step && typeof variantIndex !== 'undefined' && variantIndex > -1) {
         template = step.variants?.[variantIndex]?.template;
       }

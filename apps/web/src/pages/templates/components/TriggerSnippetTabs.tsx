@@ -1,7 +1,6 @@
 import { Prism } from '@mantine/prism';
 import { useMemo } from 'react';
-import set from 'lodash.set';
-import get from 'lodash.get';
+import { set, get } from 'es-toolkit/compat';
 
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
@@ -85,6 +84,7 @@ export const getPayloadValue = (variables: INotificationTriggerVariable[]) => {
 
   return varsObj;
 };
+
 export const getSubscriberValue = (
   variables: INotificationTriggerVariable[],
   getValue: (variable: INotificationTriggerVariable) => any

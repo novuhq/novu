@@ -1,6 +1,6 @@
 import { Grid, Text, useMantineTheme } from '@mantine/core';
 import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
-import capitalize from 'lodash.capitalize';
+import { capitalize } from 'es-toolkit/compat';
 import styled from '@emotion/styled';
 import {
   colors,

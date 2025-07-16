@@ -1,7 +1,6 @@
 import { TemplateVariableTypeEnum, IMustacheVariable, ITemplateVariable } from '@novu/shared';
 import { useMemo } from 'react';
-import set from 'lodash.set';
-import get from 'lodash.get';
+import { get, set } from 'es-toolkit/compat';
 
 const processVariables = (variables: IMustacheVariable[]) => {
   const varsObj: Record<string, any> = {};
@@ -25,6 +24,7 @@ const getVariableValue = (variable: IMustacheVariable) => {
   if (variable.type === TemplateVariableTypeEnum.BOOLEAN) {
     return variable.defaultValue;
   }
+
   if (variable.type === TemplateVariableTypeEnum.STRING) {
     return variable.defaultValue ? variable.defaultValue : variable.name;
   }

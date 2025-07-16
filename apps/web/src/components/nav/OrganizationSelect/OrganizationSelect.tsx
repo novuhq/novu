@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import capitalize from 'lodash.capitalize';
+import { capitalize } from 'es-toolkit/compat';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
 import { Select, Tooltip, When, successMessage } from '@novu/design-system';
 import { css } from '@novu/novui/css';
@@ -54,7 +54,6 @@ export function OrganizationSelect() {
       }
 
       if (Array.isArray(organizationId)) {
-        // eslint-disable-next-line no-param-reassign
         [organizationId] = organizationId;
       }
 

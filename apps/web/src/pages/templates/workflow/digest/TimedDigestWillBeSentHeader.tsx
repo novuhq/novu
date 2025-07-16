@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import capitalize from 'lodash.capitalize';
+import { capitalize } from 'es-toolkit/compat';
 import { useMantineColorScheme } from '@mantine/core';
 import { DigestUnitEnum, MonthlyTypeEnum } from '@novu/shared';
 
@@ -8,6 +8,7 @@ import { pluralizeTime } from '../../../../utils';
 
 const Highlight = ({ children, isHighlight }) => {
   const { colorScheme } = useMantineColorScheme();
+
   if (!isHighlight) {
     return children;
   }
@@ -27,6 +28,7 @@ const getOrdinalValueLabel = (value: string) => {
   if (value === 'day' || value === 'weekday') {
     return value;
   }
+
   if (value === 'weekend') {
     return 'weekend day';
   }
@@ -41,9 +43,10 @@ const getOrdinal = (num: string | number) => {
     if (Number.isNaN(res)) {
       return num;
     }
-    // eslint-disable-next-line no-param-reassign
+
     num = res;
   }
+
   const ord = ['st', 'nd', 'rd'];
   const exceptions = [11, 12, 13];
   let nth = ord[(num % 10) - 1];
@@ -65,6 +68,7 @@ export const TimedDigestWillBeSentHeader = ({ path, isHighlight = true }: { path
   const { watch } = useFormContext();
 
   const unit = watch(`${path}.digestMetadata.timed.unit`);
+
   if (unit === DigestUnitEnum.MINUTES) {
     const amount = watch(`${path}.digestMetadata.timed.minutes.amount`);
 

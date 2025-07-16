@@ -90,7 +90,7 @@
     "json-schema-to-ts": "^3.0.0",
     "jsonwebtoken": "9.0.0",
     "liquidjs": "^10.20.0",
-    "lodash": "^4.17.15",
+    "es-toolkit": "^1.39.6",
     "nanoid": "^3.1.20",
     "nest-raven": "10.1.0",
     "newrelic": "^12.8.1",

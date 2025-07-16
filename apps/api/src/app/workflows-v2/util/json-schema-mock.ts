@@ -1,4 +1,4 @@
-import _ from 'lodash';
+import { cloneDeep } from 'es-toolkit/compat';
 import { JSONSchemaFaker } from 'json-schema-faker';
 
 /**
@@ -263,7 +263,7 @@ export class JsonSchemaMock {
       return schema;
     }
 
-    const enhancedSchema = _.cloneDeep(schema);
+    const enhancedSchema = cloneDeep(schema);
 
     // Recursively add examples to properties
     if (enhancedSchema.properties && typeof enhancedSchema.properties === 'object') {

@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Group, Stack, Title, UnstyledButton } from '@mantine/core';
 import { colors } from '@novu/notification-center';
-import capitalize from 'lodash.capitalize';
+import { capitalize } from 'es-toolkit/compat';
 import {
   shadows,
   AngularGradient,

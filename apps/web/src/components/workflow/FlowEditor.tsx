@@ -17,7 +17,7 @@ import ReactFlow, {
 import { useMantineColorScheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { v4 as uuid4 } from 'uuid';
-import cloneDeep from 'lodash.clonedeep';
+import { cloneDeep } from 'es-toolkit/compat';
 import { StepTypeEnum } from '@novu/shared';
 
 import { colors } from '@novu/design-system';
@@ -128,7 +128,7 @@ export function FlowEditor({
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
-    // eslint-disable-next-line no-param-reassign
+
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
@@ -144,6 +144,7 @@ export function FlowEditor({
       }
 
       const parentNode = reactFlowInstance.getNode(parentId);
+
       if (typeof parentNode === 'undefined') {
         return;
       }
@@ -187,6 +188,7 @@ export function FlowEditor({
         parentId = newId;
       }
     }
+
     if (!readonly && nodeTypes.addNode) {
       const addNodeButton = buildAddNodeButton(parentId, isParentVariantNode);
       finalNodes.push(addNodeButton);

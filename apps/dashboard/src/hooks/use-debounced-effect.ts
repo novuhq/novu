@@ -1,4 +1,4 @@
-import debounce from 'lodash.debounce';
+import { debounce } from 'es-toolkit/compat';
 import { useEffect, useState, useMemo } from 'react';
 
 type Callback = () => void;

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
+import { merge } from 'es-toolkit/compat';
 import { NotificationTemplateEntity, JsonSchemaTypeEnum, JsonSchemaFormatEnum } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService } from '@novu/application-generic';
@@ -22,7 +22,7 @@ export class SchemaBuilderService {
       return variables;
     }
 
-    return _.merge(variables, { properties: { payload: payloadSchema } });
+    return merge(variables, { properties: { payload: payloadSchema } });
   }
 
   async buildPreviewPayloadSchema(

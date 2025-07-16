@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { MailParser } from 'mailparser';
-import _ from 'lodash';
+import { extend, cloneDeep } from 'es-toolkit/compat';
 import Promise from 'bluebird';
 import { convert } from 'html-to-text';
 import events from 'events';
@@ -381,7 +381,7 @@ class Mailin extends events.EventEmitter {
     function onData(stream, session, onDataCallback) {
       try {
         _session = session;
-        const connection = _.cloneDeep(session);
+        const connection = cloneDeep(session);
         connection.id = uuid.v4();
         const mailPath = path.join(configuration.tmp, connection.id);
         connection.mailPath = mailPath;
@@ -438,7 +438,7 @@ class Mailin extends events.EventEmitter {
       validateAddress('recipient', address.address, session.envelope).then(ack).catch(ack);
     }
 
-    const smtpOptions = _.extend({}, configuration.smtpOptions || {}, {
+    const smtpOptions = extend({}, configuration.smtpOptions || {}, {
       onData,
       onAuth,
       onMailFrom,

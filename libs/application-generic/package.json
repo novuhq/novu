@@ -84,7 +84,7 @@
     "i18next": "^23.7.6",
     "ioredis": "^5.2.4",
     "jsonwebtoken": "9.0.0",
-    "lodash": "^4.17.15",
+    "es-toolkit": "^1.39.6",
     "mixpanel": "^0.17.0",
     "nanoid": "^3.1.20",
     "nestjs-otel": "6.1.1",

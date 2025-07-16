@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
+import { cloneDeep } from 'es-toolkit/compat';
 import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { FrameworkPreviousStepsOutputState } from '../../../../bridge/usecases/preview-step/preview-step.command';
@@ -10,7 +10,7 @@ export class PreviewPayloadProcessorService {
    * Reorders keys to have "payload" first, followed by "subscriber", then the rest.
    */
   cleanPreviewExamplePayload(payloadExample: Record<string, unknown>): Record<string, unknown> {
-    const cleanedPayloadExample = _.cloneDeep(payloadExample);
+    const cleanedPayloadExample = cloneDeep(payloadExample);
 
     const reorderedPayload: Record<string, unknown> = {};
 
@@ -37,7 +37,7 @@ export class PreviewPayloadProcessorService {
    * receives accurate event counts for processing.
    */
   enhanceEventCountValue(payloadExample: PreviewPayloadDto): Record<string, Record<string, unknown>> {
-    const preparedPayload = _.cloneDeep(payloadExample);
+    const preparedPayload = cloneDeep(payloadExample);
 
     if (preparedPayload.steps && typeof preparedPayload.steps === 'object') {
       const steps = preparedPayload.steps as Record<string, unknown>;

@@ -1,4 +1,4 @@
-import cloneDeep from 'lodash.clonedeep';
+import { cloneDeep } from 'es-toolkit/compat';
 import { ScriptableContext } from 'chart.js';
 import { format, subDays } from 'date-fns';
 import { colors } from '@novu/design-system';
@@ -36,6 +36,7 @@ function buildChartDataContainer(data: IActivityGraphStats[], isDark: boolean): 
 
 function fillWeekData(data: IActivityGraphStats[]) {
   const fullWeekData = cloneDeep(data);
+
   for (let i = data.length - 1; i < 6; i += 1) {
     const earliestDate = fullWeekData[i]._id;
     const newDate = format(subDays(new Date(earliestDate), 1), 'yyyy-MM-dd');

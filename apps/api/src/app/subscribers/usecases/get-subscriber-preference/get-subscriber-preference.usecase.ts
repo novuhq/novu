@@ -13,7 +13,7 @@ import {
   PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import _ from 'lodash';
+import { chunk as _chunk } from 'es-toolkit/compat';
 
 import {
   GetPreferences,
@@ -140,7 +140,7 @@ export class GetSubscriberPreference {
     const chunkSize = 50;
     const results: (ISubscriberPreferenceResponse | undefined)[] = [];
 
-    const chunks = _.chunk(workflowList, chunkSize);
+    const chunks = _chunk(workflowList, chunkSize);
 
     for (const chunk of chunks) {
       // Use setImmediate to yield to the event loop between chunks

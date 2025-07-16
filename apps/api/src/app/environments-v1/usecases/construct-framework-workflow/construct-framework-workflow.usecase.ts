@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { workflow } from '@novu/framework/express';
+import { isEmpty } from 'es-toolkit/compat';
 import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
 import {
   EnvironmentRepository,
@@ -21,7 +22,6 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
-import _ from 'lodash';
 import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 import {
   ChatOutputRendererUsecase,
@@ -318,7 +318,7 @@ export class ConstructFrameworkWorkflow {
   ): Promise<boolean> {
     const skipRules = controlValues.skip as RulesLogic<AdditionalOperation>;
 
-    if (_.isEmpty(skipRules)) {
+    if (isEmpty(skipRules)) {
       return false;
     }
 

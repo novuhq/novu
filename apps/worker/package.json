@@ -57,7 +57,7 @@
     "i18next": "^23.7.6",
     "inline-css": "^4.0.2",
     "ioredis": "^5.2.4",
-    "lodash": "^4.17.15",
+    "es-toolkit": "^1.39.6",
     "nest-raven": "10.1.0",
     "newrelic": "^12.8.1",
     "reflect-metadata": "0.2.2",

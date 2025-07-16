@@ -1,4 +1,4 @@
-import debounce from 'lodash.debounce';
+import { debounce } from 'es-toolkit/compat';
 import { useCallback, useEffect } from 'react';
 import { useDataRef } from './use-data-ref';
 

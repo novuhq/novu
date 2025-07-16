@@ -1,8 +1,8 @@
-import _ from 'lodash';
 import { Injectable } from '@nestjs/common';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 
+import { merge } from 'es-toolkit/compat';
 import { collectKeys, keysToObject } from '../../../workflows-v2/util/utils';
 import { buildVariables } from '../../../workflows-v2/util/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
@@ -165,7 +165,7 @@ export class CreateVariablesObject {
       }
     }, {});
 
-    return _.merge(obj, val);
+    return merge(obj, val);
   }
 
   /**

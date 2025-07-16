@@ -19,7 +19,7 @@ import {
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 
 import {
   CreateExecutionDetails,

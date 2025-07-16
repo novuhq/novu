@@ -1,6 +1,4 @@
-import merge from 'lodash/merge';
-import capitalize from 'lodash/capitalize';
-import isEmpty from 'lodash/isEmpty';
+import { merge, capitalize, isEmpty } from 'es-toolkit/compat';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';

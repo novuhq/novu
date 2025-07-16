@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ITemplateVariable, TemplateVariableTypeEnum } from '@novu/shared';
-import { merge } from 'lodash';
+import { merge } from 'es-toolkit/compat';
 import { BadRequestException } from '@nestjs/common';
 import { VerifyPayloadCommand } from './verify-payload.command';
 import { VerifyPayload } from './verify-payload.usecase';

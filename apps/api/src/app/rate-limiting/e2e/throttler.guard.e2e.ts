@@ -21,8 +21,10 @@ process.env.API_RATE_LIMIT_MAXIMUM_FREE_GLOBAL = `${mockMaximumFreeGlobal}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_TRIGGER = `${mockMaximumUnlimitedTrigger}`;
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_GLOBAL = `${mockMaximumUnlimitedGlobal}`;
 
-// Disable Launch Darkly to allow test to define FF state
-// @ts-ignore
+/*
+ * Disable Launch Darkly to allow test to define FF state
+ * @ts-ignore
+ */
 process.env.LAUNCH_DARKLY_SDK_KEY = '';
 
 describe('API Rate Limiting #novu-v2', () => {
