@@ -11,10 +11,10 @@ import {
   TableFooter,
   TableCell,
 } from '@/components/primitives/table';
-import { TranslationGroup } from '@/api/translations';
+import { TranslationGroup, TranslationsFilter } from '@/api/translations';
 import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 
-import { TranslationsFilter, TranslationsUrlState } from './hooks/use-translations-url-state';
+import { TranslationsUrlState } from './hooks/use-translations-url-state';
 import { useTranslationListLogic } from './hooks/use-translation-list-logic';
 import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
 import { useNavigate } from 'react-router-dom';
