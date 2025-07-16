@@ -8,6 +8,7 @@ export * from "./_types.js";
 export * from "./cancel.js";
 export * from "./environmentsCreate.js";
 export * from "./environmentsDelete.js";
+export * from "./environmentsGetTags.js";
 export * from "./environmentsList.js";
 export * from "./environmentsUpdate.js";
 export * from "./integrationsCreate.js";

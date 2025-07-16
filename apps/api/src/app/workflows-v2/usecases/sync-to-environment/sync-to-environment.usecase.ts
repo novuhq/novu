@@ -71,7 +71,7 @@ export class SyncToEnvironmentUseCase {
   }
 
   private isSyncable(workflow: WorkflowResponseDto): boolean {
-    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin) && workflow.status !== WorkflowStatusEnum.ERROR;
+    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin);
   }
 
   private async buildRequestDto(

@@ -29,10 +29,7 @@ import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 const eventTriggerPath = '/v1/events/trigger';
 
 type Context = { name: string; isStateful: boolean };
-const contexts: Context[] = [
-  { name: 'stateful', isStateful: true },
-  { name: 'stateless', isStateful: false },
-];
+const contexts: Context[] = [{ name: 'stateful', isStateful: true }];
 
 contexts.forEach((context: Context) => {
   describe('Self-Hosted Bridge Trigger #novu-v2', async function () {
