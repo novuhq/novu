@@ -68,7 +68,7 @@ const CountrySelect = ({ disabled, value: selectedCountry, options: countryList,
           <RiArrowDownSLine className={cn('-mr-2 size-4 opacity-50', disabled ? 'hidden' : 'opacity-100')} />
         </Button>
       </PopoverTrigger>
-      <PopoverContent portal={false} className="w-[300px] rounded-lg p-0">
+      <PopoverContent portal={false} className="w-[300px] rounded-lg p-0" side="bottom" align="start">
         <Command>
           <CommandInput
             placeholder="Search country..."

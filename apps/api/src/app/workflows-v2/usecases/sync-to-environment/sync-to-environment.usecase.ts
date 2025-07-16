@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { PreferencesEntity, PreferencesRepository, ClientSession } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum } from '@novu/shared';
+import { PreferencesEntity, PreferencesRepository, ClientSession, LocalizationResourceEnum } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
@@ -30,7 +31,8 @@ export class SyncToEnvironmentUseCase {
   constructor(
     private getWorkflowUseCase: GetWorkflowUseCase,
     private preferencesRepository: PreferencesRepository,
-    private upsertWorkflowUseCase: UpsertWorkflowUseCase
+    private upsertWorkflowUseCase: UpsertWorkflowUseCase,
+    private moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()
@@ -59,7 +61,7 @@ export class SyncToEnvironmentUseCase {
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
     const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
 
-    return await this.upsertWorkflowUseCase.execute(
+    const upsertedWorkflow = await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         preserveWorkflowId: true,
         user: { ...command.user, environmentId: command.targetEnvironmentId },
@@ -68,10 +70,38 @@ export class SyncToEnvironmentUseCase {
         session: command.session,
       })
     );
+
+    await this.publishTranslationGroup(sourceWorkflow.workflowId, command);
+
+    return upsertedWorkflow;
+  }
+
+  private async publishTranslationGroup(workflowIdentifier: string, command: SyncToEnvironmentCommand): Promise<void> {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    // eslint-disable-next-line global-require
+    const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
+      strict: false,
+    });
+
+    const { user, targetEnvironmentId } = command;
+
+    await publishTranslationGroup.execute({
+      user,
+      resourceId: workflowIdentifier,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      sourceEnvironmentId: user.environmentId,
+      targetEnvironmentId,
+    });
   }
 
   private isSyncable(workflow: WorkflowResponseDto): boolean {
-    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin) && workflow.status !== WorkflowStatusEnum.ERROR;
+    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin);
   }
 
   private async buildRequestDto(
