@@ -3,3 +3,4 @@ export * from './helpers';
 export * from './results';
 export * from './error.enum';
 export * from './auth';
+export { ClientSession } from 'mongoose';

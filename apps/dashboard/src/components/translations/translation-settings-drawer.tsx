@@ -1,7 +1,7 @@
 import { forwardRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/primitives/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -16,6 +16,7 @@ import { DEFAULT_LOCALE } from '@novu/shared';
 
 interface TranslationSettingsFormData {
   defaultLocale: string;
+  targetLocales: string[];
 }
 
 interface TranslationSettingsDrawerProps {
@@ -32,6 +33,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     const form = useForm<TranslationSettingsFormData>({
       defaultValues: {
         defaultLocale: DEFAULT_LOCALE,
+        targetLocales: [],
       },
     });
 
@@ -40,6 +42,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
       if (organizationSettings?.data) {
         form.reset({
           defaultLocale: organizationSettings.data.defaultLocale,
+          targetLocales: organizationSettings.data.targetLocales || [],
         });
       }
     }, [organizationSettings, form]);
@@ -49,7 +52,10 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     const hasUnsavedChanges = useMemo(() => {
       if (!organizationSettings?.data) return false;
 
-      return formValues.defaultLocale !== organizationSettings.data.defaultLocale;
+      return (
+        formValues.defaultLocale !== organizationSettings.data.defaultLocale ||
+        JSON.stringify(formValues.targetLocales) !== JSON.stringify(organizationSettings.data.targetLocales)
+      );
     }, [formValues, organizationSettings?.data]);
 
     const handleSave = () => {
@@ -57,6 +63,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
       updateSettings.mutate(
         {
           defaultLocale: values.defaultLocale,
+          targetLocales: values.targetLocales,
         },
         {
           onSuccess: () => {
@@ -108,38 +115,64 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
               </header>
 
               <div className="flex flex-1 flex-col overflow-y-auto">
-                <div className="p-6">
+                <div className="px-3 py-4">
                   {isLoading ? (
                     <div className="space-y-6">
-                      <div className="flex w-full items-center justify-between">
-                        <Skeleton className="h-4 w-32" />
-                        <Skeleton className="h-6 w-12" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-8 w-full" />
                       </div>
-                      <Separator />
-                      <div className="space-y-3">
+                      <div className="space-y-1">
                         <Skeleton className="h-4 w-24" />
                         <Skeleton className="h-8 w-full" />
                       </div>
                     </div>
                   ) : (
                     <Form {...form}>
-                      <FormField
-                        control={form.control}
-                        name="defaultLocale"
-                        render={({ field }) => (
-                          <FormItem className="space-y-1">
-                            <FormLabel
-                              className="text-text-sub gap-1"
-                              tooltip="The fallback locale used when translations are not available for a user's preferred language"
-                            >
-                              Default locale
-                            </FormLabel>
-                            <FormControl>
-                              <LocaleSelect value={field.value} onChange={field.onChange} className="w-full" />
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
+                      <div className="space-y-6">
+                        <FormField
+                          control={form.control}
+                          name="defaultLocale"
+                          render={({ field }) => (
+                            <FormItem className="space-y-1">
+                              <FormLabel
+                                className="text-text-sub gap-1"
+                                tooltip="The primary language for your translations - serves as fallback when language specific translations are not available"
+                              >
+                                Default locale
+                              </FormLabel>
+                              <FormControl>
+                                <LocaleSelect value={field.value} onChange={field.onChange} className="w-full" />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="targetLocales"
+                          render={({ field }) => (
+                            <FormItem className="space-y-1">
+                              <FormLabel
+                                className="text-text-sub gap-1"
+                                tooltip="Languages you want to translate into. We'll check if they're in sync with your default locale."
+                              >
+                                Target locales
+                              </FormLabel>
+                              <FormControl>
+                                <LocaleSelect
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  className="w-full"
+                                  multiSelect={true}
+                                />
+                              </FormControl>
+                              <span className="text-text-soft text-2xs">
+                                Select all languages you want to translate into
+                              </span>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </Form>
                   )}
                 </div>

@@ -7,6 +7,7 @@ import {
   StepUpdateDto,
   ResourceOriginEnum,
   WorkflowResponseDto,
+  EnvironmentTypeEnum,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
@@ -104,7 +105,8 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   ];
 
   const isSupportedStep = supportedStepTypes.includes(step.type);
-  const isReadOnly = !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL;
+  const isReadOnly =
+    !isSupportedStep || workflow.origin === ResourceOriginEnum.EXTERNAL || environment.type !== EnvironmentTypeEnum.DEV;
 
   const isTemplateConfigurableStep = isSupportedStep && TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(step.type);
   const isInlineConfigurableStep = isSupportedStep && INLINE_CONFIGURABLE_STEP_TYPES.includes(step.type);
@@ -323,7 +325,9 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
                   </Button>
                 </Link>
 
-                <SkipConditionsButton origin={workflow.origin} step={step} />
+                {environment.type === EnvironmentTypeEnum.DEV && (
+                  <SkipConditionsButton origin={workflow.origin} step={step} />
+                )}
               </SidebarContent>
               <Separator />
 
@@ -352,7 +356,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
             </>
           )}
 
-          {isInlineConfigurableStep && (
+          {isInlineConfigurableStep && environment.type === EnvironmentTypeEnum.DEV && (
             <>
               <SidebarContent>
                 <SkipConditionsButton origin={workflow.origin} step={step} />

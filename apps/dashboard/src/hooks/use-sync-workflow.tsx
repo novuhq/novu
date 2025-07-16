@@ -2,7 +2,7 @@ import { getV2, NovuApiError } from '@/api/api.client';
 import { syncWorkflow } from '@/api/workflows';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { ToastIcon } from '@/components/primitives/sonner';
-import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
+import { showToast } from '@/components/primitives/sonner-helpers';
 import { SuccessButtonToast } from '@/components/success-button-toast';
 import TruncatedText from '@/components/truncated-text';
 import { useAuth } from '@/context/auth/hooks';
@@ -10,7 +10,7 @@ import { useEnvironment, useFetchEnvironments } from '@/context/environment/hook
 import { buildRoute, ROUTES } from '@/utils/routes';
 import type { IEnvironment, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResponseDto) {
   const { currentEnvironment } = useEnvironment();
   const { currentOrganization } = useAuth();
+  const queryClient = useQueryClient();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const [isLoading, setIsLoading] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -70,6 +71,11 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
   const onSyncSuccess = (workflow: WorkflowResponseDto, environment?: IEnvironment) => {
     toast.dismiss(loadingToast);
     setIsLoading(false);
+
+    // Invalidate diff environment queries when workflows are synced
+    queryClient.invalidateQueries({
+      queryKey: ['diff-environments'],
+    });
 
     return showToast({
       variant: 'lg',
