@@ -1,9 +1,7 @@
-import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiSettings4Line } from 'react-icons/ri';
 
 import { useLayoutEditor } from './layout-editor-provider';
-import { getControlsDefaultValues } from '@/utils/default-values';
 import { Form, FormRoot } from '../primitives/form/form';
 import { ResizableLayout } from '../workflow-editor/steps/layout/resizable-layout';
 import { PanelHeader } from '../workflow-editor/steps/layout/panel-header';

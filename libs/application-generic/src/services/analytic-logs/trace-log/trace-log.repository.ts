@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { LogRepository } from '../base.repository';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { LogRepository } from '../log.repository';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
 

@@ -40,6 +40,14 @@ runs:
       with:
         mongodb-version: 8.0
 
+    - name: 🔍 Start ClickHouse
+      if: ${{ inputs.slim == 'false' }}
+      uses: praneeth527/clickhouse-server-action@v1.0.0
+      env:
+        CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      with:
+        tag: '24.3-alpine'
+
     - name: 🛟 Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile

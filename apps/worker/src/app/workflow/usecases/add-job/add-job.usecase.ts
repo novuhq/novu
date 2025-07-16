@@ -3,7 +3,7 @@ import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
 import _ from 'lodash';
 
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
 import {
   castUnitToDigestUnitEnum,
   DigestCreationResultEnum,
@@ -68,7 +68,8 @@ export class AddJob {
     private conditionsFilter: ConditionsFilter,
     private normalizeVariablesUsecase: NormalizeVariables,
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
-    private executeBridgeJob: ExecuteBridgeJob
+    private executeBridgeJob: ExecuteBridgeJob,
+    private subscriberRepository: SubscriberRepository
   ) {}
 
   @InstrumentUsecase()
@@ -374,7 +375,7 @@ export class AddJob {
   private async handleDigest(
     command: AddJobCommand,
     filterVariables: IFilterVariables,
-    job,
+    job: JobEntity,
     digestAmount: number | undefined,
     filtered: boolean
   ) {
@@ -384,6 +385,7 @@ export class AddJob {
     if (bridgeResponse) {
       metadata = await this.updateMetadata(bridgeResponse, command);
     } else {
+      // @ts-ignore - job.digest is not typed
       metadata = job.digest;
     }
 
@@ -391,7 +393,16 @@ export class AddJob {
     // eslint-disable-next-line no-param-reassign
     command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
 
-    const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse);
+    const subscriber = await this.subscriberRepository.findOne(
+      {
+        _id: job._subscriberId,
+        _environmentId: job._environmentId,
+      },
+      'timezone',
+      { readPreference: 'secondaryPreferred' }
+    );
+
+    const bridgeAmount = this.mapBridgeTimedDigestAmount(bridgeResponse, subscriber?.timezone);
 
     validateDigest(job);
 
@@ -402,6 +413,7 @@ export class AddJob {
         stepMetadata: metadata,
         payload: job.payload,
         overrides: job.overrides,
+        timezone: subscriber?.timezone,
       });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -424,7 +436,7 @@ export class AddJob {
     return { digestAmount, digestCreationResult, cronExpression: bridgeResponse?.outputs?.cron as string | undefined };
   }
 
-  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput | null): number | null {
+  private mapBridgeTimedDigestAmount(bridgeResponse: ExecuteOutput | null, timezone?: string): number | null {
     let bridgeAmount: number | null = null;
     const outputs = bridgeResponse?.outputs as DigestOutput;
 
@@ -432,8 +444,9 @@ export class AddJob {
       return null;
     }
 
-    const bridgeAmountExpression = parseCronExpression(outputs?.cron);
+    const bridgeAmountExpression = parseCronExpression(outputs?.cron, { tz: timezone });
     const bridgeAmountDate = bridgeAmountExpression.next();
+
     bridgeAmount = differenceInMilliseconds(bridgeAmountDate.toDate(), new Date());
 
     return bridgeAmount;

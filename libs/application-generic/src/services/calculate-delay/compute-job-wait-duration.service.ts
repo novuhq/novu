@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { Logger, BadRequestException } from '@nestjs/common';
 import { differenceInMilliseconds } from 'date-fns';
 import {
   DigestUnitEnum,
@@ -11,7 +11,6 @@ import {
   IDelayRegularMetadata,
 } from '@novu/shared';
 
-import { BadRequestException } from '@nestjs/common';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 
@@ -20,10 +19,12 @@ export class ComputeJobWaitDurationService {
     stepMetadata,
     payload,
     overrides,
+    timezone,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
+    timezone?: string;
   }): number {
     if (!stepMetadata) {
       throw new BadRequestException(`Step metadata not found`);
@@ -63,6 +64,7 @@ export class ComputeJobWaitDurationService {
         timeConfig: {
           ...timedDigestMeta.timed,
         },
+        timezone,
       });
     } else if ((stepMetadata as IDelayRegularMetadata)?.unit && (stepMetadata as IDelayRegularMetadata)?.amount) {
       if (this.isValidDelayOverride(overrides)) {
