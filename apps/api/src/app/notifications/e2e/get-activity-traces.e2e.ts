@@ -10,7 +10,8 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let novuClient: Novu;
-  let originalEnvValue: string | undefined;
+  let originalTraceReadValue: string | undefined;
+  let originalTraceWriteValue: string | undefined;
   const messageRepository: MessageRepository = new MessageRepository();
   const notificationRepository: NotificationRepository = new NotificationRepository();
 
@@ -30,15 +31,22 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
   };
 
   before(async () => {
-    originalEnvValue = process.env.IS_TRACE_LOGS_ENABLED;
+    originalTraceReadValue = process.env.IS_TRACE_LOGS_READ_ENABLED;
+    originalTraceWriteValue = process.env.IS_TRACE_LOGS_ENABLED;
+    (process.env as any).IS_TRACE_LOGS_READ_ENABLED = 'true';
     (process.env as any).IS_TRACE_LOGS_ENABLED = 'true';
   });
 
   after(async () => {
-    if (originalEnvValue === undefined) {
+    if (originalTraceReadValue === undefined) {
+      delete (process.env as any).IS_TRACE_LOGS_READ_ENABLED;
+    } else {
+      (process.env as any).IS_TRACE_LOGS_READ_ENABLED = originalTraceReadValue;
+    }
+    if (originalTraceWriteValue === undefined) {
       delete (process.env as any).IS_TRACE_LOGS_ENABLED;
     } else {
-      (process.env as any).IS_TRACE_LOGS_ENABLED = originalEnvValue;
+      (process.env as any).IS_TRACE_LOGS_ENABLED = originalTraceWriteValue;
     }
   });
 
@@ -113,10 +121,7 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
 
     expect(actualDetails.length).to.be.equal(5);
     expectedExecutionDetails.forEach((expectedDetail) => {
-      expect(actualDetails).to.include(
-        expectedDetail,
-        `Expected execution detail '${expectedDetail}' not found in job. Found: ${actualDetails.join(', ')}`
-      );
+      expect(actualDetails).to.include(expectedDetail);
     });
   });
 
