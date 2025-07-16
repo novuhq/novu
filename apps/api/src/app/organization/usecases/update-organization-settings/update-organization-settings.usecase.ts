@@ -61,6 +61,24 @@ export class UpdateOrganizationSettings {
         );
       }
     }
+
+    if (command.targetLocales !== undefined || command.defaultLocale !== undefined) {
+      const canUseTranslations = getFeatureForTierAsBoolean(
+        FeatureNameEnum.AUTO_TRANSLATIONS,
+        organization.apiServiceLevel || ApiServiceLevelEnum.FREE
+      );
+
+      if (!canUseTranslations) {
+        throw new HttpException(
+          {
+            error: 'Payment Required',
+            message:
+              'Update of locales is a part of the translation feature. Please upgrade to a paid plan to access this feature.',
+          },
+          HttpStatus.PAYMENT_REQUIRED
+        );
+      }
+    }
   }
 
   private buildUpdateFields(command: UpdateOrganizationSettingsCommand): Partial<OrganizationEntity> {
@@ -74,6 +92,10 @@ export class UpdateOrganizationSettings {
       updateFields.defaultLocale = command.defaultLocale;
     }
 
+    if (command.targetLocales !== undefined) {
+      updateFields.targetLocales = command.targetLocales;
+    }
+
     return updateFields;
   }
 
@@ -81,6 +103,7 @@ export class UpdateOrganizationSettings {
     return {
       removeNovuBranding: organization.removeNovuBranding || false,
       defaultLocale: organization.defaultLocale || DEFAULT_LOCALE,
+      targetLocales: organization.targetLocales || [],
     };
   }
 }

@@ -28,6 +28,17 @@ export const useSaveTranslation = () => {
         queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
       });
 
+      queryClient.invalidateQueries({
+        queryKey: [
+          QueryKeys.fetchTranslationGroup,
+          variables.resourceId,
+          variables.resourceType,
+          currentEnvironment?._id,
+        ],
+      });
+
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchTranslationGroups] });
+
       // Also invalidate translation keys if this is a default locale update
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, variables.locale, currentEnvironment?._id],

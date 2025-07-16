@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { UserSessionData, PermissionsEnum } from '@novu/shared';
 import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
 import { SkipPermissionsCheck, RequirePermissions } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
@@ -21,6 +20,7 @@ import { DiffEnvironmentCommand } from './usecases/diff-environment/diff-environ
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
 import {
   PublishEnvironmentRequestDto,
@@ -34,7 +34,7 @@ import {
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
 @ApiTags('Environments')
-@ApiExcludeController()
+@SdkGroupName('Environments')
 export class EnvironmentsController {
   constructor(
     private getEnvironmentTagsUsecase: GetEnvironmentTags,
@@ -43,7 +43,13 @@ export class EnvironmentsController {
   ) {}
 
   @Get('/:environmentId/tags')
-  @ApiResponse(GetEnvironmentTagsDto)
+  @ApiOperation({
+    summary: 'Get environment tags',
+    description:
+      'Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.',
+  })
+  @ApiResponse(GetEnvironmentTagsDto, 200, true)
+  @SdkMethodName('getTags')
   @ExternalApiAccessible()
   @SkipPermissionsCheck()
   async getEnvironmentTags(
