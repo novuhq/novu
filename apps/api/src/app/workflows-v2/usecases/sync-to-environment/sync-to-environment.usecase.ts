@@ -1,11 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  PreferencesTypeEnum,
-  WorkflowCreationSourceEnum,
-  ResourceOriginEnum,
-  WorkflowStatusEnum,
-  UserSessionData,
-} from '@novu/shared';
+import { ModuleRef } from '@nestjs/core';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository, ClientSession, LocalizationResourceEnum } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
@@ -18,7 +13,6 @@ import {
 } from '../upsert-workflow';
 import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
-import { ModuleRef } from '@nestjs/core';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
@@ -90,6 +84,7 @@ export class SyncToEnvironmentUseCase {
       return;
     }
 
+    // eslint-disable-next-line global-require
     const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
       strict: false,
     });
