@@ -11,7 +11,7 @@ import {
   IsObject,
   IsDefined,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Exclude } from 'class-transformer';
 
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
 import {
@@ -21,6 +21,7 @@ import {
   ResourceOriginEnum,
   MAX_NAME_LENGTH,
 } from '@novu/shared';
+import { ClientSession } from '@novu/dal';
 import { IsValidJsonSchema } from '../../../shared/validators/json-schema.validator';
 
 export class ChannelPreferenceData {
@@ -150,4 +151,11 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsOptional()
   @IsString()
   workflowIdOrInternalId?: string;
+
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
+  @IsOptional()
+  @Exclude()
+  session?: ClientSession | null;
 }

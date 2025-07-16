@@ -1,15 +1,19 @@
+import { Novu } from '@novu/api';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
+import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Environment Tags - /v2/environments/:environmentId/tags (GET) #novu-v0', async () => {
+describe('Get Environment Tags - /v2/environments/:environmentId/tags (GET) #novu-v2', async () => {
   let session: UserSession;
+  let novuClient: Novu;
   const environmentRepository = new EnvironmentRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
 
   before(async () => {
     session = new UserSession();
     await session.initialize();
+    novuClient = initNovuClassSdkInternalAuth(session);
   });
 
   it('should return correct tags for the environment', async () => {
@@ -22,13 +26,13 @@ describe('Get Environment Tags - /v2/environments/:environmentId/tags (GET) #nov
       tags: ['tag2', 'tag3', null, '', undefined],
     });
 
-    const { body } = await session.testAgent.get(`/v2/environments/${session.environment._id}/tags`);
+    const response = await novuClient.environments.getTags(session.environment._id);
 
-    expect(body.data).to.be.an('array');
-    expect(body.data).to.have.lengthOf(3);
-    expect(body.data).to.deep.include({ name: 'tag1' });
-    expect(body.data).to.deep.include({ name: 'tag2' });
-    expect(body.data).to.deep.include({ name: 'tag3' });
+    expect(response.result).to.be.an('array');
+    expect(response.result).to.have.lengthOf(3);
+    expect(response.result).to.deep.include({ name: 'tag1' });
+    expect(response.result).to.deep.include({ name: 'tag2' });
+    expect(response.result).to.deep.include({ name: 'tag3' });
   });
 
   it('should return an empty array when no tags exist', async () => {
@@ -37,17 +41,17 @@ describe('Get Environment Tags - /v2/environments/:environmentId/tags (GET) #nov
       _organizationId: session.organization._id,
     });
 
-    const { body } = await session.testAgent.get(`/v2/environments/${newEnvironment._id}/tags`);
+    const response = await novuClient.environments.getTags(newEnvironment._id);
 
-    expect(body.data).to.be.an('array');
-    expect(body.data).to.have.lengthOf(0);
+    expect(response.result).to.be.an('array');
+    expect(response.result).to.have.lengthOf(0);
   });
 
   it('should throw NotFoundException for non-existent environment', async () => {
     const nonExistentId = '60a5f2f2f2f2f2f2f2f2f2f2';
-    const { body } = await session.testAgent.get(`/v2/environments/${nonExistentId}/tags`);
+    const { error } = await expectSdkExceptionGeneric(() => novuClient.environments.getTags(nonExistentId));
 
-    expect(body.statusCode).to.equal(404);
-    expect(body.message).to.equal(`Environment ${nonExistentId} not found`);
+    expect(error?.statusCode).to.equal(404);
+    expect(error?.message).to.equal(`Environment ${nonExistentId} not found`);
   });
 });

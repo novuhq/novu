@@ -4,9 +4,7 @@ import { SYNCABLE_WORKFLOW_ORIGINS } from '../usecases/sync-to-environment/sync-
 
 export class WorkflowNotSyncableException extends BadRequestException {
   constructor(workflow: Pick<WorkflowResponseDto, 'workflowId' | 'origin' | 'status'>) {
-    const reason = !SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin)
-      ? `origin '${workflow.origin}' is not allowed (must be one of: ${SYNCABLE_WORKFLOW_ORIGINS.join(', ')})`
-      : `cannot be synced while in '${workflow.status}' status`;
+    const reason = `origin '${workflow.origin}' is not allowed (must be one of: ${SYNCABLE_WORKFLOW_ORIGINS.join(', ')})`;
 
     super({
       message: `Cannot sync workflow: ${reason}`,

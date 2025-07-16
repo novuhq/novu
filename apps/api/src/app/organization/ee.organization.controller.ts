@@ -121,6 +121,7 @@ export class EEOrganizationController {
         organizationId: user.organizationId,
         removeNovuBranding: body.removeNovuBranding,
         defaultLocale: body.defaultLocale,
+        targetLocales: body.targetLocales,
       })
     );
   }
