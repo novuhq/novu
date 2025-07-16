@@ -8,7 +8,7 @@ import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-
 
 const TRACE_INSERT_OPTIONS: InsertOptions = {
   asyncInsert: true,
-  waitForAsyncInsert: false,
+  waitForAsyncInsert: process.env.NODE_ENV === 'test',
 };
 
 @Injectable()

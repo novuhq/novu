@@ -103,10 +103,6 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
     expect(notification).to.be.ok;
     if (!notification) throw new Error('Notification not found');
 
-    await new Promise<void>((resolve) => {
-      setTimeout(resolve, 1000);
-    });
-
     const activityResponse = await session.testAgent.get(`/v1/notifications/${notification._id}`).expect(200);
     const activity: ActivityNotificationResponseDto = activityResponse.body.data;
     expect(activity).to.be.ok;
