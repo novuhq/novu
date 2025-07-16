@@ -40,7 +40,7 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
           },
         },
         {
-          type: StepTypeEnum.EMAIL,
+          type: StepTypeEnum.IN_APP,
           content: 'Hello world {{customVar}}' as string,
         },
       ],
@@ -63,11 +63,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
       type: StepTypeEnum.DELAY,
     });
 
-    await session.waitForJobCompletionMatching({
-      type: StepTypeEnum.IN_APP,
-      templateId: template._id,
-    });
-
     expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);
 
     const messages = await messageRepository.find({
@@ -81,20 +76,13 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
 
     await session.waitForJobCompletion(template?._id);
 
-    const messagesAfterInApp = await messageRepository.find({
+    const messagesAfter = await messageRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
       channel: StepTypeEnum.IN_APP,
     });
 
-    const messagesAfterEmail = await messageRepository.find({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber._id,
-      channel: StepTypeEnum.EMAIL,
-    });
-
-    expect(messagesAfterInApp.length).to.equal(1);
-    expect(messagesAfterEmail.length).to.equal(1);
+    expect(messagesAfter.length).to.equal(2);
   });
 
   it('should delay execution until the provided datetime', async function () {

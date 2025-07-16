@@ -1,7 +1,7 @@
 import { Queue } from 'bullmq';
 import { setTimeout } from 'node:timers/promises';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
-import { JobTopicNameEnum, StepTypeEnum } from '@novu/shared';
+import { JobTopicNameEnum } from '@novu/shared';
 import { TestingQueueService } from './testing-queue.service';
 
 /**
@@ -23,15 +23,12 @@ export class JobsService {
   public async waitForJobCompletion({
     templateId,
     organizationId,
-    type,
   }: {
     templateId?: string | string[];
     organizationId?: string | string[];
-    type?: StepTypeEnum;
   }) {
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const organizationMatch = organizationId ? { _organizationId: { $in: [organizationId].flat() } } : {};
-    const typeMatch = type ? { type } : {};
 
     let redisJobsCount = 0;
     let mongoJobsCount = 0;
@@ -48,7 +45,6 @@ export class JobsService {
         await this.jobRepository.count({
           ...workflowMatch,
           ...organizationMatch,
-          ...typeMatch,
           status: {
             $in: [JobStatusEnum.PENDING, JobStatusEnum.QUEUED, JobStatusEnum.RUNNING],
           },

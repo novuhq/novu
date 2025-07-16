@@ -441,22 +441,6 @@ export class UserSession {
     });
   }
 
-  public async waitForJobCompletionMatching({
-    type,
-    templateId,
-    organizationId = this.organization._id,
-  }: {
-    type: StepTypeEnum;
-    templateId?: string | string[];
-    organizationId?: string | string[];
-  }) {
-    return this.jobsService.waitForJobCompletion({
-      templateId,
-      organizationId,
-      type,
-    });
-  }
-
   public async waitForDbJobCompletion({
     templateId,
     organizationId,
