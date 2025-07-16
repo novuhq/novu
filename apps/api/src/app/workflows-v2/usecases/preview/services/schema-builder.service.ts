@@ -67,6 +67,7 @@ export class SchemaBuilderService {
           phone: { type: JsonSchemaTypeEnum.STRING },
           avatar: { type: JsonSchemaTypeEnum.STRING },
           locale: { type: JsonSchemaTypeEnum.STRING },
+          timezone: { type: JsonSchemaTypeEnum.STRING },
           data: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
         },
         additionalProperties: true,

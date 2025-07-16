@@ -70,6 +70,7 @@ export const buildSubscriberSchema = (subscriber: unknown) => {
       phone: { type: JsonSchemaTypeEnum.STRING, description: "Subscriber's phone number (optional)" },
       avatar: { type: JsonSchemaTypeEnum.STRING, description: "URL to the subscriber's avatar image (optional)" },
       locale: { type: JsonSchemaTypeEnum.STRING, description: 'Locale for the subscriber (optional)' },
+      timezone: { type: JsonSchemaTypeEnum.STRING, description: 'Timezone for the subscriber (optional)' },
       subscriberId: { type: JsonSchemaTypeEnum.STRING, description: 'Unique identifier for the subscriber' },
       isOnline: {
         type: JsonSchemaTypeEnum.BOOLEAN,

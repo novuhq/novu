@@ -1,10 +1,11 @@
 import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
-import { Injectable, Inject, forwardRef, OnModuleDestroy } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
+import { Injectable, OnModuleDestroy } from '@nestjs/common';
+
+export { ClickHouseClient };
 
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
-  private client: ClickHouseClient | undefined;
+  private _client: ClickHouseClient | undefined;
 
   async init() {
     const requiredConnectionConfig = {
@@ -14,38 +15,61 @@ export class ClickHouseService implements OnModuleDestroy {
       database: process.env.CLICK_HOUSE_DATABASE,
     };
 
-    if (Object.values(requiredConnectionConfig).some((value) => !value)) {
+    if (!process.env.CLICK_HOUSE_URL || !process.env.CLICK_HOUSE_DATABASE) {
       /*
        * this.logger.warn(
-       *   'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
+       *   'ClickHouse client is not initialized due to missing environment configuration. ' +
+       *     'Please provide CLICK_HOUSE_URL and CLICK_HOUSE_DATABASE.'
        * );
        */
-      this.client = undefined;
+      this._client = undefined;
 
       return;
     }
 
-    this.client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
+    if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
+      const defaultClient = createClient({
+        host: 'http://localhost:8123',
+        username: 'default',
+        password: '',
+        database: 'default',
+      });
+
+      try {
+        await defaultClient.query({
+          query: `CREATE DATABASE IF NOT EXISTS ${process.env.CLICK_HOUSE_DATABASE}`,
+        });
+        // this.logger.info(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+      } catch (error) {
+        // this.logger.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
+      }
+    }
+
+    this._client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
 
     // this.logger.info('ClickHouse client created');
   }
 
+  get client(): ClickHouseClient | undefined {
+    return this._client;
+  }
+
   async onModuleDestroy() {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
-    await this.client.close();
+    await this._client.close();
     // this.logger.info('ClickHouse client closed');
   }
 
   async ping(): Promise<PingResult> {
-    if (!this.client) {
-      return { success: false, error: new Error('ClickHouse client not initialized') };
+    if (!this._client) {
+      return { success: false, error: new Error('Ping failed: ClickHouse client not initialized') };
     }
 
     // eslint-disable-next-line no-useless-catch
     try {
-      const isAlive = await this.client.ping();
+      const isAlive = await this._client.ping();
       // this.logger.info('ClickHouse server ping successful');
 
       return isAlive;
@@ -62,11 +86,11 @@ export class ClickHouseService implements OnModuleDestroy {
     query: string;
     params: Record<string, unknown>;
   }): Promise<{ data: T[]; rows: number }> {
-    if (!this.client) {
-      throw new Error('ClickHouse client not initialized');
+    if (!this._client) {
+      throw new Error('Query failed: ClickHouse client not initialized');
     }
 
-    const resultSet = await this.client.query({
+    const resultSet = await this._client.query({
       query,
       query_params: params,
       format: 'JSON',
@@ -81,11 +105,11 @@ export class ClickHouseService implements OnModuleDestroy {
   }
 
   public async insert<T extends Record<string, unknown>>(table: string, values: T[]) {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
 
-    await this.client.insert({
+    await this._client.insert({
       table,
       values,
       format: 'JSONEachRow',
@@ -93,11 +117,11 @@ export class ClickHouseService implements OnModuleDestroy {
   }
 
   public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
 
-    await this.client.exec({
+    await this._client.exec({
       query,
       query_params: params,
     });

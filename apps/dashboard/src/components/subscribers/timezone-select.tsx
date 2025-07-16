@@ -27,7 +27,10 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
         <Button
           variant="secondary"
           mode="outline"
-          className={cn('flex h-8 w-full items-center gap-1 truncate rounded-lg px-3 focus:z-10', className)}
+          className={cn(
+            'flex h-8 w-full items-center gap-1 truncate rounded-lg px-3 focus:z-10 focus-visible:shadow-none',
+            className
+          )}
           disabled={disabled}
           {...rest}
         >
@@ -50,12 +53,13 @@ export function TimezoneSelect(props: TimezoneSelectProps) {
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[300px] rounded-lg p-0">
+      <PopoverContent portal={false} className="w-[300px] rounded-lg p-0" side="bottom" align="start">
         <Command>
           <CommandInput
             placeholder="Search timezone..."
-            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none px-1.5"
+            inputRootClassName="rounded-b-none before:ring-0 before:border-b has-[input:focus]:shadow-none focus-within:shadow-none"
             inlineLeadingNode={<RiSearchLine className="size-4 text-neutral-400" />}
+            autoComplete="off"
             /**
              * Scroll to top bug workaround: https://github.com/pacocoursey/cmdk/issues/233#issuecomment-2015998940
              */

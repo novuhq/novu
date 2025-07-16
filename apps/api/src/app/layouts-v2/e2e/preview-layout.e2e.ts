@@ -253,6 +253,7 @@ describe('Preview Layout #novu-v2', () => {
             email: 'john.doe@example.com',
             locale: 'en-US',
             phone: '+1234567890',
+            timezone: 'America/New_York',
           },
         },
       };
@@ -290,6 +291,7 @@ describe('Preview Layout #novu-v2', () => {
             email: 'jane.smith@example.com',
             locale: 'en-US',
             phone: '+1234567890',
+            timezone: 'America/New_York',
           },
         },
       };

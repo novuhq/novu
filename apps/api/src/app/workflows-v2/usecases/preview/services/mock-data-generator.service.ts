@@ -117,6 +117,7 @@ export class MockDataGeneratorService {
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
       locale: 'en-US',
+      timezone: 'America/New_York',
       data: {},
     };
   }

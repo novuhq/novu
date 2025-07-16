@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { LogRepository } from '../base.repository';
+import { LogRepository } from '../log.repository';
 import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { requestLogSchema, ORDER_BY } from './request-log.schema';
