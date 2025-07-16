@@ -1929,6 +1929,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           lastName: 'Doe',
           locale: 'en-US',
           phone: '+1234567890',
+          timezone: 'America/New_York',
         },
       };
       const previewResponse5 = await novuClient.workflows.steps.generatePreview({
