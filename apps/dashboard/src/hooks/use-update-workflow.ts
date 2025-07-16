@@ -60,6 +60,12 @@ export const useUpdateWorkflow = (
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchWorkflowTestData, currentEnvironment?._id, workflowId],
       });
+
+      // Invalidate diff environment queries when workflows are updated
+      await queryClient.invalidateQueries({
+        queryKey: ['diff-environments'],
+      });
+
       options?.onSuccess?.(data, variables, context);
     },
   });

@@ -56,7 +56,9 @@ export const useDiffEnvironments = ({
     queryFn: () =>
       diffEnvironments({ sourceEnvironmentId: sourceEnvironmentId!, targetEnvironmentId: targetEnvironmentId! }),
     enabled: enabled && !!sourceEnvironmentId && !!targetEnvironmentId && sourceEnvironmentId !== targetEnvironmentId,
-    staleTime: 0, // Always refetch to get latest diff
+    staleTime: 2 * 60 * 1000, // 2 minutes - prevent constant refetching
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: true,
   });
 };
 

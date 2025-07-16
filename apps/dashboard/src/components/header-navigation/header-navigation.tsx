@@ -29,16 +29,8 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
     >
       {startItems}
       <div className="text-foreground-600 ml-auto flex items-center gap-2">
-        {!hideBridgeUrl ? (
-          <div className="pr-1">
-            <EditBridgeUrlButton />
-          </div>
-        ) : null}
-        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
-          <div className="pr-1">
-            <PublishButton />
-          </div>
-        )}
+        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && <PublishButton />}
+        {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         <CustomerSupportButton />
         <div className="flex pr-0.5">
           <InboxButton />

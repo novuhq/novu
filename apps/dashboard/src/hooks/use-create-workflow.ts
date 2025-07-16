@@ -28,6 +28,11 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
         queryKey: [QueryKeys.fetchTags, currentEnvironment?._id],
       });
 
+      // Invalidate diff environment queries when workflows are created
+      queryClient.invalidateQueries({
+        queryKey: ['diff-environments'],
+      });
+
       showSuccessToast(toastId);
       navigate(
         buildRoute(ROUTES.EDIT_WORKFLOW, {
