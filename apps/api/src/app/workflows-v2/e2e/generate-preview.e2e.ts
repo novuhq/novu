@@ -107,6 +107,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               subscriberId: {
                 type: 'string',
               },
+              timezone: {
+                type: 'string',
+              },
             },
             type: 'object',
           },
@@ -154,6 +157,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           phone: '+1234567890',
           avatar: 'https://example.com/avatar.png',
           locale: 'en-US',
+          timezone: 'America/New_York',
           data: {},
         },
         payload: {},
@@ -244,6 +248,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           phone: '+1234567890',
           avatar: 'https://example.com/avatar.png',
           locale: 'en-US',
+          timezone: 'America/New_York',
           data: {},
         },
         payload: {
@@ -346,6 +351,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           phone: '+1234567890',
           avatar: 'https://example.com/avatar.png',
           locale: 'en-US',
+          timezone: 'America/New_York',
           data: {},
         },
         payload: {
@@ -522,6 +528,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               subscriberId: {
                 type: 'string',
               },
+              timezone: {
+                type: 'string',
+              },
             },
             type: 'object',
           },
@@ -562,6 +571,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           phone: '+1234567890',
           avatar: 'https://example.com/avatar.png',
           locale: 'en-US',
+          timezone: 'America/New_York',
           data: {},
         },
         payload: {
@@ -667,6 +677,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               subscriberId: {
                 type: 'string',
               },
+              timezone: {
+                type: 'string',
+              },
             },
             type: 'object',
           },
@@ -707,6 +720,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           phone: '+1234567890',
           avatar: 'https://example.com/avatar.png',
           locale: 'en-US',
+          timezone: 'America/New_York',
           data: {},
         },
         payload: {
@@ -783,6 +797,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
               subscriberId: {
                 type: 'string',
               },
+              timezone: {
+                type: 'string',
+              },
             },
             type: 'object',
           },
@@ -823,6 +840,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           phone: '+1234567890',
           avatar: 'https://example.com/avatar.png',
           locale: 'en-US',
+          timezone: 'America/New_York',
           data: {},
         },
         payload: {
@@ -1090,6 +1108,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
       locale: 'en-US',
+      timezone: 'America/New_York',
       data: {},
     });
     expect(actualPayload.payload).to.deep.equal({
@@ -1215,6 +1234,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
       locale: 'en-US',
+      timezone: 'America/New_York',
       data: {},
     });
     expect(actualPayload.payload).to.deep.equal({
@@ -1397,6 +1417,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
       locale: 'en-US',
+      timezone: 'America/New_York',
       data: {},
     });
     expect(actualPayload.payload).to.deep.equal({
@@ -1908,6 +1929,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
           lastName: 'Doe',
           locale: 'en-US',
           phone: '+1234567890',
+          timezone: 'America/New_York',
         },
       };
       const previewResponse5 = await novuClient.workflows.steps.generatePreview({
