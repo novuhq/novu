@@ -25,8 +25,8 @@ export function TranslationStatus({ outdatedLocales, className }: TranslationSta
           <div className="max-w-xs">
             <p className="font-medium">Translation requires update</p>
             <p className="mt-1 text-xs text-neutral-400">
-              Some locales have missing or extra translation keys compared to the default locale. Review and update
-              translations to ensure all keys are consistent.
+              Some target locales have missing or extra translation keys compared to the default locale. Review and
+              update translations to ensure all keys are consistent.
             </p>
           </div>
         </TooltipContent>

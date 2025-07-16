@@ -74,8 +74,8 @@ function LocaleButton({ locale, isSelected, isDefault, isOutdated, onClick }: Lo
             </TooltipTrigger>
             <TooltipContent>
               <span className="text-xs">
-                Some keys in this locale don't match the default locale. Add missing keys or remove extra ones to sync
-                translations.
+                Some keys in this target locale don't match the default locale. Add missing keys or remove extra ones to
+                sync translations.
               </span>
             </TooltipContent>
           </Tooltip>
