@@ -27,7 +27,7 @@ export class ClickHouseService implements OnModuleDestroy {
       return;
     }
 
-    if (process.env.NODE_ENV === 'local') {
+    if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
       const defaultClient = createClient({
         host: 'http://localhost:8123',
         username: 'default',
