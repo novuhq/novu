@@ -51,10 +51,7 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
     protected readonly logger: PinoLogger,
     protected readonly schema: T,
     protected readonly schemaOrderBy: SchemaKeys<T>[],
-    protected readonly featureFlagsService: FeatureFlagsService,
-    protected readonly options: {
-      isLocal?: boolean;
-    } = {}
+    protected readonly featureFlagsService: FeatureFlagsService
   ) {
     this.initialize();
   }
