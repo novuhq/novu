@@ -7,6 +7,7 @@ export type ListNotificationsArgs = {
   data?: Record<string, unknown>;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
   limit?: number;
   after?: string;
   offset?: number;
@@ -21,6 +22,7 @@ export type FilterCountArgs = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
 };
 
 export type FiltersCountArgs = {
@@ -29,6 +31,7 @@ export type FiltersCountArgs = {
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
+    seen?: boolean;
     data?: Record<string, unknown>;
   }>;
 };

@@ -2,12 +2,36 @@ import { useState, useEffect, useRef } from 'react';
 import { ListNotificationsResponse, Notification, NovuError, isSameFilter, NotificationFilter } from '@novu/js';
 import { useNovu } from './NovuProvider';
 
+/**
+ * Props for the useNotifications hook.
+ *
+ * @example
+ * ```tsx
+ * // Get unread notifications
+ * const { notifications } = useNotifications({
+ *   read: false
+ * });
+ *
+ * // Get unseen notifications with specific tags
+ * const { notifications } = useNotifications({
+ *   seen: false,
+ *   tags: ['important']
+ * });
+ *
+ * // Get seen but unread notifications
+ * const { notifications } = useNotifications({
+ *   seen: true,
+ *   read: false
+ * });
+ * ```
+ */
 export type UseNotificationsProps = {
   tags?: string[];
   data?: Record<string, unknown>;
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
   limit?: number;
   onSuccess?: (data: Notification[]) => void;
   onError?: (error: NovuError) => void;
@@ -36,7 +60,17 @@ export type UseNotificationsResult = {
 };
 
 export const useNotifications = (props?: UseNotificationsProps): UseNotificationsResult => {
-  const { tags, data: dataFilter, read, archived = false, snoozed = false, limit, onSuccess, onError } = props || {};
+  const {
+    tags,
+    data: dataFilter,
+    read,
+    archived = false,
+    snoozed = false,
+    seen,
+    limit,
+    onSuccess,
+    onError,
+  } = props || {};
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
   const { notifications, on } = useNovu();
   const [data, setData] = useState<Array<Notification>>();
@@ -64,7 +98,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   }, []);
 
   useEffect(() => {
-    const newFilter = { tags, data: dataFilter, read, archived, snoozed };
+    const newFilter = { tags, data: dataFilter, read, archived, snoozed, seen };
     if (filterRef.current && isSameFilter(filterRef.current, newFilter)) {
       return;
     }
@@ -72,7 +106,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     filterRef.current = newFilter;
 
     fetchNotifications({ refetch: true });
-  }, [tags, dataFilter, read, archived, snoozed]);
+  }, [tags, dataFilter, read, archived, snoozed, seen]);
 
   const fetchNotifications = async (options?: { refetch: boolean }) => {
     if (options?.refetch) {
@@ -87,6 +121,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       read,
       archived,
       snoozed,
+      seen,
       limit,
       after: options?.refetch ? undefined : after,
     });
@@ -103,7 +138,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   const refetch = () => {
-    notifications.clearCache({ filter: { tags, read, archived, snoozed, data: dataFilter } });
+    notifications.clearCache({ filter: { tags, read, archived, snoozed, seen, data: dataFilter } });
 
     return fetchNotifications({ refetch: true });
   };

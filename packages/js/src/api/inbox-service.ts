@@ -51,12 +51,14 @@ export class InboxService {
     read,
     tags,
     snoozed,
+    seen,
     data,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
+    seen?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
@@ -81,6 +83,9 @@ export class InboxService {
     if (snoozed !== undefined) {
       searchParams.append('snoozed', `${snoozed}`);
     }
+    if (seen !== undefined) {
+      searchParams.append('seen', `${seen}`);
+    }
     if (data !== undefined) {
       searchParams.append('data', JSON.stringify(data));
     }
@@ -91,7 +96,14 @@ export class InboxService {
   count({
     filters,
   }: {
-    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; data?: Record<string, unknown> }>;
+    filters: Array<{
+      tags?: string[];
+      read?: boolean;
+      archived?: boolean;
+      snoozed?: boolean;
+      seen?: boolean;
+      data?: Record<string, unknown>;
+    }>;
   }): Promise<{
     data: Array<{
       count: number;

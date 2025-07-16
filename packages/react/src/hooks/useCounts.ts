@@ -8,6 +8,27 @@ type Count = {
   filter: NotificationFilter;
 };
 
+/**
+ * Props for the useCounts hook.
+ *
+ * @example
+ * ```tsx
+ * // Count unread notifications
+ * const { counts } = useCounts({
+ *   filters: [{ read: false }]
+ * });
+ *
+ * // Count unseen notifications with specific tags
+ * const { counts } = useCounts({
+ *   filters: [{ seen: false, tags: ['important'] }]
+ * });
+ *
+ * // Count seen but unread notifications
+ * const { counts } = useCounts({
+ *   filters: [{ seen: true, read: false }]
+ * });
+ * ```
+ */
 export type UseCountsProps = {
   filters: NotificationFilter[];
   onSuccess?: (data: Count[]) => void;

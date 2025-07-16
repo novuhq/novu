@@ -135,6 +135,7 @@ export type NotificationFilter = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
   data?: Record<string, unknown>;
 };
 
