@@ -91,6 +91,7 @@ export * from "./fieldfilterpartdto.js";
 export * from "./generatelayoutpreviewresponsedto.js";
 export * from "./generatepreviewrequestdto.js";
 export * from "./generatepreviewresponsedto.js";
+export * from "./getenvironmenttagsdto.js";
 export * from "./getsubscriberpreferencesdto.js";
 export * from "./inappcontroldto.js";
 export * from "./inappcontrolsmetadataresponsedto.js";

@@ -5,7 +5,11 @@ import { useSaveTranslation } from '@/hooks/use-save-translation';
 import { useDeleteTranslation } from '@/hooks/use-delete-translation';
 import { useTranslationEditor } from './hooks';
 
-export function useTranslationDrawerLogic(translationGroup: TranslationGroup, defaultLocale?: string) {
+export function useTranslationDrawerLogic(
+  translationGroup: TranslationGroup,
+  initialLocale?: string,
+  onLocaleChange?: (locale: string) => void
+) {
   const [selectedLocale, setSelectedLocale] = useState<string | null>(null);
 
   const resource = useMemo(
@@ -17,13 +21,13 @@ export function useTranslationDrawerLogic(translationGroup: TranslationGroup, de
   );
 
   useEffect(() => {
-    // Prioritize default locale if it exists in the locales list
+    // Prioritize initialLocale, then fall back to first locale
     const preferredLocale =
-      defaultLocale && translationGroup.locales.includes(defaultLocale)
-        ? defaultLocale
+      initialLocale && translationGroup.locales.includes(initialLocale)
+        ? initialLocale
         : translationGroup.locales[0] || null;
     setSelectedLocale(preferredLocale);
-  }, [translationGroup.locales, translationGroup.updatedAt, defaultLocale]);
+  }, [translationGroup.locales, translationGroup.updatedAt, initialLocale]);
 
   const {
     data: selectedTranslation,
@@ -39,9 +43,13 @@ export function useTranslationDrawerLogic(translationGroup: TranslationGroup, de
   const saveTranslationMutation = useSaveTranslation();
   const deleteTranslationMutation = useDeleteTranslation();
 
-  const handleLocaleSelect = useCallback((locale: string) => {
-    setSelectedLocale(locale);
-  }, []);
+  const handleLocaleSelect = useCallback(
+    (locale: string) => {
+      setSelectedLocale(locale);
+      onLocaleChange?.(locale);
+    },
+    [onLocaleChange]
+  );
 
   const handleSave = useCallback(async () => {
     if (!editor.modifiedContent || !selectedLocale) return;
@@ -62,15 +70,12 @@ export function useTranslationDrawerLogic(translationGroup: TranslationGroup, de
         locale,
       });
 
-      // React Query will automatically refetch and useEffect will handle the update
-
       const remainingLocales = translationGroup.locales.filter((l) => l !== locale);
-      // Prioritize default locale if it exists in remaining locales
-      const nextLocale =
-        defaultLocale && remainingLocales.includes(defaultLocale) ? defaultLocale : remainingLocales[0] || null;
+      // Select the first remaining locale
+      const nextLocale = remainingLocales[0] || null;
       setSelectedLocale(nextLocale);
     },
-    [deleteTranslationMutation, resource, translationGroup.locales, defaultLocale]
+    [deleteTranslationMutation, resource, translationGroup.locales]
   );
 
   return {

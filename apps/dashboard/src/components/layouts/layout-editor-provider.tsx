@@ -8,7 +8,7 @@ import { useFetchLayout } from '@/hooks/use-fetch-layout';
 import { createContextHook } from '@/utils/context';
 import { parse, stringify } from '@/utils/json';
 import { useLayoutPreview } from '@/hooks/use-layout-preview';
-import { getControlsDefaultValues } from '@/utils/default-values';
+import { getLayoutControlsDefaultValues } from '@/utils/default-values';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
@@ -46,7 +46,7 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
 
   const { layout, isPending } = useFetchLayout({ layoutSlug });
 
-  const defaultValues = useMemo(() => (layout ? getControlsDefaultValues(layout) : {}), [layout]);
+  const defaultValues = useMemo(() => (layout ? getLayoutControlsDefaultValues(layout) : {}), [layout]);
   const values = useMemo(() => (layout?.controls.values.email ?? {}) as Record<string, unknown>, [layout]);
 
   const form = useForm({

@@ -15,6 +15,8 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   defaultLocale?: string;
 
+  targetLocales?: string[];
+
   domain?: string;
 
   productUseCases?: ProductUseCases;

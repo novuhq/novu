@@ -17,10 +17,12 @@ import { useFetchWorkflowTestData } from '@/hooks/use-fetch-workflow-test-data';
 import { Protect } from '../../../utils/protect';
 import { parseJsonValue } from '@/components/workflow-editor/steps/utils/preview-context.utils';
 import { LocaleSelect } from '@/components/primitives/locale-select';
-import { useFetchTranslations, type FetchTranslationsParams } from '@/hooks/use-fetch-translations';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
+import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { WorkflowTranslationStatus } from '@/components/workflow-editor/workflow-translation-status';
 
 type StepEditorLayoutProps = {
   workflow: WorkflowResponseDto;
@@ -38,15 +40,15 @@ function StepEditorContent() {
   const { testData } = useFetchWorkflowTestData({ workflowSlug });
   const isTranslationsEnabled = useIsTranslationEnabled();
 
-  // Fetch translations for the current workflow
-  const { data: translationsData } = useFetchTranslations({
-    resourceId: workflow._id,
-    resourceType: 'workflow' as FetchTranslationsParams['resourceType'],
+  // Fetch translation group to get outdated locales status
+  const { data: translationGroup } = useFetchTranslationGroup({
+    resourceId: workflow.workflowId,
+    resourceType: LocalizationResourceEnum.WORKFLOW,
     enabled: isTranslationsEnabled,
   });
 
   // Extract available locales from translations
-  const availableLocales = translationsData?.data?.map((translation) => translation.locale) || [];
+  const availableLocales = translationGroup?.locales || [];
 
   const handleTestWorkflowClick = () => {
     setIsTestDrawerOpen(true);
@@ -93,7 +95,9 @@ function StepEditorContent() {
         <div className="flex min-h-0 flex-1 flex-col">
           <ResizableLayout autoSaveId="step-editor-content-layout">
             <ResizableLayout.EditorPanel>
-              <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} />
+              <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle}>
+                <WorkflowTranslationStatus workflowId={workflow.workflowId} className="text-xs" />
+              </PanelHeader>
               <div className="flex-1 overflow-y-auto">
                 <div className="h-full p-3">
                   {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (
