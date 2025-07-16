@@ -194,6 +194,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read,
       archived,
       snoozed,
+      seen,
       data,
     }: {
       environmentId: string;
@@ -203,6 +204,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
       snoozed?: boolean;
+      seen?: boolean;
       data?: Record<string, unknown>;
     },
     options: { limit: number; offset: number; after?: string }
@@ -235,6 +237,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     if (typeof snoozed === 'boolean') {
       query.snoozedUntil = snoozed ? { $exists: true, $ne: null } : { $eq: null };
+    }
+
+    if (typeof seen === 'boolean') {
+      query.seen = seen;
+    } else {
+      query.seen = { $in: [true, false] };
     }
 
     if (data) {

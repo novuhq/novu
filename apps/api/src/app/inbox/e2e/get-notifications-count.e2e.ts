@@ -55,7 +55,7 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
   });
 
   const getNotificationsCount = async (
-    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; snoozed?: boolean }>
+    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; snoozed?: boolean; seen?: boolean }>
   ) => {
     return await session.testAgent
       .get(`/v1/inbox/notifications/count?filters=${JSON.stringify(filters)}`)
@@ -295,5 +295,85 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     });
     expect(body.data[1].count).to.eq(6);
     expect(body.data[1].filter).to.deep.equal({ read: false });
+  });
+
+  it('should return notifications count for seen notifications', async function () {
+    const count = 4;
+    await triggerEvent(template, count);
+    await messageRepository.update(
+      {
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        channel: ChannelTypeEnum.IN_APP,
+      },
+      { $set: { seen: true } }
+    );
+
+    const { body, status } = await getNotificationsCount([{ seen: true }]);
+
+    expect(status).to.equal(200);
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
+      seen: true,
+    });
+  });
+
+  it('should return notifications count for unseen notifications', async function () {
+    const count = 4;
+    await triggerEvent(template, count);
+
+    const { body, status } = await getNotificationsCount([{ seen: false }]);
+
+    expect(status).to.equal(200);
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
+      seen: false,
+    });
+  });
+
+  it('should return seen notifications count for specified tags', async function () {
+    const count = 4;
+    const tags = ['hello'];
+    const templateWithTags = await session.createTemplate({
+      noFeedId: true,
+      tags,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test content for newsletter',
+          actor: {
+            type: ActorTypeEnum.SYSTEM_ICON,
+            data: SystemAvatarIconEnum.WARNING,
+          },
+        },
+      ],
+    });
+    await triggerEvent(template, 2);
+    await triggerEvent(templateWithTags, count);
+
+    await messageRepository.update(
+      {
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        channel: ChannelTypeEnum.IN_APP,
+        tags: { $in: tags },
+      },
+      { $set: { seen: true } }
+    );
+
+    const { body, status } = await getNotificationsCount([{ tags, seen: true }]);
+
+    expect(status).to.equal(200);
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.eq(1);
+    expect(body.data[0].count).to.eq(count);
+    expect(body.data[0].filter).to.deep.equal({
+      tags,
+      seen: true,
+    });
   });
 });

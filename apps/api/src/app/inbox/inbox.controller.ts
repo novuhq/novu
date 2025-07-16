@@ -121,6 +121,7 @@ export class InboxController {
         read: query.read,
         archived: query.archived,
         snoozed: query.snoozed,
+        seen: query.seen,
         data: query.data,
       })
     );
