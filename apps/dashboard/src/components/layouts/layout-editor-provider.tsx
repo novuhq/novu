@@ -2,7 +2,7 @@ import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 import { useParams, useBlocker, useLocation } from 'react-router-dom';
 import { useForm, UseFormReturn } from 'react-hook-form';
 import { ExternalToast } from 'sonner';
-import { GeneratePreviewResponseDto, LayoutResponseDto, ResourceOriginEnum } from '@novu/shared';
+import { GeneratePreviewResponseDto, LayoutResponseDto, ResourceOriginEnum, RuntimeIssue } from '@novu/shared';
 
 import { useFetchLayout } from '@/hooks/use-fetch-layout';
 import { createContextHook } from '@/utils/context';
@@ -14,6 +14,8 @@ import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
 import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layout';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { NovuApiError } from '@/api/api.client';
+import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -78,11 +80,49 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
     });
   }, 500);
 
+  const setFormIssues = useCallback(
+    (controlIssues?: Record<string, RuntimeIssue[]>) => {
+      const flattenedIssues = flattenIssues(controlIssues);
+      const layoutIssues = Object.keys(flattenedIssues).reduce(
+        (acc, key) => {
+          acc[key.replace('email.', '')] = flattenedIssues[key];
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+
+      const currentErrors = form.formState.errors;
+      Object.keys(currentErrors).forEach((key) => {
+        if (!layoutIssues[key]) {
+          form.clearErrors(key);
+        }
+      });
+
+      Object.entries(layoutIssues).forEach(([key, value]) => {
+        form.setError(key as string, { message: value });
+      });
+    },
+    [form]
+  );
+
   const { updateLayout, isPending: isUpdating } = useUpdateLayout({
     onSuccess: () => {
       showSuccessToast('Layout updated successfully', '', toastOptions);
     },
     onError: (error) => {
+      if (error instanceof NovuApiError && 'controls' in (error.rawError as any)) {
+        const controlIssues = (error.rawError as any).controls;
+        setFormIssues(controlIssues);
+
+        const firstControlError = getFirstErrorMessage({ controls: controlIssues }, 'controls');
+        showErrorToast(
+          firstControlError?.message ?? 'Failed to update layout',
+          'Failed to update layout',
+          toastOptions
+        );
+        return;
+      }
+
       showErrorToast(
         `Failed to update layout: ${(error as Error).message.toLowerCase()}`,
         (error as Error).message,

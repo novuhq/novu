@@ -7,12 +7,12 @@ import type {
   ResourceTypeEnum,
 } from '../../types';
 import { JSONSchemaDto } from '../../dto/workflows';
-import type { StepContentIssue, StepIntegrationIssue, StepIssue } from '../../dto/workflows/step.dto';
 import { ControlSchemas, IMessageTemplate } from '../message-template';
 import { INotificationGroup } from '../notification-group';
 import { INotificationBridgeTrigger, INotificationTrigger } from '../notification-trigger';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
+import { RuntimeIssue } from '../../utils/issues';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -52,8 +52,8 @@ export interface IBlueprint extends INotificationTemplate {
 }
 
 export class StepIssues {
-  controls?: Record<string, StepContentIssue[]>;
-  integration?: Record<string, StepIntegrationIssue[]>;
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }
 
 export interface IStepVariant {

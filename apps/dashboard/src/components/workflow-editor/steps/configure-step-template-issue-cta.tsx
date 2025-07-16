@@ -3,7 +3,7 @@ import { SidebarContent } from '@/components/side-navigation/sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { titleize } from '@/utils/titleize';
 import { cn } from '@/utils/ui';
-import { StepContentIssue, StepIntegrationIssue, StepResponseDto } from '@novu/shared';
+import { RuntimeIssue, StepResponseDto } from '@novu/shared';
 import { PropsWithChildren } from 'react';
 import { RiArrowRightUpLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
@@ -32,7 +32,7 @@ export const ConfigureStepTemplateIssuesContainer = (props: PropsWithChildren) =
 
 type ConfigureStepTemplateIssueCtaProps = {
   step: StepResponseDto;
-  issue: StepContentIssue | StepIntegrationIssue;
+  issue: RuntimeIssue;
   type: 'error' | 'info';
 };
 

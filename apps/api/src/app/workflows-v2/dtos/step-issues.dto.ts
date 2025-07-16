@@ -1,3 +1,4 @@
+import { RuntimeIssue } from '@novu/shared';
 import { ApiExtraModels, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { IsOptional, ValidateNested } from 'class-validator';
 import { StepContentIssueDto } from './step-content-issue.dto';
@@ -17,7 +18,7 @@ export class StepIssuesDto {
   })
   @IsOptional()
   @ValidateNested()
-  controls?: Record<string, StepContentIssueDto[]>;
+  controls?: Record<string, RuntimeIssue[]>;
 
   @ApiPropertyOptional({
     description: 'Integration-related issues',
@@ -31,5 +32,5 @@ export class StepIssuesDto {
   })
   @IsOptional()
   @ValidateNested()
-  integration?: Record<string, StepIntegrationIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }

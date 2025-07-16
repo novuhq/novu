@@ -12,7 +12,7 @@ import {
   InAppStepUpsertDto,
   JSONSchemaDto,
   ListWorkflowResponse,
-  StepContentIssueEnum,
+  ContentIssueEnum,
   StepTypeEnum,
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
@@ -1052,8 +1052,8 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           const workflowCreated = await createWorkflow(apiClient, buildWorkflow({ steps } as CreateWorkflowDto));
           const step = workflowCreated.steps[0];
 
-          expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(StepContentIssueEnum.TierLimitExceeded);
-          expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(StepContentIssueEnum.TierLimitExceeded);
+          expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(ContentIssueEnum.TierLimitExceeded);
+          expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(ContentIssueEnum.TierLimitExceeded);
         });
 
         it('should always show issues for illegal variables in control values', async () => {

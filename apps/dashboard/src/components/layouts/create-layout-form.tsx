@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { LayoutCreationSourceEnum, slugify } from '@novu/shared';
+import { LayoutCreationSourceEnum, LayoutResponseDto, slugify } from '@novu/shared';
 
 import {
   Form,
@@ -20,20 +20,21 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useTelemetry } from '@/hooks/use-telemetry';
 
 interface CreateLayoutFormProps {
-  onSuccess?: () => void;
+  onSuccess?: (layout: LayoutResponseDto) => void;
   onError?: (error: Error) => void;
   onSubmitStart?: () => void;
 }
 
 export function CreateLayoutForm({ onSuccess, onError, onSubmitStart }: CreateLayoutFormProps) {
   const track = useTelemetry();
+
   const { createLayout } = useCreateLayout({
-    onSuccess: () => {
+    onSuccess: (layout) => {
       showSuccessToast(`Layout created successfully`);
       track(TelemetryEvent.LAYOUTS_PAGE_VISIT); // Using closest available event
 
       if (onSuccess) {
-        onSuccess();
+        onSuccess(layout);
       }
     },
     onError: (error) => {
