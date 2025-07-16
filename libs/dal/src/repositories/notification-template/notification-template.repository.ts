@@ -29,7 +29,6 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
-      status: { $ne: WorkflowStatusEnum.ERROR },
     }).populate('updatedBy');
 
     return this.mapEntities(items);
