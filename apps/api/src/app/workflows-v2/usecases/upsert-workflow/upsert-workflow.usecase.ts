@@ -22,6 +22,7 @@ import {
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
+  ClientSession,
 } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
@@ -75,14 +76,13 @@ export class UpsertWorkflowUseCase {
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    // TODO: use transaction to ensure that the workflows, steps and controls are upserted atomically
-
     const existingWorkflow = command.workflowIdOrInternalId
       ? await this.getWorkflowByIdsUseCase.execute(
           GetWorkflowByIdsCommand.create({
             environmentId: command.user.environmentId,
             organizationId: command.user.organizationId,
             workflowIdOrInternalId: command.workflowIdOrInternalId,
+            session: command.session,
           })
         )
       : null;
@@ -93,13 +93,19 @@ export class UpsertWorkflowUseCase {
       this.mixpanelTrack(command, 'Workflow Update - [API]');
 
       upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
-        UpdateWorkflowCommand.create(await this.buildUpdateWorkflowCommand(command, existingWorkflow))
+        UpdateWorkflowCommand.create({
+          ...(await this.buildUpdateWorkflowCommand(command, existingWorkflow)),
+          session: command.session,
+        })
       );
     } else {
       this.mixpanelTrack(command, 'Workflow Created - [API]');
 
       upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
-        CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
+        CreateWorkflowCommand.create({
+          ...(await this.buildCreateWorkflowCommand(command)),
+          session: command.session,
+        })
       );
     }
 
@@ -143,7 +149,7 @@ export class UpsertWorkflowUseCase {
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
     const { user, workflowDto, preserveWorkflowId } = command;
     const isWorkflowActive = workflowDto?.active ?? true;
-    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId);
+    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId, command.session);
 
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
@@ -154,6 +160,7 @@ export class UpsertWorkflowUseCase {
       notificationGroupId,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
+      updatedBy: user._id,
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
@@ -184,6 +191,7 @@ export class UpsertWorkflowUseCase {
     return {
       id: existingWorkflow._id,
       environmentId: existingWorkflow._environmentId,
+      updatedBy: user._id,
       organizationId: user.organizationId,
       userId: user._id,
       name: workflowDto.name,
@@ -303,14 +311,18 @@ export class UpsertWorkflowUseCase {
     return finalStepId;
   }
 
-  private async getNotificationGroup(environmentId: string): Promise<string | undefined> {
+  private async getNotificationGroup(
+    environmentId: string,
+    session?: ClientSession | null
+  ): Promise<string | undefined> {
     return (
       await this.notificationGroupRepository.findOne(
         {
           name: 'General',
           _environmentId: environmentId,
         },
-        '_id'
+        '_id',
+        { session }
       )
     )?._id;
   }
@@ -353,13 +365,16 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      return this.controlValuesRepository.delete({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
-        _workflowId: workflowId,
-        _stepId: step._templateId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
+      return this.controlValuesRepository.delete(
+        {
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          _workflowId: workflowId,
+          _stepId: step._templateId,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+        },
+        { session: command.session }
+      );
     }
 
     const newControlValues = controlValues || {};

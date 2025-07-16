@@ -1,4 +1,4 @@
-import { EnvironmentEnum, ResourceOriginEnum, PermissionsEnum } from '@novu/shared';
+import { EnvironmentEnum, ResourceOriginEnum, PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -290,7 +290,9 @@ export const WorkflowCanvas = ({
   isTemplateStorePreview?: boolean;
 }) => {
   const has = useHasPermission();
-  const showReadOnlyOverlay = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const { currentEnvironment } = useEnvironment();
+  const hasPermission = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const showReadOnlyOverlay = !hasPermission || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   return (
     <ReactFlowProvider>
@@ -312,7 +314,11 @@ export const WorkflowCanvas = ({
               <InlineToast
                 className="bg-warning/10 border shadow-md"
                 variant={'warning'}
-                description="Content visible but locked for editing. Contact an admin for edit access."
+                description={
+                  hasPermission && currentEnvironment?.type !== EnvironmentTypeEnum.DEV
+                    ? 'Edit the workflow in your development environment.'
+                    : 'Content visible but locked for editing. Contact an admin for edit access.'
+                }
                 title="View-only mode: "
               />
             </div>

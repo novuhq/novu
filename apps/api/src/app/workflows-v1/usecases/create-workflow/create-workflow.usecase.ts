@@ -8,6 +8,7 @@ import {
   NotificationGroupEntity,
   NotificationGroupRepository,
   NotificationTemplateRepository,
+  ClientSession,
 } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
@@ -77,12 +78,13 @@ export class CreateWorkflow {
     await this.resourceValidatorService.validateWorkflowLimit(command.environmentId);
 
     let storedWorkflow!: WorkflowWithPreferencesResponseDto;
-    await this.notificationTemplateRepository.withTransaction(async () => {
+
+    const workflowCreation = async (session?: ClientSession | null) => {
       const triggerIdentifier = this.generateTriggerIdentifier(command);
 
       const parentChangeId: string = NotificationTemplateRepository.createObjectId();
 
-      const templateSteps = await this.storeTemplateSteps(command, parentChangeId);
+      const templateSteps = await this.storeTemplateSteps(command, parentChangeId, session);
       const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
       const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
         key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
@@ -101,14 +103,24 @@ export class CreateWorkflow {
         command.validatePayload = command.validatePayload ?? true;
       }
 
-      storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
+      storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier, session);
 
       if (command.isTranslationEnabled !== undefined) {
-        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command);
+        await this.toggleV2TranslationsForWorkflow(triggerIdentifier, command, session);
       }
 
       await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
-    });
+    };
+
+    if (command.session) {
+      // If session is provided, use it (we're already in a transaction)
+      await workflowCreation(command.session);
+    } else {
+      // If no session, create our own transaction
+      await this.notificationTemplateRepository.withTransaction(async (session) => {
+        await workflowCreation(session);
+      });
+    }
 
     try {
       if (
@@ -145,7 +157,11 @@ export class CreateWorkflow {
     return storedWorkflow;
   }
 
-  private async toggleV2TranslationsForWorkflow(workflowIdentifier: string, command: CreateWorkflowCommand) {
+  private async toggleV2TranslationsForWorkflow(
+    workflowIdentifier: string,
+    command: CreateWorkflowCommand,
+    session?: ClientSession | null
+  ) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
     const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
 
@@ -165,6 +181,7 @@ export class CreateWorkflow {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        session,
       });
     } catch (error) {
       this.logger.error(
@@ -321,7 +338,8 @@ export class CreateWorkflow {
     command: CreateWorkflowCommand,
     templateSteps: INotificationTemplateStep[],
     trigger: INotificationTrigger,
-    triggerIdentifier: string
+    triggerIdentifier: string,
+    session?: ClientSession | null
   ): Promise<WorkflowWithPreferencesResponseDto> {
     this.logger.info(`Creating workflow ${JSON.stringify(command)}`);
 
@@ -347,13 +365,14 @@ export class CreateWorkflow {
       origin: command.origin,
       status: command.status,
       issues: command.issues,
+      ...(command.updatedBy ? { _updatedBy: command.updatedBy } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),
       ...(command.validatePayload !== undefined ? { validatePayload: command.validatePayload } : {}),
       ...(command.data ? { data: command.data } : {}),
     };
 
-    const savedWorkflow = await this.notificationTemplateRepository.create(workflowData);
+    const savedWorkflow = await this.notificationTemplateRepository.create(workflowData, { session });
 
     // defaultPreferences is required, so we always call the upsert
     await this.upsertPreferences.upsertWorkflowPreferences(
@@ -378,24 +397,24 @@ export class CreateWorkflow {
       );
     }
 
-    const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId);
+    const item = await this.notificationTemplateRepository.findById(savedWorkflow._id, command.environmentId, session);
     if (!item) throw new NotFoundException(`Workflow ${savedWorkflow._id} is not found`);
 
     this.sendTemplateCreationEvent(command, triggerIdentifier);
 
-    return this.getWorkflowWithPreferencesUseCase.execute(
-      GetWorkflowWithPreferencesCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        workflowIdOrInternalId: savedWorkflow._id,
-      })
-    );
+    return this.getWorkflowWithPreferencesUseCase.execute({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      workflowIdOrInternalId: savedWorkflow._id,
+      session,
+    });
   }
 
   @Instrument()
   private async storeTemplateSteps(
     command: CreateWorkflowCommand,
-    parentChangeId: string
+    parentChangeId: string,
+    session?: ClientSession | null
   ): Promise<INotificationTemplateStep[]> {
     let parentStepId: string | null = null;
     const templateSteps: INotificationTemplateStep[] = [];
@@ -403,40 +422,46 @@ export class CreateWorkflow {
     for (const step of command.steps) {
       if (!step.template) throw new BadRequestException(`Unexpected error: message template is missing`);
 
-      const createdMessageTemplate = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          type: step.template.type,
-          name: step.template.name,
-          content: step.template.content,
-          variables: step.template.variables,
-          contentType: step.template.contentType,
-          cta: step.template.cta,
-          subject: step.template.subject,
-          title: step.template.title,
-          feedId: step.template.feedId,
-          layoutId: step.template.layoutId,
-          preheader: step.template.preheader,
-          senderName: step.template.senderName,
-          actor: step.template.actor,
-          controls: step.template.controls,
-          output: step.template.output,
-          stepId: step.template.stepId,
-          parentChangeId,
-          workflowType: command.type,
-        })
-      );
-
-      const storedVariants = await this.storeVariantSteps({
-        variants: step.variants,
-        parentChangeId,
+      const messageTemplateCommand = {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         userId: command.userId,
+        type: step.template.type,
+        name: step.template.name,
+        content: step.template.content,
+        variables: step.template.variables,
+        contentType: step.template.contentType,
+        cta: step.template.cta,
+        subject: step.template.subject,
+        title: step.template.title,
+        feedId: step.template.feedId,
+        layoutId: step.template.layoutId,
+        preheader: step.template.preheader,
+        senderName: step.template.senderName,
+        actor: step.template.actor,
+        controls: step.template.controls,
+        output: step.template.output,
+        stepId: step.template.stepId,
+        parentChangeId,
         workflowType: command.type,
-      });
+        ...(session ? { session } : {}),
+      };
+
+      const createdMessageTemplate = await this.createMessageTemplate.execute(
+        CreateMessageTemplateCommand.create(messageTemplateCommand)
+      );
+
+      const storedVariants = await this.storeVariantSteps(
+        {
+          variants: step.variants,
+          parentChangeId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          workflowType: command.type,
+        },
+        session
+      );
 
       const stepId = createdMessageTemplate._id;
       const templateStep: Partial<INotificationTemplateStep> = {
@@ -468,21 +493,24 @@ export class CreateWorkflow {
     return templateSteps;
   }
 
-  private async storeVariantSteps({
-    variants,
-    parentChangeId,
-    organizationId,
-    environmentId,
-    userId,
-    workflowType,
-  }: {
-    variants: NotificationStepVariantCommand[] | undefined;
-    parentChangeId: string;
-    organizationId: string;
-    environmentId: string;
-    userId: string;
-    workflowType: ResourceTypeEnum;
-  }): Promise<IStepVariant[]> {
+  private async storeVariantSteps(
+    {
+      variants,
+      parentChangeId,
+      organizationId,
+      environmentId,
+      userId,
+      workflowType,
+    }: {
+      variants: NotificationStepVariantCommand[] | undefined;
+      parentChangeId: string;
+      organizationId: string;
+      environmentId: string;
+      userId: string;
+      workflowType: ResourceTypeEnum;
+    },
+    session?: ClientSession | null
+  ): Promise<IStepVariant[]> {
     if (!variants?.length) return [];
 
     const variantsList: IStepVariant[] = [];
@@ -491,27 +519,30 @@ export class CreateWorkflow {
     for (const variant of variants) {
       if (!variant.template) throw new BadRequestException(`Unexpected error: variants message template is missing`);
 
+      const variantTemplateCommand = {
+        organizationId,
+        environmentId,
+        userId,
+        type: variant.template.type,
+        name: variant.template.name,
+        content: variant.template.content,
+        variables: variant.template.variables,
+        contentType: variant.template.contentType,
+        cta: variant.template.cta,
+        subject: variant.template.subject,
+        title: variant.template.title,
+        feedId: variant.template.feedId,
+        layoutId: variant.template.layoutId,
+        preheader: variant.template.preheader,
+        senderName: variant.template.senderName,
+        actor: variant.template.actor,
+        parentChangeId,
+        workflowType,
+        ...(session ? { session } : {}),
+      };
+
       const variantTemplate = await this.createMessageTemplate.execute(
-        CreateMessageTemplateCommand.create({
-          organizationId,
-          environmentId,
-          userId,
-          type: variant.template.type,
-          name: variant.template.name,
-          content: variant.template.content,
-          variables: variant.template.variables,
-          contentType: variant.template.contentType,
-          cta: variant.template.cta,
-          subject: variant.template.subject,
-          title: variant.template.title,
-          feedId: variant.template.feedId,
-          layoutId: variant.template.layoutId,
-          preheader: variant.template.preheader,
-          senderName: variant.template.senderName,
-          actor: variant.template.actor,
-          parentChangeId,
-          workflowType,
-        })
+        CreateMessageTemplateCommand.create(variantTemplateCommand)
       );
 
       variantsList.push({

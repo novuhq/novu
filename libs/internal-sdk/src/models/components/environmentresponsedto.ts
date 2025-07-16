@@ -5,6 +5,7 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
+import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
@@ -13,6 +14,20 @@ import {
   ApiKeyDto$Outbound,
   ApiKeyDto$outboundSchema,
 } from "./apikeydto.js";
+
+/**
+ * Type of the environment
+ */
+export const EnvironmentResponseDtoType = {
+  Dev: "dev",
+  Prod: "prod",
+} as const;
+/**
+ * Type of the environment
+ */
+export type EnvironmentResponseDtoType = ClosedEnum<
+  typeof EnvironmentResponseDtoType
+>;
 
 export type EnvironmentResponseDto = {
   /**
@@ -32,6 +47,10 @@ export type EnvironmentResponseDto = {
    */
   identifier: string;
   /**
+   * Type of the environment
+   */
+  type?: EnvironmentResponseDtoType | null | undefined;
+  /**
    * List of API keys associated with the environment
    */
   apiKeys?: Array<ApiKeyDto> | undefined;
@@ -46,6 +65,27 @@ export type EnvironmentResponseDto = {
 };
 
 /** @internal */
+export const EnvironmentResponseDtoType$inboundSchema: z.ZodNativeEnum<
+  typeof EnvironmentResponseDtoType
+> = z.nativeEnum(EnvironmentResponseDtoType);
+
+/** @internal */
+export const EnvironmentResponseDtoType$outboundSchema: z.ZodNativeEnum<
+  typeof EnvironmentResponseDtoType
+> = EnvironmentResponseDtoType$inboundSchema;
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace EnvironmentResponseDtoType$ {
+  /** @deprecated use `EnvironmentResponseDtoType$inboundSchema` instead. */
+  export const inboundSchema = EnvironmentResponseDtoType$inboundSchema;
+  /** @deprecated use `EnvironmentResponseDtoType$outboundSchema` instead. */
+  export const outboundSchema = EnvironmentResponseDtoType$outboundSchema;
+}
+
+/** @internal */
 export const EnvironmentResponseDto$inboundSchema: z.ZodType<
   EnvironmentResponseDto,
   z.ZodTypeDef,
@@ -55,6 +95,7 @@ export const EnvironmentResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   _organizationId: z.string(),
   identifier: z.string(),
+  type: z.nullable(EnvironmentResponseDtoType$inboundSchema).optional(),
   apiKeys: z.array(ApiKeyDto$inboundSchema).optional(),
   _parentId: z.string().optional(),
   slug: z.string().optional(),
@@ -72,6 +113,7 @@ export type EnvironmentResponseDto$Outbound = {
   name: string;
   _organizationId: string;
   identifier: string;
+  type?: string | null | undefined;
   apiKeys?: Array<ApiKeyDto$Outbound> | undefined;
   _parentId?: string | undefined;
   slug?: string | undefined;
@@ -87,6 +129,7 @@ export const EnvironmentResponseDto$outboundSchema: z.ZodType<
   name: z.string(),
   organizationId: z.string(),
   identifier: z.string(),
+  type: z.nullable(EnvironmentResponseDtoType$outboundSchema).optional(),
   apiKeys: z.array(ApiKeyDto$outboundSchema).optional(),
   parentId: z.string().optional(),
   slug: z.string().optional(),

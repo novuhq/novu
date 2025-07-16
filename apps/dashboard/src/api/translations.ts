@@ -15,6 +15,7 @@ export type TranslationGroup = {
   locales: string[];
   createdAt: string;
   updatedAt: string;
+  outdatedLocales?: string[];
 };
 
 export type Translation = {
@@ -98,6 +99,20 @@ export const getTranslations = async ({
   const endpoint = `/translations?${queryString}`;
 
   return getV2<GetTranslationsResponse>(endpoint, { environment });
+};
+
+export const getTranslationGroup = async ({
+  environment,
+  resourceId,
+  resourceType,
+}: {
+  environment: IEnvironment;
+  resourceId: string;
+  resourceType: LocalizationResourceEnum;
+}): Promise<TranslationGroup> => {
+  const endpoint = `/translations/group/${resourceType}/${resourceId}`;
+  const response = await getV2<{ data: TranslationGroup }>(endpoint, { environment });
+  return response.data;
 };
 
 export type GetTranslationResponse = {

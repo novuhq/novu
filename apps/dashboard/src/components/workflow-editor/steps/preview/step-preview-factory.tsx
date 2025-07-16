@@ -17,15 +17,6 @@ const NoPreviewAvailable = memo(({ stepType }: { stepType: StepTypeEnum }) => {
   );
 });
 
-const UnavailablePreview = memo(() => {
-  return (
-    <div className="flex h-full items-center justify-center text-sm text-neutral-500">
-      Preview not available for this step configuration
-    </div>
-  );
-});
-
-// Memoize mobile preview wrappers to prevent unnecessary re-renders
 const MobilePreviewWrapper = memo(({ children, description }: { children: React.ReactNode; description: string }) => {
   return (
     <div className="flex flex-col items-center justify-center">

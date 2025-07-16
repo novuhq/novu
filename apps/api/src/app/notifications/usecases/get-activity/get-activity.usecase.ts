@@ -23,7 +23,7 @@ export class GetActivity {
     });
 
     const tracesEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
+      key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_READ_ENABLED,
       defaultValue: false,
       organization: { _id: command.organizationId },
       user: { _id: command.userId },

@@ -30,6 +30,11 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
         queryKey: [QueryKeys.fetchTags, currentEnvironment?._id],
       });
 
+      // Invalidate diff environment queries when workflows are duplicated
+      queryClient.invalidateQueries({
+        queryKey: ['diff-environments'],
+      });
+
       showSuccessToast(toastId);
       navigate(
         buildRoute(ROUTES.EDIT_WORKFLOW, {

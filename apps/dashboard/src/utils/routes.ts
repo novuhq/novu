@@ -57,6 +57,7 @@ export const ROUTES = {
   LAYOUTS_CREATE: '/env/:environmentSlug/layouts/create',
   LAYOUTS_EDIT: '/env/:environmentSlug/layouts/:layoutSlug',
   TRANSLATIONS: '/env/:environmentSlug/translations',
+  TRANSLATIONS_EDIT: '/env/:environmentSlug/translations/:resourceType/:resourceId/:locale',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

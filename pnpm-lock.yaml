@@ -495,6 +495,9 @@ importers:
       date-fns:
         specifier: ^2.29.2
         version: 2.29.3
+      deep-object-diff:
+        specifier: ^1.1.9
+        version: 1.1.9
       dotenv:
         specifier: ^16.5.0
         version: 16.5.0
@@ -614,7 +617,7 @@ importers:
         specifier: ^6.15.0
         version: 6.15.0(encoding@0.1.13)
       '@swc-node/register':
-        specifier: ^1.10.10
+        specifier: 1.10.10
         version: 1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2)
       '@types/async':
         specifier: ^3.2.1
@@ -2554,6 +2557,9 @@ importers:
       i18next:
         specifier: ^23.7.11
         version: 23.7.11
+      lodash:
+        specifier: ^4.17.15
+        version: 4.17.21
       multer:
         specifier: ^2.0.0
         version: 2.0.1
@@ -2564,6 +2570,9 @@ importers:
       '@types/chai':
         specifier: ^4.2.11
         version: 4.3.4
+      '@types/lodash':
+        specifier: ^4.17.7
+        version: 4.17.20
       '@types/mocha':
         specifier: ^10.0.8
         version: 10.0.8
@@ -15750,6 +15759,9 @@ packages:
   '@types/lodash@4.14.192':
     resolution: {integrity: sha512-km+Vyn3BYm5ytMO13k9KTp27O75rbQ0NFw+U//g+PX7VZyjCioXaRFisqSIJRECljcTv73G3i6BpglNGHgUQ5A==}
 
+  '@types/lodash@4.17.20':
+    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
+
   '@types/long@4.0.2':
     resolution: {integrity: sha512-MqTGEo5bj5t157U6fA/BiDynNkn0YknVdh48CMPkTSpFTVmvao5UQmm7uEF6xBEo7qIMAlY/JSleYaE6VOdpaA==}
 
@@ -19392,6 +19404,9 @@ packages:
 
   deep-is@0.1.4:
     resolution: {integrity: sha512-oIPzksmTg4/MriiaYGO+okXDT7ztn/w3Eptv/+gSIdMdKsJo0u4CfYNFJPy+4SKMuCqGw2wxnA+URMg3t8a/bQ==}
+
+  deep-object-diff@1.1.9:
+    resolution: {integrity: sha512-Rn+RuwkmkDwCi2/oXOFS9Gsr5lJZu/yTGpK7wAaAIE75CC+LCGEZHpY6VQJa/RoJcrmaA/docWJZvYohlNkWPA==}
 
   deepmerge-ts@7.1.0:
     resolution: {integrity: sha512-q6bNsfNBtgr8ZOQqmZbl94MmYWm+QcDNIkqCxVWiw1vKvf+y/N2dZQKdnDXn4c5Ygt/y63tDof6OCN+2YwWVEg==}
@@ -47588,7 +47603,7 @@ snapshots:
       '@storybook/preview-api': 7.4.2
       '@storybook/theming': 7.4.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@storybook/types': 7.4.2
-      '@types/lodash': 4.14.192
+      '@types/lodash': 4.17.20
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
@@ -47622,7 +47637,7 @@ snapshots:
       '@storybook/preview-api': 8.1.1
       '@storybook/theming': 8.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@storybook/types': 8.1.1
-      '@types/lodash': 4.14.192
+      '@types/lodash': 4.17.20
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
@@ -50229,7 +50244,7 @@ snapshots:
 
   '@types/lodash.get@4.4.7':
     dependencies:
-      '@types/lodash': 4.14.192
+      '@types/lodash': 4.17.20
 
   '@types/lodash.isequal@4.5.8':
     dependencies:
@@ -50240,6 +50255,8 @@ snapshots:
       '@types/lodash': 4.14.192
 
   '@types/lodash@4.14.192': {}
+
+  '@types/lodash@4.17.20': {}
 
   '@types/long@4.0.2':
     optional: true
@@ -55167,6 +55184,8 @@ snapshots:
   deep-freeze@0.0.1: {}
 
   deep-is@0.1.4: {}
+
+  deep-object-diff@1.1.9: {}
 
   deepmerge-ts@7.1.0: {}
 
@@ -73115,7 +73134,7 @@ snapshots:
   yup@0.32.11:
     dependencies:
       '@babel/runtime': 7.25.6
-      '@types/lodash': 4.14.192
+      '@types/lodash': 4.17.20
       lodash: 4.17.21
       lodash-es: 4.17.21
       nanoclone: 0.2.1
