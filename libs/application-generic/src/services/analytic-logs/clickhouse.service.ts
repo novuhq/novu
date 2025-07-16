@@ -20,7 +20,7 @@ export class ClickHouseService implements OnModuleDestroy {
       return;
     }
 
-    if (process.env.NODE_ENV === 'local') {
+    if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
       const defaultClient = createClient({
         host: 'http://localhost:8123',
         username: 'default',
@@ -43,7 +43,6 @@ export class ClickHouseService implements OnModuleDestroy {
       username: process.env.CLICK_HOUSE_USER,
       password: process.env.CLICK_HOUSE_PASSWORD,
       database: process.env.CLICK_HOUSE_DATABASE,
-      clickhouse_settings: { async_insert: 1 },
     });
 
     // this.logger.info('ClickHouse client created');

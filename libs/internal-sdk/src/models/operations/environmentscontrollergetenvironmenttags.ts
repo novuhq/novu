@@ -10,6 +10,9 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type EnvironmentsControllerGetEnvironmentTagsRequest = {
+  /**
+   * Environment internal ID (MongoDB ObjectId) or identifier
+   */
   environmentId: string;
   /**
    * A header for idempotency purposes

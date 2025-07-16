@@ -9,7 +9,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { UserSessionData, PermissionsEnum } from '@novu/shared';
-import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiParam } from '@nestjs/swagger';
 import { SkipPermissionsCheck, RequirePermissions } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
@@ -48,17 +48,23 @@ export class EnvironmentsController {
     description:
       'Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.',
   })
+  @ApiParam({
+    name: 'environmentId',
+    description: 'Environment internal ID (MongoDB ObjectId) or identifier',
+    type: String,
+    example: '6615943e7ace93b0540ae377',
+  })
   @ApiResponse(GetEnvironmentTagsDto, 200, true)
   @SdkMethodName('getTags')
   @ExternalApiAccessible()
   @SkipPermissionsCheck()
   async getEnvironmentTags(
     @UserSession() user: UserSessionData,
-    @Param('environmentId') environmentId: string
+    @Param('environmentId') environmentIdOrIdentifier: string
   ): Promise<GetEnvironmentTagsDto[]> {
     return await this.getEnvironmentTagsUsecase.execute(
       GetEnvironmentTagsCommand.create({
-        environmentId,
+        environmentIdOrIdentifier,
         userId: user._id,
         organizationId: user.organizationId,
       })

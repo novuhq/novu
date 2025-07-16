@@ -1,13 +1,16 @@
+/* eslint-disable no-restricted-imports */
+
 'use client';
 
 import { InboxProps, Inbox as RInbox } from '@novu/react';
+import { buildSubscriber } from '@novu/react/internal';
 import { useRouter as useAppRouter } from 'next/navigation';
 import { useRouter } from 'next/compat/router';
 
 function AppRouterInbox(props: InboxProps) {
   const router = useAppRouter();
   const { subscriber: subscriberProp, subscriberId: subscriberIdProp, ...restProps } = props;
-  const subscriber = buildSubscriber(subscriberIdProp, subscriberProp);
+  const subscriber = buildSubscriber({ subscriberId: subscriberIdProp, subscriber: subscriberProp });
 
   const inboxProps = {
     ...restProps,
@@ -22,7 +25,7 @@ function AppRouterInbox(props: InboxProps) {
 export function Inbox(props: InboxProps) {
   const router = useRouter();
   const { subscriber: subscriberProp, subscriberId: subscriberIdProp, ...restProps } = props;
-  const subscriber = buildSubscriber(subscriberIdProp, subscriberProp);
+  const subscriber = buildSubscriber({ subscriberId: subscriberIdProp, subscriber: subscriberProp });
 
   const inboxProps = {
     ...restProps,
@@ -35,18 +38,6 @@ export function Inbox(props: InboxProps) {
   }
 
   return <RInbox {...inboxProps} />;
-}
-
-function buildSubscriber(subscriberId: string | undefined, subscriber: any | string | undefined): any {
-  let subscriberObj: any;
-
-  if (subscriber) {
-    subscriberObj = typeof subscriber === 'string' ? { subscriberId: subscriber } : subscriber;
-  } else {
-    subscriberObj = { subscriberId: subscriberId as string };
-  }
-
-  return subscriberObj;
 }
 
 export { Bell, Preferences, Notifications, InboxContent, NovuProvider } from '@novu/react';

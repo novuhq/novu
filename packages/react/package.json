@@ -64,6 +64,16 @@
         "types": "./dist/cjs/index.d.cts",
         "default": "./dist/cjs/server/index.cjs"
       }
+    },
+    "./internal": {
+      "import": {
+        "types": "./dist/esm/internal/index.d.ts",
+        "default": "./dist/esm/internal/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/internal/index.d.cts",
+        "default": "./dist/cjs/internal/index.cjs"
+      }
     }
   },
   "files": [
@@ -72,7 +82,8 @@
     "dist/cjs/**/*",
     "hooks/**/*",
     "themes/**/*",
-    "server/**/*"
+    "server/**/*",
+    "internal/**/*"
   ],
   "sideEffects": false,
   "private": false,
