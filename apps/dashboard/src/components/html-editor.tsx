@@ -4,9 +4,6 @@ import { EditorView, Extension } from '@uiw/react-codemirror';
 import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { html, htmlCompletionSource } from '@codemirror/lang-html';
 import { tags as t } from '@lezer/highlight';
-import { format } from 'prettier/standalone';
-import * as parserHtml from 'prettier/plugins/html';
-import * as parserLiquid from '@shopify/prettier-plugin-liquid/standalone';
 import { RiCodeSSlashFill } from 'react-icons/ri';
 import { JSONSchema7 } from 'json-schema';
 
@@ -18,6 +15,7 @@ import { TooltipContent } from '@/components/primitives/tooltip';
 import { TooltipTrigger } from '@/components/primitives/tooltip';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { LiquidVariable } from '@/utils/parseStepVariables';
+import { formatHtml } from '@/utils/formatter';
 
 type HtmlEditorProps = {
   viewRef: MutableRefObject<EditorView | null>;
@@ -150,15 +148,7 @@ export function HtmlEditor({
       e.preventDefault();
 
       try {
-        const formattedValue = await format(value, {
-          parser: 'liquid-html',
-          printWidth: 120,
-          tabWidth: 2,
-          useTabs: false,
-          htmlWhitespaceSensitivity: 'css',
-          plugins: [parserHtml, parserLiquid],
-        });
-
+        const formattedValue = await formatHtml(value);
         onChange(formattedValue);
         saveForm?.();
       } catch (error) {

@@ -7,7 +7,15 @@ import { ExternalToast } from 'sonner';
 import { useBlocker } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
-import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetMain } from '@/components/primitives/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetMain,
+  SheetTitle,
+} from '@/components/primitives/sheet';
 import {
   Form,
   FormControl,
@@ -30,6 +38,7 @@ import TruncatedText from '../truncated-text';
 import { Separator } from '../primitives/separator';
 import { CopyButton } from '../primitives/copy-button';
 import { formatDistanceToNow } from 'date-fns';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const layoutSettingsFormSchema = z.object({
   name: z.string().min(1),
@@ -181,6 +190,10 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
                 onSubmit={form.handleSubmit(onSubmit)}
                 className="flex h-full flex-col"
               >
+                <VisuallyHidden>
+                  <SheetTitle />
+                  <SheetDescription />
+                </VisuallyHidden>
                 <SheetHeader className="p-0">
                   <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b p-3.5">
                     <div className="flex flex-1 items-center gap-1 overflow-hidden text-sm font-medium">

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiSettings4Line } from 'react-icons/ri';
+import { EmailControlsDto } from '@novu/shared';
 
 import { useLayoutEditor } from './layout-editor-provider';
 import { Form, FormRoot } from '../primitives/form/form';
@@ -14,11 +15,21 @@ import { LayoutEditorFactory } from './layout-editor-factory';
 import { LayoutPreviewFactory } from './layout-preview-factory';
 
 export const LayoutEditor = () => {
-  const { form, layout, isPreviewPending, isPending } = useLayoutEditor();
+  const { form, layout, isPreviewPending, isPending, updateLayout, isUpdating } = useLayoutEditor();
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
 
-  const onSubmit = async (formData: Record<string, unknown>) => {
-    console.log(formData);
+  const onSubmit = (formData: Record<string, unknown>) => {
+    updateLayout({
+      layout: {
+        name: layout?.name ?? '',
+        controlValues: {
+          email: {
+            ...(formData as EmailControlsDto),
+          },
+        },
+      },
+      layoutSlug: layout?.slug ?? '',
+    });
   };
 
   return (
@@ -52,6 +63,7 @@ export const LayoutEditor = () => {
                         <CompactButton
                           size="md"
                           variant="ghost"
+                          type="button"
                           icon={RiSettings4Line}
                           onClick={() => setIsSettingsDrawerOpen(true)}
                           className="[&>svg]:size-4"
@@ -90,8 +102,8 @@ export const LayoutEditor = () => {
                   <Button
                     type="submit"
                     variant="secondary"
-                    disabled={!form.formState.isDirty}
-                    isLoading={form.formState.isSubmitting || isPending}
+                    disabled={!form.formState.isDirty || isPending || isUpdating}
+                    isLoading={isUpdating}
                   >
                     Save changes
                   </Button>
