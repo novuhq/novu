@@ -47,6 +47,7 @@ import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
+import { sleep } from '../utils/sleep.util';
 
 const promiseTimeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -2885,11 +2886,21 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           await session.waitForWorkflowQueueCompletion();
           await session.waitForSubscriberQueueCompletion();
 
-          const delayedJob = await jobRepository.findOne({
-            _environmentId: session.environment._id,
-            _templateId: template._id,
-            type: StepTypeEnum.DELAY,
-          });
+          let delayedJob;
+          // Poll for delayedJob until it's no longer in pending status
+          while (true) {
+            delayedJob = await jobRepository.findOne({
+              _environmentId: session.environment._id,
+              _templateId: template._id,
+              type: StepTypeEnum.DELAY,
+            });
+
+            if (delayedJob && delayedJob.status !== JobStatusEnum.PENDING) {
+              break;
+            }
+
+            await sleep(100);
+          }
 
           if (!delayedJob) {
             throw new Error();
@@ -2971,12 +2982,21 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           await session.waitForWorkflowQueueCompletion();
           await session.waitForSubscriberQueueCompletion();
 
-          const delayedJob = await jobRepository.findOne({
-            _environmentId: session.environment._id,
-            _templateId: template._id,
-            type: StepTypeEnum.DELAY,
-          });
+          let delayedJob;
+          // Poll for delayedJob until it's no longer in pending status
+          while (true) {
+            delayedJob = await jobRepository.findOne({
+              _environmentId: session.environment._id,
+              _templateId: template._id,
+              type: StepTypeEnum.DELAY,
+            });
 
+            if (delayedJob && delayedJob.status !== JobStatusEnum.PENDING) {
+              break;
+            }
+
+            await sleep(100);
+          }
           expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);
 
           const messages = await messageRepository.find({
