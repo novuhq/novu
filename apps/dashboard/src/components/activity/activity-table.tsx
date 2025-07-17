@@ -1,15 +1,10 @@
 import { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { formatDate, formatDateSimple } from '@/utils/format-date';
 import { parsePageParam } from '@/utils/parse-page-param';
-import { cn } from '@/utils/ui';
-import { ISubscriber } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';

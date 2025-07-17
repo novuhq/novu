@@ -116,11 +116,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
     setIsActivityDrawerOpen(true);
   };
 
-  const handleActivityDrawerClose = () => {
-    setIsActivityDrawerOpen(false);
-    setSelectedActivityId(undefined);
-  };
-
   if (error) {
     return (
       <div className="flex h-48 items-center justify-center">

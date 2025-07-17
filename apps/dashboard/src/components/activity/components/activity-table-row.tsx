@@ -49,10 +49,14 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
           </span>
           <span className="text-foreground-400 text-[10px] leading-[14px]">
             <div className="bg-bg-weak font-code inline-block rounded-sm px-1.5">
-              {activity.transactionId} •{' '}
+              {activity.transactionId}
               {getSubscriberDisplay(
                 activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
-              )}
+              )
+                ? ` • ${getSubscriberDisplay(
+                    activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
+                  )}`
+                : ''}
             </div>
           </span>
         </div>

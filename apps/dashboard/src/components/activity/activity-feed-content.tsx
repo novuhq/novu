@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 
 import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityFilters } from '@/components/activity/activity-filters';
@@ -11,8 +11,10 @@ import { ActivityTable } from '@/components/activity/activity-table';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { UpdatedAgo } from '@/components/updated-ago';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
 import { usePullActivity } from '@/hooks/use-pull-activity';
+import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { ActivityFiltersData } from '@/types/activity';
 import { cn } from '../../utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
@@ -34,6 +36,14 @@ export function ActivityFeedContent({
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, error } = usePullActivity(activityItemId);
+
+  // Track last updated time for the activities list
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const { refetch } = useFetchActivities({ filters, page: 0, limit: 10 });
+
+  useEffect(() => {
+    setLastUpdated(new Date());
+  }, [filters]);
 
   // Merge initial filters with current filters
   const mergedFilterValues = useMemo(
@@ -112,15 +122,24 @@ export function ActivityFeedContent({
     [mergedFilterValues, handleFiltersChange, handleActivitySelect]
   );
 
+  const handleRefresh = async () => {
+    await refetch();
+    setLastUpdated(new Date());
+  };
+
   return (
     <div className={cn('p-2.5', className)}>
-      <ActivityFilters
-        filters={mergedFilterValues}
-        onFiltersChange={handleFiltersChange}
-        onReset={handleClearFilters}
-        showReset={hasChanges}
-        hide={hideFilters}
-      />
+      <div className="flex items-center justify-between pb-2.5">
+        <ActivityFilters
+          filters={mergedFilterValues}
+          onFiltersChange={handleFiltersChange}
+          onReset={handleClearFilters}
+          showReset={hasChanges}
+          hide={hideFilters}
+          className="pb-0"
+        />
+        <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
+      </div>
       <div className={`relative flex ${contentHeight}`}>
         <ResizablePanelGroup direction="horizontal" className="gap-2">
           <ResizablePanel defaultSize={50} minSize={35}>
