@@ -104,12 +104,8 @@ export class GetPreferences {
   }
 
   private async getPreferencesFromDb(command: GetPreferencesCommand): Promise<PreferenceSet> {
-    const [
-      workflowResourcePreference,
-      workflowUserPreference,
-      subscriberWorkflowPreference,
-      subscriberGlobalPreference,
-    ] = await Promise.all([
+    // Always fetch workflow-level preferences
+    const workflowPreferencesPromises = [
       this.preferencesRepository.findOne({
         _templateId: command.templateId,
         _environmentId: command.environmentId,
@@ -120,18 +116,31 @@ export class GetPreferences {
         _environmentId: command.environmentId,
         type: PreferencesTypeEnum.USER_WORKFLOW,
       }) as Promise<PreferenceSet['workflowUserPreference'] | null>,
-      this.preferencesRepository.findOne({
-        _subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-        _templateId: command.templateId,
-        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-      }) as Promise<PreferenceSet['subscriberWorkflowPreference'] | null>,
-      this.preferencesRepository.findOne({
-        _subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-      }) as Promise<PreferenceSet['subscriberGlobalPreference'] | null>,
-    ]);
+    ];
+
+    // Only fetch subscriber preferences if subscriberId is provided
+    const subscriberPreferencesPromises = command.subscriberId
+      ? [
+          this.preferencesRepository.findOne({
+            _subscriberId: command.subscriberId,
+            _environmentId: command.environmentId,
+            _templateId: command.templateId,
+            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          }) as Promise<PreferenceSet['subscriberWorkflowPreference'] | null>,
+          this.preferencesRepository.findOne({
+            _subscriberId: command.subscriberId,
+            _environmentId: command.environmentId,
+            type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          }) as Promise<PreferenceSet['subscriberGlobalPreference'] | null>,
+        ]
+      : [Promise.resolve(null), Promise.resolve(null)];
+
+    const [
+      workflowResourcePreference,
+      workflowUserPreference,
+      subscriberWorkflowPreference,
+      subscriberGlobalPreference,
+    ] = await Promise.all([...workflowPreferencesPromises, ...subscriberPreferencesPromises]);
 
     return {
       ...(workflowResourcePreference ? { workflowResourcePreference } : {}),
