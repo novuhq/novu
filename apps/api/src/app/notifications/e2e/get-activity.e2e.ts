@@ -50,9 +50,9 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
       (process.env as any).IS_TRACE_LOGS_ENABLED = originalTraceWriteValue;
     }
     if (originalStepRunEnvValue === undefined) {
-      delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
+      delete (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED;
     } else {
-      (process.env as any).IS_STEP_RUN_LOGS_ENABLED = originalStepRunEnvValue;
+      (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED = originalStepRunEnvValue;
     }
   });
 
@@ -243,7 +243,7 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
 
   it('should use step runs when both trace and step run feature flags are enabled', async () => {
     // Enable both feature flags
-    (process.env as any).IS_STEP_RUN_LOGS_ENABLED = 'true';
+    (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED = 'true';
 
     const triggerResponse = await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
@@ -268,6 +268,8 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     const activity: ActivityNotificationResponseDto = activityResponse.body.data;
     expect(activity).to.be.ok;
 
+    console.log('111111 activity', activity);
+
     expect(activity.jobs?.length).to.be.equal(2);
     expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.TRIGGER);
     expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
@@ -275,13 +277,13 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     expect(activity.jobs?.[1].status).to.be.equal(JobStatusEnum.COMPLETED);
 
     // Reset feature flag
-    delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
+    delete (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED;
   });
 
   it('should fallback to trace log method when step runs are not found', async () => {
     /*
      *  Enable both feature flags
-     * (process.env as any).IS_STEP_RUN_LOGS_ENABLED = 'true';
+     * (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED = 'true';
      */
 
     const triggerResponse = await novuClient.trigger({
@@ -324,7 +326,7 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
 
     /*
      * Reset feature flag
-     * delete (process.env as any).IS_STEP_RUN_LOGS_ENABLED;
+     * delete (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED;
      */
   });
 

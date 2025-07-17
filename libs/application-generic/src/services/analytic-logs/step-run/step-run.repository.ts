@@ -8,7 +8,7 @@ import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { stepRunSchema, ORDER_BY, TABLE_NAME, StepRun, StepType } from './step-run.schema';
 
-type StepRunInsertData = Omit<StepRun, 'id'>;
+type StepRunInsertData = Omit<StepRun, 'id' | 'expires_at'>;
 
 type StepOptions = {
   status?: JobStatusEnum;
@@ -62,18 +62,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
   async create(job: JobEntity, options: StepOptions = {}): Promise<void> {
     try {
-      const isEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_ENABLED,
-        organization: { _id: job._organizationId },
-        environment: { _id: job._environmentId },
-        user: { _id: job._userId },
-        defaultValue: false,
-      });
-
-      if (!isEnabled) {
-        return;
-      }
-
       // Preserve existing deferredMs if not explicitly provided
       const existingDeferredMs = await this.getExistingDeferredMs(job._organizationId, job._id);
       const finalOptions = {
@@ -100,6 +88,50 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     } catch (error) {
       this.logger.error({ err: error, jobId: job._id, status: job.status }, `Failed to log step ${job.status}`);
     }
+  }
+
+  async insert(
+    data: StepRunInsertData,
+    context: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
+      organization: { _id: context.organizationId },
+      environment: { _id: context.environmentId },
+      user: { _id: context.userId },
+      defaultValue: false,
+    });
+
+    if (!isEnabled) {
+      return;
+    }
+    await super.insert(data, context);
+  }
+
+  async insertMany(
+    data: StepRunInsertData[],
+    context: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
+      organization: { _id: context.organizationId },
+      environment: { _id: context.environmentId },
+      user: { _id: context.userId },
+      defaultValue: false,
+    });
+
+    if (!isEnabled) {
+      return;
+    }
+    await super.insertMany(data, context);
   }
 
   private async getExistingDeferredMs(organizationId: string, stepRunId: string): Promise<number | null> {
@@ -172,12 +204,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Correlation
       transaction_id: job.transactionId,
-
-      /*
-       * Data retention
-       * todo remove this should be maintained in base repository, its already implemented in another pr
-       */
-      expires_at: this.formatDateTime64(addYears(now, 1)),
     };
   }
 
