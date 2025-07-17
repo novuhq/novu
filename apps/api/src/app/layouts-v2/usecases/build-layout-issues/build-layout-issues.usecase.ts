@@ -21,12 +21,12 @@ export class BuildLayoutIssuesUsecase {
 
   @InstrumentUsecase()
   async execute(command: BuildLayoutIssuesCommand): Promise<LayoutIssuesDto> {
-    const { resourceOrigin, user, controlSchema, controlValues } = command;
+    const { resourceOrigin, environmentId, organizationId, userId, controlSchema, controlValues } = command;
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
+        environmentId,
+        organizationId,
         controlValues: controlValues ?? {},
       })
     );

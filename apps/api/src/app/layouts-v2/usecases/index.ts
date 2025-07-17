@@ -1,4 +1,4 @@
-import { UpsertLayoutUseCase } from './upsert-layout';
+import { UpsertLayout } from './upsert-layout';
 import { GetLayoutUseCase } from './get-layout';
 import { DeleteLayoutUseCase } from './delete-layout';
 import { DuplicateLayoutUseCase } from './duplicate-layout';
@@ -8,7 +8,7 @@ import { PreviewLayoutUsecase } from './preview-layout';
 import { BuildLayoutIssuesUsecase } from './build-layout-issues/build-layout-issues.usecase';
 
 export const USE_CASES = [
-  UpsertLayoutUseCase,
+  UpsertLayout,
   GetLayoutUseCase,
   DeleteLayoutUseCase,
   DuplicateLayoutUseCase,

@@ -22,7 +22,7 @@ import {
   ContentIssueEnum,
 } from '@novu/shared';
 
-import { UpsertLayoutUseCase } from './upsert-layout.usecase';
+import { UpsertLayout } from './upsert-layout.usecase';
 import { UpsertLayoutCommand } from './upsert-layout.command';
 import { LayoutResponseDto } from '../../dtos';
 import {
@@ -57,7 +57,7 @@ describe('UpsertLayoutUseCase', () => {
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let buildLayoutIssuesUsecaseMock: sinon.SinonStubbedInstance<BuildLayoutIssuesUsecase>;
 
-  let upsertLayoutUseCase: UpsertLayoutUseCase;
+  let upsertLayoutUseCase: UpsertLayout;
 
   const mockUser = {
     _id: 'user_id',
@@ -151,7 +151,7 @@ describe('UpsertLayoutUseCase', () => {
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     buildLayoutIssuesUsecaseMock = sinon.createStubInstance(BuildLayoutIssuesUsecase);
 
-    upsertLayoutUseCase = new UpsertLayoutUseCase(
+    upsertLayoutUseCase = new UpsertLayout(
       getLayoutUseCaseMock as any,
       createLayoutUseCaseMock as any,
       updateLayoutUseCaseMock as any,

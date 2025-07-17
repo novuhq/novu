@@ -6,12 +6,12 @@ import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTy
 
 import { DuplicateLayoutUseCase } from './duplicate-layout.use-case';
 import { DuplicateLayoutCommand } from './duplicate-layout.command';
-import { UpsertLayoutUseCase } from '../upsert-layout';
+import { UpsertLayout } from '../upsert-layout';
 import { GetLayoutUseCase } from '../get-layout';
 
 describe('DuplicateLayoutUseCase', () => {
   let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;
-  let upsertLayoutUseCaseMock: sinon.SinonStubbedInstance<UpsertLayoutUseCase>;
+  let upsertLayoutUseCaseMock: sinon.SinonStubbedInstance<UpsertLayout>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let duplicateLayoutUseCase: DuplicateLayoutUseCase;
@@ -75,7 +75,7 @@ describe('DuplicateLayoutUseCase', () => {
 
   beforeEach(() => {
     getLayoutUseCaseMock = sinon.createStubInstance(GetLayoutUseCase);
-    upsertLayoutUseCaseMock = sinon.createStubInstance(UpsertLayoutUseCase);
+    upsertLayoutUseCaseMock = sinon.createStubInstance(UpsertLayout);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
 
@@ -101,7 +101,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       const result = await duplicateLayoutUseCase.execute(command);
@@ -130,7 +130,9 @@ describe('DuplicateLayoutUseCase', () => {
       const upsertCommand = upsertLayoutUseCaseMock.execute.firstCall.args[0];
       expect(upsertCommand.layoutDto.name).to.equal('Duplicated Layout');
       expect(upsertCommand.layoutDto.controlValues).to.deep.equal(mockOriginalControlValues.controls);
-      expect(upsertCommand.user).to.deep.equal(mockUser);
+      expect(upsertCommand.userId).to.deep.equal(mockUser._id);
+      expect(upsertCommand.environmentId).to.deep.equal(mockUser.environmentId);
+      expect(upsertCommand.organizationId).to.deep.equal(mockUser.organizationId);
     });
 
     it('should duplicate layout without control values when none exist', async () => {
@@ -139,7 +141,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       const result = await duplicateLayoutUseCase.execute(command);
@@ -165,7 +167,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       const result = await duplicateLayoutUseCase.execute(command);
@@ -182,7 +184,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       await duplicateLayoutUseCase.execute(command);
@@ -206,7 +208,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: customOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       await duplicateLayoutUseCase.execute(command);
@@ -223,7 +225,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'non_existent',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       try {
@@ -241,7 +243,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       try {
@@ -259,7 +261,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       try {
@@ -274,7 +276,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       await duplicateLayoutUseCase.execute(command);
@@ -301,7 +303,7 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        user: mockUser as any,
+        ...(mockUser as any),
       });
 
       await duplicateLayoutUseCase.execute(command);
