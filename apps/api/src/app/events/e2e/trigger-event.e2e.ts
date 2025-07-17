@@ -47,7 +47,7 @@ import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
-import { sleep } from '../utils/sleep.util';
+import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
 const promiseTimeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
@@ -2886,21 +2886,14 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           await session.waitForWorkflowQueueCompletion();
           await session.waitForSubscriberQueueCompletion();
 
-          let delayedJob;
-          // Poll for delayedJob until it's no longer in pending status
-          while (true) {
-            delayedJob = await jobRepository.findOne({
+          const delayedJob = await pollForJobStatusChange({
+            jobRepository,
+            query: {
               _environmentId: session.environment._id,
               _templateId: template._id,
               type: StepTypeEnum.DELAY,
-            });
-
-            if (delayedJob && delayedJob.status !== JobStatusEnum.PENDING) {
-              break;
-            }
-
-            await sleep(100);
-          }
+            },
+          });
 
           if (!delayedJob) {
             throw new Error();
