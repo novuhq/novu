@@ -1,4 +1,4 @@
-import { RiErrorWarningLine, RiErrorWarningFill } from 'react-icons/ri';
+import { RiErrorWarningLine, RiErrorWarningFill, RiInformationLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'motion/react';
 import { Issue } from '@novu/shared';
 
@@ -13,10 +13,24 @@ type IssuesPanelProps<T, D> = {
   };
   className?: string;
   children?: React.ReactNode;
+  hintMessage?: string;
+  isTranslationEnabled?: boolean;
 };
 
-export function IssuesPanel<T, D = T>({ issues, className, children }: IssuesPanelProps<T, D>) {
+export function IssuesPanel<T, D = T>({
+  issues,
+  className,
+  children,
+  hintMessage,
+  isTranslationEnabled = false,
+}: IssuesPanelProps<T, D>) {
   const issueCount = countIssues(issues);
+
+  const defaultHintMessage = isTranslationEnabled
+    ? 'Type {{ to access variables or {t. to access translation keys.'
+    : 'Type {{ to access variables.';
+
+  const displayHintMessage = hintMessage || defaultHintMessage;
 
   // Get the first control error message
   const firstControlError = getFirstErrorMessage(issues || {}, 'controls');
@@ -43,37 +57,42 @@ export function IssuesPanel<T, D = T>({ issues, className, children }: IssuesPan
           className
         )}
       >
-        <HoverCard openDelay={200} closeDelay={100}>
-          <HoverCardTrigger asChild>
-            {issueCount > 0 && (
+        {issueCount > 0 ? (
+          <HoverCard openDelay={200} closeDelay={100}>
+            <HoverCardTrigger asChild>
               <div className="flex cursor-pointer items-center gap-2 transition-colors hover:text-red-700">
                 <RiErrorWarningFill className="size-4 text-red-600" />
                 <span className="text-paragraph-xs font-medium text-red-600">{displayText}</span>
               </div>
-            )}
-          </HoverCardTrigger>
-          <HoverCardContent
-            className="bg-bg-weak flex w-80 flex-col gap-1 border border-neutral-200 p-1"
-            side="top"
-            align="start"
-            sideOffset={8}
-          >
-            <div className="flex items-center gap-2 pl-1.5">
-              <RiErrorWarningLine className="size-4 text-red-600" />
-              <span className="text-label-xs font-medium text-red-600">Action required</span>
-            </div>
-            <div className="bg-bg-white max-h-60 overflow-y-auto rounded-[6px] border border-neutral-100 p-2">
-              <ul className="space-y-2">
-                {allIssues.map((issue, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-neutral-700">
-                    <span className="mt-1.5 size-1 shrink-0 rounded-full bg-red-600" />
-                    <span className="text-label-xs text-text-sub font-medium leading-4">{issue.message}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </HoverCardContent>
-        </HoverCard>
+            </HoverCardTrigger>
+            <HoverCardContent
+              className="bg-bg-weak flex w-80 flex-col gap-1 border border-neutral-200 p-1"
+              side="top"
+              align="start"
+              sideOffset={8}
+            >
+              <div className="flex items-center gap-2 pl-1.5">
+                <RiErrorWarningLine className="size-4 text-red-600" />
+                <span className="text-label-xs font-medium text-red-600">Action required</span>
+              </div>
+              <div className="bg-bg-white max-h-60 overflow-y-auto rounded-[6px] border border-neutral-100 p-2">
+                <ul className="space-y-2">
+                  {allIssues.map((issue, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-neutral-700">
+                      <span className="mt-1.5 size-1 shrink-0 rounded-full bg-red-600" />
+                      <span className="text-label-xs text-text-sub font-medium leading-4">{issue.message}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        ) : (
+          <div className="flex items-center gap-2">
+            <RiInformationLine className="size-4 text-neutral-500" />
+            <span className="text-paragraph-xs text-neutral-600">{displayHintMessage}</span>
+          </div>
+        )}
         {children}
       </motion.div>
     </AnimatePresence>

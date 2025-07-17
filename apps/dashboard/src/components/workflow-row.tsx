@@ -61,6 +61,7 @@ import { showToast } from './primitives/sonner-helpers';
 import { TimeDisplayHoverCard } from './time-display-hover-card';
 import { Protect } from '@/utils/protect';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { TranslatedWorkflowIcon } from './icons/translated-workflow';
 
 type WorkflowRowProps = {
   workflow: WorkflowListResponseDto;
@@ -258,6 +259,9 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                 <TooltipContent>
                   <span className="font-medium">Code Workflow</span>
                   <span className="text-foreground-400 block text-xs">Managed via your codebase</span>
+                  {workflow.isTranslationEnabled && (
+                    <span className="text-foreground-400 block text-xs">Translations enabled</span>
+                  )}
                 </TooltipContent>
               </TooltipPortal>
             </Tooltip>
@@ -276,12 +280,19 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
           ) : (
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
-                <RiRouteFill className="text-feature size-4" />
+                {workflow.isTranslationEnabled ? (
+                  <TranslatedWorkflowIcon />
+                ) : (
+                  <RiRouteFill className="text-feature size-4" />
+                )}
               </TooltipTrigger>
               <TooltipPortal>
                 <TooltipContent>
                   <span className="font-medium">UI Workflow</span>
                   <span className="text-foreground-400 block text-xs">Managed in Novu Dashboard</span>
+                  {workflow.isTranslationEnabled && (
+                    <span className="text-foreground-400 block text-xs">Translations enabled</span>
+                  )}
                 </TooltipContent>
               </TooltipPortal>
             </Tooltip>

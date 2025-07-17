@@ -25,7 +25,17 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin' | 'lastTriggeredAt'
+  | 'name'
+  | 'tags'
+  | 'updatedAt'
+  | 'createdAt'
+  | '_id'
+  | 'workflowId'
+  | 'slug'
+  | 'status'
+  | 'origin'
+  | 'lastTriggeredAt'
+  | 'isTranslationEnabled'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
