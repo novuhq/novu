@@ -22,7 +22,9 @@ import {
 /**
  * Control values for the In-App step.
  */
-export type ControlValues = InAppControlDto | { [k: string]: any };
+export type InAppStepUpsertDtoControlValues = InAppControlDto | {
+  [k: string]: any;
+};
 
 export type InAppStepUpsertDto = {
   /**
@@ -44,48 +46,54 @@ export type InAppStepUpsertDto = {
 };
 
 /** @internal */
-export const ControlValues$inboundSchema: z.ZodType<
-  ControlValues,
+export const InAppStepUpsertDtoControlValues$inboundSchema: z.ZodType<
+  InAppStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
 > = z.union([InAppControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type ControlValues$Outbound = InAppControlDto$Outbound | {
-  [k: string]: any;
-};
+export type InAppStepUpsertDtoControlValues$Outbound =
+  | InAppControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
-export const ControlValues$outboundSchema: z.ZodType<
-  ControlValues$Outbound,
+export const InAppStepUpsertDtoControlValues$outboundSchema: z.ZodType<
+  InAppStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
-  ControlValues
+  InAppStepUpsertDtoControlValues
 > = z.union([InAppControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace ControlValues$ {
-  /** @deprecated use `ControlValues$inboundSchema` instead. */
-  export const inboundSchema = ControlValues$inboundSchema;
-  /** @deprecated use `ControlValues$outboundSchema` instead. */
-  export const outboundSchema = ControlValues$outboundSchema;
-  /** @deprecated use `ControlValues$Outbound` instead. */
-  export type Outbound = ControlValues$Outbound;
+export namespace InAppStepUpsertDtoControlValues$ {
+  /** @deprecated use `InAppStepUpsertDtoControlValues$inboundSchema` instead. */
+  export const inboundSchema = InAppStepUpsertDtoControlValues$inboundSchema;
+  /** @deprecated use `InAppStepUpsertDtoControlValues$outboundSchema` instead. */
+  export const outboundSchema = InAppStepUpsertDtoControlValues$outboundSchema;
+  /** @deprecated use `InAppStepUpsertDtoControlValues$Outbound` instead. */
+  export type Outbound = InAppStepUpsertDtoControlValues$Outbound;
 }
 
-export function controlValuesToJSON(controlValues: ControlValues): string {
-  return JSON.stringify(ControlValues$outboundSchema.parse(controlValues));
+export function inAppStepUpsertDtoControlValuesToJSON(
+  inAppStepUpsertDtoControlValues: InAppStepUpsertDtoControlValues,
+): string {
+  return JSON.stringify(
+    InAppStepUpsertDtoControlValues$outboundSchema.parse(
+      inAppStepUpsertDtoControlValues,
+    ),
+  );
 }
 
-export function controlValuesFromJSON(
+export function inAppStepUpsertDtoControlValuesFromJSON(
   jsonString: string,
-): SafeParseResult<ControlValues, SDKValidationError> {
+): SafeParseResult<InAppStepUpsertDtoControlValues, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => ControlValues$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'ControlValues' from JSON`,
+    (x) => InAppStepUpsertDtoControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'InAppStepUpsertDtoControlValues' from JSON`,
   );
 }
 

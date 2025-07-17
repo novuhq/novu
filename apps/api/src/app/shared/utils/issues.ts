@@ -1,6 +1,6 @@
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import { ContentIssueEnum, RuntimeIssue } from '@novu/shared';
+import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
 
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper/helper.service';
@@ -20,7 +20,19 @@ const getErrorPath = (error: ErrorObject): string => {
   return fullPath?.replace(/\//g, '.');
 };
 
-const mapAjvErrorToMessage = (error: ErrorObject<string, Record<string, unknown>, unknown>): string => {
+const mapAjvErrorToMessage = (
+  error: ErrorObject<string, Record<string, unknown>, unknown>,
+  stepType?: StepTypeEnum
+): string => {
+  if (stepType === StepTypeEnum.IN_APP) {
+    if (error.keyword === 'required') {
+      return 'Subject or body is required';
+    }
+    if (error.keyword === 'minLength') {
+      return `${capitalize(error.instancePath.replace('/', ''))} is required`;
+    }
+  }
+
   if (error.keyword === 'required') {
     return `${capitalize(error.params.missingProperty as string)} is required`;
   }
@@ -57,9 +69,11 @@ export type ControlIssues = {
 export const processControlValuesBySchema = ({
   controlSchema,
   controlValues,
+  stepType,
 }: {
   controlSchema: JSONSchemaDto | undefined;
   controlValues: Record<string, unknown> | null;
+  stepType?: StepTypeEnum;
 }): ControlIssues => {
   let issues: ControlIssues = {};
 
@@ -82,7 +96,7 @@ export const processControlValuesBySchema = ({
             acc[path] = [];
           }
           acc[path].push({
-            message: mapAjvErrorToMessage(error),
+            message: mapAjvErrorToMessage(error, stepType),
             issueType: mapAjvErrorToIssueType(error),
             variableName: path,
           });
@@ -121,15 +135,17 @@ export const processControlValuesByLiquid = ({
   currentPath,
   issues,
   variableSchema,
+  useNewLiquidParser,
 }: {
   currentValue: unknown;
   currentPath: string[];
   issues: ControlIssues;
   variableSchema: JSONSchemaDto | undefined;
+  useNewLiquidParser: boolean;
 }) => {
   if (!currentValue || typeof currentValue !== 'object') {
     const liquidTemplateIssues = buildVariables({
-      useNewLiquidParser: true,
+      useNewLiquidParser,
       variableSchema,
       controlValue: currentValue,
     });
@@ -180,6 +196,7 @@ export const processControlValuesByLiquid = ({
       currentPath: [...currentPath, key],
       issues,
       variableSchema,
+      useNewLiquidParser,
     });
   }
 };

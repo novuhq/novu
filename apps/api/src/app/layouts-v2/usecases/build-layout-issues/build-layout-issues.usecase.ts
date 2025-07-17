@@ -1,7 +1,19 @@
 import merge from 'lodash/merge';
 import { Injectable } from '@nestjs/common';
-import { ContentIssueEnum, LAYOUT_CONTENT_VARIABLE, LayoutIssuesDto, ResourceOriginEnum } from '@novu/shared';
-import { dashboardSanitizeControlValues, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  ContentIssueEnum,
+  FeatureFlagsKeysEnum,
+  LAYOUT_CONTENT_VARIABLE,
+  LayoutIssuesDto,
+  ResourceOriginEnum,
+} from '@novu/shared';
+import {
+  dashboardSanitizeControlValues,
+  FeatureFlagsService,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 
 import { LayoutVariablesSchemaCommand, LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
 import { BuildLayoutIssuesCommand } from './build-layout-issues.command';
@@ -16,6 +28,7 @@ import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared
 export class BuildLayoutIssuesUsecase {
   constructor(
     private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {}
 
@@ -48,6 +61,14 @@ export class BuildLayoutIssuesUsecase {
       };
     }
 
+    const isHtmlEditorEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
+      organization: { _id: command.user.organizationId },
+      environment: { _id: command.user.environmentId },
+      user: { _id: command.user._id },
+      defaultValue: false,
+    });
+
     const sanitizedControlValues = this.sanitizeControlValues(controlValues ?? {}, resourceOrigin);
 
     const schemaIssues = processControlValuesBySchema({
@@ -61,6 +82,7 @@ export class BuildLayoutIssuesUsecase {
       currentValue: controlValues ?? {},
       currentPath: [],
       issues: liquidIssues,
+      useNewLiquidParser: isHtmlEditorEnabled,
     });
 
     return merge(contentIssues, schemaIssues, liquidIssues);
