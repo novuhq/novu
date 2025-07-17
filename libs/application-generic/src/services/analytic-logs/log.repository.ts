@@ -4,7 +4,7 @@ import { addDays } from 'date-fns';
 
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { ClickHouseService } from './clickhouse.service';
+import { ClickHouseService, InsertOptions } from './clickhouse.service';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { generateObjectId } from '../../utils/generate-id';
 
@@ -94,7 +94,7 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
     }
   }
 
-  private async getExpirationDate(context?: {
+  protected async getExpirationDate(context?: {
     organizationId?: string;
     environmentId?: string;
     userId?: string;
@@ -175,26 +175,28 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
 
   async insert(
     data: Omit<InferClickhouseSchemaType<T>, 'id' | 'expires_at'>,
-    context?: {
+    context: {
       organizationId?: string;
       environmentId?: string;
       userId?: string;
-    }
+    },
+    options?: InsertOptions
   ): Promise<void> {
     const id = `${this.identifierPrefix}${generateObjectId()}`;
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
-    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }]);
+    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }], options);
   }
 
   async insertMany(
     data: Omit<InferClickhouseSchemaType<T>, 'id' | 'expires_at'>[],
-    context?: {
+    context: {
       organizationId?: string;
       environmentId?: string;
       userId?: string;
-    }
+    },
+    options?: InsertOptions
   ): Promise<void> {
     const ids = data.map((item) => `${this.identifierPrefix}${generateObjectId()}`);
     const expirationDate = await this.getExpirationDate(context);
@@ -202,7 +204,8 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
 
     await this.clickhouseService.insert(
       this.table,
-      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt }))
+      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt })),
+      options
     );
   }
 

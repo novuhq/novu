@@ -29,11 +29,12 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
-    }).populate('updatedBy');
+    })
+      .select({ _id: 1, name: 1, 'triggers.identifier': 1, updatedAt: 1, _updatedBy: 1 })
+      .populate('updatedBy', '_id firstName lastName externalId');
 
     return this.mapEntities(items);
   }
-
   async findByTriggerIdentifier(environmentId: string, identifier: string, session?: ClientSession | null) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,

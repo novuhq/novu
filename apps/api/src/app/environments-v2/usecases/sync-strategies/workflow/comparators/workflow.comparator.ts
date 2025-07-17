@@ -74,7 +74,7 @@ export class WorkflowComparator {
 
       return { workflowChanges, stepDiffs };
     } catch (error) {
-      this.logger.error(WORKFLOW_SYNC_MESSAGES.COMPARE_FAILED(error.message));
+      this.logger.error({ err: error }, WORKFLOW_SYNC_MESSAGES.COMPARE_FAILED(error.message));
 
       return { workflowChanges: null, stepDiffs: [] };
     }

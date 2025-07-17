@@ -147,6 +147,7 @@ function StepEditorContent() {
                     onChange={setSelectedLocale}
                     placeholder="Select locale"
                     availableLocales={availableLocales}
+                    className="h-6 w-auto min-w-[120px] text-xs"
                   />
                 )}
               </PanelHeader>
@@ -165,7 +166,7 @@ function StepEditorContent() {
           </ResizableLayout>
         </div>
 
-        <IssuesPanel issues={step.issues} />
+        <IssuesPanel issues={step.issues} isTranslationEnabled={workflow.isTranslationEnabled} />
       </ResizableLayout.MainContentPanel>
 
       <TestWorkflowDrawer

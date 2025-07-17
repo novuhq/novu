@@ -9,6 +9,8 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { getLocaleDisplayName } from '../utils';
 import { useTranslationFileOperations } from './hooks';
 import { TranslationResource } from '@/types/translations';
+import { PermissionsEnum } from '@novu/shared';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 type EditorActionsProps = {
   selectedLocale: string;
@@ -49,10 +51,17 @@ export function EditorActions({
               <span className="text-sm text-neutral-400">({displayName})</span>
             </div>
           </div>
+
           <TranslationImportTrigger resource={resource}>
-            <Button variant="secondary" mode="outline" size="xs" leadingIcon={RiFileUploadLine}>
+            <PermissionButton
+              permission={PermissionsEnum.WORKFLOW_WRITE}
+              variant="secondary"
+              mode="outline"
+              size="xs"
+              leadingIcon={RiFileUploadLine}
+            >
               Import locale(s)
-            </Button>
+            </PermissionButton>
           </TranslationImportTrigger>
         </div>
 
@@ -80,7 +89,8 @@ export function EditorActions({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
+                <PermissionButton
+                  permission={PermissionsEnum.WORKFLOW_WRITE}
                   variant="secondary"
                   mode="outline"
                   size="xs"
@@ -88,7 +98,7 @@ export function EditorActions({
                   onClick={handleDeleteClick}
                 >
                   <RiDeleteBinLine className="h-4 w-4" />
-                </Button>
+                </PermissionButton>
               </TooltipTrigger>
               <TooltipContent>Delete {selectedLocale} translation</TooltipContent>
             </Tooltip>

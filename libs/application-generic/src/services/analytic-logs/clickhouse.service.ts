@@ -1,20 +1,18 @@
-import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
+import { createClient, ClickHouseClient, PingResult, ClickHouseSettings } from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 
 export { ClickHouseClient };
+
+export type InsertOptions = {
+  asyncInsert?: boolean;
+  waitForAsyncInsert?: boolean;
+};
 
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
   private _client: ClickHouseClient | undefined;
 
   async init() {
-    const requiredConnectionConfig = {
-      url: process.env.CLICK_HOUSE_URL,
-      username: process.env.CLICK_HOUSE_USER,
-      password: process.env.CLICK_HOUSE_PASSWORD,
-      database: process.env.CLICK_HOUSE_DATABASE,
-    };
-
     if (!process.env.CLICK_HOUSE_URL || !process.env.CLICK_HOUSE_DATABASE) {
       /*
        * this.logger.warn(
@@ -45,9 +43,13 @@ export class ClickHouseService implements OnModuleDestroy {
       }
     }
 
-    this._client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
-
-    // this.logger.info('ClickHouse client created');
+    this._client = createClient({
+      url: process.env.CLICK_HOUSE_URL,
+      username: process.env.CLICK_HOUSE_USER,
+      password: process.env.CLICK_HOUSE_PASSWORD,
+      database: process.env.CLICK_HOUSE_DATABASE,
+      // clickhouse_settings: { async_insert: 1 },
+    });
   }
 
   get client(): ClickHouseClient | undefined {
@@ -104,15 +106,28 @@ export class ClickHouseService implements OnModuleDestroy {
     return data;
   }
 
-  public async insert<T extends Record<string, unknown>>(table: string, values: T[]) {
+  public async insert<T extends Record<string, unknown>>(
+    table: string,
+    values: T[],
+    clickhouseSettings?: InsertOptions
+  ) {
     if (!this._client) {
       return;
+    }
+
+    const settings: ClickHouseSettings = {};
+    if (clickhouseSettings?.asyncInsert !== undefined) {
+      settings.async_insert = clickhouseSettings.asyncInsert ? 1 : 0;
+    }
+    if (clickhouseSettings?.waitForAsyncInsert !== undefined) {
+      settings.wait_for_async_insert = clickhouseSettings.waitForAsyncInsert ? 1 : 0;
     }
 
     await this._client.insert({
       table,
       values,
       format: 'JSONEachRow',
+      clickhouse_settings: settings,
     });
   }
 

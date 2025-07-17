@@ -12,7 +12,9 @@ import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-set
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
-import { DEFAULT_LOCALE } from '@novu/shared';
+import { DEFAULT_LOCALE, PermissionsEnum } from '@novu/shared';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { PermissionButton } from '../primitives/permission-button';
 
 interface TranslationSettingsFormData {
   defaultLocale: string;
@@ -29,6 +31,8 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     const { data: organizationSettings, isLoading } = useFetchOrganizationSettings();
     const updateSettings = useUpdateOrganizationSettings();
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+    const has = useHasPermission();
+    const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
     const form = useForm<TranslationSettingsFormData>({
       defaultValues: {
@@ -142,7 +146,12 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                                 Default locale
                               </FormLabel>
                               <FormControl>
-                                <LocaleSelect value={field.value} onChange={field.onChange} className="w-full" />
+                                <LocaleSelect
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  className="w-full"
+                                  disabled={!canWrite}
+                                />
                               </FormControl>
                             </FormItem>
                           )}
@@ -164,6 +173,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                                   onChange={field.onChange}
                                   className="w-full"
                                   multiSelect={true}
+                                  disabled={!canWrite}
                                 />
                               </FormControl>
                               <span className="text-text-soft text-2xs">
@@ -182,14 +192,15 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
               <div className="mt-auto">
                 <Separator />
                 <div className="flex justify-end gap-3 p-3.5">
-                  <Button
+                  <PermissionButton
+                    permission={PermissionsEnum.WORKFLOW_WRITE}
                     variant="secondary"
                     onClick={handleSave}
-                    disabled={!hasUnsavedChanges || updateSettings.isPending}
+                    disabled={!canWrite || !hasUnsavedChanges || updateSettings.isPending}
                     isLoading={updateSettings.isPending}
                   >
                     Save changes
-                  </Button>
+                  </PermissionButton>
                 </div>
               </div>
             </div>
