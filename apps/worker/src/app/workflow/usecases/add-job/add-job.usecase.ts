@@ -228,6 +228,10 @@ export class AddJob {
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.QUEUED,
+    });
+
     await this.queueJob(job, 0);
   }
 
@@ -511,10 +515,6 @@ export class AddJob {
     };
 
     Logger.verbose(jobData, 'Going to add a minimal job in Standard Queue', LOG_CONTEXT);
-
-    await this.stepRunRepository.create(job, {
-      status: JobStatusEnum.QUEUED,
-    });
 
     await this.standardQueueService.add({
       name: job._id,

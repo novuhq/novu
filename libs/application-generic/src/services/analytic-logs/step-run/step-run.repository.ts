@@ -13,7 +13,6 @@ type StepRunInsertData = Omit<StepRun, 'id'>;
 type StepOptions = {
   status?: JobStatusEnum;
   message?: MessageEntity;
-  executionDurationMs?: number;
   errorCode?: string;
   errorMessage?: string;
   deferredMs?: number;
@@ -102,6 +101,67 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     }
   }
 
+  async createMany(jobs: JobEntity[], options: StepOptions = {}): Promise<void> {
+    if (jobs.length === 0) {
+      return;
+    }
+
+    try {
+      const firstJob = jobs[0];
+      const isEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_ENABLED,
+        organization: { _id: firstJob._organizationId },
+        environment: { _id: firstJob._environmentId },
+        user: { _id: firstJob._userId },
+        defaultValue: false,
+      });
+
+      if (!isEnabled) {
+        return;
+      }
+
+      const stepRunDataArray: StepRunInsertData[] = [];
+
+      for (const job of jobs) {
+        // Preserve existing deferredMs if not explicitly provided
+        const existingDeferredMs = await this.getExistingDeferredMs(job._organizationId, job._id);
+        const finalOptions = {
+          ...options,
+          deferredMs: options.deferredMs ?? existingDeferredMs,
+        };
+
+        const stepRunData = this.mapJobToStepRun(job, finalOptions);
+        stepRunDataArray.push(stepRunData);
+      }
+
+      await this.insertMany(stepRunDataArray, {
+        organizationId: firstJob._organizationId,
+        environmentId: firstJob._environmentId,
+        userId: firstJob._userId,
+      });
+
+      this.logger.debug(
+        {
+          count: jobs.length,
+          stepRunIds: jobs.map((job) => job._id),
+          status: options.status,
+          ...(options.errorCode && { errorCode: options.errorCode }),
+          ...(options.errorMessage && { errorMessage: options.errorMessage }),
+        },
+        `Step runs ${options.status || 'processed'} in batch`
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          jobIds: jobs.map((job) => job._id),
+          status: options.status,
+        },
+        `Failed to log step runs ${options.status || 'processing'} in batch`
+      );
+    }
+  }
+
   private async getExistingDeferredMs(organizationId: string, stepRunId: string): Promise<number | null> {
     if (!this.clickhouseService.client) {
       return null;
@@ -163,7 +223,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       status: options?.status || job.status,
 
       // Performance metrics
-      duration_ms: options?.executionDurationMs || null,
       deferred_ms: options?.deferredMs || null,
 
       // Error handling

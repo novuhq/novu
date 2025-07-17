@@ -48,11 +48,9 @@ export class CancelDelayed {
       }
     );
 
-    for (const job of jobs) {
-      await this.stepRunRepository.create(job, {
-        status: JobStatusEnum.CANCELED,
-      });
-    }
+    await this.stepRunRepository.createMany(jobs, {
+      status: JobStatusEnum.CANCELED,
+    });
 
     const mainDigestJob = jobs.find((job) => isMainDigest(job.type, job.status));
 
