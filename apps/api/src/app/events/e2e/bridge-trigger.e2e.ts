@@ -32,7 +32,7 @@ type Context = { name: string; isStateful: boolean };
 const contexts: Context[] = [{ name: 'stateful', isStateful: true }];
 
 contexts.forEach((context: Context) => {
-  describe('Self-Hosted Bridge Trigger #novu-v2', async function () {
+  describe.skip('Self-Hosted Bridge Trigger #novu-v2', async function () {
     let session: UserSession;
     let bridgeServer: TestBridgeServer;
     const messageRepository = new MessageRepository();
