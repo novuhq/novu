@@ -296,7 +296,7 @@ export class SubscribersV1Controller {
   @ApiOperation({
     summary: 'Upsert provider credentials',
     description: `Upsert credentials for a provider such as slack and push tokens. 
-      **providerId** is required field. This API creates **deviceTokens** or replaces the existing with the provided ones.`,
+      **providerId** is required field. This API creates **deviceTokens** or appends to the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')
   async updateSubscriberChannel(
@@ -325,7 +325,7 @@ export class SubscribersV1Controller {
   @ApiOperation({
     summary: 'Create or Partially Update provider credentials',
     description: `Create or Partially credentials for a provider such as **slack** and **FCM**. 
-      **providerId** is required field. This API creates the **deviceTokens** or appends to the existing ones.`,
+      **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')
   @SdkMethodName('append')
