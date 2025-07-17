@@ -72,10 +72,11 @@ export class ActivitiesRequestDto {
 
   @ApiPropertyOptional({
     type: String,
-    description: 'Transaction ID for filtering',
+    isArray: true,
+    description: 'Array of transaction IDs or a single transaction ID for filtering',
   })
   @IsOptional()
-  transactionId?: string;
+  transactionId?: string[] | string;
 
   @ApiPropertyOptional({
     type: String,

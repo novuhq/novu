@@ -37,6 +37,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     status: filters.status,
     transactionId: filters.transactionId || undefined,
     created: filters.created?.toString(),
+    url_pattern: filters.url_pattern || undefined,
   });
 
   const logsData = logsResponse?.data || [];
@@ -84,7 +85,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-text-strong h-8 px-2 py-0">Requests</TableHead>
-                      <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
+                      <TableHead className="h-8 w-[200px] px-2 py-0"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

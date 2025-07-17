@@ -1,5 +1,6 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
-import { ExternalApiAccessible, UserSession } from '@novu/application-generic';
+import { ExternalApiAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
+import { PermissionsEnum } from '@novu/shared';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetRequestsCommand } from './usecases/get-requests/get-requests.command';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
@@ -13,6 +14,7 @@ export class LogsController {
   constructor(private getRequestsUsecase: GetRequests) {}
 
   @Get('requests')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @ExternalApiAccessible()
   async getLogs(
     @UserSession() user,

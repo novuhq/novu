@@ -8,6 +8,7 @@ export interface LogsFilters {
   status: string[];
   transactionId: string;
   created: string; // Hours value for creation time filter, defaults to '24'
+  url_pattern: string;
 }
 
 export interface LogsUrlState {
@@ -85,6 +86,7 @@ export function useLogsUrlState(): LogsUrlState {
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
       created: searchParams.get('created') || maxAvailableLogsDateRange, // Default to max available for user's tier
+      url_pattern: searchParams.get('url_pattern') || '',
     }),
     [searchParams, maxAvailableLogsDateRange]
   );
@@ -96,6 +98,7 @@ export function useLogsUrlState(): LogsUrlState {
         prev.delete('status');
         prev.delete('transactionId');
         prev.delete('created');
+        prev.delete('url_pattern');
 
         // Set new filter params
         if (newFilters.status.length > 0) {
@@ -108,6 +111,10 @@ export function useLogsUrlState(): LogsUrlState {
 
         if (newFilters.created) {
           prev.set('created', newFilters.created);
+        }
+
+        if (newFilters.url_pattern.trim()) {
+          prev.set('url_pattern', newFilters.url_pattern);
         }
 
         // Reset to first page when filters change
@@ -124,6 +131,7 @@ export function useLogsUrlState(): LogsUrlState {
       prev.delete('status');
       prev.delete('transactionId');
       prev.delete('created'); // Remove from URL so it defaults to '24'
+      prev.delete('url_pattern');
       prev.delete('page');
       return prev;
     });
@@ -131,7 +139,10 @@ export function useLogsUrlState(): LogsUrlState {
 
   const hasActiveFilters = useMemo(() => {
     return (
-      filters.status.length > 0 || filters.transactionId.trim() !== '' || filters.created !== maxAvailableLogsDateRange
+      filters.status.length > 0 ||
+      filters.transactionId.trim() !== '' ||
+      filters.created !== maxAvailableLogsDateRange ||
+      filters.url_pattern.trim() !== ''
     );
   }, [filters, maxAvailableLogsDateRange]);
 

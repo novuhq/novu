@@ -8,6 +8,7 @@ export interface GetRequestLogsParams {
   limit?: number;
   statusCode?: string;
   url?: string;
+  url_pattern?: string;
   transactionId?: string;
   search?: string;
   created?: string;
@@ -16,8 +17,8 @@ export interface GetRequestLogsParams {
 export interface GetRequestLogsResponse {
   data: RequestLog[];
   total: number;
-  pageSize?: number;
-  page?: number;
+  pageSize: number;
+  page: number;
 }
 
 export async function getRequestLogs(params: GetRequestLogsParams): Promise<GetRequestLogsResponse> {

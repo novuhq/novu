@@ -60,6 +60,14 @@ export class GetRequestsDto {
 
   @IsString()
   @IsOptional()
+  @MaxLength(500)
+  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/, {
+    message: 'URL pattern contains invalid characters',
+  })
+  url_pattern?: string;
+
+  @IsString()
+  @IsOptional()
   @MaxLength(100)
   transactionId?: string;
 
