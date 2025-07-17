@@ -57,11 +57,27 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
 
-    const delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
-    });
+    function sleep(ms: number): Promise<void> {
+      return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+      });
+    }
+
+    let delayedJob;
+    // Poll for delayedJob until it's no longer in pending status
+    while (true) {
+      delayedJob = await jobRepository.findOne({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      });
+
+      if (delayedJob && delayedJob.status !== JobStatusEnum.PENDING) {
+        break;
+      }
+
+      await sleep(100);
+    }
 
     expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);
 
