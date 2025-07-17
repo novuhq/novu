@@ -51,12 +51,10 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     return { hasNext, hasPrevious, totalPages };
   }, [totalCount, limit, currentPage]);
 
-  const selectedLog = selectedLogId
-    ? logsData.find((log: RequestLog) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
-    : undefined;
+  const selectedLog = selectedLogId ? logsData.find((log: RequestLog) => log.id === selectedLogId) : undefined;
 
   const handleRowClick = (log: RequestLog) => {
-    const logId = log.transactionId || `error-${logsData.indexOf(log)}`;
+    const logId = log.id;
     handleLogSelect(logId);
     onLogClick?.(log);
   };
@@ -90,7 +88,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                   </TableHeader>
                   <TableBody>
                     {logsData.map((log: RequestLog, index: number) => {
-                      const logId = log.transactionId || `error-${index}`;
+                      const logId = log.id;
                       return (
                         <LogsTableRow
                           key={logId}
