@@ -20,22 +20,16 @@ import { MergePreferencesCommand } from './merge-preferences.command';
  * If the subscriber has no preferences, the workflow preferences are returned.
  */
 export class MergePreferences {
-  public static execute(
-    command: MergePreferencesCommand,
-  ): GetPreferencesResponseDto {
-    const workflowPreferences = [
-      command.workflowResourcePreference,
-      command.workflowUserPreference,
-    ].filter((preference) => preference !== undefined);
-
-    const subscriberPreferences = [
-      command.subscriberGlobalPreference,
-      command.subscriberWorkflowPreference,
-    ].filter((preference) => preference !== undefined);
-
-    const isWorkflowPreferenceReadonly = workflowPreferences.some(
-      (preference) => preference.preferences.all?.readOnly,
+  public static execute(command: MergePreferencesCommand): GetPreferencesResponseDto {
+    const workflowPreferences = [command.workflowResourcePreference, command.workflowUserPreference].filter(
+      (preference) => preference !== undefined
     );
+
+    const subscriberPreferences = [command.subscriberGlobalPreference, command.subscriberWorkflowPreference].filter(
+      (preference) => preference !== undefined
+    );
+
+    const isWorkflowPreferenceReadonly = workflowPreferences.some((preference) => preference.preferences.all?.readOnly);
 
     const preferencesList = [
       ...workflowPreferences,
@@ -47,14 +41,10 @@ export class MergePreferences {
 
     // Build the source object
     const source = {
-      [PreferencesTypeEnum.WORKFLOW_RESOURCE]:
-        command.workflowResourcePreference?.preferences || null,
-      [PreferencesTypeEnum.USER_WORKFLOW]:
-        command.workflowUserPreference?.preferences || null,
-      [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]:
-        command.subscriberGlobalPreference?.preferences || null,
-      [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]:
-        command.subscriberWorkflowPreference?.preferences || null,
+      [PreferencesTypeEnum.WORKFLOW_RESOURCE]: command.workflowResourcePreference?.preferences || null,
+      [PreferencesTypeEnum.USER_WORKFLOW]: command.workflowUserPreference?.preferences || null,
+      [PreferencesTypeEnum.SUBSCRIBER_GLOBAL]: command.subscriberGlobalPreference?.preferences || null,
+      [PreferencesTypeEnum.SUBSCRIBER_WORKFLOW]: command.subscriberWorkflowPreference?.preferences || null,
     };
 
     return {
