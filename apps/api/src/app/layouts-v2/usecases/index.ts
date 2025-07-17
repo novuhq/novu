@@ -5,6 +5,7 @@ import { DuplicateLayoutUseCase } from './duplicate-layout';
 import { ListLayoutsUseCase } from './list-layouts';
 import { LayoutVariablesSchemaUseCase } from './layout-variables-schema';
 import { PreviewLayoutUsecase } from './preview-layout';
+import { GetLayoutUsageUseCase } from './get-layout-usage';
 
 export const USE_CASES = [
   UpsertLayoutUseCase,
@@ -14,4 +15,5 @@ export const USE_CASES = [
   ListLayoutsUseCase,
   LayoutVariablesSchemaUseCase,
   PreviewLayoutUsecase,
+  GetLayoutUsageUseCase,
 ];

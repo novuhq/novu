@@ -16,6 +16,7 @@ import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layo
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 
 const toastOptions: ExternalToast = {
+  duration: 5000,
   position: 'bottom-right',
   classNames: {
     toast: 'mb-4 right-0 pointer-events-none',

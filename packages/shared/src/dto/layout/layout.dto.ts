@@ -45,6 +45,10 @@ export type UpdateLayoutDto = {
   controlValues: LayoutControlValuesDto;
 };
 
+export type DuplicateLayoutDto = {
+  name: string;
+};
+
 export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayoutDto;
 
 export type LayoutResponseDto = {

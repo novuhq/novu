@@ -34,7 +34,7 @@ export class DeleteLayoutUseCase {
     }
 
     await this.removeLayoutReferencesFromStepControls({
-      layoutId: layout._id!,
+      layoutId: layout.layoutId!,
       environmentId,
       organizationId,
     });
