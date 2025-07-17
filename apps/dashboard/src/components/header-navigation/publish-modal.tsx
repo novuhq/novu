@@ -1,4 +1,4 @@
-import { RiAlertFill, RiArrowRightSLine, RiErrorWarningLine, RiCheckboxCircleFill } from 'react-icons/ri';
+import { RiAlertFill, RiArrowRightSLine, RiCheckboxCircleFill } from 'react-icons/ri';
 import { Dialog, DialogContent } from '../primitives/dialog';
 import { Button } from '../primitives/button';
 import { useDiffEnvironments } from '@/hooks/use-environments';
@@ -13,7 +13,6 @@ type PublishModalProps = {
   currentEnvironmentId?: string;
   onConfirm: () => void;
   isPublishing?: boolean;
-  publishError?: string | null;
 };
 
 export function PublishModal({
@@ -23,7 +22,6 @@ export function PublishModal({
   currentEnvironmentId,
   onConfirm,
   isPublishing = false,
-  publishError = null,
 }: PublishModalProps) {
   const { data: diffData } = useDiffEnvironments({
     sourceEnvironmentId: currentEnvironmentId,
@@ -54,26 +52,21 @@ export function PublishModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md gap-4 p-3">
-        <PublishModalHeader publishError={publishError} totalChanges={totalChanges} isPublishing={isPublishing} />
+        <PublishModalHeader totalChanges={totalChanges} />
 
         <PublishModalContent
-          publishError={publishError}
-          isPublishing={isPublishing}
           totalChanges={totalChanges}
           environment={environment}
           workflowResources={workflowResources}
           layoutResources={layoutResources}
         />
 
-        {!isPublishing && !publishError && totalChanges > 0 && <ChangesSummary resources={allResources} />}
+        {totalChanges > 0 && <ChangesSummary resources={allResources} />}
 
-        {totalChanges === 0 && !isPublishing && !publishError && <NoChangesMessage />}
-
-        {isPublishing && <PublishingIndicator />}
+        {totalChanges === 0 && <NoChangesMessage />}
 
         <PublishModalActions
           totalChanges={totalChanges}
-          publishError={publishError}
           isPublishing={isPublishing}
           environment={environment}
           onClose={onClose}
@@ -84,22 +77,8 @@ export function PublishModal({
   );
 }
 
-function PublishModalHeader({
-  publishError,
-  totalChanges,
-}: {
-  publishError?: string | null;
-  totalChanges: number;
-  isPublishing: boolean;
-}) {
+function PublishModalHeader({ totalChanges }: { totalChanges: number }) {
   const getIconAndStyle = () => {
-    if (publishError) {
-      return {
-        icon: RiErrorWarningLine,
-        className: 'bg-error-lighter text-error-base',
-      };
-    }
-
     if (totalChanges === 0) {
       return {
         icon: RiCheckboxCircleFill,
@@ -125,55 +104,27 @@ function PublishModalHeader({
 }
 
 function PublishModalContent({
-  publishError,
-  isPublishing,
   totalChanges,
   environment,
   workflowResources,
   layoutResources,
 }: {
-  publishError?: string | null;
-  isPublishing: boolean;
   totalChanges: number;
   environment: IEnvironment;
   workflowResources: IResourceDiffResult[];
   layoutResources: IResourceDiffResult[];
 }) {
   const getTitle = () => {
-    if (publishError) return 'Publishing Failed';
-    if (isPublishing) return 'Publishing Changes...';
     if (totalChanges === 0) return `No Changes to Publish to ${environment?.name}`;
 
     return `Publishing ${totalChanges} Changes to ${environment?.name}`;
   };
 
   const getDescription = () => {
-    if (publishError) {
-      return <p className="text-paragraph-xs text-error-base">{publishError}</p>;
-    }
-
     if (totalChanges === 0) {
       return (
         <p className="text-paragraph-xs text-text-soft">
           Your environments are already in sync. There are no changes to publish to {environment?.name}.
-        </p>
-      );
-    }
-
-    if (isPublishing) {
-      const resourceCounts = [];
-
-      if (workflowResources.length > 0) {
-        resourceCounts.push(`${workflowResources.length} workflow${workflowResources.length === 1 ? '' : 's'}`);
-      }
-
-      if (layoutResources.length > 0) {
-        resourceCounts.push(`${layoutResources.length} layout${layoutResources.length === 1 ? '' : 's'}`);
-      }
-
-      return (
-        <p className="text-paragraph-xs text-text-soft">
-          Publishing {resourceCounts.join(', ')} to {environment?.name}...
         </p>
       );
     }
@@ -238,27 +189,14 @@ function NoChangesMessage() {
   );
 }
 
-function PublishingIndicator() {
-  return (
-    <div className="flex items-center justify-center py-8">
-      <div className="flex items-center gap-3">
-        <div className="size-6 animate-spin rounded-full border-2 border-neutral-200 border-t-neutral-900" />
-        <span className="text-paragraph-sm text-text-sub">Publishing changes...</span>
-      </div>
-    </div>
-  );
-}
-
 function PublishModalActions({
   totalChanges,
-  publishError,
   isPublishing,
   environment,
   onClose,
   onConfirm,
 }: {
   totalChanges: number;
-  publishError?: string | null;
   isPublishing: boolean;
   environment: IEnvironment;
   onClose: () => void;
@@ -266,7 +204,6 @@ function PublishModalActions({
 }) {
   const getCancelButtonText = () => {
     if (totalChanges === 0) return 'Close';
-    if (publishError) return 'Close';
     return 'Cancel';
   };
 
@@ -276,23 +213,16 @@ function PublishModalActions({
         {getCancelButtonText()}
       </Button>
 
-      {!publishError && totalChanges > 0 && (
+      {totalChanges > 0 && (
         <Button
           variant="primary"
           mode="gradient"
           size="2xs"
-          trailingIcon={!isPublishing ? RiArrowRightSLine : undefined}
           onClick={onConfirm}
           disabled={totalChanges === 0 || isPublishing}
           isLoading={isPublishing}
         >
-          {isPublishing ? 'Publishing...' : `Publish to ${environment?.name}`}
-        </Button>
-      )}
-
-      {publishError && (
-        <Button variant="primary" size="2xs" trailingIcon={RiArrowRightSLine} onClick={onConfirm}>
-          Try Again
+          Publish to {environment?.name}
         </Button>
       )}
     </div>
