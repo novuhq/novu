@@ -122,7 +122,7 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
       'Start sending message',
       'Message created',
       'Message sent',
-      'Message Read',
+      'Message read',
     ];
 
     expect(actualDetails.length).to.be.equal(5);
@@ -176,7 +176,7 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
         `Expected execution detail '${expectedDetail}' not found in job. Found: ${actualDetails.join(', ')}`
       );
     });
-    expect(actualDetails).to.not.include('Message Read');
+    expect(actualDetails).to.not.include('Message read');
   });
 
   it('should return traces in activity feed with step runs and trace logs', async () => {
@@ -229,7 +229,7 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
       'Start sending message',
       'Message created',
       'Message sent',
-      'Message Read',
+      'Message read',
     ];
 
     expect(actualDetails.length).to.be.equal(5);
@@ -373,6 +373,6 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
         `Expected execution detail '${expectedDetail}' not found in job. Found: ${actualDetails.join(', ')}`
       );
     });
-    expect(actualDetails).to.not.include('Message Read');
+    expect(actualDetails).to.not.include('Message read');
   });
 });
