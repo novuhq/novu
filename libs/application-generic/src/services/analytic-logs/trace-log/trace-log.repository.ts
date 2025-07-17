@@ -1,10 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
-import { ClickHouseService } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
+
+const TRACE_INSERT_OPTIONS: InsertOptions = {
+  asyncInsert: true,
+  waitForAsyncInsert: process.env.NODE_ENV === 'test',
+};
 
 @Injectable()
 export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
@@ -113,143 +118,167 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
       );
     }
   }
+
+  // Override insert to ensure insert methods always apply trace-optimized ClickHouse settings, even if called directly
+  async insert(
+    data: Omit<Trace, 'id' | 'expires_at'>,
+    context: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
+    await super.insert(data, context, TRACE_INSERT_OPTIONS);
+  }
+
+  // Override insert to ensure insert methods always apply trace-optimized ClickHouse settings, even if called directly
+  async insertMany(
+    data: Omit<Trace, 'id' | 'expires_at'>[],
+    context: {
+      organizationId?: string;
+      environmentId?: string;
+      userId?: string;
+    }
+  ): Promise<void> {
+    await super.insertMany(data, context, TRACE_INSERT_OPTIONS);
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {
   switch (eventType) {
     // Step events
     case 'step_created':
-      return 'Step Created';
+      return 'Step created';
     case 'step_queued':
-      return 'Step Queued';
+      return 'Step queued';
     case 'step_delayed':
-      return 'Step Delayed';
+      return 'Step delayed';
     case 'step_digested':
-      return 'Step Digested';
+      return 'Step digested';
     case 'step_filtered':
-      return 'Step Filtered';
+      return 'Step filtered';
     case 'step_filter_processing':
-      return 'Step Filter Processing';
+      return 'Step filter processing';
     case 'step_filter_failed':
-      return 'Step Filter Failed';
+      return 'Step filter failed';
 
     // Message events
     case 'message_created':
-      return 'Message Created';
+      return 'Message created';
     case 'message_sent':
-      return 'Message Sent';
+      return 'Message sent';
     case 'message_seen':
-      return 'Message Seen';
+      return 'Message seen';
     case 'message_unseen':
-      return 'Message Unseen';
+      return 'Message unseen';
     case 'message_read':
-      return 'Message Read';
+      return 'Message read';
     case 'message_unread':
-      return 'Message Unread';
+      return 'Message unread';
     case 'message_archived':
-      return 'Message Archived';
+      return 'Message archived';
     case 'message_unarchived':
-      return 'Message Unarchived';
+      return 'Message unarchived';
     case 'message_snoozed':
-      return 'Message Snoozed';
+      return 'Message snoozed';
     case 'message_unsnoozed':
-      return 'Message Unsnoozed';
+      return 'Message unsnoozed';
     case 'message_unsnooze_failed':
-      return 'Message Unsnooze Failed';
+      return 'Message unsnooze failed';
     case 'message_content_failed':
-      return 'Message Content Failed';
+      return 'Message content failed';
     case 'message_sending_started':
-      return 'Message Sending Started';
+      return 'Message sending started';
 
     // Subscriber events
     case 'subscriber_integration_missing':
-      return 'Subscriber Integration Missing';
+      return 'Subscriber integration missing';
     case 'subscriber_channel_missing':
-      return 'Subscriber Channel Missing';
+      return 'Subscriber channel missing';
     case 'subscriber_validation_failed':
-      return 'Subscriber Validation Failed';
+      return 'Subscriber validation failed';
 
     // Provider events
     case 'provider_error':
-      return 'Provider Error';
+      return 'Provider error';
     case 'provider_limit_exceeded':
-      return 'Provider Limit Exceeded';
+      return 'Provider limit exceeded';
 
     // Digest events
     case 'digest_merged':
-      return 'Digest Merged';
+      return 'Digest merged';
     case 'digest_skipped':
-      return 'Digest Skipped';
+      return 'Digest skipped';
     case 'digest_triggered':
-      return 'Digest Triggered';
+      return 'Digest triggered';
     case 'digest_started':
-      return 'Digest Started';
+      return 'Digest started';
 
     // Delay events
     case 'delay_completed':
-      return 'Delay Completed';
+      return 'Delay completed';
     case 'delay_misconfigured':
-      return 'Delay Misconfigured';
+      return 'Delay misconfigured';
     case 'delay_limit_exceeded':
-      return 'Delay Limit Exceeded';
+      return 'Delay limit exceeded';
 
     // Bridge events
     case 'bridge_response_received':
-      return 'Bridge Response Received';
+      return 'Bridge response received';
     case 'bridge_execution_failed':
-      return 'Bridge Execution Failed';
+      return 'Bridge execution failed';
 
     // Webhook events
     case 'webhook_filter_retrying':
-      return 'Webhook Filter Retrying';
+      return 'Webhook filter retrying';
     case 'webhook_filter_failed':
-      return 'Webhook Filter Failed';
+      return 'Webhook filter failed';
 
     // Integration events
     case 'integration_selected':
-      return 'Integration Selected';
+      return 'Integration selected';
     case 'layout_not_found':
-      return 'Layout Not Found';
+      return 'Layout not found';
 
     // Tenant events
     case 'tenant_selected':
-      return 'Tenant Selected';
+      return 'Tenant selected';
     case 'tenant_not_found':
-      return 'Tenant Not Found';
+      return 'Tenant not found';
 
     // Variant events
     case 'variant_selected':
-      return 'Variant Selected';
+      return 'Variant selected';
 
     // Notification events
     case 'notification_error':
-      return 'Notification Error';
+      return 'Notification error';
 
     // Chat events
     case 'chat_webhook_missing':
-      return 'Chat Webhook Missing';
+      return 'Chat webhook missing';
     case 'chat_all_channels_failed':
-      return 'Chat All Channels Failed';
+      return 'Chat all channels failed';
     case 'chat_phone_missing':
-      return 'Chat Phone Missing';
+      return 'Chat phone missing';
 
     // Push events
     case 'push_tokens_missing':
-      return 'Push Tokens Missing';
+      return 'Push tokens missing';
 
     // Reply events
     case 'reply_callback_missing':
-      return 'Reply Callback Missing';
+      return 'Reply callback missing';
     case 'reply_callback_misconfigured':
-      return 'Reply Callback Misconfigured';
+      return 'Reply callback misconfigured';
     case 'reply_mx_record_missing':
-      return 'Reply MX Record Missing';
+      return 'Reply MX record missing';
     case 'reply_mx_domain_missing':
-      return 'Reply MX Domain Missing';
+      return 'Reply MX domain missing';
 
     // Execution events
     case 'execution_detail':
-      return 'Execution Detail';
+      return 'Execution detail';
 
     default:
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases

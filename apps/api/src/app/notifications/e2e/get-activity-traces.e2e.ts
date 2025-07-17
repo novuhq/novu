@@ -116,7 +116,7 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
       'Start sending message',
       'Message created',
       'Message sent',
-      'Message Read',
+      'Message read',
     ];
 
     expect(actualDetails.length).to.be.equal(5);
@@ -170,6 +170,6 @@ describe('Get activity with traces - /notifications/:notificationId (GET) #novu-
         `Expected execution detail '${expectedDetail}' not found in job. Found: ${actualDetails.join(', ')}`
       );
     });
-    expect(actualDetails).to.not.include('Message Read');
+    expect(actualDetails).to.not.include('Message read');
   });
 });

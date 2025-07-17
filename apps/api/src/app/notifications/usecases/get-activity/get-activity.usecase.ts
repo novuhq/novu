@@ -94,7 +94,6 @@ export class GetActivity {
           environment_id: command.environmentId,
           organization_id: command.organizationId,
         },
-        limit: 1000,
         orderBy: 'created_at',
         orderDirection: 'ASC',
       });
