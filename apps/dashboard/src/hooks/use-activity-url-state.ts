@@ -24,7 +24,7 @@ function parseFilters(searchParams: URLSearchParams): ActivityFilters {
   const transactionIds = searchParams.getAll('transactionId');
 
   if (transactionIds.length > 1) {
-    result.transactionId = transactionIds;
+    result.transactionId = transactionIds.join(',');
   } else if (transactionId) {
     result.transactionId = transactionId;
   }
