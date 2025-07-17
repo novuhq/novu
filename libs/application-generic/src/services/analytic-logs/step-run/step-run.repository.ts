@@ -82,7 +82,11 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       };
 
       const stepRunData = this.mapJobToStepRun(job, finalOptions);
-      await this.insert(stepRunData);
+      await this.insert(stepRunData, {
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+        userId: job._userId,
+      });
 
       this.logger.debug(
         {
