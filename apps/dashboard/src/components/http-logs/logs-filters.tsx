@@ -164,8 +164,8 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
       <FacetedFormFilter
         size="small"
         type="single"
-        title="Path"
-        placeholder="Filter by URL path"
+        title="API Endpoint"
+        placeholder="Filter by API endpoint"
         options={URL_PATTERN_OPTIONS}
         selected={filters.url_pattern ? [filters.url_pattern] : []}
         onSelect={handleUrlPatternChange}

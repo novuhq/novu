@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
@@ -11,6 +11,73 @@ import { LogsFilters } from './logs-filters';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RequestLogsEmptyState } from './logs-empty-state';
+
+const refreshIcon = 'http://localhost:3845/assets/0aa94b2fb6d1e0194054478460d7cdfc289e265a.svg';
+
+function UpdatedAgo({ lastUpdated, onRefresh }: { lastUpdated: Date; onRefresh: () => void }) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Update current time every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const timeAgo = useMemo(() => {
+    const diffInSeconds = Math.floor((currentTime.getTime() - lastUpdated.getTime()) / 1000);
+
+    if (diffInSeconds < 5) {
+      return 'just now';
+    } else if (diffInSeconds < 60) {
+      // Round to nearest 5 seconds
+      const roundedSeconds = Math.round(diffInSeconds / 5) * 5;
+      return `${roundedSeconds} seconds ago`;
+    } else if (diffInSeconds < 3600) {
+      const minutes = Math.floor(diffInSeconds / 60);
+      return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    } else {
+      const hours = Math.floor(diffInSeconds / 3600);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    }
+  }, [lastUpdated, currentTime]);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="text-xs font-medium leading-4">
+        <span className="text-foreground-400">Updated </span>
+        <span className="text-foreground-600">{timeAgo}</span>
+      </div>
+      <button
+        onClick={async () => {
+          setIsRefreshing(true);
+          await onRefresh();
+          setIsRefreshing(false);
+        }}
+        disabled={isRefreshing}
+        className="flex items-center justify-center rounded-md bg-white p-1 transition-shadow hover:shadow-md disabled:opacity-50"
+        title="Refresh data"
+      >
+        <div className="flex h-3.5 w-3.5 items-center justify-center p-0.5">
+          <motion.img
+            alt="Refresh"
+            className="block h-full w-full max-w-none"
+            src={refreshIcon}
+            animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
+            transition={{
+              duration: 1,
+              repeat: isRefreshing ? Infinity : 0,
+              ease: 'linear',
+            }}
+          />
+        </div>
+      </button>
+    </div>
+  );
+}
 
 type LogsTableProps = {
   onLogClick?: (log: RequestLog) => void;
@@ -31,7 +98,11 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     filters,
   } = useLogsUrlState();
 
-  const { data: logsResponse, isLoading } = useFetchRequestLogs({
+  const {
+    data: logsResponse,
+    isLoading,
+    refetch,
+  } = useFetchRequestLogs({
     page: currentPage - 1, // API is 0-based
     limit: limit,
     status: filters.status,
@@ -42,6 +113,15 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
 
   const logsData = logsResponse?.data || [];
   const totalCount = logsResponse?.total || 0;
+
+  // Track last updated time
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  useEffect(() => {
+    if (logsResponse) {
+      setLastUpdated(new Date());
+    }
+  }, [logsResponse]);
 
   const paginationState = useMemo(() => {
     const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
@@ -59,6 +139,11 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     onLogClick?.(log);
   };
 
+  const handleRefresh = async () => {
+    await refetch();
+    setLastUpdated(new Date());
+  };
+
   if (!isLoading && logsData.length === 0 && !hasActiveFilters) {
     return <RequestLogsEmptyState />;
   }
@@ -72,6 +157,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
         />
+        <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
       </div>
 
       <div className="relative flex h-full min-h-full flex-1 pt-2.5">
