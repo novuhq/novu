@@ -5,7 +5,7 @@ import { updateLayout } from '@/api/layouts';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
-type UpdateLayoutParameters = OmitEnvironmentFromParameters<typeof updateLayout>;
+export type UpdateLayoutParameters = OmitEnvironmentFromParameters<typeof updateLayout>;
 
 export const useUpdateLayout = (options?: UseMutationOptions<LayoutResponseDto, unknown, UpdateLayoutParameters>) => {
   const { currentEnvironment } = useEnvironment();

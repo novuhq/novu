@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { PinoLogger, Instrument } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
@@ -10,12 +10,15 @@ import { WorkflowRepositoryService } from './workflow-repository.service';
 
 @Injectable()
 export class WorkflowDiffOperation {
+  private static readonly BATCH_SIZE = 10;
+
   constructor(
     private logger: PinoLogger,
     private workflowRepositoryService: WorkflowRepositoryService,
     private workflowComparator: WorkflowComparator
   ) {}
 
+  @Instrument()
   async execute(
     sourceEnvId: string,
     targetEnvId: string,
@@ -32,8 +35,14 @@ export class WorkflowDiffOperation {
         this.workflowRepositoryService.fetchSyncableWorkflows(targetEnvId, organizationId),
       ]);
 
+      this.logger.info(
+        `Fetched ${sourceWorkflows.length} source workflows and ${targetWorkflows.length} target workflows`
+      );
+
       await this.processWorkflowDiffs(sourceWorkflows, targetWorkflows, resultBuilder, userContext);
       await this.processDeletedWorkflows(sourceWorkflows, targetWorkflows, resultBuilder);
+
+      this.logger.info(`Workflow diff completed. Processed ${sourceWorkflows.length} workflows in batches.`);
 
       return resultBuilder.build();
     } catch (error) {
@@ -42,6 +51,7 @@ export class WorkflowDiffOperation {
     }
   }
 
+  @Instrument()
   private async processWorkflowDiffs(
     sourceWorkflows: NotificationTemplateEntity[],
     targetWorkflows: NotificationTemplateEntity[],
@@ -50,7 +60,29 @@ export class WorkflowDiffOperation {
   ): Promise<void> {
     const targetWorkflowMap = this.workflowRepositoryService.createWorkflowMap(targetWorkflows);
 
-    for (const sourceWorkflow of sourceWorkflows) {
+    // Process workflows in batches for better performance
+    const batches = this.createBatches(sourceWorkflows, WorkflowDiffOperation.BATCH_SIZE);
+
+    this.logger.info(
+      `Processing ${sourceWorkflows.length} workflows in ${batches.length} batches of ${WorkflowDiffOperation.BATCH_SIZE}`
+    );
+
+    for (let i = 0; i < batches.length; i += 1) {
+      const batch = batches[i];
+      this.logger.debug(`Processing batch ${i + 1}/${batches.length} with ${batch.length} workflows`);
+
+      await this.processBatch(batch, targetWorkflowMap, resultBuilder, userContext);
+    }
+  }
+
+  @Instrument()
+  private async processBatch(
+    sourceWorkflows: NotificationTemplateEntity[],
+    targetWorkflowMap: Map<string, NotificationTemplateEntity>,
+    resultBuilder: DiffResultBuilder,
+    userContext: UserSessionData
+  ): Promise<void> {
+    const batchPromises = sourceWorkflows.map(async (sourceWorkflow) => {
       const sourceIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow);
       const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
 
@@ -62,7 +94,11 @@ export class WorkflowDiffOperation {
           this.extractUpdatedByInfo(sourceWorkflow),
           this.extractUpdatedAtInfo(sourceWorkflow)
         );
-      } else {
+
+        return;
+      }
+
+      try {
         const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
           sourceWorkflow,
           targetWorkflow,
@@ -84,8 +120,23 @@ export class WorkflowDiffOperation {
             this.extractUpdatedAtInfo(targetWorkflow)
           );
         }
+      } catch (error) {
+        this.logger.error(`Failed to compare workflow ${sourceWorkflow.name}: ${error.message}`);
+        throw error;
       }
+    });
+
+    await Promise.all(batchPromises);
+  }
+
+  private createBatches<T>(items: T[], batchSize: number): T[][] {
+    const batches: T[][] = [];
+
+    for (let i = 0; i < items.length; i += batchSize) {
+      batches.push(items.slice(i, i + batchSize));
     }
+
+    return batches;
   }
 
   private async processDeletedWorkflows(
@@ -182,7 +233,6 @@ export class WorkflowDiffOperation {
       return null;
     }
 
-    // updatedAt is already a string in ISO format, return it directly
     return workflow.updatedAt;
   }
 }

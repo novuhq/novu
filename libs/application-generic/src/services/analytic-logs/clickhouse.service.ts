@@ -1,7 +1,12 @@
-import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
+import { createClient, ClickHouseClient, PingResult, ClickHouseSettings } from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 
 export { ClickHouseClient };
+
+export type InsertOptions = {
+  asyncInsert?: boolean;
+  waitForAsyncInsert?: boolean;
+};
 
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
@@ -44,8 +49,6 @@ export class ClickHouseService implements OnModuleDestroy {
       password: process.env.CLICK_HOUSE_PASSWORD,
       database: process.env.CLICK_HOUSE_DATABASE,
     });
-
-    // this.logger.info('ClickHouse client created');
   }
 
   get client(): ClickHouseClient | undefined {
@@ -102,15 +105,28 @@ export class ClickHouseService implements OnModuleDestroy {
     return data;
   }
 
-  public async insert<T extends Record<string, unknown>>(table: string, values: T[]) {
+  public async insert<T extends Record<string, unknown>>(
+    table: string,
+    values: T[],
+    clickhouseSettings?: InsertOptions
+  ) {
     if (!this._client) {
       return;
+    }
+
+    const settings: ClickHouseSettings = {};
+    if (clickhouseSettings?.asyncInsert !== undefined) {
+      settings.async_insert = clickhouseSettings.asyncInsert ? 1 : 0;
+    }
+    if (clickhouseSettings?.waitForAsyncInsert !== undefined) {
+      settings.wait_for_async_insert = clickhouseSettings.waitForAsyncInsert ? 1 : 0;
     }
 
     await this._client.insert({
       table,
       values,
       format: 'JSONEachRow',
+      clickhouse_settings: settings,
     });
   }
 

@@ -1,13 +1,26 @@
-import { createContext, useCallback, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useForm, UseFormReturn, useWatch } from 'react-hook-form';
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams, useBlocker, useLocation } from 'react-router-dom';
+import { useForm, UseFormReturn } from 'react-hook-form';
+import { ExternalToast } from 'sonner';
 import { GeneratePreviewResponseDto, LayoutResponseDto, ResourceOriginEnum } from '@novu/shared';
 
 import { useFetchLayout } from '@/hooks/use-fetch-layout';
 import { createContextHook } from '@/utils/context';
-import { parse } from '@/utils/json';
-import { useLayoutEditorPreview } from '@/hooks/use-layout-editor-preview';
+import { parse, stringify } from '@/utils/json';
+import { useLayoutPreview } from '@/hooks/use-layout-preview';
 import { getLayoutControlsDefaultValues } from '@/utils/default-values';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
+import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layout';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+
+const toastOptions: ExternalToast = {
+  position: 'bottom-right',
+  classNames: {
+    toast: 'mb-4 right-0 pointer-events-none',
+  },
+};
 
 export type LayoutContextType = {
   layout?: LayoutResponseDto;
@@ -16,6 +29,8 @@ export type LayoutContextType = {
   isPreviewPending: boolean;
   previewContextValue: string;
   isLayoutEditable: boolean;
+  isUpdating: boolean;
+  updateLayout: (data: UpdateLayoutParameters) => Promise<LayoutResponseDto>;
   setPreviewContextValue: (value: string) => Error | null;
   form: UseFormReturn<Record<string, unknown>, any, undefined>;
 };
@@ -27,6 +42,7 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
   const { layoutSlug = '' } = useParams<{
     layoutSlug?: string;
   }>();
+  const location = useLocation();
 
   const { layout, isPending } = useFetchLayout({ layoutSlug });
 
@@ -41,12 +57,38 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
       keepDirtyValues: true,
     },
   });
-  const controlValues = useWatch({ control: form.control });
 
-  const { previewData, isPending: isPreviewPending } = useLayoutEditorPreview({
-    layoutSlug,
-    controlValues: { email: { ...controlValues } },
-    previewContextValue,
+  const hasUnsavedChanges = form.formState.isDirty;
+
+  useBeforeUnload(hasUnsavedChanges);
+
+  const blocker = useBlocker(({ nextLocation }) => {
+    if (!hasUnsavedChanges) return false;
+
+    return !nextLocation.pathname.startsWith(location.pathname);
+  });
+
+  const { previewData, isPending: isPreviewPending, preview } = useLayoutPreview();
+
+  const debouncedPreview = useDebounce((controlValues: Record<string, unknown>) => {
+    preview({
+      layoutSlug,
+      controlValues: { email: { ...controlValues } },
+      previewContextValue,
+    });
+  }, 500);
+
+  const { updateLayout, isPending: isUpdating } = useUpdateLayout({
+    onSuccess: () => {
+      showSuccessToast('Layout updated successfully', '', toastOptions);
+    },
+    onError: (error) => {
+      showErrorToast(
+        `Failed to update layout: ${(error as Error).message.toLowerCase()}`,
+        (error as Error).message,
+        toastOptions
+      );
+    },
   });
 
   const isNovuCloud = layout?.origin === ResourceOriginEnum.NOVU_CLOUD && Boolean(layout?.controls.uiSchema);
@@ -69,6 +111,8 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
       isPreviewPending,
       previewContextValue,
       isLayoutEditable,
+      isUpdating,
+      updateLayout,
       setPreviewContextValue: setPreviewContextValueSafe,
       form,
     }),
@@ -78,13 +122,55 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
       previewData,
       isPreviewPending,
       previewContextValue,
+      isUpdating,
+      updateLayout,
       setPreviewContextValueSafe,
       isLayoutEditable,
       form,
     ]
   );
 
-  return <LayoutEditorContext.Provider value={value}>{children}</LayoutEditorContext.Provider>;
+  useEffect(() => {
+    const formValues = form.getValues();
+    debouncedPreview(formValues);
+
+    const subscription = form.watch((values) => {
+      debouncedPreview(values);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form, debouncedPreview]);
+
+  useEffect(() => {
+    const serverPayloadExample = previewData?.previewPayloadExample;
+    if (!serverPayloadExample) return;
+
+    setPreviewContextValue(stringify(serverPayloadExample));
+  }, [previewData?.previewPayloadExample]);
+
+  const handleBlockerProceed = useCallback(() => {
+    if (blocker.state === 'blocked') {
+      blocker.proceed?.();
+    }
+  }, [blocker]);
+
+  const handleBlockerReset = useCallback(() => {
+    if (blocker.state === 'blocked') {
+      blocker.reset?.();
+    }
+  }, [blocker]);
+
+  return (
+    <>
+      <LayoutEditorContext.Provider value={value}>{children}</LayoutEditorContext.Provider>
+      <UnsavedChangesAlertDialog
+        show={blocker.state === 'blocked'}
+        description="You have unsaved changes in the layout editor. These changes will be lost if you leave this page."
+        onCancel={handleBlockerReset}
+        onProceed={handleBlockerProceed}
+      />
+    </>
+  );
 };
 
 export const useLayoutEditor = createContextHook(LayoutEditorContext);
