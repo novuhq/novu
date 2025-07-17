@@ -55,7 +55,6 @@ export function UpdatedAgo({ lastUpdated, onRefresh }: UpdatedAgoProps) {
         title="Refresh data"
       >
         <div className="flex h-3.5 w-3.5 items-center justify-center p-0.5">
-          <motion.img
           <motion.div
             animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
             transition={{
