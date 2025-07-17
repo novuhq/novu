@@ -1,7 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-
-const refreshIcon = 'http://localhost:3845/assets/0aa94b2fb6d1e0194054478460d7cdfc289e265a.svg';
+import { RiLoopRightLine, RiRefreshLine, RiRepeatOneLine } from 'react-icons/ri';
 
 type UpdatedAgoProps = {
   lastUpdated: Date;
@@ -57,16 +56,16 @@ export function UpdatedAgo({ lastUpdated, onRefresh }: UpdatedAgoProps) {
       >
         <div className="flex h-3.5 w-3.5 items-center justify-center p-0.5">
           <motion.img
-            alt="Refresh"
-            className="block h-full w-full max-w-none"
-            src={refreshIcon}
+          <motion.div
             animate={isRefreshing ? { rotate: 360 } : { rotate: 0 }}
             transition={{
               duration: 1,
               repeat: isRefreshing ? Infinity : 0,
               ease: 'linear',
             }}
-          />
+          >
+            <RiLoopRightLine className="h-full w-full" />
+          </motion.div>
         </div>
       </button>
     </div>
