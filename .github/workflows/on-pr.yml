@@ -113,6 +113,10 @@ jobs:
               OUTPUT=$'test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]'
             }
             echo "$OUTPUT" >> $GITHUB_OUTPUT
+            echo "📋 Affected projects for downstream jobs:"
+            echo "$OUTPUT" | while IFS= read -r line; do
+              echo "  🔸 $line"
+            done
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
             # Use --silent to suppress pnpm output and only capture our script output
@@ -121,6 +125,10 @@ jobs:
               OUTPUT=$'test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]'
             }
             echo "$OUTPUT" >> $GITHUB_OUTPUT
+            echo "📋 Affected projects for downstream jobs:"
+            echo "$OUTPUT" | while IFS= read -r line; do
+              echo "  🔸 $line"
+            done
           fi
   test_unit_providers:
     name: Unit test @novu/providers
