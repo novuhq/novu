@@ -86,7 +86,7 @@ export const PublishButton = () => {
         targetEnvironmentId: state.selectedEnvironment._id,
       });
 
-      await queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+      queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
       actions.showSuccess(result);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to publish environment';
@@ -128,7 +128,6 @@ export const PublishButton = () => {
           currentEnvironmentId={currentEnvironment?._id}
           onConfirm={handlePublish}
           isPublishing={publishMutation.isPending}
-          publishError={publishMutation.error?.message || null}
         />
 
         <PublishSuccessModal
@@ -193,7 +192,6 @@ export const PublishButton = () => {
             currentEnvironmentId={currentEnvironment?._id}
             onConfirm={handlePublish}
             isPublishing={publishMutation.isPending}
-            publishError={publishMutation.error?.message || null}
           />
 
           <PublishSuccessModal

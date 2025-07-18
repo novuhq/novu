@@ -243,7 +243,17 @@ export function TranslationList(props: TranslationListProps) {
   }
 
   if (!areFiltersApplied && !data?.data.length) {
-    return <TranslationListBlank />;
+    return (
+      <TranslationListContainer
+        filterValues={filterValues}
+        handleFiltersChange={handleFiltersChange}
+        resetFilters={resetFilters}
+        isFetching={isFetching}
+        {...props}
+      >
+        <TranslationListBlank />
+      </TranslationListContainer>
+    );
   }
 
   if (!data?.data.length) {
@@ -255,11 +265,13 @@ export function TranslationList(props: TranslationListProps) {
         isFetching={isFetching}
         {...props}
       >
-        <ListNoResults
-          title="No translations found"
-          description="We couldn't find any translations that match your search criteria. Try adjusting your filters."
-          onClearFilters={resetFilters}
-        />
+        <div className="flex h-full w-full flex-col items-center justify-center">
+          <ListNoResults
+            title="No translations found"
+            description="We couldn't find any translations that match your search criteria. Try adjusting your filters."
+            onClearFilters={resetFilters}
+          />
+        </div>
       </TranslationListContainer>
     );
   }

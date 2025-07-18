@@ -290,9 +290,25 @@ export const WorkflowCanvas = ({
   isTemplateStorePreview?: boolean;
 }) => {
   const has = useHasPermission();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
+  const { workflow: currentWorkflow } = useWorkflow();
+  const navigate = useNavigate();
   const hasPermission = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
   const showReadOnlyOverlay = !hasPermission || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+
+  const handleSwitchToDevelopment = () => {
+    const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;
+
+    if (developmentEnvironment?.slug && currentWorkflow?.workflowId) {
+      switchEnvironment(developmentEnvironment.slug);
+      navigate(
+        buildRoute(ROUTES.EDIT_WORKFLOW, {
+          environmentSlug: developmentEnvironment.slug,
+          workflowSlug: currentWorkflow.workflowId,
+        })
+      );
+    }
+  };
 
   return (
     <ReactFlowProvider>
@@ -319,7 +335,13 @@ export const WorkflowCanvas = ({
                     ? 'Edit the workflow in your development environment.'
                     : 'Content visible but locked for editing. Contact an admin for edit access.'
                 }
-                title="View-only mode: "
+                title="View-only:"
+                ctaLabel={
+                  hasPermission && currentEnvironment?.type !== EnvironmentTypeEnum.DEV
+                    ? 'Switch environment'
+                    : undefined
+                }
+                onCtaClick={handleSwitchToDevelopment}
               />
             </div>
           </>
