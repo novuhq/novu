@@ -66,10 +66,10 @@ jobs:
         if: ${{ !inputs.ee }}
         run: |
           set -e
-          pnpm --filter @novu/api-service test:e2e:novu-v0
+          pnpm --filter @novu/api-service test:e2e:novu-v0 -- --bail
 
       - name: Run Novu V2 E2E tests
         if: ${{ inputs.ee }}
         run: |
           set -e
-          pnpm --filter @novu/api-service test:e2e:novu-v2
+          pnpm --filter @novu/api-service test:e2e:novu-v2 -- --bail
