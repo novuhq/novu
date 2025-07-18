@@ -434,33 +434,40 @@ export class UserSession {
     return feed;
   }
 
-  public async waitForJobCompletion(templateId?: string | string[], organizationId = this.organization._id) {
+  public async waitForJobCompletion(
+    templateId?: string | string[],
+    organizationId = this.organization._id,
+    maxWaitTime?: number
+  ) {
     return this.jobsService.waitForJobCompletion({
       templateId,
       organizationId,
+      maxWaitTime,
     });
   }
 
   public async waitForDbJobCompletion({
     templateId,
     organizationId,
+    maxWaitTime,
   }: {
     templateId?: string | string[];
     organizationId?: string | string[];
+    maxWaitTime?: number;
   }) {
-    return this.jobsService.waitForDbJobCompletion({ templateId, organizationId });
+    return this.jobsService.waitForDbJobCompletion({ templateId, organizationId, maxWaitTime });
   }
 
-  public async waitForWorkflowQueueCompletion() {
-    return this.jobsService.waitForWorkflowQueueCompletion();
+  public async waitForWorkflowQueueCompletion(maxWaitTime?: number) {
+    return this.jobsService.waitForWorkflowQueueCompletion(maxWaitTime);
   }
 
-  public async waitForSubscriberQueueCompletion() {
-    return this.jobsService.waitForSubscriberQueueCompletion();
+  public async waitForSubscriberQueueCompletion(maxWaitTime?: number) {
+    return this.jobsService.waitForSubscriberQueueCompletion(maxWaitTime);
   }
 
-  public async waitForStandardQueueCompletion() {
-    return this.jobsService.waitForStandardQueueCompletion();
+  public async waitForStandardQueueCompletion(maxWaitTime?: number) {
+    return this.jobsService.waitForStandardQueueCompletion(maxWaitTime);
   }
 
   public async runStandardQueueDelayedJobsImmediately() {
