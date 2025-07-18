@@ -218,10 +218,12 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     where: Where<InferClickhouseSchemaType<T_Schema>>;
     limit?: number;
     offset?: number;
+    // todo make a type validation for available orderBy columns
     orderBy?: SchemaKeys<T_Schema>;
     orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
   }): Promise<{ data: T_Enhanced_Type[]; rows: number }> {
-    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC' } = options;
+    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false } = options;
 
     if (limit < 0 || limit > LIMIT_MAX_THRESHOLD) {
       throw new Error(`Limit must be between 0 and ${LIMIT_MAX_THRESHOLD}`);
@@ -236,7 +238,11 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       this.validateColumnName(String(orderBy));
 
       if (!this.schemaOrderBy.includes(orderBy)) {
-        throw new Error(
+        this.logger.error(
+          {
+            orderBy,
+            schemaOrderBy: this.schemaOrderBy,
+          },
           `Column '${orderBy as string}' cannot be used for ordering. Available columns: ${this.schemaOrderBy.join(', ')}`
         );
       }
@@ -246,9 +252,10 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       throw new Error(`Invalid order direction: ${orderDirection}. Allowed directions: ${ORDER_DIRECTION.join(', ')}`);
     }
 
+    const finalModifier = useFinal ? ' FINAL' : '';
     const query = `
       SELECT *
-      FROM ${this.table}
+      FROM ${this.table}${finalModifier}
       ${clause}
       ${orderBy ? `ORDER BY ${String(orderBy)} ${orderDirection}` : ''}
       LIMIT ${limit}

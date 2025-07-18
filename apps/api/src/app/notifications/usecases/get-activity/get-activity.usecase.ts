@@ -178,49 +178,25 @@ export class GetActivity {
     feedItem: NotificationFeedItemEntity,
     command: GetActivityCommand
   ): Promise<JobFeedItem[]> {
-    const stepRunsResult = (
-      await this.stepRunRepository.find({
-        where: {
-          organization_id: command.organizationId,
-          environment_id: command.environmentId,
-          transaction_id: feedItem.transactionId,
-        },
-      })
-    ).data;
+    const stepRunsResult = await this.stepRunRepository.find({
+      where: {
+        organization_id: command.organizationId,
+        environment_id: command.environmentId,
+        transaction_id: feedItem.transactionId,
+      },
+      orderBy: 'created_at',
+      orderDirection: 'ASC',
+      useFinal: true,
+    });
 
-    if (!stepRunsResult || stepRunsResult.length === 0) {
+    if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
       return [];
     }
 
-    // Sort and deduplicate step runs
-    stepRunsResult.sort((a, b) => {
-      const updatedAtA = new Date(a.updated_at).getTime();
-      const updatedAtB = new Date(b.updated_at).getTime();
-
-      return updatedAtB - updatedAtA; // Descending order (newest first)
-    });
-    // Deduplicate by organization_id and step_run_id, keeping the most recent
-    const seenKeys = new Set<string>();
-    const deduplicatedStepRuns = stepRunsResult.filter((stepRun) => {
-      const dedupeKey = `${stepRun.organization_id}:${stepRun.step_run_id}`;
-      if (seenKeys.has(dedupeKey)) {
-        return false;
-      }
-      seenKeys.add(dedupeKey);
-
-      return true;
-    });
-    deduplicatedStepRuns.sort((a, b) => {
-      const updatedAtA = new Date(a.updated_at).getTime();
-      const updatedAtB = new Date(b.updated_at).getTime();
-
-      return updatedAtA - updatedAtB;
-    });
-
-    const stepRunIds = deduplicatedStepRuns.map((stepRun) => stepRun.step_run_id);
+    const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
     const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
 
-    return deduplicatedStepRuns.map((stepRun) => mapStepRunToJob(stepRun, executionDetailsByStepRunId));
+    return stepRunsResult.data.map((stepRun) => mapStepRunToJob(stepRun, executionDetailsByStepRunId));
   }
 
   private async getFeedItemFromStepRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
@@ -257,22 +233,19 @@ export class GetActivity {
 
   private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
-      // First, get the workflow run from ClickHouse
-      const workflowRunsResult = (
-        await this.workflowRunRepository.find({
-          where: {
-            organization_id: command.organizationId,
-            environment_id: command.environmentId,
-            workflow_run_id: command.notificationId,
-          },
-          /*
-           * ClickHouse only supports ordering by organization_id and workflow_run_id
-           * We'll sort by updated_at after getting the results
-           */
-        })
-      ).data;
+      const workflowRunsResult = await this.workflowRunRepository.find({
+        where: {
+          organization_id: command.organizationId,
+          environment_id: command.environmentId,
+          workflow_run_id: command.notificationId,
+        },
+        orderBy: 'created_at',
+        orderDirection: 'ASC',
+        limit: 1,
+        useFinal: true,
+      });
 
-      if (!workflowRunsResult || workflowRunsResult.length === 0) {
+      if (!workflowRunsResult.data || workflowRunsResult.data.length === 0) {
         this.logger.warn(
           {
             notificationId: command.notificationId,
@@ -286,13 +259,7 @@ export class GetActivity {
         return await this.getFeedItemFromStepRuns(command);
       }
 
-      workflowRunsResult.sort((a, b) => {
-        const updatedAtA = new Date(a.updated_at).getTime();
-        const updatedAtB = new Date(b.updated_at).getTime();
-
-        return updatedAtB - updatedAtA; // Descending order (newest first)
-      });
-      const mostRecentWorkflowRun = workflowRunsResult[0];
+      const mostRecentWorkflowRun = workflowRunsResult.data[0];
 
       // Create the base feed item from workflow run data
       const feedItem: NotificationFeedItemEntity = {

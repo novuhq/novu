@@ -63,9 +63,9 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
         key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
-        organization: { _id: context.organizationId },
-        environment: { _id: context.environmentId },
-        user: { _id: context.userId },
+        organization: { _id: job._organizationId },
+        environment: { _id: job._environmentId },
+        user: { _id: job._userId },
         defaultValue: false,
       });
 
@@ -153,7 +153,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     try {
       const firstJob = jobs[0];
       const isEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_ENABLED,
+        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
         organization: { _id: firstJob._organizationId },
         environment: { _id: firstJob._environmentId },
         user: { _id: firstJob._userId },
