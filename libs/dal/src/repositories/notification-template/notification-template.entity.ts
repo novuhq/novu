@@ -16,6 +16,7 @@ import {
   ResourceOriginEnum,
   WorkflowStatusEnum,
   ResourceTypeEnum,
+  RuntimeIssue,
 } from '@novu/shared';
 import { Types } from 'mongoose';
 import type { ChangePropsValueType } from '../../types';
@@ -97,11 +98,6 @@ export class NotificationTemplateEntity {
   status?: WorkflowStatusEnum;
 
   lastTriggeredAt?: string;
-}
-export class RuntimeIssue {
-  issueType: WorkflowIssueTypeEnum;
-  variableName?: string;
-  message: string;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<

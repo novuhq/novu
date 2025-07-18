@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import getPort from 'get-port';
 
-import { SubscribersService, UserSession } from '@novu/testing';
+import { SubscribersService, UserSession, JobsService } from '@novu/testing';
 import {
   ExecutionDetailsRepository,
   JobRepository,
@@ -1960,6 +1960,16 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
   });
 
   it('should execute a Novu-managed workflow', async () => {
+    // Log current Redis jobs count before starting the test
+    const jobsService = new JobsService();
+    const currentMetrics = await (jobsService as any).getQueueMetrics();
+    console.log(
+      `[Test] Starting 'should execute a Novu-managed workflow' - Current Redis jobs count: ${currentMetrics.totalCount}`
+    );
+    console.log(
+      `[Test] Queue breakdown - Workflow: ${currentMetrics.activeWorkflowJobsCount + currentMetrics.waitingWorkflowJobsCount}, Subscriber: ${currentMetrics.activeSubscriberJobsCount + currentMetrics.waitingSubscriberJobsCount}, Standard: ${currentMetrics.activeStandardJobsCount + currentMetrics.waitingStandardJobsCount}`
+    );
+
     const createWorkflowDto: CreateWorkflowDto = {
       tags: [],
       active: true,

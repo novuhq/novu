@@ -4,7 +4,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 
 import { collectKeys, keysToObject } from '../../../workflows-v2/util/utils';
-import { buildVariables } from '../../../workflows-v2/util/build-variables';
+import { buildVariables } from '../../utils/build-variables';
 import { CreateVariablesObjectCommand } from './create-variables-object.command';
 import { MailyAttrsEnum } from '../../helpers/maily.types';
 import { isStringifiedMailyJSONContent } from '../../helpers/maily-utils';

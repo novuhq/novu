@@ -59,7 +59,12 @@ function StepEditorContent() {
 
     if (developmentEnvironment?.slug) {
       switchEnvironment(developmentEnvironment.slug);
-      navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: developmentEnvironment.slug }));
+      navigate(
+        buildRoute(ROUTES.EDIT_WORKFLOW, {
+          environmentSlug: developmentEnvironment.slug,
+          workflowSlug: workflow.workflowId,
+        })
+      );
     }
   };
 

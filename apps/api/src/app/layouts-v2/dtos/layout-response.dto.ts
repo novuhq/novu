@@ -1,9 +1,8 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ResourceOriginEnum, ResourceTypeEnum, Slug } from '@novu/shared';
 
-import { RuntimeIssueDto } from '../../workflows-v2/dtos/runtime-issue.dto';
 import { CreateLayoutDto } from './create-layout.dto';
 import { UpdateLayoutDto } from './update-layout.dto';
 import { ControlsMetadataDto } from '../../workflows-v2/dtos/controls-metadata.dto';
@@ -17,7 +16,6 @@ class LayoutControlsDto extends ControlsMetadataDto {
   values?: LayoutControlValuesDto;
 }
 
-@ApiExtraModels(RuntimeIssueDto)
 export class LayoutResponseDto {
   @ApiProperty({ description: 'Unique internal identifier of the layout' })
   @IsString()
@@ -62,17 +60,6 @@ export class LayoutResponseDto {
   })
   @IsEnum(ResourceTypeEnum)
   type: ResourceTypeEnum;
-
-  @ApiPropertyOptional({
-    description: 'Runtime issues for layout creation and update',
-    type: 'object',
-    additionalProperties: {
-      $ref: getSchemaPath(RuntimeIssueDto),
-    },
-  })
-  @IsOptional()
-  @Type(() => RuntimeIssueDto)
-  issues?: Record<LayoutCreateAndUpdateKeys, RuntimeIssueDto>;
 
   @ApiPropertyOptional({
     description: 'The variables JSON Schema for the layout',

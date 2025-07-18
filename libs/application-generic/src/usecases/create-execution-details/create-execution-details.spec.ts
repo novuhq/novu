@@ -1,14 +1,11 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { ExecutionDetailsRepository } from '@novu/dal';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 
 import { CreateExecutionDetails } from './create-execution-details.usecase';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
+import { DetailEnum } from './types';
 
 describe('Create Execution Details', function () {
   let useCase: CreateExecutionDetails;
@@ -38,7 +35,7 @@ describe('Create Execution Details', function () {
       providerId: 'test-provider-id',
       transactionId: 'test-transaction-id',
       channel: StepTypeEnum.SMS,
-      detail: 'test',
+      detail: DetailEnum.MESSAGE_SENT,
       source: ExecutionDetailsSourceEnum.WEBHOOK,
       status: ExecutionDetailsStatusEnum.SUCCESS,
       isTest: false,

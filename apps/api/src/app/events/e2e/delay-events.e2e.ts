@@ -6,6 +6,7 @@ import { MessageRepository, SubscriberEntity, JobRepository, JobStatusEnum } fro
 import { UserSession, SubscribersService } from '@novu/testing';
 import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum, JobTopicNameEnum } from '@novu/shared';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
 describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #novu-v2', function () {
   let session: UserSession;
@@ -57,10 +58,14 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST) #no
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
 
-    const delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
+    const delayedJob = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+      },
+      timeout: 5000,
     });
 
     expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);

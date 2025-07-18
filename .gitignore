@@ -13,6 +13,8 @@ coverage
 .DS_Store
 dist
 **-changes-cache.json
+.nx-cache-affected-*.json
+output.json
 
 .idea/workspace.xml
 .idea/usage.statistics.xml

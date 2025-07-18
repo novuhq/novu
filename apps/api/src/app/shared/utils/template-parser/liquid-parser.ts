@@ -8,7 +8,7 @@ import {
   isValidDynamicPath,
   isValidTemplate,
 } from './parser-utils';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import type { VariableDetails, Variable } from './types';
 import { buildLiquidParser } from './liquid-engine';
 

@@ -40,6 +40,7 @@ import { LayoutPreviewRequestDto } from './dtos/layout-preview-request.dto';
 import { GenerateLayoutPreviewResponseDto } from './dtos/generate-layout-preview-response.dto';
 import { PreviewLayoutCommand, PreviewLayoutUsecase } from './usecases/preview-layout';
 import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { EMPTY_LAYOUT } from './utils/layout-templates';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -75,6 +76,12 @@ export class LayoutsController {
       UpsertLayoutCommand.create({
         layoutDto: {
           ...createLayoutDto,
+          controlValues: {
+            email: {
+              body: JSON.stringify(EMPTY_LAYOUT),
+              editorType: 'block',
+            },
+          },
         },
         user,
       })
