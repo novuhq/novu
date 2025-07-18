@@ -23,30 +23,54 @@ async function runNxCommand(args) {
     const processOptions = {
       cwd: ROOT_PATH,
       env: process.env,
+      stdio: ['inherit', 'pipe', 'pipe'],
     };
 
-    const nxProcess = spawn('pnpm', ['nx', ...args], processOptions);
-    let output = '';
-    let errorOutput = '';
+    // Try npx nx first, fallback to pnpm nx
+    const commands = [
+      ['npx', 'nx', ...args],
+      ['pnpm', 'nx', ...args],
+    ];
 
-    nxProcess.stdout.setEncoding(ENCODING_TYPE);
-    nxProcess.stderr.setEncoding(ENCODING_TYPE);
+    let currentCommand = 0;
 
-    nxProcess.stdout.on('data', (data) => {
-      output += data;
-    });
-
-    nxProcess.stderr.on('data', (data) => {
-      errorOutput += data;
-    });
-
-    nxProcess.on('close', (code) => {
-      if (code !== 0) {
-        reject(new Error(`Command failed with code ${code}: ${errorOutput}`));
-      } else {
-        resolve(output);
+    function tryCommand() {
+      if (currentCommand >= commands.length) {
+        reject(new Error('All nx commands failed'));
+        return;
       }
-    });
+
+      const [command, ...cmdArgs] = commands[currentCommand];
+      const nxProcess = spawn(command, cmdArgs, processOptions);
+      let output = '';
+      let errorOutput = '';
+
+      nxProcess.stdout.setEncoding(ENCODING_TYPE);
+      nxProcess.stderr.setEncoding(ENCODING_TYPE);
+
+      nxProcess.stdout.on('data', (data) => {
+        output += data;
+      });
+
+      nxProcess.stderr.on('data', (data) => {
+        errorOutput += data;
+      });
+
+      nxProcess.on('close', (code) => {
+        if (code !== 0) {
+          currentCommand++;
+          if (currentCommand < commands.length) {
+            tryCommand();
+          } else {
+            reject(new Error(`All commands failed. Last error: ${errorOutput}`));
+          }
+        } else {
+          resolve(output);
+        }
+      });
+    }
+
+    tryCommand();
   });
 }
 
