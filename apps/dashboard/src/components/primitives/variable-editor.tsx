@@ -143,7 +143,7 @@ export function VariableEditor({
     [digestStepName]
   );
 
-  // Create extensions only once and never recreate them
+  // Create extensions only once and never recreate them unless external extensions change
   const extensionsRef = useRef<Extension[]>();
   const callbacksRef = useRef({
     onVariableSelect,
@@ -157,6 +157,20 @@ export function VariableEditor({
     multiline,
     extensions,
   });
+
+  // Update callbacks ref on every render
+  callbacksRef.current = {
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    multiline,
+    extensions,
+  };
 
   // Update callbacks without triggering re-renders
   callbacksRef.current = {
@@ -226,22 +240,22 @@ export function VariableEditor({
   }, []);
 
   const editorExtensions = useMemo(() => {
-    if (!extensionsRef.current) {
-      // For props that rarely change, we can check them dynamically
-      const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-      const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
+    // Clear cache when extensions change
+    extensionsRef.current = undefined;
 
-      // Handle external extensions
-      if (callbacksRef.current.extensions) {
-        allExtensions.push(...callbacksRef.current.extensions);
-      }
+    // For props that rarely change, we can check them dynamically
+    const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
+    const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
 
-      extensionsRef.current = allExtensions;
+    // Handle external extensions
+    if (callbacksRef.current.extensions) {
+      allExtensions.push(...callbacksRef.current.extensions);
     }
 
+    extensionsRef.current = allExtensions;
     return extensionsRef.current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [extensions]);
 
   const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
