@@ -202,15 +202,16 @@ async function main() {
     const results = await getAffectedByTarget();
 
     // Output results in the format expected by GitHub Actions
-    console.log(`test-unit=${JSON.stringify(results['test-unit'])}`);
-    console.log(`test-e2e=${JSON.stringify(results['test-e2e'])}`);
-    console.log(`test-e2e-ee=${JSON.stringify(results['test-e2e-ee'])}`);
-    console.log(`test-cypress=${JSON.stringify(results['test-cypress'])}`);
-    console.log(`test-providers=${JSON.stringify(results['test-providers'])}`);
-    console.log(`test-packages=${JSON.stringify(results['test-packages'])}`);
-    console.log(`test-libs=${JSON.stringify(results['test-libs'])}`);
+    // Using process.stdout.write to avoid any extra formatting from console.log
+    process.stdout.write(`test-unit=${JSON.stringify(results['test-unit'])}\n`);
+    process.stdout.write(`test-e2e=${JSON.stringify(results['test-e2e'])}\n`);
+    process.stdout.write(`test-e2e-ee=${JSON.stringify(results['test-e2e-ee'])}\n`);
+    process.stdout.write(`test-cypress=${JSON.stringify(results['test-cypress'])}\n`);
+    process.stdout.write(`test-providers=${JSON.stringify(results['test-providers'])}\n`);
+    process.stdout.write(`test-packages=${JSON.stringify(results['test-packages'])}\n`);
+    process.stdout.write(`test-libs=${JSON.stringify(results['test-libs'])}\n`);
   } catch (error) {
-    console.error('Error:', error);
+    process.stderr.write(`Error: ${error.message || error}\n`);
     process.exit(1);
   }
 }
