@@ -11,6 +11,7 @@ import { DigestTypeEnum, DigestUnitEnum, IDigestRegularMetadata, StepTypeEnum } 
 import { JobsService, SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
 const axiosInstance = axios.create();
 
@@ -233,10 +234,14 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
     await session.waitForSubscriberQueueCompletion();
     await session.waitForStandardQueueCompletion();
 
-    const jobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
+    const jobs = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DIGEST,
+      },
+      findMultiple: true,
     });
 
     expect(jobs && jobs.length).to.eql(3);

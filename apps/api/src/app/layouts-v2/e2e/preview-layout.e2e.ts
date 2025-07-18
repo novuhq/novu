@@ -17,6 +17,8 @@ describe('Preview Layout #novu-v2', () => {
   beforeEach(async () => {
     // @ts-ignore
     process.env.IS_LAYOUTS_PAGE_ACTIVE = 'true';
+    // @ts-ignore
+    process.env.IS_HTML_EDITOR_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);

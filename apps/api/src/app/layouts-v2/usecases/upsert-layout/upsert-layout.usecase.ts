@@ -49,7 +49,7 @@ export class UpsertLayout {
 
   @InstrumentUsecase()
   async execute(command: UpsertLayoutCommand): Promise<LayoutResponseDto> {
-    const controlValues = command.layoutDto.controlValues ?? {};
+    const { controlValues } = command.layoutDto;
     await this.validateLayout({
       command,
       controlValues,
@@ -113,7 +113,7 @@ export class UpsertLayout {
       LayoutVariablesSchemaCommand.create({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        controlValues: controlValues as Record<string, unknown>,
+        controlValues: (controlValues ?? {}) as Record<string, unknown>,
       })
     );
 
@@ -129,9 +129,13 @@ export class UpsertLayout {
     controlValues,
   }: {
     command: UpsertLayoutCommand;
-    controlValues: LayoutControlValuesDto;
+    controlValues?: LayoutControlValuesDto | null;
   }) {
-    if (controlValues?.email) {
+    if (!controlValues) {
+      return;
+    }
+
+    if (controlValues.email) {
       const { body: content, editorType } = controlValues.email;
       const isMailyContent = isStringifiedMailyJSONContent(content);
       const isHtmlContent =

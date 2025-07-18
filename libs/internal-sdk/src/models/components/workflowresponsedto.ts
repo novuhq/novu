@@ -139,7 +139,7 @@ export type WorkflowResponseDto = {
   /**
    * The payload JSON Schema for the workflow
    */
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   /**
    * Enable or disable translations for this workflow
    */
@@ -447,7 +447,7 @@ export const WorkflowResponseDto$inboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   _id: z.string(),
   workflowId: z.string(),
@@ -518,7 +518,7 @@ export type WorkflowResponseDto$Outbound = {
   tags?: Array<string> | undefined;
   active: boolean;
   validatePayload?: boolean | undefined;
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   isTranslationEnabled: boolean;
   _id: string;
   workflowId: string;
@@ -555,7 +555,7 @@ export const WorkflowResponseDto$outboundSchema: z.ZodType<
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
   validatePayload: z.boolean().optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   isTranslationEnabled: z.boolean().default(false),
   id: z.string(),
   workflowId: z.string(),

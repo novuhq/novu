@@ -161,7 +161,7 @@ export class UpdateWorkflow {
         updatePayload.rawData = command.rawData;
       }
 
-      if (command.payloadSchema) {
+      if (command.payloadSchema !== undefined) {
         updatePayload.payloadSchema = command.payloadSchema;
       }
 
