@@ -42,6 +42,13 @@ export class CreateOrUpdateSubscriberUseCase {
   }
 
   private async updateSubscriber(command: CreateOrUpdateSubscriberCommand, existingSubscriber: SubscriberEntity) {
+    await this.invalidateCache.invalidateByKey({
+      key: buildSubscriberKey({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+    });
+
     return await this.updateSubscriberUseCase.execute(
       UpdateSubscriberCommand.create({
         environmentId: command.environmentId,
