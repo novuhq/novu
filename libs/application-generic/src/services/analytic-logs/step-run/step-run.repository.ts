@@ -61,6 +61,18 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
   async create(job: JobEntity, options: StepOptions = {}): Promise<void> {
     try {
+      const isEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
+        organization: { _id: context.organizationId },
+        environment: { _id: context.environmentId },
+        user: { _id: context.userId },
+        defaultValue: false,
+      });
+
+      if (!isEnabled) {
+        return;
+      }
+
       // Preserve existing deferredMs if not explicitly provided
       const existingDeferredMs = await this.getExistingDeferredMs(job._organizationId, job._id);
       const finalOptions = {
@@ -69,7 +81,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       };
 
       const stepRunData = this.mapJobToStepRun(job, finalOptions);
-      await this.insert(stepRunData, {
+      await super.insert(stepRunData, {
         organizationId: job._organizationId,
         environmentId: job._environmentId,
         userId: job._userId,
@@ -166,7 +178,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         stepRunDataArray.push(stepRunData);
       }
 
-      await this.insertMany(stepRunDataArray, {
+      await super.insertMany(stepRunDataArray, {
         organizationId: firstJob._organizationId,
         environmentId: firstJob._environmentId,
         userId: firstJob._userId,
