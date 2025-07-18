@@ -107,29 +107,24 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
             echo "Running ALL"
-            # Use --silent to suppress pnpm output and only capture our script output
-            OUTPUT=$(pnpm --silent run get-affected-batch origin/main --all 2>/dev/null) || {
-              echo "Script failed, falling back to empty arrays"
-              OUTPUT=$'test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]'
-            }
-            echo "$OUTPUT" >> $GITHUB_OUTPUT
-            echo "📋 Affected projects for downstream jobs:"
-            echo "$OUTPUT" | while IFS= read -r line; do
-              echo "  🔸 $line"
-            done
+            echo "test-unit=$(pnpm run get-affected test:unit --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e=$(pnpm run get-affected test:e2e --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-providers=$(pnpm run get-affected test --all providers | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-packages=$(pnpm run get-affected test --all packages | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-libs=$(pnpm run get-affected test --all libs | tail -n +5)" >> $GITHUB_OUTPUT
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
-            # Use --silent to suppress pnpm output and only capture our script output
-            OUTPUT=$(pnpm --silent run get-affected-batch origin/${{steps.get-base-branch-name.outputs.branch}} 2>/dev/null) || {
-              echo "Script failed, falling back to empty arrays"
-              OUTPUT=$'test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]'
-            }
-            echo "$OUTPUT" >> $GITHUB_OUTPUT
-            echo "📋 Affected projects for downstream jobs:"
-            echo "$OUTPUT" | while IFS= read -r line; do
-              echo "  🔸 $line"
-            done
+            echo "test-unit=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e=$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
+
   test_unit_providers:
     name: Unit test @novu/providers
     runs-on: blacksmith-4vcpu-ubuntu-2404
