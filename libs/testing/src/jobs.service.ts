@@ -24,7 +24,7 @@ export class JobsService {
   public async waitForJobCompletion({
     templateId,
     organizationId,
-    maxWaitTime = 30000,
+    maxWaitTime = 10000,
   }: {
     templateId?: string | string[];
     organizationId?: string | string[];
