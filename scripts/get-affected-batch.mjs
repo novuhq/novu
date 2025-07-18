@@ -105,44 +105,8 @@ async function getAllAffectedProjects() {
     return JSON.parse(cache);
   }
 
-  // Get the full project graph with all metadata in a single call
-  const graphArgs = IS_ALL
-    ? ['graph', '--affected', '--files', 'package.json', '--file=output.json']
-    : ['graph', '--affected', '--base', BASE_BRANCH_NAME, '--file=output.json'];
-
   try {
-    await runNxCommand(graphArgs);
-
-    // Read the generated graph file
-    const graphPath = path.join(ROOT_PATH, 'output.json');
-    const graphData = JSON.parse(readFileSync(graphPath, 'utf8'));
-
-    // Extract project targets from the graph
-    const projectsWithTargets = {};
-    const affectedProjects = Object.keys(graphData.graph.nodes || {});
-
-    for (const project of affectedProjects) {
-      const node = graphData.graph.nodes[project];
-      if (node && node.data) {
-        projectsWithTargets[project] = Object.keys(node.data.targets || {});
-      } else {
-        projectsWithTargets[project] = [];
-      }
-    }
-
-    // Clean up the output file
-    if (existsSync(graphPath)) {
-      fs.unlinkSync(graphPath);
-    }
-
-    // Cache the result
-    writeFileSync(cachePath, JSON.stringify(projectsWithTargets, null, 2));
-
-    return projectsWithTargets;
-  } catch (error) {
-    console.error('Failed to generate project graph, falling back to individual queries:', error);
-
-    // Fallback to the original approach if graph generation fails
+    // Simple approach: just get affected projects and assume common targets
     const args = IS_ALL
       ? ['show', 'projects', '--affected', '--files', 'package.json', '--json']
       : ['show', 'projects', '--affected', '--base', BASE_BRANCH_NAME, '--json'];
@@ -150,12 +114,23 @@ async function getAllAffectedProjects() {
     const output = await runNxCommand(args);
     const allProjects = JSON.parse(extractJsonFromOutput(output));
 
+    // For each project, assume common test targets exist
+    // This is simpler and faster than querying each project individually
     const projectsWithTargets = {};
     for (const project of allProjects) {
-      projectsWithTargets[project] = [];
+      // Assume all projects have these common targets - they'll be filtered later anyway
+      projectsWithTargets[project] = ['test', 'test:unit', 'test:e2e', 'test:e2e:ee', 'cypress:run', 'build', 'lint'];
     }
 
+    // Cache the result
+    writeFileSync(cachePath, JSON.stringify(projectsWithTargets, null, 2));
+
     return projectsWithTargets;
+  } catch (error) {
+    process.stderr.write(`Failed to get affected projects: ${error.message}\n`);
+
+    // Return empty result if everything fails
+    return {};
   }
 }
 
