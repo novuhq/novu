@@ -24,6 +24,7 @@ describe('DeleteLayoutUseCase', () => {
 
   const mockLayout = {
     _id: 'layout_id',
+    layoutId: 'layout_id',
     identifier: 'layout_identifier',
     name: 'Test Layout',
     isDefault: false,
