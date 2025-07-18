@@ -2976,21 +2976,14 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           await session.waitForWorkflowQueueCompletion();
           await session.waitForSubscriberQueueCompletion();
 
-          let delayedJob;
-          // Poll for delayedJob until it's no longer in pending status
-          while (true) {
-            delayedJob = await jobRepository.findOne({
+          const delayedJob = await pollForJobStatusChange({
+            jobRepository,
+            query: {
               _environmentId: session.environment._id,
               _templateId: template._id,
               type: StepTypeEnum.DELAY,
-            });
-
-            if (delayedJob && delayedJob.status !== JobStatusEnum.PENDING) {
-              break;
-            }
-
-            await sleep(100);
-          }
+            },
+          });
           expect(delayedJob!.status).to.equal(JobStatusEnum.DELAYED);
 
           const messages = await messageRepository.find({
