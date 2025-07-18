@@ -110,7 +110,7 @@ jobs:
             # Use --silent to suppress pnpm output and only capture our script output
             OUTPUT=$(pnpm --silent run get-affected-batch origin/main --all 2>/dev/null) || {
               echo "Script failed, falling back to empty arrays"
-              OUTPUT="test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]"
+              OUTPUT=$'test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]'
             }
             echo "$OUTPUT" >> $GITHUB_OUTPUT
           else
@@ -118,7 +118,7 @@ jobs:
             # Use --silent to suppress pnpm output and only capture our script output
             OUTPUT=$(pnpm --silent run get-affected-batch origin/${{steps.get-base-branch-name.outputs.branch}} 2>/dev/null) || {
               echo "Script failed, falling back to empty arrays"
-              OUTPUT="test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]"
+              OUTPUT=$'test-unit=[]\ntest-e2e=[]\ntest-e2e-ee=[]\ntest-cypress=[]\ntest-providers=[]\ntest-packages=[]\ntest-libs=[]'
             }
             echo "$OUTPUT" >> $GITHUB_OUTPUT
           fi
