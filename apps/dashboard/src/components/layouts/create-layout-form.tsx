@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { LayoutCreationSourceEnum, LayoutResponseDto, slugify } from '@novu/shared';
+import { slugify } from '@novu/shared';
 
 import {
   Form,
@@ -14,58 +14,22 @@ import {
 } from '@/components/primitives/form/form';
 import { layoutSchema } from '@/components/layouts/schema';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useCreateLayout } from '@/hooks/use-create-layout';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useTelemetry } from '@/hooks/use-telemetry';
 
 interface CreateLayoutFormProps {
-  onSuccess?: (layout: LayoutResponseDto) => void;
-  onError?: (error: Error) => void;
-  onSubmitStart?: () => void;
+  onSubmit: (formData: z.infer<typeof layoutSchema>) => void;
+  template?: {
+    name: string;
+  };
 }
 
-export function CreateLayoutForm({ onSuccess, onError, onSubmitStart }: CreateLayoutFormProps) {
-  const track = useTelemetry();
-
-  const { createLayout } = useCreateLayout({
-    onSuccess: (layout) => {
-      showSuccessToast(`Layout created successfully`);
-      track(TelemetryEvent.LAYOUTS_PAGE_VISIT); // Using closest available event
-
-      if (onSuccess) {
-        onSuccess(layout);
-      }
-    },
-    onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create layout';
-      showErrorToast(errorMessage);
-
-      if (onError && error instanceof Error) {
-        onError(error);
-      }
-    },
-  });
-
+export function CreateLayoutForm({ onSubmit, template }: CreateLayoutFormProps) {
   const form = useForm<z.infer<typeof layoutSchema>>({
     resolver: zodResolver(layoutSchema),
     defaultValues: {
-      name: '',
-      layoutId: '',
+      name: template?.name ?? '',
+      layoutId: slugify(template?.name ?? ''),
     },
   });
-
-  const onSubmit = async (formData: z.infer<typeof layoutSchema>) => {
-    if (onSubmitStart) {
-      onSubmitStart();
-    }
-
-    await createLayout({
-      layoutId: formData.layoutId,
-      name: formData.name,
-      __source: LayoutCreationSourceEnum.DASHBOARD,
-    });
-  };
 
   return (
     <Form {...form}>

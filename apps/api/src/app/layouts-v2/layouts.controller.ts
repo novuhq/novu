@@ -29,6 +29,7 @@ import {
   LayoutResponseDto,
   UpdateLayoutDto,
   ListLayoutResponseDto,
+  GetLayoutUsageResponseDto,
 } from './dtos';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { UpsertLayoutCommand, UpsertLayout } from './usecases/upsert-layout';
@@ -36,6 +37,7 @@ import { GetLayoutCommand, GetLayoutUseCase } from './usecases/get-layout';
 import { DeleteLayoutCommand, DeleteLayoutUseCase } from './usecases/delete-layout';
 import { DuplicateLayoutCommand, DuplicateLayoutUseCase } from './usecases/duplicate-layout';
 import { ListLayoutsCommand, ListLayoutsUseCase } from './usecases/list-layouts';
+import { GetLayoutUsageCommand, GetLayoutUsageUseCase } from './usecases/get-layout-usage';
 import { LayoutPreviewRequestDto } from './dtos/layout-preview-request.dto';
 import { GenerateLayoutPreviewResponseDto } from './dtos/generate-layout-preview-response.dto';
 import { PreviewLayoutCommand, PreviewLayoutUsecase } from './usecases/preview-layout';
@@ -56,7 +58,8 @@ export class LayoutsController {
     private deleteLayoutUseCase: DeleteLayoutUseCase,
     private duplicateLayoutUseCase: DuplicateLayoutUseCase,
     private listLayoutsUseCase: ListLayoutsUseCase,
-    private previewLayoutUsecase: PreviewLayoutUsecase
+    private previewLayoutUsecase: PreviewLayoutUsecase,
+    private getLayoutUsageUseCase: GetLayoutUsageUseCase
   ) {}
 
   @Post('')
@@ -232,6 +235,28 @@ export class LayoutsController {
         user,
         layoutIdOrInternalId,
         layoutPreviewRequestDto,
+      })
+    );
+  }
+
+  @Get(':layoutId/usage')
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Get layout usage',
+    description:
+      'Retrieves information about workflows that use the specified layout by its unique identifier **layoutId**',
+  })
+  @ApiResponse(GetLayoutUsageResponseDto)
+  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  async getUsage(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string
+  ): Promise<GetLayoutUsageResponseDto> {
+    return this.getLayoutUsageUseCase.execute(
+      GetLayoutUsageCommand.create({
+        layoutIdOrInternalId,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
       })
     );
   }
