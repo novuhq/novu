@@ -115,7 +115,7 @@ export const updateStepInWorkflow = (
   };
 };
 
-export const createStep = (type: StepTypeEnum): StepCreateDto => {
+export const createStep = (type: StepTypeEnum, defaultLayoutId: string | undefined): StepCreateDto => {
   const controlValue: Record<string, unknown> = {};
 
   if (type === StepTypeEnum.DIGEST) {
@@ -129,6 +129,10 @@ export const createStep = (type: StepTypeEnum): StepCreateDto => {
     controlValue.amount = DEFAULT_CONTROL_DELAY_AMOUNT;
     controlValue.unit = DEFAULT_CONTROL_DELAY_UNIT;
     controlValue.type = DEFAULT_CONTROL_DELAY_TYPE;
+  }
+
+  if (type === StepTypeEnum.EMAIL && defaultLayoutId) {
+    controlValue.layoutId = defaultLayoutId;
   }
 
   return {

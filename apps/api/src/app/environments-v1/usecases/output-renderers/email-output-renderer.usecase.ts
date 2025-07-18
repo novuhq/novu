@@ -184,24 +184,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         _layoutId: layout._id,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
-    } else if (layoutId === null) {
-      // otherwise find the default layout controls
-      const defaultEmailLayout = await this.getLayoutUseCase.execute(
-        GetLayoutCommand.create({
-          environmentId,
-          organizationId,
-          skipAdditionalFields: true,
-        })
-      );
-
-      layoutControlsEntity = defaultEmailLayout
-        ? await this.controlValuesRepository.findOne({
-            _organizationId: organizationId,
-            _environmentId: environmentId,
-            _layoutId: defaultEmailLayout._id,
-            level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
-          })
-        : null;
     }
 
     const stepBodyHtml = await this.processBodyContent({

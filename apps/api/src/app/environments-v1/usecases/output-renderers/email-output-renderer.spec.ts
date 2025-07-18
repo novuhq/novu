@@ -1136,7 +1136,7 @@ describe('EmailOutputRendererUsecase', () => {
         expect(getLayoutUseCase.execute.called).to.be.true;
       });
 
-      it('should use default layout when layoutId is null', async () => {
+      it('should not use layout when layoutId is null', async () => {
         const renderCommand: EmailOutputRendererCommand = {
           environmentId: 'fake_env_id',
           organizationId: 'fake_org_id',
@@ -1154,26 +1154,12 @@ describe('EmailOutputRendererUsecase', () => {
 
         const result = await emailOutputRendererUsecase.execute(renderCommand);
 
-        expect(result.body).to.include('class="layout"');
+        expect(result.body).to.not.include('class="layout"');
         expect(result.body).to.include('Step content John');
-        expect(result.body).to.include('<html>');
+        expect(result.body).to.not.include('<html>');
 
-        // Verify layout repository was called first to find default layout
-        expect(getLayoutUseCase.execute.calledOnce).to.be.true;
-        expect(getLayoutUseCase.execute.firstCall.args[0]).to.deep.eq({
-          organizationId: 'fake_org_id',
-          environmentId: 'fake_env_id',
-          skipAdditionalFields: true,
-        });
-
-        // Then control values repository should be called with the default layout ID
-        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
-        expect(controlValuesRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
-          _organizationId: 'fake_org_id',
-          _environmentId: 'fake_env_id',
-          _layoutId: 'default_layout_id',
-          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
-        });
+        expect(getLayoutUseCase.execute.calledOnce).to.be.false;
+        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.false;
       });
 
       it('should render without layout when no layout controls are found', async () => {
@@ -1203,36 +1189,6 @@ describe('EmailOutputRendererUsecase', () => {
 
         // Verify repository was called but returned null
         expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
-      });
-
-      it('should render without layout when default layout does not exist', async () => {
-        getLayoutUseCase.execute.resolves(undefined);
-
-        const renderCommand: EmailOutputRendererCommand = {
-          environmentId: 'fake_env_id',
-          organizationId: 'fake_org_id',
-          controlValues: {
-            subject: 'Layout Test',
-            body: simpleBodyContent,
-            layoutId: null,
-          },
-          fullPayloadForRender: {
-            ...mockFullPayload,
-            payload: { name: 'John' },
-          },
-          workflowId: mockDbWorkflow._id,
-        };
-
-        const result = await emailOutputRendererUsecase.execute(renderCommand);
-
-        expect(result.body).to.include('Step content John');
-        expect(result.body).to.not.include('class="layout"');
-        expect(result.body).to.not.include('<html>');
-
-        // Verify layout repository was called but returned null
-        expect(getLayoutUseCase.execute.calledOnce).to.be.true;
-        // Control values repository should not be called when default layout is not found
-        expect(controlValuesRepositoryMock.findOne.called).to.be.false;
       });
 
       it('should clean step content before injecting into layout', async () => {
@@ -1440,7 +1396,7 @@ describe('EmailOutputRendererUsecase', () => {
         });
       });
 
-      it('should pass correct repository query parameters for default layout', async () => {
+      it('should not call layout repository when layoutId is null', async () => {
         const renderCommand: EmailOutputRendererCommand = {
           environmentId: 'fake_env_id',
           organizationId: 'fake_org_id',
@@ -1456,22 +1412,12 @@ describe('EmailOutputRendererUsecase', () => {
           workflowId: mockDbWorkflow._id,
         };
 
-        await emailOutputRendererUsecase.execute(renderCommand);
+        const result = await emailOutputRendererUsecase.execute(renderCommand);
 
-        expect(getLayoutUseCase.execute.calledOnce).to.be.true;
-        expect(getLayoutUseCase.execute.firstCall.args[0]).to.deep.eq({
-          organizationId: 'fake_org_id',
-          environmentId: 'fake_env_id',
-          skipAdditionalFields: true,
-        });
-
-        expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
-        expect(controlValuesRepositoryMock.findOne.firstCall.args[0]).to.deep.eq({
-          _organizationId: 'fake_org_id',
-          _environmentId: 'fake_env_id',
-          _layoutId: 'default_layout_id',
-          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
-        });
+        expect(getLayoutUseCase.execute.called).to.be.false;
+        expect(controlValuesRepositoryMock.findOne.called).to.be.false;
+        expect(result.body).to.include('Step content John');
+        expect(result.body).to.not.include('class="layout"');
       });
 
       it('should not call layout repository when layoutId is undefined', async () => {
@@ -1531,28 +1477,6 @@ describe('EmailOutputRendererUsecase', () => {
         // Should handle missing email controls gracefully
         expect(result.body).to.not.include('Step content John');
         expect(result.body).to.not.include('class="layout"');
-      });
-
-      it('should call repository methods in correct order for default layout', async () => {
-        const renderCommand: EmailOutputRendererCommand = {
-          environmentId: 'fake_env_id',
-          organizationId: 'fake_org_id',
-          controlValues: {
-            subject: 'Layout Test',
-            body: simpleBodyContent,
-            layoutId: null,
-          },
-          fullPayloadForRender: {
-            ...mockFullPayload,
-            payload: { name: 'John' },
-          },
-          workflowId: mockDbWorkflow._id,
-        };
-
-        await emailOutputRendererUsecase.execute(renderCommand);
-
-        // Verify call order: layout repository should be called before control values repository
-        expect(getLayoutUseCase.execute.calledBefore(controlValuesRepositoryMock.findOne)).to.be.true;
       });
     });
   });
