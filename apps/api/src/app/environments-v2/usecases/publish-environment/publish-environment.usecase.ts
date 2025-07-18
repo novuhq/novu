@@ -94,16 +94,11 @@ export class PublishEnvironmentUseCase {
       }
     } else {
       // For actual sync, use transactions for atomicity
-      await this.executeWithTransaction(async (session) => {
-        // Add session to context for transactional operations
-        const transactionalContext = { ...context, session };
+      for (const strategy of strategies) {
+        const result = await strategy.execute(context);
 
-        for (const strategy of strategies) {
-          const result = await strategy.execute(transactionalContext);
-
-          results.push(result);
-        }
-      }, 'environment publish');
+        results.push(result);
+      }
     }
 
     return results;

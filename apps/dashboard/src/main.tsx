@@ -260,15 +260,27 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.TRANSLATIONS,
-                element: <TranslationsPage />,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                    <TranslationsPage />
+                  </ProtectedRoute>
+                ),
                 children: [
                   {
                     path: ROUTES.TRANSLATION_SETTINGS,
-                    element: <TranslationSettingsPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <TranslationSettingsPage />
+                      </ProtectedRoute>
+                    ),
                   },
                   {
                     path: ROUTES.TRANSLATIONS_EDIT,
-                    element: <EditTranslationPage />,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
+                        <EditTranslationPage />
+                      </ProtectedRoute>
+                    ),
                   },
                 ],
               },

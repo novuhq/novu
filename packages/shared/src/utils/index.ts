@@ -5,3 +5,4 @@ export * from './bridge.utils';
 export * from './buildWorkflowPreferences';
 export { slugify } from './slugify';
 export { createMockObjectFromSchema } from './schema/create-mock-object-from-schema';
+export * from './issues';

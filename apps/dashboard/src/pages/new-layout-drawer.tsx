@@ -17,11 +17,12 @@ import { CreateLayoutForm } from '@/components/layouts/create-layout-form';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
+import { LayoutResponseDto } from '@novu/shared';
 
 type NewLayoutDrawerProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (layout: LayoutResponseDto) => void;
   onCancel?: () => void;
 };
 
@@ -48,11 +49,11 @@ export const NewLayoutDrawer = forwardRef<HTMLDivElement, NewLayoutDrawerProps>(
 
   const combinedRef = useCombinedRefs(forwardedRef, unmountRef, protectionRef);
 
-  const handleSuccess = () => {
+  const handleSuccess = (layout: LayoutResponseDto) => {
     onOpenChange(false);
 
     if (onSuccess) {
-      onSuccess();
+      onSuccess(layout);
     }
   };
 

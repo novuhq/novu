@@ -9,9 +9,31 @@ import { InputRoot } from '../../../primitives/input';
 
 const bodyKey = 'body';
 
+function getFormMessage(
+  fieldValue: string,
+  isOutputSanitizationDisabled: boolean,
+  isTranslationEnabled: boolean
+): string {
+  if (containsHTMLEntities(fieldValue) && !isOutputSanitizationDisabled) {
+    return 'HTML entities detected. Consider disabling content sanitization for proper rendering';
+  }
+
+  if (fieldValue.length > 2 && !containsVariables(fieldValue)) {
+    const hints = ['Type {{ to access variables, or wrap text in ** for bold.'];
+
+    if (isTranslationEnabled) {
+      hints.push('Type {t. to access translation keys.');
+    }
+
+    return hints.join(' ');
+  }
+
+  return '';
+}
+
 export const InAppBody = () => {
   const { control, getValues } = useFormContext();
-  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
 
   return (
@@ -37,11 +59,11 @@ export const InAppBody = () => {
             </InputRoot>
           </FormControl>
           <FormMessage>
-            {containsHTMLEntities(field.value) && !getValues('disableOutputSanitization')
-              ? 'HTML entities detected. Consider disabling content sanitization for proper rendering'
-              : field.value.length > 2 && !containsVariables(field.value)
-                ? `Type {{ for variables, or wrap text in ** for bold.`
-                : ''}
+            {getFormMessage(
+              field.value,
+              getValues('disableOutputSanitization'),
+              workflow?.isTranslationEnabled || false
+            )}
           </FormMessage>
         </FormItem>
       )}

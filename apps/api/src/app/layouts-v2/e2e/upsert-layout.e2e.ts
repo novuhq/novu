@@ -8,6 +8,7 @@ import { LayoutRepository } from '@novu/dal';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { CreateLayoutDto, UpdateLayoutDto } from '../dtos';
 import { LayoutCreationSourceEnum } from '../types';
+import { EMPTY_LAYOUT } from '../utils/layout-templates';
 
 describe('Upsert Layout #novu-v2', () => {
   let session: UserSession;
@@ -15,6 +16,8 @@ describe('Upsert Layout #novu-v2', () => {
   let layoutRepository: LayoutRepository;
 
   beforeEach(async () => {
+    // @ts-ignore
+    process.env.IS_HTML_EDITOR_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
@@ -38,7 +41,12 @@ describe('Upsert Layout #novu-v2', () => {
       expect(createdLayout.id).to.be.a('string');
       expect(createdLayout.createdAt).to.be.a('string');
       expect(createdLayout.updatedAt).to.be.a('string');
-      expect(createdLayout.controls.values).to.deep.equal({});
+      expect(createdLayout.controls.values).to.deep.equal({
+        email: {
+          body: JSON.stringify(EMPTY_LAYOUT),
+          editorType: 'block',
+        },
+      });
       expect(createdLayout.controls.uiSchema).to.deep.equal(layoutUiSchema);
       expect(createdLayout.controls.dataSchema).to.deep.equal(layoutControlSchema);
       expect(createdLayout.variables).to.exist;
@@ -174,7 +182,9 @@ describe('Upsert Layout #novu-v2', () => {
         expect.fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.statusCode).to.equal(400);
-        expect(error.message).to.contain('The layout body should contain the "content" variable');
+        expect(error.ctx.controls['email.body'][0].message).to.contain(
+          'The layout body should contain the "content" variable'
+        );
       }
     });
 
@@ -202,7 +212,9 @@ describe('Upsert Layout #novu-v2', () => {
         expect.fail('Should have thrown validation error');
       } catch (error: any) {
         expect(error.statusCode).to.equal(400);
-        expect(error.message).to.contain('The layout body should contain the "content" variable');
+        expect(error.ctx.controls['email.body'][0].message).to.contain(
+          'The layout body should contain the "content" variable'
+        );
       }
     });
 
@@ -274,11 +286,10 @@ describe('Upsert Layout #novu-v2', () => {
     it('should delete control values when set to null', async () => {
       const updateData: UpdateLayoutDto = {
         name: 'Layout with deleted controls',
-        controlValues: {},
+        controlValues: null,
       };
 
       const { result: updatedLayout } = await novuClient.layouts.update(updateData, existingLayout.layoutId);
-
       expect(updatedLayout.name).to.equal(updateData.name);
       expect(updatedLayout.controls.values).to.deep.equal({});
     });

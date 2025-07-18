@@ -6,6 +6,7 @@ import { ROUTES } from '@/utils/routes';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InfoIcon } from 'lucide-react';
 import { Control, FieldValues, Path } from 'react-hook-form';
+import { Badge } from '../primitives/badge';
 
 interface TranslationToggleSectionProps<T extends FieldValues> {
   control: Control<T>;
@@ -36,7 +37,13 @@ export function TranslationToggleSection<T extends FieldValues>({
         render={({ field }) => (
           <div className="flex items-center justify-between py-1">
             <div className="flex items-center gap-2">
-              <span className="text-label-xs text-text-strong">Enable Translations</span>
+              <span className="text-label-xs text-text-strong">
+                Enable Translations{' '}
+                <Badge color="gray" size="sm" variant="lighter">
+                  BETA
+                </Badge>
+              </span>
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />

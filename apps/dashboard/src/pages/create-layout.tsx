@@ -5,7 +5,7 @@ import { useLayoutsNavigate } from '@/components/layouts/hooks/use-layouts-navig
 
 export function CreateLayoutPage() {
   const [isOpen, setIsOpen] = useState(true);
-  const { navigateToLayoutsPage } = useLayoutsNavigate();
+  const { navigateToLayoutsPage, navigateToLayoutEditorPage } = useLayoutsNavigate();
   const { ref: unmountRef } = useOnElementUnmount({
     callback: () => {
       navigateToLayoutsPage();
@@ -18,9 +18,8 @@ export function CreateLayoutPage() {
       ref={unmountRef}
       isOpen={isOpen}
       onOpenChange={setIsOpen}
-      onSuccess={() => {
-        // TODO: navigate to the layout editor page
-        navigateToLayoutsPage();
+      onSuccess={(layout) => {
+        navigateToLayoutEditorPage(layout.slug);
       }}
       onCancel={() => navigateToLayoutsPage()}
     />

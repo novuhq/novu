@@ -59,8 +59,6 @@ export class RunJob {
       status: JobStatusEnum.RUNNING,
     });
 
-    const startTime = Date.now();
-
     this.assignLogger(job);
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
@@ -69,7 +67,6 @@ export class RunJob {
       Logger.verbose({ canceled }, `Job ${job._id} that had been delayed has been cancelled`, LOG_CONTEXT);
       await this.stepRunRepository.create(job, {
         status: JobStatusEnum.CANCELED,
-        executionDurationMs: Date.now() - startTime,
       });
 
       return;
@@ -143,7 +140,6 @@ export class RunJob {
         await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
 
         await this.stepRunRepository.create(job, {
-          executionDurationMs: Date.now() - startTime,
           status: JobStatusEnum.COMPLETED,
         });
       } else if (sendMessageResult.status === 'failed') {
@@ -161,7 +157,6 @@ export class RunJob {
         );
 
         await this.stepRunRepository.create(job, {
-          executionDurationMs: Date.now() - startTime,
           status: JobStatusEnum.FAILED,
           errorCode: 'send_message_failed',
           errorMessage: sendMessageResult.reason,
@@ -178,13 +173,11 @@ export class RunJob {
         }
       } else if (sendMessageResult.status === 'canceled') {
         await this.stepRunRepository.create(job, {
-          executionDurationMs: Date.now() - startTime,
           status: JobStatusEnum.CANCELED,
         });
       }
     } catch (error: any) {
       await this.stepRunRepository.create(job, {
-        executionDurationMs: Date.now() - startTime,
         status: JobStatusEnum.FAILED,
         errorCode: 'execution_error',
         errorMessage: error.message,

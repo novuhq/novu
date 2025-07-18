@@ -4,7 +4,6 @@ export * from './get-list-query-params';
 export * from './json-schema-dto';
 export * from './preview-step-response.dto';
 export * from './promote-workflow-dto';
-export * from './step-content-issue.enum';
 export * from './step.dto';
 export * from './workflow.dto';
 export * from './update-workflow-deprecated.dto';

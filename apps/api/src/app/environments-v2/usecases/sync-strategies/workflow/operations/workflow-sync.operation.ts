@@ -192,7 +192,7 @@ export class WorkflowSyncOperation {
     for (const targetWorkflow of targetWorkflows) {
       try {
         const targetIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow);
-        if (!sourceWorkflowMap.has(targetIdentifier) && targetWorkflow.active) {
+        if (!sourceWorkflowMap.has(targetIdentifier)) {
           await this.deleteWorkflowFromTarget(context, targetWorkflow);
           resultBuilder.addSuccess(
             this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),

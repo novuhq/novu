@@ -153,7 +153,7 @@ export const SideNavigation = () => {
                   to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
                 >
                   <RiTranslate2 className="size-4" />
-                  <span>Translations</span>
+                  <span>Translations </span>
                 </NavigationLink>
               )}
             </NavigationGroup>

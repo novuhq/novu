@@ -23,12 +23,6 @@ import {
   ResourceTypeEnum$inboundSchema,
   ResourceTypeEnum$outboundSchema,
 } from "./resourcetypeenum.js";
-import {
-  RuntimeIssueDto,
-  RuntimeIssueDto$inboundSchema,
-  RuntimeIssueDto$Outbound,
-  RuntimeIssueDto$outboundSchema,
-} from "./runtimeissuedto.js";
 
 export type LayoutResponseDto = {
   /**
@@ -68,10 +62,6 @@ export type LayoutResponseDto = {
    */
   type: ResourceTypeEnum;
   /**
-   * Runtime issues for layout creation and update
-   */
-  issues?: { [k: string]: RuntimeIssueDto } | undefined;
-  /**
    * The variables JSON Schema for the layout
    */
   variables?: { [k: string]: any } | null | undefined;
@@ -96,7 +86,6 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<
   createdAt: z.string(),
   origin: ResourceOriginEnum$inboundSchema,
   type: ResourceTypeEnum$inboundSchema,
-  issues: z.record(RuntimeIssueDto$inboundSchema).optional(),
   variables: z.nullable(z.record(z.any())).optional(),
   controls: LayoutControlsDto$inboundSchema,
 }).transform((v) => {
@@ -116,7 +105,6 @@ export type LayoutResponseDto$Outbound = {
   createdAt: string;
   origin: string;
   type: string;
-  issues?: { [k: string]: RuntimeIssueDto$Outbound } | undefined;
   variables?: { [k: string]: any } | null | undefined;
   controls: LayoutControlsDto$Outbound;
 };
@@ -136,7 +124,6 @@ export const LayoutResponseDto$outboundSchema: z.ZodType<
   createdAt: z.string(),
   origin: ResourceOriginEnum$outboundSchema,
   type: ResourceTypeEnum$outboundSchema,
-  issues: z.record(RuntimeIssueDto$outboundSchema).optional(),
   variables: z.nullable(z.record(z.any())).optional(),
   controls: LayoutControlsDto$outboundSchema,
 }).transform((v) => {
