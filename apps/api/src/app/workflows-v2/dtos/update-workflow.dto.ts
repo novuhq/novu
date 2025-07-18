@@ -16,7 +16,6 @@ import {
   DigestStepUpsertDto,
   CustomStepUpsertDto,
 } from './create-step.dto';
-import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
 
 @ApiExtraModels(
   InAppStepUpsertDto,
