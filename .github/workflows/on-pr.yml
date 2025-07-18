@@ -107,10 +107,12 @@ jobs:
         run: |
           if [[ "${{github.event.pull_request.base.ref}}" == "" && "${{steps.branch-name.outputs.current_branch}}" == "main" ]]; then
             echo "Running ALL"
-            pnpm run get-affected-batch origin/main --all >> $GITHUB_OUTPUT
+            # Use --silent to suppress pnpm output and only capture our script output
+            pnpm --silent run get-affected-batch origin/main --all >> $GITHUB_OUTPUT
           else
             echo "Running PR origin/${{steps.get-base-branch-name.outputs.branch}}"
-            pnpm run get-affected-batch origin/${{steps.get-base-branch-name.outputs.branch}} >> $GITHUB_OUTPUT
+            # Use --silent to suppress pnpm output and only capture our script output
+            pnpm --silent run get-affected-batch origin/${{steps.get-base-branch-name.outputs.branch}} >> $GITHUB_OUTPUT
           fi
   test_unit_providers:
     name: Unit test @novu/providers
