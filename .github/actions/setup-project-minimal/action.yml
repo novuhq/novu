@@ -1,6 +1,6 @@
 name: Setup Novu Monorepo (Minimal)
 
-description: Minimal setup for Nx operations without installing all dependencies
+description: Minimal setup for Nx operations with separate cache from main CI
 
 runs:
   using: composite
@@ -11,16 +11,17 @@ runs:
         version: 10.11.0
 
     - uses: useblacksmith/setup-node@v5
-      name: ⚙️ Setup Node Version
+      name: ⚙️ Setup Node Version with separate cache
       with:
         node-version: '20.19.0'
         cache: 'pnpm'
+        # Use root package.json instead of pnpm-lock.yaml for much smaller cache
+        cache-dependency-path: 'package.json'
 
-    - name: 🚀 Install minimal dependencies for Nx
+    - name: 🚀 Install root dependencies
       shell: bash
       run: |
-        # Only install root dependencies (includes Nx)
-        pnpm install --frozen-lockfile --filter=root...
-
-        # Ensure Nx daemon is not running to avoid any caching issues
-        npx nx reset
+        # Install all root dependencies (includes Nx and other tools)
+        pnpm install --frozen-lockfile --filter=root --ignore-scripts
+        # Reset Nx cache
+        npx nx reset || true
