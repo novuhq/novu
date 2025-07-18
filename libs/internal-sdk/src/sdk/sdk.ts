@@ -146,10 +146,12 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Retrieve workflow step
+   * List all messages
    *
    * @remarks
-   * Retrieves data for a specific step in a workflow
+   * List all messages for the current environment.
+   *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+   *     This API returns a paginated list of messages.
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,

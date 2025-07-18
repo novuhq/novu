@@ -167,7 +167,7 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
     additionalProperties: true,
   })
   @IsOptional()
-  payloadExample?: object;
+  payloadExample?: object | null;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
