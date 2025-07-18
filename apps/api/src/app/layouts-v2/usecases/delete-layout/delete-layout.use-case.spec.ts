@@ -99,7 +99,9 @@ describe('DeleteLayoutUseCase', () => {
     it('should successfully delete non-default layout', async () => {
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await deleteLayoutUseCase.execute(command);
@@ -131,7 +133,9 @@ describe('DeleteLayoutUseCase', () => {
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'default_layout',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -149,7 +153,9 @@ describe('DeleteLayoutUseCase', () => {
     it('should remove layout references from step controls', async () => {
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await deleteLayoutUseCase.execute(command);
@@ -192,7 +198,9 @@ describe('DeleteLayoutUseCase', () => {
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await deleteLayoutUseCase.execute(command);
@@ -210,7 +218,9 @@ describe('DeleteLayoutUseCase', () => {
     it('should track analytics event', async () => {
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await deleteLayoutUseCase.execute(command);
@@ -231,7 +241,9 @@ describe('DeleteLayoutUseCase', () => {
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'non_existent',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -248,7 +260,9 @@ describe('DeleteLayoutUseCase', () => {
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -265,7 +279,9 @@ describe('DeleteLayoutUseCase', () => {
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -282,7 +298,9 @@ describe('DeleteLayoutUseCase', () => {
 
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -296,7 +314,9 @@ describe('DeleteLayoutUseCase', () => {
     it('should validate deletion order: step controls cleanup before layout deletion', async () => {
       const command = DeleteLayoutCommand.create({
         layoutIdOrInternalId: 'layout_identifier',
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await deleteLayoutUseCase.execute(command);

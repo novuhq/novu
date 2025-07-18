@@ -101,7 +101,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       const result = await duplicateLayoutUseCase.execute(command);
@@ -141,7 +143,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       const result = await duplicateLayoutUseCase.execute(command);
@@ -167,7 +171,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       const result = await duplicateLayoutUseCase.execute(command);
@@ -184,7 +190,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await duplicateLayoutUseCase.execute(command);
@@ -208,7 +216,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: customOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await duplicateLayoutUseCase.execute(command);
@@ -225,7 +235,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'non_existent',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -243,7 +255,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -261,7 +275,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       try {
@@ -276,7 +292,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await duplicateLayoutUseCase.execute(command);
@@ -303,7 +321,9 @@ describe('DuplicateLayoutUseCase', () => {
       const command = DuplicateLayoutCommand.create({
         layoutIdOrInternalId: 'original_layout_identifier',
         overrides: mockOverrides,
-        ...(mockUser as any),
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
       });
 
       await duplicateLayoutUseCase.execute(command);
