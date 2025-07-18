@@ -188,7 +188,11 @@ export class JobsService {
    * This is useful for test isolation to ensure tests start with clean queues
    */
   public async clearAllQueues() {
-    await Promise.all([this.standardQueue.drain(), this.workflowQueue.drain(), this.subscriberProcessQueue.drain()]);
+    try {
+      await Promise.all([this.standardQueue.drain(), this.workflowQueue.drain(), this.subscriberProcessQueue.drain()]);
+    } catch (error) {
+      console.warn('Failed to clear Redis queues, continuing with test setup:', error);
+    }
   }
 
   /**
@@ -197,11 +201,15 @@ export class JobsService {
    * Use with caution, mainly for test teardown
    */
   public async obliterateAllQueues() {
-    await Promise.all([
-      this.standardQueue.obliterate(),
-      this.workflowQueue.obliterate(),
-      this.subscriberProcessQueue.obliterate(),
-    ]);
+    try {
+      await Promise.all([
+        this.standardQueue.obliterate(),
+        this.workflowQueue.obliterate(),
+        this.subscriberProcessQueue.obliterate(),
+      ]);
+    } catch (error) {
+      console.warn('Failed to obliterate Redis queues, continuing with test teardown:', error);
+    }
   }
 
   private async getQueueMetrics() {

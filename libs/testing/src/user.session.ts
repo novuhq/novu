@@ -97,6 +97,9 @@ export class UserSession {
   }
 
   async initialize(options: UserSessionOptions = {}) {
+    // Clear Redis queues from any previous test jobs to ensure test isolation
+    await this.jobsService.clearAllQueues();
+
     if (isClerkEnabled()) {
       await this.initializeEE(options);
     } else {
@@ -472,6 +475,14 @@ export class UserSession {
 
   public async runStandardQueueDelayedJobsImmediately() {
     return this.jobsService.runStandardQueueDelayedJobsImmediately();
+  }
+
+  public async clearAllQueues() {
+    return this.jobsService.clearAllQueues();
+  }
+
+  public async obliterateAllQueues() {
+    return this.jobsService.obliterateAllQueues();
   }
 
   public async applyChanges(where: Partial<ChangeEntity> = {}) {
