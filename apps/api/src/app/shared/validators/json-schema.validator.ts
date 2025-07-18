@@ -2,7 +2,7 @@ import { registerDecorator, ValidationOptions, ValidationArguments } from 'class
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 
-export function IsValidJsonSchema(validationOptions?: ValidationOptions) {
+export function IsValidJsonSchema(validationOptions?: ValidationOptions & { nullable?: boolean }) {
   return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'isValidJsonSchema',
@@ -12,6 +12,10 @@ export function IsValidJsonSchema(validationOptions?: ValidationOptions) {
       validator: {
         validate(value: any, args: ValidationArguments) {
           if (!value || typeof value !== 'object') {
+            if (validationOptions?.nullable && !value) {
+              return true;
+            }
+
             return false;
           }
 

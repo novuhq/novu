@@ -146,11 +146,12 @@ export class Novu extends ClientSDK {
   }
 
   /**
-   * Retrieve a subscriber
+   * List all messages
    *
    * @remarks
-   * Retrieve a subscriber by its unique key identifier **subscriberId**.
-   *     **subscriberId** field is required.
+   * List all messages for the current environment.
+   *     This API supports filtering by **channel**, **subscriberId**, and **transactionId**.
+   *     This API returns a paginated list of messages.
    */
   async retrieve(
     request: operations.LogsControllerGetLogsRequest,

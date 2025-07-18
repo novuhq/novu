@@ -127,6 +127,7 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsValidJsonSchema({
     message: 'payloadSchema must be a valid JSON schema',
+    nullable: true,
   })
   payloadSchema?: object | null;
 
