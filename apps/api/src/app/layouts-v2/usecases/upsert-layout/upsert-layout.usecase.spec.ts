@@ -3,9 +3,7 @@ import { expect } from 'chai';
 import { BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
-  UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
-  GetLayoutCommand,
   GetLayoutUseCase,
   layoutControlSchema,
 } from '@novu/application-generic';
@@ -17,24 +15,15 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
   slugify,
-  ShortIsPrefixEnum,
   LayoutIssuesDto,
   ContentIssueEnum,
 } from '@novu/shared';
 
-import { UpsertLayoutUseCase } from './upsert-layout.usecase';
+import { UpsertLayout } from './upsert-layout.usecase';
 import { UpsertLayoutCommand } from './upsert-layout.command';
-import { LayoutResponseDto } from '../../dtos';
-import {
-  CreateLayoutCommand,
-  CreateLayoutUseCase,
-  UpdateLayoutCommand,
-  UpdateLayoutUseCase,
-} from '../../../layouts-v1/usecases';
+import { CreateLayoutUseCase, UpdateLayoutUseCase } from '../../../layouts-v1/usecases';
 import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
-import { LayoutVariablesSchemaCommand } from '../layout-variables-schema/layout-variables-schema.command';
 import { LayoutDto } from '../../../layouts-v1/dtos';
-import { BuildLayoutIssuesCommand } from '../build-layout-issues/build-layout-issues.command';
 import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
 import { LayoutCreationSourceEnum } from '../../types';
 
@@ -57,7 +46,7 @@ describe('UpsertLayoutUseCase', () => {
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let buildLayoutIssuesUsecaseMock: sinon.SinonStubbedInstance<BuildLayoutIssuesUsecase>;
 
-  let upsertLayoutUseCase: UpsertLayoutUseCase;
+  let upsertLayoutUseCase: UpsertLayout;
 
   const mockUser = {
     _id: 'user_id',
@@ -151,7 +140,7 @@ describe('UpsertLayoutUseCase', () => {
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     buildLayoutIssuesUsecaseMock = sinon.createStubInstance(BuildLayoutIssuesUsecase);
 
-    upsertLayoutUseCase = new UpsertLayoutUseCase(
+    upsertLayoutUseCase = new UpsertLayout(
       getLayoutUseCaseMock as any,
       createLayoutUseCaseMock as any,
       updateLayoutUseCaseMock as any,
@@ -185,7 +174,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should successfully create a new layout when no existing layout found', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -200,7 +191,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should call createLayoutUseCase with correct parameters', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -223,7 +216,9 @@ describe('UpsertLayoutUseCase', () => {
         layoutRepositoryMock.findOne.resolves(existingDefaultLayout as any);
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -235,7 +230,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should track "Layout Create" analytics event', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -261,7 +258,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should successfully update an existing layout when layoutIdOrInternalId provided', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
           layoutIdOrInternalId: 'existing_layout_id',
         });
@@ -276,7 +275,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should call getLayoutUseCase with correct parameters', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
           layoutIdOrInternalId: 'existing_layout_id',
         });
@@ -294,7 +295,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should call updateLayoutUseCase with correct parameters', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
           layoutIdOrInternalId: 'existing_layout_id',
         });
@@ -314,7 +317,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should track "Layout Update" analytics event', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
           layoutIdOrInternalId: 'existing_layout_id',
         });
@@ -341,7 +346,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should upsert control values when provided', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -363,7 +370,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: layoutDtoWithNullControls,
         });
 
@@ -384,7 +393,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: layoutDtoWithEmptyControls,
         });
 
@@ -404,7 +415,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should call layoutVariablesSchemaUseCase with correct parameters', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -424,7 +437,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: layoutDtoWithEmptyControls,
         });
 
@@ -455,7 +470,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: htmlLayoutDto,
         });
 
@@ -476,7 +493,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: invalidHtmlLayoutDto,
         });
 
@@ -503,7 +522,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mailyLayoutDto,
         });
 
@@ -526,7 +547,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: invalidMailyLayoutDto,
         });
 
@@ -553,7 +576,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: invalidLayoutDto,
         });
 
@@ -573,7 +598,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: noEmailLayoutDto,
         });
 
@@ -591,7 +618,9 @@ describe('UpsertLayoutUseCase', () => {
 
       it('should call buildLayoutIssuesUsecase with correct parameters', async () => {
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -602,7 +631,7 @@ describe('UpsertLayoutUseCase', () => {
         expect(issuesCommand.controlSchema).to.deep.equal(layoutControlSchema);
         expect(issuesCommand.controlValues).to.deep.equal(mockLayoutDto.controlValues);
         expect(issuesCommand.resourceOrigin).to.equal(ResourceOriginEnum.NOVU_CLOUD);
-        expect(issuesCommand.user).to.deep.equal(mockUser);
+        expect(issuesCommand.userId).to.deep.equal(mockUser._id);
       });
 
       it('should use EXTERNAL origin when __source is not provided', async () => {
@@ -612,7 +641,9 @@ describe('UpsertLayoutUseCase', () => {
         };
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: layoutDtoWithoutSource,
         });
 
@@ -642,7 +673,9 @@ describe('UpsertLayoutUseCase', () => {
         buildLayoutIssuesUsecaseMock.execute.resolves(mockIssues);
 
         const command = UpsertLayoutCommand.create({
-          user: mockUser as any,
+          userId: mockUser._id,
+          environmentId: mockUser.environmentId,
+          organizationId: mockUser.organizationId,
           layoutDto: mockLayoutDto,
         });
 
@@ -664,7 +697,9 @@ describe('UpsertLayoutUseCase', () => {
       getLayoutUseCaseMock.execute.rejects(error);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
         layoutIdOrInternalId: 'existing_layout_id',
       });
@@ -683,7 +718,9 @@ describe('UpsertLayoutUseCase', () => {
       createLayoutUseCaseMock.execute.rejects(error);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
       });
 
@@ -701,7 +738,9 @@ describe('UpsertLayoutUseCase', () => {
       updateLayoutUseCaseMock.execute.rejects(error);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
         layoutIdOrInternalId: 'existing_layout_id',
       });
@@ -721,7 +760,9 @@ describe('UpsertLayoutUseCase', () => {
       upsertControlValuesUseCaseMock.execute.rejects(error);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
       });
 
@@ -740,7 +781,9 @@ describe('UpsertLayoutUseCase', () => {
       layoutVariablesSchemaUseCaseMock.execute.rejects(error);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
       });
 
@@ -764,7 +807,9 @@ describe('UpsertLayoutUseCase', () => {
       updateLayoutUseCaseMock.execute.resolves(layoutWithoutTypeAndOrigin);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
         layoutIdOrInternalId: 'existing_layout_id',
       });
@@ -786,7 +831,9 @@ describe('UpsertLayoutUseCase', () => {
       createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: layoutDtoWithUndefinedControls,
       });
 
@@ -801,7 +848,9 @@ describe('UpsertLayoutUseCase', () => {
       createLayoutUseCaseMock.execute.resolves(mockCreatedLayout);
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
         layoutIdOrInternalId: '',
       });
@@ -822,7 +871,9 @@ describe('UpsertLayoutUseCase', () => {
 
     it('should pass all required parameters to dependencies', async () => {
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: mockLayoutDto,
       });
 
@@ -843,7 +894,9 @@ describe('UpsertLayoutUseCase', () => {
       };
 
       const command = UpsertLayoutCommand.create({
-        user: mockUser as any,
+        userId: mockUser._id,
+        environmentId: mockUser.environmentId,
+        organizationId: mockUser.organizationId,
         layoutDto: customLayoutDto,
       });
 

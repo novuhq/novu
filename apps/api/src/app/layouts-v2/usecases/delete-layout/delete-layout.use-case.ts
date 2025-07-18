@@ -16,7 +16,7 @@ export class DeleteLayoutUseCase {
   ) {}
 
   async execute(command: DeleteLayoutCommand): Promise<void> {
-    const { environmentId, organizationId, _id: userId } = command.user;
+    const { environmentId, organizationId, userId } = command;
     const layout = await this.getLayoutUseCase.execute(
       GetLayoutCommand.create({
         layoutIdOrInternalId: command.layoutIdOrInternalId,
@@ -34,7 +34,7 @@ export class DeleteLayoutUseCase {
     }
 
     await this.removeLayoutReferencesFromStepControls({
-      layoutId: layout._id!,
+      layoutId: layout.layoutId!,
       environmentId,
       organizationId,
     });

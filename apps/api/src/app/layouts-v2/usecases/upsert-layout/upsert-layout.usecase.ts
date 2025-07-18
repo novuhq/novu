@@ -34,7 +34,7 @@ import { BuildLayoutIssuesCommand } from '../build-layout-issues/build-layout-is
 import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
 
 @Injectable()
-export class UpsertLayoutUseCase {
+export class UpsertLayout {
   constructor(
     private getLayoutUseCaseV0: GetLayoutUseCase,
     private createLayoutUseCaseV0: CreateLayoutUseCase,
@@ -59,8 +59,8 @@ export class UpsertLayoutUseCase {
       ? await this.getLayoutUseCaseV0.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: command.layoutIdOrInternalId,
-            environmentId: command.user.environmentId,
-            organizationId: command.user.organizationId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
             type: ResourceTypeEnum.BRIDGE,
             origin: ResourceOriginEnum.NOVU_CLOUD,
           })
@@ -73,9 +73,9 @@ export class UpsertLayoutUseCase {
 
       upsertedLayout = await this.updateLayoutUseCaseV0.execute(
         UpdateLayoutCommand.create({
-          environmentId: command.user.environmentId,
-          organizationId: command.user.organizationId,
-          userId: command.user._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
           layoutId: existingLayout._id!,
           name: command.layoutDto.name,
           type: existingLayout.type ?? ResourceTypeEnum.BRIDGE,
@@ -86,8 +86,8 @@ export class UpsertLayoutUseCase {
       this.mixpanelTrack(command, 'Layout Create - [Layouts]');
 
       const defaultLayout = await this.layoutRepository.findOne({
-        _organizationId: command.user.organizationId,
-        _environmentId: command.user.environmentId,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         type: ResourceTypeEnum.BRIDGE,
         origin: ResourceOriginEnum.NOVU_CLOUD,
         isDefault: true,
@@ -95,9 +95,9 @@ export class UpsertLayoutUseCase {
 
       upsertedLayout = await this.createLayoutUseCaseV0.execute(
         CreateLayoutCommand.create({
-          environmentId: command.user.environmentId,
-          organizationId: command.user.organizationId,
-          userId: command.user._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
           name: command.layoutDto.name,
           identifier: slugify(command.layoutDto.name),
           type: ResourceTypeEnum.BRIDGE,
@@ -111,8 +111,8 @@ export class UpsertLayoutUseCase {
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
         controlValues: (controlValues ?? {}) as Record<string, unknown>,
       })
     );
@@ -162,7 +162,9 @@ export class UpsertLayoutUseCase {
         controlSchema: layoutControlSchema,
         controlValues,
         resourceOrigin: command.layoutDto.__source ? ResourceOriginEnum.NOVU_CLOUD : ResourceOriginEnum.EXTERNAL,
-        user: command.user,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
       })
     );
 
@@ -183,8 +185,8 @@ export class UpsertLayoutUseCase {
     const shouldDelete = controlValues === null;
     if (shouldDelete) {
       this.controlValuesRepository.delete({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
         _layoutId: layoutId,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
@@ -194,8 +196,8 @@ export class UpsertLayoutUseCase {
 
     return this.upsertControlValuesUseCase.execute(
       UpsertControlValuesCommand.create({
-        organizationId: command.user.organizationId,
-        environmentId: command.user.environmentId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
         layoutId,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
         newControlValues: controlValues as unknown as Record<string, unknown>,
@@ -204,8 +206,8 @@ export class UpsertLayoutUseCase {
   }
 
   private mixpanelTrack(command: UpsertLayoutCommand, eventName: string) {
-    this.analyticsService.mixpanelTrack(eventName, command.user?._id, {
-      _organization: command.user.organizationId,
+    this.analyticsService.mixpanelTrack(eventName, command.userId, {
+      _organization: command.organizationId,
       name: command.layoutDto.name,
       source: command.layoutDto.__source,
     });
