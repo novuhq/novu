@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, ValidateNested } from 'class-validator';
+import { IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { LayoutControlValuesDto } from './layout-controls.dto';
 
@@ -9,7 +9,8 @@ export class UpdateLayoutDto {
   name: string;
 
   @ApiProperty({ type: LayoutControlValuesDto, description: 'Control values for the layout' })
+  @IsOptional()
   @ValidateNested()
   @Type(() => LayoutControlValuesDto)
-  controlValues: LayoutControlValuesDto;
+  controlValues?: LayoutControlValuesDto | null;
 }

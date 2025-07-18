@@ -6,11 +6,12 @@ import {
   UpsertControlValuesUseCase,
   GetLayoutCommand,
   GetLayoutUseCase,
+  layoutControlSchema,
 } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
-  LAYOUT_CONTENT_VARIABLE,
+  LayoutControlValuesDto,
   ResourceOriginEnum,
   ResourceTypeEnum,
   slugify,
@@ -18,7 +19,7 @@ import {
 
 import { LayoutResponseDto } from '../../dtos';
 import { UpsertLayoutCommand } from './upsert-layout.command';
-import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
@@ -29,6 +30,8 @@ import { mapToResponseDto } from '../mapper';
 import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
 import { LayoutVariablesSchemaCommand } from '../layout-variables-schema/layout-variables-schema.command';
 import { LayoutDto } from '../../../layouts-v1/dtos';
+import { BuildLayoutIssuesCommand } from '../build-layout-issues/build-layout-issues.command';
+import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
 
 @Injectable()
 export class UpsertLayoutUseCase {
@@ -40,12 +43,17 @@ export class UpsertLayoutUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
     private layoutRepository: LayoutRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private buildLayoutIssuesUsecase: BuildLayoutIssuesUsecase
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpsertLayoutCommand): Promise<LayoutResponseDto> {
-    this.validateLayout(command);
+    const { controlValues } = command.layoutDto;
+    await this.validateLayout({
+      command,
+      controlValues,
+    });
 
     const existingLayout = command.layoutIdOrInternalId
       ? await this.getLayoutUseCaseV0.execute(
@@ -105,7 +113,7 @@ export class UpsertLayoutUseCase {
       LayoutVariablesSchemaCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
-        controlValues: upsertedControlValues?.controls ?? {},
+        controlValues: (controlValues ?? {}) as Record<string, unknown>,
       })
     );
 
@@ -116,9 +124,19 @@ export class UpsertLayoutUseCase {
     });
   }
 
-  private validateLayout(command: UpsertLayoutCommand) {
-    if (command.layoutDto.controlValues?.email) {
-      const { body: content, editorType } = command.layoutDto.controlValues.email;
+  private async validateLayout({
+    command,
+    controlValues,
+  }: {
+    command: UpsertLayoutCommand;
+    controlValues?: LayoutControlValuesDto | null;
+  }) {
+    if (!controlValues) {
+      return;
+    }
+
+    if (controlValues.email) {
+      const { body: content, editorType } = controlValues.email;
       const isMailyContent = isStringifiedMailyJSONContent(content);
       const isHtmlContent =
         content.includes('<html') &&
@@ -137,13 +155,19 @@ export class UpsertLayoutUseCase {
       } else if (editorType === 'block' && !isMailyContent) {
         throw new BadRequestException('Content must be a valid Maily JSON content');
       }
+    }
 
-      if (
-        (isMailyContent && !hasMailyVariable(content, LAYOUT_CONTENT_VARIABLE)) ||
-        (isHtmlContent && !this.hasHtmlVariable(content, LAYOUT_CONTENT_VARIABLE))
-      ) {
-        throw new BadRequestException('The layout body should contain the "content" variable');
-      }
+    const issues = await this.buildLayoutIssuesUsecase.execute(
+      BuildLayoutIssuesCommand.create({
+        controlSchema: layoutControlSchema,
+        controlValues,
+        resourceOrigin: command.layoutDto.__source ? ResourceOriginEnum.NOVU_CLOUD : ResourceOriginEnum.EXTERNAL,
+        user: command.user,
+      })
+    );
+
+    if (Object.keys(issues).length > 0) {
+      throw new BadRequestException(issues);
     }
   }
 
@@ -151,8 +175,12 @@ export class UpsertLayoutUseCase {
     const {
       layoutDto: { controlValues },
     } = command;
-    const shouldDelete = controlValues === null;
+    const doNothing = typeof controlValues === 'undefined';
+    if (doNothing) {
+      return null;
+    }
 
+    const shouldDelete = controlValues === null;
     if (shouldDelete) {
       this.controlValuesRepository.delete({
         _environmentId: command.user.environmentId,
@@ -181,11 +209,5 @@ export class UpsertLayoutUseCase {
       name: command.layoutDto.name,
       source: command.layoutDto.__source,
     });
-  }
-
-  private hasHtmlVariable(content: string, variable: string): boolean {
-    const liquidVariableRegex = new RegExp(`\\{\\{\\s*${variable}\\s*\\}\\}`, 'g');
-
-    return liquidVariableRegex.test(content);
   }
 }

@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 
 import {
+  RuntimeIssue,
   CustomDataType,
   INotificationGroup,
   ResourceOriginEnum,
@@ -25,7 +26,7 @@ import {
 } from '@novu/shared';
 
 import { Exclude, Type } from 'class-transformer';
-import { RuntimeIssue, ClientSession } from '@novu/dal';
+import { ClientSession } from '@novu/dal';
 import {
   EnvironmentWithUserCommand,
   ContentIssue,
@@ -110,7 +111,7 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   rawData?: Record<string, unknown>;
 
   @IsOptional()
-  payloadSchema?: JSONSchema;
+  payloadSchema?: JSONSchema | null;
 
   @IsOptional()
   @IsBoolean()

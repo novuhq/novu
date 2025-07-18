@@ -12,7 +12,7 @@ import {
   InAppStepUpsertDto,
   JSONSchemaDto,
   ListWorkflowResponse,
-  StepContentIssueEnum,
+  ContentIssueEnum,
   StepTypeEnum,
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
@@ -1052,11 +1052,14 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           const workflowCreated = await createWorkflow(apiClient, buildWorkflow({ steps } as CreateWorkflowDto));
           const step = workflowCreated.steps[0];
 
-          expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(StepContentIssueEnum.TierLimitExceeded);
-          expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(StepContentIssueEnum.TierLimitExceeded);
+          expect(step.issues?.controls?.amount[0].issueType).to.deep.equal(ContentIssueEnum.TierLimitExceeded);
+          expect(step.issues?.controls?.unit[0].issueType).to.deep.equal(ContentIssueEnum.TierLimitExceeded);
         });
 
         it('should always show issues for illegal variables in control values', async () => {
+          const oldIsHtmlEditorEnabled = process.env.IS_HTML_EDITOR_ENABLED;
+          // @ts-ignore
+          process.env.IS_HTML_EDITOR_ENABLED = 'false';
           const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
             steps: [
               {
@@ -1074,6 +1077,9 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           expect(stepData.issues?.controls?.body, 'Step data should have body issues').to.exist;
           expect(stepData.issues?.controls?.body?.[0]?.variableName).to.equal('{{}}');
           expect(stepData.issues?.controls?.body?.[0]?.issueType).to.equal('ILLEGAL_VARIABLE_IN_CONTROL_VALUE');
+
+          // @ts-ignore
+          process.env.IS_HTML_EDITOR_ENABLED = oldIsHtmlEditorEnabled;
         });
       });
     });

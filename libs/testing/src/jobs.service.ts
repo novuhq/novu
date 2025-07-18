@@ -19,22 +19,32 @@ export class JobsService {
    *
    * @param templateId - The template ID to wait for (optional)
    * @param organizationId - The organization ID to wait for (optional)
+   * @param maxWaitTime - Maximum time to wait in milliseconds (default: 30000)
    */
   public async waitForJobCompletion({
     templateId,
     organizationId,
+    maxWaitTime = 10000,
   }: {
     templateId?: string | string[];
     organizationId?: string | string[];
+    maxWaitTime?: number;
   }) {
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const organizationMatch = organizationId ? { _organizationId: { $in: [organizationId].flat() } } : {};
 
+    const startTime = Date.now();
     let redisJobsCount = 0;
     let mongoJobsCount = 0;
 
     do {
       await setTimeout(100);
+
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error(
+          `waitForJobCompletion timed out after ${maxWaitTime}ms. Redis jobs: ${redisJobsCount}, Mongo jobs: ${mongoJobsCount}`
+        );
+      }
 
       const metrics = await this.getQueueMetrics();
 
@@ -61,21 +71,29 @@ export class JobsService {
    *
    * @param templateId - The template ID to wait for (optional)
    * @param organizationId - The organization ID to wait for (optional)
+   * @param maxWaitTime - Maximum time to wait in milliseconds (default: 30000)
    */
   public async waitForDbJobCompletion({
     templateId,
     organizationId,
+    maxWaitTime = 10000,
   }: {
     templateId?: string | string[];
     organizationId?: string | string[];
+    maxWaitTime?: number;
   }) {
     const workflowMatch = templateId ? { _templateId: { $in: [templateId].flat() } } : {};
     const organizationMatch = organizationId ? { _organizationId: { $in: [organizationId].flat() } } : {};
 
+    const startTime = Date.now();
     let mongoJobsCount = 0;
 
     do {
       await setTimeout(100);
+
+      if (Date.now() - startTime > maxWaitTime) {
+        throw new Error(`waitForDbJobCompletion timed out after ${maxWaitTime}ms. Mongo jobs: ${mongoJobsCount}`);
+      }
 
       mongoJobsCount = Math.max(
         // @ts-expect-error
@@ -151,19 +169,47 @@ export class JobsService {
     maxWaitTime = 10000
   ) {
     const startTime = Date.now();
-    const safeMaxWaitTime = Math.min(200, maxWaitTime);
 
     let queueMetrics: Awaited<ReturnType<typeof this.getQueueMetrics>>;
 
     do {
       await setTimeout(100);
       queueMetrics = await this.getQueueMetrics();
-    } while (cb(queueMetrics) && Date.now() - startTime < safeMaxWaitTime);
+    } while (cb(queueMetrics) && Date.now() - startTime < maxWaitTime);
   }
 
   public async runStandardQueueDelayedJobsImmediately() {
     const delayedJobs = await this.standardQueue.getDelayed();
     await Promise.all(delayedJobs.map((job) => job.promote()));
+  }
+
+  /**
+   * Clean all Redis queues from any pending jobs (waiting, delayed)
+   * This is useful for test isolation to ensure tests start with clean queues
+   */
+  public async clearAllQueues() {
+    try {
+      await Promise.all([this.standardQueue.drain(), this.workflowQueue.drain(), this.subscriberProcessQueue.drain()]);
+    } catch (error) {
+      console.warn('Failed to clear Redis queues, continuing with test setup:', error);
+    }
+  }
+
+  /**
+   * Completely obliterate all Redis queues and their contents
+   * WARNING: This removes ALL jobs including completed and failed ones
+   * Use with caution, mainly for test teardown
+   */
+  public async obliterateAllQueues() {
+    try {
+      await Promise.all([
+        this.standardQueue.obliterate(),
+        this.workflowQueue.obliterate(),
+        this.subscriberProcessQueue.obliterate(),
+      ]);
+    } catch (error) {
+      console.warn('Failed to obliterate Redis queues, continuing with test teardown:', error);
+    }
   }
 
   private async getQueueMetrics() {

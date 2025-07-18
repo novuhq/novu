@@ -18,7 +18,7 @@ import {
 } from 'liquidjs';
 import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import { DIGEST_EVENTS_VARIABLE_PATTERN, isLiquidErrors, isValidDynamicPath, isValidTemplate } from './parser-utils';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import type { ProcessContext, VariableDetails, Variable } from './types';
 import { buildLiquidParser } from './liquid-engine';
 
