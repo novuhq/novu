@@ -105,7 +105,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   rawData?: Record<string, unknown>;
 
   @IsOptional()
-  payloadSchema?: JSONSchema;
+  payloadSchema?: JSONSchema | null;
 
   @IsOptional()
   @IsBoolean()
