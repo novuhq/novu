@@ -48,6 +48,7 @@ import { v4 as uuid } from 'uuid';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
 import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
+import { sleep } from './utils/sleep.util';
 
 const promiseTimeout = (ms: number): Promise<void> =>
   new Promise((resolve) => {
