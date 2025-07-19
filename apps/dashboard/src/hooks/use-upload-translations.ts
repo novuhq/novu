@@ -14,15 +14,19 @@ export const useUploadTranslations = ({ onSuccess }: { onSuccess?: () => void } 
   return useMutation({
     mutationFn: (args: UploadTranslationsParameters) =>
       uploadTranslations({ environment: currentEnvironment!, ...args }),
-    onSuccess: async () => {
+    onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslation, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslation, variables.resourceId, variables.resourceType],
         exact: false,
       });
 
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-        exact: false,
+        queryKey: [
+          QueryKeys.fetchTranslationGroup,
+          variables.resourceId,
+          variables.resourceType,
+          currentEnvironment?._id,
+        ],
       });
 
       await queryClient.invalidateQueries({
