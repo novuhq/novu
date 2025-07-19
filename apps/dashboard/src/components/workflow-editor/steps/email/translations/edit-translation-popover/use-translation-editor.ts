@@ -89,6 +89,7 @@ export const useTranslationEditor = (
   const [editValue, setEditValue] = useState(initialValue);
   const [initialKeyOnOpen, setInitialKeyOnOpen] = useState(initialKey);
   const [hasUserEditedKey, setHasUserEditedKey] = useState(false);
+  const [hasUserEditedValue, setHasUserEditedValue] = useState(false);
 
   const actualTranslationValue = useMemo(() => {
     return getTranslationValue(translationData?.content, editKey.trim());
@@ -108,24 +109,34 @@ export const useTranslationEditor = (
     setEditKey(initialKey);
     setInitialKeyOnOpen(initialKey);
     setHasUserEditedKey(false);
+    setHasUserEditedValue(false);
   }, [initialKey]);
 
   useEffect(() => {
-    const newValue = actualTranslationValue || initialValue;
-    setEditValue(newValue);
-    lastSavedValueRef.current = newValue;
-  }, [actualTranslationValue, initialValue, lastSavedValueRef]);
+    // Only update editValue from server if user hasn't edited the value
+    // This prevents overwriting user's typing when server responds
+    if (!hasUserEditedValue) {
+      const newValue = actualTranslationValue || initialValue;
+      setEditValue(newValue);
+      lastSavedValueRef.current = newValue;
+    }
+  }, [actualTranslationValue, initialValue, lastSavedValueRef, hasUserEditedValue]);
 
   const handleSetEditKey = (newKey: string) => {
     setEditKey(newKey);
     setHasUserEditedKey(true);
   };
 
+  const handleSetEditValue = (newValue: string) => {
+    setEditValue(newValue);
+    setHasUserEditedValue(true);
+  };
+
   return {
     editKey,
     editValue,
     setEditKey: handleSetEditKey,
-    setEditValue,
+    setEditValue: handleSetEditValue,
     isSaving: updateTranslationValue.isPending,
     hasUserEditedKey,
     initialKeyOnOpen,
