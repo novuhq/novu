@@ -198,8 +198,8 @@ describe('Upsert Workflow #novu-v2', function () {
         process.env.IS_HTML_EDITOR_ENABLED = 'false';
       });
 
-      it('should assign default v2 layout when creating email step with null layoutId', async () => {
-        const layout = await createLayout({
+      it('should not use layoutId when null is provided', async () => {
+        await createLayout({
           name: 'Test Layout',
           layoutId: 'test-layout',
           source: LayoutCreationSourceEnum.Dashboard,
@@ -226,8 +226,7 @@ describe('Upsert Workflow #novu-v2', function () {
         const emailStep = workflow.steps[0] as EmailStepResponseDto;
         expect(emailStep.type).to.equal(StepTypeEnum.Email);
 
-        // should get default layoutId
-        expect(emailStep.controls.values.layoutId).to.equal(layout.layoutId);
+        expect(emailStep.controls.values.layoutId).to.equal(null);
       });
 
       it('should keep layoutId as undefined when not specified and there is no default layout', async () => {

@@ -1,10 +1,10 @@
-import { IsDefined, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { IsDefined, IsEnum, IsObject, IsOptional } from 'class-validator';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { ResourceOriginEnum } from '@novu/shared';
 
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 
-export class BuildLayoutIssuesCommand extends EnvironmentWithUserObjectCommand {
+export class BuildLayoutIssuesCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsEnum(ResourceOriginEnum)
   resourceOrigin: ResourceOriginEnum;

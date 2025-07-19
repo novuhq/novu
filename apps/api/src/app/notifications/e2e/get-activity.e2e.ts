@@ -51,7 +51,8 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     }
     if (originalStepRunEnvValue === undefined) {
       delete (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED;
-    } else {
+    }
+    if (originalStepRunEnvValue !== undefined) {
       (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED = originalStepRunEnvValue;
     }
   });
@@ -268,8 +269,6 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     const activity: ActivityNotificationResponseDto = activityResponse.body.data;
     expect(activity).to.be.ok;
 
-    console.log('111111 activity', activity);
-
     expect(activity.jobs?.length).to.be.equal(2);
     expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.TRIGGER);
     expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
@@ -323,11 +322,6 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     expect(activity.jobs?.length).to.be.equal(1);
     expect(activity.jobs?.[0].type).to.be.equal(StepTypeEnum.IN_APP);
     expect(activity.jobs?.[0].status).to.be.equal(JobStatusEnum.COMPLETED);
-
-    /*
-     * Reset feature flag
-     * delete (process.env as any).IS_STEP_RUN_LOGS_READ_ENABLED;
-     */
   });
 
   it('should fallback to old method when traces query fails', async () => {

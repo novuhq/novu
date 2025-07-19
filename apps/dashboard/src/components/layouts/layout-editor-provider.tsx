@@ -18,6 +18,7 @@ import { NovuApiError } from '@/api/api.client';
 import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
 
 const toastOptions: ExternalToast = {
+  duration: 5000,
   position: 'bottom-right',
   classNames: {
     toast: 'mb-4 right-0 pointer-events-none',

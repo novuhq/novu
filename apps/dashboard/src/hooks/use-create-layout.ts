@@ -28,6 +28,6 @@ export function useCreateLayout(options?: UseMutationOptions<LayoutResponseDto, 
 
   return {
     createLayout: mutation.mutateAsync,
-    isLoading: mutation.isPending,
+    isPending: mutation.isPending,
   };
 }

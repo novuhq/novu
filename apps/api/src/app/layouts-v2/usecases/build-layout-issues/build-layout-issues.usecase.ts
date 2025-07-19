@@ -34,12 +34,12 @@ export class BuildLayoutIssuesUsecase {
 
   @InstrumentUsecase()
   async execute(command: BuildLayoutIssuesCommand): Promise<LayoutIssuesDto> {
-    const { resourceOrigin, user, controlSchema, controlValues } = command;
+    const { resourceOrigin, environmentId, organizationId, userId, controlSchema, controlValues } = command;
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
+        environmentId,
+        organizationId,
         controlValues: controlValues ?? {},
       })
     );
@@ -63,9 +63,9 @@ export class BuildLayoutIssuesUsecase {
 
     const isHtmlEditorEnabled = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-      organization: { _id: command.user.organizationId },
-      environment: { _id: command.user.environmentId },
-      user: { _id: command.user._id },
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
       defaultValue: false,
     });
 

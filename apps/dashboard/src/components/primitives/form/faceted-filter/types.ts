@@ -24,6 +24,10 @@ export interface FacetedFilterProps {
   onOpenChange?: (open: boolean) => void;
   icon?: ComponentType<{ className?: string }>;
   hideTitle?: boolean;
+  hidePlusIcon?: boolean;
   hideSearch?: boolean;
   hideClear?: boolean;
+  className?: string;
+  trailingNode?: React.ReactNode;
+  disabled?: boolean;
 }

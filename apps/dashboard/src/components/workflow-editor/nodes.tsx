@@ -25,6 +25,7 @@ import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useState, useCallback, useRef } from 'react';
 import { StepCreateDto } from '@novu/shared';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -556,8 +557,16 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
+  const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
+    limit: 100,
+    refetchOnWindowFocus: false,
+  });
+  const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
+  const addDefaultLayout = isLayoutsPageActive && !!defaultLayout;
+  const defaultLayoutId = defaultLayout?.layoutId;
 
-  if (!workflow) {
+  if (!workflow || isFetchingLayouts) {
     return null;
   }
 
@@ -579,7 +588,7 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
           update(
             {
               ...workflow,
-              steps: [...workflow.steps, createStep(stepType)],
+              steps: [...workflow.steps, createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined)],
             },
             {
               onSuccess: (data) => {

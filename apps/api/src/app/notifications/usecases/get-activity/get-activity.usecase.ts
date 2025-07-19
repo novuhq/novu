@@ -12,9 +12,9 @@ import {
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  StepRun,
   PinoLogger,
   FeatureFlagsService,
-  StepRun,
 } from '@novu/application-generic';
 import {
   ExecutionDetailsSourceEnum,
