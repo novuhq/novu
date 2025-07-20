@@ -58,7 +58,7 @@ export const useDiffEnvironments = ({
     enabled: enabled && !!sourceEnvironmentId && !!targetEnvironmentId && sourceEnvironmentId !== targetEnvironmentId,
     staleTime: 2 * 60 * 1000, // 2 minutes - prevent constant refetching
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
 };
 

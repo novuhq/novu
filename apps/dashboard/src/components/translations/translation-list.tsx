@@ -1,37 +1,37 @@
 import { HTMLAttributes } from 'react';
 
-import { cn } from '@/utils/ui';
+import { TranslationGroup, TranslationsFilter } from '@/api/translations';
 import { DefaultPagination } from '@/components/default-pagination';
 import {
   Table,
   TableBody,
+  TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
-  TableFooter,
-  TableCell,
 } from '@/components/primitives/table';
-import { TranslationGroup, TranslationsFilter } from '@/api/translations';
+import { cn } from '@/utils/ui';
 import { DEFAULT_TRANSLATIONS_LIMIT } from './constants';
 
-import { TranslationsUrlState } from './hooks/use-translations-url-state';
-import { useTranslationListLogic } from './hooks/use-translation-list-logic';
-import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
-import { useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { DEFAULT_LOCALE } from '@novu/shared';
-import { TranslationListBlank } from './translation-list-blank';
+import { useNavigate } from 'react-router-dom';
 import { ListNoResults } from '../list-no-results';
+import { useDeleteTranslationModal } from './hooks/use-delete-translation-modal';
+import { useTranslationListLogic } from './hooks/use-translation-list-logic';
+import { TranslationsUrlState } from './hooks/use-translations-url-state';
+import { TranslationOnboardingPage } from './translation-onboarding-page';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
 import { TranslationsFilters } from './translations-filters';
 
-import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
 import { IS_SELF_HOSTED } from '@/config';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { DeleteTranslationGroupDialog } from './delete-translation-modal';
+import { TranslationListUpgradeCta } from './translation-list-upgrade-cta';
 
 type TranslationListHeaderProps = HTMLAttributes<HTMLDivElement> &
   Pick<TranslationsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -243,17 +243,7 @@ export function TranslationList(props: TranslationListProps) {
   }
 
   if (!areFiltersApplied && !data?.data.length) {
-    return (
-      <TranslationListContainer
-        filterValues={filterValues}
-        handleFiltersChange={handleFiltersChange}
-        resetFilters={resetFilters}
-        isFetching={isFetching}
-        {...props}
-      >
-        <TranslationListBlank />
-      </TranslationListContainer>
-    );
+    return <TranslationOnboardingPage />;
   }
 
   if (!data?.data.length) {

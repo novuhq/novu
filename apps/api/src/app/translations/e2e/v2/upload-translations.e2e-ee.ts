@@ -98,11 +98,13 @@ describe('Upload translation files - /v2/translations/upload (POST) #novu-v2', a
     expect(body.data.errors).to.be.an('array').that.is.empty;
 
     // Verify both translations were created
-    const { body: allTranslations } = await session.testAgent
-      .get(`/v2/translations?resourceId=${workflowId}&resourceType=${LocalizationResourceEnum.WORKFLOW}`)
+    const { body: translationGroup } = await session.testAgent
+      .get(`/v2/translations/group/${LocalizationResourceEnum.WORKFLOW}/${workflowId}`)
       .expect(200);
 
-    expect(allTranslations.total).to.equal(2);
+    expect(translationGroup.data.locales).to.have.lengthOf(2);
+    expect(translationGroup.data.locales).to.include('en_US');
+    expect(translationGroup.data.locales).to.include('es_ES');
   });
 
   it('should update existing translation when uploading same locale', async () => {
