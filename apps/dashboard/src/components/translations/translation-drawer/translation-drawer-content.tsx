@@ -1,13 +1,19 @@
-import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
+import { forwardRef, useImperativeHandle, useCallback, useState } from 'react';
 import { TranslationGroup } from '@/api/translations';
+import { PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { useEnvironment } from '@/context/environment/hooks';
+import { PermissionButton } from '@/components/primitives/permission-button';
+import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { TranslationHeader } from './translation-header';
 import { LocaleList } from './locale-list';
 import { EditorPanel } from './editor-panel';
 import { useTranslationDrawerLogic } from './use-translation-drawer-logic';
-import { forwardRef, useImperativeHandle, useState, useCallback } from 'react';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { PermissionsEnum } from '@novu/shared';
-import { PermissionButton } from '@/components/primitives/permission-button';
+import { InlineToast } from '@/components/primitives/inline-toast';
+
+export type TranslationDrawerContentRef = {
+  hasUnsavedChanges: () => boolean;
+};
 
 type TranslationDrawerContentProps = {
   translationGroup: TranslationGroup;
@@ -15,16 +21,15 @@ type TranslationDrawerContentProps = {
   onLocaleChange?: (locale: string) => void;
 };
 
-export interface TranslationDrawerContentRef {
-  hasUnsavedChanges: () => boolean;
-}
-
 export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, TranslationDrawerContentProps>(
   ({ translationGroup, initialLocale, onLocaleChange }, ref) => {
     const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
     const has = useHasPermission();
+    const { currentEnvironment } = useEnvironment();
     const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+    const isReadOnly = !canWrite || !isDevEnvironment;
 
     const {
       selectedLocale,
@@ -41,7 +46,12 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
     } = useTranslationDrawerLogic(translationGroup, initialLocale, onLocaleChange);
 
     const canSave =
-      canWrite && selectedLocale && editor.modifiedContent && !saveTranslationMutation.isPending && !editor.jsonError;
+      canWrite &&
+      isDevEnvironment &&
+      selectedLocale &&
+      editor.modifiedContent &&
+      !saveTranslationMutation.isPending &&
+      !editor.jsonError;
 
     const checkUnsavedChanges = useCallback(
       (action: () => void) => {
@@ -77,6 +87,16 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
       <div className="flex h-full w-full flex-col">
         <TranslationHeader resourceName={translationGroup.resourceName} />
 
+        {!isDevEnvironment && (
+          <div className="border-b border-neutral-200 px-6 py-3">
+            <InlineToast
+              variant="warning"
+              title="View-only mode"
+              description="Edit translations in your development environment."
+            />
+          </div>
+        )}
+
         <div className="flex h-full">
           <LocaleList
             locales={translationGroup.locales}
@@ -98,6 +118,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             onDelete={handleDelete}
             isDeleting={deleteTranslationMutation.isPending}
             outdatedLocales={translationGroup.outdatedLocales}
+            isReadOnly={isReadOnly}
           />
         </div>
 
@@ -124,5 +145,3 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
     );
   }
 );
-
-TranslationDrawerContent.displayName = 'TranslationDrawerContent';

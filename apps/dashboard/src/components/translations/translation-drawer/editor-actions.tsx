@@ -17,6 +17,7 @@ type EditorActionsProps = {
   modifiedContent?: Record<string, unknown> | null;
   onDelete: (locale: string) => void | Promise<void>;
   isDeleting?: boolean;
+  isReadOnly?: boolean;
 };
 
 export function EditorActions({
@@ -24,6 +25,7 @@ export function EditorActions({
   modifiedContent,
   onDelete,
   isDeleting = false,
+  isReadOnly = false,
 }: EditorActionsProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { handleDownload } = useTranslationFileOperations();
@@ -42,7 +44,7 @@ export function EditorActions({
   };
 
   // Don't allow deletion of placeholder translations that don't exist in the database
-  const canDelete = selectedTranslation && !selectedTranslation.isPlaceholder;
+  const canDelete = selectedTranslation && !selectedTranslation.isPlaceholder && !isReadOnly;
 
   const handleDeleteClick = () => setIsDeleteModalOpen(true);
 
@@ -70,6 +72,7 @@ export function EditorActions({
               mode="outline"
               size="xs"
               leadingIcon={RiFileUploadLine}
+              disabled={isReadOnly}
             >
               Import locale(s)
             </PermissionButton>
@@ -113,7 +116,11 @@ export function EditorActions({
                 </PermissionButton>
               </TooltipTrigger>
               <TooltipContent>
-                {canDelete ? `Delete ${selectedLocale} translation` : 'Translation does not exist yet'}
+                {!isReadOnly && canDelete
+                  ? `Delete ${selectedLocale} translation`
+                  : isReadOnly
+                    ? 'Edit translations in your development environment.'
+                    : 'Translation does not exist yet'}
               </TooltipContent>
             </Tooltip>
           </div>

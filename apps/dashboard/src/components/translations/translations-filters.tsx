@@ -11,8 +11,9 @@ import { FlagCircle } from '@/components/flag-circle';
 import { cn } from '@/utils/ui';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { DEFAULT_LOCALE, PermissionsEnum } from '@novu/shared';
+import { DEFAULT_LOCALE, PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useEnvironment } from '@/context/environment/hooks';
 
 import { defaultTranslationsFilter } from './hooks/use-translations-url-state';
 import { useExportMasterJson } from '@/hooks/use-export-master-json';
@@ -82,7 +83,10 @@ function ActionButtons() {
   const { environmentSlug } = useParams();
   const { data: organizationSettings } = useFetchOrganizationSettings();
   const has = useHasPermission();
+  const { currentEnvironment } = useEnvironment();
   const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
+  const canEdit = canWrite && isDevEnvironment;
 
   const defaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
 
@@ -132,40 +136,49 @@ function ActionButtons() {
         </TooltipContent>
       </Tooltip>
 
-      {canWrite && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="secondary"
-              mode="lighter"
-              className="px-2.5 py-1.5"
-              onClick={handleImport}
-              disabled={uploadMutation.isPending}
-            >
-              {uploadMutation.isPending ? (
-                <RiLoader4Line className="h-3 w-3 animate-spin" />
-              ) : (
-                <RiUploadLine className="h-3 w-3" />
-              )}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="max-w-xs">
-              <p className="font-medium">Import Master JSON</p>
-              <p className="mt-1 text-xs text-neutral-400">
-                Upload a translated JSON file to import or update translations. Locale is automatically detected from
-                filename (e.g., en_US.json, fr_FR.json). The system will match resources by ID and create new ones or
-                update existing translations.
-              </p>
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      )}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            mode="lighter"
+            className="px-2.5 py-1.5"
+            onClick={handleImport}
+            disabled={uploadMutation.isPending || !canEdit}
+          >
+            {uploadMutation.isPending ? (
+              <RiLoader4Line className="h-3 w-3 animate-spin" />
+            ) : (
+              <RiUploadLine className="h-3 w-3" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <div className="max-w-xs">
+            <p className="font-medium">Import Master JSON</p>
+            <p className="mt-1 text-xs text-neutral-400">
+              {!canEdit
+                ? 'Edit translations in your development environment.'
+                : 'Upload a translated JSON file to import or update translations. Locale is automatically detected from filename (e.g., en_US.json, fr_FR.json). The system will match resources by ID and create new ones or update existing translations.'}
+            </p>
+          </div>
+        </TooltipContent>
+      </Tooltip>
 
       <DefaultLocaleButton locale={defaultLocale} onClick={handleConfigure} />
-      <Button variant="secondary" mode="lighter" onClick={handleConfigure} leadingIcon={RiSettingsLine}>
-        Configure translations
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            mode="lighter"
+            onClick={handleConfigure}
+            leadingIcon={RiSettingsLine}
+            disabled={!canEdit}
+          >
+            Configure translations
+          </Button>
+        </TooltipTrigger>
+        {!canEdit && <TooltipContent>Edit translations in your development environment.</TooltipContent>}
+      </Tooltip>
     </div>
   );
 }
