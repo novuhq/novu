@@ -150,7 +150,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       expect(allNotificationsBefore.data.length).to.equal(allNotificationsAfter.data.length);
 
       allNotificationsBefore.data.forEach((notification, index) => {
-        expect(allNotificationsAfter.data[index].seen || false).to.equal(false);
+        expect(allNotificationsAfter.data[index].seen).to.equal(false);
       });
     });
   });

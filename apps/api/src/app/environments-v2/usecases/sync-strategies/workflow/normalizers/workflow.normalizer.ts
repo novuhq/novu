@@ -27,7 +27,7 @@ export class WorkflowNormalizer {
 
     return {
       ...normalizedWorkflow,
-      payloadSchema: normalizedWorkflow.payloadSchema || null,
+      payloadSchema: normalizedWorkflow.payloadSchema ?? null,
       steps: steps.map((step) => this.normalizeStep(step)),
     };
   }
