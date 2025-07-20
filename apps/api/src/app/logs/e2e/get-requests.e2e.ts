@@ -117,7 +117,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     // Test 1: Filter by status codes 200 and 404
     const statusFilterResponse = await session.testAgent
       .get('/v1/logs/requests')
-      .query({ statusCodes: [200, 404] })
+      .query({ statusCode: [200, 404] })
       .expect(200);
 
     expect(statusFilterResponse.body.data.length).to.be.equal(3);
@@ -141,7 +141,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     // Test 3: Combine filters - status codes 200,404 AND URL containing 'workflows'
     const combinedFilterResponse = await session.testAgent
       .get('/v1/logs/requests')
-      .query({ statusCodes: [200, 404], url: 'workflows' })
+      .query({ statusCode: [200, 404], url: 'workflows' })
       .expect(200);
 
     expect(combinedFilterResponse.body.data.length).to.be.equal(1);
