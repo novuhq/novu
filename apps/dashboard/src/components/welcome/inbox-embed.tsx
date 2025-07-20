@@ -10,14 +10,12 @@ import { useSearchParams } from 'react-router-dom';
 
 export function InboxEmbed(): JSX.Element | null {
   const [showConfetti, setShowConfetti] = useState(false);
-  // Temporary override to show as not connected for development
   const { currentUser } = useAuth();
   const { integrations } = useFetchIntegrations({ refetchInterval: 1000, refetchOnWindowFocus: true });
   const { environments } = useEnvironment();
   const [searchParams] = useSearchParams();
   const environmentHint = searchParams.get('environmentId');
 
-  // If hint provided, use it, otherwise use the first dev environment
   const selectedEnvironment = environments?.find((env) =>
     environmentHint ? env._id === environmentHint : !env._parentId
   );

@@ -1,6 +1,6 @@
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useState } from 'react';
-import { RiFileCopyLine, RiLoader4Line } from 'react-icons/ri';
+import { RiFileCopyLine } from 'react-icons/ri';
 import { Notification5Fill } from '@/components/icons';
 import { useNavigate } from 'react-router-dom';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
@@ -30,17 +30,17 @@ function generateCurlCommand(userId: string): string {
   -d '{
     "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
     "to": {
-      "subscriberId": "${userId}"
+      "subscriberId": ${JSON.stringify(userId)}
     },
     "payload": {}
   }'`;
 }
 
-function showSuccessToast(message: string) {
+function showCustomToast(message: string, variant: 'success' | 'error') {
   showToast({
     children: () => (
       <>
-        <ToastIcon variant="success" />
+        <ToastIcon variant={variant} />
         <span className="whitespace-nowrap text-sm">{message}</span>
       </>
     ),
@@ -54,33 +54,7 @@ function showSuccessToast(message: string) {
   });
 }
 
-function showErrorToast(message: string) {
-  showToast({
-    children: () => (
-      <>
-        <ToastIcon variant="error" />
-        <span className="whitespace-nowrap text-sm">{message}</span>
-      </>
-    ),
-    options: {
-      position: 'bottom-center',
-      style: {
-        left: '50%',
-        transform: 'translateX(-50%)',
-      },
-    },
-  });
-}
-
-export function InboxPlayground({
-  appId,
-  subscriberId,
-  currentEnvironment,
-}: {
-  appId: string;
-  subscriberId: string;
-  currentEnvironment: string;
-}) {
+export function InboxPlayground({ appId, subscriberId }: { appId: string; subscriberId: string }) {
   const { organization } = useOrganization();
   const { currentEnvironment: environment } = useEnvironment();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
@@ -89,22 +63,24 @@ export function InboxPlayground({
   const telemetry = useTelemetry();
 
   // Initialize the demo workflow before triggering
-  useInitDemoWorkflow(environment!);
+  useInitDemoWorkflow(environment);
+
+  // Early return if environment is not available
+  if (!environment) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500">Loading environment...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Ensure we're using the environment identifier consistently
   const effectiveAppId = environment?.identifier || appId;
 
   const handleSendNotification = async () => {
     try {
-      console.log('Triggering workflow with:', {
-        name: ONBOARDING_DEMO_WORKFLOW_ID,
-        to: subscriberId,
-        environment: environment?.name,
-        environmentId: environment?._id,
-        appId: effectiveAppId,
-        originalAppId: appId,
-      });
-
       await triggerWorkflow({
         name: ONBOARDING_DEMO_WORKFLOW_ID,
         to: subscriberId,
@@ -113,12 +89,10 @@ export function InboxPlayground({
 
       telemetry(TelemetryEvent.INBOX_NOTIFICATION_SENT);
       setHasNotificationBeenSent(true);
-      showSuccessToast('Notification sent successfully!');
-
-      console.log('Notification triggered successfully');
+      showCustomToast('Notification sent successfully!', 'success');
     } catch (error) {
       console.error('Failed to send notification:', error);
-      showErrorToast(`Failed to send notification: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showCustomToast('Failed to send notification. Please try again later.', 'error');
     }
   };
 
@@ -130,9 +104,9 @@ export function InboxPlayground({
 
       const curlCommand = generateCurlCommand(subscriberId);
       await navigator.clipboard.writeText(curlCommand);
-      showSuccessToast('cURL command copied to clipboard!');
+      showCustomToast('cURL command copied to clipboard!', 'success');
     } catch (error) {
-      showErrorToast('Failed to copy cURL command');
+      showCustomToast('Failed to copy cURL command', 'error');
     }
   };
 

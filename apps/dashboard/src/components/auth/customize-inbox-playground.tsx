@@ -13,9 +13,16 @@ interface PreviewStyle {
   image: string;
 }
 
-// interface CustomizeInboxProps {
-//   form: UseFormReturn<InboxPlaygroundFormData>;
-// }
+interface CustomizeInboxFormData {
+  selectedStyle: string;
+  enableTabs: boolean;
+  primaryColor: string;
+  foregroundColor: string;
+}
+
+interface CustomizeInboxProps {
+  form: UseFormReturn<CustomizeInboxFormData>;
+}
 
 const previewStyles: PreviewStyle[] = [
   { id: 'popover', label: 'Popover', image: '/images/auth/popover-layout.svg' },
@@ -23,7 +30,7 @@ const previewStyles: PreviewStyle[] = [
   { id: 'full-width', label: 'Full Width', image: '/images/auth/full-width-layout.svg' },
 ];
 
-export function CustomizeInbox({ form }: { form: UseFormReturn<any> }) {
+export function CustomizeInbox({ form }: CustomizeInboxProps) {
   const selectedStyle = form.watch('selectedStyle');
 
   return (
@@ -115,7 +122,7 @@ function StylePreviewCard({
   );
 }
 
-function ColorPickerSection({ form }: { form: UseFormReturn<any> }) {
+function ColorPickerSection({ form }: { form: UseFormReturn<CustomizeInboxFormData> }) {
   return (
     <div className="space-y-2">
       <div className="flex gap-2">

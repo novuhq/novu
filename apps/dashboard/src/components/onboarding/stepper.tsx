@@ -5,7 +5,13 @@ interface StepperProps {
 
 export function Stepper({ currentStep, totalSteps }: StepperProps) {
   return (
-    <div className="flex flex-col items-end gap-2 p-3">
+    <div
+      className="flex flex-col items-end gap-2 p-3"
+      role="progressbar"
+      aria-valuenow={currentStep}
+      aria-valuemin={1}
+      aria-valuemax={totalSteps}
+    >
       <div className="flex h-1 w-[100px] gap-1">
         {Array.from({ length: totalSteps }).map((_, idx) => (
           <div

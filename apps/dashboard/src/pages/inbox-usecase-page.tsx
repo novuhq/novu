@@ -19,7 +19,6 @@ interface InboxUsecasePageProps {
 interface RequiredData {
   appId: string;
   subscriberId: string;
-  environmentName: string;
 }
 
 interface DelightfulState {
@@ -147,42 +146,45 @@ const useDelightfulInboxData = (organizationId?: string) => {
     } catch (error) {
       console.warn('Fetch failed, will auto-refresh...', error);
 
-      setState((prev) => {
-        const newCount = prev.autoRefreshCount + 1;
+      // Compute the new count from current state
+      const newCount = state.autoRefreshCount + 1;
 
-        // Auto-refresh with delightful messaging
+      // Update state with the complete new state object
+      setState((prev) => {
         if (newCount <= 3) {
-          setState((prev) => ({
+          return {
             ...prev,
             phase: 'refreshing',
             message: `Optimizing connection (${newCount}/3)`,
             progress: 40,
             autoRefreshCount: newCount,
-          }));
-
-          // Auto-refresh after a short delay
-          autoRefreshTimeoutRef.current = setTimeout(
-            () => {
-              initializeAndFetch();
-            },
-            2000 + newCount * 1000
-          ); // Progressive delay
-
-          return prev;
+          };
         } else {
-          // Ultimate fallback: silent page refresh
-          setTimeout(() => {
-            window.location.reload();
-          }, 3000);
-
           return {
             ...prev,
             phase: 'refreshing',
             message: 'Refreshing page',
             progress: 80,
+            autoRefreshCount: newCount,
           };
         }
       });
+
+      // Handle side effects outside of setState callback
+      if (newCount <= 3) {
+        // Auto-refresh after a short delay
+        autoRefreshTimeoutRef.current = setTimeout(
+          () => {
+            initializeAndFetch();
+          },
+          2000 + newCount * 1000
+        ); // Progressive delay
+      } else {
+        // Ultimate fallback: silent page refresh
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      }
     }
   }, [organizationId, refetchEnvironments, progressToPhase]);
 
@@ -207,14 +209,13 @@ const useDelightfulInboxData = (organizationId?: string) => {
 
 // Simple validation function
 const getRequiredData = (environment?: IEnvironment, userId?: string, organizationId?: string): RequiredData | null => {
-  if (!environment?.identifier || !userId || !organizationId || !environment.name) {
+  if (!environment?.identifier || !userId || !organizationId) {
     return null;
   }
 
   return {
     appId: environment.identifier,
     subscriberId: userId,
-    environmentName: environment.name,
   };
 };
 
@@ -284,11 +285,7 @@ export function InboxUsecasePage({ currentEnvironment }: InboxUsecasePageProps) 
     <AnimatedPage>
       <PageMeta title="Integrate with the Inbox component" />
       <AuthCard>
-        <InboxPlayground
-          appId={requiredData.appId}
-          subscriberId={requiredData.subscriberId}
-          currentEnvironment={requiredData.environmentName}
-        />
+        <InboxPlayground appId={requiredData.appId} subscriberId={requiredData.subscriberId} />
       </AuthCard>
     </AnimatedPage>
   );

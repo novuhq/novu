@@ -15,30 +15,12 @@ type InboxConnectedGuideProps = {
   environment: IEnvironment;
 };
 
-function showSuccessToast(message: string) {
+function showStatusToast(variant: 'success' | 'error', message: string) {
   showToast({
     children: () => (
       <>
-        <ToastIcon variant="success" />
-        <span className="whitespace-nowrap text-sm">{message}</span>
-      </>
-    ),
-    options: {
-      position: 'bottom-center',
-      style: {
-        left: '50%',
-        transform: 'translateX(-50%)',
-      },
-    },
-  });
-}
-
-function showErrorToast(message: string) {
-  showToast({
-    children: () => (
-      <>
-        <ToastIcon variant="error" />
-        <span className="whitespace-nowrap text-sm">{message}</span>
+        <ToastIcon variant={variant} />
+        <span className="text-sm">{message}</span>
       </>
     ),
     options: {
@@ -80,10 +62,10 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
         },
       });
 
-      showSuccessToast('Notification sent successfully!');
+      showStatusToast('success', 'Notification sent successfully!');
       navigate(ROUTES.INBOX_EMBED_SUCCESS);
     } catch (error) {
-      showErrorToast('Failed to send notification');
+      showStatusToast('error', 'Failed to send notification');
     }
   }
 
@@ -140,7 +122,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(curlCommand);
-                        showSuccessToast('Copied to clipboard!');
+                        showStatusToast('success', 'Copied to clipboard!');
                       }}
                       className="flex h-6 w-6 items-center justify-center rounded p-1 hover:bg-white/10"
                     >
