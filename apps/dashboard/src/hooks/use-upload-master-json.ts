@@ -14,20 +14,25 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: async ({ locale, file }: { locale: string; file: File }) => {
+    mutationFn: async ({ file }: { file: File }) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
       }
 
       return await uploadMasterJson({
         environment: currentEnvironment,
-        locale,
         file,
       });
     },
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: QueryKeys.fetchTranslationGroups });
-      queryClient.invalidateQueries({ queryKey: QueryKeys.fetchTranslationKeys });
+    onSuccess: async (result) => {
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTranslationGroups],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTranslationKeys],
+        exact: false,
+      });
 
       const { success = false, message = 'Import completed', successful, failed } = result || {};
 
@@ -55,7 +60,7 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
     },
   });
 
-  const triggerFileUpload = (locale: string) => {
+  const triggerFileUpload = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -64,7 +69,7 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
       const file = (event.target as HTMLInputElement).files?.[0];
 
       if (file) {
-        mutation.mutate({ locale, file });
+        mutation.mutate({ file });
       }
     };
 
