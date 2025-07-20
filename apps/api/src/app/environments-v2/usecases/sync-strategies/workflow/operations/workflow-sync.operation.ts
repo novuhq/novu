@@ -295,7 +295,7 @@ export class WorkflowSyncOperation {
         return [];
       }
 
-      const rawDiffs = await diffTranslationGroups.execute({
+      return await diffTranslationGroups.execute({
         sourceEnvironmentId: sourceEnvId,
         targetEnvironmentId: targetEnvId,
         resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
@@ -304,18 +304,10 @@ export class WorkflowSyncOperation {
         userId: userContext._id,
         environmentId: sourceEnvId, // Required by EnvironmentWithUserCommand
       });
-
-      // Apply proper normalization and comparison similar to workflow comparator
-      return this.normalizeLocalizationDiffs(rawDiffs);
     } catch (error) {
       this.logger.error(`Failed to diff localization groups for workflow ${sourceWorkflow.name}`, error);
 
       return [];
     }
-  }
-
-  private normalizeLocalizationDiffs(rawDiffs: IResourceDiff[]): IResourceDiff[] {
-    // Simple approach: just return the raw diffs as-is, since deep-object-diff should handle comparison correctly
-    return rawDiffs;
   }
 }

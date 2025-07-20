@@ -3,7 +3,7 @@ import { ModuleRef } from '@nestjs/core';
 import { PinoLogger, Instrument } from '@novu/application-generic';
 import { NotificationTemplateEntity, LocalizationResourceEnum } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
-import { diff } from 'deep-object-diff';
+
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
 import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum, IUserInfo } from '../../../../types/sync.types';
@@ -294,7 +294,7 @@ export class WorkflowDiffOperation {
         return [];
       }
 
-      const rawDiffs = await diffTranslationGroups.execute({
+      return await diffTranslationGroups.execute({
         sourceEnvironmentId: sourceEnvId,
         targetEnvironmentId: targetEnvId,
         resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
@@ -303,33 +303,10 @@ export class WorkflowDiffOperation {
         userId: userContext._id,
         environmentId: sourceEnvId, // Required by EnvironmentWithUserCommand
       });
-
-      // Apply proper normalization and comparison similar to workflow comparator
-      return this.normalizeLocalizationDiffs(rawDiffs);
     } catch (error) {
       this.logger.error(`Failed to diff localization groups for workflow ${sourceWorkflow.name}`, error);
 
       return [];
     }
-  }
-
-  private normalizeLocalizationDiffs(rawDiffs: IResourceDiff[]): IResourceDiff[] {
-    return rawDiffs.filter((resourceDiff) => {
-      if (resourceDiff.action !== DiffActionEnum.MODIFIED || !resourceDiff.diffs) {
-        return true; // Keep added/deleted diffs as-is
-      }
-
-      const { previous, new: newData } = resourceDiff.diffs;
-
-      if (!previous || !newData) {
-        return true; // Keep if missing data
-      }
-
-      // Use deep-object-diff to compare objects, just like workflow comparator
-      const differences = diff(previous, newData);
-
-      // Only keep the diff if there are actual differences
-      return Object.keys(differences).length > 0;
-    });
   }
 }
