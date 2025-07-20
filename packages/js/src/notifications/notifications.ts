@@ -7,7 +7,6 @@ import {
   archiveAll,
   archiveAllRead,
   completeAction,
-  markAsSeen,
   read,
   readAll,
   revertAction,
@@ -286,19 +285,30 @@ export class Notifications extends BaseModule {
     );
   }
 
-  async seenAll({
-    tags,
-    data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
-    return this.callWithSession(async () =>
-      seenAll({
-        emitter: this._emitter,
-        inboxService: this._inboxService,
-        notificationsCache: this.cache,
-        tags,
-        data,
-      })
-    );
+  async seenAll(
+    args:
+      | { notificationIds: string[] }
+      | { tags?: NotificationFilter['tags']; data?: Record<string, unknown> }
+      | {} = {}
+  ): Result<void> {
+    return this.callWithSession(async () => {
+      if ('notificationIds' in args) {
+        return seenAll({
+          emitter: this._emitter,
+          inboxService: this._inboxService,
+          notificationsCache: this.cache,
+          notificationIds: args.notificationIds,
+        });
+      } else {
+        return seenAll({
+          emitter: this._emitter,
+          inboxService: this._inboxService,
+          notificationsCache: this.cache,
+          tags: 'tags' in args ? args.tags : undefined,
+          data: 'data' in args ? args.data : undefined,
+        });
+      }
+    });
   }
 
   async archiveAll({
@@ -328,26 +338,6 @@ export class Notifications extends BaseModule {
         emitter: this._emitter,
         inboxService: this._inboxService,
         notificationsCache: this.cache,
-        tags,
-        data,
-      })
-    );
-  }
-
-  async markAsSeen({
-    notificationIds,
-    tags,
-    data,
-  }: {
-    notificationIds?: string[];
-    tags?: string[];
-    data?: Record<string, unknown>;
-  } = {}): Result<void> {
-    return this.callWithSession(async () =>
-      markAsSeen({
-        emitter: this._emitter,
-        inboxService: this._inboxService,
-        notificationIds,
         tags,
         data,
       })

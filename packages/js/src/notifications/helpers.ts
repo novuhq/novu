@@ -476,18 +476,27 @@ export const seenAll = async ({
   emitter,
   inboxService,
   notificationsCache,
+  notificationIds,
   tags,
   data,
 }: {
   emitter: NovuEventEmitter;
   inboxService: InboxService;
   notificationsCache: NotificationsCache;
+  notificationIds?: string[];
   tags?: NotificationFilter['tags'];
   data?: Record<string, unknown>;
 }): Result<void> => {
   try {
     const notifications = notificationsCache.getUniqueNotifications({ tags, data });
-    const optimisticNotifications = notifications.map(
+
+    // Filter notifications by IDs if provided
+    const filteredNotifications =
+      notificationIds && notificationIds.length > 0
+        ? notifications.filter((notification) => notificationIds.includes(notification.id))
+        : notifications;
+
+    const optimisticNotifications = filteredNotifications.map(
       (notification) =>
         new Notification(
           {
@@ -499,15 +508,22 @@ export const seenAll = async ({
           inboxService
         )
     );
-    emitter.emit('notifications.seen_all.pending', { args: { tags, data }, data: optimisticNotifications });
 
-    await inboxService.markAsSeen({ tags, data });
+    emitter.emit('notifications.seen_all.pending', {
+      args: { notificationIds, tags, data },
+      data: optimisticNotifications,
+    });
 
-    emitter.emit('notifications.seen_all.resolved', { args: { tags, data }, data: optimisticNotifications });
+    await inboxService.markAsSeen({ notificationIds, tags, data });
+
+    emitter.emit('notifications.seen_all.resolved', {
+      args: { notificationIds, tags, data },
+      data: optimisticNotifications,
+    });
 
     return {};
   } catch (error) {
-    emitter.emit('notifications.seen_all.resolved', { args: { tags, data }, error });
+    emitter.emit('notifications.seen_all.resolved', { args: { notificationIds, tags, data }, error });
 
     return { error: new NovuError('Failed to mark all notifications as seen', error) };
   }
@@ -590,33 +606,5 @@ export const archiveAllRead = async ({
     emitter.emit('notifications.archive_all_read.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to archive all read notifications', error) };
-  }
-};
-
-export const markAsSeen = async ({
-  emitter,
-  inboxService,
-  notificationIds,
-  tags,
-  data,
-}: {
-  emitter: NovuEventEmitter;
-  inboxService: InboxService;
-  notificationIds?: string[];
-  tags?: NotificationFilter['tags'];
-  data?: Record<string, unknown>;
-}): Result<void> => {
-  try {
-    emitter.emit('notifications.mark_as_seen.pending', { args: { notificationIds, tags, data } });
-
-    await inboxService.markAsSeen({ notificationIds, tags, data });
-
-    emitter.emit('notifications.mark_as_seen.resolved', { args: { notificationIds, tags, data } });
-
-    return {};
-  } catch (error) {
-    emitter.emit('notifications.mark_as_seen.resolved', { args: { notificationIds, tags, data }, error });
-
-    return { error: new NovuError('Failed to mark notifications as seen', error) };
   }
 };
