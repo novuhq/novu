@@ -2557,6 +2557,9 @@ importers:
       class-validator:
         specifier: 0.14.1
         version: 0.14.1
+      deep-object-diff:
+        specifier: ^1.1.9
+        version: 1.1.9
       i18next:
         specifier: ^23.7.11
         version: 23.7.11
