@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { PinoLogger, Instrument } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, LocalizationResourceEnum } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
@@ -15,7 +16,8 @@ export class WorkflowDiffOperation {
   constructor(
     private logger: PinoLogger,
     private workflowRepositoryService: WorkflowRepositoryService,
-    private workflowComparator: WorkflowComparator
+    private workflowComparator: WorkflowComparator,
+    private moduleRef: ModuleRef
   ) {}
 
   @Instrument()
@@ -39,7 +41,15 @@ export class WorkflowDiffOperation {
         `Fetched ${sourceWorkflows.length} source workflows and ${targetWorkflows.length} target workflows`
       );
 
-      await this.processWorkflowDiffs(sourceWorkflows, targetWorkflows, resultBuilder, userContext);
+      await this.processWorkflowDiffs(
+        sourceWorkflows,
+        targetWorkflows,
+        resultBuilder,
+        userContext,
+        sourceEnvId,
+        targetEnvId,
+        organizationId
+      );
       await this.processDeletedWorkflows(sourceWorkflows, targetWorkflows, resultBuilder);
 
       this.logger.info(`Workflow diff completed. Processed ${sourceWorkflows.length} workflows in batches.`);
@@ -56,7 +66,10 @@ export class WorkflowDiffOperation {
     sourceWorkflows: NotificationTemplateEntity[],
     targetWorkflows: NotificationTemplateEntity[],
     resultBuilder: DiffResultBuilder,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string
   ): Promise<void> {
     const targetWorkflowMap = this.workflowRepositoryService.createWorkflowMap(targetWorkflows);
 
@@ -71,7 +84,15 @@ export class WorkflowDiffOperation {
       const batch = batches[i];
       this.logger.debug(`Processing batch ${i + 1}/${batches.length} with ${batch.length} workflows`);
 
-      await this.processBatch(batch, targetWorkflowMap, resultBuilder, userContext);
+      await this.processBatch(
+        batch,
+        targetWorkflowMap,
+        resultBuilder,
+        userContext,
+        sourceEnvId,
+        targetEnvId,
+        organizationId
+      );
     }
   }
 
@@ -80,7 +101,10 @@ export class WorkflowDiffOperation {
     sourceWorkflows: NotificationTemplateEntity[],
     targetWorkflowMap: Map<string, NotificationTemplateEntity>,
     resultBuilder: DiffResultBuilder,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string
   ): Promise<void> {
     const batchPromises = sourceWorkflows.map(async (sourceWorkflow) => {
       const sourceIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow);
@@ -105,7 +129,18 @@ export class WorkflowDiffOperation {
           userContext
         );
 
+        // Get localization group diffs for this workflow
+        const localizationDiffs = await this.getLocalizationDiffs(
+          sourceWorkflow,
+          targetWorkflow,
+          userContext,
+          sourceEnvId,
+          targetEnvId,
+          organizationId
+        );
+
         const allDiffs = this.createWorkflowDiffs(sourceWorkflow, targetWorkflow, workflowChanges, stepDiffs);
+        allDiffs.push(...localizationDiffs);
 
         if (allDiffs.length > 0) {
           resultBuilder.addWorkflowDiff(
@@ -234,5 +269,43 @@ export class WorkflowDiffOperation {
     }
 
     return workflow.updatedAt;
+  }
+
+  @Instrument()
+  private async getLocalizationDiffs(
+    sourceWorkflow: NotificationTemplateEntity,
+    targetWorkflow: NotificationTemplateEntity,
+    userContext: UserSessionData,
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string
+  ): Promise<IResourceDiff[]> {
+    try {
+      // Use the new DiffTranslationGroups use case from the translation module
+      // eslint-disable-next-line global-require
+      const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
+        strict: false,
+      });
+
+      if (!diffTranslationGroups) {
+        this.logger.debug('Translation module not available, skipping localization diff');
+
+        return [];
+      }
+
+      return await diffTranslationGroups.execute({
+        sourceEnvironmentId: sourceEnvId,
+        targetEnvironmentId: targetEnvId,
+        resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId,
+        userId: userContext._id,
+        environmentId: sourceEnvId, // Required by EnvironmentWithUserCommand
+      });
+    } catch (error) {
+      this.logger.error(`Failed to diff localization groups for workflow ${sourceWorkflow.name}`, error);
+
+      return [];
+    }
   }
 }
