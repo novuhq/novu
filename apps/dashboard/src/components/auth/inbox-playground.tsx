@@ -62,10 +62,8 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
   const navigate = useNavigate();
   const telemetry = useTelemetry();
 
-  // Initialize the demo workflow before triggering
   useInitDemoWorkflow(environment);
 
-  // Early return if environment is not available
   if (!environment) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -76,7 +74,6 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
     );
   }
 
-  // Ensure we're using the environment identifier consistently
   const effectiveAppId = environment?.identifier || appId;
 
   const handleSendNotification = async () => {

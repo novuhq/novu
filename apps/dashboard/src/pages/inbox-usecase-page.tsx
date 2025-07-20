@@ -28,22 +28,18 @@ interface DelightfulState {
   autoRefreshCount: number;
 }
 
-// Delightful loading component with smooth animations
 const DelightfulLoadingState = ({ state }: { state: DelightfulState }) => {
   const { phase, message, progress, autoRefreshCount } = state;
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-8" aria-live="polite">
       <div className="max-w-md text-center">
-        {/* Main loading indicator */}
         <div className="mb-6">
           <LoadingIndicator size="md" className="mx-auto" />
         </div>
 
-        {/* Dynamic messaging */}
         <h3 className="mb-3 text-lg font-medium text-neutral-950">{message}</h3>
 
-        {/* Progress bar */}
         <div className="mx-auto mb-6 w-80">
           <div className="h-1 overflow-hidden rounded-full bg-neutral-200">
             <div
@@ -53,14 +49,12 @@ const DelightfulLoadingState = ({ state }: { state: DelightfulState }) => {
           </div>
         </div>
 
-        {/* Auto-refresh indicator (subtle) */}
         {autoRefreshCount > 0 && <p className="text-xs text-neutral-400">Retrying connection ({autoRefreshCount}/3)</p>}
       </div>
     </div>
   );
 };
 
-// Auto-refresh hook with delightful UX
 const useDelightfulInboxData = (organizationId?: string) => {
   const [state, setState] = useState<DelightfulState>({
     phase: 'initializing',
@@ -75,7 +69,6 @@ const useDelightfulInboxData = (organizationId?: string) => {
   const autoRefreshTimeoutRef = useRef<NodeJS.Timeout>();
   const progressTimeoutRef = useRef<NodeJS.Timeout>();
 
-  // Smooth progress animation
   const animateProgress = useCallback((target: number, duration = 1000) => {
     setState((prev) => {
       const start = prev.progress;
@@ -99,7 +92,6 @@ const useDelightfulInboxData = (organizationId?: string) => {
     });
   }, []);
 
-  // Phase progression with delightful messaging
   const progressToPhase = useCallback(
     (newPhase: DelightfulState['phase'], progress: number, message: string) => {
       setState((prev) => ({
@@ -113,30 +105,23 @@ const useDelightfulInboxData = (organizationId?: string) => {
     [animateProgress]
   );
 
-  // Smart initialization and fetching
   const initializeAndFetch = useCallback(async () => {
     if (!organizationId) return;
 
     try {
-      // Phase 1: Initializing
       progressToPhase('initializing', 25, 'Initializing workspace');
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Phase 2: Loading
       progressToPhase('loading', 50, 'Loading environment');
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      // Phase 3: Connecting
       progressToPhase('connecting', 75, 'Connecting to inbox');
 
-      // Actual fetch
       await refetchEnvironments();
 
-      // Phase 4: Finalizing
       progressToPhase('finalizing', 95, 'Finalizing setup');
       await new Promise((resolve) => setTimeout(resolve, 600));
 
-      // Success!
       setState((prev) => ({
         ...prev,
         phase: 'ready',
@@ -146,10 +131,8 @@ const useDelightfulInboxData = (organizationId?: string) => {
     } catch (error) {
       console.warn('Fetch failed, will auto-refresh...', error);
 
-      // Compute the new count from current state
       const newCount = state.autoRefreshCount + 1;
 
-      // Update state with the complete new state object
       setState((prev) => {
         if (newCount <= 3) {
           return {
@@ -170,17 +153,14 @@ const useDelightfulInboxData = (organizationId?: string) => {
         }
       });
 
-      // Handle side effects outside of setState callback
       if (newCount <= 3) {
-        // Auto-refresh after a short delay
         autoRefreshTimeoutRef.current = setTimeout(
           () => {
             initializeAndFetch();
           },
           2000 + newCount * 1000
-        ); // Progressive delay
+        );
       } else {
-        // Ultimate fallback: silent page refresh
         setTimeout(() => {
           window.location.reload();
         }, 3000);
@@ -188,10 +168,8 @@ const useDelightfulInboxData = (organizationId?: string) => {
     }
   }, [organizationId, refetchEnvironments, progressToPhase]);
 
-  // Start the delightful flow
   useEffect(() => {
     if (organizationId) {
-      // Small delay to ensure contexts are ready
       phaseTimeoutRef.current = setTimeout(() => {
         initializeAndFetch();
       }, 200);
@@ -207,7 +185,6 @@ const useDelightfulInboxData = (organizationId?: string) => {
   return state;
 };
 
-// Simple validation function
 const getRequiredData = (environment?: IEnvironment, userId?: string, organizationId?: string): RequiredData | null => {
   if (!environment?.identifier || !userId || !organizationId) {
     return null;
@@ -226,21 +203,16 @@ export function InboxUsecasePage({ currentEnvironment }: InboxUsecasePageProps) 
 
   const delightfulState = useDelightfulInboxData(currentOrganization?._id);
 
-  // Use prop environment or fallback to context
   const environment = currentEnvironment || envFromContext;
 
-  // Get required data
   const requiredData = getRequiredData(environment, currentUser?._id, currentOrganization?._id);
 
-  // Track page view once
   useEffect(() => {
     telemetry(TelemetryEvent.INBOX_USECASE_PAGE_VIEWED);
   }, [telemetry]);
 
-  // Show loading until we have all required data and phase is ready
   const shouldShowLoading = !requiredData || delightfulState.phase !== 'ready';
 
-  // Force refresh after 3 seconds if still loading
   useEffect(() => {
     if (shouldShowLoading) {
       const refreshTimeout = setTimeout(() => {
@@ -252,7 +224,6 @@ export function InboxUsecasePage({ currentEnvironment }: InboxUsecasePageProps) 
   }, [shouldShowLoading]);
 
   if (shouldShowLoading) {
-    // Update state based on missing data
     let adjustedState = { ...delightfulState };
 
     if (!currentUser) {

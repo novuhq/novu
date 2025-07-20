@@ -1,13 +1,17 @@
 import { OrganizationList as OrganizationListForm } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/clerk-react';
+import { useEffect } from 'react';
 import { ROUTES } from '../../utils/routes';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
 import { AuthCard } from './auth-card';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { TelemetryEvent } from '../../utils/telemetry';
 
 // Constants
 const HEADER_CONFIG = {
-  title: "Create an organization",
-  description: "Create an organization to get started",
+  title: 'Create an organization',
+  description: 'Create an organization to get started',
   showSkipButton: false,
   showBackButton: false,
   showStepper: true,
@@ -31,9 +35,9 @@ const FORM_APPEARANCE = {
 } as const;
 
 const ILLUSTRATION_CONFIG = {
-  src: "/images/auth/ui-org.svg",
-  alt: "Novu dashboard overview",
-  className: "opacity-70",
+  src: '/images/auth/ui-org.svg',
+  alt: 'Novu dashboard overview',
+  className: 'opacity-70',
 } as const;
 
 // Types
@@ -51,20 +55,13 @@ interface IllustrationProps {
 function FormContainer({ children }: FormContainerProps) {
   return (
     <div className="flex min-w-[564px] max-w-[564px] items-center p-[60px]">
-      <div className="flex flex-col gap-[4px]">
-        {children}
-      </div>
+      <div className="flex flex-col gap-[4px]">{children}</div>
     </div>
   );
 }
 
 function OrganizationForm() {
-  return (
-    <OrganizationListForm
-      appearance={FORM_APPEARANCE}
-      {...ORGANIZATION_FORM_CONFIG}
-    />
-  );
+  return <OrganizationListForm appearance={FORM_APPEARANCE} {...ORGANIZATION_FORM_CONFIG} />;
 }
 
 function OrganizationFormSection() {
@@ -117,6 +114,20 @@ function PageContent() {
 
 // Main Component - No hooks called, all configuration is through constants
 export default function OrganizationCreate() {
+  const { organization } = useOrganization();
+  const track = useTelemetry();
+
+  useEffect(() => {
+    // Track when an organization is successfully created/selected
+    if (organization) {
+      track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
+        location: 'web',
+        organizationId: organization.id,
+        organizationName: organization.name,
+      });
+    }
+  }, [organization, track]);
+
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">
       <AuthCard>
