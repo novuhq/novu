@@ -9,6 +9,7 @@ import { AddStepMenu } from './add-step-menu';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
@@ -28,6 +29,14 @@ export function AddNodeEdge({
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
+  const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
+    limit: 100,
+    refetchOnWindowFocus: false,
+  });
+  const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
+  const addDefaultLayout = isLayoutsPageActive && !!defaultLayout;
+  const defaultLayoutId = defaultLayout?.layoutId;
 
   const isReadOnly =
     workflow?.origin === ResourceOriginEnum.EXTERNAL ||
@@ -62,10 +71,10 @@ export function AddNodeEdge({
             {!isReadOnly && (
               <AddStepMenu
                 onMenuItemClick={async (stepType) => {
-                  if (workflow) {
+                  if (workflow && !isFetchingLayouts) {
                     const indexToAdd = data.addStepIndex;
 
-                    const newStep = createStep(stepType);
+                    const newStep = createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined);
 
                     const updatedSteps = [
                       ...workflow.steps.slice(0, indexToAdd),

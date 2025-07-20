@@ -7,11 +7,21 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  LayoutControlValuesDto,
-  LayoutControlValuesDto$inboundSchema,
-  LayoutControlValuesDto$Outbound,
-  LayoutControlValuesDto$outboundSchema,
-} from "./layoutcontrolvaluesdto.js";
+  EmailControlsDto,
+  EmailControlsDto$inboundSchema,
+  EmailControlsDto$Outbound,
+  EmailControlsDto$outboundSchema,
+} from "./emailcontrolsdto.js";
+
+/**
+ * Control values for the layout
+ */
+export type ControlValues = {
+  /**
+   * Email layout controls
+   */
+  email?: EmailControlsDto | undefined;
+};
 
 export type UpdateLayoutDto = {
   /**
@@ -21,8 +31,58 @@ export type UpdateLayoutDto = {
   /**
    * Control values for the layout
    */
-  controlValues: LayoutControlValuesDto;
+  controlValues?: ControlValues | null | undefined;
 };
+
+/** @internal */
+export const ControlValues$inboundSchema: z.ZodType<
+  ControlValues,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  email: EmailControlsDto$inboundSchema.optional(),
+});
+
+/** @internal */
+export type ControlValues$Outbound = {
+  email?: EmailControlsDto$Outbound | undefined;
+};
+
+/** @internal */
+export const ControlValues$outboundSchema: z.ZodType<
+  ControlValues$Outbound,
+  z.ZodTypeDef,
+  ControlValues
+> = z.object({
+  email: EmailControlsDto$outboundSchema.optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace ControlValues$ {
+  /** @deprecated use `ControlValues$inboundSchema` instead. */
+  export const inboundSchema = ControlValues$inboundSchema;
+  /** @deprecated use `ControlValues$outboundSchema` instead. */
+  export const outboundSchema = ControlValues$outboundSchema;
+  /** @deprecated use `ControlValues$Outbound` instead. */
+  export type Outbound = ControlValues$Outbound;
+}
+
+export function controlValuesToJSON(controlValues: ControlValues): string {
+  return JSON.stringify(ControlValues$outboundSchema.parse(controlValues));
+}
+
+export function controlValuesFromJSON(
+  jsonString: string,
+): SafeParseResult<ControlValues, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => ControlValues$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'ControlValues' from JSON`,
+  );
+}
 
 /** @internal */
 export const UpdateLayoutDto$inboundSchema: z.ZodType<
@@ -31,13 +91,14 @@ export const UpdateLayoutDto$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   name: z.string(),
-  controlValues: LayoutControlValuesDto$inboundSchema,
+  controlValues: z.nullable(z.lazy(() => ControlValues$inboundSchema))
+    .optional(),
 });
 
 /** @internal */
 export type UpdateLayoutDto$Outbound = {
   name: string;
-  controlValues: LayoutControlValuesDto$Outbound;
+  controlValues?: ControlValues$Outbound | null | undefined;
 };
 
 /** @internal */
@@ -47,7 +108,8 @@ export const UpdateLayoutDto$outboundSchema: z.ZodType<
   UpdateLayoutDto
 > = z.object({
   name: z.string(),
-  controlValues: LayoutControlValuesDto$outboundSchema,
+  controlValues: z.nullable(z.lazy(() => ControlValues$outboundSchema))
+    .optional(),
 });
 
 /**

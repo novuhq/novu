@@ -21,6 +21,7 @@ export interface IMessage {
   seen: boolean;
   read: boolean;
   lastSeenDate?: string;
+  firstSeenDate?: string;
   lastReadDate?: string;
   createdAt: string;
   cta?: IMessageCTA;

@@ -182,29 +182,7 @@ export class SocketWorkerService {
 
   private async sendUnseenCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
     try {
-      const unseenCount = await this.messageRepository.getCount(
-        environmentId,
-        userId,
-        ChannelTypeEnum.IN_APP,
-        { seen: false },
-        { limit: 101 },
-        undefined,
-        'primary'
-      );
-
-      const paginationIndication: UnseenCountPaginationIndication =
-        unseenCount > 100 ? { unseenCount: 100, hasMore: true } : { unseenCount, hasMore: false };
-
-      await this.sendMessageInternal(
-        userId,
-        WebSocketEventEnum.UNSEEN,
-        {
-          unseenCount: paginationIndication.unseenCount,
-          hasMore: paginationIndication.hasMore,
-        },
-        organizationId,
-        environmentId
-      );
+      await this.sendMessageInternal(userId, WebSocketEventEnum.UNSEEN, {}, organizationId, environmentId);
     } catch (error) {
       Logger.error(
         `Error sending unseen count change: ${error instanceof Error ? error.message : String(error)}`,

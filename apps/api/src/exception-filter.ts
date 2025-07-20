@@ -53,7 +53,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     try {
       if (basicLog) {
-        await retryWithBackoff(() => this.requestLogRepository.insert(basicLog));
+        await retryWithBackoff(() =>
+          this.requestLogRepository.insert(basicLog, {
+            organizationId: user?.organizationId,
+            environmentId: user?.environmentId,
+            userId: user?._id,
+          })
+        );
       }
     } catch (err) {
       this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');

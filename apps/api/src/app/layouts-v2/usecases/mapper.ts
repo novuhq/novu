@@ -28,8 +28,6 @@ export const mapToResponseDto = ({
     origin: layout.origin!,
     type: layout.type!,
     variables,
-    // TODO: implement issues
-    issues: undefined,
     controls: {
       uiSchema: layout.controls?.uiSchema,
       dataSchema: layout.controls?.dataSchema,

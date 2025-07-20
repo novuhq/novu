@@ -19,6 +19,7 @@ import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { EEOrganizationController } from './ee.organization.controller';
+import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -46,6 +47,7 @@ function getControllers() {
     EnvironmentsModuleV1,
     IntegrationModule,
     forwardRef(() => AuthModule),
+    LayoutsV2Module,
     ...enterpriseImports(),
   ],
   controllers: [...getControllers()],

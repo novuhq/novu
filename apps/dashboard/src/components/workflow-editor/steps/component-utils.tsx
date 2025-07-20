@@ -17,6 +17,7 @@ import { DataObject } from './base/data-object';
 import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 import { useWorkflow } from '../workflow-provider';
 import { useSaveForm } from './save-form-context';
+import { LayoutSelect } from './email/layout-select';
 
 const EmailEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
@@ -94,6 +95,10 @@ export const getComponentByType = ({ component }: { component?: UiComponentEnum 
 
     case UiComponentEnum.CHAT_BODY: {
       return <BaseBody />;
+    }
+
+    case UiComponentEnum.LAYOUT_SELECT: {
+      return <LayoutSelect />;
     }
 
     default: {

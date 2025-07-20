@@ -63,6 +63,7 @@ export class GetNotifications {
         read: command.read,
         archived: command.archived,
         snoozed: command.snoozed,
+        seen: command.seen,
         data: parsedData,
       },
       {
@@ -85,6 +86,7 @@ export class GetNotifications {
       read: command.read,
       archived: command.archived,
       snoozed: command.snoozed,
+      seen: command.seen,
       data: parsedData,
     };
 

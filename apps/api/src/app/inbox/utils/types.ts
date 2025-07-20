@@ -20,12 +20,14 @@ export type InboxNotification = {
   body: string;
   to: Subscriber;
   isRead: boolean;
+  isSeen: boolean;
   isArchived: boolean;
   isSnoozed: boolean;
   snoozedUntil?: string | null;
   deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
+  firstSeenAt?: string | null;
   archivedAt?: string | null;
   avatar?: string;
   primaryAction?: Action;
@@ -42,6 +44,7 @@ export type NotificationFilter = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
   data?: string;
 };
 

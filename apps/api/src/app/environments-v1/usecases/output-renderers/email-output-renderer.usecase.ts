@@ -184,24 +184,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         _layoutId: layout._id,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
-    } else if (layoutId === null) {
-      // otherwise find the default layout controls
-      const defaultEmailLayout = await this.getLayoutUseCase.execute(
-        GetLayoutCommand.create({
-          environmentId,
-          organizationId,
-          skipAdditionalFields: true,
-        })
-      );
-
-      layoutControlsEntity = defaultEmailLayout
-        ? await this.controlValuesRepository.findOne({
-            _organizationId: organizationId,
-            _environmentId: environmentId,
-            _layoutId: defaultEmailLayout._id,
-            level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
-          })
-        : null;
     }
 
     const stepBodyHtml = await this.processBodyContent({
@@ -328,9 +310,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         workflowId,
         locale,
       });
-      const escapedContent = this.escapeJsonStringValues(translatedContent);
 
-      return JSON.parse(escapedContent);
+      return JSON.parse(translatedContent);
     } catch (error) {
       this.logger.error('Maily translation processing failed, falling back to original content', error);
 
@@ -369,14 +350,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
       return await this.liquidEngine.parseAndRender(text, variables);
     }
-  }
-
-  private escapeJsonStringValues(jsonString: string): string {
-    // Escape literal control characters that break JSON parsing
-    return jsonString
-      .replace(/\n/g, '\\n') // newline
-      .replace(/\r/g, '\\r') // carriage return
-      .replace(/\t/g, '\\t'); // tab
   }
 
   private async parseMailyContentByLiquid(

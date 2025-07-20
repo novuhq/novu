@@ -41,14 +41,16 @@ export class WorkflowCommonsFields {
 
   @ApiPropertyOptional({
     description: 'The payload JSON Schema for the workflow',
+    nullable: true,
     type: 'object',
     additionalProperties: true,
   })
   @IsOptional()
   @IsValidJsonSchema({
     message: 'payloadSchema must be a valid JSON schema',
+    nullable: true,
   })
-  payloadSchema?: object;
+  payloadSchema?: object | null;
 
   @ApiPropertyOptional({
     description: 'Enable or disable translations for this workflow',

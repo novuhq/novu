@@ -60,6 +60,9 @@ import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-
 import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
 import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
 import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
+import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
+import { MarkNotificationsAsSeen } from './usecases/mark-notifications-as-seen/mark-notifications-as-seen.usecase';
+import { MarkNotificationsAsSeenCommand } from './usecases/mark-notifications-as-seen/mark-notifications-as-seen.command';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
 import { TriggerEventRequestDto } from '../events/dtos';
@@ -82,6 +85,7 @@ export class InboxController {
     private bulkUpdatePreferencesUsecase: BulkUpdatePreferences,
     private snoozeNotificationUsecase: SnoozeNotification,
     private unsnoozeNotificationUsecase: UnsnoozeNotification,
+    private markNotificationsAsSeenUsecase: MarkNotificationsAsSeen,
     private parseEventRequest: ParseEventRequest
   ) {}
 
@@ -117,6 +121,7 @@ export class InboxController {
         read: query.read,
         archived: query.archived,
         snoozed: query.snoozed,
+        seen: query.seen,
         data: query.data,
       })
     );
@@ -359,6 +364,25 @@ export class InboxController {
         sms: body.sms,
         workflowIdOrIdentifier,
         includeInactiveChannels: false,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/notifications/seen')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async markNotificationsAsSeen(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: MarkNotificationsAsSeenRequestDto
+  ): Promise<void> {
+    await this.markNotificationsAsSeenUsecase.execute(
+      MarkNotificationsAsSeenCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationIds: body.notificationIds,
+        tags: body.tags,
+        data: body.data,
       })
     );
   }

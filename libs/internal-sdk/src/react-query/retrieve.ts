@@ -78,6 +78,7 @@ export function setRetrieveData(
       limit?: number | undefined;
       statusCodes?: Array<number> | undefined;
       url?: string | undefined;
+      urlPattern?: string | undefined;
       transactionId?: string | undefined;
       created?: number | undefined;
       idempotencyKey?: string | undefined;
@@ -98,6 +99,7 @@ export function invalidateRetrieve(
       limit?: number | undefined;
       statusCodes?: Array<number> | undefined;
       url?: string | undefined;
+      urlPattern?: string | undefined;
       transactionId?: string | undefined;
       created?: number | undefined;
       idempotencyKey?: string | undefined;
@@ -135,6 +137,7 @@ export function buildRetrieveQuery(
       limit: request.limit,
       statusCodes: request.statusCodes,
       url: request.url,
+      urlPattern: request.urlPattern,
       transactionId: request.transactionId,
       created: request.created,
       idempotencyKey: request.idempotencyKey,
@@ -161,6 +164,7 @@ export function queryKeyRetrieve(
     limit?: number | undefined;
     statusCodes?: Array<number> | undefined;
     url?: string | undefined;
+    urlPattern?: string | undefined;
     transactionId?: string | undefined;
     created?: number | undefined;
     idempotencyKey?: string | undefined;

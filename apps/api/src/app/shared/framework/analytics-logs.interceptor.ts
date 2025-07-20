@@ -20,6 +20,7 @@ const LOG_ANALYTICS_KEY = 'logAnalytics';
 export enum AnalyticsStrategyEnum {
   BASIC = 'basic',
   EVENTS = 'events',
+  EVENTS_BULK = 'events_bulk',
 }
 
 export function LogAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC): MethodDecorator {
@@ -134,6 +135,24 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
           ...analyticsLog,
           transaction_id: eventResponse.transactionId,
         };
+      }
+    }
+
+    if (strategy === AnalyticsStrategyEnum.EVENTS_BULK) {
+      const bulkEventResponse = (res as any).data as TriggerEventResponseDto[];
+
+      if (Array.isArray(bulkEventResponse)) {
+        const transactionIds = bulkEventResponse
+          .map((response) => response.transactionId)
+          .filter(Boolean)
+          .join(',');
+
+        if (transactionIds) {
+          return {
+            ...analyticsLog,
+            transaction_id: transactionIds,
+          };
+        }
       }
     }
 

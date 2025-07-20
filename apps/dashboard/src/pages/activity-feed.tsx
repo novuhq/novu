@@ -9,7 +9,6 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { LogsTable } from '../components/http-logs/logs-table';
 import { PageMeta } from '../components/page-meta';
-import { RequestLog } from '../types/logs';
 
 export function ActivityFeed() {
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);

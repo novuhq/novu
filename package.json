@@ -24,6 +24,7 @@
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
     "generate:provider": "cd libs/automation && npm run generate:provider",
     "get-affected": "node scripts/print-affected-array.mjs",
+    "get-affected-batch": "node scripts/get-affected-batch.mjs",
     "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "get-remote-env-files": "sh ./scripts/get-remote-env-files.sh",
     "install:with-ee": "pnpm install && pnpm symlink:submodules",

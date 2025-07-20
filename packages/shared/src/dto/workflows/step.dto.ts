@@ -1,6 +1,6 @@
 import type { JSONSchemaDto } from './json-schema-dto';
 import { Slug, StepTypeEnum, ResourceOriginEnum } from '../../types';
-import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
+import { RuntimeIssue } from '../../utils/issues';
 
 export type StepResponseDto = {
   controls: Controls;
@@ -32,28 +32,12 @@ export type StepDto = {
   type: StepTypeEnum;
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface Issue<T> {
-  issueType: T;
-  variableName?: string;
-  message: string;
-}
-
 export class StepIssuesDto {
-  controls?: Record<string, StepContentIssue[]>;
-  integration?: Record<string, StepIntegrationIssue[]>;
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }
 
 export type StepCreateAndUpdateKeys = keyof StepCreateDto | keyof StepUpdateDto;
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepContentIssue extends Issue<StepContentIssueEnum> {}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepIntegrationIssue extends Issue<StepIntegrationIssueEnum> {}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepIssue extends Issue<StepIssueEnum> {}
 
 export enum UiSchemaGroupEnum {
   IN_APP = 'IN_APP',

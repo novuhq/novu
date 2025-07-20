@@ -70,6 +70,11 @@ export class NotificationsController {
       subscribersQuery = Array.isArray(query.subscriberIds) ? query.subscriberIds : [query.subscriberIds];
     }
 
+    let transactionIdQuery: string[] | undefined;
+    if (query.transactionId) {
+      transactionIdQuery = Array.isArray(query.transactionId) ? query.transactionId : [query.transactionId];
+    }
+
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
         page: query.page,
@@ -82,7 +87,7 @@ export class NotificationsController {
         emails: emailsQuery,
         search: query.search,
         subscriberIds: subscribersQuery,
-        transactionId: query.transactionId,
+        transactionId: transactionIdQuery,
         topicKey: query.topicKey,
         after: query.after,
         before: query.before,

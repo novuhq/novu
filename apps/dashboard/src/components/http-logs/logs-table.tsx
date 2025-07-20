@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { CursorPagination } from '@/components/cursor-pagination';
+import { UpdatedAgo } from '@/components/updated-ago';
 import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
 import { LogsTableSkeletonRow } from './logs-table-skeleton-row';
@@ -31,16 +32,30 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     filters,
   } = useLogsUrlState();
 
-  const { data: logsResponse, isLoading } = useFetchRequestLogs({
+  const {
+    data: logsResponse,
+    isLoading,
+    refetch,
+  } = useFetchRequestLogs({
     page: currentPage - 1, // API is 0-based
     limit: limit,
     status: filters.status,
     transactionId: filters.transactionId || undefined,
     created: filters.created?.toString(),
+    url_pattern: filters.url_pattern || undefined,
   });
 
   const logsData = logsResponse?.data || [];
   const totalCount = logsResponse?.total || 0;
+
+  // Track last updated time
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  useEffect(() => {
+    if (logsResponse) {
+      setLastUpdated(new Date());
+    }
+  }, [logsResponse]);
 
   const paginationState = useMemo(() => {
     const totalPages = totalCount > 0 ? Math.ceil(totalCount / limit) : 1;
@@ -50,14 +65,17 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     return { hasNext, hasPrevious, totalPages };
   }, [totalCount, limit, currentPage]);
 
-  const selectedLog = selectedLogId
-    ? logsData.find((log: RequestLog) => (log.transactionId || `error-${logsData.indexOf(log)}`) === selectedLogId)
-    : undefined;
+  const selectedLog = selectedLogId ? logsData.find((log: RequestLog) => log.id === selectedLogId) : undefined;
 
   const handleRowClick = (log: RequestLog) => {
-    const logId = log.transactionId || `error-${logsData.indexOf(log)}`;
+    const logId = log.id;
     handleLogSelect(logId);
     onLogClick?.(log);
+  };
+
+  const handleRefresh = async () => {
+    await refetch();
+    setLastUpdated(new Date());
   };
 
   if (!isLoading && logsData.length === 0 && !hasActiveFilters) {
@@ -73,6 +91,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
         />
+        <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
       </div>
 
       <div className="relative flex h-full min-h-full flex-1 pt-2.5">
@@ -84,12 +103,12 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-text-strong h-8 px-2 py-0">Requests</TableHead>
-                      <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
+                      <TableHead className="h-8 w-[200px] px-2 py-0"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {logsData.map((log: RequestLog, index: number) => {
-                      const logId = log.transactionId || `error-${index}`;
+                      const logId = log.id;
                       return (
                         <LogsTableRow
                           key={logId}

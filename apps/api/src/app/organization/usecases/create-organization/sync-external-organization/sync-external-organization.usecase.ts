@@ -1,9 +1,10 @@
 /* eslint-disable global-require */
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
 
 import { ModuleRef } from '@nestjs/core';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
@@ -12,6 +13,8 @@ import { GetOrganization } from '../../get-organization/get-organization.usecase
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
+import { UpsertLayout, UpsertLayoutCommand } from '../../../../layouts-v2/usecases/upsert-layout';
+import { DEFAULT_LAYOUT } from '../../../../layouts-v2/utils/layout-templates';
 
 // TODO: eventually move to @novu/ee-auth
 
@@ -31,7 +34,9 @@ export class SyncExternalOrganization {
     private readonly userRepository: UserRepository,
     private readonly createEnvironmentUsecase: CreateEnvironment,
     private readonly createNovuIntegrations: CreateNovuIntegrations,
+    private readonly upsertLayoutUsecase: UpsertLayout,
     private analyticsService: AnalyticsService,
+    private featureFlagsService: FeatureFlagsService,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
   ) {
@@ -44,6 +49,12 @@ export class SyncExternalOrganization {
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
+    });
+
+    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+      defaultValue: false,
+      organization: { _id: organization._id },
     });
 
     const devEnv = await this.createEnvironmentUsecase.execute(
@@ -64,6 +75,25 @@ export class SyncExternalOrganization {
       })
     );
 
+    if (isLayoutsPageActive) {
+      await this.upsertLayoutUsecase.execute(
+        UpsertLayoutCommand.create({
+          environmentId: devEnv._id,
+          organizationId: devEnv._organizationId,
+          userId: user._id,
+          layoutDto: {
+            name: 'Default layout',
+            controlValues: {
+              email: {
+                body: JSON.stringify(DEFAULT_LAYOUT),
+                editorType: 'block',
+              },
+            },
+          },
+        })
+      );
+    }
+
     const prodEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
         userId: user._id,
@@ -82,6 +112,25 @@ export class SyncExternalOrganization {
         name: prodEnv.name,
       })
     );
+
+    if (isLayoutsPageActive) {
+      await this.upsertLayoutUsecase.execute(
+        UpsertLayoutCommand.create({
+          environmentId: prodEnv._id,
+          organizationId: prodEnv._organizationId,
+          userId: user._id,
+          layoutDto: {
+            name: 'Default layout',
+            controlValues: {
+              email: {
+                body: JSON.stringify(DEFAULT_LAYOUT),
+                editorType: 'block',
+              },
+            },
+          },
+        })
+      );
+    }
 
     this.analyticsService.upsertGroup(organization._id, organization, user);
 

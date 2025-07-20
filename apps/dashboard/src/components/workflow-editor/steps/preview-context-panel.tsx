@@ -116,6 +116,13 @@ export function PreviewContextPanel({
     }
   }, [localParsedData.subscriber, selectedLocale, updateJsonSection]);
 
+  // Sync selected locale when subscriber locale is manually changed
+  useEffect(() => {
+    if (localParsedData.subscriber.locale && localParsedData.subscriber.locale !== selectedLocale && onLocaleChange) {
+      onLocaleChange(localParsedData.subscriber.locale);
+    }
+  }, [localParsedData.subscriber.locale, selectedLocale, onLocaleChange]);
+
   const handleClearPersistedPayload = () => {
     clearPersistedPayload();
 

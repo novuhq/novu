@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { StepContentIssueEnum } from '@novu/shared';
+import { ContentIssueEnum } from '@novu/shared';
 
 export class ContentIssue {
   @IsOptional()
@@ -9,6 +9,6 @@ export class ContentIssue {
   @IsString()
   message: string;
 
-  @IsEnum(StepContentIssueEnum)
-  issueType: StepContentIssueEnum;
+  @IsEnum(ContentIssueEnum)
+  issueType: ContentIssueEnum;
 }

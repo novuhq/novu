@@ -4,6 +4,7 @@ import { cn } from '@/utils/ui';
 import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 import { NovuBranding } from './novu-branding';
+import { ResourceOriginEnum } from '@novu/shared';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & { minimalHeader?: boolean };
 
@@ -49,10 +50,11 @@ export const EmailPreviewSubject = (props: EmailPreviewSubjectProps) => {
 
 type EmailPreviewBodyProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
+  resourceOrigin: ResourceOriginEnum;
 };
 
 export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
-  const { body, className, ...rest } = props;
+  const { body, className, resourceOrigin, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -120,7 +122,7 @@ export const EmailPreviewBody = (props: EmailPreviewBodyProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding />
+      <NovuBranding resourceOrigin={resourceOrigin} />
     </div>
   );
 };
@@ -135,10 +137,11 @@ export const EmailPreviewContentMobile = (props: EmailPreviewContentMobileProps)
 
 type EmailPreviewBodyMobileProps = HTMLAttributes<HTMLDivElement> & {
   body: string;
+  resourceOrigin: ResourceOriginEnum;
 };
 
 export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
-  const { body, className, ...rest } = props;
+  const { body, className, resourceOrigin, ...rest } = props;
   const refNode = useRef<HTMLDivElement | null>(null);
   const shadowRootRef = useRef<ShadowRoot | null>(null);
 
@@ -211,7 +214,7 @@ export const EmailPreviewBodyMobile = (props: EmailPreviewBodyMobileProps) => {
           attachShadow(node, body);
         }}
       />
-      <NovuBranding />
+      <NovuBranding resourceOrigin={resourceOrigin} />
     </div>
   );
 };

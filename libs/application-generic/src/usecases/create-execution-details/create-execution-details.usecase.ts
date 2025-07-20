@@ -54,6 +54,9 @@ const mapDetailToEventType = {
   [DetailEnum.DELAY_MISCONFIGURATION]: 'delay_misconfigured',
   [DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED]: 'delay_limit_exceeded',
 
+  // Workflow events
+  [DetailEnum.STEP_COMPLETED]: 'step_completed',
+
   // Bridge events
   [DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED]: 'bridge_response_received',
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',

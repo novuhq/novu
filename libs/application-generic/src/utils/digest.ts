@@ -17,10 +17,7 @@ export const isRegularDelay = (type: DelayTypeEnum) => {
   return type === DelayTypeEnum.REGULAR;
 };
 
-export const isMainDigest = (
-  type: StepTypeEnum | undefined,
-  status: JobStatusEnum,
-) => {
+export const isMainDigest = (type: StepTypeEnum | undefined, status: JobStatusEnum) => {
   return type === StepTypeEnum.DIGEST && status === JobStatusEnum.DELAYED;
 };
 
@@ -31,13 +28,7 @@ export function isActionStepType(type: StepTypeEnum) {
 }
 
 export function isChannelStepType(type: StepTypeEnum) {
-  const channels = [
-    StepTypeEnum.IN_APP,
-    StepTypeEnum.EMAIL,
-    StepTypeEnum.SMS,
-    StepTypeEnum.PUSH,
-    StepTypeEnum.CHAT,
-  ];
+  const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
   return channels.find((channel) => channel === type);
 }

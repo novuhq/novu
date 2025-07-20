@@ -14,6 +14,7 @@ export class WorkflowNormalizer {
       _id,
       slug,
       updatedAt,
+      updatedBy,
       createdAt,
       origin,
       status,
@@ -26,6 +27,7 @@ export class WorkflowNormalizer {
 
     return {
       ...normalizedWorkflow,
+      payloadSchema: normalizedWorkflow.payloadSchema ?? null,
       steps: steps.map((step) => this.normalizeStep(step)),
     };
   }

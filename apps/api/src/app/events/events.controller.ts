@@ -117,6 +117,8 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
+  @RequestAnalytics(AnalyticsStrategyEnum.EVENTS_BULK)
+  @LogAnalytics(AnalyticsStrategyEnum.EVENTS_BULK)
   @Post('/trigger/bulk')
   @SdkMethodName('triggerBulk')
   @SdkUsageExample('Trigger Notification Events in Bulk')
@@ -149,6 +151,8 @@ export class EventsController {
 
   @ExternalApiAccessible()
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
+  @RequestAnalytics(AnalyticsStrategyEnum.EVENTS)
+  @LogAnalytics(AnalyticsStrategyEnum.EVENTS)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
   @ApiResponse(PayloadValidationExceptionDto, 400, false, false, {

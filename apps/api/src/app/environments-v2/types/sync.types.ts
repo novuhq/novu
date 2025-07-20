@@ -4,6 +4,7 @@ import { ClientSession } from '@novu/dal';
 export enum ResourceTypeEnum {
   WORKFLOW = 'workflow',
   STEP = 'step',
+  LOCALIZATION_GROUP = 'localization_group',
 }
 
 export interface ISyncOptions {

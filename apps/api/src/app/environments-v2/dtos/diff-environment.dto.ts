@@ -96,10 +96,10 @@ export class ResourceDiffDto {
 
   @ApiProperty({
     description: 'Type of resource',
-    enum: ['workflow', 'step'],
+    enum: ['workflow', 'step', 'localization_group'],
   })
-  @IsEnum(['workflow', 'step'])
-  resourceType: 'workflow' | 'step';
+  @IsEnum(['workflow', 'step', 'localization_group'])
+  resourceType: 'workflow' | 'step' | 'localization_group';
 
   @ApiProperty({
     description: 'Type of change',

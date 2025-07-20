@@ -20,6 +20,7 @@ import {
   MetricsModule,
   ProcessTenant,
   QueuesModule,
+  StepRunRepository,
   StorageHelperService,
   storageService,
   UpdateSubscriber,
@@ -27,6 +28,7 @@ import {
   UpdateTenant,
   clickHouseService,
   TraceLogRepository,
+  WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
   ControlValuesRepository,
@@ -86,6 +88,8 @@ const dalService = {
 const ANALYTICS_PROVIDERS = [
   // Repositories
   TraceLogRepository,
+  StepRunRepository,
+  WorkflowRunRepository,
 
   // Services
   clickHouseService,

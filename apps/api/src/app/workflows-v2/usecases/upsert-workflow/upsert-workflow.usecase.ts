@@ -397,18 +397,7 @@ export class UpsertWorkflowUseCase {
         organization: { _id: command.user.organizationId },
       });
 
-      // Assign default layoutId if null (but not if undefined)
-      if (isLayoutsPageActive && emailControlValues.layoutId === null) {
-        const defaultLayout = await this.getLayoutUseCase.execute(
-          GetLayoutCommand.create({
-            environmentId: command.user.environmentId,
-            organizationId: command.user.organizationId,
-            userId: command.user._id,
-            skipAdditionalFields: true,
-          })
-        );
-        emailControlValues.layoutId = defaultLayout.layoutId;
-      } else if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
+      if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
         const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: emailControlValues.layoutId,

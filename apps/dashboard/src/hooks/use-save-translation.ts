@@ -25,10 +25,6 @@ export const useSaveTranslation = () => {
       });
 
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-      });
-
-      queryClient.invalidateQueries({
         queryKey: [
           QueryKeys.fetchTranslationGroup,
           variables.resourceId,
@@ -42,6 +38,11 @@ export const useSaveTranslation = () => {
       // Also invalidate translation keys if this is a default locale update
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, variables.locale, currentEnvironment?._id],
+      });
+
+      // Invalidate diff environment queries when translations are updated
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       showSuccessToast('Translation saved successfully');

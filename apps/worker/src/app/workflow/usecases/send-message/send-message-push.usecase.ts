@@ -452,12 +452,12 @@ export class SendMessagePush extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: `${DetailEnum.MESSAGE_SENT}: ${integration.providerId}`,
+          detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ result, deviceToken }),
+          raw: JSON.stringify({ providerId: integration.providerId, result, deviceToken }),
         })
       );
 
@@ -521,13 +521,16 @@ export class SendMessagePush extends SendMessageBase {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
+        detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: this.storeContent() ? JSON.stringify(content) : null,
+        raw: JSON.stringify({
+          providerId: integration.providerId,
+          content: this.storeContent() ? JSON.stringify(content) : null,
+        }),
       })
     );
 
