@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Notification, NotificationFilter, NovuError, areTagsEqual } from '@novu/js';
+import { Notification, NotificationFilter, NovuError, areTagsEqual, isSameFilter } from '@novu/js';
 import { useNovu } from './NovuProvider';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 
@@ -89,7 +89,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
 
       // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
-        const countReceived = countsReceived.find((c) => areTagsEqual(c.filter.tags, existingCounts[i].filter.tags));
+        const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingCounts[i].filter));
         const count = countReceived || (oldCounts && oldCounts[i]);
         if (count) {
           newCounts.push(count);
