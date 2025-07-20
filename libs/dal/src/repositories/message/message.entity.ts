@@ -78,6 +78,8 @@ export class MessageEntity {
 
   lastSeenDate: string;
 
+  firstSeenDate: string;
+
   lastReadDate: string;
 
   cta: IMessageCTA;

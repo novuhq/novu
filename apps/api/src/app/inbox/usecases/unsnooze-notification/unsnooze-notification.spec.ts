@@ -61,6 +61,7 @@ describe('UnsnoozeNotification', () => {
       subscriberId: validSubscriberId,
       id: validSubscriberId,
     },
+    isSeen: false,
     isRead: false,
     isArchived: false,
     isSnoozed: false,

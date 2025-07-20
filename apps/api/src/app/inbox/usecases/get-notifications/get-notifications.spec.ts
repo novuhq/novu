@@ -17,6 +17,7 @@ const mockMessages: any = [
     _id: '_id',
     content: '',
     read: false,
+    seen: false,
     archived: false,
     createdAt: new Date(),
     lastReadAt: new Date(),
@@ -130,6 +131,7 @@ describe('GetNotifications', () => {
       data: command.data,
       archived: command.archived,
       snoozed: command.snoozed,
+      seen: command.seen,
     });
     expect(result.hasMore).to.be.false;
     expect(analyticsServiceMock.mixpanelTrack.calledOnce).to.be.true;

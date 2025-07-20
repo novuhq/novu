@@ -5,8 +5,8 @@ import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
-const excludeEmpty = ({ tags, data, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs) =>
-  Object.entries({ tags, data, read, archived, snoozed, limit, offset, after })
+const excludeEmpty = ({ tags, data, read, archived, snoozed, seen, limit, offset, after }: ListNotificationsArgs) =>
+  Object.entries({ tags, data, read, archived, snoozed, seen, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -15,8 +15,18 @@ const excludeEmpty = ({ tags, data, read, archived, snoozed, limit, offset, afte
       return acc;
     }, {});
 
-const getCacheKey = ({ tags, data, read, archived, snoozed, limit, offset, after }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, limit, offset, after }));
+const getCacheKey = ({
+  tags,
+  data,
+  read,
+  archived,
+  snoozed,
+  seen,
+  limit,
+  offset,
+  after,
+}: ListNotificationsArgs): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, limit, offset, after }));
 };
 
 const getFilterKey = ({
@@ -25,8 +35,9 @@ const getFilterKey = ({
   read,
   archived,
   snoozed,
-}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed }));
+  seen,
+}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen'>): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -199,6 +210,7 @@ export class NotificationsCache {
         read: args.read,
         snoozed: args.snoozed,
         archived: args.archived,
+        seen: args.seen,
       });
     }
   }
