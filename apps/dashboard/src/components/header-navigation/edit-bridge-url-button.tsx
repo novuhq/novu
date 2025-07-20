@@ -65,9 +65,11 @@ export const EditBridgeUrlButton = () => {
     if (status === ConnectionStatus.DISCONNECTED) {
       return 'Bridge endpoint disconnected';
     }
+
     if (status === ConnectionStatus.LOADING) {
       return 'Checking bridge endpoint...';
     }
+
     return 'Bridge endpoint connected';
   };
 

@@ -31,7 +31,7 @@ export class NotificationRepository extends BaseRepository<
       channels?: ChannelTypeEnum[] | null;
       templates?: string[] | null;
       subscriberIds?: string[];
-      transactionId?: string;
+      transactionId?: string[];
       topicKey?: string;
       after?: string;
       before?: string;
@@ -43,8 +43,10 @@ export class NotificationRepository extends BaseRepository<
       _environmentId: environmentId,
     };
 
-    if (query.transactionId) {
-      requestQuery.transactionId = query.transactionId;
+    if (query.transactionId && query.transactionId.length > 0) {
+      requestQuery.transactionId = {
+        $in: query.transactionId,
+      };
     }
 
     if (query.topicKey) {

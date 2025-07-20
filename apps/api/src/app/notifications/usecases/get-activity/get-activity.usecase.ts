@@ -139,6 +139,8 @@ export class GetActivity {
         environment_id: command.environmentId,
         organization_id: command.organizationId,
       },
+      orderBy: 'created_at',
+      orderDirection: 'ASC',
     });
 
     const executionDetailsByEntityId = new Map<string, ExecutionDetailFeedItem[]>();

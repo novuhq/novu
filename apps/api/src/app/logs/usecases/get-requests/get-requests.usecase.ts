@@ -29,8 +29,12 @@ export class GetRequests {
       where.url = { operator: 'LIKE', value: `%${command.url}%` };
     }
 
+    if (command.url_pattern) {
+      where.url = command.url_pattern;
+    }
+
     if (command.transactionId) {
-      where.transaction_id = command.transactionId;
+      where.transaction_id = { operator: 'LIKE', value: `%${command.transactionId}%` };
     }
 
     if (command.hoursAgo) {

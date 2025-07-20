@@ -100,7 +100,7 @@ function ActionButtons() {
   };
 
   const handleImport = () => {
-    uploadMutation.triggerFileUpload(defaultLocale);
+    uploadMutation.triggerFileUpload();
   };
 
   return (
@@ -153,8 +153,9 @@ function ActionButtons() {
             <div className="max-w-xs">
               <p className="font-medium">Import Master JSON</p>
               <p className="mt-1 text-xs text-neutral-400">
-                Upload a translated JSON file to import or update translations for any locale. The system will match
-                resources by ID and create new ones or update existing translations. Invalid resources will be skipped.
+                Upload a translated JSON file to import or update translations. Locale is automatically detected from
+                filename (e.g., en_US.json, fr_FR.json). The system will match resources by ID and create new ones or
+                update existing translations.
               </p>
             </div>
           </TooltipContent>

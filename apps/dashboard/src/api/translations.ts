@@ -216,7 +216,6 @@ export const getMasterJson = async ({
 };
 
 export type UploadMasterJsonRequest = {
-  locale: string;
   file: File;
 };
 
@@ -231,12 +230,10 @@ export type UploadMasterJsonResponse = {
 
 export const uploadMasterJson = async ({
   environment,
-  locale,
   file,
 }: UploadMasterJsonRequest & { environment: IEnvironment }): Promise<UploadMasterJsonResponse['data']> => {
   const formData = new FormData();
 
-  formData.append('locale', locale);
   formData.append('file', file);
 
   const endpoint = '/translations/master-json/upload';

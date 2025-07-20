@@ -55,7 +55,19 @@ export function getActivityList({
   }
 
   if (filters?.transactionId) {
-    searchParams.append('transactionId', filters.transactionId);
+    // Parse comma-delimited string into array for backend
+    const transactionIds = filters.transactionId
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    if (transactionIds.length > 1) {
+      transactionIds.forEach((id) => {
+        searchParams.append('transactionId', id);
+      });
+    } else {
+      searchParams.append('transactionId', filters.transactionId);
+    }
   }
 
   if (filters?.topicKey) {

@@ -26,7 +26,10 @@ export function LogsDetailPanel({ log, isLoading, error }: LogsDetailPanelProps)
     return <RequestLogDetailEmptyState />;
   }
 
-  const shouldShowWorkflowRuns = log.path === '/v1/events/trigger' || log.path === '/v1/events/trigger/bulk';
+  const shouldShowWorkflowRuns =
+    log.path === '/v1/events/trigger' ||
+    log.path === '/v1/events/trigger/bulk' ||
+    log.path === '/v1/events/trigger/broadcast';
 
   return (
     <motion.div
