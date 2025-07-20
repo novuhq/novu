@@ -20,14 +20,17 @@ export function InboxEmbedPage() {
         <div className="w-full">
           <div className="flex flex-1 flex-col overflow-hidden">
             <UsecasePlaygroundHeader
-              title="Four minutes to a fully functional <Inbox/>"
-              description="You're just a couple steps away from your first notification."
+              title="Minutes to a fully functional <Inbox/>"
+              description="You're just a couple steps away from having a fully functional inbox."
               skipPath={ROUTES.WELCOME}
               onSkip={() =>
                 telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
                   skippedFrom: 'inbox-embed',
                 })
               }
+              currentStep={3}
+              totalSteps={4}
+              showSkipButton={true}
             />
           </div>
           <InboxEmbed />

@@ -1,11 +1,13 @@
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { IEnvironment } from '@novu/shared';
-import { RiCheckboxCircleFill, RiLoader3Line, RiNotification2Fill } from 'react-icons/ri';
+import { RiCheckboxCircleFill, RiLoader3Line } from 'react-icons/ri';
+import { Notification5Fill } from '@/components/icons';
 import { useNavigate } from 'react-router-dom';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { ROUTES } from '../../utils/routes';
 import { Button } from '../primitives/button';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { showToast } from '../primitives/sonner-helpers';
+import { ToastIcon } from '../primitives/sonner';
 import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
 
 type InboxConnectedGuideProps = {
@@ -13,10 +15,57 @@ type InboxConnectedGuideProps = {
   environment: IEnvironment;
 };
 
+function showSuccessToast(message: string) {
+  showToast({
+    children: () => (
+      <>
+        <ToastIcon variant="success" />
+        <span className="whitespace-nowrap text-sm">{message}</span>
+      </>
+    ),
+    options: {
+      position: 'bottom-center',
+      style: {
+        left: '50%',
+        transform: 'translateX(-50%)',
+      },
+    },
+  });
+}
+
+function showErrorToast(message: string) {
+  showToast({
+    children: () => (
+      <>
+        <ToastIcon variant="error" />
+        <span className="whitespace-nowrap text-sm">{message}</span>
+      </>
+    ),
+    options: {
+      position: 'bottom-center',
+      style: {
+        left: '50%',
+        transform: 'translateX(-50%)',
+      },
+    },
+  });
+}
+
 export function InboxConnectedGuide({ subscriberId, environment }: InboxConnectedGuideProps) {
   const navigate = useNavigate();
   const { triggerWorkflow, isPending } = useTriggerWorkflow(environment);
   useInitDemoWorkflow(environment);
+
+  const curlCommand = `curl -X POST 'https://api.novu.co/v1/events/trigger' \\
+  -H 'Authorization: ApiKey YOUR_NOVU_SECRET_KEY' \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
+    "to": {
+      "subscriberId": "${subscriberId}"
+    },
+    "payload": {}
+  }'`;
 
   async function handleSendNotification() {
     try {
@@ -57,26 +106,73 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
               <RiLoader3Line className="h-4 w-4 text-neutral-300" />
             </div>
 
-            <div className="flex w-[344px] max-w-md flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Let the magic happen 🪄</span>
+            <div className="flex gap-12">
+              {/* Left section - existing content */}
+              <div className="flex w-[344px] max-w-md flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Let the magic happen 🪄</span>
+                </div>
+                <p className="text-foreground-400 text-xs">
+                  Now, trigger a notification to see it pop up in your app! If it doesn't appear, double-check that the
+                  subscriberId matches as above.
+                </p>
+                <div>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="gap-2 px-2"
+                    onClick={handleSendNotification}
+                    disabled={isPending}
+                    isLoading={isPending}
+                    leadingIcon={(props) => <Notification5Fill {...props} className="h-4 w-4" />}
+                  >
+                    Send notification
+                  </Button>
+                </div>
               </div>
-              <p className="text-foreground-400 text-xs">
-                Now, trigger a notification to see it pop up in your app! If it doesn't appear, double-check that the
-                subscriberId matches as above.
-              </p>
-              <div>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="gap-1 px-2"
-                  onClick={handleSendNotification}
-                  disabled={isPending}
-                  isLoading={isPending}
-                  trailingIcon={RiNotification2Fill}
-                >
-                  Send notification
-                </Button>
+
+              {/* Right section - curl code snippet */}
+              <div className="flex w-[500px] flex-col gap-6">
+                <div className="flex flex-col gap-0 rounded-xl bg-[rgba(14,18,27,0.9)] shadow-[inset_0px_0px_0px_1px_#18181B,inset_0px_0px_0px_1.5px_rgba(255,255,255,0.05)]">
+                  {/* Header */}
+                  <div className="flex h-10 items-center justify-between gap-3 px-4 py-2">
+                    <span className="text-xs font-medium text-[#99A0AE]">Terminal</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(curlCommand);
+                        showSuccessToast('Copied to clipboard!');
+                      }}
+                      className="flex h-6 w-6 items-center justify-center rounded p-1 hover:bg-white/10"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M20 9H11C9.89543 9 9 9.89543 9 11V20C9 21.1046 9.89543 22 11 22H20C21.1046 22 22 21.1046 22 20V11C22 9.89543 21.1046 9 20 9Z"
+                          stroke="#99A0AE"
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M5 15H4C3.46957 15 2.96086 14.7893 2.58579 14.4142C2.21071 14.0391 2 13.5304 2 13V4C2 3.46957 2.21071 2.96086 2.58579 2.58579C2.96086 2.21071 3.46957 2 4 2H13C13.5304 2 14.0391 2.21071 14.4142 2.58579C14.7893 2.96086 15 3.46957 15 4V5"
+                          stroke="#99A0AE"
+                          strokeWidth="1.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Code block */}
+                  <div className="flex px-1 pb-1">
+                    <div className="flex w-full gap-4 rounded-lg bg-[rgba(14,18,27,0.9)] p-3">
+                      <span className="self-start text-xs text-[#525866]">❯</span>
+                      <pre className="whitespace-pre-wrap font-mono text-xs font-medium leading-4 text-white">
+                        {curlCommand}
+                      </pre>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

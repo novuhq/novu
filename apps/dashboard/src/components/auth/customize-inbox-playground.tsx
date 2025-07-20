@@ -4,7 +4,7 @@ import { RiLayoutLine } from 'react-icons/ri';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { ColorPicker } from '@/components/primitives/color-picker';
 
-import type { InboxPlaygroundFormData } from './inbox-playground';
+// import type { InboxPlaygroundFormData } from './inbox-playground';
 import { Switch } from '../primitives/switch';
 
 interface PreviewStyle {
@@ -13,9 +13,9 @@ interface PreviewStyle {
   image: string;
 }
 
-interface CustomizeInboxProps {
-  form: UseFormReturn<InboxPlaygroundFormData>;
-}
+// interface CustomizeInboxProps {
+//   form: UseFormReturn<InboxPlaygroundFormData>;
+// }
 
 const previewStyles: PreviewStyle[] = [
   { id: 'popover', label: 'Popover', image: '/images/auth/popover-layout.svg' },
@@ -23,7 +23,7 @@ const previewStyles: PreviewStyle[] = [
   { id: 'full-width', label: 'Full Width', image: '/images/auth/full-width-layout.svg' },
 ];
 
-export function CustomizeInbox({ form }: CustomizeInboxProps) {
+export function CustomizeInbox({ form }: { form: UseFormReturn<any> }) {
   const selectedStyle = form.watch('selectedStyle');
 
   return (
@@ -115,7 +115,7 @@ function StylePreviewCard({
   );
 }
 
-function ColorPickerSection({ form }: { form: UseFormReturn<InboxPlaygroundFormData> }) {
+function ColorPickerSection({ form }: { form: UseFormReturn<any> }) {
   return (
     <div className="space-y-2">
       <div className="flex gap-2">

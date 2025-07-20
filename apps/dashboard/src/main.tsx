@@ -96,14 +96,6 @@ const router = createBrowserRouter([
         ),
         children: [
           {
-            path: ROUTES.SIGNUP_QUESTIONNAIRE,
-            element: <QuestionnairePage />,
-          },
-          {
-            path: ROUTES.USECASE_SELECT,
-            element: <UsecaseSelectPage />,
-          },
-          {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
           },
