@@ -17,6 +17,7 @@ const mockMessages: any = [
     _id: '_id',
     content: '',
     read: false,
+    seen: false,
     archived: false,
     createdAt: new Date(),
     lastReadAt: new Date(),
