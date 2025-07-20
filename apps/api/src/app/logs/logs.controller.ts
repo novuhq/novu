@@ -26,6 +26,7 @@ export class LogsController {
       userId: user._id,
       hoursAgo: query.created,
       ...query,
+      statusCodes: query.statusCode,
     });
 
     return this.getRequestsUsecase.execute(command);

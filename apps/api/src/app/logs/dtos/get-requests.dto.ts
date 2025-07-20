@@ -45,10 +45,8 @@ export class GetRequestsDto {
   limit?: number;
 
   @IsOptional()
-  @IsArray()
-  @IsNumber({}, { each: true })
   @StatusCodeTransformer
-  statusCodes?: number[];
+  statusCode?: number[];
 
   @IsString()
   @IsOptional()
