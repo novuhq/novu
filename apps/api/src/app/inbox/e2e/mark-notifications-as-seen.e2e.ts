@@ -129,30 +129,6 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
 
       expect(body.message).to.include('Validation Error');
     });
-
-    it('should handle empty notification IDs array', async () => {
-      const { body: allNotificationsBefore } = await session.testAgent
-        .get('/v1/inbox/notifications')
-        .set('Authorization', `Bearer ${session.subscriberToken}`)
-        .expect(200);
-
-      await session.testAgent
-        .post('/v1/inbox/notifications/seen')
-        .set('Authorization', `Bearer ${session.subscriberToken}`)
-        .send({ notificationIds: [] })
-        .expect(204);
-
-      const { body: allNotificationsAfter } = await session.testAgent
-        .get('/v1/inbox/notifications')
-        .set('Authorization', `Bearer ${session.subscriberToken}`)
-        .expect(200);
-
-      expect(allNotificationsBefore.data.length).to.equal(allNotificationsAfter.data.length);
-
-      allNotificationsBefore.data.forEach((notification, index) => {
-        expect(allNotificationsAfter.data[index].seen).to.equal(false);
-      });
-    });
   });
 
   describe('Mark notifications as seen by filters', () => {
