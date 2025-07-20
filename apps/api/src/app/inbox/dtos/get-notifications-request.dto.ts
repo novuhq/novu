@@ -35,6 +35,11 @@ export class GetNotificationsRequestDto
   snoozed?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true')
+  seen?: boolean;
+
+  @IsOptional()
   @IsString()
   @ApiPropertyOptional({
     description: 'Filter by data attributes (JSON string)',

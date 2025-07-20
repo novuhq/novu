@@ -1,4 +1,4 @@
-import { IsArray, IsDefined } from 'class-validator';
+import { IsDefined } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
 import { MessageEntity } from '@novu/dal';
 

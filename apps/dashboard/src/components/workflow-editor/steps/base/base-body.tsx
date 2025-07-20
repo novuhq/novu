@@ -11,8 +11,12 @@ const bodyKey = 'body';
 
 export const BaseBody = () => {
   const { control } = useFormContext();
-  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+
+  const hintMessage = workflow?.isTranslationEnabled
+    ? 'Type {{ to access variables or {t. to access translation keys.'
+    : 'Type {{ to access variables.';
 
   return (
     <FormField
@@ -35,7 +39,7 @@ export const BaseBody = () => {
               />
             </InputRoot>
           </FormControl>
-          <FormMessage>{`You can use variables by typing {{ select from the list or create a new one.`}</FormMessage>
+          <FormMessage>{hintMessage}</FormMessage>
         </FormItem>
       )}
     />

@@ -51,7 +51,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
       const isNewTranslationKeyItem = !existingKeys.includes(item.name);
 
       if (isNewTranslationKeyItem) {
-        const displayLabel = `Create ${item.name}`;
+        const displayLabel = `Create "${item.name}"`;
 
         return {
           label: displayLabel,

@@ -10,12 +10,16 @@ type FetchTranslationParams = {
   locale: string;
 };
 
+export type TranslationWithPlaceholder = Translation & {
+  isPlaceholder?: boolean;
+};
+
 export const useFetchTranslation = ({ resourceId, resourceType, locale }: FetchTranslationParams) => {
   const { currentEnvironment } = useEnvironment();
 
   return useQuery({
     queryKey: [QueryKeys.fetchTranslation, resourceId, resourceType, locale, currentEnvironment?._id],
-    queryFn: async (): Promise<Translation> => {
+    queryFn: async (): Promise<TranslationWithPlaceholder> => {
       if (!currentEnvironment) {
         throw new Error('Environment is required');
       }
@@ -41,6 +45,7 @@ export const useFetchTranslation = ({ resourceId, resourceType, locale }: FetchT
             content: {}, // Empty content for new translations
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
+            isPlaceholder: true, // Flag to indicate this is just a placeholder
           };
         }
 

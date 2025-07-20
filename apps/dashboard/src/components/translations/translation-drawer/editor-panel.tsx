@@ -7,7 +7,7 @@ import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { formatTranslationDate, formatTranslationTime } from '../utils';
 import { EditorActions } from './editor-actions';
-import { TranslationResource } from '@/types/translations';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 
 type JSONEditorProps = {
   content: string;
@@ -15,15 +15,17 @@ type JSONEditorProps = {
   error: string | null;
   updatedAt: string;
   isOutdated?: boolean;
+  isReadOnly?: boolean;
 };
 
-function JSONEditor({ content, onChange, error, updatedAt, isOutdated }: JSONEditorProps) {
+function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnly = false }: JSONEditorProps) {
   return (
     <div className="flex-1 px-3 pb-3">
       <div
         className={cn(
           'relative h-[calc(100%-10rem)] rounded-lg border bg-white p-4',
-          error ? 'border-red-300' : 'border-neutral-200'
+          error ? 'border-red-300' : 'border-neutral-200',
+          isReadOnly && 'bg-neutral-50'
         )}
       >
         <Editor
@@ -35,10 +37,16 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated }: JSONEdi
           placeholder="Enter JSON content..."
           className={cn('h-full overflow-auto', error ? 'pb-8' : '')}
           foldGutter
+          readOnly={isReadOnly}
         />
         {error && (
           <div className="absolute bottom-2 left-3 right-3 text-xs text-red-500">
             <span className="font-medium">Invalid JSON:</span> {error}
+          </div>
+        )}
+        {isReadOnly && (
+          <div className="absolute right-2 top-2">
+            <div className="rounded bg-neutral-100 px-2 py-1 text-xs text-neutral-600">Read-only</div>
           </div>
         )}
       </div>
@@ -64,21 +72,19 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated }: JSONEdi
 }
 
 type EditorPanelProps = {
-  selectedLocale: string | null;
-  selectedTranslation: any;
+  selectedTranslation: TranslationWithPlaceholder | undefined;
   isLoadingTranslation: boolean;
   translationError: any;
   modifiedContent: Record<string, unknown> | null;
   jsonError: string | null;
   onContentChange: (content: string) => void;
   onDelete: (locale: string) => void | Promise<void>;
-  resource: TranslationResource;
   isDeleting?: boolean;
   outdatedLocales?: string[];
+  isReadOnly?: boolean;
 };
 
 export function EditorPanel({
-  selectedLocale,
   selectedTranslation,
   isLoadingTranslation,
   translationError,
@@ -86,11 +92,11 @@ export function EditorPanel({
   jsonError,
   onContentChange,
   onDelete,
-  resource,
   isDeleting = false,
   outdatedLocales,
+  isReadOnly = false,
 }: EditorPanelProps) {
-  if (!selectedLocale) {
+  if (!selectedTranslation) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="text-center">
@@ -101,19 +107,17 @@ export function EditorPanel({
     );
   }
 
-  const contentToUse = modifiedContent || selectedTranslation?.content || {};
-  const contentToCopy = JSON.stringify(contentToUse, null, 2);
-  const isOutdated = outdatedLocales?.includes(selectedLocale);
+  const contentToUse = modifiedContent || selectedTranslation.content || {};
+  const isOutdated = outdatedLocales?.includes(selectedTranslation.locale);
 
   return (
     <div className="flex flex-1 flex-col bg-neutral-50">
       <EditorActions
-        selectedLocale={selectedLocale}
-        contentToCopy={contentToCopy}
-        content={contentToUse}
-        resource={resource}
+        selectedTranslation={selectedTranslation}
+        modifiedContent={modifiedContent}
         onDelete={onDelete}
         isDeleting={isDeleting}
+        isReadOnly={isReadOnly}
       />
 
       {isLoadingTranslation ? (
@@ -127,7 +131,7 @@ export function EditorPanel({
         </div>
       ) : translationError ? (
         <div className="flex h-32 items-center justify-center">
-          <p className="text-sm text-red-500">Failed to load translation for {selectedLocale}</p>
+          <p className="text-sm text-red-500">Failed to load translation for {selectedTranslation.locale}</p>
         </div>
       ) : selectedTranslation ? (
         <JSONEditor
@@ -136,6 +140,7 @@ export function EditorPanel({
           error={jsonError}
           updatedAt={selectedTranslation.updatedAt}
           isOutdated={isOutdated}
+          isReadOnly={isReadOnly}
         />
       ) : null}
     </div>

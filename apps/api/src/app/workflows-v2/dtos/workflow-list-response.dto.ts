@@ -1,5 +1,5 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { StepTypeEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { WorkflowResponseDto } from './workflow-response.dto';
@@ -85,4 +85,11 @@ export class WorkflowListResponseDto {
   @IsArray()
   @IsEnum(StepTypeEnum, { each: true })
   stepTypeOverviews: StepTypeEnum[];
+
+  @ApiProperty({
+    description: 'Is translation enabled for the workflow',
+    type: Boolean,
+  })
+  @IsBoolean()
+  isTranslationEnabled: boolean;
 }

@@ -47,6 +47,7 @@ export function useNotifications(_: UseNotificationsProps): UseNotificationsResu
     isFetching: false,
     hasMore: false,
     readAll: () => Promise.resolve({ data: undefined, error: undefined }),
+    seenAll: () => Promise.resolve({ data: undefined, error: undefined }),
     archiveAll: () => Promise.resolve({ data: undefined, error: undefined }),
     archiveAllRead: () => Promise.resolve({ data: undefined, error: undefined }),
     refetch: () => Promise.resolve(),

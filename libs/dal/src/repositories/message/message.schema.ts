@@ -91,6 +91,7 @@ const messageSchema = new Schema<MessageDBModel>(
       default: undefined,
     },
     lastSeenDate: Schema.Types.Date,
+    firstSeenDate: Schema.Types.Date,
     lastReadDate: Schema.Types.Date,
     archivedAt: Schema.Types.Date,
     status: {

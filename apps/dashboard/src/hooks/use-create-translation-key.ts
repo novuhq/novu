@@ -98,6 +98,11 @@ export const useCreateTranslationKey = () => {
         exact: false,
       });
 
+      // Invalidate diff environment queries when translation keys are created
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
+      });
+
       showSuccessToast(`Translation key "${variables.translationKey}" created successfully`);
     },
     onError: (error, variables) => {

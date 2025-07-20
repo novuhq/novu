@@ -82,6 +82,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
       : undefined,
     status: template.status || WorkflowStatusEnum.ACTIVE,
     lastTriggeredAt: template.lastTriggeredAt,
+    isTranslationEnabled: template.isTranslationEnabled || false,
   };
 }
 

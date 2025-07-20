@@ -109,6 +109,8 @@ const baseTheme = (options: { multiline?: boolean }) =>
       border: '1px solid var(--neutral-100)',
       backgroundColor: 'hsl(var(--background))',
       boxShadow: '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
+      maxWidth: '250px',
+      minWidth: '250px',
       '&:before': {
         content: "''",
         top: '0',
@@ -137,6 +139,7 @@ const baseTheme = (options: { multiline?: boolean }) =>
       maxHeight: '12rem',
       margin: '4px 0',
       padding: '4px',
+      width: '100%',
     },
     '.cm-tooltip-autocomplete.cm-tooltip > ul > li[role="option"]': {
       display: 'flex',
@@ -150,6 +153,11 @@ const baseTheme = (options: { multiline?: boolean }) =>
       minHeight: '24px',
       color: 'var(--foreground-950)',
       borderRadius: 'calc(var(--radius) - 2px)',
+      width: '100%',
+      maxWidth: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     },
     '.cm-tooltip-autocomplete.cm-tooltip > ul > li[aria-selected="true"]': {
       backgroundColor: 'hsl(var(--neutral-100))',

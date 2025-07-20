@@ -51,12 +51,14 @@ export class InboxService {
     read,
     tags,
     snoozed,
+    seen,
     data,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
+    seen?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
@@ -81,6 +83,9 @@ export class InboxService {
     if (snoozed !== undefined) {
       searchParams.append('snoozed', `${snoozed}`);
     }
+    if (seen !== undefined) {
+      searchParams.append('seen', `${seen}`);
+    }
     if (data !== undefined) {
       searchParams.append('data', JSON.stringify(data));
     }
@@ -91,7 +96,14 @@ export class InboxService {
   count({
     filters,
   }: {
-    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; data?: Record<string, unknown> }>;
+    filters: Array<{
+      tags?: string[];
+      read?: boolean;
+      archived?: boolean;
+      snoozed?: boolean;
+      seen?: boolean;
+      data?: Record<string, unknown>;
+    }>;
   }): Promise<{
     data: Array<{
       count: number;
@@ -146,10 +158,30 @@ export class InboxService {
   }
 
   archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive/read`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
+  }
+
+  markAsSeen({
+    notificationIds,
+    tags,
+    data,
+  }: {
+    notificationIds?: string[];
+    tags?: string[];
+    data?: Record<string, unknown>;
+  }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/seen`, {
+      notificationIds,
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  seen(notificationId: string): Promise<void> {
+    return this.markAsSeen({ notificationIds: [notificationId] });
   }
 
   completeAction({

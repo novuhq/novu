@@ -89,6 +89,7 @@ async function $do(
     "statusCodes": payload.statusCodes,
     "transactionId": payload.transactionId,
     "url": payload.url,
+    "url_pattern": payload.url_pattern,
   });
 
   const headers = new Headers(compactMap({

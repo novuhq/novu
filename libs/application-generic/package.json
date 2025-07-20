@@ -78,6 +78,7 @@
     "clickhouse-schema": "^2.0.1",
     "cron-parser": "^4.9.0",
     "date-fns": "^2.29.2",
+    "date-fns-tz": "^3.2.0",
     "got": "^11.8.6",
     "handlebars": "^4.7.7",
     "i18next": "^23.7.6",

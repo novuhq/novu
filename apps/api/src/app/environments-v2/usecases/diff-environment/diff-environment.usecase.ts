@@ -20,12 +20,10 @@ export class DiffEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: DiffEnvironmentCommand): Promise<IEnvironmentDiffResult> {
     try {
-      // First validate the target environment ID format
       if (!BaseRepository.isInternalId(command.targetEnvironmentId)) {
         throw new BadRequestException('Invalid environment ID format');
       }
 
-      // If sourceEnvironmentId is not provided, default to development environment
       const sourceEnvironmentId =
         command.sourceEnvironmentId ||
         (await this.environmentValidationService.getDevelopmentEnvironmentId(command.user.organizationId));

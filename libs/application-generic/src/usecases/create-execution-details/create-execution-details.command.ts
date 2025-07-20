@@ -3,6 +3,7 @@ import { ExecutionDetailsEntity, ExecutionDetailsRepository, JobEntity } from '@
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
 import { EnvironmentWithSubscriber } from '../../commands';
+import { DetailEnum } from './types';
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -27,7 +28,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
   channel?: StepTypeEnum;
 
   @IsNotEmpty()
-  detail: string;
+  detail: DetailEnum;
 
   @IsNotEmpty()
   source: ExecutionDetailsSourceEnum;

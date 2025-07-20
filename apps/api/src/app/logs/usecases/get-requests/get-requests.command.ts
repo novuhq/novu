@@ -21,6 +21,10 @@ export class GetRequestsCommand extends OrganizationCommand {
 
   @IsString()
   @IsOptional()
+  public url_pattern?: string;
+
+  @IsString()
+  @IsOptional()
   public transactionId?: string;
 
   @IsNumber()

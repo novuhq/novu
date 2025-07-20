@@ -13,7 +13,7 @@ export class UpdateOrganizationSettingsDto {
 
   @ApiProperty({
     description: 'Default locale',
-    example: 'en-US',
+    example: 'en_US',
   })
   @IsOptional()
   @IsValidLocale()
@@ -21,7 +21,7 @@ export class UpdateOrganizationSettingsDto {
 
   @ApiProperty({
     description: 'Target locales',
-    example: ['en-US', 'es-ES'],
+    example: ['en_US', 'es_ES'],
   })
   @IsOptional()
   @IsArray()

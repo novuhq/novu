@@ -13,7 +13,14 @@ export const useLayoutsNavigate = () => {
     navigate(`${buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment.slug })}${search}`);
   };
 
+  const navigateToLayoutEditorPage = (layoutSlug: string) => {
+    if (!currentEnvironment?.slug) return;
+
+    navigate(`${buildRoute(ROUTES.LAYOUTS_EDIT, { environmentSlug: currentEnvironment.slug, layoutSlug })}${search}`);
+  };
+
   return {
     navigateToLayoutsPage,
+    navigateToLayoutEditorPage,
   };
 };

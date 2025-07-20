@@ -34,6 +34,12 @@ const STATUS_OPTIONS = [
   { label: '503 Service Unavailable', value: '503' },
 ];
 
+const URL_PATTERN_OPTIONS = [
+  { label: '/v1/events/trigger', value: '/v1/events/trigger' },
+  { label: '/v1/events/trigger/bulk', value: '/v1/events/trigger/bulk' },
+  { label: '/v1/events/trigger/broadcast', value: '/v1/events/trigger/broadcast' },
+];
+
 const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
   return (
     <Tooltip>
@@ -88,6 +94,7 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
       status: values,
       transactionId: form.getValues('transactionId'),
       created: form.getValues('created'),
+      url_pattern: form.getValues('url_pattern'),
     });
   };
 
@@ -97,6 +104,7 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
       status: form.getValues('status'),
       transactionId: value,
       created: form.getValues('created'),
+      url_pattern: form.getValues('url_pattern'),
     });
   };
 
@@ -107,6 +115,18 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
       status: form.getValues('status'),
       transactionId: form.getValues('transactionId'),
       created: selectedCreated,
+      url_pattern: form.getValues('url_pattern'),
+    });
+  };
+
+  const handleUrlPatternChange = (values: string[]) => {
+    const selectedUrlPattern = values[0]; // Single selection
+    form.setValue('url_pattern', selectedUrlPattern || '');
+    onFiltersChange({
+      status: form.getValues('status'),
+      transactionId: form.getValues('transactionId'),
+      created: form.getValues('created'),
+      url_pattern: selectedUrlPattern || '',
     });
   };
 
@@ -140,6 +160,15 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
         options={STATUS_OPTIONS}
         selected={filters.status}
         onSelect={handleStatusChange}
+      />
+      <FacetedFormFilter
+        size="small"
+        type="single"
+        title="API Endpoint"
+        placeholder="Filter by API endpoint"
+        options={URL_PATTERN_OPTIONS}
+        selected={filters.url_pattern ? [filters.url_pattern] : []}
+        onSelect={handleUrlPatternChange}
       />
       {hasActiveFilters && (
         <button onClick={onClearFilters} className="text-foreground-600 hover:text-foreground-950 text-sm font-medium">

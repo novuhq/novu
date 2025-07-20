@@ -45,10 +45,8 @@ export class GetRequestsDto {
   limit?: number;
 
   @IsOptional()
-  @IsArray()
-  @IsNumber({}, { each: true })
   @StatusCodeTransformer
-  statusCodes?: number[];
+  statusCode?: number[];
 
   @IsString()
   @IsOptional()
@@ -57,6 +55,14 @@ export class GetRequestsDto {
     message: 'URL contains invalid characters',
   })
   url?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(500)
+  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/, {
+    message: 'URL pattern contains invalid characters',
+  })
+  url_pattern?: string;
 
   @IsString()
   @IsOptional()

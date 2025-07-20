@@ -191,3 +191,5 @@ function mergeSubscriberChannels(subscriber: ISubscriber, mergedChannelsMap) {
     }
   }
 }
+
+removeDuplicatedSubscribers()

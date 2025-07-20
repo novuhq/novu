@@ -1,26 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+import { PinoLogger, Instrument } from '@novu/application-generic';
+import { NotificationTemplateEntity, LocalizationResourceEnum } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
 import { SyncToEnvironmentUseCase } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { SyncToEnvironmentCommand } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.command';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { SyncResultBuilder } from '../builders/sync-result.builder';
-import { ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
+import { ISyncContext, ISyncResult, ResourceTypeEnum, IResourceDiff } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_MESSAGES, WORKFLOW_SYNC_ACTIONS, SKIP_REASONS } from '../constants/workflow-sync.constants';
 import { WorkflowRepositoryService } from './workflow-repository.service';
 import { DeleteWorkflowUseCase } from '../../../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { DeleteWorkflowCommand } from '../../../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 
+interface IWorkflowSyncDecision {
+  workflow: NotificationTemplateEntity;
+  targetWorkflow?: NotificationTemplateEntity;
+  sync: boolean;
+  action: 'created' | 'updated' | 'skipped';
+  reason?: string;
+}
+
 @Injectable()
 export class WorkflowSyncOperation {
+  private static readonly COMPARISON_BATCH_SIZE = 5;
+
   constructor(
     private logger: PinoLogger,
     private workflowRepositoryService: WorkflowRepositoryService,
     private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
-    private workflowComparator: WorkflowComparator
+    private workflowComparator: WorkflowComparator,
+    private moduleRef: ModuleRef
   ) {}
 
+  @Instrument()
   async execute(context: ISyncContext): Promise<ISyncResult> {
     this.logger.info(WORKFLOW_SYNC_MESSAGES.STARTING_SYNC(context.sourceEnvironmentId, context.targetEnvironmentId));
 
@@ -72,41 +86,98 @@ export class WorkflowSyncOperation {
 
     const targetWorkflowMap = this.workflowRepositoryService.createWorkflowMap(targetWorkflows);
 
-    for (const workflow of sourceWorkflows) {
+    // First phase: Determine which workflows need syncing using batch processing for comparisons
+    const syncDecisions = await this.determineSyncDecisions(context, sourceWorkflows, targetWorkflowMap);
+
+    // Second phase: Execute sync operations sequentially to avoid side effects
+    for (const decision of syncDecisions) {
       try {
-        const sourceIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(workflow);
-        const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
-
-        const shouldSync = await this.shouldSyncWorkflow(context, workflow, targetWorkflow);
-
-        if (shouldSync.sync) {
-          await this.syncWorkflowToTarget(context, workflow);
+        if (decision.sync) {
+          await this.syncWorkflowToTarget(context, decision.workflow);
           resultBuilder.addSuccess(
-            this.workflowRepositoryService.getWorkflowIdentifier(workflow),
-            workflow.name,
-            shouldSync.action as 'created' | 'updated'
+            this.workflowRepositoryService.getWorkflowIdentifier(decision.workflow),
+            decision.workflow.name,
+            decision.action as 'created' | 'updated'
           );
-          this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SUCCESS(workflow.name, shouldSync.action));
+          this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SUCCESS(decision.workflow.name, decision.action));
         } else {
           resultBuilder.addSkipped(
-            this.workflowRepositoryService.getWorkflowIdentifier(workflow),
-            workflow.name,
-            shouldSync.reason!
+            this.workflowRepositoryService.getWorkflowIdentifier(decision.workflow),
+            decision.workflow.name,
+            decision.reason!
           );
-          this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SKIP(workflow.name, shouldSync.action));
+          this.logger.info(WORKFLOW_SYNC_MESSAGES.SYNC_SKIP(decision.workflow.name, decision.action));
         }
       } catch (error) {
         resultBuilder.addFailure(
-          this.workflowRepositoryService.getWorkflowIdentifier(workflow),
-          workflow.name,
+          this.workflowRepositoryService.getWorkflowIdentifier(decision.workflow),
+          decision.workflow.name,
           error.message,
           error.stack
         );
-        this.logger.error(WORKFLOW_SYNC_MESSAGES.SYNC_FAILED(workflow.name, error.message));
+        this.logger.error(WORKFLOW_SYNC_MESSAGES.SYNC_FAILED(decision.workflow.name, error.message));
 
         throw error;
       }
     }
+  }
+
+  @Instrument()
+  private async determineSyncDecisions(
+    context: ISyncContext,
+    sourceWorkflows: NotificationTemplateEntity[],
+    targetWorkflowMap: Map<string, NotificationTemplateEntity>
+  ): Promise<IWorkflowSyncDecision[]> {
+    const batches = this.createBatches(sourceWorkflows, WorkflowSyncOperation.COMPARISON_BATCH_SIZE);
+    const syncDecisions: IWorkflowSyncDecision[] = [];
+
+    this.logger.info(
+      `Determining sync decisions for ${sourceWorkflows.length} workflows in ${batches.length} batches of ${WorkflowSyncOperation.COMPARISON_BATCH_SIZE}`
+    );
+
+    for (let i = 0; i < batches.length; i += 1) {
+      const batch = batches[i];
+      this.logger.debug(`Processing sync decision batch ${i + 1}/${batches.length} with ${batch.length} workflows`);
+
+      const batchDecisions = await this.processSyncDecisionBatch(context, batch, targetWorkflowMap);
+      syncDecisions.push(...batchDecisions);
+    }
+
+    return syncDecisions;
+  }
+
+  @Instrument()
+  private async processSyncDecisionBatch(
+    context: ISyncContext,
+    sourceWorkflows: NotificationTemplateEntity[],
+    targetWorkflowMap: Map<string, NotificationTemplateEntity>
+  ): Promise<IWorkflowSyncDecision[]> {
+    const batchPromises = sourceWorkflows.map(async (workflow) => {
+      const sourceIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(workflow);
+      const targetWorkflow = targetWorkflowMap.get(sourceIdentifier);
+
+      const decision = await this.shouldSyncWorkflow(context, workflow, targetWorkflow);
+
+      return {
+        workflow,
+        targetWorkflow,
+        sync: decision.sync,
+        action: decision.action,
+        reason: decision.reason,
+      };
+    });
+
+    return Promise.all(batchPromises);
+  }
+
+  private createBatches<T>(items: T[], batchSize: number): T[][] {
+    const batches: T[][] = [];
+
+    for (let i = 0; i < items.length; i += batchSize) {
+      batches.push(items.slice(i, i + batchSize));
+    }
+
+    return batches;
   }
 
   private async handleDeletedWorkflows(
@@ -124,7 +195,7 @@ export class WorkflowSyncOperation {
     for (const targetWorkflow of targetWorkflows) {
       try {
         const targetIdentifier = this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow);
-        if (!sourceWorkflowMap.has(targetIdentifier) && targetWorkflow.active) {
+        if (!sourceWorkflowMap.has(targetIdentifier)) {
           await this.deleteWorkflowFromTarget(context, targetWorkflow);
           resultBuilder.addSuccess(
             this.workflowRepositoryService.getWorkflowIdentifier(targetWorkflow),
@@ -154,7 +225,7 @@ export class WorkflowSyncOperation {
       return { sync: true, action: WORKFLOW_SYNC_ACTIONS.CREATED };
     }
 
-    // Check if there are actual changes (both workflow and step level)
+    // Check if there are actual changes (workflow, step, and localization group level)
     const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
       workflow,
       targetWorkflow,
@@ -163,7 +234,18 @@ export class WorkflowSyncOperation {
     const hasWorkflowChanges = workflowChanges !== null;
     const hasStepChanges = stepDiffs.length > 0;
 
-    if (!hasWorkflowChanges && !hasStepChanges) {
+    // Check for localization group changes
+    const localizationDiffs = await this.getLocalizationDiffs(
+      workflow,
+      targetWorkflow,
+      context.user,
+      context.sourceEnvironmentId,
+      context.targetEnvironmentId,
+      context.user.organizationId
+    );
+    const hasLocalizationChanges = localizationDiffs.length > 0;
+
+    if (!hasWorkflowChanges && !hasStepChanges && !hasLocalizationChanges) {
       return { sync: false, action: WORKFLOW_SYNC_ACTIONS.SKIPPED, reason: SKIP_REASONS.NO_CHANGES };
     }
 
@@ -190,5 +272,42 @@ export class WorkflowSyncOperation {
         userId: context.user._id,
       })
     );
+  }
+
+  private async getLocalizationDiffs(
+    sourceWorkflow: NotificationTemplateEntity,
+    targetWorkflow: NotificationTemplateEntity,
+    userContext: UserSessionData,
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string
+  ): Promise<IResourceDiff[]> {
+    try {
+      // Use the new DiffTranslationGroups use case from the translation module
+      // eslint-disable-next-line global-require
+      const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
+        strict: false,
+      });
+
+      if (!diffTranslationGroups) {
+        this.logger.debug('Translation module not available, skipping localization diff');
+
+        return [];
+      }
+
+      return await diffTranslationGroups.execute({
+        sourceEnvironmentId: sourceEnvId,
+        targetEnvironmentId: targetEnvId,
+        resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId,
+        userId: userContext._id,
+        environmentId: sourceEnvId, // Required by EnvironmentWithUserCommand
+      });
+    } catch (error) {
+      this.logger.error(`Failed to diff localization groups for workflow ${sourceWorkflow.name}`, error);
+
+      return [];
+    }
   }
 }
