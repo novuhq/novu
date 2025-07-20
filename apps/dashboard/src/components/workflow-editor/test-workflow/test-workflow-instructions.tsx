@@ -22,11 +22,11 @@ import {
 import { TelemetryEvent } from '@/utils/telemetry';
 import type { WorkflowResponseDto } from '@novu/shared';
 import { PermissionsEnum } from '@novu/shared';
-import { motion } from 'motion/react';
 import { useEffect } from 'react';
 import { CodeBlock, Language } from '../../primitives/code-block';
 import { InlineToast } from '../../primitives/inline-toast';
 import { Separator } from '../../primitives/separator';
+import { TimelineStep, TimelineContainer } from '../../primitives/timeline';
 import { ExternalLink } from '../../shared/external-link';
 import { SnippetLanguage } from './types';
 
@@ -56,18 +56,6 @@ const SNIPPET_TO_CODE_LANGUAGE: Record<SnippetLanguage, Language> = {
   framework: 'typescript',
 };
 
-function StepNumber({ index }: { index: number }) {
-  return (
-    <div className="text-label-xs text-text-strong bg-bg-weak flex h-6 w-6 shrink-0 items-center justify-center rounded-full">
-      {index + 1}
-    </div>
-  );
-}
-
-function TimelineLine() {
-  return <div className="absolute left-3 top-6 h-[calc(100%+2rem)] w-[1px] -translate-x-1/2 bg-neutral-100" />;
-}
-
 function TriggerStepContent() {
   return (
     <>
@@ -86,21 +74,6 @@ function TriggerStepContent() {
     </>
   );
 }
-
-function StepContent({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="flex-1">
-      <div className="text-label-sm text-neutral-950">{title}</div>
-      <div className="text-label-xs text-text-soft mt-2">{children}</div>
-    </div>
-  );
-}
-
-const stepAnimation = (index: number) => ({
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { delay: index * 0.1 },
-});
 
 interface InstructionStepProps {
   index: number;
@@ -127,20 +100,13 @@ function InstructionStep({
   secretMask,
 }: InstructionStepProps) {
   return (
-    <motion.div {...stepAnimation(index)} className="relative flex gap-6">
-      <div className="relative">
-        <StepNumber index={index} />
-        <TimelineLine />
-      </div>
-      <StepContent title={title}>
-        {children}
-        {code && (
-          <div className="mt-3">
-            <CodeBlock code={code} language={codeLanguage} title={codeTitle} secretMask={secretMask} />
-          </div>
-        )}
-      </StepContent>
-    </motion.div>
+    <TimelineStep index={index} title={title} description={children as string}>
+      {code && (
+        <div className="mt-3">
+          <CodeBlock code={code} language={codeLanguage} title={codeTitle} secretMask={secretMask} />
+        </div>
+      )}
+    </TimelineStep>
   );
 }
 
@@ -208,112 +174,132 @@ export function TestWorkflowInstructions({ isOpen, onClose, workflow, to, payloa
               </TabsTrigger>
             </TabsList>
 
-            <div className="mt-5 space-y-8 p-3">
-              <TabsContent value="nodejs" className="space-y-8">
-                <InstructionStep index={0} title="Install @novu/api" code="npm install @novu/api" codeTitle="Terminal">
-                  The npm package to use with novu and node.js.
-                </InstructionStep>
+            <div className="mt-5 p-3">
+              <TabsContent value="nodejs">
+                <TimelineContainer>
+                  <InstructionStep
+                    index={0}
+                    title="Install @novu/api"
+                    code="npm install @novu/api"
+                    codeTitle="Terminal"
+                  >
+                    The npm package to use with novu and node.js.
+                  </InstructionStep>
 
-                <InstructionStep
-                  index={1}
-                  title="Copy API Keys to"
-                  code={`NOVU_SECRET_KEY=${apiKey}`}
-                  codeTitle=".env"
-                  secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
-                >
-                  Use this key to authenticate your API requests. Keep it secure and never share it publicly.{' '}
-                </InstructionStep>
+                  <InstructionStep
+                    index={1}
+                    title="Copy API Keys to"
+                    code={`NOVU_SECRET_KEY=${apiKey}`}
+                    codeTitle=".env"
+                    secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
+                  >
+                    Use this key to authenticate your API requests. Keep it secure and never share it publicly.{' '}
+                  </InstructionStep>
 
-                <InstructionStep
-                  index={2}
-                  title="Add trigger code to your application"
-                  code={getSnippetForLanguage('typescript')}
-                  codeLanguage={SNIPPET_TO_CODE_LANGUAGE.typescript}
-                  codeTitle="index.ts"
-                >
-                  <TriggerStepContent />
-                </InstructionStep>
+                  <InstructionStep
+                    index={2}
+                    title="Add trigger code to your application"
+                    code={getSnippetForLanguage('typescript')}
+                    codeLanguage={SNIPPET_TO_CODE_LANGUAGE.typescript}
+                    codeTitle="index.ts"
+                  >
+                    <TriggerStepContent />
+                  </InstructionStep>
+                </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="shell" className="space-y-8">
-                <InstructionStep
-                  index={0}
-                  title="Trigger from your terminal"
-                  code={getSnippetForLanguage('shell')}
-                  codeLanguage={SNIPPET_TO_CODE_LANGUAGE.shell}
-                >
-                  <TriggerStepContent />
-                </InstructionStep>
+              <TabsContent value="shell">
+                <TimelineContainer>
+                  <InstructionStep
+                    index={0}
+                    title="Trigger from your terminal"
+                    code={getSnippetForLanguage('shell')}
+                    codeLanguage={SNIPPET_TO_CODE_LANGUAGE.shell}
+                  >
+                    <TriggerStepContent />
+                  </InstructionStep>
+                </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="php" className="space-y-8">
-                <InstructionStep index={0} title="Install" code='composer require "novuhq/novu"' codeTitle="Terminal" />
+              <TabsContent value="php">
+                <TimelineContainer>
+                  <InstructionStep
+                    index={0}
+                    title="Install"
+                    code='composer require "novuhq/novu"'
+                    codeTitle="Terminal"
+                  />
 
-                <InstructionStep
-                  index={1}
-                  title="Add the Secret Key to your .env file"
-                  code={`# .env file
+                  <InstructionStep
+                    index={1}
+                    title="Add the Secret Key to your .env file"
+                    code={`# .env file
 NOVU_SECRET_KEY='${apiKey}'`}
-                  codeTitle=".env"
-                  secretMask={canReadApiKeys ? [{ line: 2, maskStart, maskEnd }] : undefined}
-                />
+                    codeTitle=".env"
+                    secretMask={canReadApiKeys ? [{ line: 2, maskStart, maskEnd }] : undefined}
+                  />
 
-                <InstructionStep
-                  index={2}
-                  title="Add trigger code to your application"
-                  code={getSnippetForLanguage('php')}
-                  codeTitle="index.php"
-                  codeLanguage={SNIPPET_TO_CODE_LANGUAGE.php}
-                >
-                  <TriggerStepContent />
-                </InstructionStep>
+                  <InstructionStep
+                    index={2}
+                    title="Add trigger code to your application"
+                    code={getSnippetForLanguage('php')}
+                    codeTitle="index.php"
+                    codeLanguage={SNIPPET_TO_CODE_LANGUAGE.php}
+                  >
+                    <TriggerStepContent />
+                  </InstructionStep>
+                </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="python" className="space-y-8">
-                <InstructionStep index={0} title="Install" code="pip install novu" codeTitle="Terminal" />
+              <TabsContent value="python">
+                <TimelineContainer>
+                  <InstructionStep index={0} title="Install" code="pip install novu" codeTitle="Terminal" />
 
-                <InstructionStep
-                  index={1}
-                  title="Copy API Keys to"
-                  code={`NOVU_SECRET_KEY = '${apiKey}'`}
-                  codeTitle=".env"
-                  secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
-                />
+                  <InstructionStep
+                    index={1}
+                    title="Copy API Keys to"
+                    code={`NOVU_SECRET_KEY = '${apiKey}'`}
+                    codeTitle=".env"
+                    secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
+                  />
 
-                <InstructionStep
-                  index={2}
-                  title="Add trigger code to your application"
-                  code={getSnippetForLanguage('python')}
-                  codeLanguage={SNIPPET_TO_CODE_LANGUAGE.python}
-                >
-                  <TriggerStepContent />
-                </InstructionStep>
+                  <InstructionStep
+                    index={2}
+                    title="Add trigger code to your application"
+                    code={getSnippetForLanguage('python')}
+                    codeLanguage={SNIPPET_TO_CODE_LANGUAGE.python}
+                  >
+                    <TriggerStepContent />
+                  </InstructionStep>
+                </TimelineContainer>
               </TabsContent>
 
-              <TabsContent value="go" className="space-y-8">
-                <InstructionStep
-                  index={0}
-                  title="Install"
-                  code="go get github.com/novuhq/novu-go"
-                  codeTitle="Terminal"
-                />
+              <TabsContent value="go">
+                <TimelineContainer>
+                  <InstructionStep
+                    index={0}
+                    title="Install"
+                    code="go get github.com/novuhq/novu-go"
+                    codeTitle="Terminal"
+                  />
 
-                <InstructionStep
-                  index={1}
-                  title="Copy API Keys to"
-                  code={`NOVU_SECRET_KEY = '${apiKey}'`}
-                  codeTitle=".env"
-                  secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
-                />
+                  <InstructionStep
+                    index={1}
+                    title="Copy API Keys to"
+                    code={`NOVU_SECRET_KEY = '${apiKey}'`}
+                    codeTitle=".env"
+                    secretMask={canReadApiKeys ? [{ line: 1, maskStart, maskEnd }] : undefined}
+                  />
 
-                <InstructionStep
-                  index={2}
-                  title="Add trigger code to your application"
-                  code={getSnippetForLanguage('go')}
-                  codeLanguage={SNIPPET_TO_CODE_LANGUAGE.go}
-                >
-                  <TriggerStepContent />
-                </InstructionStep>
+                  <InstructionStep
+                    index={2}
+                    title="Add trigger code to your application"
+                    code={getSnippetForLanguage('go')}
+                    codeLanguage={SNIPPET_TO_CODE_LANGUAGE.go}
+                  >
+                    <TriggerStepContent />
+                  </InstructionStep>
+                </TimelineContainer>
               </TabsContent>
             </div>
           </Tabs>

@@ -2,5 +2,8 @@ export * from './constants';
 export * from './createInfiniteScroll';
 export * from './formatToRelativeTime';
 export * from './useStyle';
+export * from './useTabsDropdown';
 export * from './useUncontrolledState';
+export * from './useWebSocketEvent';
+export * from './useNotificationVisibility';
 export * from './utils';
