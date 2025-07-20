@@ -1,4 +1,4 @@
-import { createEffect, createMemo, For, JSX, Show } from 'solid-js';
+import { createEffect, createMemo, For, JSX, Show, onCleanup } from 'solid-js';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../context';
@@ -80,6 +80,7 @@ export const NotificationList = (props: NotificationListProps) => {
                         mutation.removedNodes.forEach((node) => {
                           if (node === el) {
                             unobserveNotification(el);
+                            observer.disconnect();
                           }
                         });
                       });
@@ -88,6 +89,12 @@ export const NotificationList = (props: NotificationListProps) => {
                     if (el.parentElement) {
                       observer.observe(el.parentElement, { childList: true });
                     }
+
+                    // Cleanup function to disconnect observer when ref changes
+                    onCleanup(() => {
+                      observer.disconnect();
+                      unobserveNotification(el);
+                    });
                   }}
                 >
                   <Notification
