@@ -1,14 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum } from 'class-validator';
-import { StepIntegrationIssueEnum } from '@novu/shared';
+import { IntegrationIssueEnum } from '@novu/shared';
 import { BaseIssueDto } from './base-issue.dto';
 
-export class StepIntegrationIssue extends BaseIssueDto<StepIntegrationIssueEnum> {
+export class StepIntegrationIssue extends BaseIssueDto<IntegrationIssueEnum> {
   @ApiProperty({
     description: 'Type of integration issue',
-    enum: [...Object.values(StepIntegrationIssueEnum)],
-    enumName: 'StepIntegrationIssueEnum',
+    enum: [...Object.values(IntegrationIssueEnum)],
+    enumName: 'IntegrationIssueEnum',
   })
-  @IsEnum(StepIntegrationIssueEnum)
-  issueType: StepIntegrationIssueEnum;
+  @IsEnum(IntegrationIssueEnum)
+  issueType: IntegrationIssueEnum;
 }

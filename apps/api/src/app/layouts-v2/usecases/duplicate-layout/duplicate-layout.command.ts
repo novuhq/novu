@@ -1,9 +1,9 @@
 import { IsString, IsDefined, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { DuplicateLayoutDto } from '../../dtos';
 
-export class DuplicateLayoutCommand extends EnvironmentWithUserObjectCommand {
+export class DuplicateLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   layoutIdOrInternalId: string;

@@ -8,28 +8,41 @@ import { TranslationImportTrigger } from '../translation-import-trigger';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { getLocaleDisplayName } from '../utils';
 import { useTranslationFileOperations } from './hooks';
-import { TranslationResource } from '@/types/translations';
+import { PermissionsEnum } from '@novu/shared';
+import { PermissionButton } from '@/components/primitives/permission-button';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 
 type EditorActionsProps = {
-  selectedLocale: string;
-  contentToCopy: string;
-  content: Record<string, unknown>;
-  resource: TranslationResource;
+  selectedTranslation: TranslationWithPlaceholder;
+  modifiedContent?: Record<string, unknown> | null;
   onDelete: (locale: string) => void | Promise<void>;
   isDeleting?: boolean;
 };
 
 export function EditorActions({
-  selectedLocale,
-  contentToCopy,
-  content,
-  resource,
+  selectedTranslation,
+  modifiedContent,
   onDelete,
   isDeleting = false,
 }: EditorActionsProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const { handleDownload } = useTranslationFileOperations();
+
+  const selectedLocale = selectedTranslation.locale;
   const displayName = getLocaleDisplayName(selectedLocale);
+
+  // Use modified content if available, otherwise use translation content
+  const content = modifiedContent || selectedTranslation.content || {};
+  const contentToCopy = JSON.stringify(content, null, 2);
+
+  // Create resource object from translation data
+  const resource = {
+    resourceId: selectedTranslation.resourceId,
+    resourceType: selectedTranslation.resourceType,
+  };
+
+  // Don't allow deletion of placeholder translations that don't exist in the database
+  const canDelete = selectedTranslation && !selectedTranslation.isPlaceholder;
 
   const handleDeleteClick = () => setIsDeleteModalOpen(true);
 
@@ -49,10 +62,17 @@ export function EditorActions({
               <span className="text-sm text-neutral-400">({displayName})</span>
             </div>
           </div>
+
           <TranslationImportTrigger resource={resource}>
-            <Button variant="secondary" mode="outline" size="xs" leadingIcon={RiFileUploadLine}>
+            <PermissionButton
+              permission={PermissionsEnum.WORKFLOW_WRITE}
+              variant="secondary"
+              mode="outline"
+              size="xs"
+              leadingIcon={RiFileUploadLine}
+            >
               Import locale(s)
-            </Button>
+            </PermissionButton>
           </TranslationImportTrigger>
         </div>
 
@@ -79,18 +99,22 @@ export function EditorActions({
               <TooltipContent>Export translation JSON</TooltipContent>
             </Tooltip>
             <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
+              <TooltipTrigger>
+                <PermissionButton
+                  permission={PermissionsEnum.WORKFLOW_WRITE}
                   variant="secondary"
                   mode="outline"
                   size="xs"
                   className="px-2 py-1.5 text-neutral-700 hover:text-red-500"
                   onClick={handleDeleteClick}
+                  disabled={!canDelete}
                 >
                   <RiDeleteBinLine className="h-4 w-4" />
-                </Button>
+                </PermissionButton>
               </TooltipTrigger>
-              <TooltipContent>Delete {selectedLocale} translation</TooltipContent>
+              <TooltipContent>
+                {canDelete ? `Delete ${selectedLocale} translation` : 'Translation does not exist yet'}
+              </TooltipContent>
             </Tooltip>
           </div>
         </div>

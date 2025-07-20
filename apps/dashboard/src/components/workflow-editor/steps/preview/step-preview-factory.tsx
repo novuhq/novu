@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { StepTypeEnum } from '@novu/shared';
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { EmailCorePreview } from './previews/email-preview-wrapper';
 import { InboxPreview } from '@/components/workflow-editor/steps/in-app/inbox-preview';
@@ -39,7 +39,13 @@ export function StepPreviewFactory() {
 
   switch (step.type) {
     case StepTypeEnum.EMAIL:
-      return <EmailCorePreview {...commonProps} controlValues={controlValues} />;
+      return (
+        <EmailCorePreview
+          {...commonProps}
+          isCustomHtmlEditor={controlValues?.editorType === 'html'}
+          resourceOrigin={step.origin ?? ResourceOriginEnum.NOVU_CLOUD}
+        />
+      );
 
     case StepTypeEnum.IN_APP:
       return <InboxPreview {...commonProps} />;

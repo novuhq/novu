@@ -10,14 +10,14 @@ import { ROUTES } from '@/utils/routes';
 import { Separator } from '@/components/primitives/separator';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
-type NovuBrandingProps = HTMLAttributes<HTMLDivElement>;
+type NovuBrandingProps = HTMLAttributes<HTMLDivElement> & {
+  resourceOrigin: ResourceOriginEnum;
+};
 
-export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
+export const NovuBranding = ({ className, resourceOrigin, ...rest }: NovuBrandingProps) => {
   const { subscription } = useFetchSubscription();
   const navigate = useNavigate();
-  const { workflow } = useWorkflow();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
 
@@ -29,7 +29,7 @@ export const NovuBranding = ({ className, ...rest }: NovuBrandingProps) => {
   const removeNovuBranding = organizationSettings?.data?.removeNovuBranding;
   const isUpdating = updateOrganizationSettings.isPending;
 
-  const showBranding = workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings;
+  const showBranding = resourceOrigin === ResourceOriginEnum.NOVU_CLOUD && !removeNovuBranding && !isLoadingSettings;
 
   // Don't render anything while loading or if branding should be removed
   if (!showBranding) return null;

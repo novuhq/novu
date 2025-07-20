@@ -6,11 +6,12 @@ import {
   UpsertControlValuesUseCase,
   GetLayoutCommand,
   GetLayoutUseCase,
+  layoutControlSchema,
 } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
-  LAYOUT_CONTENT_VARIABLE,
+  LayoutControlValuesDto,
   ResourceOriginEnum,
   ResourceTypeEnum,
   slugify,
@@ -18,7 +19,7 @@ import {
 
 import { LayoutResponseDto } from '../../dtos';
 import { UpsertLayoutCommand } from './upsert-layout.command';
-import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
   CreateLayoutCommand,
   CreateLayoutUseCase,
@@ -29,9 +30,11 @@ import { mapToResponseDto } from '../mapper';
 import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
 import { LayoutVariablesSchemaCommand } from '../layout-variables-schema/layout-variables-schema.command';
 import { LayoutDto } from '../../../layouts-v1/dtos';
+import { BuildLayoutIssuesCommand } from '../build-layout-issues/build-layout-issues.command';
+import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
 
 @Injectable()
-export class UpsertLayoutUseCase {
+export class UpsertLayout {
   constructor(
     private getLayoutUseCaseV0: GetLayoutUseCase,
     private createLayoutUseCaseV0: CreateLayoutUseCase,
@@ -40,19 +43,24 @@ export class UpsertLayoutUseCase {
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
     private layoutRepository: LayoutRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private buildLayoutIssuesUsecase: BuildLayoutIssuesUsecase
   ) {}
 
   @InstrumentUsecase()
   async execute(command: UpsertLayoutCommand): Promise<LayoutResponseDto> {
-    this.validateLayout(command);
+    const { controlValues } = command.layoutDto;
+    await this.validateLayout({
+      command,
+      controlValues,
+    });
 
     const existingLayout = command.layoutIdOrInternalId
       ? await this.getLayoutUseCaseV0.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: command.layoutIdOrInternalId,
-            environmentId: command.user.environmentId,
-            organizationId: command.user.organizationId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
             type: ResourceTypeEnum.BRIDGE,
             origin: ResourceOriginEnum.NOVU_CLOUD,
           })
@@ -65,9 +73,9 @@ export class UpsertLayoutUseCase {
 
       upsertedLayout = await this.updateLayoutUseCaseV0.execute(
         UpdateLayoutCommand.create({
-          environmentId: command.user.environmentId,
-          organizationId: command.user.organizationId,
-          userId: command.user._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
           layoutId: existingLayout._id!,
           name: command.layoutDto.name,
           type: existingLayout.type ?? ResourceTypeEnum.BRIDGE,
@@ -78,8 +86,8 @@ export class UpsertLayoutUseCase {
       this.mixpanelTrack(command, 'Layout Create - [Layouts]');
 
       const defaultLayout = await this.layoutRepository.findOne({
-        _organizationId: command.user.organizationId,
-        _environmentId: command.user.environmentId,
+        _organizationId: command.organizationId,
+        _environmentId: command.environmentId,
         type: ResourceTypeEnum.BRIDGE,
         origin: ResourceOriginEnum.NOVU_CLOUD,
         isDefault: true,
@@ -87,9 +95,9 @@ export class UpsertLayoutUseCase {
 
       upsertedLayout = await this.createLayoutUseCaseV0.execute(
         CreateLayoutCommand.create({
-          environmentId: command.user.environmentId,
-          organizationId: command.user.organizationId,
-          userId: command.user._id,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
           name: command.layoutDto.name,
           identifier: slugify(command.layoutDto.name),
           type: ResourceTypeEnum.BRIDGE,
@@ -103,9 +111,9 @@ export class UpsertLayoutUseCase {
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
-        controlValues: upsertedControlValues?.controls ?? {},
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        controlValues: (controlValues ?? {}) as Record<string, unknown>,
       })
     );
 
@@ -116,9 +124,19 @@ export class UpsertLayoutUseCase {
     });
   }
 
-  private validateLayout(command: UpsertLayoutCommand) {
-    if (command.layoutDto.controlValues?.email) {
-      const { body: content, editorType } = command.layoutDto.controlValues.email;
+  private async validateLayout({
+    command,
+    controlValues,
+  }: {
+    command: UpsertLayoutCommand;
+    controlValues?: LayoutControlValuesDto | null;
+  }) {
+    if (!controlValues) {
+      return;
+    }
+
+    if (controlValues.email) {
+      const { body: content, editorType } = controlValues.email;
       const isMailyContent = isStringifiedMailyJSONContent(content);
       const isHtmlContent =
         content.includes('<html') &&
@@ -137,13 +155,21 @@ export class UpsertLayoutUseCase {
       } else if (editorType === 'block' && !isMailyContent) {
         throw new BadRequestException('Content must be a valid Maily JSON content');
       }
+    }
 
-      if (
-        (isMailyContent && !hasMailyVariable(content, LAYOUT_CONTENT_VARIABLE)) ||
-        (isHtmlContent && !this.hasHtmlVariable(content, LAYOUT_CONTENT_VARIABLE))
-      ) {
-        throw new BadRequestException('The layout body should contain the "content" variable');
-      }
+    const issues = await this.buildLayoutIssuesUsecase.execute(
+      BuildLayoutIssuesCommand.create({
+        controlSchema: layoutControlSchema,
+        controlValues,
+        resourceOrigin: command.layoutDto.__source ? ResourceOriginEnum.NOVU_CLOUD : ResourceOriginEnum.EXTERNAL,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+      })
+    );
+
+    if (Object.keys(issues).length > 0) {
+      throw new BadRequestException(issues);
     }
   }
 
@@ -151,12 +177,16 @@ export class UpsertLayoutUseCase {
     const {
       layoutDto: { controlValues },
     } = command;
-    const shouldDelete = controlValues === null;
+    const doNothing = typeof controlValues === 'undefined';
+    if (doNothing) {
+      return null;
+    }
 
+    const shouldDelete = controlValues === null;
     if (shouldDelete) {
       this.controlValuesRepository.delete({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
         _layoutId: layoutId,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
@@ -166,8 +196,8 @@ export class UpsertLayoutUseCase {
 
     return this.upsertControlValuesUseCase.execute(
       UpsertControlValuesCommand.create({
-        organizationId: command.user.organizationId,
-        environmentId: command.user.environmentId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
         layoutId,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
         newControlValues: controlValues as unknown as Record<string, unknown>,
@@ -176,16 +206,10 @@ export class UpsertLayoutUseCase {
   }
 
   private mixpanelTrack(command: UpsertLayoutCommand, eventName: string) {
-    this.analyticsService.mixpanelTrack(eventName, command.user?._id, {
-      _organization: command.user.organizationId,
+    this.analyticsService.mixpanelTrack(eventName, command.userId, {
+      _organization: command.organizationId,
       name: command.layoutDto.name,
       source: command.layoutDto.__source,
     });
-  }
-
-  private hasHtmlVariable(content: string, variable: string): boolean {
-    const liquidVariableRegex = new RegExp(`\\{\\{\\s*${variable}\\s*\\}\\}`, 'g');
-
-    return liquidVariableRegex.test(content);
   }
 }

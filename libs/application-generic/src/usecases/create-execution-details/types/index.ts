@@ -31,6 +31,7 @@ export enum DetailEnum {
   PROVIDER_ERROR = 'Unexpected provider error',
   START_SENDING = 'Start sending message',
   START_DIGESTING = 'Start digesting',
+  STEP_COMPLETED = 'Step completed',
   PROCESSING_STEP_FILTER = 'Processing step filter',
   PROCESSING_STEP_FILTER_ERROR = 'Processing step filter failed',
   FILTER_STEPS = 'Step was filtered based on steps filters',

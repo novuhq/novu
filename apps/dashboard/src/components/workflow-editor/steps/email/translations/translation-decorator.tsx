@@ -50,8 +50,6 @@ export const createTranslationExtension = (
           items.push({
             name: query.trim(),
             id: query.trim(),
-            type: 'new-translation-key',
-            displayLabel: `Create "${query.trim()}"`,
           });
         }
 

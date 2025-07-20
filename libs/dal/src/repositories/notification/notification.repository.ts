@@ -122,6 +122,22 @@ export class NotificationRepository extends BaseRepository<
     ) as unknown as NotificationFeedItemEntity;
   }
 
+  public async findNotificationMetadataOnly(
+    notificationId: string,
+    _environmentId: string,
+    _organizationId: string
+  ): Promise<NotificationFeedItemEntity> {
+    const requestQuery: FilterQuery<NotificationDBModel> = {
+      _id: notificationId,
+      _environmentId,
+      _organizationId,
+    };
+
+    return this.mapEntity(
+      await this.populateNotificationMetadataOnly(this.MongooseModel.findOne(requestQuery))
+    ) as unknown as NotificationFeedItemEntity;
+  }
+
   private populateFeed(query: QueryWithHelpers<unknown, unknown, unknown>, environmentId: string) {
     return query
       .populate({
@@ -205,6 +221,24 @@ export class NotificationRepository extends BaseRepository<
             select: '_parentId _templateId active filters template',
           },
         ],
+      });
+  }
+
+  private populateNotificationMetadataOnly(query: QueryWithHelpers<unknown, unknown, unknown>) {
+    return query
+      .populate({
+        options: {
+          readPreference: 'secondaryPreferred',
+        },
+        path: 'subscriber',
+        select: 'firstName _id lastName email phone subscriberId',
+      })
+      .populate({
+        options: {
+          readPreference: 'secondaryPreferred',
+        },
+        path: 'template',
+        select: '_id name triggers origin',
       });
   }
 

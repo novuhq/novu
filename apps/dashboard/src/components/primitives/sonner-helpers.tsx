@@ -49,3 +49,19 @@ export const showErrorToast = (message: string | ReactNode, title?: string, opti
     },
   });
 };
+
+export const showWarningToast = (message: string | ReactNode, title?: string, options: ExternalToast = {}) => {
+  showToast({
+    title,
+    children: () => (
+      <>
+        <ToastIcon variant="warning" />
+        <span className="text-sm">{message}</span>
+      </>
+    ),
+    options: {
+      position: 'bottom-center',
+      ...options,
+    },
+  });
+};

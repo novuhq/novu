@@ -39,14 +39,10 @@ export class GetPreferences {
   constructor(private preferencesRepository: PreferencesRepository) {}
 
   @InstrumentUsecase()
-  async execute(
-    command: GetPreferencesCommand,
-  ): Promise<GetPreferencesResponseDto> {
+  async execute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
     const items = await this.getPreferencesFromDb(command);
 
-    const mergedPreferences = MergePreferences.execute(
-      MergePreferencesCommand.create(items),
-    );
+    const mergedPreferences = MergePreferences.execute(MergePreferencesCommand.create(items));
 
     if (!mergedPreferences.preferences) {
       throw new PreferencesNotFoundException(command);
@@ -68,14 +64,10 @@ export class GetPreferences {
       return undefined;
     }
 
-    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(
-      result.preferences,
-    );
+    return GetPreferences.mapWorkflowPreferencesToChannelPreferences(result.preferences);
   }
 
-  public async safeExecute(
-    command: GetPreferencesCommand,
-  ): Promise<GetPreferencesResponseDto> {
+  public async safeExecute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {
     try {
       return await this.execute(
         GetPreferencesCommand.create({
@@ -83,7 +75,7 @@ export class GetPreferences {
           organizationId: command.organizationId,
           subscriberId: command.subscriberId,
           templateId: command.templateId,
-        }),
+        })
       );
     } catch (e) {
       // If we cant find preferences lets return undefined instead of throwing it up to caller to make it easier for caller to handle.
@@ -96,32 +88,24 @@ export class GetPreferences {
 
   /** Transform WorkflowPreferences into IPreferenceChannels */
   public static mapWorkflowPreferencesToChannelPreferences(
-    workflowPreferences: WorkflowPreferencesPartial,
+    workflowPreferences: WorkflowPreferencesPartial
   ): IPreferenceChannels {
     const builtPreferences = buildWorkflowPreferences(workflowPreferences);
 
-    const mappedPreferences = Object.entries(
-      builtPreferences.channels ?? {},
-    ).reduce(
+    const mappedPreferences = Object.entries(builtPreferences.channels ?? {}).reduce(
       (acc, [channel, preference]) => ({
         ...acc,
         [channel]: preference.enabled,
       }),
-      {} as IPreferenceChannels,
+      {} as IPreferenceChannels
     );
 
     return mappedPreferences;
   }
 
-  private async getPreferencesFromDb(
-    command: GetPreferencesCommand,
-  ): Promise<PreferenceSet> {
-    const [
-      workflowResourcePreference,
-      workflowUserPreference,
-      subscriberWorkflowPreference,
-      subscriberGlobalPreference,
-    ] = await Promise.all([
+  private async getPreferencesFromDb(command: GetPreferencesCommand): Promise<PreferenceSet> {
+    // Always fetch workflow-level preferences
+    const workflowPreferencesPromises = [
       this.preferencesRepository.findOne({
         _templateId: command.templateId,
         _environmentId: command.environmentId,
@@ -132,18 +116,31 @@ export class GetPreferences {
         _environmentId: command.environmentId,
         type: PreferencesTypeEnum.USER_WORKFLOW,
       }) as Promise<PreferenceSet['workflowUserPreference'] | null>,
-      this.preferencesRepository.findOne({
-        _subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-        _templateId: command.templateId,
-        type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-      }) as Promise<PreferenceSet['subscriberWorkflowPreference'] | null>,
-      this.preferencesRepository.findOne({
-        _subscriberId: command.subscriberId,
-        _environmentId: command.environmentId,
-        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-      }) as Promise<PreferenceSet['subscriberGlobalPreference'] | null>,
-    ]);
+    ];
+
+    // Only fetch subscriber preferences if subscriberId is provided
+    const subscriberPreferencesPromises = command.subscriberId
+      ? [
+          this.preferencesRepository.findOne({
+            _subscriberId: command.subscriberId,
+            _environmentId: command.environmentId,
+            _templateId: command.templateId,
+            type: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
+          }) as Promise<PreferenceSet['subscriberWorkflowPreference'] | null>,
+          this.preferencesRepository.findOne({
+            _subscriberId: command.subscriberId,
+            _environmentId: command.environmentId,
+            type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+          }) as Promise<PreferenceSet['subscriberGlobalPreference'] | null>,
+        ]
+      : [Promise.resolve(null), Promise.resolve(null)];
+
+    const [
+      workflowResourcePreference,
+      workflowUserPreference,
+      subscriberWorkflowPreference,
+      subscriberGlobalPreference,
+    ] = await Promise.all([...workflowPreferencesPromises, ...subscriberPreferencesPromises]);
 
     return {
       ...(workflowResourcePreference ? { workflowResourcePreference } : {}),

@@ -4,7 +4,7 @@ import { addDays } from 'date-fns';
 
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { ClickHouseService } from './clickhouse.service';
+import { ClickHouseService, InsertOptions } from './clickhouse.service';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { generateObjectId } from '../../utils/generate-id';
 
@@ -42,27 +42,32 @@ export type Where<T> = {
 
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
-export abstract class LogRepository<T extends ClickhouseSchema<any>> {
+export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_Enhanced_Type> {
   readonly table: string;
   readonly identifierPrefix: string;
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly schema: T,
-    protected readonly schemaOrderBy: SchemaKeys<T>[],
+    protected readonly schema: T_Schema,
+    protected readonly schemaOrderBy: SchemaKeys<T_Schema>[],
     protected readonly featureFlagsService: FeatureFlagsService
   ) {
     this.initialize();
   }
 
-  private initialize() {
+  private async initialize() {
     if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
       return;
     }
 
-    const query = this.schema.GetCreateTableQuery().replace('ORDER_BY_X_LIST', `(${this.schemaOrderBy.join(', ')})`);
-    this.clickhouseService.exec({ query });
+    const query = this.schema.GetCreateTableQuery();
+
+    try {
+      await this.clickhouseService.exec({ query });
+    } catch (error) {
+      this.logger.error('Failed to create ClickHouse table', error);
+    }
   }
 
   private getColumnType(column: string): string {
@@ -74,7 +79,7 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
     return 'String';
   }
 
-  private validateColumnName(columnName: SchemaKeys<T>): void {
+  private validateColumnName(columnName: SchemaKeys<T_Schema>): void {
     if (!columnName || typeof columnName !== 'string') {
       throw new Error('Invalid column name: must be a non-empty string');
     }
@@ -94,7 +99,7 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
     }
   }
 
-  private async getExpirationDate(context?: {
+  protected async getExpirationDate(context?: {
     organizationId?: string;
     environmentId?: string;
     userId?: string;
@@ -130,7 +135,7 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
    *   params: { param_0_userid: 123, param_1_name: 'John%' }
    * }
    */
-  private buildWhereClause(where: Where<InferClickhouseSchemaType<T>>): {
+  private buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
     clause: string;
     params: Record<string, any>;
   } {
@@ -174,27 +179,29 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
   }
 
   async insert(
-    data: Omit<InferClickhouseSchemaType<T>, 'id' | 'expires_at'>,
-    context?: {
+    data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'>,
+    context: {
       organizationId?: string;
       environmentId?: string;
       userId?: string;
-    }
+    },
+    options?: InsertOptions
   ): Promise<void> {
     const id = `${this.identifierPrefix}${generateObjectId()}`;
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
-    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }]);
+    await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }], options);
   }
 
   async insertMany(
-    data: Omit<InferClickhouseSchemaType<T>, 'id' | 'expires_at'>[],
-    context?: {
+    data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'>[],
+    context: {
       organizationId?: string;
       environmentId?: string;
       userId?: string;
-    }
+    },
+    options?: InsertOptions
   ): Promise<void> {
     const ids = data.map((item) => `${this.identifierPrefix}${generateObjectId()}`);
     const expirationDate = await this.getExpirationDate(context);
@@ -202,18 +209,21 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
 
     await this.clickhouseService.insert(
       this.table,
-      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt }))
+      data.map((item, index) => ({ ...item, id: ids[index], expires_at: expiresAt })),
+      options
     );
   }
 
   async find(options: {
-    where: Where<InferClickhouseSchemaType<T>>;
+    where: Where<InferClickhouseSchemaType<T_Schema>>;
     limit?: number;
     offset?: number;
-    orderBy?: SchemaKeys<T>;
+    // todo make a type validation for available orderBy columns
+    orderBy?: SchemaKeys<T_Schema>;
     orderDirection?: 'ASC' | 'DESC';
-  }): Promise<{ data: InferClickhouseSchemaType<T>[]; rows: number }> {
-    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC' } = options;
+    useFinal?: boolean;
+  }): Promise<{ data: T_Enhanced_Type[]; rows: number }> {
+    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false } = options;
 
     if (limit < 0 || limit > LIMIT_MAX_THRESHOLD) {
       throw new Error(`Limit must be between 0 and ${LIMIT_MAX_THRESHOLD}`);
@@ -228,7 +238,11 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
       this.validateColumnName(String(orderBy));
 
       if (!this.schemaOrderBy.includes(orderBy)) {
-        throw new Error(
+        this.logger.error(
+          {
+            orderBy,
+            schemaOrderBy: this.schemaOrderBy,
+          },
           `Column '${orderBy as string}' cannot be used for ordering. Available columns: ${this.schemaOrderBy.join(', ')}`
         );
       }
@@ -238,16 +252,17 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
       throw new Error(`Invalid order direction: ${orderDirection}. Allowed directions: ${ORDER_DIRECTION.join(', ')}`);
     }
 
+    const finalModifier = useFinal ? ' FINAL' : '';
     const query = `
       SELECT *
-      FROM ${this.table}
+      FROM ${this.table}${finalModifier}
       ${clause}
       ${orderBy ? `ORDER BY ${String(orderBy)} ${orderDirection}` : ''}
       LIMIT ${limit}
       OFFSET ${offset}
     `;
 
-    const result = await this.clickhouseService.query<InferClickhouseSchemaType<T>>({
+    const result = await this.clickhouseService.query<T_Enhanced_Type>({
       query,
       params,
     });
@@ -255,7 +270,7 @@ export abstract class LogRepository<T extends ClickhouseSchema<any>> {
     return result;
   }
 
-  async count(options: { where: Where<InferClickhouseSchemaType<T>> }): Promise<number> {
+  async count(options: { where: Where<InferClickhouseSchemaType<T_Schema>> }): Promise<number> {
     const { where } = options;
     const { clause, params } = this.buildWhereClause(where);
 

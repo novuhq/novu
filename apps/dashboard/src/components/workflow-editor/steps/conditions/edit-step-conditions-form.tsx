@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { StepContentIssueEnum, type StepUpdateDto } from '@novu/shared';
+import { ContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
@@ -273,7 +273,7 @@ export const EditStepConditionsForm = () => {
       stepConditionIssues.forEach((issue) => {
         const queryPath = 'query.rules.' + issue.variableName?.split('.').join('.rules.');
 
-        if (issue.issueType === StepContentIssueEnum.MISSING_VALUE) {
+        if (issue.issueType === ContentIssueEnum.MISSING_VALUE) {
           form.setError(`${queryPath}.value` as keyof typeof form.formState.errors, {
             message: issue.message,
           });

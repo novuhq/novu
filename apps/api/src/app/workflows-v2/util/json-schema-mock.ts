@@ -212,7 +212,7 @@ export class JsonSchemaMock {
 
     // Language/Locale patterns
     if (this.matchesPattern(lowerKey, ['language', 'lang', 'locale', 'timezone', 'tz'])) {
-      return 'en-US';
+      return 'en_US';
     }
 
     // Version patterns

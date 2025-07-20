@@ -3,7 +3,8 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { uploadTranslations } from '@/api/translations';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast, showWarningToast } from '@/components/primitives/sonner-helpers';
+import { NovuApiError } from '@/api/api.client';
 
 type UploadTranslationsParameters = OmitEnvironmentFromParameters<typeof uploadTranslations>;
 
@@ -14,15 +15,19 @@ export const useUploadTranslations = ({ onSuccess }: { onSuccess?: () => void } 
   return useMutation({
     mutationFn: (args: UploadTranslationsParameters) =>
       uploadTranslations({ environment: currentEnvironment!, ...args }),
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslation, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslation, variables.resourceId, variables.resourceType],
         exact: false,
       });
 
       await queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-        exact: false,
+        queryKey: [
+          QueryKeys.fetchTranslationGroup,
+          variables.resourceId,
+          variables.resourceType,
+          currentEnvironment?._id,
+        ],
       });
 
       await queryClient.invalidateQueries({
@@ -30,11 +35,41 @@ export const useUploadTranslations = ({ onSuccess }: { onSuccess?: () => void } 
         exact: false,
       });
 
-      showSuccessToast('Translations uploaded successfully');
+      // Check if there were any failures in the upload
+      if (data.failedUploads > 0) {
+        // Partial success - some files uploaded, some failed
+        const errorMessage = data.errors.join('\n');
+        showWarningToast(
+          `${data.successfulUploads} of ${data.totalFiles} files uploaded successfully. ${data.failedUploads} failed:\n${errorMessage}`,
+          'Partial Upload'
+        );
+      } else {
+        // Complete success - all files uploaded
+        showSuccessToast(`All ${data.totalFiles} translation files uploaded successfully`);
+      }
+
       onSuccess?.();
     },
     onError: (error) => {
-      showErrorToast(error instanceof Error ? error.message : 'Failed to upload translations', 'Upload failed');
+      let errorMessage = 'Failed to upload translations';
+
+      // Check if it's a NovuApiError with rawError containing detailed errors
+      if (error instanceof NovuApiError && error.rawError) {
+        const errorData = error.rawError as any;
+
+        // Check for detailed errors in errors array
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join('\n');
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else {
+          errorMessage = error.message;
+        }
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+
+      showErrorToast(errorMessage, 'Upload failed');
     },
   });
 };

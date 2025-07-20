@@ -35,6 +35,7 @@ import {
   NormalizeVariables,
   NormalizeVariablesCommand,
   StandardQueueService,
+  StepRunRepository,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
@@ -69,6 +70,7 @@ export class AddJob {
     private normalizeVariablesUsecase: NormalizeVariables,
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private executeBridgeJob: ExecuteBridgeJob,
+    private stepRunRepository: StepRunRepository,
     private subscriberRepository: SubscriberRepository
   ) {}
 
@@ -175,6 +177,11 @@ export class AddJob {
       throw new Error('Defer duration limit exceeded');
     }
 
+    await this.stepRunRepository.create(command.job, {
+      status: JobStatusEnum.DELAYED,
+      deferredMs: delay,
+    });
+
     await this.queueJob(job, delay);
   }
 
@@ -220,6 +227,10 @@ export class AddJob {
 
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.QUEUED,
+    });
 
     await this.queueJob(job, 0);
   }

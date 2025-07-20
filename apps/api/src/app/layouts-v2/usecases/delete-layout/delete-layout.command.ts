@@ -1,7 +1,7 @@
 import { IsString, IsDefined } from 'class-validator';
-import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
-export class DeleteLayoutCommand extends EnvironmentWithUserObjectCommand {
+export class DeleteLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsDefined()
   layoutIdOrInternalId: string;

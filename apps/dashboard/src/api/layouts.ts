@@ -8,6 +8,15 @@ import {
 } from '@novu/shared';
 import { getV2, postV2, putV2, delV2 } from './api.client';
 
+export type WorkflowInfo = {
+  name: string;
+  workflowId: string;
+};
+
+export type GetLayoutUsageResponse = {
+  workflows: WorkflowInfo[];
+};
+
 export const getLayouts = async ({
   environment,
   limit,
@@ -70,6 +79,35 @@ export const updateLayout = async ({
 
 export const deleteLayout = async ({ environment, layoutSlug }: { environment: IEnvironment; layoutSlug: string }) => {
   await delV2(`/layouts/${layoutSlug}`, { environment });
+};
+
+export const duplicateLayout = async ({
+  environment,
+  layoutSlug,
+  data,
+}: {
+  environment: IEnvironment;
+  layoutSlug: string;
+  data: { name: string };
+}) => {
+  const { data: result } = await postV2<{ data: LayoutResponseDto }>(`/layouts/${layoutSlug}/duplicate`, {
+    environment,
+    body: data,
+  });
+
+  return result;
+};
+
+export const getLayoutUsage = async ({
+  environment,
+  layoutSlug,
+}: {
+  environment: IEnvironment;
+  layoutSlug: string;
+}): Promise<GetLayoutUsageResponse> => {
+  const { data } = await getV2<{ data: GetLayoutUsageResponse }>(`/layouts/${layoutSlug}/usage`, { environment });
+
+  return data;
 };
 
 export const previewLayout = async ({

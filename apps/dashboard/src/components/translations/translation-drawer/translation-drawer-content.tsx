@@ -1,4 +1,3 @@
-import { Button } from '@/components/primitives/button';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { TranslationGroup } from '@/api/translations';
 import { TranslationHeader } from './translation-header';
@@ -6,6 +5,9 @@ import { LocaleList } from './locale-list';
 import { EditorPanel } from './editor-panel';
 import { useTranslationDrawerLogic } from './use-translation-drawer-logic';
 import { forwardRef, useImperativeHandle, useState, useCallback } from 'react';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { PermissionsEnum } from '@novu/shared';
+import { PermissionButton } from '@/components/primitives/permission-button';
 
 type TranslationDrawerContentProps = {
   translationGroup: TranslationGroup;
@@ -21,6 +23,8 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
   ({ translationGroup, initialLocale, onLocaleChange }, ref) => {
     const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+    const has = useHasPermission();
+    const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
 
     const {
       selectedLocale,
@@ -36,7 +40,8 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
       handleDelete,
     } = useTranslationDrawerLogic(translationGroup, initialLocale, onLocaleChange);
 
-    const canSave = selectedLocale && editor.modifiedContent && !saveTranslationMutation.isPending && !editor.jsonError;
+    const canSave =
+      canWrite && selectedLocale && editor.modifiedContent && !saveTranslationMutation.isPending && !editor.jsonError;
 
     const checkUnsavedChanges = useCallback(
       (action: () => void) => {
@@ -84,7 +89,6 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
           />
 
           <EditorPanel
-            selectedLocale={selectedLocale}
             selectedTranslation={selectedTranslation}
             isLoadingTranslation={isLoadingTranslation}
             translationError={translationError}
@@ -92,14 +96,14 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             jsonError={editor.jsonError}
             onContentChange={editor.handleContentChange}
             onDelete={handleDelete}
-            resource={resource}
             isDeleting={deleteTranslationMutation.isPending}
             outdatedLocales={translationGroup.outdatedLocales}
           />
         </div>
 
         <div className="flex items-center justify-end border-t border-neutral-200 bg-white px-6 py-3">
-          <Button
+          <PermissionButton
+            permission={PermissionsEnum.WORKFLOW_WRITE}
             variant="secondary"
             size="sm"
             disabled={!canSave}
@@ -107,7 +111,7 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             isLoading={saveTranslationMutation.isPending}
           >
             Save changes
-          </Button>
+          </PermissionButton>
         </div>
 
         <UnsavedChangesAlertDialog

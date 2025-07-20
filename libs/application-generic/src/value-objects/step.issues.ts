@@ -1,7 +1,6 @@
 import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { StepCreateAndUpdateKeys } from '@novu/shared';
-import { ContentIssue } from './content.issue';
+import { RuntimeIssue, StepCreateAndUpdateKeys } from '@novu/shared';
 import { StepIssue } from './step.issue';
 
 export class StepIssues {
@@ -14,6 +13,6 @@ export class StepIssues {
   @IsOptional()
   @IsObject()
   @ValidateNested({ each: true })
-  @Type(() => ContentIssue)
-  controls?: Record<string, ContentIssue[]>;
+  @Type(() => RuntimeIssue)
+  controls?: Record<string, RuntimeIssue[]>;
 }

@@ -8,21 +8,14 @@ import {
   DEFAULT_CONTROL_DIGEST_UNIT,
   STEP_TYPE_LABELS,
 } from '@/utils/constants';
-import type {
-  StepContentIssue,
-  StepCreateDto,
-  StepUpdateDto,
-  UpdateWorkflowDto,
-  WorkflowResponseDto,
-  Issue,
-} from '@novu/shared';
+import type { StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto, RuntimeIssue } from '@novu/shared';
 import { StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
 
-export const getFirstErrorMessage = <T, D = T>(
+export const getFirstErrorMessage = (
   issues?: {
-    controls?: Record<string, Issue<T>[]>;
-    integration?: Record<string, Issue<D>[]>;
+    controls?: Record<string, RuntimeIssue[]>;
+    integration?: Record<string, RuntimeIssue[]>;
   },
   type: 'controls' | 'integration' = 'controls'
 ) => {
@@ -35,9 +28,9 @@ export const getFirstErrorMessage = <T, D = T>(
   }
 };
 
-export const countIssues = <T, D = T>(issues?: {
-  controls?: Record<string, Issue<T>[]>;
-  integration?: Record<string, Issue<D>[]>;
+export const countIssues = (issues?: {
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }): number => {
   if (!issues) return 0;
 
@@ -58,13 +51,13 @@ export const countIssues = <T, D = T>(issues?: {
   return count;
 };
 
-export const getAllStepIssues = <T, D = T>(issues?: {
-  controls?: Record<string, Issue<T>[]>;
-  integration?: Record<string, Issue<D>[]>;
-}): Issue<T | D>[] => {
+export const getAllStepIssues = (issues?: {
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
+}): RuntimeIssue[] => {
   if (!issues) return [];
 
-  const allIssues: Issue<T | D>[] = [];
+  const allIssues: RuntimeIssue[] = [];
 
   if (issues.controls) {
     Object.values(issues.controls).forEach((issueArray) => {
@@ -81,8 +74,8 @@ export const getAllStepIssues = <T, D = T>(issues?: {
   return allIssues;
 };
 
-export const flattenIssues = (controlIssues?: Record<string, StepContentIssue[]>): Record<string, string> => {
-  const controlIssuesFlat: Record<string, StepContentIssue[]> = flatten({ ...controlIssues }, { safe: true });
+export const flattenIssues = (controlIssues?: Record<string, RuntimeIssue[]>): Record<string, string> => {
+  const controlIssuesFlat: Record<string, RuntimeIssue[]> = flatten({ ...controlIssues }, { safe: true });
 
   return Object.entries(controlIssuesFlat).reduce((acc, [key, value]) => {
     const errorMessage = value.length > 0 ? value[0].message : undefined;
@@ -122,7 +115,7 @@ export const updateStepInWorkflow = (
   };
 };
 
-export const createStep = (type: StepTypeEnum): StepCreateDto => {
+export const createStep = (type: StepTypeEnum, defaultLayoutId: string | undefined): StepCreateDto => {
   const controlValue: Record<string, unknown> = {};
 
   if (type === StepTypeEnum.DIGEST) {
@@ -136,6 +129,10 @@ export const createStep = (type: StepTypeEnum): StepCreateDto => {
     controlValue.amount = DEFAULT_CONTROL_DELAY_AMOUNT;
     controlValue.unit = DEFAULT_CONTROL_DELAY_UNIT;
     controlValue.type = DEFAULT_CONTROL_DELAY_TYPE;
+  }
+
+  if (type === StepTypeEnum.EMAIL && defaultLayoutId) {
+    controlValue.layoutId = defaultLayoutId;
   }
 
   return {

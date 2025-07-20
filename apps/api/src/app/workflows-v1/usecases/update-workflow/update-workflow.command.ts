@@ -14,6 +14,7 @@ import {
 } from 'class-validator';
 
 import {
+  RuntimeIssue,
   CustomDataType,
   WorkflowStatusEnum,
   ResourceTypeEnum,
@@ -23,7 +24,7 @@ import {
 } from '@novu/shared';
 
 import { Exclude, Type } from 'class-transformer';
-import { ClientSession, RuntimeIssue } from '@novu/dal';
+import { ClientSession } from '@novu/dal';
 import {
   EnvironmentWithUserCommand,
   PreferencesRequired,
@@ -104,7 +105,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   rawData?: Record<string, unknown>;
 
   @IsOptional()
-  payloadSchema?: JSONSchema;
+  payloadSchema?: JSONSchema | null;
 
   @IsOptional()
   @IsBoolean()
