@@ -29,14 +29,6 @@ type PublishState = {
   publishResult: IEnvironmentPublishResponse | null;
 };
 
-type ChangesSummary = {
-  total: number;
-  added: number;
-  modified: number;
-  deleted: number;
-  unchanged: number;
-};
-
 export const PublishButton = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { state, actions } = usePublishState();
@@ -59,7 +51,7 @@ export const PublishButton = () => {
     enabled: !!targetEnvironment,
   });
 
-  const changesSummary = calculateChangesSummary(diffData);
+  const changesCount = calculateChangesCount(diffData);
 
   // Invalidate diff cache when workflows change
   useInvalidateDiffOnWorkflowChange(!!targetEnvironment);
@@ -112,12 +104,12 @@ export const PublishButton = () => {
           mode="outline"
           size="2xs"
           leadingIcon={RiGitPullRequestFill}
-          onClick={() => handleEnvironmentSelect(targetEnvironment, changesSummary.total > 0)}
+          onClick={() => handleEnvironmentSelect(targetEnvironment, changesCount > 0)}
           disabled={isDiffLoading}
         >
           <div className="flex items-center">
             Publish changes
-            <ChangeIndicator summary={changesSummary} isLoading={isDiffLoading} />
+            <ChangeIndicator count={changesCount} isLoading={isDiffLoading} />
           </div>
         </Button>
 
@@ -213,24 +205,10 @@ export const PublishButton = () => {
   );
 };
 
-const calculateChangesSummary = (diffData: any): ChangesSummary => {
-  const initial = { added: 0, modified: 0, deleted: 0, unchanged: 0, total: 0 };
+const calculateChangesCount = (diffData: any): number => {
+  if (!diffData?.resources) return 0;
 
-  if (!diffData?.resources) return initial;
-
-  const summary = diffData.resources.reduce(
-    (acc: any, resource: any) => ({
-      added: acc.added + resource.summary.added,
-      modified: acc.modified + resource.summary.modified,
-      deleted: acc.deleted + resource.summary.deleted,
-      unchanged: acc.unchanged + resource.summary.unchanged,
-    }),
-    initial
-  );
-
-  summary.total = summary.added + summary.modified + summary.deleted;
-
-  return summary;
+  return diffData.resources.length;
 };
 
 const usePublishState = () => {
@@ -273,17 +251,17 @@ const useInvalidateDiffOnWorkflowChange = (enabled: boolean = true) => {
 };
 
 type ChangeIndicatorProps = {
-  summary: ChangesSummary | null;
+  count: number;
   isLoading: boolean;
   variant?: 'inline' | 'badge';
 };
 
-const ChangeIndicator = ({ summary, isLoading, variant = 'inline' }: ChangeIndicatorProps) => {
-  if (isLoading && !summary) {
+const ChangeIndicator = ({ count, isLoading, variant = 'inline' }: ChangeIndicatorProps) => {
+  if (isLoading) {
     return <Skeleton className="ml-1 h-4 w-6 rounded-full" />;
   }
 
-  if (!summary || summary.total === 0) {
+  if (count === 0) {
     return variant === 'badge' ? (
       <Badge variant="lighter" color="gray" size="sm">
         No changes
@@ -294,7 +272,7 @@ const ChangeIndicator = ({ summary, isLoading, variant = 'inline' }: ChangeIndic
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={summary.total}
+        key={count}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -302,7 +280,7 @@ const ChangeIndicator = ({ summary, isLoading, variant = 'inline' }: ChangeIndic
         className={variant === 'inline' ? 'ml-1' : ''}
       >
         <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
-          {summary.total}
+          {count}
         </Badge>
       </motion.div>
     </AnimatePresence>
@@ -323,8 +301,8 @@ const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDrop
     enabled: isDropdownOpen,
   });
 
-  const summary = calculateChangesSummary(diffData);
-  const hasChanges = summary.total > 0;
+  const changesCount = calculateChangesCount(diffData);
+  const hasChanges = changesCount > 0;
 
   const handleClick = () => {
     if (!isLoading) {
@@ -344,7 +322,7 @@ const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDrop
             </TruncatedText>
           </span>
         </div>
-        <ChangeIndicator summary={summary} isLoading={isLoading} variant="badge" />
+        <ChangeIndicator count={changesCount} isLoading={isLoading} variant="badge" />
       </div>
     </DropdownMenuItem>
   );

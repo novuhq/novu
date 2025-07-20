@@ -36,6 +36,11 @@ export const useDeleteTranslation = () => {
           currentEnvironment?._id,
         ],
       });
+
+      // Invalidate diff environment queries when translations are deleted
+      await queryClient.invalidateQueries({
+        queryKey: ['diff-environments'],
+      });
     },
   });
 };

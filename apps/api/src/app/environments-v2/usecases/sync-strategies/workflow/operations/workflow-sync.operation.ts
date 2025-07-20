@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { PinoLogger, Instrument } from '@novu/application-generic';
-import { NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, LocalizationResourceEnum } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
 import { SyncToEnvironmentUseCase } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
 import { SyncToEnvironmentCommand } from '../../../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.command';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 import { SyncResultBuilder } from '../builders/sync-result.builder';
-import { ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
+import { ISyncContext, ISyncResult, ResourceTypeEnum, IResourceDiff } from '../../../../types/sync.types';
 import { WORKFLOW_SYNC_MESSAGES, WORKFLOW_SYNC_ACTIONS, SKIP_REASONS } from '../constants/workflow-sync.constants';
 import { WorkflowRepositoryService } from './workflow-repository.service';
 import { DeleteWorkflowUseCase } from '../../../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
@@ -28,7 +30,8 @@ export class WorkflowSyncOperation {
     private workflowRepositoryService: WorkflowRepositoryService,
     private syncToEnvironmentUseCase: SyncToEnvironmentUseCase,
     private deleteWorkflowUseCase: DeleteWorkflowUseCase,
-    private workflowComparator: WorkflowComparator
+    private workflowComparator: WorkflowComparator,
+    private moduleRef: ModuleRef
   ) {}
 
   @Instrument()
@@ -222,7 +225,7 @@ export class WorkflowSyncOperation {
       return { sync: true, action: WORKFLOW_SYNC_ACTIONS.CREATED };
     }
 
-    // Check if there are actual changes (both workflow and step level)
+    // Check if there are actual changes (workflow, step, and localization group level)
     const { workflowChanges, stepDiffs } = await this.workflowComparator.compareWorkflows(
       workflow,
       targetWorkflow,
@@ -231,7 +234,18 @@ export class WorkflowSyncOperation {
     const hasWorkflowChanges = workflowChanges !== null;
     const hasStepChanges = stepDiffs.length > 0;
 
-    if (!hasWorkflowChanges && !hasStepChanges) {
+    // Check for localization group changes
+    const localizationDiffs = await this.getLocalizationDiffs(
+      workflow,
+      targetWorkflow,
+      context.user,
+      context.sourceEnvironmentId,
+      context.targetEnvironmentId,
+      context.user.organizationId
+    );
+    const hasLocalizationChanges = localizationDiffs.length > 0;
+
+    if (!hasWorkflowChanges && !hasStepChanges && !hasLocalizationChanges) {
       return { sync: false, action: WORKFLOW_SYNC_ACTIONS.SKIPPED, reason: SKIP_REASONS.NO_CHANGES };
     }
 
@@ -258,5 +272,50 @@ export class WorkflowSyncOperation {
         userId: context.user._id,
       })
     );
+  }
+
+  private async getLocalizationDiffs(
+    sourceWorkflow: NotificationTemplateEntity,
+    targetWorkflow: NotificationTemplateEntity,
+    userContext: UserSessionData,
+    sourceEnvId: string,
+    targetEnvId: string,
+    organizationId: string
+  ): Promise<IResourceDiff[]> {
+    try {
+      // Use the new DiffTranslationGroups use case from the translation module
+      // eslint-disable-next-line global-require
+      const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
+        strict: false,
+      });
+
+      if (!diffTranslationGroups) {
+        this.logger.debug('Translation module not available, skipping localization diff');
+
+        return [];
+      }
+
+      const rawDiffs = await diffTranslationGroups.execute({
+        sourceEnvironmentId: sourceEnvId,
+        targetEnvironmentId: targetEnvId,
+        resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId,
+        userId: userContext._id,
+        environmentId: sourceEnvId, // Required by EnvironmentWithUserCommand
+      });
+
+      // Apply proper normalization and comparison similar to workflow comparator
+      return this.normalizeLocalizationDiffs(rawDiffs);
+    } catch (error) {
+      this.logger.error(`Failed to diff localization groups for workflow ${sourceWorkflow.name}`, error);
+
+      return [];
+    }
+  }
+
+  private normalizeLocalizationDiffs(rawDiffs: IResourceDiff[]): IResourceDiff[] {
+    // Simple approach: just return the raw diffs as-is, since deep-object-diff should handle comparison correctly
+    return rawDiffs;
   }
 }
