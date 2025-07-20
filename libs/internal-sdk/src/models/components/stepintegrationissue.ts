@@ -7,16 +7,16 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  StepIntegrationIssueEnum,
-  StepIntegrationIssueEnum$inboundSchema,
-  StepIntegrationIssueEnum$outboundSchema,
-} from "./stepintegrationissueenum.js";
+  IntegrationIssueEnum,
+  IntegrationIssueEnum$inboundSchema,
+  IntegrationIssueEnum$outboundSchema,
+} from "./integrationissueenum.js";
 
 export type StepIntegrationIssue = {
   /**
    * Type of integration issue
    */
-  issueType: StepIntegrationIssueEnum;
+  issueType: IntegrationIssueEnum;
   /**
    * Name of the variable related to the issue
    */
@@ -33,7 +33,7 @@ export const StepIntegrationIssue$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  issueType: StepIntegrationIssueEnum$inboundSchema,
+  issueType: IntegrationIssueEnum$inboundSchema,
   variableName: z.string().optional(),
   message: z.string(),
 });
@@ -51,7 +51,7 @@ export const StepIntegrationIssue$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   StepIntegrationIssue
 > = z.object({
-  issueType: StepIntegrationIssueEnum$outboundSchema,
+  issueType: IntegrationIssueEnum$outboundSchema,
   variableName: z.string().optional(),
   message: z.string(),
 });

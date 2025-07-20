@@ -1,4 +1,3 @@
-import { Button } from '@/components/primitives/button';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { TranslationGroup } from '@/api/translations';
 import { TranslationHeader } from './translation-header';
@@ -90,7 +89,6 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
           />
 
           <EditorPanel
-            selectedLocale={selectedLocale}
             selectedTranslation={selectedTranslation}
             isLoadingTranslation={isLoadingTranslation}
             translationError={translationError}
@@ -98,7 +96,6 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             jsonError={editor.jsonError}
             onContentChange={editor.handleContentChange}
             onDelete={handleDelete}
-            resource={resource}
             isDeleting={deleteTranslationMutation.isPending}
             outdatedLocales={translationGroup.outdatedLocales}
           />

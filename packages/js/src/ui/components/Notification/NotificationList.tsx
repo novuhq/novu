@@ -1,8 +1,9 @@
-import { createEffect, createMemo, For, JSX, Show } from 'solid-js';
+import { createEffect, createMemo, For, JSX, Show, onCleanup } from 'solid-js';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../context';
 import { useStyle } from '../../helpers';
+import { useNotificationVisibility } from '../../helpers/useNotificationVisibility';
 import type {
   BodyRenderer,
   NotificationActionClickHandler,
@@ -34,6 +35,7 @@ export const NotificationList = (props: NotificationListProps) => {
   });
   const { setLimit } = useInboxContext();
   const ids = createMemo(() => data().map((n) => n.id));
+  const { observeNotification, unobserveNotification } = useNotificationVisibility();
   let notificationListElement: HTMLDivElement;
 
   createEffect(() => {
@@ -67,15 +69,44 @@ export const NotificationList = (props: NotificationListProps) => {
               const notification = () => data()[index()];
 
               return (
-                <Notification
-                  notification={notification()}
-                  renderNotification={props.renderNotification}
-                  renderSubject={props.renderSubject}
-                  renderBody={props.renderBody}
-                  onNotificationClick={props.onNotificationClick}
-                  onPrimaryActionClick={props.onPrimaryActionClick}
-                  onSecondaryActionClick={props.onSecondaryActionClick}
-                />
+                <div
+                  ref={(el) => {
+                    // Start observing this notification for visibility tracking
+                    observeNotification(el, notification().id);
+
+                    // Set up cleanup when element is removed
+                    const observer = new MutationObserver((mutations) => {
+                      mutations.forEach((mutation) => {
+                        mutation.removedNodes.forEach((node) => {
+                          if (node === el) {
+                            unobserveNotification(el);
+                            observer.disconnect();
+                          }
+                        });
+                      });
+                    });
+
+                    if (el.parentElement) {
+                      observer.observe(el.parentElement, { childList: true });
+                    }
+
+                    // Cleanup function to disconnect observer when ref changes
+                    onCleanup(() => {
+                      observer.disconnect();
+                      unobserveNotification(el);
+                    });
+                  }}
+                >
+                  <Notification
+                    notification={notification()}
+                    renderNotification={props.renderNotification}
+                    renderSubject={props.renderSubject}
+                    renderBody={props.renderBody}
+                    onNotificationClick={props.onNotificationClick}
+                    onPrimaryActionClick={props.onPrimaryActionClick}
+                    onSecondaryActionClick={props.onSecondaryActionClick}
+                  />
+                </div>
               );
             }}
           </For>

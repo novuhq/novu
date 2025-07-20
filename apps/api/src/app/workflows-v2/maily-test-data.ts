@@ -503,7 +503,7 @@ export function previewPayloadExample() {
       email: 'user@example.com',
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
-      locale: 'en-US',
+      locale: 'en_US',
       timezone: 'America/New_York',
       data: {},
     },

@@ -60,7 +60,6 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
 
     const { body } = await session.testAgent
       .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
       .attach('file', Buffer.from(JSON.stringify(masterJson)), 'en_US.json')
       .expect(200);
 
@@ -123,18 +122,11 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
     };
 
     // Test missing file
-    await session.testAgent.post('/v2/translations/master-json/upload').field('locale', 'en_US').expect(400);
-
-    // Test missing locale
-    await session.testAgent
-      .post('/v2/translations/master-json/upload')
-      .attach('file', Buffer.from(JSON.stringify(masterJson)), 'en_US.json')
-      .expect(400);
+    await session.testAgent.post('/v2/translations/master-json/upload').expect(400);
 
     // Test multiple files (should only allow one)
     await session.testAgent
       .post('/v2/translations/master-json/upload')
-      .field('locale', 'en_US')
       .attach('file', Buffer.from(JSON.stringify(masterJson)), 'en_US.json')
       .attach('file', Buffer.from(JSON.stringify(masterJson)), 'fr_FR.json')
       .expect(400);

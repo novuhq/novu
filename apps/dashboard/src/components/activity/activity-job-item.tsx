@@ -127,6 +127,12 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
   }
 
   switch (job.type?.toLowerCase()) {
+    case StepTypeEnum.TRIGGER:
+      if (job.status === JobStatusEnum.COMPLETED) {
+        return 'Step completed';
+      }
+
+      return '';
     case StepTypeEnum.DIGEST:
       if (job.status === JobStatusEnum.COMPLETED) {
         return `Digested ${job.digest?.events?.length ?? 0} events for ${(job.digest as IDigestRegularMetadata)?.amount ?? 0} ${

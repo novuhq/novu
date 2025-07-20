@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { PinoLogger } from '@novu/application-generic';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
@@ -116,7 +117,7 @@ export class MockDataGeneratorService {
       email: 'user@example.com',
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
-      locale: 'en-US',
+      locale: DEFAULT_LOCALE,
       timezone: 'America/New_York',
       data: {},
     };

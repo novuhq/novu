@@ -12,7 +12,7 @@ const TRACE_INSERT_OPTIONS: InsertOptions = {
 };
 
 @Injectable()
-export class TraceLogRepository extends LogRepository<typeof traceLogSchema> {
+export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Trace> {
   public readonly table = TABLE_NAME;
   public readonly identifierPrefix = 'trc_';
 
@@ -161,6 +161,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Step filter processing';
     case 'step_filter_failed':
       return 'Step filter failed';
+    case 'step_completed':
+      return 'Step completed';
 
     // Message events
     case 'message_created':

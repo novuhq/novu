@@ -75,32 +75,6 @@ export const getTranslationsList = async ({
   return getV2<GetTranslationsListResponse>(endpoint, { environment });
 };
 
-export const getTranslations = async ({
-  environment,
-  resourceId,
-  resourceType,
-  locale,
-}: {
-  environment: IEnvironment;
-  resourceId: string;
-  resourceType: LocalizationResourceEnum;
-  locale?: string;
-}): Promise<GetTranslationsResponse> => {
-  const searchParams = new URLSearchParams();
-
-  searchParams.append('resourceId', resourceId);
-  searchParams.append('resourceType', resourceType);
-
-  if (locale) {
-    searchParams.append('locale', locale);
-  }
-
-  const queryString = searchParams.toString();
-  const endpoint = `/translations?${queryString}`;
-
-  return getV2<GetTranslationsResponse>(endpoint, { environment });
-};
-
 export const getTranslationGroup = async ({
   environment,
   resourceId,
@@ -242,7 +216,6 @@ export const getMasterJson = async ({
 };
 
 export type UploadMasterJsonRequest = {
-  locale: string;
   file: File;
 };
 
@@ -257,12 +230,10 @@ export type UploadMasterJsonResponse = {
 
 export const uploadMasterJson = async ({
   environment,
-  locale,
   file,
 }: UploadMasterJsonRequest & { environment: IEnvironment }): Promise<UploadMasterJsonResponse['data']> => {
   const formData = new FormData();
 
-  formData.append('locale', locale);
   formData.append('file', file);
 
   const endpoint = '/translations/master-json/upload';

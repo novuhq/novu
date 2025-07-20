@@ -95,11 +95,6 @@ export const useUpdateTranslationValue = () => {
         ],
       });
 
-      // Invalidate the translations list
-      queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-      });
-
       // Invalidate all preview-step queries to update the preview
       queryClient.invalidateQueries({
         queryKey: ['preview-step'],

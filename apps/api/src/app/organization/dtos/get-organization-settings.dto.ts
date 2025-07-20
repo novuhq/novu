@@ -12,14 +12,14 @@ export class GetOrganizationSettingsDto {
 
   @ApiProperty({
     description: 'Default locale',
-    example: 'en-US',
+    example: 'en_US',
   })
   @IsValidLocale()
   defaultLocale: string;
 
   @ApiProperty({
     description: 'Target locales',
-    example: ['en-US', 'es-ES'],
+    example: ['en_US', 'es_ES'],
   })
   @IsOptional()
   @IsArray()

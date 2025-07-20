@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiSettings4Line } from 'react-icons/ri';
-import { EmailControlsDto } from '@novu/shared';
+import { ContentIssueEnum, EmailControlsDto, RuntimeIssue } from '@novu/shared';
 
 import { useLayoutEditor } from './layout-editor-provider';
 import { Form, FormRoot } from '../primitives/form/form';
@@ -17,6 +17,16 @@ import { LayoutPreviewFactory } from './layout-preview-factory';
 export const LayoutEditor = () => {
   const { form, layout, isPreviewPending, isPending, updateLayout, isUpdating } = useLayoutEditor();
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
+
+  const issues = {
+    controls: Object.entries(form.formState.errors).reduce(
+      (acc, [key, value]) => {
+        acc[key] = [{ message: value?.message ?? '', issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE }];
+        return acc;
+      },
+      {} as Record<string, RuntimeIssue[]>
+    ),
+  };
 
   const onSubmit = (formData: Record<string, unknown>) => {
     updateLayout({
@@ -97,7 +107,7 @@ export const LayoutEditor = () => {
                 </ResizableLayout>
               </div>
 
-              <IssuesPanel issues={layout?.issues}>
+              <IssuesPanel issues={issues}>
                 <div className="ml-auto">
                   <Button
                     type="submit"

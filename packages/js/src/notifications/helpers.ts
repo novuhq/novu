@@ -7,6 +7,7 @@ import type {
   CompleteArgs,
   ReadArgs,
   RevertArgs,
+  SeenArgs,
   SnoozeArgs,
   UnarchivedArgs,
   UnreadArgs,
@@ -95,6 +96,49 @@ export const unread = async ({
     emitter.emit('notification.unread.resolved', { args, error });
 
     return { error: new NovuError('Failed to unread notification', error) };
+  }
+};
+
+export const seen = async ({
+  emitter,
+  apiService,
+  args,
+}: {
+  emitter: NovuEventEmitter;
+  apiService: InboxService;
+  args: SeenArgs;
+}): Result<Notification> => {
+  const { notificationId, optimisticValue } = getNotificationDetails(
+    args,
+    {
+      isSeen: true,
+    },
+    {
+      emitter,
+      apiService,
+    }
+  );
+
+  try {
+    emitter.emit('notification.seen.pending', {
+      args,
+      data: optimisticValue,
+    });
+
+    await apiService.seen(notificationId);
+
+    if (!optimisticValue) {
+      throw new Error('Failed to create optimistic value for notification');
+    }
+
+    const updatedNotification = new Notification(optimisticValue, emitter, apiService);
+    emitter.emit('notification.seen.resolved', { args, data: updatedNotification });
+
+    return { data: updatedNotification };
+  } catch (error) {
+    emitter.emit('notification.seen.resolved', { args, error });
+
+    return { error: new NovuError('Failed to mark notification as seen', error) };
   }
 };
 
@@ -425,6 +469,63 @@ export const readAll = async ({
     emitter.emit('notifications.read_all.resolved', { args: { tags, data }, error });
 
     return { error: new NovuError('Failed to read all notifications', error) };
+  }
+};
+
+export const seenAll = async ({
+  emitter,
+  inboxService,
+  notificationsCache,
+  notificationIds,
+  tags,
+  data,
+}: {
+  emitter: NovuEventEmitter;
+  inboxService: InboxService;
+  notificationsCache: NotificationsCache;
+  notificationIds?: string[];
+  tags?: NotificationFilter['tags'];
+  data?: Record<string, unknown>;
+}): Result<void> => {
+  try {
+    const notifications = notificationsCache.getUniqueNotifications({ tags, data });
+
+    // Filter notifications by IDs if provided
+    const filteredNotifications =
+      notificationIds && notificationIds.length > 0
+        ? notifications.filter((notification) => notificationIds.includes(notification.id))
+        : notifications;
+
+    const optimisticNotifications = filteredNotifications.map(
+      (notification) =>
+        new Notification(
+          {
+            ...notification,
+            isSeen: true,
+            firstSeenAt: notification.firstSeenAt || new Date().toISOString(),
+          },
+          emitter,
+          inboxService
+        )
+    );
+
+    emitter.emit('notifications.seen_all.pending', {
+      args: { notificationIds, tags, data },
+      data: optimisticNotifications,
+    });
+
+    await inboxService.markAsSeen({ notificationIds, tags, data });
+
+    emitter.emit('notifications.seen_all.resolved', {
+      args: { notificationIds, tags, data },
+      data: optimisticNotifications,
+    });
+
+    return {};
+  } catch (error) {
+    emitter.emit('notifications.seen_all.resolved', { args: { notificationIds, tags, data }, error });
+
+    return { error: new NovuError('Failed to mark all notifications as seen', error) };
   }
 };
 

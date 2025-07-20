@@ -12,9 +12,9 @@ import {
 } from '@novu/application-generic';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
-import { buildLiquidParser } from '../../workflows-v2/util/template-parser/liquid-engine';
-import type { Variable } from '../../workflows-v2/util/template-parser/types';
-import { buildVariables } from '../../workflows-v2/util/build-variables';
+import { buildLiquidParser } from '../utils/template-parser/liquid-engine';
+import type { Variable } from '../utils/template-parser/types';
+import { buildVariables } from '../utils/build-variables';
 import { isStringifiedMailyJSONContent, isObjectMailyJSONContent, replaceMailyVariables } from '../helpers/maily-utils';
 import { previewControlValueDefault } from '../../workflows-v2/usecases/preview/preview.constants';
 import { replaceAll } from '../../workflows-v2/usecases/preview/utils/variable-helpers';

@@ -1,15 +1,15 @@
 import { RiErrorWarningLine, RiErrorWarningFill, RiInformationLine } from 'react-icons/ri';
 import { motion, AnimatePresence } from 'motion/react';
-import { Issue } from '@novu/shared';
+import { RuntimeIssue } from '@novu/shared';
 
 import { countIssues, getFirstErrorMessage, getAllStepIssues } from '@/components/workflow-editor/step-utils';
 import { cn } from '@/utils/ui';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 
-type IssuesPanelProps<T, D> = {
+type IssuesPanelProps = {
   issues?: {
-    controls?: Record<string, Issue<T>[]>;
-    integration?: Record<string, Issue<D>[]>;
+    controls?: Record<string, RuntimeIssue[]>;
+    integration?: Record<string, RuntimeIssue[]>;
   };
   className?: string;
   children?: React.ReactNode;
@@ -17,13 +17,13 @@ type IssuesPanelProps<T, D> = {
   isTranslationEnabled?: boolean;
 };
 
-export function IssuesPanel<T, D = T>({
+export function IssuesPanel({
   issues,
   className,
   children,
   hintMessage,
   isTranslationEnabled = false,
-}: IssuesPanelProps<T, D>) {
+}: IssuesPanelProps) {
   const issueCount = countIssues(issues);
 
   const defaultHintMessage = isTranslationEnabled

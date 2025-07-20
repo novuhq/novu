@@ -17,6 +17,8 @@ describe('Preview Layout #novu-v2', () => {
   beforeEach(async () => {
     // @ts-ignore
     process.env.IS_LAYOUTS_PAGE_ACTIVE = 'true';
+    // @ts-ignore
+    process.env.IS_HTML_EDITOR_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
@@ -251,7 +253,7 @@ describe('Preview Layout #novu-v2', () => {
             firstName: 'John',
             lastName: 'Doe',
             email: 'john.doe@example.com',
-            locale: 'en-US',
+            locale: 'en_US',
             phone: '+1234567890',
             timezone: 'America/New_York',
           },
@@ -289,7 +291,7 @@ describe('Preview Layout #novu-v2', () => {
             firstName: 'Jane',
             lastName: 'Smith',
             email: 'jane.smith@example.com',
-            locale: 'en-US',
+            locale: 'en_US',
             phone: '+1234567890',
             timezone: 'America/New_York',
           },

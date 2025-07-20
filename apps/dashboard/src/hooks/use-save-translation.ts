@@ -25,10 +25,6 @@ export const useSaveTranslation = () => {
       });
 
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-      });
-
-      queryClient.invalidateQueries({
         queryKey: [
           QueryKeys.fetchTranslationGroup,
           variables.resourceId,

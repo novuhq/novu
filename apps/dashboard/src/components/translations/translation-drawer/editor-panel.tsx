@@ -7,7 +7,7 @@ import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { formatTranslationDate, formatTranslationTime } from '../utils';
 import { EditorActions } from './editor-actions';
-import { TranslationResource } from '@/types/translations';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 
 type JSONEditorProps = {
   content: string;
@@ -64,21 +64,18 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated }: JSONEdi
 }
 
 type EditorPanelProps = {
-  selectedLocale: string | null;
-  selectedTranslation: any;
+  selectedTranslation: TranslationWithPlaceholder | undefined;
   isLoadingTranslation: boolean;
   translationError: any;
   modifiedContent: Record<string, unknown> | null;
   jsonError: string | null;
   onContentChange: (content: string) => void;
   onDelete: (locale: string) => void | Promise<void>;
-  resource: TranslationResource;
   isDeleting?: boolean;
   outdatedLocales?: string[];
 };
 
 export function EditorPanel({
-  selectedLocale,
   selectedTranslation,
   isLoadingTranslation,
   translationError,
@@ -86,11 +83,10 @@ export function EditorPanel({
   jsonError,
   onContentChange,
   onDelete,
-  resource,
   isDeleting = false,
   outdatedLocales,
 }: EditorPanelProps) {
-  if (!selectedLocale) {
+  if (!selectedTranslation) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <div className="text-center">
@@ -101,17 +97,14 @@ export function EditorPanel({
     );
   }
 
-  const contentToUse = modifiedContent || selectedTranslation?.content || {};
-  const contentToCopy = JSON.stringify(contentToUse, null, 2);
-  const isOutdated = outdatedLocales?.includes(selectedLocale);
+  const contentToUse = modifiedContent || selectedTranslation.content || {};
+  const isOutdated = outdatedLocales?.includes(selectedTranslation.locale);
 
   return (
     <div className="flex flex-1 flex-col bg-neutral-50">
       <EditorActions
-        selectedLocale={selectedLocale}
-        contentToCopy={contentToCopy}
-        content={contentToUse}
-        resource={resource}
+        selectedTranslation={selectedTranslation}
+        modifiedContent={modifiedContent}
         onDelete={onDelete}
         isDeleting={isDeleting}
       />
@@ -127,7 +120,7 @@ export function EditorPanel({
         </div>
       ) : translationError ? (
         <div className="flex h-32 items-center justify-center">
-          <p className="text-sm text-red-500">Failed to load translation for {selectedLocale}</p>
+          <p className="text-sm text-red-500">Failed to load translation for {selectedTranslation.locale}</p>
         </div>
       ) : selectedTranslation ? (
         <JSONEditor
