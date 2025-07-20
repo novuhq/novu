@@ -194,7 +194,7 @@ export function useWorkflowSchemaManager({
 
       // Invalidate diff environment queries when workflow schema is updated
       await queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       onSaveSuccess?.(schemaToSave);

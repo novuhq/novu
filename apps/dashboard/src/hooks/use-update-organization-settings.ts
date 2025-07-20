@@ -40,7 +40,7 @@ export function useUpdateOrganizationSettings() {
 
       // Invalidate diff environment queries when organization translation settings are updated
       await queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       const queryKey = [QueryKeys.organizationSettings, currentEnvironment?._id];

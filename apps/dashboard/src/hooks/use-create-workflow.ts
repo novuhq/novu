@@ -30,7 +30,7 @@ export function useCreateWorkflow({ onSuccess }: UseCreateWorkflowOptions = {}) 
 
       // Invalidate diff environment queries when workflows are created
       queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       showSuccessToast(toastId);

@@ -32,7 +32,7 @@ export function useDuplicateWorkflow({ workflowSlug, onSuccess }: UseDuplicateWo
 
       // Invalidate diff environment queries when workflows are duplicated
       queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       showSuccessToast(toastId);

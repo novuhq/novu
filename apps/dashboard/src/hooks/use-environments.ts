@@ -52,7 +52,7 @@ export const useDiffEnvironments = ({
   enabled?: boolean;
 }) => {
   return useQuery<IEnvironmentDiffResponse>({
-    queryKey: ['diff-environments', sourceEnvironmentId, targetEnvironmentId],
+    queryKey: [QueryKeys.diffEnvironments, sourceEnvironmentId, targetEnvironmentId],
     queryFn: () =>
       diffEnvironments({ sourceEnvironmentId: sourceEnvironmentId!, targetEnvironmentId: targetEnvironmentId! }),
     enabled: enabled && !!sourceEnvironmentId && !!targetEnvironmentId && sourceEnvironmentId !== targetEnvironmentId,
@@ -68,7 +68,7 @@ export const usePublishEnvironments = () => {
   return useMutation<IEnvironmentPublishResponse, Error, { sourceEnvironmentId: string; targetEnvironmentId: string }>({
     mutationFn: publishEnvironments,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
     },
   });
 };

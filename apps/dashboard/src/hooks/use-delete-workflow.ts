@@ -20,7 +20,7 @@ export const useDeleteWorkflow = (options?: UseMutationOptions<void, unknown, De
 
       // Invalidate diff environment queries when workflows are deleted
       await queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       options?.onSuccess?.(data, variables, ctx);

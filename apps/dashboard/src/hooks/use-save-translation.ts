@@ -42,7 +42,7 @@ export const useSaveTranslation = () => {
 
       // Invalidate diff environment queries when translations are updated
       queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       showSuccessToast('Translation saved successfully');

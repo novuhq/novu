@@ -36,7 +36,7 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
 
       // Invalidate diff environment queries when master translations are uploaded
       await queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       const { success = false, message = 'Import completed', successful, failed } = result || {};

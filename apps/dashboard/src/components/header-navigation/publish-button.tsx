@@ -19,7 +19,7 @@ import { NoChangesModal } from './no-changes-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { QueryKeys } from '@/utils/query-keys';
 import type { IEnvironment } from '@novu/shared';
-import type { IEnvironmentPublishResponse } from '@/api/environments';
+import type { IEnvironmentPublishResponse, IEnvironmentDiffResponse } from '@/api/environments';
 
 type ModalState = 'closed' | 'publish' | 'success' | 'no-changes';
 
@@ -40,15 +40,16 @@ export const PublishButton = () => {
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const publishMutation = usePublishEnvironments();
 
-  const otherEnvironments = environments.filter((env) => env._id !== currentEnvironment?._id);
+  // Filter out current environment and ensure we have valid environments
+  const otherEnvironments = environments.filter((env) => env?._id && env._id !== currentEnvironment?._id);
   const isSingleEnvironment = otherEnvironments.length === 1;
   const targetEnvironment = isSingleEnvironment ? otherEnvironments[0] : null;
 
-  // Fetch diff for single environment
+  // Fetch diff for single environment with proper validation
   const { data: diffData, isLoading: isDiffLoading } = useDiffEnvironments({
     sourceEnvironmentId: currentEnvironment?._id,
     targetEnvironmentId: targetEnvironment?._id,
-    enabled: !!targetEnvironment,
+    enabled: !!targetEnvironment?._id && !!currentEnvironment?._id,
   });
 
   const changesCount = calculateChangesCount(diffData);
@@ -57,6 +58,11 @@ export const PublishButton = () => {
   useInvalidateDiffOnWorkflowChange(!!targetEnvironment);
 
   const handleEnvironmentSelect = (environment: IEnvironment, hasChanges: boolean) => {
+    if (!environment?._id) {
+      console.warn('Cannot select environment: missing environment ID');
+      return;
+    }
+
     setIsDropdownOpen(false);
 
     // Force refetch diff data to get latest changes
@@ -70,7 +76,10 @@ export const PublishButton = () => {
   };
 
   const handlePublish = async () => {
-    if (!state.selectedEnvironment || !currentEnvironment?._id) return;
+    if (!state.selectedEnvironment?._id || !currentEnvironment?._id) {
+      console.warn('Cannot publish: missing required environment IDs');
+      return;
+    }
 
     try {
       const result = await publishMutation.mutateAsync({
@@ -87,10 +96,13 @@ export const PublishButton = () => {
   };
 
   const handleSwitchEnvironment = () => {
-    if (!state.selectedEnvironment) return;
+    if (!state.selectedEnvironment?.slug) {
+      console.warn('Cannot switch environment: missing environment slug');
+      return;
+    }
 
-    switchEnvironment(state.selectedEnvironment.slug || '');
-    navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: state.selectedEnvironment.slug || '' }));
+    switchEnvironment(state.selectedEnvironment.slug);
+    navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: state.selectedEnvironment.slug }));
     actions.close();
   };
 
@@ -155,7 +167,7 @@ export const PublishButton = () => {
             Publish changes
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[280px]">
+        <DropdownMenuContent align="end" className="max-h-[400px] min-w-[280px] overflow-y-auto">
           {otherEnvironments.length === 0 ? (
             <DropdownMenuItem disabled className="p-3">
               <div className="text-sm text-neutral-500">No other environments available</div>
@@ -205,8 +217,10 @@ export const PublishButton = () => {
   );
 };
 
-const calculateChangesCount = (diffData: any): number => {
-  if (!diffData?.resources) return 0;
+const calculateChangesCount = (diffData: IEnvironmentDiffResponse | undefined | null): number => {
+  if (!diffData?.resources || !Array.isArray(diffData.resources)) {
+    return 0;
+  }
 
   return diffData.resources.length;
 };
@@ -251,17 +265,27 @@ const useInvalidateDiffOnWorkflowChange = (enabled: boolean = true) => {
 };
 
 type ChangeIndicatorProps = {
+  /** The number of changes to display */
   count: number;
+  /** Whether the diff data is currently loading */
   isLoading: boolean;
+  /** Visual variant for different contexts */
   variant?: 'inline' | 'badge';
 };
 
+/**
+ * Component that displays the count of changes with appropriate styling
+ * Handles loading states and empty states gracefully
+ */
 const ChangeIndicator = ({ count, isLoading, variant = 'inline' }: ChangeIndicatorProps) => {
+  // Ensure count is a valid non-negative number
+  const safeCount = Math.max(0, Math.floor(count) || 0);
+
   if (isLoading) {
     return <Skeleton className="ml-1 h-4 w-6 rounded-full" />;
   }
 
-  if (count === 0) {
+  if (safeCount === 0) {
     return variant === 'badge' ? (
       <Badge variant="lighter" color="gray" size="sm">
         No changes
@@ -272,7 +296,7 @@ const ChangeIndicator = ({ count, isLoading, variant = 'inline' }: ChangeIndicat
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={count}
+        key={safeCount}
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.8, opacity: 0 }}
@@ -280,7 +304,7 @@ const ChangeIndicator = ({ count, isLoading, variant = 'inline' }: ChangeIndicat
         className={variant === 'inline' ? 'ml-1' : ''}
       >
         <Badge variant="lighter" color="purple" size="sm" className="text-subheading-2xs h-4 min-w-4 p-0">
-          {count}
+          {safeCount}
         </Badge>
       </motion.div>
     </AnimatePresence>
@@ -294,21 +318,30 @@ type EnvironmentOptionProps = {
   isDropdownOpen: boolean;
 };
 
+/**
+ * Component representing a single environment option in the publish dropdown
+ * Fetches and displays diff information for the environment
+ */
 const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDropdownOpen }: EnvironmentOptionProps) => {
   const { data: diffData, isLoading } = useDiffEnvironments({
     sourceEnvironmentId: currentEnvironmentId,
     targetEnvironmentId: environment._id,
-    enabled: isDropdownOpen,
+    enabled: isDropdownOpen && !!currentEnvironmentId && !!environment._id,
   });
 
   const changesCount = calculateChangesCount(diffData);
   const hasChanges = changesCount > 0;
 
   const handleClick = () => {
-    if (!isLoading) {
+    if (!isLoading && environment._id) {
       onSelect(hasChanges);
     }
   };
+
+  // Ensure we have required data before rendering
+  if (!environment._id || !environment.name) {
+    return null;
+  }
 
   return (
     <DropdownMenuItem onClick={handleClick} className="cursor-pointer p-1">

@@ -102,7 +102,7 @@ export const useUpdateTranslationValue = () => {
 
       // Invalidate diff environment queries when translations are updated
       queryClient.invalidateQueries({
-        queryKey: ['diff-environments'],
+        queryKey: [QueryKeys.diffEnvironments],
       });
     },
     onError: (error, variables) => {
