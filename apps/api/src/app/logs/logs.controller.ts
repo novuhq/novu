@@ -21,14 +21,13 @@ export class LogsController {
     @Query()
     query: GetRequestsDto
   ): Promise<GetRequestsResponseDto> {
-    const command = GetRequestsCommand.create({
-      organizationId: user.organizationId,
-      userId: user._id,
-      hoursAgo: query.created,
-      ...query,
-      statusCodes: query.statusCode,
-    });
-
-    return this.getRequestsUsecase.execute(command);
+    return this.getRequestsUsecase.execute(
+      GetRequestsCommand.create({
+        ...query,
+        organizationId: user.organizationId,
+        userId: user._id,
+        createdGte: query.createdGte,
+      })
+    );
   }
 }

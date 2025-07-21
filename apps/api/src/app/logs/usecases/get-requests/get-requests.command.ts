@@ -1,14 +1,14 @@
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString, IsDate } from 'class-validator';
 import { OrganizationCommand } from '@novu/application-generic';
 
 export class GetRequestsCommand extends OrganizationCommand {
   @IsNumber()
   @IsOptional()
-  public page?: number;
+  page?: number;
 
   @IsNumber()
   @IsOptional()
-  public limit?: number;
+  limit?: number;
 
   @IsOptional()
   @IsArray()
@@ -17,7 +17,7 @@ export class GetRequestsCommand extends OrganizationCommand {
 
   @IsString()
   @IsOptional()
-  public url?: string;
+  url?: string;
 
   @IsString()
   @IsOptional()
@@ -25,9 +25,8 @@ export class GetRequestsCommand extends OrganizationCommand {
 
   @IsString()
   @IsOptional()
-  public transactionId?: string;
+  transactionId?: string;
 
-  @IsNumber()
   @IsOptional()
-  public hoursAgo?: number;
+  createdGte?: number;
 }

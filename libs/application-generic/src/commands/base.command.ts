@@ -12,6 +12,10 @@ export abstract class BaseCommand {
     const errors = validateSync(convertedObject);
     const flattenedErrors = flattenErrors(errors);
     if (Object.keys(flattenedErrors).length > 0) {
+      // eslint-disable-next-line no-console
+      console.error('11111111');
+      // eslint-disable-next-line no-console
+      console.error(this.name, flattenedErrors);
       throw new CommandValidationException(this.name, flattenedErrors);
     }
 

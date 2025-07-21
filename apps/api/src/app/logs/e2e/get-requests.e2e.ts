@@ -41,8 +41,11 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       duration_ms: 42,
     };
 
-    await requestLogRepository.insert(requestLog);
-    await requestLogRepository.insert(requestLog);
+    await requestLogRepository.insertMany([requestLog, requestLog], {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
 
     const { body } = await session.testAgent.get('/v1/logs/requests').expect(200);
 
@@ -109,10 +112,11 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       created_at: LogRepository.formatDateTime64(threeHoursAgo) as any,
     };
 
-    await requestLogRepository.insert(log200Api);
-    await requestLogRepository.insert(log404Api);
-    await requestLogRepository.insert(log500Api);
-    await requestLogRepository.insert(log200Auth);
+    await requestLogRepository.insertMany([log200Api, log404Api, log500Api, log200Auth], {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
 
     // Test 1: Filter by status codes 200 and 404
     const statusFilterResponse = await session.testAgent
@@ -169,8 +173,12 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     const returnedStatusCodes = transactionFilterResponse.body.data.map((log: RequestLogResponseDto) => log.statusCode);
     expect(returnedStatusCodes).to.include.members([200, 404]);
 
-    // Test 5: Filter by created (last 2 hours) - should only return recent logs
-    const createdFilterResponse = await session.testAgent.get('/v1/logs/requests').query({ created: 2 }).expect(200);
+    // Test 5: Filter by createdGte (last 2 hours) - should only return recent logs
+    const twoHoursAgoTimestamp = subHours(currentTime, 2).getTime();
+    const createdFilterResponse = await session.testAgent
+      .get('/v1/logs/requests')
+      .query({ createdGte: twoHoursAgoTimestamp })
+      .expect(200);
 
     expect(createdFilterResponse.body.data.length).to.be.equal(2);
     expect(createdFilterResponse.body.total).to.be.equal(2);

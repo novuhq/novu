@@ -69,10 +69,9 @@ export class GetRequestsDto {
   @MaxLength(100)
   transactionId?: string;
 
-  @IsNumber()
   @IsOptional()
   @Type(() => Number)
-  @Min(1)
-  @Max(2160) // 90 days * 24 hours
-  created?: number;
+  @IsNumber({}, { message: 'createdGte must be a valid timestamp' })
+  @Min(0, { message: 'createdGte must be a positive timestamp' })
+  createdGte?: number;
 }
