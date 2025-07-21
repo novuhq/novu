@@ -2,13 +2,19 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
-import { addYears, format } from 'date-fns';
+import { format } from 'date-fns';
 import { LogRepository, SchemaKeys } from '../log.repository';
-import { ClickHouseService } from '../clickhouse.service';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { stepRunSchema, ORDER_BY, TABLE_NAME, StepRun, StepType } from './step-run.schema';
+import { getInsertOptions } from '../shared';
 
 type StepRunInsertData = Omit<StepRun, 'id' | 'expires_at'>;
+
+const STEP_RUN_INSERT_OPTIONS: InsertOptions = getInsertOptions(
+  process.env.STEP_RUNS_ASYNC_INSERT,
+  process.env.STEP_RUNS_WAIT_ASYNC_INSERT
+);
 
 type StepOptions = {
   status?: JobStatusEnum;
@@ -81,11 +87,15 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       };
 
       const stepRunData = this.mapJobToStepRun(job, finalOptions);
-      await super.insert(stepRunData, {
-        organizationId: job._organizationId,
-        environmentId: job._environmentId,
-        userId: job._userId,
-      });
+      await super.insert(
+        stepRunData,
+        {
+          organizationId: job._organizationId,
+          environmentId: job._environmentId,
+          userId: job._userId,
+        },
+        STEP_RUN_INSERT_OPTIONS
+      );
 
       this.logger.debug(
         {
@@ -99,50 +109,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     } catch (error) {
       this.logger.error({ err: error, jobId: job._id, status: job.status }, `Failed to log step ${job.status}`);
     }
-  }
-
-  async insert(
-    data: StepRunInsertData,
-    context: {
-      organizationId?: string;
-      environmentId?: string;
-      userId?: string;
-    }
-  ): Promise<void> {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
-      organization: { _id: context.organizationId },
-      environment: { _id: context.environmentId },
-      user: { _id: context.userId },
-      defaultValue: false,
-    });
-
-    if (!isEnabled) {
-      return;
-    }
-    await super.insert(data, context);
-  }
-
-  async insertMany(
-    data: StepRunInsertData[],
-    context: {
-      organizationId?: string;
-      environmentId?: string;
-      userId?: string;
-    }
-  ): Promise<void> {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_STEP_RUN_LOGS_WRITE_ENABLED,
-      organization: { _id: context.organizationId },
-      environment: { _id: context.environmentId },
-      user: { _id: context.userId },
-      defaultValue: false,
-    });
-
-    if (!isEnabled) {
-      return;
-    }
-    await super.insertMany(data, context);
   }
 
   async createMany(jobs: JobEntity[], options: StepOptions = {}): Promise<void> {
@@ -178,11 +144,15 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         stepRunDataArray.push(stepRunData);
       }
 
-      await super.insertMany(stepRunDataArray, {
-        organizationId: firstJob._organizationId,
-        environmentId: firstJob._environmentId,
-        userId: firstJob._userId,
-      });
+      await super.insertMany(
+        stepRunDataArray,
+        {
+          organizationId: firstJob._organizationId,
+          environmentId: firstJob._environmentId,
+          userId: firstJob._userId,
+        },
+        STEP_RUN_INSERT_OPTIONS
+      );
 
       this.logger.debug(
         {
