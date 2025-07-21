@@ -146,6 +146,7 @@ export class UpsertWorkflowUseCase {
     return updatedWorkflow;
   }
 
+  @Instrument()
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
     const { user, workflowDto, preserveWorkflowId } = command;
     const isWorkflowActive = workflowDto?.active ?? true;
@@ -180,6 +181,7 @@ export class UpsertWorkflowUseCase {
     };
   }
 
+  @Instrument()
   private async buildUpdateWorkflowCommand(
     command: UpsertWorkflowCommand,
     existingWorkflow: NotificationTemplateEntity
@@ -210,6 +212,7 @@ export class UpsertWorkflowUseCase {
     };
   }
 
+  @Instrument()
   private async buildSteps(
     command: UpsertWorkflowCommand,
     existingWorkflow?: NotificationTemplateEntity
@@ -275,6 +278,7 @@ export class UpsertWorkflowUseCase {
     return steps;
   }
 
+  @Instrument()
   private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
     const slug = slugify(step.name);
 
@@ -340,6 +344,7 @@ export class UpsertWorkflowUseCase {
     );
   }
 
+  @Instrument()
   private getControlValuesUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
     return updatedSteps
       .map((step) => {
@@ -355,6 +360,7 @@ export class UpsertWorkflowUseCase {
       .filter((update): update is NonNullable<typeof update> => update !== null);
   }
 
+  @Instrument()
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -453,6 +459,7 @@ export class UpsertWorkflowUseCase {
     );
   }
 
+  @Instrument()
   private findControlValueInRequest(
     updatedStep: NotificationStepEntity,
     commandSteps: UpsertStepDataCommand[]
