@@ -60,43 +60,15 @@ export function InboxPreviewContent() {
   };
 
   return (
-    <>
-      <style>
-        {`
-          .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
-            display: none !important;
-          }
-          .inbox-scroll-container {
-            height: 500px;
-            overflow-y: auto;
-            overflow-x: hidden;
-            /* Hide scrollbar for Chrome, Safari and Opera */
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* Internet Explorer 10+ */
-          }
-          .inbox-scroll-container::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for Chrome, Safari and Opera */
-          }
-          /* Hide scrollbars for all elements within the inbox */
-          .inbox-scroll-container * {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* Internet Explorer 10+ */
-          }
-          .inbox-scroll-container *::-webkit-scrollbar {
-            display: none; /* Hide scrollbar for Chrome, Safari and Opera */
-          }
-        `}
-      </style>
-      <div className="inbox-scroll-container mt-1 h-[470px] w-[375px]">
-        <Inbox
-          {...configuration}
-          routerPush={(path: string) => {
-            return navigate(path);
-          }}
-        >
-          <InboxContent />
-        </Inbox>
-      </div>
-    </>
+    <div className="hide-inbox-footer nv-no-scrollbar mt-1 h-[470px] w-[375px] overflow-y-auto overflow-x-hidden">
+      <Inbox
+        {...configuration}
+        routerPush={(path: string) => {
+          return navigate(path);
+        }}
+      >
+        <InboxContent />
+      </Inbox>
+    </div>
   );
 }

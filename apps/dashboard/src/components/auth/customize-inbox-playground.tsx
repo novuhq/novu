@@ -3,8 +3,6 @@ import { Controller, UseFormReturn } from 'react-hook-form';
 import { RiLayoutLine } from 'react-icons/ri';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { ColorPicker } from '@/components/primitives/color-picker';
-
-// import type { InboxPlaygroundFormData } from './inbox-playground';
 import { Switch } from '../primitives/switch';
 
 interface PreviewStyle {

@@ -5,10 +5,6 @@ import { Toast, ToastIcon, ToastProps } from './sonner';
 // Consistent toast options for bottom-center positioning like inbox-usecase-page
 export const CONSISTENT_TOAST_OPTIONS: ExternalToast = {
   position: 'bottom-center',
-  style: {
-    left: '50%',
-    transform: 'translateX(-50%)',
-  },
 };
 
 export const showToast = ({

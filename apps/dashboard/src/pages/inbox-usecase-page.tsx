@@ -1,16 +1,14 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
 import type { IEnvironment } from '@novu/shared';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AuthCard } from '../components/auth/auth-card';
-import { PageMeta } from '../components/page-meta';
-import { InboxPlayground } from '../components/auth/inbox-playground';
-import { LoadingIndicator } from '../components/primitives/loading-indicator';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
+import { AuthCard } from '../components/auth/auth-card';
+import { InboxPlayground } from '../components/auth/inbox-playground';
+import { PageMeta } from '../components/page-meta';
+import { useAuth } from '../context/auth/hooks';
+import { useEnvironment, useFetchEnvironments } from '../context/environment/hooks';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
-import { useAuth } from '../context/auth/hooks';
-import { useEnvironment } from '../context/environment/hooks';
-import { useFetchEnvironments } from '../context/environment/hooks';
 
 interface InboxUsecasePageProps {
   currentEnvironment?: IEnvironment;
@@ -21,168 +19,126 @@ interface RequiredData {
   subscriberId: string;
 }
 
-interface DelightfulState {
-  phase: 'initializing' | 'loading' | 'connecting' | 'finalizing' | 'refreshing' | 'ready';
-  message: string;
-  progress: number;
-  autoRefreshCount: number;
-}
+type LoadingPhase = 'initializing' | 'loading' | 'ready';
 
-const DelightfulLoadingState = ({ state }: { state: DelightfulState }) => {
-  const { phase, message, progress, autoRefreshCount } = state;
-
+const InboxLoadingSkeleton = () => {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center p-8" aria-live="polite">
-      <div className="max-w-md text-center">
-        <div className="mb-6">
-          <LoadingIndicator size="md" className="mx-auto" />
+    <div className="flex flex-1 flex-col overflow-hidden pb-3">
+      {/* Header skeleton - matches UsecasePlaygroundHeader */}
+      <div className="px-8 pb-6 pt-8">
+        <div className="space-y-4">
+          {/* Title skeleton */}
+          <div className="h-8 w-80 animate-pulse rounded bg-neutral-200"></div>
+
+          {/* Description skeleton */}
+          <div className="h-4 w-96 animate-pulse rounded bg-neutral-200"></div>
         </div>
+      </div>
 
-        <h3 className="mb-3 text-lg font-medium text-neutral-950">{message}</h3>
+      {/* Main content area with background */}
+      <div
+        className="flex flex-1 flex-col"
+        style={{
+          backgroundImage: 'url(/images/auth/Content.svg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        <div className="flex flex-1">
+          {/* Left side - App name skeleton */}
+          <div className="flex flex-1 items-start justify-start">
+            <div className="ml-10 mt-9">
+              <div className="h-6 w-32 animate-pulse rounded bg-neutral-200"></div>
+            </div>
+          </div>
 
-        <div className="mx-auto mb-6 w-80">
-          <div className="h-1 overflow-hidden rounded-full bg-neutral-200">
-            <div
-              className="bg-primary-base h-1 rounded-full transition-all duration-700 ease-out"
-              style={{ width: `${progress}%` }}
-            />
+          {/* Right side - Inbox skeleton */}
+          <div className="flex flex-1 flex-col">
+            <div className="flex items-start justify-end">
+              <div className="mr-20 mt-16 h-[470px] w-[375px] overflow-hidden rounded-lg border border-neutral-200 bg-white shadow-sm">
+                {/* Inbox header skeleton */}
+                <div className="border-b border-neutral-100 p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="h-5 w-16 animate-pulse rounded bg-neutral-200"></div>
+                    <div className="h-6 w-6 animate-pulse rounded bg-neutral-200"></div>
+                  </div>
+                </div>
+
+                {/* Tabs skeleton */}
+                <div className="border-b border-neutral-100 px-4 pb-2 pt-3">
+                  <div className="flex space-x-6">
+                    <div className="h-4 w-8 animate-pulse rounded bg-neutral-200"></div>
+                    <div className="h-4 w-20 animate-pulse rounded bg-neutral-200"></div>
+                    <div className="h-4 w-24 animate-pulse rounded bg-neutral-200"></div>
+                  </div>
+                </div>
+
+                {/* Content area skeleton */}
+                <div className="space-y-3 p-4">
+                  {/* Empty state or notification items */}
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="mb-4 h-12 w-12 animate-pulse rounded-full bg-neutral-200"></div>
+                    <div className="mb-2 h-4 w-48 animate-pulse rounded bg-neutral-200"></div>
+                    <div className="h-3 w-32 animate-pulse rounded bg-neutral-200"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {autoRefreshCount > 0 && <p className="text-xs text-neutral-400">Retrying connection ({autoRefreshCount}/3)</p>}
+      {/* Bottom action buttons skeleton */}
+      <div className="bg-muted">
+        <div className="flex justify-center gap-2 p-3">
+          <div className="h-8 w-24 animate-pulse rounded-lg bg-neutral-200"></div>
+          <div className="h-8 w-32 animate-pulse rounded-lg bg-neutral-200"></div>
+        </div>
       </div>
     </div>
   );
 };
 
-const useDelightfulInboxData = (organizationId?: string) => {
-  const [state, setState] = useState<DelightfulState>({
-    phase: 'initializing',
-    message: 'Setting up your inbox',
-    progress: 10,
-    autoRefreshCount: 0,
-  });
+const useInboxLoading = (organizationId?: string) => {
+  const [phase, setPhase] = useState<LoadingPhase>('initializing');
 
   const { refetchEnvironments } = useFetchEnvironments({ organizationId });
 
-  const phaseTimeoutRef = useRef<NodeJS.Timeout>();
-  const autoRefreshTimeoutRef = useRef<NodeJS.Timeout>();
-  const progressTimeoutRef = useRef<NodeJS.Timeout>();
-
-  const animateProgress = useCallback((target: number, duration = 1000) => {
-    setState((prev) => {
-      const start = prev.progress;
-      const diff = target - start;
-      const startTime = Date.now();
-
-      const updateProgress = () => {
-        const elapsed = Date.now() - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const currentProgress = start + diff * progress;
-
-        setState((prev) => ({ ...prev, progress: currentProgress }));
-
-        if (progress < 1) {
-          progressTimeoutRef.current = setTimeout(updateProgress, 16);
-        }
-      };
-
-      updateProgress();
-      return prev;
-    });
-  }, []);
-
-  const progressToPhase = useCallback(
-    (newPhase: DelightfulState['phase'], progress: number, message: string) => {
-      setState((prev) => ({
-        ...prev,
-        phase: newPhase,
-        message,
-      }));
-
-      animateProgress(progress);
-    },
-    [animateProgress]
-  );
+  const loadingTimeoutRef = useRef<NodeJS.Timeout>();
 
   const initializeAndFetch = useCallback(async () => {
     if (!organizationId) return;
 
     try {
-      progressToPhase('initializing', 25, 'Initializing workspace');
+      setPhase('initializing');
       await new Promise((resolve) => setTimeout(resolve, 800));
 
-      progressToPhase('loading', 50, 'Loading environment');
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      progressToPhase('connecting', 75, 'Connecting to inbox');
-
+      setPhase('loading');
       await refetchEnvironments();
 
-      progressToPhase('finalizing', 95, 'Finalizing setup');
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      setState((prev) => ({
-        ...prev,
-        phase: 'ready',
-        message: 'Inbox ready',
-        progress: 100,
-      }));
+      setPhase('ready');
     } catch (error) {
-      console.warn('Fetch failed, will auto-refresh...', error);
-
-      const newCount = state.autoRefreshCount + 1;
-
-      setState((prev) => {
-        if (newCount <= 3) {
-          return {
-            ...prev,
-            phase: 'refreshing',
-            message: `Optimizing connection (${newCount}/3)`,
-            progress: 40,
-            autoRefreshCount: newCount,
-          };
-        } else {
-          return {
-            ...prev,
-            phase: 'refreshing',
-            message: 'Refreshing page',
-            progress: 80,
-            autoRefreshCount: newCount,
-          };
-        }
-      });
-
-      if (newCount <= 3) {
-        autoRefreshTimeoutRef.current = setTimeout(
-          () => {
-            initializeAndFetch();
-          },
-          2000 + newCount * 1000
-        );
-      } else {
-        setTimeout(() => {
-          window.location.reload();
-        }, 3000);
-      }
+      console.warn('Failed to load environment:', error);
+      setPhase('loading');
     }
-  }, [organizationId, refetchEnvironments, progressToPhase]);
+  }, [organizationId, refetchEnvironments]);
 
   useEffect(() => {
     if (organizationId) {
-      phaseTimeoutRef.current = setTimeout(() => {
+      loadingTimeoutRef.current = setTimeout(() => {
         initializeAndFetch();
       }, 200);
     }
 
     return () => {
-      [phaseTimeoutRef, autoRefreshTimeoutRef, progressTimeoutRef].forEach((ref) => {
-        if (ref.current) clearTimeout(ref.current);
-      });
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
     };
   }, [organizationId, initializeAndFetch]);
 
-  return state;
+  return phase;
 };
 
 const getRequiredData = (environment?: IEnvironment, userId?: string, organizationId?: string): RequiredData | null => {
@@ -201,7 +157,7 @@ export function InboxUsecasePage({ currentEnvironment }: InboxUsecasePageProps) 
   const { currentUser, currentOrganization } = useAuth();
   const { currentEnvironment: envFromContext } = useEnvironment();
 
-  const delightfulState = useDelightfulInboxData(currentOrganization?._id);
+  const loadingPhase = useInboxLoading(currentOrganization?._id);
 
   const environment = currentEnvironment || envFromContext;
 
@@ -211,42 +167,14 @@ export function InboxUsecasePage({ currentEnvironment }: InboxUsecasePageProps) 
     telemetry(TelemetryEvent.INBOX_USECASE_PAGE_VIEWED);
   }, [telemetry]);
 
-  const shouldShowLoading = !requiredData || delightfulState.phase !== 'ready';
-
-  useEffect(() => {
-    if (shouldShowLoading) {
-      const refreshTimeout = setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-
-      return () => clearTimeout(refreshTimeout);
-    }
-  }, [shouldShowLoading]);
+  const shouldShowLoading = !requiredData || loadingPhase !== 'ready';
 
   if (shouldShowLoading) {
-    let adjustedState = { ...delightfulState };
-
-    if (!currentUser) {
-      adjustedState = {
-        ...adjustedState,
-        phase: 'initializing',
-        message: 'Authenticating account',
-        progress: 15,
-      };
-    } else if (!currentOrganization) {
-      adjustedState = {
-        ...adjustedState,
-        phase: 'loading',
-        message: 'Loading workspace',
-        progress: 35,
-      };
-    }
-
     return (
       <AnimatedPage>
         <PageMeta title="Integrate with the Inbox component" />
         <AuthCard>
-          <DelightfulLoadingState state={adjustedState} />
+          <InboxLoadingSkeleton />
         </AuthCard>
       </AnimatedPage>
     );

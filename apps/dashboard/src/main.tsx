@@ -20,12 +20,10 @@ import {
   ErrorPage,
   IntegrationsListPage,
   OrganizationListPage,
-  QuestionnairePage,
   SettingsPage,
   SignInPage,
   SignUpPage,
   TemplateModal,
-  UsecaseSelectPage,
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';

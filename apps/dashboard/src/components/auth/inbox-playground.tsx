@@ -1,20 +1,21 @@
+import { Notification5Fill } from '@/components/icons';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useInitDemoWorkflow } from '@/hooks/use-init-demo-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
+import { useOrganization } from '@clerk/clerk-react';
 import { useState } from 'react';
 import { RiFileCopyLine } from 'react-icons/ri';
-import { Notification5Fill } from '@/components/icons';
 import { useNavigate } from 'react-router-dom';
-import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
+import { API_HOSTNAME, ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Button } from '../primitives/button';
+import { ToastIcon } from '../primitives/sonner';
 import { showToast } from '../primitives/sonner-helpers';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
-import { ToastIcon } from '../primitives/sonner';
-import { useOrganization } from '@clerk/clerk-react';
 import { InboxPreviewContent } from './inbox-preview-content';
-import { useInitDemoWorkflow } from '@/hooks/use-init-demo-workflow';
-import { useEnvironment } from '@/context/environment/hooks';
 
 const PLAYGROUND_CONFIG = {
   title: 'The <Inbox/> your app deserves',
@@ -23,10 +24,14 @@ const PLAYGROUND_CONFIG = {
   totalSteps: 4,
 } as const;
 
-function generateCurlCommand(userId: string): string {
-  return `curl -X POST ${window.location.origin}/api/v1/events/trigger \\
+export function generateCurlCommand(userId: string, apiKey: string): string {
+  if (!apiKey) {
+    throw new Error('API key not found');
+  }
+
+  return `curl -X POST ${API_HOSTNAME}/api/v1/events/trigger \\
   -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Authorization: Bearer ${apiKey}" \\
   -d '{
     "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
     "to": {
@@ -58,6 +63,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
   const { organization } = useOrganization();
   const { currentEnvironment: environment } = useEnvironment();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
+  const apiKeysQuery = useFetchApiKeys();
   const [hasNotificationBeenSent, setHasNotificationBeenSent] = useState(false);
   const navigate = useNavigate();
   const telemetry = useTelemetry();
@@ -99,7 +105,9 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
         throw new Error('User ID not found. Please refresh the page.');
       }
 
-      const curlCommand = generateCurlCommand(subscriberId);
+      const apiKeys = apiKeysQuery.data?.data ?? [];
+      const apiKey = apiKeys[0]?.key ?? '';
+      const curlCommand = generateCurlCommand(subscriberId, apiKey);
       await navigator.clipboard.writeText(curlCommand);
       showCustomToast('cURL command copied to clipboard!', 'success');
     } catch (error) {

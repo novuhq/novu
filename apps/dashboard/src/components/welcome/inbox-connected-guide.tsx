@@ -9,6 +9,8 @@ import { Button } from '../primitives/button';
 import { showToast } from '../primitives/sonner-helpers';
 import { ToastIcon } from '../primitives/sonner';
 import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
+import { generateCurlCommand } from '../auth/inbox-playground';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 
 type InboxConnectedGuideProps = {
   subscriberId: string;
@@ -37,29 +39,18 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   const navigate = useNavigate();
   const { triggerWorkflow, isPending } = useTriggerWorkflow(environment);
   useInitDemoWorkflow(environment);
+  const apiKeysQuery = useFetchApiKeys();
+  const apiKeys = apiKeysQuery.data?.data ?? [];
+  const apiKey = apiKeys[0]?.key ?? '';
 
-  const curlCommand = `curl -X POST 'https://api.novu.co/v1/events/trigger' \\
-  -H 'Authorization: ApiKey YOUR_NOVU_SECRET_KEY' \\
-  -H 'Content-Type: application/json' \\
-  -d '{
-    "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
-    "to": {
-      "subscriberId": "${subscriberId}"
-    },
-    "payload": {}
-  }'`;
+  const curlCommand = generateCurlCommand(subscriberId, apiKey) || '';  
 
   async function handleSendNotification() {
     try {
       await triggerWorkflow({
         name: ONBOARDING_DEMO_WORKFLOW_ID,
         to: subscriberId,
-        payload: {
-          subject: '**Welcome to Inbox!**',
-          body: 'This is your first notification. Customize and explore more features.',
-          primaryActionLabel: 'Add to your app',
-          secondaryActionLabel: '',
-        },
+        payload: {},
       });
 
       showStatusToast('success', 'Notification sent successfully!');
