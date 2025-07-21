@@ -205,7 +205,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     const cleanedStepBodyHtml = stepBodyHtml
       .replace(/<!DOCTYPE.*?>/g, '')
       .replace(/<!--\$-->/g, '')
-      .replace(/<!--\/\$-->/g, '');
+      .replace(/<!--\/\$-->/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
 
     if (!layoutControlsEntity || skipLayoutRendering) {
       return cleanedStepBodyHtml;
