@@ -36,9 +36,6 @@ const schemaDefinition = {
   // Execution details
   status: { type: CHLowCardinality(CHString()) }, // pending, queued, running, completed, failed, skipped, cancelled
 
-  // Performance metrics
-  deferred_ms: { type: CHNullable(CHUInt32()) },
-
   // Error handling
   error_code: { type: CHNullable(CHString()) },
   error_message: { type: CHNullable(CHString()) },
