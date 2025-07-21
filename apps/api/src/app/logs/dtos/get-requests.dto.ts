@@ -1,8 +1,8 @@
 import { IsNumber, IsOptional, IsString, Matches, MaxLength, Min, Max, IsArray } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
-// Custom transformer to convert statusCode to array of numbers
-const StatusCodeTransformer = Transform(({ value }) => {
+// Custom transformer to convert statusCodes to array of numbers
+const StatusCodesTransformer = Transform(({ value }) => {
   if (!value) return undefined;
 
   // If already an array of numbers, return as is
@@ -45,8 +45,12 @@ export class GetRequestsDto {
   limit?: number;
 
   @IsOptional()
-  @StatusCodeTransformer
-  statusCode?: number[];
+  @StatusCodesTransformer
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Min(100, { each: true })
+  @Max(599, { each: true })
+  statusCodes?: number[];
 
   @IsString()
   @IsOptional()
