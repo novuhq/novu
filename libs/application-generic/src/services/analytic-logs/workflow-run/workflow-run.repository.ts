@@ -3,7 +3,7 @@ import { PinoLogger } from 'nestjs-pino';
 import { NotificationEntity, NotificationTemplateEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
-import { LogRepository, SchemaKeys } from '../log.repository';
+import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { workflowRunSchema, ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatus } from './workflow-run.schema';
@@ -233,6 +233,102 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         'Failed to update workflow run status'
       );
     }
+  }
+
+  /**
+   * Compound cursor-based pagination for workflow runs.
+   * Handles timestamp collisions by using both created_at and workflow_run_id.
+   *
+   * This implements industry best practices.
+   * The compound condition ensures no records are skipped or duplicated when
+   * multiple workflow runs have identical timestamps.
+   */
+  async findWithCursor(options: {
+    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    cursor?: {
+      created_at: string;
+      workflow_run_id: string;
+    };
+    limit?: number;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+  }): Promise<{ data: WorkflowRun[]; rows: number }> {
+    const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false } = options;
+
+    if (limit < 0 || limit > 1000) {
+      throw new Error('Limit must be between 0 and 1000');
+    }
+
+    // Build the base WHERE clause
+    const { clause: baseClause, params: baseParams } = this.buildWhereClause(where);
+
+    let whereClause = baseClause || 'WHERE 1=1';
+    const params = { ...baseParams };
+
+    // Add compound cursor conditions if cursor is provided
+    if (cursor) {
+      const cursorTimestamp = new Date(cursor.created_at);
+      const cursorId = cursor.workflow_run_id;
+
+      // Generate unique parameter names for cursor conditions
+      const timestampParam = 'cursor_timestamp';
+      const timestampEqualParam = 'cursor_timestamp_eq';
+      const idParam = 'cursor_id';
+
+      params[timestampParam] = cursorTimestamp;
+      params[timestampEqualParam] = cursorTimestamp;
+      params[idParam] = cursorId;
+
+      /*
+       * Build compound cursor condition
+       * For DESC: (created_at < cursor_timestamp) OR (created_at = cursor_timestamp AND workflow_run_id < cursor_id)
+       * For ASC: (created_at > cursor_timestamp) OR (created_at = cursor_timestamp AND workflow_run_id > cursor_id)
+       */
+      const timeOperator = orderDirection === 'DESC' ? '<' : '>';
+      const idOperator = orderDirection === 'DESC' ? '<' : '>';
+
+      const cursorCondition = `
+        (created_at ${timeOperator} {${timestampParam}:DateTime64(3, 'UTC')})
+        OR (
+          created_at = {${timestampEqualParam}:DateTime64(3, 'UTC')} 
+          AND workflow_run_id ${idOperator} {${idParam}:String}
+        )
+      `;
+
+      // Combine base WHERE with cursor conditions
+      if (baseClause) {
+        whereClause = `${baseClause} AND (${cursorCondition})`;
+      } else {
+        whereClause = `WHERE ${cursorCondition}`;
+      }
+    }
+
+    const finalModifier = useFinal ? ' FINAL' : '';
+    const orderByClause = `ORDER BY created_at ${orderDirection}, workflow_run_id ${orderDirection}`;
+
+    const query = `
+      SELECT *
+      FROM ${this.table}${finalModifier}
+      ${whereClause}
+      ${orderByClause}
+      LIMIT ${limit}
+    `;
+
+    this.logger.debug('Executing compound cursor query', {
+      query: query.replace(/\s+/g, ' ').trim(),
+      params,
+      cursor: cursor ? 'present' : 'none',
+    });
+
+    const result = await this.clickhouseService.query({
+      query,
+      params,
+    });
+
+    return {
+      data: result.data as WorkflowRun[],
+      rows: result.rows,
+    };
   }
 
   private mapNotificationToWorkflowRun(

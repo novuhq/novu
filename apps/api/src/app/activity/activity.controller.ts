@@ -1,17 +1,29 @@
-import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors, Param } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 import { ExternalApiAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum } from '@novu/shared';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetRequestsCommand } from './usecases/get-requests/get-requests.command';
+import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
+import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
+import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
+import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-run.command';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
+import { GetWorkflowRunsDto } from './dtos/workflow-runs-request.dto';
+import { GetWorkflowRunsResponseDto, WorkflowRunDto } from './dtos/workflow-runs-response.dto';
 
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
+@ApiTags('Activity')
 export class ActivityController {
-  constructor(private getRequestsUsecase: GetRequests) {}
+  constructor(
+    private getRequestsUsecase: GetRequests,
+    private getWorkflowRunsUsecase: GetWorkflowRuns,
+    private getWorkflowRunUsecase: GetWorkflowRun
+  ) {}
 
   @Get('requests')
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
@@ -27,6 +39,36 @@ export class ActivityController {
         organizationId: user.organizationId,
         userId: user._id,
         createdGte: query.createdGte,
+      })
+    );
+  }
+
+  @Get('workflow-run')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
+  async getWorkflowRuns(
+    @UserSession() user,
+    @Query()
+    query: GetWorkflowRunsDto
+  ): Promise<GetWorkflowRunsResponseDto> {
+    return this.getWorkflowRunsUsecase.execute(
+      GetWorkflowRunsCommand.create({
+        ...query,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+      })
+    );
+  }
+
+  @Get('workflow-run/:workflowRunId')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
+  async getWorkflowRun(@UserSession() user, @Param('workflowRunId') workflowRunId: string): Promise<WorkflowRunDto> {
+    return this.getWorkflowRunUsecase.execute(
+      GetWorkflowRunCommand.create({
+        workflowRunId,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
       })
     );
   }
