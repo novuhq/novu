@@ -129,6 +129,8 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
         phone: fetchedSubscriberData.phone ?? undefined,
         avatar: fetchedSubscriberData.avatar ?? undefined,
         locale: fetchedSubscriberData.locale ?? undefined,
+        timezone: fetchedSubscriberData.timezone ?? undefined,
+        data: fetchedSubscriberData.data ?? undefined,
       });
     } else if (currentUser && !fetchedSubscriberData && !subscriberData?.subscriberId && !isLoadingSubscriber) {
       setSubscriberData({
