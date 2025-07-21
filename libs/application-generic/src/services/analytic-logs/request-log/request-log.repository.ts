@@ -27,8 +27,8 @@ export class RequestLogRepository extends LogRepository<typeof requestLogSchema,
     this.logger.setContext(this.constructor.name);
   }
 
-  protected async create(
-    data: RequestLog,
+  public async create(
+    data: Omit<RequestLog, 'id' | 'expires_at'>,
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -38,8 +38,8 @@ export class RequestLogRepository extends LogRepository<typeof requestLogSchema,
     await super.insert(data, context, REQUEST_LOG_INSERT_OPTIONS);
   }
 
-  protected async createMany(
-    data: RequestLog[],
+  public async createMany(
+    data: Omit<RequestLog, 'id' | 'expires_at'>[],
     context: {
       organizationId?: string;
       environmentId?: string;
