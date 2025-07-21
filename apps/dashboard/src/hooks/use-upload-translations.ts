@@ -35,8 +35,7 @@ export const useUploadTranslations = ({ onSuccess }: { onSuccess?: () => void } 
         exact: false,
       });
 
-      // Invalidate diff environment queries when translations are uploaded
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

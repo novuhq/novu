@@ -48,6 +48,9 @@ export class ClickHouseService implements OnModuleDestroy {
       username: process.env.CLICK_HOUSE_USER,
       password: process.env.CLICK_HOUSE_PASSWORD,
       database: process.env.CLICK_HOUSE_DATABASE,
+      max_open_connections: process.env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS
+        ? parseInt(process.env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS, 10)
+        : 10,
     });
   }
 

@@ -34,8 +34,7 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
         exact: false,
       });
 
-      // Invalidate diff environment queries when master translations are uploaded
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

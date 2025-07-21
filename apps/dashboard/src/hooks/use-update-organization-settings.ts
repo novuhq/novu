@@ -38,8 +38,7 @@ export function useUpdateOrganizationSettings() {
         exact: false,
       });
 
-      // Invalidate diff environment queries when organization translation settings are updated
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

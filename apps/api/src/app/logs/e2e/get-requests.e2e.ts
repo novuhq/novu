@@ -41,7 +41,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       duration_ms: 42,
     };
 
-    await requestLogRepository.insertMany([requestLog, requestLog], {
+    await requestLogRepository.createMany([requestLog, requestLog], {
       organizationId: session.organization._id,
       environmentId: session.environment._id,
       userId: session.user._id,
@@ -112,7 +112,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       created_at: LogRepository.formatDateTime64(threeHoursAgo) as any,
     };
 
-    await requestLogRepository.insertMany([log200Api, log404Api, log500Api, log200Auth], {
+    await requestLogRepository.createMany([log200Api, log404Api, log500Api, log200Auth], {
       organizationId: session.organization._id,
       environmentId: session.environment._id,
       userId: session.user._id,
