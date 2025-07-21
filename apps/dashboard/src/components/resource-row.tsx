@@ -80,13 +80,7 @@ export function ResourceRow({ resource }: ResourceRowProps) {
         <div className="flex items-center gap-1">
           {updatedBy?.firstName && updatedBy?.lastName && (
             <>
-              <Avatar className="size-4">
-                <AvatarFallback className="text-[8px] font-medium">
-                  {updatedBy?.firstName?.[0]}
-                  {updatedBy?.lastName?.[0]}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-paragraph-2xs text-text-sub font-medium">{updatedBy?.firstName}</span>
+              <span className="text-paragraph-2xs text-text-sub font-medium capitalize">{updatedBy?.firstName}</span>
               <div className="size-0.5 rounded-full bg-neutral-400" />
             </>
           )}
