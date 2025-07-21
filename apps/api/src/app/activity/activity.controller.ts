@@ -7,10 +7,10 @@ import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
 
-@Controller('/logs')
+@Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
-export class LogsController {
+export class ActivityController {
   constructor(private getRequestsUsecase: GetRequests) {}
 
   @Get('requests')

@@ -32,7 +32,7 @@ export async function getRequestLogs(params: GetRequestLogsParams): Promise<GetR
   });
 
   const queryString = searchParams.toString();
-  const endpoint = `/logs/requests${queryString ? `?${queryString}` : ''}`;
+  const endpoint = `/activity/requests${queryString ? `?${queryString}` : ''}`;
 
   return get<GetRequestLogsResponse>(endpoint, { environment });
 }
