@@ -1,5 +1,4 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors, Param } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags, ApiParam } from '@nestjs/swagger';
 import { ExternalApiAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum } from '@novu/shared';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
@@ -17,7 +16,6 @@ import { GetWorkflowRunsResponseDto, WorkflowRunDto } from './dtos/workflow-runs
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
-@ApiTags('Activity')
 export class ActivityController {
   constructor(
     private getRequestsUsecase: GetRequests,
