@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
 import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
@@ -1028,6 +1028,305 @@ describe('EmailOutputRendererUsecase', () => {
 
       const result = await emailOutputRendererUsecase.execute(renderCommand);
       expect(result.body).to.include('href="https://example.com"');
+    });
+  });
+
+  describe('enhanceContentVariable functionality', () => {
+    beforeEach(() => {
+      // Disable layouts feature flag for these tests to focus on step content only
+      featureFlagsServiceMock.getFlag.resolves(false);
+    });
+
+    it('should process content variable with shouldDangerouslySetInnerHTML behavior', async () => {
+      const mockMailyContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'variable',
+                attrs: {
+                  id: LAYOUT_CONTENT_VARIABLE,
+                  label: 'Content',
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Content Variable Test',
+          body: JSON.stringify(mockMailyContent),
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          [LAYOUT_CONTENT_VARIABLE]: '<strong>Injected Content</strong>',
+        },
+        workflowId: mockDbWorkflow._id,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      // The content variable should be processed and the HTML should contain the injected content
+      expect(result.body).to.include('<strong>Injected Content</strong>');
+      expect(result.subject).to.equal('Content Variable Test');
+    });
+
+    it('should process non-content variables normally through liquid templating', async () => {
+      const mockMailyContent = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'variable',
+                attrs: {
+                  id: 'payload.name',
+                  label: 'Name',
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Non-Content Variable Test',
+          body: JSON.stringify(mockMailyContent),
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John Doe' },
+        },
+        workflowId: mockDbWorkflow._id,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      // Regular variables should be processed through liquid templating
+      expect(result.body).to.include('John Doe');
+      expect(result.subject).to.equal('Non-Content Variable Test');
+    });
+  });
+
+  describe('skipLayoutRendering functionality', () => {
+    const simpleBodyContent = '<p>Step content {{payload.name}}</p>';
+    const layoutContent = '<html><body><div class="layout">{{content}}</div></body></html>';
+
+    let mockControlValuesEntity: any;
+    let mockLayoutDto: any;
+
+    beforeEach(() => {
+      // Enable layouts feature flag for these tests
+      featureFlagsServiceMock.getFlag.resolves(true);
+
+      mockControlValuesEntity = {
+        controls: {
+          email: {
+            body: layoutContent,
+          },
+        },
+      };
+
+      mockLayoutDto = {
+        _id: 'test_layout_id',
+        isDefault: false,
+      };
+
+      controlValuesRepositoryMock.findOne.resolves(mockControlValuesEntity as any);
+      getLayoutUseCase.execute.resolves(mockLayoutDto as any);
+    });
+
+    it('should skip layout rendering when skipLayoutRendering is true', async () => {
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Skip Layout Test',
+          body: simpleBodyContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        skipLayoutRendering: true,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Step content John');
+      expect(result.body).to.not.include('class="layout"');
+      expect(result.body).to.not.include('<html>');
+      expect(result.body).to.not.include('<body>');
+
+      // Verify that layout was fetched but not applied
+      expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+      expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+    });
+
+    it('should apply layout rendering when skipLayoutRendering is false', async () => {
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Apply Layout Test',
+          body: simpleBodyContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        skipLayoutRendering: false,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Step content John');
+      expect(result.body).to.include('class="layout"');
+      expect(result.body).to.include('<html>');
+      expect(result.body).to.include('<body>');
+
+      expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+      expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+    });
+
+    it('should apply layout rendering when skipLayoutRendering is undefined', async () => {
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Default Layout Test',
+          body: simpleBodyContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        // skipLayoutRendering not specified
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Step content John');
+      expect(result.body).to.include('class="layout"');
+      expect(result.body).to.include('<html>');
+      expect(result.body).to.include('<body>');
+
+      expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+      expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+    });
+
+    it('should skip layout rendering with maily content when skipLayoutRendering is true', async () => {
+      const mailyStepContent = JSON.stringify({
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: 'Hello {{payload.name}}',
+              },
+            ],
+          },
+        ],
+      });
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Skip Layout Maily Test',
+          body: mailyStepContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        skipLayoutRendering: true,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Hello John');
+      expect(result.body).to.not.include('class="layout"');
+      expect(result.body).to.not.include('<html>');
+
+      // Should still process the maily content and apply liquid templating
+      expect(result.body).to.not.include('{{payload.name}}');
+    });
+
+    it('should properly clean content even when skipping layout rendering', async () => {
+      const bodyWithDoctype = '<!DOCTYPE html><p>Content {{payload.name}}</p><!--$-->';
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Clean Content Test',
+          body: bodyWithDoctype,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        skipLayoutRendering: true,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Content John');
+      expect(result.body).to.not.include('<!DOCTYPE');
+      expect(result.body).to.not.include('<!--$-->');
+      expect(result.body).to.not.include('class="layout"');
+    });
+
+    it('should handle skipLayoutRendering when no layout controls exist', async () => {
+      controlValuesRepositoryMock.findOne.resolves(null);
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'No Layout Test',
+          body: simpleBodyContent,
+          layoutId: 'non_existent_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        skipLayoutRendering: true,
+      };
+
+      const result = await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(result.body).to.include('Step content John');
+      expect(result.body).to.not.include('class="layout"');
+
+      // Should still attempt to fetch layout but gracefully handle null result
+      expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+      expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
     });
   });
 

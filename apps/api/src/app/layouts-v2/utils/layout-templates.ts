@@ -64,18 +64,13 @@ export const DEFAULT_LAYOUT = {
         },
         {
           type: 'paragraph',
-          attrs: { textAlign: 'center', showIfKey: null },
+          attrs: { textAlign: null, showIfKey: null },
           content: [
             {
               type: 'variable',
-              attrs: {
-                id: 'content',
-                label: null,
-                fallback: null,
-                required: false,
-                aliasFor: null,
-              },
+              attrs: { id: 'content', label: null, fallback: null, required: false, aliasFor: null },
             },
+            { type: 'text', text: ' ' },
           ],
         },
         { type: 'horizontalRule' },

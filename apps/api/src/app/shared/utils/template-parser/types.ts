@@ -47,4 +47,5 @@ export type ProcessContext = {
   invalidVariables: Array<Variable>;
   variableSchema?: JSONSchemaDto;
   localVariables?: Set<string>;
+  suggestPayloadNamespace?: boolean;
 };
