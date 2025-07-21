@@ -178,14 +178,14 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }
 
-  async insert(
+  protected async insert(
     data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'>,
     context: {
       organizationId?: string;
       environmentId?: string;
       userId?: string;
     },
-    options?: InsertOptions
+    options: InsertOptions
   ): Promise<void> {
     const id = `${this.identifierPrefix}${generateObjectId()}`;
     const expirationDate = await this.getExpirationDate(context);
@@ -194,14 +194,14 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     await this.clickhouseService.insert(this.table, [{ ...data, id, expires_at: expiresAt }], options);
   }
 
-  async insertMany(
+  protected async insertMany(
     data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'>[],
     context: {
       organizationId?: string;
       environmentId?: string;
       userId?: string;
     },
-    options?: InsertOptions
+    options: InsertOptions
   ): Promise<void> {
     const ids = data.map((item) => `${this.identifierPrefix}${generateObjectId()}`);
     const expirationDate = await this.getExpirationDate(context);

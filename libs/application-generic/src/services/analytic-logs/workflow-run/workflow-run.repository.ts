@@ -4,9 +4,10 @@ import { NotificationEntity, NotificationTemplateEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { LogRepository, SchemaKeys } from '../log.repository';
-import { ClickHouseService } from '../clickhouse.service';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { workflowRunSchema, ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatus } from './workflow-run.schema';
+import { getInsertOptions } from '../shared';
 
 type WorkflowRunInsertData = Omit<InferClickhouseSchemaType<typeof workflowRunSchema>, 'id' | 'expires_at'>;
 
@@ -15,6 +16,11 @@ interface IWorkflowRunOptions {
   userId?: string;
   externalSubscriberId?: string;
 }
+
+const WORKFLOW_RUN_INSERT_OPTIONS: InsertOptions = getInsertOptions(
+  process.env.WORKFLOW_RUNS_ASYNC_INSERT,
+  process.env.WORKFLOW_RUNS_WAIT_ASYNC_INSERT
+);
 
 @Injectable()
 export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchema, WorkflowRun> {
@@ -52,11 +58,15 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       const workflowRunData = this.mapNotificationToWorkflowRun(notification, template, options);
 
-      await this.insert(workflowRunData, {
-        organizationId: notification._organizationId,
-        environmentId: notification._environmentId,
-        userId: options.userId,
-      });
+      await this.insert(
+        workflowRunData,
+        {
+          organizationId: notification._organizationId,
+          environmentId: notification._environmentId,
+          userId: options.userId,
+        },
+        WORKFLOW_RUN_INSERT_OPTIONS
+      );
     } catch (error) {
       this.logger.error(
         {
@@ -98,11 +108,15 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         this.mapNotificationToWorkflowRun(notification, template, options)
       );
 
-      await this.insertMany(workflowRunsData, {
-        organizationId: firstNotification._organizationId,
-        environmentId: firstNotification._environmentId,
-        userId: notifications[0].options?.userId,
-      });
+      await this.insertMany(
+        workflowRunsData,
+        {
+          organizationId: firstNotification._organizationId,
+          environmentId: firstNotification._environmentId,
+          userId: notifications[0].options?.userId,
+        },
+        WORKFLOW_RUN_INSERT_OPTIONS
+      );
 
       this.logger.debug(
         {
@@ -193,7 +207,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           is_digest: existingRun.is_digest,
           digested_workflow_run_id: existingRun.digested_workflow_run_id,
         },
-        context
+        context,
+        WORKFLOW_RUN_INSERT_OPTIONS
       );
 
       this.logger.debug(

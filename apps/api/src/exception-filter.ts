@@ -54,7 +54,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     try {
       if (basicLog) {
         await retryWithBackoff(() =>
-          this.requestLogRepository.insert(basicLog, {
+          this.requestLogRepository.create(basicLog, {
             organizationId: user?.organizationId,
             environmentId: user?.environmentId,
             userId: user?._id,
