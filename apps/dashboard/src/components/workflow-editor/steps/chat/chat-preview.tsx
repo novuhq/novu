@@ -15,7 +15,7 @@ export const ChatPreview = ({
   variant?: 'mini' | 'default';
 }) => {
   const isValidChatPreview =
-    previewData?.result.type === ChannelTypeEnum.CHAT && previewData?.result.preview.body.length > 0;
+    previewData?.result.type === ChannelTypeEnum.CHAT && previewData?.result.preview.body?.length > 0;
   const body = isValidChatPreview ? ((previewData?.result.preview as ChatRenderOutput)?.body ?? '') : '';
 
   return (
