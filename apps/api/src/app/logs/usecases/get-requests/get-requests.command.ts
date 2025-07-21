@@ -1,7 +1,7 @@
 import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
-import { OrganizationCommand } from '@novu/application-generic';
+import { EnvironmentCommand } from '@novu/application-generic';
 
-export class GetRequestsCommand extends OrganizationCommand {
+export class GetRequestsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
   public page?: number;
