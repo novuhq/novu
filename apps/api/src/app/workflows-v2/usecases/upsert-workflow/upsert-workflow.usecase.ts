@@ -420,6 +420,7 @@ export class UpsertWorkflowUseCase {
             generatePreviewRequestDto: {
               controlValues: emailControlValues,
             },
+            skipLayoutRendering: true,
           })
         );
         let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
