@@ -28,5 +28,6 @@ export class GetRequestsCommand extends OrganizationCommand {
   transactionId?: string;
 
   @IsOptional()
+  @IsNumber()
   createdGte?: number;
 }
