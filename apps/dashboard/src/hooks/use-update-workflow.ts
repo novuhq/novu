@@ -61,8 +61,7 @@ export const useUpdateWorkflow = (
         queryKey: [QueryKeys.fetchWorkflowTestData, currentEnvironment?._id, workflowId],
       });
 
-      // Invalidate diff environment queries when workflows are updated
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

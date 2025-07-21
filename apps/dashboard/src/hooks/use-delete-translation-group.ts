@@ -33,8 +33,7 @@ export const useDeleteTranslationGroup = () => {
         });
       }
 
-      // Invalidate diff environment queries when translation groups are deleted
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

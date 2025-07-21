@@ -37,8 +37,7 @@ export const useDeleteTranslation = () => {
         ],
       });
 
-      // Invalidate diff environment queries when translations are deleted
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
     },
