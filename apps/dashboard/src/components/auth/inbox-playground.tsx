@@ -30,15 +30,15 @@ export function generateCurlCommand(userId: string, apiKey: string): string {
   }
 
   return `curl -X POST ${API_HOSTNAME}/api/v1/events/trigger \\
-  -H "Content-Type: application/json" \\
-  -H "Authorization: Bearer ${apiKey}" \\
-  -d '{
-    "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
-    "to": {
-      "subscriberId": ${JSON.stringify(userId)}
-    },
-    "payload": {}
-  }'`;
+     -H "Content-Type: application/json" \\
+     -H "Authorization: Bearer ${apiKey}" \\
+     -d '{
+       "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
+       "to": {
+         "subscriberId": ${JSON.stringify(userId)}
+       },
+       "payload": {}
+     }'`;
 }
 
 function showCustomToast(message: string, variant: 'success' | 'error') {
@@ -79,8 +79,6 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
       </div>
     );
   }
-
-  const effectiveAppId = environment?.identifier || appId;
 
   const handleSendNotification = async () => {
     try {
@@ -191,10 +189,11 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
               Send notification
             </Button>
           ) : (
-            <button
+            <Button
               onClick={handleImplementClick}
               disabled={!appId}
-              className="flex h-8 w-auto flex-none flex-row items-center justify-center gap-1 rounded-lg border-0 px-2.5 py-2 text-xs font-medium text-white disabled:opacity-50"
+              size="xs"
+              className="px-2.5 text-white disabled:opacity-50"
               style={{
                 background:
                   'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #DD2450',
@@ -207,7 +206,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
               }}
             >
               Implement &lt;Inbox /&gt;
-            </button>
+            </Button>
           )}
         </div>
       </div>

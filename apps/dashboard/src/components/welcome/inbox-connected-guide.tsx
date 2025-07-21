@@ -43,7 +43,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   const apiKeys = apiKeysQuery.data?.data ?? [];
   const apiKey = apiKeys[0]?.key ?? '';
 
-  const curlCommand = generateCurlCommand(subscriberId, apiKey) || '';  
+  const curlCommand = generateCurlCommand(subscriberId, apiKey) || '';
 
   async function handleSendNotification() {
     try {
@@ -79,15 +79,15 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
               <RiLoader3Line className="h-4 w-4 text-neutral-300" />
             </div>
 
-            <div className="flex gap-12">
+            <div className="flex gap-2">
               {/* Left section - existing content */}
-              <div className="flex w-[344px] max-w-md flex-col gap-3">
+              <div className="flex w-[350px] flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">Let the magic happen 🪄</span>
                 </div>
                 <p className="text-foreground-400 text-xs">
                   Now, trigger a notification to see it pop up in your app! If it doesn't appear, double-check that the
-                  subscriberId matches as above.
+                  subscriberId matches.
                 </p>
                 <div>
                   <Button
@@ -105,7 +105,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
               </div>
 
               {/* Right section - curl code snippet */}
-              <div className="flex w-[500px] flex-col gap-6">
+              <div className="flex w-[520px] flex-col gap-6">
                 <div className="flex flex-col gap-0 rounded-xl bg-[rgba(14,18,27,0.9)] shadow-[inset_0px_0px_0px_1px_#18181B,inset_0px_0px_0px_1.5px_rgba(255,255,255,0.05)]">
                   {/* Header */}
                   <div className="flex h-10 items-center justify-between gap-3 px-4 py-2">
