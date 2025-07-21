@@ -21,7 +21,6 @@ type StepOptions = {
   message?: MessageEntity;
   errorCode?: string;
   errorMessage?: string;
-  deferredMs?: number;
 };
 
 @Injectable()
@@ -79,14 +78,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         return;
       }
 
-      // Preserve existing deferredMs if not explicitly provided
-      const existingDeferredMs = await this.getExistingDeferredMs(job._organizationId, job._id);
-      const finalOptions = {
-        ...options,
-        deferredMs: options.deferredMs ?? existingDeferredMs,
-      };
-
-      const stepRunData = this.mapJobToStepRun(job, finalOptions);
+      const stepRunData = this.mapJobToStepRun(job, options);
       await super.insert(
         stepRunData,
         {
@@ -133,14 +125,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       const stepRunDataArray: StepRunInsertData[] = [];
 
       for (const job of jobs) {
-        // Preserve existing deferredMs if not explicitly provided
-        const existingDeferredMs = await this.getExistingDeferredMs(job._organizationId, job._id);
-        const finalOptions = {
-          ...options,
-          deferredMs: options.deferredMs ?? existingDeferredMs,
-        };
-
-        const stepRunData = this.mapJobToStepRun(job, finalOptions);
+        const stepRunData = this.mapJobToStepRun(job, options);
         stepRunDataArray.push(stepRunData);
       }
 
@@ -176,38 +161,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     }
   }
 
-  private async getExistingDeferredMs(organizationId: string, stepRunId: string): Promise<number | null> {
-    if (!this.clickhouseService.client) {
-      return null;
-    }
-
-    try {
-      const query = `
-        SELECT deferred_ms 
-        FROM ${this.table} 
-        WHERE organization_id = {organizationId:String} 
-          AND step_run_id = {stepRunId:String}
-          AND deferred_ms IS NOT NULL
-        ORDER BY updated_at DESC
-        LIMIT 1
-      `;
-
-      const result = await this.clickhouseService.query({
-        query,
-        params: {
-          organizationId,
-          stepRunId,
-        },
-      });
-
-      return (result.data?.[0] as { deferred_ms?: number })?.deferred_ms || null;
-    } catch (error) {
-      this.logger.warn({ err: error, stepRunId }, 'Failed to query existing deferredMs');
-
-      return null;
-    }
-  }
-
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
     const createdAt = new Date(job.createdAt || now);
@@ -235,9 +188,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Execution details
       status: options?.status || job.status,
-
-      // Performance metrics
-      deferred_ms: options?.deferredMs || null,
 
       // Error handling
       error_code: options?.errorCode || null,
