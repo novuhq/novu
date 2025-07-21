@@ -1,13 +1,13 @@
-import { RiFileTextLine } from 'react-icons/ri';
-import { Skeleton } from '@/components/primitives/skeleton';
 import { Editor } from '@/components/primitives/editor';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 import { cn } from '@/utils/ui';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { RiFileTextLine } from 'react-icons/ri';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { formatTranslationDate, formatTranslationTime } from '../utils';
 import { EditorActions } from './editor-actions';
-import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 
 type JSONEditorProps = {
   content: string;
@@ -35,8 +35,12 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           extensions={[loadLanguage('json')?.extension ?? []]}
           basicSetup={{ lineNumbers: true, defaultKeymap: true }}
           placeholder="Enter JSON content..."
-          className={cn('h-full overflow-auto', error ? 'pb-8' : '')}
+          className={cn(
+            'h-full overflow-y-auto overflow-x-hidden [&_.cm-content]:max-w-[calc(100%-2rem)]',
+            error ? 'pb-8' : ''
+          )}
           foldGutter
+          multiline
           readOnly={isReadOnly}
         />
         {error && (
