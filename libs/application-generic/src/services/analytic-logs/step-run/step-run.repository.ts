@@ -180,6 +180,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       subscriber_id: job._subscriberId || job.subscriberId,
       external_subscriber_id: null, // Will be populated from subscriber if available
       message_id: options?.message?._id || null,
+      notification_id: job._notificationId,
 
       // Step metadata
       step_type: this.mapStepTypeEnumToStepType(job.type || job.step.template?.type),
