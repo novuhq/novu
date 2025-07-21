@@ -8,8 +8,9 @@ export function Stepper({ currentStep, totalSteps }: StepperProps) {
     <div
       className="flex flex-col items-end gap-2 p-3"
       role="progressbar"
+      aria-label="Onboarding progress"
       aria-valuenow={currentStep}
-      aria-valuemin={1}
+      aria-valuemin={0}
       aria-valuemax={totalSteps}
     >
       <div className="flex h-1 w-[100px] gap-1">

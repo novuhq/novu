@@ -19,7 +19,7 @@ interface RequiredData {
   subscriberId: string;
 }
 
-type LoadingPhase = 'initializing' | 'loading' | 'ready';
+type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
 
 const InboxLoadingSkeleton = () => {
   return (
@@ -112,7 +112,7 @@ const useInboxLoading = (organizationId?: string) => {
 
     try {
       setPhase('initializing');
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       setPhase('loading');
       await refetchEnvironments();
@@ -120,7 +120,7 @@ const useInboxLoading = (organizationId?: string) => {
       setPhase('ready');
     } catch (error) {
       console.warn('Failed to load environment:', error);
-      setPhase('loading');
+      setPhase('error');
     }
   }, [organizationId, refetchEnvironments]);
 
@@ -128,7 +128,7 @@ const useInboxLoading = (organizationId?: string) => {
     if (organizationId) {
       loadingTimeoutRef.current = setTimeout(() => {
         initializeAndFetch();
-      }, 200);
+      }, 50);
     }
 
     return () => {
