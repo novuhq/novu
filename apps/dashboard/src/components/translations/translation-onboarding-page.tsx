@@ -3,15 +3,15 @@ import { LinkButton } from '@/components/primitives/button-link';
 import { Form, FormControl, FormField, FormItem } from '@/components/primitives/form/form';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { LocaleSelect } from '@/components/primitives/locale-select';
-import { TimelineStep, TimelineContainer } from '@/components/primitives/timeline';
+import { TimelineContainer, TimelineStep } from '@/components/primitives/timeline';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { ROUTES, buildRoute } from '@/utils/routes';
 
 import { DEFAULT_LOCALE, PermissionsEnum } from '@novu/shared';
-import { useForm } from 'react-hook-form';
 import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { EmptyTranslationsIllustration } from './empty-translations-illustration';
@@ -50,15 +50,15 @@ export const TranslationOnboardingPage = () => {
     });
   };
 
-  // Update form when organization settings change
+  // Update form when organization settings change (but not during mutations)
   useEffect(() => {
-    if (organizationSettings?.data) {
+    if (organizationSettings?.data && !updateOrganizationSettings.isPending) {
       form.reset({
         defaultLocale: organizationSettings.data.defaultLocale,
         targetLocales: organizationSettings.data.targetLocales || [],
       });
     }
-  }, [organizationSettings, form]);
+  }, [organizationSettings, form, updateOrganizationSettings.isPending]);
 
   const handleViewWorkflows = () => {
     if (environmentSlug) {
