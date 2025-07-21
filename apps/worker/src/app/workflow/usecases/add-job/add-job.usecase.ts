@@ -179,7 +179,6 @@ export class AddJob {
 
     await this.stepRunRepository.create(command.job, {
       status: JobStatusEnum.DELAYED,
-      deferredMs: delay,
     });
 
     await this.queueJob(job, delay);

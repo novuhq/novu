@@ -5,6 +5,7 @@ import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum, StepTypeEnum } from '@no
 import { SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
 const axiosInstance = axios.create();
 
@@ -109,15 +110,19 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
 
     await cancelEvent(transactionId!);
 
-    const delayedJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
-      transactionId,
+    const delayedJobs = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        type: StepTypeEnum.DELAY,
+        transactionId,
+      },
+      findMultiple: true,
     });
 
-    expect(delayedJobs[0].status).to.equal(JobStatusEnum.CANCELED);
-    expect(delayedJobs[1].status).to.equal(JobStatusEnum.CANCELED);
+    expect(delayedJobs?.[0]?.status).to.equal(JobStatusEnum.CANCELED);
+    expect(delayedJobs?.[1]?.status).to.equal(JobStatusEnum.CANCELED);
   });
 
   it.skip('should cancel a digest after it has already digested some triggers', async function () {
