@@ -1,10 +1,38 @@
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { TranslationDrawerContent, TranslationDrawerContentRef } from './translation-drawer-content';
+import { EditorPanelSkeleton } from './editor-panel';
+import { LocaleListSkeleton } from './locale-list';
 import { useState, useRef, useCallback, forwardRef } from 'react';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { LocalizationResourceEnum } from '@/types/translations';
+
+function TranslationDrawerSkeleton() {
+  return (
+    <div className="flex h-full w-full flex-col">
+      {/* Header skeleton */}
+      <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
+        <div className="flex flex-1 items-center gap-2 overflow-hidden text-sm font-medium">
+          <Skeleton className="h-4 w-4" /> {/* Translate icon */}
+          <Skeleton className="h-4 w-48" /> {/* Resource name */}
+        </div>
+      </header>
+
+      {/* Main content skeleton */}
+      <div className="flex h-full">
+        <LocaleListSkeleton />
+        <EditorPanelSkeleton />
+      </div>
+
+      {/* Footer skeleton */}
+      <div className="flex items-center justify-end border-t border-neutral-200 bg-white px-6 py-3">
+        <Skeleton className="h-8 w-24" /> {/* Save changes button */}
+      </div>
+    </div>
+  );
+}
 
 type TranslationDrawerProps = {
   isOpen: boolean;
@@ -58,9 +86,7 @@ export const TranslationDrawer = forwardRef<HTMLDivElement, TranslationDrawerPro
               <SheetDescription />
             </VisuallyHidden>
             {isPending ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-neutral-500">Loading translation group...</p>
-              </div>
+              <TranslationDrawerSkeleton />
             ) : translationGroup && translationGroup.locales ? (
               <TranslationDrawerContent
                 key={translationGroup.resourceId}
