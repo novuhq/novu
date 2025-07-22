@@ -128,6 +128,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                 <div className="flex flex-col gap-1" key={index}>
                   <div className="grid grid-cols-[3fr,4fr,1.75rem] items-center gap-2">
                     <Input
+                      size="xs"
                       placeholder="Insert property key..."
                       type="text"
                       value={pair.key}
@@ -136,6 +137,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                     />
                     <InputRoot>
                       <ControlInput
+                        size="2xs"
                         multiline={false}
                         indentWithTab={false}
                         value={pair.value}
@@ -148,7 +150,12 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                         variables={variables}
                       />
                     </InputRoot>
-                    <Button variant="secondary" mode="outline" className="h-7 px-0" onClick={() => handleRemovePair(index)}>
+                    <Button
+                      variant="secondary"
+                      mode="outline"
+                      className="w-7.5 h-8 px-0"
+                      onClick={() => handleRemovePair(index)}
+                    >
                       <RiDeleteBin2Line className="size-4" />
                     </Button>
                   </div>
@@ -163,6 +170,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
             <Button
               variant="secondary"
               mode="lighter"
+              size="2xs"
               className="self-start"
               onClick={() => {
                 handleAddPair();
