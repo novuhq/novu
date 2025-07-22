@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ResourceTypeEnum } from '../types/sync.types';
 
 export class DiffEnvironmentRequestDto {
   @ApiPropertyOptional({
@@ -96,10 +97,12 @@ export class ResourceDiffDto {
 
   @ApiProperty({
     description: 'Type of resource',
-    enum: ['workflow', 'step', 'localization_group'],
+    enum: [...Object.values(ResourceTypeEnum)],
+    enumName: 'ResourceTypeEnum',
+    example: 'workflow',
   })
-  @IsEnum(['workflow', 'step', 'localization_group'])
-  resourceType: 'workflow' | 'step' | 'localization_group';
+  @IsEnum(ResourceTypeEnum)
+  resourceType: ResourceTypeEnum;
 
   @ApiProperty({
     description: 'Type of change',
@@ -169,11 +172,12 @@ export class DiffSummaryDto {
 export class ResourceDiffResultDto {
   @ApiProperty({
     description: 'Type of resource being compared',
-    enum: ['workflow'],
+    enum: [...Object.values(ResourceTypeEnum)],
+    enumName: 'ResourceTypeEnum',
     example: 'workflow',
   })
-  @IsEnum(['workflow'])
-  resourceType: string;
+  @IsEnum(ResourceTypeEnum)
+  resourceType: ResourceTypeEnum;
 
   @ApiPropertyOptional({
     description: 'Source resource information',

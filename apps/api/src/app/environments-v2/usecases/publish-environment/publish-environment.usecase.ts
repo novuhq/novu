@@ -2,16 +2,10 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { EnvironmentRepository, ClientSession, BaseRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
-import {
-  ResourceTypeEnum,
-  ISyncStrategy,
-  IPublishResult,
-  ISyncContext,
-  ISyncOptions,
-  ISyncResult,
-} from '../../types/sync.types';
+import { ISyncStrategy, IPublishResult, ISyncContext, ISyncOptions, ISyncResult } from '../../types/sync.types';
 import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
+import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 
 @Injectable()
 export class PublishEnvironmentUseCase {
@@ -19,7 +13,8 @@ export class PublishEnvironmentUseCase {
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
     private environmentRepository: EnvironmentRepository,
-    private workflowSyncStrategy: WorkflowSyncStrategy
+    private workflowSyncStrategy: WorkflowSyncStrategy,
+    private layoutSyncStrategy: LayoutSyncStrategy
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -61,7 +56,7 @@ export class PublishEnvironmentUseCase {
        * For now, we only support workflow sync
        * In the future, we can add more strategies here
        */
-      const strategies = [this.workflowSyncStrategy];
+      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
 
       const results = await this.executeSync(strategies, syncContext);
 

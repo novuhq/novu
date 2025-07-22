@@ -1,20 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { Instrument, PinoLogger } from '@novu/application-generic';
 import { diff } from 'deep-object-diff';
 import { UserSessionData } from '@novu/shared';
-import { NotificationTemplateEntity } from '@novu/dal';
-import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../../workflows-v2/usecases/get-workflow';
+import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../workflows-v2/usecases/get-workflow';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
 import { IWorkflowComparison, INormalizedStep, INormalizedWorkflow } from '../types/workflow-sync.types';
-import { IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../../types/sync.types';
-import { WORKFLOW_SYNC_MESSAGES } from '../constants/workflow-sync.constants';
+import { IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../types/sync.types';
+import { WorkflowRepositoryService } from '../operations/workflow-repository.service';
 
 @Injectable()
 export class WorkflowComparator {
   constructor(
     private logger: PinoLogger,
     private getWorkflowUseCase: GetWorkflowUseCase,
-    private workflowNormalizer: WorkflowNormalizer
+    private workflowNormalizer: WorkflowNormalizer,
+    private workflowRepositoryService: WorkflowRepositoryService,
+    private moduleRef: ModuleRef
   ) {}
 
   async compareWorkflows(
@@ -72,11 +75,49 @@ export class WorkflowComparator {
       // Compare steps and generate step-level diffs
       const stepDiffs = this.compareStepsAsEntities(sourceSteps, targetSteps);
 
-      return { workflowChanges, stepDiffs };
-    } catch (error) {
-      this.logger.error({ err: error }, WORKFLOW_SYNC_MESSAGES.COMPARE_FAILED(error.message));
+      // Get localization group diffs for this workflow
+      const localizationDiffs = await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow, userContext._id);
 
-      return { workflowChanges: null, stepDiffs: [] };
+      return { workflowChanges, otherDiffs: [...stepDiffs, ...localizationDiffs] };
+    } catch (error) {
+      this.logger.error({ err: error }, `Failed to compare workflows ${error.message}`);
+
+      return { workflowChanges: null, otherDiffs: [] };
+    }
+  }
+
+  @Instrument()
+  private async getLocalizationDiffs(
+    sourceWorkflow: NotificationTemplateEntity,
+    targetWorkflow: NotificationTemplateEntity,
+    userId: string
+  ): Promise<IResourceDiff[]> {
+    try {
+      // Use the new DiffTranslationGroups use case from the translation module
+      // eslint-disable-next-line global-require
+      const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
+        strict: false,
+      });
+
+      if (!diffTranslationGroups) {
+        this.logger.debug('Translation module not available, skipping localization diff');
+
+        return [];
+      }
+
+      return await diffTranslationGroups.execute({
+        sourceEnvironmentId: sourceWorkflow._environmentId,
+        targetEnvironmentId: targetWorkflow._environmentId,
+        resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        organizationId: sourceWorkflow._organizationId,
+        userId,
+        environmentId: sourceWorkflow._environmentId, // Required by EnvironmentWithUserCommand
+      });
+    } catch (error) {
+      this.logger.error(`Failed to diff localization groups for workflow ${sourceWorkflow.name}`, error);
+
+      return [];
     }
   }
 

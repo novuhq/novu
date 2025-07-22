@@ -105,6 +105,7 @@ export class CreateLayoutUseCase {
       origin: domainEntity.origin,
       deleted: false,
       controls: domainEntity.controls,
+      _updatedBy: domainEntity.userId,
     };
   }
 

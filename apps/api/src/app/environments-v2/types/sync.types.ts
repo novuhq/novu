@@ -5,6 +5,7 @@ export enum ResourceTypeEnum {
   WORKFLOW = 'workflow',
   STEP = 'step',
   LOCALIZATION_GROUP = 'localization_group',
+  LAYOUT = 'layout',
 }
 
 export interface ISyncOptions {

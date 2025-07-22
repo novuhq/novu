@@ -3,25 +3,25 @@ import { PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { BaseSyncStrategy } from './base/base-sync.strategy';
 import { ResourceTypeEnum, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
-import { WorkflowSyncOperation } from './operations/workflow-sync.operation';
-import { WorkflowDiffOperation } from './operations/workflow-diff.operation';
+import { LayoutSyncOperation } from './operations/layout-sync.operation';
+import { LayoutDiffOperation } from './operations/layout-diff.operation';
 
 @Injectable()
-export class WorkflowSyncStrategy extends BaseSyncStrategy {
+export class LayoutSyncStrategy extends BaseSyncStrategy {
   constructor(
     logger: PinoLogger,
-    private workflowSyncOperation: WorkflowSyncOperation,
-    private workflowDiffOperation: WorkflowDiffOperation
+    private layoutSyncOperation: LayoutSyncOperation,
+    private layoutDiffOperation: LayoutDiffOperation
   ) {
     super(logger);
   }
 
   getResourceType(): ResourceTypeEnum {
-    return ResourceTypeEnum.WORKFLOW;
+    return ResourceTypeEnum.LAYOUT;
   }
 
   async execute(context: ISyncContext): Promise<ISyncResult> {
-    return this.workflowSyncOperation.execute(context);
+    return this.layoutSyncOperation.execute(context);
   }
 
   async diff(
@@ -30,6 +30,6 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     organizationId: string,
     userContext: UserSessionData
   ): Promise<IDiffResult[]> {
-    return this.workflowDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
+    return this.layoutDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
   }
 }
