@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LayoutEntity } from '@novu/dal';
 import { IBaseRepositoryService } from '../base/interfaces/base-repository.interface';
-import { LayoutRepositoryService } from '../operations/layout-reposiotry.service';
+import { LayoutRepositoryService } from '../operations/layout-repository.service';
 
 @Injectable()
 export class LayoutRepositoryAdapter implements IBaseRepositoryService<LayoutEntity> {

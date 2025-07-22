@@ -17,7 +17,7 @@ import { WorkflowNormalizer } from './normalizers/workflow.normalizer';
 import { WorkflowSyncStrategy } from './workflow-sync.strategy';
 import { DeleteLayoutUseCase } from '../../../layouts-v2/usecases/delete-layout';
 import { LayoutSyncStrategy } from './layout-sync.strategy';
-import { LayoutRepositoryService } from './operations/layout-reposiotry.service';
+import { LayoutRepositoryService } from './operations/layout-repository.service';
 import { LayoutNormalizer } from './normalizers/layout.normalizer';
 import { LayoutComparator } from './comparators/layout.comparator';
 import { LayoutRepositoryAdapter } from './adapters/layout-repository.adapter';
