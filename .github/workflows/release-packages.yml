@@ -20,14 +20,14 @@ on:
         default: '@novu/js@v3.4.0'
       nightly:
         description: 'Publish as nightly release'
-        required: false
+        required: true
         type: boolean
         default: false
       create_github_release:
         description: 'Create GitHub releases for the packages'
-        required: false
+        required: true
         type: boolean
-        default: true
+        default: false
 
 jobs:
   release:

@@ -15,10 +15,10 @@ on:
         default: 'v3.0.0'
       create_github_release:
         description: 'Create GitHub releases for the packages'
-        required: false
+        required: true
         type: boolean
-        default: true
-
+        default: false
+        
 jobs:
   manual_post_release:
     runs-on: ubuntu-latest
