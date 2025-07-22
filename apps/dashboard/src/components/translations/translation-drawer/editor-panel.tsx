@@ -1,6 +1,7 @@
 import { Editor } from '@/components/primitives/editor';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 import { cn } from '@/utils/ui';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
@@ -115,10 +116,10 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
       )}
 
       <div className="mt-2 px-1">
-        <span className="text-2xs text-neutral-400">
+        <TimeDisplayHoverCard date={updatedAt} className="text-2xs text-neutral-400">
           Last updated at {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
           {formatTranslationTime(updatedAt, TIME_FORMAT_OPTIONS)} UTC
-        </span>
+        </TimeDisplayHoverCard>
       </div>
     </div>
   );

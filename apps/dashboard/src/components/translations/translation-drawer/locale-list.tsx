@@ -3,6 +3,7 @@ import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Badge } from '@/components/primitives/badge';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { FlagCircle } from '@/components/flag-circle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
@@ -67,10 +68,10 @@ function TranslationStatusSection({ updatedAt, outdatedLocales }: TranslationSta
       </div>
       <div className="flex w-full items-center justify-between">
         <span className="text-sm text-neutral-600">Last updated at</span>
-        <span className="font-code text-xs text-neutral-400">
+        <TimeDisplayHoverCard date={updatedAt} className="font-code text-xs text-neutral-400">
           {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
           {formatTranslationTime(updatedAt, TIME_FORMAT_OPTIONS)} UTC
-        </span>
+        </TimeDisplayHoverCard>
       </div>
     </div>
   );
