@@ -1,11 +1,10 @@
 import { forwardRef, useEffect, useMemo, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { Button } from '@/components/primitives/button';
 import { RiSettings4Line } from 'react-icons/ri';
 import TruncatedText from '@/components/truncated-text';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
@@ -47,8 +46,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
       },
     });
 
-    const { watch, reset, formState } = form;
-    const { isDirty } = formState;
+    const { watch, reset } = form;
 
     const formValues = watch();
 
@@ -119,15 +117,14 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
             onEscapeKeyDown={handleCloseAttempt}
           >
             <div className="flex h-full flex-col">
-              <div className="border-b border-neutral-200 p-3.5">
-                <div className="flex items-center gap-2">
+              <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
+                <div className="flex flex-1 items-center gap-2 overflow-hidden text-sm font-medium">
                   <RiSettings4Line className="h-4 w-4 text-neutral-600" />
-                  <SheetTitle className="text-base font-medium text-neutral-950">Translation Settings</SheetTitle>
+                  <SheetTitle className="flex-1 truncate pr-10 text-sm font-medium text-neutral-950">
+                    Configure translation settings
+                  </SheetTitle>
                 </div>
-                <SheetDescription className="mt-1 text-sm text-neutral-500">
-                  Configure your default and target locales for translations
-                </SheetDescription>
-              </div>
+              </header>
 
               <div className="flex-1 overflow-auto p-3.5">
                 {!isDevEnvironment && (
@@ -142,7 +139,6 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
 
                 <div className="space-y-6">
                   <div>
-                    <TruncatedText className="text-label-xs text-text-sub mb-4">Settings</TruncatedText>
                     {isLoading ? (
                       <div className="space-y-4">
                         <Skeleton className="h-16 w-full" />
@@ -204,7 +200,6 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                     )}
                   </div>
                 </div>
-                <Separator />
               </div>
 
               <div className="mt-auto">
