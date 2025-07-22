@@ -79,7 +79,7 @@ type EditorPanelProps = {
   selectedTranslation: TranslationWithPlaceholder | undefined;
   isLoadingTranslation: boolean;
   translationError: any;
-  modifiedContent: Record<string, unknown> | null;
+  modifiedContentString: string | null;
   jsonError: string | null;
   onContentChange: (content: string) => void;
   outdatedLocales?: string[];
@@ -90,7 +90,7 @@ export function EditorPanel({
   selectedTranslation,
   isLoadingTranslation,
   translationError,
-  modifiedContent,
+  modifiedContentString,
   jsonError,
   onContentChange,
   outdatedLocales,
@@ -107,14 +107,29 @@ export function EditorPanel({
     );
   }
 
-  const contentToUse = modifiedContent || selectedTranslation.content || {};
+  // Use the modified string if available, otherwise format the original content
+  const contentToUse = modifiedContentString ?? JSON.stringify(selectedTranslation.content || {}, null, 2);
   const isOutdated = outdatedLocales?.includes(selectedTranslation.locale);
+
+  const parseContentForActions = () => {
+    if (!modifiedContentString || jsonError) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(modifiedContentString);
+    } catch {
+      return null;
+    }
+  };
+
+  const modifiedContentForActions = parseContentForActions();
 
   return (
     <div className="flex flex-1 flex-col bg-neutral-50">
       <EditorActions
         selectedTranslation={selectedTranslation}
-        modifiedContent={modifiedContent}
+        modifiedContent={modifiedContentForActions}
         isReadOnly={isReadOnly}
       />
 
@@ -133,7 +148,7 @@ export function EditorPanel({
         </div>
       ) : selectedTranslation ? (
         <JSONEditor
-          content={JSON.stringify(contentToUse, null, 2)}
+          content={contentToUse}
           onChange={onContentChange}
           error={jsonError}
           updatedAt={selectedTranslation.updatedAt}
