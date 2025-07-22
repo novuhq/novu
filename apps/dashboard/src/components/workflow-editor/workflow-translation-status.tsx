@@ -1,11 +1,13 @@
-import { RiAlertFill, RiTranslate2 } from 'react-icons/ri';
-import { StatusBadge, StatusBadgeIcon, Dot } from '@/components/primitives/status-badge';
+import { Dot, StatusBadge } from '@/components/primitives/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
-import { useEnvironment } from '@/context/environment/hooks';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { ROUTES, buildRoute } from '@/utils/routes';
+import { useState } from 'react';
+import { RiAlertFill, RiArrowRightSLine, RiMenuUnfoldLine, RiSidebarUnfoldLine, RiTranslate2 } from 'react-icons/ri';
 
 type WorkflowTranslationStatusProps = {
   workflowId: string;
@@ -13,6 +15,7 @@ type WorkflowTranslationStatusProps = {
 };
 
 export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTranslationStatusProps) {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isTranslationsEnabled = useIsTranslationEnabled();
   const { currentEnvironment } = useEnvironment();
 
@@ -28,8 +31,19 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
 
   const hasOutdatedLocales = translationGroup.outdatedLocales && translationGroup.outdatedLocales.length > 0;
 
+  const handleStatusBadgeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDrawerOpen(true);
+  };
+
   const statusBadge = (
-    <StatusBadge variant="light" status={hasOutdatedLocales ? 'pending' : 'completed'} className={className}>
+    <StatusBadge
+      variant="light"
+      status={hasOutdatedLocales ? 'pending' : 'completed'}
+      className={`hover:border-current/20 group ml-auto cursor-pointer border border-transparent transition-all duration-200 hover:shadow-sm ${className || ''}`}
+      onClick={handleStatusBadgeClick}
+    >
       {hasOutdatedLocales ? (
         <>
           <RiAlertFill className="size-3.5" />
@@ -42,31 +56,48 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
         </>
       )}
       {hasOutdatedLocales ? 'Locales out of sync' : 'All locales in sync'}
+      <div className="relative size-3.5 overflow-hidden">
+        <RiArrowRightSLine className="absolute size-3.5 opacity-60 transition-all duration-200 group-hover:-translate-x-1 group-hover:opacity-0" />
+        <RiSidebarUnfoldLine className="absolute size-3.5 translate-x-1 opacity-0 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-60" />
+      </div>
     </StatusBadge>
   );
 
   if (hasOutdatedLocales) {
-    const translationsUrl = currentEnvironment?.slug
-      ? buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment.slug }) + `?workflowId=${workflowId}`
-      : '#';
-
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>{statusBadge}</TooltipTrigger>
-        <TooltipContent>
-          <div className="max-w-xs">
-            <p className="font-medium">Locales out of sync</p>
-            <p className="mt-1 text-xs text-neutral-400">
-              Translation keys were added or removed from the default locale. Update target locales to stay up to date.
-            </p>
-            <a href={translationsUrl} target="_blank" rel="noopener noreferrer" className="mt-2 block underline">
-              Manage translations ↗
-            </a>
-          </div>
-        </TooltipContent>
-      </Tooltip>
+      <>
+        <Tooltip>
+          <TooltipTrigger asChild>{statusBadge}</TooltipTrigger>
+          <TooltipContent sideOffset={10}>
+            <div className="max-w-xs">
+              <p className="font-medium">Locales out of sync</p>
+              <p className="mt-1 text-xs text-neutral-400">
+                Translation keys were added or removed from the default locale. Click to update target locales.
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+
+        <TranslationDrawer
+          isOpen={isDrawerOpen}
+          onOpenChange={setIsDrawerOpen}
+          resourceType={LocalizationResourceEnum.WORKFLOW}
+          resourceId={workflowId}
+        />
+      </>
     );
   }
 
-  return statusBadge;
+  return (
+    <>
+      {statusBadge}
+
+      <TranslationDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        resourceType={LocalizationResourceEnum.WORKFLOW}
+        resourceId={workflowId}
+      />
+    </>
+  );
 }
