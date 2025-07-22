@@ -48,8 +48,8 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
     const items = await this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
-      origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
-      type: { $in: [ResourceTypeEnum.BRIDGE] },
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
     }).populate('updatedBy', '_id firstName lastName externalId');
 
     return this.mapEntities(items);
