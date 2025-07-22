@@ -20,6 +20,8 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useTranslationEditor } from './use-translation-editor';
 import { useTranslationForm } from './use-translation-form';
 import { useVirtualAnchor } from './use-virtual-anchor';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { DEFAULT_LOCALE } from '@novu/shared';
 
 interface EditTranslationPopoverProps {
   open: boolean;
@@ -67,13 +69,12 @@ const TranslationKeyInput = ({
   const { environmentSlug } = useParams();
   const { workflow } = useWorkflow();
 
-  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
+  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS_EDIT, {
     environmentSlug: environmentSlug ?? '',
+    resourceType: LocalizationResourceEnum.WORKFLOW,
+    resourceId: workflow?.workflowId ?? '',
+    locale: DEFAULT_LOCALE,
   });
-
-  const translationsUrlWithSearch = workflow?.name
-    ? `${translationsUrl}?query=${encodeURIComponent(workflow.name)}`
-    : translationsUrl;
 
   return (
     <FormItem>
@@ -99,7 +100,7 @@ const TranslationKeyInput = ({
               size="sm"
               className="text-label-2xs text-xs"
               leadingIcon={RiListView}
-              onClick={() => window.open(translationsUrlWithSearch, '_blank')}
+              onClick={() => window.open(translationsUrl, '_blank')}
             >
               View & manage translations ↗
             </LinkButton>

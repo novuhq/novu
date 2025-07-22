@@ -2,18 +2,18 @@ import { FormField } from '@/components/primitives/form/form';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationSwitch } from '@/components/translations/translation-switch';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { ROUTES } from '@/utils/routes';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InfoIcon } from 'lucide-react';
 import { Control, FieldValues, Path } from 'react-hook-form';
 import { Badge } from '../primitives/badge';
+import { useEnvironment } from '@/context/environment/hooks';
 
 interface TranslationToggleSectionProps<T extends FieldValues> {
   control: Control<T>;
   fieldName: Path<T>;
   onChange?: (checked: boolean) => void;
   isReadOnly?: boolean;
-  workflowId?: string;
 }
 
 export function TranslationToggleSection<T extends FieldValues>({
@@ -21,13 +21,17 @@ export function TranslationToggleSection<T extends FieldValues>({
   fieldName,
   onChange,
   isReadOnly = false,
-  workflowId,
 }: TranslationToggleSectionProps<T>) {
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
+  const { currentEnvironment } = useEnvironment();
 
   if (!isTranslationEnabled) {
     return null;
   }
+
+  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+  });
 
   return (
     <div className="flex flex-col border-t border-neutral-100 pt-4">
@@ -68,12 +72,7 @@ export function TranslationToggleSection<T extends FieldValues>({
           </div>
         )}
       />
-      <a
-        href={`${ROUTES.TRANSLATIONS}?workflowId=${workflowId}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-foreground-400 text-2xs mb-1"
-      >
+      <a href={translationsUrl} rel="noopener noreferrer" className="text-foreground-400 text-2xs mb-1">
         View & manage translations ↗
       </a>
     </div>

@@ -81,7 +81,7 @@ function LocaleButton({ locale, isSelected, isDefault, isOutdated, onClick }: Lo
           </Tooltip>
         )}
         {isDefault && (
-          <Badge variant="lighter" color="orange" size="md">
+          <Badge variant="lighter" color="green" size="md">
             DEFAULT
           </Badge>
         )}

@@ -1,6 +1,6 @@
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
 import { VariableList, VariableListRef } from '@/components/variable/variable-list';
-import { TranslationKey } from '@/types/translations';
+import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
 import { NewTranslationKeyPreview } from './new-translation-key-preview';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useParams } from 'react-router-dom';
@@ -36,13 +36,12 @@ export const TranslationSuggestionsListView = React.forwardRef<
 
   const defaultLocale = organizationSettings?.data?.defaultLocale ?? DEFAULT_LOCALE;
 
-  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
+  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS_EDIT, {
     environmentSlug: environmentSlug ?? '',
+    resourceType: LocalizationResourceEnum.WORKFLOW,
+    resourceId: workflow?.workflowId ?? '',
+    locale: DEFAULT_LOCALE,
   });
-
-  const translationsUrlWithSearch = workflow?.name
-    ? `${translationsUrl}?query=${encodeURIComponent(workflow.name)}`
-    : translationsUrl;
 
   const options = useMemo(() => {
     return items.map((item: TranslationKeyItem): { label: string; value: string; preview?: React.ReactNode } => {
@@ -56,7 +55,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
         return {
           label: displayLabel,
           value: item.name,
-          preview: <NewTranslationKeyPreview locale={defaultLocale} translationsUrl={translationsUrlWithSearch} />,
+          preview: <NewTranslationKeyPreview locale={defaultLocale} translationsUrl={translationsUrl} />,
         };
       }
 
@@ -65,7 +64,7 @@ export const TranslationSuggestionsListView = React.forwardRef<
         value: item.name,
       };
     });
-  }, [items, translationKeys, defaultLocale, translationsUrlWithSearch]);
+  }, [items, translationKeys, defaultLocale, translationsUrl]);
 
   const variablesListRef = useRef<VariableListRef>(null);
 
