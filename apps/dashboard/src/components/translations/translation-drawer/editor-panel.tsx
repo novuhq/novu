@@ -82,8 +82,6 @@ type EditorPanelProps = {
   modifiedContent: Record<string, unknown> | null;
   jsonError: string | null;
   onContentChange: (content: string) => void;
-  onDelete: (locale: string) => void | Promise<void>;
-  isDeleting?: boolean;
   outdatedLocales?: string[];
   isReadOnly?: boolean;
 };
@@ -95,8 +93,6 @@ export function EditorPanel({
   modifiedContent,
   jsonError,
   onContentChange,
-  onDelete,
-  isDeleting = false,
   outdatedLocales,
   isReadOnly = false,
 }: EditorPanelProps) {
@@ -119,8 +115,6 @@ export function EditorPanel({
       <EditorActions
         selectedTranslation={selectedTranslation}
         modifiedContent={modifiedContent}
-        onDelete={onDelete}
-        isDeleting={isDeleting}
         isReadOnly={isReadOnly}
       />
 

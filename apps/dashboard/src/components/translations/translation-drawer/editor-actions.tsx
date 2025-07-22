@@ -1,4 +1,4 @@
-import { RiFileUploadLine, RiDownloadLine, RiDeleteBinLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
+import { RiFileUploadLine, RiDownloadLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/components/primitives/button';
@@ -6,7 +6,6 @@ import { CopyButton } from '@/components/primitives/copy-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { FlagCircle } from '@/components/flag-circle';
 import { TranslationImportTrigger } from '../translation-import-trigger';
-import { ConfirmationModal } from '@/components/confirmation-modal';
 import { getLocaleDisplayName } from '../utils';
 import { useTranslationFileOperations } from './hooks';
 import { PermissionsEnum } from '@novu/shared';
@@ -99,19 +98,10 @@ function UploadButton({
 type EditorActionsProps = {
   selectedTranslation: TranslationWithPlaceholder;
   modifiedContent?: Record<string, unknown> | null;
-  onDelete: (locale: string) => void | Promise<void>;
-  isDeleting?: boolean;
   isReadOnly?: boolean;
 };
 
-export function EditorActions({
-  selectedTranslation,
-  modifiedContent,
-  onDelete,
-  isDeleting = false,
-  isReadOnly = false,
-}: EditorActionsProps) {
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+export function EditorActions({ selectedTranslation, modifiedContent, isReadOnly = false }: EditorActionsProps) {
   const { handleDownload } = useTranslationFileOperations();
 
   const selectedLocale = selectedTranslation.locale;
@@ -125,16 +115,6 @@ export function EditorActions({
   const resource = {
     resourceId: selectedTranslation.resourceId,
     resourceType: selectedTranslation.resourceType,
-  };
-
-  // Don't allow deletion of placeholder translations that don't exist in the database
-  const canDelete = selectedTranslation && !selectedTranslation.isPlaceholder && !isReadOnly;
-
-  const handleDeleteClick = () => setIsDeleteModalOpen(true);
-
-  const handleDeleteConfirm = async () => {
-    await onDelete(selectedLocale);
-    setIsDeleteModalOpen(false);
   };
 
   return (
@@ -176,46 +156,9 @@ export function EditorActions({
               </TooltipTrigger>
               <TooltipContent>Export translation JSON</TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger>
-                <PermissionButton
-                  permission={PermissionsEnum.WORKFLOW_WRITE}
-                  variant="secondary"
-                  mode="outline"
-                  size="xs"
-                  className="px-2 py-1.5 text-neutral-700 hover:text-red-500"
-                  onClick={handleDeleteClick}
-                  disabled={!canDelete}
-                >
-                  <RiDeleteBinLine className="h-4 w-4" />
-                </PermissionButton>
-              </TooltipTrigger>
-              <TooltipContent>
-                {!isReadOnly && canDelete
-                  ? `Delete ${selectedLocale} translation`
-                  : isReadOnly
-                    ? 'Edit translations in your development environment.'
-                    : 'Translation does not exist yet'}
-              </TooltipContent>
-            </Tooltip>
           </div>
         </div>
       </div>
-
-      <ConfirmationModal
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
-        onConfirm={handleDeleteConfirm}
-        title="Delete translation"
-        description={
-          <span>
-            Are you sure you want to delete the <span className="font-bold">{selectedLocale}</span> translation? This
-            action cannot be undone.
-          </span>
-        }
-        confirmButtonText="Delete translation"
-        isLoading={isDeleting}
-      />
     </>
   );
 }
