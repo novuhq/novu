@@ -9,6 +9,7 @@ import { useAuth } from '../context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '../context/environment/hooks';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
+import { useOrganization, useUser } from '@clerk/clerk-react';
 
 interface InboxUsecasePageProps {
   currentEnvironment?: IEnvironment;
@@ -152,20 +153,31 @@ const getRequiredData = (environment?: IEnvironment, userId?: string, organizati
   };
 };
 
-export function InboxUsecasePage({ currentEnvironment }: InboxUsecasePageProps) {
+export function InboxUsecasePage() {
+  const { user } = useUser();
+  const { organization } = useOrganization();
   const telemetry = useTelemetry();
   const { currentUser, currentOrganization } = useAuth();
   const { currentEnvironment: envFromContext } = useEnvironment();
+  const { environments } = useFetchEnvironments({
+    organizationId: currentOrganization?._id || 'org',
+    refetchInterval: 1000,
+  });
 
   const loadingPhase = useInboxLoading(currentOrganization?._id);
-
-  const environment = currentEnvironment || envFromContext;
-
+  const environment = envFromContext;
   const requiredData = getRequiredData(environment, currentUser?._id, currentOrganization?._id);
 
   useEffect(() => {
     telemetry(TelemetryEvent.INBOX_USECASE_PAGE_VIEWED);
   }, [telemetry]);
+
+  useEffect(() => {
+    if (environments?.length) {
+      user?.reload();
+      organization?.reload();
+    }
+  }, [environments]);
 
   const shouldShowLoading = !requiredData || loadingPhase !== 'ready';
 
