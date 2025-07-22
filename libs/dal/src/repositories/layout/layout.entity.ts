@@ -12,6 +12,7 @@ import {
 } from './types';
 import type { ChangePropsValueType } from '../../types/helpers';
 import { ControlSchemas } from '../message-template';
+import { UserEntity } from '../user';
 
 export class LayoutEntity {
   _id: LayoutId;
@@ -19,6 +20,7 @@ export class LayoutEntity {
   _organizationId: OrganizationId;
   _creatorId: UserId;
   _parentId?: LayoutId;
+  _updatedBy?: string;
   name: LayoutName;
   identifier: LayoutIdentifier;
   description?: LayoutDescription;
@@ -33,9 +35,10 @@ export class LayoutEntity {
   createdAt?: string;
   updatedAt?: string;
   controls?: ControlSchemas;
+  readonly updatedBy?: UserEntity;
 }
 
 export type LayoutDBModel = ChangePropsValueType<
   LayoutEntity,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_parentId'
+  '_environmentId' | '_organizationId' | '_creatorId' | '_parentId' | '_updatedBy'
 >;

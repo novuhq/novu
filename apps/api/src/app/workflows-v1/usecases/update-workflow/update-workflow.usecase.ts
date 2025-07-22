@@ -138,8 +138,6 @@ export class UpdateWorkflow {
       existingTemplate._id
     );
 
-    let notificationTemplateWithStepTemplate!: WorkflowWithPreferencesResponseDto;
-
     const workflowUpdate = async (session?: ClientSession | null) => {
       if (command.steps) {
         updatePayload = this.updateTriggers(updatePayload, command.steps);
@@ -280,29 +278,6 @@ export class UpdateWorkflow {
         },
         { session }
       );
-
-      notificationTemplateWithStepTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
-        GetWorkflowWithPreferencesCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          workflowIdOrInternalId: command.id,
-        })
-      );
-
-      if (!isBridgeWorkflow(command.type)) {
-        const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
-
-        await this.createChange.execute(
-          CreateChangeCommand.create({
-            organizationId: command.organizationId,
-            environmentId: command.environmentId,
-            userId: command.userId,
-            type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-            item: notificationTemplate,
-            changeId: parentChangeId,
-          })
-        );
-      }
     };
 
     if (command.session) {
@@ -313,6 +288,30 @@ export class UpdateWorkflow {
       await this.notificationTemplateRepository.withTransaction(async (session) => {
         await workflowUpdate(session);
       });
+    }
+
+    const notificationTemplateWithStepTemplate = await this.getWorkflowWithPreferencesUseCase.execute(
+      GetWorkflowWithPreferencesCommand.create({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        workflowIdOrInternalId: command.id,
+        session: command.session,
+      })
+    );
+
+    if (!isBridgeWorkflow(command.type)) {
+      const notificationTemplate = this.cleanNotificationTemplate(notificationTemplateWithStepTemplate);
+
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+          item: notificationTemplate,
+          changeId: parentChangeId,
+        })
+      );
     }
 
     this.analyticsService.track('Update Notification Template - [Platform]', command.userId, {

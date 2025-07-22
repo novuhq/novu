@@ -21,8 +21,7 @@ export const usePatchWorkflow = (
         queryKey: [QueryKeys.fetchWorkflows],
       });
 
-      // Invalidate diff environment queries when workflows are updated
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
 

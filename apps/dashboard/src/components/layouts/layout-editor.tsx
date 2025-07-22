@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { RiCodeBlock, RiEdit2Line, RiEyeLine, RiSettings4Line } from 'react-icons/ri';
-import { ContentIssueEnum, EmailControlsDto, RuntimeIssue } from '@novu/shared';
+import { RiArrowRightSLine, RiCodeBlock, RiEdit2Line, RiEyeLine, RiLockLine, RiSettings4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { ContentIssueEnum, EmailControlsDto, EnvironmentTypeEnum, RuntimeIssue } from '@novu/shared';
 
 import { useLayoutEditor } from './layout-editor-provider';
 import { Form, FormRoot } from '../primitives/form/form';
@@ -13,8 +14,12 @@ import { LayoutEditorSettingsDrawer } from './layout-editor-settings-drawer';
 import { CompactButton } from '../primitives/button-compact';
 import { LayoutEditorFactory } from './layout-editor-factory';
 import { LayoutPreviewFactory } from './layout-preview-factory';
+import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 export const LayoutEditor = () => {
+  const navigate = useNavigate();
+  const { currentEnvironment, oppositeEnvironment } = useEnvironment();
   const { form, layout, isPreviewPending, isPending, updateLayout, isUpdating } = useLayoutEditor();
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
 
@@ -41,6 +46,21 @@ export const LayoutEditor = () => {
       layoutSlug: layout?.slug ?? '',
     });
   };
+
+  const handleSwitchToDevelopment = () => {
+    const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;
+
+    if (developmentEnvironment?.slug) {
+      navigate(
+        buildRoute(ROUTES.LAYOUTS_EDIT, {
+          environmentSlug: developmentEnvironment.slug ?? '',
+          layoutSlug: layout?.layoutId ?? '',
+        })
+      );
+    }
+  };
+
+  const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;
 
   return (
     <div className="flex h-full w-full">
@@ -82,7 +102,39 @@ export const LayoutEditor = () => {
                     </div>
                     <div className="flex-1 overflow-y-auto">
                       <div className="h-full p-3">
-                        <LayoutEditorFactory />
+                        {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (
+                          <LayoutEditorFactory />
+                        ) : (
+                          <div className="flex h-full items-center justify-center p-6">
+                            <div className="max-w-md space-y-4 text-center">
+                              <div className="flex justify-center">
+                                <div className="bg-neutral-alpha-50 rounded-full p-3">
+                                  <RiLockLine className="text-neutral-alpha-400 h-8 w-8" />
+                                </div>
+                              </div>
+                              <div className="space-y-2">
+                                <h3 className="text-base font-medium text-neutral-600">Step editor unavailable</h3>
+                                <p className="text-sm leading-relaxed text-neutral-500">
+                                  Step editing is only available in development environments. Switch to a development
+                                  environment to modify this step.
+                                </p>
+                              </div>
+                              {developmentEnvironment && (
+                                <div className="flex justify-center pt-2">
+                                  <Button
+                                    variant="secondary"
+                                    size="xs"
+                                    mode="gradient"
+                                    onClick={handleSwitchToDevelopment}
+                                    trailingIcon={RiArrowRightSLine}
+                                  >
+                                    Switch to {developmentEnvironment.name}
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </ResizableLayout.EditorPanel>
@@ -112,7 +164,12 @@ export const LayoutEditor = () => {
                   <Button
                     type="submit"
                     variant="secondary"
-                    disabled={!form.formState.isDirty || isPending || isUpdating}
+                    disabled={
+                      !form.formState.isDirty ||
+                      isPending ||
+                      isUpdating ||
+                      currentEnvironment?.type !== EnvironmentTypeEnum.DEV
+                    }
                     isLoading={isUpdating}
                   >
                     Save changes

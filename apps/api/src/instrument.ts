@@ -1,5 +1,8 @@
+/* eslint-disable import/first */
 import './config/env.config';
-import 'newrelic';
+
+require('newrelic');
+
 import { init } from '@sentry/nestjs';
 import { version } from '../package.json';
 

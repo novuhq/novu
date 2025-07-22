@@ -1,6 +1,6 @@
-import { IResourceDiff } from '../../../../types/sync.types';
-import { WorkflowResponseDto } from '../../../../../workflows-v2/dtos/workflow-response.dto';
-import { StepResponseDto } from '../../../../../workflows-v2/dtos/step.response.dto';
+import { IResourceDiff } from '../../../types/sync.types';
+import { WorkflowResponseDto } from '../../../../workflows-v2/dtos/workflow-response.dto';
+import { StepResponseDto } from '../../../../workflows-v2/dtos/step.response.dto';
 
 export type INormalizedWorkflow = Omit<
   WorkflowResponseDto,
@@ -35,5 +35,5 @@ export interface IWorkflowComparison {
     previous: Partial<INormalizedWorkflow> | null;
     new: Partial<INormalizedWorkflow> | null;
   } | null;
-  stepDiffs: IResourceDiff[];
+  otherDiffs: IResourceDiff[];
 }

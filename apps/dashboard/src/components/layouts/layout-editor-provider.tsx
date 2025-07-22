@@ -73,9 +73,9 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
 
   const { previewData, isPending: isPreviewPending, preview } = useLayoutPreview();
 
-  const debouncedPreview = useDebounce((controlValues: Record<string, unknown>) => {
+  const debouncedPreview = useDebounce((controlValues: Record<string, unknown>, slug: string) => {
     preview({
-      layoutSlug,
+      layoutSlug: slug,
       controlValues: { email: { ...controlValues } },
       previewContextValue,
     });
@@ -173,14 +173,14 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const formValues = form.getValues();
-    debouncedPreview(formValues);
+    debouncedPreview(formValues, layoutSlug);
 
     const subscription = form.watch((values) => {
-      debouncedPreview(values);
+      debouncedPreview(values, layoutSlug);
     });
 
     return () => subscription.unsubscribe();
-  }, [form, debouncedPreview]);
+  }, [form, debouncedPreview, layoutSlug]);
 
   useEffect(() => {
     const serverPayloadExample = previewData?.previewPayloadExample;

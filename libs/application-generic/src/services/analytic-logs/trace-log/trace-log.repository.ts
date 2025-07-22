@@ -5,11 +5,12 @@ import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
+import { getInsertOptions } from '../shared';
 
-const TRACE_INSERT_OPTIONS: InsertOptions = {
-  asyncInsert: true,
-  waitForAsyncInsert: process.env.NODE_ENV === 'test',
-};
+const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
+  process.env.TRACES_ASYNC_INSERT,
+  process.env.TRACES_WAIT_ASYNC_INSERT
+);
 
 @Injectable()
 export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Trace> {
@@ -39,11 +40,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         return;
       }
 
-      await this.insert(traceData, {
-        organizationId: traceData.organization_id,
-        environmentId: traceData.environment_id,
-        userId: traceData.user_id,
-      });
+      await this.insert(
+        traceData,
+        {
+          organizationId: traceData.organization_id,
+          environmentId: traceData.environment_id,
+          userId: traceData.user_id,
+        },
+        TRACE_INSERT_OPTIONS
+      );
 
       this.logger.debug(
         {
@@ -88,11 +93,15 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         return;
       }
 
-      await this.insertMany(traceDataArray, {
-        organizationId: firstTraceData.organization_id,
-        environmentId: firstTraceData.environment_id,
-        userId: firstTraceData.user_id,
-      });
+      await this.insertMany(
+        traceDataArray,
+        {
+          organizationId: firstTraceData.organization_id,
+          environmentId: firstTraceData.environment_id,
+          userId: firstTraceData.user_id,
+        },
+        TRACE_INSERT_OPTIONS
+      );
 
       this.logger.debug(
         {
@@ -117,30 +126,6 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         'Failed to log trace events in batch'
       );
     }
-  }
-
-  // Override insert to ensure insert methods always apply trace-optimized ClickHouse settings, even if called directly
-  async insert(
-    data: Omit<Trace, 'id' | 'expires_at'>,
-    context: {
-      organizationId?: string;
-      environmentId?: string;
-      userId?: string;
-    }
-  ): Promise<void> {
-    await super.insert(data, context, TRACE_INSERT_OPTIONS);
-  }
-
-  // Override insert to ensure insert methods always apply trace-optimized ClickHouse settings, even if called directly
-  async insertMany(
-    data: Omit<Trace, 'id' | 'expires_at'>[],
-    context: {
-      organizationId?: string;
-      environmentId?: string;
-      userId?: string;
-    }
-  ): Promise<void> {
-    await super.insertMany(data, context, TRACE_INSERT_OPTIONS);
   }
 }
 

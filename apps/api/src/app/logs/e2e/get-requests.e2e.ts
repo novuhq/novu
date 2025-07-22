@@ -41,8 +41,8 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       duration_ms: 42,
     };
 
-    await requestLogRepository.insert(requestLog);
-    await requestLogRepository.insert(requestLog);
+    await requestLogRepository.create(requestLog);
+    await requestLogRepository.create(requestLog);
 
     const { body } = await session.testAgent.get('/v1/logs/requests').expect(200);
 
@@ -109,10 +109,10 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       created_at: LogRepository.formatDateTime64(threeHoursAgo) as any,
     };
 
-    await requestLogRepository.insert(log200Api);
-    await requestLogRepository.insert(log404Api);
-    await requestLogRepository.insert(log500Api);
-    await requestLogRepository.insert(log200Auth);
+    await requestLogRepository.create(log200Api);
+    await requestLogRepository.create(log404Api);
+    await requestLogRepository.create(log500Api);
+    await requestLogRepository.create(log200Auth);
 
     // Test 1: Filter by status codes 200 and 404
     const statusFilterResponse = await session.testAgent

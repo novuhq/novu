@@ -247,6 +247,7 @@
       "@fortawesome/free-regular-svg-icons",
       "@fortawesome/free-solid-svg-icons",
       "@nestjs/core",
+      "@newrelic/fn-inspect",
       "@newrelic/native-metrics",
       "@novu/novui",
       "@sentry/cli",

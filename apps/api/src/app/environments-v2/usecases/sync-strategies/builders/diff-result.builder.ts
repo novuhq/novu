@@ -5,7 +5,7 @@ import {
   DiffActionEnum,
   IUserInfo,
   IResourceInfo,
-} from '../../../../types/sync.types';
+} from '../../../types/sync.types';
 
 export class DiffResultBuilder {
   private results: IDiffResult[] = [];

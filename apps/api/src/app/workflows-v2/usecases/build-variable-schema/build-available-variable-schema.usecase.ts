@@ -5,7 +5,7 @@ import {
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { Instrument } from '@novu/application-generic';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 
 import { computeResultSchema } from '../../shared';
@@ -24,6 +24,7 @@ export class BuildVariableSchemaUsecase {
     private readonly controlValuesRepository: ControlValuesRepository
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId, optimisticSteps } = command;
 

@@ -44,7 +44,7 @@ export const LayoutSelect = () => {
                   <FacetedFormFilter
                     type="single"
                     size="small"
-                    title="Transactional layout"
+                    title="Layout"
                     icon={RiLayout5Line}
                     placeholder="Search layout"
                     className="bg-bg-weak border-transparent hover:border-transparent hover:bg-neutral-100 [&_span]:text-neutral-600"

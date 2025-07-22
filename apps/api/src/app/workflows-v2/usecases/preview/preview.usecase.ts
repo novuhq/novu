@@ -178,6 +178,7 @@ export class PreviewUsecase {
         workflowId: stepData.workflowId,
         workflowOrigin: stepData.origin,
         state,
+        skipLayoutRendering: command.skipLayoutRendering,
       })
     );
   }

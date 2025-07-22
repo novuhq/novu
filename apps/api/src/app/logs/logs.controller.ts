@@ -22,8 +22,8 @@ export class LogsController {
     query: GetRequestsDto
   ): Promise<GetRequestsResponseDto> {
     const command = GetRequestsCommand.create({
+      environmentId: user.environmentId,
       organizationId: user.organizationId,
-      userId: user._id,
       hoursAgo: query.created,
       ...query,
       statusCodes: query.statusCode,

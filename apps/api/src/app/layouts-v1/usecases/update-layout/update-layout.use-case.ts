@@ -106,6 +106,7 @@ export class UpdateLayoutUseCase {
       ...(updates.content && { content: updates.content }),
       ...(updates.variables && { variables: updates.variables }),
       ...(typeof updates.isDefault === 'boolean' && { isDefault: updates.isDefault }),
+      _updatedBy: updates.userId,
     };
   }
 

@@ -1,6 +1,6 @@
 import { PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { ResourceTypeEnum, ISyncStrategy, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
+import { ResourceTypeEnum, ISyncStrategy, ISyncContext, ISyncResult, IDiffResult } from '../../../types/sync.types';
 
 export abstract class BaseSyncStrategy implements ISyncStrategy {
   protected readonly BATCH_SIZE = 100;
