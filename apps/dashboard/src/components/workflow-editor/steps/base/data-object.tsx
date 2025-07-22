@@ -14,7 +14,7 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import React from 'react';
-import { RiAddLine, RiDeleteBin6Line, RiInputField } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBin2Line, RiInputField } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 
 const dataObjectKey = 'data';
@@ -149,7 +149,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                       />
                     </InputRoot>
                     <Button variant="secondary" mode="outline" className="h-7" onClick={() => handleRemovePair(index)}>
-                      <RiDeleteBin6Line className="size-4" />
+                      <RiDeleteBin2Line className="size-4" />
                     </Button>
                   </div>
                   <FormMessage keyName={isDuplicate ? '' : pair.key}>
