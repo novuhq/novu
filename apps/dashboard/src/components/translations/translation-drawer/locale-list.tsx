@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Badge } from '@/components/primitives/badge';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { FlagCircle } from '@/components/flag-circle';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
@@ -10,6 +12,47 @@ import { getLocaleDisplayName, formatTranslationDate, formatTranslationTime } fr
 import { TranslationStatus } from '../translation-status';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { DEFAULT_LOCALE } from '@novu/shared';
+
+export function LocaleListSkeleton() {
+  return (
+    <div className="w-[400px] border-r border-neutral-200">
+      {/* Status section skeleton */}
+      <div className="flex flex-col items-start gap-3 self-stretch border-b border-neutral-100 p-4">
+        <div className="flex w-full items-center justify-between">
+          <Skeleton className="h-4 w-12" /> {/* "Status" */}
+          <Skeleton className="h-5 w-20" /> {/* Status badge */}
+        </div>
+        <div className="flex w-full items-center justify-between">
+          <Skeleton className="h-4 w-24" /> {/* "Last updated at" */}
+          <Skeleton className="h-3 w-32" /> {/* Timestamp */}
+        </div>
+      </div>
+
+      {/* Locale buttons skeleton */}
+      <div className="p-4">
+        <div className="space-y-2">
+          {/* Render 3-4 skeleton locale buttons */}
+          {[...Array(4)].map((_, index) => (
+            <div
+              key={index}
+              className="flex h-10 w-full items-center justify-start gap-3 rounded-lg border border-neutral-100 px-3 py-2"
+            >
+              <Skeleton className="h-6 w-6 rounded-full" /> {/* Flag */}
+              <div className="flex min-w-0 flex-1 items-center gap-1">
+                <Skeleton className="h-4 w-10" /> {/* Locale code */}
+                <Skeleton className="h-3 w-24" /> {/* Display name */}
+              </div>
+              <div className="flex items-center gap-2">
+                {index === 0 && <Skeleton className="h-5 w-16" />} {/* DEFAULT badge for first item */}
+                <Skeleton className="h-4 w-4" /> {/* Arrow icon */}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type TranslationStatusSectionProps = {
   updatedAt: string;
@@ -25,10 +68,10 @@ function TranslationStatusSection({ updatedAt, outdatedLocales }: TranslationSta
       </div>
       <div className="flex w-full items-center justify-between">
         <span className="text-sm text-neutral-600">Last updated at</span>
-        <span className="font-code text-xs text-neutral-400">
+        <TimeDisplayHoverCard date={updatedAt} className="font-code text-xs text-neutral-400">
           {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
           {formatTranslationTime(updatedAt, TIME_FORMAT_OPTIONS)} UTC
-        </span>
+        </TimeDisplayHoverCard>
       </div>
     </div>
   );
@@ -81,7 +124,7 @@ function LocaleButton({ locale, isSelected, isDefault, isOutdated, onClick }: Lo
           </Tooltip>
         )}
         {isDefault && (
-          <Badge variant="lighter" color="orange" size="md">
+          <Badge variant="lighter" color="green" size="md">
             DEFAULT
           </Badge>
         )}

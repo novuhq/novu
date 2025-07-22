@@ -36,13 +36,10 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
       selectedTranslation,
       isLoadingTranslation,
       translationError,
-      resource,
       editor,
       saveTranslationMutation,
-      deleteTranslationMutation,
       handleLocaleSelect,
       handleSave,
-      handleDelete,
     } = useTranslationDrawerLogic(translationGroup, initialLocale, onLocaleChange);
 
     const canSave =
@@ -112,11 +109,9 @@ export const TranslationDrawerContent = forwardRef<TranslationDrawerContentRef, 
             selectedTranslation={selectedTranslation}
             isLoadingTranslation={isLoadingTranslation}
             translationError={translationError}
-            modifiedContent={editor.modifiedContent}
+            modifiedContentString={editor.modifiedContentString}
             jsonError={editor.jsonError}
             onContentChange={editor.handleContentChange}
-            onDelete={handleDelete}
-            isDeleting={deleteTranslationMutation.isPending}
             outdatedLocales={translationGroup.outdatedLocales}
             isReadOnly={isReadOnly}
           />

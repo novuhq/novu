@@ -22,7 +22,7 @@ export const TranslationListUpgradeCta = () => {
           One language is good. Speaking your users’ language? Better.
         </span>
         <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
-          Upgrade now and start speaking your users’ language(s).
+          Unlock multi-language support and deliver personalized experiences in your users' preferred language.
         </p>
       </div>
 

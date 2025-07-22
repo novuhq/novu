@@ -1,13 +1,63 @@
-import { RiFileTextLine } from 'react-icons/ri';
-import { Skeleton } from '@/components/primitives/skeleton';
 import { Editor } from '@/components/primitives/editor';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Skeleton } from '@/components/primitives/skeleton';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 import { cn } from '@/utils/ui';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { RiFileTextLine } from 'react-icons/ri';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { formatTranslationDate, formatTranslationTime } from '../utils';
 import { EditorActions } from './editor-actions';
-import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
+
+export function EditorPanelSkeleton() {
+  return (
+    <div className="flex flex-1 flex-col bg-neutral-50">
+      {/* EditorActions skeleton - matches exact HTML structure */}
+      <div className="flex flex-col items-start gap-6 self-stretch px-3 pb-3 pt-3">
+        {/* First row: Flag + locale info + Import button */}
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-5 w-5 rounded-full" /> {/* Flag circle h-5 w-5 */}
+            <div className="flex items-center gap-1">
+              <Skeleton className="h-4 w-12" /> {/* "en_US" text-sm */}
+              <Skeleton className="h-4 w-36" /> {/* "(English, United States)" text-sm */}
+            </div>
+          </div>
+          <Skeleton className="h-8 w-28" /> {/* Import locale(s) button */}
+        </div>
+
+        {/* Second row: Translation JSON title + Copy/Download buttons */}
+        <div className="flex w-full items-center justify-between">
+          <Skeleton className="h-5 w-32" /> {/* "Translation JSON" text-sm font-medium */}
+          <div className="flex items-center gap-1">
+            <Skeleton className="h-8 w-8" /> {/* Copy button */}
+            <Skeleton className="h-8 w-8" /> {/* Download button */}
+          </div>
+        </div>
+      </div>
+
+      {/* JSON Editor skeleton - matches the actual editor */}
+      <div className="flex-1 px-3 pb-3">
+        <div className="relative h-[calc(100%-10rem)] rounded-lg border border-neutral-200 bg-white p-4">
+          {/* Line numbers and content like real editor */}
+          <div className="flex gap-4">
+            <div className="text-neutral-400">
+              <Skeleton className="h-4 w-3" /> {/* Line number "1" */}
+            </div>
+            <div>
+              <Skeleton className="h-4 w-4" /> {/* The "{}" content */}
+            </div>
+          </div>
+        </div>
+        {/* Footer timestamp */}
+        <div className="mt-2 px-1">
+          <Skeleton className="h-3 w-60" /> {/* "Last updated at Jul 22, 2025 15:11:30 UTC" */}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 type JSONEditorProps = {
   content: string;
@@ -35,8 +85,12 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           extensions={[loadLanguage('json')?.extension ?? []]}
           basicSetup={{ lineNumbers: true, defaultKeymap: true }}
           placeholder="Enter JSON content..."
-          className={cn('h-full overflow-auto', error ? 'pb-8' : '')}
+          className={cn(
+            'h-full overflow-y-auto overflow-x-hidden [&_.cm-content]:max-w-[calc(100%-2rem)]',
+            error ? 'pb-8' : ''
+          )}
           foldGutter
+          multiline
           readOnly={isReadOnly}
         />
         {error && (
@@ -62,10 +116,10 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
       )}
 
       <div className="mt-2 px-1">
-        <span className="text-2xs text-neutral-400">
+        <TimeDisplayHoverCard date={updatedAt} className="text-2xs text-neutral-400">
           Last updated at {formatTranslationDate(updatedAt, DATE_FORMAT_OPTIONS)}{' '}
           {formatTranslationTime(updatedAt, TIME_FORMAT_OPTIONS)} UTC
-        </span>
+        </TimeDisplayHoverCard>
       </div>
     </div>
   );
@@ -75,11 +129,9 @@ type EditorPanelProps = {
   selectedTranslation: TranslationWithPlaceholder | undefined;
   isLoadingTranslation: boolean;
   translationError: any;
-  modifiedContent: Record<string, unknown> | null;
+  modifiedContentString: string | null;
   jsonError: string | null;
   onContentChange: (content: string) => void;
-  onDelete: (locale: string) => void | Promise<void>;
-  isDeleting?: boolean;
   outdatedLocales?: string[];
   isReadOnly?: boolean;
 };
@@ -88,14 +140,16 @@ export function EditorPanel({
   selectedTranslation,
   isLoadingTranslation,
   translationError,
-  modifiedContent,
+  modifiedContentString,
   jsonError,
   onContentChange,
-  onDelete,
-  isDeleting = false,
   outdatedLocales,
   isReadOnly = false,
 }: EditorPanelProps) {
+  if (isLoadingTranslation) {
+    return <EditorPanelSkeleton />;
+  }
+
   if (!selectedTranslation) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -107,35 +161,39 @@ export function EditorPanel({
     );
   }
 
-  const contentToUse = modifiedContent || selectedTranslation.content || {};
+  // Use the modified string if available, otherwise format the original content
+  const contentToUse = modifiedContentString ?? JSON.stringify(selectedTranslation.content || {}, null, 2);
   const isOutdated = outdatedLocales?.includes(selectedTranslation.locale);
+
+  const parseContentForActions = () => {
+    if (!modifiedContentString || jsonError) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(modifiedContentString);
+    } catch {
+      return null;
+    }
+  };
+
+  const modifiedContentForActions = parseContentForActions();
 
   return (
     <div className="flex flex-1 flex-col bg-neutral-50">
       <EditorActions
         selectedTranslation={selectedTranslation}
-        modifiedContent={modifiedContent}
-        onDelete={onDelete}
-        isDeleting={isDeleting}
+        modifiedContent={modifiedContentForActions}
         isReadOnly={isReadOnly}
       />
 
-      {isLoadingTranslation ? (
-        <div className="flex-1 px-3 pb-3">
-          <div className="space-y-4">
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-4 w-2/3" />
-          </div>
-        </div>
-      ) : translationError ? (
+      {translationError ? (
         <div className="flex h-32 items-center justify-center">
           <p className="text-sm text-red-500">Failed to load translation for {selectedTranslation.locale}</p>
         </div>
       ) : selectedTranslation ? (
         <JSONEditor
-          content={JSON.stringify(contentToUse, null, 2)}
+          content={contentToUse}
           onChange={onContentChange}
           error={jsonError}
           updatedAt={selectedTranslation.updatedAt}

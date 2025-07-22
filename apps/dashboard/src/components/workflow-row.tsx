@@ -34,6 +34,7 @@ import {
   WorkflowListResponseDto,
   FeatureFlagsKeysEnum,
   EnvironmentTypeEnum,
+  DEFAULT_LOCALE,
 } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { CgBolt } from 'react-icons/cg';
@@ -47,6 +48,7 @@ import {
   RiPlayCircleLine,
   RiPulseFill,
   RiRouteFill,
+  RiTranslate2,
 } from 'react-icons/ri';
 
 import { FilesIcon } from 'lucide-react';
@@ -62,6 +64,7 @@ import { TimeDisplayHoverCard } from './time-display-hover-card';
 import { Protect } from '@/utils/protect';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { TranslatedWorkflowIcon } from './icons/translated-workflow';
+import { LocalizationResourceEnum } from '@/types/translations';
 
 type WorkflowRowProps = {
   workflow: WorkflowListResponseDto;
@@ -114,6 +117,13 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: workflow.slug,
       });
+
+  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS_EDIT, {
+    environmentSlug: currentEnvironment?.slug ?? '',
+    resourceType: LocalizationResourceEnum.WORKFLOW,
+    resourceId: workflow.workflowId,
+    locale: DEFAULT_LOCALE,
+  });
 
   const { deleteWorkflow, isPending: isDeleteWorkflowPending } = useDeleteWorkflow({
     onSuccess: () => {
@@ -401,6 +411,14 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
                       </DropdownMenuItem>
                     </Link>
                   </Protect>
+                  {workflow.isTranslationEnabled && (
+                    <Link to={translationsUrl}>
+                      <DropdownMenuItem className="cursor-pointer">
+                        <RiTranslate2 />
+                        View translations
+                      </DropdownMenuItem>
+                    </Link>
+                  )}
                   {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
                     <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
                       {isDuplicable ? (

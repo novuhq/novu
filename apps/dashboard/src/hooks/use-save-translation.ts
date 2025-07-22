@@ -13,17 +13,29 @@ export const useSaveTranslation = () => {
 
   return useMutation({
     mutationFn: (args: SaveTranslationParameters) => saveTranslation({ environment: currentEnvironment!, ...args }),
-    onSuccess: (result, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: [
-          QueryKeys.fetchTranslation,
-          variables.resourceId,
-          variables.resourceType,
-          variables.locale,
-          currentEnvironment?._id,
-        ],
-      });
+    onMutate: async (variables) => {
+      // Optimistically update the cache with the new content
+      const queryKey = [
+        QueryKeys.fetchTranslation,
+        variables.resourceId,
+        variables.resourceType,
+        variables.locale,
+        currentEnvironment?._id,
+      ];
 
+      const previousTranslation = queryClient.getQueryData(queryKey);
+
+      if (previousTranslation) {
+        queryClient.setQueryData(queryKey, {
+          ...previousTranslation,
+          content: variables.content,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+
+      return { previousTranslation, queryKey };
+    },
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({
         queryKey: [
           QueryKeys.fetchTranslationGroup,
@@ -46,7 +58,12 @@ export const useSaveTranslation = () => {
 
       showSuccessToast('Translation saved successfully');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Roll back on error
+      if (context?.previousTranslation) {
+        queryClient.setQueryData(context.queryKey, context.previousTranslation);
+      }
+
       showErrorToast(error instanceof Error ? error.message : 'Failed to save translation', 'Save failed');
     },
   });
