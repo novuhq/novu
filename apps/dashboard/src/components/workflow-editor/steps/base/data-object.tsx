@@ -148,7 +148,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                         variables={variables}
                       />
                     </InputRoot>
-                    <Button variant="secondary" mode="outline" className="h-7" onClick={() => handleRemovePair(index)}>
+                    <Button variant="secondary" mode="outline" className="h-7 px-0" onClick={() => handleRemovePair(index)}>
                       <RiDeleteBin2Line className="size-4" />
                     </Button>
                   </div>
