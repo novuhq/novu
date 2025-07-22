@@ -1,5 +1,6 @@
-import { RiFileUploadLine, RiDownloadLine, RiDeleteBinLine } from 'react-icons/ri';
-import { useState } from 'react';
+import { RiFileUploadLine, RiDownloadLine, RiDeleteBinLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
+import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -11,6 +12,89 @@ import { useTranslationFileOperations } from './hooks';
 import { PermissionsEnum } from '@novu/shared';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
+
+function UploadButton({
+  isUploading,
+  uploadSuccess,
+  uploadError,
+  disabled,
+  onClick,
+  children,
+}: {
+  isUploading?: boolean;
+  uploadSuccess?: boolean;
+  uploadError?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    if (uploadSuccess || uploadError) {
+      setShowResult(true);
+      const timer = setTimeout(() => setShowResult(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [uploadSuccess, uploadError]);
+
+  return (
+    <PermissionButton
+      permission={PermissionsEnum.WORKFLOW_WRITE}
+      variant="secondary"
+      mode="outline"
+      size="xs"
+      leadingIcon={showResult ? undefined : RiFileUploadLine}
+      disabled={disabled || isUploading}
+      onClick={onClick}
+      className="relative min-w-[120px]" // Fixed width to prevent resizing
+    >
+      <div className="relative">
+        {/* Default content - normal layout */}
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: showResult ? 0 : 1,
+          }}
+          transition={{
+            duration: 0.15,
+            ease: 'easeOut',
+          }}
+        >
+          {children}
+        </motion.div>
+
+        {/* Success/Error overlay */}
+        <AnimatePresence>
+          {showResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
+              transition={{
+                duration: 0.25,
+                ease: [0.16, 1, 0.3, 1], // Custom smooth easing
+              }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              {uploadSuccess ? (
+                <div className="flex items-center gap-1">
+                  <RiCheckLine className="size-4 text-green-600" />
+                  <span className="text-xs text-green-600">Success!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <RiCloseLine className="size-4 text-red-600" />
+                  <span className="text-xs text-red-600">Failed</span>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </PermissionButton>
+  );
+}
 
 type EditorActionsProps = {
   selectedTranslation: TranslationWithPlaceholder;
@@ -66,16 +150,7 @@ export function EditorActions({
           </div>
 
           <TranslationImportTrigger resource={resource}>
-            <PermissionButton
-              permission={PermissionsEnum.WORKFLOW_WRITE}
-              variant="secondary"
-              mode="outline"
-              size="xs"
-              leadingIcon={RiFileUploadLine}
-              disabled={isReadOnly}
-            >
-              Import locale(s)
-            </PermissionButton>
+            <UploadButton disabled={isReadOnly}>Import locale(s)</UploadButton>
           </TranslationImportTrigger>
         </div>
 
