@@ -112,7 +112,6 @@ function PageContent() {
   );
 }
 
-// Main Component - No hooks called, all configuration is through constants
 export default function OrganizationCreate() {
   const { organization } = useOrganization();
   const track = useTelemetry();

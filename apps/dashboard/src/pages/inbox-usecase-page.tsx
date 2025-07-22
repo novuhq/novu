@@ -11,10 +11,6 @@ import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 import { useOrganization, useUser } from '@clerk/clerk-react';
 
-interface InboxUsecasePageProps {
-  currentEnvironment?: IEnvironment;
-}
-
 interface RequiredData {
   appId: string;
   subscriberId: string;
@@ -105,9 +101,7 @@ const useInboxLoading = (organizationId?: string) => {
   const [phase, setPhase] = useState<LoadingPhase>('initializing');
 
   const { refetchEnvironments } = useFetchEnvironments({ organizationId });
-
   const loadingTimeoutRef = useRef<NodeJS.Timeout>();
-
   const initializeAndFetch = useCallback(async () => {
     if (!organizationId) return;
 
@@ -162,6 +156,7 @@ export function InboxUsecasePage() {
   const { environments } = useFetchEnvironments({
     organizationId: currentOrganization?._id || 'org',
     refetchInterval: 1000,
+    showError: false,
   });
 
   const loadingPhase = useInboxLoading(currentOrganization?._id);

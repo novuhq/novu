@@ -103,7 +103,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
         throw new Error('User ID not found. Please refresh the page.');
       }
 
-      const apiKeys = apiKeysQuery.data?.data ?? [];
+      const apiKeys = apiKeysQuery?.data?.data ?? [];
       const apiKey = apiKeys[0]?.key ?? '';
       const curlCommand = generateCurlCommand(subscriberId, apiKey);
       await navigator.clipboard.writeText(curlCommand);
