@@ -1,3 +1,15 @@
+## v3.7.0 (2025-07-22)
+
+### 🩹 Fixes
+
+- **root:** bring back eslint and web app build ([#8505](https://github.com/novuhq/novu/pull/8505))
+- version bump react packages ([62ff7ee154](https://github.com/novuhq/novu/commit/62ff7ee154))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- Paweł Tymczuk @LetItRock
+
 ## v3.4.0 (2025-05-16)
 
 ### 🧱 Updated Dependencies
