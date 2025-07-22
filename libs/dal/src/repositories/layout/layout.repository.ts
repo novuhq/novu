@@ -49,6 +49,7 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
+      type: { $in: [ResourceTypeEnum.BRIDGE] },
     }).populate('updatedBy', '_id firstName lastName externalId');
 
     return this.mapEntities(items);

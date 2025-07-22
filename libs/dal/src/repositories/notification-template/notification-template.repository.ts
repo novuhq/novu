@@ -1,7 +1,7 @@
 import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
-import { DirectionEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -29,6 +29,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
       _organizationId: organizationId,
       origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
+      type: { $in: [ResourceTypeEnum.BRIDGE] },
     })
       .select({ _id: 1, name: 1, 'triggers.identifier': 1, updatedAt: 1, _updatedBy: 1, _environmentId: 1 })
       .populate('updatedBy', '_id firstName lastName externalId');
