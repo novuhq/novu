@@ -80,9 +80,7 @@ export class EventsController {
   @ApiOperation({
     summary: 'Trigger event',
     description: `
-    Trigger event is the main (and only) way to send notifications to subscribers. 
-    The trigger identifier is used to match the particular workflow associated with it. 
-    Additional information can be passed according the body interface below.
+    Ensures the request is processed only once. If the same \`idempotency-key\` is sent within a short time window (for example, on retry), the original response is replayed. For longer-term deduplication across events, use the \`transactionId\` field in the body instead.
     `,
   })
   @SdkMethodName('trigger')
