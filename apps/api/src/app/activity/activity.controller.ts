@@ -41,7 +41,7 @@ export class ActivityController {
     );
   }
 
-  @Get('workflow-run')
+  @Get('workflow-runs')
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   async getWorkflowRuns(
     @UserSession() user,
@@ -58,7 +58,7 @@ export class ActivityController {
     );
   }
 
-  @Get('workflow-run/:workflowRunId')
+  @Get('workflow-runs/:workflowRunId')
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   async getWorkflowRun(@UserSession() user, @Param('workflowRunId') workflowRunId: string): Promise<WorkflowRunDto> {
     return this.getWorkflowRunUsecase.execute(
