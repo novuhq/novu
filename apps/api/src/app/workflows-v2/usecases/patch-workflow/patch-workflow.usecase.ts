@@ -2,14 +2,13 @@ import { Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { SendWebhookMessage, PinoLogger } from '@novu/application-generic';
+import { SendWebhookMessage, PinoLogger, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { PatchWorkflowCommand } from './patch-workflow.command';
 import { GetWorkflowUseCase } from '../get-workflow';
 import { WorkflowResponseDto } from '../../dtos';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { stepTypeToControlSchema } from '../../shared';
 import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { GetWorkflowWithPreferencesCommand } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 @Injectable()
@@ -25,6 +24,7 @@ export class PatchWorkflowUsecase {
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
     const persistedWorkflow = await this.fetchWorkflow(command);
 
@@ -74,6 +74,7 @@ export class PatchWorkflowUsecase {
     );
   }
 
+  @Instrument()
   private async recalculateStepIssues(
     workflow: NotificationTemplateEntity,
     userSessionData: UserSessionData
