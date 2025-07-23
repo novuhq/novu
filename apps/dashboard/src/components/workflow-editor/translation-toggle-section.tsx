@@ -7,13 +7,19 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InfoIcon } from 'lucide-react';
 import { Control, FieldValues, Path } from 'react-hook-form';
 import { Badge } from '../primitives/badge';
+import { Button } from '../primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { RiArrowRightSLine } from 'react-icons/ri';
+import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 
 interface TranslationToggleSectionProps<T extends FieldValues> {
   control: Control<T>;
   fieldName: Path<T>;
   onChange?: (checked: boolean) => void;
   isReadOnly?: boolean;
+  showManageLink?: boolean;
 }
 
 export function TranslationToggleSection<T extends FieldValues>({
@@ -21,9 +27,12 @@ export function TranslationToggleSection<T extends FieldValues>({
   fieldName,
   onChange,
   isReadOnly = false,
+  showManageLink = true,
 }: TranslationToggleSectionProps<T>) {
+  const navigate = useNavigate();
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
   const { currentEnvironment } = useEnvironment();
+  const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
 
   if (!isTranslationEnabled) {
     return null;
@@ -32,6 +41,51 @@ export function TranslationToggleSection<T extends FieldValues>({
   const translationsUrl = buildRoute(ROUTES.TRANSLATIONS, {
     environmentSlug: currentEnvironment?.slug ?? '',
   });
+
+  const hasTargetLocales = (organizationSettings?.data?.targetLocales?.length ?? 0) > 0;
+  const needsOnboarding = !isLoadingSettings && !hasTargetLocales;
+
+  if (needsOnboarding) {
+    return (
+      <div className="flex items-center justify-between border-t border-neutral-100 pt-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-label-xs text-text-strong">
+              Enable Translations{' '}
+              <Badge color="gray" size="sm" variant="lighter">
+                BETA
+              </Badge>
+            </span>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <InfoIcon className="text-text-soft h-4 w-4 cursor-help" />
+              </TooltipTrigger>
+              <TooltipPortal>
+                <TooltipContent side="left" hideWhenDetached>
+                  When enabled, allows you to create and manage translations for your workflow content across different
+                  languages.
+                </TooltipContent>
+              </TooltipPortal>
+            </Tooltip>
+          </div>
+          <p className="text-foreground-400 text-2xs mb-1">Set up your target locales first to enable translations</p>
+        </div>
+
+        <motion.div whileHover={{ x: 2 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+          <Button
+            variant="secondary"
+            mode="ghost"
+            size="xs"
+            onClick={() => navigate(translationsUrl)}
+            trailingIcon={RiArrowRightSLine}
+          >
+            Setup
+          </Button>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col border-t border-neutral-100 pt-4">
@@ -72,9 +126,11 @@ export function TranslationToggleSection<T extends FieldValues>({
           </div>
         )}
       />
-      <a href={translationsUrl} rel="noopener noreferrer" className="text-foreground-400 text-2xs mb-1">
-        View & manage translations ↗
-      </a>
+      {showManageLink && (
+        <a href={translationsUrl} rel="noopener noreferrer" className="text-foreground-400 text-2xs mb-1">
+          View & manage translations ↗
+        </a>
+      )}
     </div>
   );
 }
