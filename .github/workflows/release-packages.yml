@@ -80,18 +80,18 @@ jobs:
         run: |
           if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
             echo "Running nightly release with version: ${{ env.NIGHTLY_VERSION }}"
-            pnpm nx release version ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }} --preid nightly --skip-commit --verbose
+            pnpm nx release version ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }} --preid nightly --git-commit=false --verbose
           else
             echo "Running regular release with version: ${{ github.event.inputs.version }}"
-            pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --skip-commit --verbose
+            pnpm nx release version ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --git-commit=false --verbose
           fi
 
       - name: Generate changelog (without commit)
         run: |
           if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            pnpm nx release changelog ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --skip-commit
+            pnpm nx release changelog ${{ env.NIGHTLY_VERSION }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
           else
-            pnpm nx release changelog ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --skip-commit
+            pnpm nx release changelog ${{ github.event.inputs.version }} --projects=${{ github.event.inputs.packages }} --from=${{ github.event.inputs.previous_tag }} --git-commit=false
           fi
 
       - name: Build packages
