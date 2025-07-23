@@ -148,6 +148,7 @@ export const processControlValuesByLiquid = ({
       useNewLiquidParser,
       variableSchema,
       controlValue: currentValue,
+      suggestPayloadNamespace: false,
     });
 
     // Prioritize invalid variable validation over content compilation since it provides more granular error details

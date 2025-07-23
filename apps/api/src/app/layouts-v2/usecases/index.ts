@@ -7,6 +7,7 @@ import { LayoutVariablesSchemaUseCase } from './layout-variables-schema';
 import { PreviewLayoutUsecase } from './preview-layout';
 import { GetLayoutUsageUseCase } from './get-layout-usage';
 import { BuildLayoutIssuesUsecase } from './build-layout-issues/build-layout-issues.usecase';
+import { LayoutSyncToEnvironmentUseCase } from './sync-to-environment';
 
 export const USE_CASES = [
   UpsertLayout,
@@ -18,4 +19,5 @@ export const USE_CASES = [
   PreviewLayoutUsecase,
   GetLayoutUsageUseCase,
   BuildLayoutIssuesUsecase,
+  LayoutSyncToEnvironmentUseCase,
 ];

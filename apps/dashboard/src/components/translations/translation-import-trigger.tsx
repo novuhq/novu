@@ -50,6 +50,9 @@ export function TranslationImportTrigger({ resource, onSuccess, children }: Tran
       />
       {cloneElement(children, {
         onClick: handleClick,
+        isUploading: uploadMutation.isPending,
+        uploadSuccess: uploadMutation.isSuccess,
+        uploadError: uploadMutation.isError,
       })}
     </>
   );

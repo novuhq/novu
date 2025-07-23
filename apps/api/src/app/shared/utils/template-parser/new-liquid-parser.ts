@@ -36,23 +36,27 @@ const parserEngine = buildLiquidParser();
 export function extractLiquidTemplateVariables({
   template,
   variableSchema,
+  suggestPayloadNamespace = true,
 }: {
   template: string;
   variableSchema?: JSONSchemaDto;
+  suggestPayloadNamespace?: boolean;
 }): VariableDetails {
   if (!isValidTemplate(template)) {
     return { validVariables: [], invalidVariables: [] };
   }
 
-  return processLiquidRawOutput({ template, variableSchema });
+  return processLiquidRawOutput({ template, variableSchema, suggestPayloadNamespace });
 }
 
 function processLiquidRawOutput({
   template,
   variableSchema,
+  suggestPayloadNamespace = true,
 }: {
   template: string;
   variableSchema?: JSONSchemaDto;
+  suggestPayloadNamespace?: boolean;
 }): VariableDetails {
   const validVariables: Array<Variable> = [];
   const invalidVariables: Array<Variable> = [];
@@ -66,7 +70,7 @@ function processLiquidRawOutput({
   }
 
   try {
-    const result = parseByLiquid({ template, variableSchema });
+    const result = parseByLiquid({ template, variableSchema, suggestPayloadNamespace });
     result.validVariables.forEach((variable) => addVariable(variable, true));
     result.invalidVariables.forEach((variable) => addVariable(variable, false));
   } catch (error: unknown) {
@@ -110,9 +114,11 @@ function processLiquidRawOutput({
 function parseByLiquid({
   template,
   variableSchema,
+  suggestPayloadNamespace = true,
 }: {
   template: string;
   variableSchema?: JSONSchemaDto;
+  suggestPayloadNamespace?: boolean;
 }): VariableDetails {
   const validVariables: Array<Variable> = [];
   const invalidVariables: Array<Variable> = [];
@@ -124,13 +130,21 @@ function parseByLiquid({
     invalidVariables,
     variableSchema,
     localVariables: new Set(),
+    suggestPayloadNamespace,
   });
 
   return { validVariables, invalidVariables };
 }
 
 function processTemplates(context: ProcessContext) {
-  const { templates, validVariables, invalidVariables, variableSchema, localVariables = new Set() } = context;
+  const {
+    templates,
+    validVariables,
+    invalidVariables,
+    variableSchema,
+    localVariables = new Set(),
+    suggestPayloadNamespace,
+  } = context;
 
   templates.forEach((template: Template) => {
     if (isOutputToken(template)) {
@@ -140,6 +154,7 @@ function processTemplates(context: ProcessContext) {
         invalidVariables,
         variableSchema,
         localVariables,
+        suggestPayloadNamespace,
       });
     } else if (isTagToken(template)) {
       processTagToken({
@@ -218,6 +233,7 @@ function validateVariable({
   output,
   outputStart,
   outputEnd,
+  suggestPayloadNamespace,
 }: {
   variableName: string;
   validVariables: Array<Variable>;
@@ -227,6 +243,7 @@ function validateVariable({
   output: string;
   outputStart: number;
   outputEnd: number;
+  suggestPayloadNamespace?: boolean;
 }) {
   // Check if this variable has no namespace (single part)
   const hasNoNamespace = variableName.split('.').length === 1;
@@ -246,7 +263,9 @@ function validateVariable({
     // Otherwise, it's invalid (missing namespace)
     invalidVariables.push({
       name: variableName,
-      message: `missing namespace. Did you mean {{payload.${variableName}}}?`,
+      message: suggestPayloadNamespace
+        ? `invalid or missing namespace. Did you mean {{payload.${variableName}}}?`
+        : 'invalid or missing namespace',
       output,
       outputStart,
       outputEnd,
@@ -279,12 +298,14 @@ function validateOutputToken({
   invalidVariables,
   variableSchema,
   localVariables,
+  suggestPayloadNamespace,
 }: {
   template: Template;
   validVariables: Array<Variable>;
   invalidVariables: Array<Variable>;
   variableSchema?: JSONSchemaDto;
   localVariables: Set<string>;
+  suggestPayloadNamespace?: boolean;
 }) {
   const result = extractProps(template);
   const variableName = buildVariable(result.props);
@@ -377,6 +398,7 @@ function validateOutputToken({
     output,
     outputStart,
     outputEnd,
+    suggestPayloadNamespace,
   });
 }
 

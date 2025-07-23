@@ -15,6 +15,7 @@ export class GetRequests {
 
     const where: Where<RequestLog> = {
       organization_id: command.organizationId,
+      environment_id: command.environmentId,
     };
 
     if (command.statusCodes) {

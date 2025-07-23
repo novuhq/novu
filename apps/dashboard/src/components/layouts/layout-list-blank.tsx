@@ -1,18 +1,8 @@
-import { Button } from '@/components/primitives/button';
 import { RiLayout2Line } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
+
+import { CreateLayoutButton } from './create-layout-btn';
 
 export const LayoutListBlank = () => {
-  const navigate = useNavigate();
-  const { search } = useLocation();
-  const { currentEnvironment } = useEnvironment();
-
-  const handleCreateLayout = () => {
-    navigate(`${buildRoute(ROUTES.LAYOUTS_CREATE, { environmentSlug: currentEnvironment?.slug ?? '' })}${search}`);
-  };
-
   return (
     <div className="flex flex-1 items-center justify-center">
       <div className="flex max-w-md flex-col items-center gap-6 text-center">
@@ -25,9 +15,7 @@ export const LayoutListBlank = () => {
             Create your first email layout to define reusable templates for your email notifications.
           </p>
         </div>
-        <Button variant="primary" leadingIcon={RiLayout2Line} onClick={handleCreateLayout}>
-          Create your first layout
-        </Button>
+        <CreateLayoutButton icon={RiLayout2Line} text="Create your first layout" />
       </div>
     </div>
   );

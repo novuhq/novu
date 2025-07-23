@@ -16,7 +16,6 @@ export function InboxEmbed(): JSX.Element | null {
   const [searchParams] = useSearchParams();
   const environmentHint = searchParams.get('environmentId');
 
-  // If hint provided, use it, otherwise use the first dev environment
   const selectedEnvironment = environments?.find((env) =>
     environmentHint ? env._id === environmentHint : !env._parentId
   );
@@ -30,7 +29,7 @@ export function InboxEmbed(): JSX.Element | null {
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
-  useEffect(() => {
+  useEffect(() => { 
     if (foundIntegration?.connected) {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);

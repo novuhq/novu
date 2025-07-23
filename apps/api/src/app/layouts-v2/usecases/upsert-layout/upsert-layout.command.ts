@@ -1,4 +1,4 @@
-import { IsOptional, IsString, ValidateNested, IsEnum, IsNotEmpty, Length } from 'class-validator';
+import { IsOptional, IsString, ValidateNested, IsEnum, IsNotEmpty, Length, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
@@ -7,6 +7,10 @@ import { LayoutCreationSourceEnum } from '../../types';
 import { LayoutControlValuesDto } from '../../dtos/layout-controls.dto';
 
 export class UpsertLayoutDataCommand {
+  @IsString()
+  @IsOptional()
+  layoutId?: string;
+
   @IsString()
   @IsNotEmpty()
   @Length(1, MAX_NAME_LENGTH)
@@ -28,4 +32,8 @@ export class UpsertLayoutCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   layoutIdOrInternalId?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  preserveLayoutId?: boolean;
 }

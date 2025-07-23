@@ -198,6 +198,10 @@ const buildFeatureArray: (columns: ApiServiceLevelEnum[], featureFlags: FeatureF
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_STEP_CONTROLS_BOOLEAN, isBoolean: true }),
     },
     {
+      label: 'Translations',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.AUTO_TRANSLATIONS, isBoolean: true }),
+    },
+    {
       label: 'Inbox',
       isTitle: true,
       values: buildEmptyRow(),

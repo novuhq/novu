@@ -14,6 +14,7 @@ type PropertyNameInputProps = {
   control: Control<SchemaEditorFormValues>;
   isDisabled?: boolean;
   placeholder?: string;
+  autoFocus?: boolean;
 };
 
 export const PropertyNameInput = memo(function PropertyNameInput({
@@ -21,6 +22,7 @@ export const PropertyNameInput = memo(function PropertyNameInput({
   control,
   isDisabled = false,
   placeholder = 'Property name',
+  autoFocus = false,
 }: PropertyNameInputProps) {
   return (
     <div className="flex-1 flex-col">
@@ -41,6 +43,7 @@ export const PropertyNameInput = memo(function PropertyNameInput({
                   placeholder={placeholder}
                   className="text-xs"
                   disabled={isDisabled}
+                  autoFocus={autoFocus}
                 />
                 {fieldState.error && (
                   <TooltipProvider delayDuration={0}>

@@ -141,6 +141,7 @@ export function CreateWorkflowForm({ onSubmit, template }: CreateWorkflowFormPro
         <TranslationToggleSection
           control={form.control}
           fieldName="isTranslationEnabled"
+          showManageLink={false}
           onChange={(checked) => {
             form.setValue('isTranslationEnabled', checked, {
               shouldValidate: true,

@@ -198,6 +198,76 @@ describe('Upsert Workflow #novu-v2', function () {
         process.env.IS_HTML_EDITOR_ENABLED = 'false';
       });
 
+      it('should skip layout rendering when converting Maily JSON to HTML with assigned layoutId', async () => {
+        // First create a layout with distinctive HTML content
+        const layout = await createLayout({
+          name: 'Test Layout for skipLayoutRendering',
+          layoutId: 'test-layout-skip-rendering',
+          source: LayoutCreationSourceEnum.Dashboard,
+        });
+
+        const mailyJsonContent = JSON.stringify({
+          type: 'doc',
+          content: [
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  text: 'This is email content that should not include layout HTML.',
+                },
+              ],
+            },
+          ],
+        });
+
+        // Create workflow with email step that has layoutId assigned
+        const workflow = await createWorkflow({
+          name: 'Test Workflow with Layout',
+          workflowId: `test-workflow-layout-${Date.now()}`,
+          source: WorkflowCreationSourceEnum.Editor,
+          active: true,
+          steps: [
+            {
+              name: `Email Step with Layout`,
+              type: StepTypeEnum.Email,
+              controlValues: {
+                subject: 'Test Email with Layout',
+                body: mailyJsonContent,
+                editorType: 'block',
+                layoutId: layout.layoutId,
+              },
+            },
+          ],
+        });
+
+        // Switch to HTML editor - this should trigger skipLayoutRendering
+        const updatedWorkflow = await updateWorkflow(workflow.slug, {
+          ...workflow,
+          steps: [
+            {
+              ...workflow.steps[0],
+              controlValues: {
+                ...workflow.steps[0].controls.values,
+                editorType: 'html',
+              },
+            },
+          ],
+        });
+
+        const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
+
+        expect(updatedEmailStep.controls.values.editorType).to.equal('html');
+        expect(updatedEmailStep.controls.values.layoutId).to.equal(layout.layoutId);
+
+        // The body should contain the converted HTML from Maily JSON
+        expect(updatedEmailStep.controls.values.body).to.not.contain('<!DOCTYPE');
+        expect(updatedEmailStep.controls.values.body).to.not.contain('<html');
+        expect(updatedEmailStep.controls.values.body).to.contain(
+          'This is email content that should not include layout HTML'
+        );
+      });
+
       it('should not use layoutId when null is provided', async () => {
         await createLayout({
           name: 'Test Layout',
@@ -477,7 +547,6 @@ describe('Upsert Workflow #novu-v2', function () {
       const updatedEmailStep = updatedWorkflow.steps[0] as EmailStepResponseDto;
 
       expect(updatedEmailStep.controls.values.editorType).to.equal('html');
-      expect(updatedEmailStep.controls.values.body).to.contain('<!DOCTYPE');
       expect(updatedEmailStep.controls.values.body).to.contain('<html');
       expect(updatedEmailStep.controls.values.body).to.contain('<body');
       expect(updatedEmailStep.controls.values.body).to.contain(`>

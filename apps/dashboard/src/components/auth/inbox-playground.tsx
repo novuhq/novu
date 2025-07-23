@@ -1,222 +1,213 @@
+import { Notification5Fill } from '@/components/icons';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useInitDemoWorkflow } from '@/hooks/use-init-demo-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiNotification2Fill } from 'react-icons/ri';
+import { useOrganization } from '@clerk/clerk-react';
+import { useState } from 'react';
+import { RiFileCopyLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { z } from 'zod';
-import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
-import { useAuth } from '../../context/auth/hooks';
+import { API_HOSTNAME, ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
-import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
 import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Button } from '../primitives/button';
-import { InlineToast } from '../primitives/inline-toast';
-import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
+import { ToastIcon } from '../primitives/sonner';
+import { showToast } from '../primitives/sonner-helpers';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
-import { CustomizeInbox } from './customize-inbox-playground';
 import { InboxPreviewContent } from './inbox-preview-content';
 
-export interface ActionConfig {
-  label: string;
-  redirect: {
-    target: string;
-    url: string;
-  };
+const PLAYGROUND_CONFIG = {
+  title: 'The <Inbox/> your app deserves',
+  description: "This is what your users will see. Try sending a message. We've prefilled it for you.",
+  currentStep: 2,
+  totalSteps: 4,
+} as const;
+
+export function generateCurlCommand(userId: string, apiKey: string): string {
+  if (!apiKey) {
+    throw new Error('API key not found');
+  }
+
+  return `curl -X POST ${API_HOSTNAME}/api/v1/events/trigger \\
+     -H "Content-Type: application/json" \\
+     -H "Authorization: Bearer ${apiKey}" \\
+     -d '{
+       "name": "${ONBOARDING_DEMO_WORKFLOW_ID}",
+       "to": {
+         "subscriberId": ${JSON.stringify(userId)}
+       },
+       "payload": {}
+     }'`;
 }
 
-export interface InboxPlaygroundFormData {
-  subject: string;
-  body: string;
-  primaryColor: string;
-  foregroundColor: string;
-  selectedStyle: string;
-  openAccordion?: string;
-  primaryAction: ActionConfig;
-  secondaryAction: ActionConfig | null;
-  enableTabs?: boolean;
-}
-
-const formSchema = z.object({
-  subject: z.string().optional(),
-  body: z.string(),
-  primaryColor: z.string(),
-  foregroundColor: z.string(),
-  selectedStyle: z.string(),
-  openAccordion: z.string().optional(),
-  primaryAction: z.object({
-    label: z.string(),
-    redirect: z.object({
-      target: z.string(),
-      url: z.string(),
-    }),
-  }),
-  secondaryAction: z
-    .object({
-      label: z.string(),
-      redirect: z.object({
-        target: z.string(),
-        url: z.string(),
-      }),
-    })
-    .nullable(),
-  enableTabs: z.boolean().optional(),
-});
-
-const defaultFormValues = (): InboxPlaygroundFormData => ({
-  subject: '**Welcome to Inbox!**',
-  body: 'This is your first notification. Customize and explore more features.',
-  primaryColor: '#7D52F4',
-  foregroundColor: '#0E121B',
-  selectedStyle: 'popover',
-  openAccordion: 'layout',
-  primaryAction: {
-    label: 'Add to your app',
-    redirect: {
-      target: '_self',
-      url: '/onboarding/inbox/embed',
+function showCustomToast(message: string, variant: 'success' | 'error') {
+  showToast({
+    children: () => (
+      <>
+        <ToastIcon variant={variant} />
+        <span className="whitespace-nowrap text-sm">{message}</span>
+      </>
+    ),
+    options: {
+      position: 'bottom-center',
+      style: {
+        left: '50%',
+        transform: 'translateX(-50%)',
+      },
     },
-  },
-  secondaryAction: null,
-  enableTabs: true,
-});
-
-export function InboxPlayground() {
-  const { currentEnvironment } = useEnvironment();
-  const form = useForm<InboxPlaygroundFormData>({
-    mode: 'onSubmit',
-    resolver: zodResolver(formSchema),
-    defaultValues: defaultFormValues(),
-    shouldFocusError: true,
   });
+}
 
+export function InboxPlayground({ appId, subscriberId }: { appId: string; subscriberId: string }) {
+  const { organization } = useOrganization();
+  const { currentEnvironment: environment } = useEnvironment();
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
-  const auth = useAuth();
+  const apiKeysQuery = useFetchApiKeys();
   const [hasNotificationBeenSent, setHasNotificationBeenSent] = useState(false);
   const navigate = useNavigate();
   const telemetry = useTelemetry();
-  useInitDemoWorkflow(currentEnvironment!);
+
+  useInitDemoWorkflow(environment);
+
+  if (!environment) {
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500">Loading environment...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSendNotification = async () => {
     try {
-      const formValues = form.getValues();
-
       await triggerWorkflow({
         name: ONBOARDING_DEMO_WORKFLOW_ID,
-        to: auth.currentUser?._id,
-        payload: {
-          subject: formValues.subject,
-          body: formValues.body,
-          primaryActionLabel: formValues.primaryAction?.label || '',
-          secondaryActionLabel: formValues.secondaryAction?.label || '',
-          __source: 'inbox-onboarding',
-        },
+        to: subscriberId,
+        payload: {},
       });
 
-      telemetry(TelemetryEvent.INBOX_NOTIFICATION_SENT, {
-        subject: formValues.subject,
-        hasSecondaryAction: !!formValues.secondaryAction,
-      });
-
+      telemetry(TelemetryEvent.INBOX_NOTIFICATION_SENT);
       setHasNotificationBeenSent(true);
-      showSuccessToast('Notification sent successfully!');
+      showCustomToast('Notification sent successfully!', 'success');
     } catch (error) {
-      showErrorToast('Failed to send notification');
+      console.error('Failed to send notification:', error);
+      showCustomToast('Failed to send notification. Please try again later.', 'error');
+    }
+  };
+
+  const handleCopyCurlCommand = async () => {
+    try {
+      if (!subscriberId) {
+        throw new Error('User ID not found. Please refresh the page.');
+      }
+
+      const apiKeys = apiKeysQuery?.data?.data ?? [];
+      const apiKey = apiKeys[0]?.key ?? '';
+      const curlCommand = generateCurlCommand(subscriberId, apiKey);
+      await navigator.clipboard.writeText(curlCommand);
+      showCustomToast('cURL command copied to clipboard!', 'success');
+    } catch (error) {
+      showCustomToast('Failed to copy cURL command', 'error');
     }
   };
 
   const handleImplementClick = () => {
-    const { primaryColor, foregroundColor } = form.getValues();
-    telemetry(TelemetryEvent.INBOX_IMPLEMENTATION_CLICKED, {
-      primaryColor,
-      foregroundColor,
-    });
-    const queryParams = new URLSearchParams({ primaryColor, foregroundColor }).toString();
+    telemetry(TelemetryEvent.INBOX_IMPLEMENTATION_CLICKED, {});
+    const queryParams = new URLSearchParams({}).toString();
     navigate(`${ROUTES.INBOX_EMBED}?${queryParams}`);
   };
 
-  useEffect(() => {
-    const subscription = form.watch((value, { name }) => {
-      if (name === 'selectedStyle') {
-        telemetry(TelemetryEvent.INBOX_PREVIEW_STYLE_CHANGED, {
-          style: value.selectedStyle,
-        });
-      }
-
-      if (['primaryColor', 'foregroundColor', 'subject', 'body'].includes(name || '')) {
-        telemetry(TelemetryEvent.INBOX_CUSTOMIZATION_CHANGED, {
-          field: name,
-        });
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [form, telemetry]);
-
   return (
-    <div className="flex flex-1 flex-col overflow-hidden">
+    <div className="flex flex-1 flex-col overflow-hidden pb-3">
       <UsecasePlaygroundHeader
-        title="Send your first Inbox notification"
-        description="Customize your notification and hit 'Send notification' 🎉"
-        skipPath={ROUTES.WELCOME}
-        onSkip={() =>
-          telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
-            skippedFrom: 'inbox-playground',
-          })
-        }
+        title={PLAYGROUND_CONFIG.title}
+        description={PLAYGROUND_CONFIG.description}
+        showSkipButton={false}
+        showBackButton={true}
+        showStepper={true}
+        currentStep={PLAYGROUND_CONFIG.currentStep}
+        totalSteps={PLAYGROUND_CONFIG.totalSteps}
       />
 
-      <div className="flex flex-1">
-        <div className="flex min-w-[480px] flex-col">
-          <CustomizeInbox form={form} />
-
-          {hasNotificationBeenSent && (
-            <div className="px-3">
-              <InlineToast
-                variant="tip"
-                title="Send Again?"
-                description="Edit the notification and resend"
-                ctaLabel="Send again"
-                onCtaClick={handleSendNotification}
-                isCtaLoading={isPending}
-              />
+      <div
+        className="flex flex-1 flex-col"
+        style={{
+          backgroundImage: 'url(/images/auth/Content.svg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        <div className="flex flex-1">
+          {/* App Name Section - Show immediately */}
+          <div className="flex flex-1 items-start justify-start">
+            <div className="ml-10 mt-9">
+              <div className="text-1xl font-medium text-gray-500">
+                {organization?.name ? `${organization.name} App` : 'ACME App'}
+              </div>
             </div>
-          )}
+          </div>
 
-          <div className="bg-muted mt-auto border-t">
-            <div className="flex justify-end gap-3 p-2">
-              {!hasNotificationBeenSent ? (
-                <Button
-                  variant="secondary"
-                  size="xs"
-                  trailingIcon={RiNotification2Fill}
-                  isLoading={isPending}
-                  onClick={handleSendNotification}
-                  disabled={isPending}
-                >
-                  Send notification
-                </Button>
-              ) : (
-                <>
-                  <Button size="xs" variant="secondary" onClick={handleImplementClick}>
-                    Implement &lt;Inbox /&gt;
-                  </Button>
-                </>
-              )}
+          {/* Inbox Preview Section - Show with optimized loading */}
+          <div className="flex flex-1 flex-col">
+            <div className="flex items-start justify-end">
+              <div className="nv-no-scrollbar mr-20 mt-16 h-[470px] w-[375px] rounded-lg border border-gray-200 bg-white shadow-[0_8px_25px_-8px_rgba(0,0,0,0.15)]">
+                <InboxPreviewContent />
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <div className="max-h-[610px] w-full border-l">
-          <InboxPreviewContent
-            hasNotificationBeenSent={hasNotificationBeenSent}
-            selectedStyle={form.watch('selectedStyle')}
-            primaryColor={form.watch('primaryColor')}
-            foregroundColor={form.watch('foregroundColor')}
-            enableTabs={form.watch('enableTabs')}
-          />
+      {/* Action Buttons - Show with optimized interaction states */}
+      <div className="bg-muted">
+        <div className="flex justify-center gap-2 p-3">
+          <Button
+            variant="secondary"
+            size="xs"
+            trailingIcon={hasNotificationBeenSent ? Notification5Fill : RiFileCopyLine}
+            onClick={hasNotificationBeenSent ? handleSendNotification : handleCopyCurlCommand}
+            mode="outline"
+            className="px-2"
+            isLoading={hasNotificationBeenSent && isPending}
+            disabled={hasNotificationBeenSent && isPending}
+          >
+            {hasNotificationBeenSent ? 'Send again' : 'Copy cURL'}
+          </Button>
+          {!hasNotificationBeenSent ? (
+            <Button
+              variant="secondary"
+              size="xs"
+              trailingIcon={Notification5Fill}
+              isLoading={isPending}
+              onClick={handleSendNotification}
+              disabled={isPending}
+              className="px-2"
+            >
+              Send notification
+            </Button>
+          ) : (
+            <Button
+              onClick={handleImplementClick}
+              disabled={!appId}
+              size="xs"
+              className="px-2.5 text-white disabled:opacity-50"
+              style={{
+                background:
+                  'linear-gradient(180deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 100%), #DD2450',
+                boxShadow: '0px 1px 2px rgba(14, 18, 27, 0.24), 0px 0px 0px 1px #DD2450',
+                fontFamily: 'Inter',
+                fontSize: '12px',
+                lineHeight: '16px',
+                fontWeight: 500,
+                fontFeatureSettings: '"cv09" on, "ss11" on, "calt" off, "liga" off',
+              }}
+            >
+              Implement &lt;Inbox /&gt;
+            </Button>
+          )}
         </div>
       </div>
     </div>

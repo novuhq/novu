@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useMemo, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, ReactNode, useMemo, useState, useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import {
   WorkflowResponseDto,
@@ -37,17 +37,18 @@ type StepEditorProviderProps = {
 export function StepEditorProvider({ children, workflow, step }: StepEditorProviderProps) {
   const form = useFormContext();
   const controlValues = form.watch();
-  const { data: organizationSettings } = useFetchOrganizationSettings();
-  const [selectedLocale, setSelectedLocale] = useState<string>(DEFAULT_LOCALE);
-  const hasInitialized = useRef(false);
+  const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
 
-  // Set to organization default when settings load (only once)
+  // Only initialize selectedLocale when organization settings are loaded
+  const organizationDefaultLocale = organizationSettings?.data?.defaultLocale || DEFAULT_LOCALE;
+  const [selectedLocale, setSelectedLocale] = useState<string>(organizationDefaultLocale);
+
+  // Update locale when organization settings first load
   useEffect(() => {
-    if (organizationSettings?.data?.defaultLocale && !hasInitialized.current) {
+    if (!isOrgSettingsLoading && organizationSettings?.data?.defaultLocale) {
       setSelectedLocale(organizationSettings.data.defaultLocale);
-      hasInitialized.current = true;
     }
-  }, [organizationSettings?.data?.defaultLocale]);
+  }, [isOrgSettingsLoading, organizationSettings?.data?.defaultLocale]);
 
   const { editorValue, setEditorValue, previewData, isPreviewPending, isFetching } = useEditorPreview({
     workflowSlug: workflow.workflowId,

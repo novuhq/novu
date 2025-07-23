@@ -1,7 +1,5 @@
 import { HTMLAttributes } from 'react';
-import { RiAddCircleLine } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum } from '@novu/shared';
 
 import { cn } from '@/utils/ui';
 import {
@@ -24,11 +22,9 @@ import { ListNoResults } from '@/components/list-no-results';
 import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
 import { LayoutsFilters } from '@/components/layouts/layouts-filters';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
-import { PermissionButton } from '@/components/primitives/permission-button';
 import { Skeleton } from '../primitives/skeleton';
 import { DefaultPagination } from '../default-pagination';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { CreateLayoutButton } from './create-layout-btn';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<LayoutsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -37,13 +33,6 @@ type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
 
 const LayoutListWrapper = (props: LayoutListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
-  const navigate = useNavigate();
-  const { currentEnvironment } = useEnvironment();
-  const { search } = useLocation();
-
-  const handleCreateLayout = () => {
-    navigate(`${buildRoute(ROUTES.LAYOUTS_CREATE, { environmentSlug: currentEnvironment?.slug ?? '' })}${search}`);
-  };
 
   return (
     <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
@@ -55,17 +44,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
           isFetching={isFetching}
           className="py-2.5"
         />
-        <PermissionButton
-          permission={PermissionsEnum.LAYOUT_WRITE}
-          mode="gradient"
-          className="rounded-l-lg border-none text-white"
-          variant="primary"
-          size="xs"
-          leadingIcon={RiAddCircleLine}
-          onClick={handleCreateLayout}
-        >
-          Create layout
-        </PermissionButton>
+        <CreateLayoutButton />
       </div>
       {children}
     </div>

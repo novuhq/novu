@@ -13,11 +13,13 @@ export function buildVariables({
   variableSchema,
   controlValue,
   logger,
+  suggestPayloadNamespace = true,
 }: {
   useNewLiquidParser: boolean;
   variableSchema: JSONSchemaDto | undefined;
   controlValue: unknown | Record<string, unknown>;
   logger?: PinoLogger;
+  suggestPayloadNamespace?: boolean;
 }): VariableDetails {
   let variableControlValue = controlValue;
 
@@ -49,6 +51,7 @@ export function buildVariables({
     const { validVariables, invalidVariables } = newExtractLiquidTemplateVariables({
       template: typeof variableControlValue === 'string' ? variableControlValue : JSON.stringify(variableControlValue),
       variableSchema,
+      suggestPayloadNamespace,
     });
 
     return {

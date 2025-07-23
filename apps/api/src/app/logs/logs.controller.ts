@@ -25,8 +25,9 @@ export class LogsController {
       GetRequestsCommand.create({
         ...query,
         organizationId: user.organizationId,
-        userId: user._id,
+        environmentId: user.environmentId,
         createdGte: query.createdGte,
+        statusCodes: query.statusCodes,
       })
     );
   }

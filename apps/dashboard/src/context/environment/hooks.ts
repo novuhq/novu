@@ -16,7 +16,15 @@ export function useEnvironment() {
   };
 }
 
-export const useFetchEnvironments = ({ organizationId }: { organizationId?: string }) => {
+export const useFetchEnvironments = ({
+  organizationId,
+  refetchInterval,
+  showError = true,
+}: {
+  organizationId?: string;
+  refetchInterval?: number;
+  showError?: boolean;
+}) => {
   /*
    * Loading environments depends on the current organization. Fetching should start only when the current
    * organization is set and it should happens once, on full page reload, until the cache is invalidated on-demand
@@ -32,6 +40,10 @@ export const useFetchEnvironments = ({ organizationId }: { organizationId?: stri
     enabled: !!organizationId,
     retry: false,
     staleTime: Infinity,
+    refetchInterval,
+    meta: {
+      showError,
+    },
   });
 
   return {

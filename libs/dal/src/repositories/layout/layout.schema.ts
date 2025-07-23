@@ -24,6 +24,10 @@ const layoutSchema = new Schema<LayoutDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Layout',
     },
+    _updatedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     name: Schema.Types.String,
     identifier: Schema.Types.String,
     description: Schema.Types.String,
@@ -61,6 +65,14 @@ const layoutSchema = new Schema<LayoutDBModel>(
 );
 
 layoutSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
+
+layoutSchema.virtual('updatedBy', {
+  ref: 'User',
+  localField: '_updatedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
+});
 
 layoutSchema.index({
   _environmentId: 1,

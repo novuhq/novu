@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum } from '@novu/shared';
+import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository, ClientSession, LocalizationResourceEnum } from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
@@ -13,6 +13,10 @@ import {
 } from '../upsert-workflow';
 import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
 import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
+import {
+  LayoutSyncToEnvironmentCommand,
+  LayoutSyncToEnvironmentUseCase,
+} from '../../../layouts-v2/usecases/sync-to-environment';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
@@ -32,6 +36,7 @@ export class SyncToEnvironmentUseCase {
     private getWorkflowUseCase: GetWorkflowUseCase,
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
+    private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
     private moduleRef: ModuleRef
   ) {}
 
@@ -60,6 +65,18 @@ export class SyncToEnvironmentUseCase {
     const externalId = sourceWorkflow.workflowId;
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
     const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
+
+    for (const step of workflowDto.steps) {
+      if (step.type === StepTypeEnum.EMAIL && step.controlValues?.layoutId) {
+        await this.layoutSyncToEnvironmentUseCase.execute(
+          LayoutSyncToEnvironmentCommand.create({
+            user: command.user,
+            layoutIdOrInternalId: step.controlValues.layoutId as string,
+            targetEnvironmentId: command.targetEnvironmentId,
+          })
+        );
+      }
+    }
 
     const upsertedWorkflow = await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({

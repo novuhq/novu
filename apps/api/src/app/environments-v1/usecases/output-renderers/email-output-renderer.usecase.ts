@@ -24,6 +24,7 @@ import {
   isLinkNode,
   isRepeatNode,
   isVariableNode,
+  replaceMailyNodesByCondition,
   wrapMailyInLiquid,
 } from '../../../shared/helpers/maily-utils';
 import { NOVU_BRANDING_HTML } from './novu-branding-html';
@@ -40,6 +41,7 @@ export class EmailOutputRendererCommand extends RenderCommand {
   organizationId: string;
   workflowId?: string;
   locale?: string;
+  skipLayoutRendering?: boolean;
 }
 
 function isJsonString(str: string): boolean {
@@ -90,7 +92,8 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       };
     }
 
-    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale } = renderCommand;
+    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale, skipLayoutRendering } =
+      renderCommand;
 
     const isLayoutsPageActive = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
@@ -120,6 +123,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         organizationId,
         workflowId,
         locale,
+        skipLayoutRendering,
       });
     } else {
       renderedHtml = await this.processBodyContent({
@@ -157,6 +161,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId,
     workflowId,
     locale,
+    skipLayoutRendering,
   }: {
     body: string;
     layoutId?: string | null;
@@ -165,6 +170,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     organizationId: string;
     workflowId?: string;
     locale?: string;
+    skipLayoutRendering?: boolean;
   }): Promise<string> {
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
@@ -196,11 +202,16 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       noHtmlWrappingTags: !!layoutControlsEntity,
     });
 
-    if (!layoutControlsEntity) {
-      return stepBodyHtml;
+    const cleanedStepBodyHtml = stepBodyHtml
+      .replace(/<!DOCTYPE.*?>/g, '')
+      .replace(/<!--\$-->/g, '')
+      .replace(/<!--\/\$-->/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    if (!layoutControlsEntity || skipLayoutRendering) {
+      return cleanedStepBodyHtml;
     }
 
-    const cleanedStepBodyHtml = stepBodyHtml.replace(/<!DOCTYPE.*?>/, '').replace(/<!--\/$-->/, '');
     const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
 
     return this.processBodyContent({
@@ -214,6 +225,23 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       workflowId,
       locale,
     });
+  }
+
+  private enhanceContentVariable(body: string) {
+    return JSON.stringify(
+      replaceMailyNodesByCondition(
+        body,
+        (node) => node.type === 'variable' && node.attrs?.id === LAYOUT_CONTENT_VARIABLE,
+        (node) =>
+          ({
+            ...node,
+            attrs: {
+              ...node.attrs,
+              shouldDangerouslySetInnerHTML: true,
+            },
+          }) satisfies MailyJSONContent
+      )
+    );
   }
 
   private async processBodyContent({
@@ -235,7 +263,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   }): Promise<string> {
     if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
       const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
-      const liquifiedMaily = wrapMailyInLiquid(body);
+      const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
       const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
       const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, escapedPayloadForJson);
 

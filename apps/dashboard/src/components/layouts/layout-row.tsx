@@ -2,7 +2,7 @@ import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
-import { PermissionsEnum, LayoutResponseDto } from '@novu/shared';
+import { PermissionsEnum, LayoutResponseDto, ResourceOriginEnum, EnvironmentTypeEnum } from '@novu/shared';
 
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -73,6 +73,8 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
   const { currentEnvironment } = useEnvironment();
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const isDuplicable =
+    layout.origin === ResourceOriginEnum.NOVU_CLOUD && currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   const { deleteLayout, isPending: isDeleteLayoutPending } = useDeleteLayout({
     onSuccess: () => {
@@ -162,44 +164,48 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
         </LayoutTableCell>
         <Protect permission={PermissionsEnum.LAYOUT_WRITE}>
           <LayoutTableCell className="w-1">
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild onClick={stopPropagation}>
-                <CompactButton variant="ghost" icon={RiMore2Fill} className="z-10 h-8 w-8 p-0" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56" onClick={stopPropagation}>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      navigate(
-                        buildRoute(ROUTES.LAYOUTS_DUPLICATE, {
-                          environmentSlug: currentEnvironment?.slug ?? '',
-                          layoutId: layout.layoutId,
-                        })
-                      );
-                    }}
-                    className="flex cursor-pointer items-center gap-2"
-                  >
-                    <RiFileCopyLine className="h-4 w-4" />
-                    <span>Duplicate layout</span>
-                  </DropdownMenuItem>
-                  <Tooltip>
-                    <TooltipTrigger className="w-full">
+            {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+              <DropdownMenu modal={false}>
+                <DropdownMenuTrigger asChild onClick={stopPropagation}>
+                  <CompactButton variant="ghost" icon={RiMore2Fill} className="z-10 h-8 w-8 p-0" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56" onClick={stopPropagation}>
+                  <DropdownMenuGroup>
+                    {isDuplicable && (
                       <DropdownMenuItem
                         onClick={() => {
-                          setTimeout(() => setIsDeleteModalOpen(true), 0);
+                          navigate(
+                            buildRoute(ROUTES.LAYOUTS_DUPLICATE, {
+                              environmentSlug: currentEnvironment?.slug ?? '',
+                              layoutId: layout.layoutId,
+                            })
+                          );
                         }}
-                        className="text-destructive flex cursor-pointer items-center gap-2"
-                        disabled={layout.isDefault}
+                        className="flex cursor-pointer items-center gap-2"
                       >
-                        <RiDeleteBin2Line className="h-4 w-4" />
-                        <span>Delete layout</span>
+                        <RiFileCopyLine className="h-4 w-4" />
+                        <span>Duplicate layout</span>
                       </DropdownMenuItem>
-                    </TooltipTrigger>
-                    {layout.isDefault && <TooltipContent>The default layout cannot be deleted.</TooltipContent>}
-                  </Tooltip>
-                </DropdownMenuGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    )}
+                    <Tooltip>
+                      <TooltipTrigger className="w-full">
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setTimeout(() => setIsDeleteModalOpen(true), 0);
+                          }}
+                          className="text-destructive flex cursor-pointer items-center gap-2"
+                          disabled={layout.isDefault}
+                        >
+                          <RiDeleteBin2Line className="h-4 w-4" />
+                          <span>Delete layout</span>
+                        </DropdownMenuItem>
+                      </TooltipTrigger>
+                      {layout.isDefault && <TooltipContent>The default layout cannot be deleted.</TooltipContent>}
+                    </Tooltip>
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </LayoutTableCell>
         </Protect>
       </TableRow>

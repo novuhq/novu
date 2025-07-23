@@ -77,7 +77,7 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
         <TableRow>
           <TableHead>Resource</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Locales</TableHead>
+          <TableHead>Languages</TableHead>
           <TableHead>Created at</TableHead>
           <TableHead>Updated at</TableHead>
           <TableHead />

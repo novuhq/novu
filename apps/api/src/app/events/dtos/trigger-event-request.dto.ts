@@ -227,7 +227,8 @@ export class TriggerEventRequestDto {
   to: TriggerRecipientsPayload;
 
   @ApiPropertyOptional({
-    description: 'A unique identifier for this transaction, we will generate a UUID if not provided.',
+    description: `A unique identifier for deduplication. If the same **transactionId** is sent again, 
+      the trigger is ignored. Useful to prevent duplicate notifications. The retention period depends on your billing tier.`,
   })
   @IsString()
   @IsOptional()
