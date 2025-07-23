@@ -19,6 +19,7 @@ const schemaDefinition = {
   // Core step run identification
   step_run_id: { type: CHString() }, // Maps to JobEntity._id
   step_id: { type: CHString() }, // Maps to messageTemplate._id
+  workflow_run_id: { type: CHNullable(CHString()) }, // Maps to NotificationEntity._id
 
   // Context
   organization_id: { type: CHString() },
@@ -27,7 +28,6 @@ const schemaDefinition = {
   subscriber_id: { type: CHString() },
   external_subscriber_id: { type: CHNullable(CHString()) },
   message_id: { type: CHNullable(CHString()) }, // Links to MessageEntity
-  notification_id: { type: CHNullable(CHString()) }, // Maps to NotificationEntity._id
 
   // Step metadata
   step_type: { type: CHLowCardinality(CHString()) }, // email, sms, in_app, push, etc.
@@ -43,7 +43,6 @@ const schemaDefinition = {
 
   // Correlation
   transaction_id: { type: CHString() },
-  // workflow_run_id: { type: CHString() }, // Links to workflow_runs
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
