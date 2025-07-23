@@ -96,6 +96,7 @@ export type EventType =
   | 'webhook_filter_failed'
   | 'integration_selected'
   | 'layout_not_found'
+  | 'layout_selected'
   | 'tenant_selected'
   | 'tenant_not_found'
   | 'variant_selected'
