@@ -1,5 +1,5 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors, Param } from '@nestjs/common';
-import { ExternalApiAccessible, RequirePermissions, UserSession, WorkflowRunStatus } from '@novu/application-generic';
+import { ExternalApiAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum } from '@novu/shared';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetRequestsCommand } from './usecases/get-requests/get-requests.command';
@@ -35,7 +35,7 @@ export class ActivityController {
       GetRequestsCommand.create({
         ...query,
         organizationId: user.organizationId,
-        userId: user._id,
+        environmentId: user.environmentId,
         createdGte: query.createdGte,
       })
     );
