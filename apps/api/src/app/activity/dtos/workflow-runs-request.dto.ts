@@ -7,7 +7,7 @@ export class GetWorkflowRunsDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  limit: number = 50;
+  limit: number = 10;
 
   @IsOptional()
   @IsString()

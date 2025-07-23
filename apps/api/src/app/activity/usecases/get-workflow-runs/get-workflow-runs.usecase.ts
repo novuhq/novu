@@ -112,7 +112,7 @@ export class GetWorkflowRuns {
       }
 
       // Generate next cursor if there are more results
-      let nextCursor: string | undefined;
+      let nextCursor: string | null = null;
       if (hasMore && workflowRuns.length > 0) {
         const lastRun = workflowRuns[workflowRuns.length - 1];
         nextCursor = this.encodeCursor({
@@ -122,7 +122,7 @@ export class GetWorkflowRuns {
       }
 
       // Generate previous cursor if we're not on the first page
-      let previousCursor: string | undefined;
+      let previousCursor: string | null = null;
       if (command.cursor && workflowRuns.length > 0) {
         const firstRun = workflowRuns[0];
         previousCursor = this.encodeCursor({
@@ -164,6 +164,7 @@ export class GetWorkflowRuns {
 
   private mapWorkflowRunToDto(workflowRun: WorkflowRun): WorkflowRunDto {
     return {
+      id: workflowRun.id,
       workflowRunId: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
       workflowName: workflowRun.workflow_name,
