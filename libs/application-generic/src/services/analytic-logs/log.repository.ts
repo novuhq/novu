@@ -252,7 +252,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       this.validateColumnName(String(orderBy));
 
       if (!this.schemaOrderBy.includes(orderBy)) {
-        this.logger.error(
+        this.logger.warn(
           {
             orderBy,
             schemaOrderBy: this.schemaOrderBy,

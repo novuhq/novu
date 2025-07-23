@@ -36,7 +36,7 @@ export class GetWorkflowRun {
     try {
       const workflowRunResult = await this.workflowRunRepository.findOne({
         where: {
-          workflow_run_id: command.workflowRunId,
+          id: command.workflowRunId,
           organization_id: command.organizationId,
           environment_id: command.environmentId,
         },
@@ -178,6 +178,7 @@ export class GetWorkflowRun {
 
   private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): WorkflowRunDto {
     return {
+      id: workflowRun.id,
       workflowRunId: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
       workflowName: workflowRun.workflow_name,

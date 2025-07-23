@@ -41,6 +41,10 @@ export class StepRunDto {
 }
 
 export class WorkflowRunDto {
+  @ApiProperty({ description: 'Workflow run id' })
+  @IsString()
+  id: string;
+
   @ApiProperty({ description: 'Workflow run identifier' })
   @IsString()
   workflowRunId: string;
