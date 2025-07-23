@@ -248,7 +248,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     });
   });
 
-  it.only('should filter results by date range', async () => {
+  it('should filter results by date range', async () => {
     await createMultipleWorkflowRuns({
       count: 2,
       workflowId: template.triggers[0].identifier,
