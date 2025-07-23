@@ -70,7 +70,7 @@ export class LayoutsController {
   @ExternalApiAccessible()
   @ApiBody({ type: CreateLayoutDto, description: 'Layout creation details' })
   @ApiResponse(LayoutResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async create(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createLayoutDto: CreateLayoutDto
@@ -101,7 +101,7 @@ export class LayoutsController {
   })
   @ApiBody({ type: UpdateLayoutDto, description: 'Layout update details' })
   @ApiResponse(LayoutResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async update(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string,
@@ -127,7 +127,7 @@ export class LayoutsController {
     description: 'Fetches details of a specific layout by its unique identifier **layoutId**',
   })
   @ApiResponse(LayoutResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async get(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string
@@ -149,7 +149,7 @@ export class LayoutsController {
     summary: 'Delete a layout',
     description: 'Removes a specific layout by its unique identifier **layoutId**',
   })
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async delete(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string
@@ -173,7 +173,7 @@ export class LayoutsController {
   })
   @ApiBody({ type: DuplicateLayoutDto })
   @ApiResponse(LayoutResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @SdkMethodName('duplicate')
   async duplicate(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -198,7 +198,7 @@ export class LayoutsController {
     description: 'Retrieves a list of layouts with optional filtering and pagination',
   })
   @ApiResponse(ListLayoutResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async list(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Query() query: GetLayoutListQueryParamsDto
@@ -223,7 +223,7 @@ export class LayoutsController {
   })
   @ApiBody({ type: LayoutPreviewRequestDto, description: 'Layout preview generation details' })
   @ApiResponse(GenerateLayoutPreviewResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @SdkMethodName('generatePreview')
   async generatePreview(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -247,7 +247,7 @@ export class LayoutsController {
       'Retrieves information about workflows that use the specified layout by its unique identifier **layoutId**',
   })
   @ApiResponse(GetLayoutUsageResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async getUsage(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string

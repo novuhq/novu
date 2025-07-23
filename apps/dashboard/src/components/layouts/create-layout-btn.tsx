@@ -50,7 +50,7 @@ export const CreateLayoutButton = ({
 
   return (
     <PermissionButton
-      permission={PermissionsEnum.LAYOUT_WRITE}
+      permission={PermissionsEnum.WORKFLOW_WRITE}
       mode="gradient"
       className="rounded-l-lg border-none text-white"
       variant="primary"
