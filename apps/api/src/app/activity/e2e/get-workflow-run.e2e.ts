@@ -6,30 +6,13 @@ import { Novu } from '@novu/api';
 import { WorkflowRunRepository } from '@novu/application-generic';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe.only('Workflow Run - GET /v1/activity/workflow-run/:workflowRunId #novu-v2', () => {
+describe('Workflow Run - GET /v1/activity/workflow-run/:workflowRunId #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   let novuClient: Novu;
-  let notificationId: string;
-  const notificationRepository = new NotificationRepository();
   let workflowRunRepository: WorkflowRunRepository;
-
-  let originalIsWorkflowRunLogsWriteEnabled: string | undefined;
-
-  before(async () => {
-    originalIsWorkflowRunLogsWriteEnabled = process.env.IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
-    (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'true';
-  });
-
-  after(async () => {
-    if (originalIsWorkflowRunLogsWriteEnabled === undefined) {
-      delete (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
-    } else {
-      (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = originalIsWorkflowRunLogsWriteEnabled;
-    }
-  });
 
   beforeEach(async () => {
     session = new UserSession();
