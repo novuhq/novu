@@ -22,13 +22,14 @@ import { useDiffEnvironments } from '@/hooks/use-environments';
 import { formatDateSimple } from '@/utils/format-date';
 import type { IEnvironment } from '@novu/shared';
 import type { IResourceDiffResult, IResourceDependency } from '@/api/environments';
+import type { ResourceToPublish } from '@/api/environments';
 
 type EnhancedPublishModalProps = {
   isOpen: boolean;
   onClose: () => void;
   environment: IEnvironment;
   currentEnvironmentId?: string;
-  onConfirm: (selectedResources: string[]) => void;
+  onConfirm: (selectedResources: ResourceToPublish[]) => void;
   isPublishing?: boolean;
 };
 
@@ -194,10 +195,13 @@ export function EnhancedPublishModal({
   };
 
   const handleConfirm = () => {
-    const selectedIds = Object.entries(resourceSelection)
+    const selectedResources: ResourceToPublish[] = Object.entries(resourceSelection)
       .filter(([_, state]) => state.selected)
-      .map(([id]) => id);
-    onConfirm(selectedIds);
+      .map(([id, state]) => ({
+        resourceType: state.resource.resourceType as ResourceToPublish['resourceType'],
+        resourceId: id,
+      }));
+    onConfirm(selectedResources);
   };
 
   return (
@@ -488,6 +492,235 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
   );
 }
 
+type WorkflowChangeType = {
+  type: 'configuration' | 'steps' | 'translations';
+  label: string;
+  action: 'added' | 'modified' | 'deleted';
+  count: number;
+};
+
+type WorkflowHoverCardProps = {
+  workflowResource: IResourceDiffResult;
+  children: React.ReactNode;
+};
+
+function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProps) {
+  const changeTypes = useMemo(() => {
+    const types: WorkflowChangeType[] = [];
+    const { changes } = workflowResource;
+
+    // Track different types of changes
+    let hasWorkflowConfigChanges = false;
+    let hasStepChanges = false;
+    let hasTranslationChanges = false;
+
+    // Count step changes by action
+    const stepActionCounts = { added: 0, modified: 0, deleted: 0, moved: 0 };
+
+    changes.forEach((change) => {
+      if (change.resourceType === 'workflow') {
+        // This is a workflow-level change
+        hasWorkflowConfigChanges = true;
+
+        // Check if it's specifically translation-related
+        if (change.diffs) {
+          const hasTranslationChange =
+            'isTranslationEnabled' in (change.diffs.new || {}) ||
+            'isTranslationEnabled' in (change.diffs.previous || {});
+
+          if (hasTranslationChange) {
+            hasTranslationChanges = true;
+          }
+        }
+      } else if (change.resourceType === 'step') {
+        // This is a step-level change
+        hasStepChanges = true;
+        if (change.action && change.action in stepActionCounts) {
+          stepActionCounts[change.action as keyof typeof stepActionCounts]++;
+        }
+      }
+    });
+
+    // Add change types based on what we found
+    if (hasWorkflowConfigChanges) {
+      types.push({
+        type: 'configuration',
+        label: 'Workflow configuration',
+        action: 'modified',
+        count: 1,
+      });
+    }
+
+    if (hasStepChanges) {
+      // Use the most significant action (prioritize: added > modified > deleted > moved)
+      let primaryAction: 'added' | 'modified' | 'deleted' = 'modified';
+      let totalStepChanges = 0;
+
+      if (stepActionCounts.added > 0) {
+        primaryAction = 'added';
+        totalStepChanges = stepActionCounts.added;
+      } else if (stepActionCounts.modified > 0) {
+        primaryAction = 'modified';
+        totalStepChanges = stepActionCounts.modified;
+      } else if (stepActionCounts.deleted > 0) {
+        primaryAction = 'deleted';
+        totalStepChanges = stepActionCounts.deleted;
+      } else {
+        totalStepChanges = stepActionCounts.moved;
+      }
+
+      types.push({
+        type: 'steps',
+        label: 'Steps & content',
+        action: primaryAction,
+        count: totalStepChanges,
+      });
+    }
+
+    if (hasTranslationChanges) {
+      types.push({
+        type: 'translations',
+        label: 'Translations',
+        action: 'added',
+        count: 1,
+      });
+    }
+
+    return types;
+  }, [workflowResource.changes]);
+
+  const getChangeIcon = (action: 'added' | 'modified' | 'deleted') => {
+    switch (action) {
+      case 'added':
+        return (
+          <img
+            src="http://localhost:3845/assets/993ff250611ff291f28fb031f7279a0bfaeac60f.svg"
+            alt=""
+            className="h-3 w-3"
+          />
+        );
+      case 'modified':
+        return (
+          <img
+            src="http://localhost:3845/assets/3c6ee0b7509bfd8da47a5669970048709faf3341.svg"
+            alt=""
+            className="h-3 w-3"
+          />
+        );
+      case 'deleted':
+        return <div className="h-2 w-0.5 bg-red-500" />;
+      default:
+        return (
+          <img
+            src="http://localhost:3845/assets/3c6ee0b7509bfd8da47a5669970048709faf3341.svg"
+            alt=""
+            className="h-3 w-3"
+          />
+        );
+    }
+  };
+
+  const getChangeColor = (action: 'added' | 'modified' | 'deleted') => {
+    switch (action) {
+      case 'added':
+        return {
+          bg: 'bg-green-50/40',
+          icon: 'bg-green-100/60',
+          text: 'text-gray-600',
+        };
+      case 'modified':
+        return {
+          bg: 'bg-orange-50/40',
+          icon: 'bg-orange-100/60',
+          text: 'text-gray-600',
+        };
+      case 'deleted':
+        return {
+          bg: 'bg-red-50/40',
+          icon: 'bg-red-100/60',
+          text: 'text-gray-600',
+        };
+      default:
+        return {
+          bg: 'bg-orange-50/40',
+          icon: 'bg-orange-100/60',
+          text: 'text-gray-600',
+        };
+    }
+  };
+
+  const getOverallStatus = () => {
+    const { summary } = workflowResource;
+
+    if (summary.added > 0) {
+      return { action: 'added' as const, label: 'Added' };
+    }
+    if (summary.modified > 0) {
+      return { action: 'modified' as const, label: 'Modified' };
+    }
+    if (summary.deleted > 0) {
+      return { action: 'deleted' as const, label: 'Deleted' };
+    }
+
+    return { action: 'modified' as const, label: 'Modified' };
+  };
+
+  const overallStatus = getOverallStatus();
+
+  if (changeTypes.length === 0) {
+    return <>{children}</>;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent
+        side="top"
+        className="rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
+        style={{
+          filter: 'drop-shadow(0px 12px 24px rgba(14, 18, 27, 0.06)) drop-shadow(0px 1px 2px rgba(14, 18, 27, 0.03))',
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          {/* Overall status badge */}
+          <div
+            className={`flex items-center gap-0.5 rounded-full px-1 py-0.5 pr-2 ${getChangeColor(overallStatus.action).bg}`}
+          >
+            <div
+              className={`flex h-3 w-3 items-center justify-center ${getChangeColor(overallStatus.action).icon} rounded-sm`}
+            >
+              {getChangeIcon(overallStatus.action)}
+            </div>
+            <span className="text-xs font-medium text-orange-700" style={{ fontSize: '10px', lineHeight: '14px' }}>
+              {overallStatus.label}
+            </span>
+          </div>
+
+          {/* Change type details */}
+          <div className="flex flex-col gap-1.5">
+            {changeTypes.map((changeType, index) => {
+              const colors = getChangeColor(changeType.action);
+
+              return (
+                <div key={index} className={`flex min-w-[175px] items-center gap-1.5 rounded p-1 ${colors.bg}`}>
+                  <div className={`flex h-[15px] w-[15px] items-center justify-center rounded-sm ${colors.icon}`}>
+                    {getChangeIcon(changeType.action)}
+                  </div>
+                  <div className="flex flex-col justify-center">
+                    <div className={`font-medium ${colors.text}`} style={{ fontSize: '10px', lineHeight: '14px' }}>
+                      {changeType.label}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function CompactResourceRow({
   resource,
   selected,
@@ -542,7 +775,7 @@ function CompactResourceRow({
     return null;
   };
 
-  return (
+  const rowContent = (
     <div className="flex items-center gap-1.5 p-1">
       {disabled ? (
         <Tooltip>
@@ -624,4 +857,11 @@ function CompactResourceRow({
       </div>
     </div>
   );
+
+  // Only wrap workflow rows with the hover card
+  if (resource.resourceType === 'workflow') {
+    return <WorkflowHoverCard workflowResource={resource}>{rowContent}</WorkflowHoverCard>;
+  }
+
+  return rowContent;
 }

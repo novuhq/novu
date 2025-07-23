@@ -21,9 +21,15 @@ export interface IResourceDependency {
   reason: DependencyReasonEnum;
 }
 
+export interface IResourceToPublish {
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+}
+
 export interface ISyncOptions {
   dryRun?: boolean;
   batchSize?: number;
+  resourcesToPublish?: IResourceToPublish[];
 }
 
 export interface ISyncContext {
@@ -145,6 +151,7 @@ export interface ISyncStrategy {
     organizationId: string,
     userContext: UserSessionData
   ): Promise<IDiffResult[]>;
+  getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]>;
 }
 
 export interface ISyncProgress {

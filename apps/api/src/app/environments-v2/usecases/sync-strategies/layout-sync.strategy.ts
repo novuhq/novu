@@ -32,4 +32,8 @@ export class LayoutSyncStrategy extends BaseSyncStrategy {
   ): Promise<IDiffResult[]> {
     return this.layoutDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
   }
+
+  async getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]> {
+    return this.layoutSyncOperation.getAvailableResourceIds(sourceEnvironmentId, organizationId);
+  }
 }

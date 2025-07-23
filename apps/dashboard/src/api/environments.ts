@@ -83,6 +83,11 @@ export interface IEnvironmentPublishResponse {
   };
 }
 
+export type ResourceToPublish = {
+  resourceType: 'workflow' | 'layout' | 'localization_group' | 'step';
+  resourceId: string;
+};
+
 export async function getEnvironments() {
   const { data } = await get<{ data: IEnvironment[] }>('/environments');
   return data;
@@ -145,12 +150,18 @@ export async function diffEnvironments({
 export async function publishEnvironments({
   sourceEnvironmentId,
   targetEnvironmentId,
+  resourcesToPublish,
 }: {
   sourceEnvironmentId: string;
   targetEnvironmentId: string;
+  resourcesToPublish?: ResourceToPublish[];
 }): Promise<IEnvironmentPublishResponse> {
   const { data } = await postV2<{ data: IEnvironmentPublishResponse }>(`/environments/${targetEnvironmentId}/publish`, {
-    body: { sourceEnvironmentId, dryRun: false },
+    body: {
+      sourceEnvironmentId,
+      dryRun: false,
+      ...(resourcesToPublish && { resourcesToPublish }),
+    },
   });
   return data;
 }

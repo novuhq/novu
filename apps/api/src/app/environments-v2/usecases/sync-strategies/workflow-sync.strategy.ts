@@ -32,4 +32,8 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
   ): Promise<IDiffResult[]> {
     return this.workflowDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
   }
+
+  async getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]> {
+    return this.workflowSyncOperation.getAvailableResourceIds(sourceEnvironmentId, organizationId);
+  }
 }
