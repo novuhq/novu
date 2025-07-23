@@ -13,7 +13,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { PublishModal } from './publish-modal';
+import { EnhancedPublishModal } from './enhanced-publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
 import { NoChangesModal } from './no-changes-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -75,7 +75,7 @@ export const PublishButton = () => {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (selectedResources?: string[]) => {
     if (!state.selectedEnvironment?._id || !currentEnvironment?._id) {
       console.warn('Cannot publish: missing required environment IDs');
       return;
@@ -125,7 +125,7 @@ export const PublishButton = () => {
           </div>
         </Button>
 
-        <PublishModal
+        <EnhancedPublishModal
           isOpen={state.modalState === 'publish'}
           onClose={actions.close}
           environment={state.selectedEnvironment!}
@@ -189,7 +189,7 @@ export const PublishButton = () => {
       {/* Modals */}
       {state.selectedEnvironment && (
         <>
-          <PublishModal
+          <EnhancedPublishModal
             isOpen={state.modalState === 'publish'}
             onClose={actions.close}
             environment={state.selectedEnvironment}

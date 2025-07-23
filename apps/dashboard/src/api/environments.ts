@@ -22,12 +22,21 @@ export interface IResourceInfo {
   updatedAt?: string | null;
 }
 
+export interface IResourceDependency {
+  resourceType: string;
+  resourceId: string;
+  resourceName: string;
+  isBlocking: boolean;
+  reason: 'LAYOUT_REQUIRED_FOR_WORKFLOW' | 'LAYOUT_EXISTS_IN_TARGET';
+}
+
 export interface IResourceDiffResult {
   resourceType: string;
   sourceResource?: IResourceInfo | null;
   targetResource?: IResourceInfo | null;
   changes: any[];
   summary: IDiffSummary;
+  dependencies?: IResourceDependency[];
 }
 
 export interface IEnvironmentDiffResponse {

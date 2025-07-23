@@ -4,7 +4,7 @@ import { UserSessionData } from '@novu/shared';
 import { BaseRepository } from '@novu/dal';
 import { DiffEnvironmentCommand } from './diff-environment.command';
 import { ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
-import { EnvironmentValidationService } from '../../services';
+import { EnvironmentValidationService, DependencyAnalyzerService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 
@@ -14,7 +14,8 @@ export class DiffEnvironmentUseCase {
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
     private workflowSyncStrategy: WorkflowSyncStrategy,
-    private layoutSyncStrategy: LayoutSyncStrategy
+    private layoutSyncStrategy: LayoutSyncStrategy,
+    private dependencyAnalyzerService: DependencyAnalyzerService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -51,6 +52,21 @@ export class DiffEnvironmentUseCase {
         command.user.organizationId,
         command.user
       );
+
+      // Analyze dependencies
+      const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
+        resources,
+        sourceEnvironmentId,
+        command.targetEnvironmentId,
+        command.user.organizationId
+      );
+
+      // Add dependencies to resources
+      for (const resource of resources) {
+        if (resource.sourceResource?.id && dependencyMap.has(resource.sourceResource.id)) {
+          resource.dependencies = dependencyMap.get(resource.sourceResource.id);
+        }
+      }
 
       const summary = this.calculateSummary(resources);
 

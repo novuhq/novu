@@ -8,6 +8,19 @@ export enum ResourceTypeEnum {
   LAYOUT = 'layout',
 }
 
+export enum DependencyReasonEnum {
+  LAYOUT_REQUIRED_FOR_WORKFLOW = 'LAYOUT_REQUIRED_FOR_WORKFLOW',
+  LAYOUT_EXISTS_IN_TARGET = 'LAYOUT_EXISTS_IN_TARGET',
+}
+
+export interface IResourceDependency {
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+  resourceName: string;
+  isBlocking: boolean;
+  reason: DependencyReasonEnum;
+}
+
 export interface ISyncOptions {
   dryRun?: boolean;
   batchSize?: number;
@@ -109,6 +122,7 @@ export interface IDiffResult {
     deleted: number;
     unchanged: number;
   };
+  dependencies?: IResourceDependency[];
 }
 
 export interface IEnvironmentDiffResult {
