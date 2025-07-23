@@ -262,6 +262,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     // Build the base WHERE clause
     const { clause: baseClause, params: baseParams } = this.buildWhereClause(where);
 
+    // Use 'WHERE 1=1' as neutral base to simplify dynamic AND condition appending
     let whereClause = baseClause || 'WHERE 1=1';
     const params = { ...baseParams };
 
