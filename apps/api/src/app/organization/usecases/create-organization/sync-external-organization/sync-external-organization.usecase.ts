@@ -46,15 +46,14 @@ export class SyncExternalOrganization {
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new BadRequestException('User not found');
+    if (!user._id) {
+      this.logger.error({ err: 'User not found' }, 'User not found when syncing external organization');
+
+      throw new BadRequestException('User not found');
+    }
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
-    });
-
-    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-      defaultValue: false,
-      organization: { _id: organization._id },
     });
 
     const devEnv = await this.createEnvironmentUsecase.execute(
@@ -74,6 +73,12 @@ export class SyncExternalOrganization {
         name: devEnv.name,
       })
     );
+
+    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+      defaultValue: false,
+      organization: { _id: organization._id },
+    });
 
     if (isLayoutsPageActive) {
       await this.upsertLayoutUsecase.execute(

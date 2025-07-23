@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsBoolean } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsBoolean, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ResourceOriginEnum, ResourceTypeEnum, Slug } from '@novu/shared';
 
@@ -7,6 +7,7 @@ import { CreateLayoutDto } from './create-layout.dto';
 import { UpdateLayoutDto } from './update-layout.dto';
 import { ControlsMetadataDto } from '../../workflows-v2/dtos/controls-metadata.dto';
 import { LayoutControlValuesDto } from './layout-controls.dto';
+import { UserResponseDto } from '../../workflows-v2/dtos/user-response.dto';
 
 export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayoutDto;
 
@@ -40,6 +41,16 @@ export class LayoutResponseDto {
   @ApiProperty({ description: 'Last updated timestamp' })
   @IsString()
   updatedAt: string;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the layout',
+    type: () => UserResponseDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  updatedBy?: UserResponseDto;
 
   @ApiProperty({ description: 'Creation timestamp' })
   @IsString()

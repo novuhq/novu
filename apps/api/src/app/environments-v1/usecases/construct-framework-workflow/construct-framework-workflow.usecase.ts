@@ -73,7 +73,7 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    return this.constructFrameworkWorkflow(dbWorkflow);
+    return this.constructFrameworkWorkflow(dbWorkflow, command.skipLayoutRendering);
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
@@ -107,19 +107,20 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructFrameworkWorkflow(dbWorkflow: NotificationTemplateEntity): Workflow {
+  private constructFrameworkWorkflow(dbWorkflow: NotificationTemplateEntity, skipLayoutRendering?: boolean): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
         const fullPayloadForRender: FullPayloadForRender = { payload, subscriber, steps: {} };
         for (const staticStep of dbWorkflow.steps) {
-          fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
+          fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep({
             step,
             staticStep,
             fullPayloadForRender,
             dbWorkflow,
-            subscriber.locale ?? undefined
-          );
+            locale: subscriber.locale ?? undefined,
+            skipLayoutRendering,
+          });
         }
       },
       {
@@ -138,13 +139,21 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructStep(
-    step: Step,
-    staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): StepOutput<Record<string, unknown>> {
+  private constructStep({
+    step,
+    staticStep,
+    fullPayloadForRender,
+    dbWorkflow,
+    locale,
+    skipLayoutRendering,
+  }: {
+    step: Step;
+    staticStep: NotificationStepEntity;
+    fullPayloadForRender: FullPayloadForRender;
+    dbWorkflow: NotificationTemplateEntity;
+    locale?: string;
+    skipLayoutRendering?: boolean;
+  }): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
@@ -190,6 +199,7 @@ export class ConstructFrameworkWorkflow {
               organizationId: dbWorkflow._organizationId,
               workflowId: dbWorkflow._id,
               locale,
+              skipLayoutRendering,
             });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)

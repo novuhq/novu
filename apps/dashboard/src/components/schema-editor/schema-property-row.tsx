@@ -78,7 +78,11 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
       )}
     >
       <div className={cn('flex items-center gap-2', getMarginClassPx(indentationLevel))}>
-        <PropertyNameInput fieldPath={paths.keyName} control={control} />
+        <PropertyNameInput 
+          fieldPath={paths.keyName} 
+          control={control} 
+          autoFocus={isKeyNameEmpty}
+        />
         <PropertyTypeSelector
           definitionPath={paths.definition}
           control={control}

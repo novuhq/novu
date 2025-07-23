@@ -25,8 +25,9 @@ export class GetMyEnvironments {
 
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
-    if (!environments?.length)
+    if (!environments?.length) {
       throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
+    }
 
     const isNewChangeMechanismEnabled = await this.isNewChangeMechanismEnabled(command);
 

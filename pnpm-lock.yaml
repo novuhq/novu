@@ -373,8 +373,8 @@ importers:
         specifier: ^6.2.3
         version: 6.12.0(encoding@0.1.13)
       '@maily-to/render':
-        specifier: github:novuhq/maily.to#release/v0.1.3-novu.6-render&path:/packages/render
-        version: https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: github:novuhq/maily.to#release/v0.1.3-novu.7-render&path:/packages/render
+        version: https://codeload.github.com/novuhq/maily.to/tar.gz/cd50b53283e6f110872a23c7f7b85c838aba66c8#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@nestjs/axios':
         specifier: 3.0.3
         version: 3.0.3(@nestjs/common@10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1))(axios@1.9.0)(rxjs@7.8.1)
@@ -2637,8 +2637,8 @@ importers:
         specifier: ^9.7.3
         version: 9.7.3
       '@maily-to/render':
-        specifier: github:novuhq/maily.to#release/v0.1.3-novu.6-render&path:/packages/render
-        version: https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: github:novuhq/maily.to#release/v0.1.3-novu.7-render&path:/packages/render
+        version: https://codeload.github.com/novuhq/maily.to/tar.gz/cd50b53283e6f110872a23c7f7b85c838aba66c8#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@nestjs/common':
         specifier: 10.4.18
         version: 10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.1)
@@ -8797,9 +8797,9 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
-  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render':
-    resolution: {path: /packages/render, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c}
-    version: 0.1.3-novu.6-render
+  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/cd50b53283e6f110872a23c7f7b85c838aba66c8#path:/packages/render':
+    resolution: {path: /packages/render, tarball: https://codeload.github.com/novuhq/maily.to/tar.gz/cd50b53283e6f110872a23c7f7b85c838aba66c8}
+    version: 0.1.3-novu.7-render
     engines: {node: '>=18.0.0'}
     peerDependencies:
       react: ^18.3.1
@@ -40429,7 +40429,7 @@ snapshots:
       - y-protocols
       - yjs
 
-  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/87ee6fb9a4334f30a7a3eda50df6ba019a7bc41c#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@maily-to/render@https://codeload.github.com/novuhq/maily.to/tar.gz/cd50b53283e6f110872a23c7f7b85c838aba66c8#path:/packages/render(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@react-email/components': 0.0.25(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@react-email/render': 1.0.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)

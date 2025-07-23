@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RiSettings4Line, RiDeleteBin6Line } from 'react-icons/ri';
+import { RiSettings4Line, RiDeleteBin2Line } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
 import { Popover, PopoverTrigger } from '@/components/primitives/popover';
@@ -54,7 +54,7 @@ export function PropertyActions({
         variant="error"
         mode="ghost"
         size="2xs"
-        leadingIcon={RiDeleteBin6Line}
+        leadingIcon={RiDeleteBin2Line}
         onClick={onDeleteProperty}
         aria-label="Delete property"
         className={cn('border-1 !ml-0 h-7 w-7 border-neutral-200')}

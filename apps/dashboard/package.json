@@ -1,7 +1,7 @@
 {
   "name": "@novu/dashboard",
   "private": true,
-  "version": "2.3.0",
+  "version": "2.3.2",
   "type": "module",
   "scripts": {
     "start": "vite",
@@ -131,7 +131,6 @@
     "@novu/testing": "workspace:*",
     "@playwright/test": "^1.46.1",
     "@sentry/vite-plugin": "^2.22.6",
-
     "@tiptap/core": "^2.11.5",
     "@types/json-schema": "^7.0.15",
     "@types/lodash.debounce": "^4.0.9",

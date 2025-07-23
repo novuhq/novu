@@ -1,6 +1,9 @@
+import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
@@ -11,7 +14,6 @@ import {
   RiChat1Line,
   RiDatabase2Line,
   RiDiscussLine,
-  RiFileTextLine,
   RiGroup2Line,
   RiKey2Line,
   RiLayout5Line,
@@ -19,9 +21,10 @@ import {
   RiSettings4Line,
   RiSignalTowerLine,
   RiStore3Line,
-  RiUserAddLine,
   RiTranslate2,
+  RiUserAddLine,
 } from 'react-icons/ri';
+import { IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -30,9 +33,6 @@ import { GettingStartedMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { IS_SELF_HOSTED } from '../../config';
-import { Protect } from '@/utils/protect';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -153,7 +153,12 @@ export const SideNavigation = () => {
                   to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
                 >
                   <RiTranslate2 className="size-4" />
-                  <span>Translations </span>
+                  <span>
+                    Translations{' '}
+                    <Badge variant="lighter" className="text-xs">
+                      BETA
+                    </Badge>
+                  </span>
                 </NavigationLink>
               )}
             </NavigationGroup>

@@ -45,7 +45,7 @@
     "@google-cloud/storage": "^6.2.3",
     "@hokify/agenda": "^6.3.0",
     "@launchdarkly/node-server-sdk": "^9.7.3",
-    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.6-render&path:/packages/render",
+    "@maily-to/render": "github:novuhq/maily.to#release/v0.1.3-novu.7-render&path:/packages/render",
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/providers": "workspace:*",

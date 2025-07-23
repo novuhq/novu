@@ -1,6 +1,6 @@
 import { memo, useCallback } from 'react';
 import { Controller, Path, useFieldArray, type Control } from 'react-hook-form';
-import { RiAddLine, RiDeleteBin6Line, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
+import { RiAddLine, RiDeleteBin2Line, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
 import { InputPure, InputRoot } from '@/components/primitives/input';
@@ -48,7 +48,7 @@ const EnumChoice = memo<EnumChoiceProps>(function EnumChoice({ enumChoicePath, e
         variant="error"
         mode="ghost"
         size="2xs"
-        leadingIcon={RiDeleteBin6Line}
+        leadingIcon={RiDeleteBin2Line}
         onClick={onRemove}
         aria-label="Delete property"
         className={cn('border-1 !ml-1.5 h-7 w-7 border-neutral-200')}

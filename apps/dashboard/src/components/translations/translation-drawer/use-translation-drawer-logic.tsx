@@ -2,7 +2,6 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { TranslationGroup } from '@/api/translations';
 import { useFetchTranslation } from '@/hooks/use-fetch-translation';
 import { useSaveTranslation } from '@/hooks/use-save-translation';
-import { useDeleteTranslation } from '@/hooks/use-delete-translation';
 import { useTranslationEditor } from './hooks';
 
 export function useTranslationDrawerLogic(
@@ -41,7 +40,6 @@ export function useTranslationDrawerLogic(
 
   const editor = useTranslationEditor(selectedTranslation);
   const saveTranslationMutation = useSaveTranslation();
-  const deleteTranslationMutation = useDeleteTranslation();
 
   const handleLocaleSelect = useCallback(
     (locale: string) => {
@@ -63,34 +61,16 @@ export function useTranslationDrawerLogic(
     editor.resetContent();
   }, [editor, selectedLocale, saveTranslationMutation, resource]);
 
-  const handleDelete = useCallback(
-    async (locale: string) => {
-      await deleteTranslationMutation.mutateAsync({
-        ...resource,
-        locale,
-      });
-
-      const remainingLocales = translationGroup.locales.filter((l) => l !== locale);
-      // Select the first remaining locale
-      const nextLocale = remainingLocales[0] || null;
-      setSelectedLocale(nextLocale);
-    },
-    [deleteTranslationMutation, resource, translationGroup.locales]
-  );
-
   return {
     selectedLocale,
     selectedTranslation,
     isLoadingTranslation,
     translationError,
-    resource,
 
     editor,
     saveTranslationMutation,
-    deleteTranslationMutation,
 
     handleLocaleSelect,
     handleSave,
-    handleDelete,
   };
 }

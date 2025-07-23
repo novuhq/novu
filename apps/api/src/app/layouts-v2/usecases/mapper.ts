@@ -24,6 +24,14 @@ export const mapToResponseDto = ({
     slug: buildSlug(layout.name, ShortIsPrefixEnum.LAYOUT, layout._id!),
     isDefault: layout.isDefault,
     updatedAt: layout.updatedAt!,
+    updatedBy: layout.updatedBy
+      ? {
+          _id: layout.updatedBy._id,
+          firstName: layout.updatedBy.firstName,
+          lastName: layout.updatedBy.lastName,
+          externalId: layout.updatedBy.externalId,
+        }
+      : undefined,
     createdAt: layout.createdAt!,
     origin: layout.origin!,
     type: layout.type!,

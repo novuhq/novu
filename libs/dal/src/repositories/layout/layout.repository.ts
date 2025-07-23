@@ -1,4 +1,4 @@
-import { FilterQuery } from 'mongoose';
+import { ClientSession, FilterQuery, ProjectionType, QueryOptions } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 
 import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
@@ -17,6 +17,42 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
   constructor() {
     super(Layout, LayoutEntity);
     this.layout = Layout;
+  }
+
+  async findOne(
+    query: FilterQuery<LayoutDBModel> & EnforceEnvOrOrgIds,
+    select?: ProjectionType<LayoutEntity>,
+    options: {
+      readPreference?: 'secondaryPreferred' | 'primary';
+      query?: QueryOptions<LayoutDBModel>;
+      session?: ClientSession | null;
+    } = {}
+  ): Promise<LayoutEntity | null> {
+    const { session, ...queryOptions } = options;
+
+    const queryBuilder = this.MongooseModel.findOne(query, select, queryOptions.query)
+      .read(queryOptions.readPreference || 'primary')
+      .populate('updatedBy');
+
+    if (session) {
+      queryBuilder.session(session);
+    }
+
+    const data = await queryBuilder;
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
+  }
+
+  async findPublishable(environmentId: string, organizationId: string): Promise<LayoutEntity[]> {
+    const items = await this.MongooseModel.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+    }).populate('updatedBy', '_id firstName lastName externalId');
+
+    return this.mapEntities(items);
   }
 
   async createLayout(entity: Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'>): Promise<LayoutEntity> {

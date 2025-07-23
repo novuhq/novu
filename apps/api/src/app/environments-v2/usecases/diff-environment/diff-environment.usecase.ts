@@ -3,16 +3,18 @@ import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { BaseRepository } from '@novu/dal';
 import { DiffEnvironmentCommand } from './diff-environment.command';
-import { ResourceTypeEnum, ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
+import { ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
 import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
+import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 
 @Injectable()
 export class DiffEnvironmentUseCase {
   constructor(
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
-    private workflowSyncStrategy: WorkflowSyncStrategy
+    private workflowSyncStrategy: WorkflowSyncStrategy,
+    private layoutSyncStrategy: LayoutSyncStrategy
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -40,7 +42,7 @@ export class DiffEnvironmentUseCase {
        * For now, we only support workflow diff
        * In the future, we can add more strategies here
        */
-      const strategies = [this.workflowSyncStrategy];
+      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
 
       const resources = await this.executeDiff(
         strategies,

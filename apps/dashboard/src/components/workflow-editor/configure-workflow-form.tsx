@@ -490,7 +490,6 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                   saveForm();
                 }}
                 isReadOnly={isReadOnly}
-                workflowId={workflow.workflowId}
               />
             </SidebarContent>
             <Separator />

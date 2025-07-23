@@ -1,3 +1,29 @@
+## v3.7.0 (2025-07-22)
+
+### 🚀 Features
+
+- **react,js,api-service:** Add seen status and behaviour to inbox component fixes NV-6179 ([#8704](https://github.com/novuhq/novu/pull/8704))
+- **worker,js,react:** subscriber timezone aware delivery fixes NV-6239 ([#8674](https://github.com/novuhq/novu/pull/8674))
+- **worker,js:** Durable workers socket management ([#8578](https://github.com/novuhq/novu/pull/8578))
+- **react,js,nextjs,react-native:** create new inbox session on subscriber change ([#8417](https://github.com/novuhq/novu/pull/8417))
+- **inbox:** backwards compatible inbox keyless ([b6b42a9f43](https://github.com/novuhq/novu/commit/b6b42a9f43))
+- **root:** create keyless environment ([#8276](https://github.com/novuhq/novu/pull/8276))
+- **api-service:** add data attribute filtering for inbox notifications ([#8338](https://github.com/novuhq/novu/pull/8338))
+
+### 🩹 Fixes
+
+- **root:** bring back eslint and web app build ([#8505](https://github.com/novuhq/novu/pull/8505))
+- **js:** increase bottom padding for inbox preferences to prevent footer gradient clickability issues NV-6005 ([#8428](https://github.com/novuhq/novu/pull/8428))
+- version bump react packages ([62ff7ee154](https://github.com/novuhq/novu/commit/62ff7ee154))
+- **inbox:** change redirect urls for keyless ([d663dfa5bc](https://github.com/novuhq/novu/commit/d663dfa5bc))
+- novu react rc 4 release ([b737df7335](https://github.com/novuhq/novu/commit/b737df7335))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
 ## v3.4.0 (2025-05-16)
 
 ### 🚀 Features

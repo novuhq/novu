@@ -220,15 +220,6 @@ const FILTERS: Filters[] = [
     sampleValue: '2024-01-20',
   },
   {
-    label: 'Default',
-    value: 'default',
-    hasParam: true,
-    description: 'Use default value if input is empty.',
-    example: '"" | default: "¯\\_(ツ)_/¯" → ¯\\_(ツ)_/¯',
-    params: [{ label: 'Default value', type: 'string' }],
-    sampleValue: '',
-  },
-  {
     label: 'JSON',
     value: 'json',
     description: 'Convert object to JSON string.',

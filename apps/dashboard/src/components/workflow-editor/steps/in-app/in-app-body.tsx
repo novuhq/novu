@@ -18,12 +18,10 @@ function getFormMessage(
     return 'HTML entities detected. Consider disabling content sanitization for proper rendering';
   }
 
-  if (fieldValue.length > 2 && !containsVariables(fieldValue)) {
-    const hints = ['Type {{ to access variables, or wrap text in ** for bold.'];
+  const hints = ['Type {{ to access variables, or wrap text in ** for bold.'];
 
-    if (isTranslationEnabled) {
-      hints.push('Type {t. to access translation keys.');
-    }
+  if (isTranslationEnabled) {
+    hints.push('Type {t. to access translation keys.');
 
     return hints.join(' ');
   }

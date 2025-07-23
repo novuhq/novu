@@ -2,6 +2,7 @@ import { DecodedJwt } from '.';
 
 export interface SelfHostedUser {
   update: () => Promise<null>;
+  reload: () => Promise<null>;
   externalId?: string;
   firstName?: string;
   lastName?: string;
@@ -16,6 +17,7 @@ export interface SelfHostedUser {
 export function createUserFromJwt(decodedJwt: DecodedJwt | null): SelfHostedUser {
   return {
     update: async () => null,
+    reload: async () => null,
     externalId: decodedJwt?._id,
     firstName: decodedJwt?.firstName,
     lastName: decodedJwt?.lastName,

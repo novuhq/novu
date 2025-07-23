@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
+import { UserEntity } from '@novu/dal';
 import { ChannelTypeEnum, ITemplateVariable } from '../types';
 import { ControlsMetadataDto } from '../../workflows-v2/dtos/controls-metadata.dto';
 
@@ -51,6 +52,9 @@ export class LayoutDto {
 
   @ApiPropertyOptional()
   updatedAt?: string;
+
+  @ApiPropertyOptional()
+  updatedBy?: UserEntity;
 
   @ApiPropertyOptional()
   _parentId?: string;
