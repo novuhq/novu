@@ -138,14 +138,15 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     // Step 3: Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
+    const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
-      return { subject: translatedSubject, body: htmlWithBranding };
+      return { subject: translatedSubject, body: cleanedHtml };
     }
 
     const sanitizedSubject = sanitizeHTML(translatedSubject);
-    const sanitizedBody = sanitizeHTML(htmlWithBranding);
+    const sanitizedBody = sanitizeHTML(cleanedHtml);
 
     return {
       subject: sanitizedSubject,
@@ -203,7 +204,6 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     });
 
     const cleanedStepBodyHtml = stepBodyHtml
-      .replace(/<!DOCTYPE.*?>/g, '')
       .replace(/<!--\$-->/g, '')
       .replace(/<!--\/\$-->/g, '')
       .replace(/<!--[\s\S]*?-->/g, '');
@@ -218,7 +218,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       body: layoutControlValues.email?.body ?? '',
       payload: {
         ...payload,
-        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),
+        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(
+          cleanedStepBodyHtml.replace(/<!DOCTYPE.*?>/g, '').replace(/\n/g, '')
+        ),
       },
       environmentId,
       organizationId,
@@ -277,9 +279,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale,
       });
 
-      const renderedHtml = await mailyRender(translatedMaily, { noHtmlWrappingTags });
-
-      return this.cleanupRenderedHtml(renderedHtml);
+      return await mailyRender(translatedMaily, { noHtmlWrappingTags });
     } else {
       // For simple text body, apply translations directly
       const processedHtml = await this.processTextTranslations({
@@ -291,7 +291,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale,
       });
 
-      return this.cleanupRenderedHtml(processedHtml);
+      return processedHtml;
     }
   }
 
@@ -710,10 +710,108 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
   private cleanupRenderedHtml(html: string): string {
     /*
-     * Convert paragraphs that contain only whitespace characters to empty paragraphs to prevent Gmail clipping.
-     * Gmail's clipping algorithm detects trailing whitespace content and marks emails as "message clipped".
-     * This preserves the intended spacing while removing the problematic whitespace content.
+     * Gmail clipping prevention - comprehensive approach to prevent "Message clipped" issue.
+     * Gmail's clipping algorithm is triggered by several factors:
+     * 1. Email size > 102KB
+     * 2. Trailing whitespace content
+     * 3. Repetitive patterns
+     * 4. Long lines without breaks
+     * 5. Malformed HTML structure
+     * 6. Excessive nested elements
      */
-    return html.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
+
+    let cleanedHtml = html;
+
+    // Remove whitespace-only paragraphs (existing fix)
+    cleanedHtml = cleanedHtml.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
+
+    // Remove excessive whitespace between tags
+    cleanedHtml = cleanedHtml.replace(/>\s{1,}</g, '><');
+
+    // Remove excessive whitespace between tags
+    cleanedHtml = cleanedHtml.replace(/>\n\s{1,}</g, '>\n<');
+
+    // Remove trailing whitespace at end of lines
+    cleanedHtml = cleanedHtml.replace(/\s+$/gm, '');
+
+    // Remove multiple consecutive line breaks
+    cleanedHtml = cleanedHtml.replace(/\n{3,}/g, '\n\n');
+
+    // Break very long lines (over 998 characters) by adding line breaks after closing tags
+    cleanedHtml = cleanedHtml.replace(/(.{998,}?)(<\/[^>]+>)/g, '$1$2\n');
+
+    // Remove empty attributes that add unnecessary bytes
+    cleanedHtml = cleanedHtml.replace(/\s(style|class|id)=""\s*/g, ' ');
+
+    // Remove redundant spaces in attributes
+    cleanedHtml = cleanedHtml.replace(/\s+(?=\s*[>=])/g, '');
+
+    // Prevent repetitive content patterns
+    cleanedHtml = this.preventRepetitivePatterns(cleanedHtml);
+
+    // Optimize HTML structure
+    cleanedHtml = this.optimizeHtmlStructure(cleanedHtml);
+
+    // Ensure proper DOCTYPE if missing for better rendering
+    if (!cleanedHtml.includes('<!DOCTYPE') && cleanedHtml.includes('<html')) {
+      cleanedHtml = `<!DOCTYPE html>\n${cleanedHtml}`;
+    }
+
+    // Add unique identifier to prevent Gmail from detecting identical emails
+    cleanedHtml = this.addUniqueIdentifier(cleanedHtml);
+
+    // Check final size and warn if approaching Gmail's limit (102KB)
+    const sizeInBytes = Buffer.byteLength(cleanedHtml, 'utf8');
+    if (sizeInBytes > 90000) {
+      // 90KB warning threshold
+      this.logger.warn(`Email size (${sizeInBytes} bytes) approaching Gmail clipping limit (102KB)`);
+    }
+
+    return cleanedHtml;
+  }
+
+  private addUniqueIdentifier(html: string): string {
+    const uniqueIdentifier = `<!-- NOVU_UNIQUE_IDENTIFIER_${Date.now()} -->`;
+
+    return html + uniqueIdentifier;
+  }
+
+  private preventRepetitivePatterns(html: string): string {
+    let cleanedHtml = html;
+
+    // Remove multiple consecutive identical empty elements
+    cleanedHtml = cleanedHtml.replace(/(<(div|p|span|td|th)[^>]*><\/\2>\s*){3,}/gi, '$1');
+
+    // Remove repeated sequences of identical table rows (keep max 2 identical rows)
+    cleanedHtml = cleanedHtml.replace(/(<tr[^>]*>.*?<\/tr>\s*)\1{2,}/gi, '$1$1');
+
+    // Break up long sequences of identical characters (common in ASCII art or dividers)
+    cleanedHtml = cleanedHtml.replace(/(.)\1{50,}/g, (match, char) => {
+      // Keep the pattern but add occasional breaks to prevent detection
+      return `${match.substring(0, 50)} ${match.substring(50)}`;
+    });
+
+    return cleanedHtml;
+  }
+
+  private optimizeHtmlStructure(html: string): string {
+    let cleanedHtml = html;
+
+    // Remove unnecessary nested div/span elements that don't add value
+    cleanedHtml = cleanedHtml.replace(
+      /<(div|span)([^>]*)>\s*<(div|span)([^>]*)>(.*?)<\/\3>\s*<\/\1>/gi,
+      '<$3$4>$5</$3>'
+    );
+
+    // Optimize table structures - remove empty cells that might trigger clipping
+    cleanedHtml = cleanedHtml.replace(/<td[^>]*>\s*<\/td>/gi, '<td>&nbsp;</td>');
+
+    // Remove redundant table attributes that add to size
+    cleanedHtml = cleanedHtml.replace(/\s(cellpadding|cellspacing)="0"/gi, '');
+
+    // Ensure tables have proper structure for email clients
+    cleanedHtml = cleanedHtml.replace(/<table(?![^>]*role)/gi, '<table role="presentation"');
+
+    return cleanedHtml;
   }
 }
