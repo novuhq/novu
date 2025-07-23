@@ -259,12 +259,45 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       throw new Error('Limit must be between 0 and 1000');
     }
 
-    // Build the base WHERE clause
-    const { clause: baseClause, params: baseParams } = this.buildWhereClause(where);
+    // Extract and handle date range conditions
+    const processedWhere = { ...where };
+    const dateRangeConditions: string[] = [];
+    const dateRangeParams: Record<string, any> = {};
+
+    // Handle created_at_gte condition
+    if ('created_at_gte' in processedWhere) {
+      const gteCondition = processedWhere.created_at_gte as any;
+      const gteValue = gteCondition.value || gteCondition;
+      dateRangeParams.created_at_gte = gteValue;
+      dateRangeConditions.push("created_at >= {created_at_gte:DateTime64(3, 'UTC')}");
+      delete processedWhere.created_at_gte;
+    }
+
+    // Handle created_at_lte condition
+    if ('created_at_lte' in processedWhere) {
+      const lteCondition = processedWhere.created_at_lte as any;
+      const lteValue = lteCondition.value || lteCondition;
+      dateRangeParams.created_at_lte = lteValue;
+      dateRangeConditions.push("created_at <= {created_at_lte:DateTime64(3, 'UTC')}");
+      delete processedWhere.created_at_lte;
+    }
+
+    // Build the base WHERE clause with processed conditions
+    const { clause: baseClause, params: baseParams } = this.buildWhereClause(processedWhere);
 
     // Use 'WHERE 1=1' as neutral base to simplify dynamic AND condition appending
     let whereClause = baseClause || 'WHERE 1=1';
-    const params = { ...baseParams };
+    const params = { ...baseParams, ...dateRangeParams };
+
+    // Add date range conditions to the WHERE clause
+    if (dateRangeConditions.length > 0) {
+      const dateRangeClause = dateRangeConditions.join(' AND ');
+      if (baseClause) {
+        whereClause = `${baseClause} AND ${dateRangeClause}`;
+      } else {
+        whereClause = `WHERE ${dateRangeClause}`;
+      }
+    }
 
     // Add compound cursor conditions if cursor is provided
     if (cursor) {
@@ -296,9 +329,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         )
       `;
 
-      // Combine base WHERE with cursor conditions
-      if (baseClause) {
-        whereClause = `${baseClause} AND (${cursorCondition})`;
+      // Combine existing WHERE clause with cursor conditions
+      if (whereClause && whereClause !== 'WHERE 1=1') {
+        whereClause = `${whereClause} AND (${cursorCondition})`;
       } else {
         whereClause = `WHERE ${cursorCondition}`;
       }

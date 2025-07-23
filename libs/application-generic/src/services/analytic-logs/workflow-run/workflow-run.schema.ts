@@ -64,7 +64,7 @@ const clickhouseSchemaOptions = {
 
 export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
-export type WorkflowRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'timeout' | 'partial';
+export type WorkflowRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 

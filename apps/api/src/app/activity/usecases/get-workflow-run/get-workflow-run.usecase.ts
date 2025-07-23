@@ -142,7 +142,7 @@ export class GetWorkflowRun {
           status: this.mapTraceStatusToExecutionStatus(trace.status),
           isTest: false,
           isRetry: false,
-          createdAt: new Date(trace.created_at).toISOString(),
+          createdAt: this.parseClickHouseTimestamp(trace.created_at).toISOString(),
           raw: trace.raw_data,
         });
       }
@@ -176,6 +176,26 @@ export class GetWorkflowRun {
     }
   }
 
+  /**
+   * Parses ClickHouse timestamp format as UTC
+   * ClickHouse returns timestamps in format "YYYY-MM-DD HH:mm:ss.SSS" which should be treated as UTC
+   * but JavaScript's Date constructor interprets them as local time by default
+   */
+  private parseClickHouseTimestamp(timestamp: string | Date): Date {
+    // If already a Date object, return as-is
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+
+    /*
+     * ClickHouse format: "2025-07-23 13:52:52.860"
+     * Convert to ISO format with explicit UTC: "2025-07-23T13:52:52.860Z"
+     */
+    const isoFormat = `${timestamp.replace(' ', 'T')}Z`;
+
+    return new Date(isoFormat);
+  }
+
   private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): WorkflowRunDto {
     return {
       id: workflowRun.id,
@@ -196,8 +216,8 @@ export class GetWorkflowRun {
       topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : undefined,
       isDigest: workflowRun.is_digest === 'true',
       digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
-      createdAt: new Date(workflowRun.created_at).toISOString(),
-      updatedAt: new Date(workflowRun.updated_at).toISOString(),
+      createdAt: new Date(workflowRun.created_at),
+      updatedAt: new Date(workflowRun.updated_at),
       steps: stepRuns.map((stepRun) => ({
         stepRunId: stepRun.step_run_id,
         stepId: stepRun.step_id,
@@ -205,8 +225,8 @@ export class GetWorkflowRun {
         stepName: stepRun.step_name,
         providerId: stepRun.provider_id || undefined,
         status: stepRun.status,
-        createdAt: new Date(stepRun.created_at).toISOString(),
-        updatedAt: new Date(stepRun.updated_at).toISOString(),
+        createdAt: new Date(stepRun.created_at),
+        updatedAt: new Date(stepRun.updated_at),
         executionDetails: stepRun.executionDetails || [],
       })),
     };

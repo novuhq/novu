@@ -30,11 +30,11 @@ export class StepRunDto {
 
   @ApiProperty({ description: 'Creation timestamp' })
   @IsString()
-  createdAt: string;
+  createdAt: Date;
 
   @ApiProperty({ description: 'Update timestamp' })
   @IsString()
-  updatedAt: string;
+  updatedAt: Date;
 
   @ApiProperty({ description: 'Execution details', type: [Object] })
   executionDetails: any[];
@@ -119,12 +119,10 @@ export class WorkflowRunDto {
   digestedWorkflowRunId?: string;
 
   @ApiProperty({ description: 'Creation timestamp' })
-  @IsString()
-  createdAt: string;
+  createdAt: Date;
 
   @ApiProperty({ description: 'Update timestamp' })
-  @IsString()
-  updatedAt: string;
+  updatedAt: Date;
 
   @ApiPropertyOptional({
     description: 'Step runs for this workflow run',
@@ -151,7 +149,4 @@ export class GetWorkflowRunsResponseDto {
   @ApiProperty({ description: 'Whether more results are available' })
   @IsBoolean()
   hasMore: boolean;
-
-  @ApiProperty({ description: 'Page size used' })
-  pageSize: number;
 }

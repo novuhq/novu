@@ -1,4 +1,5 @@
 import { IsArray, IsISO8601, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { WorkflowRunStatus } from '@novu/application-generic';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
@@ -29,7 +30,7 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  statuses?: string[];
+  statuses?: WorkflowRunStatus[];
 
   @IsOptional()
   @IsISO8601()

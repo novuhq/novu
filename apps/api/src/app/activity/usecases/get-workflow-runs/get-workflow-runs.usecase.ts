@@ -1,12 +1,12 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { WorkflowRunRepository, WorkflowRun, PinoLogger } from '@novu/application-generic';
+import { WorkflowRunRepository, WorkflowRun, PinoLogger, Where } from '@novu/application-generic';
 import { GetWorkflowRunsResponseDto, WorkflowRunDto } from '../../dtos/workflow-runs-response.dto';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
-interface ICursorData {
+type CursorData = {
   created_at: string;
   workflow_run_id: string;
-}
+};
 
 @Injectable()
 export class GetWorkflowRuns {
@@ -27,7 +27,7 @@ export class GetWorkflowRuns {
 
     try {
       // Build WHERE conditions object for LogRepository
-      const whereConditions: any = {
+      const whereConditions: Where<WorkflowRun> = {
         organization_id: command.organizationId,
         environment_id: command.environmentId,
       };
@@ -61,23 +61,27 @@ export class GetWorkflowRuns {
         };
       }
 
+      /*
+       * Handle date range conditions properly to avoid overwriting
+       * Since the current query builder doesn't support multiple conditions on the same field,
+       * we'll use separate field names that will be handled specially in the repository call
+       */
       if (command.createdGte) {
-        whereConditions.created_at = {
+        (whereConditions as any).created_at_gte = {
           operator: '>=',
           value: new Date(command.createdGte),
         };
       }
 
       if (command.createdLte) {
-        const beforeCondition = {
+        (whereConditions as any).created_at_lte = {
           operator: '<=',
           value: new Date(command.createdLte),
         };
-        whereConditions.created_at = beforeCondition;
       }
 
       // Decode cursor if provided
-      let cursor: { created_at: string; workflow_run_id: string } | undefined;
+      let cursor: CursorData | undefined;
       if (command.cursor) {
         try {
           cursor = this.decodeCursor(command.cursor);
@@ -116,7 +120,7 @@ export class GetWorkflowRuns {
       if (hasMore && workflowRuns.length > 0) {
         const lastRun = workflowRuns[workflowRuns.length - 1];
         nextCursor = this.encodeCursor({
-          created_at: new Date(lastRun.created_at).toISOString(),
+          created_at: this.parseClickHouseTimestamp(lastRun.created_at).toISOString(),
           workflow_run_id: lastRun.workflow_run_id,
         });
       }
@@ -126,7 +130,7 @@ export class GetWorkflowRuns {
       if (command.cursor && workflowRuns.length > 0) {
         const firstRun = workflowRuns[0];
         previousCursor = this.encodeCursor({
-          created_at: new Date(firstRun.created_at).toISOString(),
+          created_at: this.parseClickHouseTimestamp(firstRun.created_at).toISOString(),
           workflow_run_id: firstRun.workflow_run_id,
         });
       }
@@ -138,7 +142,6 @@ export class GetWorkflowRuns {
         nextCursor,
         previousCursor,
         hasMore,
-        pageSize: data.length,
       };
     } catch (error) {
       this.logger.error('Failed to get workflow runs', {
@@ -154,12 +157,32 @@ export class GetWorkflowRuns {
    * Cursor-based pagination implementation for ClickHouse optimization
    * This approach provides consistent performance regardless of page depth
    */
-  private encodeCursor(data: ICursorData): string {
+  private encodeCursor(data: CursorData): string {
     return Buffer.from(JSON.stringify(data)).toString('base64');
   }
 
-  private decodeCursor(cursor: string): ICursorData {
+  private decodeCursor(cursor: string): CursorData {
     return JSON.parse(Buffer.from(cursor, 'base64').toString('utf-8'));
+  }
+
+  /**
+   * Parses ClickHouse timestamp format as UTC
+   * ClickHouse returns timestamps in format "YYYY-MM-DD HH:mm:ss.SSS" which should be treated as UTC
+   * but JavaScript's Date constructor interprets them as local time by default
+   */
+  private parseClickHouseTimestamp(timestamp: string | Date): Date {
+    // If already a Date object, return as-is
+    if (timestamp instanceof Date) {
+      return timestamp;
+    }
+
+    /*
+     * ClickHouse format: "2025-07-23 13:52:52.860"
+     * Convert to ISO format with explicit UTC: "2025-07-23T13:52:52.860Z"
+     */
+    const isoFormat = `${timestamp.replace(' ', 'T')}Z`;
+
+    return new Date(isoFormat);
   }
 
   private mapWorkflowRunToDto(workflowRun: WorkflowRun): WorkflowRunDto {
@@ -182,8 +205,8 @@ export class GetWorkflowRuns {
       topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : undefined,
       isDigest: workflowRun.is_digest === 'true',
       digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
-      createdAt: new Date(workflowRun.created_at).toISOString(),
-      updatedAt: new Date(workflowRun.updated_at).toISOString(),
+      createdAt: new Date(workflowRun.created_at),
+      updatedAt: new Date(workflowRun.updated_at),
     };
   }
 }
