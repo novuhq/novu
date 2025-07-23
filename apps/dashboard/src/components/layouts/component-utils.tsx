@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { ChannelTypeEnum, UiComponentEnum } from '@novu/shared';
+import { ChannelTypeEnum, LAYOUT_CONTENT_VARIABLE, UiComponentEnum } from '@novu/shared';
 
 import { EmailEditorSelect } from '@/components/email-editor-select';
 import { LayoutEmailBody } from './layout-email-body';
@@ -24,7 +24,13 @@ const EmailEditorSelectInternal = () => {
       isLoading={false}
       saveForm={async ({ editorType, onSuccess }) => {
         if (editorType === 'html') {
-          const formattedValue = await formatHtml(previewBody);
+          const cleanedBody = previewBody
+            .replace(
+              /<table[^>]*data-content-placeholder[^>]*>[\s\S]*?<\/table>(\s*)/gi,
+              `{{ ${LAYOUT_CONTENT_VARIABLE} }}`
+            )
+            .replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>(\s*)/gi, '');
+          const formattedValue = await formatHtml(cleanedBody);
           setValue('body', formattedValue);
         } else {
           setValue('body', '{"type":"doc","content":[]}');
