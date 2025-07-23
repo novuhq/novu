@@ -244,6 +244,8 @@ export function EnhancedPublishModal({
                   disabled={resourceSelection[id]?.disabled || false}
                   onToggle={() => handleResourceToggle(id)}
                   dependencies={dependencyMap.get(id)}
+                  allWorkflows={workflows}
+                  dependencyMap={dependencyMap}
                 />
               );
             })}
@@ -269,6 +271,8 @@ export function EnhancedPublishModal({
                   selected={resourceSelection[id]?.selected || false}
                   disabled={resourceSelection[id]?.disabled || false}
                   onToggle={() => handleResourceToggle(id)}
+                  allWorkflows={workflows}
+                  dependencyMap={dependencyMap}
                 />
               );
             })}
@@ -393,9 +397,106 @@ type SelectableResourceRowProps = {
   disabled: boolean;
   onToggle: () => void;
   dependencies?: IResourceDependency[];
+  allWorkflows?: IResourceDiffResult[];
+  dependencyMap?: Map<string, IResourceDependency[]>;
 };
 
-function CompactResourceRow({ resource, selected, disabled, onToggle, dependencies }: SelectableResourceRowProps) {
+type LayoutUsageIndicatorProps = {
+  layoutResource: IResourceDiffResult;
+  allWorkflows: IResourceDiffResult[];
+  dependencies: Map<string, IResourceDependency[]>;
+};
+
+function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: LayoutUsageIndicatorProps) {
+  const layoutName = layoutResource.sourceResource?.name || layoutResource.targetResource?.name;
+
+  // Find workflows that depend on this layout
+  const workflowsUsingLayout = useMemo(() => {
+    const workflows: Array<{ name: string; slug: string }> = [];
+
+    dependencies.forEach((deps, workflowId) => {
+      const workflow = allWorkflows.find(
+        (w) => w.sourceResource?.id === workflowId || w.targetResource?.id === workflowId
+      );
+
+      if (workflow && deps.some((dep) => dep.resourceName === layoutName)) {
+        const workflowName = workflow.sourceResource?.name || workflow.targetResource?.name;
+        const workflowSlug = workflowName?.toLowerCase().replace(/\s+/g, '-');
+
+        if (workflowName && workflowSlug) {
+          workflows.push({ name: workflowName, slug: workflowSlug });
+        }
+      }
+    });
+
+    return workflows;
+  }, [layoutName, allWorkflows, dependencies]);
+
+  const usageCount = workflowsUsingLayout.length;
+
+  if (usageCount === 0) {
+    return (
+      <div className="relative flex items-center gap-1 p-0">
+        <span className="text-xs font-medium leading-3 text-gray-400">Not used</span>
+      </div>
+    );
+  }
+
+  const UsageDisplay = () => (
+    <div className="flex items-center gap-px">
+      <img
+        src="http://localhost:3845/assets/01b4b3416a96c0cc25ece4c9955126ee530f0794.svg"
+        alt=""
+        className="h-3.5 w-3.5"
+      />
+      <span className="text-xs font-medium leading-3 text-gray-600">{usageCount}</span>
+    </div>
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="relative flex cursor-pointer items-center gap-1 p-0">
+          <span className="text-xs font-medium leading-3 text-gray-400">Used in</span>
+          <UsageDisplay />
+        </div>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="rounded-lg border border-gray-200 bg-white p-1.5 pb-1 pt-1.5 shadow-lg">
+        <div className="flex flex-col gap-1">
+          <div className="mb-1 text-xs font-medium leading-3 text-gray-400">Used in</div>
+          {workflowsUsingLayout.map((workflow, index) => (
+            <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded bg-gray-50 px-1 py-0.5">
+              <img
+                src="http://localhost:3845/assets/01b4b3416a96c0cc25ece4c9955126ee530f0794.svg"
+                alt=""
+                className="h-3.5 w-3.5"
+              />
+              <div className="flex flex-col text-left leading-tight">
+                <div className="text-xs font-medium leading-[14px] text-gray-600">{workflow.name}</div>
+                <div
+                  className="font-mono leading-[14px] tracking-tight text-gray-400"
+                  style={{ fontSize: '8px', letterSpacing: '-0.16px' }}
+                >
+                  {workflow.slug}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function CompactResourceRow({
+  resource,
+  selected,
+  disabled,
+  onToggle,
+  dependencies,
+  allWorkflows = [],
+  dependencyMap = new Map(),
+}: SelectableResourceRowProps) {
   const displayName = resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
   const slug = displayName.toLowerCase().replace(/\s+/g, '-');
   const updatedBy = resource.sourceResource?.updatedBy || resource.targetResource?.updatedBy;
@@ -443,21 +544,64 @@ function CompactResourceRow({ resource, selected, disabled, onToggle, dependenci
 
   return (
     <div className="flex items-center gap-1.5 p-1">
-      <Checkbox checked={selected} disabled={disabled} onCheckedChange={onToggle} />
+      {disabled ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Checkbox checked={selected} disabled={disabled} onCheckedChange={onToggle} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="rounded bg-gray-900 px-2 py-1 text-xs text-white">
+            This layout is linked to a selected workflow and they must be published together.
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Checkbox checked={selected} disabled={disabled} onCheckedChange={onToggle} />
+      )}
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1">
-          <span className="truncate text-xs font-medium text-gray-900">{displayName}</span>
-          {hasDependencies && (
-            <Tooltip>
-              <TooltipTrigger>
-                <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
-              </TooltipTrigger>
-              <TooltipContent>Has dependencies</TooltipContent>
-            </Tooltip>
-          )}
-        </div>
-        <div className="font-mono text-xs tracking-tight text-gray-400">{slug}</div>
+        {resource.resourceType === 'layout' ? (
+          // Layout: name and ID side by side
+          <div className="leading-0 flex w-full items-center gap-1 text-nowrap text-left">
+            <span className="overflow-hidden truncate overflow-ellipsis text-xs font-medium leading-4 text-gray-900">
+              {displayName}
+            </span>
+            <span
+              className="font-mono text-xs leading-[14px] tracking-tight text-gray-400"
+              style={{ fontSize: '10px', letterSpacing: '-0.2px' }}
+            >
+              {slug}
+            </span>
+            {hasDependencies && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                </TooltipTrigger>
+                <TooltipContent>Has dependencies</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        ) : (
+          // Workflow: name above, ID below (original layout)
+          <>
+            <div className="flex items-center gap-1">
+              <span className="truncate text-xs font-medium text-gray-900">{displayName}</span>
+              {hasDependencies && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>Has dependencies</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <div className="font-mono text-xs tracking-tight text-gray-400">{slug}</div>
+          </>
+        )}
+
+        {resource.resourceType === 'layout' && (
+          <LayoutUsageIndicator layoutResource={resource} allWorkflows={allWorkflows} dependencies={dependencyMap} />
+        )}
       </div>
 
       <div className="flex flex-col items-end gap-0.5">
