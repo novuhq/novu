@@ -130,7 +130,7 @@ export function EditorActions({ selectedTranslation, modifiedContent, isReadOnly
           </div>
 
           <TranslationImportTrigger resource={resource}>
-            <UploadButton disabled={isReadOnly}>Import locale(s)</UploadButton>
+            <UploadButton disabled={isReadOnly}>Import language(s)</UploadButton>
           </TranslationImportTrigger>
         </div>
 

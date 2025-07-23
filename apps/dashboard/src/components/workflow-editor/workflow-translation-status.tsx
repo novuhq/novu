@@ -72,7 +72,7 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
             <div className="max-w-xs">
               <p className="font-medium">Locales out of sync</p>
               <p className="mt-1 text-xs text-neutral-400">
-                Translation keys were added or removed from the default locale. Click to update target locales.
+                Translation keys were added or removed from the default language. Click to update target languages.
               </p>
             </div>
           </TooltipContent>

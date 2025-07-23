@@ -156,7 +156,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                                   className="text-text-sub gap-1"
                                   tooltip="The primary language for your translations - serves as fallback when language specific translations are not available"
                                 >
-                                  Default locale
+                                  Default language
                                 </FormLabel>
                                 <FormControl>
                                   <LocaleSelect
@@ -176,9 +176,9 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                               <FormItem className="space-y-1">
                                 <FormLabel
                                   className="text-text-sub gap-1"
-                                  tooltip="Languages you want to translate into. We'll check if they're in sync with your default locale."
+                                  tooltip="Languages you want to translate into. We'll check if they're in sync with your default language."
                                 >
-                                  Target locales
+                                  Target languages
                                 </FormLabel>
                                 <FormControl>
                                   <LocaleSelect

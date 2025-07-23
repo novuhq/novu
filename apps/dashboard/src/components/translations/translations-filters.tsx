@@ -1,6 +1,14 @@
-import { HTMLAttributes, useEffect } from 'react';
+import { HTMLAttributes, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiLoader4Line, RiSettingsLine, RiUploadLine, RiDownloadLine } from 'react-icons/ri';
+import {
+  RiLoader4Line,
+  RiSettingsLine,
+  RiDownload2Line,
+  RiUpload2Line,
+  RiCheckLine,
+  RiCloseLine,
+} from 'react-icons/ri';
+import { AnimatePresence, motion } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
@@ -69,12 +77,96 @@ function DefaultLocaleButton({ locale, onClick }: DefaultLocaleButtonProps) {
       className="group flex h-8 items-center overflow-hidden rounded-lg border border-neutral-200 bg-neutral-50 text-xs hover:bg-neutral-50 focus:bg-neutral-100"
       onClick={onClick}
     >
-      <span className="px-3 py-2">Default locale</span>
+      <span className="px-3 py-2">Default language</span>
       <span className="flex items-center gap-2 border-l border-neutral-200 bg-white p-2 font-medium text-neutral-700 group-hover:bg-neutral-50">
         <FlagCircle locale={locale} size="sm" />
         {locale}
       </span>
     </button>
+  );
+}
+
+function AnimatedImportButton({
+  isPending,
+  isSuccess,
+  isError,
+  disabled,
+  onClick,
+}: {
+  isPending?: boolean;
+  isSuccess?: boolean;
+  isError?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+}) {
+  const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    if (isSuccess || isError) {
+      setShowResult(true);
+      const timer = setTimeout(() => setShowResult(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess, isError]);
+
+  return (
+    <Button
+      variant="secondary"
+      mode="lighter"
+      className="relative min-w-[80px] gap-2"
+      onClick={onClick}
+      disabled={disabled || isPending}
+    >
+      <div className="relative">
+        {/* Default content - normal layout */}
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: showResult ? 0 : 1,
+          }}
+          transition={{
+            duration: 0.15,
+            ease: 'easeOut',
+          }}
+          className="flex items-center gap-2"
+        >
+          {isPending ? (
+            <RiLoader4Line className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RiUpload2Line className="h-3.5 w-3.5" />
+          )}
+          Import
+        </motion.div>
+
+        {/* Success/Error overlay */}
+        <AnimatePresence>
+          {showResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
+              transition={{
+                duration: 0.25,
+                ease: [0.16, 1, 0.3, 1], // Custom smooth easing
+              }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              {isSuccess ? (
+                <div className="flex items-center gap-1">
+                  <RiCheckLine className="size-4 text-green-600" />
+                  <span className="text-xs text-green-600">Success!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <RiCloseLine className="size-4 text-red-600" />
+                  <span className="text-xs text-red-600">Failed</span>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </Button>
   );
 }
 
@@ -114,43 +206,38 @@ function ActionButtons() {
           <Button
             variant="secondary"
             mode="lighter"
-            className="px-2.5 py-1.5"
+            className="gap-2"
             onClick={handleExport}
             disabled={exportMutation.isPending}
           >
             {exportMutation.isPending ? (
-              <RiLoader4Line className="h-3 w-3 animate-spin" />
+              <RiLoader4Line className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <RiDownloadLine className="h-3 w-3" />
+              <RiDownload2Line className="h-3.5 w-3.5" />
             )}
+            Export
           </Button>
         </TooltipTrigger>
-        <TooltipContent>
+        {/* <TooltipContent>
           <div className="max-w-xs">
             <p className="font-medium">Export Master JSON</p>
             <p className="mt-1 text-xs text-neutral-400">
-              Download a JSON file containing all translation resources for {defaultLocale} (default locale). Send this
-              to translation services or translators, then import the translated version back.
+              Download a JSON file containing all translation resources for {defaultLocale} (default langauge). Send
+              this to translation services or translators, then import the translated version back.
             </p>
           </div>
-        </TooltipContent>
+        </TooltipContent> */}
       </Tooltip>
 
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="secondary"
-            mode="lighter"
-            className="px-2.5 py-1.5"
+          <AnimatedImportButton
+            isPending={uploadMutation.isPending}
+            isSuccess={uploadMutation.isSuccess}
+            isError={uploadMutation.isError}
+            disabled={!canEdit}
             onClick={handleImport}
-            disabled={uploadMutation.isPending || !canEdit}
-          >
-            {uploadMutation.isPending ? (
-              <RiLoader4Line className="h-3 w-3 animate-spin" />
-            ) : (
-              <RiUploadLine className="h-3 w-3" />
-            )}
-          </Button>
+          />
         </TooltipTrigger>
         <TooltipContent>
           <div className="max-w-xs">

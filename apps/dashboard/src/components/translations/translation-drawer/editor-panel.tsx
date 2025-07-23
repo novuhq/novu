@@ -110,7 +110,7 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           <InlineToast
             variant="warning"
             title="Warning:"
-            description="Some keys in this target locale don't match the default locale. Add missing keys or remove extra ones to sync translations."
+            description="Some keys in this target language don't match the default language. Add missing keys or remove extra ones to sync translations."
           />
         </div>
       )}
