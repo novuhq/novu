@@ -21,7 +21,7 @@ export const DashboardLayout = ({
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <HeaderNavigation startItems={headerStartItems} hideBridgeUrl={!showBridgeUrl} />
 
-        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden p-2">{children}</div>
       </div>
     </div>
   );

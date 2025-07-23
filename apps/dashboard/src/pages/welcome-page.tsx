@@ -93,7 +93,7 @@ export function WelcomePage(): ReactElement {
     <>
       <PageMeta title="Get Started with Novu" />
       <DashboardLayout>
-        <motion.div className="flex flex-col gap-8 p-9 pt-6" variants={pageVariants} initial="hidden" animate="show">
+        <motion.div className="flex flex-col gap-8 p-9 pt-4" variants={pageVariants} initial="hidden" animate="show">
           <motion.div variants={sectionVariants}>
             <ProgressSection />
           </motion.div>

@@ -17,7 +17,7 @@ export const TopicsPage = () => {
     <>
       <PageMeta title="Topics" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Topics</h1>}>
-        <TopicList className="px-2.5" />
+        <TopicList />
         <AnimatedOutlet />
       </DashboardLayout>
     </>

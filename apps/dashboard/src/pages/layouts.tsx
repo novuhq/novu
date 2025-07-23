@@ -20,7 +20,7 @@ export const LayoutsPage = () => {
       <DashboardLayout
         headerStartItems={<h1 className="text-foreground-950 flex items-center gap-1">Email Layouts</h1>}
       >
-        <LayoutList className="px-2.5" />
+        <LayoutList />
         <AnimatedOutlet />
       </DashboardLayout>
     </>

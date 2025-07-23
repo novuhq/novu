@@ -64,7 +64,7 @@ export function ActivityFeed() {
           </h1>
         }
       >
-        <Tabs value={currentTab} onValueChange={handleTabChange}>
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2">
           <TabsList variant="regular" className="border-t-0">
             <TabsTrigger value="workflow-runs" variant="regular" size="lg">
               Workflow Runs
