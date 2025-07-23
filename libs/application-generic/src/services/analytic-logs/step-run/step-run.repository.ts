@@ -172,6 +172,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       // Core step run identification
       step_run_id: job._id,
       step_id: job.step._id || job.step.stepId || job._id,
+      workflow_run_id: job._notificationId,
 
       // Context
       organization_id: job._organizationId,
@@ -180,7 +181,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       subscriber_id: job._subscriberId || job.subscriberId,
       external_subscriber_id: null, // Will be populated from subscriber if available
       message_id: options?.message?._id || null,
-      notification_id: job._notificationId,
 
       // Step metadata
       step_type: this.mapStepTypeEnumToStepType(job.type || job.step.template?.type),
