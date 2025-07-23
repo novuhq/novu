@@ -71,7 +71,7 @@ export class GetRequestsDto {
   @ApiPropertyOptional({
     description: 'Filter by request URL',
     maxLength: 500,
-    example: 'https://api.example.com/users',
+    example: '/api/users',
   })
   @IsString()
   @IsOptional()
@@ -84,7 +84,7 @@ export class GetRequestsDto {
   @ApiPropertyOptional({
     description: 'Filter by URL pattern',
     maxLength: 500,
-    example: '/api/users/:id',
+    example: '/api/users/123',
   })
   @IsString()
   @IsOptional()
