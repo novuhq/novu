@@ -41,8 +41,11 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       duration_ms: 42,
     };
 
-    await requestLogRepository.create(requestLog);
-    await requestLogRepository.create(requestLog);
+    await requestLogRepository.createMany([requestLog, requestLog], {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
 
     const { body } = await session.testAgent.get('/v1/logs/requests').expect(200);
 
@@ -109,29 +112,30 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       created_at: LogRepository.formatDateTime64(threeHoursAgo) as any,
     };
 
-    await requestLogRepository.create(log200Api);
-    await requestLogRepository.create(log404Api);
-    await requestLogRepository.create(log500Api);
-    await requestLogRepository.create(log200Auth);
+    await requestLogRepository.createMany([log200Api, log404Api, log500Api, log200Auth], {
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      userId: session.user._id,
+    });
 
     // Test 1: Filter by status codes 200 and 404
     const statusFilterResponse = await session.testAgent
       .get('/v1/logs/requests')
-      .query({ statusCode: [200, 404] })
+      .query({ statusCodes: [200, 404] })
       .expect(200);
 
-    expect(statusFilterResponse.body.data.length).to.be.equal(3);
-    expect(statusFilterResponse.body.total).to.be.equal(3);
+    expect(statusFilterResponse.body.data.length, 'statusFilterResponse.body.data.length').to.be.equal(3);
+    expect(statusFilterResponse.body.total, 'statusFilterResponse.body.total').to.be.equal(3);
 
     const statusCodes = statusFilterResponse.body.data.map((log: RequestLogResponseDto) => log.statusCode);
-    expect(statusCodes.length).to.be.equal(3);
-    expect(statusCodes).to.include.members([200, 404]);
+    expect(statusCodes.length, 'statusCodes.length').to.be.equal(3);
+    expect(statusCodes, 'statusCodes').to.include.members([200, 404]);
 
     // Test 2: Filter by URL containing 'api'
     const urlFilterResponse = await session.testAgent.get('/v1/logs/requests').query({ url: 'api' }).expect(200);
 
-    expect(urlFilterResponse.body.data.length).to.be.equal(3);
-    expect(urlFilterResponse.body.total).to.be.equal(3);
+    expect(urlFilterResponse.body.data.length, 'urlFilterResponse.body.data.length').to.be.equal(3);
+    expect(urlFilterResponse.body.total, 'urlFilterResponse.body.total').to.be.equal(3);
 
     const urls = urlFilterResponse.body.data.map((log: RequestLogResponseDto) => log.url);
     urls.forEach((url: string) => {
@@ -141,7 +145,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     // Test 3: Combine filters - status codes 200,404 AND URL containing 'workflows'
     const combinedFilterResponse = await session.testAgent
       .get('/v1/logs/requests')
-      .query({ statusCode: [200, 404], url: 'workflows' })
+      .query({ statusCodes: [200, 404], url: 'workflows' })
       .expect(200);
 
     expect(combinedFilterResponse.body.data.length).to.be.equal(1);
@@ -169,8 +173,12 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     const returnedStatusCodes = transactionFilterResponse.body.data.map((log: RequestLogResponseDto) => log.statusCode);
     expect(returnedStatusCodes).to.include.members([200, 404]);
 
-    // Test 5: Filter by created (last 2 hours) - should only return recent logs
-    const createdFilterResponse = await session.testAgent.get('/v1/logs/requests').query({ created: 2 }).expect(200);
+    // Test 5: Filter by createdGte (last 2 hours) - should only return recent logs
+    const twoHoursAgoTimestamp = subHours(currentTime, 2).getTime();
+    const createdFilterResponse = await session.testAgent
+      .get('/v1/logs/requests')
+      .query({ createdGte: twoHoursAgoTimestamp })
+      .expect(200);
 
     expect(createdFilterResponse.body.data.length).to.be.equal(2);
     expect(createdFilterResponse.body.total).to.be.equal(2);

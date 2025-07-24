@@ -11,7 +11,7 @@ export interface GetRequestLogsParams {
   url_pattern?: string;
   transactionId?: string;
   search?: string;
-  created?: string;
+  createdGte?: number;
 }
 
 export interface GetRequestLogsResponse {

@@ -8,16 +8,16 @@ import { RequestLog } from '../../types/logs';
 import { LogsTableRow } from './logs-table-row';
 import { LogsTableSkeletonRow } from './logs-table-skeleton-row';
 import { LogsDetailPanel } from './logs-detail-panel';
-import { LogsFilters } from './logs-filters';
+import { RequestsFilters } from './logs-filters';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RequestLogsEmptyState } from './logs-empty-state';
 
-type LogsTableProps = {
+type RequestsTableProps = {
   onLogClick?: (log: RequestLog) => void;
 };
 
-export function LogsTable({ onLogClick }: LogsTableProps) {
+export function RequestsTable({ onLogClick }: RequestsTableProps) {
   const {
     selectedLogId,
     handleLogSelect,
@@ -41,8 +41,8 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
     limit: limit,
     status: filters.status,
     transactionId: filters.transactionId || undefined,
-    created: filters.created?.toString(),
     url_pattern: filters.url_pattern || undefined,
+    createdGte: filters.createdGte ? Number(filters.createdGte) : undefined,
   });
 
   const logsData = logsResponse?.data || [];
@@ -85,7 +85,7 @@ export function LogsTable({ onLogClick }: LogsTableProps) {
   return (
     <div className="flex h-full flex-col p-2.5">
       <div className="flex items-center justify-between">
-        <LogsFilters
+        <RequestsFilters
           filters={filters}
           onFiltersChange={handleFiltersChange}
           onClearFilters={clearFilters}

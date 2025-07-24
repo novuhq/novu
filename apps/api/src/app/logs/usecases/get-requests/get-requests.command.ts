@@ -4,11 +4,11 @@ import { EnvironmentCommand } from '@novu/application-generic';
 export class GetRequestsCommand extends EnvironmentCommand {
   @IsNumber()
   @IsOptional()
-  public page?: number;
+  page?: number;
 
   @IsNumber()
   @IsOptional()
-  public limit?: number;
+  limit?: number;
 
   @IsOptional()
   @IsArray()
@@ -17,7 +17,7 @@ export class GetRequestsCommand extends EnvironmentCommand {
 
   @IsString()
   @IsOptional()
-  public url?: string;
+  url?: string;
 
   @IsString()
   @IsOptional()
@@ -25,9 +25,9 @@ export class GetRequestsCommand extends EnvironmentCommand {
 
   @IsString()
   @IsOptional()
-  public transactionId?: string;
+  transactionId?: string;
 
-  @IsNumber()
   @IsOptional()
-  public hoursAgo?: number;
+  @IsNumber()
+  createdGte?: number;
 }

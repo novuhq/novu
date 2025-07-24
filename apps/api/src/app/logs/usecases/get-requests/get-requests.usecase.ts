@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { subHours } from 'date-fns';
-import { RequestLog, RequestLogRepository, Where } from '@novu/application-generic';
+import { LogRepository, RequestLog, RequestLogRepository, Where } from '@novu/application-generic';
 import { GetRequestsCommand } from './get-requests.command';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { mapRequestLogToResponseDto } from '../../shared/mappers';
@@ -38,10 +37,10 @@ export class GetRequests {
       where.transaction_id = { operator: 'LIKE', value: `%${command.transactionId}%` };
     }
 
-    if (command.hoursAgo) {
+    if (command.createdGte) {
       where.created_at = {
         operator: '>=',
-        value: subHours(new Date(), command.hoursAgo).toISOString().slice(0, -1) as any,
+        value: LogRepository.formatDateTime64(new Date(command.createdGte)),
       };
     }
 
