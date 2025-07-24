@@ -1,9 +1,16 @@
 import sinon from 'sinon';
 import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
-import { ControlValuesRepository } from '@novu/dal';
-import { ControlValuesLevelEnum, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
+import { CreateExecutionDetails, DetailEnum, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import {
+  ControlValuesLevelEnum,
+  ExecutionDetailsStatusEnum,
+  ExecutionDetailsSourceEnum,
+  LAYOUT_CONTENT_VARIABLE,
+  StepTypeEnum,
+  JobStatusEnum,
+} from '@novu/shared';
 import { ModuleRef } from '@nestjs/core';
 import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
@@ -17,6 +24,8 @@ describe('EmailOutputRendererUsecase', () => {
   let pinoLoggerMock: sinon.SinonStubbedInstance<PinoLogger>;
   let controlValuesRepositoryMock: sinon.SinonStubbedInstance<ControlValuesRepository>;
   let getLayoutUseCase: sinon.SinonStubbedInstance<GetLayoutUseCase>;
+  let jobRepositoryMock: sinon.SinonStubbedInstance<JobRepository>;
+  let createExecutionDetailsMock: sinon.SinonStubbedInstance<CreateExecutionDetails>;
   let emailOutputRendererUsecase: EmailOutputRendererUsecase;
 
   beforeEach(async () => {
@@ -31,6 +40,8 @@ describe('EmailOutputRendererUsecase', () => {
     pinoLoggerMock = sinon.createStubInstance(PinoLogger);
     controlValuesRepositoryMock = sinon.createStubInstance(ControlValuesRepository);
     getLayoutUseCase = sinon.createStubInstance(GetLayoutUseCase);
+    jobRepositoryMock = sinon.createStubInstance(JobRepository);
+    createExecutionDetailsMock = sinon.createStubInstance(CreateExecutionDetails);
 
     emailOutputRendererUsecase = new EmailOutputRendererUsecase(
       getOrganizationSettingsMock as any,
@@ -38,7 +49,9 @@ describe('EmailOutputRendererUsecase', () => {
       pinoLoggerMock as any,
       featureFlagsServiceMock as any,
       controlValuesRepositoryMock as any,
-      getLayoutUseCase as any
+      getLayoutUseCase as any,
+      jobRepositoryMock as any,
+      createExecutionDetailsMock as any
     );
   });
 
@@ -1140,6 +1153,8 @@ describe('EmailOutputRendererUsecase', () => {
       mockLayoutDto = {
         _id: 'test_layout_id',
         isDefault: false,
+        name: 'test_layout_name',
+        layoutId: 'test_layout_id',
       };
 
       controlValuesRepositoryMock.findOne.resolves(mockControlValuesEntity as any);
@@ -1173,6 +1188,74 @@ describe('EmailOutputRendererUsecase', () => {
       // Verify that layout was fetched but not applied
       expect(getLayoutUseCase.execute.calledOnce).to.be.true;
       expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+    });
+
+    it('should log the execution details when jobId is provided', async () => {
+      const mockJob: JobEntity = {
+        _id: 'test_job_id',
+        _environmentId: 'fake_env_id',
+        _organizationId: 'fake_org_id',
+        subscriberId: 'fake_subscriber_id',
+        providerId: 'fake_provider_id',
+        transactionId: 'fake_transaction_id',
+        type: StepTypeEnum.EMAIL,
+        status: JobStatusEnum.PENDING,
+        identifier: 'fake_identifier',
+        payload: {},
+        overrides: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        step: {
+          _id: 'fake_step_id',
+          name: 'fake_step_name',
+          _templateId: 'fake_template_id',
+          active: true,
+          replyCallback: {
+            active: true,
+            url: 'fake_url',
+          },
+        },
+        _notificationId: 'fake_notification_id',
+        _subscriberId: 'fake_subscriber_id',
+        _userId: 'fake_user_id',
+        _templateId: 'fake_template_id',
+      };
+      jobRepositoryMock.findOne.resolves(mockJob as any);
+      createExecutionDetailsMock.execute.resolves();
+
+      const renderCommand: EmailOutputRendererCommand = {
+        environmentId: 'fake_env_id',
+        organizationId: 'fake_org_id',
+        controlValues: {
+          subject: 'Skip Layout Test',
+          body: simpleBodyContent,
+          layoutId: 'test_layout_id',
+        },
+        fullPayloadForRender: {
+          ...mockFullPayload,
+          payload: { name: 'John' },
+        },
+        workflowId: mockDbWorkflow._id,
+        jobId: mockJob._id,
+      };
+
+      await emailOutputRendererUsecase.execute(renderCommand);
+
+      expect(getLayoutUseCase.execute.calledOnce).to.be.true;
+      expect(controlValuesRepositoryMock.findOne.calledOnce).to.be.true;
+      expect(jobRepositoryMock.findOne.calledOnce).to.be.true;
+      expect(jobRepositoryMock.findOne.firstCall.args[0]._id).to.equal(mockJob._id);
+      expect(jobRepositoryMock.findOne.firstCall.args[0]._environmentId).to.equal('fake_env_id');
+      expect(createExecutionDetailsMock.execute.calledOnce).to.be.true;
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].jobId).to.equal(mockJob._id);
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].detail).to.equal(DetailEnum.LAYOUT_SELECTED);
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].source).to.equal(ExecutionDetailsSourceEnum.INTERNAL);
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].status).to.equal(ExecutionDetailsStatusEnum.PENDING);
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].isTest).to.be.false;
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].isRetry).to.be.false;
+      expect(createExecutionDetailsMock.execute.firstCall.args[0].raw).to.equal(
+        JSON.stringify({ name: 'test_layout_name', layoutId: 'test_layout_id' })
+      );
     });
 
     it('should apply layout rendering when skipLayoutRendering is false', async () => {
