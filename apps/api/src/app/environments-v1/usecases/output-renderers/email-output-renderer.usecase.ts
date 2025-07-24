@@ -23,7 +23,7 @@ import {
   DetailEnum,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
-import { ControlValuesEntity, ControlValuesRepository, JobRepository } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
@@ -53,6 +53,7 @@ export class EmailOutputRendererCommand extends RenderCommand {
   locale?: string;
   skipLayoutRendering?: boolean;
   jobId?: string;
+  stepId: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -105,8 +106,16 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       };
     }
 
-    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale, skipLayoutRendering, jobId } =
-      renderCommand;
+    const {
+      fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+    } = renderCommand;
 
     const isLayoutsPageActive = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
@@ -138,6 +147,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale,
         skipLayoutRendering,
         jobId,
+        stepId,
       });
     } else {
       renderedHtml = await this.processBodyContent({
@@ -167,9 +177,47 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     };
   }
 
+  private async getOverrideLayoutId({
+    job,
+    stepId,
+  }: {
+    job: JobEntity;
+    stepId: string;
+  }): Promise<string | null | undefined> {
+    const { overrides, step } = job;
+    let layoutIdentifier: string | null | undefined;
+
+    // Step 1: Check step-level override (highest priority)
+    const id = overrides?.steps?.[step._id ?? ''] ? step._id : stepId;
+    const stepOverrides = overrides?.steps?.[id ?? ''];
+    if (stepOverrides?.layoutId !== undefined) {
+      layoutIdentifier = stepOverrides.layoutId;
+    }
+    // Step 2: Check channel-level override for email
+    else if (overrides?.channels?.email?.layoutId !== undefined) {
+      layoutIdentifier = overrides.channels.email.layoutId;
+    }
+    // Step 3: Check deprecated layoutIdentifier (backward compatibility)
+    else if (overrides?.layoutIdentifier) {
+      layoutIdentifier = overrides.layoutIdentifier;
+    }
+
+    // If no override is specified, return undefined (use step configuration)
+    if (layoutIdentifier === undefined) {
+      return undefined;
+    }
+
+    // If explicitly set to null, return null (no layout)
+    if (layoutIdentifier === null) {
+      return null;
+    }
+
+    return layoutIdentifier;
+  }
+
   private async renderWithLayout({
     body,
-    layoutId,
+    layoutId: controlValueLayoutId,
     payload,
     environmentId,
     organizationId,
@@ -177,6 +225,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale,
     skipLayoutRendering,
     jobId,
+    stepId,
   }: {
     body: string;
     layoutId?: string | null;
@@ -187,32 +236,40 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     locale?: string;
     skipLayoutRendering?: boolean;
     jobId?: string;
+    stepId: string;
   }): Promise<string> {
+    let job: JobEntity | null = null;
+    let overrideLayoutId: string | null | undefined;
+    if (jobId) {
+      job = await this.jobRepository.findOne({
+        _id: jobId,
+        _environmentId: environmentId,
+      });
+      if (job) {
+        overrideLayoutId = await this.getOverrideLayoutId({ job, stepId });
+      }
+    }
+
+    const layoutId = overrideLayoutId || (overrideLayoutId === null ? null : controlValueLayoutId);
+
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
     if (layoutId) {
-      const layout = await this.getLayoutUseCase.execute(
-        GetLayoutCommand.create({
-          layoutIdOrInternalId: layoutId,
-          environmentId,
-          organizationId,
-          skipAdditionalFields: true,
-        })
-      );
-
-      layoutControlsEntity = await this.controlValuesRepository.findOne({
-        _organizationId: organizationId,
-        _environmentId: environmentId,
-        _layoutId: layout._id,
-        level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
-      });
-
-      if (jobId) {
-        const job = await this.jobRepository.findOne({
-          _id: jobId,
+      try {
+        const layout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: layoutId,
+            environmentId,
+            organizationId,
+            skipAdditionalFields: true,
+          })
+        );
+        layoutControlsEntity = await this.controlValuesRepository.findOne({
+          _organizationId: organizationId,
           _environmentId: environmentId,
+          _layoutId: layout._id,
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
         });
-
         if (job) {
           this.createExecutionDetails
             .execute(
@@ -226,10 +283,32 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
                 raw: JSON.stringify({ name: layout.name, layoutId: layout.layoutId }),
               })
             )
-            .catch((error) => {
-              this.logger.error({ err: error }, 'Failed to create execution details');
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
             });
         }
+      } catch (error) {
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_NOT_FOUND,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.FAILED,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({
+                  layoutId,
+                  error: error.message,
+                }),
+              })
+            )
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
+            });
+        }
+        throw error;
       }
     }
 

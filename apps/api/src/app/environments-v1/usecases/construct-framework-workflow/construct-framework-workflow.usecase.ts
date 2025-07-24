@@ -98,6 +98,7 @@ export class ConstructFrameworkWorkflow {
             environmentId: environment._id,
             organizationId: environment._organizationId,
             locale: subscriber.locale ?? undefined,
+            stepId: LAYOUT_PREVIEW_EMAIL_STEP,
           });
         },
         {
@@ -216,6 +217,7 @@ export class ConstructFrameworkWorkflow {
               locale,
               skipLayoutRendering,
               jobId,
+              stepId,
             });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
