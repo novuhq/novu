@@ -1,8 +1,8 @@
 import { IsNumber, IsOptional, IsString, Matches, MaxLength, Min, Max, IsArray } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 
-// Custom transformer to convert statusCode to array of numbers
-const StatusCodeTransformer = Transform(({ value }) => {
+// Custom transformer to convert statusCodes to array of numbers
+const StatusCodesTransformer = Transform(({ value }) => {
   if (!value) return undefined;
 
   // If already an array of numbers, return as is
@@ -45,8 +45,12 @@ export class GetRequestsDto {
   limit?: number;
 
   @IsOptional()
-  @StatusCodeTransformer
-  statusCode?: number[];
+  @StatusCodesTransformer
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Min(100, { each: true })
+  @Max(599, { each: true })
+  statusCodes?: number[];
 
   @IsString()
   @IsOptional()
@@ -69,10 +73,9 @@ export class GetRequestsDto {
   @MaxLength(100)
   transactionId?: string;
 
-  @IsNumber()
   @IsOptional()
   @Type(() => Number)
-  @Min(1)
-  @Max(2160) // 90 days * 24 hours
-  created?: number;
+  @IsNumber({}, { message: 'createdGte must be a valid timestamp' })
+  @Min(0, { message: 'createdGte must be a positive timestamp' })
+  createdGte?: number;
 }

@@ -165,7 +165,7 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
             {formatDateSimple(layout.updatedAt)}
           </TimeDisplayHoverCard>
         </LayoutTableCell>
-        <Protect permission={PermissionsEnum.LAYOUT_WRITE}>
+        <Protect permission={PermissionsEnum.WORKFLOW_WRITE}>
           <LayoutTableCell className="w-1">
             {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
               <DropdownMenu modal={false}>

@@ -7,8 +7,8 @@ import { useOrganization } from '@clerk/clerk-react';
 export interface LogsFilters {
   status: string[];
   transactionId: string;
-  created: string; // Hours value for creation time filter, defaults to '24'
   url_pattern: string;
+  createdGte: string; // Timestamp string for creation time filter, defaults to calculated timestamp based on max available range
 }
 
 export interface LogsUrlState {
@@ -85,8 +85,8 @@ export function useLogsUrlState(): LogsUrlState {
     (): LogsFilters => ({
       status: searchParams.getAll('status'),
       transactionId: searchParams.get('transactionId') || '',
-      created: searchParams.get('created') || maxAvailableLogsDateRange, // Default to max available for user's tier
       url_pattern: searchParams.get('url_pattern') || '',
+      createdGte: searchParams.get('createdGte') || maxAvailableLogsDateRange, // Default to max available for user's tier
     }),
     [searchParams, maxAvailableLogsDateRange]
   );
@@ -97,8 +97,8 @@ export function useLogsUrlState(): LogsUrlState {
         // Clear existing filter params
         prev.delete('status');
         prev.delete('transactionId');
-        prev.delete('created');
         prev.delete('url_pattern');
+        prev.delete('createdGte');
 
         // Set new filter params
         if (newFilters.status.length > 0) {
@@ -109,8 +109,8 @@ export function useLogsUrlState(): LogsUrlState {
           prev.set('transactionId', newFilters.transactionId);
         }
 
-        if (newFilters.created) {
-          prev.set('created', newFilters.created);
+        if (newFilters.createdGte) {
+          prev.set('createdGte', newFilters.createdGte);
         }
 
         if (newFilters.url_pattern.trim()) {
@@ -130,8 +130,8 @@ export function useLogsUrlState(): LogsUrlState {
     setSearchParams((prev) => {
       prev.delete('status');
       prev.delete('transactionId');
-      prev.delete('created'); // Remove from URL so it defaults to '24'
       prev.delete('url_pattern');
+      prev.delete('createdGte'); // Remove from URL so it uses default date range
       prev.delete('page');
       return prev;
     });
@@ -141,7 +141,7 @@ export function useLogsUrlState(): LogsUrlState {
     return (
       filters.status.length > 0 ||
       filters.transactionId.trim() !== '' ||
-      filters.created !== maxAvailableLogsDateRange ||
+      filters.createdGte !== maxAvailableLogsDateRange ||
       filters.url_pattern.trim() !== ''
     );
   }, [filters, maxAvailableLogsDateRange]);

@@ -7,7 +7,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { LogsTable } from '../components/http-logs/logs-table';
+import { RequestsTable } from '../components/http-logs/logs-table';
 import { PageMeta } from '../components/page-meta';
 
 export function ActivityFeed() {
@@ -79,7 +79,7 @@ export function ActivityFeed() {
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
           <TabsContent value="requests" className="h-[calc(100vh-140px)]">
-            <LogsTable />
+            <RequestsTable />
           </TabsContent>
         </Tabs>
       </DashboardLayout>

@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import type { LogsFilters } from '@/hooks/use-logs-url-state';
 import { IS_SELF_HOSTED } from '../../config';
 
-interface LogsFiltersProps {
+interface RequestsFiltersProps {
   filters: LogsFilters;
   onFiltersChange: (filters: LogsFilters) => void;
   onClearFilters: () => void;
@@ -60,7 +60,7 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
   );
 };
 
-export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiveFilters }: LogsFiltersProps) {
+export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasActiveFilters }: RequestsFiltersProps) {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
 
@@ -93,8 +93,8 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     onFiltersChange({
       status: values,
       transactionId: form.getValues('transactionId'),
-      created: form.getValues('created'),
       url_pattern: form.getValues('url_pattern'),
+      createdGte: form.getValues('createdGte'),
     });
   };
 
@@ -103,19 +103,19 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: value,
-      created: form.getValues('created'),
       url_pattern: form.getValues('url_pattern'),
+      createdGte: form.getValues('createdGte'),
     });
   };
 
   const handleCreatedChange = (values: string[]) => {
-    const selectedCreated = values[0]; // Single selection
-    form.setValue('created', selectedCreated);
+    const selectedCreatedGte = values[0]; // Single selection
+    form.setValue('createdGte', selectedCreatedGte);
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: form.getValues('transactionId'),
-      created: selectedCreated,
       url_pattern: form.getValues('url_pattern'),
+      createdGte: selectedCreatedGte,
     });
   };
 
@@ -125,8 +125,8 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: form.getValues('transactionId'),
-      created: form.getValues('created'),
       url_pattern: selectedUrlPattern || '',
+      createdGte: form.getValues('createdGte'),
     });
   };
 
@@ -140,7 +140,7 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
         hideTitle
         title="Time period"
         options={maxLogsRetentionOptions}
-        selected={filters.created ? [filters.created] : []}
+        selected={filters.createdGte ? [filters.createdGte] : []}
         onSelect={handleCreatedChange}
         icon={CalendarIcon}
       />

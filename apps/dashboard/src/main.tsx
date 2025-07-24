@@ -222,7 +222,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.LAYOUTS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
                     <LayoutsPage />
                   </ProtectedRoute>
                 ),
@@ -230,7 +230,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.LAYOUTS_CREATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.LAYOUT_WRITE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <CreateLayoutPage />
                       </ProtectedRoute>
                     ),
@@ -238,7 +238,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.LAYOUTS_DUPLICATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.LAYOUT_WRITE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <DuplicateLayoutPage />
                       </ProtectedRoute>
                     ),
@@ -248,7 +248,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.LAYOUTS_EDIT,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
                     <EditLayoutPage />
                   </ProtectedRoute>
                 ),

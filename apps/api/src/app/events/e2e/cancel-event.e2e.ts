@@ -87,7 +87,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
           content: '',
           metadata: {
             unit: DigestUnitEnum.SECONDS,
-            amount: 5,
+            amount: 3,
             type: DelayTypeEnum.REGULAR,
           },
         },
@@ -120,6 +120,8 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
       },
       findMultiple: true,
     });
+
+    await session.waitForJobCompletion();
 
     expect(delayedJobs?.[0]?.status).to.equal(JobStatusEnum.CANCELED);
     expect(delayedJobs?.[1]?.status).to.equal(JobStatusEnum.CANCELED);
