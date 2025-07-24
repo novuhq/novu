@@ -88,7 +88,7 @@ export type WorkflowListResponseDto = {
    */
   status: WorkflowStatusEnum;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**

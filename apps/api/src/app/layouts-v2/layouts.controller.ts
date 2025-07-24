@@ -248,6 +248,7 @@ export class LayoutsController {
   })
   @ApiResponse(GetLayoutUsageResponseDto)
   @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @SdkMethodName('usage')
   async getUsage(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string

@@ -3,14 +3,13 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
-import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -27,22 +26,19 @@ import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
 /**
- * Update provider credentials
+ * Get layout usage
  *
  * @remarks
- * Update credentials for a provider such as **slack** and **FCM**.
- *       **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.
+ * Retrieves information about workflows that use the specified layout by its unique identifier **layoutId**
  */
-export function subscribersCredentialsAppend(
+export function layoutsUsage(
   client: NovuCore,
-  updateSubscriberChannelRequestDto:
-    components.UpdateSubscriberChannelRequestDto,
-  subscriberId: string,
+  layoutId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.SubscribersV1ControllerModifySubscriberChannelResponse,
+    operations.LayoutsControllerGetUsageResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -57,8 +53,7 @@ export function subscribersCredentialsAppend(
 > {
   return new APIPromise($do(
     client,
-    updateSubscriberChannelRequestDto,
-    subscriberId,
+    layoutId,
     idempotencyKey,
     options,
   ));
@@ -66,15 +61,13 @@ export function subscribersCredentialsAppend(
 
 async function $do(
   client: NovuCore,
-  updateSubscriberChannelRequestDto:
-    components.UpdateSubscriberChannelRequestDto,
-  subscriberId: string,
+  layoutId: string,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.SubscribersV1ControllerModifySubscriberChannelResponse,
+      operations.LayoutsControllerGetUsageResponse,
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -89,42 +82,33 @@ async function $do(
     APICall,
   ]
 > {
-  const input:
-    operations.SubscribersV1ControllerModifySubscriberChannelRequest = {
-      updateSubscriberChannelRequestDto: updateSubscriberChannelRequestDto,
-      subscriberId: subscriberId,
-      idempotencyKey: idempotencyKey,
-    };
+  const input: operations.LayoutsControllerGetUsageRequest = {
+    layoutId: layoutId,
+    idempotencyKey: idempotencyKey,
+  };
 
   const parsed = safeParse(
     input,
     (value) =>
-      operations
-        .SubscribersV1ControllerModifySubscriberChannelRequest$outboundSchema
-        .parse(value),
+      operations.LayoutsControllerGetUsageRequest$outboundSchema.parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = encodeJSON("body", payload.UpdateSubscriberChannelRequestDto, {
-    explode: true,
-  });
+  const body = null;
 
   const pathParams = {
-    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+    layoutId: encodeSimple("layoutId", payload.layoutId, {
       explode: false,
       charEncoding: "percent",
     }),
   };
 
-  const path = pathToFunc("/v1/subscribers/{subscriberId}/credentials")(
-    pathParams,
-  );
+  const path = pathToFunc("/v2/layouts/{layoutId}/usage")(pathParams);
 
   const headers = new Headers(compactMap({
-    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -139,7 +123,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "SubscribersV1Controller_modifySubscriberChannel",
+    operationID: "LayoutsController_getUsage",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -163,7 +147,7 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "PATCH",
+    method: "GET",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
@@ -208,7 +192,7 @@ async function $do(
   };
 
   const [result] = await M.match<
-    operations.SubscribersV1ControllerModifySubscriberChannelResponse,
+    operations.LayoutsControllerGetUsageResponse,
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -220,12 +204,10 @@ async function $do(
     | UnexpectedClientError
     | SDKValidationError
   >(
-    M.json(
-      200,
-      operations
-        .SubscribersV1ControllerModifySubscriberChannelResponse$inboundSchema,
-      { hdrs: true, key: "Result" },
-    ),
+    M.json(200, operations.LayoutsControllerGetUsageResponse$inboundSchema, {
+      hdrs: true,
+      key: "Result",
+    }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
       [400, 401, 403, 404, 405, 409, 413, 415],
