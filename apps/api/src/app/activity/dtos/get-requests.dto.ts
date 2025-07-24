@@ -71,12 +71,12 @@ export class GetRequestsDto {
   @ApiPropertyOptional({
     description: 'Filter by request URL',
     maxLength: 500,
-    example: '/api/users',
+    example: '/api/v1/users',
   })
   @IsString()
   @IsOptional()
   @MaxLength(500)
-  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/, {
+  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&"()*+,;=%]*$/, {
     message: 'URL contains invalid characters',
   })
   url?: string;
@@ -84,12 +84,12 @@ export class GetRequestsDto {
   @ApiPropertyOptional({
     description: 'Filter by URL pattern',
     maxLength: 500,
-    example: '/api/users/123',
+    example: '/api/v1/users/123',
   })
   @IsString()
   @IsOptional()
   @MaxLength(500)
-  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/, {
+  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&"()*+,;=%]*$/, {
     message: 'URL pattern contains invalid characters',
   })
   url_pattern?: string;
