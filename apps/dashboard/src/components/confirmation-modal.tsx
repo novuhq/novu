@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/primitives/dialog';
 import { ReactNode } from 'react';
+import { IconType } from 'react-icons';
 import { RiAlertFill } from 'react-icons/ri';
 
 type ConfirmationModalProps = {
@@ -20,6 +21,7 @@ type ConfirmationModalProps = {
   title: string;
   description: ReactNode;
   confirmButtonText: string;
+  confirmTrailingIcon?: IconType;
   isLoading?: boolean;
   isConfirmDisabled?: boolean;
 };
@@ -31,6 +33,7 @@ export const ConfirmationModal = ({
   title,
   description,
   confirmButtonText,
+  confirmTrailingIcon,
   isLoading,
   isConfirmDisabled,
 }: ConfirmationModalProps) => {
@@ -60,6 +63,7 @@ export const ConfirmationModal = ({
               size="sm"
               variant="primary"
               onClick={onConfirm}
+              trailingIcon={confirmTrailingIcon}
               isLoading={isLoading}
               disabled={isConfirmDisabled}
             >

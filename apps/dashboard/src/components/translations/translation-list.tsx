@@ -47,7 +47,7 @@ function TranslationListHeader({
   ...props
 }: TranslationListHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between py-2.5', className)} {...props}>
+    <div className={cn('flex items-center justify-between py-2', className)} {...props}>
       <TranslationsFilters
         onFiltersChange={handleFiltersChange}
         filterValues={filterValues}
@@ -171,7 +171,7 @@ function TranslationListContainer({
   ...props
 }: TranslationListContainerProps) {
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...props}>
+    <div className={cn('flex h-full flex-col', className)} {...props}>
       <TranslationListHeader
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}

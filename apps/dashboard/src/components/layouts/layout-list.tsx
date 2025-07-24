@@ -35,7 +35,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex h-full flex-col', className)} {...rest}>
       <div className="flex items-center justify-between">
         <LayoutsFilters
           onFiltersChange={handleFiltersChange}

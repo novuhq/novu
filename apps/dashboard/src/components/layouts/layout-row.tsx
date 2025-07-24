@@ -27,6 +27,7 @@ import { DeleteLayoutDialog } from '@/components/layouts/delete-layout-dialog';
 import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { Badge } from '../primitives/badge';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',
@@ -136,7 +137,9 @@ export const LayoutRow = ({ layout }: LayoutRowProps) => {
               <div className="flex items-center gap-2">
                 <TruncatedText className="text-text-strong max-w-[36ch] font-medium">{layout.name}</TruncatedText>
                 {layout.isDefault && (
-                  <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs font-medium text-blue-800">Default</span>
+                  <Badge variant="lighter" className="text-xs" size="md">
+                    DEFAULT
+                  </Badge>
                 )}
               </div>
               <div className="flex items-center gap-1 transition-opacity duration-200">
