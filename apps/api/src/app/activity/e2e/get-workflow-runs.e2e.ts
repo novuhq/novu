@@ -7,7 +7,7 @@ import { WorkflowRunRepository } from '@novu/application-generic';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 
-describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', function () {
+describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
