@@ -128,11 +128,7 @@ export class GetWorkflowRuns {
       // Generate previous cursor if we're not on the first page
       let previousCursor: string | null = null;
       if (command.cursor && workflowRuns.length > 0) {
-        const firstRun = workflowRuns[0];
-        previousCursor = this.encodeCursor({
-          created_at: this.parseClickHouseTimestamp(firstRun.created_at).toISOString(),
-          workflow_run_id: firstRun.workflow_run_id,
-        });
+        previousCursor = await this.generatePreviousCursor(whereConditions, cursor!, command.limit);
       }
 
       const data = workflowRuns.map((workflowRun) => this.mapWorkflowRunToDto(workflowRun));
@@ -150,6 +146,51 @@ export class GetWorkflowRuns {
         environmentId: command.environmentId,
       });
       throw error;
+    }
+  }
+
+  /**
+   * Generates the previous cursor using a simple approach:
+   * Query backwards from current cursor and use the last item as the boundary
+   */
+  private async generatePreviousCursor(
+    whereConditions: Where<WorkflowRun>,
+    currentCursor: CursorData,
+    limit: number
+  ): Promise<string | null> {
+    try {
+      const backwardResult = await this.workflowRunRepository.findWithCursor({
+        where: whereConditions,
+        cursor: currentCursor,
+        limit,
+        orderDirection: 'ASC', // Get older items
+        useFinal: true,
+      });
+
+      const previousPageItems = backwardResult.data;
+
+      if (previousPageItems.length === 0) {
+        return null;
+      }
+
+      /*
+       * Use the last item from the previous page as the cursor.
+       * When this cursor is used with DESC order, it will exclude this item
+       * and everything older, effectively giving us the previous page.
+       */
+      const lastItemOfPreviousPage = previousPageItems[previousPageItems.length - 1];
+
+      return this.encodeCursor({
+        created_at: this.parseClickHouseTimestamp(lastItemOfPreviousPage.created_at).toISOString(),
+        workflow_run_id: lastItemOfPreviousPage.workflow_run_id,
+      });
+    } catch (error) {
+      this.logger.error('Failed to generate previous cursor', {
+        error: error.message,
+        currentCursor,
+      });
+
+      return null;
     }
   }
 

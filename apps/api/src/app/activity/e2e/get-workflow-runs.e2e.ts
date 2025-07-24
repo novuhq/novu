@@ -7,7 +7,7 @@ import { WorkflowRunRepository } from '@novu/application-generic';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 
-describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', function () {
+describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -146,10 +146,12 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     await session.waitForSubscriberQueueCompletion();
 
     const fetchedRunNumbers = new Set<number>();
+    const pages: any[] = [];
     let cursor: string | null = null;
     let totalFetched = 0;
     let pageCount = 0;
 
+    // Go forward through all pages
     do {
       const query: any = { limit: 2 };
       if (cursor) {
@@ -160,6 +162,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
       pageCount += 1;
       const currentPageNumber = pageCount;
+      pages.push(body);
 
       expect(body.data).to.be.an('array');
       expect(body.data.length).to.be.at.most(2);
@@ -191,6 +194,48 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     for (let i = 1; i <= 11; i += 1) {
       expect(fetchedRunNumbers.has(i), `runNumber ${i} should be present`).to.be.true;
     }
+
+    // Test bidirectional pagination: Navigate to the last page, then go back once
+    const lastPage = pages[pages.length - 1];
+    const secondToLastPage = pages[pages.length - 2];
+
+    expect(lastPage.previousCursor, 'Last page should have previousCursor').to.be.not.null;
+
+    // Go back one page using previousCursor
+    const { body: previousPageResult } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ cursor: lastPage.previousCursor, limit: 2 })
+      .expect(200);
+
+    // Validate we get the exact same items as the second-to-last page
+    expect(previousPageResult.data.length, 'Previous page should have same length as second-to-last page').to.equal(
+      secondToLastPage.data.length
+    );
+
+    // Compare each item's runNumber to ensure they match exactly
+    const secondToLastRunNumbers = secondToLastPage.data.map((item: any) => item.payload.runNumber).sort();
+    const previousPageRunNumbers = previousPageResult.data.map((item: any) => item.payload.runNumber).sort();
+
+    expect(previousPageRunNumbers, 'Previous page runNumbers should match second-to-last page').to.deep.equal(
+      secondToLastRunNumbers
+    );
+
+    // Validate cursor properties of the previous page result
+    expect(previousPageResult.hasMore, 'Previous page should have hasMore true').to.be.true;
+    expect(previousPageResult.nextCursor, 'Previous page should have nextCursor').to.be.not.null;
+    expect(previousPageResult.previousCursor, 'Previous page should have previousCursor').to.be.not.null;
+
+    // Test that we can go forward again from the previous page
+    const { body: forwardAgainResult } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ cursor: previousPageResult.nextCursor, limit: 2 })
+      .expect(200);
+
+    // Should get back to the last page
+    const forwardAgainRunNumbers = forwardAgainResult.data.map((item: any) => item.payload.runNumber).sort();
+    const lastPageRunNumbers = lastPage.data.map((item: any) => item.payload.runNumber).sort();
+
+    expect(forwardAgainRunNumbers, 'Forward navigation should return to last page').to.deep.equal(lastPageRunNumbers);
   });
 
   it('should filter results by single workflowId', async () => {
