@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, NotificationEntity } from '@novu/dal';
 import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
@@ -7,7 +7,7 @@ import { WorkflowRunRepository } from '@novu/application-generic';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 
-describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', function () {
+describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', function () {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -37,7 +37,52 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     }
   }
 
+  async function createMultipleWorkflowRunsByDb(options: {
+    count: number;
+    workflowId: string;
+    subscriberId: string;
+    payloadTemplate?: (index: number) => Record<string, any>;
+    transactionId?: string;
+  }) {
+    const { count, workflowId, subscriberId, payloadTemplate, transactionId } = options;
+
+    const promises: Promise<void>[] = [];
+
+    for (let i = 1; i < count + 1; i += 1) {
+      const payload = payloadTemplate ? payloadTemplate(i) : { runNumber: i };
+
+      // Create a mock NotificationEntity
+      const mockNotification: NotificationEntity = {
+        _id: `notification_${Date.now()}_${i}`,
+        _templateId: template._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriber._id,
+        topics: [],
+        transactionId: transactionId ? `${transactionId}-${i}` : `txn_${Date.now()}_${i}`,
+        channels: [StepTypeEnum.EMAIL],
+        to: [subscriberId],
+        payload,
+        controls: undefined,
+        tags: [],
+      };
+
+      promises.push(
+        workflowRunRepository.create(mockNotification, template, {
+          status: 'completed',
+          userId: session.user._id,
+          externalSubscriberId: subscriberId,
+        })
+      );
+    }
+
+    await Promise.all(promises);
+  }
+
   beforeEach(async () => {
+    // Enable workflow run logs writing for testing
+    (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'true';
+
     session = new UserSession();
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
@@ -54,6 +99,11 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
         },
       ],
     });
+  });
+
+  afterEach(() => {
+    // Clean up environment variable after each test
+    delete (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
   });
 
   it('should return paginated results with default limit', async () => {
@@ -85,9 +135,9 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(secondPage.data[0].payload.runNumber, 'secondPage runNumber').to.be.equal(1);
   });
 
-  it('should respect custom limit parameter', async () => {
-    await createMultipleWorkflowRuns({
-      count: 5,
+  it('should validate cursor-based pagination collision handling', async () => {
+    await createMultipleWorkflowRunsByDb({
+      count: 11,
       workflowId: template.triggers[0].identifier,
       subscriberId: subscriber.subscriberId,
     });
@@ -95,9 +145,52 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
 
-    const { body } = await session.testAgent.get('/v1/activity/workflow-runs').query({ limit: 2 }).expect(200);
+    const fetchedRunNumbers = new Set<number>();
+    let cursor: string | null = null;
+    let totalFetched = 0;
+    let pageCount = 0;
 
-    expect(body.data.length).to.be.at.most(2);
+    do {
+      const query: any = { limit: 2 };
+      if (cursor) {
+        query.cursor = cursor;
+      }
+
+      const { body } = await session.testAgent.get('/v1/activity/workflow-runs').query(query).expect(200);
+
+      pageCount += 1;
+      const currentPageNumber = pageCount;
+
+      expect(body.data).to.be.an('array');
+      expect(body.data.length).to.be.at.most(2);
+
+      // Check for duplicates and collect runNumbers
+      body.data.forEach((workflowRun: any) => {
+        const { runNumber } = workflowRun.payload;
+        expect(fetchedRunNumbers.has(runNumber), `Duplicate runNumber ${runNumber} found on page ${currentPageNumber}`)
+          .to.be.false;
+        fetchedRunNumbers.add(runNumber);
+      });
+
+      totalFetched += body.data.length;
+      cursor = body.nextCursor;
+
+      // Validate cursor logic
+      if (body.hasMore) {
+        expect(cursor, `nextCursor should not be null when hasMore is true on page ${pageCount}`).to.be.not.null;
+      } else {
+        expect(cursor, `nextCursor should be null when hasMore is false on page ${pageCount}`).to.be.null;
+      }
+    } while (cursor);
+
+    // Validate we fetched all 11 workflow runs
+    expect(totalFetched, 'Total fetched workflow runs').to.equal(11);
+    expect(fetchedRunNumbers.size, 'Unique runNumbers fetched').to.equal(11);
+
+    // Validate we have runNumbers 1 through 11
+    for (let i = 1; i <= 11; i += 1) {
+      expect(fetchedRunNumbers.has(i), `runNumber ${i} should be present`).to.be.true;
+    }
   });
 
   it('should filter results by single workflowId', async () => {
