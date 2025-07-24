@@ -22,9 +22,9 @@ const { argv } = yargs(hideBin(process.argv))
   })
   .option('enterprise', {
     alias: 'e',
-    type: 'string',
-    description: 'The enterprise value',
-    demandOption: true,
+    type: 'boolean',
+    description: 'Whether this is an enterprise deployment',
+    default: false,
   })
   .option('env', {
     alias: 'v',
@@ -42,12 +42,12 @@ const { argv } = yargs(hideBin(process.argv))
 const { secretName, region, enterprise, env, selfHosted } = argv;
 
 // Check deployment mode
-if (!enterprise || enterprise.toLowerCase() === 'false') {
+if (!enterprise) {
   console.log('Booting up community version');
   process.exit(0);
 }
 
-if (enterprise.toLowerCase() === 'true' && selfHosted) {
+if (enterprise && selfHosted) {
   console.log('Booting up Enterprise Self-Hosted Version');
   process.exit(0);
 }
