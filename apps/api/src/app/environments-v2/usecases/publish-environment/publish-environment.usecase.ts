@@ -14,6 +14,8 @@ import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 
+const PUBLISH_BATCH_SIZE = 100;
+
 @Injectable()
 export class PublishEnvironmentUseCase {
   constructor(
@@ -44,7 +46,7 @@ export class PublishEnvironmentUseCase {
 
       const options: ISyncOptions = {
         dryRun: command.dryRun || false,
-        batchSize: 100,
+        batchSize: PUBLISH_BATCH_SIZE,
         resources: command.resources,
       };
 

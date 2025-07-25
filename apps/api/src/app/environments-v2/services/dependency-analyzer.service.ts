@@ -4,6 +4,7 @@ import { ControlValuesRepository, LayoutRepository, NotificationTemplateReposito
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 import {
   IDiffResult,
+  IResourceDiff,
   IResourceDependency,
   ResourceTypeEnum,
   DiffActionEnum,
@@ -55,11 +56,32 @@ export class DependencyAnalyzerService {
       `Found ${layoutResourceByIdMap.size} layouts by ID and ${layoutResourceByNameMap.size} layouts by name`
     );
 
-    // Analyze each workflow for layout dependencies
-    for (const resource of resources) {
-      if (resource.resourceType === ResourceTypeEnum.WORKFLOW && resource.sourceResource?.id) {
+    // Get all workflow resources for batched processing
+    const workflowResources = resources.filter(
+      (resource) => resource.resourceType === ResourceTypeEnum.WORKFLOW && resource.sourceResource?.id
+    );
+
+    if (workflowResources.length > 0) {
+      // Batch query for all workflow control values
+      const workflowIds = workflowResources
+        .map((resource) => resource.sourceResource?.id)
+        .filter((id): id is string => id !== null && id !== undefined);
+      const allControlValues = await this.getControlValuesForWorkflows(workflowIds, sourceEnvId, organizationId);
+
+      // Create a map for quick lookup
+      const controlValuesByWorkflowId = new Map<string, unknown[]>();
+      allControlValues.forEach((cv) => {
+        const workflowId = (cv as any)._workflowId;
+        if (!controlValuesByWorkflowId.has(workflowId)) {
+          controlValuesByWorkflowId.set(workflowId, []);
+        }
+        controlValuesByWorkflowId.get(workflowId)!.push(cv);
+      });
+
+      // Analyze each workflow for layout dependencies
+      for (const resource of workflowResources) {
         this.logger.debug(
-          `Analyzing dependencies for workflow: ${resource.sourceResource.name} (${resource.sourceResource.id})`
+          `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
         );
 
         const dependencies = await this.getWorkflowDependencies(
@@ -68,12 +90,13 @@ export class DependencyAnalyzerService {
           layoutResourceByNameMap,
           sourceEnvId,
           targetEnvId,
-          organizationId
+          organizationId,
+          controlValuesByWorkflowId.get(resource.sourceResource!.id) || []
         );
 
         if (dependencies.length > 0) {
-          this.logger.debug(`Found ${dependencies.length} dependencies for workflow ${resource.sourceResource.name}`);
-          dependencyMap.set(resource.sourceResource.id, dependencies);
+          this.logger.debug(`Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`);
+          dependencyMap.set(resource.sourceResource!.id, dependencies);
         }
       }
     }
@@ -103,13 +126,28 @@ export class DependencyAnalyzerService {
     return dependencyMap;
   }
 
+  private async getControlValuesForWorkflows(
+    workflowIds: string[],
+    sourceEnvId: string,
+    organizationId: string
+  ): Promise<unknown[]> {
+    return this.controlValuesRepository.find({
+      _environmentId: sourceEnvId,
+      _organizationId: organizationId,
+      _workflowId: { $in: workflowIds },
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+      'controls.layoutId': { $exists: true, $ne: null },
+    });
+  }
+
   private async getWorkflowDependencies(
     workflowDiff: IDiffResult,
     layoutResourceByIdMap: Map<string, IDiffResult>,
     layoutResourceByNameMap: Map<string, IDiffResult>,
     sourceEnvId: string,
     targetEnvId: string,
-    organizationId: string
+    organizationId: string,
+    preloadedControlValues: unknown[] = []
   ): Promise<IResourceDependency[]> {
     const dependencies: IResourceDependency[] = [];
     const processedLayoutIds = new Set<string>();
@@ -120,7 +158,7 @@ export class DependencyAnalyzerService {
 
         for (const change of workflowDiff.changes) {
           // Handle both enum and string values for resourceType
-          const isStepChange = change.resourceType === ResourceTypeEnum.STEP || (change.resourceType as any) === 'step';
+          const isStepChange = change.resourceType === ResourceTypeEnum.STEP;
           const isEmailStep = change.stepType === 'email';
 
           if (isStepChange && isEmailStep) {
@@ -152,18 +190,10 @@ export class DependencyAnalyzerService {
         }
       }
 
-      const controlValues = await this.controlValuesRepository.find({
-        _environmentId: sourceEnvId,
-        _organizationId: organizationId,
-        _workflowId: workflowDiff.sourceResource?.id,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-        'controls.layoutId': { $exists: true, $ne: null },
-      });
+      this.logger.debug(`Found ${preloadedControlValues.length} control values with layoutId references`);
 
-      this.logger.debug(`Found ${controlValues.length} control values with layoutId references`);
-
-      for (const controlValue of controlValues) {
-        const layoutId = controlValue.controls?.layoutId as string;
+      for (const controlValue of preloadedControlValues) {
+        const layoutId = (controlValue as any)?.controls?.layoutId as string;
         if (!layoutId || processedLayoutIds.has(layoutId)) continue;
         processedLayoutIds.add(layoutId);
 
@@ -263,7 +293,7 @@ export class DependencyAnalyzerService {
     return reverseDependencies;
   }
 
-  private extractLayoutIdsFromStepChange(stepChange: any): string[] {
+  private extractLayoutIdsFromStepChange(stepChange: IResourceDiff): string[] {
     const layoutIds: string[] = [];
 
     // Check current/new layout ID
@@ -284,7 +314,7 @@ export class DependencyAnalyzerService {
     return layoutIds;
   }
 
-  private extractWorkflowIdsFromStepChange(stepChange: any): string[] {
+  private extractWorkflowIdsFromStepChange(stepChange: IResourceDiff): string[] {
     const workflowIds: string[] = [];
 
     // Check current/new workflow ID
@@ -356,7 +386,7 @@ export class DependencyAnalyzerService {
     };
   }
 
-  private isDependencyBlocking(targetLayout: any, layoutDiff?: IDiffResult): boolean {
+  private isDependencyBlocking(targetLayout: unknown, layoutDiff?: IDiffResult): boolean {
     // If layout doesn't exist in target and there's a new layout being added, it's blocking
     if (!targetLayout && layoutDiff?.summary?.added && layoutDiff.summary.added > 0) {
       this.logger.debug("Dependency is blocking: layout doesn't exist in target but is being added");

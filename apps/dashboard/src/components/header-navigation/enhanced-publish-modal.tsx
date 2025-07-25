@@ -1,27 +1,23 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import {
   RiAlertFill,
-  RiArrowRightSLine,
-  RiCheckboxCircleFill,
   RiRouteFill,
   RiDashboardLine,
   RiLinkUnlinkM,
-  RiInformationLine,
-  RiCloseFill,
   RiContractUpDownLine,
   RiExpandUpDownLine,
   RiAddBoxLine,
   RiDeleteBin2Line,
   RiGitCommitFill,
 } from 'react-icons/ri';
-import { Dialog, DialogContent, DialogClose } from '../primitives/dialog';
+import { Dialog, DialogContent } from '../primitives/dialog';
 import { Button } from '../primitives/button';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { Checkbox } from '../primitives/checkbox';
-import { Separator } from '../primitives/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../primitives/collapsible';
+import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
 import { useDiffEnvironments } from '@/hooks/use-environments';
+import { useResourceDependencies } from '@/hooks/use-resource-dependencies';
 import { formatDateSimple } from '@/utils/format-date';
 import type { IEnvironment } from '@novu/shared';
 import type { IResourceDiffResult, IResourceDependency } from '@/api/environments';
@@ -64,114 +60,8 @@ export function EnhancedPublishModal({
     enabled: isOpen,
   });
 
-  const { workflows, layouts, dependencyMap } = useMemo(() => {
-    if (!diffData?.resources) {
-      return { workflows: [], layouts: [], dependencyMap: new Map() };
-    }
+  const { workflows, layouts, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
 
-    const workflowResources = diffData.resources.filter((r) => r.resourceType === 'workflow');
-    const layoutResources = diffData.resources.filter((r) => r.resourceType === 'layout');
-
-    // Build dependency map for quick lookup (include both workflows and layouts)
-    const depMap = new Map<string, IResourceDependency[]>();
-
-    // Add workflow dependencies
-    workflowResources.forEach((workflow) => {
-      if (workflow.dependencies?.length) {
-        const workflowId = workflow.sourceResource?.id || workflow.targetResource?.id;
-
-        if (workflowId) {
-          depMap.set(workflowId, workflow.dependencies);
-        }
-      }
-    });
-
-    // Add layout dependencies to the map as well
-    layoutResources.forEach((layout) => {
-      if (layout.dependencies?.length) {
-        const layoutId = layout.sourceResource?.id || layout.targetResource?.id;
-
-        if (layoutId) {
-          depMap.set(layoutId, layout.dependencies);
-        }
-      }
-    });
-
-    return {
-      workflows: workflowResources,
-      layouts: layoutResources,
-      dependencyMap: depMap,
-    };
-  }, [diffData]);
-
-  // Function to calculate dependency state
-  const calculateDependencyState = useMemo(() => {
-    return (selection: ResourceSelection): ResourceSelection => {
-      const updated = { ...selection };
-
-      // Reset all disabled states
-      Object.keys(updated).forEach((id) => {
-        updated[id] = { ...updated[id], disabled: false };
-      });
-
-      // Check dependencies for all selected resources (both workflows and layouts)
-      Object.entries(updated).forEach(([resourceId, resourceState]) => {
-        if (resourceState.selected) {
-          // Get dependencies from the resource itself
-          const resourceDependencies = resourceState.resource.dependencies;
-
-          if (resourceDependencies && resourceDependencies.length > 0) {
-            resourceDependencies.forEach((dep: IResourceDependency) => {
-              if (dep.isBlocking) {
-                // Find the dependent resource by ID and mark it as selected and disabled
-                Object.entries(updated).forEach(([depResourceId, depResourceState]) => {
-                  const depResource = depResourceState.resource;
-                  const depResourceActualId = depResource.sourceResource?.id || depResource.targetResource?.id;
-
-                  if (depResourceActualId === dep.resourceId) {
-                    updated[depResourceId] = {
-                      ...updated[depResourceId],
-                      selected: true,
-                      disabled: true,
-                    };
-                  }
-                });
-              }
-            });
-          }
-
-          // Also check if this is a workflow with dependencies (original logic)
-          if (resourceState.resource.resourceType === 'workflow') {
-            const dependencies = dependencyMap.get(resourceId);
-
-            if (dependencies) {
-              dependencies.forEach((dep: IResourceDependency) => {
-                // Find the dependent layout and mark as disabled if blocking
-                Object.entries(updated).forEach(([layoutId, layoutState]) => {
-                  if (layoutState.resource.resourceType === 'layout' && dep.isBlocking) {
-                    const layoutResource = layoutState.resource;
-                    const layoutResourceId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
-
-                    const matchesById = layoutResourceId === dep.resourceId;
-
-                    if (matchesById) {
-                      updated[layoutId] = {
-                        ...updated[layoutId],
-                        selected: true,
-                        disabled: true,
-                      };
-                    }
-                  }
-                });
-              });
-            }
-          }
-        }
-      });
-
-      return updated;
-    };
-  }, [dependencyMap]);
 
   // Initialize selection state
   useEffect(() => {
