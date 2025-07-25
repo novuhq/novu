@@ -105,16 +105,19 @@ export function EnhancedPublishModal({
             dependencies.forEach((dep: IResourceDependency) => {
               // Find the dependent layout and mark as disabled if blocking
               Object.entries(updated).forEach(([layoutId, layoutState]) => {
-                if (
-                  layoutState.resource.resourceType === 'layout' &&
-                  layoutState.resource.sourceResource?.name === dep.resourceName &&
-                  dep.isBlocking
-                ) {
-                  updated[layoutId] = {
-                    ...updated[layoutId],
-                    selected: true,
-                    disabled: true,
-                  };
+                if (layoutState.resource.resourceType === 'layout' && dep.isBlocking) {
+                  const layoutResource = layoutState.resource;
+                  const layoutResourceId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
+
+                  const matchesById = layoutResourceId === dep.resourceId;
+
+                  if (matchesById) {
+                    updated[layoutId] = {
+                      ...updated[layoutId],
+                      selected: true,
+                      disabled: true,
+                    };
+                  }
                 }
               });
             });
@@ -413,6 +416,7 @@ type LayoutUsageIndicatorProps = {
 
 function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: LayoutUsageIndicatorProps) {
   const layoutName = layoutResource.sourceResource?.name || layoutResource.targetResource?.name;
+  const layoutId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
 
   // Find workflows that depend on this layout
   const workflowsUsingLayout = useMemo(() => {
@@ -423,7 +427,13 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
         (w) => w.sourceResource?.id === workflowId || w.targetResource?.id === workflowId
       );
 
-      if (workflow && deps.some((dep) => dep.resourceName === layoutName)) {
+      if (
+        workflow &&
+        deps.some((dep) => {
+          // Match by resource ID first (most reliable), then by resource name
+          return dep.resourceId === layoutId || dep.resourceName === layoutName;
+        })
+      ) {
         const workflowName = workflow.sourceResource?.name || workflow.targetResource?.name;
         const workflowSlug = workflowName?.toLowerCase().replace(/\s+/g, '-');
 
@@ -434,7 +444,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
     });
 
     return workflows;
-  }, [layoutName, allWorkflows, dependencies]);
+  }, [layoutName, layoutId, allWorkflows, dependencies]);
 
   const usageCount = workflowsUsingLayout.length;
 
@@ -535,6 +545,7 @@ function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProp
       } else if (change.resourceType === 'step') {
         // This is a step-level change
         hasStepChanges = true;
+
         if (change.action && change.action in stepActionCounts) {
           stepActionCounts[change.action as keyof typeof stepActionCounts]++;
         }
@@ -655,9 +666,11 @@ function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProp
     if (summary.added > 0) {
       return { action: 'added' as const, label: 'Added' };
     }
+
     if (summary.modified > 0) {
       return { action: 'modified' as const, label: 'Modified' };
     }
+
     if (summary.deleted > 0) {
       return { action: 'deleted' as const, label: 'Deleted' };
     }

@@ -313,12 +313,12 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
 
         // Find the workflow and layout in the diff results
         const workflowResource = diffResult.body.data.resources.find(
-          (resource: any) =>
+          (resource) =>
             resource.resourceType === 'workflow' &&
             resource.sourceResource?.id === 'new-workflow-with-new-layout-dependency'
         );
         const layoutResource = diffResult.body.data.resources.find(
-          (resource: any) =>
+          (resource) =>
             resource.resourceType === 'layout' && resource.sourceResource?.id === 'new-layout-for-blocking-test'
         );
 
@@ -335,7 +335,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         expect(workflowResource.dependencies.length).to.be.greaterThan(0);
 
         const layoutDependency = workflowResource.dependencies.find(
-          (dep: any) => dep.resourceType === 'layout' && dep.resourceId === layout.layoutId
+          (dep) => dep.resourceType === 'layout' && dep.resourceId === layout.layoutId
         );
 
         expect(layoutDependency).to.exist;
