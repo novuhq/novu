@@ -1,7 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { EnvironmentRepository, ClientSession, BaseRepository } from '@novu/dal';
-import { UserSessionData } from '@novu/shared';
+import { BaseRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
 import {
   ISyncStrategy,
@@ -10,7 +9,6 @@ import {
   ISyncOptions,
   ISyncResult,
   IResourceToPublish,
-  ResourceTypeEnum,
 } from '../../types/sync.types';
 import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
@@ -21,7 +19,6 @@ export class PublishEnvironmentUseCase {
   constructor(
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
-    private environmentRepository: EnvironmentRepository,
     private workflowSyncStrategy: WorkflowSyncStrategy,
     private layoutSyncStrategy: LayoutSyncStrategy
   ) {
@@ -31,12 +28,10 @@ export class PublishEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: PublishEnvironmentCommand): Promise<IPublishResult> {
     try {
-      // First validate the target environment ID format
       if (!BaseRepository.isInternalId(command.targetEnvironmentId)) {
         throw new BadRequestException('Invalid environment ID format');
       }
 
-      // If sourceEnvironmentId is not provided, default to development environment
       const sourceEnvironmentId =
         command.sourceEnvironmentId ||
         (await this.environmentValidationService.getDevelopmentEnvironmentId(command.user.organizationId));
@@ -46,11 +41,6 @@ export class PublishEnvironmentUseCase {
         targetEnvironmentId: command.targetEnvironmentId,
         user: command.user,
       });
-
-      // Validate resource IDs if provided
-      if (command.resourcesToPublish?.length) {
-        await this.validateResourceIds(sourceEnvironmentId, command.resourcesToPublish, command.user);
-      }
 
       const options: ISyncOptions = {
         dryRun: command.dryRun || false,
@@ -123,36 +113,6 @@ export class PublishEnvironmentUseCase {
     return results;
   }
 
-  private async executeWithTransaction<T>(
-    operation: (session: ClientSession | null) => Promise<T>,
-    operationName: string = 'sync operation'
-  ): Promise<T> {
-    this.logger.info(`Starting transactional ${operationName}`);
-
-    try {
-      return await this.environmentRepository.withTransaction(async (session) => {
-        if (session) {
-          this.logger.debug(`Executing ${operationName} within transaction`);
-        } else {
-          this.logger.debug(`Executing ${operationName} without transaction (non-replica set mode)`);
-        }
-
-        const result = await operation(session);
-
-        if (session) {
-          this.logger.debug(`Successfully completed ${operationName} within transaction`);
-        } else {
-          this.logger.debug(`Successfully completed ${operationName} without transaction`);
-        }
-
-        return result;
-      });
-    } catch (error) {
-      this.logger.error(`Transaction failed for ${operationName}: ${error.message}`);
-      throw error;
-    }
-  }
-
   private calculateSummary(results: ISyncResult[]) {
     const summary = {
       resources: 0,
@@ -178,59 +138,5 @@ export class PublishEnvironmentUseCase {
     const requestedResourceTypes = new Set(resourcesToPublish.map((resource) => resource.resourceType));
 
     return strategies.filter((strategy) => requestedResourceTypes.has(strategy.getResourceType()));
-  }
-
-  private async validateResourceIds(
-    sourceEnvironmentId: string,
-    resourcesToPublish: IResourceToPublish[],
-    user: UserSessionData
-  ): Promise<void> {
-    const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
-    const invalidResources: string[] = [];
-
-    for (const strategy of strategies) {
-      const resourcesOfType = resourcesToPublish.filter(
-        (resource) => resource.resourceType === strategy.getResourceType()
-      );
-
-      if (resourcesOfType.length === 0) continue;
-
-      // Get all available resources for this type
-      const availableResources = await this.getAvailableResourceIds(strategy, sourceEnvironmentId, user.organizationId);
-
-      this.logger.debug(
-        `Available ${strategy.getResourceType()} resources in source environment: [${Array.from(availableResources).join(', ')}]`
-      );
-
-      // Check which requested resources don't exist
-      for (const resource of resourcesOfType) {
-        if (!availableResources.has(resource.resourceId)) {
-          this.logger.warn(
-            `Resource ${resource.resourceType}:${resource.resourceId} not found in available resources: [${Array.from(availableResources).join(', ')}]`
-          );
-          invalidResources.push(`${resource.resourceType}:${resource.resourceId}`);
-        }
-      }
-    }
-
-    if (invalidResources.length > 0) {
-      throw new BadRequestException(`The following resources were not found: ${invalidResources.join(', ')}`);
-    }
-  }
-
-  private async getAvailableResourceIds(
-    strategy: ISyncStrategy,
-    sourceEnvironmentId: string,
-    organizationId: string
-  ): Promise<Set<string>> {
-    try {
-      const resourceIds = await strategy.getAvailableResourceIds(sourceEnvironmentId, organizationId);
-
-      return new Set(resourceIds);
-    } catch (error) {
-      this.logger.warn(`Failed to validate resource IDs for ${strategy.getResourceType()}: ${error.message}`);
-
-      return new Set();
-    }
   }
 }

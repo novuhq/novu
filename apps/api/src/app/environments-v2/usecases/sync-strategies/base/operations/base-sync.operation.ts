@@ -31,6 +31,7 @@ export abstract class BaseSyncOperation<T> {
 
   async getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]> {
     const resources = await this.repositoryService.fetchSyncableResources(sourceEnvironmentId, organizationId);
+
     return resources.map((resource) => this.repositoryService.getResourceIdentifier(resource));
   }
 
@@ -141,10 +142,15 @@ export abstract class BaseSyncOperation<T> {
     sourceResources: T[],
     resultBuilder: SyncResultBuilder
   ): Promise<void> {
-    const targetResources = await this.repositoryService.fetchSyncableResources(
+    let targetResources = await this.repositoryService.fetchSyncableResources(
       context.targetEnvironmentId,
       context.user.organizationId
     );
+
+    // Filter target resources if selective sync is requested
+    if (context.options.resourcesToPublish?.length) {
+      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resourcesToPublish);
+    }
 
     const targetResourceMap = this.repositoryService.createResourceMap(targetResources);
     const syncDecisions = await this.determineSyncDecisions(context, sourceResources, targetResourceMap);
@@ -243,10 +249,15 @@ export abstract class BaseSyncOperation<T> {
     sourceResources: T[],
     resultBuilder: SyncResultBuilder
   ): Promise<void> {
-    const targetResources = await this.repositoryService.fetchSyncableResources(
+    let targetResources = await this.repositoryService.fetchSyncableResources(
       context.targetEnvironmentId,
       context.user.organizationId
     );
+
+    // Filter target resources if selective sync is requested
+    if (context.options.resourcesToPublish?.length) {
+      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resourcesToPublish);
+    }
 
     const sourceResourceMap = this.repositoryService.createResourceMap(sourceResources);
 

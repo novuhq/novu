@@ -85,7 +85,6 @@ export class DependencyAnalyzerService {
     const processedLayoutIds = new Set<string>();
 
     try {
-      // First, analyze step changes within the workflow diff for layout dependencies
       if (workflowDiff.changes) {
         this.logger.debug(`Analyzing ${workflowDiff.changes.length} changes in workflow`);
 
@@ -123,7 +122,6 @@ export class DependencyAnalyzerService {
         }
       }
 
-      // Then, get email step control values that reference layouts (for existing workflow analysis)
       const controlValues = await this.controlValuesRepository.find({
         _environmentId: sourceEnvId,
         _organizationId: organizationId,
@@ -194,7 +192,6 @@ export class DependencyAnalyzerService {
   ): Promise<IResourceDependency | null> {
     this.logger.debug(`Creating layout dependency for layoutId: ${layoutId}`);
 
-    // Check if layout exists in target environment
     const targetLayout = await this.layoutRepository.findOne({
       _environmentId: targetEnvId,
       _organizationId: organizationId,
@@ -203,18 +200,12 @@ export class DependencyAnalyzerService {
 
     this.logger.debug(`Layout ${layoutId} exists in target environment: ${!!targetLayout}`);
 
-    // Find layout in diff results by ID first, then by name if not found
-    let layoutDiff = layoutResourceByIdMap.get(layoutId);
-    if (!layoutDiff) {
-      // Try to find by name (fallback for edge cases)
-      layoutDiff = layoutResourceByNameMap.get(layoutId);
-    }
+    const layoutDiff = layoutResourceByIdMap.get(layoutId);
 
     this.logger.debug(
       `Layout ${layoutId} found in diff results: ${!!layoutDiff} (added: ${layoutDiff?.summary?.added || 0})`
     );
 
-    // Determine if this dependency is blocking
     const isBlocking = this.isDependencyBlocking(targetLayout, layoutDiff);
     const reason = isBlocking
       ? DependencyReasonEnum.LAYOUT_REQUIRED_FOR_WORKFLOW
@@ -227,7 +218,7 @@ export class DependencyAnalyzerService {
     return {
       resourceType: ResourceTypeEnum.LAYOUT,
       resourceId: layoutId,
-      resourceName: layoutDiff?.sourceResource?.name || layoutId,
+      resourceName: layoutDiff?.sourceResource?.name || layoutId || '',
       isBlocking,
       reason,
     };
