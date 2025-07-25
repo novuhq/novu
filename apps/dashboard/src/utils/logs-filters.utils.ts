@@ -1,6 +1,7 @@
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber, type GetSubscriptionDto } from '@novu/shared';
 import { type OrganizationResource } from '@clerk/types';
 import { IS_SELF_HOSTED } from '../config';
+import { subMilliseconds } from 'date-fns';
 
 export const LOGS_DATE_RANGE_OPTIONS = [
   { value: '24', label: 'Last 24 Hours', ms: 24 * 60 * 60 * 1000 },
@@ -23,6 +24,8 @@ export function buildLogsDateFilters({
     true
   );
 
+  const now = new Date();
+
   return LOGS_DATE_RANGE_OPTIONS.map((option) => {
     const isLegacyFreeTier =
       apiServiceLevel === ApiServiceLevelEnum.FREE && organization && organization.createdAt < new Date('2025-02-28');
@@ -34,7 +37,7 @@ export function buildLogsDateFilters({
     return {
       disabled: option.ms > maxRetentionMs,
       label: option.label,
-      value: option.value,
+      value: subMilliseconds(now, option.ms).getTime().toString(),
     };
   });
 }
@@ -47,7 +50,8 @@ export function getMaxAvailableLogsDateRange({
   organization: OrganizationResource | null;
 }>) {
   if (!organization || !subscription) {
-    return '24';
+    const defaultMs = 24 * 60 * 60 * 1000; // 24 hours
+    return subMilliseconds(new Date(), defaultMs).getTime().toString();
   }
 
   const lastAvailableLogsFilter = buildLogsDateFilters({
@@ -57,5 +61,10 @@ export function getMaxAvailableLogsDateRange({
     .filter((option) => !option.disabled)
     .at(-1);
 
-  return lastAvailableLogsFilter?.value ?? '24';
+  return (
+    lastAvailableLogsFilter?.value ??
+    subMilliseconds(new Date(), 24 * 60 * 60 * 1000)
+      .getTime()
+      .toString()
+  );
 }

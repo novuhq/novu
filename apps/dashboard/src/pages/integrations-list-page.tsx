@@ -30,9 +30,9 @@ export function IntegrationsListPage() {
         </h1>
       }
     >
-      <Tabs defaultValue="providers">
+      <Tabs defaultValue="providers" className="-mx-2">
         <div className="border-neutral-alpha-200 flex items-center justify-between border-b">
-          <TabsList variant="regular" className="border-b-0 border-t-2 border-transparent p-0 !px-2">
+          <TabsList variant="regular" className="border-b-0 border-transparent p-0 !px-2">
             <TabsTrigger value="providers" variant="regular" size="xl">
               Providers
             </TabsTrigger>
@@ -58,7 +58,7 @@ export function IntegrationsListPage() {
             variant="primary"
             mode="gradient"
             onClick={onAddIntegrationClickCallback}
-            className="my-1.5 mr-2.5"
+            className="mr-2.5"
           >
             Connect Provider
           </PermissionButton>

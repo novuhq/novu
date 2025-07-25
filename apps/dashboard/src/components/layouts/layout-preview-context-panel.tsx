@@ -8,6 +8,8 @@ import { clearSubscriberData, loadSubscriberData, saveSubscriberData } from './u
 import { useLayoutEditor } from './layout-editor-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { createSubscriberData } from '../workflow-editor/steps/utils/preview-context.utils';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
 
 type ParsedData = { subscriber: Partial<SubscriberDto> };
 
@@ -26,6 +28,7 @@ function parseJsonValue(value: string): ParsedData {
 
 export const LayoutPreviewContextPanel = () => {
   const { layout, previewContextValue, setPreviewContextValue } = useLayoutEditor();
+  const { data: organizationSettings, isLoading: isOrgSettingsLoading } = useFetchOrganizationSettings();
   const { currentEnvironment } = useEnvironment();
 
   const { accordionValue, setAccordionValue, errors, localParsedData, updateJsonSection } = usePreviewContext({
@@ -42,6 +45,17 @@ export const LayoutPreviewContextPanel = () => {
       }
     },
   });
+
+  const createDefaultSubscriberData = useDefaultSubscriberData(undefined, organizationSettings?.data?.defaultLocale);
+
+  // Initialize default subscriber data if none exists (after data initialization)
+  useEffect(() => {
+    if (!isOrgSettingsLoading && localParsedData.subscriber && Object.keys(localParsedData.subscriber).length === 0) {
+      // No subscriber data exists, create default
+      const defaultSubscriber = createDefaultSubscriberData();
+      updateJsonSection('subscriber', defaultSubscriber);
+    }
+  }, [isOrgSettingsLoading, localParsedData.subscriber, updateJsonSection, createDefaultSubscriberData]);
 
   useEffect(() => {
     if (!layout?._id || !currentEnvironment?._id) {
@@ -66,7 +80,7 @@ export const LayoutPreviewContextPanel = () => {
   const handleClearPersistedSubscriber = () => {
     clearSubscriberData(layout?._id || '', currentEnvironment?._id || '');
 
-    updateJsonSection('subscriber', {});
+    updateJsonSection('subscriber', createDefaultSubscriberData());
   };
 
   const canClearPersisted = !!(layout?._id && currentEnvironment?._id);

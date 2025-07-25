@@ -1,6 +1,7 @@
 import { searchSlashCommands, Variable } from '@maily-to/core/extensions';
 import {
   BlockGroupItem,
+  BlockItem,
   blockquote,
   bulletList,
   button,
@@ -57,6 +58,93 @@ import { ForwardRefExoticComponent } from 'react';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
 
+type BlockType =
+  | 'blockquote'
+  | 'bulletList'
+  | 'button'
+  | 'columns'
+  | 'divider'
+  | 'hardBreak'
+  | 'heading1'
+  | 'heading2'
+  | 'heading3'
+  | 'image'
+  | 'inlineImage'
+  | 'orderedList'
+  | 'repeat'
+  | 'section'
+  | 'spacer'
+  | 'text'
+  | 'cards'
+  | 'headers'
+  | 'footers'
+  | 'digest'
+  | 'htmlCodeBlock';
+
+export type BlockConfig = {
+  highlights: {
+    enabled: boolean;
+    title: string;
+    blocks: Array<{
+      type: BlockType;
+      enabled: boolean;
+      order: number;
+    }>;
+  };
+  allBlocks: {
+    enabled: boolean;
+    title: string;
+    blocks: Array<{
+      type: BlockType;
+      enabled: boolean;
+      order: number;
+    }>;
+    sortAlphabetically: boolean;
+  };
+};
+
+export const DEFAULT_BLOCK_CONFIG: BlockConfig = {
+  highlights: {
+    enabled: true,
+    title: 'Highlights',
+    blocks: [
+      { type: 'cards', enabled: true, order: 0 },
+      { type: 'htmlCodeBlock', enabled: true, order: 1 },
+      { type: 'headers', enabled: true, order: 2 },
+      { type: 'footers', enabled: true, order: 3 },
+      { type: 'digest', enabled: true, order: 4 },
+    ],
+  },
+  allBlocks: {
+    enabled: true,
+    title: 'All blocks',
+    blocks: [
+      { type: 'blockquote', enabled: true, order: 0 },
+      { type: 'bulletList', enabled: true, order: 1 },
+      { type: 'button', enabled: true, order: 2 },
+      { type: 'cards', enabled: true, order: 3 },
+      { type: 'columns', enabled: true, order: 4 },
+      { type: 'digest', enabled: true, order: 4 },
+      { type: 'divider', enabled: true, order: 5 },
+      { type: 'footers', enabled: true, order: 3 },
+      { type: 'hardBreak', enabled: true, order: 6 },
+      { type: 'headers', enabled: true, order: 2 },
+      { type: 'heading1', enabled: true, order: 7 },
+      { type: 'heading2', enabled: true, order: 8 },
+      { type: 'heading3', enabled: true, order: 9 },
+      { type: 'htmlCodeBlock', enabled: true, order: 1 },
+      { type: 'image', enabled: true, order: 10 },
+      { type: 'inlineImage', enabled: true, order: 11 },
+      { type: 'orderedList', enabled: true, order: 12 },
+      { type: 'repeat', enabled: true, order: 13 },
+      { type: 'section', enabled: true, order: 14 },
+      { type: 'spacer', enabled: true, order: 15 },
+      { type: 'text', enabled: true, order: 16 },
+    ],
+    sortAlphabetically: true,
+  },
+};
+
 declare module '@tiptap/core' {
   interface ButtonAttributes extends MailyButtonAttributes {
     aliasFor: string | null;
@@ -107,52 +195,91 @@ export const DEFAULT_EDITOR_CONFIG = {
 export const createEditorBlocks = (props: {
   track: ReturnType<typeof useTelemetry>;
   digestStepBeforeCurrent?: StepResponseDto;
+  blockConfig?: Partial<BlockConfig>;
 }): BlockGroupItem[] => {
-  const { track, digestStepBeforeCurrent } = props;
+  const { track, digestStepBeforeCurrent, blockConfig: userConfig } = props;
+
+  // Merge user config with defaults
+  const config: BlockConfig = {
+    highlights: { ...DEFAULT_BLOCK_CONFIG.highlights, ...userConfig?.highlights },
+    allBlocks: { ...DEFAULT_BLOCK_CONFIG.allBlocks, ...userConfig?.allBlocks },
+  };
+
   const blocks: BlockGroupItem[] = [];
 
-  const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
+  // Create block type to command mapping for highlights
+  const blocksMap: Record<BlockType, () => BlockItem | null> = {
+    cards: () => createCards({ track }),
+    htmlCodeBlock: () => createHtmlCodeBlock({ track }),
+    headers: () => createHeaders({ track }),
+    footers: () => createFooters({ track }),
+    digest: () => (digestStepBeforeCurrent ? createDigestBlock({ track, digestStepBeforeCurrent }) : null),
+    blockquote: () => blockquote,
+    bulletList: () => bulletList,
+    button: () => button,
+    columns: () => columns,
+    divider: () => divider,
+    hardBreak: () => hardBreak,
+    heading1: () => heading1,
+    heading2: () => heading2,
+    heading3: () => heading3,
+    image: () => image,
+    inlineImage: () => inlineImage,
+    orderedList: () => orderedList,
+    repeat: () => repeat,
+    section: () => section,
+    spacer: () => spacer,
+    text: () => text,
+  };
 
-  highlightBlocks.unshift(createCards({ track }));
+  // Build highlights section
+  if (config.highlights.enabled) {
+    const enabledHighlightBlocks = config.highlights.blocks
+      .filter((block) => block.enabled)
+      .filter((block) => block.type !== 'digest' || digestStepBeforeCurrent) // Only include digest if available
+      .sort((a, b) => a.order - b.order)
+      .map((blockConfig) => {
+        const createCommand = blocksMap[blockConfig.type];
+        return createCommand?.();
+      })
+      .filter((command): command is NonNullable<typeof command> => command !== null);
 
-  if (digestStepBeforeCurrent) {
-    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+    if (enabledHighlightBlocks.length > 0) {
+      blocks.push({
+        title: config.highlights.title,
+        commands: enabledHighlightBlocks,
+      });
+    }
   }
 
-  blocks.push({
-    title: 'Highlights',
-    commands: highlightBlocks,
-  });
+  // Build all blocks section
+  if (config.allBlocks.enabled) {
+    const allBlockCommands = [];
 
-  const allBlocks = [
-    blockquote,
-    bulletList,
-    button,
-    columns,
-    divider,
-    hardBreak,
-    heading1,
-    heading2,
-    heading3,
-    image,
-    inlineImage,
-    orderedList,
-    repeat,
-    section,
-    spacer,
-    text,
-    ...highlightBlocks,
-  ];
+    // Add base blocks
+    const enabledBaseBlocks = config.allBlocks.blocks
+      .filter((block) => block.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((blockConfig) => {
+        const createCommand = blocksMap[blockConfig.type];
+        return createCommand?.();
+      })
+      .filter((el) => !!el);
 
-  blocks.push({
-    title: 'All blocks',
-    commands: allBlocks,
-  });
+    allBlockCommands.push(...enabledBaseBlocks);
 
-  // sort command titles alphabetically within each block group
-  blocks.forEach((blockGroup) => {
-    blockGroup.commands.sort((a, b) => a.title.localeCompare(b.title));
-  });
+    // Sort alphabetically if enabled
+    if (config.allBlocks.sortAlphabetically) {
+      allBlockCommands.sort((a, b) => a?.title?.localeCompare(b?.title ?? '') ?? 0);
+    }
+
+    if (allBlockCommands.length > 0) {
+      blocks.push({
+        title: config.allBlocks.title,
+        commands: allBlockCommands,
+      });
+    }
+  }
 
   return blocks;
 };

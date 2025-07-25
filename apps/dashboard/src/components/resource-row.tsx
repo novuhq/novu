@@ -1,5 +1,4 @@
-import { RiRouteFill, RiDashboardLine, RiTranslate2 } from 'react-icons/ri';
-import { Avatar, AvatarFallback } from './primitives/avatar';
+import { RiRouteFill, RiTranslate2, RiLayout5Line } from 'react-icons/ri';
 import { formatDateSimple } from '@/utils/format-date';
 import type { IResourceDiffResult } from '@/api/environments';
 
@@ -13,7 +12,7 @@ export function ResourceRow({ resource }: ResourceRowProps) {
       case 'workflow':
         return RiRouteFill;
       case 'layout':
-        return RiDashboardLine;
+        return RiLayout5Line;
       case 'translation':
         return RiTranslate2;
       default:

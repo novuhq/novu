@@ -28,7 +28,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex h-full flex-col', className)} {...rest}>
       <div className="flex items-center justify-between">
         <SubscribersFilters
           onFiltersChange={handleFiltersChange}

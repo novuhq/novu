@@ -145,7 +145,7 @@ export function WebhooksPage() {
   if (currentEnvironment && !currentEnvironment?.webhookAppId) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full flex-col items-center justify-center gap-4 p-4 text-center">
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-2 text-center">
           <div className="bg-muted mb-3 flex h-16 w-16 items-center justify-center rounded-full">
             <RiWebhookLine className="text-muted-foreground h-8 w-8" />
           </div>

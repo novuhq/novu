@@ -16,6 +16,7 @@ import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layo
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { NovuApiError } from '@/api/api.client';
 import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
+import { useDataRef } from '@/hooks/use-data-ref';
 
 const toastOptions: ExternalToast = {
   duration: 5000,
@@ -42,6 +43,7 @@ export const LayoutEditorContext = createContext<LayoutContextType>({} as Layout
 
 export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }) => {
   const [previewContextValue, setPreviewContextValue] = useState('{}');
+  const previewContextValueRef = useDataRef(previewContextValue);
   const { layoutSlug = '' } = useParams<{
     layoutSlug?: string;
   }>();
@@ -73,13 +75,16 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
 
   const { previewData, isPending: isPreviewPending, preview } = useLayoutPreview();
 
-  const debouncedPreview = useDebounce((controlValues: Record<string, unknown>, slug: string) => {
-    preview({
-      layoutSlug: slug,
-      controlValues: { email: { ...controlValues } },
-      previewContextValue,
-    });
-  }, 500);
+  const debouncedPreview = useDebounce(
+    (controlValues: Record<string, unknown>, slug: string, previewContext: string) => {
+      preview({
+        layoutSlug: slug,
+        controlValues: { email: { ...controlValues } },
+        previewContextValue: previewContext,
+      });
+    },
+    500
+  );
 
   const setFormIssues = useCallback(
     (controlIssues?: Record<string, RuntimeIssue[]>) => {
@@ -173,21 +178,25 @@ export const LayoutEditorProvider = ({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const formValues = form.getValues();
-    debouncedPreview(formValues, layoutSlug);
+    debouncedPreview(formValues, layoutSlug, previewContextValue);
 
     const subscription = form.watch((values) => {
-      debouncedPreview(values, layoutSlug);
+      debouncedPreview(values, layoutSlug, previewContextValue);
     });
 
     return () => subscription.unsubscribe();
-  }, [form, debouncedPreview, layoutSlug]);
+  }, [form, debouncedPreview, layoutSlug, previewContextValue]);
 
   useEffect(() => {
     const serverPayloadExample = previewData?.previewPayloadExample;
     if (!serverPayloadExample) return;
 
-    setPreviewContextValue(stringify(serverPayloadExample));
-  }, [previewData?.previewPayloadExample]);
+    const newPreviewContextValue = stringify({ subscriber: serverPayloadExample.subscriber });
+
+    if (previewContextValueRef.current === newPreviewContextValue) return;
+
+    setPreviewContextValue(newPreviewContextValue);
+  }, [previewData?.previewPayloadExample, previewContextValueRef]);
 
   const handleBlockerProceed = useCallback(() => {
     if (blocker.state === 'blocked') {

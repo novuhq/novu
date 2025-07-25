@@ -73,7 +73,11 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    return this.constructFrameworkWorkflow(dbWorkflow, command.skipLayoutRendering);
+    return this.constructFrameworkWorkflow({
+      dbWorkflow,
+      skipLayoutRendering: command.skipLayoutRendering,
+      jobId: command.jobId,
+    });
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
@@ -107,7 +111,15 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructFrameworkWorkflow(dbWorkflow: NotificationTemplateEntity, skipLayoutRendering?: boolean): Workflow {
+  private constructFrameworkWorkflow({
+    dbWorkflow,
+    skipLayoutRendering,
+    jobId,
+  }: {
+    dbWorkflow: NotificationTemplateEntity;
+    skipLayoutRendering?: boolean;
+    jobId?: string;
+  }): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
@@ -120,6 +132,7 @@ export class ConstructFrameworkWorkflow {
             dbWorkflow,
             locale: subscriber.locale ?? undefined,
             skipLayoutRendering,
+            jobId,
           });
         }
       },
@@ -146,6 +159,7 @@ export class ConstructFrameworkWorkflow {
     dbWorkflow,
     locale,
     skipLayoutRendering,
+    jobId,
   }: {
     step: Step;
     staticStep: NotificationStepEntity;
@@ -153,6 +167,7 @@ export class ConstructFrameworkWorkflow {
     dbWorkflow: NotificationTemplateEntity;
     locale?: string;
     skipLayoutRendering?: boolean;
+    jobId?: string;
   }): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
@@ -200,6 +215,7 @@ export class ConstructFrameworkWorkflow {
               workflowId: dbWorkflow._id,
               locale,
               skipLayoutRendering,
+              jobId,
             });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)

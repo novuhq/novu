@@ -44,7 +44,7 @@ export const TranslationsPage = () => {
           </h1>
         }
       >
-        <TranslationList className="px-2.5" />
+        <TranslationList />
         <AnimatedOutlet />
       </DashboardLayout>
     </>

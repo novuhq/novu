@@ -3,7 +3,6 @@ import { getComponentByType } from '@/components/workflow-editor/steps/component
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { cn } from '../../../../utils/ui';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { Code2 } from '@/components/icons/code-2';
 
 type EmailEditorProps = { uiSchema: UiSchema; isEditorV2?: boolean };
 
@@ -34,11 +33,7 @@ export const EmailEditor = (props: EmailEditorProps) => {
 
         <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
         {isLayoutsPageActive && (
-          <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-0.5">
-            <div className="px-[5px] py-1">
-              <Code2 className="size-3.5" />
-            </div>
-            <span className="h-[22px] w-px border-r border-neutral-100" />
+          <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-1">
             {getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
           </div>
         )}

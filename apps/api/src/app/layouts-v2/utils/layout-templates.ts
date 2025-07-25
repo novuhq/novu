@@ -3,6 +3,11 @@ export const EMPTY_LAYOUT = {
   content: [
     {
       type: 'paragraph',
+      attrs: { textAlign: null, showIfKey: null },
+      content: [{ type: 'text', text: ' ' }],
+    },
+    {
+      type: 'paragraph',
       attrs: { textAlign: 'left', showIfKey: null },
       content: [
         {
@@ -16,6 +21,11 @@ export const EMPTY_LAYOUT = {
           },
         },
       ],
+    },
+    {
+      type: 'paragraph',
+      attrs: { textAlign: null, showIfKey: null },
+      content: [{ type: 'text', text: ' ' }],
     },
   ],
 };

@@ -3,7 +3,14 @@ import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-t
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Liquid } from 'liquidjs';
-import { ControlValuesLevelEnum, EmailRenderOutput, FeatureFlagsKeysEnum, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
+import {
+  ControlValuesLevelEnum,
+  EmailRenderOutput,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
+  LAYOUT_CONTENT_VARIABLE,
+} from '@novu/shared';
 import {
   InstrumentUsecase,
   sanitizeHTML,
@@ -11,9 +18,12 @@ import {
   PinoLogger,
   EmailControlType,
   LayoutControlType,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
 } from '@novu/application-generic';
 import { createLiquidEngine } from '@novu/framework/internal';
-import { ControlValuesEntity, ControlValuesRepository } from '@novu/dal';
+import { ControlValuesEntity, ControlValuesRepository, JobRepository } from '@novu/dal';
 
 import { FullPayloadForRender, RenderCommand } from './render-command';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
@@ -42,6 +52,7 @@ export class EmailOutputRendererCommand extends RenderCommand {
   workflowId?: string;
   locale?: string;
   skipLayoutRendering?: boolean;
+  jobId?: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -64,7 +75,9 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     protected logger: PinoLogger,
     protected featureFlagsService: FeatureFlagsService,
     private controlValuesRepository: ControlValuesRepository,
-    private getLayoutUseCase: GetLayoutUseCase
+    private getLayoutUseCase: GetLayoutUseCase,
+    private jobRepository: JobRepository,
+    private createExecutionDetails: CreateExecutionDetails
   ) {
     super(moduleRef, logger, featureFlagsService);
     this.liquidEngine = createLiquidEngine();
@@ -92,7 +105,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       };
     }
 
-    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale, skipLayoutRendering } =
+    const { fullPayloadForRender, environmentId, organizationId, workflowId, locale, skipLayoutRendering, jobId } =
       renderCommand;
 
     const isLayoutsPageActive = await this.featureFlagsService.getFlag({
@@ -124,6 +137,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         workflowId,
         locale,
         skipLayoutRendering,
+        jobId,
       });
     } else {
       renderedHtml = await this.processBodyContent({
@@ -162,6 +176,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     workflowId,
     locale,
     skipLayoutRendering,
+    jobId,
   }: {
     body: string;
     layoutId?: string | null;
@@ -171,6 +186,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     workflowId?: string;
     locale?: string;
     skipLayoutRendering?: boolean;
+    jobId?: string;
   }): Promise<string> {
     let layoutControlsEntity: ControlValuesEntity | null = null;
     // if the step control values have a layoutId then find layout controls entity
@@ -190,6 +206,31 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         _layoutId: layout._id,
         level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
       });
+
+      if (jobId) {
+        const job = await this.jobRepository.findOne({
+          _id: jobId,
+          _environmentId: environmentId,
+        });
+
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_SELECTED,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.PENDING,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({ name: layout.name, layoutId: layout.layoutId }),
+              })
+            )
+            .catch((error) => {
+              this.logger.error({ err: error }, 'Failed to create execution details');
+            });
+        }
+      }
     }
 
     const stepBodyHtml = await this.processBodyContent({

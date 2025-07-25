@@ -54,7 +54,7 @@ export const VercelIntegrationPage = () => {
   ) {
     return (
       <DashboardLayout showSideNavigation={false} showBridgeUrl={false}>
-        <div className="flex w-full justify-center pt-8">
+        <div className="flex w-full justify-center pt-6">
           <Card className="max-w-[700px] overflow-hidden shadow-none">
             <CardHeader>
               <h1 className="text-foreground-950 flex items-center gap-1">
