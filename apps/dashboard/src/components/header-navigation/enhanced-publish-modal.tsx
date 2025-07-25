@@ -258,11 +258,6 @@ export function EnhancedPublishModal({
           <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-orange-50">
             <RiAlertFill className="h-6 w-6 text-orange-500" />
           </div>
-          <DialogClose asChild>
-            <button className="opacity-70 transition-opacity hover:opacity-100">
-              <RiCloseFill className="h-4 w-4" />
-            </button>
-          </DialogClose>
         </div>
 
         <div className="space-y-1">
@@ -343,9 +338,8 @@ export function EnhancedPublishModal({
             onClick={handleConfirm}
             disabled={getTotalSelectedCount() === 0 || isPublishing}
             isLoading={isPublishing}
-            trailingIcon={RiAlertFill}
           >
-            Publish to {environment?.name} ({getTotalSelectedCount()})
+            Publish to {environment?.name} <span className="text-[#E1E4EA]">({getTotalSelectedCount()})</span>
           </Button>
         </div>
       </DialogContent>
@@ -418,7 +412,7 @@ function ResourceGroupCompact({
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex h-[16px] items-center gap-1">
           <Checkbox
             checked={allSelected}
             onCheckedChange={onGroupToggle}
@@ -503,7 +497,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
 
   const UsageDisplay = () => (
     <div className="flex items-center gap-px">
-      <RiRouteFill className="h-3.5 w-3.5 text-icon-sub" />
+      <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
       <span className="text-xs font-medium leading-3 text-gray-600">{usageCount}</span>
     </div>
   );
@@ -521,7 +515,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
           <div className="mb-1 text-xs font-medium leading-3 text-gray-400">Used in</div>
           {workflowsUsingLayout.map((workflow, index) => (
             <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded bg-gray-50 px-1 py-0.5">
-              <RiRouteFill className="h-3.5 w-3.5 text-icon-sub" />
+              <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
               <div className="flex flex-col text-left leading-tight">
                 <div className="text-xs font-medium leading-[14px] text-gray-600">{workflow.name}</div>
                 <div
@@ -709,15 +703,21 @@ function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProp
             {changeTypes.map((changeType, index) => {
               const IconComponent = getChangeIcon(changeType.action);
               const color = getChangeColor(changeType.action);
-              
+
               return (
                 <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded p-1">
                   <div className={`flex h-[15px] w-[15px] items-center justify-center`}>
-                    <IconComponent className={`h-3 w-3 ${
-                      color === 'green' ? 'text-success-base' :
-                      color === 'orange' ? 'text-warning-base' :
-                      color === 'red' ? 'text-error-base' : 'text-warning-base'
-                    }`} />
+                    <IconComponent
+                      className={`h-3 w-3 ${
+                        color === 'green'
+                          ? 'text-success-base'
+                          : color === 'orange'
+                            ? 'text-warning-base'
+                            : color === 'red'
+                              ? 'text-error-base'
+                              : 'text-warning-base'
+                      }`}
+                    />
                   </div>
                   <div className="flex flex-col justify-center">
                     <div className="font-medium text-gray-600" style={{ fontSize: '10px', lineHeight: '14px' }}>
@@ -745,7 +745,6 @@ function CompactResourceRow({
 }: SelectableResourceRowProps) {
   const displayName = resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
   const slug = displayName.toLowerCase().replace(/\s+/g, '-');
-  const updatedBy = resource.sourceResource?.updatedBy || resource.targetResource?.updatedBy;
   const updatedAt = resource.sourceResource?.updatedAt || resource.targetResource?.updatedAt;
   const hasDependencies = dependencies && dependencies.length > 0;
 
@@ -762,12 +761,19 @@ function CompactResourceRow({
     }
 
     if (summary.modified > 0) {
-      return (
+      const badge = (
         <Badge variant="lighter" size="sm" color="orange">
           <BadgeIcon as={RiGitCommitFill} />
           Modified
         </Badge>
       );
+
+      // Only wrap the modified badge with hover card for workflows
+      if (resource.resourceType === 'workflow') {
+        return <WorkflowHoverCard workflowResource={resource}>{badge}</WorkflowHoverCard>;
+      }
+
+      return badge;
     }
 
     if (summary.deleted > 0) {
@@ -869,28 +875,10 @@ function CompactResourceRow({
       <div className="flex flex-col items-end gap-0.5">
         {getStatusBadge()}
 
-        {updatedBy && (
-          <div className="flex items-center gap-1">
-            <div className="flex items-center gap-1">
-              <div className="h-4 w-4 overflow-hidden rounded-full bg-gray-200">
-                <div className="h-full w-full bg-gray-300" />
-              </div>
-              <span className="text-xs font-medium text-gray-600">{updatedBy.firstName}</span>
-            </div>
-            <div className="h-0.5 w-0.5 rounded-full bg-gray-400" />
-            <span className="text-xs font-medium text-gray-600">
-              {updatedAt ? formatDateSimple(updatedAt) : 'Unknown'}
-            </span>
-          </div>
-        )}
+        {updatedAt && <span className="text-xs font-medium text-gray-600">{formatDateSimple(updatedAt)}</span>}
       </div>
     </div>
   );
-
-  // Only wrap workflow rows with the hover card
-  if (resource.resourceType === 'workflow') {
-    return <WorkflowHoverCard workflowResource={resource}>{rowContent}</WorkflowHoverCard>;
-  }
 
   return rowContent;
 }
