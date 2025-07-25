@@ -135,7 +135,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(secondPage.data[0].payload.runNumber, 'secondPage runNumber').to.be.equal(1);
   });
 
-  it.only('should validate cursor-based pagination collision handling', async () => {
+  it('should validate cursor-based pagination collision handling', async () => {
     await createMultipleWorkflowRunsByDb({
       count: 11,
       workflowId: template.triggers[0].identifier,
