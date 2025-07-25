@@ -26,6 +26,8 @@ import { formatDateSimple } from '@/utils/format-date';
 import type { IEnvironment } from '@novu/shared';
 import type { IResourceDiffResult, IResourceDependency } from '@/api/environments';
 import type { ResourceToPublish } from '@/api/environments';
+import { WorkflowHoverCard } from './workflow-hover-card';
+import { LayoutUsageIndicator } from './layout-usage-indicator';
 
 type EnhancedPublishModalProps = {
   isOpen: boolean;
@@ -254,19 +256,8 @@ export function EnhancedPublishModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg gap-4 p-3">
-        <div className="flex items-start justify-between">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-orange-50">
-            <RiAlertFill className="h-6 w-6 text-orange-500" />
-          </div>
-        </div>
-
-        <div className="space-y-1">
-          <h2 className="text-sm font-medium text-gray-900">Publishing changes to {environment?.name}</h2>
-          <p className="text-xs text-gray-500">
-            You're about to publish changes to {environment?.name}. This may cause breaking behavior. Please review all
-            changes before proceeding.
-          </p>
-        </div>
+        <PublishModalHeader />
+        <PublishModalContent environment={environment} />
 
         <div className="space-y-1.5">
           {workflows.length > 0 && (
@@ -330,22 +321,13 @@ export function EnhancedPublishModal({
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3">
-          <Button variant="secondary" mode="outline" size="2xs" onClick={onClose} disabled={isPublishing}>
-            Cancel
-          </Button>
-
-          <Button
-            variant="primary"
-            mode="gradient"
-            size="2xs"
-            onClick={handleConfirm}
-            disabled={getTotalSelectedCount() === 0 || isPublishing}
-            isLoading={isPublishing}
-          >
-            Publish to {environment?.name} <span className="text-[#E1E4EA]">({getTotalSelectedCount()})</span>
-          </Button>
-        </div>
+        <PublishModalActions
+          environment={environment}
+          totalSelected={getTotalSelectedCount()}
+          isPublishing={isPublishing}
+          onClose={onClose}
+          onConfirm={handleConfirm}
+        />
       </DialogContent>
     </Dialog>
   );
@@ -423,292 +405,6 @@ type SelectableResourceRowProps = {
   dependencyMap?: Map<string, IResourceDependency[]>;
 };
 
-type LayoutUsageIndicatorProps = {
-  layoutResource: IResourceDiffResult;
-  allWorkflows: IResourceDiffResult[];
-  dependencies: Map<string, IResourceDependency[]>;
-};
-
-function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: LayoutUsageIndicatorProps) {
-  const layoutName = layoutResource.sourceResource?.name || layoutResource.targetResource?.name;
-  const layoutId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
-
-  // Find workflows that depend on this layout
-  const workflowsUsingLayout = useMemo(() => {
-    const workflows: Array<{ name: string; slug: string }> = [];
-
-    dependencies.forEach((deps, workflowId) => {
-      const workflow = allWorkflows.find(
-        (w) => w.sourceResource?.id === workflowId || w.targetResource?.id === workflowId
-      );
-
-      if (
-        workflow &&
-        deps.some((dep) => {
-          // Match by resource ID first (most reliable), then by resource name
-          return dep.resourceId === layoutId || dep.resourceName === layoutName;
-        })
-      ) {
-        const workflowName = workflow.sourceResource?.name || workflow.targetResource?.name;
-        const workflowSlug = workflowName?.toLowerCase().replace(/\s+/g, '-');
-
-        if (workflowName && workflowSlug) {
-          workflows.push({ name: workflowName, slug: workflowSlug });
-        }
-      }
-    });
-
-    return workflows;
-  }, [layoutName, layoutId, allWorkflows, dependencies]);
-
-  const usageCount = workflowsUsingLayout.length;
-
-  if (usageCount === 0) {
-    return (
-      <div className="relative flex items-center gap-1 p-0">
-        <span className="text-label-2xs text-text-soft">Not used</span>
-      </div>
-    );
-  }
-
-  const UsageDisplay = () => (
-    <div className="flex items-center gap-px">
-      <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
-      <span className="text-label-2xs text-text-soft">{usageCount}</span>
-    </div>
-  );
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="relative flex cursor-pointer items-center gap-1 p-0">
-          <span className="text-xs font-medium leading-3 text-gray-400">Used in</span>
-          <UsageDisplay />
-        </div>
-      </TooltipTrigger>
-      <TooltipContent side="top" className="rounded-lg border border-gray-200 bg-white p-1.5 pb-1 pt-1.5 shadow-lg">
-        <div className="flex flex-col gap-1">
-          <div className="mb-1 text-xs font-medium leading-3 text-gray-400">Used in</div>
-          {workflowsUsingLayout.map((workflow, index) => (
-            <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded bg-gray-50 px-1 py-0.5">
-              <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
-              <div className="flex flex-col text-left leading-tight">
-                <div className="text-xs font-medium leading-[14px] text-gray-600">{workflow.name}</div>
-                <div
-                  className="font-mono leading-[14px] tracking-tight text-gray-400"
-                  style={{ fontSize: '8px', letterSpacing: '-0.16px' }}
-                >
-                  {workflow.slug}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
-
-type WorkflowChangeType = {
-  type: 'configuration' | 'steps' | 'translations';
-  label: string;
-  action: 'added' | 'modified' | 'deleted';
-  count: number;
-};
-
-type WorkflowHoverCardProps = {
-  workflowResource: IResourceDiffResult;
-  children: React.ReactNode;
-};
-
-function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProps) {
-  const changeTypes = useMemo(() => {
-    const types: WorkflowChangeType[] = [];
-    const { changes } = workflowResource;
-
-    // Track different types of changes
-    let hasWorkflowConfigChanges = false;
-    let hasStepChanges = false;
-    let hasTranslationChanges = false;
-
-    // Count step changes by action
-    const stepActionCounts = { added: 0, modified: 0, deleted: 0, moved: 0 };
-
-    changes.forEach((change) => {
-      if (change.resourceType === 'workflow') {
-        // This is a workflow-level change
-        hasWorkflowConfigChanges = true;
-
-        // Check if it's specifically translation-related
-        if (change.diffs) {
-          const hasTranslationChange =
-            'isTranslationEnabled' in (change.diffs.new || {}) ||
-            'isTranslationEnabled' in (change.diffs.previous || {});
-
-          if (hasTranslationChange) {
-            hasTranslationChanges = true;
-          }
-        }
-      } else if (change.resourceType === 'step') {
-        // This is a step-level change
-        hasStepChanges = true;
-
-        if (change.action && change.action in stepActionCounts) {
-          stepActionCounts[change.action as keyof typeof stepActionCounts]++;
-        }
-      }
-    });
-
-    // Add change types based on what we found
-    if (hasWorkflowConfigChanges) {
-      types.push({
-        type: 'configuration',
-        label: 'Workflow configuration',
-        action: 'modified',
-        count: 1,
-      });
-    }
-
-    if (hasStepChanges) {
-      // Use the most significant action (prioritize: added > modified > deleted > moved)
-      let primaryAction: 'added' | 'modified' | 'deleted' = 'modified';
-      let totalStepChanges = 0;
-
-      if (stepActionCounts.added > 0) {
-        primaryAction = 'added';
-        totalStepChanges = stepActionCounts.added;
-      } else if (stepActionCounts.modified > 0) {
-        primaryAction = 'modified';
-        totalStepChanges = stepActionCounts.modified;
-      } else if (stepActionCounts.deleted > 0) {
-        primaryAction = 'deleted';
-        totalStepChanges = stepActionCounts.deleted;
-      } else {
-        totalStepChanges = stepActionCounts.moved;
-      }
-
-      types.push({
-        type: 'steps',
-        label: 'Steps & content',
-        action: primaryAction,
-        count: totalStepChanges,
-      });
-    }
-
-    if (hasTranslationChanges) {
-      types.push({
-        type: 'translations',
-        label: 'Translations',
-        action: 'added',
-        count: 1,
-      });
-    }
-
-    return types;
-  }, [workflowResource.changes]);
-
-  const getChangeIcon = (action: 'added' | 'modified' | 'deleted') => {
-    switch (action) {
-      case 'added':
-        return RiAddBoxLine;
-      case 'modified':
-        return RiGitCommitFill;
-      case 'deleted':
-        return RiDeleteBin2Line;
-      default:
-        return RiGitCommitFill;
-    }
-  };
-
-  const getChangeColor = (action: 'added' | 'modified' | 'deleted') => {
-    switch (action) {
-      case 'added':
-        return 'green' as const;
-      case 'modified':
-        return 'orange' as const;
-      case 'deleted':
-        return 'red' as const;
-      default:
-        return 'orange' as const;
-    }
-  };
-
-  const getOverallStatus = () => {
-    const { summary } = workflowResource;
-
-    if (summary.added > 0) {
-      return { action: 'added' as const, label: 'Added' };
-    }
-
-    if (summary.modified > 0) {
-      return { action: 'modified' as const, label: 'Modified' };
-    }
-
-    if (summary.deleted > 0) {
-      return { action: 'deleted' as const, label: 'Deleted' };
-    }
-
-    return { action: 'modified' as const, label: 'Modified' };
-  };
-
-  const overallStatus = getOverallStatus();
-
-  if (changeTypes.length === 0) {
-    return <>{children}</>;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{children}</TooltipTrigger>
-      <TooltipContent
-        side="top"
-        className="rounded-lg border border-gray-200 bg-white p-1 shadow-lg"
-        style={{
-          filter: 'drop-shadow(0px 12px 24px rgba(14, 18, 27, 0.06)) drop-shadow(0px 1px 2px rgba(14, 18, 27, 0.03))',
-        }}
-      >
-        <div className="flex flex-col gap-1">
-          {/* Overall status badge */}
-          <Badge variant="lighter" size="sm" color={getChangeColor(overallStatus.action)}>
-            <BadgeIcon as={getChangeIcon(overallStatus.action)} />
-            {overallStatus.label}
-          </Badge>
-
-          {/* Change type details */}
-          <div className="flex flex-col gap-1.5">
-            {changeTypes.map((changeType, index) => {
-              const IconComponent = getChangeIcon(changeType.action);
-              const color = getChangeColor(changeType.action);
-
-              return (
-                <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded p-1">
-                  <div className={`flex h-[15px] w-[15px] items-center justify-center`}>
-                    <IconComponent
-                      className={`h-3 w-3 ${
-                        color === 'green'
-                          ? 'text-success-base'
-                          : color === 'orange'
-                            ? 'text-warning-base'
-                            : color === 'red'
-                              ? 'text-error-base'
-                              : 'text-warning-base'
-                      }`}
-                    />
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <div className="font-medium text-gray-600" style={{ fontSize: '10px', lineHeight: '14px' }}>
-                      {changeType.label}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </TooltipContent>
-    </Tooltip>
-  );
-}
 
 function CompactResourceRow({
   resource,
@@ -724,44 +420,7 @@ function CompactResourceRow({
   const updatedAt = resource.sourceResource?.updatedAt || resource.targetResource?.updatedAt;
   const hasDependencies = dependencies && dependencies.length > 0;
 
-  const getStatusBadge = () => {
-    const summary = resource.summary;
-
-    if (summary.added > 0) {
-      return (
-        <Badge variant="lighter" size="sm" color="green" className="text-label-2xs">
-          <BadgeIcon as={RiAddBoxLine} />
-          Added
-        </Badge>
-      );
-    }
-
-    if (summary.modified > 0) {
-      const badge = (
-        <Badge variant="lighter" size="sm" color="orange" className="text-label-2xs">
-          <BadgeIcon as={RiGitCommitFill} />
-          Modified
-        </Badge>
-      );
-
-      if (resource.resourceType === 'workflow') {
-        return <WorkflowHoverCard workflowResource={resource}>{badge}</WorkflowHoverCard>;
-      }
-
-      return badge;
-    }
-
-    if (summary.deleted > 0) {
-      return (
-        <Badge variant="lighter" size="sm" color="red" className="text-label-2xs">
-          <BadgeIcon as={RiDeleteBin2Line} />
-          Deleted
-        </Badge>
-      );
-    }
-
-    return null;
-  };
+  const statusBadge = <ResourceStatusBadge resource={resource} />;
 
   const rowContent = (
     <div className="flex items-center gap-1.5 p-1">
@@ -847,7 +506,7 @@ function CompactResourceRow({
       </div>
 
       <div className="flex flex-col items-end gap-1.5">
-        {getStatusBadge()}
+        {statusBadge}
 
         {updatedAt && <span className="text-label-2xs text-text-sub">{formatDateSimple(updatedAt)}</span>}
       </div>
@@ -855,4 +514,99 @@ function CompactResourceRow({
   );
 
   return rowContent;
+}
+
+// Extracted Components
+function ResourceStatusBadge({ resource }: { resource: IResourceDiffResult }) {
+  const summary = resource.summary;
+
+  if (summary.added > 0) {
+    return (
+      <Badge variant="lighter" size="sm" color="green" className="text-label-2xs">
+        <BadgeIcon as={RiAddBoxLine} />
+        Added
+      </Badge>
+    );
+  }
+
+  if (summary.modified > 0) {
+    const badge = (
+      <Badge variant="lighter" size="sm" color="orange" className="text-label-2xs">
+        <BadgeIcon as={RiGitCommitFill} />
+        Modified
+      </Badge>
+    );
+
+    if (resource.resourceType === 'workflow') {
+      return <WorkflowHoverCard workflowResource={resource}>{badge}</WorkflowHoverCard>;
+    }
+
+    return badge;
+  }
+
+  if (summary.deleted > 0) {
+    return (
+      <Badge variant="lighter" size="sm" color="red" className="text-label-2xs">
+        <BadgeIcon as={RiDeleteBin2Line} />
+        Deleted
+      </Badge>
+    );
+  }
+
+  return null;
+}
+
+function PublishModalHeader() {
+  return (
+    <div className="flex items-start justify-between">
+      <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-orange-50">
+        <RiAlertFill className="h-6 w-6 text-orange-500" />
+      </div>
+    </div>
+  );
+}
+
+function PublishModalContent({ environment }: { environment: IEnvironment }) {
+  return (
+    <div className="space-y-1">
+      <h2 className="text-sm font-medium text-gray-900">Publishing changes to {environment?.name}</h2>
+      <p className="text-xs text-gray-500">
+        You're about to publish changes to {environment?.name}. This may cause breaking behavior. Please review all
+        changes before proceeding.
+      </p>
+    </div>
+  );
+}
+
+function PublishModalActions({
+  environment,
+  totalSelected,
+  isPublishing,
+  onClose,
+  onConfirm,
+}: {
+  environment: IEnvironment;
+  totalSelected: number;
+  isPublishing: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="flex items-center justify-end gap-3">
+      <Button variant="secondary" mode="outline" size="2xs" onClick={onClose} disabled={isPublishing}>
+        Cancel
+      </Button>
+
+      <Button
+        variant="primary"
+        mode="gradient"
+        size="2xs"
+        onClick={onConfirm}
+        disabled={totalSelected === 0 || isPublishing}
+        isLoading={isPublishing}
+      >
+        Publish to {environment?.name} <span className="text-[#E1E4EA]">({totalSelected})</span>
+      </Button>
+    </div>
+  );
 }
