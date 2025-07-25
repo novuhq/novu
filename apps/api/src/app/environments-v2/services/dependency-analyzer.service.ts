@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
+import { ControlValuesRepository, LayoutRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 import {
   IDiffResult,
@@ -15,7 +15,8 @@ export class DependencyAnalyzerService {
   constructor(
     private logger: PinoLogger,
     private controlValuesRepository: ControlValuesRepository,
-    private layoutRepository: LayoutRepository
+    private layoutRepository: LayoutRepository,
+    private workflowRepository: NotificationTemplateRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -226,11 +227,23 @@ export class DependencyAnalyzerService {
         if (!workflowId || processedWorkflowIds.has(workflowId)) continue;
         processedWorkflowIds.add(workflowId);
 
+        // Fetch the actual workflow to get its name
+        const workflow = await this.workflowRepository.findOne({
+          _environmentId: targetEnvId,
+          _organizationId: organizationId,
+          _id: workflowId,
+        });
+
+        if (!workflow) {
+          this.logger.warn(`Workflow ${workflowId} not found in target environment`);
+          continue;
+        }
+
         // Create a dependency showing this layout cannot be deleted because it's used by a workflow in target
         const dependency: IResourceDependency = {
           resourceType: ResourceTypeEnum.WORKFLOW,
-          resourceId: workflowId,
-          resourceName: `Workflow using layout ${deletedLayoutDiff.targetResource.name}`,
+          resourceId: workflow.triggers?.[0]?.identifier!,
+          resourceName: workflow.name,
           isBlocking: true,
           reason: DependencyReasonEnum.LAYOUT_REQUIRED_FOR_WORKFLOW,
         };
@@ -301,6 +314,18 @@ export class DependencyAnalyzerService {
   ): Promise<IResourceDependency | null> {
     this.logger.debug(`Creating layout dependency for layoutId: ${layoutId}`);
 
+    const layoutDiff = layoutResourceByIdMap.get(layoutId);
+
+    /*
+     * If the layout is being deleted (exists in target but not in source),
+     * don't create a dependency for the workflow
+     */
+    if (layoutDiff?.summary?.deleted && layoutDiff.summary.deleted > 0) {
+      this.logger.debug(`Layout ${layoutId} is being deleted - not creating dependency for workflow`);
+
+      return null;
+    }
+
     const targetLayout = await this.layoutRepository.findOne({
       _environmentId: targetEnvId,
       _organizationId: organizationId,
@@ -308,8 +333,6 @@ export class DependencyAnalyzerService {
     });
 
     this.logger.debug(`Layout ${layoutId} exists in target environment: ${!!targetLayout}`);
-
-    const layoutDiff = layoutResourceByIdMap.get(layoutId);
 
     this.logger.debug(
       `Layout ${layoutId} found in diff results: ${!!layoutDiff} (added: ${layoutDiff?.summary?.added || 0})`
@@ -341,11 +364,14 @@ export class DependencyAnalyzerService {
       return true;
     }
 
-    // If layout is being deleted in the diff, it's blocking
+    /*
+     * If layout is being deleted in the diff, it's NOT blocking for workflows
+     * Workflows can function without a specific layout (they can use another layout or null)
+     */
     if (layoutDiff?.summary?.deleted && layoutDiff.summary.deleted > 0) {
-      this.logger.debug('Dependency is blocking: layout is being deleted');
+      this.logger.debug('Layout is being deleted, but workflow can function without it - not blocking');
 
-      return true;
+      return false;
     }
 
     // If layout doesn't exist in target at all (and not in diff), it's blocking

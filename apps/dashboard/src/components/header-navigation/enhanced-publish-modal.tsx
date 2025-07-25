@@ -67,14 +67,27 @@ export function EnhancedPublishModal({
     const workflowResources = diffData.resources.filter((r) => r.resourceType === 'workflow');
     const layoutResources = diffData.resources.filter((r) => r.resourceType === 'layout');
 
-    // Build dependency map for quick lookup
+    // Build dependency map for quick lookup (include both workflows and layouts)
     const depMap = new Map<string, IResourceDependency[]>();
+
+    // Add workflow dependencies
     workflowResources.forEach((workflow) => {
       if (workflow.dependencies?.length) {
         const workflowId = workflow.sourceResource?.id || workflow.targetResource?.id;
 
         if (workflowId) {
           depMap.set(workflowId, workflow.dependencies);
+        }
+      }
+    });
+
+    // Add layout dependencies to the map as well
+    layoutResources.forEach((layout) => {
+      if (layout.dependencies?.length) {
+        const layoutId = layout.sourceResource?.id || layout.targetResource?.id;
+
+        if (layoutId) {
+          depMap.set(layoutId, layout.dependencies);
         }
       }
     });
@@ -96,31 +109,57 @@ export function EnhancedPublishModal({
         updated[id] = { ...updated[id], disabled: false };
       });
 
-      // Apply dependency rules based on currently selected workflows
-      Object.entries(updated).forEach(([workflowId, workflowState]) => {
-        if (workflowState.selected && workflowState.resource.resourceType === 'workflow') {
-          const dependencies = dependencyMap.get(workflowId);
+      // Check dependencies for all selected resources (both workflows and layouts)
+      Object.entries(updated).forEach(([resourceId, resourceState]) => {
+        if (resourceState.selected) {
+          // Get dependencies from the resource itself
+          const resourceDependencies = resourceState.resource.dependencies;
 
-          if (dependencies) {
-            dependencies.forEach((dep: IResourceDependency) => {
-              // Find the dependent layout and mark as disabled if blocking
-              Object.entries(updated).forEach(([layoutId, layoutState]) => {
-                if (layoutState.resource.resourceType === 'layout' && dep.isBlocking) {
-                  const layoutResource = layoutState.resource;
-                  const layoutResourceId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
+          if (resourceDependencies && resourceDependencies.length > 0) {
+            resourceDependencies.forEach((dep: IResourceDependency) => {
+              if (dep.isBlocking) {
+                // Find the dependent resource by ID and mark it as selected and disabled
+                Object.entries(updated).forEach(([depResourceId, depResourceState]) => {
+                  const depResource = depResourceState.resource;
+                  const depResourceActualId = depResource.sourceResource?.id || depResource.targetResource?.id;
 
-                  const matchesById = layoutResourceId === dep.resourceId;
-
-                  if (matchesById) {
-                    updated[layoutId] = {
-                      ...updated[layoutId],
+                  if (depResourceActualId === dep.resourceId) {
+                    updated[depResourceId] = {
+                      ...updated[depResourceId],
                       selected: true,
                       disabled: true,
                     };
                   }
-                }
-              });
+                });
+              }
             });
+          }
+
+          // Also check if this is a workflow with dependencies (original logic)
+          if (resourceState.resource.resourceType === 'workflow') {
+            const dependencies = dependencyMap.get(resourceId);
+
+            if (dependencies) {
+              dependencies.forEach((dep: IResourceDependency) => {
+                // Find the dependent layout and mark as disabled if blocking
+                Object.entries(updated).forEach(([layoutId, layoutState]) => {
+                  if (layoutState.resource.resourceType === 'layout' && dep.isBlocking) {
+                    const layoutResource = layoutState.resource;
+                    const layoutResourceId = layoutResource.sourceResource?.id || layoutResource.targetResource?.id;
+
+                    const matchesById = layoutResourceId === dep.resourceId;
+
+                    if (matchesById) {
+                      updated[layoutId] = {
+                        ...updated[layoutId],
+                        selected: true,
+                        disabled: true,
+                      };
+                    }
+                  }
+                });
+              });
+            }
           }
         }
       });
@@ -147,7 +186,9 @@ export function EnhancedPublishModal({
       }
     });
 
-    setResourceSelection(calculateDependencyState(initialSelection));
+    // Apply dependency rules to the initial selection
+    const selectionWithDependencies = calculateDependencyState(initialSelection);
+    setResourceSelection(selectionWithDependencies);
   }, [diffData, calculateDependencyState]);
 
   const handleResourceToggle = (resourceId: string) => {
@@ -278,6 +319,7 @@ export function EnhancedPublishModal({
                   selected={resourceSelection[id]?.selected || false}
                   disabled={resourceSelection[id]?.disabled || false}
                   onToggle={() => handleResourceToggle(id)}
+                  dependencies={layout.dependencies}
                   allWorkflows={workflows}
                   dependencyMap={dependencyMap}
                 />
@@ -798,7 +840,7 @@ function CompactResourceRow({
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="rounded bg-gray-900 px-2 py-1 text-xs text-white">
-            This layout is linked to a selected workflow and they must be published together.
+            This resource is required by another selected resource and they must be published together.
           </TooltipContent>
         </Tooltip>
       ) : (
@@ -823,7 +865,18 @@ function CompactResourceRow({
                 <TooltipTrigger>
                   <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
                 </TooltipTrigger>
-                <TooltipContent>Has dependencies</TooltipContent>
+                <TooltipContent>
+                  {dependencies && dependencies.length > 0 && (
+                    <div className="space-y-1">
+                      <div>This layout depends on:</div>
+                      {dependencies.map((dep, idx) => (
+                        <div key={idx} className="text-xs">
+                          - {dep.resourceName} ({dep.resourceType})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TooltipContent>
               </Tooltip>
             )}
           </div>
@@ -837,7 +890,18 @@ function CompactResourceRow({
                   <TooltipTrigger>
                     <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
                   </TooltipTrigger>
-                  <TooltipContent>Has dependencies</TooltipContent>
+                  <TooltipContent>
+                    {dependencies && dependencies.length > 0 && (
+                      <div className="space-y-1">
+                        <div>This workflow depends on:</div>
+                        {dependencies.map((dep, idx) => (
+                          <div key={idx} className="text-xs">
+                            - {dep.resourceName} ({dep.resourceType})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TooltipContent>
                 </Tooltip>
               )}
             </div>

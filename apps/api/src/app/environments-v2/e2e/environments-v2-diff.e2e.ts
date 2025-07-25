@@ -251,6 +251,8 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
 
         expect(workflowResource).to.exist;
         expect(workflowResource.targetResource?.name).to.equal('Test Workflow with Layout Dependency');
+        // Workflow should not have dependencies - it can function without the specific layout
+        expect(workflowResource.dependencies).to.not.exist;
 
         expect(layoutResource).to.exist;
         expect(layoutResource.targetResource?.name).to.equal('Test Layout for Dependencies');
@@ -265,7 +267,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
 
         const workflowDependency = layoutResource.dependencies.find((dep: any) => dep.resourceType === 'workflow');
 
-        expect(workflowDependency.resourceName).to.contain('Workflow using layout');
+        expect(workflowDependency.resourceName).to.equal('Test Workflow with Layout Dependency');
         expect(workflowDependency.isBlocking).to.equal(true);
         expect(workflowDependency.reason).to.be.equal('LAYOUT_REQUIRED_FOR_WORKFLOW');
       });
