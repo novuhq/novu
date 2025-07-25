@@ -21,6 +21,7 @@ export enum FeatureNameEnum {
   PLATFORM_SUPPORT_CHANNELS = 'platformSupportChannel',
   PLATFORM_SUBSCRIBERS = 'platformSubscribers',
   PLATFORM_MAX_WORKFLOWS = 'platformMaxWorkflows',
+  PLATFORM_MAX_LAYOUTS = 'platformMaxLayouts',
   PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN = 'platformGuiBasedWorkflowManagementBoolean',
   PLATFORM_CODE_BASED_WORKFLOW_MANAGEMENT_BOOLEAN = 'platformCodeBasedWorkflowManagementBoolean',
   PLATFORM_SUBSCRIBER_MANAGEMENT_BOOLEAN = 'platformSubscriberManagementBoolean',
@@ -222,6 +223,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.PLATFORM_MAX_WORKFLOWS]: {
     [ApiServiceLevelEnum.FREE]: { value: 20 },
     [ApiServiceLevelEnum.PRO]: { value: 20 },
+    [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+    [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+    [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
+  },
+  [FeatureNameEnum.PLATFORM_MAX_LAYOUTS]: {
+    [ApiServiceLevelEnum.FREE]: { value: 1 },
+    [ApiServiceLevelEnum.PRO]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
     [ApiServiceLevelEnum.BUSINESS]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
     [ApiServiceLevelEnum.ENTERPRISE]: { value: UNLIMITED_VALUE, label: 'Unlimited' },
     [ApiServiceLevelEnum.UNLIMITED]: { value: UNLIMITED_VALUE, label: 'Unlimited' },

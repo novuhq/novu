@@ -2,7 +2,13 @@ import { Injectable, ConflictException, BadRequestException } from '@nestjs/comm
 
 import { ControlSchemas, LayoutEntity, LayoutRepository } from '@novu/dal';
 import { isReservedVariableName, ResourceTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { AnalyticsService, ContentService, layoutControlSchema, layoutUiSchema } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  ContentService,
+  layoutControlSchema,
+  layoutUiSchema,
+  ResourceValidatorService,
+} from '@novu/application-generic';
 
 import { CreateLayoutCommand } from './create-layout.command';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
@@ -16,12 +22,15 @@ export class CreateLayoutUseCase {
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
     private layoutRepository: LayoutRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   async execute(command: CreateLayoutCommand): Promise<LayoutDto & { _id: string }> {
     const isV2Layout =
       command.origin === ResourceOriginEnum.NOVU_CLOUD || command.origin === ResourceOriginEnum.EXTERNAL;
+    await this.resourceValidatorService.validateLayoutsLimit(command.environmentId, isV2Layout);
+
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content ?? '');
     const hasBody = command.content?.includes('{{{body}}}');
     if (!hasBody && !isV2Layout) {

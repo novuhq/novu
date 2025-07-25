@@ -3,6 +3,7 @@ import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
   EnvironmentRepository,
+  LayoutRepository,
   NotificationTemplateRepository,
   OrganizationEntity,
 } from '@novu/dal';
@@ -12,6 +13,8 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
   getFeatureForTierAsNumber,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   UNLIMITED_VALUE,
 } from '@novu/shared';
 
@@ -31,6 +34,7 @@ const DEMO_WORKFLOWS_IDENTIFIER = [
 /* The absolute maximum values allowed by the system */
 export const SYSTEM_LIMITS = {
   WORKFLOWS: 100,
+  LAYOUTS: 100,
   STEPS_PER_WORKFLOW: 20,
   DEFER_DURATION_MS: 180 * DAY_IN_MS,
 } as const;
@@ -38,6 +42,7 @@ export const SYSTEM_LIMITS = {
 /* The threshold below which validation is skipped */
 export const MIN_VALIDATION_LIMITS = {
   WORKFLOWS: 20,
+  LAYOUTS: 1,
   STEPS_PER_WORKFLOW: 20,
   DEFER_DURATION_MS: DAY_IN_MS,
 } as const;
@@ -48,7 +53,8 @@ export class ResourceValidatorService {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private organizationRepository: CommunityOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
-    private featureFlagService: FeatureFlagsService
+    private featureFlagService: FeatureFlagsService,
+    private layoutRepository: LayoutRepository
   ) {}
 
   async validateStepsLimit(environmentId: string, organizationId: string, steps: NotificationStep[]): Promise<void> {
@@ -130,6 +136,76 @@ export class ResourceValidatorService {
       environment,
       organization,
     });
+  }
+
+  async validateLayoutsLimit(environmentId: string, isV2Layout: boolean): Promise<void> {
+    let layoutsCount = 0;
+    if (isV2Layout) {
+      layoutsCount = await this.layoutRepository.count({
+        _environmentId: environmentId,
+        type: ResourceTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+      });
+    } else {
+      layoutsCount = await this.layoutRepository.count({
+        _environmentId: environmentId,
+        type: { $exists: false },
+        origin: { $exists: false },
+      });
+    }
+
+    if (layoutsCount < MIN_VALIDATION_LIMITS.LAYOUTS) {
+      return;
+    }
+
+    const environment = await this.getEnvironment(environmentId);
+    const organization = await this.getOrganization(environment._organizationId);
+    const maxLayoutsLimit = await this.getLayoutLimit(environment, organization, layoutsCount);
+
+    if (layoutsCount >= maxLayoutsLimit) {
+      throw new BadRequestException({
+        message: 'Layout limit exceeded. Please contact us to support more layouts.',
+        currentCount: layoutsCount,
+        limit: maxLayoutsLimit,
+      });
+    }
+  }
+
+  private async getLayoutLimit(environment: EnvironmentEntity, organization: OrganizationEntity, layoutsCount: number) {
+    const maxLayoutsTierLimit = await this.getMaxLayoutsTierLimit(organization);
+    if (layoutsCount >= maxLayoutsTierLimit && organization.apiServiceLevel === ApiServiceLevelEnum.FREE) {
+      return maxLayoutsTierLimit;
+    }
+
+    const systemLimitMaxLayouts = await this.getMaxLayoutsSystemLimit(environment, organization);
+    // If the system limit is not the default, we need to use it as the absolute limit for special cases instead of the tier limit
+    const isSpecialLimit = systemLimitMaxLayouts !== SYSTEM_LIMITS.LAYOUTS;
+    if (isSpecialLimit) {
+      return systemLimitMaxLayouts;
+    }
+
+    return Math.min(systemLimitMaxLayouts, maxLayoutsTierLimit);
+  }
+
+  private async getMaxLayoutsSystemLimit(environment, organization) {
+    return await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_LAYOUT_LIMIT_NUMBER,
+      defaultValue: SYSTEM_LIMITS.LAYOUTS,
+      environment,
+      organization,
+    });
+  }
+
+  private async getMaxLayoutsTierLimit(organization) {
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return UNLIMITED_VALUE;
+    }
+
+    return getFeatureForTierAsNumber(
+      FeatureNameEnum.PLATFORM_MAX_LAYOUTS,
+      organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
+      false
+    );
   }
 
   private async getEnvironment(environmentId: string) {
