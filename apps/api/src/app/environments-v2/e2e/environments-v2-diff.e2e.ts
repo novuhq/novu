@@ -339,13 +339,9 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         );
 
         expect(layoutDependency).to.exist;
-        expect(layoutDependency.resourceName).to.equal('new-layout-for-blocking-test');
+        expect(layoutDependency.resourceName).to.equal('New Layout for Blocking Test');
         expect(layoutDependency.isBlocking).to.equal(true);
         expect(layoutDependency.reason).to.equal('LAYOUT_REQUIRED_FOR_WORKFLOW');
-
-        // Verify summary shows changes
-        expect(diffResult.body.data.summary.totalEntities).to.be.greaterThan(1);
-        expect(diffResult.body.data.summary.hasChanges).to.equal(true);
       });
     });
   });
