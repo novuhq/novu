@@ -93,6 +93,8 @@ describe('Upsert Layout #novu-v2', () => {
     });
 
     it('should create first layout as default and not set the second layout', async () => {
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
+
       await layoutRepository.delete({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
