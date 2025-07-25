@@ -269,61 +269,65 @@ export function EnhancedPublishModal({
         </div>
 
         <div className="space-y-1.5">
-          <ResourceGroupCompact
-            title="Workflows"
-            count={workflows.length}
-            selectedCount={getSelectedCount('workflow')}
-            isExpanded={workflowsExpanded}
-            onToggle={() => setWorkflowsExpanded(!workflowsExpanded)}
-            onGroupToggle={() => handleGroupToggle('workflow')}
-            icon={RiRouteFill}
-          >
-            {workflows.map((workflow) => {
-              const id = workflow.sourceResource?.id || workflow.targetResource?.id;
-              if (!id) return null;
+          {workflows.length > 0 && (
+            <ResourceGroupCompact
+              title="Workflows"
+              count={workflows.length}
+              selectedCount={getSelectedCount('workflow')}
+              isExpanded={workflowsExpanded}
+              onToggle={() => setWorkflowsExpanded(!workflowsExpanded)}
+              onGroupToggle={() => handleGroupToggle('workflow')}
+              icon={RiRouteFill}
+            >
+              {workflows.map((workflow) => {
+                const id = workflow.sourceResource?.id || workflow.targetResource?.id;
+                if (!id) return null;
 
-              return (
-                <CompactResourceRow
-                  key={id}
-                  resource={workflow}
-                  selected={resourceSelection[id]?.selected || false}
-                  disabled={resourceSelection[id]?.disabled || false}
-                  onToggle={() => handleResourceToggle(id)}
-                  dependencies={dependencyMap.get(id)}
-                  allWorkflows={workflows}
-                  dependencyMap={dependencyMap}
-                />
-              );
-            })}
-          </ResourceGroupCompact>
+                return (
+                  <CompactResourceRow
+                    key={id}
+                    resource={workflow}
+                    selected={resourceSelection[id]?.selected || false}
+                    disabled={resourceSelection[id]?.disabled || false}
+                    onToggle={() => handleResourceToggle(id)}
+                    dependencies={dependencyMap.get(id)}
+                    allWorkflows={workflows}
+                    dependencyMap={dependencyMap}
+                  />
+                );
+              })}
+            </ResourceGroupCompact>
+          )}
 
-          <ResourceGroupCompact
-            title="Layouts"
-            count={layouts.length}
-            selectedCount={getSelectedCount('layout')}
-            isExpanded={layoutsExpanded}
-            onToggle={() => setLayoutsExpanded(!layoutsExpanded)}
-            onGroupToggle={() => handleGroupToggle('layout')}
-            icon={RiDashboardLine}
-          >
-            {layouts.map((layout) => {
-              const id = layout.sourceResource?.id || layout.targetResource?.id;
-              if (!id) return null;
+          {layouts.length > 0 && (
+            <ResourceGroupCompact
+              title="Layouts"
+              count={layouts.length}
+              selectedCount={getSelectedCount('layout')}
+              isExpanded={layoutsExpanded}
+              onToggle={() => setLayoutsExpanded(!layoutsExpanded)}
+              onGroupToggle={() => handleGroupToggle('layout')}
+              icon={RiDashboardLine}
+            >
+              {layouts.map((layout) => {
+                const id = layout.sourceResource?.id || layout.targetResource?.id;
+                if (!id) return null;
 
-              return (
-                <CompactResourceRow
-                  key={id}
-                  resource={layout}
-                  selected={resourceSelection[id]?.selected || false}
-                  disabled={resourceSelection[id]?.disabled || false}
-                  onToggle={() => handleResourceToggle(id)}
-                  dependencies={layout.dependencies}
-                  allWorkflows={workflows}
-                  dependencyMap={dependencyMap}
-                />
-              );
-            })}
-          </ResourceGroupCompact>
+                return (
+                  <CompactResourceRow
+                    key={id}
+                    resource={layout}
+                    selected={resourceSelection[id]?.selected || false}
+                    disabled={resourceSelection[id]?.disabled || false}
+                    onToggle={() => handleResourceToggle(id)}
+                    dependencies={layout.dependencies}
+                    allWorkflows={workflows}
+                    dependencyMap={dependencyMap}
+                  />
+                );
+              })}
+            </ResourceGroupCompact>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-3">
@@ -344,34 +348,6 @@ export function EnhancedPublishModal({
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function PublishModalHeader({
-  environment,
-  totalSelected,
-  totalResources,
-}: {
-  environment: IEnvironment;
-  totalSelected: number;
-  totalResources: number;
-}) {
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <div className="bg-warning-light flex h-8 w-8 items-center justify-center rounded-lg">
-          <RiAlertFill className="text-warning-base h-4 w-4" />
-        </div>
-        <h2 className="text-label-md text-text-strong">Publishing changes to {environment?.name}</h2>
-      </div>
-      <p className="text-paragraph-sm text-text-soft">
-        You're about to publish{' '}
-        <span className="text-text-sub font-medium">
-          {totalSelected} of {totalResources}
-        </span>{' '}
-        changes to {environment?.name}. This may cause breaking behavior. Please review all changes before proceeding.
-      </p>
-    </div>
   );
 }
 
@@ -490,7 +466,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
   if (usageCount === 0) {
     return (
       <div className="relative flex items-center gap-1 p-0">
-        <span className="text-xs font-medium leading-3 text-gray-400">Not used</span>
+        <span className="text-label-2xs text-text-soft">Not used</span>
       </div>
     );
   }
@@ -498,7 +474,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
   const UsageDisplay = () => (
     <div className="flex items-center gap-px">
       <RiRouteFill className="text-icon-sub h-3.5 w-3.5" />
-      <span className="text-xs font-medium leading-3 text-gray-600">{usageCount}</span>
+      <span className="text-label-2xs text-text-soft">{usageCount}</span>
     </div>
   );
 
@@ -753,7 +729,7 @@ function CompactResourceRow({
 
     if (summary.added > 0) {
       return (
-        <Badge variant="lighter" size="sm" color="green">
+        <Badge variant="lighter" size="sm" color="green" className="text-label-2xs">
           <BadgeIcon as={RiAddBoxLine} />
           Added
         </Badge>
@@ -762,13 +738,12 @@ function CompactResourceRow({
 
     if (summary.modified > 0) {
       const badge = (
-        <Badge variant="lighter" size="sm" color="orange">
+        <Badge variant="lighter" size="sm" color="orange" className="text-label-2xs">
           <BadgeIcon as={RiGitCommitFill} />
           Modified
         </Badge>
       );
 
-      // Only wrap the modified badge with hover card for workflows
       if (resource.resourceType === 'workflow') {
         return <WorkflowHoverCard workflowResource={resource}>{badge}</WorkflowHoverCard>;
       }
@@ -778,7 +753,7 @@ function CompactResourceRow({
 
     if (summary.deleted > 0) {
       return (
-        <Badge variant="lighter" size="sm" color="red">
+        <Badge variant="lighter" size="sm" color="red" className="text-label-2xs">
           <BadgeIcon as={RiDeleteBin2Line} />
           Deleted
         </Badge>
@@ -839,7 +814,6 @@ function CompactResourceRow({
             )}
           </div>
         ) : (
-          // Workflow: name above, ID below (original layout)
           <>
             <div className="flex items-center gap-1">
               <span className="truncate text-xs font-medium text-gray-900">{displayName}</span>
@@ -872,10 +846,10 @@ function CompactResourceRow({
         )}
       </div>
 
-      <div className="flex flex-col items-end gap-0.5">
+      <div className="flex flex-col items-end gap-1.5">
         {getStatusBadge()}
 
-        {updatedAt && <span className="text-xs font-medium text-gray-600">{formatDateSimple(updatedAt)}</span>}
+        {updatedAt && <span className="text-label-2xs text-text-sub">{formatDateSimple(updatedAt)}</span>}
       </div>
     </div>
   );
