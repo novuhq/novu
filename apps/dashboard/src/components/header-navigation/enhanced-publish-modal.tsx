@@ -10,10 +10,13 @@ import {
   RiCloseFill,
   RiContractUpDownLine,
   RiExpandUpDownLine,
+  RiAddBoxLine,
+  RiDeleteBin2Line,
+  RiGitCommitFill,
 } from 'react-icons/ri';
 import { Dialog, DialogContent, DialogClose } from '../primitives/dialog';
 import { Button } from '../primitives/button';
-import { Badge } from '../primitives/badge';
+import { Badge, BadgeIcon } from '../primitives/badge';
 import { Checkbox } from '../primitives/checkbox';
 import { Separator } from '../primitives/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
@@ -500,11 +503,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
 
   const UsageDisplay = () => (
     <div className="flex items-center gap-px">
-      <img
-        src="http://localhost:3845/assets/01b4b3416a96c0cc25ece4c9955126ee530f0794.svg"
-        alt=""
-        className="h-3.5 w-3.5"
-      />
+      <RiRouteFill className="h-3.5 w-3.5 text-icon-sub" />
       <span className="text-xs font-medium leading-3 text-gray-600">{usageCount}</span>
     </div>
   );
@@ -522,11 +521,7 @@ function LayoutUsageIndicator({ layoutResource, allWorkflows, dependencies }: La
           <div className="mb-1 text-xs font-medium leading-3 text-gray-400">Used in</div>
           {workflowsUsingLayout.map((workflow, index) => (
             <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded bg-gray-50 px-1 py-0.5">
-              <img
-                src="http://localhost:3845/assets/01b4b3416a96c0cc25ece4c9955126ee530f0794.svg"
-                alt=""
-                className="h-3.5 w-3.5"
-              />
+              <RiRouteFill className="h-3.5 w-3.5 text-icon-sub" />
               <div className="flex flex-col text-left leading-tight">
                 <div className="text-xs font-medium leading-[14px] text-gray-600">{workflow.name}</div>
                 <div
@@ -645,60 +640,26 @@ function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProp
   const getChangeIcon = (action: 'added' | 'modified' | 'deleted') => {
     switch (action) {
       case 'added':
-        return (
-          <img
-            src="http://localhost:3845/assets/993ff250611ff291f28fb031f7279a0bfaeac60f.svg"
-            alt=""
-            className="h-3 w-3"
-          />
-        );
+        return RiAddBoxLine;
       case 'modified':
-        return (
-          <img
-            src="http://localhost:3845/assets/3c6ee0b7509bfd8da47a5669970048709faf3341.svg"
-            alt=""
-            className="h-3 w-3"
-          />
-        );
+        return RiGitCommitFill;
       case 'deleted':
-        return <div className="h-2 w-0.5 bg-red-500" />;
+        return RiDeleteBin2Line;
       default:
-        return (
-          <img
-            src="http://localhost:3845/assets/3c6ee0b7509bfd8da47a5669970048709faf3341.svg"
-            alt=""
-            className="h-3 w-3"
-          />
-        );
+        return RiGitCommitFill;
     }
   };
 
   const getChangeColor = (action: 'added' | 'modified' | 'deleted') => {
     switch (action) {
       case 'added':
-        return {
-          bg: 'bg-green-50/40',
-          icon: 'bg-green-100/60',
-          text: 'text-gray-600',
-        };
+        return 'green' as const;
       case 'modified':
-        return {
-          bg: 'bg-orange-50/40',
-          icon: 'bg-orange-100/60',
-          text: 'text-gray-600',
-        };
+        return 'orange' as const;
       case 'deleted':
-        return {
-          bg: 'bg-red-50/40',
-          icon: 'bg-red-100/60',
-          text: 'text-gray-600',
-        };
+        return 'red' as const;
       default:
-        return {
-          bg: 'bg-orange-50/40',
-          icon: 'bg-orange-100/60',
-          text: 'text-gray-600',
-        };
+        return 'orange' as const;
     }
   };
 
@@ -738,31 +699,28 @@ function WorkflowHoverCard({ workflowResource, children }: WorkflowHoverCardProp
       >
         <div className="flex flex-col gap-1">
           {/* Overall status badge */}
-          <div
-            className={`flex items-center gap-0.5 rounded-full px-1 py-0.5 pr-2 ${getChangeColor(overallStatus.action).bg}`}
-          >
-            <div
-              className={`flex h-3 w-3 items-center justify-center ${getChangeColor(overallStatus.action).icon} rounded-sm`}
-            >
-              {getChangeIcon(overallStatus.action)}
-            </div>
-            <span className="text-xs font-medium text-orange-700" style={{ fontSize: '10px', lineHeight: '14px' }}>
-              {overallStatus.label}
-            </span>
-          </div>
+          <Badge variant="lighter" size="sm" color={getChangeColor(overallStatus.action)}>
+            <BadgeIcon as={getChangeIcon(overallStatus.action)} />
+            {overallStatus.label}
+          </Badge>
 
           {/* Change type details */}
           <div className="flex flex-col gap-1.5">
             {changeTypes.map((changeType, index) => {
-              const colors = getChangeColor(changeType.action);
-
+              const IconComponent = getChangeIcon(changeType.action);
+              const color = getChangeColor(changeType.action);
+              
               return (
-                <div key={index} className={`flex min-w-[175px] items-center gap-1.5 rounded p-1 ${colors.bg}`}>
-                  <div className={`flex h-[15px] w-[15px] items-center justify-center rounded-sm ${colors.icon}`}>
-                    {getChangeIcon(changeType.action)}
+                <div key={index} className="flex min-w-[175px] items-center gap-1.5 rounded p-1">
+                  <div className={`flex h-[15px] w-[15px] items-center justify-center`}>
+                    <IconComponent className={`h-3 w-3 ${
+                      color === 'green' ? 'text-success-base' :
+                      color === 'orange' ? 'text-warning-base' :
+                      color === 'red' ? 'text-error-base' : 'text-warning-base'
+                    }`} />
                   </div>
                   <div className="flex flex-col justify-center">
-                    <div className={`font-medium ${colors.text}`} style={{ fontSize: '10px', lineHeight: '14px' }}>
+                    <div className="font-medium text-gray-600" style={{ fontSize: '10px', lineHeight: '14px' }}>
                       {changeType.label}
                     </div>
                   </div>
@@ -796,34 +754,28 @@ function CompactResourceRow({
 
     if (summary.added > 0) {
       return (
-        <div className="flex items-center gap-0.5 rounded-full bg-green-50 px-1 py-0.5 pr-2">
-          <div className="flex h-3 w-3 items-center justify-center">
-            <div className="h-2 w-2 border border-green-500" />
-          </div>
-          <span className="text-xs font-medium text-green-600">Added</span>
-        </div>
+        <Badge variant="lighter" size="sm" color="green">
+          <BadgeIcon as={RiAddBoxLine} />
+          Added
+        </Badge>
       );
     }
 
     if (summary.modified > 0) {
       return (
-        <div className="flex items-center gap-0.5 rounded-full bg-orange-50 px-1 py-0.5 pr-2">
-          <div className="flex h-3 w-3 items-center justify-center">
-            <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
-          </div>
-          <span className="text-xs font-medium text-orange-600">Modified</span>
-        </div>
+        <Badge variant="lighter" size="sm" color="orange">
+          <BadgeIcon as={RiGitCommitFill} />
+          Modified
+        </Badge>
       );
     }
 
     if (summary.deleted > 0) {
       return (
-        <div className="flex items-center gap-0.5 rounded-full bg-red-50 px-1 py-0.5 pr-2">
-          <div className="flex h-3 w-3 items-center justify-center">
-            <div className="h-2 w-0.5 bg-red-500" />
-          </div>
-          <span className="text-xs font-medium text-red-600">Deleted</span>
-        </div>
+        <Badge variant="lighter" size="sm" color="red">
+          <BadgeIcon as={RiDeleteBin2Line} />
+          Deleted
+        </Badge>
       );
     }
 

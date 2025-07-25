@@ -147,3 +147,7 @@ pnpm typecheck      # Run TypeScript checks
 - **MongoDB & Redis** required for local development (available via Docker Compose)
 - **Environment files** are set up automatically by setup scripts
 - **Dashboard is primary UI** - web app is legacy but still maintained
+
+## Development Guidance
+
+- No need to run npm typecheck commands, as we will see it ourself
