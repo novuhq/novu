@@ -88,8 +88,8 @@ export abstract class BaseSyncOperation<T> {
       );
 
       // Filter resources if selective sync is requested
-      if (context.options.resourcesToPublish?.length) {
-        sourceResources = this.filterResourcesForSelectiveSync(sourceResources, context.options.resourcesToPublish);
+      if (context.options.resources?.length) {
+        sourceResources = this.filterResourcesForSelectiveSync(sourceResources, context.options.resources);
       }
 
       this.logger.info(this.getFoundResourcesMessage(sourceResources.length));
@@ -118,10 +118,10 @@ export abstract class BaseSyncOperation<T> {
     }
   }
 
-  private filterResourcesForSelectiveSync(sourceResources: T[], resourcesToPublish: IResourceToPublish[]): T[] {
+  private filterResourcesForSelectiveSync(sourceResources: T[], resources: IResourceToPublish[]): T[] {
     const currentResourceType = this.getResourceType();
     const resourceIdsToPublish = new Set(
-      resourcesToPublish
+      resources
         .filter((resource) => resource.resourceType === currentResourceType)
         .map((resource) => resource.resourceId)
     );
@@ -148,8 +148,8 @@ export abstract class BaseSyncOperation<T> {
     );
 
     // Filter target resources if selective sync is requested
-    if (context.options.resourcesToPublish?.length) {
-      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resourcesToPublish);
+    if (context.options.resources?.length) {
+      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resources);
     }
 
     const targetResourceMap = this.repositoryService.createResourceMap(targetResources);
@@ -255,8 +255,8 @@ export abstract class BaseSyncOperation<T> {
     );
 
     // Filter target resources if selective sync is requested
-    if (context.options.resourcesToPublish?.length) {
-      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resourcesToPublish);
+    if (context.options.resources?.length) {
+      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resources);
     }
 
     const sourceResourceMap = this.repositoryService.createResourceMap(sourceResources);

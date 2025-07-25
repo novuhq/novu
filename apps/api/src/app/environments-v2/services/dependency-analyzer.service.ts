@@ -40,6 +40,13 @@ export class DependencyAnalyzerService {
         if (resource.sourceResource?.name) {
           layoutResourceByNameMap.set(resource.sourceResource.name, resource);
         }
+        // Handle deleted layouts (targetResource exists but sourceResource is null)
+        if (resource.targetResource?.id && !resource.sourceResource) {
+          layoutResourceByIdMap.set(resource.targetResource.id, resource);
+        }
+        if (resource.targetResource?.name && !resource.sourceResource) {
+          layoutResourceByNameMap.set(resource.targetResource.name, resource);
+        }
       }
     });
 
@@ -66,6 +73,28 @@ export class DependencyAnalyzerService {
         if (dependencies.length > 0) {
           this.logger.debug(`Found ${dependencies.length} dependencies for workflow ${resource.sourceResource.name}`);
           dependencyMap.set(resource.sourceResource.id, dependencies);
+        }
+      }
+    }
+
+    // Analyze reverse dependencies: layouts that are being deleted but are still used by workflows in target
+    for (const resource of resources) {
+      if (
+        resource.resourceType === ResourceTypeEnum.LAYOUT &&
+        resource.targetResource?.id &&
+        !resource.sourceResource
+      ) {
+        this.logger.debug(
+          `Analyzing reverse dependencies for deleted layout: ${resource.targetResource.name} (${resource.targetResource.id})`
+        );
+
+        const reverseDependencies = await this.getLayoutReverseDependencies(resource, targetEnvId, organizationId);
+
+        if (reverseDependencies.length > 0) {
+          this.logger.debug(
+            `Found ${reverseDependencies.length} reverse dependencies for layout ${resource.targetResource.name}`
+          );
+          dependencyMap.set(resource.targetResource.id, reverseDependencies);
         }
       }
     }
@@ -162,6 +191,65 @@ export class DependencyAnalyzerService {
     return dependencies;
   }
 
+  private async getLayoutReverseDependencies(
+    deletedLayoutDiff: IDiffResult,
+    targetEnvId: string,
+    organizationId: string
+  ): Promise<IResourceDependency[]> {
+    const reverseDependencies: IResourceDependency[] = [];
+
+    try {
+      if (!deletedLayoutDiff.targetResource?.id) {
+        return reverseDependencies;
+      }
+
+      const layoutId = deletedLayoutDiff.targetResource.id;
+      this.logger.debug(`Checking if deleted layout ${layoutId} is still used by workflows in target environment`);
+
+      // Find workflows in target environment that use this layout
+      const controlValues = await this.controlValuesRepository.find({
+        _environmentId: targetEnvId,
+        _organizationId: organizationId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+        'controls.layoutId': layoutId,
+      });
+
+      this.logger.debug(
+        `Found ${controlValues.length} control values using deleted layout ${layoutId} in target environment`
+      );
+
+      // Create blocking dependencies for each workflow using this layout
+      const processedWorkflowIds = new Set<string>();
+
+      for (const controlValue of controlValues) {
+        const workflowId = controlValue._workflowId;
+        if (!workflowId || processedWorkflowIds.has(workflowId)) continue;
+        processedWorkflowIds.add(workflowId);
+
+        // Create a dependency showing this layout cannot be deleted because it's used by a workflow in target
+        const dependency: IResourceDependency = {
+          resourceType: ResourceTypeEnum.WORKFLOW,
+          resourceId: workflowId,
+          resourceName: `Workflow using layout ${deletedLayoutDiff.targetResource.name}`,
+          isBlocking: true,
+          reason: DependencyReasonEnum.LAYOUT_REQUIRED_FOR_WORKFLOW,
+        };
+
+        this.logger.debug(
+          `Created blocking dependency: layout ${layoutId} -> workflow ${workflowId} (layout cannot be deleted)`
+        );
+        reverseDependencies.push(dependency);
+      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to analyze reverse dependencies for deleted layout ${deletedLayoutDiff.targetResource?.name || 'unknown'}`,
+        error
+      );
+    }
+
+    return reverseDependencies;
+  }
+
   private extractLayoutIdsFromStepChange(stepChange: any): string[] {
     const layoutIds: string[] = [];
 
@@ -181,6 +269,27 @@ export class DependencyAnalyzerService {
     }
 
     return layoutIds;
+  }
+
+  private extractWorkflowIdsFromStepChange(stepChange: any): string[] {
+    const workflowIds: string[] = [];
+
+    // Check current/new workflow ID
+    const newWorkflowId = stepChange.diffs?.new?.controlValues?.workflowId;
+    if (newWorkflowId && typeof newWorkflowId === 'string') {
+      this.logger.debug(`Found new workflowId in step change: ${newWorkflowId}`);
+      workflowIds.push(newWorkflowId);
+    }
+
+    // Check previous workflow ID for context (though typically we care about new dependencies)
+    const previousWorkflowId = stepChange.diffs?.previous?.controlValues?.workflowId;
+    if (previousWorkflowId && typeof previousWorkflowId === 'string' && previousWorkflowId !== newWorkflowId) {
+      this.logger.debug(`Found previous workflowId in step change: ${previousWorkflowId}`);
+      // Only add if it's different from the new one
+      workflowIds.push(previousWorkflowId);
+    }
+
+    return workflowIds;
   }
 
   private async createLayoutDependency(

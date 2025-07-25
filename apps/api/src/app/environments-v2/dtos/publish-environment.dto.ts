@@ -50,7 +50,7 @@ export class PublishEnvironmentRequestDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ResourceToPublishDto)
-  resourcesToPublish?: ResourceToPublishDto[];
+  resources?: ResourceToPublishDto[];
 }
 
 export class SyncedWorkflowDto {

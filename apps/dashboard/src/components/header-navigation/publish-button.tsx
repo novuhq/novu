@@ -85,7 +85,7 @@ export const PublishButton = () => {
       const result = await publishMutation.mutateAsync({
         sourceEnvironmentId: currentEnvironment._id,
         targetEnvironmentId: state.selectedEnvironment._id,
-        resourcesToPublish: selectedResources,
+        resources: selectedResources,
       });
 
       queryClient.invalidateQueries({ queryKey: ['diff-environments'] });

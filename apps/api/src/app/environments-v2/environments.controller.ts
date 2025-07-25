@@ -88,7 +88,7 @@ export class EnvironmentsController {
       sourceEnvironmentId: body.sourceEnvironmentId,
       targetEnvironmentId,
       dryRun: body.dryRun,
-      resourcesToPublish: body.resourcesToPublish,
+      resources: body.resources,
     });
 
     return await this.publishEnvironmentUseCase.execute(command);

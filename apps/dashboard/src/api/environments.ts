@@ -150,17 +150,17 @@ export async function diffEnvironments({
 export async function publishEnvironments({
   sourceEnvironmentId,
   targetEnvironmentId,
-  resourcesToPublish,
+  resources,
 }: {
   sourceEnvironmentId: string;
   targetEnvironmentId: string;
-  resourcesToPublish?: ResourceToPublish[];
+  resources?: ResourceToPublish[];
 }): Promise<IEnvironmentPublishResponse> {
   const { data } = await postV2<{ data: IEnvironmentPublishResponse }>(`/environments/${targetEnvironmentId}/publish`, {
     body: {
       sourceEnvironmentId,
       dryRun: false,
-      ...(resourcesToPublish && { resourcesToPublish }),
+      ...(resources && { resources }),
     },
   });
   return data;

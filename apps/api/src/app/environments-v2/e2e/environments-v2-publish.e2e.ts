@@ -145,7 +145,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     expect(body.data.summary.skipped).to.equal(1);
   });
 
-  it('should publish specific workflows when resourcesToPublish is provided', async () => {
+  it('should publish specific workflows when resources is provided', async () => {
     // Get the production environment
     const prodEnv = await environmentRepository.findOne({
       _parentId: session.environment._id,
@@ -207,7 +207,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: false,
-        resourcesToPublish: [
+        resources: [
           {
             resourceType: 'workflow',
             resourceId: workflow1.workflowId,
@@ -239,7 +239,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     expect(publishedWorkflow2).to.be.null; // Should not exist
   });
 
-  it('should publish multiple resources of different types when resourcesToPublish contains mixed types', async () => {
+  it('should publish multiple resources of different types when resources contains mixed types', async () => {
     const prodEnv = await environmentRepository.findOne({
       _parentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -299,7 +299,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: false,
-        resourcesToPublish: [
+        resources: [
           {
             resourceType: 'workflow',
             resourceId: workflow1.workflowId,
@@ -352,7 +352,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: false,
-        resourcesToPublish: [
+        resources: [
           {
             resourceType: 'workflow',
             resourceId: 'non-existent-workflow-id',
@@ -380,7 +380,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: false,
-        resourcesToPublish: [
+        resources: [
           {
             resourceType: 'workflow',
             resourceId: 'non-existent-workflow',
@@ -439,7 +439,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: true,
-        resourcesToPublish: [
+        resources: [
           {
             resourceType: 'workflow',
             resourceId: workflow.workflowId,
@@ -463,7 +463,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     expect(publishedWorkflow).to.be.null;
   });
 
-  it('should return error when resourcesToPublish contains unsupported resource type', async () => {
+  it('should return error when resources contains unsupported resource type', async () => {
     const prodEnv = await environmentRepository.findOne({
       _parentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -479,7 +479,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: false,
-        resourcesToPublish: [
+        resources: [
           {
             resourceType: 'unsupported_type',
             resourceId: 'some-id',
@@ -491,7 +491,7 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     expect(body.message).to.contain('Validation Error');
   });
 
-  it('should fall back to full publish when resourcesToPublish is empty array', async () => {
+  it('should fall back to full publish when resources is empty array', async () => {
     const prodEnv = await environmentRepository.findOne({
       _parentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -526,13 +526,13 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
       setTimeout(resolve, 100);
     });
 
-    // Test with empty resourcesToPublish array (should fall back to full publish)
+    // Test with empty resources array (should fall back to full publish)
     const { body } = await session.testAgent
       .post(`/v2/environments/${prodEnv._id}/publish`)
       .send({
         sourceEnvironmentId: session.environment._id,
         dryRun: true, // Use dry run to avoid side effects
-        resourcesToPublish: [], // Empty array
+        resources: [], // Empty array
       })
       .expect(200);
 

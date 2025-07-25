@@ -24,5 +24,5 @@ export class PublishEnvironmentCommand extends EnvironmentWithUserObjectCommand 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => Object)
-  resourcesToPublish?: IResourceToPublish[];
+  resources?: IResourceToPublish[];
 }

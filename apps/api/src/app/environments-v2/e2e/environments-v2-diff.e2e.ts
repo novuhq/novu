@@ -256,17 +256,18 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         expect(layoutResource.targetResource?.name).to.equal('Test Layout for Dependencies');
         expect(layoutResource.sourceResource).to.be.null; // Layout was deleted from source
 
-        // Verify dependencies are properly identified
-        expect(workflowResource.dependencies).to.be.an('array');
-        expect(workflowResource.dependencies.length).to.be.greaterThan(0);
+        /*
+         * Verify dependencies are properly identified - the layout should be blocked from deletion
+         * because it's still being used by workflows in the target environment
+         */
+        expect(layoutResource.dependencies).to.be.an('array');
+        expect(layoutResource.dependencies.length).to.be.greaterThan(0);
 
-        const layoutDependency = workflowResource.dependencies.find(
-          (dep: any) => dep.resourceType === 'layout' && dep.resourceId === layout.layoutId
-        );
+        const workflowDependency = layoutResource.dependencies.find((dep: any) => dep.resourceType === 'workflow');
 
-        expect(layoutDependency.resourceName).to.equal('test-layout-for-dependencies');
-        expect(layoutDependency.isBlocking).to.equal(true);
-        expect(layoutDependency.reason).to.be.equal('LAYOUT_REQUIRED_FOR_WORKFLOW');
+        expect(workflowDependency.resourceName).to.contain('Workflow using layout');
+        expect(workflowDependency.isBlocking).to.equal(true);
+        expect(workflowDependency.reason).to.be.equal('LAYOUT_REQUIRED_FOR_WORKFLOW');
       });
 
       it('should show workflow blocked by layout dependency when both are new resources', async () => {

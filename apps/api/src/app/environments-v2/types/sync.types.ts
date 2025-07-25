@@ -29,7 +29,7 @@ export interface IResourceToPublish {
 export interface ISyncOptions {
   dryRun?: boolean;
   batchSize?: number;
-  resourcesToPublish?: IResourceToPublish[];
+  resources?: IResourceToPublish[];
 }
 
 export interface ISyncContext {

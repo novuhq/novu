@@ -72,7 +72,7 @@ export const usePublishEnvironments = () => {
     {
       sourceEnvironmentId: string;
       targetEnvironmentId: string;
-      resourcesToPublish?: ResourceToPublish[];
+      resources?: ResourceToPublish[];
     }
   >({
     mutationFn: publishEnvironments,

@@ -66,6 +66,10 @@ export class DiffEnvironmentUseCase {
         if (resource.sourceResource?.id && dependencyMap.has(resource.sourceResource.id)) {
           resource.dependencies = dependencyMap.get(resource.sourceResource.id);
         }
+        // Check target resource ID for deleted resources (sourceResource is null, targetResource exists)
+        if (!resource.sourceResource && resource.targetResource?.id && dependencyMap.has(resource.targetResource.id)) {
+          resource.dependencies = dependencyMap.get(resource.targetResource.id);
+        }
       }
 
       const summary = this.calculateSummary(resources);

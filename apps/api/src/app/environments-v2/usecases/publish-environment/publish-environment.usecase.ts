@@ -45,7 +45,7 @@ export class PublishEnvironmentUseCase {
       const options: ISyncOptions = {
         dryRun: command.dryRun || false,
         batchSize: 100,
-        resourcesToPublish: command.resourcesToPublish,
+        resources: command.resources,
       };
 
       const syncContext: ISyncContext = {
@@ -64,11 +64,11 @@ export class PublishEnvironmentUseCase {
       const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
 
       // Filter strategies based on resource types if specific resources are provided
-      const strategiesToExecute = options.resourcesToPublish?.length
-        ? this.filterStrategiesForSelectiveSync(strategies, options.resourcesToPublish)
+      const strategiesToExecute = options.resources?.length
+        ? this.filterStrategiesForSelectiveSync(strategies, options.resources)
         : strategies;
 
-      if (options.resourcesToPublish?.length && strategiesToExecute.length === 0) {
+      if (options.resources?.length && strategiesToExecute.length === 0) {
         throw new BadRequestException('No supported resource types found in the request');
       }
 
@@ -133,9 +133,9 @@ export class PublishEnvironmentUseCase {
 
   private filterStrategiesForSelectiveSync(
     strategies: ISyncStrategy[],
-    resourcesToPublish: IResourceToPublish[]
+    resources: IResourceToPublish[]
   ): ISyncStrategy[] {
-    const requestedResourceTypes = new Set(resourcesToPublish.map((resource) => resource.resourceType));
+    const requestedResourceTypes = new Set(resources.map((resource) => resource.resourceType));
 
     return strategies.filter((strategy) => requestedResourceTypes.has(strategy.getResourceType()));
   }
