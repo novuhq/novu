@@ -254,6 +254,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     useFinal?: boolean;
   }): Promise<{ data: WorkflowRun[]; rows: number }> {
     const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false } = options;
+    const isBoundaryCase = cursor?.workflow_run_id === '1'; // first or last item
 
     if (limit < 0 || limit > 1000) {
       throw new Error('Limit must be between 0 and 1000');
@@ -309,10 +310,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       const timestampEqualParam = 'cursor_timestamp_eq';
       const idParam = 'cursor_id';
 
-      params[timestampParam] = cursorTimestamp;
-      params[timestampEqualParam] = cursorTimestamp;
-      params[idParam] = cursorId;
-
       /*
        * Build compound cursor condition
        * For DESC: (created_at < cursor_timestamp) OR (created_at = cursor_timestamp AND workflow_run_id < cursor_id)
@@ -320,6 +317,16 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
        */
       const timeOperator = orderDirection === 'DESC' ? '<' : '>';
       const idOperator = orderDirection === 'DESC' ? '<' : '>';
+
+      if (!isBoundaryCase) {
+        params[timestampParam] = cursorTimestamp;
+        params[timestampEqualParam] = cursorTimestamp;
+        params[idParam] = cursorId;
+      } else {
+        params[timestampParam] = timeOperator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
+        params[timestampEqualParam] = timeOperator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
+        params[idParam] = timeOperator === '>' ? '1' : '9999999999999999999999999999999999999999';
+      }
 
       const cursorCondition = `
         (created_at ${timeOperator} {${timestampParam}:DateTime64(3, 'UTC')})

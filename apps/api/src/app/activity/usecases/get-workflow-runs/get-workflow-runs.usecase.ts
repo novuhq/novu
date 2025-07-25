@@ -158,6 +158,12 @@ export class GetWorkflowRuns {
     currentCursor: CursorData,
     limit: number
   ): Promise<string | null> {
+    const isBoundaryCase = currentCursor?.workflow_run_id === '1'; // first or last item
+    // Return empty when at boundary during cursor computation - cannot compute previous page beyond dataset limits
+    if (isBoundaryCase) {
+      return null;
+    }
+
     try {
       const backwardResult = await this.workflowRunRepository.findWithCursor({
         where: whereConditions,
@@ -171,6 +177,13 @@ export class GetWorkflowRuns {
 
       if (previousPageItems.length === 0) {
         return null;
+      }
+
+      if (previousPageItems.length < limit) {
+        return this.encodeCursor({
+          created_at: new Date(0).toISOString(), // Unix epoch (1970-01-01)
+          workflow_run_id: '1', // Earliest possible workflow_run_id
+        });
       }
 
       /*

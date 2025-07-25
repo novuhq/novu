@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberEntity, NotificationEntity } from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity, NotificationEntity, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
@@ -53,7 +53,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
       // Create a mock NotificationEntity
       const mockNotification: NotificationEntity = {
-        _id: `notification_${Date.now()}_${i}`,
+        _id: NotificationRepository.createObjectId(),
         _templateId: template._id,
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
@@ -135,7 +135,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(secondPage.data[0].payload.runNumber, 'secondPage runNumber').to.be.equal(1);
   });
 
-  it('should validate cursor-based pagination collision handling', async () => {
+  it.only('should validate cursor-based pagination collision handling', async () => {
     await createMultipleWorkflowRunsByDb({
       count: 11,
       workflowId: template.triggers[0].identifier,
@@ -146,12 +146,18 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     await session.waitForSubscriberQueueCompletion();
 
     const fetchedRunNumbers = new Set<number>();
-    const pages: any[] = [];
+    const forwardPages: Array<{
+      pageNumber: number;
+      orderedIds: string[];
+      transactionIds: string[];
+      nextCursor: string | null;
+      previousCursor: string | null;
+    }> = [];
     let cursor: string | null = null;
     let totalFetched = 0;
     let pageCount = 0;
 
-    // Go forward through all pages
+    // Go forward through all pages and store detailed page information
     do {
       const query: any = { limit: 2 };
       if (cursor) {
@@ -162,7 +168,17 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
       pageCount += 1;
       const currentPageNumber = pageCount;
-      pages.push(body);
+
+      // Store page data with ordered IDs for later comparison
+      const orderedIds = body.data.map((item: any) => item.id);
+      const transactionIds = body.data.map((item: any) => item.transactionId);
+      forwardPages.push({
+        pageNumber: currentPageNumber,
+        orderedIds,
+        transactionIds,
+        nextCursor: body.nextCursor,
+        previousCursor: body.previousCursor,
+      });
 
       expect(body.data).to.be.an('array');
       expect(body.data.length).to.be.at.most(2);
@@ -195,47 +211,85 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       expect(fetchedRunNumbers.has(i), `runNumber ${i} should be present`).to.be.true;
     }
 
-    // Test bidirectional pagination: Navigate to the last page, then go back once
-    const lastPage = pages[pages.length - 1];
-    const secondToLastPage = pages[pages.length - 2];
-
+    // Test bidirectional pagination: Navigate backwards through ALL pages
+    const lastPage = forwardPages[forwardPages.length - 1];
     expect(lastPage.previousCursor, 'Last page should have previousCursor').to.be.not.null;
 
-    // Go back one page using previousCursor
-    const { body: previousPageResult } = await session.testAgent
-      .get('/v1/activity/workflow-runs')
-      .query({ cursor: lastPage.previousCursor, limit: 2 })
-      .expect(200);
+    // Navigate backwards through all pages and validate they match forward pages exactly
+    let backwardCursor = lastPage.previousCursor;
+    let backwardPageIndex = forwardPages.length - 2; // Start from second-to-last page
 
-    // Validate we get the exact same items as the second-to-last page
-    expect(previousPageResult.data.length, 'Previous page should have same length as second-to-last page').to.equal(
-      secondToLastPage.data.length
-    );
+    while (backwardCursor && backwardPageIndex >= 0) {
+      // eslint-disable-next-line no-console
+      console.log('WHILE CONTEXT  ', { backwardCursor, backwardPageIndex });
 
-    // Compare each item's runNumber to ensure they match exactly
-    const secondToLastRunNumbers = secondToLastPage.data.map((item: any) => item.payload.runNumber).sort();
-    const previousPageRunNumbers = previousPageResult.data.map((item: any) => item.payload.runNumber).sort();
+      const { body: backwardPageResult } = await session.testAgent
+        .get('/v1/activity/workflow-runs')
+        .query({ cursor: backwardCursor, limit: 2 })
+        .expect(200);
 
-    expect(previousPageRunNumbers, 'Previous page runNumbers should match second-to-last page').to.deep.equal(
-      secondToLastRunNumbers
-    );
+      const correspondingForwardPage = forwardPages[backwardPageIndex];
+      const backwardOrderedIds = backwardPageResult.data.map((item: any) => item.id);
 
-    // Validate cursor properties of the previous page result
-    expect(previousPageResult.hasMore, 'Previous page should have hasMore true').to.be.true;
-    expect(previousPageResult.nextCursor, 'Previous page should have nextCursor').to.be.not.null;
-    expect(previousPageResult.previousCursor, 'Previous page should have previousCursor').to.be.not.null;
+      // Validate exact same items in exact same order
+      expect(backwardPageResult.data.length, `Backward page ${backwardPageIndex + 1} should have same length`).to.equal(
+        correspondingForwardPage.orderedIds.length
+      );
 
-    // Test that we can go forward again from the previous page
-    const { body: forwardAgainResult } = await session.testAgent
-      .get('/v1/activity/workflow-runs')
-      .query({ cursor: previousPageResult.nextCursor, limit: 2 })
-      .expect(200);
+      expect(
+        backwardOrderedIds,
+        `Backward page ${backwardPageIndex + 1} IDs should match forward page exactly`
+      ).to.deep.equal(correspondingForwardPage.orderedIds);
 
-    // Should get back to the last page
-    const forwardAgainRunNumbers = forwardAgainResult.data.map((item: any) => item.payload.runNumber).sort();
-    const lastPageRunNumbers = lastPage.data.map((item: any) => item.payload.runNumber).sort();
+      // Validate runNumbers match in exact order (no sorting, preserve original order)
+      const backwardRunNumbers = backwardPageResult.data.map((item: any) => item.transactionId);
+      const forwardRunNumbers = correspondingForwardPage.transactionIds;
 
-    expect(forwardAgainRunNumbers, 'Forward navigation should return to last page').to.deep.equal(lastPageRunNumbers);
+      expect(
+        backwardRunNumbers,
+        `Backward page ${backwardPageIndex + 1} runNumbers should match forward page order`
+      ).to.deep.equal(forwardRunNumbers);
+
+      // Validate cursor properties
+      if (backwardPageIndex > 0) {
+        expect(backwardPageResult.previousCursor, `Backward page ${backwardPageIndex + 1} should have previousCursor`)
+          .to.be.not.null;
+      } else {
+        expect(backwardPageResult.previousCursor, `First page (backward) should have null previousCursor`).to.be.null;
+      }
+
+      expect(backwardPageResult.hasMore, `Backward page ${backwardPageIndex + 1} should have hasMore true`).to.be.true;
+      expect(backwardPageResult.nextCursor, `Backward page ${backwardPageIndex + 1} should have nextCursor`).to.be.not
+        .null;
+
+      // Move to previous page
+      backwardCursor = backwardPageResult.previousCursor;
+      backwardPageIndex -= 1;
+    }
+
+    // Validate we reached the beginning (first page should have null previousCursor)
+    expect(backwardPageIndex, 'Should have navigated through all pages backwards').to.equal(-1);
+
+    /*
+     * Test that we can navigate forward again from any backward page
+     * Test from the middle page for comprehensive validation
+     */
+    const middlePageIndex = Math.floor(forwardPages.length / 2);
+    const middlePage = forwardPages[middlePageIndex];
+
+    if (middlePage.nextCursor) {
+      const { body: forwardFromMiddleResult } = await session.testAgent
+        .get('/v1/activity/workflow-runs')
+        .query({ cursor: middlePage.nextCursor, limit: 2 })
+        .expect(200);
+
+      const nextPageFromMiddle = forwardPages[middlePageIndex + 1];
+      const forwardFromMiddleIds = forwardFromMiddleResult.data.map((item: any) => item.id);
+
+      expect(forwardFromMiddleIds, 'Forward navigation from middle should match original forward page').to.deep.equal(
+        nextPageFromMiddle.orderedIds
+      );
+    }
   });
 
   it('should filter results by single workflowId', async () => {
