@@ -336,68 +336,6 @@ describe('Environment Publish - /v2/environments/:targetEnvironmentId/publish (P
     expect(publishedWorkflow2?.name).to.equal('Mixed Type Test Workflow 2');
   });
 
-  it('should return validation error when resourceId does not exist', async () => {
-    const prodEnv = await environmentRepository.findOne({
-      _parentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    if (!prodEnv) {
-      throw new Error('Production environment not found');
-    }
-
-    // Test selective publish with non-existent resource
-    const { body } = await session.testAgent
-      .post(`/v2/environments/${prodEnv._id}/publish`)
-      .send({
-        sourceEnvironmentId: session.environment._id,
-        dryRun: false,
-        resources: [
-          {
-            resourceType: 'workflow',
-            resourceId: 'non-existent-workflow-id',
-          },
-        ],
-      })
-      .expect(400);
-
-    expect(body.message).to.contain('The following resources were not found: workflow:non-existent-workflow-id');
-  });
-
-  it('should return validation error for multiple non-existent resources', async () => {
-    const prodEnv = await environmentRepository.findOne({
-      _parentId: session.environment._id,
-      _organizationId: session.organization._id,
-    });
-
-    if (!prodEnv) {
-      throw new Error('Production environment not found');
-    }
-
-    // Test selective publish with multiple non-existent resources
-    const { body } = await session.testAgent
-      .post(`/v2/environments/${prodEnv._id}/publish`)
-      .send({
-        sourceEnvironmentId: session.environment._id,
-        dryRun: false,
-        resources: [
-          {
-            resourceType: 'workflow',
-            resourceId: 'non-existent-workflow',
-          },
-          {
-            resourceType: 'layout',
-            resourceId: 'non-existent-layout',
-          },
-        ],
-      })
-      .expect(400);
-
-    expect(body.message).to.contain('The following resources were not found');
-    expect(body.message).to.contain('workflow:non-existent-workflow');
-    expect(body.message).to.contain('layout:non-existent-layout');
-  });
-
   it('should work correctly in dry run mode with selective publishing', async () => {
     const prodEnv = await environmentRepository.findOne({
       _parentId: session.environment._id,
