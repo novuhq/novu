@@ -42,30 +42,21 @@ export class DiffEnvironmentUseCase {
 
       this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
-      /*
-       * For now, we only support workflow diff
-       * In the future, we can add more strategies here
-       */
-      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
-
-      const resources = await this.executeDiff(
-        strategies,
-        sourceEnvironmentId,
-        command.targetEnvironmentId,
-        command.user.organizationId,
-        command.user
-      );
-
-      // Create workflow data container and pre-load workflow data
+      // Create workflow data container and pre-load workflow data for optimization
       const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.workflowRepository);
 
-      // Extract workflow identifiers from resources for pre-loading
-      const workflowIdentifiers = resources
-        .filter((resource) => resource.resourceType === 'workflow' && resource.sourceResource?.id)
-        .map((resource) => resource.sourceResource!.id)
+      // Pre-load workflow identifiers from source environment
+      const sourceWorkflows = await this.workflowRepository.find({
+        _environmentId: sourceEnvironmentId,
+        _organizationId: command.user.organizationId,
+      });
+
+      const workflowIdentifiers = sourceWorkflows
+        .map((workflow) => workflow.triggers?.[0]?.identifier)
         .filter((id): id is string => id !== null && id !== undefined);
 
       if (workflowIdentifiers.length > 0) {
+        this.logger.info(`Pre-loading data for ${workflowIdentifiers.length} workflows before diff`);
         await workflowDataContainer.loadWorkflowsWithControlValues(
           workflowIdentifiers,
           sourceEnvironmentId,
@@ -73,7 +64,25 @@ export class DiffEnvironmentUseCase {
         );
       }
 
-      // Analyze dependencies with pre-loaded workflow data
+      // Execute diff with workflow container optimization and layout strategy normally
+      const [workflowDiffResults, layoutDiffResults] = await Promise.all([
+        this.workflowSyncStrategy.diff(
+          sourceEnvironmentId,
+          command.targetEnvironmentId,
+          command.user.organizationId,
+          command.user,
+          workflowDataContainer
+        ),
+        this.layoutSyncStrategy.diff(
+          sourceEnvironmentId,
+          command.targetEnvironmentId,
+          command.user.organizationId,
+          command.user
+        ),
+      ]);
+
+      const resources = [...workflowDiffResults, ...layoutDiffResults];
+
       const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
         resources,
         sourceEnvironmentId,

@@ -5,6 +5,7 @@ export interface IWorkflowWithControlValues {
   workflow: NotificationTemplateEntity;
   identifier: string;
   controlValues: unknown[];
+  workflowDetails?: any; // Full workflow DTO for diff operations
 }
 
 export class WorkflowDataContainer {
@@ -95,6 +96,21 @@ export class WorkflowDataContainer {
 
   getAllLoadedIdentifiers(): string[] {
     return Array.from(this.workflowsByIdentifier.keys());
+  }
+
+  setWorkflowDetails(identifier: string, workflowDetails: any): void {
+    const workflowData = this.workflowsByIdentifier.get(identifier);
+    if (workflowData) {
+      workflowData.workflowDetails = workflowDetails;
+    }
+  }
+
+  getWorkflowDetails(identifier: string): any | undefined {
+    return this.workflowsByIdentifier.get(identifier)?.workflowDetails;
+  }
+
+  hasWorkflowDetails(identifier: string): boolean {
+    return this.workflowsByIdentifier.get(identifier)?.workflowDetails !== undefined;
   }
 
   async getWorkflowObjectIdsFromIdentifiers(

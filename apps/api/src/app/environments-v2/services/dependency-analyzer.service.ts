@@ -30,6 +30,9 @@ export class DependencyAnalyzerService {
     organizationId: string,
     workflowDataContainer?: WorkflowDataContainer
   ): Promise<Map<string, IResourceDependency[]>> {
+    if (!workflowDataContainer) {
+      throw new Error('WorkflowDataContainer is required for dependency analysis');
+    }
     const dependencyMap = new Map<string, IResourceDependency[]>();
 
     // Create map of layout resources for quick lookup by ID
@@ -55,86 +58,29 @@ export class DependencyAnalyzerService {
     );
 
     if (workflowResources.length > 0) {
-      if (workflowDataContainer) {
-        // Use pre-loaded workflow data from container
-        for (const resource of workflowResources) {
-          this.logger.debug(
-            `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
-          );
-
-          const preloadedControlValues =
-            workflowDataContainer.getControlValuesForWorkflow(resource.sourceResource?.id!) || [];
-
-          const dependencies = await this.getWorkflowDependencies(
-            resource,
-            layoutResourceByIdMap,
-            sourceEnvId,
-            targetEnvId,
-            organizationId,
-            preloadedControlValues
-          );
-
-          if (dependencies.length > 0) {
-            this.logger.debug(
-              `Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`
-            );
-            dependencyMap.set(resource.sourceResource?.id!, dependencies);
-          }
-        }
-      } else {
-        // Fallback to original batch querying logic
-        const workflowIdentifiers = workflowResources
-          .map((resource) => resource.sourceResource?.id)
-          .filter((id): id is string => id !== null && id !== undefined);
-
-        const { identifierToObjectId, objectIdToIdentifier } = await this.getWorkflowObjectIdsFromIdentifiers(
-          workflowIdentifiers,
-          sourceEnvId,
-          organizationId
+      // Use pre-loaded workflow data from container
+      for (const resource of workflowResources) {
+        this.logger.debug(
+          `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
         );
 
-        // Batch query for all workflow control values using ObjectIds
-        const workflowObjectIds = Array.from(identifierToObjectId.values());
-        const allControlValues = await this.getControlValuesForWorkflows(
-          workflowObjectIds,
+        const preloadedControlValues =
+          workflowDataContainer.getControlValuesForWorkflow(resource.sourceResource?.id!) || [];
+
+        const dependencies = await this.getWorkflowDependencies(
+          resource,
+          layoutResourceByIdMap,
           sourceEnvId,
-          organizationId
+          targetEnvId,
+          organizationId,
+          preloadedControlValues
         );
 
-        // Create a map for quick lookup using identifiers as keys
-        const controlValuesByWorkflowId = new Map<string, unknown[]>();
-        allControlValues.forEach((cv) => {
-          const workflowObjectId = (cv as any)._workflowId;
-          const workflowIdentifier = objectIdToIdentifier.get(workflowObjectId);
-          if (workflowIdentifier) {
-            if (!controlValuesByWorkflowId.has(workflowIdentifier)) {
-              controlValuesByWorkflowId.set(workflowIdentifier, []);
-            }
-            controlValuesByWorkflowId.get(workflowIdentifier)!.push(cv);
-          }
-        });
-
-        // Analyze each workflow for layout dependencies
-        for (const resource of workflowResources) {
+        if (dependencies.length > 0) {
           this.logger.debug(
-            `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
+            `Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`
           );
-
-          const dependencies = await this.getWorkflowDependencies(
-            resource,
-            layoutResourceByIdMap,
-            sourceEnvId,
-            targetEnvId,
-            organizationId,
-            controlValuesByWorkflowId.get(resource.sourceResource?.id!) || []
-          );
-
-          if (dependencies.length > 0) {
-            this.logger.debug(
-              `Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`
-            );
-            dependencyMap.set(resource.sourceResource?.id!, dependencies);
-          }
+          dependencyMap.set(resource.sourceResource?.id!, dependencies);
         }
       }
     }
@@ -162,48 +108,6 @@ export class DependencyAnalyzerService {
     }
 
     return dependencyMap;
-  }
-
-  private async getWorkflowObjectIdsFromIdentifiers(
-    workflowIdentifiers: string[],
-    environmentId: string,
-    organizationId: string
-  ): Promise<{
-    identifierToObjectId: Map<string, string>;
-    objectIdToIdentifier: Map<string, string>;
-  }> {
-    const workflows = await this.workflowRepository.find({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      'triggers.identifier': { $in: workflowIdentifiers },
-    });
-
-    const identifierToObjectId = new Map<string, string>();
-    const objectIdToIdentifier = new Map<string, string>();
-
-    workflows.forEach((workflow) => {
-      const identifier = workflow.triggers?.[0]?.identifier;
-      if (identifier && workflow._id) {
-        identifierToObjectId.set(identifier, workflow._id);
-        objectIdToIdentifier.set(workflow._id, identifier);
-      }
-    });
-
-    return { identifierToObjectId, objectIdToIdentifier };
-  }
-
-  async getControlValuesForWorkflows(
-    workflowObjectIds: string[],
-    sourceEnvId: string,
-    organizationId: string
-  ): Promise<unknown[]> {
-    return this.controlValuesRepository.find({
-      _environmentId: sourceEnvId,
-      _organizationId: organizationId,
-      _workflowId: { $in: workflowObjectIds },
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-      'controls.layoutId': { $exists: true, $ne: null },
-    });
   }
 
   async getWorkflowDependencies(
