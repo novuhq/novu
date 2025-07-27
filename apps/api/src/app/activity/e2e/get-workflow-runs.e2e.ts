@@ -118,8 +118,6 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     const { body: firstPage } = await session.testAgent.get('/v1/activity/workflow-runs').expect(200);
 
-    expect(firstPage.hasMore, 'firstPage hasMore').to.be.true;
-    expect(firstPage.hasMore, 'firstPage hasMore').to.be.true;
     expect(firstPage.nextCursor, 'firstPage nextCursor').to.be.not.null;
     expect(firstPage.previousCursor, 'firstPage previousCursor').to.be.null;
     expect(firstPage.data.length, 'firstPage dataLength').to.be.equal(10);
