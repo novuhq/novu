@@ -1,5 +1,6 @@
 import { EditorView } from '@uiw/react-codemirror';
 import { MutableRefObject, useCallback, useState } from 'react';
+import { TRANSLATION_DEFAULT_TEMPLATE, TRANSLATION_DELIMITER_CLOSE } from '@novu/shared';
 
 export interface SelectedTranslation {
   translationKey: string;
@@ -58,7 +59,7 @@ export function useTranslations(viewRef: MutableRefObject<EditorView | null>, on
       // This prevents finding the wrong occurrence when there are multiple similar translations
       const { from, to } = selectedTranslation;
       const view = viewRef.current;
-      const newExpression = `{t.${newKey}}`;
+      const newExpression = TRANSLATION_DEFAULT_TEMPLATE(newKey);
 
       // Calculate the actual end position by looking for the closing bracket
       // This mimics what the variable plugin does
@@ -66,8 +67,8 @@ export function useTranslations(viewRef: MutableRefObject<EditorView | null>, on
 
       const contentAfterFrom = currentContent.slice(from);
 
-      const closingBracketPos = contentAfterFrom.indexOf('}');
-      const actualEnd = closingBracketPos > -1 ? from + closingBracketPos + 1 : to;
+      const closingBracketPos = contentAfterFrom.indexOf(TRANSLATION_DELIMITER_CLOSE);
+      const actualEnd = closingBracketPos > -1 ? from + closingBracketPos + 2 : to;
 
       const changes = {
         from,

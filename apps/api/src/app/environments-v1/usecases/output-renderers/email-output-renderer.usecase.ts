@@ -306,19 +306,17 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
       const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
       const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
-      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, escapedPayloadForJson);
-
-      // Apply translations to the liquid-processed Maily JSON before rendering
       const translatedMaily = await this.processMailyTranslations({
-        mailyContent: parsedMaily,
+        mailyContent: transformedMaily,
         variables: escapedPayloadForJson,
         environmentId,
         organizationId,
         workflowId,
         locale,
       });
+      const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
-      const renderedHtml = await mailyRender(translatedMaily, { noHtmlWrappingTags });
+      const renderedHtml = await mailyRender(parsedMaily, { noHtmlWrappingTags });
 
       return this.cleanupRenderedHtml(renderedHtml);
     } else {

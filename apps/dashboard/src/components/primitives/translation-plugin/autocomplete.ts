@@ -1,7 +1,6 @@
 import { Completion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
-import { TRANSLATION_TRIGGER_CHARACTER } from '@novu/shared';
-import { TRANSLATION_PREFIX_LENGTH } from './constants';
+import { TRANSLATION_TRIGGER_CHARACTER, TRANSLATION_DELIMITER_CLOSE } from '@novu/shared';
 import { isInsideVariableContext } from './utils';
 import { TranslationKey, TranslationCompletionOption, TranslationAutocompleteConfig } from '@/types/translations';
 import { createRoot } from 'react-dom/client';
@@ -94,10 +93,10 @@ function createApplyFunction(translationOption: TranslationCompletionOption, con
     const afterCursor = content.slice(to);
 
     const needsOpening = !beforeCursor.endsWith(TRANSLATION_TRIGGER_CHARACTER);
-    const needsClosing = !afterCursor.startsWith('}');
+    const needsClosing = !afterCursor.startsWith(TRANSLATION_DELIMITER_CLOSE);
 
-    const wrappedValue = `${needsOpening ? TRANSLATION_TRIGGER_CHARACTER : ''}${selectedValue}${needsClosing ? '}' : ''}`;
-    const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 1);
+    const wrappedValue = `${needsOpening ? TRANSLATION_TRIGGER_CHARACTER : ''}${selectedValue}${needsClosing ? TRANSLATION_DELIMITER_CLOSE : ''}`;
+    const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
 
     view.dispatch({
       changes: { from, to, insert: wrappedValue },
@@ -121,8 +120,8 @@ export function createTranslationAutocompleteSource(config: TranslationAutocompl
     const lastTranslationStart = beforeCursor.lastIndexOf(TRANSLATION_TRIGGER_CHARACTER);
     if (lastTranslationStart === -1) return null;
 
-    const insideTranslation = state.sliceDoc(lastTranslationStart + TRANSLATION_PREFIX_LENGTH, pos);
-    if (insideTranslation.includes('}')) return null;
+    const insideTranslation = state.sliceDoc(lastTranslationStart + TRANSLATION_TRIGGER_CHARACTER.length, pos);
+    if (insideTranslation.includes(TRANSLATION_DELIMITER_CLOSE)) return null;
 
     const searchText = insideTranslation.trim();
     const matchingKeys = findMatchingKeys(searchText, translationKeys);
@@ -139,7 +138,7 @@ export function createTranslationAutocompleteSource(config: TranslationAutocompl
 
     if (allSuggestions.length > 0 || lastTranslationStart !== -1) {
       return {
-        from: lastTranslationStart + TRANSLATION_PREFIX_LENGTH,
+        from: lastTranslationStart + TRANSLATION_TRIGGER_CHARACTER.length,
         to: pos,
         options: allSuggestions.map(
           (suggestion): Completion => ({

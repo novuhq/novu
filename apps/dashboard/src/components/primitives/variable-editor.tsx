@@ -199,11 +199,15 @@ export function VariableEditor({
 
   const autocompletionExtension = useMemo(() => {
     const dynamicCompletionSource: CompletionSource = (context) => {
-      const sources = [variableCompletionSource];
+      const sources = [];
 
+      // Put translation completion sources first to give them higher priority
       if (callbacksRef.current.completionSources) {
         sources.push(...callbacksRef.current.completionSources);
       }
+
+      // Add variable completion source last
+      sources.push(variableCompletionSource);
 
       for (const source of sources) {
         const result = source(context);
@@ -245,12 +249,16 @@ export function VariableEditor({
 
     // For props that rarely change, we can check them dynamically
     const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-    const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
+    const allExtensions = [...baseExtensions, autocompletionExtension];
 
-    // Handle external extensions
+    // Add external extensions (including translation plugin) BEFORE variable plugin
+    // This ensures translation patterns are processed first
     if (callbacksRef.current.extensions) {
       allExtensions.push(...callbacksRef.current.extensions);
     }
+
+    // Add variable plugin last so it doesn't interfere with translation patterns
+    allExtensions.push(variablePluginExtension);
 
     extensionsRef.current = allExtensions;
     return extensionsRef.current;

@@ -27,7 +27,7 @@ export function IssuesPanel({
   const issueCount = countIssues(issues);
 
   const defaultHintMessage = isTranslationEnabled
-    ? 'Type {{ to access variables or {t. to access translation keys.'
+    ? 'Type {{ to access variables or {{t. to access translation keys.'
     : 'Type {{ to access variables.';
 
   const displayHintMessage = hintMessage || defaultHintMessage;
