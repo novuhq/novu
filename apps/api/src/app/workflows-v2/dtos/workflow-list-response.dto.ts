@@ -89,7 +89,9 @@ export class WorkflowListResponseDto {
   @ApiProperty({
     description: 'Is translation enabled for the workflow',
     type: Boolean,
+    required: false,
   })
+  @IsOptional()
   @IsBoolean()
-  isTranslationEnabled: boolean;
+  isTranslationEnabled?: boolean;
 }
