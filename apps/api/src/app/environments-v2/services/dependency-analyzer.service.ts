@@ -77,9 +77,7 @@ export class DependencyAnalyzerService {
         );
 
         if (dependencies.length > 0) {
-          this.logger.debug(
-            `Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`
-          );
+          this.logger.debug(`Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`);
           dependencyMap.set(resource.sourceResource?.id!, dependencies);
         }
       }

@@ -35,6 +35,7 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     if (!workflowDataContainer) {
       throw new Error('WorkflowDataContainer is required for workflow diff operations');
     }
+
     return this.workflowDiffOperation.execute(
       sourceEnvId,
       targetEnvId,

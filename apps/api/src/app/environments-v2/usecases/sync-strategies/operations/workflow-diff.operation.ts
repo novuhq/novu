@@ -120,7 +120,12 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
           userContext
         );
 
-        const allDiffs = this.createWorkflowResourceDiffs(sourceResource, targetResource, resourceChanges, otherDiffs ?? []);
+        const allDiffs = this.createWorkflowResourceDiffs(
+          sourceResource,
+          targetResource,
+          resourceChanges,
+          otherDiffs ?? []
+        );
 
         if (allDiffs.length > 0) {
           resultBuilder.addResourceDiff(
@@ -172,11 +177,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     };
 
     // For new workflows, we need to extract steps to analyze dependencies
-    const stepDiffs = await this.extractStepsFromNewWorkflow(
-      sourceResource,
-      userContext,
-      workflowDataContainer
-    );
+    const stepDiffs = await this.extractStepsFromNewWorkflow(sourceResource, userContext, workflowDataContainer);
 
     const allDiffs: IResourceDiff[] = [
       {
@@ -301,9 +302,10 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
   ): Promise<IResourceDiff[]> {
     try {
       const workflowIdentifier = workflow.triggers?.[0]?.identifier;
-      
+
       if (!workflowIdentifier) {
         this.logger.warn(`Workflow ${workflow._id} has no trigger identifier, skipping step extraction`);
+
         return [];
       }
 
