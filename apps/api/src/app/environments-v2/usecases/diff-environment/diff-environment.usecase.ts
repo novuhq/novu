@@ -1,12 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { BaseRepository } from '@novu/dal';
+import { BaseRepository, ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { DiffEnvironmentCommand } from './diff-environment.command';
 import { ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
 import { EnvironmentValidationService, DependencyAnalyzerService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 
 @Injectable()
 export class DiffEnvironmentUseCase {
@@ -15,7 +16,9 @@ export class DiffEnvironmentUseCase {
     private environmentValidationService: EnvironmentValidationService,
     private workflowSyncStrategy: WorkflowSyncStrategy,
     private layoutSyncStrategy: LayoutSyncStrategy,
-    private dependencyAnalyzerService: DependencyAnalyzerService
+    private dependencyAnalyzerService: DependencyAnalyzerService,
+    private controlValuesRepository: ControlValuesRepository,
+    private workflowRepository: NotificationTemplateRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -53,12 +56,30 @@ export class DiffEnvironmentUseCase {
         command.user
       );
 
-      // Analyze dependencies
+      // Create workflow data container and pre-load workflow data
+      const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.workflowRepository);
+
+      // Extract workflow identifiers from resources for pre-loading
+      const workflowIdentifiers = resources
+        .filter((resource) => resource.resourceType === 'workflow' && resource.sourceResource?.id)
+        .map((resource) => resource.sourceResource!.id)
+        .filter((id): id is string => id !== null && id !== undefined);
+
+      if (workflowIdentifiers.length > 0) {
+        await workflowDataContainer.loadWorkflowsWithControlValues(
+          workflowIdentifiers,
+          sourceEnvironmentId,
+          command.user.organizationId
+        );
+      }
+
+      // Analyze dependencies with pre-loaded workflow data
       const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
         resources,
         sourceEnvironmentId,
         command.targetEnvironmentId,
-        command.user.organizationId
+        command.user.organizationId,
+        workflowDataContainer
       );
 
       // Add dependencies to resources

@@ -6,6 +6,7 @@ import { ControlValuesLevelEnum } from '@novu/shared';
 import { GetLayoutUsageCommand } from './get-layout-usage.command';
 import { GetLayoutUsageResponseDto, WorkflowInfoDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 
 @Injectable()
 export class GetLayoutUsageUseCase {
@@ -16,7 +17,10 @@ export class GetLayoutUsageUseCase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetLayoutUsageCommand): Promise<GetLayoutUsageResponseDto> {
+  async execute(
+    command: GetLayoutUsageCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<GetLayoutUsageResponseDto> {
     // First, resolve the layout to get its internal ID
     const layout = await this.getLayoutUseCase.execute(
       GetLayoutCommand.create({
@@ -27,33 +31,53 @@ export class GetLayoutUsageUseCase {
       })
     );
 
-    // Find all control values where the layoutId is referenced
-    const controlValues = await this.controlValuesRepository.find({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-      'controls.layoutId': layout.layoutId,
-    });
+    let workflows: WorkflowInfoDto[] = [];
 
-    // Get unique workflow IDs from the control values
-    const workflowIds = [...new Set(controlValues.map((cv) => cv._workflowId).filter(Boolean))] as string[];
-
-    // Fetch workflow information for each workflow ID
-    const workflows: WorkflowInfoDto[] = [];
-
-    for (const workflowId of workflowIds) {
-      try {
-        const workflow = await this.notificationTemplateRepository.findById(workflowId, command.environmentId);
-
-        if (workflow && workflow.triggers && workflow.triggers.length > 0) {
-          workflows.push({
-            name: workflow.name,
-            workflowId: workflow.triggers[0].identifier,
-          });
+    if (workflowDataContainer) {
+      // Use pre-loaded workflow data if available
+      const allLoadedIdentifiers = workflowDataContainer.getAllLoadedIdentifiers();
+      
+      for (const identifier of allLoadedIdentifiers) {
+        const controlValues = workflowDataContainer.getControlValuesForWorkflow(identifier);
+        const hasLayoutReference = controlValues.some((cv: any) => cv?.controls?.layoutId === layout.layoutId);
+        
+        if (hasLayoutReference) {
+          const workflow = workflowDataContainer.getWorkflow(identifier);
+          if (workflow) {
+            workflows.push({
+              name: workflow.name,
+              workflowId: identifier,
+            });
+          }
         }
-      } catch (error) {
-        // Continue if workflow is not found or has issues
-        continue;
+      }
+    } else {
+      // Fallback to original querying logic
+      const controlValues = await this.controlValuesRepository.find({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+        'controls.layoutId': layout.layoutId,
+      });
+
+      // Get unique workflow IDs from the control values
+      const workflowIds = [...new Set(controlValues.map((cv) => cv._workflowId).filter(Boolean))] as string[];
+
+      // Fetch workflow information for each workflow ID
+      for (const workflowId of workflowIds) {
+        try {
+          const workflow = await this.notificationTemplateRepository.findById(workflowId, command.environmentId);
+
+          if (workflow && workflow.triggers && workflow.triggers.length > 0) {
+            workflows.push({
+              name: workflow.name,
+              workflowId: workflow.triggers[0].identifier,
+            });
+          }
+        } catch (error) {
+          // Continue if workflow is not found or has issues
+          continue;
+        }
       }
     }
 

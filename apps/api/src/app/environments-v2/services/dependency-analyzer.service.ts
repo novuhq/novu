@@ -10,6 +10,7 @@ import {
   DiffActionEnum,
   DependencyReasonEnum,
 } from '../types/sync.types';
+import { WorkflowDataContainer } from '../../shared/containers/workflow-data.container';
 
 @Injectable()
 export class DependencyAnalyzerService {
@@ -26,7 +27,8 @@ export class DependencyAnalyzerService {
     resources: IDiffResult[],
     sourceEnvId: string,
     targetEnvId: string,
-    organizationId: string
+    organizationId: string,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<Map<string, IResourceDependency[]>> {
     const dependencyMap = new Map<string, IResourceDependency[]>();
 
@@ -53,52 +55,86 @@ export class DependencyAnalyzerService {
     );
 
     if (workflowResources.length > 0) {
-      // Extract workflow identifiers and resolve to ObjectIds
-      const workflowIdentifiers = workflowResources
-        .map((resource) => resource.sourceResource?.id)
-        .filter((id): id is string => id !== null && id !== undefined);
+      if (workflowDataContainer) {
+        // Use pre-loaded workflow data from container
+        for (const resource of workflowResources) {
+          this.logger.debug(
+            `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
+          );
 
-      const { identifierToObjectId, objectIdToIdentifier } = await this.getWorkflowObjectIdsFromIdentifiers(
-        workflowIdentifiers,
-        sourceEnvId,
-        organizationId
-      );
+          const preloadedControlValues =
+            workflowDataContainer.getControlValuesForWorkflow(resource.sourceResource?.id!) || [];
 
-      // Batch query for all workflow control values using ObjectIds
-      const workflowObjectIds = Array.from(identifierToObjectId.values());
-      const allControlValues = await this.getControlValuesForWorkflows(workflowObjectIds, sourceEnvId, organizationId);
+          const dependencies = await this.getWorkflowDependencies(
+            resource,
+            layoutResourceByIdMap,
+            sourceEnvId,
+            targetEnvId,
+            organizationId,
+            preloadedControlValues
+          );
 
-      // Create a map for quick lookup using identifiers as keys
-      const controlValuesByWorkflowId = new Map<string, unknown[]>();
-      allControlValues.forEach((cv) => {
-        const workflowObjectId = (cv as any)._workflowId;
-        const workflowIdentifier = objectIdToIdentifier.get(workflowObjectId);
-        if (workflowIdentifier) {
-          if (!controlValuesByWorkflowId.has(workflowIdentifier)) {
-            controlValuesByWorkflowId.set(workflowIdentifier, []);
+          if (dependencies.length > 0) {
+            this.logger.debug(
+              `Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`
+            );
+            dependencyMap.set(resource.sourceResource?.id!, dependencies);
           }
-          controlValuesByWorkflowId.get(workflowIdentifier)!.push(cv);
         }
-      });
+      } else {
+        // Fallback to original batch querying logic
+        const workflowIdentifiers = workflowResources
+          .map((resource) => resource.sourceResource?.id)
+          .filter((id): id is string => id !== null && id !== undefined);
 
-      // Analyze each workflow for layout dependencies
-      for (const resource of workflowResources) {
-        this.logger.debug(
-          `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
-        );
-
-        const dependencies = await this.getWorkflowDependencies(
-          resource,
-          layoutResourceByIdMap,
+        const { identifierToObjectId, objectIdToIdentifier } = await this.getWorkflowObjectIdsFromIdentifiers(
+          workflowIdentifiers,
           sourceEnvId,
-          targetEnvId,
-          organizationId,
-          controlValuesByWorkflowId.get(resource.sourceResource?.id!) || []
+          organizationId
         );
 
-        if (dependencies.length > 0) {
-          this.logger.debug(`Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`);
-          dependencyMap.set(resource.sourceResource?.id!, dependencies);
+        // Batch query for all workflow control values using ObjectIds
+        const workflowObjectIds = Array.from(identifierToObjectId.values());
+        const allControlValues = await this.getControlValuesForWorkflows(
+          workflowObjectIds,
+          sourceEnvId,
+          organizationId
+        );
+
+        // Create a map for quick lookup using identifiers as keys
+        const controlValuesByWorkflowId = new Map<string, unknown[]>();
+        allControlValues.forEach((cv) => {
+          const workflowObjectId = (cv as any)._workflowId;
+          const workflowIdentifier = objectIdToIdentifier.get(workflowObjectId);
+          if (workflowIdentifier) {
+            if (!controlValuesByWorkflowId.has(workflowIdentifier)) {
+              controlValuesByWorkflowId.set(workflowIdentifier, []);
+            }
+            controlValuesByWorkflowId.get(workflowIdentifier)!.push(cv);
+          }
+        });
+
+        // Analyze each workflow for layout dependencies
+        for (const resource of workflowResources) {
+          this.logger.debug(
+            `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
+          );
+
+          const dependencies = await this.getWorkflowDependencies(
+            resource,
+            layoutResourceByIdMap,
+            sourceEnvId,
+            targetEnvId,
+            organizationId,
+            controlValuesByWorkflowId.get(resource.sourceResource?.id!) || []
+          );
+
+          if (dependencies.length > 0) {
+            this.logger.debug(
+              `Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`
+            );
+            dependencyMap.set(resource.sourceResource?.id!, dependencies);
+          }
         }
       }
     }
