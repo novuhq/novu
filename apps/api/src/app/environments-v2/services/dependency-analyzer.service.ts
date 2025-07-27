@@ -53,20 +53,32 @@ export class DependencyAnalyzerService {
     );
 
     if (workflowResources.length > 0) {
-      // Batch query for all workflow control values
-      const workflowIds = workflowResources
+      // Extract workflow identifiers and resolve to ObjectIds
+      const workflowIdentifiers = workflowResources
         .map((resource) => resource.sourceResource?.id)
         .filter((id): id is string => id !== null && id !== undefined);
-      const allControlValues = await this.getControlValuesForWorkflows(workflowIds, sourceEnvId, organizationId);
 
-      // Create a map for quick lookup
+      const { identifierToObjectId, objectIdToIdentifier } = await this.getWorkflowObjectIdsFromIdentifiers(
+        workflowIdentifiers,
+        sourceEnvId,
+        organizationId
+      );
+
+      // Batch query for all workflow control values using ObjectIds
+      const workflowObjectIds = Array.from(identifierToObjectId.values());
+      const allControlValues = await this.getControlValuesForWorkflows(workflowObjectIds, sourceEnvId, organizationId);
+
+      // Create a map for quick lookup using identifiers as keys
       const controlValuesByWorkflowId = new Map<string, unknown[]>();
       allControlValues.forEach((cv) => {
-        const workflowId = (cv as any)._workflowId;
-        if (!controlValuesByWorkflowId.has(workflowId)) {
-          controlValuesByWorkflowId.set(workflowId, []);
+        const workflowObjectId = (cv as any)._workflowId;
+        const workflowIdentifier = objectIdToIdentifier.get(workflowObjectId);
+        if (workflowIdentifier) {
+          if (!controlValuesByWorkflowId.has(workflowIdentifier)) {
+            controlValuesByWorkflowId.set(workflowIdentifier, []);
+          }
+          controlValuesByWorkflowId.get(workflowIdentifier)!.push(cv);
         }
-        controlValuesByWorkflowId.get(workflowId)!.push(cv);
       });
 
       // Analyze each workflow for layout dependencies
@@ -116,15 +128,43 @@ export class DependencyAnalyzerService {
     return dependencyMap;
   }
 
+  private async getWorkflowObjectIdsFromIdentifiers(
+    workflowIdentifiers: string[],
+    environmentId: string,
+    organizationId: string
+  ): Promise<{
+    identifierToObjectId: Map<string, string>;
+    objectIdToIdentifier: Map<string, string>;
+  }> {
+    const workflows = await this.workflowRepository.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      'triggers.identifier': { $in: workflowIdentifiers },
+    });
+
+    const identifierToObjectId = new Map<string, string>();
+    const objectIdToIdentifier = new Map<string, string>();
+
+    workflows.forEach((workflow) => {
+      const identifier = workflow.triggers?.[0]?.identifier;
+      if (identifier && workflow._id) {
+        identifierToObjectId.set(identifier, workflow._id);
+        objectIdToIdentifier.set(workflow._id, identifier);
+      }
+    });
+
+    return { identifierToObjectId, objectIdToIdentifier };
+  }
+
   async getControlValuesForWorkflows(
-    workflowIds: string[],
+    workflowObjectIds: string[],
     sourceEnvId: string,
     organizationId: string
   ): Promise<unknown[]> {
     return this.controlValuesRepository.find({
       _environmentId: sourceEnvId,
       _organizationId: organizationId,
-      _workflowId: { $in: workflowIds },
+      _workflowId: { $in: workflowObjectIds },
       level: ControlValuesLevelEnum.STEP_CONTROLS,
       'controls.layoutId': { $exists: true, $ne: null },
     });
