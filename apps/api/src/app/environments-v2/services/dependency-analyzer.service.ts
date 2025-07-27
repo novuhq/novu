@@ -126,7 +126,7 @@ export class DependencyAnalyzerService {
         for (const change of workflowDiff.changes) {
           // Handle both enum and string values for resourceType
           const isStepChange = change.resourceType === ResourceTypeEnum.STEP;
-          const isEmailStep = change.stepType === 'email';
+          const isEmailStep = change.stepType === StepTypeEnum.EMAIL;
 
           if (isStepChange && isEmailStep) {
             this.logger.debug(`Found email step change: ${change.sourceResource?.name || change.targetResource?.name}`);
