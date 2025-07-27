@@ -30,31 +30,22 @@ export class DependencyAnalyzerService {
   ): Promise<Map<string, IResourceDependency[]>> {
     const dependencyMap = new Map<string, IResourceDependency[]>();
 
-    // Create maps of layout resources for quick lookup by both ID and name
+    // Create map of layout resources for quick lookup by ID
     const layoutResourceByIdMap = new Map<string, IDiffResult>();
-    const layoutResourceByNameMap = new Map<string, IDiffResult>();
 
     resources.forEach((resource) => {
       if (resource.resourceType === ResourceTypeEnum.LAYOUT) {
         if (resource.sourceResource?.id) {
           layoutResourceByIdMap.set(resource.sourceResource.id, resource);
         }
-        if (resource.sourceResource?.name) {
-          layoutResourceByNameMap.set(resource.sourceResource.name, resource);
-        }
         // Handle deleted layouts (targetResource exists but sourceResource is null)
         if (resource.targetResource?.id && !resource.sourceResource) {
           layoutResourceByIdMap.set(resource.targetResource.id, resource);
         }
-        if (resource.targetResource?.name && !resource.sourceResource) {
-          layoutResourceByNameMap.set(resource.targetResource.name, resource);
-        }
       }
     });
 
-    this.logger.debug(
-      `Found ${layoutResourceByIdMap.size} layouts by ID and ${layoutResourceByNameMap.size} layouts by name`
-    );
+    this.logger.debug(`Found ${layoutResourceByIdMap.size} layouts by ID`);
 
     // Get all workflow resources for batched processing
     const workflowResources = resources.filter(
@@ -87,7 +78,6 @@ export class DependencyAnalyzerService {
         const dependencies = await this.getWorkflowDependencies(
           resource,
           layoutResourceByIdMap,
-          layoutResourceByNameMap,
           sourceEnvId,
           targetEnvId,
           organizationId,
@@ -143,7 +133,6 @@ export class DependencyAnalyzerService {
   private async getWorkflowDependencies(
     workflowDiff: IDiffResult,
     layoutResourceByIdMap: Map<string, IDiffResult>,
-    layoutResourceByNameMap: Map<string, IDiffResult>,
     sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
@@ -174,7 +163,6 @@ export class DependencyAnalyzerService {
               const dependency = await this.createLayoutDependency(
                 layoutId,
                 layoutResourceByIdMap,
-                layoutResourceByNameMap,
                 targetEnvId,
                 organizationId
               );
@@ -200,7 +188,6 @@ export class DependencyAnalyzerService {
         const dependency = await this.createLayoutDependency(
           layoutId,
           layoutResourceByIdMap,
-          layoutResourceByNameMap,
           targetEnvId,
           organizationId
         );
@@ -314,31 +301,9 @@ export class DependencyAnalyzerService {
     return layoutIds;
   }
 
-  private extractWorkflowIdsFromStepChange(stepChange: IResourceDiff): string[] {
-    const workflowIds: string[] = [];
-
-    // Check current/new workflow ID
-    const newWorkflowId = stepChange.diffs?.new?.controlValues?.workflowId;
-    if (newWorkflowId && typeof newWorkflowId === 'string') {
-      this.logger.debug(`Found new workflowId in step change: ${newWorkflowId}`);
-      workflowIds.push(newWorkflowId);
-    }
-
-    // Check previous workflow ID for context (though typically we care about new dependencies)
-    const previousWorkflowId = stepChange.diffs?.previous?.controlValues?.workflowId;
-    if (previousWorkflowId && typeof previousWorkflowId === 'string' && previousWorkflowId !== newWorkflowId) {
-      this.logger.debug(`Found previous workflowId in step change: ${previousWorkflowId}`);
-      // Only add if it's different from the new one
-      workflowIds.push(previousWorkflowId);
-    }
-
-    return workflowIds;
-  }
-
   private async createLayoutDependency(
     layoutId: string,
     layoutResourceByIdMap: Map<string, IDiffResult>,
-    layoutResourceByNameMap: Map<string, IDiffResult>,
     targetEnvId: string,
     organizationId: string
   ): Promise<IResourceDependency | null> {
