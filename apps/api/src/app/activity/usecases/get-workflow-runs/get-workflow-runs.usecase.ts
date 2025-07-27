@@ -137,7 +137,6 @@ export class GetWorkflowRuns {
         data,
         nextCursor,
         previousCursor,
-        hasMore,
       };
     } catch (error) {
       this.logger.error('Failed to get workflow runs', {

@@ -145,8 +145,4 @@ export class GetWorkflowRunsResponseDto {
   @ApiPropertyOptional({ description: 'Previous cursor for pagination' })
   @IsString()
   previousCursor: string | null;
-
-  @ApiProperty({ description: 'Whether more results are available' })
-  @IsBoolean()
-  hasMore: boolean;
 }
