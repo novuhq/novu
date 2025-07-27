@@ -133,7 +133,7 @@ export class WorkflowDataContainer {
     }
 
     if (identifierToObjectId.size < workflowIdentifiers.length) {
-      const missingIdentifiers = workflowIdentifiers.filter(id => !identifierToObjectId.has(id));
+      const missingIdentifiers = workflowIdentifiers.filter((id) => !identifierToObjectId.has(id));
       const workflows = await this.workflowRepository.find({
         _environmentId: environmentId,
         _organizationId: organizationId,

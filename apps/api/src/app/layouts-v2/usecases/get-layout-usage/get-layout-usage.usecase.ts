@@ -31,16 +31,16 @@ export class GetLayoutUsageUseCase {
       })
     );
 
-    let workflows: WorkflowInfoDto[] = [];
+    const workflows: WorkflowInfoDto[] = [];
 
     if (workflowDataContainer) {
       // Use pre-loaded workflow data if available
       const allLoadedIdentifiers = workflowDataContainer.getAllLoadedIdentifiers();
-      
+
       for (const identifier of allLoadedIdentifiers) {
         const controlValues = workflowDataContainer.getControlValuesForWorkflow(identifier);
         const hasLayoutReference = controlValues.some((cv: any) => cv?.controls?.layoutId === layout.layoutId);
-        
+
         if (hasLayoutReference) {
           const workflow = workflowDataContainer.getWorkflow(identifier);
           if (workflow) {
