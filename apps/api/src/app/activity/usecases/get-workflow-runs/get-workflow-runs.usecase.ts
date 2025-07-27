@@ -1,6 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { WorkflowRunRepository, WorkflowRun, PinoLogger, Where } from '@novu/application-generic';
-import { GetWorkflowRunsResponseDto, WorkflowRunDto } from '../../dtos/workflow-runs-response.dto';
+import {
+  WorkflowRunRepository,
+  WorkflowRun,
+  PinoLogger,
+  Where,
+  StepRunRepository,
+  StepRun,
+} from '@novu/application-generic';
+import { GetWorkflowRunsResponseDto, GetWorkflowRunsDto } from '../../dtos/workflow-runs-response.dto';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
 type CursorData = {
@@ -12,6 +19,7 @@ type CursorData = {
 export class GetWorkflowRuns {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
+    private stepRunRepository: StepRunRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -131,12 +139,19 @@ export class GetWorkflowRuns {
         previousCursor = await this.generatePreviousCursor(whereConditions, cursor!, command.limit);
       }
 
-      const data = workflowRuns.map((workflowRun) => this.mapWorkflowRunToDto(workflowRun));
+      // Fetch step runs for all workflow runs efficiently
+      const stepRunsByCompositeKey = await this.getStepRunsForWorkflowRuns(command, workflowRuns);
+
+      const data = workflowRuns.map((workflowRun) => {
+        const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
+
+        return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
+      });
 
       return {
         data,
-        nextCursor,
-        previousCursor,
+        next: nextCursor,
+        previous: previousCursor,
       };
     } catch (error) {
       this.logger.error('Failed to get workflow runs', {
@@ -238,7 +253,76 @@ export class GetWorkflowRuns {
     return new Date(isoFormat);
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRun): WorkflowRunDto {
+  /**
+   * Efficiently fetch step runs for multiple workflow runs using batch query
+   * Groups by composite key: subscriber_id:transaction_id
+   */
+  private async getStepRunsForWorkflowRuns(
+    command: GetWorkflowRunsCommand,
+    workflowRuns: WorkflowRun[]
+  ): Promise<Map<string, StepRun[]>> {
+    if (workflowRuns.length === 0) {
+      return new Map();
+    }
+
+    try {
+      const transactionIds = workflowRuns.map((run) => run.transaction_id);
+
+      const stepRunsResult = await this.stepRunRepository.find({
+        where: {
+          organization_id: command.organizationId,
+          environment_id: command.environmentId,
+          transaction_id: {
+            operator: 'IN',
+            value: transactionIds,
+          },
+        },
+        orderBy: 'created_at',
+        orderDirection: 'ASC',
+        useFinal: true,
+      });
+
+      // Group step runs by composite key: subscriber_id:transaction_id
+      const stepRunsByCompositeKey = new Map<string, StepRun[]>();
+
+      for (const stepRun of stepRunsResult.data) {
+        const compositeKey = `${stepRun.subscriber_id}:${stepRun.transaction_id}`;
+        if (!stepRunsByCompositeKey.has(compositeKey)) {
+          stepRunsByCompositeKey.set(compositeKey, []);
+        }
+        stepRunsByCompositeKey.get(compositeKey)!.push(stepRun);
+      }
+
+      return stepRunsByCompositeKey;
+    } catch (error) {
+      this.logger.warn('Failed to get step runs for workflow runs', {
+        error: error.message,
+        transactionIds: workflowRuns.map((run) => run.transaction_id),
+        subscriberIds: workflowRuns.map((run) => run.subscriber_id),
+      });
+
+      return new Map();
+    }
+  }
+
+  // Return mapped value or fallback to Pascal case conversion
+  private mapStepTypeToName(stepType: string): string {
+    const stepTypeMap: Record<string, string> = {
+      in_app: 'In App',
+      email: 'Email',
+      sms: 'SMS',
+      chat: 'Chat',
+      push: 'Push',
+      digest: 'Digest',
+      trigger: 'Trigger',
+      delay: 'Delay',
+      custom: 'Custom',
+    };
+
+    return stepTypeMap[stepType];
+  }
+
+  private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: StepRun[]): GetWorkflowRunsDto {
     return {
       id: workflowRun.id,
       workflowRunId: workflowRun.workflow_run_id,
@@ -246,20 +330,19 @@ export class GetWorkflowRuns {
       workflowName: workflowRun.workflow_name,
       organizationId: workflowRun.organization_id,
       environmentId: workflowRun.environment_id,
-      subscriberId: workflowRun.subscriber_id,
-      externalSubscriberId: workflowRun.external_subscriber_id || undefined,
+      internalSubscriberId: workflowRun.subscriber_id,
+      subscriberId: workflowRun.external_subscriber_id || undefined,
       status: workflowRun.status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
-      channels: workflowRun.channels ? JSON.parse(workflowRun.channels) : [],
-      subscriberTo: workflowRun.subscriber_to ? JSON.parse(workflowRun.subscriber_to) : undefined,
-      payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : undefined,
-      controlValues: workflowRun.control_values ? JSON.parse(workflowRun.control_values) : undefined,
-      topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : undefined,
-      isDigest: workflowRun.is_digest === 'true',
-      digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
       createdAt: new Date(workflowRun.created_at),
       updatedAt: new Date(workflowRun.updated_at),
+      steps: stepRuns.map((stepRun) => ({
+        id: stepRun.id,
+        stepRunId: stepRun.step_run_id,
+        stepName: this.mapStepTypeToName(stepRun.step_type),
+        status: stepRun.status,
+      })),
     };
   }
 }

@@ -165,7 +165,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     const now = new Date();
     const createdAt = new Date(job.createdAt || now);
     const stepType = this.mapStepTypeEnumToStepType(job.type || job.step.template?.type);
-    const stepName = stepType === 'trigger' ? 'Trigger step' : 'unnamed_step';
 
     return {
       created_at: this.formatDateTime64(createdAt),
@@ -186,7 +185,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
 
       // Step metadata
       step_type: stepType,
-      step_name: stepName,
+      step_name: null, // todo remove this parameter because we do not have step name at this stage.
       provider_id: job.providerId || null,
 
       // Execution details

@@ -8,7 +8,7 @@ import {
   TraceLogRepository,
 } from '@novu/application-generic';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { WorkflowRunDto } from '../../dtos/workflow-runs-response.dto';
+import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 interface IStepRunWithDetails extends StepRun {
@@ -26,7 +26,7 @@ export class GetWorkflowRun {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: GetWorkflowRunCommand): Promise<WorkflowRunDto> {
+  async execute(command: GetWorkflowRunCommand): Promise<GetWorkflowRunResponseDto> {
     this.logger.debug('Getting workflow run from ClickHouse', {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -196,7 +196,7 @@ export class GetWorkflowRun {
     return new Date(isoFormat);
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): WorkflowRunDto {
+  private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): GetWorkflowRunResponseDto {
     return {
       id: workflowRun.id,
       workflowRunId: workflowRun.workflow_run_id,
@@ -204,25 +204,18 @@ export class GetWorkflowRun {
       workflowName: workflowRun.workflow_name,
       organizationId: workflowRun.organization_id,
       environmentId: workflowRun.environment_id,
-      subscriberId: workflowRun.subscriber_id,
-      externalSubscriberId: workflowRun.external_subscriber_id || undefined,
+      internalSubscriberId: workflowRun.subscriber_id,
+      subscriberId: workflowRun.external_subscriber_id || undefined,
       status: workflowRun.status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
-      channels: workflowRun.channels ? JSON.parse(workflowRun.channels) : [],
-      subscriberTo: workflowRun.subscriber_to ? JSON.parse(workflowRun.subscriber_to) : undefined,
-      payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : undefined,
-      controlValues: workflowRun.control_values ? JSON.parse(workflowRun.control_values) : undefined,
-      topics: workflowRun.topics ? JSON.parse(workflowRun.topics) : undefined,
-      isDigest: workflowRun.is_digest === 'true',
-      digestedWorkflowRunId: workflowRun.digested_workflow_run_id || undefined,
       createdAt: new Date(workflowRun.created_at),
       updatedAt: new Date(workflowRun.updated_at),
+      payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
       steps: stepRuns.map((stepRun) => ({
         stepRunId: stepRun.step_run_id,
         stepId: stepRun.step_id,
         stepType: stepRun.step_type,
-        stepName: stepRun.step_name,
         providerId: stepRun.provider_id || undefined,
         status: stepRun.status,
         createdAt: new Date(stepRun.created_at),

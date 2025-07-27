@@ -2,7 +2,7 @@ import { WorkflowRunStatus } from '@novu/application-generic';
 import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString, IsArray, IsInt, Min, Max, IsISO8601, IsIn } from 'class-validator';
 
-export class GetWorkflowRunsDto {
+export class GetWorkflowRunsRequestDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()

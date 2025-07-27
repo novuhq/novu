@@ -2,7 +2,6 @@ import {
   CHNullable,
   CHString,
   CHDateTime64,
-  CHUInt32,
   CHLowCardinality,
   ClickhouseSchema,
   InferClickhouseSchemaType,
@@ -31,7 +30,7 @@ const schemaDefinition = {
 
   // Step metadata
   step_type: { type: CHLowCardinality(CHString()) }, // email, sms, in_app, push, etc.
-  step_name: { type: CHString() },
+  step_name: { type: CHNullable(CHString()) }, // todo remove this parameter because we do not have step name at this stage.
   provider_id: { type: CHNullable(CHString()) },
 
   // Execution details

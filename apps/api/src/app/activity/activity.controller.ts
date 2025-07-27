@@ -10,8 +10,9 @@ import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
-import { GetWorkflowRunsDto } from './dtos/workflow-runs-request.dto';
-import { GetWorkflowRunsResponseDto, WorkflowRunDto } from './dtos/workflow-runs-response.dto';
+import { GetWorkflowRunsRequestDto } from './dtos/workflow-runs-request.dto';
+import { GetWorkflowRunsResponseDto } from './dtos/workflow-runs-response.dto';
+import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
 
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -46,7 +47,7 @@ export class ActivityController {
   async getWorkflowRuns(
     @UserSession() user,
     @Query()
-    query: GetWorkflowRunsDto
+    query: GetWorkflowRunsRequestDto
   ): Promise<GetWorkflowRunsResponseDto> {
     return this.getWorkflowRunsUsecase.execute(
       GetWorkflowRunsCommand.create({
@@ -60,7 +61,10 @@ export class ActivityController {
 
   @Get('workflow-runs/:workflowRunId')
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
-  async getWorkflowRun(@UserSession() user, @Param('workflowRunId') workflowRunId: string): Promise<WorkflowRunDto> {
+  async getWorkflowRun(
+    @UserSession() user,
+    @Param('workflowRunId') workflowRunId: string
+  ): Promise<GetWorkflowRunResponseDto> {
     return this.getWorkflowRunUsecase.execute(
       GetWorkflowRunCommand.create({
         workflowRunId,
