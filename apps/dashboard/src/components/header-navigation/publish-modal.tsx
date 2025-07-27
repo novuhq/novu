@@ -25,7 +25,7 @@ import type { ResourceToPublish } from '@/api/environments';
 import { WorkflowHoverCard } from './workflow-hover-card';
 import { LayoutUsageIndicator } from './layout-usage-indicator';
 
-type EnhancedPublishModalProps = {
+type PublishModalProps = {
   isOpen: boolean;
   onClose: () => void;
   environment: IEnvironment;
@@ -42,14 +42,14 @@ type ResourceSelection = {
   };
 };
 
-export function EnhancedPublishModal({
+export function PublishModal({
   isOpen,
   onClose,
   environment,
   currentEnvironmentId,
   onConfirm,
   isPublishing = false,
-}: EnhancedPublishModalProps) {
+}: PublishModalProps) {
   const [resourceSelection, setResourceSelection] = useState<ResourceSelection>({});
   const [workflowsExpanded, setWorkflowsExpanded] = useState(true);
   const [layoutsExpanded, setLayoutsExpanded] = useState(true);
@@ -61,7 +61,6 @@ export function EnhancedPublishModal({
   });
 
   const { workflows, layouts, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
-
 
   // Initialize selection state
   useEffect(() => {
@@ -294,7 +293,6 @@ type SelectableResourceRowProps = {
   allWorkflows?: IResourceDiffResult[];
   dependencyMap?: Map<string, IResourceDependency[]>;
 };
-
 
 function CompactResourceRow({
   resource,

@@ -2,14 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { BaseRepository } from '@novu/dal';
 import { PublishEnvironmentCommand } from './publish-environment.command';
-import {
-  ISyncStrategy,
-  IPublishResult,
-  ISyncContext,
-  ISyncOptions,
-  ISyncResult,
-  IResourceToPublish,
-} from '../../types/sync.types';
+import { ISyncStrategy, IPublishResult, ISyncContext, ISyncOptions, ISyncResult } from '../../types/sync.types';
 import { EnvironmentValidationService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
@@ -65,16 +58,7 @@ export class PublishEnvironmentUseCase {
        */
       const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
 
-      // Filter strategies based on resource types if specific resources are provided
-      const strategiesToExecute = options.resources?.length
-        ? this.filterStrategiesForSelectiveSync(strategies, options.resources)
-        : strategies;
-
-      if (options.resources?.length && strategiesToExecute.length === 0) {
-        throw new BadRequestException('No supported resource types found in the request');
-      }
-
-      const results = await this.executeSync(strategiesToExecute, syncContext);
+      const results = await this.executeSync(strategies, syncContext);
 
       const summary = this.calculateSummary(results);
 
@@ -131,14 +115,5 @@ export class PublishEnvironmentUseCase {
     }
 
     return summary;
-  }
-
-  private filterStrategiesForSelectiveSync(
-    strategies: ISyncStrategy[],
-    resources: IResourceToPublish[]
-  ): ISyncStrategy[] {
-    const requestedResourceTypes = new Set(resources.map((resource) => resource.resourceType));
-
-    return strategies.filter((strategy) => requestedResourceTypes.has(strategy.getResourceType()));
   }
 }

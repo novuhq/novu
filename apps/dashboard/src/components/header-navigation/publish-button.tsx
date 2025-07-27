@@ -13,7 +13,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDiffEnvironments, usePublishEnvironments } from '@/hooks/use-environments';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { EnhancedPublishModal } from './enhanced-publish-modal';
+import { PublishModal } from './publish-modal';
 import { PublishSuccessModal } from './publish-success-modal';
 import { NoChangesModal } from './no-changes-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -126,7 +126,7 @@ export const PublishButton = () => {
           </div>
         </Button>
 
-        <EnhancedPublishModal
+        <PublishModal
           isOpen={state.modalState === 'publish'}
           onClose={actions.close}
           environment={state.selectedEnvironment!}
@@ -190,7 +190,7 @@ export const PublishButton = () => {
       {/* Modals */}
       {state.selectedEnvironment && (
         <>
-          <EnhancedPublishModal
+          <PublishModal
             isOpen={state.modalState === 'publish'}
             onClose={actions.close}
             environment={state.selectedEnvironment}
