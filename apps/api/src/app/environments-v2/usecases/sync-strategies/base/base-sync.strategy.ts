@@ -17,6 +17,7 @@ export abstract class BaseSyncStrategy implements ISyncStrategy {
     organizationId: string,
     userContext: UserSessionData
   ): Promise<IDiffResult[]>;
+  abstract getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]>;
 
   protected async processBatch<T>(
     entities: T[],

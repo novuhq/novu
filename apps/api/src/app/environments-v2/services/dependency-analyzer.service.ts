@@ -91,12 +91,12 @@ export class DependencyAnalyzerService {
           sourceEnvId,
           targetEnvId,
           organizationId,
-          controlValuesByWorkflowId.get(resource.sourceResource!.id) || []
+          controlValuesByWorkflowId.get(resource.sourceResource?.id!) || []
         );
 
         if (dependencies.length > 0) {
           this.logger.debug(`Found ${dependencies.length} dependencies for workflow ${resource.sourceResource!.name}`);
-          dependencyMap.set(resource.sourceResource!.id, dependencies);
+          dependencyMap.set(resource.sourceResource?.id!, dependencies);
         }
       }
     }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { IResourceDiffResult, IResourceDependency, IDiffEnvironmentResult } from '@/api/environments';
+import type { IResourceDiffResult, IResourceDependency, IEnvironmentDiffResponse } from '@/api/environments';
 
 type ResourceSelection = {
   [resourceId: string]: {
@@ -16,20 +16,20 @@ type UseResourceDependenciesResult = {
   calculateDependencyState: (selection: ResourceSelection) => ResourceSelection;
 };
 
-export function useResourceDependencies(diffData: IDiffEnvironmentResult | undefined): UseResourceDependenciesResult {
+export function useResourceDependencies(diffData: IEnvironmentDiffResponse | undefined): UseResourceDependenciesResult {
   const { workflows, layouts, dependencyMap } = useMemo(() => {
     if (!diffData?.resources) {
       return { workflows: [], layouts: [], dependencyMap: new Map() };
     }
 
-    const workflowResources = diffData.resources.filter((r) => r.resourceType === 'workflow');
-    const layoutResources = diffData.resources.filter((r) => r.resourceType === 'layout');
+    const workflowResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'workflow');
+    const layoutResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'layout');
 
     // Build dependency map for quick lookup (include both workflows and layouts)
     const depMap = new Map<string, IResourceDependency[]>();
 
     // Add workflow dependencies
-    workflowResources.forEach((workflow) => {
+    workflowResources.forEach((workflow: IResourceDiffResult) => {
       if (workflow.dependencies?.length) {
         const workflowId = workflow.sourceResource?.id || workflow.targetResource?.id;
 
@@ -40,7 +40,7 @@ export function useResourceDependencies(diffData: IDiffEnvironmentResult | undef
     });
 
     // Add layout dependencies to the map as well
-    layoutResources.forEach((layout) => {
+    layoutResources.forEach((layout: IResourceDiffResult) => {
       if (layout.dependencies?.length) {
         const layoutId = layout.sourceResource?.id || layout.targetResource?.id;
 
