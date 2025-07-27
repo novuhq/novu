@@ -1,4 +1,5 @@
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
+import { TRANSLATION_NAMESPACE_SEPARATOR, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 
 import {
   AssignTag,
@@ -16,7 +17,6 @@ import {
   UnlessTag,
   LiquidError,
 } from 'liquidjs';
-import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import { DIGEST_EVENTS_VARIABLE_PATTERN, isLiquidErrors, isValidDynamicPath, isValidTemplate } from './parser-utils';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
 import type { ProcessContext, VariableDetails, Variable } from './types';
@@ -255,6 +255,8 @@ function validateVariable({
 
   const isAllowedVariable = isPropertyAllowed(variableSchema, variableName);
   const isContentVariable = variableName === LAYOUT_CONTENT_VARIABLE && isAllowedVariable;
+  const isTranslationVariable = variableName.startsWith(TRANSLATION_NAMESPACE_SEPARATOR);
+
   if (isLocalVariable) {
     return;
   }
@@ -274,7 +276,7 @@ function validateVariable({
     return;
   }
 
-  if (isAllowedVariable) {
+  if (isAllowedVariable || isTranslationVariable) {
     validVariables.push({
       name: variableName,
       output,
