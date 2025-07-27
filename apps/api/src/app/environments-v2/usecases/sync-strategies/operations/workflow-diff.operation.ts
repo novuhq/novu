@@ -6,13 +6,17 @@ import { ResourceTypeEnum, IUserInfo, DiffActionEnum, IResourceDiff } from '../.
 import { BaseDiffOperation } from '../base/operations/base-diff.operation';
 import { WorkflowRepositoryAdapter, WorkflowComparatorAdapter } from '../adapters';
 import { DiffResultBuilder } from '../builders/diff-result.builder';
+import { GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
+import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
 
 @Injectable()
 export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplateEntity> {
   constructor(
     protected logger: PinoLogger,
     protected repositoryAdapter: WorkflowRepositoryAdapter,
-    protected comparatorAdapter: WorkflowComparatorAdapter
+    protected comparatorAdapter: WorkflowComparatorAdapter,
+    private getWorkflowUseCase: GetWorkflowUseCase,
+    private workflowNormalizer: WorkflowNormalizer
   ) {
     super(logger, repositoryAdapter, comparatorAdapter);
   }
@@ -83,16 +87,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     userContext: UserSessionData
   ): Promise<IResourceDiff[]> {
     try {
-      /*
-       * We need to get the workflow details with steps
-       * Use the comparator's internal methods to get normalized workflow data
-       */
-      const comparator = (this.comparatorAdapter as any).workflowComparator;
-      const { getWorkflowUseCase } = comparator;
-      const { workflowNormalizer } = comparator;
-
       // Get the full workflow data
-      const workflowDto = await getWorkflowUseCase.execute({
+      const workflowDto = await this.getWorkflowUseCase.execute({
         user: {
           ...userContext,
           environmentId: workflow._environmentId,
@@ -101,7 +97,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       });
 
       // Normalize the workflow to get steps
-      const normalizedWorkflow = workflowNormalizer.normalizeWorkflow(workflowDto);
+      const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);
 
       // Create step diffs for each step as "added"
       return normalizedWorkflow.steps.map((step, index) => ({

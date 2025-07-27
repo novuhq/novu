@@ -116,7 +116,7 @@ export class DependencyAnalyzerService {
     return dependencyMap;
   }
 
-  private async getControlValuesForWorkflows(
+  async getControlValuesForWorkflows(
     workflowIds: string[],
     sourceEnvId: string,
     organizationId: string
@@ -130,7 +130,7 @@ export class DependencyAnalyzerService {
     });
   }
 
-  private async getWorkflowDependencies(
+  async getWorkflowDependencies(
     workflowDiff: IDiffResult,
     layoutResourceByIdMap: Map<string, IDiffResult>,
     sourceEnvId: string,
@@ -209,7 +209,7 @@ export class DependencyAnalyzerService {
     return dependencies;
   }
 
-  private async getLayoutReverseDependencies(
+  async getLayoutReverseDependencies(
     deletedLayoutDiff: IDiffResult,
     targetEnvId: string,
     organizationId: string
@@ -280,7 +280,7 @@ export class DependencyAnalyzerService {
     return reverseDependencies;
   }
 
-  private extractLayoutIdsFromStepChange(stepChange: IResourceDiff): string[] {
+  extractLayoutIdsFromStepChange(stepChange: IResourceDiff): string[] {
     const layoutIds: string[] = [];
 
     // Check current/new layout ID
@@ -301,7 +301,7 @@ export class DependencyAnalyzerService {
     return layoutIds;
   }
 
-  private async createLayoutDependency(
+  async createLayoutDependency(
     layoutId: string,
     layoutResourceByIdMap: Map<string, IDiffResult>,
     targetEnvId: string,
@@ -351,7 +351,7 @@ export class DependencyAnalyzerService {
     };
   }
 
-  private isDependencyBlocking(targetLayout: unknown, layoutDiff?: IDiffResult): boolean {
+  isDependencyBlocking(targetLayout: unknown, layoutDiff?: IDiffResult): boolean {
     // If layout doesn't exist in target and there's a new layout being added, it's blocking
     if (!targetLayout && layoutDiff?.summary?.added && layoutDiff.summary.added > 0) {
       this.logger.debug("Dependency is blocking: layout doesn't exist in target but is being added");
