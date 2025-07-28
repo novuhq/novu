@@ -5,6 +5,8 @@ import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize, containsHTMLEntities } from '@/utils/string';
 import { cn } from '@/utils/ui';
 import { useFormContext } from 'react-hook-form';
+import { useEnvironment } from '@/context/environment/hooks';
+import { EnvironmentTypeEnum } from '@novu/shared';
 
 const subjectKey = 'subject';
 
@@ -12,6 +14,7 @@ export const EmailSubject = () => {
   const { control, getValues } = useFormContext();
   const { step, digestStepBeforeCurrent } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+  const { currentEnvironment } = useEnvironment();
 
   return (
     <FormField
@@ -33,6 +36,7 @@ export const EmailSubject = () => {
                 value={field.value}
                 onChange={(val) => field.onChange(val)}
                 enableTranslations
+                disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
               />
             </FormControl>
             <FormMessage className="mb-2">

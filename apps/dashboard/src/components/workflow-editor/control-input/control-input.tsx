@@ -40,6 +40,7 @@ type ControlInputProps = {
   multiline?: boolean;
   indentWithTab?: boolean;
   enableTranslations?: boolean;
+  disabled?: boolean;
 };
 
 export function ControlInput({
@@ -56,6 +57,7 @@ export function ControlInput({
   indentWithTab,
   isAllowedVariable,
   enableTranslations = false,
+  disabled = false,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -124,6 +126,7 @@ export function ControlInput({
       skipContainerClick={isTranslationPopoverOpen}
       onManageSchemaClick={openSchemaDrawer}
       onCreateNewVariable={handleCreateNewVariable}
+      disabled={disabled}
     >
       <EditorOverlays
         isTranslationPopoverOpen={isTranslationPopoverOpen}

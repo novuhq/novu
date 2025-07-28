@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import cronParser from 'cron-parser';
+import { RiInformationLine } from 'react-icons/ri';
 
 import {
   getCronBasedOnPeriod,
@@ -13,6 +14,7 @@ import {
 import { Period } from '@/components/workflow-editor/steps/digest/period';
 import { NumbersPicker } from '@/components/workflow-editor/steps/digest/numbers-picker';
 import { DaysOfWeek } from '@/components/workflow-editor/steps/digest/days-of-week';
+import { Hint, HintIcon } from '@/components/primitives/hint';
 
 export const ScheduledDigest = ({
   value,
@@ -72,64 +74,71 @@ export const ScheduledDigest = ({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-x-1 gap-y-2">
-      <div className="flex items-center gap-1">
-        <span className="text-foreground-600 text-xs font-medium">Every</span>
-        <Period value={period} onPeriodChange={handlePeriodChange} isDisabled={isDisabled} />
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-x-1 gap-y-2">
+        <div className="flex items-center gap-1">
+          <span className="text-foreground-600 text-xs font-medium">Every</span>
+          <Period value={period} onPeriodChange={handlePeriodChange} isDisabled={isDisabled} />
+        </div>
+        {period !== PeriodValues.HOUR && period !== PeriodValues.MONTH && <span className="min-w-full" />}
+        {period === PeriodValues.MONTH && (
+          <div className="ml-auto flex items-center gap-1">
+            <span className="text-foreground-600 text-xs font-medium">on</span>
+            <NumbersPicker
+              numbers={dayOfMonth}
+              length={31}
+              label="day(s)"
+              onNumbersChange={(value) => {
+                handleValueChange({ dayOfMonth: value });
+              }}
+            />
+          </div>
+        )}
+        {(period === PeriodValues.MONTH || period === PeriodValues.WEEK) && (
+          <div className="col-span-2 flex min-w-full items-center gap-1">
+            <span className="text-foreground-600 text-xs font-medium">and</span>
+            <DaysOfWeek
+              daysOfWeek={dayOfWeek}
+              onDaysChange={(value) => {
+                handleValueChange({ dayOfWeek: value });
+              }}
+            />
+          </div>
+        )}
+        {period !== PeriodValues.HOUR && period !== PeriodValues.MINUTE && (
+          <div className="flex items-center gap-1">
+            <span className="text-foreground-600 text-xs font-medium">at</span>
+            <NumbersPicker
+              numbers={hour}
+              length={24}
+              label="hour(s)"
+              onNumbersChange={(value) => {
+                handleValueChange({ hour: value });
+              }}
+              zeroBased
+            />
+          </div>
+        )}
+        {period !== PeriodValues.MINUTE && (
+          <div className="flex items-center gap-1">
+            <span className="text-foreground-600 text-xs font-medium">{period === PeriodValues.HOUR ? 'at' : ':'}</span>
+            <NumbersPicker
+              numbers={minute}
+              length={60}
+              label="minute(s)"
+              onNumbersChange={(value) => {
+                handleValueChange({ minute: value });
+              }}
+              zeroBased
+            />
+          </div>
+        )}
       </div>
-      {period !== PeriodValues.HOUR && period !== PeriodValues.MONTH && <span className="min-w-full" />}
-      {period === PeriodValues.MONTH && (
-        <div className="ml-auto flex items-center gap-1">
-          <span className="text-foreground-600 text-xs font-medium">on</span>
-          <NumbersPicker
-            numbers={dayOfMonth}
-            length={31}
-            label="day(s)"
-            onNumbersChange={(value) => {
-              handleValueChange({ dayOfMonth: value });
-            }}
-          />
-        </div>
-      )}
-      {(period === PeriodValues.MONTH || period === PeriodValues.WEEK) && (
-        <div className="col-span-2 flex min-w-full items-center gap-1">
-          <span className="text-foreground-600 text-xs font-medium">and</span>
-          <DaysOfWeek
-            daysOfWeek={dayOfWeek}
-            onDaysChange={(value) => {
-              handleValueChange({ dayOfWeek: value });
-            }}
-          />
-        </div>
-      )}
-      {period !== PeriodValues.HOUR && period !== PeriodValues.MINUTE && (
-        <div className="flex items-center gap-1">
-          <span className="text-foreground-600 text-xs font-medium">at</span>
-          <NumbersPicker
-            numbers={hour}
-            length={24}
-            label="hour(s)"
-            onNumbersChange={(value) => {
-              handleValueChange({ hour: value });
-            }}
-            zeroBased
-          />
-        </div>
-      )}
-      {period !== PeriodValues.MINUTE && (
-        <div className="flex items-center gap-1">
-          <span className="text-foreground-600 text-xs font-medium">{period === PeriodValues.HOUR ? 'at' : ':'}</span>
-          <NumbersPicker
-            numbers={minute}
-            length={60}
-            label="minute(s)"
-            onNumbersChange={(value) => {
-              handleValueChange({ minute: value });
-            }}
-            zeroBased
-          />
-        </div>
-      )}
+  
+      <Hint className="text-text-soft text-label-2xs">
+        <HintIcon as={RiInformationLine} />
+        Delivered in subscriber's timezone, if exists.
+      </Hint>
     </div>
   );
 };

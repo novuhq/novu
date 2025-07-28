@@ -42,6 +42,7 @@ type VariableEditorProps = {
   onManageSchemaClick?: (variableName: string) => void;
   skipContainerClick?: boolean;
   children?: React.ReactNode;
+  disabled?: boolean;
 } & Pick<
   EditorProps,
   | 'className'
@@ -91,6 +92,7 @@ export function VariableEditor({
   onCreateNewVariable = () => Promise.resolve(),
   onManageSchemaClick = () => {},
   children,
+  disabled = false,
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -348,6 +350,7 @@ export function VariableEditor({
         onChange={onChange}
         onBlur={onBlur}
         tagStyles={tagStyles}
+        editable={!disabled}
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover
