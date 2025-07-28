@@ -13,9 +13,9 @@ export class WorkflowRunStepsDetailsDto {
   @IsString()
   stepRunId: string;
 
-  @ApiProperty({ description: 'Step name' })
+  @ApiProperty({ description: 'Step type' })
   @IsString()
-  stepName: string;
+  stepType: string;
 
   @ApiProperty({
     description: 'Step status',

@@ -40,7 +40,7 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
   it('should return workflow run details by ID', async () => {
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
-      to: [subscriber.subscriberId],
+      to: [subscriber.subscriberId, '123'],
       payload: { firstName: 'John' },
     });
 
@@ -61,13 +61,13 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
     const { data } = body;
 
     expect(data.id, 'response workflow run id').to.equal(workflowRunId);
-    expect(data.subscriberId, 'response subscriber id').to.equal(subscriber._id);
+    expect(data.subscriberId, 'response subscriber id').to.equal(subscriber.subscriberId);
     expect(data.organizationId, 'response organization id').to.equal(session.organization._id);
     expect(data.environmentId, 'response environment id').to.equal(session.environment._id);
     expect(data.steps.length, 'response steps count').to.be.greaterThan(0);
 
-    const triggerStepRun = data.steps[0];
-    expect(triggerStepRun.stepType, 'response step type').to.equal('trigger');
+    const triggerSteps = data.steps.filter((step: any) => step.stepType === 'trigger');
+    expect(triggerSteps.length, 'should have exactly one trigger step').to.equal(1);
 
     const triggerStepRunTraces = data.steps[0].executionDetails;
     expect(triggerStepRunTraces.length, 'response step execution details count').to.be.greaterThan(0);

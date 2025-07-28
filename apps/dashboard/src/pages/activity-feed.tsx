@@ -22,7 +22,7 @@ export function ActivityFeed() {
       return 'requests';
     }
 
-    if (location.pathname.includes('/activity/runs')) {
+    if (location.pathname.includes('/activity/workflow-runs')) {
       return 'workflow-runs';
     }
 
@@ -40,17 +40,19 @@ export function ActivityFeed() {
   const handleTabChange = (value: string) => {
     if (!currentEnvironment?.slug) return;
 
-    if (value === 'workflow-runs') {
-      navigate(buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug }));
-    } else if (value === 'requests') {
-      navigate(buildRoute(ROUTES.ACTIVITY_LOGS, { environmentSlug: currentEnvironment.slug }));
+    if (value === 'requests') {
+      navigate(buildRoute(ROUTES.ACTIVITY_REQUESTS, { environmentSlug: currentEnvironment.slug }));
+    } else if (value === 'workflow-runs') {
+      navigate(buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }));
     }
   };
 
   // Redirect legacy activity-feed URLs to the new runs URL when feature flag is enabled
   useEffect(() => {
     if (isHttpLogsPageEnabled && location.pathname.includes('/activity-feed') && currentEnvironment?.slug) {
-      navigate(buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug }), { replace: true });
+      navigate(buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }), {
+        replace: true,
+      });
     }
   }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
 
@@ -66,20 +68,20 @@ export function ActivityFeed() {
       >
         <Tabs value={currentTab} onValueChange={handleTabChange}>
           <TabsList variant="regular" className="border-t-0">
-            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
-              Workflow Runs
-            </TabsTrigger>
             {isHttpLogsPageEnabled && (
               <TabsTrigger value="requests" variant="regular" size="lg">
                 Requests
               </TabsTrigger>
             )}
+            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
+              Workflow Runs
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="workflow-runs">
-            <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
-          </TabsContent>
           <TabsContent value="requests" className="h-[calc(100vh-140px)]">
             <RequestsTable />
+          </TabsContent>
+          <TabsContent value="workflow-runs">
+            <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
         </Tabs>
       </DashboardLayout>

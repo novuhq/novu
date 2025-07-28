@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { IActivity } from '@novu/shared';
+import { IActivity, FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { getActivityList, ActivityFilters } from '@/api/activity';
+import { getActivityList, getWorkflowRunsList, ActivityFilters } from '@/api/activity';
 import { useEnvironment } from '../context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { QueryKeys } from '@/utils/query-keys';
 
 interface UseActivitiesOptions {
@@ -34,10 +35,30 @@ export function useFetchActivities(
   } = {}
 ) {
   const { currentEnvironment } = useEnvironment();
+  const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
 
   const { data, ...rest } = useQuery<ActivityResponse>({
-    queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id, page, limit, filters, limit],
-    queryFn: ({ signal }) => getActivityList({ environment: currentEnvironment!, page, limit, filters, signal }),
+    queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id, page, limit, filters, isWorkflowRunMigrationEnabled],
+    queryFn: async ({ signal }) => {
+      if (isWorkflowRunMigrationEnabled) {
+        const workflowRunsResponse = await getWorkflowRunsList({
+          environment: currentEnvironment!,
+          page,
+          limit,
+          filters,
+          signal,
+        });
+        return workflowRunsResponse;
+      }
+
+      return getActivityList({
+        environment: currentEnvironment!,
+        page,
+        limit,
+        filters,
+        signal,
+      });
+    },
     staleTime,
     refetchOnWindowFocus,
     refetchInterval,

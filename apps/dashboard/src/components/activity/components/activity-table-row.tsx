@@ -26,6 +26,10 @@ function getSubscriberDisplay(
     return `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
   }
 
+  if (subscriber.subscriberId) {
+    return subscriber.subscriberId;
+  }
+
   return '';
 }
 

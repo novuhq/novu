@@ -306,23 +306,6 @@ export class GetWorkflowRuns {
     }
   }
 
-  // Return mapped value or fallback to Pascal case conversion
-  private mapStepTypeToName(stepType: string): string {
-    const stepTypeMap: Record<string, string> = {
-      in_app: 'In App',
-      email: 'Email',
-      sms: 'SMS',
-      chat: 'Chat',
-      push: 'Push',
-      digest: 'Digest',
-      trigger: 'Trigger',
-      delay: 'Delay',
-      custom: 'Custom',
-    };
-
-    return stepTypeMap[stepType];
-  }
-
   private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: StepRun[]): GetWorkflowRunsDto {
     return {
       id: workflowRun.id,
@@ -341,7 +324,7 @@ export class GetWorkflowRuns {
       steps: stepRuns.map((stepRun) => ({
         id: stepRun.id,
         stepRunId: stepRun.step_run_id,
-        stepName: this.mapStepTypeToName(stepRun.step_type),
+        stepType: stepRun.step_type,
         status: stepRun.status,
       })),
     };

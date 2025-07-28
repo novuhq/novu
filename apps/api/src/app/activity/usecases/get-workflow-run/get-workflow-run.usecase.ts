@@ -76,6 +76,7 @@ export class GetWorkflowRun {
           organization_id: command.organizationId,
           environment_id: command.environmentId,
           transaction_id: workflowRun.transaction_id,
+          workflow_run_id: workflowRun.workflow_run_id,
         },
         orderBy: 'created_at',
         orderDirection: 'ASC',

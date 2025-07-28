@@ -8,7 +8,7 @@ import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
 
-describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
+describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -154,7 +154,7 @@ describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-
     if (firstPage.data[0].steps.length > 0) {
       const step = firstPage.data[0].steps[0];
       expect(step.id.startsWith('sr_'), 'step id should start with sr_').to.be.true;
-      expect(step.stepName, 'step should have step name').to.be.equal('Trigger');
+      expect(step.stepType, 'step should have step type').to.be.equal('trigger');
       expect(step.status, 'step should have status').to.be.equal('completed');
     }
   });
