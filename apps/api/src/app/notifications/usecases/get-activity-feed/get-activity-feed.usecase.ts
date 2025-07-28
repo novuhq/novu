@@ -117,16 +117,19 @@ export class GetActivityFeed {
    * @see https://github.com/novuhq/cloud-infra/blob/main/scripts/expiredNotification.js#L93
    */
   private getMaxRetentionPeriodByOrganization(organization: OrganizationEntity) {
+    // 1. Self-hosted gets unlimited retention both community and enterprise
     if (process.env.IS_SELF_HOSTED === 'true') {
-      return Number.MAX_SAFE_INTEGER; // effectively unlimited
+      return Number.MAX_SAFE_INTEGER;
     }
 
     const { apiServiceLevel, createdAt } = organization;
 
+    // 2. Special case: Free tier orgs created before Feb 28, 2025 get 30 days
     if (apiServiceLevel === ApiServiceLevelEnum.FREE && new Date(createdAt) < new Date('2025-02-28')) {
       return 30 * 24 * 60 * 60 * 1000;
     }
 
+    // 3. Otherwise, use tier-based retention from feature flags
     return getFeatureForTierAsNumber(
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
       apiServiceLevel ?? ApiServiceLevelEnum.FREE,
