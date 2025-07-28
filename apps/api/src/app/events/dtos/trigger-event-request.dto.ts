@@ -65,7 +65,11 @@ export class StepsOverrides {
   @ApiPropertyOptional({
     description: 'Override the or remove the layout for this specific step',
     example: 'welcome-email-layout',
+    nullable: true,
+    type: 'string',
   })
+  @IsOptional()
+  @IsString()
   layoutId?: string | null;
 }
 
@@ -73,7 +77,11 @@ export class EmailChannelOverrides {
   @ApiPropertyOptional({
     description: 'Override or remove the layout for all email steps in the workflow',
     example: 'promotional-layout-2024',
+    nullable: true,
+    type: 'string',
   })
+  @IsOptional()
+  @IsString()
   layoutId?: string | null;
 }
 
