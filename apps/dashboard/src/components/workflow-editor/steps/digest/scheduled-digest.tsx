@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import cronParser from 'cron-parser';
+import { RiInformationLine } from 'react-icons/ri';
 
 import {
   getCronBasedOnPeriod,
@@ -13,7 +14,7 @@ import {
 import { Period } from '@/components/workflow-editor/steps/digest/period';
 import { NumbersPicker } from '@/components/workflow-editor/steps/digest/numbers-picker';
 import { DaysOfWeek } from '@/components/workflow-editor/steps/digest/days-of-week';
-import { RiInformationLine } from 'react-icons/ri';
+import { Hint, HintIcon } from '@/components/primitives/hint';
 
 export const ScheduledDigest = ({
   value,
@@ -134,21 +135,12 @@ export const ScheduledDigest = ({
         )}
       </div>
       
-      {/* Informational note for scheduled digest */}
-      <div className="bg-neutral-alpha-50 border border-neutral-100 rounded-lg p-3">
-        <div className="flex items-start gap-2">
-          <RiInformationLine className="text-neutral-500 mt-0.5 h-4 w-4 flex-shrink-0" />
-          <div className="text-xs text-neutral-600 space-y-1">
-            <p className="font-medium">How Scheduled Digest works:</p>
-            <ul className="list-disc list-inside space-y-0.5 ml-1">
-              <li>Events are collected and sent at the scheduled time intervals</li>
-              <li>Delivered in subscriber's timezone, if exists, otherwise defaults to UTC</li>
-              <li>Only sends if there are events to digest during the time window</li>
-              <li>Use this for regular reports or summaries (daily, weekly, monthly)</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+      <Hint>
+        <HintIcon as={RiInformationLine} />
+        <span className="text-paragraph-xs text-neutral-600">
+          Delivered in subscriber's timezone, if exists.
+        </span>
+      </Hint>
     </div>
   );
 };
