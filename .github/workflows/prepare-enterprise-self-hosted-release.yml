@@ -10,6 +10,17 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: true
         type: string
+      services:
+        description: 'Services to build'
+        required: true
+        type: choice
+        options:
+          - 'all'
+          - 'api'
+          - 'worker'
+          - 'dashboard'
+          - 'ws'
+        default: 'all'
 
 permissions:
   contents: write
@@ -18,13 +29,28 @@ permissions:
   id-token: write
 
 jobs:
+  setup_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set up build matrix
+        id: set-matrix
+        run: |
+          if [ "${{ github.event.inputs.services }}" = "all" ]; then
+            echo 'matrix=["novu/api-ee", "novu/worker-ee", "novu/dashboard-ee", "novu/ws-ee"]' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix=["novu/${{ github.event.inputs.services }}-ee"]' >> $GITHUB_OUTPUT
+          fi
+
   build_docker:
+    needs: setup_matrix
     runs-on: ubuntu-latest
     timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api-ee', 'novu/worker-ee', 'novu/dashboard-ee', 'novu/ws-ee']
+        name: ${{ fromJson(needs.setup_matrix.outputs.matrix) }}
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
