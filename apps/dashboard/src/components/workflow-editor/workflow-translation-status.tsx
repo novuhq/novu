@@ -1,13 +1,11 @@
 import { Dot, StatusBadge } from '@/components/primitives/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
-import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 import { LocalizationResourceEnum } from '@/types/translations';
-import { ROUTES, buildRoute } from '@/utils/routes';
 import { useState } from 'react';
-import { RiAlertFill, RiArrowRightSLine, RiMenuUnfoldLine, RiSidebarUnfoldLine, RiTranslate2 } from 'react-icons/ri';
+import { RiAlertFill, RiArrowRightSLine, RiSidebarUnfoldLine, RiTranslate2 } from 'react-icons/ri';
 
 type WorkflowTranslationStatusProps = {
   workflowId: string;
@@ -17,7 +15,6 @@ type WorkflowTranslationStatusProps = {
 export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTranslationStatusProps) {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isTranslationsEnabled = useIsTranslationEnabled();
-  const { currentEnvironment } = useEnvironment();
 
   const { data: translationGroup } = useFetchTranslationGroup({
     resourceId: workflowId,
