@@ -216,7 +216,6 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
 
         await novuClient.workflows.create(workflowData);
 
-        // Step 3: Publish both layout and workflow to production
         await session.testAgent
           .post(`/v2/environments/${prodEnv._id}/publish`)
           .send({

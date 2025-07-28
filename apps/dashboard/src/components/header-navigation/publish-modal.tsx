@@ -407,17 +407,9 @@ function CompactResourceRow({
 // Extracted Components
 function ResourceStatusBadge({ resource }: { resource: IResourceDiffResult }) {
   const summary = resource.summary;
+  const existsInBothEnvironments = resource.sourceResource && resource.targetResource;
 
-  if (summary.added > 0) {
-    return (
-      <Badge variant="lighter" size="sm" color="green" className="text-label-2xs">
-        <BadgeIcon as={RiAddBoxLine} />
-        Added
-      </Badge>
-    );
-  }
-
-  if (summary.modified > 0) {
+  if (existsInBothEnvironments && (summary.added > 0 || summary.modified > 0)) {
     const badge = (
       <Badge variant="lighter" size="sm" color="orange" className="text-label-2xs">
         <BadgeIcon as={RiGitCommitFill} />
@@ -430,6 +422,15 @@ function ResourceStatusBadge({ resource }: { resource: IResourceDiffResult }) {
     }
 
     return badge;
+  }
+
+  if (summary.added > 0 && !existsInBothEnvironments) {
+    return (
+      <Badge variant="lighter" size="sm" color="green" className="text-label-2xs">
+        <BadgeIcon as={RiAddBoxLine} />
+        Added
+      </Badge>
+    );
   }
 
   if (summary.deleted > 0) {
