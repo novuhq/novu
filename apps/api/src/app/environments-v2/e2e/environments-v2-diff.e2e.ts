@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { StepTypeEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { StepTypeEnum, ResourceOriginEnum, ResourceTypeEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -191,6 +191,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
           .expect(200);
       });
       it('should handle layout-workflow dependencies properly in diff when layout is removed after publishing', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
         const prodEnv = await getProductionEnvironment();
 
         // Step 1: Create a new layout in development environment
@@ -273,6 +274,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
       });
 
       it('should show workflow blocked by layout dependency when both are new resources', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
         const prodEnv = await getProductionEnvironment();
 
         // Step 1: Create a new layout in development environment
