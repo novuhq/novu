@@ -22,9 +22,9 @@ const { argv } = yargs(hideBin(process.argv))
   })
   .option('enterprise', {
     alias: 'e',
-    type: 'boolean',
+    type: 'string',
     description: 'Whether this is an enterprise deployment',
-    default: false,
+    default: 'false',
   })
   .option('env', {
     alias: 'v',
@@ -34,12 +34,25 @@ const { argv } = yargs(hideBin(process.argv))
   })
   .option('selfHosted', {
     alias: 'h',
-    type: 'boolean',
+    type: 'string',
     description: 'Whether this is a self-hosted enterprise deployment',
-    default: false,
+    default: 'false',
   });
 
-const { secretName, region, enterprise, env, selfHosted } = argv;
+const { secretName, region, env } = argv;
+
+// Helper function to parse string boolean values
+function parseBooleanString(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true' || lowerValue === '1' || lowerValue === 'yes';
+  }
+  return false;
+}
+
+const enterprise = parseBooleanString(argv.enterprise);
+const selfHosted = parseBooleanString(argv.selfHosted);
 
 // Check deployment mode
 if (!enterprise) {
