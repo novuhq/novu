@@ -35,11 +35,13 @@ export class ClickHouseService implements OnModuleDestroy {
 
       try {
         await defaultClient.query({
-          query: `CREATE DATABASE IF NOT EXISTS ${process.env.CLICK_HOUSE_DATABASE}`,
+          query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
         });
-        // this.logger.info(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+        // eslint-disable-next-line no-console
+        console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
       } catch (error) {
-        // this.logger.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
+        // eslint-disable-next-line no-console
+        console.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
       }
     }
 

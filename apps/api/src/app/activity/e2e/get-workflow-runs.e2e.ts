@@ -46,7 +46,14 @@ describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-
     transactionId?: string;
     status?: WorkflowRunStatusEnum;
   }) {
-    const { count, workflowId, subscriberId, payloadTemplate, transactionId, status = 'completed' } = options;
+    const {
+      count,
+      workflowId,
+      subscriberId,
+      payloadTemplate,
+      transactionId,
+      status = WorkflowRunStatusEnum.SUCCESS,
+    } = options;
 
     const promises: Promise<void>[] = [];
 
@@ -438,29 +445,32 @@ describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-
     });
   });
 
-  it.only('should filter results by status', async () => {
+  it('should filter results by status', async () => {
     await createMultipleWorkflowRunsByDb({
       count: 2,
       workflowId: template.triggers[0].identifier,
       subscriberId: [subscriber.subscriberId],
-      status: 'failed',
+      status: WorkflowRunStatusEnum.SUCCESS,
     });
-
-    await session.waitForWorkflowQueueCompletion();
-    await session.waitForSubscriberQueueCompletion();
+    await createMultipleWorkflowRunsByDb({
+      count: 1,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+      status: WorkflowRunStatusEnum.ERROR,
+    });
 
     const { body } = await session.testAgent
       .get('/v1/activity/workflow-runs')
-      .query({ statuses: ['Success'] })
+      .query({ statuses: [WorkflowRunStatusEnum.SUCCESS] })
       .expect(200);
 
     // eslint-disable-next-line no-console
     console.log('BODY', JSON.stringify(body, null, 2));
 
-    expect(body.data.length).to.be.greaterThan(0);
+    expect(body.data.length).to.be.equal(2);
 
     body.data.forEach((workflowRun: any) => {
-      expect(workflowRun.status).to.equal('completed');
+      expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
     });
   });
 
@@ -534,7 +544,7 @@ describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-
       .query({
         workflowIds: [template._id],
         subscriberIds: subscriber.subscriberId,
-        statuses: ['Success'],
+        statuses: [WorkflowRunStatusEnum.SUCCESS],
         limit: 10,
       })
       .expect(200);
@@ -544,7 +554,7 @@ describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-
     body.data.forEach((workflowRun: any) => {
       expect(workflowRun.workflowId).to.equal(template._id);
       expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
-      expect(workflowRun.status).to.equal('completed');
+      expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
     });
   });
 
