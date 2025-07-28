@@ -8,6 +8,7 @@ import { usePreviewStep } from '@/hooks/use-preview-step';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { parse, stringify } from '@/utils/json';
+import { QueryKeys } from '@/utils/query-keys';
 
 type UseEditorPreviewProps = {
   workflowSlug: string;
@@ -64,7 +65,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     isPending: isPreviewPending,
     isFetching,
   } = useQuery({
-    queryKey: ['preview-step', workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
+    queryKey: [QueryKeys.previewStep, workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
     queryFn: async ({ signal }) => {
       if (!parsedEditorPayload) {
         throw new Error('Invalid JSON in editor');
