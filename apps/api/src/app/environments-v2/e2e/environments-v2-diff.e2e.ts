@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-import { StepTypeEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { EnvironmentRepository, NotificationTemplateRepository, LocalizationResourceEnum } from '@novu/dal';
+import { StepTypeEnum, ResourceOriginEnum, ResourceTypeEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -413,6 +413,190 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         expect(workflowResource.dependencies).to.have.length(1);
         expect(workflowResource.dependencies[0].resourceId).to.equal('new-layout');
       });
+    });
+  });
+
+  describe('Localization Group Diff Tests', () => {
+    beforeEach(async () => {
+      // Enable translation feature for testing
+      (process.env as any).IS_TRANSLATION_ENABLED = 'true';
+      // Set organization service level to business to avoid payment required errors
+      await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+    });
+
+    afterEach(() => {
+      // Disable translation feature after each test
+      (process.env as any).IS_TRANSLATION_ENABLED = 'false';
+    });
+
+    it('should detect localization group modifications when translation content changes', async () => {
+      const prodEnv = await getProductionEnvironment();
+
+      // Create a workflow with translations enabled
+      const workflowData = {
+        name: 'Test Workflow with Translations',
+        workflowId: 'test-workflow-translations',
+        description: 'Test workflow for localization diff',
+        active: true,
+        isTranslationEnabled: true,
+        steps: [
+          {
+            name: 'In-App Step',
+            type: 'in_app' as const,
+            controlValues: {
+              body: 'Original content',
+            },
+          },
+        ],
+        source: WorkflowCreationSourceEnum.Editor,
+      };
+
+      const { result: workflow } = await novuClient.workflows.create(workflowData);
+
+      // Create initial translation in development environment
+      const initialTranslation = {
+        resourceId: workflow.workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale: 'en_US',
+        content: {
+          'welcome.title': 'Welcome',
+          'welcome.message': 'Hello there!',
+          'button.submit': 'Submit',
+        },
+      };
+
+      await session.testAgent.post('/v2/translations').send(initialTranslation).expect(200);
+
+      // Publish to production environment
+      await session.testAgent
+        .post(`/v2/environments/${prodEnv._id}/publish`)
+        .send({
+          sourceEnvironmentId: session.environment._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      // Modify translation content in development environment
+      const modifiedTranslation = {
+        resourceId: workflow.workflowId,
+        resourceType: LocalizationResourceEnum.WORKFLOW,
+        locale: 'en_US',
+        content: {
+          'welcome.title': 'Welcome Updated',
+          'welcome.message': 'Hello there! Updated message.',
+          'button.submit': 'Submit Now',
+          'new.key': 'New content added',
+        },
+      };
+
+      await session.testAgent.post('/v2/translations').send(modifiedTranslation).expect(200);
+
+      const { body } = await session.testAgent
+        .post(`/v2/environments/${prodEnv._id}/diff`)
+        .send({
+          sourceEnvironmentId: session.environment._id,
+        })
+        .expect(200);
+
+      // Find localization group resource in diff
+      const localizationGroupResource = body.data.resources.find((resource) => resource.resourceType === 'workflow');
+
+      expect(localizationGroupResource).to.exist;
+      expect(localizationGroupResource.sourceResource).to.exist;
+      expect(localizationGroupResource.targetResource).to.exist;
+      expect(localizationGroupResource.summary.modified).to.be.greaterThan(0);
+
+      // Verify changes array contains the modification
+      expect(localizationGroupResource.changes).to.be.an('array');
+      expect(localizationGroupResource.changes.length).to.be.greaterThan(0);
+
+      const change = localizationGroupResource.changes[0];
+      expect(change.resourceType).to.equal('localization_group');
+      expect(change.action).to.equal('modified');
+      expect(change.diffs).to.exist;
+      expect(change.diffs.new.translations.en_US).to.deep.equal(modifiedTranslation.content);
+      expect(change.diffs.previous.translations.en_US).to.deep.equal(initialTranslation.content);
+    });
+
+    it('should detect localization group when new locale is added', async () => {
+      const prodEnv = await getProductionEnvironment();
+
+      // Create a workflow with translations enabled
+      const workflowData = {
+        name: 'Test Workflow Locale Addition',
+        workflowId: 'test-workflow-locale-addition',
+        active: true,
+        isTranslationEnabled: true,
+        steps: [
+          {
+            name: 'In-App Step',
+            type: 'in_app' as const,
+            controlValues: {
+              body: 'Test content',
+            },
+          },
+        ],
+        source: WorkflowCreationSourceEnum.Editor,
+      };
+
+      const { result: workflow } = await novuClient.workflows.create(workflowData);
+
+      // Create initial English translation
+      await session.testAgent
+        .post('/v2/translations')
+        .send({
+          resourceId: workflow.workflowId,
+          resourceType: LocalizationResourceEnum.WORKFLOW,
+          locale: 'en_US',
+          content: {
+            'welcome.title': 'Welcome',
+            'welcome.message': 'Hello!',
+          },
+        })
+        .expect(200);
+
+      // Publish to production
+      await session.testAgent
+        .post(`/v2/environments/${prodEnv._id}/publish`)
+        .send({
+          sourceEnvironmentId: session.environment._id,
+          dryRun: false,
+        })
+        .expect(200);
+
+      // Add Spanish translation in development
+      await session.testAgent
+        .post('/v2/translations')
+        .send({
+          resourceId: workflow.workflowId,
+          resourceType: LocalizationResourceEnum.WORKFLOW,
+          locale: 'es_ES',
+          content: {
+            'welcome.title': 'Bienvenido',
+            'welcome.message': '¡Hola!',
+          },
+        })
+        .expect(200);
+
+      // Get diff
+      const { body } = await session.testAgent
+        .post(`/v2/environments/${prodEnv._id}/diff`)
+        .send({
+          sourceEnvironmentId: session.environment._id,
+        })
+        .expect(200);
+
+      // Find localization group resource
+      const localizationGroupResource = body.data.resources.find((resource) => resource.resourceType === 'workflow');
+
+      expect(localizationGroupResource).to.exist;
+      expect(localizationGroupResource.summary.modified).to.be.greaterThan(0);
+
+      // Verify new locale is detected in changes
+      const change = localizationGroupResource.changes[0];
+      expect(change.diffs.new.locales).to.include('es_ES');
+      expect(change.diffs.new.translations.es_ES).to.exist;
+      expect(change.diffs.previous.locales).to.not.include('es_ES');
     });
   });
 });
