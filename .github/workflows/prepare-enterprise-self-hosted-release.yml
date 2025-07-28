@@ -21,6 +21,11 @@ on:
           - 'dashboard'
           - 'ws'
         default: 'all'
+      prerelease:
+        description: 'Is this a pre-release? (if yes, will not be tagged as latest)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -133,13 +138,13 @@ jobs:
           docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
           docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
           
-          # Only tag as latest if it's not a pre-release (alpha, beta, rc)
-          if [[ ! "${{ env.LATEST_VERSION }}" =~ (alpha|beta|rc) ]]; then
-            echo "Stable release detected, tagging as latest"
+          # Only tag as latest if not marked as pre-release
+          if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
+            echo "Pre-release flag is set, skipping latest tag"
+          else
+            echo "Stable release (pre-release flag not set), tagging as latest"
             docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
             docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
-          else
-            echo "Pre-release version detected (alpha/beta/rc), skipping latest tag"
           fi
 
       - name: Output image details
@@ -147,10 +152,10 @@ jobs:
           echo "Successfully built and pushed:"
           echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}"
           
-          if [[ ! "${{ env.LATEST_VERSION }}" =~ (alpha|beta|rc) ]]; then
-            echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest"
+          if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
+            echo "  (latest tag skipped - pre-release flag set)"
           else
-            echo "  (latest tag skipped for pre-release version)"
+            echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest"
           fi
           
           echo "Platform: linux/amd64 (x86)"
