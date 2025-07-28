@@ -35,6 +35,7 @@ type VariableEditorProps = {
   indentWithTab?: boolean;
   completionSources?: CompletionSource[];
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
@@ -83,6 +84,7 @@ export function VariableEditor({
   tagStyles,
   completionSources,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
   digestStepName,
   skipContainerClick = false,
   getSchemaPropertyByKey = () => undefined,
@@ -154,6 +156,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   });
@@ -168,6 +171,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   };
@@ -182,6 +186,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   };
@@ -192,7 +197,8 @@ export function VariableEditor({
         callbacksRef.current.variables,
         (completion: CompletionOption) => callbacksRef.current.onVariableSelect(completion),
         async (variableName: string) => callbacksRef.current.onCreateNewVariable(variableName),
-        callbacksRef.current.isPayloadSchemaEnabled
+        callbacksRef.current.isPayloadSchemaEnabled,
+        callbacksRef.current.isTranslationEnabled
       )(context);
     };
   }, []);

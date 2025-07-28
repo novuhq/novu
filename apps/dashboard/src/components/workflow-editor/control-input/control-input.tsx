@@ -117,6 +117,7 @@ export function ControlInput({
       size={size}
       completionSources={translationCompletionSource}
       isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+      isTranslationEnabled={shouldEnableTranslations}
       getSchemaPropertyByKey={getSchemaPropertyByKey}
       extensions={extensions}
       digestStepName={digestStepBeforeCurrent?.stepId}

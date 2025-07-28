@@ -40,6 +40,7 @@ export const MailyVariablesListView = React.forwardRef(
         items.map((item) => {
           const isDigestVariable = item.name in DIGEST_VARIABLES_FILTER_MAP;
           const isNewVariableItem = isNewVariable(item);
+          const displayLabel = hasDisplayLabel(item) ? item.displayLabel : (item as ExtendedVariable).name;
 
           if (isDigestVariable) {
             const { label } = getDynamicDigestVariable({
@@ -57,8 +58,6 @@ export const MailyVariablesListView = React.forwardRef(
           }
 
           if (isNewVariableItem) {
-            const displayLabel = hasDisplayLabel(item) ? item.displayLabel : (item as ExtendedVariable).name;
-
             return {
               label: displayLabel ?? '',
               value: item.name,
@@ -67,7 +66,7 @@ export const MailyVariablesListView = React.forwardRef(
           }
 
           return {
-            label: item.name,
+            label: displayLabel ?? item.name,
             value: item.name,
           };
         }),
