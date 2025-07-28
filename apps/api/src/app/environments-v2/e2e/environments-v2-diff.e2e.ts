@@ -166,6 +166,8 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
 
     describe('Layout-Workflow Dependencies', () => {
       beforeEach(async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
+
         const prodEnv = await getProductionEnvironment();
 
         const defaultLayout = {
@@ -183,6 +185,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
           })
           .expect(200);
       });
+
       it('should handle layout-workflow dependencies properly in diff when layout is removed after publishing', async () => {
         await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
         const prodEnv = await getProductionEnvironment();

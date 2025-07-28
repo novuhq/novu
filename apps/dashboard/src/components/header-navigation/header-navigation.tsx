@@ -5,9 +5,10 @@ import { CustomerSupportButton } from './customer-support-button';
 import { EditBridgeUrlButton } from './edit-bridge-url-button';
 import { PublishButton } from './publish-button';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { cn } from '@/utils/ui';
 import { useEnvironment } from '../../context/environment/hooks';
+import { useHasPermission } from '../../hooks/use-has-permission';
 
 type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;
@@ -17,6 +18,9 @@ type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
 export const HeaderNavigation = (props: HeaderNavigationProps) => {
   const { startItems, hideBridgeUrl = false, className, ...rest } = props;
   const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
+
   const isNewChangeMechanismEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED, false);
 
   return (
@@ -29,7 +33,9 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
     >
       {startItems}
       <div className="text-foreground-600 ml-auto flex items-center gap-2">
-        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && <PublishButton />}
+        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && (
+          <PublishButton />
+        )}
         {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         <CustomerSupportButton />
         <div className="flex pr-0.5">

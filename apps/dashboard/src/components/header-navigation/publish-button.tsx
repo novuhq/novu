@@ -107,7 +107,6 @@ export const PublishButton = () => {
     actions.close();
   };
 
-  // Render single environment button
   if (isSingleEnvironment && targetEnvironment) {
     return (
       <>
@@ -118,7 +117,6 @@ export const PublishButton = () => {
           size="2xs"
           leadingIcon={RiGitPullRequestFill}
           onClick={() => handleEnvironmentSelect(targetEnvironment, changesCount > 0)}
-          disabled={isDiffLoading}
         >
           <div className="flex items-center">
             Publish changes
@@ -339,7 +337,6 @@ const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDrop
     }
   };
 
-  // Ensure we have required data before rendering
   if (!environment._id || !environment.name) {
     return null;
   }
