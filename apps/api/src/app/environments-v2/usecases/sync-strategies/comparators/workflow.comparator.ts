@@ -110,7 +110,6 @@ export class WorkflowComparator {
         targetEnvironmentId: targetWorkflow._environmentId,
         resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
         resourceType: LocalizationResourceEnum.WORKFLOW,
-        organizationId: sourceWorkflow._organizationId,
         userId,
         environmentId: sourceWorkflow._environmentId, // Required by EnvironmentWithUserCommand
       });
