@@ -61,10 +61,10 @@ export class GetWorkflowRunResponseBaseDto {
   transactionId: string;
 
   @ApiProperty({ description: 'Creation timestamp' })
-  @IsDate()
-  createdAt: Date;
+  @IsString()
+  createdAt: string;
 
   @ApiProperty({ description: 'Update timestamp' })
-  @IsDate()
-  updatedAt: Date;
+  @IsString()
+  updatedAt: string;
 }

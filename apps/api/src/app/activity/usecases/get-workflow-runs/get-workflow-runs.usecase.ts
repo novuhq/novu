@@ -319,8 +319,8 @@ export class GetWorkflowRuns {
       status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
-      createdAt: new Date(workflowRun.created_at),
-      updatedAt: new Date(workflowRun.updated_at),
+      createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
+      updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       steps: stepRuns.map((stepRun) => ({
         id: stepRun.id,
         stepRunId: stepRun.step_run_id,

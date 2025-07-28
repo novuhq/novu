@@ -36,8 +36,8 @@ export interface GetWorkflowRunsDto {
   status: 'success' | 'error' | 'pending' | 'skipped' | 'canceled' | 'merged';
   triggerIdentifier: string;
   transactionId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   steps: WorkflowRunStepsDetailsDto[];
 }
 
@@ -58,8 +58,8 @@ interface BaseWorkflowRun {
   subscriberId?: string;
   triggerIdentifier: string;
   transactionId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
 // Step mapping configuration
@@ -91,8 +91,8 @@ function mapWorkflowRunToActivityBase(
     },
     payload,
     tags: [], // Not available in workflow runs, empty array for compatibility
-    createdAt: typeof workflowRun.createdAt === 'string' ? workflowRun.createdAt : workflowRun.createdAt.toISOString(),
-    updatedAt: typeof workflowRun.updatedAt === 'string' ? workflowRun.updatedAt : workflowRun.updatedAt.toISOString(),
+    createdAt: workflowRun.createdAt,
+    updatedAt: workflowRun.updatedAt,
     template: {
       _id: workflowRun.workflowId,
       name: workflowRun.workflowName,
@@ -160,10 +160,8 @@ function mapWorkflowRunToActivityBase(
       providerId: step.providerId,
       overrides: {},
       transactionId: workflowRun.transactionId,
-      createdAt:
-        typeof workflowRun.createdAt === 'string' ? workflowRun.createdAt : workflowRun.createdAt.toISOString(),
-      updatedAt:
-        typeof workflowRun.updatedAt === 'string' ? workflowRun.updatedAt : workflowRun.updatedAt.toISOString(),
+      createdAt: workflowRun.createdAt,
+      updatedAt: workflowRun.updatedAt,
     })),
   };
 }
@@ -292,8 +290,8 @@ export type GetWorkflowRunResponse = {
   status: 'success' | 'error' | 'pending' | 'skipped' | 'canceled' | 'merged';
   triggerIdentifier: string;
   transactionId: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
   payload: Record<string, unknown>;
   steps: StepRunDto[];
 };
@@ -327,12 +325,12 @@ export async function getWorkflowRunsList({
 
   if (filters?.workflows?.length) {
     filters.workflows.forEach((workflow) => {
-      searchParams.append('workflowId', workflow);
+      searchParams.append('workflowIds', workflow);
     });
   }
 
   if (filters?.subscriberId) {
-    searchParams.append('subscriberId', filters.subscriberId);
+    searchParams.append('subscriberIds', filters.subscriberId);
   }
 
   if (filters?.transactionId) {
@@ -347,7 +345,7 @@ export async function getWorkflowRunsList({
         searchParams.append('transactionId', id);
       });
     } else {
-      searchParams.append('transactionId', filters.transactionId);
+      searchParams.append('transactionIds', filters.transactionId);
     }
   }
 
