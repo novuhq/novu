@@ -103,7 +103,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build ${{ env.SERVICE_NAME }} Enterprise Docker Image
+      - name: Build ${{ matrix.name }} Docker Image
         shell: bash
         env:
           DOCKER_BUILD_ARGUMENTS: >
