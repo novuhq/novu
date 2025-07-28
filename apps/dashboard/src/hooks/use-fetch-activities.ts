@@ -12,16 +12,19 @@ interface UseActivitiesOptions {
   limit?: number;
   staleTime?: number;
   refetchOnWindowFocus?: boolean;
+  cursor?: string | null;
 }
 
 interface ActivityResponse {
   data: IActivity[];
   hasMore: boolean;
   pageSize: number;
+  next?: string | null;
+  previous?: string | null;
 }
 
 export function useFetchActivities(
-  { filters, page = 0, limit = 10 }: UseActivitiesOptions = {},
+  { filters, page = 0, limit = 10, cursor }: UseActivitiesOptions = {},
   {
     enabled = true,
     refetchInterval = false,
@@ -38,15 +41,24 @@ export function useFetchActivities(
   const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
 
   const { data, ...rest } = useQuery<ActivityResponse>({
-    queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id, page, limit, filters, isWorkflowRunMigrationEnabled],
+    queryKey: [
+      QueryKeys.fetchActivities,
+      currentEnvironment?._id,
+      page,
+      limit,
+      filters,
+      isWorkflowRunMigrationEnabled,
+      cursor,
+    ],
     queryFn: async ({ signal }) => {
       if (isWorkflowRunMigrationEnabled) {
         const workflowRunsResponse = await getWorkflowRunsList({
           environment: currentEnvironment!,
-          page,
+          ...(cursor ? {} : { page }), // Only include page if no cursor
           limit,
           filters,
           signal,
+          cursor,
         });
         return workflowRunsResponse;
       }
@@ -68,6 +80,8 @@ export function useFetchActivities(
   return {
     activities: data?.data || [],
     hasMore: data?.hasMore || false,
+    next: data?.next,
+    previous: data?.previous,
     ...rest,
     page,
   };

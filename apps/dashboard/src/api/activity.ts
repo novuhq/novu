@@ -15,6 +15,8 @@ export interface ActivityResponse {
   data: IActivity[];
   hasMore: boolean;
   pageSize: number;
+  next?: string | null;
+  previous?: string | null;
 }
 
 export interface WorkflowRunStepsDetailsDto {
@@ -306,20 +308,23 @@ export async function getWorkflowRunsList({
   limit,
   filters,
   signal,
+  cursor,
 }: {
   environment: IEnvironment;
-  page: number;
+  page?: number;
   limit: number;
   filters?: ActivityFilters;
   signal?: AbortSignal;
+  cursor?: string | null;
 }): Promise<ActivityResponse> {
   const searchParams = new URLSearchParams();
   searchParams.append('limit', limit.toString());
 
-  // Convert page-based pagination to cursor-based
-  if (page > 0) {
-    // For now, we'll use a simple cursor approach based on page
-    // In a real implementation, you'd need to manage cursors properly
+  // Use cursor if provided, otherwise fall back to page-based
+  if (cursor) {
+    searchParams.append('cursor', cursor);
+  } else if (page && page > 0) {
+    // For backward compatibility, convert page to cursor
     searchParams.append('cursor', `page_${page}`);
   }
 
@@ -366,6 +371,8 @@ export async function getWorkflowRunsList({
     data: mappedData,
     hasMore: !!response.next, // Convert cursor-based to boolean
     pageSize: response.data.length,
+    next: response.next,
+    previous: response.previous,
   };
 }
 
