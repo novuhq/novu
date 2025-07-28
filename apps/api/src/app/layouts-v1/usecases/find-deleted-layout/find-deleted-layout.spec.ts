@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { LayoutRepository } from '@novu/dal';
-import { TemplateVariableTypeEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, TemplateVariableTypeEnum } from '@novu/shared';
 
 import { FindDeletedLayoutUseCase } from './find-deleted-layout.use-case';
 import { FindDeletedLayoutCommand } from './find-deleted-layout.command';
@@ -58,6 +58,7 @@ describe('Find Deleted Layout Usecase', function () {
   });
 
   it('should find the deleted layout', async () => {
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
     const environmentId = session.environment._id;
     const organizationId = session.organization._id;
     const userId = session.user._id;

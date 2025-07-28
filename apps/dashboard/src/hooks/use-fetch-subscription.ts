@@ -2,7 +2,7 @@ import { getSubscription } from '@/api/billing';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
-import type { GetSubscriptionDto } from '@novu/shared';
+import { ApiServiceLevelEnum, type GetSubscriptionDto } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { differenceInDays, isSameDay } from 'date-fns';
 import { useMemo } from 'react';

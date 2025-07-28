@@ -101,9 +101,18 @@ export const Maily = ({
         isAllowedVariable: variables?.isAllowedVariable ?? (() => false),
         addDigestVariables,
         isPayloadSchemaEnabled,
+        isTranslationEnabled,
       });
     },
-    [primitives, arrays, namespaces, variables?.isAllowedVariable, addDigestVariables, isPayloadSchemaEnabled]
+    [
+      primitives,
+      arrays,
+      namespaces,
+      variables?.isAllowedVariable,
+      addDigestVariables,
+      isPayloadSchemaEnabled,
+      isTranslationEnabled,
+    ]
   );
 
   const extensions = useMemo(

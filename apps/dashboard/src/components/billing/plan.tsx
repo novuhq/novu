@@ -178,6 +178,10 @@ const buildFeatureArray: (columns: ApiServiceLevelEnum[], featureFlags: FeatureF
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_WORKFLOWS }),
     },
     {
+      label: 'Custom Layouts',
+      values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_MAX_LAYOUTS }),
+    },
+    {
       label: 'Provider integrations',
       values: buildTableRowRecord({ featureName: FeatureNameEnum.PLATFORM_PROVIDER_INTEGRATIONS }),
     },

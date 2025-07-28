@@ -290,6 +290,7 @@ export const EmailBody = () => {
               saveForm={saveForm}
               completionSources={translationCompletionSource}
               isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+              isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
               getSchemaPropertyByKey={getSchemaPropertyByKey}
               extensions={extensions}
               digestStepName={digestStepBeforeCurrent?.stepId}

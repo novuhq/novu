@@ -47,14 +47,14 @@ export const useSaveTranslation = () => {
 
       queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchTranslationGroups] });
 
-      // Also invalidate translation keys if this is a default locale update
-      queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslationKeys, variables.resourceId, variables.locale, currentEnvironment?._id],
-      });
+      queryClient.refetchQueries({ queryKey: [QueryKeys.fetchTranslationKeys] });
 
       queryClient.invalidateQueries({
         queryKey: [QueryKeys.diffEnvironments],
       });
+
+      // Invalidate preview queries to refetch with updated translations
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] });
 
       showSuccessToast('Translation saved successfully');
     },

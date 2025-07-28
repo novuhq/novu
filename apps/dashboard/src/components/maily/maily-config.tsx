@@ -39,7 +39,7 @@ import {
 } from '@maily-to/core/extensions';
 import { ReactNodeViewRenderer } from '@tiptap/react';
 import type { Editor, Editor as TiptapEditor, NodeViewProps } from '@tiptap/core';
-import { StepResponseDto } from '@novu/shared';
+import { StepResponseDto, TRANSLATION_NAMESPACE_SEPARATOR, TRANSLATION_TRIGGER_CHARACTER } from '@novu/shared';
 
 import { createFooters } from '@/components/maily/blocks/footers';
 import { createHeaders } from '@/components/maily/blocks/headers';
@@ -399,6 +399,13 @@ export const createExtensions = ({
             !existsInSchema &&
             props.id !== 'payload' &&
             props.id !== 'current.payload';
+
+          if (props.id === TRANSLATION_NAMESPACE_SEPARATOR) {
+            // just insert "{{t." (not closed) to trigger the translation extension
+            editor.chain().focus().insertContentAt(range, TRANSLATION_TRIGGER_CHARACTER).run();
+
+            return;
+          }
 
           if (isNewVariable) {
             const variableName = props.id.replace('current.payload.', '').replace('payload.', '');

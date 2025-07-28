@@ -184,6 +184,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
           .expect(200);
       });
       it('should handle layout-workflow dependencies properly in diff when layout is removed after publishing', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
         const prodEnv = await getProductionEnvironment();
 
         // Step 1: Create a new layout in development environment
@@ -265,6 +266,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
       });
 
       it('should show workflow blocked by layout dependency when both are new resources', async () => {
+        await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
         const prodEnv = await getProductionEnvironment();
 
         // Step 1: Create a new layout in development environment

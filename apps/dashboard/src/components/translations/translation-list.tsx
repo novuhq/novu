@@ -87,7 +87,7 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
       {data && data.limit < data.total && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={3}>
+            <TableCell colSpan={4}>
               <div className="flex items-center justify-between">
                 <span className="text-foreground-600 block text-sm font-normal">
                   Page {currentPage} of {totalPages}
