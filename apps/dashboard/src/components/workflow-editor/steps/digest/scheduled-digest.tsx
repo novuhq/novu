@@ -134,12 +134,10 @@ export const ScheduledDigest = ({
           </div>
         )}
       </div>
-      
+  
       <Hint>
         <HintIcon as={RiInformationLine} />
-        <span className="text-paragraph-xs text-neutral-600">
-          Delivered in subscriber's timezone, if exists.
-        </span>
+        Delivered in subscriber's timezone, if exists.
       </Hint>
     </div>
   );
