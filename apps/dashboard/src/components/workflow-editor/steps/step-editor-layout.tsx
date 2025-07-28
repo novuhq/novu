@@ -100,7 +100,7 @@ function StepEditorContent() {
         <div className="flex min-h-0 flex-1 flex-col">
           <ResizableLayout autoSaveId="step-editor-content-layout">
             <ResizableLayout.EditorPanel>
-              <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="py-2">
+              <PanelHeader icon={() => <RiEdit2Line />} title={editorTitle} className="min-h-[45px] py-2">
                 <WorkflowTranslationStatus workflowId={workflow.workflowId} className="h-7 text-xs" />
               </PanelHeader>
               <div className="flex-1 overflow-y-auto">
@@ -145,7 +145,7 @@ function StepEditorContent() {
             <ResizableLayout.Handle />
 
             <ResizableLayout.PreviewPanel>
-              <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} className="py-2">
+              <PanelHeader icon={RiEyeLine} title="Preview" isLoading={isSubsequentLoad} className="min-h-[45px] py-2">
                 {isTranslationsEnabled && availableLocales.length > 0 && (
                   <LocaleSelect
                     value={selectedLocale}

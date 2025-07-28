@@ -281,13 +281,14 @@ const StepNode = (props: StepNodeProps) => {
             {rest.children}
           </Node>
           <AnimatePresence>
-            {isHovered && !isReadOnly && !data.isTemplateStorePreview && type && (
+            {isHovered && !data.isTemplateStorePreview && type && (
               <WorkflowNodeActionBar
                 stepType={type}
                 stepName={data.name || 'Untitled Step'}
                 onRemoveClick={handleRemoveStep}
                 onEditContentClick={handleEditContent}
                 onCopyClick={handleCopyStep}
+                isReadOnly={isReadOnly}
               />
             )}
           </AnimatePresence>
@@ -303,13 +304,14 @@ const StepNode = (props: StepNodeProps) => {
           {rest.children}
         </Node>
         <AnimatePresence>
-          {isHovered && !isReadOnly && !data.isTemplateStorePreview && type && (
+          {isHovered && !data.isTemplateStorePreview && type && (
             <WorkflowNodeActionBar
               stepType={type}
               stepName={data.name || 'Untitled Step'}
               onRemoveClick={handleRemoveStep}
               onEditContentClick={handleEditContent}
               onCopyClick={handleCopyStep}
+              isReadOnly={isReadOnly}
             />
           )}
         </AnimatePresence>
