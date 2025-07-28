@@ -7,7 +7,6 @@ import {
   IResourceDiff,
   IResourceDependency,
   ResourceTypeEnum,
-  DiffActionEnum,
   DependencyReasonEnum,
 } from '../types/sync.types';
 import { WorkflowDataContainer } from '../../shared/containers/workflow-data.container';
@@ -25,7 +24,6 @@ export class DependencyAnalyzerService {
 
   async analyzeDependencies(
     resources: IDiffResult[],
-    sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
     workflowDataContainer?: WorkflowDataContainer
@@ -70,7 +68,6 @@ export class DependencyAnalyzerService {
         const dependencies = await this.getWorkflowDependencies(
           resource,
           layoutResourceByIdMap,
-          sourceEnvId,
           targetEnvId,
           organizationId,
           preloadedControlValues
@@ -111,7 +108,6 @@ export class DependencyAnalyzerService {
   async getWorkflowDependencies(
     workflowDiff: IDiffResult,
     layoutResourceByIdMap: Map<string, IDiffResult>,
-    sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
     preloadedControlValues: unknown[] = []
@@ -159,7 +155,7 @@ export class DependencyAnalyzerService {
       this.logger.debug(`Found ${preloadedControlValues.length} control values with layoutId references`);
 
       for (const controlValue of preloadedControlValues) {
-        const layoutId = (controlValue as any)?.controls?.layoutId as string;
+        const layoutId = (controlValue as { controls?: { layoutId?: string } })?.controls?.layoutId;
         if (!layoutId || processedLayoutIds.has(layoutId)) continue;
         processedLayoutIds.add(layoutId);
 
@@ -261,20 +257,17 @@ export class DependencyAnalyzerService {
   extractLayoutIdsFromStepChange(stepChange: IResourceDiff): string[] {
     const layoutIds: string[] = [];
 
-    // Check current/new layout ID
+    // Check current/new layout ID - this is what the workflow actually depends on
     const newLayoutId = stepChange.diffs?.new?.controlValues?.layoutId;
     if (newLayoutId && typeof newLayoutId === 'string') {
       this.logger.debug(`Found new layoutId in step change: ${newLayoutId}`);
       layoutIds.push(newLayoutId);
     }
 
-    // Check previous layout ID for context (though typically we care about new dependencies)
-    const previousLayoutId = stepChange.diffs?.previous?.controlValues?.layoutId;
-    if (previousLayoutId && typeof previousLayoutId === 'string' && previousLayoutId !== newLayoutId) {
-      this.logger.debug(`Found previous layoutId in step change: ${previousLayoutId}`);
-      // Only add if it's different from the new one
-      layoutIds.push(previousLayoutId);
-    }
+    /*
+     * Note: We intentionally don't include the previous layout ID as a dependency
+     * because the workflow is moving away from it and no longer needs it
+     */
 
     return layoutIds;
   }

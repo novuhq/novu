@@ -11,7 +11,6 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
   let session: UserSession;
   let novuClient: Novu;
   const environmentRepository = new EnvironmentRepository();
-  const workflowRepository = new NotificationTemplateRepository();
 
   beforeEach(async () => {
     // @ts-ignore
@@ -41,12 +40,6 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
     }
 
     return prodEnv;
-  }
-
-  async function createWorkflow(workflow: CreateWorkflowDto): Promise<WorkflowResponseDto> {
-    const { result: createWorkflowBody } = await novuClient.workflows.create(workflow);
-
-    return createWorkflowBody;
   }
 
   describe('Error Handling', () => {
@@ -345,6 +338,81 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
         expect(layoutDependency.resourceName).to.equal('New Layout for Blocking Test');
         expect(layoutDependency.isBlocking).to.equal(true);
         expect(layoutDependency.reason).to.equal('LAYOUT_REQUIRED_FOR_WORKFLOW');
+      });
+
+      it('should only show dependency on new layout when workflow changes layouts', async () => {
+        const prodEnv = await getProductionEnvironment();
+
+        // Create two layouts
+        const oldLayout = await novuClient.layouts.create({
+          layoutId: 'old-layout',
+          name: 'Old Layout',
+          source: LayoutCreationSourceEnum.DASHBOARD,
+        });
+
+        const newLayout = await novuClient.layouts.create({
+          layoutId: 'new-layout',
+          name: 'New Layout',
+          source: LayoutCreationSourceEnum.DASHBOARD,
+        });
+
+        // Create workflow with old layout
+        const workflow = await novuClient.workflows.create({
+          name: 'Test Workflow Layout Change',
+          workflowId: 'test-workflow-layout-change',
+          active: true,
+          steps: [
+            {
+              name: 'Email Step',
+              type: 'email' as const,
+              controlValues: {
+                subject: 'Test',
+                body: 'Test',
+                layoutId: oldLayout.result.layoutId,
+              },
+            },
+          ],
+          source: WorkflowCreationSourceEnum.Editor,
+        });
+
+        // Publish to prod
+        await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/publish`)
+          .send({ sourceEnvironmentId: session.environment._id, dryRun: false })
+          .expect(200);
+
+        // Update workflow to use new layout
+        await novuClient.workflows.update(
+          {
+            ...workflow.result,
+            steps: [
+              {
+                name: 'Email Step',
+                type: 'email' as const,
+                controlValues: {
+                  subject: 'Test',
+                  body: 'Test',
+                  layoutId: newLayout.result.layoutId,
+                },
+              },
+            ],
+          },
+          workflow.result.workflowId
+        );
+
+        // Check diff - should only show dependency on new layout
+        const { body } = await session.testAgent
+          .post(`/v2/environments/${prodEnv._id}/diff`)
+          .send({ sourceEnvironmentId: session.environment._id })
+          .expect(200);
+
+        const workflowResource = body.data.resources.find(
+          (resource) =>
+            resource.resourceType === 'workflow' && resource.sourceResource?.id === 'test-workflow-layout-change'
+        );
+
+        expect(workflowResource.dependencies).to.have.length(1);
+        expect(workflowResource.dependencies[0].resourceId).to.equal('new-layout');
       });
     });
   });

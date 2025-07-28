@@ -85,7 +85,6 @@ export class DiffEnvironmentUseCase {
 
       const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
         resources,
-        sourceEnvironmentId,
         command.targetEnvironmentId,
         command.user.organizationId,
         workflowDataContainer
