@@ -7,11 +7,6 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-/**
- * Override the or remove the layout for this specific step
- */
-export type LayoutId = {};
-
 export type StepsOverrides = {
   /**
    * Passing the provider id and the provider specific configurations
@@ -20,52 +15,8 @@ export type StepsOverrides = {
   /**
    * Override the or remove the layout for this specific step
    */
-  layoutId?: LayoutId | null | undefined;
+  layoutId?: string | null | undefined;
 };
-
-/** @internal */
-export const LayoutId$inboundSchema: z.ZodType<
-  LayoutId,
-  z.ZodTypeDef,
-  unknown
-> = z.object({});
-
-/** @internal */
-export type LayoutId$Outbound = {};
-
-/** @internal */
-export const LayoutId$outboundSchema: z.ZodType<
-  LayoutId$Outbound,
-  z.ZodTypeDef,
-  LayoutId
-> = z.object({});
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace LayoutId$ {
-  /** @deprecated use `LayoutId$inboundSchema` instead. */
-  export const inboundSchema = LayoutId$inboundSchema;
-  /** @deprecated use `LayoutId$outboundSchema` instead. */
-  export const outboundSchema = LayoutId$outboundSchema;
-  /** @deprecated use `LayoutId$Outbound` instead. */
-  export type Outbound = LayoutId$Outbound;
-}
-
-export function layoutIdToJSON(layoutId: LayoutId): string {
-  return JSON.stringify(LayoutId$outboundSchema.parse(layoutId));
-}
-
-export function layoutIdFromJSON(
-  jsonString: string,
-): SafeParseResult<LayoutId, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => LayoutId$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'LayoutId' from JSON`,
-  );
-}
 
 /** @internal */
 export const StepsOverrides$inboundSchema: z.ZodType<
@@ -74,13 +25,13 @@ export const StepsOverrides$inboundSchema: z.ZodType<
   unknown
 > = z.object({
   providers: z.record(z.record(z.any())).optional(),
-  layoutId: z.nullable(z.lazy(() => LayoutId$inboundSchema)).optional(),
+  layoutId: z.nullable(z.string()).optional(),
 });
 
 /** @internal */
 export type StepsOverrides$Outbound = {
   providers?: { [k: string]: { [k: string]: any } } | undefined;
-  layoutId?: LayoutId$Outbound | null | undefined;
+  layoutId?: string | null | undefined;
 };
 
 /** @internal */
@@ -90,7 +41,7 @@ export const StepsOverrides$outboundSchema: z.ZodType<
   StepsOverrides
 > = z.object({
   providers: z.record(z.record(z.any())).optional(),
-  layoutId: z.nullable(z.lazy(() => LayoutId$outboundSchema)).optional(),
+  layoutId: z.nullable(z.string()).optional(),
 });
 
 /**

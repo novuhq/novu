@@ -50,6 +50,7 @@ export class UpsertLayout {
   @InstrumentUsecase()
   async execute(command: UpsertLayoutCommand): Promise<LayoutResponseDto> {
     const { controlValues } = command.layoutDto;
+
     await this.validateLayout({
       command,
       controlValues,

@@ -5,6 +5,7 @@ import { BaseSyncStrategy } from './base/base-sync.strategy';
 import { ResourceTypeEnum, ISyncContext, ISyncResult, IDiffResult } from '../../types/sync.types';
 import { WorkflowSyncOperation } from './operations/workflow-sync.operation';
 import { WorkflowDiffOperation } from './operations/workflow-diff.operation';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 
 @Injectable()
 export class WorkflowSyncStrategy extends BaseSyncStrategy {
@@ -28,8 +29,23 @@ export class WorkflowSyncStrategy extends BaseSyncStrategy {
     sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<IDiffResult[]> {
-    return this.workflowDiffOperation.execute(sourceEnvId, targetEnvId, organizationId, userContext);
+    if (!workflowDataContainer) {
+      throw new Error('WorkflowDataContainer is required for workflow diff operations');
+    }
+
+    return this.workflowDiffOperation.execute(
+      sourceEnvId,
+      targetEnvId,
+      organizationId,
+      userContext,
+      workflowDataContainer
+    );
+  }
+
+  async getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]> {
+    return this.workflowSyncOperation.getAvailableResourceIds(sourceEnvironmentId, organizationId);
   }
 }

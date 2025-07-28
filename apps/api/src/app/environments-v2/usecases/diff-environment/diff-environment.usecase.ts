@@ -1,12 +1,13 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { BaseRepository } from '@novu/dal';
+import { BaseRepository, ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { DiffEnvironmentCommand } from './diff-environment.command';
 import { ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
-import { EnvironmentValidationService } from '../../services';
+import { EnvironmentValidationService, DependencyAnalyzerService } from '../../services';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 
 @Injectable()
 export class DiffEnvironmentUseCase {
@@ -14,7 +15,10 @@ export class DiffEnvironmentUseCase {
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
     private workflowSyncStrategy: WorkflowSyncStrategy,
-    private layoutSyncStrategy: LayoutSyncStrategy
+    private layoutSyncStrategy: LayoutSyncStrategy,
+    private dependencyAnalyzerService: DependencyAnalyzerService,
+    private controlValuesRepository: ControlValuesRepository,
+    private workflowRepository: NotificationTemplateRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -38,19 +42,65 @@ export class DiffEnvironmentUseCase {
 
       this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
-      /*
-       * For now, we only support workflow diff
-       * In the future, we can add more strategies here
-       */
-      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
+      // Create workflow data container and pre-load workflow data for optimization
+      const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.workflowRepository);
 
-      const resources = await this.executeDiff(
-        strategies,
+      // Pre-load workflow identifiers from source environment
+      const sourceWorkflows = await this.workflowRepository.find({
+        _environmentId: sourceEnvironmentId,
+        _organizationId: command.user.organizationId,
+      });
+
+      const workflowIdentifiers = sourceWorkflows
+        .map((workflow) => workflow.triggers?.[0]?.identifier)
+        .filter((id): id is string => id !== null && id !== undefined);
+
+      if (workflowIdentifiers.length > 0) {
+        this.logger.info(`Pre-loading data for ${workflowIdentifiers.length} workflows before diff`);
+        await workflowDataContainer.loadWorkflowsWithControlValues(
+          workflowIdentifiers,
+          sourceEnvironmentId,
+          command.user.organizationId
+        );
+      }
+
+      // Execute diff with workflow container optimization and layout strategy normally
+      const [workflowDiffResults, layoutDiffResults] = await Promise.all([
+        this.workflowSyncStrategy.diff(
+          sourceEnvironmentId,
+          command.targetEnvironmentId,
+          command.user.organizationId,
+          command.user,
+          workflowDataContainer
+        ),
+        this.layoutSyncStrategy.diff(
+          sourceEnvironmentId,
+          command.targetEnvironmentId,
+          command.user.organizationId,
+          command.user
+        ),
+      ]);
+
+      const resources = [...workflowDiffResults, ...layoutDiffResults];
+
+      const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
+        resources,
         sourceEnvironmentId,
         command.targetEnvironmentId,
         command.user.organizationId,
-        command.user
+        workflowDataContainer
       );
+
+      // Add dependencies to resources
+      for (const resource of resources) {
+        if (resource.sourceResource?.id && dependencyMap.has(resource.sourceResource.id)) {
+          resource.dependencies = dependencyMap.get(resource.sourceResource.id);
+        }
+        // Check target resource ID for deleted resources (sourceResource is null, targetResource exists)
+        if (!resource.sourceResource && resource.targetResource?.id && dependencyMap.has(resource.targetResource.id)) {
+          resource.dependencies = dependencyMap.get(resource.targetResource.id);
+        }
+      }
 
       const summary = this.calculateSummary(resources);
 
