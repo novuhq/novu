@@ -1,7 +1,15 @@
-import { IsString, IsOptional, IsDate } from 'class-validator';
-
+import { IsString, IsOptional, IsDate, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { WorkflowRunStatusEnum } from '@novu/application-generic';
+
+export enum WorkflowRunStatusDtoEnum {
+  SUCCESS = 'success',
+  ERROR = 'error',
+  PENDING = 'pending',
+  SKIPPED = 'skipped',
+  CANCELED = 'canceled',
+  MERGED = 'merged',
+}
 
 export class GetWorkflowRunResponseBaseDto {
   @ApiProperty({ description: 'Workflow run id' })
@@ -37,9 +45,12 @@ export class GetWorkflowRunResponseBaseDto {
   @IsString()
   subscriberId?: string;
 
-  @ApiProperty({ description: 'Workflow run status' })
-  @IsString()
-  status: string;
+  @ApiProperty({
+    description: 'Workflow run status',
+    enum: WorkflowRunStatusDtoEnum,
+  })
+  @IsIn(Object.values(WorkflowRunStatusDtoEnum))
+  status: WorkflowRunStatusDtoEnum;
 
   @ApiProperty({ description: 'Trigger identifier' })
   @IsString()

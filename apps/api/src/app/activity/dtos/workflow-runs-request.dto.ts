@@ -1,6 +1,6 @@
-import { WorkflowRunStatus } from '@novu/application-generic';
 import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString, IsArray, IsInt, Min, Max, IsISO8601, IsIn } from 'class-validator';
+import { WorkflowRunStatusEnum } from '@novu/application-generic';
 
 export class GetWorkflowRunsRequestDto {
   @IsOptional()
@@ -36,8 +36,10 @@ export class GetWorkflowRunsRequestDto {
   @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
   @IsArray()
   @IsString({ each: true })
-  @IsIn(['pending', 'running', 'completed', 'failed', 'cancelled'] satisfies WorkflowRunStatus[], { each: true })
-  statuses?: WorkflowRunStatus[];
+  @IsIn(Object.values(WorkflowRunStatusEnum), {
+    each: true,
+  })
+  statuses?: WorkflowRunStatusEnum[];
 
   @IsOptional()
   @IsISO8601()

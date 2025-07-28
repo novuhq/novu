@@ -1,7 +1,7 @@
 export * from './request-log';
-export { StepRunRepository, StepRun, StepRunStatus } from './step-run';
+export { StepRunRepository, StepRun, StepRunStatus, StepRunNonFinalStatus, StepRunFinalStatus } from './step-run';
+export { WorkflowRunRepository, WorkflowRun, WorkflowRunStatusEnum } from './workflow-run';
 export { TraceLogRepository, traceLogSchema, Trace, EventType, mapEventTypeToTitle } from './trace-log';
-export { WorkflowRunRepository, WorkflowRun, WorkflowRunStatus } from './workflow-run';
 export * from './clickhouse.service';
 export * from './log.repository';
 

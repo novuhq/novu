@@ -9,6 +9,7 @@ import {
 } from '@novu/application-generic';
 import { GetWorkflowRunsResponseDto, GetWorkflowRunsDto } from '../../dtos/workflow-runs-response.dto';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
+import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 
 type CursorData = {
   created_at: string;
@@ -332,7 +333,7 @@ export class GetWorkflowRuns {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: workflowRun.status,
+      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(workflowRun.created_at),

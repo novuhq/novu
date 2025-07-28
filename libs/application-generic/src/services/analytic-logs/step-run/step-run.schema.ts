@@ -62,16 +62,9 @@ export const stepRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSc
 
 export type StepType = 'email' | 'sms' | 'in_app' | 'push' | 'chat' | 'digest' | 'trigger' | 'delay' | 'custom';
 
-export type StepRunStatus =
-  | 'pending'
-  | 'queued'
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'delayed'
-  | 'canceled'
-  | 'merged'
-  | 'skipped';
+export type StepRunNonFinalStatus = 'pending' | 'queued' | 'running' | 'delayed';
+export type StepRunFinalStatus = 'completed' | 'failed' | 'canceled' | 'merged' | 'skipped';
+export type StepRunStatus = StepRunNonFinalStatus | StepRunFinalStatus;
 
 type NativeStepRun = InferClickhouseSchemaType<typeof stepRunSchema>;
 

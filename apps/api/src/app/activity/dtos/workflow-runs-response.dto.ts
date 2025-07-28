@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
+import { StepRunStatus } from '@novu/application-generic';
 import { GetWorkflowRunResponseBaseDto } from './shared.dto';
 
 export class WorkflowRunStepsDetailsDto {
@@ -16,9 +17,22 @@ export class WorkflowRunStepsDetailsDto {
   @IsString()
   stepName: string;
 
-  @ApiProperty({ description: 'Step status' })
-  @IsString()
-  status: string;
+  @ApiProperty({
+    description: 'Step status',
+    enum: ['pending', 'queued', 'running', 'completed', 'failed', 'delayed', 'canceled', 'merged', 'skipped'],
+  })
+  @IsIn([
+    'pending',
+    'queued',
+    'running',
+    'completed',
+    'failed',
+    'delayed',
+    'canceled',
+    'merged',
+    'skipped',
+  ] satisfies StepRunStatus[])
+  status: StepRunStatus;
 }
 
 export class GetWorkflowRunsDto extends GetWorkflowRunResponseBaseDto {

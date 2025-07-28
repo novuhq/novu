@@ -3,12 +3,12 @@ import { NotificationTemplateEntity, SubscriberEntity, NotificationEntity, Notif
 import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
-import { WorkflowRunRepository } from '@novu/application-generic';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { sleep } from '../../events/e2e/utils/sleep.util';
 import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
 
-describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
+describe.only('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -44,8 +44,9 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     subscriberId: string[];
     payloadTemplate?: (index: number) => Record<string, any>;
     transactionId?: string;
+    status?: WorkflowRunStatusEnum;
   }) {
-    const { count, workflowId, subscriberId, payloadTemplate, transactionId } = options;
+    const { count, workflowId, subscriberId, payloadTemplate, transactionId, status = 'completed' } = options;
 
     const promises: Promise<void>[] = [];
 
@@ -70,7 +71,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
       promises.push(
         workflowRunRepository.create(mockNotification, template, {
-          status: 'completed',
+          status,
           userId: session.user._id,
           externalSubscriberId: subscriberId[0],
         })
@@ -107,7 +108,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     delete (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
   });
 
-  it.only('should return paginated results with default limit', async () => {
+  it('should return paginated results with default limit', async () => {
     // will generate 6 workflow runs with 2 subscribers, total of 12 workflow runs
     await createMultipleWorkflowRuns({
       count: 6,
@@ -437,11 +438,12 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     });
   });
 
-  it('should filter results by status', async () => {
-    await novuClient.trigger({
+  it.only('should filter results by status', async () => {
+    await createMultipleWorkflowRunsByDb({
+      count: 2,
       workflowId: template.triggers[0].identifier,
-      to: subscriber.subscriberId,
-      payload: { firstName: 'John' },
+      subscriberId: [subscriber.subscriberId],
+      status: 'failed',
     });
 
     await session.waitForWorkflowQueueCompletion();
@@ -449,10 +451,13 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     const { body } = await session.testAgent
       .get('/v1/activity/workflow-runs')
-      .query({ statuses: ['completed'] })
+      .query({ statuses: ['Success'] })
       .expect(200);
 
-    expect(body.data).to.be.an('array');
+    // eslint-disable-next-line no-console
+    console.log('BODY', JSON.stringify(body, null, 2));
+
+    expect(body.data.length).to.be.greaterThan(0);
 
     body.data.forEach((workflowRun: any) => {
       expect(workflowRun.status).to.equal('completed');
@@ -529,7 +534,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       .query({
         workflowIds: [template._id],
         subscriberIds: subscriber.subscriberId,
-        statuses: ['completed'],
+        statuses: ['Success'],
         limit: 10,
       })
       .expect(200);

@@ -10,6 +10,7 @@ import {
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
+import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 
 interface IStepRunWithDetails extends StepRun {
   executionDetails?: any[];
@@ -206,7 +207,7 @@ export class GetWorkflowRun {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: workflowRun.status,
+      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(workflowRun.created_at),

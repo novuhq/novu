@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDate, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsDate, IsObject, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
+import { StepRunStatus } from '@novu/application-generic';
 import { GetWorkflowRunResponseBaseDto } from './shared.dto';
 
 export class StepRunDto {
@@ -21,9 +22,22 @@ export class StepRunDto {
   @IsString()
   providerId?: string;
 
-  @ApiProperty({ description: 'Step status' })
-  @IsString()
-  status: string;
+  @ApiProperty({
+    description: 'Step status',
+    enum: ['pending', 'queued', 'running', 'completed', 'failed', 'delayed', 'canceled', 'merged', 'skipped'],
+  })
+  @IsIn([
+    'pending',
+    'queued',
+    'running',
+    'completed',
+    'failed',
+    'delayed',
+    'canceled',
+    'merged',
+    'skipped',
+  ] satisfies StepRunStatus[])
+  status: StepRunStatus;
 
   @ApiProperty({ description: 'Creation timestamp' })
   @IsDate()

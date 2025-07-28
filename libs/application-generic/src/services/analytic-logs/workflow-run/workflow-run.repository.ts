@@ -6,13 +6,13 @@ import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { workflowRunSchema, ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatus } from './workflow-run.schema';
+import { workflowRunSchema, ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum } from './workflow-run.schema';
 import { getInsertOptions } from '../shared';
 
 type WorkflowRunInsertData = Omit<InferClickhouseSchemaType<typeof workflowRunSchema>, 'id' | 'expires_at'>;
 
 interface IWorkflowRunOptions {
-  status?: WorkflowRunStatus;
+  status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
 }
@@ -148,7 +148,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    */
   async updateWorkflowRunStatus(
     workflowRunId: string,
-    status: WorkflowRunStatus,
+    status: WorkflowRunStatusEnum,
     context: {
       organizationId: string;
       environmentId: string;
