@@ -1,13 +1,14 @@
-import { FeatureFlagsKeysEnum, UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
 
 import { Notification5Fill } from '@/components/icons';
-import { Badge } from '@/components/primitives/badge';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
 import { RiInstanceLine } from 'react-icons/ri';
 import { useFeatureFlag } from '../../../../hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
+import { StepEditorUnavailable } from '../step-editor-unavailable';
+import { useEnvironment } from '@/context/environment/hooks';
 
 const avatarKey = 'avatar';
 const subjectKey = 'subject';
@@ -19,6 +20,7 @@ const disableOutputSanitizationKey = 'disableOutputSanitization';
 const dataObjectKey = 'data';
 
 export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
+  const { currentEnvironment } = useEnvironment();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   if (uiSchema.group !== UiSchemaGroupEnum.IN_APP) {
@@ -35,6 +37,10 @@ export const InAppEditor = ({ uiSchema }: { uiSchema: UiSchema }) => {
     [disableOutputSanitizationKey]: disableOutputSanitization,
     [dataObjectKey]: dataObject,
   } = uiSchema.properties ?? {};
+
+  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
+    return <StepEditorUnavailable />;
+  }
 
   return (
     <div className="flex flex-col">

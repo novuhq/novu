@@ -1,4 +1,4 @@
-import { UiComponentEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
 
 import { DelayAmount } from '@/components/workflow-editor/steps/delay/delay-amount';
 import { DigestKey } from '@/components/workflow-editor/steps/digest/digest-key';
@@ -18,12 +18,20 @@ import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 import { useWorkflow } from '../workflow-provider';
 import { useSaveForm } from './save-form-context';
 import { LayoutSelect } from './email/layout-select';
+import { useEnvironment } from '@/context/environment/hooks';
 
 const EmailEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();
   const { saveForm } = useSaveForm();
+  const { currentEnvironment } = useEnvironment();
 
-  return <EmailEditorSelect isLoading={isUpdatePatchPending} saveForm={saveForm} />;
+  return (
+    <EmailEditorSelect
+      isLoading={isUpdatePatchPending}
+      saveForm={saveForm}
+      disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+    />
+  );
 };
 
 export const getComponentByType = ({ component }: { component?: UiComponentEnum }) => {
