@@ -14,7 +14,7 @@ import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 import { UpsertLayout, UpsertLayoutCommand } from '../../../../layouts-v2/usecases/upsert-layout';
-import { DEFAULT_LAYOUT } from '../../../../layouts-v2/utils/layout-templates';
+import { createDefaultLayout } from '../../../../layouts-v2/utils/layout-templates';
 
 // TODO: eventually move to @novu/ee-auth
 
@@ -90,7 +90,7 @@ export class SyncExternalOrganization {
             name: 'Default layout',
             controlValues: {
               email: {
-                body: JSON.stringify(DEFAULT_LAYOUT),
+                body: JSON.stringify(createDefaultLayout(organization.name)),
                 editorType: 'block',
               },
             },
@@ -128,7 +128,7 @@ export class SyncExternalOrganization {
             name: 'Default layout',
             controlValues: {
               email: {
-                body: JSON.stringify(DEFAULT_LAYOUT),
+                body: JSON.stringify(createDefaultLayout(organization.name)),
                 editorType: 'block',
               },
             },
