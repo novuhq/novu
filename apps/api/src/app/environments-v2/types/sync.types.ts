@@ -8,9 +8,28 @@ export enum ResourceTypeEnum {
   LAYOUT = 'layout',
 }
 
+export enum DependencyReasonEnum {
+  LAYOUT_REQUIRED_FOR_WORKFLOW = 'LAYOUT_REQUIRED_FOR_WORKFLOW',
+  LAYOUT_EXISTS_IN_TARGET = 'LAYOUT_EXISTS_IN_TARGET',
+}
+
+export interface IResourceDependency {
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+  resourceName: string;
+  isBlocking: boolean;
+  reason: DependencyReasonEnum;
+}
+
+export interface IResourceToPublish {
+  resourceType: ResourceTypeEnum;
+  resourceId: string;
+}
+
 export interface ISyncOptions {
   dryRun?: boolean;
   batchSize?: number;
+  resources?: IResourceToPublish[];
 }
 
 export interface ISyncContext {
@@ -109,6 +128,7 @@ export interface IDiffResult {
     deleted: number;
     unchanged: number;
   };
+  dependencies?: IResourceDependency[];
 }
 
 export interface IEnvironmentDiffResult {
@@ -131,6 +151,7 @@ export interface ISyncStrategy {
     organizationId: string,
     userContext: UserSessionData
   ): Promise<IDiffResult[]>;
+  getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]>;
 }
 
 export interface ISyncProgress {

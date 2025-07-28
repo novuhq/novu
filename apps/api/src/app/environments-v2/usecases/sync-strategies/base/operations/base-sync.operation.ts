@@ -1,7 +1,7 @@
 import { PinoLogger, Instrument } from '@novu/application-generic';
 import { LayoutEntity } from '@novu/dal';
 import { SyncResultBuilder } from '../../builders/sync-result.builder';
-import { ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
+import { ISyncContext, ISyncResult, ResourceTypeEnum, IResourceToPublish } from '../../../../types/sync.types';
 import { SYNC_ACTIONS, SKIP_REASONS } from '../../constants/sync.constants';
 import { IBaseRepositoryService, IBaseSyncService, IBaseDeleteService, IBaseComparator } from '../interfaces';
 import { capitalize } from '../../../../../shared/services/helper/helper.service';
@@ -28,6 +28,12 @@ export abstract class BaseSyncOperation<T> {
   protected abstract getResourceType(): ResourceTypeEnum;
 
   protected abstract getResourceName(resource: T): string;
+
+  async getAvailableResourceIds(sourceEnvironmentId: string, organizationId: string): Promise<string[]> {
+    const resources = await this.repositoryService.fetchSyncableResources(sourceEnvironmentId, organizationId);
+
+    return resources.map((resource) => this.repositoryService.getResourceIdentifier(resource));
+  }
 
   private getResourceTypeMessage(): string {
     return this.getResourceType().toString().toLowerCase();
@@ -76,10 +82,15 @@ export abstract class BaseSyncOperation<T> {
     const resultBuilder = new SyncResultBuilder(this.getResourceType());
 
     try {
-      const sourceResources = await this.repositoryService.fetchSyncableResources(
+      let sourceResources = await this.repositoryService.fetchSyncableResources(
         context.sourceEnvironmentId,
         context.user.organizationId
       );
+
+      // Filter resources if selective sync is requested
+      if (context.options.resources?.length) {
+        sourceResources = this.filterResourcesForSelectiveSync(sourceResources, context.options.resources);
+      }
 
       this.logger.info(this.getFoundResourcesMessage(sourceResources.length));
 
@@ -107,15 +118,39 @@ export abstract class BaseSyncOperation<T> {
     }
   }
 
+  private filterResourcesForSelectiveSync(sourceResources: T[], resources: IResourceToPublish[]): T[] {
+    const currentResourceType = this.getResourceType();
+    const resourceIdsToPublish = new Set(
+      resources
+        .filter((resource) => resource.resourceType === currentResourceType)
+        .map((resource) => resource.resourceId)
+    );
+
+    if (resourceIdsToPublish.size === 0) {
+      return [];
+    }
+
+    return sourceResources.filter((resource) => {
+      const resourceId = this.repositoryService.getResourceIdentifier(resource);
+
+      return resourceIdsToPublish.has(resourceId);
+    });
+  }
+
   private async syncResources(
     context: ISyncContext,
     sourceResources: T[],
     resultBuilder: SyncResultBuilder
   ): Promise<void> {
-    const targetResources = await this.repositoryService.fetchSyncableResources(
+    let targetResources = await this.repositoryService.fetchSyncableResources(
       context.targetEnvironmentId,
       context.user.organizationId
     );
+
+    // Filter target resources if selective sync is requested
+    if (context.options.resources?.length) {
+      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resources);
+    }
 
     const targetResourceMap = this.repositoryService.createResourceMap(targetResources);
     const syncDecisions = await this.determineSyncDecisions(context, sourceResources, targetResourceMap);
@@ -214,10 +249,15 @@ export abstract class BaseSyncOperation<T> {
     sourceResources: T[],
     resultBuilder: SyncResultBuilder
   ): Promise<void> {
-    const targetResources = await this.repositoryService.fetchSyncableResources(
+    let targetResources = await this.repositoryService.fetchSyncableResources(
       context.targetEnvironmentId,
       context.user.organizationId
     );
+
+    // Filter target resources if selective sync is requested
+    if (context.options.resources?.length) {
+      targetResources = this.filterResourcesForSelectiveSync(targetResources, context.options.resources);
+    }
 
     const sourceResourceMap = this.repositoryService.createResourceMap(sourceResources);
 

@@ -1,18 +1,45 @@
-import { RiAlertFill, RiArrowRightSLine, RiCheckboxCircleFill } from 'react-icons/ri';
+import { useState, useEffect } from 'react';
+import {
+  RiAlertFill,
+  RiRouteFill,
+  RiDashboardLine,
+  RiLinkUnlinkM,
+  RiContractUpDownLine,
+  RiExpandUpDownLine,
+  RiAddBoxLine,
+  RiDeleteBin2Line,
+  RiGitCommitFill,
+} from 'react-icons/ri';
 import { Dialog, DialogContent } from '../primitives/dialog';
 import { Button } from '../primitives/button';
+import { Badge, BadgeIcon } from '../primitives/badge';
+import { Checkbox } from '../primitives/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
 import { useDiffEnvironments } from '@/hooks/use-environments';
-import { ResourceRow } from '../resource-row';
+import { useResourceDependencies } from '@/hooks/use-resource-dependencies';
+import { formatDateSimple } from '@/utils/format-date';
 import type { IEnvironment } from '@novu/shared';
-import type { IResourceDiffResult } from '@/api/environments';
+import type { IResourceDiffResult, IResourceDependency } from '@/api/environments';
+import type { ResourceToPublish } from '@/api/environments';
+import { WorkflowHoverCard } from './workflow-hover-card';
+import { LayoutUsageIndicator } from './layout-usage-indicator';
 
 type PublishModalProps = {
   isOpen: boolean;
   onClose: () => void;
   environment: IEnvironment;
   currentEnvironmentId?: string;
-  onConfirm: () => void;
+  onConfirm: (selectedResources: ResourceToPublish[]) => void;
   isPublishing?: boolean;
+};
+
+type ResourceSelection = {
+  [resourceId: string]: {
+    selected: boolean;
+    disabled: boolean;
+    resource: IResourceDiffResult;
+  };
 };
 
 export function PublishModal({
@@ -23,208 +50,451 @@ export function PublishModal({
   onConfirm,
   isPublishing = false,
 }: PublishModalProps) {
+  const [resourceSelection, setResourceSelection] = useState<ResourceSelection>({});
+  const [workflowsExpanded, setWorkflowsExpanded] = useState(true);
+  const [layoutsExpanded, setLayoutsExpanded] = useState(true);
+
   const { data: diffData } = useDiffEnvironments({
     sourceEnvironmentId: currentEnvironmentId,
     targetEnvironmentId: environment?._id,
     enabled: isOpen,
   });
 
-  const aggregatedSummary = diffData?.resources?.reduce(
-    (acc, resource) => ({
-      added: acc.added + resource.summary.added,
-      modified: acc.modified + resource.summary.modified,
-      deleted: acc.deleted + resource.summary.deleted,
-      unchanged: acc.unchanged + resource.summary.unchanged,
-    }),
-    { added: 0, modified: 0, deleted: 0, unchanged: 0 }
-  );
+  const { workflows, layouts, dependencyMap, calculateDependencyState } = useResourceDependencies(diffData);
 
-  const totalChanges = aggregatedSummary
-    ? aggregatedSummary.added + aggregatedSummary.modified + aggregatedSummary.deleted
-    : 0;
+  // Initialize selection state
+  useEffect(() => {
+    if (!diffData?.resources) return;
 
-  const workflowResources = diffData?.resources?.filter((resource) => resource.resourceType === 'workflow') || [];
-  const layoutResources = diffData?.resources?.filter((resource) => resource.resourceType === 'layout') || [];
-  const translationResources = diffData?.resources?.filter((resource) => resource.resourceType === 'translation') || [];
+    const initialSelection: ResourceSelection = {};
 
-  const allResources = [...workflowResources, ...layoutResources, ...translationResources];
+    diffData.resources.forEach((resource) => {
+      const resourceId = resource.sourceResource?.id || resource.targetResource?.id;
+
+      if (resourceId) {
+        initialSelection[resourceId] = {
+          selected: true, // Start with all selected
+          disabled: false,
+          resource,
+        };
+      }
+    });
+
+    // Apply dependency rules to the initial selection
+    const selectionWithDependencies = calculateDependencyState(initialSelection);
+    setResourceSelection(selectionWithDependencies);
+  }, [diffData, calculateDependencyState]);
+
+  const handleResourceToggle = (resourceId: string) => {
+    setResourceSelection((prev) => {
+      const current = prev[resourceId];
+      if (current.disabled) return prev;
+
+      const updated = { ...prev };
+      updated[resourceId] = { ...current, selected: !current.selected };
+
+      // Recalculate dependency state after the selection change
+      return calculateDependencyState(updated);
+    });
+  };
+
+  const handleGroupToggle = (resourceType: 'workflow' | 'layout') => {
+    const resources = resourceType === 'workflow' ? workflows : layouts;
+    const allSelected = resources.every((r) => {
+      const id = r.sourceResource?.id || r.targetResource?.id;
+      return id && resourceSelection[id]?.selected;
+    });
+
+    setResourceSelection((prev) => {
+      const updated = { ...prev };
+      resources.forEach((resource) => {
+        const id = resource.sourceResource?.id || resource.targetResource?.id;
+
+        if (id && !updated[id]?.disabled) {
+          updated[id] = { ...updated[id], selected: !allSelected };
+        }
+      });
+
+      // Recalculate dependency state after the group selection change
+      return calculateDependencyState(updated);
+    });
+  };
+
+  const getSelectedCount = (resourceType: 'workflow' | 'layout') => {
+    const resources = resourceType === 'workflow' ? workflows : layouts;
+    return resources.filter((r) => {
+      const id = r.sourceResource?.id || r.targetResource?.id;
+      return id && resourceSelection[id]?.selected;
+    }).length;
+  };
+
+  const getTotalSelectedCount = () => {
+    return Object.values(resourceSelection).filter((state) => state.selected).length;
+  };
+
+  const handleConfirm = () => {
+    const selectedResources: ResourceToPublish[] = Object.entries(resourceSelection)
+      .filter(([_, state]) => state.selected)
+      .map(([id, state]) => ({
+        resourceType: state.resource.resourceType as ResourceToPublish['resourceType'],
+        resourceId: id,
+      }));
+    onConfirm(selectedResources);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md gap-4 p-3">
-        <PublishModalHeader totalChanges={totalChanges} />
+      <DialogContent className="max-w-lg gap-4 p-3">
+        <PublishModalHeader />
+        <PublishModalContent environment={environment} />
 
-        <PublishModalContent
-          totalChanges={totalChanges}
-          environment={environment}
-          workflowResources={workflowResources}
-          layoutResources={layoutResources}
-        />
+        <div className="space-y-1.5">
+          {workflows.length > 0 && (
+            <ResourceGroupCompact
+              title="Workflows"
+              count={workflows.length}
+              selectedCount={getSelectedCount('workflow')}
+              isExpanded={workflowsExpanded}
+              onToggle={() => setWorkflowsExpanded(!workflowsExpanded)}
+              onGroupToggle={() => handleGroupToggle('workflow')}
+              icon={RiRouteFill}
+            >
+              {workflows.map((workflow) => {
+                const id = workflow.sourceResource?.id || workflow.targetResource?.id;
+                if (!id) return null;
 
-        {totalChanges > 0 && <ChangesSummary resources={allResources} />}
+                return (
+                  <CompactResourceRow
+                    key={id}
+                    resource={workflow}
+                    selected={resourceSelection[id]?.selected || false}
+                    disabled={resourceSelection[id]?.disabled || false}
+                    onToggle={() => handleResourceToggle(id)}
+                    dependencies={dependencyMap.get(id)}
+                    allWorkflows={workflows}
+                    dependencyMap={dependencyMap}
+                  />
+                );
+              })}
+            </ResourceGroupCompact>
+          )}
 
-        {totalChanges === 0 && <NoChangesMessage />}
+          {layouts.length > 0 && (
+            <ResourceGroupCompact
+              title="Layouts"
+              count={layouts.length}
+              selectedCount={getSelectedCount('layout')}
+              isExpanded={layoutsExpanded}
+              onToggle={() => setLayoutsExpanded(!layoutsExpanded)}
+              onGroupToggle={() => handleGroupToggle('layout')}
+              icon={RiDashboardLine}
+            >
+              {layouts.map((layout) => {
+                const id = layout.sourceResource?.id || layout.targetResource?.id;
+                if (!id) return null;
+
+                return (
+                  <CompactResourceRow
+                    key={id}
+                    resource={layout}
+                    selected={resourceSelection[id]?.selected || false}
+                    disabled={resourceSelection[id]?.disabled || false}
+                    onToggle={() => handleResourceToggle(id)}
+                    dependencies={layout.dependencies}
+                    allWorkflows={workflows}
+                    dependencyMap={dependencyMap}
+                  />
+                );
+              })}
+            </ResourceGroupCompact>
+          )}
+        </div>
 
         <PublishModalActions
-          totalChanges={totalChanges}
-          isPublishing={isPublishing}
           environment={environment}
+          totalSelected={getTotalSelectedCount()}
+          isPublishing={isPublishing}
           onClose={onClose}
-          onConfirm={onConfirm}
+          onConfirm={handleConfirm}
         />
       </DialogContent>
     </Dialog>
   );
 }
 
-function PublishModalHeader({ totalChanges }: { totalChanges: number }) {
-  const getIconAndStyle = () => {
-    if (totalChanges === 0) {
-      return {
-        icon: RiCheckboxCircleFill,
-        className: 'bg-success-lighter text-success-base',
-      };
-    }
+type ResourceGroupProps = {
+  title: string;
+  count: number;
+  selectedCount: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onGroupToggle: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+};
 
-    return {
-      icon: RiAlertFill,
-      className: 'bg-warning-lighter text-warning-base',
-    };
-  };
-
-  const { icon: IconComponent, className } = getIconAndStyle();
-
-  return (
-    <div className="flex items-start justify-between">
-      <div className={`rounded-10 p-2 ${className}`}>
-        <IconComponent className="size-6" />
-      </div>
-    </div>
-  );
-}
-
-function PublishModalContent({
-  totalChanges,
-  environment,
-  workflowResources,
-  layoutResources,
-}: {
-  totalChanges: number;
-  environment: IEnvironment;
-  workflowResources: IResourceDiffResult[];
-  layoutResources: IResourceDiffResult[];
-}) {
-  const getTitle = () => {
-    if (totalChanges === 0) return `No Changes to Publish to ${environment?.name}`;
-
-    return `Publishing ${totalChanges} Changes to ${environment?.name}`;
-  };
-
-  const getDescription = () => {
-    if (totalChanges === 0) {
-      return (
-        <p className="text-paragraph-xs text-text-soft">
-          Your environments are already in sync. There are no changes to publish to {environment?.name}.
-        </p>
-      );
-    }
-
-    const resourceCounts = [];
-
-    if (workflowResources.length > 0) {
-      resourceCounts.push(`${workflowResources.length} workflow${workflowResources.length === 1 ? '' : 's'}`);
-    }
-
-    if (layoutResources.length > 0) {
-      resourceCounts.push(`${layoutResources.length} layout${layoutResources.length === 1 ? '' : 's'}`);
-    }
-
-    return (
-      <p className="text-paragraph-xs text-text-soft">
-        You're about to publish <span className="text-text-sub">{resourceCounts.join(', ')}</span> to{' '}
-        {environment?.name}. This may cause breaking behavior. Please review all changes before proceeding.
-      </p>
-    );
-  };
+function ResourceGroupCompact({
+  title,
+  count,
+  selectedCount,
+  isExpanded,
+  onToggle,
+  onGroupToggle,
+  icon: Icon,
+  children,
+}: ResourceGroupProps) {
+  const allSelected = selectedCount === count;
+  const hasPartialSelection = selectedCount > 0 && selectedCount < count;
 
   return (
-    <div className="space-y-1">
-      <h2 className="text-label-sm text-text-strong">{getTitle()}</h2>
-      {getDescription()}
-    </div>
-  );
-}
-
-function ChangesSummary({ resources }: { resources: IResourceDiffResult[] }) {
-  return (
-    <div className="bg-bg-weak rounded-lg">
-      <div className="p-1">
-        <div className="flex items-center justify-between p-1">
-          <span className="text-label-xs text-text-sub">Changes included in this publish</span>
-        </div>
-
-        <div className="bg-bg-white border-stroke-soft-100 rounded-md border">
-          <div className="max-h-64 overflow-y-auto">
-            <div className="space-y-0.5 p-0.5">
-              {resources.map((resource, index) => (
-                <ResourceRow key={`${resource.resourceType}-${index}`} resource={resource} />
-              ))}
-            </div>
+    <div className="rounded-lg border border-gray-100 bg-gray-50 p-1">
+      <div className="flex items-center justify-between px-1 py-1.5">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <Icon className="h-3.5 w-3.5 text-gray-600" />
+            <span className="text-xs font-medium text-gray-600">{title}</span>
+            <span className="text-xs text-gray-400">
+              ({selectedCount}/{count})
+            </span>
           </div>
         </div>
+
+        <div className="flex h-[16px] items-center gap-1">
+          <Checkbox
+            checked={allSelected}
+            onCheckedChange={onGroupToggle}
+            {...(hasPartialSelection && { 'data-state': 'indeterminate' })}
+          />
+          <button onClick={onToggle} className="flex h-4 w-4 items-center justify-center rounded-lg p-0.5">
+            {isExpanded ? <RiContractUpDownLine className="h-3 w-3" /> : <RiExpandUpDownLine className="h-3 w-3" />}
+          </button>
+        </div>
+      </div>
+
+      <Collapsible open={isExpanded}>
+        <CollapsibleContent>
+          {count > 0 && (
+            <div className="rounded-md border border-gray-200 bg-white">
+              <div className="divide-y divide-gray-100">{children}</div>
+            </div>
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
+  );
+}
+
+type SelectableResourceRowProps = {
+  resource: IResourceDiffResult;
+  selected: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+  dependencies?: IResourceDependency[];
+  allWorkflows?: IResourceDiffResult[];
+  dependencyMap?: Map<string, IResourceDependency[]>;
+};
+
+function CompactResourceRow({
+  resource,
+  selected,
+  disabled,
+  onToggle,
+  dependencies,
+  allWorkflows = [],
+  dependencyMap = new Map(),
+}: SelectableResourceRowProps) {
+  const displayName = resource.targetResource?.name || resource.sourceResource?.name || 'Unnamed Resource';
+  const slug = displayName.toLowerCase().replace(/\s+/g, '-');
+  const updatedAt = resource.sourceResource?.updatedAt || resource.targetResource?.updatedAt;
+  const hasDependencies = dependencies && dependencies.length > 0;
+
+  const statusBadge = <ResourceStatusBadge resource={resource} />;
+
+  const rowContent = (
+    <div className="flex items-center gap-1.5 p-1">
+      {disabled ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <Checkbox checked={selected} disabled={disabled} onCheckedChange={onToggle} />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="rounded bg-gray-900 px-2 py-1 text-xs text-white">
+            This resource is required by another selected resource and they must be published together.
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        <Checkbox checked={selected} disabled={disabled} onCheckedChange={onToggle} />
+      )}
+
+      <div className="min-w-0 flex-1">
+        {resource.resourceType === 'layout' ? (
+          // Layout: name and ID side by side
+          <div className="leading-0 flex w-full items-center gap-1 text-nowrap text-left">
+            <span className="overflow-hidden truncate overflow-ellipsis text-xs font-medium leading-4 text-gray-900">
+              {displayName}
+            </span>
+            <span
+              className="font-mono text-xs leading-[14px] tracking-tight text-gray-400"
+              style={{ fontSize: '10px', letterSpacing: '-0.2px' }}
+            >
+              {slug}
+            </span>
+            {hasDependencies && (
+              <Tooltip>
+                <TooltipTrigger>
+                  <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  {dependencies && dependencies.length > 0 && (
+                    <div className="space-y-1">
+                      <div>This layout depends on:</div>
+                      {dependencies.map((dep, idx) => (
+                        <div key={idx} className="text-xs">
+                          - {dep.resourceName} ({dep.resourceType})
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-1">
+              <span className="truncate text-xs font-medium text-gray-900">{displayName}</span>
+              {hasDependencies && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <RiLinkUnlinkM className="h-3 w-3 text-orange-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {dependencies && dependencies.length > 0 && (
+                      <div className="space-y-1">
+                        <div>This workflow depends on:</div>
+                        {dependencies.map((dep, idx) => (
+                          <div key={idx} className="text-xs">
+                            - {dep.resourceName} ({dep.resourceType})
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+            <div className="font-mono text-xs tracking-tight text-gray-400">{slug}</div>
+          </>
+        )}
+
+        {resource.resourceType === 'layout' && (
+          <LayoutUsageIndicator layoutResource={resource} allWorkflows={allWorkflows} dependencies={dependencyMap} />
+        )}
+      </div>
+
+      <div className="flex flex-col items-end gap-1.5">
+        {statusBadge}
+
+        {updatedAt && <span className="text-label-2xs text-text-sub">{formatDateSimple(updatedAt)}</span>}
+      </div>
+    </div>
+  );
+
+  return rowContent;
+}
+
+// Extracted Components
+function ResourceStatusBadge({ resource }: { resource: IResourceDiffResult }) {
+  const summary = resource.summary;
+
+  if (summary.added > 0) {
+    return (
+      <Badge variant="lighter" size="sm" color="green" className="text-label-2xs">
+        <BadgeIcon as={RiAddBoxLine} />
+        Added
+      </Badge>
+    );
+  }
+
+  if (summary.modified > 0) {
+    const badge = (
+      <Badge variant="lighter" size="sm" color="orange" className="text-label-2xs">
+        <BadgeIcon as={RiGitCommitFill} />
+        Modified
+      </Badge>
+    );
+
+    if (resource.resourceType === 'workflow') {
+      return <WorkflowHoverCard workflowResource={resource}>{badge}</WorkflowHoverCard>;
+    }
+
+    return badge;
+  }
+
+  if (summary.deleted > 0) {
+    return (
+      <Badge variant="lighter" size="sm" color="red" className="text-label-2xs">
+        <BadgeIcon as={RiDeleteBin2Line} />
+        Deleted
+      </Badge>
+    );
+  }
+
+  return null;
+}
+
+function PublishModalHeader() {
+  return (
+    <div className="flex items-start justify-between">
+      <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-orange-50">
+        <RiAlertFill className="h-6 w-6 text-orange-500" />
       </div>
     </div>
   );
 }
 
-function NoChangesMessage() {
+function PublishModalContent({ environment }: { environment: IEnvironment }) {
   return (
-    <div className="bg-success-lighter border-success-base/20 rounded-lg border p-4 text-center">
-      <RiCheckboxCircleFill className="text-success-base mx-auto mb-2 size-8" />
-      <p className="text-paragraph-sm text-success-dark font-medium">Environments are in sync</p>
-      <p className="text-paragraph-xs text-success-base mt-1">
-        All workflows and configurations are identical between environments.
+    <div className="space-y-1">
+      <h2 className="text-sm font-medium text-gray-900">Publishing changes to {environment?.name}</h2>
+      <p className="text-xs text-gray-500">
+        You're about to publish changes to {environment?.name}. This may cause breaking behavior. Please review all
+        changes before proceeding.
       </p>
     </div>
   );
 }
 
 function PublishModalActions({
-  totalChanges,
-  isPublishing,
   environment,
+  totalSelected,
+  isPublishing,
   onClose,
   onConfirm,
 }: {
-  totalChanges: number;
-  isPublishing: boolean;
   environment: IEnvironment;
+  totalSelected: number;
+  isPublishing: boolean;
   onClose: () => void;
   onConfirm: () => void;
 }) {
-  const getCancelButtonText = () => {
-    if (totalChanges === 0) return 'Close';
-    return 'Cancel';
-  };
-
   return (
     <div className="flex items-center justify-end gap-3">
       <Button variant="secondary" mode="outline" size="2xs" onClick={onClose} disabled={isPublishing}>
-        {getCancelButtonText()}
+        Cancel
       </Button>
 
-      {totalChanges > 0 && (
-        <Button
-          variant="primary"
-          mode="gradient"
-          size="2xs"
-          onClick={onConfirm}
-          disabled={totalChanges === 0 || isPublishing}
-          isLoading={isPublishing}
-        >
-          Publish to {environment?.name}
-        </Button>
-      )}
+      <Button
+        variant="primary"
+        mode="gradient"
+        size="2xs"
+        onClick={onConfirm}
+        disabled={totalSelected === 0 || isPublishing}
+        isLoading={isPublishing}
+      >
+        Publish to {environment?.name} <span className="text-[#E1E4EA]">({totalSelected})</span>
+      </Button>
     </div>
   );
 }

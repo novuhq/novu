@@ -95,12 +95,7 @@ export abstract class BaseDiffOperation<T> {
       const targetResource = targetResourceMap.get(sourceIdentifier);
 
       if (!targetResource) {
-        resultBuilder.addResourceAdded({
-          id: this.repositoryService.getResourceIdentifier(sourceResource),
-          name: this.getResourceName(sourceResource),
-          updatedBy: this.extractUpdatedByInfo(sourceResource),
-          updatedAt: this.extractUpdatedAtInfo(sourceResource),
-        });
+        await this.handleNewResource(sourceResource, resultBuilder, userContext);
 
         return;
       }
@@ -168,6 +163,19 @@ export abstract class BaseDiffOperation<T> {
         });
       }
     }
+  }
+
+  protected async handleNewResource(
+    sourceResource: T,
+    resultBuilder: DiffResultBuilder,
+    userContext: UserSessionData
+  ): Promise<void> {
+    resultBuilder.addResourceAdded({
+      id: this.repositoryService.getResourceIdentifier(sourceResource),
+      name: this.getResourceName(sourceResource),
+      updatedBy: this.extractUpdatedByInfo(sourceResource),
+      updatedAt: this.extractUpdatedAtInfo(sourceResource),
+    });
   }
 
   private createResourceDiffs(
