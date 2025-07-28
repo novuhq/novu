@@ -38,7 +38,7 @@ export function WorkflowTranslationStatus({ workflowId, className }: WorkflowTra
     <StatusBadge
       variant="light"
       status={hasOutdatedLocales ? 'pending' : 'completed'}
-      className={`hover:border-current/20 group ml-auto cursor-pointer border border-transparent transition-all duration-200 hover:shadow-sm ${className || ''}`}
+      className={`hover:border-current/20 group ml-auto cursor-pointer border border-transparent transition-all duration-200 ${className || ''}`}
       onClick={handleStatusBadgeClick}
     >
       {hasOutdatedLocales ? (
