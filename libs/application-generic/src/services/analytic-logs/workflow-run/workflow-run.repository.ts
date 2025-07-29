@@ -17,6 +17,12 @@ interface IWorkflowRunOptions {
   externalSubscriberId?: string;
 }
 
+// Type for selected columns from the workflow run schema
+type WorkflowRunColumns = keyof InferClickhouseSchemaType<typeof workflowRunSchema>;
+
+// Utility type to create partial WorkflowRun based on selected columns
+type SelectedWorkflowRun<T extends readonly WorkflowRunColumns[]> = Pick<WorkflowRun, T[number]>;
+
 const WORKFLOW_RUN_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.WORKFLOW_RUNS_ASYNC_INSERT,
   process.env.WORKFLOW_RUNS_WAIT_ASYNC_INSERT
@@ -235,14 +241,23 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     }
   }
 
-  /**
-   * Compound cursor-based pagination for workflow runs.
-   * Handles timestamp collisions by using both created_at and workflow_run_id.
-   *
-   * This implements industry best practices.
-   * The compound condition ensures no records are skipped or duplicated when
-   * multiple workflow runs have identical timestamps.
-   */
+  // Overload for when select is provided
+  async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
+    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    cursor?: {
+      created_at: string;
+      workflow_run_id: string;
+    };
+    limit?: number;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select: T;
+  }): Promise<{
+    data: SelectedWorkflowRun<T>[];
+    rows: number;
+  }>;
+
+  // Overload for when select is not provided (fallback to full WorkflowRun)
   async findWithCursor(options: {
     where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
     cursor?: {
@@ -252,8 +267,35 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     limit?: number;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-  }): Promise<{ data: WorkflowRun[]; rows: number }> {
-    const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false } = options;
+    select?: undefined;
+  }): Promise<{
+    data: WorkflowRun[];
+    rows: number;
+  }>;
+
+  /**
+   * Compound cursor-based pagination for workflow runs.
+   * Handles timestamp collisions by using both created_at and workflow_run_id.
+   *
+   * This implements industry best practices.
+   * The compound condition ensures no records are skipped or duplicated when
+   * multiple workflow runs have identical timestamps.
+   */
+  async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
+    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    cursor?: {
+      created_at: string;
+      workflow_run_id: string;
+    };
+    limit?: number;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select?: T;
+  }): Promise<{
+    data: WorkflowRun[] | SelectedWorkflowRun<T>[];
+    rows: number;
+  }> {
+    const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false, select } = options;
     const isBoundaryCase = cursor?.workflow_run_id === '1'; // first or last item
 
     if (limit < 0 || limit > 1000) {
@@ -347,8 +389,11 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     const finalModifier = useFinal ? ' FINAL' : '';
     const orderByClause = `ORDER BY created_at ${orderDirection}, workflow_run_id ${orderDirection}`;
 
+    // Build SELECT clause - use selected columns or fallback to wildcard
+    const selectClause = select && select.length > 0 ? select.join(', ') : '*';
+
     const query = `
-      SELECT *
+      SELECT ${selectClause}
       FROM ${this.table}${finalModifier}
       ${whereClause}
       ${orderByClause}
@@ -359,6 +404,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       query: query.replace(/\s+/g, ' ').trim(),
       params,
       cursor: cursor ? 'present' : 'none',
+      selectedColumns: select ? select.length : 'all',
     });
 
     const result = await this.clickhouseService.query({
@@ -367,7 +413,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     });
 
     return {
-      data: result.data as WorkflowRun[],
+      data: result.data as any,
       rows: result.rows,
     };
   }

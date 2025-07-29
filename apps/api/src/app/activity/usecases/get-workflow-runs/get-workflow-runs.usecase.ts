@@ -16,6 +16,23 @@ type CursorData = {
   workflow_run_id: string;
 };
 
+const workflowRunSelectColumns = [
+  'id',
+  'workflow_run_id',
+  'workflow_id',
+  'workflow_name',
+  'organization_id',
+  'environment_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'status',
+  'trigger_identifier',
+  'transaction_id',
+  'created_at',
+  'updated_at',
+] as const;
+type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
+
 @Injectable()
 export class GetWorkflowRuns {
   constructor(
@@ -103,18 +120,14 @@ export class GetWorkflowRuns {
         }
       }
 
-      /*
-       * Execute query using WorkflowRunRepository's compound cursor method
-       * This handles timestamp collisions properly using both created_at AND workflow_run_id
-       * Order by created_at DESC, workflow_run_id DESC for most recent first
-       */
-      const result = await this.workflowRunRepository.findWithCursor({
+      const result = (await this.workflowRunRepository.findWithCursor({
         where: whereConditions,
         cursor,
         limit: command.limit + 1, // Get one extra to determine if there are more results
         orderDirection: 'DESC',
         useFinal: true, // Use FINAL for consistent reads in ReplacingMergeTree
-      });
+        select: workflowRunSelectColumns,
+      })) satisfies { data: WorkflowRunFetchResult[] };
 
       const workflowRuns = result.data;
       const hasMore = workflowRuns.length > command.limit;
@@ -186,9 +199,10 @@ export class GetWorkflowRuns {
         limit,
         orderDirection: 'ASC', // Get older items
         useFinal: true,
+        select: ['created_at', 'workflow_run_id'],
       });
 
-      const previousPageItems = backwardResult.data;
+      const previousPageItems = backwardResult.data as WorkflowRun[];
 
       if (previousPageItems.length === 0) {
         return null;
@@ -260,7 +274,7 @@ export class GetWorkflowRuns {
    */
   private async getStepRunsForWorkflowRuns(
     command: GetWorkflowRunsCommand,
-    workflowRuns: WorkflowRun[]
+    workflowRuns: WorkflowRunFetchResult[]
   ): Promise<Map<string, StepRun[]>> {
     if (workflowRuns.length === 0) {
       return new Map();
@@ -306,7 +320,7 @@ export class GetWorkflowRuns {
     }
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: StepRun[]): GetWorkflowRunsDto {
+  private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): GetWorkflowRunsDto {
     return {
       id: workflowRun.id,
       workflowRunId: workflowRun.workflow_run_id,
