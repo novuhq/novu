@@ -12,6 +12,8 @@ import { RequestsFilters } from './logs-filters';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { RequestLogsEmptyState } from './logs-empty-state';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 type RequestsTableProps = {
   onLogClick?: (log: RequestLog) => void;
@@ -31,6 +33,8 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     limit,
     filters,
   } = useLogsUrlState();
+
+  const track = useTelemetry();
 
   const {
     data: logsResponse,
@@ -71,6 +75,11 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     const logId = log.id;
     handleLogSelect(logId);
     onLogClick?.(log);
+
+    track(TelemetryEvent.REQUEST_LOG_ENTRY_CLICKED, {
+      urlPattern: log.urlPattern,
+      method: log.method,
+    });
   };
 
   const handleRefresh = async () => {
