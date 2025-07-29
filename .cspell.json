@@ -823,7 +823,7 @@
     ".example.env",
     ".gitignore",
     ".vscode/settings.json",
-    ".biome.json",
+    "biome.json",
     "*.riv",
     "*/**/.vscode/settings.json",
     "*/**/CHANGELOG.md",
