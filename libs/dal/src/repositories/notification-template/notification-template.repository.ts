@@ -307,7 +307,8 @@ export class NotificationTemplateRepository extends BaseRepository<
       .populate({ path: 'notificationGroup' })
       .populate('steps.template', { type: 1 })
       .select('-steps.variants')
-      .populate('updatedBy');
+      .populate('updatedBy')
+      .populate('lastPublishedBy', '_id firstName lastName');
 
     const items = await mongoQuery.lean();
 

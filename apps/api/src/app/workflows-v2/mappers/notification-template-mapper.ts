@@ -26,7 +26,7 @@ export function toResponseWorkflowDto(
     user: workflow.userPreferences,
     default: workflow.defaultPreferences,
   };
-  const workflowName = workflow.name || 'Missing Name | UPDATE IMMEDIATELY';
+  const workflowName = workflow.name || '';
 
   return {
     _id: workflow._id,
@@ -39,8 +39,10 @@ export function toResponseWorkflowDto(
     steps,
     description: workflow.description,
     origin: computeOrigin(workflow),
-    updatedAt: workflow.updatedAt || 'Missing Updated At',
-    createdAt: workflow.createdAt || 'Missing Create At',
+    lastPublishedAt: workflow.lastPublishedAt,
+    lastPublishedBy: workflow.lastPublishedBy,
+    updatedAt: workflow.updatedAt || '',
+    createdAt: workflow.createdAt || '',
     updatedBy: workflow.updatedBy
       ? {
           _id: workflow.updatedBy._id,
@@ -69,9 +71,11 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     name: workflowName,
     origin: computeOrigin(template),
     tags: template.tags,
-    updatedAt: template.updatedAt || 'Missing Updated At',
+    updatedAt: template.updatedAt || '',
+    lastPublishedAt: template.lastPublishedAt || '',
+    lastPublishedBy: template.lastPublishedBy,
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
-    createdAt: template.createdAt || 'Missing Create At',
+    createdAt: template.createdAt || '',
     updatedBy: template.updatedBy
       ? {
           _id: template.updatedBy._id,
