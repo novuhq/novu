@@ -109,7 +109,15 @@ export type EventType =
   | 'reply_mx_record_missing'
   | 'reply_mx_domain_missing'
   | 'execution_detail'
-  | 'step_completed';
+  | 'step_completed'
+  | 'request_received'
+  | 'request_dispatched'
+  | 'request_failed'
+  | 'request_organization_not_found'
+  | 'request_environment_not_found'
+  | 'request_workflow_not_found'
+  | 'request_invalid_recipients'
+  | 'request_payload_validation_failed';
 
 export type EntityType = 'request' | 'step_run';
 

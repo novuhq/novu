@@ -267,6 +267,24 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'execution_detail':
       return 'Execution detail';
 
+    // Request events
+    case 'request_received':
+      return 'Request received';
+    case 'request_dispatched':
+      return 'Request dispatched to worker';
+    case 'request_failed':
+      return 'Request failed';
+    case 'request_organization_not_found':
+      return 'Organization not found';
+    case 'request_environment_not_found':
+      return 'Environment not found';
+    case 'request_workflow_not_found':
+      return 'Workflow not found';
+    case 'request_invalid_recipients':
+      return 'Invalid recipients';
+    case 'request_payload_validation_failed':
+      return 'Payload validation failed';
+
     default:
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
       // eslint-disable-next-line no-case-declarations
