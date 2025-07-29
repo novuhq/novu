@@ -91,11 +91,17 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': triggerIdentifier,
     };
 
-    const item = await this.MongooseModel.findOneAndUpdate(requestQuery, {
-      $set: {
-        lastTriggeredAt,
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastTriggeredAt,
+        },
       },
-    }).populate('steps.template');
+      {
+        timestamps: false,
+      }
+    ).populate('steps.template');
 
     return this.mapEntity(item);
   }
