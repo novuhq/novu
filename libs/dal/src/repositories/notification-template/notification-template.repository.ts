@@ -31,7 +31,15 @@ export class NotificationTemplateRepository extends BaseRepository<
       type: ResourceTypeEnum.BRIDGE,
       origin: ResourceOriginEnum.NOVU_CLOUD,
     })
-      .select({ _id: 1, name: 1, 'triggers.identifier': 1, updatedAt: 1, _updatedBy: 1, _environmentId: 1 })
+      .select({
+        _id: 1,
+        name: 1,
+        'triggers.identifier': 1,
+        updatedAt: 1,
+        _updatedBy: 1,
+        _environmentId: 1,
+        isTranslationEnabled: 1,
+      })
       .populate('updatedBy', '_id firstName lastName externalId')
       .populate('lastPublishedBy', '_id firstName lastName externalId');
 
