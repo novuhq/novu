@@ -123,8 +123,8 @@ jobs:
           fi
 
           # Switch from PM2 cluster mode to single node process to support K8s deployments
-          if [[ "${{ env.SERVICE_NAME }}" =~ ^(api|worker|ws)$ ]]; then
-            echo "Switching ${{ env.SERVICE_NAME }} from PM2 cluster mode to single node process to support K8s deployments"
+          if [[ "${{ env.SERVICE_COMMON_NAME }}" =~ ^(api|worker|ws)$ ]]; then
+            echo "Switching ${{ env.SERVICE_COMMON_NAME }} from PM2 cluster mode to single node process to support K8s deployments"
             sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
           fi
 
