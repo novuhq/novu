@@ -111,7 +111,7 @@ export const createDefaultLayout = (organizationName: string) => ({
                 {
                   type: 'text',
                   marks: [{ type: 'textStyle', attrs: { color: 'rgb(170, 170, 170)' } }],
-                  text: `${organizationName} © 2025`,
+                  text: `From ${organizationName} with ❤️`,
                 },
               ],
             },
