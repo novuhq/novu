@@ -67,6 +67,25 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @Type(() => UserResponseDto)
   updatedBy?: UserResponseDto;
 
+  @ApiPropertyOptional({
+    description: 'Timestamp of the last workflow publication',
+    type: 'string',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPublishedAt?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'User who last published the workflow',
+    type: () => UserResponseDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  lastPublishedBy?: UserResponseDto | null;
+
   @ApiProperty({
     description: 'Steps of the workflow',
     type: 'array',

@@ -107,7 +107,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
       }
     }
 
-    const runsUrl = buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug });
+    const runsUrl = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
     navigate(`${runsUrl}?${params.toString()}`);
   };
 

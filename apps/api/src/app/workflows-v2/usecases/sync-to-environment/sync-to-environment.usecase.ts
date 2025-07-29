@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
-import { PreferencesEntity, PreferencesRepository, ClientSession, LocalizationResourceEnum } from '@novu/dal';
+import {
+  PreferencesEntity,
+  PreferencesRepository,
+  ClientSession,
+  LocalizationResourceEnum,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
@@ -37,7 +43,8 @@ export class SyncToEnvironmentUseCase {
     private preferencesRepository: PreferencesRepository,
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
-    private moduleRef: ModuleRef
+    private moduleRef: ModuleRef,
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   @InstrumentUsecase()
@@ -89,6 +96,14 @@ export class SyncToEnvironmentUseCase {
     );
 
     await this.publishTranslationGroup(sourceWorkflow.workflowId, command);
+
+    // Update the source workflow with publish information
+    await this.notificationTemplateRepository.updatePublishFields(
+      sourceWorkflow._id,
+      command.user.environmentId,
+      command.user._id,
+      command.session
+    );
 
     return upsertedWorkflow;
   }

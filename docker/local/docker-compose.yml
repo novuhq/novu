@@ -38,3 +38,19 @@ services:
       test: "bash -c 'redis-cli ping'"
       retries: 5
       interval: 10s
+
+  clickhouse:
+    container_name: '${CLICKHOUSE_DOCKER_NAME-clickhouse_main}'
+    image: clickhouse/clickhouse-server:24.3-alpine
+    network_mode: bridge
+    environment:
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - '${DOCKER_CLICKHOUSE_HTTP_PORT:-8123}:8123'
+      - '${DOCKER_CLICKHOUSE_NATIVE_PORT:-9000}:9000'
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G

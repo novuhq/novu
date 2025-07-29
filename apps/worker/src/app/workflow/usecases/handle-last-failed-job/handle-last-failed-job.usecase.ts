@@ -9,6 +9,7 @@ import {
   InstrumentUsecase,
   WorkflowRunRepository,
   PinoLogger,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 
 import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
@@ -73,7 +74,7 @@ export class HandleLastFailedJob {
 
   private async updateWorkflowRunStatusToFailed(job: JobEntity): Promise<void> {
     try {
-      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, 'failed', {
+      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, WorkflowRunStatusEnum.ERROR, {
         organizationId: job._organizationId,
         environmentId: job._environmentId,
       });

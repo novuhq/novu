@@ -1,0 +1,572 @@
+import { expect } from 'chai';
+import { NotificationTemplateEntity, SubscriberEntity, NotificationEntity, NotificationRepository } from '@novu/dal';
+import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { sleep } from '../../events/e2e/utils/sleep.util';
+import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
+
+describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
+  let session: UserSession;
+  let template: NotificationTemplateEntity;
+  let subscriber: SubscriberEntity;
+  let subscriberService: SubscribersService;
+  let novuClient: Novu;
+  let workflowRunRepository: WorkflowRunRepository;
+
+  // Helper function to create multiple workflow triggers with 5ms delay between each
+  async function createMultipleWorkflowRuns(options: {
+    count: number;
+    workflowId: string;
+    subscriberId: string[];
+    payloadTemplate?: (index: number) => Record<string, any>;
+    transactionId?: string;
+  }) {
+    const { count, workflowId, subscriberId, payloadTemplate, transactionId } = options;
+
+    for (let i = 1; i < count + 1; i += 1) {
+      await novuClient.trigger({
+        workflowId,
+        to: subscriberId,
+        payload: payloadTemplate ? payloadTemplate(i) : { runNumber: i },
+        ...(transactionId && { transactionId: `${transactionId}-${i}` }),
+      });
+
+      await sleep(5);
+    }
+  }
+
+  async function createMultipleWorkflowRunsByDb(options: {
+    count: number;
+    workflowId: string;
+    subscriberId: string[];
+    payloadTemplate?: (index: number) => Record<string, any>;
+    transactionId?: string;
+    status?: WorkflowRunStatusEnum;
+  }) {
+    const {
+      count,
+      workflowId,
+      subscriberId,
+      payloadTemplate,
+      transactionId,
+      status = WorkflowRunStatusEnum.SUCCESS,
+    } = options;
+
+    const promises: Promise<void>[] = [];
+
+    for (let i = 1; i < count + 1; i += 1) {
+      const payload = payloadTemplate ? payloadTemplate(i) : { runNumber: i };
+
+      // Create a mock NotificationEntity
+      const mockNotification: NotificationEntity = {
+        _id: NotificationRepository.createObjectId(),
+        _templateId: template._id,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        _subscriberId: subscriber._id,
+        topics: [],
+        transactionId: transactionId ? `${transactionId}-${i}` : `txn_${Date.now()}_${i}`,
+        channels: [StepTypeEnum.EMAIL],
+        to: subscriberId[0],
+        payload,
+        controls: undefined,
+        tags: [],
+      };
+
+      promises.push(
+        workflowRunRepository.create(mockNotification, template, {
+          status,
+          userId: session.user._id,
+          externalSubscriberId: subscriberId[0],
+        })
+      );
+    }
+
+    await Promise.all(promises);
+  }
+
+  beforeEach(async () => {
+    // Enable workflow run logs writing for testing
+    (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'true';
+
+    session = new UserSession();
+    await session.initialize();
+    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+    subscriber = await subscriberService.createSubscriber();
+    novuClient = initNovuClassSdk(session);
+    workflowRunRepository = session.testServer?.getService(WorkflowRunRepository);
+
+    template = await session.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          subject: 'Test subject',
+          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'Hello {{firstName}}' }],
+        },
+      ],
+    });
+  });
+
+  afterEach(() => {
+    // Clean up environment variable after each test
+    delete (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED;
+  });
+
+  it('should return paginated results with default limit', async () => {
+    // will generate 6 workflow runs with 2 subscribers, total of 12 workflow runs
+    await createMultipleWorkflowRuns({
+      count: 6,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId, '123'],
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body: firstPage }: { body: GetWorkflowRunsResponseDto } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .expect(200);
+
+    expect(firstPage.next, 'firstPage next').to.be.not.null;
+    expect(firstPage.previous, 'firstPage previous').to.be.null;
+    expect(firstPage.data.length, 'firstPage dataLength').to.be.equal(10);
+
+    const { body: secondPage }: { body: GetWorkflowRunsResponseDto } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ cursor: firstPage.next })
+      .expect(200);
+
+    expect(secondPage.next, 'secondPage next').to.be.null;
+    expect(secondPage.previous, 'secondPage previous').to.be.not.null;
+    expect(secondPage.data.length, 'secondPage dataLength').to.be.equal(2);
+
+    const secondPageWorkflowRun = await workflowRunRepository.findOne({
+      where: {
+        id: secondPage.data[0].id,
+      },
+    });
+    expect(JSON.parse(secondPageWorkflowRun.data.payload || '{}')?.runNumber, 'secondPage runNumber').to.be.equal(1);
+
+    expect(firstPage.data[0].steps, 'workflow run should have steps').to.be.an('array');
+    if (firstPage.data[0].steps.length > 0) {
+      const step = firstPage.data[0].steps[0];
+      expect(step.id.startsWith('sr_'), 'step id should start with sr_').to.be.true;
+      expect(step.stepType, 'step should have step type').to.be.equal('trigger');
+      expect(step.status, 'step should have status').to.be.equal('completed');
+    }
+  });
+
+  it('should validate cursor-based pagination collision handling', async () => {
+    await createMultipleWorkflowRunsByDb({
+      count: 11,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const fetchedRunNumbers = new Set<number>();
+    const forwardPages: Array<{
+      pageNumber: number;
+      orderedIds: string[];
+      transactionIds: string[];
+      next: string | null;
+      previous: string | null;
+    }> = [];
+    let cursor: string | null = null;
+    let totalFetched = 0;
+    let pageCount = 0;
+
+    // Go forward through all pages and store detailed page information
+    do {
+      const query: any = { limit: 2 };
+      if (cursor) {
+        query.cursor = cursor;
+      }
+
+      const { body } = await session.testAgent.get('/v1/activity/workflow-runs').query(query).expect(200);
+
+      pageCount += 1;
+      const currentPageNumber = pageCount;
+
+      // Store page data with ordered IDs for later comparison
+      const orderedIds = body.data.map((item: any) => item.id);
+      const transactionIds = body.data.map((item: any) => item.transactionId);
+      forwardPages.push({
+        pageNumber: currentPageNumber,
+        orderedIds,
+        transactionIds,
+        next: body.next,
+        previous: body.previous,
+      });
+
+      expect(body.data).to.be.an('array');
+      expect(body.data.length).to.be.at.most(2);
+
+      // Check for duplicates and collect runNumbers
+      for (const workflowRun of body.data) {
+        const workflowRunEntity = await workflowRunRepository.findOne({
+          where: {
+            id: workflowRun.id,
+          },
+        });
+        const runNumber = JSON.parse(workflowRunEntity.data.payload || '{}')?.runNumber;
+        expect(fetchedRunNumbers.has(runNumber), `Duplicate runNumber ${runNumber} found on page ${currentPageNumber}`)
+          .to.be.false;
+        fetchedRunNumbers.add(runNumber);
+      }
+
+      totalFetched += body.data.length;
+      cursor = body.next;
+
+      // Validate cursor logic - next indicates if there are more results
+      if (cursor) {
+        expect(cursor, `next should be a valid string when there are more results on page ${pageCount}`).to.be.a(
+          'string'
+        );
+      } else {
+        expect(cursor, `next should be null when there are no more results on page ${pageCount}`).to.be.null;
+      }
+    } while (cursor);
+
+    // Validate we fetched all 11 workflow runs
+    expect(totalFetched, 'Total fetched workflow runs').to.equal(11);
+    expect(fetchedRunNumbers.size, 'Unique runNumbers fetched').to.equal(11);
+
+    // Validate we have runNumbers 1 through 11
+    for (let i = 1; i <= 11; i += 1) {
+      expect(fetchedRunNumbers.has(i), `runNumber ${i} should be present`).to.be.true;
+    }
+
+    // Test bidirectional pagination: Navigate backwards through ALL pages
+    const lastPage = forwardPages[forwardPages.length - 1];
+    expect(lastPage.previous, 'Last page should have previous').to.be.not.null;
+
+    // Navigate backwards through all pages and validate they match forward pages exactly
+    let backwardCursor = lastPage.previous;
+    let backwardPageIndex = forwardPages.length - 2; // Start from second-to-last page
+
+    while (backwardCursor && backwardPageIndex >= 0) {
+      const { body: backwardPageResult } = await session.testAgent
+        .get('/v1/activity/workflow-runs')
+        .query({ cursor: backwardCursor, limit: 2 })
+        .expect(200);
+
+      const correspondingForwardPage = forwardPages[backwardPageIndex];
+      const backwardOrderedIds = backwardPageResult.data.map((item: any) => item.id);
+
+      // Validate exact same items in exact same order
+      expect(backwardPageResult.data.length, `Backward page ${backwardPageIndex + 1} should have same length`).to.equal(
+        correspondingForwardPage.orderedIds.length
+      );
+
+      expect(
+        backwardOrderedIds,
+        `Backward page ${backwardPageIndex + 1} IDs should match forward page exactly`
+      ).to.deep.equal(correspondingForwardPage.orderedIds);
+
+      // Validate runNumbers match in exact order (no sorting, preserve original order)
+      const backwardRunNumbers = backwardPageResult.data.map((item: any) => item.transactionId);
+      const forwardRunNumbers = correspondingForwardPage.transactionIds;
+
+      expect(
+        backwardRunNumbers,
+        `Backward page ${backwardPageIndex + 1} runNumbers should match forward page order`
+      ).to.deep.equal(forwardRunNumbers);
+
+      // Validate cursor properties
+      if (backwardPageIndex > 0) {
+        expect(backwardPageResult.previous, `Backward page ${backwardPageIndex + 1} should have previous`).to.be.not
+          .null;
+      } else {
+        expect(backwardPageResult.previous, `First page (backward) should have null previous`).to.be.null;
+      }
+
+      expect(backwardPageResult.next, `Backward page ${backwardPageIndex + 1} should have next`).to.be.not.null;
+
+      // Move to previous page
+      backwardCursor = backwardPageResult.previous;
+      backwardPageIndex -= 1;
+    }
+
+    // Validate we reached the beginning (first page should have null previous)
+    expect(backwardPageIndex, 'Should have navigated through all pages backwards').to.equal(-1);
+
+    /*
+     * Test that we can navigate forward again from any backward page
+     * Test from the middle page for comprehensive validation
+     */
+    const middlePageIndex = Math.floor(forwardPages.length / 2);
+    const middlePage = forwardPages[middlePageIndex];
+
+    if (middlePage.next) {
+      const { body: forwardFromMiddleResult } = await session.testAgent
+        .get('/v1/activity/workflow-runs')
+        .query({ cursor: middlePage.next, limit: 2 })
+        .expect(200);
+
+      const nextPageFromMiddle = forwardPages[middlePageIndex + 1];
+      const forwardFromMiddleIds = forwardFromMiddleResult.data.map((item: any) => item.id);
+
+      expect(forwardFromMiddleIds, 'Forward navigation from middle should match original forward page').to.deep.equal(
+        nextPageFromMiddle.orderedIds
+      );
+    }
+  });
+
+  it('should filter results by single workflowId', async () => {
+    const secondTemplate = await session.createTemplate({
+      steps: [{ type: StepTypeEnum.IN_APP, content: 'Test in-app message' }],
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'John' },
+    });
+
+    await novuClient.trigger({
+      workflowId: secondTemplate.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'Jane' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ workflowIds: [template._id] })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+
+    body.data.forEach((workflowRun: any) => {
+      expect(workflowRun.workflowId).to.equal(template._id);
+      expect(workflowRun.steps, 'workflow run should have steps').to.be.an('array');
+    });
+  });
+
+  it('should filter results by multiple workflowIds', async () => {
+    const secondTemplate = await session.createTemplate({
+      steps: [{ type: StepTypeEnum.IN_APP, content: 'Test in-app message' }],
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'John' },
+    });
+
+    await novuClient.trigger({
+      workflowId: secondTemplate.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'Jane' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ workflowIds: [template._id, secondTemplate._id] })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+
+    const allowedIds = [template._id, secondTemplate._id];
+    body.data.forEach((workflowRun: any) => {
+      expect(allowedIds).to.include(workflowRun.workflowId);
+    });
+  });
+
+  it('should filter results by single subscriberId', async () => {
+    const secondSubscriber = await subscriberService.createSubscriber();
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'John' },
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: secondSubscriber.subscriberId,
+      payload: { firstName: 'Jane' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ subscriberIds: [subscriber.subscriberId] })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+
+    body.data.forEach((workflowRun: any) => {
+      expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
+    });
+  });
+
+  it('should filter results by transactionId', async () => {
+    const customTransactionId = `test-transaction-${Date.now()}`;
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'John' },
+      transactionId: customTransactionId,
+    });
+
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'Jane' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ transactionIds: [customTransactionId] })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+
+    body.data.forEach((workflowRun: any) => {
+      expect(workflowRun.transactionId).to.equal(customTransactionId);
+    });
+  });
+
+  it('should filter results by status', async () => {
+    await createMultipleWorkflowRunsByDb({
+      count: 2,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+      status: WorkflowRunStatusEnum.SUCCESS,
+    });
+    await createMultipleWorkflowRunsByDb({
+      count: 1,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+      status: WorkflowRunStatusEnum.ERROR,
+    });
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ statuses: [WorkflowRunStatusEnum.SUCCESS] })
+      .expect(200);
+
+    // eslint-disable-next-line no-console
+    console.log('BODY', JSON.stringify(body, null, 2));
+
+    expect(body.data.length).to.be.equal(2);
+
+    body.data.forEach((workflowRun: any) => {
+      expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
+    });
+  });
+
+  it('should filter results by date range', async () => {
+    await createMultipleWorkflowRuns({
+      count: 2,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+      payloadTemplate: (index) => ({ testText: `first trigger ${index}` }),
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const beforeTrigger = new Date();
+
+    await createMultipleWorkflowRuns({
+      count: 2,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+      payloadTemplate: (index) => ({ testText: `second trigger ${index}` }),
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const afterTrigger = new Date();
+
+    await createMultipleWorkflowRuns({
+      count: 2,
+      workflowId: template.triggers[0].identifier,
+      subscriberId: [subscriber.subscriberId],
+      payloadTemplate: (index) => ({ testText: `third trigger ${index}` }),
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({
+        createdGte: beforeTrigger.toISOString(),
+        createdLte: afterTrigger.toISOString(),
+      })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+    expect(body.data.length, 'body.data.length').to.be.greaterThan(0);
+    body.data.forEach(async (workflowRun: any) => {
+      const workflowRunEntity = await workflowRunRepository.findOne({
+        where: {
+          id: workflowRun.id,
+        },
+      });
+      expect(JSON.parse(workflowRunEntity.data.payload || '{}')?.testText).to.contain('second trigger');
+    });
+  });
+
+  it('should support combining multiple filters', async () => {
+    await novuClient.trigger({
+      workflowId: template.triggers[0].identifier,
+      to: subscriber.subscriberId,
+      payload: { firstName: 'John' },
+    });
+
+    await session.waitForWorkflowQueueCompletion();
+    await session.waitForSubscriberQueueCompletion();
+
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({
+        workflowIds: [template._id],
+        subscriberIds: subscriber.subscriberId,
+        statuses: [WorkflowRunStatusEnum.SUCCESS],
+        limit: 10,
+      })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+
+    body.data.forEach((workflowRun: any) => {
+      expect(workflowRun.workflowId).to.equal(template._id);
+      expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
+      expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
+    });
+  });
+
+  it('should handle empty results gracefully', async () => {
+    const { body } = await session.testAgent
+      .get('/v1/activity/workflow-runs')
+      .query({ workflowIds: ['non-existent-id'] })
+      .expect(200);
+
+    expect(body.data).to.be.an('array');
+    expect(body.data.length).to.equal(0);
+    expect(body.next).to.equal(null);
+    expect(body.previous).to.equal(null);
+  });
+});

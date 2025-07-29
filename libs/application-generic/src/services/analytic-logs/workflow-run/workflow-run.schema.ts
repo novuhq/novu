@@ -64,12 +64,16 @@ const clickhouseSchemaOptions = {
 
 export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
-export type WorkflowRunStatus = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled' | 'timeout' | 'partial';
+export enum WorkflowRunStatusEnum {
+  PENDING = 'pending',
+  SUCCESS = 'success',
+  ERROR = 'error',
+}
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 
 export type WorkflowRun = Prettify<
   Omit<NativeWorkflowRun, 'status'> & {
-    status: WorkflowRunStatus;
+    status: WorkflowRunStatusEnum;
   }
 >;

@@ -40,6 +40,26 @@ export class WorkflowListResponseDto {
   @Type(() => UserResponseDto)
   updatedBy?: UserResponseDto;
 
+  @ApiProperty({
+    description: 'Timestamp of the last workflow publication',
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPublishedAt?: string;
+
+  @ApiProperty({
+    description: 'User who last published the workflow',
+    type: () => UserResponseDto,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @Type(() => UserResponseDto)
+  lastPublishedBy?: UserResponseDto;
+
   @ApiProperty({ description: 'Unique database identifier' })
   @IsString()
   _id: string;

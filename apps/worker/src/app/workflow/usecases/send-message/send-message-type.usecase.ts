@@ -4,7 +4,7 @@ import { CreateExecutionDetails } from '@novu/application-generic';
 import { SendMessageCommand } from './send-message.command';
 
 export type SendMessageResult = {
-  status: 'success' | 'failed' | 'canceled';
+  status: 'success' | 'failed' | 'skippedByConditionsOrPreferences';
   reason?: string;
 };
 
