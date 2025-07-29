@@ -15,6 +15,7 @@ import {
   fortySixElksConfig,
   genericSmsConfig,
   gupshupConfig,
+  iMediaConfig,
   infobipSMSConfig,
   iSendSmsConfig,
   kannelConfig,
@@ -295,5 +296,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: afroSmsConfig,
     docReference: 'https://afromessage.com/developers',
     logoFileName: { light: 'afro-sms.png', dark: 'afro-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.IMedia,
+    displayName: 'iMedia',
+    channel: ChannelTypeEnum.SMS,
+    credentials: iMediaConfig,
+    docReference: '',
+    logoFileName: { light: 'imedia.png', dark: 'imedia.png' },
   },
 ];

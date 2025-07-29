@@ -12,6 +12,7 @@ export * from './firetext.handler';
 export * from './forty-six-elks.handler';
 export * from './generic-sms.handler';
 export * from './gupshup.handler';
+export * from './imedia.handler';
 export * from './infobip.handler';
 export * from './isend-sms.handler';
 export * from './kannel.handler';
