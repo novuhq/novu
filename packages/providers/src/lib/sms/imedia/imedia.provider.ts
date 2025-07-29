@@ -51,10 +51,17 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
   constructor(private config: IMediaSmsConfig) {
     super();
 
-    this.axiosInstance = axios.create({
+    console.log({
       baseURL: IMediaSmsProvider.BASE_URL,
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
+        token: this.config.token,
+      },
+    });
+    this.axiosInstance = axios.create({
+      baseURL: IMediaSmsProvider.BASE_URL,
+      headers: {
+        'Content-Type': 'application/json',
         token: this.config.token,
       },
     });
@@ -74,8 +81,31 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
       type: 1,
     }).body;
 
-    const response = await this.axiosInstance.post<IMediaSendResponse>('/SMSBrandname/SendSMS', payload);
+    console.log({
+      baseURL: IMediaSmsProvider.BASE_URL,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        token: this.config.token,
+      },
+      payload,
+      url: '/api/SMSBrandname/SendSMS',
+    });
 
+    const response = await this.axiosInstance.request<IMediaSendResponse>({
+      url: '/api/SMSBrandname/SendSMS',
+      data: payload,
+    });
+
+    console.log({
+      baseURL: IMediaSmsProvider.BASE_URL,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        token: this.config.token,
+      },
+      payload,
+      response: response.data,
+      url: '/api/SMSBrandname/SendSMS',
+    });
     if (response.data.errorCode !== '000') {
       throw new Error(`iMedia API error: ${response.data.errorCode} - ${response.data.errorMessage}`);
     }
