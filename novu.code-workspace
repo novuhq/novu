@@ -37,7 +37,6 @@
       "path": "libs/design-system",
     },
     {
-    {
       "name": "📦 @novu/novui",
       "path": "libs/novui",
     },
@@ -62,7 +61,6 @@
       "path": "packages/stateless",
     },
     {
-    {
       "name": "📦 @novu/react-native",
       "path": "packages/react-native",
     },
@@ -86,13 +84,13 @@
   "settings": {
     "typescript.tsdk": "node_modules/typescript/lib",
     "typescript.enablePromptUseWorkspaceTsdk": true,
-    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.defaultFormatter": "biomejs.biome",
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "cSpell.words": ["Chainable", "usecases"],
     "vsicons.presets.nestjs": true,
   },
   "extensions": {
-    "recommendations": ["folke.vscode-monorepo-workspace", "esbenp.prettier-vscode", "dbaeumer.vscode-eslint"],
+    "recommendations": ["biomejs.biome"],
   },
 }

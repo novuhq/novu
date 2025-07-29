@@ -13,8 +13,8 @@
     "postbuild": "npm run check:circulars",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
-    "lint": "eslint src",
-    "lint:fix": "pnpm lint -- --fix",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test": "vitest",
     "watch:test": "pnpm test --watch",
     "check:circulars": "madge --circular --extensions ts ./src"
