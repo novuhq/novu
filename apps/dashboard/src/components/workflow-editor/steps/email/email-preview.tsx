@@ -5,11 +5,18 @@ import { HTMLAttributes, useCallback, useEffect, useRef } from 'react';
 import { RiArrowDownSFill } from 'react-icons/ri';
 import { NovuBranding } from './novu-branding';
 import { ResourceOriginEnum } from '@novu/shared';
+import { usePrimaryEmailIntegration } from '@/hooks/use-primary-email-integration';
+import { Skeleton } from '@/components/primitives/skeleton';
 
 type EmailPreviewHeaderProps = HTMLAttributes<HTMLDivElement> & { minimalHeader?: boolean };
 
 export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
   const { className, children, minimalHeader = false, ...rest } = props;
+  const { senderEmail, senderName, isLoading } = usePrimaryEmailIntegration();
+
+  const displaySenderName = senderName || 'Acme Inc.';
+  const displaySenderEmail = senderEmail || 'noreply@novu.co';
+
   return (
     <div className={cn('flex gap-2', className)} {...rest}>
       {!minimalHeader && (
@@ -20,7 +27,13 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
       <div className="flex flex-1 justify-between">
         <div>
           <div>
-            Acme Inc. <span className="text-foreground-600 text-xs">{`<noreply@novu.co>`}</span>
+            {isLoading ? (
+              <Skeleton className="h-4 w-40" />
+            ) : (
+              <>
+                {displaySenderName} <span className="text-foreground-600 text-xs">{`<${displaySenderEmail}>`}</span>
+              </>
+            )}
           </div>
           {!minimalHeader && (
             <div className="text-foreground-600 flex items-center gap-1 text-xs">
