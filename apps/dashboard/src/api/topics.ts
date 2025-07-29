@@ -71,7 +71,10 @@ export const getTopic = async ({ environment, topicKey }: { environment: IEnviro
 };
 
 export const createTopic = async ({ environment, topic }: { environment: IEnvironment; topic: Partial<Topic> }) => {
-  const { data } = await postV2<{ data: Topic }>(`/topics`, {
+  const queryParams = new URLSearchParams();
+  queryParams.append('failIfExists', 'true');
+
+  const { data } = await postV2<{ data: Topic }>(`/topics?${queryParams}`, {
     environment,
     body: topic,
   });

@@ -14,11 +14,20 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useCreateTopic } from '@/hooks/use-create-topic';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { NovuApiError } from '@/api/api.client';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
+import { ExternalToast } from 'sonner';
+
+const toastOptions: ExternalToast = {
+  position: 'bottom-right',
+  classNames: {
+    toast: 'mb-4 right-0 pointer-events-none',
+  },
+};
 
 const TopicFormSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -52,7 +61,7 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
 
   const { createTopic } = useCreateTopic({
     onSuccess: () => {
-      showSuccessToast(`Topic created successfully`);
+      showSuccessToast(`Topic created successfully`, undefined, toastOptions);
       track(TelemetryEvent.TOPICS_PAGE_VISIT); // Using closest available event
 
       if (onSuccess) {
@@ -60,8 +69,17 @@ export const CreateTopicForm = (props: CreateTopicFormProps) => {
       }
     },
     onError: (error) => {
+      // Check if it's a conflict error (topic already exists)
+      if (error instanceof NovuApiError && error.status === 409) {
+        // Set error on the key field specifically
+        form.setError('key', {
+          type: 'manual',
+          message: 'A topic with this key already exists',
+        });
+      }
+
       const errorMessage = error instanceof Error ? error.message : 'Failed to create topic';
-      showErrorToast(errorMessage);
+      showErrorToast(errorMessage, undefined, toastOptions);
 
       if (onError && error instanceof Error) {
         onError(error);
