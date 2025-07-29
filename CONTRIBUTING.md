@@ -71,7 +71,7 @@ If you would like to _implement_ it, an issue with your proposal must be submitt
 To ensure consistency throughout the source code, please keep these rules in mind as you are working:
 
 - All features or bug fixes must be tested by one or more specs (unit-tests).
-- We use [Eslint default rule guide](https://eslint.org/docs/rules/), with minor changes. An automated formatter is available using prettier.
+- We use [Biome default rule guide](https://biomejs.dev/linter/#rules), with minor changes. An automated formatter is available using Biome.
 
 ## Need help? Questions and suggestions
 
