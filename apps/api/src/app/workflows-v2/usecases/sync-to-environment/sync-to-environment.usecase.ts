@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
-import { PreferencesEntity, PreferencesRepository, ClientSession, LocalizationResourceEnum, NotificationTemplateRepository } from '@novu/dal';
+import {
+  PreferencesEntity,
+  PreferencesRepository,
+  ClientSession,
+  LocalizationResourceEnum,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
