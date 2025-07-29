@@ -10,7 +10,7 @@ import {
   StorageHelperService,
   StepRunRepository,
   WorkflowRunRepository,
-  WorkflowRunStatus,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 
 import { RunJobCommand } from './run-job.command';
@@ -171,7 +171,7 @@ export class RunJob {
             _templateId: job._templateId,
           });
         }
-      } else if (sendMessageResult.status === 'canceled') {
+      } else if (sendMessageResult.status === 'skippedByConditionsOrPreferences') {
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.CANCELED,
         });
@@ -236,7 +236,7 @@ export class RunJob {
         });
 
         if (!nextJob) {
-          await this.updateWorkflowRunStatusToComplete(currentJob, 'completed');
+          await this.updateWorkflowRunStatus(currentJob, WorkflowRunStatusEnum.SUCCESS);
 
           return;
         }
@@ -266,7 +266,7 @@ export class RunJob {
         );
 
         if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error)) {
-          await this.updateWorkflowRunStatusToComplete(nextJob, 'failed');
+          await this.updateWorkflowRunStatus(nextJob, WorkflowRunStatusEnum.ERROR);
           await this.jobRepository.cancelPendingJobs({
             transactionId: nextJob.transactionId,
             _environmentId: nextJob._environmentId,
@@ -362,7 +362,7 @@ export class RunJob {
     return await this.jobRepository.findOne(jobQuery);
   }
 
-  private async updateWorkflowRunStatusToComplete(job: JobEntity, status: WorkflowRunStatus): Promise<void> {
+  private async updateWorkflowRunStatus(job: JobEntity, status: WorkflowRunStatusEnum): Promise<void> {
     try {
       await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, status, {
         organizationId: job._organizationId,
@@ -376,7 +376,7 @@ export class RunJob {
           organizationId: job._organizationId,
           environmentId: job._environmentId,
         },
-        'Updated workflow run status to completed'
+        `Updated workflow run status to ${status}`
       );
     } catch (error) {
       this.logger.error(
@@ -385,7 +385,7 @@ export class RunJob {
           jobId: job._id,
           notificationId: job._notificationId,
         },
-        'Failed to update workflow run status to completed'
+        `Failed to update workflow run status to ${status}`
       );
     }
   }

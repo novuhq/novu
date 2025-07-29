@@ -135,7 +135,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
    *   params: { param_0_userid: 123, param_1_name: 'John%' }
    * }
    */
-  private buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
+  protected buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
     clause: string;
     params: Record<string, any>;
   } {
@@ -214,6 +214,20 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     );
   }
 
+  async findOne(options: {
+    where: Where<InferClickhouseSchemaType<T_Schema>>;
+    limit?: number;
+    offset?: number;
+    // todo make a type validation for available orderBy columns
+    orderBy?: SchemaKeys<T_Schema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+  }): Promise<{ data: T_Enhanced_Type; rows: number }> {
+    const result = await this.find({ ...options, limit: 1 });
+
+    return { data: result.data[0], rows: result.rows };
+  }
+
   async find(options: {
     where: Where<InferClickhouseSchemaType<T_Schema>>;
     limit?: number;
@@ -238,7 +252,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       this.validateColumnName(String(orderBy));
 
       if (!this.schemaOrderBy.includes(orderBy)) {
-        this.logger.error(
+        this.logger.warn(
           {
             orderBy,
             schemaOrderBy: this.schemaOrderBy,

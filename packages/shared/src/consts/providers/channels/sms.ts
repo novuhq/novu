@@ -217,7 +217,7 @@ export const smsProviders: IProviderConfig[] = [
   },
   {
     id: SmsProviderIdEnum.GenericSms,
-    displayName: `Generic SMS`,
+    displayName: `SMS Webhook`,
     channel: ChannelTypeEnum.SMS,
     credentials: genericSmsConfig,
     docReference: `https://docs.novu.co/channels/sms/generic-sms${UTM_CAMPAIGN_QUERY_PARAM}`,

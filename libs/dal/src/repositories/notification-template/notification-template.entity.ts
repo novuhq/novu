@@ -98,11 +98,17 @@ export class NotificationTemplateEntity {
   status?: WorkflowStatusEnum;
 
   lastTriggeredAt?: string;
+
+  lastPublishedAt?: string;
+
+  _lastPublishedBy?: string;
+
+  readonly lastPublishedBy?: UserEntity;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
   Omit<NotificationTemplateEntity, '_parentId'>,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId' | '_updatedBy'
+  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId' | '_updatedBy' | '_lastPublishedBy'
 > & {
   _parentId?: Types.ObjectId;
 };

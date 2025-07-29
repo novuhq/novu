@@ -184,7 +184,7 @@ export const SideNavigation = () => {
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                   <NavigationLink
-                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_RUNS : ROUTES.ACTIVITY_FEED, {
+                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_REQUESTS : ROUTES.ACTIVITY_FEED, {
                       environmentSlug: currentEnvironment?.slug ?? '',
                     })}
                   >

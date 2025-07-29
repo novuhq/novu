@@ -34,7 +34,6 @@ import { MessagesModule } from './app/messages/messages.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { NotificationModule } from './app/notifications/notification.module';
 import { OrganizationModule } from './app/organization/organization.module';
-import { LogsModule } from './app/logs/logs.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { PreferencesModule } from './app/preferences';
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
@@ -58,6 +57,7 @@ import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
 import { WorkflowModule } from './app/workflows-v2/workflow.module';
 import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.interceptor';
 import { AnalyticsLogsGuard } from './app/shared/framework/analytics-logs.guard';
+import { ActivityModule } from './app/activity/activity.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -103,7 +103,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   NotificationGroupsModule,
   ContentTemplatesModule,
   OrganizationModule,
-  LogsModule,
+  ActivityModule,
   UserModule,
   IntegrationModule,
   InternalModule,

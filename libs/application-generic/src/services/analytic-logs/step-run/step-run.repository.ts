@@ -164,6 +164,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
     const createdAt = new Date(job.createdAt || now);
+    const stepType = this.mapStepTypeEnumToStepType(job.type || job.step.template?.type);
 
     return {
       created_at: this.formatDateTime64(createdAt),
@@ -178,13 +179,13 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       organization_id: job._organizationId,
       environment_id: job._environmentId,
       user_id: job._userId,
-      subscriber_id: job._subscriberId || job.subscriberId,
-      external_subscriber_id: null, // Will be populated from subscriber if available
+      subscriber_id: job._subscriberId,
+      external_subscriber_id: job.subscriberId,
       message_id: options?.message?._id || null,
 
       // Step metadata
-      step_type: this.mapStepTypeEnumToStepType(job.type || job.step.template?.type),
-      step_name: job.step.template?.name || job.step.stepId || 'unnamed_step',
+      step_type: stepType,
+      step_name: null, // todo remove this parameter because we do not have step name at this stage.
       provider_id: job.providerId || null,
 
       // Execution details

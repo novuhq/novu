@@ -75,8 +75,11 @@ export class WorkflowComparator {
       // Compare steps and generate step-level diffs
       const stepDiffs = this.compareStepsAsEntities(sourceSteps, targetSteps);
 
-      // Get localization group diffs for this workflow
-      const localizationDiffs = await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow, userContext._id);
+      // Get localization group diffs for this workflow only if translation is enabled
+      const localizationDiffs =
+        sourceWorkflow.isTranslationEnabled || targetWorkflow.isTranslationEnabled
+          ? await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow, userContext._id)
+          : [];
 
       return { workflowChanges, otherDiffs: [...stepDiffs, ...localizationDiffs] };
     } catch (error) {

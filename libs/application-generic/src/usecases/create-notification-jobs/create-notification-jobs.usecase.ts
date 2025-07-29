@@ -19,7 +19,7 @@ import { InstrumentUsecase } from '../../instrumentation';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
 import { getNestedValue } from '../../utils';
-import { WorkflowRunRepository } from '../../services/analytic-logs';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from '../../services/analytic-logs';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -99,7 +99,7 @@ export class CreateNotificationJobs {
   private async createWorkflowRun(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
     try {
       await this.workflowRunRepository.create(notification, command.template, {
-        status: 'pending',
+        status: WorkflowRunStatusEnum.PENDING,
         userId: command.userId,
         externalSubscriberId: command.subscriber.subscriberId,
       });
