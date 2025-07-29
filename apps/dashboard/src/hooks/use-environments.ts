@@ -7,6 +7,7 @@ import {
   publishEnvironments,
   type IEnvironmentDiffResponse,
   type IEnvironmentPublishResponse,
+  type ResourceToPublish,
 } from '@/api/environments';
 
 export function useCreateEnvironment() {
@@ -65,7 +66,15 @@ export const useDiffEnvironments = ({
 export const usePublishEnvironments = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<IEnvironmentPublishResponse, Error, { sourceEnvironmentId: string; targetEnvironmentId: string }>({
+  return useMutation<
+    IEnvironmentPublishResponse,
+    Error,
+    {
+      sourceEnvironmentId: string;
+      targetEnvironmentId: string;
+      resources?: ResourceToPublish[];
+    }
+  >({
     mutationFn: publishEnvironments,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });

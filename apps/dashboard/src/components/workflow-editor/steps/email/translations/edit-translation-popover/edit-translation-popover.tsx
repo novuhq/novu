@@ -1,27 +1,25 @@
-import React, { useCallback, useId } from 'react';
-import { RiDeleteBin2Line, RiListView, RiQuestionLine, RiErrorWarningLine } from 'react-icons/ri';
+import React, { useCallback, useId, useState } from 'react';
+import { RiDeleteBin2Line, RiErrorWarningLine, RiListView, RiQuestionLine } from 'react-icons/ri';
 
-import { Popover, PopoverContent, PopoverAnchor } from '@/components/primitives/popover';
-import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/form/form';
-import { InputRoot, InputPure, InputWrapper } from '@/components/primitives/input';
+import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { ControlInput } from '@/components/workflow-editor/control-input';
+import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/form/form';
+import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { TranslateVariableIcon } from '@/components/icons/translate-variable';
-import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
+import { ControlInput } from '@/components/workflow-editor/control-input';
+import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useUpdateTranslationValue } from '@/hooks/use-update-translation-value';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { useParams } from 'react-router-dom';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { useTranslationEditor } from './use-translation-editor';
 import { useTranslationForm } from './use-translation-form';
 import { useVirtualAnchor } from './use-virtual-anchor';
-import { LocalizationResourceEnum } from '@/types/translations';
-import { DEFAULT_LOCALE } from '@novu/shared';
 
 interface EditTranslationPopoverProps {
   open: boolean;
@@ -56,6 +54,7 @@ const TranslationKeyInput = ({
   onAddTranslationKey,
   isLoading,
   isCreatingKey,
+  workflowId,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -65,16 +64,15 @@ const TranslationKeyInput = ({
   onAddTranslationKey: () => void;
   isLoading: boolean;
   isCreatingKey: boolean;
+  workflowId: string;
 }) => {
-  const { environmentSlug } = useParams();
-  const { workflow } = useWorkflow();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS_EDIT, {
-    environmentSlug: environmentSlug ?? '',
-    resourceType: LocalizationResourceEnum.WORKFLOW,
-    resourceId: workflow?.workflowId ?? '',
-    locale: DEFAULT_LOCALE,
-  });
+  const handleManageTranslationsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDrawerOpen(true);
+  };
 
   return (
     <FormItem>
@@ -83,14 +81,17 @@ const TranslationKeyInput = ({
           <div className="flex w-full items-center justify-between gap-1">
             <label className="text-text-sub text-label-xs flex items-center gap-1">
               Translation key
+              <span className="text-text-soft bg-neutral-alpha-50 text-label-2xs rounded px-1.5 py-0.5 font-medium">
+                {DEFAULT_LOCALE}
+              </span>
               <Tooltip>
                 <TooltipTrigger className="relative cursor-pointer">
                   <RiQuestionLine className="text-text-soft size-4" />
                 </TooltipTrigger>
                 <TooltipContent side="top" className="max-w-xs">
                   <p className="text-label-xs">
-                    A unique identifier for this translation. Use dot notation for nested keys (e.g., "welcome.title" or
-                    "buttons.submit").
+                    A unique identifier for this translation. Keys are added to the default language ({DEFAULT_LOCALE}).
+                    Use dot notation for nested keys (e.g., "welcome.title" or "buttons.submit").
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -100,7 +101,7 @@ const TranslationKeyInput = ({
               size="sm"
               className="text-label-2xs text-xs"
               leadingIcon={RiListView}
-              onClick={() => window.open(translationsUrl, '_blank')}
+              onClick={handleManageTranslationsClick}
             >
               View & manage translations ↗
             </LinkButton>
@@ -135,6 +136,13 @@ const TranslationKeyInput = ({
           )}
         </div>
       </FormControl>
+
+      <TranslationDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        resourceType={LocalizationResourceEnum.WORKFLOW}
+        resourceId={workflowId}
+      />
     </FormItem>
   );
 };
@@ -338,6 +346,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               onAddTranslationKey={form.handleAddTranslationKey}
               isLoading={isLoading}
               isCreatingKey={form.isCreatingKey}
+              workflowId={workflowId}
             />
 
             <TranslationValueInput

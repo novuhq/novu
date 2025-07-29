@@ -21,6 +21,10 @@ export const useDuplicateLayout = (
         queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id],
       });
 
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
+      });
+
       options?.onSuccess?.(data, variables, ctx);
     },
   });

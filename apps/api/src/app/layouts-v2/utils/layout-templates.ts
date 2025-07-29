@@ -3,6 +3,11 @@ export const EMPTY_LAYOUT = {
   content: [
     {
       type: 'paragraph',
+      attrs: { textAlign: null, showIfKey: null },
+      content: [{ type: 'text', text: ' ' }],
+    },
+    {
+      type: 'paragraph',
       attrs: { textAlign: 'left', showIfKey: null },
       content: [
         {
@@ -17,10 +22,15 @@ export const EMPTY_LAYOUT = {
         },
       ],
     },
+    {
+      type: 'paragraph',
+      attrs: { textAlign: null, showIfKey: null },
+      content: [{ type: 'text', text: ' ' }],
+    },
   ],
 };
 
-export const DEFAULT_LAYOUT = {
+export const createDefaultLayout = (organizationName: string) => ({
   type: 'doc',
   content: [
     {
@@ -28,7 +38,7 @@ export const DEFAULT_LAYOUT = {
       attrs: {
         borderRadius: 0,
         backgroundColor: '#FFFFFF',
-        align: 'center',
+        align: 'left',
         borderWidth: 0,
         borderColor: '#FFFFFF',
         paddingTop: 12,
@@ -46,7 +56,7 @@ export const DEFAULT_LAYOUT = {
             title: null,
             width: 48,
             height: 48,
-            alignment: 'center',
+            alignment: 'left',
             externalLink: null,
             isExternalLinkVariable: false,
             borderRadius: 0,
@@ -56,11 +66,6 @@ export const DEFAULT_LAYOUT = {
             showIfKey: null,
             aliasFor: null,
           },
-        },
-        {
-          type: 'heading',
-          attrs: { textAlign: 'center', level: 3, showIfKey: null },
-          content: [{ type: 'text', text: 'Company' }],
         },
         {
           type: 'paragraph',
@@ -73,7 +78,13 @@ export const DEFAULT_LAYOUT = {
             { type: 'text', text: ' ' },
           ],
         },
-        { type: 'horizontalRule' },
+        {
+          type: 'horizontalRule',
+          attrs: {
+            marginTop: 16,
+            marginBottom: 6,
+          },
+        },
         {
           type: 'section',
           attrs: {
@@ -100,7 +111,7 @@ export const DEFAULT_LAYOUT = {
                 {
                   type: 'text',
                   marks: [{ type: 'textStyle', attrs: { color: 'rgb(170, 170, 170)' } }],
-                  text: 'Company © 2025',
+                  text: `${organizationName} © 2025`,
                 },
               ],
             },
@@ -109,4 +120,4 @@ export const DEFAULT_LAYOUT = {
       ],
     },
   ],
-};
+});

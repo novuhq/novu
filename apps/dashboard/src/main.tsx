@@ -20,12 +20,10 @@ import {
   ErrorPage,
   IntegrationsListPage,
   OrganizationListPage,
-  QuestionnairePage,
   SettingsPage,
   SignInPage,
   SignUpPage,
   TemplateModal,
-  UsecaseSelectPage,
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
@@ -90,20 +88,8 @@ const router = createBrowserRouter([
       },
       {
         path: '/onboarding',
-        element: (
-          <ProtectedRoute permission={PermissionsEnum.ORG_METADATA_WRITE}>
-            <OnboardingParentRoute />
-          </ProtectedRoute>
-        ),
+        element: <OnboardingParentRoute />,
         children: [
-          {
-            path: ROUTES.SIGNUP_QUESTIONNAIRE,
-            element: <QuestionnairePage />,
-          },
-          {
-            path: ROUTES.USECASE_SELECT,
-            element: <UsecaseSelectPage />,
-          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
@@ -236,7 +222,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.LAYOUTS,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
                     <LayoutsPage />
                   </ProtectedRoute>
                 ),
@@ -244,7 +230,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.LAYOUTS_CREATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.LAYOUT_WRITE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <CreateLayoutPage />
                       </ProtectedRoute>
                     ),
@@ -252,7 +238,7 @@ const router = createBrowserRouter([
                   {
                     path: ROUTES.LAYOUTS_DUPLICATE,
                     element: (
-                      <ProtectedRoute permission={PermissionsEnum.LAYOUT_WRITE} isDrawerRoute>
+                      <ProtectedRoute permission={PermissionsEnum.WORKFLOW_WRITE} isDrawerRoute>
                         <DuplicateLayoutPage />
                       </ProtectedRoute>
                     ),
@@ -262,7 +248,7 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.LAYOUTS_EDIT,
                 element: (
-                  <ProtectedRoute permission={PermissionsEnum.LAYOUT_READ}>
+                  <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
                     <EditLayoutPage />
                   </ProtectedRoute>
                 ),

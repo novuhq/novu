@@ -14,7 +14,7 @@ import { useWorkflowSchema } from '../../workflow-schema-provider';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { createEditorBlocks } from '../../../maily/maily-config';
+import { createEditorBlocks, DEFAULT_BLOCK_CONFIG } from '../../../maily/maily-config';
 import {
   MailyVariablesListView,
   VariableSuggestionsPopoverRef,
@@ -28,6 +28,8 @@ import { EditorView } from '@uiw/react-codemirror';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
 import { EditorOverlays } from '@/components/editor-overlays';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const MailyVariablesListViewForWorkflows = React.forwardRef<
   VariableSuggestionsPopoverRef,
@@ -128,6 +130,7 @@ function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: 
 }
 
 export const EmailBody = () => {
+  const isLayoutsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
   const { control, setValue } = useFormContext();
@@ -145,8 +148,29 @@ export const EmailBody = () => {
   );
 
   const blocks = useMemo(() => {
-    return createEditorBlocks({ track, digestStepBeforeCurrent });
-  }, [digestStepBeforeCurrent, track]);
+    if (isLayoutsPageEnabled) {
+      return createEditorBlocks({
+        track,
+        digestStepBeforeCurrent,
+        blockConfig: {
+          ...DEFAULT_BLOCK_CONFIG,
+          highlights: {
+            ...DEFAULT_BLOCK_CONFIG.highlights,
+            blocks: [
+              { type: 'cards', enabled: true, order: 0 },
+              { type: 'htmlCodeBlock', enabled: true, order: 1 },
+              { type: 'digest', enabled: true, order: 2 },
+            ],
+          },
+        },
+      });
+    }
+
+    return createEditorBlocks({
+      track,
+      digestStepBeforeCurrent,
+    });
+  }, [digestStepBeforeCurrent, isLayoutsPageEnabled, track]);
 
   const {
     handleCreateNewVariable,
@@ -266,6 +290,7 @@ export const EmailBody = () => {
               saveForm={saveForm}
               completionSources={translationCompletionSource}
               isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+              isTranslationEnabled={shouldEnableTranslations && !isTranslationKeysLoading}
               getSchemaPropertyByKey={getSchemaPropertyByKey}
               extensions={extensions}
               digestStepName={digestStepBeforeCurrent?.stepId}

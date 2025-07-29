@@ -1,11 +1,18 @@
 import { getFilters } from '@/components/variable/constants';
 import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import { LiquidVariable } from '@/utils/parseStepVariables';
-import { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
+import {
+  Completion,
+  CompletionContext,
+  CompletionResult,
+  CompletionSource,
+  startCompletion,
+} from '@codemirror/autocomplete';
 import { EditorView } from '@uiw/react-codemirror';
 import { createRoot } from 'react-dom/client';
 import React from 'react';
 import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
+import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 
 export interface CompletionOption {
   label: string;
@@ -319,11 +326,79 @@ function getMatchingVariables(
   return existingMatchingVariables;
 }
 
+function createTranslationNamespaceCompletion(): Completion {
+  return {
+    label: TRANSLATION_NAMESPACE_SEPARATOR,
+    displayLabel: 't.',
+    type: 'translation',
+  };
+}
+
+function applyTranslationNamespaceCompletion(
+  view: EditorView,
+  completion: Completion,
+  from: number,
+  to: number,
+  onVariableSelect?: (completion: CompletionOption) => void
+): boolean {
+  const content = view.state.doc.toString();
+  const beforeCursor = content.slice(0, from);
+  const afterCursor = content.slice(to);
+
+  const needsOpening = !beforeCursor.endsWith('{{');
+  const selectedValue = completion.label;
+
+  // Remove auto-inserted closing braces if present
+  const finalTo = afterCursor.startsWith('}}') ? to + 2 : to;
+  const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}`;
+
+  onVariableSelect?.(completion as CompletionOption);
+
+  view.dispatch({
+    changes: { from, to: finalTo, insert: wrappedValue },
+    selection: { anchor: from + wrappedValue.length },
+  });
+
+  // Trigger translation autocomplete
+  setTimeout(() => startCompletion(view), 0);
+
+  return true;
+}
+
+function applyRegularCompletion(
+  view: EditorView,
+  completion: Completion,
+  from: number,
+  to: number,
+  onVariableSelect?: (completion: CompletionOption) => void
+): boolean {
+  const selectedValue = completion.label;
+  const content = view.state.doc.toString();
+  const beforeCursor = content.slice(0, from);
+  const afterCursor = content.slice(to);
+
+  const needsOpening = !beforeCursor.endsWith('{{');
+  const needsClosing = !afterCursor.startsWith('}}');
+
+  const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
+  const finalCursorPos = from + wrappedValue.length;
+
+  onVariableSelect?.(completion as CompletionOption);
+
+  view.dispatch({
+    changes: { from, to, insert: wrappedValue },
+    selection: { anchor: finalCursorPos },
+  });
+
+  return true;
+}
+
 export function createAutocompleteSource(
   variables: LiquidVariable[],
   onVariableSelect?: (completion: CompletionOption) => void,
   onCreateNewVariable?: (variableName: string) => Promise<void>,
-  isPayloadSchemaEnabled?: boolean
+  isPayloadSchemaEnabled?: boolean,
+  isTranslationEnabled?: boolean
 ): CompletionSource {
   return (context: CompletionContext) => {
     // Match text that starts with {{ and capture everything after it until the cursor position
@@ -339,6 +414,11 @@ export function createAutocompleteSource(
     const options = completions(scopedLiquidVariables, variables, onCreateNewVariable, isPayloadSchemaEnabled)(context);
     if (!options) return null;
 
+    // Add translation namespace variable if translation feature is enabled
+    if (isTranslationEnabled) {
+      options.options = [createTranslationNamespaceCompletion(), ...options.options] as Completion[];
+    }
+
     const { from, to } = options;
 
     return {
@@ -349,30 +429,11 @@ export function createAutocompleteSource(
           ({
             ...option,
             apply: (view: EditorView, completion: CompletionOption, from: number, to: number) => {
-              const selectedValue = completion.label;
+              if (completion.type === 'translation') {
+                return applyTranslationNamespaceCompletion(view, completion, from, to, onVariableSelect);
+              }
 
-              const content = view.state.doc.toString();
-              const beforeCursor = content.slice(0, from);
-              const afterCursor = content.slice(to);
-
-              // Ensure proper {{ }} wrapping
-              const needsOpening = !beforeCursor.endsWith('{{');
-              const needsClosing = !afterCursor.startsWith('}}');
-
-              const wrappedValue = `${needsOpening ? '{{' : ''}${selectedValue}${needsClosing ? '}}' : ''}`;
-
-              // Calculate the final cursor position
-              // Add 2 if we need to account for closing brackets
-              const finalCursorPos = from + wrappedValue.length + (needsClosing ? 0 : 2);
-
-              onVariableSelect?.(completion);
-
-              view.dispatch({
-                changes: { from, to, insert: wrappedValue },
-                selection: { anchor: finalCursorPos },
-              });
-
-              return true;
+              return applyRegularCompletion(view, completion, from, to, onVariableSelect);
             },
           }) as Completion
       ),

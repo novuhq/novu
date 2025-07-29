@@ -97,7 +97,7 @@ export const useUpdateTranslationValue = () => {
 
       // Invalidate all preview-step queries to update the preview
       queryClient.invalidateQueries({
-        queryKey: ['preview-step'],
+        queryKey: [QueryKeys.previewStep],
       });
 
       // Invalidate diff environment queries when translations are updated

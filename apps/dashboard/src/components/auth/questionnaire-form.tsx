@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useSegment } from '@/context/segment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { hubspotCookie } from '@/utils/cookies';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { useOrganization, useUser } from '@clerk/clerk-react';
@@ -37,7 +36,6 @@ interface SubmitQuestionnaireData {
   companySize?: CompanySizeEnum | string;
   pageUri: string;
   pageName: string;
-  hubspotContext: string;
 }
 
 export function QuestionnaireForm() {
@@ -64,14 +62,11 @@ export function QuestionnaireForm() {
   }, [selectedJobTitle, selectedOrgType, shouldShowCompanySize, companySize]);
 
   const onSubmit = async (data: QuestionnaireFormData) => {
-    const hubspotContext = hubspotCookie.get();
-
     submitQuestionnaireMutation.mutate({
       ...data,
       companySize: data.companySize || '1',
       pageUri: window.location.href,
       pageName: 'Create Organization Form',
-      hubspotContext: hubspotContext || '',
     });
 
     // TODO: Make this more robust for all new sign-ups
@@ -261,7 +256,6 @@ function useSubmitQuestionnaire() {
       await identifyUser({
         pageUri: data.pageUri,
         pageName: data.pageName,
-        hubspotContext: data.hubspotContext,
         jobTitle: data.jobTitle,
         companySize: data.companySize,
         organizationType: data.organizationType,

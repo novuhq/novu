@@ -47,7 +47,7 @@ function TranslationListHeader({
   ...props
 }: TranslationListHeaderProps) {
   return (
-    <div className={cn('flex items-center justify-between py-2.5', className)} {...props}>
+    <div className={cn('flex items-center justify-between py-2', className)} {...props}>
       <TranslationsFilters
         onFiltersChange={handleFiltersChange}
         filterValues={filterValues}
@@ -77,7 +77,7 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
         <TableRow>
           <TableHead>Resource</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Locales</TableHead>
+          <TableHead>Languages</TableHead>
           <TableHead>Created at</TableHead>
           <TableHead>Updated at</TableHead>
           <TableHead />
@@ -87,7 +87,7 @@ function TranslationTable({ children, data, ...props }: TranslationTableProps) {
       {data && data.limit < data.total && (
         <TableFooter>
           <TableRow>
-            <TableCell colSpan={3}>
+            <TableCell colSpan={4}>
               <div className="flex items-center justify-between">
                 <span className="text-foreground-600 block text-sm font-normal">
                   Page {currentPage} of {totalPages}
@@ -171,7 +171,7 @@ function TranslationListContainer({
   ...props
 }: TranslationListContainerProps) {
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...props}>
+    <div className={cn('flex h-full flex-col', className)} {...props}>
       <TranslationListHeader
         filterValues={filterValues}
         handleFiltersChange={handleFiltersChange}

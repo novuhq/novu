@@ -323,8 +323,8 @@ export class SubscribersV1Controller {
   @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
-    summary: 'Create or Partially Update provider credentials',
-    description: `Create or Partially credentials for a provider such as **slack** and **FCM**. 
+    summary: 'Update provider credentials',
+    description: `Update credentials for a provider such as **slack** and **FCM**. 
       **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')

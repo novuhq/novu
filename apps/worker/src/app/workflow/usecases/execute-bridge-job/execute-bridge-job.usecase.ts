@@ -133,6 +133,7 @@ export class ExecuteBridgeJob {
       searchParams: {
         workflowId,
         stepId,
+        jobId: command.job._id,
       },
     });
 

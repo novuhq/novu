@@ -19,7 +19,7 @@ import { NoChangesModal } from './no-changes-modal';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { QueryKeys } from '@/utils/query-keys';
 import type { IEnvironment } from '@novu/shared';
-import type { IEnvironmentPublishResponse, IEnvironmentDiffResponse } from '@/api/environments';
+import type { IEnvironmentPublishResponse, IEnvironmentDiffResponse, ResourceToPublish } from '@/api/environments';
 
 type ModalState = 'closed' | 'publish' | 'success' | 'no-changes';
 
@@ -75,7 +75,7 @@ export const PublishButton = () => {
     }
   };
 
-  const handlePublish = async () => {
+  const handlePublish = async (selectedResources?: ResourceToPublish[]) => {
     if (!state.selectedEnvironment?._id || !currentEnvironment?._id) {
       console.warn('Cannot publish: missing required environment IDs');
       return;
@@ -85,6 +85,7 @@ export const PublishButton = () => {
       const result = await publishMutation.mutateAsync({
         sourceEnvironmentId: currentEnvironment._id,
         targetEnvironmentId: state.selectedEnvironment._id,
+        resources: selectedResources,
       });
 
       queryClient.invalidateQueries({ queryKey: ['diff-environments'] });
@@ -106,7 +107,6 @@ export const PublishButton = () => {
     actions.close();
   };
 
-  // Render single environment button
   if (isSingleEnvironment && targetEnvironment) {
     return (
       <>
@@ -117,7 +117,6 @@ export const PublishButton = () => {
           size="2xs"
           leadingIcon={RiGitPullRequestFill}
           onClick={() => handleEnvironmentSelect(targetEnvironment, changesCount > 0)}
-          disabled={isDiffLoading}
         >
           <div className="flex items-center">
             Publish changes
@@ -338,7 +337,6 @@ const EnvironmentOption = ({ environment, currentEnvironmentId, onSelect, isDrop
     }
   };
 
-  // Ensure we have required data before rendering
   if (!environment._id || !environment.name) {
     return null;
   }

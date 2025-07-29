@@ -4,7 +4,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { StepTypeEnum } from '@/utils/enums';
-import { DEFAULT_LOCALE, ISubscriberResponseDto } from '@novu/shared';
+import { ISubscriberResponseDto } from '@novu/shared';
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePreviewContext } from '../../../hooks/use-preview-context';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
@@ -20,6 +20,7 @@ import {
   ValidationErrors,
 } from './types/preview-context.types';
 import { createSubscriberData, parseJsonValue } from './utils/preview-context.utils';
+import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
 
 function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>();
@@ -27,23 +28,6 @@ function usePrevious<T>(value: T): T | undefined {
     ref.current = value;
   });
   return ref.current;
-}
-
-function useDefaultSubscriberData(selectedLocale?: string, organizationDefaultLocale?: string) {
-  return useCallback((): PreviewSubscriberData => {
-    const defaultLocale = selectedLocale || organizationDefaultLocale || DEFAULT_LOCALE;
-    return {
-      subscriberId: '123456',
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'user@example.com',
-      phone: '+1234567890',
-      avatar: 'https://example.com/avatar.png',
-      locale: defaultLocale,
-      timezone: 'America/New_York',
-      data: {},
-    };
-  }, [selectedLocale, organizationDefaultLocale]);
 }
 
 function useLocaleSynchronization({

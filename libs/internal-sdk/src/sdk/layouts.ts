@@ -9,6 +9,7 @@ import { layoutsGeneratePreview } from "../funcs/layoutsGeneratePreview.js";
 import { layoutsList } from "../funcs/layoutsList.js";
 import { layoutsRetrieve } from "../funcs/layoutsRetrieve.js";
 import { layoutsUpdate } from "../funcs/layoutsUpdate.js";
+import { layoutsUsage } from "../funcs/layoutsUsage.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
 import * as components from "../models/components/index.js";
 import * as operations from "../models/operations/index.js";
@@ -146,6 +147,25 @@ export class Layouts extends ClientSDK {
     return unwrapAsync(layoutsGeneratePreview(
       this,
       layoutPreviewRequestDto,
+      layoutId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Get layout usage
+   *
+   * @remarks
+   * Retrieves information about workflows that use the specified layout by its unique identifier **layoutId**
+   */
+  async usage(
+    layoutId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.LayoutsControllerGetUsageResponse> {
+    return unwrapAsync(layoutsUsage(
+      this,
       layoutId,
       idempotencyKey,
       options,

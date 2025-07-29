@@ -38,7 +38,7 @@ export function EnvironmentsPage() {
       <PageMeta title={`Environments`} />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Environments</h1>}>
         {canAccessEnvironments ? (
-          <div className="flex flex-col justify-between gap-2 px-2.5 py-2.5">
+          <div className="flex flex-col justify-between gap-2 py-2">
             <div className="flex justify-end">
               <CreateEnvironmentButton />
             </div>

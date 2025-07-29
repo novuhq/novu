@@ -24,6 +24,7 @@ export * from "./layoutsGeneratePreview.js";
 export * from "./layoutsList.js";
 export * from "./layoutsRetrieve.js";
 export * from "./layoutsUpdate.js";
+export * from "./layoutsUsage.js";
 export * from "./messagesDelete.js";
 export * from "./messagesDeleteByTransactionId.js";
 export * from "./messagesRetrieve.js";

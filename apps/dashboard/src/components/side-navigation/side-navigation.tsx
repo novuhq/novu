@@ -141,7 +141,7 @@ export const SideNavigation = () => {
                 </NavigationLink>
               </Protect>
               {isEmailLayoutsPageActive && (
-                <Protect permission={PermissionsEnum.LAYOUT_READ}>
+                <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                   <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                     <RiLayout5Line className="size-4" />
                     <span>Email Layouts</span>

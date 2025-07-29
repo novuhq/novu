@@ -1,5 +1,5 @@
 import { LayoutResponseDto } from '@novu/shared';
-import { RiRouteFill } from 'react-icons/ri';
+import { RiArrowRightSLine, RiRouteFill } from 'react-icons/ri';
 import { ConfirmationModal } from '../confirmation-modal';
 import TruncatedText from '../truncated-text';
 import { useFetchLayoutUsage } from '@/hooks/use-fetch-layout-usage';
@@ -76,7 +76,7 @@ export const DeleteLayoutDialog = ({ layout, open, onOpenChange, onConfirm, isLo
                     className={`flex items-center gap-1 p-1 ${index > 0 ? 'border-t border-neutral-100' : ''}`}
                   >
                     <div className="flex h-5 w-5 items-center justify-center">
-                      <RiRouteFill className="h-3.5 w-3.5 text-blue-500" />
+                      <RiRouteFill className="text-feature h-3.5 w-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
@@ -105,7 +105,8 @@ export const DeleteLayoutDialog = ({ layout, open, onOpenChange, onConfirm, isLo
       onConfirm={onConfirm}
       title="Are you sure?"
       description={getDescription()}
-      confirmButtonText={usage?.workflows.length === 0 || isUsagePending ? 'Delete layout' : 'Proceed >'}
+      confirmButtonText={usage?.workflows.length === 0 || isUsagePending ? 'Delete layout' : 'Proceed'}
+      confirmTrailingIcon={RiArrowRightSLine}
       isLoading={isLoading}
       isConfirmDisabled={isUsagePending}
     />

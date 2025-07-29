@@ -14,7 +14,7 @@ import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 import { UpsertLayout, UpsertLayoutCommand } from '../../../../layouts-v2/usecases/upsert-layout';
-import { DEFAULT_LAYOUT } from '../../../../layouts-v2/utils/layout-templates';
+import { createDefaultLayout } from '../../../../layouts-v2/utils/layout-templates';
 
 // TODO: eventually move to @novu/ee-auth
 
@@ -46,15 +46,14 @@ export class SyncExternalOrganization {
   async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new BadRequestException('User not found');
+    if (!user._id) {
+      this.logger.error({ err: 'User not found' }, 'User not found when syncing external organization');
+
+      throw new BadRequestException('User not found');
+    }
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
-    });
-
-    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-      defaultValue: false,
-      organization: { _id: organization._id },
     });
 
     const devEnv = await this.createEnvironmentUsecase.execute(
@@ -75,6 +74,12 @@ export class SyncExternalOrganization {
       })
     );
 
+    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+      defaultValue: false,
+      organization: { _id: organization._id },
+    });
+
     if (isLayoutsPageActive) {
       await this.upsertLayoutUsecase.execute(
         UpsertLayoutCommand.create({
@@ -85,7 +90,7 @@ export class SyncExternalOrganization {
             name: 'Default layout',
             controlValues: {
               email: {
-                body: JSON.stringify(DEFAULT_LAYOUT),
+                body: JSON.stringify(createDefaultLayout(organization.name)),
                 editorType: 'block',
               },
             },
@@ -123,7 +128,7 @@ export class SyncExternalOrganization {
             name: 'Default layout',
             controlValues: {
               email: {
-                body: JSON.stringify(DEFAULT_LAYOUT),
+                body: JSON.stringify(createDefaultLayout(organization.name)),
                 editorType: 'block',
               },
             },

@@ -23,7 +23,7 @@ export class DiffResultBuilder {
         sourceResource,
         targetResource,
         changes,
-        summary: this.calculateSummary(changes),
+        summary: this.calculateSummaryForResource(sourceResource, targetResource, changes),
       });
     }
 
@@ -156,6 +156,30 @@ export class DiffResultBuilder {
       totalDiffs,
       ...summaryTotals,
     };
+  }
+
+  private calculateSummaryForResource(
+    sourceResource: IResourceInfo | null,
+    targetResource: IResourceInfo | null,
+    diffs: IResourceDiff[]
+  ) {
+    const existsInBothEnvironments = sourceResource && targetResource;
+
+    /*
+     * For resources that exist in both environments, treat any changes as a modification
+     * of the resource itself, not individual step/sub-resource changes
+     */
+    if (existsInBothEnvironments && diffs.length > 0) {
+      return {
+        added: 0,
+        modified: 1,
+        deleted: 0,
+        unchanged: 0,
+      };
+    }
+
+    // For new or deleted resources, use the traditional counting approach
+    return this.calculateSummary(diffs);
   }
 
   private calculateSummary(diffs: IResourceDiff[]) {

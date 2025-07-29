@@ -91,12 +91,12 @@ export const TranslationOnboardingPage = () => {
               <TimelineStep
                 index={0}
                 title="Set your default language"
-                description="This is your default locale — the one your content is written in."
+                description="This is your default language — the one your content is written in."
                 layout="grid"
                 rightContent={
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-text-sub text-xs font-medium">Default Locale</span>
+                      <span className="text-text-sub text-xs font-medium">Default language</span>
                     </div>
                     <FormField
                       control={form.control}
@@ -141,7 +141,7 @@ export const TranslationOnboardingPage = () => {
                 rightContent={
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-text-sub text-xs font-medium">Target locale(s)</span>
+                      <span className="text-text-sub text-xs font-medium">Target languages</span>
                     </div>
                     <FormField
                       control={form.control}

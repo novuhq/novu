@@ -17,4 +17,8 @@ export class ConstructFrameworkWorkflowCommand extends EnvironmentLevelCommand {
   @IsOptional()
   @IsBoolean()
   skipLayoutRendering?: boolean;
+
+  @IsOptional()
+  @IsString()
+  jobId?: string;
 }

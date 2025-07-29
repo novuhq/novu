@@ -1,21 +1,21 @@
-import { forwardRef, useEffect, useMemo, useState, useCallback } from 'react';
+import { forwardRef, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/primitives/form/form';
+import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormRoot } from '@/components/primitives/form/form';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { RiSettings4Line } from 'react-icons/ri';
-import TruncatedText from '@/components/truncated-text';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { DEFAULT_LOCALE, PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useEnvironment } from '@/context/environment/hooks';
 import { PermissionButton } from '../primitives/permission-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { useFormProtection } from '@/hooks/use-form-protection';
+import { useCombinedRefs } from '@/hooks/use-combined-refs';
 
 interface TranslationSettingsFormData {
   defaultLocale: string;
@@ -29,7 +29,6 @@ interface TranslationSettingsDrawerProps {
 
 export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationSettingsDrawerProps>(
   ({ isOpen, onOpenChange }, forwardedRef) => {
-    const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
     const has = useHasPermission();
     const { currentEnvironment } = useEnvironment();
     const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
@@ -39,6 +38,16 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     const { data: organizationSettings, isLoading, refetch } = useFetchOrganizationSettings();
     const updateSettings = useUpdateOrganizationSettings();
 
+    const {
+      protectedOnValueChange,
+      ProtectionAlert,
+      ref: protectionRef,
+    } = useFormProtection({
+      onValueChange: onOpenChange,
+    });
+
+    const combinedRef = useCombinedRefs(forwardedRef, protectionRef);
+
     const form = useForm<TranslationSettingsFormData>({
       defaultValues: {
         defaultLocale: DEFAULT_LOCALE,
@@ -46,24 +55,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
       },
     });
 
-    const { watch, reset } = form;
-
-    const formValues = watch();
-
-    // Track unsaved changes
-    const hasUnsavedChanges = useMemo(() => {
-      if (!organizationSettings?.data || isLoading) return false;
-
-      const current = {
-        defaultLocale: organizationSettings.data.defaultLocale || DEFAULT_LOCALE,
-        targetLocales: organizationSettings.data.targetLocales || [],
-      };
-
-      return (
-        formValues.defaultLocale !== current.defaultLocale ||
-        JSON.stringify(formValues.targetLocales?.sort()) !== JSON.stringify(current.targetLocales?.sort())
-      );
-    }, [formValues, organizationSettings?.data, isLoading]);
+    const { reset } = form;
 
     // Update form when settings load
     useEffect(() => {
@@ -76,7 +68,9 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
     }, [organizationSettings?.data, reset]);
 
     const handleSave = useCallback(async () => {
-      if (!hasUnsavedChanges || isReadOnly) return;
+      const formValues = form.getValues();
+
+      if (isReadOnly) return;
 
       try {
         await updateSettings.mutateAsync({
@@ -86,36 +80,16 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
 
         showSuccessToast('Translation settings updated successfully');
         refetch();
-        setShowUnsavedDialog(false);
         onOpenChange(false);
       } catch (error) {
         // Error handling is already handled by the mutation
       }
-    }, [hasUnsavedChanges, formValues, updateSettings, isReadOnly, refetch, onOpenChange]);
-
-    const handleCloseAttempt = useCallback(() => {
-      if (hasUnsavedChanges && !isReadOnly) {
-        setShowUnsavedDialog(true);
-      } else {
-        onOpenChange(false);
-      }
-    }, [hasUnsavedChanges, onOpenChange, isReadOnly]);
-
-    const handleConfirmClose = useCallback(() => {
-      setShowUnsavedDialog(false);
-      onOpenChange(false);
-    }, [onOpenChange]);
+    }, [form, updateSettings, isReadOnly, refetch, onOpenChange]);
 
     return (
       <>
-        <Sheet open={isOpen} onOpenChange={onOpenChange}>
-          <SheetContent
-            ref={forwardedRef}
-            side="right"
-            className="w-[500px] !max-w-none"
-            onInteractOutside={handleCloseAttempt}
-            onEscapeKeyDown={handleCloseAttempt}
-          >
+        <Sheet open={isOpen} onOpenChange={protectedOnValueChange}>
+          <SheetContent ref={combinedRef} side="right" className="w-[500px] !max-w-none">
             <div className="flex h-full flex-col">
               <header className="border-bg-soft flex h-12 w-full flex-row items-center gap-3 border-b px-3 py-4">
                 <div className="flex flex-1 items-center gap-2 overflow-hidden text-sm font-medium">
@@ -146,7 +120,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                       </div>
                     ) : (
                       <Form {...form}>
-                        <div className="space-y-6">
+                        <FormRoot className="space-y-6">
                           <FormField
                             control={form.control}
                             name="defaultLocale"
@@ -156,7 +130,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                                   className="text-text-sub gap-1"
                                   tooltip="The primary language for your translations - serves as fallback when language specific translations are not available"
                                 >
-                                  Default locale
+                                  Default language
                                 </FormLabel>
                                 <FormControl>
                                   <LocaleSelect
@@ -176,9 +150,9 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                               <FormItem className="space-y-1">
                                 <FormLabel
                                   className="text-text-sub gap-1"
-                                  tooltip="Languages you want to translate into. We'll check if they're in sync with your default locale."
+                                  tooltip="Languages you want to translate into. We'll check if they're in sync with your default language."
                                 >
-                                  Target locales
+                                  Target languages
                                 </FormLabel>
                                 <FormControl>
                                   <LocaleSelect
@@ -195,7 +169,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                               </FormItem>
                             )}
                           />
-                        </div>
+                        </FormRoot>
                       </Form>
                     )}
                   </div>
@@ -209,7 +183,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
                     permission={PermissionsEnum.WORKFLOW_WRITE}
                     variant="secondary"
                     onClick={handleSave}
-                    disabled={!hasUnsavedChanges || updateSettings.isPending || isReadOnly}
+                    disabled={updateSettings.isPending || isReadOnly}
                     isLoading={updateSettings.isPending}
                   >
                     Save changes
@@ -220,12 +194,7 @@ export const TranslationSettingsDrawer = forwardRef<HTMLDivElement, TranslationS
           </SheetContent>
         </Sheet>
 
-        <UnsavedChangesAlertDialog
-          show={showUnsavedDialog}
-          description="You have unsaved changes to the workflow settings. These changes will be lost if you close the drawer."
-          onCancel={() => setShowUnsavedDialog(false)}
-          onProceed={handleConfirmClose}
-        />
+        {ProtectionAlert}
       </>
     );
   }

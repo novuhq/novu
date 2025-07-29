@@ -12,37 +12,71 @@ const { argv } = yargs(hideBin(process.argv))
     alias: 's',
     type: 'string',
     description: 'The name of the secret',
-    demandOption: true,
+    demandOption: false,
   })
   .option('region', {
     alias: 'r',
     type: 'string',
     description: 'The region',
-    demandOption: true,
+    demandOption: false,
   })
   .option('enterprise', {
     alias: 'e',
     type: 'string',
-    description: 'The enterprise value',
-    demandOption: true,
+    description: 'Whether this is an enterprise deployment',
+    default: 'false',
   })
   .option('env', {
     alias: 'v',
     type: 'string',
     description: 'The environment',
     demandOption: true,
+  })
+  .option('selfHosted', {
+    alias: 'h',
+    type: 'string',
+    description: 'Whether this is a self-hosted enterprise deployment',
+    default: 'false',
   });
 
-const { secretName, region, enterprise, env } = argv;
+const { secretName, region, env } = argv;
 
-if (!enterprise || enterprise.toLowerCase() === 'false') {
+// Helper function to parse string boolean values
+function parseBooleanString(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true' || lowerValue === '1' || lowerValue === 'yes';
+  }
+  return false;
+}
+
+const enterprise = parseBooleanString(argv.enterprise);
+const selfHosted = parseBooleanString(argv.selfHosted);
+
+// Check deployment mode
+if (!enterprise) {
   console.log('Booting up community version');
   process.exit(0);
+}
+
+if (enterprise && selfHosted) {
+  console.log('Booting up Enterprise Self-Hosted Version');
+  process.exit(0);
+}
+
+console.log('Booting up enterprise cloud version');
+
+// Validate required parameters for cloud enterprise
+if (!secretName || !region) {
+  console.error('Error: secretName and region are required for enterprise cloud deployment');
+  process.exit(1);
 }
 
 const secretsManagerClient = new SecretsManagerClient({
   region,
 });
+
 // Get the directory of the current script
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -79,7 +113,7 @@ function escapeValue(value) {
   return value;
 }
 
-// Function to update or add to .env file with new key-value pairs
+// Function to update or add to .env file with new key-value pairs (for cloud enterprise)
 async function updateEnvFile() {
   try {
     const secret = await getSecretValue(secretName);
@@ -113,6 +147,9 @@ async function updateEnvFile() {
       }
     });
 
+    // Ensure IS_SELF_HOSTED is set to false for cloud enterprise
+    existingEnvVars.set('IS_SELF_HOSTED', 'false');
+
     // Combine all the updated key-value pairs into a string
     const updatedEnvContent = Array.from(existingEnvVars.entries())
       .map(([key, value]) => `${key}=${value}`)
@@ -126,6 +163,6 @@ async function updateEnvFile() {
   }
 }
 
-// Run the script
+// Run the script for cloud enterprise
 updateEnvFile();
 console.timeEnd('dotenvcreate');

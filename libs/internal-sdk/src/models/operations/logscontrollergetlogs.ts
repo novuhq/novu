@@ -15,7 +15,7 @@ export type LogsControllerGetLogsRequest = {
   url?: string | undefined;
   urlPattern?: string | undefined;
   transactionId?: string | undefined;
-  created?: number | undefined;
+  createdGte?: number | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -36,7 +36,7 @@ export const LogsControllerGetLogsRequest$inboundSchema: z.ZodType<
   url: z.string().optional(),
   url_pattern: z.string().optional(),
   transactionId: z.string().optional(),
-  created: z.number().optional(),
+  createdGte: z.number().optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
@@ -53,7 +53,7 @@ export type LogsControllerGetLogsRequest$Outbound = {
   url?: string | undefined;
   url_pattern?: string | undefined;
   transactionId?: string | undefined;
-  created?: number | undefined;
+  createdGte?: number | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -69,7 +69,7 @@ export const LogsControllerGetLogsRequest$outboundSchema: z.ZodType<
   url: z.string().optional(),
   urlPattern: z.string().optional(),
   transactionId: z.string().optional(),
-  created: z.number().optional(),
+  createdGte: z.number().optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {

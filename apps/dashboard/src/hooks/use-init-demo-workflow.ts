@@ -35,11 +35,11 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
   });
 }
 
-export function useInitDemoWorkflow(environment: IEnvironment) {
+export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
   const { data } = useFetchWorkflows({ query: ONBOARDING_DEMO_WORKFLOW_ID });
 
   useEffect(() => {
-    if (!data) return;
+    if (!data || !environment) return;
 
     const initializeDemoWorkflow = async () => {
       const workflow = data?.workflows.find((workflow) => workflow.workflowId?.includes(ONBOARDING_DEMO_WORKFLOW_ID));

@@ -57,6 +57,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({
     organizationId: currentOrganization?._id,
+    showError: false,
   });
 
   useLayoutEffect(() => {

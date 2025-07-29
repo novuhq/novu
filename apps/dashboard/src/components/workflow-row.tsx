@@ -291,7 +291,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 {workflow.isTranslationEnabled ? (
-                  <TranslatedWorkflowIcon />
+                  <TranslatedWorkflowIcon className="text-feature size-4" />
                 ) : (
                   <RiRouteFill className="text-feature size-4" />
                 )}
