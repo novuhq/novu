@@ -34,5 +34,6 @@
   },
   "testExplorer.useNativeTesting": true,
   "vsicons.presets.nestjs": true,
-  "biome.enabled": true
+  "biome.enabled": true,
+  "biome.lsp.bin": "node_modules/.bin/biome"
 }
