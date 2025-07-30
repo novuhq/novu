@@ -51,13 +51,6 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
   constructor(private config: IMediaSmsConfig) {
     super();
 
-    console.log({
-      baseURL: IMediaSmsProvider.BASE_URL,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        token: this.config.token,
-      },
-    });
     this.axiosInstance = axios.create({
       baseURL: IMediaSmsProvider.BASE_URL,
       headers: {
