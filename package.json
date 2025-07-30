@@ -126,6 +126,8 @@
     "ts-jest": "27.1.5",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "^4.2.0",
+    "wait-port": "^0.3.0",
+    "yargs": "^17.7.2",
     "typescript": "5.6.2"
   },
   "workspaces": {

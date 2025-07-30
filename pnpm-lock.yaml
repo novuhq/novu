@@ -198,6 +198,12 @@ importers:
       typescript:
         specifier: 5.6.2
         version: 5.6.2
+      wait-port:
+        specifier: ^0.3.0
+        version: 0.3.1
+      yargs:
+        specifier: ^17.7.2
+        version: 17.7.2
 
   apps/api:
     dependencies:
@@ -31281,6 +31287,11 @@ packages:
   w3c-xmlserializer@5.0.0:
     resolution: {integrity: sha512-o8qghlI8NZHU1lLPrpi2+Uq7abh4GGPpYANlalzWxyWteJOCsr/P+oPBA49TOLu5FTZO4d3F9MnWJfiMo4BkmA==}
     engines: {node: '>=18'}
+
+  wait-port@0.3.1:
+    resolution: {integrity: sha512-o8kW8xjslQDrbazXgXeDFt53l128J9xBAiG4aBmr9DcQA05jt0VBf2TE2vc9rxctgZjIuWpiXuO0gIYFo3pZSA==}
+    engines: {node: '>=10'}
+    hasBin: true
 
   walkdir@0.4.1:
     resolution: {integrity: sha512-3eBwRyEln6E1MSzcxcVpQIhRG8Q1jLvEqRmCZqS3dsfXEDR/AhOF4d+jHg1qvDCpYaVRZjENPQyrVxAkQqxPgQ==}
@@ -70604,6 +70615,14 @@ snapshots:
   w3c-xmlserializer@5.0.0:
     dependencies:
       xml-name-validator: 5.0.0
+
+  wait-port@0.3.1:
+    dependencies:
+      chalk: 4.1.2
+      commander: 9.5.0
+      debug: 4.4.0(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - supports-color
 
   walkdir@0.4.1: {}
 
