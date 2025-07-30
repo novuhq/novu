@@ -93,7 +93,7 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
 
     const response = await this.axiosInstance.request<IMediaSendResponse>({
       url: '/api/SMSBrandname/SendSMS',
-      data: payload,
+      data: JSON.stringify(payload),
     });
 
     console.log({
