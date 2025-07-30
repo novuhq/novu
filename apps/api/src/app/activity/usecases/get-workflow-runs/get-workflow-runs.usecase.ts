@@ -17,7 +17,6 @@ type CursorData = {
 };
 
 const workflowRunSelectColumns = [
-  'id',
   'workflow_run_id',
   'workflow_id',
   'workflow_name',
@@ -322,8 +321,7 @@ export class GetWorkflowRuns {
 
   private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): GetWorkflowRunsDto {
     return {
-      id: workflowRun.id,
-      workflowRunId: workflowRun.workflow_run_id,
+      id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
       workflowName: workflowRun.workflow_name,
       organizationId: workflowRun.organization_id,
