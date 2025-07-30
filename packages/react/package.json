@@ -93,8 +93,9 @@
   "scripts": {
     "build:watch": "tsup --watch",
     "build": "tsup && pnpm run check-exports",
-    "lint": "eslint src",
     "check-exports": "attw --pack .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "publish": "pnpm publish",
     "publish:rc": "pnpm publish --tag rc"
   },

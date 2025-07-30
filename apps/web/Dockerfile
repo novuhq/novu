@@ -27,8 +27,6 @@ RUN --mount=type=cache,id=pnpm-store-web,target=/root/.pnpm-store\
 
 RUN pnpm add @babel/core -w
 
-COPY [".prettierrc",".prettierignore", "./"]
-
 RUN CI='' pnpm build:web --skip-nx-cache
 # end build stage
 

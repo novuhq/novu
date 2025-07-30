@@ -23,7 +23,6 @@ COPY pnpm-lock.yaml .
 RUN --mount=type=cache,id=pnpm-store-dashboard,target=/root/.pnpm-store\
   pnpm install --frozen-lockfile --unsafe-perm
 
-COPY [".prettierrc",".prettierignore", "./"]
 RUN CI='' pnpm build:dashboard --skip-nx-cache
 
 FROM node:20-alpine

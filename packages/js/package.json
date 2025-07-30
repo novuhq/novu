@@ -75,8 +75,8 @@
     "build:watch": "concurrently \"pnpm run prebuild\" \"NODE_ENV=development pnpm run tsup:watch\" \"pnpm run start:server\"",
     "tsup:watch": "tsup --watch --onSuccess 'tsup --dts-only'",
     "check-exports": "attw --pack .",
-    "lint": "eslint src",
-    "lint:fix": "pnpm lint -- --fix",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test": "jest",
     "publish": "pnpm publish",
     "publish:rc": "pnpm publish --tag rc"
@@ -112,7 +112,6 @@
     "postcss-load-config": "^6.0.1",
     "postcss-prefix-selector": "^1.16.1",
     "postcss-preset-env": "^9.5.14",
-    "prettier-plugin-tailwindcss": "^0.6.5",
     "solid-devtools": "^0.29.2",
     "tailwindcss": "^3.4.4",
     "tailwindcss-animate": "^1.0.7",
