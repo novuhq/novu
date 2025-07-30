@@ -9,12 +9,15 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RequestsTable } from '../components/http-logs/logs-table';
 import { PageMeta } from '../components/page-meta';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 export function ActivityFeed() {
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
+  const track = useTelemetry();
 
   // Determine current tab based on URL
   const getCurrentTab = () => {
@@ -22,7 +25,7 @@ export function ActivityFeed() {
       return 'requests';
     }
 
-    if (location.pathname.includes('/activity/runs')) {
+    if (location.pathname.includes('/activity/workflow-runs')) {
       return 'workflow-runs';
     }
 
@@ -40,19 +43,28 @@ export function ActivityFeed() {
   const handleTabChange = (value: string) => {
     if (!currentEnvironment?.slug) return;
 
-    if (value === 'workflow-runs') {
-      navigate(buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug }));
-    } else if (value === 'requests') {
-      navigate(buildRoute(ROUTES.ACTIVITY_LOGS, { environmentSlug: currentEnvironment.slug }));
+    if (value === 'requests') {
+      navigate(buildRoute(ROUTES.ACTIVITY_REQUESTS, { environmentSlug: currentEnvironment.slug }));
+    } else if (value === 'workflow-runs') {
+      navigate(buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }));
     }
   };
 
   // Redirect legacy activity-feed URLs to the new runs URL when feature flag is enabled
   useEffect(() => {
     if (isHttpLogsPageEnabled && location.pathname.includes('/activity-feed') && currentEnvironment?.slug) {
-      navigate(buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug }), { replace: true });
+      navigate(buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }), {
+        replace: true,
+      });
     }
   }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
+
+  // Track page visit for requests tab
+  useEffect(() => {
+    if (currentTab === 'requests') {
+      track(TelemetryEvent.REQUEST_LOGS_PAGE_VISIT);
+    }
+  }, [currentTab, track]);
 
   return (
     <>
@@ -75,6 +87,7 @@ export function ActivityFeed() {
               </TabsTrigger>
             )}
           </TabsList>
+
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>

@@ -1,5 +1,6 @@
 import { IsNumber, IsOptional, IsString, Matches, MaxLength, Min, Max, IsArray } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 // Custom transformer to convert statusCodes to array of numbers
 const StatusCodesTransformer = Transform(({ value }) => {
@@ -30,6 +31,11 @@ const StatusCodesTransformer = Transform(({ value }) => {
 });
 
 export class GetRequestsDto {
+  @ApiPropertyOptional({
+    description: 'Page number for pagination',
+    minimum: 0,
+    maximum: 100,
+  })
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
@@ -37,6 +43,11 @@ export class GetRequestsDto {
   @Max(100)
   page?: number;
 
+  @ApiPropertyOptional({
+    description: 'Number of items per page',
+    minimum: 1,
+    maximum: 100,
+  })
   @IsNumber()
   @IsOptional()
   @Type(() => Number)
@@ -44,6 +55,11 @@ export class GetRequestsDto {
   @Max(100)
   limit?: number;
 
+  @ApiPropertyOptional({
+    description: 'Filter by HTTP status codes',
+    type: [Number],
+    example: [200, 404, 500],
+  })
   @IsOptional()
   @StatusCodesTransformer
   @IsArray()
@@ -52,27 +68,44 @@ export class GetRequestsDto {
   @Max(599, { each: true })
   statusCodes?: number[];
 
+  @ApiPropertyOptional({
+    description: 'Filter by request URL',
+    maxLength: 500,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(500)
-  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/, {
+  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&"()*+,;=%]*$/, {
     message: 'URL contains invalid characters',
   })
   url?: string;
 
+  @ApiPropertyOptional({
+    description: 'Filter by URL pattern',
+    maxLength: 500,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(500)
-  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]*$/, {
+  @Matches(/^[a-zA-Z0-9\-._~:/?#[\]@!$&"()*+,;=%]*$/, {
     message: 'URL pattern contains invalid characters',
   })
   url_pattern?: string;
 
+  @ApiPropertyOptional({
+    description: 'Filter by transaction identifier',
+    maxLength: 100,
+  })
   @IsString()
   @IsOptional()
   @MaxLength(100)
   transactionId?: string;
 
+  @ApiPropertyOptional({
+    description: 'Filter requests created after this timestamp (Unix timestamp)',
+    minimum: 0,
+    example: 1640995200,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({}, { message: 'createdGte must be a valid timestamp' })

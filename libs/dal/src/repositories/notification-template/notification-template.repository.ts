@@ -31,8 +31,17 @@ export class NotificationTemplateRepository extends BaseRepository<
       type: ResourceTypeEnum.BRIDGE,
       origin: ResourceOriginEnum.NOVU_CLOUD,
     })
-      .select({ _id: 1, name: 1, 'triggers.identifier': 1, updatedAt: 1, _updatedBy: 1, _environmentId: 1 })
-      .populate('updatedBy', '_id firstName lastName externalId');
+      .select({
+        _id: 1,
+        name: 1,
+        'triggers.identifier': 1,
+        updatedAt: 1,
+        _updatedBy: 1,
+        _environmentId: 1,
+        isTranslationEnabled: 1,
+      })
+      .populate('updatedBy', '_id firstName lastName externalId')
+      .populate('lastPublishedBy', '_id firstName lastName externalId');
 
     return this.mapEntities(items);
   }
@@ -90,11 +99,37 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': triggerIdentifier,
     };
 
-    const item = await this.MongooseModel.findOneAndUpdate(requestQuery, {
-      $set: {
-        lastTriggeredAt,
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastTriggeredAt,
+        },
       },
-    }).populate('steps.template');
+      {
+        timestamps: false,
+      }
+    ).populate('steps.template');
+
+    return this.mapEntity(item);
+  }
+
+  async updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null) {
+    const requestQuery: NotificationTemplateQuery = {
+      _id: workflowId,
+      _environmentId: environmentId,
+    };
+
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastPublishedAt: new Date(),
+          _lastPublishedBy: userId,
+        },
+      },
+      { session, new: true }
+    );
 
     return this.mapEntity(item);
   }
@@ -272,7 +307,8 @@ export class NotificationTemplateRepository extends BaseRepository<
       .populate({ path: 'notificationGroup' })
       .populate('steps.template', { type: 1 })
       .select('-steps.variants')
-      .populate('updatedBy');
+      .populate('updatedBy')
+      .populate('lastPublishedBy', '_id firstName lastName');
 
     const items = await mongoQuery.lean();
 

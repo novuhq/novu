@@ -134,7 +134,7 @@ export class SendMessage {
         })
       );
 
-      return { status: 'canceled' };
+      return { status: 'skippedByConditionsOrPreferences' };
     }
 
     if (stepType !== StepTypeEnum.DELAY) {

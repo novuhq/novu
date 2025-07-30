@@ -8,7 +8,7 @@ import { generateTransactionId } from '../../shared/helpers';
 import { mapRequestLogToResponseDto } from '../shared/mappers';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 
-describe('Logs - /logs/requests (GET) #novu-v2', () => {
+describe('Activity - /activity/requests (GET) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   let requestLogRepository: RequestLogRepository;
@@ -47,7 +47,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
       userId: session.user._id,
     });
 
-    const { body } = await session.testAgent.get('/v1/logs/requests').expect(200);
+    const { body } = await session.testAgent.get('/v1/activity/requests').expect(200);
 
     expect(body.data.length).to.be.equal(2);
     expect(body.total).to.be.equal(2);
@@ -120,7 +120,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
 
     // Test 1: Filter by status codes 200 and 404
     const statusFilterResponse = await session.testAgent
-      .get('/v1/logs/requests')
+      .get('/v1/activity/requests')
       .query({ statusCodes: [200, 404] })
       .expect(200);
 
@@ -132,7 +132,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     expect(statusCodes, 'statusCodes').to.include.members([200, 404]);
 
     // Test 2: Filter by URL containing 'api'
-    const urlFilterResponse = await session.testAgent.get('/v1/logs/requests').query({ url: 'api' }).expect(200);
+    const urlFilterResponse = await session.testAgent.get('/v1/activity/requests').query({ url: 'api' }).expect(200);
 
     expect(urlFilterResponse.body.data.length, 'urlFilterResponse.body.data.length').to.be.equal(3);
     expect(urlFilterResponse.body.total, 'urlFilterResponse.body.total').to.be.equal(3);
@@ -144,7 +144,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
 
     // Test 3: Combine filters - status codes 200,404 AND URL containing 'workflows'
     const combinedFilterResponse = await session.testAgent
-      .get('/v1/logs/requests')
+      .get('/v1/activity/requests')
       .query({ statusCodes: [200, 404], url: 'workflows' })
       .expect(200);
 
@@ -157,7 +157,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
 
     // Test 4: Filter by transaction ID
     const transactionFilterResponse = await session.testAgent
-      .get('/v1/logs/requests')
+      .get('/v1/activity/requests')
       .query({ transactionId: transactionId1 })
       .expect(200);
 
@@ -176,7 +176,7 @@ describe('Logs - /logs/requests (GET) #novu-v2', () => {
     // Test 5: Filter by createdGte (last 2 hours) - should only return recent logs
     const twoHoursAgoTimestamp = subHours(currentTime, 2).getTime();
     const createdFilterResponse = await session.testAgent
-      .get('/v1/logs/requests')
+      .get('/v1/activity/requests')
       .query({ createdGte: twoHoursAgoTimestamp })
       .expect(200);
 

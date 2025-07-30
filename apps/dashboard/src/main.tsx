@@ -300,7 +300,7 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.ACTIVITY_RUNS,
+                path: ROUTES.ACTIVITY_WORKFLOW_RUNS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
@@ -308,7 +308,7 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.ACTIVITY_LOGS,
+                path: ROUTES.ACTIVITY_REQUESTS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />

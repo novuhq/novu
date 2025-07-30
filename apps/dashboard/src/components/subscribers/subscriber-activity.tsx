@@ -118,7 +118,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           To view more detailed activity, View{' '}
           <Link
             className="underline"
-            to={`${buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_RUNS : ROUTES.ACTIVITY_FEED, {
+            to={`${buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
               environmentSlug: currentEnvironment?.slug ?? '',
             })}?${searchParams.toString()}`}
           >
