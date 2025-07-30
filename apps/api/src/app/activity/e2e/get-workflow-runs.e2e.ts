@@ -145,9 +145,11 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     const secondPageWorkflowRun = await workflowRunRepository.findOne({
       where: {
-        id: secondPage.data[0].id,
+        workflow_run_id: secondPage.data[0].id,
       },
     });
+    expect(secondPageWorkflowRun, 'secondPageWorkflowRun should exist').to.not.be.null;
+    expect(secondPageWorkflowRun.data, 'secondPageWorkflowRun.data should exist').to.not.be.undefined;
     expect(JSON.parse(secondPageWorkflowRun.data.payload || '{}')?.runNumber, 'secondPage runNumber').to.be.equal(1);
 
     expect(firstPage.data[0].steps, 'workflow run should have steps').to.be.an('array');
@@ -211,9 +213,11 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       for (const workflowRun of body.data) {
         const workflowRunEntity = await workflowRunRepository.findOne({
           where: {
-            id: workflowRun.id,
+            workflow_run_id: workflowRun.id,
           },
         });
+        expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
+        expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
         const runNumber = JSON.parse(workflowRunEntity.data.payload || '{}')?.runNumber;
         expect(fetchedRunNumbers.has(runNumber), `Duplicate runNumber ${runNumber} found on page ${currentPageNumber}`)
           .to.be.false;
@@ -522,9 +526,11 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     body.data.forEach(async (workflowRun: any) => {
       const workflowRunEntity = await workflowRunRepository.findOne({
         where: {
-          id: workflowRun.id,
+          workflow_run_id: workflowRun.id,
         },
       });
+      expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
+      expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
       expect(JSON.parse(workflowRunEntity.data.payload || '{}')?.testText).to.contain('second trigger');
     });
   });
