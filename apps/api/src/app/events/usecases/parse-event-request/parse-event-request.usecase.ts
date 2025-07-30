@@ -396,7 +396,7 @@ export class ParseEventRequest {
     // Trace: Request successfully dispatched
     await this.createRequestTrace(
       command,
-      'request_dispatched',
+      'request_queued',
       transactionId,
       'success',
       'Event successfully dispatched to workflow queue',

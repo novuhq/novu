@@ -274,8 +274,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Request events
     case 'request_received':
       return 'Request received';
-    case 'request_dispatched':
-      return 'Request dispatched to worker';
+    case 'request_queued':
+      return 'Request queued';
     case 'request_failed':
       return 'Request failed';
     case 'request_organization_not_found':
@@ -288,6 +288,38 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Invalid recipients';
     case 'request_payload_validation_failed':
       return 'Payload validation failed';
+
+    // Workflow events
+    case 'workflow_execution_started':
+      return 'Workflow execution started';
+    case 'workflow_environment_not_found':
+      return 'Workflow environment not found';
+    case 'workflow_template_not_found':
+      return 'Workflow template not found';
+    case 'workflow_template_found':
+      return 'Workflow template found';
+    case 'workflow_tenant_processing_started':
+      return 'Workflow tenant processing started';
+    case 'workflow_tenant_processing_failed':
+      return 'Workflow tenant processing failed';
+    case 'workflow_tenant_processing_completed':
+      return 'Workflow tenant processing completed';
+    case 'workflow_actor_processing_started':
+      return 'Workflow actor processing started';
+    case 'workflow_actor_processing_completed':
+      return 'Workflow actor processing completed';
+    case 'workflow_execution_failed':
+      return 'Workflow execution failed';
+    case 'workflow_actor_processing_failed':
+      return 'Workflow actor processing failed';
+
+    // Request fan-out events
+    case 'request_subscriber_processing_completed':
+      return 'Request subscriber processing completed';
+
+    // Topic events
+    case 'topic_not_found':
+      return 'Topic not found';
 
     default:
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases

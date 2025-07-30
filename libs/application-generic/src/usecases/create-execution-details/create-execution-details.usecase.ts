@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsRepository, ExecutionDetailsEntity } from '@novu/dal';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { EntityType, EventType, TraceLogRepository } from '../../services/analytic-logs/trace-log';
+import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
 
 import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
@@ -151,7 +151,7 @@ export class CreateExecutionDetails {
     await this.traceLogRepository.create(traceData);
   }
 
-  private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): string {
+  private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): TraceStatus {
     switch (status) {
       case ExecutionDetailsStatusEnum.SUCCESS:
         return 'success';
@@ -161,8 +161,6 @@ export class CreateExecutionDetails {
         return 'pending';
       case ExecutionDetailsStatusEnum.WARNING:
         return 'warning';
-      default:
-        return 'unknown';
     }
   }
 }
