@@ -16,10 +16,6 @@ export class GetWorkflowRunResponseBaseDto {
   @IsString()
   id: string;
 
-  @ApiProperty({ description: 'Workflow run identifier' })
-  @IsString()
-  workflowRunId: string;
-
   @ApiProperty({ description: 'Workflow identifier' })
   @IsString()
   workflowId: string;
