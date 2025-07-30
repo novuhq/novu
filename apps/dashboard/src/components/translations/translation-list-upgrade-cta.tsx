@@ -47,7 +47,7 @@ export const TranslationListUpgradeCta = () => {
         >
           {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade now'}
         </Button>
-        <Link to={'https://docs.novu.co/platform/translations'} target="_blank">
+        <Link to={'https://docs.novu.co/platform/workflow/translations'} target="_blank">
           <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
             How does this help?
           </LinkButton>

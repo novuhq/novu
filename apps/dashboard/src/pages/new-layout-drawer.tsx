@@ -135,7 +135,7 @@ export const NewLayoutDrawer = (props: NewLayoutDrawerProps) => {
             <div>
               <SheetDescription>
                 Create a reusable email layout template for your notifications.{' '}
-                <ExternalLink href="https://docs.novu.co/platform/concepts/layouts">Learn more</ExternalLink>
+                <ExternalLink href="https://docs.novu.co/platform/workflow/layouts">Learn more</ExternalLink>
               </SheetDescription>
             </div>
           </SheetHeader>

@@ -108,16 +108,20 @@ export class TopicsController {
   @ExternalApiAccessible()
   @ApiOperation({
     summary: 'Create a topic',
-    description: `Creates a new topic if it does not exist, or updates an existing topic if it already exists`,
+    description: `Creates a new topic if it does not exist, or updates an existing topic if it already exists. Use ?failIfExists=true to prevent updates.`,
   })
   @ApiResponse(TopicResponseDto, 201)
   @ApiResponse(TopicResponseDto, 200)
+  @ApiResponse(TopicResponseDto, 409, false, false, {
+    description: 'Topic already exists (when query param failIfExists=true)',
+  })
   @SdkMethodName('create')
   @RequirePermissions(PermissionsEnum.TOPIC_WRITE)
   async upsertTopic(
     @UserSession() user: UserSessionData,
     @Body() body: CreateUpdateTopicRequestDto,
-    @Res({ passthrough: true }) response: Response
+    @Res({ passthrough: true }) response: Response,
+    @Query('failIfExists') failIfExists?: boolean
   ): Promise<TopicResponseDto> {
     const result = await this.upsertTopicUsecase.execute(
       UpsertTopicCommand.create({
@@ -126,6 +130,7 @@ export class TopicsController {
         userId: user._id,
         key: body.key,
         name: body.name,
+        failIfExists,
       })
     );
 

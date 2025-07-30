@@ -180,6 +180,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           environment_id: context.environmentId,
         },
         limit: 1,
+        useFinal: true,
       });
 
       if (existingRuns.data.length === 0) {

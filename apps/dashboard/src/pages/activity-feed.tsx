@@ -78,20 +78,21 @@ export function ActivityFeed() {
       >
         <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2">
           <TabsList variant="regular" className="border-t-0">
+            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
+              Workflow Runs
+            </TabsTrigger>
             {isHttpLogsPageEnabled && (
               <TabsTrigger value="requests" variant="regular" size="lg">
                 Requests
               </TabsTrigger>
             )}
-            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
-              Workflow Runs
-            </TabsTrigger>
           </TabsList>
-          <TabsContent value="requests" className="h-[calc(100vh-140px)]">
-            <RequestsTable />
-          </TabsContent>
+
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
+          </TabsContent>
+          <TabsContent value="requests" className="h-[calc(100vh-140px)]">
+            <RequestsTable />
           </TabsContent>
         </Tabs>
       </DashboardLayout>
