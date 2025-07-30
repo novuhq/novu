@@ -134,7 +134,7 @@ export const LayoutsListUpgradeCta = () => {
             >
               {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade plan'}
             </Button>
-            <Link to={'https://docs.novu.co/platform/concepts/layouts'} target="_blank">
+            <Link to={'https://docs.novu.co/platform/workflow/layouts'} target="_blank">
               <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
                 <span className="underline">How does this help?</span>
               </LinkButton>

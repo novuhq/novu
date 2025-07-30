@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { TopicRepository } from '@novu/dal';
 import { VALID_ID_REGEX } from '@novu/shared';
@@ -13,6 +13,9 @@ export class UpsertTopicUseCase {
   @InstrumentUsecase()
   async execute(command: UpsertTopicCommand): Promise<{ topic: TopicResponseDto; created: boolean }> {
     let topic = await this.topicRepository.findTopicByKey(command.key, command.organizationId, command.environmentId);
+    if (command.failIfExists && topic) {
+      throw new ConflictException(`Topic with key "${command.key}" already exists`);
+    }
 
     if (!topic) {
       this.isValidTopicKey(command.key);

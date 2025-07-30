@@ -21,7 +21,7 @@ export const LayoutListBlank = () => {
         <p className="text-text-soft text-paragraph-sm max-w-[48ch]">
           Layouts let you reuse structure, stay consistent, and ship faster. Create once, plug anywhere — your emails
           (and teammates) will love you for it.{' '}
-          <Link to="https://docs.novu.co/platform/layouts" className="underline">
+          <Link to="https://docs.novu.co/platform/workflow/layouts" className="underline">
             Learn more ↗
           </Link>
         </p>

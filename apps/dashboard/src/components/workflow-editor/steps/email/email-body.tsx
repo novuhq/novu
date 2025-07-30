@@ -297,6 +297,7 @@ export const EmailBody = () => {
               skipContainerClick={isTranslationPopoverOpen}
               onManageSchemaClick={openSchemaDrawer}
               onCreateNewVariable={handleCreateNewVariable}
+              className="max-h-[calc(100%-124px)]"
             >
               <EditorOverlays
                 isTranslationPopoverOpen={isTranslationPopoverOpen}
