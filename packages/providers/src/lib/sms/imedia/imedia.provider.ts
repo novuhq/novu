@@ -1,16 +1,16 @@
 import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ISMSEventBody,
-  ISmsOptions,
-  ISmsProvider,
+  type ISendMessageSuccessResponse,
+  type ISMSEventBody,
+  type ISmsOptions,
+  type ISmsProvider,
   SmsEventStatusEnum,
 } from '@novu/stateless';
-import axios, { AxiosInstance } from 'axios';
+import axios, { type AxiosInstance } from 'axios';
 
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { WithPassthrough } from '../../../utils/types';
+import type { WithPassthrough } from '../../../utils/types';
 
 interface IMediaSmsConfig {
   token: string;
@@ -81,31 +81,12 @@ export class IMediaSmsProvider extends BaseProvider implements ISmsProvider {
       type: 1,
     }).body;
 
-    console.log({
-      baseURL: IMediaSmsProvider.BASE_URL,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        token: this.config.token,
-      },
-      payload,
-      url: '/api/SMSBrandname/SendSMS',
-    });
-
     const response = await this.axiosInstance.request<IMediaSendResponse>({
       url: '/api/SMSBrandname/SendSMS',
       data: JSON.stringify(payload),
+      method: 'POST',
     });
 
-    console.log({
-      baseURL: IMediaSmsProvider.BASE_URL,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        token: this.config.token,
-      },
-      payload,
-      response: response.data,
-      url: '/api/SMSBrandname/SendSMS',
-    });
     if (response.data.errorCode !== '000') {
       throw new Error(`iMedia API error: ${response.data.errorCode} - ${response.data.errorMessage}`);
     }
