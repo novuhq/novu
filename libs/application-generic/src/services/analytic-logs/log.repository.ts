@@ -36,9 +36,11 @@ export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERA
 const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
-export type Where<T> = {
-  [K in keyof T]?: T[K] | { operator: ClickhouseOperator; value: T[K] | T[K][] };
-};
+export type WhereCondition<T> = {
+  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } }
+}[keyof T];
+
+export type Where<T> = WhereCondition<T>[];
 
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
@@ -126,13 +128,18 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
   /**
    * Builds a WHERE clause with parameterized values for ClickHouse queries.
-   * @param where - Object mapping column names to values or {operator, value} objects
+   * @param where - Array of condition objects, each with a single property mapping column names to values or {operator, value} objects
    * @returns Object with SQL WHERE clause string and parameter map for safe query execution
    * @example
-   * Input: { user_id: 123, name: { operator: 'LIKE', value: 'John%' } }
+   * Input: [
+   *   { user_id: 123 },
+   *   { name: { operator: 'LIKE', value: 'John%' } },
+   *   { age: { operator: '>', value: 18 } },
+   *   { age: { operator: '<', value: 65 } }
+   * ]
    * Output: {
-   *   clause: "WHERE user_id = {param_0_userid:String} AND name LIKE {param_1_name:String}",
-   *   params: { param_0_userid: 123, param_1_name: 'John%' }
+   *   clause: "WHERE user_id = {param_0_userid:String} AND name LIKE {param_1_name:String} AND age > {param_2_age:String} AND age < {param_3_age:String}",
+   *   params: { param_0_userid: 123, param_1_name: 'John%', param_2_age: 18, param_3_age: 65 }
    * }
    */
   protected buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
@@ -140,8 +147,14 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     params: Record<string, any>;
   } {
     const params: Record<string, any> = {};
-    const clauses = Object.entries(where)
-      .map(([key, value], index) => {
+    const clauses = where
+      .map((condition, index) => {
+        const entries = Object.entries(condition);
+        if (entries.length !== 1) {
+          throw new Error('Each where condition must have exactly one property');
+        }
+
+        const [key, value] = entries[0];
         this.validateColumnName(key);
 
         let operator: ClickhouseOperator = '=';

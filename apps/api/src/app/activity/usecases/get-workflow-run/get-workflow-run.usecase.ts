@@ -36,11 +36,11 @@ export class GetWorkflowRun {
 
     try {
       const workflowRunResult = await this.workflowRunRepository.findOne({
-        where: {
-          workflow_run_id: command.workflowRunId,
-          organization_id: command.organizationId,
-          environment_id: command.environmentId,
-        },
+        where: [
+          { workflow_run_id: { operator: '=', value: command.workflowRunId } },
+          { organization_id: { operator: '=', value: command.organizationId } },
+          { environment_id: { operator: '=', value: command.environmentId } },
+        ],
         useFinal: true,
       });
 
@@ -72,12 +72,12 @@ export class GetWorkflowRun {
   ): Promise<IStepRunWithDetails[]> {
     try {
       const stepRunsResult = await this.stepRunRepository.find({
-        where: {
-          organization_id: command.organizationId,
-          environment_id: command.environmentId,
-          transaction_id: workflowRun.transaction_id,
-          workflow_run_id: workflowRun.workflow_run_id,
-        },
+        where: [
+          { organization_id: { operator: '=', value: command.organizationId } },
+          { environment_id: { operator: '=', value: command.environmentId } },
+          { transaction_id: { operator: '=', value: workflowRun.transaction_id } },
+          { workflow_run_id: { operator: '=', value: workflowRun.workflow_run_id } },
+        ],
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
@@ -116,15 +116,12 @@ export class GetWorkflowRun {
     try {
       // Get traces for these entities
       const traceResult = await this.traceLogRepository.find({
-        where: {
-          entity_id: {
-            operator: 'IN' as const,
-            value: entityIds,
-          },
-          entity_type: 'step_run',
-          environment_id: command.environmentId,
-          organization_id: command.organizationId,
-        },
+        where: [
+          { entity_id: { operator: 'IN', value: entityIds } },
+          { entity_type: { operator: '=', value: 'step_run' } },
+          { environment_id: { operator: '=', value: command.environmentId } },
+          { organization_id: { operator: '=', value: command.organizationId } },
+        ],
         orderBy: 'created_at',
         orderDirection: 'ASC',
       });
