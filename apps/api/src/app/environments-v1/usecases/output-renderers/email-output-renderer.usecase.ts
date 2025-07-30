@@ -324,6 +324,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
     });
 
     const cleanedStepBodyHtml = stepBodyHtml
+      .replace(/<!DOCTYPE.*?>/g, '')
       .replace(/<!--\$-->/g, '')
       .replace(/<!--\/\$-->/g, '')
       .replace(/<!--[\s\S]*?-->/g, '');
@@ -338,9 +339,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       body: layoutControlValues.email?.body ?? '',
       payload: {
         ...payload,
-        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(
-          cleanedStepBodyHtml.replace(/<!DOCTYPE.*?>/g, '').replace(/\n/g, '')
-        ),
+        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),
       },
       environmentId,
       organizationId,
