@@ -25,11 +25,9 @@
     "build:cjs": "tsc -p tsconfig.json",
     "build:esm": "tsc -p tsconfig.esm.json",
     "fix": "run-s fix:*",
-    "fix:prettier": "prettier \"src/**/*.ts\" --write",
-    "lint:fix": "eslint src --fix",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test": "run-s test:*",
-    "lint": "eslint src",
-    "test:prettier": "prettier \"src/**/*.ts\"",
     "test:unit": "jest src",
     "check-cli": "run-s test diff-integration-tests check-integration-tests",
     "check-integration-tests": "run-s check-integration-test:*",
@@ -68,9 +66,6 @@
     "ts-jest": "^29.1.0",
     "typedoc": "^0.24.0",
     "typescript": "5.6.2"
-  },
-  "prettier": {
-    "singleQuote": true
   },
   "nx": {
     "tags": [

@@ -19,7 +19,6 @@ output.json
 .idea/workspace.xml
 .idea/usage.statistics.xml
 .idea/tasks.xml
-.eslintcache
 .idea/codestream.xml
 # User-specific stuff
 .idea/**/workspace.xml
@@ -113,4 +112,3 @@ nx-cloud.env
 # EE Symlinked folders - we need these for the EE build
 # @TODO - find a way to remove the symlinks without breaking the build
 !enterprise/packages/**/src
-/.idea/jsLinters/eslint.xml

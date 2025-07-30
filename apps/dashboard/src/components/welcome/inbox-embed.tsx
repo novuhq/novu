@@ -29,7 +29,7 @@ export function InboxEmbed(): JSX.Element | null {
   const primaryColor = searchParams.get('primaryColor') || '#DD2450';
   const foregroundColor = searchParams.get('foregroundColor') || '#0E121B';
 
-  useEffect(() => { 
+  useEffect(() => {
     if (foundIntegration?.connected) {
       setShowConfetti(true);
       const timer = setTimeout(() => setShowConfetti(false), 10000);

@@ -162,14 +162,15 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
 
     // Step 3: Add Novu branding
     const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
+    const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
 
     // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
-      return { subject: translatedSubject, body: htmlWithBranding };
+      return { subject: translatedSubject, body: cleanedHtml };
     }
 
     const sanitizedSubject = sanitizeHTML(translatedSubject);
-    const sanitizedBody = sanitizeHTML(htmlWithBranding);
+    const sanitizedBody = sanitizeHTML(cleanedHtml);
 
     return {
       subject: sanitizedSubject,
@@ -395,9 +396,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
       });
       const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
 
-      const renderedHtml = await mailyRender(parsedMaily, { noHtmlWrappingTags });
-
-      return this.cleanupRenderedHtml(renderedHtml);
+      return await mailyRender(parsedMaily, { noHtmlWrappingTags });
     } else {
       // For simple text body, apply translations directly
       const processedHtml = await this.processTextTranslations({
@@ -409,7 +408,7 @@ export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
         locale,
       });
 
-      return this.cleanupRenderedHtml(processedHtml);
+      return processedHtml;
     }
   }
 

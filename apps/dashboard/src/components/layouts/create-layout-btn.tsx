@@ -78,7 +78,13 @@ export const CreateLayoutButton = ({
         </TooltipTrigger>
         <TooltipContent className="max-w-60">
           {'Create the layout in your development environment. '}
-          <a href="https://docs.novu.co/platform/account/roles-and-permissions" target="_blank" className="underline">
+          <a
+            href="https://docs.novu.co/platform/workflow/layouts"
+            target="_blank"
+            rel="noreferrer noopener"
+            aria-label="Learn more about layouts"
+            className="underline"
+          >
             Learn More ↗
           </a>
         </TooltipContent>

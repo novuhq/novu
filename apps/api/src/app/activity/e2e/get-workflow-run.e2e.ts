@@ -55,7 +55,7 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
       },
     });
 
-    const workflowRunId = workflowRun?.data?.id;
+    const workflowRunId = workflowRun?.data?.workflow_run_id;
 
     const { body } = await session.testAgent.get(`/v1/activity/workflow-runs/${workflowRunId}`).expect(200);
     const { data } = body;
