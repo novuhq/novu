@@ -11,8 +11,8 @@
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "start:dev": "pnpm build:watch",
     "precommit": "lint-staged",
-    "lint": "eslint src",
-    "lint:fix": "pnpm lint -- --fix",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test": "echo \"no tests yet\"",
     "test:watch": ""
   },
@@ -49,7 +49,6 @@
     "@types/async": "^3.2.1",
     "@types/node": "^20.15.0",
     "@types/supertest": "^6.0.2",
-    "@typescript-eslint/parser": "^8.33.0",
     "apollo-boost": "0.4.9",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",

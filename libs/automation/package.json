@@ -5,8 +5,8 @@
   "license": "MIT",
   "scripts": {
     "generate:provider": "pnpm nx g automation:provider",
-    "lint": "eslint src",
-    "lint:fix": "pnpm lint -- --fix"
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
   },
   "dependencies": {
     "@nx/devkit": "20.1.2"

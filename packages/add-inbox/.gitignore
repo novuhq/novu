@@ -40,4 +40,3 @@ next-env.d.ts
 # Cache
 .cache/
 .npm/
-.eslintcache 

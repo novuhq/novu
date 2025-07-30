@@ -1,5 +1,7 @@
 {
   "name": "@novu/worker",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "tags": ["type:app"],
   "sourceRoot": "apps/worker/src",
   "projectType": "application",
   "targets": {
@@ -13,6 +15,12 @@
         "!{projectRoot}/jest.config.[jt]s"
       ],
       "outputs": ["{projectRoot}/dist", "{projectRoot}/build", "{projectRoot}/lib"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint apps/worker"
+      }
     }
   }
 }
