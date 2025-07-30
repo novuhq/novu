@@ -6,7 +6,7 @@ import {
   PROTECTED_ENVIRONMENTS,
 } from '@novu/shared';
 import { useMemo, useState } from 'react';
-import { RiDeleteBin2Line, RiMore2Fill } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiInformation2Line, RiMore2Fill } from 'react-icons/ri';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteEnvironment } from '@/hooks/use-environments';
 import { Protect } from '@/utils/protect';
@@ -26,6 +26,7 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Skeleton } from '../primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../primitives/table';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import TruncatedText from '../truncated-text';
 import { DeleteEnvironmentDialog } from './delete-environment-dialog';
@@ -57,7 +58,21 @@ const EnvironmentRowSkeleton = () => (
 const EnvironmentSectionHeader = ({ title }: { title: string }) => (
   <TableRow>
     <TableCell colSpan={4} className="px-3 py-1 bg-bg-weak">
-      <div className="text-paragraph-2xs text-text-soft">{title}</div>
+      <div className="flex items-center gap-1 text-paragraph-2xs text-text-soft">
+        {title}
+        {title.toLowerCase().includes('live') && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-block cursor-help">
+                <RiInformation2Line className="size-3 text-foreground-400" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              Live environments are read only. Use them for staging, QA, previews. Great for safe reviews and testing!
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
     </TableCell>
   </TableRow>
 );
