@@ -6,6 +6,7 @@ import { RepeatVariable } from '@/components/icons/repeat-variable';
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { REPEAT_BLOCK_ITERABLE_ALIAS } from '@/components/maily/repeat-block-aliases';
 import { DIGEST_PREVIEW_MAP } from '@/components/variable/utils/digest-variables';
+import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 
 export const VariableIcon = ({
   variableName,
@@ -26,7 +27,7 @@ export const VariableIcon = ({
     return <RiErrorWarningLine className="text-error-base size-3.5 min-w-3.5" />;
   }
 
-  if (context === 'translations') {
+  if (context === 'translations' || variableName === TRANSLATION_NAMESPACE_SEPARATOR) {
     return <TranslateVariableIcon className="text-feature size-3.5 min-w-3.5" />;
   }
 

@@ -91,6 +91,7 @@ export const LayoutEmailBody = () => {
               isAllowedVariable={parsedVariables.isAllowedVariable}
               onChange={field.onChange}
               isPayloadSchemaEnabled={false}
+              className="max-h-[calc(100%-45px)]"
             />
           );
         }

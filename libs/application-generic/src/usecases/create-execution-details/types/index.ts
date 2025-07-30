@@ -19,6 +19,7 @@ export enum DetailEnum {
   SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED = 'Successful Bridge response received',
   FAILED_BRIDGE_EXECUTION = 'Bridge execution failed',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
+  LAYOUT_SELECTED = 'Layout selected',
   LAYOUT_NOT_FOUND = 'Layout not found ',
   INTEGRATION_INSTANCE_SELECTED = 'Integration instance selected',
   TENANT_CONTEXT_SELECTED = 'Tenant context selected',

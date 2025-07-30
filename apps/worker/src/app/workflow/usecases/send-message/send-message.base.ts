@@ -16,6 +16,7 @@ import {
   ITenantDefine,
   ProvidersIdEnum,
   SmsProviderIdEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
@@ -51,13 +52,13 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected combineOverrides(
     bridgeData: Record<string, any> | null | undefined,
-    overrides: Record<string, any> | undefined,
+    overrides: TriggerOverrides | undefined,
     stepId: string | undefined,
     integrationId: string
   ): Record<string, unknown> {
     const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
     const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers[integrationId] || {} : {};
+    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
     return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
   }

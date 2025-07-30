@@ -29,6 +29,8 @@ type HtmlEditorProps = {
   extensions?: Extension[];
   children?: React.ReactNode;
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
+  className?: string;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
@@ -55,8 +57,10 @@ export function HtmlEditor({
   onChange,
   saveForm,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
   digestStepName,
   skipContainerClick = false,
+  className,
   getSchemaPropertyByKey = () => undefined,
   onCreateNewVariable = () => Promise.resolve(),
   onManageSchemaClick = () => {},
@@ -174,7 +178,7 @@ export function HtmlEditor({
   }, []);
 
   return (
-    <div className="relative h-full flex-1 border-t border-neutral-200">
+    <div className={cn('relative h-full flex-1 border-t border-neutral-200', className)}>
       <Tooltip>
         <TooltipTrigger
           ref={formatButtonRef}
@@ -211,6 +215,7 @@ export function HtmlEditor({
         tagStyles={tagStyles}
         completionSources={allCompletionSources}
         isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+        isTranslationEnabled={isTranslationEnabled}
         getSchemaPropertyByKey={getSchemaPropertyByKey}
         extensions={allExtensions}
         digestStepName={digestStepName}

@@ -2,9 +2,9 @@ import { forwardRef, useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { RiSettings4Line } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiSettings4Line } from 'react-icons/ri';
 import { ExternalToast } from 'sonner';
-import { useBlocker } from 'react-router-dom';
+import { useBlocker, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/primitives/button';
 import {
@@ -26,7 +26,7 @@ import {
   FormRoot,
 } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast, showToast } from '@/components/primitives/sonner-helpers';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { useLayoutEditor } from './layout-editor-provider';
 import { useUpdateLayout } from '@/hooks/use-update-layout';
@@ -39,6 +39,11 @@ import { Separator } from '../primitives/separator';
 import { CopyButton } from '../primitives/copy-button';
 import { formatDistanceToNow } from 'date-fns';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { DeleteLayoutDialog } from './delete-layout-dialog';
+import { useDeleteLayout } from '@/hooks/use-delete-layout';
+import { ToastIcon } from '../primitives/sonner';
+import { PermissionButton } from '../primitives/permission-button';
+import { PermissionsEnum } from '@novu/shared';
 
 const layoutSettingsFormSchema = z.object({
   name: z.string().min(1),
@@ -61,9 +66,11 @@ type LayoutEditorSettingsDrawerProps = {
 
 export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEditorSettingsDrawerProps>(
   ({ isOpen, onOpenChange }, forwardedRef) => {
+    const navigate = useNavigate();
     const { layout } = useLayoutEditor();
     const { currentEnvironment } = useEnvironment();
     const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
 
     const form = useForm<LayoutSettingsFormData>({
@@ -103,6 +110,48 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
         showErrorToast('Failed to update layout', 'Please try again later.', toastOptions);
       },
     });
+
+    const { deleteLayout, isPending: isDeleteLayoutPending } = useDeleteLayout({
+      onSuccess: () => {
+        showToast({
+          children: () => (
+            <>
+              <ToastIcon variant="success" />
+              <span className="text-sm">
+                Deleted layout <span className="font-bold">{layout?.name}</span>
+              </span>
+            </>
+          ),
+          options: toastOptions,
+        });
+        navigate(
+          buildRoute(ROUTES.LAYOUTS, {
+            environmentSlug: currentEnvironment?.slug ?? '',
+          })
+        );
+      },
+      onError: () => {
+        showToast({
+          children: () => (
+            <>
+              <ToastIcon variant="error" />
+              <span className="text-sm">
+                Failed to delete layout <span className="font-bold">{layout?.name}</span>
+              </span>
+            </>
+          ),
+          options: toastOptions,
+        });
+      },
+    });
+
+    const onDeleteLayout = async () => {
+      if (!layout) return;
+
+      await deleteLayout({
+        layoutSlug: layout.slug,
+      });
+    };
 
     const onSubmit = async (data: LayoutSettingsFormData) => {
       if (!layout) return;
@@ -244,6 +293,18 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
                 <Separator className="mt-auto" />
                 <SheetFooter className="p-0">
                   <div className="flex w-full items-center justify-between gap-3 p-3">
+                    <PermissionButton
+                      permission={PermissionsEnum.WORKFLOW_WRITE}
+                      variant="primary"
+                      mode="ghost"
+                      leadingIcon={RiDeleteBin2Line}
+                      onClick={() => {
+                        setIsDeleteDialogOpen(true);
+                      }}
+                      disabled={isDeleteLayoutPending}
+                    >
+                      Delete layout
+                    </PermissionButton>
                     <Button
                       type="submit"
                       variant="secondary"
@@ -272,6 +333,14 @@ export const LayoutEditorSettingsDrawer = forwardRef<HTMLDivElement, LayoutEdito
           description="You have unsaved changes to the layout settings. These changes will be lost if you leave this page."
           onCancel={handleBlockerReset}
           onProceed={handleBlockerProceed}
+        />
+
+        <DeleteLayoutDialog
+          layout={layout}
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={onDeleteLayout}
+          isLoading={isDeleteLayoutPending}
         />
       </>
     );

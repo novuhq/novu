@@ -1,5 +1,5 @@
 import { HTMLAttributes } from 'react';
-import { DirectionEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, DirectionEnum } from '@novu/shared';
 
 import { cn } from '@/utils/ui';
 import {
@@ -25,6 +25,8 @@ import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { Skeleton } from '../primitives/skeleton';
 import { DefaultPagination } from '../default-pagination';
 import { CreateLayoutButton } from './create-layout-btn';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { LayoutsListUpgradeCta } from './layouts-list-upgrade-cta';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<LayoutsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -35,7 +37,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex h-full flex-col', className)} {...rest}>
       <div className="flex items-center justify-between">
         <LayoutsFilters
           onFiltersChange={handleFiltersChange}
@@ -44,7 +46,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
           isFetching={isFetching}
           className="py-2.5"
         />
-        <CreateLayoutButton />
+        <CreateLayoutButton disabled={isFetching} />
       </div>
       {children}
     </div>
@@ -156,6 +158,9 @@ export const LayoutList = (props: LayoutListProps) => {
     query: filterValues.query,
   });
 
+  const { subscription } = useFetchSubscription();
+  const tier = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+
   const currentPage = Math.floor(filterValues.offset / filterValues.limit) + 1;
   const totalPages = Math.ceil((data?.totalCount || 0) / filterValues.limit);
 
@@ -186,6 +191,10 @@ export const LayoutList = (props: LayoutListProps) => {
         </LayoutListTable>
       </LayoutListWrapper>
     );
+  }
+
+  if (tier === ApiServiceLevelEnum.FREE && data?.layouts.length === 1) {
+    return <LayoutsListUpgradeCta />;
   }
 
   if (!areFiltersApplied && !data?.layouts.length) {

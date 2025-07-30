@@ -10,6 +10,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   FeatureFlagsService,
+  GetLayoutCommand,
+  GetLayoutUseCase as GetLayoutUseCaseV1,
   GetNovuProviderCredentials,
   InstrumentUsecase,
   MailFactory,
@@ -20,6 +22,7 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
+  LayoutEntity,
   LayoutRepository,
   MessageEntity,
   MessageRepository,
@@ -60,7 +63,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private featureFlagService: FeatureFlagsService
+    private featureFlagService: FeatureFlagsService,
+    private getLayoutUseCaseV1: GetLayoutUseCaseV1
   ) {
     super(
       messageRepository,
@@ -151,9 +155,10 @@ export class SendMessageEmail extends SendMessageBase {
       };
     }
 
+    const bridgeOutputs = command.bridgeData?.outputs;
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
-      this.getOverrideLayoutId(command),
+      this.getOverrideLayoutId(command, !!bridgeOutputs),
       this.sendSelectedIntegrationExecution(command.job, integration),
     ]);
 
@@ -165,7 +170,6 @@ export class SendMessageEmail extends SendMessageBase {
       ...(command.overrides?.email || {}),
       ...(command.overrides?.[integration?.providerId] || {}),
     };
-    const bridgeOutputs = command.bridgeData?.outputs;
 
     let html;
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
@@ -177,7 +181,7 @@ export class SendMessageEmail extends SendMessageBase {
       subject,
       preheader: step.template.preheader,
       content: step.template.content,
-      layoutId: overrideLayoutId ?? step.template._layoutId,
+      layoutId: overrideLayoutId || (overrideLayoutId === null ? null : step.template._layoutId),
       contentType: step.template.contentType ? step.template.contentType : 'editor',
       payload: this.getCompilePayload(command.compileContext),
     };
@@ -544,34 +548,70 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  private async getOverrideLayoutId(command: SendMessageCommand) {
-    const overrideLayoutIdentifier = command.overrides?.layoutIdentifier;
+  private async getOverrideLayoutId(command: SendMessageCommand, isBridge: boolean) {
+    const { overrides, step } = command;
+    let layoutId: string | null | undefined;
+    let overrideSource: string | undefined;
 
-    if (overrideLayoutIdentifier) {
-      const layoutOverride = await this.layoutRepository.findOne(
-        {
-          _environmentId: command.environmentId,
-          identifier: overrideLayoutIdentifier,
-        },
-        '_id'
+    // Step 1: Check step-level override (highest priority)
+    const stepId = overrides?.steps?.[step._id ?? ''] ? step._id : step.stepId;
+    const stepOverrides = overrides?.steps?.[stepId ?? ''];
+    if (stepOverrides?.layoutId !== undefined) {
+      layoutId = stepOverrides.layoutId;
+      overrideSource = 'step';
+    }
+    // Step 2: Check channel-level override for email
+    else if (overrides?.channels?.email?.layoutId !== undefined) {
+      layoutId = overrides.channels.email.layoutId;
+      overrideSource = 'channel';
+    }
+    // Step 3: Check deprecated layoutIdentifier (backward compatibility)
+    else if (overrides?.layoutIdentifier) {
+      layoutId = overrides.layoutIdentifier;
+      overrideSource = 'layoutIdentifier';
+    }
+
+    // If no override is specified, return undefined (use step configuration)
+    if (layoutId === undefined) {
+      return undefined;
+    }
+
+    // If explicitly set to null, return null (no layout)
+    if (layoutId === null) {
+      return null;
+    }
+
+    if (isBridge) {
+      return layoutId;
+    }
+
+    // Look up layout by identifier or MongoDB ObjectId
+    try {
+      const layout = await this.getLayoutUseCaseV1.execute(
+        GetLayoutCommand.create({
+          layoutIdOrInternalId: layoutId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
       );
-      if (!layoutOverride) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.LAYOUT_NOT_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              layoutIdentifier: overrideLayoutIdentifier,
-            }),
-          })
-        );
-      }
 
-      return layoutOverride?._id;
+      return layout._id;
+    } catch (error) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.LAYOUT_NOT_FOUND,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            layoutId,
+            overrideSource,
+            error: error.message,
+          }),
+        })
+      );
     }
   }
 

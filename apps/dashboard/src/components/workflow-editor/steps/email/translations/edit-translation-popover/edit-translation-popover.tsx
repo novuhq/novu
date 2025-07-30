@@ -1,4 +1,4 @@
-import React, { useCallback, useId } from 'react';
+import React, { useCallback, useId, useState } from 'react';
 import { RiDeleteBin2Line, RiErrorWarningLine, RiListView, RiQuestionLine } from 'react-icons/ri';
 
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
@@ -9,16 +9,14 @@ import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/inpu
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ControlInput } from '@/components/workflow-editor/control-input';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useUpdateTranslationValue } from '@/hooks/use-update-translation-value';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { DEFAULT_LOCALE } from '@novu/shared';
-import { useParams } from 'react-router-dom';
 import { useTranslationEditor } from './use-translation-editor';
 import { useTranslationForm } from './use-translation-form';
 import { useVirtualAnchor } from './use-virtual-anchor';
@@ -56,6 +54,7 @@ const TranslationKeyInput = ({
   onAddTranslationKey,
   isLoading,
   isCreatingKey,
+  workflowId,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -65,16 +64,15 @@ const TranslationKeyInput = ({
   onAddTranslationKey: () => void;
   isLoading: boolean;
   isCreatingKey: boolean;
+  workflowId: string;
 }) => {
-  const { environmentSlug } = useParams();
-  const { workflow } = useWorkflow();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  const translationsUrl = buildRoute(ROUTES.TRANSLATIONS_EDIT, {
-    environmentSlug: environmentSlug ?? '',
-    resourceType: LocalizationResourceEnum.WORKFLOW,
-    resourceId: workflow?.workflowId ?? '',
-    locale: DEFAULT_LOCALE,
-  });
+  const handleManageTranslationsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDrawerOpen(true);
+  };
 
   return (
     <FormItem>
@@ -103,7 +101,7 @@ const TranslationKeyInput = ({
               size="sm"
               className="text-label-2xs text-xs"
               leadingIcon={RiListView}
-              onClick={() => window.open(translationsUrl, '_blank')}
+              onClick={handleManageTranslationsClick}
             >
               View & manage translations ↗
             </LinkButton>
@@ -138,6 +136,13 @@ const TranslationKeyInput = ({
           )}
         </div>
       </FormControl>
+
+      <TranslationDrawer
+        isOpen={isDrawerOpen}
+        onOpenChange={setIsDrawerOpen}
+        resourceType={LocalizationResourceEnum.WORKFLOW}
+        resourceId={workflowId}
+      />
     </FormItem>
   );
 };
@@ -341,6 +346,7 @@ export const EditTranslationPopover: React.FC<EditTranslationPopoverProps> = ({
               onAddTranslationKey={form.handleAddTranslationKey}
               isLoading={isLoading}
               isCreatingKey={form.isCreatingKey}
+              workflowId={workflowId}
             />
 
             <TranslationValueInput

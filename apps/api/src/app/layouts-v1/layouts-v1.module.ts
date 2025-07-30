@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 
+import { ResourceValidatorService } from '@novu/application-generic';
 import { USE_CASES } from './usecases';
 import { LayoutsControllerV1 } from './layouts-v1.controller';
 
@@ -10,7 +11,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [SharedModule, ChangeModule, MessageTemplateModule, forwardRef(() => AuthModule)],
-  providers: [...USE_CASES],
+  providers: [...USE_CASES, ResourceValidatorService],
   exports: [...USE_CASES],
   controllers: [LayoutsControllerV1],
 })

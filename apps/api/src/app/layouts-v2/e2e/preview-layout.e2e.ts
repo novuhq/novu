@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum } from '@novu/shared';
 import { EnvironmentRepository, LayoutRepository } from '@novu/dal';
 
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
@@ -22,6 +22,7 @@ describe('Preview Layout #novu-v2', () => {
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.PRO);
     layoutRepository = new LayoutRepository();
     environmentRepository = new EnvironmentRepository();
 

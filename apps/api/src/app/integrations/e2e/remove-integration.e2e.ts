@@ -215,18 +215,6 @@ describe('Delete Integration - /integration/:integrationId (DELETE) #novu-v2', f
     expect(second.priority).to.equal(1);
   });
 
-  it('should throw an error when trying to delete a demo integration', async function () {
-    const existingIntegrations = (await session.testAgent.get(`/v1/integrations`)).body.data;
-
-    const demoEmailIntegration = existingIntegrations.find(
-      (integration) => integration.providerId === EmailProviderIdEnum.Novu
-    );
-
-    const res = await session.testAgent.delete(`/v1/integrations/${demoEmailIntegration._id}`).send();
-    expect(res.body.statusCode).to.equal(400);
-    expect(res.body.message).to.equal('Novu demo integration or In-App integration cannot be deleted');
-  });
-
   it('should remove a newly created integration', async function () {
     const payload = {
       providerId: EmailProviderIdEnum.SendGrid,

@@ -47,7 +47,7 @@ export class TopicPayloadDto {
 }
 
 export class StepsOverrides {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Passing the provider id and the provider specific configurations',
     example: {
       sendgrid: {
@@ -60,12 +60,42 @@ export class StepsOverrides {
       additionalProperties: true,
     },
   })
-  providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
+    description: 'Override the or remove the layout for this specific step',
+    example: 'welcome-email-layout',
+    nullable: true,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+}
+
+export class EmailChannelOverrides {
+  @ApiPropertyOptional({
+    description: 'Override or remove the layout for all email steps in the workflow',
+    example: 'promotional-layout-2024',
+    nullable: true,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+}
+
+export class ChannelOverrides {
+  @ApiPropertyOptional({
+    description: 'Email channel specific overrides',
+    type: () => EmailChannelOverrides,
+  })
+  email?: EmailChannelOverrides;
 }
 
 export class TriggerOverrides {
   @ApiPropertyOptional({
-    description: 'This could be used to override provider specific configurations',
+    description: 'This could be used to override provider specific configurations or layout at the step level',
     example: {
       'email-step': {
         providers: {
@@ -73,6 +103,7 @@ export class TriggerOverrides {
             templateId: '1234567890',
           },
         },
+        layoutId: 'step-specific-layout',
       },
     },
     type: 'object',
@@ -81,6 +112,18 @@ export class TriggerOverrides {
     },
   })
   steps?: Record<string, StepsOverrides>;
+
+  @ApiPropertyOptional({
+    description:
+      'Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.',
+    example: {
+      email: {
+        layoutId: 'promotional-layout-2024',
+      },
+    },
+    type: () => ChannelOverrides,
+  })
+  channels?: ChannelOverrides;
 
   @ApiPropertyOptional({
     description: 'Overrides the provider configuration for the entire workflow and all steps',
@@ -136,7 +179,14 @@ export class TriggerOverrides {
   layoutIdentifier?: string;
 }
 
-@ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto, StepsOverrides)
+@ApiExtraModels(
+  SubscriberPayloadDto,
+  TenantPayloadDto,
+  TopicPayloadDto,
+  StepsOverrides,
+  EmailChannelOverrides,
+  ChannelOverrides
+)
 export class TriggerEventRequestDto {
   @SdkApiProperty(
     {

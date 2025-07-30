@@ -22,6 +22,7 @@ export * from "./layoutscontrollerdelete.js";
 export * from "./layoutscontrollerduplicate.js";
 export * from "./layoutscontrollergeneratepreview.js";
 export * from "./layoutscontrollerget.js";
+export * from "./layoutscontrollergetusage.js";
 export * from "./layoutscontrollerlist.js";
 export * from "./layoutscontrollerupdate.js";
 export * from "./logscontrollergetlogs.js";

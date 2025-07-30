@@ -1,17 +1,24 @@
 import { Sms } from '@/components/icons';
-import { FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
 
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
 import { useFeatureFlag } from '../../../../hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
+import { StepEditorUnavailable } from '../step-editor-unavailable';
+import { useEnvironment } from '@/context/environment/hooks';
 
 type SmsEditorProps = { uiSchema: UiSchema };
 
 export const SmsEditor = (props: SmsEditorProps) => {
+  const { currentEnvironment } = useEnvironment();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const { uiSchema } = props;
   const { body } = uiSchema.properties ?? {};
+
+  if (currentEnvironment?.type !== EnvironmentTypeEnum.DEV) {
+    return <StepEditorUnavailable />;
+  }
 
   return (
     <div className="flex h-full flex-col">

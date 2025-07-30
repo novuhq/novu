@@ -36,7 +36,7 @@ const TopicListWrapper = (
     ...rest
   } = props;
   return (
-    <div className={cn('flex h-full flex-col p-2', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
+    <div className={cn('flex h-full flex-col', showEmptyState && 'h-[calc(100vh-100px)]', className)} {...rest}>
       <div className="flex items-center justify-between">
         {isLoading || hasData || areFiltersApplied ? (
           <TopicsFilters

@@ -1,6 +1,7 @@
 import { FormField } from '@/components/primitives/form/form';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationSwitch } from '@/components/translations/translation-switch';
+import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -13,6 +14,8 @@ import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-set
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { useState } from 'react';
 
 interface TranslationToggleSectionProps<T extends FieldValues> {
   control: Control<T>;
@@ -20,6 +23,7 @@ interface TranslationToggleSectionProps<T extends FieldValues> {
   onChange?: (checked: boolean) => void;
   isReadOnly?: boolean;
   showManageLink?: boolean;
+  workflowId?: string;
 }
 
 export function TranslationToggleSection<T extends FieldValues>({
@@ -28,8 +32,10 @@ export function TranslationToggleSection<T extends FieldValues>({
   onChange,
   isReadOnly = false,
   showManageLink = true,
+  workflowId,
 }: TranslationToggleSectionProps<T>) {
   const navigate = useNavigate();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
   const { currentEnvironment } = useEnvironment();
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
@@ -44,6 +50,17 @@ export function TranslationToggleSection<T extends FieldValues>({
 
   const hasTargetLocales = (organizationSettings?.data?.targetLocales?.length ?? 0) > 0;
   const needsOnboarding = !isLoadingSettings && !hasTargetLocales;
+
+  const handleManageTranslationsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (workflowId) {
+      setIsDrawerOpen(true);
+    } else {
+      // Fallback to navigation if no workflowId is provided
+      navigate(translationsUrl);
+    }
+  };
 
   if (needsOnboarding) {
     return (
@@ -127,9 +144,24 @@ export function TranslationToggleSection<T extends FieldValues>({
         )}
       />
       {showManageLink && (
-        <a href={translationsUrl} rel="noopener noreferrer" className="text-foreground-400 text-2xs mb-1">
-          View & manage translations ↗
-        </a>
+        <>
+          <button
+            type="button"
+            onClick={handleManageTranslationsClick}
+            className="text-foreground-400 text-2xs hover:text-foreground-600 mb-1 cursor-pointer text-left transition-colors"
+          >
+            View & manage translations ↗
+          </button>
+
+          {workflowId && (
+            <TranslationDrawer
+              isOpen={isDrawerOpen}
+              onOpenChange={setIsDrawerOpen}
+              resourceType={LocalizationResourceEnum.WORKFLOW}
+              resourceId={workflowId}
+            />
+          )}
+        </>
       )}
     </div>
   );

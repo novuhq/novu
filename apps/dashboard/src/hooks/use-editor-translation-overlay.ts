@@ -4,9 +4,9 @@ import { EditorView } from '@uiw/react-codemirror';
 import { CompletionRange } from '@/components/primitives/variable-editor';
 import { useTranslationCompletionSource } from '@/hooks/use-translation-completion-source';
 import { useTranslationPluginExtension } from '@/hooks/use-translation-plugin-extension';
-import { TRANSLATION_PILL_HEIGHT } from '@/components/primitives/translation-plugin/constants';
 import { WorkflowResponseDto } from '@novu/shared';
 import { useIsTranslationEnabled } from './use-is-translation-enabled';
+import { TRANSLATION_PILL_HEIGHT } from '@/components/primitives/translation-plugin/pill-widget';
 
 type UseTranslationEditorProps = {
   viewRef: React.MutableRefObject<EditorView | null>;

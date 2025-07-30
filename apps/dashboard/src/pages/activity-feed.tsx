@@ -9,12 +9,15 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { RequestsTable } from '../components/http-logs/logs-table';
 import { PageMeta } from '../components/page-meta';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 export function ActivityFeed() {
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
   const navigate = useNavigate();
+  const track = useTelemetry();
 
   // Determine current tab based on URL
   const getCurrentTab = () => {
@@ -56,6 +59,13 @@ export function ActivityFeed() {
     }
   }, [isHttpLogsPageEnabled, location.pathname, currentEnvironment?.slug, navigate]);
 
+  // Track page visit for requests tab
+  useEffect(() => {
+    if (currentTab === 'requests') {
+      track(TelemetryEvent.REQUEST_LOGS_PAGE_VISIT);
+    }
+  }, [currentTab, track]);
+
   return (
     <>
       <PageMeta title="Activity Feed" />
@@ -66,7 +76,7 @@ export function ActivityFeed() {
           </h1>
         }
       >
-        <Tabs value={currentTab} onValueChange={handleTabChange}>
+        <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2">
           <TabsList variant="regular" className="border-t-0">
             {isHttpLogsPageEnabled && (
               <TabsTrigger value="requests" variant="regular" size="lg">
@@ -77,6 +87,9 @@ export function ActivityFeed() {
               Workflow Runs
             </TabsTrigger>
           </TabsList>
+          <TabsContent value="workflow-runs">
+            <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
+          </TabsContent>
           <TabsContent value="requests" className="h-[calc(100vh-140px)]">
             <RequestsTable />
           </TabsContent>

@@ -21,7 +21,7 @@ function getFormMessage(
   const hints = ['Type {{ to access variables, or wrap text in ** for bold.'];
 
   if (isTranslationEnabled) {
-    hints.push('Type {t. to access translation keys.');
+    hints.push('Type {{t. to access translation keys.');
 
     return hints.join(' ');
   }

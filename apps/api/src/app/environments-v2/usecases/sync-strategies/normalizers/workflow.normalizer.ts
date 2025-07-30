@@ -15,6 +15,8 @@ export class WorkflowNormalizer {
       slug,
       updatedAt,
       updatedBy,
+      lastPublishedAt,
+      lastPublishedBy,
       createdAt,
       origin,
       status,

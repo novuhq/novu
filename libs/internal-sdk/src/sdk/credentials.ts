@@ -12,11 +12,11 @@ import { unwrapAsync } from "../types/fp.js";
 
 export class Credentials extends ClientSDK {
   /**
-   * Update provider credentials
+   * Upsert provider credentials
    *
    * @remarks
-   * Update credentials for a provider such as slack and push tokens.
-   *       **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.
+   * Upsert credentials for a provider such as slack and push tokens.
+   *       **providerId** is required field. This API creates **deviceTokens** or appends to the existing ones.
    */
   async update(
     updateSubscriberChannelRequestDto:
@@ -37,11 +37,11 @@ export class Credentials extends ClientSDK {
   }
 
   /**
-   * Upsert provider credentials
+   * Update provider credentials
    *
    * @remarks
    * Update credentials for a provider such as **slack** and **FCM**.
-   *       **providerId** is required field. This API appends the **deviceTokens** to the existing ones.
+   *       **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.
    */
   async append(
     updateSubscriberChannelRequestDto:

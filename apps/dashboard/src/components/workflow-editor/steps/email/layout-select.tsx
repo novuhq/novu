@@ -3,18 +3,23 @@ import { useFormContext } from 'react-hook-form';
 
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
-import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
-import { RiExpandUpDownLine, RiLayout5Line } from 'react-icons/ri';
+import { RiLayout5Line } from 'react-icons/ri';
 import { useSaveForm } from '../save-form-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { useEnvironment } from '@/context/environment/hooks';
+import { EnvironmentTypeEnum } from '@novu/shared';
 
 export const LayoutSelect = () => {
+  const { currentEnvironment } = useEnvironment();
   const { control } = useFormContext();
   const { data, isFetching } = useFetchLayouts({ limit: 100, refetchOnWindowFocus: false });
   const { saveForm } = useSaveForm();
 
   const layoutsSortedByDefault = useMemo(() => {
-    return data?.layouts
+    if (!data?.layouts) return [];
+
+    return data.layouts
       .sort((a, b) => {
         if (a.isDefault) return -1;
         if (b.isDefault) return 1;
@@ -41,28 +46,37 @@ export const LayoutSelect = () => {
                     e.preventDefault();
                   }}
                 >
-                  <FacetedFormFilter
-                    type="single"
-                    size="small"
-                    title="Layout"
-                    icon={RiLayout5Line}
-                    placeholder="Search layout"
-                    className="bg-bg-weak border-transparent hover:border-transparent hover:bg-neutral-100 [&_span]:text-neutral-600"
-                    selected={field.value ? [field.value] : undefined}
-                    disabled={isFetching || layoutsSortedByDefault?.length === 0}
-                    hidePlusIcon
-                    options={layoutsSortedByDefault}
-                    onSelect={(value) => {
-                      if (value.length > 0) {
-                        field.onChange(value[0]);
-                        return;
-                      }
-
-                      field.onChange(null);
+                  <Select
+                    value={field.value ?? 'no_layout'}
+                    onValueChange={(value) => {
+                      const newValue = value === 'no_layout' ? null : value;
+                      field.onChange(newValue);
                       saveForm({ forceSubmit: true });
                     }}
-                    trailingNode={<RiExpandUpDownLine className="text-text-soft size-3" />}
-                  />
+                    disabled={
+                      isFetching ||
+                      layoutsSortedByDefault?.length === 0 ||
+                      currentEnvironment?.type !== EnvironmentTypeEnum.DEV
+                    }
+                  >
+                    <SelectTrigger
+                      size="2xs"
+                      className="bg-bg-weak border-transparent hover:border-transparent hover:bg-neutral-100 [&_span]:text-neutral-600"
+                    >
+                      <RiLayout5Line className="text-text-soft mr-2 size-4" />
+                      <SelectValue placeholder="Select layout" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no_layout" className="text-paragraph-xs">
+                        No layout
+                      </SelectItem>
+                      {layoutsSortedByDefault.map((layout) => (
+                        <SelectItem key={layout.value} value={layout.value} className="text-paragraph-xs">
+                          {layout.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TooltipTrigger>
                 {layoutsSortedByDefault?.length === 0 && <TooltipContent>No layouts found</TooltipContent>}
               </Tooltip>

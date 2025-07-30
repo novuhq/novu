@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsBoolean, IsOptional, IsEnum, IsNumber, ValidateNested, IsDateString } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ResourceTypeEnum } from '../types/sync.types';
+import { ResourceTypeEnum, DependencyReasonEnum } from '../types/sync.types';
 
 export class DiffEnvironmentRequestDto {
   @ApiPropertyOptional({
@@ -169,6 +169,47 @@ export class DiffSummaryDto {
   unchanged: number;
 }
 
+export class ResourceDependencyDto {
+  @ApiProperty({
+    description: 'Type of dependent resource',
+    enum: [...Object.values(ResourceTypeEnum)],
+    enumName: 'ResourceTypeEnum',
+    example: 'layout',
+  })
+  @IsEnum(ResourceTypeEnum)
+  resourceType: ResourceTypeEnum;
+
+  @ApiProperty({
+    description: 'ID of the dependent resource',
+    example: 'layout-id-123',
+  })
+  @IsString()
+  resourceId: string;
+
+  @ApiProperty({
+    description: 'Name of the dependent resource',
+    example: 'Email Layout Template',
+  })
+  @IsString()
+  resourceName: string;
+
+  @ApiProperty({
+    description: 'Whether this dependency blocks the operation',
+    example: true,
+  })
+  @IsBoolean()
+  isBlocking: boolean;
+
+  @ApiProperty({
+    description: 'Reason for the dependency',
+    enum: [...Object.values(DependencyReasonEnum)],
+    enumName: 'DependencyReasonEnum',
+    example: 'LAYOUT_REQUIRED_FOR_WORKFLOW',
+  })
+  @IsEnum(DependencyReasonEnum)
+  reason: DependencyReasonEnum;
+}
+
 export class ResourceDiffResultDto {
   @ApiProperty({
     description: 'Type of resource being compared',
@@ -210,6 +251,15 @@ export class ResourceDiffResultDto {
     type: DiffSummaryDto,
   })
   summary: DiffSummaryDto;
+
+  @ApiPropertyOptional({
+    description: 'Dependencies that affect this resource',
+    type: [ResourceDependencyDto],
+  })
+  @IsOptional()
+  @ValidateNested({ each: true })
+  @Type(() => ResourceDependencyDto)
+  dependencies?: ResourceDependencyDto[];
 }
 
 export class EnvironmentDiffSummaryDto {

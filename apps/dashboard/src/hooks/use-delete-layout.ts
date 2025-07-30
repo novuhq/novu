@@ -18,6 +18,11 @@ export const useDeleteLayout = (options?: UseMutationOptions<void, unknown, Dele
         queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id],
       });
 
+      // Invalidate environment diff cache since layout changes affect environment comparison
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
+      });
+
       options?.onSuccess?.(data, variables, ctx);
     },
   });

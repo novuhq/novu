@@ -8,12 +8,17 @@ import {
   IntegrationRepository,
   ControlValuesRepository,
   LayoutRepository,
+  JobRepository,
+  ExecutionDetailsRepository,
 } from '@novu/dal';
 import {
   AnalyticsService,
   GetDecryptedSecretKey,
   FeatureFlagsService,
   GetLayoutUseCase as GetLayoutUseCaseV1,
+  CreateExecutionDetails,
+  TraceLogRepository,
+  ClickHouseService,
 } from '@novu/application-generic';
 import { NovuBridgeClient } from './novu-bridge-client';
 import { ConstructFrameworkWorkflow } from './usecases/construct-framework-workflow';
@@ -71,6 +76,11 @@ export const featureFlagsService = {
     LayoutVariablesSchemaUseCase,
     CreateVariablesObject,
     GetLayoutUseCase,
+    JobRepository,
+    ExecutionDetailsRepository,
+    TraceLogRepository,
+    ClickHouseService,
+    CreateExecutionDetails,
     featureFlagsService,
   ],
 })

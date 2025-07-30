@@ -59,4 +59,8 @@ export class CreateOrUpdateSubscriberCommand extends EnvironmentCommand {
   @IsOptional()
   @IsBoolean()
   allowUpdate?: boolean = true;
+
+  @IsOptional()
+  @IsBoolean()
+  failIfExists?: boolean = false;
 }

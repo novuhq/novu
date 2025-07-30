@@ -690,18 +690,30 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
+      const templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      const parsedTemplate = this.templateEngine.parse(templateString);
 
-      const compiledString = await this.templateEngine.render(templateString, {
+      const renderVariables = {
         payload: event.payload,
         subscriber: event.subscriber,
         steps: buildSteps(event.state),
-      });
+        t: {}, // Empty object so t.* properties are undefined and trigger default filters
+      };
+
+      const compiledString = await this.templateEngine.render(parsedTemplate, renderVariables);
 
       return JSON.parse(compiledString);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }
+  }
+
+  /**
+   * Preprocesses translation patterns to preserve them when values are undefined.
+   * Transforms {{t.key}} to {{t.key | default: "{{t.key}}"}}
+   */
+  private preprocessTranslationPatterns(template: string): string {
+    return template.replace(/\{\{\s*t\.(\w+(?:\.\w+)*)\s*\}\}/g, '{{ t.$1 | default: "{{t.$1}}" }}');
   }
 
   /**

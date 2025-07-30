@@ -49,6 +49,7 @@ export class LayoutSyncToEnvironmentUseCase {
 
     const externalId = sourceLayout.layoutId;
     const targetLayout = await this.findLayoutInTargetEnvironment(command, externalId);
+
     const layoutDto = await this.buildRequestDto(sourceLayout);
 
     const upsertedLayout = await this.upsertLayoutUseCase.execute(

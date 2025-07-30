@@ -24,10 +24,6 @@ export class RemoveIntegration {
         throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
       }
 
-      if (this.isBuiltInIntegration(existingIntegration)) {
-        throw new BadRequestException('Novu demo integration or In-App integration cannot be deleted');
-      }
-
       await this.invalidateCache.invalidateQuery({
         key: buildIntegrationKey().invalidate({
           _organizationId: command.organizationId,

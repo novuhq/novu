@@ -1,5 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsBoolean, IsOptional, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, IsNumber, Min, Max, IsArray, IsEnum, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ResourceTypeEnum } from '../types/sync.types';
+
+export class ResourceToPublishDto {
+  @ApiProperty({
+    description: 'Type of resource to publish',
+    enum: Object.values(ResourceTypeEnum),
+    enumName: 'ResourceTypeEnum',
+    example: ResourceTypeEnum.WORKFLOW,
+  })
+  @IsEnum(ResourceTypeEnum)
+  resourceType: ResourceTypeEnum;
+
+  @ApiProperty({
+    description: 'Unique identifier of the resource to publish',
+    example: 'workflow-id-1',
+  })
+  @IsString()
+  resourceId: string;
+}
 
 export class PublishEnvironmentRequestDto {
   @ApiPropertyOptional({
@@ -17,6 +37,20 @@ export class PublishEnvironmentRequestDto {
   @IsOptional()
   @IsBoolean()
   dryRun?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Array of specific resources to publish. If not provided, all resources will be published.',
+    type: [ResourceToPublishDto],
+    example: [
+      { resourceType: 'workflow', resourceId: 'workflow-id-1' },
+      { resourceType: 'layout', resourceId: 'layout-id-1' },
+    ],
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ResourceToPublishDto)
+  resources?: ResourceToPublishDto[];
 }
 
 export class SyncedWorkflowDto {

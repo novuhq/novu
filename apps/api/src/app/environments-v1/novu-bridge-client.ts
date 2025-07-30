@@ -47,6 +47,7 @@ export class NovuBridgeClient {
           controlValues: req.body.controls,
           action: req.query.action as PostActionEnum,
           skipLayoutRendering: req.query.skipLayoutRendering === 'true',
+          jobId: req.query.jobId ? (req.query.jobId as string) : undefined,
         })
       );
 

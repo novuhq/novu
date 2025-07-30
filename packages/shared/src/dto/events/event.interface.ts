@@ -15,9 +15,15 @@ export type TriggerOverrides = {
   steps?: Record<
     string,
     {
-      providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+      providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+      layoutId?: string | null;
     }
   >;
+  channels?: {
+    email?: {
+      layoutId?: string | null;
+    };
+  };
   email?: Record<string, unknown>;
   sms?: Record<string, unknown>;
   push?: Record<string, unknown>;

@@ -17,6 +17,8 @@ export function useCreateLayout(options?: UseMutationOptions<LayoutResponseDto, 
     onSuccess: async (data, variables, ctx) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id] });
 
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
+
       options?.onSuccess?.(data, variables, ctx);
     },
 

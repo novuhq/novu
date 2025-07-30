@@ -224,8 +224,12 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     // Integration events
     case 'integration_selected':
       return 'Integration selected';
+
+    // Layout events
     case 'layout_not_found':
       return 'Layout not found';
+    case 'layout_selected':
+      return 'Layout selected';
 
     // Tenant events
     case 'tenant_selected':
