@@ -181,10 +181,6 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
               variant={'tip'}
               title="Live environments are read-only"
               description={`Use them for staging, QA, previews. Great for safe reviews and testing!`}
-              ctaLabel="Learn more"
-              onCtaClick={() => {
-                window.open('https://docs.novu.co/platform/concepts/environments', '_blank');
-              }}
             />
           </div>
         </SheetMain>

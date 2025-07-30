@@ -55,23 +55,21 @@ const EnvironmentRowSkeleton = () => (
   </TableRow>
 );
 
-const EnvironmentSectionHeader = ({ title }: { title: string }) => (
+const EnvironmentSectionHeader = () => (
   <TableRow>
     <TableCell colSpan={4} className="px-3 py-1 bg-bg-weak">
       <div className="flex items-center gap-1 text-paragraph-2xs text-text-soft">
-        {title}
-        {title.toLowerCase().includes('live') && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-block cursor-help">
-                <RiInformation2Line className="size-3 text-foreground-400" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-xs">
-              Live environments are read only. Use them for staging, QA, previews. Great for safe reviews and testing!
-            </TooltipContent>
-          </Tooltip>
-        )}
+        Live Environments
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-block cursor-help">
+              <RiInformation2Line className="size-3 text-foreground-400" />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs">
+            Live environments are read only. Use them for staging, QA, previews. Great for safe reviews and testing!
+          </TooltipContent>
+        </Tooltip>
       </div>
     </TableCell>
   </TableRow>
@@ -201,7 +199,7 @@ export function EnvironmentsList({ environments, isLoading }: { environments: IE
               {groupedEnvironments.devEnvironments.map(renderEnvironmentRow)}
               {groupedEnvironments.liveEnvironments.length > 0 && (
                 <>
-                  <EnvironmentSectionHeader title="Live Environments" />
+                  <EnvironmentSectionHeader />
                   {groupedEnvironments.liveEnvironments.map(renderEnvironmentRow)}
                 </>
               )}
