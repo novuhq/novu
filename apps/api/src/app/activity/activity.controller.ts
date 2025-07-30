@@ -7,12 +7,15 @@ import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.
 import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-run.command';
+import { GetRequest } from './usecases/get-request/get-request.usecase';
+import { GetRequestCommand } from './usecases/get-request/get-request.command';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
 import { GetWorkflowRunsRequestDto } from './dtos/workflow-runs-request.dto';
 import { GetWorkflowRunsResponseDto } from './dtos/workflow-runs-response.dto';
 import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
+import { GetRequestResponseDto } from './dtos/get-request-traces.response.dto';
 
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -21,7 +24,8 @@ export class ActivityController {
   constructor(
     private getRequestsUsecase: GetRequests,
     private getWorkflowRunsUsecase: GetWorkflowRuns,
-    private getWorkflowRunUsecase: GetWorkflowRun
+    private getWorkflowRunUsecase: GetWorkflowRun,
+    private getRequestUsecase: GetRequest
   ) {}
 
   @Get('requests')
@@ -38,6 +42,22 @@ export class ActivityController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         createdGte: query.createdGte,
+      })
+    );
+  }
+
+  @Get('requests/:transactionId')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
+  @ExternalApiAccessible()
+  async getRequestTraces(
+    @UserSession() user,
+    @Param('transactionId') transactionId: string
+  ): Promise<GetRequestResponseDto> {
+    return this.getRequestUsecase.execute(
+      GetRequestCommand.create({
+        transactionId,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
       })
     );
   }

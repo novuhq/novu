@@ -15,6 +15,7 @@ import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 import { type ActivityFilters } from '@/api/activity';
 import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { WorkflowRunActivityDrawer } from './workflow-run-activity-drawer';
+import { ApiTracesContent } from './api-traces-content';
 
 type WorkflowRunsContentProps = {
   log: RequestLog;
@@ -126,12 +127,20 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
 
   return (
     <>
-      <Tabs defaultValue="workflow-runs" className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
+      <Tabs defaultValue="api-traces" className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
         <TabsList variant="regular" className="bg-bg-weak">
+          <TabsTrigger variant="regular" size="md" value="api-traces" className="h-[36px]">
+            API Traces
+          </TabsTrigger>
+          
           <TabsTrigger variant="regular" size="md" value="workflow-runs" className="h-[36px]">
             Workflow runs
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="api-traces" className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
+          <ApiTracesContent log={log} />
+        </TabsContent>
 
         <TabsContent value="workflow-runs" className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
           <div className="flex-none bg-white px-3 py-3 pb-2">
