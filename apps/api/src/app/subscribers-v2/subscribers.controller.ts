@@ -136,11 +136,15 @@ export class SubscribersController {
       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated`,
   })
   @ApiResponse(SubscriberResponseDto, 201)
+  @ApiResponse(SubscriberResponseDto, 409, false, false, {
+    description: 'Subscriber already exists (when query param failIfExists=true)',
+  })
   @SdkMethodName('create')
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async createSubscriber(
     @UserSession() user: UserSessionData,
-    @Body() body: CreateSubscriberRequestDto
+    @Body() body: CreateSubscriberRequestDto,
+    @Query('failIfExists') failIfExists?: boolean
   ): Promise<SubscriberResponseDto> {
     const subscriberEntity = await this.createOrUpdateSubscriberUsecase.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -160,6 +164,7 @@ export class SubscribersController {
          * TODO: In Subscriber V2 API endpoint we haven't added channels yet.
          * channels: body.channels || [],
          */
+        failIfExists,
       })
     );
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
 import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
@@ -22,6 +22,9 @@ export class CreateOrUpdateSubscriberUseCase {
   })
   async execute(command: CreateOrUpdateSubscriberCommand) {
     const persistedSubscriber = await this.getExistingSubscriber(command);
+    if (command.failIfExists && persistedSubscriber) {
+      throw new ConflictException(`Subscriber with id "${command.subscriberId}" already exists`);
+    }
 
     if (persistedSubscriber) {
       if (command.allowUpdate) {
