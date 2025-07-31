@@ -1,79 +1,131 @@
-import { useMemo } from 'react';
-import { RiLoader4Fill, RiCheckboxCircleFill, RiErrorWarningFill, RiAlertFill, RiTimeFill } from 'react-icons/ri';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { Badge } from '@/components/primitives/badge';
+import { RiCheckboxCircleFill, RiErrorWarningFill, RiLoader4Fill, RiTimeFill } from 'react-icons/ri';
 import { useFetchRequestTraces } from '@/hooks/use-fetch-request-traces';
-import { RequestLog, ApiTrace } from '../../types/logs';
-import { formatDistanceToNow } from 'date-fns';
+import type { ApiTrace, RequestLog } from '../../types/logs';
+import { formatDateSimple } from '../../utils/format-date';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '../primitives/hover-card';
+import { Skeleton } from '../primitives/skeleton';
+import { StatusBadge, StatusBadgeIcon } from '../primitives/status-badge';
+import { TimeDisplayHoverCard } from '../time-display-hover-card';
 
 type ApiTracesContentProps = {
   log: RequestLog;
 };
 
-function getStatusIcon(status: string) {
-  switch (status) {
+function mapTraceStatusToBadgeStatus(traceStatus: ApiTrace['status']) {
+  switch (traceStatus) {
     case 'success':
-      return <RiCheckboxCircleFill className="h-4 w-4 text-success" />;
+      return 'completed';
     case 'error':
-      return <RiErrorWarningFill className="h-4 w-4 text-destructive" />;
+      return 'failed';
     case 'warning':
-      return <RiAlertFill className="h-4 w-4 text-warning" />;
+      return 'pending';
     case 'pending':
-      return <RiTimeFill className="h-4 w-4 text-foreground-400" />;
+      return 'pending';
     default:
-      return <RiTimeFill className="h-4 w-4 text-foreground-400" />;
+      return 'disabled';
   }
 }
 
-function getStatusColor(status: string): "stroke" | "filled" | "light" | "lighter" | undefined {
+function getStatusIcon(status: ApiTrace['status']) {
   switch (status) {
     case 'success':
-      return 'filled';
+      return RiCheckboxCircleFill;
     case 'error':
-      return 'filled';
+      return RiErrorWarningFill;
     case 'warning':
-      return 'filled';
+      return RiTimeFill;
     case 'pending':
-      return 'light';
+      return RiLoader4Fill;
     default:
-      return 'light';
+      return RiCheckboxCircleFill;
   }
 }
 
-function TraceRow({ trace }: { trace: ApiTrace }) {
-  const createdAt = new Date(trace.createdAt);
-  const timeAgo = formatDistanceToNow(createdAt, { addSuffix: true });
+function formatRawData(rawData: string): string {
+  try {
+    return JSON.stringify(JSON.parse(rawData), null, 2);
+  } catch {
+    return rawData;
+  }
+}
+
+function TraceEventSkeleton() {
+  return (
+    <div className="flex items-center gap-2 w-full h-6">
+      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+        <Skeleton className="h-4 w-4 rounded-full" />
+      </div>
+      <div className="flex-1">
+        <div className="bg-white rounded flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div>
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+          <div>
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TraceEvent({ trace }: { trace: ApiTrace }) {
+  const badgeStatus = mapTraceStatusToBadgeStatus(trace.status);
+  const StatusIcon = getStatusIcon(trace.status);
 
   return (
-    <TableRow className="hover:bg-neutral-50">
-      <TableCell className="w-12">
-        {getStatusIcon(trace.status)}
-      </TableCell>
-      <TableCell className="font-medium">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm text-foreground-900">{trace.title}</span>
-          {trace.message && (
-            <span className="text-xs text-foreground-600 max-w-md truncate">{trace.message}</span>
-          )}
+    <div className="flex items-center gap-2 w-full h-6">
+      <div className="flex h-4 w-4 items-center justify-center rounded-full bg-white shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]">
+        <StatusBadge variant="stroke" status={badgeStatus} className="h-4 w-4 border-0 px-0 ring-0">
+          <StatusBadgeIcon as={StatusIcon} />
+        </StatusBadge>
+      </div>
+      <div className="flex-1">
+        <div className="bg-white rounded flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div>
+              {trace.rawData ? (
+                <HoverCard openDelay={200}>
+                  <HoverCardTrigger asChild>
+                    <p className="text-label-xs font-medium text-text-sub whitespace-pre border-b border-dotted border-text-sub cursor-help">
+                      {trace.title}
+                    </p>
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-96 max-h-80 overflow-auto">
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium text-text-strong">Raw Data</div>
+                      <pre className="text-xs bg-neutral-50 rounded p-2 overflow-auto font-mono text-text-sub">
+                        {formatRawData(trace.rawData)}
+                      </pre>
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
+              ) : (
+                <p className="text-label-xs font-medium text-text-sub whitespace-pre">{trace.title}</p>
+              )}
+            </div>
+          </div>
+          <div>
+            <TimeDisplayHoverCard
+              date={new Date(trace.createdAt)}
+              className="text-right text-text-soft text-[10px] font-code h-4"
+            >
+              {formatDateSimple(trace.createdAt, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false,
+              })}
+            </TimeDisplayHoverCard>
+          </div>
         </div>
-      </TableCell>
-      <TableCell>
-        <Badge variant={getStatusColor(trace.status)} size="sm" className="capitalize">
-          {trace.status}
-        </Badge>
-      </TableCell>
-      <TableCell className="text-sm text-foreground-600">
-        <span className="font-mono text-xs bg-neutral-100 px-2 py-1 rounded">
-          {trace.eventType}
-        </span>
-      </TableCell>
-      <TableCell className="text-xs text-foreground-500">
-        <div className="flex flex-col gap-0.5">
-          <span>{createdAt.toLocaleTimeString()}</span>
-          <span className="text-foreground-400">{timeAgo}</span>
-        </div>
-      </TableCell>
-    </TableRow>
+      </div>
+    </div>
   );
 }
 
@@ -84,7 +136,7 @@ export function ApiTracesContent({ log }: ApiTracesContentProps) {
     error,
   } = useFetchRequestTraces(
     {
-      requestId: log.transactionId!,
+      requestId: log.transactionId || '',
     },
     {
       refetchOnWindowFocus: false,
@@ -92,21 +144,17 @@ export function ApiTracesContent({ log }: ApiTracesContentProps) {
     }
   );
 
-
   const traces = requestTraces?.traces || [];
-  const totalTraces = traces.length;
 
-  console.log(requestTraces);
-
-  const statusCounts = useMemo(() => {
-    return traces.reduce(
-      (acc, trace) => {
-        acc[trace.status] = (acc[trace.status] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-1 p-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <TraceEventSkeleton key={index} />
+        ))}
+      </div>
     );
-  }, [traces]);
+  }
 
   if (error) {
     return (
@@ -116,81 +164,19 @@ export function ApiTracesContent({ log }: ApiTracesContentProps) {
     );
   }
 
-  return (
-    <div className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex-none bg-white px-3 py-3 pb-2">
-        <div className="flex w-full flex-row items-start justify-between">
-          <div className="flex w-full flex-col items-start gap-2 text-left">
-            <div className="flex flex-col justify-center text-[14px] tracking-[-0.084px] text-[#525866]">
-              <p className="leading-[20px] font-medium font-['Inter']">
-                <span className="text-[#525866]">{totalTraces}</span>
-                <span className="text-[#99a0ae]"> API traces found</span>
-              </p>
-            </div>
-            
-            {totalTraces > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(statusCounts).map(([status, count]) => (
-                  <div key={status} className="flex items-center gap-1.5">
-                    {getStatusIcon(status)}
-                    <span className="text-xs text-foreground-600 capitalize">
-                      {status}: {count}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+  if (traces.length === 0) {
+    return (
+      <div className="flex h-48 items-center justify-center">
+        <p className="text-foreground-600 text-sm">No traces available</p>
       </div>
+    );
+  }
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="min-h-full">
-          {isLoading ? (
-            <div className="p-3">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="mb-3 flex items-center gap-2 rounded-lg border border-neutral-100 p-3">
-                  <div className="h-4 w-4 animate-pulse rounded-full bg-neutral-200" />
-                  <div className="flex-1">
-                    <div className="mb-1 h-4 w-48 animate-pulse rounded bg-neutral-200" />
-                    <div className="h-3 w-32 animate-pulse rounded bg-neutral-200" />
-                  </div>
-                  <div className="h-3 w-16 animate-pulse rounded bg-neutral-200" />
-                  <div className="h-3 w-12 animate-pulse rounded bg-neutral-200" />
-                </div>
-              ))}
-            </div>
-          ) : traces.length === 0 ? (
-            <div className="flex h-48 items-center justify-center">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <p className="text-foreground-600 text-sm">No API traces found</p>
-                <p className="text-foreground-400 text-xs">
-                  This request doesn't have any associated trace events
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="p-3">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Status</TableHead>
-                    <TableHead>Event</TableHead>
-                    <TableHead className="w-24">Status</TableHead>
-                    <TableHead className="w-32">Type</TableHead>
-                    <TableHead className="w-24">Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {traces.map((trace) => (
-                    <TraceRow key={trace.id} trace={trace} />
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </div>
-      </div>
+  return (
+    <div className="flex flex-col gap-1 p-3">
+      {traces.map((trace) => (
+        <TraceEvent key={trace.id} trace={trace} />
+      ))}
     </div>
   );
-} 
+}

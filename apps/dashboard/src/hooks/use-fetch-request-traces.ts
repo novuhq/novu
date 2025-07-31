@@ -1,7 +1,7 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { getRequestTraces, GetRequestTracesParams } from '../api/logs';
-import { RequestTraces } from '../types/logs';
+import { type UseQueryOptions, useQuery } from '@tanstack/react-query';
+import { type GetRequestTracesParams, getRequestTraces } from '../api/logs';
 import { useEnvironment } from '../context/environment/hooks';
+import type { RequestTraces } from '../types/logs';
 
 interface UseFetchRequestTracesParams extends Omit<GetRequestTracesParams, 'environment'> {
   enabled?: boolean;
@@ -20,7 +20,7 @@ export function useFetchRequestTraces(
         environment: currentEnvironment!,
         ...params,
       }),
-    enabled: !!currentEnvironment && !!params.requestId && (params.enabled !== false),
+    enabled: !!currentEnvironment && !!params.requestId && params.enabled !== false,
     ...options,
   });
-} 
+}
