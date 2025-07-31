@@ -75,7 +75,8 @@
         "useAsConstAssertion": "error",
         "noCommonJs": "warn",
         "noNamespace": "warn",
-        "useConst": "warn"
+        "useConst": "warn",
+        "useImportType": "off"
       },
       "suspicious": {
         "noAsyncPromiseExecutor": "warn",
@@ -165,7 +166,8 @@
             "useHookAtTopLevel": "error"
           },
           "style": {
-            "useComponentExportOnlyModules": "warn"
+            "useComponentExportOnlyModules": "warn",
+            "useImportType": "error"
           },
           "suspicious": {
             "noExtraNonNullAssertion": "error",

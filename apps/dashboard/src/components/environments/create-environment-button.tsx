@@ -1,3 +1,9 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { type IEnvironment, PermissionsEnum } from '@novu/shared';
+import { type ComponentProps, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiAddLine, RiArrowRightSLine, RiDatabase2Line } from 'react-icons/ri';
+import { z } from 'zod';
 import { Button } from '@/components/primitives/button';
 import {
   Form,
@@ -9,6 +15,7 @@ import {
   FormMessage,
   FormRoot,
 } from '@/components/primitives/form/form';
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { Separator } from '@/components/primitives/separator';
 import {
   Sheet,
@@ -23,17 +30,11 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchEnvironments } from '@/context/environment/hooks';
 import { useCreateEnvironment } from '@/hooks/use-environments';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { IEnvironment, PermissionsEnum } from '@novu/shared';
-import { ComponentProps, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiAddLine, RiArrowRightSLine } from 'react-icons/ri';
-import { z } from 'zod';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { ColorPicker } from '../primitives/color-picker';
+import { InlineToast } from '../primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
-import { PermissionButton } from '@/components/primitives/permission-button';
 
 const ENVIRONMENT_COLORS = [
   '#FF6B6B', // Vibrant Coral
@@ -123,59 +124,65 @@ export const CreateEnvironmentButton = (props: CreateEnvironmentButtonProps) => 
       </PermissionButton>
 
       <SheetContent onOpenAutoFocus={(e) => e.preventDefault()}>
-        <SheetHeader>
-          <SheetTitle>Create environment</SheetTitle>
-          <div>
-            <SheetDescription>
-              Create a new environment to manage your notifications.{' '}
-              <ExternalLink href="https://docs.novu.co/platform/concepts/environments">Learn more</ExternalLink>
-            </SheetDescription>
-          </div>
+        <SheetHeader className="py-3.5 px-3">
+          <SheetTitle className="text-label-sm font-medium flex items-center gap-2">
+            <RiDatabase2Line /> Create live environment
+          </SheetTitle>
         </SheetHeader>
         <Separator />
-        <SheetMain>
-          <Form {...form}>
-            <FormRoot
-              id="create-environment"
-              autoComplete="off"
-              noValidate
-              onSubmit={form.handleSubmit(onSubmit)}
-              className="flex flex-col gap-4"
-            >
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Name</FormLabel>
-                    <FormControl>
-                      <FormInput
-                        {...field}
-                        autoFocus
-                        onChange={(e) => {
-                          field.onChange(e);
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel required>Color</FormLabel>
-                    <FormControl>
-                      <ColorPicker pureInput={false} value={field.value} onChange={field.onChange} />
-                    </FormControl>
-                    <FormMessage>Will be used to identify the environment in the UI.</FormMessage>
-                  </FormItem>
-                )}
-              />
-            </FormRoot>
-          </Form>
+        <SheetMain className="px-0">
+          <div className="px-3">
+            <Form {...form}>
+              <FormRoot
+                id="create-environment"
+                autoComplete="off"
+                noValidate
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex flex-col gap-4"
+              >
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Name</FormLabel>
+                      <FormControl>
+                        <FormInput
+                          {...field}
+                          autoFocus
+                          onChange={(e) => {
+                            field.onChange(e);
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel required>Color</FormLabel>
+                      <FormControl>
+                        <ColorPicker pureInput={false} value={field.value} onChange={field.onChange} />
+                      </FormControl>
+                      <FormMessage>Will be used to identify the environment in the UI.</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </FormRoot>
+            </Form>
+          </div>
+          <Separator className="my-[20px]" />
+          <div className="px-3">
+            <InlineToast
+              variant={'tip'}
+              title="Live environments are read-only"
+              description={`Use them for staging, QA, previews. Great for safe reviews and testing!`}
+            />
+          </div>
         </SheetMain>
         <Separator />
         <SheetFooter>
