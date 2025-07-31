@@ -1,13 +1,13 @@
-import { IsDefined, IsEnum, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 import {
   AddressingTypeEnum,
   StatelessControls,
-  TriggerRecipientsPayload,
+  TriggerOverrides,
   TriggerRecipientSubscriber,
+  TriggerRecipientsPayload,
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
-  TriggerOverrides,
 } from '@novu/shared';
+import { IsDefined, IsEnum, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 

@@ -1,11 +1,12 @@
+import { LogRepository, RequestLog } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
 import { getClientIp } from 'request-ip';
-import { LogRepository, RequestLog } from '@novu/application-generic';
 import { sanitizePayload } from '../../../utils/payload-sanitizer';
-import { generateTransactionId } from '../helpers';
+import { RequestWithTransactionId } from '../middleware/transaction-id.middleware';
+import { getRequestTransactionId } from './request-transaction.util';
 
 export function buildLog(
-  req: any,
+  req: RequestWithTransactionId,
   statusCode: number,
   data: any,
   user: UserSessionData | null,
@@ -22,7 +23,7 @@ export function buildLog(
     hostname: req.hostname,
     status_code: statusCode,
     method: req.method,
-    transaction_id: generateTransactionId(),
+    transaction_id: getRequestTransactionId(req),
     ip: getClientIp(req) || '',
     user_agent: req.headers['user-agent'] || '',
     request_body: sanitizePayload(req.body),

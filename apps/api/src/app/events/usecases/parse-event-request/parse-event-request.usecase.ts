@@ -1,5 +1,7 @@
+import { randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import type { EventType, Trace } from '@novu/application-generic';
 import {
   ExecuteBridgeRequest,
   ExecuteBridgeRequestCommand,
@@ -9,13 +11,12 @@ import {
   InstrumentUsecase,
   IWorkflowDataDto,
   LogRepository,
+  mapEventTypeToTitle,
   PinoLogger,
   StorageHelperService,
   TraceLogRepository,
   WorkflowQueueService,
-  mapEventTypeToTitle,
 } from '@novu/application-generic';
-import type { Trace, EventType } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -33,17 +34,15 @@ import { DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal'
 import {
   FeatureFlagsKeysEnum,
   ReservedVariablesMap,
+  ResourceOriginEnum,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
   TriggerRecipientsPayload,
-  ResourceOriginEnum,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
-import { randomBytes } from 'crypto';
-import { merge } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
-import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
+import { merge } from 'lodash';
+import { GetRequestContext } from '../../../shared/services/get-request-context';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
@@ -52,7 +51,6 @@ import {
   ParseEventRequestCommand,
   ParseEventRequestMulticastCommand,
 } from './parse-event-request.command';
-import { generateTransactionId } from '../../../shared/helpers';
 
 @Injectable()
 export class ParseEventRequest {
@@ -69,14 +67,15 @@ export class ParseEventRequest {
     private logger: PinoLogger,
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private getRequestContext: GetRequestContext
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
-    const transactionId = command.transactionId || generateTransactionId();
+    const transactionId = this.getRequestContext.getTransactionId();
 
     await this.createRequestTrace(command, 'request_received', transactionId, 'success', 'Event request received');
 
