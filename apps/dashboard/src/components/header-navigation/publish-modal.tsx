@@ -1,29 +1,28 @@
-import { useState, useEffect } from 'react';
+import type { IEnvironment } from '@novu/shared';
+import { useEffect, useState } from 'react';
 import {
-  RiAlertFill,
-  RiRouteFill,
-  RiDashboardLine,
-  RiLinkUnlinkM,
-  RiContractUpDownLine,
-  RiExpandUpDownLine,
   RiAddBoxLine,
+  RiAlertFill,
+  RiContractUpDownLine,
+  RiDashboardLine,
   RiDeleteBin2Line,
+  RiExpandUpDownLine,
   RiGitCommitFill,
+  RiLinkUnlinkM,
+  RiRouteFill,
 } from 'react-icons/ri';
-import { Dialog, DialogContent } from '../primitives/dialog';
-import { Button } from '../primitives/button';
-import { Badge, BadgeIcon } from '../primitives/badge';
-import { Checkbox } from '../primitives/checkbox';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
+import type { IResourceDependency, IResourceDiffResult, ResourceToPublish } from '@/api/environments';
 import { useDiffEnvironments } from '@/hooks/use-environments';
 import { useResourceDependencies } from '@/hooks/use-resource-dependencies';
 import { formatDateSimple } from '@/utils/format-date';
-import type { IEnvironment } from '@novu/shared';
-import type { IResourceDiffResult, IResourceDependency } from '@/api/environments';
-import type { ResourceToPublish } from '@/api/environments';
-import { WorkflowHoverCard } from './workflow-hover-card';
+import { Badge, BadgeIcon } from '../primitives/badge';
+import { Button } from '../primitives/button';
+import { Checkbox } from '../primitives/checkbox';
+import { Collapsible, CollapsibleContent } from '../primitives/collapsible';
+import { Dialog, DialogContent } from '../primitives/dialog';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { LayoutUsageIndicator } from './layout-usage-indicator';
+import { WorkflowHoverCard } from './workflow-hover-card';
 
 type PublishModalProps = {
   isOpen: boolean;
@@ -275,7 +274,7 @@ function ResourceGroupCompact({
         <CollapsibleContent>
           {count > 0 && (
             <div className="rounded-md border border-gray-200 bg-white">
-              <div className="divide-y divide-gray-100">{children}</div>
+              <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">{children}</div>
             </div>
           )}
         </CollapsibleContent>
