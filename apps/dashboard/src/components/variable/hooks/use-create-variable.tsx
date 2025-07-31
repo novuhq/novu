@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react';
 import { RiListView } from 'react-icons/ri';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
-import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import { Button } from '@/components/primitives/button';
 import { ToastIcon } from '@/components/primitives/sonner';
+import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
 import type { JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 
 export const useCreateVariable = () => {
   const { workflow } = useWorkflow();

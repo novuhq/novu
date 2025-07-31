@@ -1,14 +1,14 @@
-import { HTMLAttributes, ReactNode } from 'react';
-import { UserProfile } from '@/components/user-profile';
-import { InboxButton } from '@/components/inbox-button';
-import { CustomerSupportButton } from './customer-support-button';
-import { EditBridgeUrlButton } from './edit-bridge-url-button';
-import { PublishButton } from './publish-button';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { HTMLAttributes, ReactNode } from 'react';
+import { InboxButton } from '@/components/inbox-button';
+import { UserProfile } from '@/components/user-profile';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '@/utils/ui';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useHasPermission } from '../../hooks/use-has-permission';
+import { CustomerSupportButton } from './customer-support-button';
+import { EditBridgeUrlButton } from './edit-bridge-url-button';
+import { PublishButton } from './publish-button';
 
 type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;

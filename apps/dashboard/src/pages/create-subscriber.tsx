@@ -1,11 +1,11 @@
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { RiGroup2Line, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ExternalToast } from 'sonner';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-
+import { NovuApiError } from '@/api/api.client';
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Separator } from '@/components/primitives/separator';
@@ -13,6 +13,7 @@ import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetMain } from '@/comp
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { CreateSubscriberForm } from '@/components/subscribers/create-subscriber-form';
 import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
+import { CreateSubscriberFormSchema } from '@/components/subscribers/schema';
 import TruncatedText from '@/components/truncated-text';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useCreateSubscriber } from '@/hooks/use-create-subscriber';
@@ -21,9 +22,7 @@ import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { CreateSubscriberFormSchema } from '@/components/subscribers/schema';
 import { generateUUID } from '@/utils/uuid';
-import { NovuApiError } from '@/api/api.client';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',

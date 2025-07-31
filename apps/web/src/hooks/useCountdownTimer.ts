@@ -26,14 +26,12 @@ export const useCountdownTimer = ({
     if (timeRemaining <= minimumTimeSeconds) {
       interval.stop();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRemaining]);
 
   useEffect(() => {
     return () => {
       interval.stop();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   /**

@@ -1,9 +1,8 @@
-/* eslint-disable global-require */
-import { expect } from 'chai';
-import { CommunityOrganizationRepository, EnvironmentRepository, NotificationRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
 import { MockCacheService, PinoLogger } from '@novu/application-generic';
+import { CommunityOrganizationRepository, EnvironmentRepository, NotificationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, isClerkEnabled } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('GetPlatformNotificationUsage #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');

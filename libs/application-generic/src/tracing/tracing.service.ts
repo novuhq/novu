@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Inject, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { initializeOtelSdk } from './tracing';
 
@@ -14,7 +9,7 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
   constructor(
     @Inject('TRACING_SERVICE_NAME') private readonly serviceName: string,
     @Inject('TRACING_SERVICE_VERSION') private readonly version: string,
-    @Inject('TRACING_ENABLE_OTEL') private readonly otelEnabled: boolean,
+    @Inject('TRACING_ENABLE_OTEL') private readonly otelEnabled: boolean
   ) {}
 
   async onModuleDestroy() {

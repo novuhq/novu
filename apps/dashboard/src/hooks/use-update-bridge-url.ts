@@ -1,5 +1,5 @@
-import { updateBridgeUrl } from '@/api/environments';
 import { useMutation } from '@tanstack/react-query';
+import { updateBridgeUrl } from '@/api/environments';
 import { useEnvironment } from '@/context/environment/hooks';
 
 export const useUpdateBridgeUrl = () => {

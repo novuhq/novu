@@ -1,45 +1,41 @@
 export type {
-  FiltersCountResponse,
-  ListNotificationsResponse,
-  NovuError,
-  Preference,
-  PreferencesResponse,
   ChannelPreference,
-  Notification,
   ChannelType,
-  InboxNotification,
-  NotificationFilter,
-  NotificationStatus,
-  NovuOptions,
-  PreferenceLevel,
-  WebSocketEvent,
   EventHandler,
   Events,
+  FiltersCountResponse,
+  InboxNotification,
+  ListNotificationsResponse,
+  Notification,
+  NotificationFilter,
+  NotificationStatus,
+  NovuError,
+  NovuOptions,
+  Preference,
+  PreferenceLevel,
+  PreferencesResponse,
   SocketEventNames,
+  WebSocketEvent,
 } from '@novu/js';
 
 export type {
   Appearance,
   AppearanceKey,
-  Elements,
   ElementStyles,
+  Elements,
   Localization,
   LocalizationKey,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
-  PreferencesFilter,
   PreferenceGroups,
+  PreferencesFilter,
   RouterPush,
   Tab,
   Variables,
 } from '@novu/js/ui';
-
-export { Inbox, Bell, InboxContent, Notifications, NovuProvider, Preferences } from './components';
-export { useNovu, useCounts, useNotifications, usePreferences } from './hooks';
-
-export type { InboxProps, BellProps, InboxContentProps, NotificationProps, NovuProviderProps } from './components';
-
+export type { BellProps, InboxContentProps, InboxProps, NotificationProps, NovuProviderProps } from './components';
+export { Bell, Inbox, InboxContent, Notifications, NovuProvider, Preferences } from './components';
 export type {
   UseCountsProps,
   UseCountsResult,
@@ -48,17 +44,18 @@ export type {
   UsePreferencesProps,
   UsePreferencesResult,
 } from './hooks';
+export { useCounts, useNotifications, useNovu, usePreferences } from './hooks';
 
 export type {
-  NotificationsRenderer,
-  SubjectRenderer,
-  BodyRenderer,
-  BellRenderer,
-  DefaultInboxProps,
   BaseProps,
-  NotificationRendererProps,
-  SubjectBodyRendererProps,
-  NoRendererProps,
+  BellRenderer,
+  BodyRenderer,
+  DefaultInboxProps,
   DefaultProps,
+  NoRendererProps,
+  NotificationRendererProps,
+  NotificationsRenderer,
+  SubjectBodyRendererProps,
+  SubjectRenderer,
   WithChildrenProps,
 } from './utils/types';

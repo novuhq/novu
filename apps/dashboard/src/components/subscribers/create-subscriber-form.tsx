@@ -1,18 +1,18 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 import { useFormContext } from 'react-hook-form';
 import { RiCloseCircleLine, RiMailLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { CompactButton } from '../primitives/button-compact';
 import { Editor } from '../primitives/editor';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../primitives/form/form';
 import { InlineToast } from '../primitives/inline-toast';
 import { Input, InputRoot } from '../primitives/input';
+import { LocaleSelect } from '../primitives/locale-select';
 import { PhoneInput } from '../primitives/phone-input';
 import { Separator } from '../primitives/separator';
-import { LocaleSelect } from '../primitives/locale-select';
 import { CreateSubscriberFormSchema } from './schema';
 import { TimezoneSelect } from './timezone-select';
 

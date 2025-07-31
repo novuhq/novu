@@ -1,14 +1,14 @@
 export type { Notification } from '../notifications';
 export type { InboxPage, InboxProps } from './components';
-export { NovuUI } from './novuUI';
 export type { BaseNovuUIOptions, NovuUIOptions } from './novuUI';
+export { NovuUI } from './novuUI';
 export {
   Appearance,
   AppearanceKey,
   BellRenderer,
   BodyRenderer,
-  Elements,
   ElementStyles,
+  Elements,
   IconKey,
   IconOverrides,
   IconRenderer,
@@ -19,8 +19,8 @@ export {
   NotificationRenderer,
   NotificationStatus,
   NovuProviderProps,
-  PreferencesFilter,
   PreferenceGroups,
+  PreferencesFilter,
   RouterPush,
   SubjectRenderer,
   Tab,

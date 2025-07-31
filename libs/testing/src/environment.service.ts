@@ -1,5 +1,5 @@
 import { faker } from '@faker-js/faker';
-import { EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { IApiRateLimitMaximum } from '@novu/shared';
 import { createHash } from 'crypto';
 import { v4 as uuid } from 'uuid';

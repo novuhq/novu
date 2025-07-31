@@ -1,7 +1,7 @@
-import { expect } from 'chai';
-import { UserSession, WorkflowOverrideService } from '@novu/testing';
-import { IWorkflowOverride } from '@novu/shared';
 import { TenantRepository } from '@novu/dal';
+import { IWorkflowOverride } from '@novu/shared';
+import { UserSession, WorkflowOverrideService } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (GET) #novu-v0', async () => {
   let session: UserSession;
@@ -12,7 +12,7 @@ describe('Get workflow override - /workflow-overrides/workflows/:workflowId/tena
     await session.initialize();
   });
 
-  it('should return the workflow override', async function () {
+  it('should return the workflow override', async () => {
     const workflowOverrideService = new WorkflowOverrideService({
       organizationId: session.organization._id,
       environmentId: session.environment._id,

@@ -1,13 +1,13 @@
 import '../../src/config';
+import { NestFactory } from '@nestjs/core';
 import {
-  OrganizationRepository,
-  EnvironmentRepository,
-  IntegrationRepository,
   ChannelTypeEnum,
   EnvironmentEntity,
+  EnvironmentRepository,
+  IntegrationRepository,
+  OrganizationRepository,
 } from '@novu/dal';
 import { EmailProviderIdEnum, SmsProviderIdEnum, slugify } from '@novu/shared';
-import { NestFactory } from '@nestjs/core';
 import shortid from 'shortid';
 import { AppModule } from '../../src/app.module';
 
@@ -59,10 +59,8 @@ export async function createNovuIntegrations() {
     logger: false,
   });
 
-  // eslint-disable-next-line no-console
   console.log('start migration - novu integrations');
 
-  // eslint-disable-next-line no-console
   console.log('get organizations and its environments');
 
   const organizations = await organizationRepository.find({});
@@ -83,7 +81,6 @@ export async function createNovuIntegrations() {
     console.log(`Processed organization${organization._id}`);
   }
 
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }
 

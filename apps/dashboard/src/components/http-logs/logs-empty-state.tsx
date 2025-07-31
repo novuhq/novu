@@ -1,8 +1,8 @@
-import { LinkButton } from '@/components/primitives/button-link';
 import { RiAddCircleLine, RiBookMarkedLine } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
-import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
+import { LinkButton } from '@/components/primitives/button-link';
 import { Button } from '../primitives/button';
+import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 
 export const RequestLogsEmptyState = () => {
   const navigate = useNavigate();

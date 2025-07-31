@@ -1,7 +1,4 @@
-/* eslint-disable no-restricted-imports */
-
 import { applyDecorators } from '@nestjs/common';
-// eslint-disable-next-line import/no-namespace
 import * as nestSwagger from '@nestjs/swagger';
 import { ApiResponseOptions } from '@nestjs/swagger';
 import type { ApiResponseDecoratorName } from '@novu/application-generic';

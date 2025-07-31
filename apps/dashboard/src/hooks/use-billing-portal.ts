@@ -1,9 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { get } from '../api/api.client';
 import { TelemetryEvent } from '../utils/telemetry';
 import { useTelemetry } from './use-telemetry';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 export function useBillingPortal(billingInterval?: 'month' | 'year') {
   const track = useTelemetry();

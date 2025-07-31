@@ -7,7 +7,10 @@ export const useArchiveAll = (props?: { onSuccess?: () => void; onError?: (err: 
   const archiveAll = async ({
     tags,
     data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}) => {
+  }: {
+    tags?: NotificationFilter['tags'];
+    data?: Record<string, unknown>;
+  } = {}) => {
     try {
       await novu.notifications.archiveAll({ tags, data });
       props?.onSuccess?.();

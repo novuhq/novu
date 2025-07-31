@@ -1,5 +1,5 @@
-import { CheckIntegrationResponseEnum } from '@/api/integrations';
 import * as Sentry from '@sentry/react';
+import { CheckIntegrationResponseEnum } from '@/api/integrations';
 import { showErrorToast } from '../../../../components/primitives/sonner-helpers';
 
 export function handleIntegrationError(error: any, operation: 'update' | 'create' | 'delete') {

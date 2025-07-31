@@ -1,12 +1,12 @@
+import { HTMLAttributes, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiLoader4Line } from 'react-icons/ri';
+import { ActivityFilters } from '@/api/activity';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
 import { cn } from '@/utils/ui';
-import { HTMLAttributes, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiLoader4Line } from 'react-icons/ri';
 import { defaultWorkflowRunsFilter } from './hooks/use-workflow-runs-url-state';
-import { ActivityFilters } from '@/api/activity';
 
 export type WorkflowRunsFiltersProps = HTMLAttributes<HTMLDivElement> & {
   onFiltersChange: (filter: ActivityFilters) => void;

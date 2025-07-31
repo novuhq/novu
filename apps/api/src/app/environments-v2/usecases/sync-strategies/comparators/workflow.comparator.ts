@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Instrument, PinoLogger } from '@novu/application-generic';
-import { diff } from 'deep-object-diff';
-import { UserSessionData } from '@novu/shared';
-import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { ModuleRef } from '@nestjs/core';
-import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../workflows-v2/usecases/get-workflow';
+import { Instrument, PinoLogger } from '@novu/application-generic';
+import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
+import { diff } from 'deep-object-diff';
+import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
+import { DiffActionEnum, IResourceDiff, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
-import { IWorkflowComparison, INormalizedStep, INormalizedWorkflow } from '../types/workflow-sync.types';
-import { IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowRepositoryService } from '../operations/workflow-repository.service';
+import { INormalizedStep, INormalizedWorkflow, IWorkflowComparison } from '../types/workflow-sync.types';
 
 @Injectable()
 export class WorkflowComparator {
@@ -97,7 +97,6 @@ export class WorkflowComparator {
   ): Promise<IResourceDiff[]> {
     try {
       // Use the new DiffTranslationGroups use case from the translation module
-      // eslint-disable-next-line global-require
       const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
         strict: false,
       });

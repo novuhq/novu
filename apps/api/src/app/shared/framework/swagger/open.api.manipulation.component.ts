@@ -1,7 +1,7 @@
-import Nimma from 'nimma';
 import { OpenAPIObject } from '@nestjs/swagger';
-import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { OperationObject, PathItemObject, PathsObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
+import Nimma from 'nimma';
 
 const jpath = '$.paths..responses["200","201"].content["application/json"]';
 
@@ -32,7 +32,6 @@ function liftDataProperty(scope) {
     return;
   }
 
-  // eslint-disable-next-line no-param-reassign
   scope.value.schema = data;
 }
 
@@ -43,10 +42,8 @@ export function removeEndpointsWithoutApiKey<T>(openApiDocument: T): T {
     throw new Error('Invalid OpenAPI document');
   }
 
-  // eslint-disable-next-line guard-for-in
   for (const path in parsedDocument.paths) {
     const operations = parsedDocument.paths[path];
-    // eslint-disable-next-line guard-for-in
     for (const method in operations) {
       const operation = operations[method];
       if (operation.security) {

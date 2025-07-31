@@ -1,12 +1,6 @@
-import React from 'react';
-import { OrganizationSwitcher } from './organization-switcher';
-import { UserButton } from './user-button';
-import { OrganizationContextProvider, useOrganization } from './organization.resource';
-import { UserContextProvider, useUser } from './user.resource';
-import { AuthContextProvider, useAuth } from './auth.resource';
 import { IOrganizationEntity } from '@novu/shared';
-import { getJwtToken, isJwtValid } from './jwt-manager';
-
+import React from 'react';
+import { AuthContextProvider, useAuth } from './auth.resource';
 import {
   OrganizationList,
   OrganizationProfile,
@@ -17,6 +11,11 @@ import {
   SignUp,
   UserProfile,
 } from './components';
+import { getJwtToken, isJwtValid } from './jwt-manager';
+import { OrganizationContextProvider, useOrganization } from './organization.resource';
+import { OrganizationSwitcher } from './organization-switcher';
+import { UserContextProvider, useUser } from './user.resource';
+import { UserButton } from './user-button';
 
 export {
   OrganizationSwitcher,
@@ -33,7 +32,6 @@ export {
   SignedOut,
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export { useOrganization, useUser, useAuth };
 
 export const useOrganizationList = () => {
@@ -69,7 +67,6 @@ export function ClerkProvider({ children }: any) {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).Clerk = {
   loggedIn: isJwtValid(getJwtToken()),
   session: {

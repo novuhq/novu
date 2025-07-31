@@ -1,9 +1,9 @@
-import { PinoLogger, Instrument } from '@novu/application-generic';
+import { Instrument, PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { DiffResultBuilder } from '../../builders/diff-result.builder';
-import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum, IUserInfo } from '../../../../types/sync.types';
-import { IBaseRepositoryService, IBaseComparator } from '../interfaces';
 import { capitalize } from '../../../../../shared/services/helper/helper.service';
+import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../../types/sync.types';
+import { DiffResultBuilder } from '../../builders/diff-result.builder';
+import { IBaseComparator, IBaseRepositoryService } from '../interfaces';
 
 export abstract class BaseDiffOperation<T> {
   private static readonly BATCH_SIZE = 10;

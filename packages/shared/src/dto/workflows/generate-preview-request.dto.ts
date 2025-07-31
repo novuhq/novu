@@ -6,7 +6,6 @@ export enum ValidationStrategyEnum {
 }
 
 // Interface for Generate Preview Request DTO
-// eslint-disable-next-line @typescript-eslint/naming-convention
 interface GeneratePreviewRequestDto {
   controlValues?: Record<string, unknown>; // Optional control values
   previewPayload?: PreviewPayload; // Optional payload values

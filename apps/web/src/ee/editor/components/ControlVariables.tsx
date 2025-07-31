@@ -11,7 +11,6 @@ export const ControlVariables = ({ schema = {}, onChange = (values) => {}, defau
       return;
     }
     onChange(values);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values]);
 
   return (

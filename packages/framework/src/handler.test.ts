@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeEach, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from './client';
 import { NovuRequestHandler } from './handler';

@@ -1,7 +1,7 @@
-import { ActivityFiltersData } from '@/types/activity';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
+import { ActivityFiltersData } from '@/types/activity';
 import { StatusBadgeProps } from '../primitives/status-badge';
 
 export const STATUS_STYLES = {

@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   EnvironmentEntity,
@@ -8,11 +9,9 @@ import {
   TopicRepository,
   UserEntity,
 } from '@novu/dal';
-import { FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum, VALID_ID_REGEX } from '@novu/shared';
-import { CreateTopicCommand } from './create-topic.command';
-
 import { TopicDto } from '../../dtos/topic.dto';
+import { CreateTopicCommand } from './create-topic.command';
 
 @Injectable()
 export class CreateTopicUseCase {

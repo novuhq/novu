@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace Clerk {
   export const session: {
     getToken: () => Promise<string | null>;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
 import { JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-import { getJobDigest, InstrumentUsecase } from '@novu/application-generic';
 
 import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEvents } from './get-digest-events.usecase';

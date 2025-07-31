@@ -1,10 +1,12 @@
-import { plainToInstance } from 'class-transformer';
-import { validateSync, ValidationError } from 'class-validator';
 import { BadRequestException } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
+import { ValidationError, validateSync } from 'class-validator';
 
+// biome-ignore lint/complexity/noStaticOnlyClass: Base class pattern for command validation
 export abstract class BaseCommand {
   static create<T extends BaseCommand>(this: new (...args: unknown[]) => T, data: T): T {
+    // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
     const convertedObject = plainToInstance<T, unknown>(this, {
       ...data,
     });
@@ -12,6 +14,7 @@ export abstract class BaseCommand {
     const errors = validateSync(convertedObject);
     const flattenedErrors = flattenErrors(errors);
     if (Object.keys(flattenedErrors).length > 0) {
+      // biome-ignore lint/complexity/noThisInStatic: Biome linter is configured to newer JS/TS version than the compiler
       throw new CommandValidationException(this.name, flattenedErrors);
     }
 

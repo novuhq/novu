@@ -1,7 +1,7 @@
 import { PropsWithChildren } from 'react';
 import { IconContext } from 'react-icons';
-import { DEFAULT_ICON_SIZE } from './Icon.const';
 import { css } from '../../styled-system/css';
+import { DEFAULT_ICON_SIZE } from './Icon.const';
 
 const iconClassName = css({
   verticalAlign: 'middle',

@@ -1,16 +1,16 @@
-import { ActivityFilters } from '@/api/activity';
-import { defaultActivityFilters } from '@/components/activity/constants';
-import { Button } from '@/components/primitives/button';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { cn } from '@/utils/ui';
+import { PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo } from 'react';
 import { RiCloseCircleLine, RiPlayCircleLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { ExternalLink } from '../shared/external-link';
-import { PermissionsEnum } from '@novu/shared';
+import { ActivityFilters } from '@/api/activity';
+import { defaultActivityFilters } from '@/components/activity/constants';
+import { Button } from '@/components/primitives/button';
+import { useEnvironment } from '@/context/environment/hooks';
 import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { ExternalLink } from '../shared/external-link';
 
 interface ActivityEmptyStateProps {
   className?: string;

@@ -1,12 +1,11 @@
 import { EnvironmentId, ITenantDefine, OrganizationId, StepTypeEnum } from '../../types';
+import { INotificationTemplateStep } from '../notification-template';
 import { IWorkflowStepMetadata } from '../step';
 import { JobStatusEnum } from './status.enum';
-import { INotificationTemplateStep } from '../notification-template';
 
 export interface IJob {
   _id: string;
   identifier: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload: any;
 
   overrides: Record<string, Record<string, unknown>>;
@@ -23,13 +22,11 @@ export interface IJob {
   delay?: number;
   _parentId?: string;
   status: JobStatusEnum;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   error?: any;
   createdAt: string;
   updatedAt: string;
   _templateId: string;
   digest?: IWorkflowStepMetadata & {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     events?: any[];
   };
   type?: StepTypeEnum;

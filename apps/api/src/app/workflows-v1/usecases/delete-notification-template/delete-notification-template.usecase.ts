@@ -1,11 +1,10 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { AnalyticsService, CreateChange, CreateChangeCommand } from '@novu/application-generic';
 import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { AnalyticsService, CreateChange, CreateChangeCommand } from '@novu/application-generic';
-
-import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
 import { DeleteWorkflowCommand } from '../delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../delete-workflow/delete-workflow.usecase';
+import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
 
 /**
  * @deprecated

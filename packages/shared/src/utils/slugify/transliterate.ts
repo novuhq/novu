@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-
 import { builtinReplacements } from './builtinReplacements';
 
 const matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;

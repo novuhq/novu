@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
-import { MODE, SENTRY_DSN } from '@/config';
+import { useEffect } from 'react';
 import { createRoutesFromChildren, matchRoutes, useLocation, useNavigationType } from 'react-router-dom';
+import { MODE, SENTRY_DSN } from '@/config';
 
 export const initializeSentry = () => {
   if (SENTRY_DSN) {

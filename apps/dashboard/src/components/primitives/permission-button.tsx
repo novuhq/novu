@@ -1,8 +1,8 @@
-import { Button, ButtonProps } from '@/components/primitives/button';
 import { PermissionsEnum } from '@novu/shared';
 import { ReactNode } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { Button, ButtonProps } from '@/components/primitives/button';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 export interface PermissionButtonProps extends ButtonProps {
   /** The permission required to access this button functionality */
@@ -33,7 +33,12 @@ export const PermissionButton = ({
   const defaultTooltipContent = (
     <>
       Almost there! Your role just doesn't have permission for this one.{' '}
-      <a href="https://docs.novu.co/platform/account/roles-and-permissions" target="_blank" className="underline">
+      <a
+        href="https://docs.novu.co/platform/account/roles-and-permissions"
+        target="_blank"
+        className="underline"
+        rel="noopener"
+      >
         Learn More ↗
       </a>
     </>

@@ -1,7 +1,7 @@
 import { FactoryProvider } from '@nestjs/common';
 import { PATH_METADATA } from '@nestjs/common/constants';
+import { NOVU_OPTIONS, REGISTER_API_PATH } from './nest.constants';
 import { NovuController } from './nest.controller';
-import { REGISTER_API_PATH, NOVU_OPTIONS } from './nest.constants';
 import { OPTIONS_TYPE } from './nest.module-definition';
 
 /**

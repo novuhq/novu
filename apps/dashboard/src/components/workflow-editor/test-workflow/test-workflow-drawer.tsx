@@ -1,36 +1,35 @@
-import { forwardRef, useMemo, useState, useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { type WorkflowTestDataResponseDto, type ISubscriberResponseDto, PermissionsEnum } from '@novu/shared';
-
+import { type ISubscriberResponseDto, PermissionsEnum, type WorkflowTestDataResponseDto } from '@novu/shared';
+import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiArrowDownSLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
+import * as z from 'zod';
 import { Button } from '@/components/primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
-import { Form, FormRoot } from '@/components/primitives/form/form';
-import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
-import { VisuallyHidden } from '@/components/primitives/visually-hidden';
-import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
-import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
-import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
-import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
-import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
-import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
-import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
-import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { useAuth } from '@/context/auth/hooks';
-import { useWorkflow } from '../workflow-provider';
-import { RiPlayCircleLine, RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
-import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
-import { useEnvironment } from '../../../context/environment/hooks';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
+import { Form, FormRoot } from '@/components/primitives/form/form';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
+import { showErrorToast, showToast } from '@/components/primitives/sonner-helpers';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
+import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
+import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
+import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
+import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
 import { API_HOSTNAME } from '@/config';
-import * as z from 'zod';
+import { useAuth } from '@/context/auth/hooks';
+import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
+import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
+import { useEnvironment } from '../../../context/environment/hooks';
+import { useWorkflow } from '../workflow-provider';
 
 type TestWorkflowDrawerProps = {
   isOpen: boolean;

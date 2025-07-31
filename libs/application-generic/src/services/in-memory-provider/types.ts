@@ -1,11 +1,4 @@
-import {
-  ChainableCommander,
-  Cluster,
-  ClusterOptions,
-  Redis,
-  RedisOptions,
-  ScanStream,
-} from 'ioredis';
+import { ChainableCommander, Cluster, ClusterOptions, Redis, RedisOptions, ScanStream } from 'ioredis';
 
 export { Cluster, ClusterOptions, Redis, RedisOptions, ScanStream };
 

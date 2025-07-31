@@ -1,4 +1,4 @@
-import { expect } from 'chai';
+import { ContentService } from '@novu/application-generic';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
@@ -6,15 +6,15 @@ import {
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   FilterPartTypeEnum,
+  INotificationTemplateStep,
   StepTypeEnum,
   TriggerContextTypeEnum,
-  INotificationTemplateStep,
 } from '@novu/shared';
-import { ContentService } from '@novu/application-generic';
+import { expect } from 'chai';
 
-describe('ContentService', function () {
-  describe('replaceVariables', function () {
-    it('should replace duplicates entries', function () {
+describe('ContentService', () => {
+  describe('replaceVariables', () => {
+    it('should replace duplicates entries', () => {
       const variables = {
         firstName: 'Name',
         lastName: 'Last Name',
@@ -28,7 +28,7 @@ describe('ContentService', function () {
       expect(modified).to.equal('Name is the first Name of Name');
     });
 
-    it('should replace multiple variables', function () {
+    it('should replace multiple variables', () => {
       const variables = {
         firstName: 'Name',
         $last_name: 'Last Name',
@@ -42,7 +42,7 @@ describe('ContentService', function () {
       expect(modified).to.equal('Name is the first Last Name of Name');
     });
 
-    it('should not manipulate variables for text without them', function () {
+    it('should not manipulate variables for text without them', () => {
       const variables = {
         firstName: 'Name',
         lastName: 'Last Name',
@@ -54,8 +54,8 @@ describe('ContentService', function () {
     });
   });
 
-  describe('extractVariables', function () {
-    it('should not find any variables', function () {
+  describe('extractVariables', () => {
+    it('should not find any variables', () => {
       const contentService = new ContentService();
       try {
         contentService.extractVariables('This is a text without variables {{ invalid }} {{ not valid{ {var}}');
@@ -65,7 +65,7 @@ describe('ContentService', function () {
       }
     });
 
-    it('should extract all valid variables', function () {
+    it('should extract all valid variables', () => {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(
         ' {{name}} d {{lastName}} dd {{_validName}} {{not valid}} aa {{0notValid}}tr {{organization_name}}'
@@ -79,7 +79,7 @@ describe('ContentService', function () {
       expect(variablesNames).to.include('organization_name');
     });
 
-    it('should correctly extract variables related to registered handlebar helpers', function () {
+    it('should correctly extract variables related to registered handlebar helpers', () => {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(' {{titlecase word}}');
 
@@ -87,7 +87,7 @@ describe('ContentService', function () {
       expect(extractVariables[0].name).to.include('word');
     });
 
-    it('should not show @data variables ', function () {
+    it('should not show @data variables ', () => {
       const contentService = new ContentService();
       const extractVariables = contentService.extractVariables(
         ' {{#each array}} {{@index}} {{#if @first}} First {{/if}} {{name}} {{/each}}'
@@ -100,8 +100,8 @@ describe('ContentService', function () {
     });
   });
 
-  describe('extractMessageVariables', function () {
-    it('should not extract variables', function () {
+  describe('extractMessageVariables', () => {
+    it('should not extract variables', () => {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([
         {
@@ -115,7 +115,7 @@ describe('ContentService', function () {
       expect(variables.length).to.equal(0);
     });
 
-    it('should extract subject variables', function () {
+    it('should extract subject variables', () => {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([
         {
@@ -130,7 +130,7 @@ describe('ContentService', function () {
       expect(variables[0].name).to.include('firstName');
     });
 
-    it('should extract reserved variables', function () {
+    it('should extract reserved variables', () => {
       const contentService = new ContentService();
       const { variables, reservedVariables } = contentService.extractMessageVariables([
         {
@@ -148,7 +148,7 @@ describe('ContentService', function () {
       expect(reservedVariables[0].variables[0].name).to.include('identifier');
     });
 
-    it('should add phone when SMS channel Exists', function () {
+    it('should add phone when SMS channel Exists', () => {
       const contentService = new ContentService();
       const variables = contentService.extractSubscriberMessageVariables([
         {
@@ -169,7 +169,7 @@ describe('ContentService', function () {
       expect(variables[0]).to.equal('phone');
     });
 
-    it('should add email when EMAIL channel Exists', function () {
+    it('should add email when EMAIL channel Exists', () => {
       const contentService = new ContentService();
       const variables = contentService.extractSubscriberMessageVariables([
         {
@@ -190,7 +190,7 @@ describe('ContentService', function () {
       expect(variables[0]).to.equal('email');
     });
 
-    it('should extract email content variables', function () {
+    it('should extract email content variables', () => {
       const contentService = new ContentService();
       const messages = [
         {
@@ -241,7 +241,7 @@ describe('ContentService', function () {
       expect(subscriberVariables).to.include('email');
     });
 
-    it('should extract in-app content variables', function () {
+    it('should extract in-app content variables', () => {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([
         {
@@ -256,7 +256,7 @@ describe('ContentService', function () {
       expect(variables[0].name).to.include('customVariables');
     });
 
-    it('should extract i18n content variables', function () {
+    it('should extract i18n content variables', () => {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([
         {
@@ -274,7 +274,7 @@ describe('ContentService', function () {
       expect(variablesNames).to.include('secVar');
     });
 
-    it('should extract action steps variables', function () {
+    it('should extract action steps variables', () => {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([
         {
@@ -300,7 +300,7 @@ describe('ContentService', function () {
       expect(variablesNames).to.include('path');
     });
 
-    it('should extract filter variables on payload', function () {
+    it('should extract filter variables on payload', () => {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([
         {
@@ -333,7 +333,7 @@ describe('ContentService', function () {
       expect(variablesNames).to.include('counter');
     });
 
-    it('should not extract variables reserved for the system', function () {
+    it('should not extract variables reserved for the system', () => {
       const contentService = new ContentService();
       const messages = [
         {

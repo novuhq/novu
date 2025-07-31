@@ -1,9 +1,8 @@
-import { SubscriberCustomData, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
-
-import { ExternalSubscriberId } from './types';
-import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
+import { ChatProviderIdEnum, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
+import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
+import { ExternalSubscriberId } from './types';
 
 export class SubscriberEntity {
   // TODO: Use SubscriberId. Means lot of changes across whole codebase. Cool down.

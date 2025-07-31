@@ -1,15 +1,15 @@
-import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
 import { faker } from '@faker-js/faker';
+import { Test } from '@nestjs/testing';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
 
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { SubscribersService, UserSession } from '@novu/testing';
 import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
-import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 import { SharedModule } from '../../shared/shared.module';
 
-describe('Update Subscriber channel credentials', function () {
+describe('Update Subscriber channel credentials', () => {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
   let session: UserSession;
   const subscriberRepository = new SubscriberRepository();
@@ -27,7 +27,7 @@ describe('Update Subscriber channel credentials', function () {
     updateSubscriberChannelUsecase = moduleRef.get<UpdateSubscriberChannel>(UpdateSubscriberChannel);
   });
 
-  it('should add subscriber new discord channel credentials', async function () {
+  it('should add subscriber new discord channel credentials', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -59,7 +59,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(newChannel?.credentials.webhookUrl).to.equal(subscriberChannel.credentials.webhookUrl);
   });
 
-  it('should update subscriber existing slack channel credentials', async function () {
+  it('should update subscriber existing slack channel credentials', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -103,7 +103,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(updatedChannel?.credentials.webhookUrl).to.equal(newSlackSubscribersChannel.credentials.webhookUrl);
   });
 
-  it('should update only webhookUrl on existing slack channel credentials', async function () {
+  it('should update only webhookUrl on existing slack channel credentials', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
     const slackIntegration = await integrationRepository.findOne({
@@ -143,7 +143,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(newChannel?.credentials.webhookUrl).to.equal('new-secret-webhookUrl');
   });
 
-  it('should update slack channel credentials for a specific integration', async function () {
+  it('should update slack channel credentials for a specific integration', async () => {
     const identifier = 'identifier_slack';
     const webhookUrl = 'webhookUrl';
     const integration = await integrationRepository.create({
@@ -183,7 +183,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(updatedChannel?.credentials.webhookUrl).to.equal(webhookUrl);
   });
 
-  it('should not add duplicated token when the operation IS idempotent', async function () {
+  it('should not add duplicated token when the operation IS idempotent', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -218,7 +218,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['token_1']);
   });
 
-  it('should not add duplicated token when the operation IS NOT idempotent', async function () {
+  it('should not add duplicated token when the operation IS NOT idempotent', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -253,7 +253,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['identifier', 'token_1']);
   });
 
-  it('should append to existing device token array when the operation IS NOT idempotent', async function () {
+  it('should append to existing device token array when the operation IS NOT idempotent', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -288,7 +288,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(addedFcmToken?.credentials?.deviceTokens).to.deep.equal(['identifier', 'token_1']);
   });
 
-  it('should update deviceTokens with empty array', async function () {
+  it('should update deviceTokens with empty array', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -346,7 +346,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(updatedProviderWithEmptyDeviceToken?.credentials?.deviceTokens).to.deep.equal([]);
   });
 
-  it('should update deviceTokens with new token after stress adding', async function () {
+  it('should update deviceTokens with new token after stress adding', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 
@@ -417,7 +417,7 @@ describe('Update Subscriber channel credentials', function () {
     expect(updateToken?.credentials?.deviceTokens).to.deep.equal(['token_555']);
   });
 
-  it('should update deviceTokens without duplication on channel creation (addChannelToSubscriber)', async function () {
+  it('should update deviceTokens without duplication on channel creation (addChannelToSubscriber)', async () => {
     const subscriberId = SubscriberRepository.createObjectId();
     const test = await subscriberRepository.create({
       firstName: faker.name.firstName(),

@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChangeEntity, ChangeRepository } from '@novu/dal';
 
-import { PromoteChangeToEnvironmentCommand, PromoteChangeToEnvironment } from '../promote-change-to-environment';
+import { PromoteChangeToEnvironment, PromoteChangeToEnvironmentCommand } from '../promote-change-to-environment';
 import { ApplyChangeCommand } from './apply-change.command';
 
 @Injectable()

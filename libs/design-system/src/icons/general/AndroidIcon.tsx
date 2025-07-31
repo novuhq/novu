@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 
 export const AndroidIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
   return (

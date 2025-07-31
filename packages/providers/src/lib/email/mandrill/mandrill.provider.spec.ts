@@ -9,9 +9,7 @@ const mockConfig = {
 
 test('should send a standard email through Mandrill', async () => {
   const provider = new MandrillProvider(mockConfig);
-  // eslint-disable-next-line @typescript-eslint/dot-notation
   const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return [{}] as any;
   });
 
@@ -51,9 +49,7 @@ test('should send a standard email through Mandrill', async () => {
 
 test('should send an email using a Mandrill template', async () => {
   const provider = new MandrillProvider(mockConfig);
-  // eslint-disable-next-line @typescript-eslint/dot-notation
   const spy = vi.spyOn(provider['transporter'].messages, 'sendTemplate').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return [{}] as any;
   });
 
@@ -92,13 +88,9 @@ test('should send an email using a Mandrill template', async () => {
 
 test('should trigger mandrill correctly with _passthrough', async () => {
   const provider = new MandrillProvider(mockConfig);
-  const spy = vi
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    .spyOn(provider['transporter'].messages, 'send')
-    .mockImplementation(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return [{}] as any;
-    });
+  const spy = vi.spyOn(provider['transporter'].messages, 'send').mockImplementation(async () => {
+    return [{}] as any;
+  });
   const mockNovuMessage = {
     to: ['test2@test.com'],
     subject: 'test subject',
@@ -148,12 +140,9 @@ test('should trigger mandrill correctly with _passthrough', async () => {
 
 test('should check provider integration correctly', async () => {
   const provider = new MandrillProvider(mockConfig);
-  const spy = vi
-    // eslint-disable-next-line @typescript-eslint/dot-notation
-    .spyOn(provider['transporter'].users, 'ping')
-    .mockImplementation(async () => {
-      return 'PONG!';
-    });
+  const spy = vi.spyOn(provider['transporter'].users, 'ping').mockImplementation(async () => {
+    return 'PONG!';
+  });
 
   const response = await provider.checkIntegration();
   expect(spy).toHaveBeenCalled();

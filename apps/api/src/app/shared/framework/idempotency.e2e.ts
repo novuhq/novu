@@ -1,12 +1,12 @@
-import { UserSession } from '@novu/testing';
 import { CacheService, HttpResponseHeaderKeysEnum } from '@novu/application-generic';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { expectSdkExceptionGeneric } from '../helpers/e2e/sdk/e2e-sdk.helper';
 import {
   IdempotenceTestingResponse,
   IdempotencyBehaviorEnum,
   IdempotencyTestingDto,
 } from '../../testing/dtos/idempotency.dto';
+import { expectSdkExceptionGeneric } from '../helpers/e2e/sdk/e2e-sdk.helper';
 
 const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
 // @ts-ignore

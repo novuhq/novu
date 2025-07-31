@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { colors } from '@novu/design-system';
 
 export const DateArrow = () => {

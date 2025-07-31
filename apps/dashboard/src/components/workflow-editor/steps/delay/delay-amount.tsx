@@ -1,11 +1,10 @@
+import { TimeUnitEnum } from '@novu/shared';
+import { useMemo } from 'react';
 import { AmountInput } from '@/components/amount-input';
-
 import { FormLabel } from '@/components/primitives/form/form';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { TIME_UNIT_OPTIONS } from '@/components/workflow-editor/steps/time-units';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { TimeUnitEnum } from '@novu/shared';
-import { useMemo } from 'react';
 
 const amountKey = 'amount';
 const unitKey = 'unit';

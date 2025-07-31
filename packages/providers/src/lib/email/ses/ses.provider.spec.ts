@@ -1,6 +1,6 @@
-import { expect, test, vi, describe } from 'vitest';
-import { EmailEventStatusEnum } from '@novu/stateless';
 import { SESClient } from '@aws-sdk/client-ses';
+import { EmailEventStatusEnum } from '@novu/stateless';
+import { describe, expect, test, vi } from 'vitest';
 import { SESEmailProvider } from './ses.provider';
 
 const mockConfig = {
@@ -83,14 +83,12 @@ const mockSESMessage = {
 test('should trigger ses library correctly', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
   const spy = vi.spyOn(SESClient.prototype, 'send').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return mockResponse as any;
   });
 
   const provider = new SESEmailProvider(mockConfig);
   const response = await provider.sendMessage(mockNovuMessage);
 
-  // eslint-disable-next-line
   const bufferArray = spy.mock.calls[0][0].input['RawMessage']['Data'];
   const buffer = Buffer.from(bufferArray);
   const emailContent = buffer.toString();
@@ -103,7 +101,6 @@ test('should trigger ses library correctly', async () => {
 test('should trigger ses library correctly with _passthrough', async () => {
   const mockResponse = { MessageId: 'mock-message-id' };
   const spy = vi.spyOn(SESClient.prototype, 'send').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return mockResponse as any;
   });
 
@@ -116,7 +113,6 @@ test('should trigger ses library correctly with _passthrough', async () => {
     },
   });
 
-  // eslint-disable-next-line
   const bufferArray = spy.mock.calls[0][0].input['RawMessage']['Data'];
   const buffer = Buffer.from(bufferArray);
   const emailContent = buffer.toString();

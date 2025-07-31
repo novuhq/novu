@@ -1,8 +1,8 @@
 import { createHash } from 'crypto';
 import { BaseRepository } from '../base-repository';
-import { IUserRepository } from './user-repository.interface';
-import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
+import { IUserResetTokenCount, UserDBModel, UserEntity } from './user.entity';
 import { User } from './user.schema';
+import { IUserRepository } from './user-repository.interface';
 
 export class CommunityUserRepository
   extends BaseRepository<UserDBModel, UserEntity, object>

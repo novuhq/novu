@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ActorTypeEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
 import { MessageTemplateDBModel } from './message-template.entity';

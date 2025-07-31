@@ -1,21 +1,20 @@
+import { ContentIssueEnum, EmailControlsDto, EnvironmentTypeEnum, RuntimeIssue } from '@novu/shared';
 import { useState } from 'react';
 import { RiArrowRightSLine, RiCodeBlock, RiEdit2Line, RiEyeLine, RiLockLine, RiSettings4Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { ContentIssueEnum, EmailControlsDto, EnvironmentTypeEnum, RuntimeIssue } from '@novu/shared';
-
-import { useLayoutEditor } from './layout-editor-provider';
-import { Form, FormRoot } from '../primitives/form/form';
-import { ResizableLayout } from '../workflow-editor/steps/layout/resizable-layout';
-import { PanelHeader } from '../workflow-editor/steps/layout/panel-header';
-import { LayoutPreviewContextPanel } from './layout-preview-context-panel';
-import { IssuesPanel } from '../issues-panel';
-import { Button } from '../primitives/button';
-import { LayoutEditorSettingsDrawer } from './layout-editor-settings-drawer';
-import { CompactButton } from '../primitives/button-compact';
-import { LayoutEditorFactory } from './layout-editor-factory';
-import { LayoutPreviewFactory } from './layout-preview-factory';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { IssuesPanel } from '../issues-panel';
+import { Button } from '../primitives/button';
+import { CompactButton } from '../primitives/button-compact';
+import { Form, FormRoot } from '../primitives/form/form';
+import { PanelHeader } from '../workflow-editor/steps/layout/panel-header';
+import { ResizableLayout } from '../workflow-editor/steps/layout/resizable-layout';
+import { LayoutEditorFactory } from './layout-editor-factory';
+import { useLayoutEditor } from './layout-editor-provider';
+import { LayoutEditorSettingsDrawer } from './layout-editor-settings-drawer';
+import { LayoutPreviewContextPanel } from './layout-preview-context-panel';
+import { LayoutPreviewFactory } from './layout-preview-factory';
 
 export const LayoutEditor = () => {
   const navigate = useNavigate();

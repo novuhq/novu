@@ -361,8 +361,6 @@ export const replaceMailyNodesByCondition = (
         const processedChild = processNodes(child);
 
         if (processedChild === null) {
-          // Skip null nodes (deletion)
-          continue;
         } else if (Array.isArray(processedChild)) {
           // Handle multiple replacement nodes
           processedContent.push(...processedChild);

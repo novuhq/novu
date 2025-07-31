@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CheckIntegrationEMail } from './check-integration-email.usecase';
 import { CheckIntegrationCommand } from './check-integration.command';
+import { CheckIntegrationEMail } from './check-integration-email.usecase';
 
 @Injectable()
 export class CheckIntegration {
@@ -9,7 +9,6 @@ export class CheckIntegration {
 
   public async execute(command: CheckIntegrationCommand) {
     try {
-      // eslint-disable-next-line default-case
       switch (command.channel) {
         case ChannelTypeEnum.EMAIL:
           return await this.checkIntegrationEmail.execute(command);

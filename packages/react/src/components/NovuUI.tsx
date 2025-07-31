@@ -3,10 +3,10 @@ import type { NovuUIOptions as JsNovuUIOptions } from '@novu/js/ui';
 import { NovuUI as NovuUIClass } from '@novu/js/ui';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NovuUIProvider } from '../context/NovuUIContext';
-import { useDataRef } from '../hooks/internal/useDataRef';
-import type { ReactAppearance } from '../utils/types';
-import { adaptAppearanceForJs } from '../utils/appearance';
 import { useRenderer } from '../context/RendererContext';
+import { useDataRef } from '../hooks/internal/useDataRef';
+import { adaptAppearanceForJs } from '../utils/appearance';
+import type { ReactAppearance } from '../utils/types';
 import { ShadowRootDetector } from './ShadowRootDetector';
 
 type NovuUIProps = Omit<JsNovuUIOptions, 'appearance'> & {

@@ -28,7 +28,7 @@ const JSONSchemaFaker = (() => {
   };
   var __copyProps = (to, from, except, desc) => {
     if ((from && typeof from === 'object') || typeof from === 'function') {
-      for (let key of __getOwnPropNames(from))
+      for (const key of __getOwnPropNames(from))
         if (!__hasOwnProp.call(to, key) && key !== except)
           __defProp(to, key, {
             get: () => from[key],
@@ -293,7 +293,9 @@ const JSONSchemaFaker = (() => {
             value = new Date(clampDate(value)).toISOString().substr(0, 10);
             break;
           case 'time':
-            value = /* @__PURE__ */ new Date(`1969-01-01 ${value}`).toISOString().substr(11);
+            value = /* @__PURE__ */ new Date(`1969-01-01 ${value}`)
+              .toISOString()
+              .substr(11);
             break;
           default:
             break;
@@ -1177,7 +1179,7 @@ const JSONSchemaFaker = (() => {
       }
     }
     let valueCopy = {};
-    let contextCopy = { ...context };
+    const contextCopy = { ...context };
     if (Array.isArray(schema)) {
       valueCopy = [];
     }
@@ -1491,7 +1493,7 @@ const JSONSchemaFaker = (() => {
         };
       __copyProps2 = (to, from, except, desc) => {
         if ((from && typeof from === 'object') || typeof from === 'function') {
-          for (let key of __getOwnPropNames2(from))
+          for (const key of __getOwnPropNames2(from))
             if (!__hasOwnProp2.call(to, key) && key !== except)
               __defProp2(to, key, {
                 get: () => from[key],
@@ -1580,10 +1582,10 @@ const JSONSchemaFaker = (() => {
           var sets = require_sets();
           var CTRL = '@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^ ?';
           var SLSH = { 0: 0, t: 9, n: 10, v: 11, f: 12, r: 13 };
-          exports.strToChars = function (str) {
+          exports.strToChars = (str) => {
             var chars_regex =
               /(\[\\b\])|(\\)?\\(?:u([A-F0-9]{4})|x([A-F0-9]{2})|(0?[0-7]{2})|c([@A-Z[\\\]^?])|([0tnvfr]))/g;
-            str = str.replace(chars_regex, function (s, b, lbs, a16, b16, c8, dctrl, eslsh) {
+            str = str.replace(chars_regex, (s, b, lbs, a16, b16, c8, dctrl, eslsh) => {
               if (lbs) {
                 return s;
               }
@@ -1717,7 +1719,7 @@ const JSONSchemaFaker = (() => {
                 case '$':
                   last.push(positions.end());
                   break;
-                case '[':
+                case '[': {
                   var not;
                   if (str[i] === '^') {
                     not = true;
@@ -1733,10 +1735,11 @@ const JSONSchemaFaker = (() => {
                     not,
                   });
                   break;
+                }
                 case '.':
                   last.push(sets.anyChar());
                   break;
-                case '(':
+                case '(': {
                   var group = {
                     type: types2.GROUP,
                     stack: [],
@@ -1760,6 +1763,7 @@ const JSONSchemaFaker = (() => {
                   lastGroup = group;
                   last = group.stack;
                   break;
+                }
                 case ')':
                   if (groupStack.length === 0) {
                     util.error(regexpStr, `Unmatched ) at column ${i - 1}`);
@@ -1767,7 +1771,7 @@ const JSONSchemaFaker = (() => {
                   lastGroup = groupStack.pop();
                   last = lastGroup.options ? lastGroup.options[lastGroup.options.length - 1] : lastGroup.stack;
                   break;
-                case '|':
+                case '|': {
                   if (!lastGroup.options) {
                     lastGroup.options = [lastGroup.stack];
                     delete lastGroup.stack;
@@ -1776,7 +1780,8 @@ const JSONSchemaFaker = (() => {
                   lastGroup.options.push(stack);
                   last = stack;
                   break;
-                case '{':
+                }
+                case '{': {
                   var rs = /^(\d+)(,(\d+)?)?\}/.exec(str.slice(i)),
                     min,
                     max;
@@ -1800,6 +1805,7 @@ const JSONSchemaFaker = (() => {
                     });
                   }
                   break;
+                }
                 case '?':
                   if (last.length === 0) {
                     repeatErr(i);
@@ -1850,7 +1856,6 @@ const JSONSchemaFaker = (() => {
       });
       require_lib2 = __commonJS2({
         'node_modules/drange/lib/index.js'(exports, module) {
-          'use strict';
           var SubRange = class _SubRange {
             constructor(low, high) {
               this.low = low;
@@ -2075,12 +2080,13 @@ const JSONSchemaFaker = (() => {
                   return str;
                 case types2.POSITION:
                   return '';
-                case types2.SET:
+                case types2.SET: {
                   var expandedSet = this._expand(token);
                   if (!expandedSet.length) {
                     return '';
                   }
                   return String.fromCharCode(this._randSelect(expandedSet));
+                }
                 case types2.REPETITION:
                   n = this.randInt(token.min, token.max === Infinity ? token.min + this.max : token.max);
                   str = '';
@@ -2090,9 +2096,10 @@ const JSONSchemaFaker = (() => {
                   return str;
                 case types2.REFERENCE:
                   return groups[token.value - 1] || '';
-                case types2.CHAR:
+                case types2.CHAR: {
                   var code = this.ignoreCase && this._randBool() ? this._toOtherCase(token.value) : token.value;
                   return String.fromCharCode(code);
+                }
               }
             }
             /**
@@ -2138,14 +2145,14 @@ const JSONSchemaFaker = (() => {
               } else if (token.type === ret.types.RANGE) {
                 return new DRange(token.from, token.to);
               } else {
-                let drange = new DRange();
+                const drange = new DRange();
                 for (let i = 0; i < token.set.length; i++) {
-                  let subrange = this._expand(token.set[i]);
+                  const subrange = this._expand(token.set[i]);
                   drange.add(subrange);
                   if (this.ignoreCase) {
                     for (let j = 0; j < subrange.length; j++) {
-                      let code = subrange.index(j);
-                      let otherCaseCode = this._toOtherCase(code);
+                      const code = subrange.index(j);
+                      const otherCaseCode = this._toOtherCase(code);
                       if (code !== otherCaseCode) {
                         drange.add(otherCaseCode);
                       }
@@ -2213,7 +2220,6 @@ const JSONSchemaFaker = (() => {
       });
       require_PlainValue_ec8e588e = __commonJS2({
         'node_modules/yaml/dist/PlainValue-ec8e588e.js'(exports) {
-          'use strict';
           var Char = {
             ANCHOR: '&',
             COMMENT: '#',
@@ -2859,7 +2865,6 @@ ${ctx}
       });
       require_resolveSeq_d03cb037 = __commonJS2({
         'node_modules/yaml/dist/resolveSeq-d03cb037.js'(exports) {
-          'use strict';
           var PlainValue = require_PlainValue_ec8e588e();
           function addCommentBefore(str, indent, comment) {
             if (!comment) return str;
@@ -4658,7 +4663,6 @@ ${ca}`
       });
       require_warnings_1000a372 = __commonJS2({
         'node_modules/yaml/dist/warnings-1000a372.js'(exports) {
-          'use strict';
           var PlainValue = require_PlainValue_ec8e588e();
           var resolveSeq = require_resolveSeq_d03cb037();
           var binary = {
@@ -4953,9 +4957,7 @@ ${pair.comment}`
             // If the time zone is omitted, the timestamp is assumed to be specified in UTC. The time part
             // may be omitted altogether, resulting in a date format. In such a case, the time part is
             // assumed to be 00:00:00Z (start of day, UTC).
-            test: RegExp(
-              '^(?:([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})(?:(?:t|T|[ \\t]+)([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2}(\\.[0-9]+)?)(?:[ \\t]*(Z|[-+][012]?[0-9](?::[0-9]{2})?))?)?)$'
-            ),
+            test: /^(?:([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})(?:(?:t|T|[ \t]+)([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2}(\.[0-9]+)?)(?:[ \t]*(Z|[-+][012]?[0-9](?::[0-9]{2})?))?)?)$/,
             resolve: (str, year, month, day, hour, minute, second, millisec, tz) => {
               if (millisec) millisec = (millisec + '00').substr(1, 3);
               let date2 = Date.UTC(year, month - 1, day, hour || 0, minute || 0, second || 0, millisec || 0);
@@ -5018,7 +5020,6 @@ ${pair.comment}`
       });
       require_Schema_88e323a7 = __commonJS2({
         'node_modules/yaml/dist/Schema-88e323a7.js'(exports) {
-          'use strict';
           var PlainValue = require_PlainValue_ec8e588e();
           var resolveSeq = require_resolveSeq_d03cb037();
           var warnings = require_warnings_1000a372();
@@ -5485,7 +5486,6 @@ ${pair.comment}`
       });
       require_types2 = __commonJS2({
         'node_modules/yaml/dist/types.js'(exports) {
-          'use strict';
           var resolveSeq = require_resolveSeq_d03cb037();
           var Schema2 = require_Schema_88e323a7();
           require_PlainValue_ec8e588e();
@@ -6046,7 +6046,7 @@ laborum`.split(/\W/);
   });
   return require_main_iife();
 })();
-(function (root, factory) {
+((root, factory) => {
   root.JSONSchemaFaker = factory();
 })(typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : globalThis, () => JSONSchemaFaker);
 

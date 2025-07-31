@@ -4,11 +4,11 @@ import {
   AUTOCOMPLETE_OPEN_TAG,
   INVALID_VARIABLE_REGEX,
   JSON_SCHEMA_FORM_ID_DELIMITER,
+  PAYLOAD_NAMESPACE,
   VALID_VARIABLE_REGEX,
-  VariableErrorCode,
   VARIABLE_HTML_ERROR_STATE_REGEX,
   VARIABLE_HTML_TAG_NAME,
-  PAYLOAD_NAMESPACE,
+  VariableErrorCode,
 } from './constants';
 
 /** determine the tree depth of a JsonSchemaForm section with the given sectionId */

@@ -16,9 +16,8 @@ import {
   OrdinalValueEnum,
   StepVariantDto,
 } from '@novu/shared';
-import { IsBoolean, IsString, ValidateNested } from 'class-validator';
-
 import { Type } from 'class-transformer';
+import { IsBoolean, IsString, ValidateNested } from 'class-validator';
 import { MessageTemplate } from './message-template';
 import { StepFilterDto } from './step-filter-dto';
 

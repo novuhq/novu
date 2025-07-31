@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository, TenantEntity, TenantRepository } from '@novu/dal';
 import { FilterPartTypeEnum, IMessageFilter } from '@novu/shared';
-import { IFilterVariables } from '../../utils';
 import { buildSubscriberKey, CachedResponse } from '../../services';
+import { IFilterVariables } from '../../utils';
 import { ConditionsFilterCommand } from '../conditions-filter';
 
 /**

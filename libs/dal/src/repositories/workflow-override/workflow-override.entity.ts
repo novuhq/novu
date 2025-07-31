@@ -1,11 +1,10 @@
 import { IPreferenceChannels } from '@novu/shared';
-
-import type { OrganizationId } from '../organization';
-import type { EnvironmentId } from '../environment';
 import type { ChangePropsValueType } from '../../types';
-import { WorkflowOverrideId } from './types';
-import { TenantEntity } from '../tenant';
+import type { EnvironmentId } from '../environment';
 import { NotificationTemplateEntity } from '../notification-template';
+import type { OrganizationId } from '../organization';
+import { TenantEntity } from '../tenant';
+import { WorkflowOverrideId } from './types';
 
 export class WorkflowOverrideEntity {
   _id: WorkflowOverrideId;

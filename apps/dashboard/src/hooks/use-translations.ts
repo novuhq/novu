@@ -1,6 +1,6 @@
+import { TRANSLATION_DEFAULT_TEMPLATE, TRANSLATION_DELIMITER_CLOSE } from '@novu/shared';
 import { EditorView } from '@uiw/react-codemirror';
 import { MutableRefObject, useCallback, useState } from 'react';
-import { TRANSLATION_DEFAULT_TEMPLATE, TRANSLATION_DELIMITER_CLOSE } from '@novu/shared';
 
 export interface SelectedTranslation {
   translationKey: string;

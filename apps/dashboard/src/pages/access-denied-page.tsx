@@ -1,5 +1,5 @@
-import { Button } from '@/components/primitives/button';
 import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/primitives/button';
 
 export function AccessDeniedPage() {
   return (

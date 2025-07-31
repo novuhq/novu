@@ -5,7 +5,7 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mark-all (POST) #novu-v2', function () {
+describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mark-all (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   const messageRepository = new MessageRepository();
@@ -22,7 +22,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     });
   });
 
-  it("should throw not found when subscriberId doesn't exist", async function () {
+  it("should throw not found when subscriberId doesn't exist", async () => {
     const fakeSubscriberId = 'fake-subscriber-id';
     const { error } = await expectSdkExceptionGeneric(() =>
       markAllSubscriberMessagesAs(fakeSubscriberId, MessagesStatusEnum.READ)
@@ -37,7 +37,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     );
   });
 
-  it('should mark all the subscriber messages as read', async function () {
+  it('should mark all the subscriber messages as read', async () => {
     const { subscriberId } = session;
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -69,7 +69,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     }
   });
 
-  it('should not mark all the messages as read if they are already read', async function () {
+  it('should not mark all the messages as read if they are already read', async () => {
     const { subscriberId } = session;
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -112,7 +112,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     }
   });
 
-  it('should mark all the subscriber messages as unread', async function () {
+  it('should mark all the subscriber messages as unread', async () => {
     const { subscriberId } = session;
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -155,7 +155,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     }
   });
 
-  it('should mark all the subscriber messages as seen', async function () {
+  it('should mark all the subscriber messages as seen', async () => {
     const { subscriberId } = session;
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -187,7 +187,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     }
   });
 
-  it('should mark all the subscriber messages as unseen', async function () {
+  it('should mark all the subscriber messages as unseen', async () => {
     const { subscriberId } = session;
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });

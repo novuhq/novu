@@ -1,4 +1,4 @@
-import { RequestLog, WorkflowRunStatusEnum, StepRunNonFinalStatus, StepRun } from '@novu/application-generic';
+import { RequestLog, StepRun, StepRunNonFinalStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 

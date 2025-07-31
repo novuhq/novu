@@ -4,9 +4,9 @@ import {
   ResourceOriginEnum,
   type WorkflowResponseDto,
 } from '@novu/shared';
+import { TabsContent } from '@radix-ui/react-tabs';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { cn } from '@/utils/ui';
 import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -20,7 +20,7 @@ import {
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
-import { TabsContent } from '@radix-ui/react-tabs';
+import { cn } from '@/utils/ui';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type EmailEditorPreviewProps = {

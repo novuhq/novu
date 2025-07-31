@@ -1,6 +1,6 @@
-import { validateEnhancedDigestFilters, getFirstFilterAndItsArgs } from '@/components/variable/utils';
 import { WidgetType } from '@uiw/react-codemirror';
 import { CSSProperties } from 'react';
+import { getFirstFilterAndItsArgs, validateEnhancedDigestFilters } from '@/components/variable/utils';
 
 export const DEFAULT_VARIABLE_PILL_HEIGHT = 18;
 
@@ -94,7 +94,6 @@ export class VariablePillWidget extends WidgetType {
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       '-webkit-font-smoothing': 'antialiased',
       '-moz-osx-font-smoothing': 'grayscale',
@@ -113,7 +112,6 @@ export class VariablePillWidget extends WidgetType {
       lineHeight: '1.2',
       color: 'hsl(var(--text-soft))',
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       '-webkit-font-smoothing': 'antialiased',
       '-moz-osx-font-smoothing': 'grayscale',

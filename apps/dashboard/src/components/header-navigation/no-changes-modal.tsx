@@ -1,6 +1,6 @@
+import type { IEnvironment } from '@novu/shared';
 import { Button } from '../primitives/button';
 import { Dialog, DialogContent } from '../primitives/dialog';
-import type { IEnvironment } from '@novu/shared';
 
 type NoChangesModalProps = {
   isOpen: boolean;

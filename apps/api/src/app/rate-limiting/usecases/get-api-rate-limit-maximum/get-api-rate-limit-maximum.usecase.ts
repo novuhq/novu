@@ -1,5 +1,4 @@
 import { Injectable, InternalServerErrorException, OnModuleInit } from '@nestjs/common';
-import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import {
   buildMaximumApiRateLimitKey,
   CachedResponse,
@@ -7,6 +6,7 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
+import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCategoryToFeatureName,
@@ -109,7 +109,6 @@ export class GetApiRateLimitMaximum implements OnModuleInit {
           const envVarName = this.getEnvVarName(apiServiceLevel, apiRateLimitCategory);
           const envVarValue = processEnv[envVarName];
 
-          // eslint-disable-next-line no-param-reassign
           categoryAcc[apiRateLimitCategory] = envVarValue ? Number(envVarValue) : featureForTierAsNumber;
 
           return categoryAcc;

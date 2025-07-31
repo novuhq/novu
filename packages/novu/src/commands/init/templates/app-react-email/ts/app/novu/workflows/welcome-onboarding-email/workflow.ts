@@ -1,12 +1,12 @@
-import { workflow } from "@novu/framework";
-import { renderEmail } from "../../emails/novu-onboarding-email";
-import { emailControlSchema, payloadSchema } from "./schemas";
+import { workflow } from '@novu/framework';
+import { renderEmail } from '../../emails/novu-onboarding-email';
+import { emailControlSchema, payloadSchema } from './schemas';
 
 export const welcomeOnboardingEmail = workflow(
-  "welcome-onboarding-email",
+  'welcome-onboarding-email',
   async ({ step, payload }) => {
     await step.email(
-      "send-email",
+      'send-email',
       async (controls) => {
         return {
           subject: controls.subject,
@@ -15,10 +15,10 @@ export const welcomeOnboardingEmail = workflow(
       },
       {
         controlSchema: emailControlSchema,
-      },
+      }
     );
 
-    await step.inApp("In-App Step", async () => {
+    await step.inApp('In-App Step', async () => {
       return {
         subject: payload.inAppSubject,
         body: payload.inAppBody,
@@ -28,5 +28,5 @@ export const welcomeOnboardingEmail = workflow(
   },
   {
     payloadSchema,
-  },
+  }
 );

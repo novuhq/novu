@@ -281,7 +281,6 @@ export function mapEventTypeToTitle(eventType: EventType): string {
 
     default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
-      // eslint-disable-next-line no-case-declarations
       const _exhaustiveCheck: never = eventType;
 
       return _exhaustiveCheck;

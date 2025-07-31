@@ -1,13 +1,12 @@
 import { ClerkClient, createClerkClient } from '@clerk/backend';
 import { clerk, clerkSetup } from '@clerk/testing/playwright';
-import { Page } from '@playwright/test';
 import { faker } from '@faker-js/faker';
 import { DalService, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
-
-import { UserService } from './user-service';
-import { OrganizationService } from './organization-service';
+import { Page } from '@playwright/test';
 import { EnvironmentService } from './environment-service';
 import { IntegrationService } from './integration-service';
+import { OrganizationService } from './organization-service';
+import { UserService } from './user-service';
 
 export class Session {
   private dal: DalService;

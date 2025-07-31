@@ -1,6 +1,5 @@
 import { JSX } from 'solid-js';
 
-/* eslint-disable max-len */
 export function Bell(props?: JSX.HTMLAttributes<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>

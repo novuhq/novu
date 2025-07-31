@@ -4,7 +4,6 @@ import { IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
 export class CreateUpdateTopicRequestDto {
   @ApiProperty({
     description:
-      // eslint-disable-next-line max-len
       'The unique key identifier for the topic. The key must contain only alphanumeric characters (a-z, A-Z, 0-9), hyphens (-), underscores (_), colons (:), or be a valid email address.',
     example: 'task:12345',
   })

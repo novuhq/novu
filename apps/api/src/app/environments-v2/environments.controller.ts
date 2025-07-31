@@ -1,33 +1,33 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
-  Body,
   UseInterceptors,
-  HttpCode,
 } from '@nestjs/common';
-import { UserSessionData, PermissionsEnum } from '@novu/shared';
-import { ApiTags, ApiOperation, ApiExcludeEndpoint, ApiParam } from '@nestjs/swagger';
-import { SkipPermissionsCheck, RequirePermissions } from '@novu/application-generic';
-import { UserSession } from '../shared/framework/user.decorator';
-import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
-import { PublishEnvironmentUseCase } from './usecases/publish-environment/publish-environment.usecase';
-import { DiffEnvironmentUseCase } from './usecases/diff-environment/diff-environment.usecase';
-import { PublishEnvironmentCommand } from './usecases/publish-environment/publish-environment.command';
-import { DiffEnvironmentCommand } from './usecases/diff-environment/diff-environment.command';
+import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
+import { UserSession } from '../shared/framework/user.decorator';
 import {
-  PublishEnvironmentRequestDto,
-  PublishEnvironmentResponseDto,
   DiffEnvironmentRequestDto,
   DiffEnvironmentResponseDto,
+  PublishEnvironmentRequestDto,
+  PublishEnvironmentResponseDto,
 } from './dtos';
+import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
+import { DiffEnvironmentCommand } from './usecases/diff-environment/diff-environment.command';
+import { DiffEnvironmentUseCase } from './usecases/diff-environment/diff-environment.usecase';
+import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
+import { PublishEnvironmentCommand } from './usecases/publish-environment/publish-environment.command';
+import { PublishEnvironmentUseCase } from './usecases/publish-environment/publish-environment.usecase';
 
 @ApiCommonResponses()
 @Controller({ path: `/environments`, version: '2' })

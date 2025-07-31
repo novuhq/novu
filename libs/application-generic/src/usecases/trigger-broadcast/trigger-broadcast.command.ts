@@ -1,12 +1,6 @@
-import {
-  IsDefined,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from 'class-validator';
-
 import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { ITenantDefine } from '@novu/shared';
+import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { TriggerEventBroadcastCommand } from '../trigger-event';
 

@@ -1,11 +1,10 @@
-import { ReactElement, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { PageMeta } from '../components/page-meta';
-import { DashboardLayout } from '../components/dashboard-layout';
-import { ProgressSection } from '../components/welcome/progress-section';
-import { ResourcesList } from '../components/welcome/resources-list';
+import { ReactElement, useEffect } from 'react';
 import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
-import { Resource } from '../components/welcome/resources-list';
+import { DashboardLayout } from '../components/dashboard-layout';
+import { PageMeta } from '../components/page-meta';
+import { ProgressSection } from '../components/welcome/progress-section';
+import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 

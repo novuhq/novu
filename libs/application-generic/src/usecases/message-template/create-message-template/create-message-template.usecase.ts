@@ -1,13 +1,12 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { MessageTemplateEntity, MessageTemplateRepository, LayoutRepository } from '@novu/dal';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { LayoutRepository, MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, IMessageAction, isBridgeWorkflow, StepTypeEnum } from '@novu/shared';
-
-import { CreateMessageTemplateCommand } from './create-message-template.command';
-import { CreateChange, CreateChangeCommand } from '../../create-change';
-import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContentV0 } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
+import { CreateChange, CreateChangeCommand } from '../../create-change';
+import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { shouldSanitize } from '../shared';
+import { CreateMessageTemplateCommand } from './create-message-template.command';
 
 @Injectable()
 export class CreateMessageTemplate {

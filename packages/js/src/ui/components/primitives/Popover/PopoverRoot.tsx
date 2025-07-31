@@ -1,4 +1,4 @@
-import { autoUpdate, flip, offset, OffsetOptions, Placement, shift } from '@floating-ui/dom';
+import { autoUpdate, flip, OffsetOptions, offset, Placement, shift } from '@floating-ui/dom';
 import { useFloating } from 'solid-floating-ui';
 import { Accessor, createContext, createMemo, createSignal, JSX, Setter, useContext } from 'solid-js';
 

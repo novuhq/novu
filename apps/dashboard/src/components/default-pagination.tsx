@@ -1,13 +1,13 @@
 import {
   Pagination,
   PaginationContent,
-  PaginationItem,
-  PaginationStart,
-  PaginationPrevious,
-  PaginationLink,
   PaginationEllipsis,
-  PaginationNext,
   PaginationEnd,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationStart,
 } from '@/components/primitives/pagination';
 
 type DefaultPaginationProps = {

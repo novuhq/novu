@@ -1,4 +1,4 @@
-import { ApiRateLimitCategoryEnum, EnvironmentTypeEnum, EnvironmentEnum } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, EnvironmentEnum, EnvironmentTypeEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -106,7 +106,7 @@ environmentSchema.index(
 );
 
 // To provide backward compatibility with environments created before the type field was added
-environmentSchema.post(['find', 'findOne', 'findOneAndUpdate'], function (docs) {
+environmentSchema.post(['find', 'findOne', 'findOneAndUpdate'], (docs) => {
   const processDoc = (document: any) => {
     if (document && !document.type) {
       let defaultType = EnvironmentTypeEnum.PROD;

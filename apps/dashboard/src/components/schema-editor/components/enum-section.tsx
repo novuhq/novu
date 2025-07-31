@@ -1,5 +1,5 @@
 import { memo, useCallback } from 'react';
-import { Controller, Path, useFieldArray, type Control } from 'react-hook-form';
+import { type Control, Controller, Path, useFieldArray } from 'react-hook-form';
 import { RiAddLine, RiDeleteBin2Line, RiDeleteBinLine, RiErrorWarningLine } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';

@@ -1,7 +1,6 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
-
 import { BaseCommand } from '@novu/application-generic';
 import { MessageEntity } from '@novu/dal';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class ExternalServicesRouteCommand extends BaseCommand {
   @IsDefined()

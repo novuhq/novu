@@ -1,16 +1,16 @@
-import { MessageRepository, JobRepository, JobStatusEnum, ChannelTypeEnum, JobEntity } from '@novu/dal';
-import { Injectable, NotFoundException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
   PinoLogger,
 } from '@novu/application-generic';
+import { ChannelTypeEnum, JobEntity, JobRepository, JobStatusEnum, MessageRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
+import { InboxNotification } from '../../utils/types';
 import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
-import { InboxNotification } from '../../utils/types';
+import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
 
 @Injectable()
 export class UnsnoozeNotification {

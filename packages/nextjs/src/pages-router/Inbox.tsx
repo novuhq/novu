@@ -1,11 +1,9 @@
-/* eslint-disable no-restricted-imports */
-
 'use client';
 
 import { InboxProps, Inbox as RInbox } from '@novu/react';
 import { buildSubscriber } from '@novu/react/internal';
-import { useRouter as useAppRouter } from 'next/navigation';
 import { useRouter } from 'next/compat/router';
+import { useRouter as useAppRouter } from 'next/navigation';
 
 function AppRouterInbox(props: InboxProps) {
   const router = useAppRouter();
@@ -40,4 +38,4 @@ export function Inbox(props: InboxProps) {
   return <RInbox {...inboxProps} />;
 }
 
-export { Bell, Preferences, Notifications, InboxContent, NovuProvider } from '@novu/react';
+export { Bell, InboxContent, Notifications, NovuProvider, Preferences } from '@novu/react';

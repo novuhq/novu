@@ -1,27 +1,26 @@
-"use client";
+'use client';
 
-import { Novu } from "@novu/js";
-import { useEffect, useState, useMemo } from "react";
-import { Inbox } from "@novu/nextjs";
-import { useRouter } from "next/navigation";
-import styles from "./Notifications.module.css"; // You'll need to create this
+import { Novu } from '@novu/js';
+import { Inbox } from '@novu/nextjs';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import styles from './Notifications.module.css'; // You'll need to create this
 
 const NotificationToast = () => {
   const novu = useMemo(
     () =>
       new Novu({
-        subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID || "",
-        applicationIdentifier:
-          process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER || "",
+        subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID || '',
+        applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER || '',
       }),
-    [],
+    []
   );
 
   const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     const listener = ({ result: notification }: { result: any }) => {
-      console.log("Received notification:", notification);
+      console.log('Received notification:', notification);
       setShowToast(true);
 
       setTimeout(() => {
@@ -29,11 +28,11 @@ const NotificationToast = () => {
       }, 2500);
     };
 
-    console.log("Setting up Novu notification listener");
-    novu.on("notifications.notification_received", listener);
+    console.log('Setting up Novu notification listener');
+    novu.on('notifications.notification_received', listener);
 
     return () => {
-      novu.off("notifications.notification_received", listener);
+      novu.off('notifications.notification_received', listener);
     };
   }, [novu]);
 
@@ -49,18 +48,17 @@ const NotificationToast = () => {
 export default NotificationToast;
 
 const novuConfig = {
-  applicationIdentifier:
-    process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER || "",
-  subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID || "",
+  applicationIdentifier: process.env.NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER || '',
+  subscriberId: process.env.NEXT_PUBLIC_NOVU_SUBSCRIBER_ID || '',
   appearance: {
     elements: {
       bellContainer: {
-        width: "30px",
-        height: "30px",
+        width: '30px',
+        height: '30px',
       },
       bellIcon: {
-        width: "30px",
-        height: "30px",
+        width: '30px',
+        height: '30px',
       },
     },
   },
@@ -69,7 +67,5 @@ const novuConfig = {
 export function NovuInbox() {
   const router = useRouter();
 
-  return (
-    <Inbox {...novuConfig} routerPush={(path: string) => router.push(path)} />
-  );
+  return <Inbox {...novuConfig} routerPush={(path: string) => router.push(path)} />;
 }

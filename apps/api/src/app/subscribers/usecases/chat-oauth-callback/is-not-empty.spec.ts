@@ -14,14 +14,14 @@ function assertCommandValidationError(e: CommandValidationException, fieldName: 
   expect(e.constraintsViolated[fieldName].messages[0]).to.equal(fieldMsg);
 }
 
-describe('@IsNotEmpty() validator', function () {
-  it('should create command with string name', async function () {
+describe('@IsNotEmpty() validator', () => {
+  it('should create command with string name', async () => {
     const validateNameCommand = IsNotEmptyNameCommand.create({ name: 'mike' });
 
     expect(validateNameCommand.name).to.equal('mike');
   });
 
-  it('should throw exception on string null', async function () {
+  it('should throw exception on string null', async () => {
     const noValidation = NameCommand.create({ name: 'null' } as any);
 
     try {
@@ -32,7 +32,7 @@ describe('@IsNotEmpty() validator', function () {
     }
   });
 
-  it('should throw exception on undefined', async function () {
+  it('should throw exception on undefined', async () => {
     const noValidation = NameCommand.create({ name: undefined } as any);
 
     try {
@@ -43,7 +43,7 @@ describe('@IsNotEmpty() validator', function () {
     }
   });
 
-  it('should throw exception on undefined null', async function () {
+  it('should throw exception on undefined null', async () => {
     const noValidation = NameCommand.create({ name: 'undefined' } as any);
 
     try {
@@ -54,7 +54,7 @@ describe('@IsNotEmpty() validator', function () {
     }
   });
 
-  it('should throw exception on empty string', async function () {
+  it('should throw exception on empty string', async () => {
     const noValidation = NameCommand.create({ name: '' });
 
     try {

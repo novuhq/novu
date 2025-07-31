@@ -1,14 +1,14 @@
 import { StepTypeEnum } from '@novu/shared';
 import { IconType } from 'react-icons';
 import {
-  RiMailLine,
-  RiSmartphoneLine,
-  RiNotificationLine,
+  RiBracesFill,
   RiChat1Line,
   RiCodeLine,
-  RiTimeLine,
-  RiBracesFill,
+  RiMailLine,
+  RiNotificationLine,
   RiPlayCircleLine,
+  RiSmartphoneLine,
+  RiTimeLine,
 } from 'react-icons/ri';
 
 export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {

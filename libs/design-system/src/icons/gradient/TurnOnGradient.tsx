@@ -1,6 +1,5 @@
 import React from 'react';
 import { ISvgPropsInterface } from '../interfaces/svg-props.interface';
-/* eslint-disable */
 
 export function TurnOnGradient({ stopColor, offSetStopColor, ...props }: ISvgPropsInterface) {
   return (

@@ -1,7 +1,6 @@
-/* eslint-disable */
 import { execSync } from 'child_process';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 
 function isInGitRepository(): boolean {
   try {

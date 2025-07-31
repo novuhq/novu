@@ -1,7 +1,7 @@
-import { ROUTES } from '@/utils/routes';
 import { GetSubscriptionDto } from '@novu/shared';
 import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/utils/routes';
 import { LogoCircle } from '../icons';
 import { Button } from '../primitives/button';
 import { Progress } from '../primitives/progress';

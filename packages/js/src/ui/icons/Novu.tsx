@@ -9,7 +9,6 @@ export const Novu = (props?: JSX.HTMLAttributes<SVGSVGElement>) => {
       ></path>
       <path
         fill="currentColor"
-        // eslint-disable-next-line max-len
         d="M2.879 1.216A5.99 5.99 0 00.5 6c0 1.134.315 2.195.862 3.1V7.309c0-1.966 2.379-2.946 3.764-1.552l4.995 5.027A5.99 5.99 0 0012.5 6a5.972 5.972 0 00-.862-3.1v1.791c0 1.966-2.379 2.946-3.764 1.552L2.879 1.216z"
       ></path>
       <path

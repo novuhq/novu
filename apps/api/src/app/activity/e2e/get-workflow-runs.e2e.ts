@@ -1,11 +1,11 @@
-import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberEntity, NotificationEntity, NotificationRepository } from '@novu/dal';
-import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
-import { SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from '@novu/application-generic';
-import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { NotificationEntity, NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { sleep } from '../../events/e2e/utils/sleep.util';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
 
 describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
@@ -144,9 +144,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(secondPage.data.length, 'secondPage dataLength').to.be.equal(2);
 
     const secondPageWorkflowRun = await workflowRunRepository.findOne({
-      where: [
-        { workflow_run_id: { operator: '=', value: secondPage.data[0].id } },
-      ],
+      where: [{ workflow_run_id: { operator: '=', value: secondPage.data[0].id } }],
     });
     expect(secondPageWorkflowRun, 'secondPageWorkflowRun should exist').to.not.be.null;
     expect(secondPageWorkflowRun.data, 'secondPageWorkflowRun.data should exist').to.not.be.undefined;
@@ -212,9 +210,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       // Check for duplicates and collect runNumbers
       for (const workflowRun of body.data) {
         const workflowRunEntity = await workflowRunRepository.findOne({
-          where: [
-            { workflow_run_id: { operator: '=', value: workflowRun.id } },
-          ],
+          where: [{ workflow_run_id: { operator: '=', value: workflowRun.id } }],
         });
         expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
         expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
@@ -468,7 +464,6 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       .query({ statuses: [WorkflowRunStatusEnum.SUCCESS] })
       .expect(200);
 
-    // eslint-disable-next-line no-console
     console.log('BODY', JSON.stringify(body, null, 2));
 
     expect(body.data.length).to.be.equal(2);
@@ -525,9 +520,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(body.data.length, 'body.data.length').to.be.greaterThan(0);
     body.data.forEach(async (workflowRun: any) => {
       const workflowRunEntity = await workflowRunRepository.findOne({
-        where: [
-          { workflow_run_id: { operator: '=', value: workflowRun.id } },
-        ],
+        where: [{ workflow_run_id: { operator: '=', value: workflowRun.id } }],
       });
       expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
       expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;

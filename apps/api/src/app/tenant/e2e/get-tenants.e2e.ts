@@ -1,10 +1,9 @@
-import { expect } from 'chai';
-import axios, { AxiosResponse } from 'axios';
-
-import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import axios, { AxiosResponse } from 'axios';
+import { expect } from 'chai';
 
-describe('Get Tenants List- /tenants (GET) #novu-v0', function () {
+describe('Get Tenants List- /tenants (GET) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -13,7 +12,7 @@ describe('Get Tenants List- /tenants (GET) #novu-v0', function () {
     await session.initialize();
   });
 
-  it('should get the newly created tenants', async function () {
+  it('should get the newly created tenants', async () => {
     for (let i = 0; i < 5; i += 1) {
       await tenantRepository.create({
         _organizationId: session.organization._id,
@@ -38,7 +37,7 @@ describe('Get Tenants List- /tenants (GET) #novu-v0', function () {
     expect(data.data[4].identifier).to.equal('identifier_0');
   });
 
-  it('should get second page of tenants', async function () {
+  it('should get second page of tenants', async () => {
     for (let i = 0; i < 9; i += 1) {
       await tenantRepository.create({
         _environmentId: session.environment._id,
@@ -63,7 +62,7 @@ describe('Get Tenants List- /tenants (GET) #novu-v0', function () {
     expect(data.data[3].identifier).to.equal('identifier_0');
   });
 
-  it('should get tenants by pagination', async function () {
+  it('should get tenants by pagination', async () => {
     for (let i = 0; i < 14; i += 1) {
       await tenantRepository.create({
         _environmentId: session.environment._id,

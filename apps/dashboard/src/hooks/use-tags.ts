@@ -1,8 +1,8 @@
-import { getTags } from '@/api/environments';
-import { QueryKeys } from '@/utils/query-keys';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useQuery } from '@tanstack/react-query';
 import type { ITagsResponse } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
+import { getTags } from '@/api/environments';
+import { useEnvironment } from '@/context/environment/hooks';
+import { QueryKeys } from '@/utils/query-keys';
 
 export const useTags = () => {
   const { currentEnvironment } = useEnvironment();

@@ -1,7 +1,7 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { StepTypeEnum } from '@novu/shared';
 import { FeedRepository } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
 describe('Create A Feed - /feeds (POST) #novu-v0', async () => {
@@ -13,7 +13,7 @@ describe('Create A Feed - /feeds (POST) #novu-v0', async () => {
     await session.initialize();
   });
 
-  it('should create a new feed', async function () {
+  it('should create a new feed', async () => {
     const testFeed = {
       name: 'Test name',
     };
@@ -27,7 +27,7 @@ describe('Create A Feed - /feeds (POST) #novu-v0', async () => {
     expect(feed._environmentId).to.equal(session.environment._id);
   });
 
-  it('should promote feed changes with template', async function () {
+  it('should promote feed changes with template', async () => {
     const testFeed = {
       name: 'add feed to message',
     };
@@ -136,7 +136,7 @@ describe('Create A Feed - /feeds (POST) #novu-v0', async () => {
     expect(feedsCount).to.equal(2);
   });
 
-  it('should throw error if a feed already exist', async function () {
+  it('should throw error if a feed already exist', async () => {
     await session.testAgent.post(`/v1/feeds`).send({
       name: 'identifier_123',
     });

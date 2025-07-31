@@ -1,5 +1,5 @@
-import { z } from 'zod';
 import { isValidPhoneNumber } from 'react-phone-number-input';
+import { z } from 'zod';
 
 export const SubscriberFormSchema = z.object({
   firstName: z.string().optional(),

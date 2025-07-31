@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-
+import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
 import {
   EnvironmentEntity,
   EnvironmentRepository,
@@ -7,30 +7,28 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
+import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   StepTypeEnum,
   UserSessionData,
   WorkflowCreationSourceEnum,
-  ResourceOriginEnum,
   WorkflowPreferences,
-  ResourceTypeEnum,
 } from '@novu/shared';
-import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
-
-import { SyncCommand } from './sync.command';
-import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
-import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
-import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
-import { StepIssuesDto } from '../../../workflows-v2/dtos';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
-import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
-import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
-import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { StepIssuesDto } from '../../../workflows-v2/dtos';
+import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
+import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
+import { SyncCommand } from './sync.command';
 
 @Injectable()
 export class Sync {
@@ -357,9 +355,7 @@ export class Sync {
     return workflow.tags || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private castToAnyNotSupportedParam(param: any): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return param as any;
   }
 }

@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 
-import { GetTenantCommand, GetTenant } from '@novu/application-generic';
-import { TenantRepository, DalException } from '@novu/dal';
+import { GetTenant, GetTenantCommand } from '@novu/application-generic';
+import { DalException, TenantRepository } from '@novu/dal';
 
 import { DeleteTenantCommand } from './delete-tenant.command';
 

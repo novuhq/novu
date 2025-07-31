@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
-import { InMemoryProviderEnum, InMemoryProviderClient } from './types';
+import { InMemoryProviderClient, InMemoryProviderEnum } from './types';
 import { isClusterModeEnabled } from './utils';
 
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';

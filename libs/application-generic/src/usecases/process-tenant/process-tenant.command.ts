@@ -1,5 +1,5 @@
-import { IsDefined } from 'class-validator';
 import { ITenantDefine } from '@novu/shared';
+import { IsDefined } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 

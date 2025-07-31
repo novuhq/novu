@@ -245,7 +245,6 @@ export class SendMessage {
     });
 
     const { digest } = command.job;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let timedInfo: any = {};
 
     if (digest && digest.type === DigestTypeEnum.TIMED && digest.timed) {

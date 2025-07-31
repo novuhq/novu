@@ -1,11 +1,10 @@
+import { faker } from '@faker-js/faker';
+import { decryptApiKey } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/stateless';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { createHash } from 'crypto';
-import { faker } from '@faker-js/faker';
-
-import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/stateless';
-import { EnvironmentRepository } from '@novu/dal';
-import { decryptApiKey } from '@novu/application-generic';
 
 import { encryptApiKeysMigration } from './encrypt-api-keys-migration';
 
@@ -17,7 +16,7 @@ async function pruneIntegration({ environmentRepository }: { environmentReposito
   }
 }
 
-describe('Encrypt Old api keys', function () {
+describe('Encrypt Old api keys', () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
 
@@ -26,7 +25,7 @@ describe('Encrypt Old api keys', function () {
     await session.initialize();
   });
 
-  it('should decrypt all old api keys', async function () {
+  it('should decrypt all old api keys', async () => {
     await pruneIntegration({ environmentRepository });
 
     for (let i = 0; i < 2; i += 1) {
@@ -73,7 +72,7 @@ describe('Encrypt Old api keys', function () {
     }
   });
 
-  it('should validate migration idempotence', async function () {
+  it('should validate migration idempotence', async () => {
     await pruneIntegration({ environmentRepository });
 
     const data = {

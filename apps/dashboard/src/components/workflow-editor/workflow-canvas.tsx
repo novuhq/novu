@@ -1,4 +1,4 @@
-import { EnvironmentEnum, ResourceOriginEnum, PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
+import { EnvironmentEnum, EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -11,17 +11,18 @@ import {
   ViewportHelperFunctionOptions,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useUser } from '@clerk/clerk-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { generateUUID } from '@/utils/uuid';
-
+import { useLocation, useNavigate } from 'react-router-dom';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
-import { useUser } from '@clerk/clerk-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { generateUUID } from '@/utils/uuid';
 import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { AddNodeEdge, AddNodeEdgeType } from './edges';
 import {
@@ -38,8 +39,6 @@ import {
   TriggerNode,
 } from './nodes';
 import { WorkflowChecklist } from './workflow-checklist';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { useHasPermission } from '@/hooks/use-has-permission';
 
 const nodeTypes = {
   trigger: TriggerNode,

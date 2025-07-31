@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getResponse, getBridgeUrl } from './env.utils';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { getBridgeUrl, getResponse } from './env.utils';
 
 describe('env.utils', () => {
   describe('getResponse', () => {
@@ -14,7 +14,6 @@ describe('env.utils', () => {
       // @ts-expect-error - incorrect Response types
       global.Response = undefined;
       const response = getResponse();
-      // eslint-disable-next-line global-require
       expect(response).toBe(require('cross-fetch').Response);
     });
   });

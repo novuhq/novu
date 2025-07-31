@@ -1,7 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
-import { BulkCreateSubscribersCommand } from './bulk-create-subscribers.command';
 import { BulkCreateSubscriberResponseDto } from '../../dtos/bulk-create-subscriber-response.dto';
+import { BulkCreateSubscribersCommand } from './bulk-create-subscribers.command';
 
 @Injectable()
 export class BulkCreateSubscribers {

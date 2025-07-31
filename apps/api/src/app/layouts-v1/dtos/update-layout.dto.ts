@@ -1,9 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
-
-import { LayoutDto } from './layout.dto';
-
 import { LayoutVariables } from '../types';
+import { LayoutDto } from './layout.dto';
 
 export class UpdateLayoutResponseDto extends LayoutDto {}
 

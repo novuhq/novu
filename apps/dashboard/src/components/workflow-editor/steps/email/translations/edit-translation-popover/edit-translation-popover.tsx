@@ -1,6 +1,6 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import React, { useCallback, useId, useState } from 'react';
 import { RiDeleteBin2Line, RiErrorWarningLine, RiListView, RiQuestionLine } from 'react-icons/ri';
-
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
@@ -8,15 +8,14 @@ import { FormControl, FormItem, FormMessagePure } from '@/components/primitives/
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ControlInput } from '@/components/workflow-editor/control-input';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useUpdateTranslationValue } from '@/hooks/use-update-translation-value';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { DEFAULT_LOCALE } from '@novu/shared';
 import { useTranslationEditor } from './use-translation-editor';
 import { useTranslationForm } from './use-translation-form';
 import { useVirtualAnchor } from './use-virtual-anchor';

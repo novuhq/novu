@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-
-import { Tabs, TabsTrigger, TabsList } from '@/components/primitives/tabs';
-import { FormField } from '@/components/primitives/form/form';
 import { RiCodeSSlashFill, RiDashboardLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { FormField } from '@/components/primitives/form/form';
+import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { isEmptyMailyJson } from './maily/maily-utils';
 
 export const EmailEditorSelect = ({

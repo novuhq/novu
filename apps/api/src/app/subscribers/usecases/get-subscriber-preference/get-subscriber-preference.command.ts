@@ -1,5 +1,5 @@
-import { IsArray, IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '@novu/application-generic';
+import { IsArray, IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class GetSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
   @IsOptional()

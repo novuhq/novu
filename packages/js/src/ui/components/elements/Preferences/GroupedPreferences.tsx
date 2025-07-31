@@ -1,8 +1,8 @@
 import { Index, Show } from 'solid-js';
 
 import { ChannelPreference, Preference } from '../../../../types';
-import { PreferencesListSkeleton } from './PreferencesListSkeleton';
 import { GroupedPreferencesRow } from './GroupedPreferencesRow';
+import { PreferencesListSkeleton } from './PreferencesListSkeleton';
 
 export const GroupedPreferences = (props: {
   groups: Array<{ name: string; preferences: Preference[] }>;

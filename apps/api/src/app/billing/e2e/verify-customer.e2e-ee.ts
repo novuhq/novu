@@ -1,11 +1,10 @@
-/* eslint-disable global-require */
-// eslint-disable-next-line no-restricted-imports
+// biome-ignore lint/style/noRestrictedImports: <explanation>
 import { Logger } from '@nestjs/common';
-import sinon from 'sinon';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
 import { VerifyCustomerCommand } from '@novu/ee-billing';
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 describe('VerifyCustomer #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');

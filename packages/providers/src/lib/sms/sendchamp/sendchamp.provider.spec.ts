@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { SendchampSmsProvider } from './sendchamp.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { SendchampSmsProvider } from './sendchamp.provider';
 
 const mockConfig = {
   apiKey: 'test-key',

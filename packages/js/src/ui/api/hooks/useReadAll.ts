@@ -7,7 +7,10 @@ export const useReadAll = (props?: { onSuccess?: () => void; onError?: (err: unk
   const readAll = async ({
     tags,
     data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}) => {
+  }: {
+    tags?: NotificationFilter['tags'];
+    data?: Record<string, unknown>;
+  } = {}) => {
     try {
       await novu.notifications.readAll({ tags, data });
       props?.onSuccess?.();

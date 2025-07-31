@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-
-import { GetWorkflowByIdsCommand } from './get-workflow-by-ids.command';
 import { InstrumentUsecase } from '../../../instrumentation';
+import { GetWorkflowByIdsCommand } from './get-workflow-by-ids.command';
 
 @Injectable()
 export class GetWorkflowByIdsUseCase {

@@ -1,15 +1,13 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { NotFoundException } from '@nestjs/common';
 import { expect } from 'chai';
-
-import { GetSubscriber } from './get-subscriber.usecase';
-import { GetSubscriberCommand } from './get-subscriber.command';
-
-import { SubscribersV1Module } from '../../subscribersV1.module';
 import { SharedModule } from '../../../shared/shared.module';
+import { SubscribersV1Module } from '../../subscribersV1.module';
+import { GetSubscriberCommand } from './get-subscriber.command';
+import { GetSubscriber } from './get-subscriber.usecase';
 
-describe('Get Subscriber', function () {
+describe('Get Subscriber', () => {
   let useCase: GetSubscriber;
   let session: UserSession;
 
@@ -25,7 +23,7 @@ describe('Get Subscriber', function () {
     useCase = moduleRef.get<GetSubscriber>(GetSubscriber);
   });
 
-  it('should get a subscriber', async function () {
+  it('should get a subscriber', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
     const res = await useCase.execute(

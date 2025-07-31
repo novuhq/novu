@@ -1,23 +1,16 @@
-import {
-  HealthCheckError,
-  HealthIndicator,
-  HealthIndicatorResult,
-} from '@nestjs/terminus';
 import { Injectable, Logger } from '@nestjs/common';
+import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 
 import { QueueBaseService } from '../services/queues/queue-base.service';
 import { IHealthIndicator } from './health-indicator.interface';
 
 @Injectable()
-export abstract class QueueHealthIndicator
-  extends HealthIndicator
-  implements IHealthIndicator
-{
+export abstract class QueueHealthIndicator extends HealthIndicator implements IHealthIndicator {
   constructor(
     private queueService: QueueBaseService,
     private indicatorKey: string,
     private serviceName: string,
-    private logContext: string,
+    private logContext: string
   ) {
     super();
   }
@@ -34,9 +27,6 @@ export abstract class QueueHealthIndicator
       return result;
     }
 
-    throw new HealthCheckError(
-      `${this.serviceName} Health is not ready`,
-      result,
-    );
+    throw new HealthCheckError(`${this.serviceName} Health is not ready`, result);
   }
 }

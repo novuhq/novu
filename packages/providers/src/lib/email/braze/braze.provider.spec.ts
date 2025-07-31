@@ -18,7 +18,6 @@ test('should trigger sendMessage method correctly', async () => {
   const provider = new BrazeEmailProvider(mockConfig);
 
   const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   });
 

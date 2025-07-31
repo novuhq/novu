@@ -1,10 +1,10 @@
-import { expect } from 'chai';
+import { Novu } from '@novu/api';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { Novu } from '@novu/api';
+import { expect } from 'chai';
 import { expectSdkValidationExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', function () {
+describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', () => {
   let session: UserSession;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
@@ -19,7 +19,7 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', funct
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should return the response array in correct format', async function () {
+  it('should return the response array in correct format', async () => {
     const bulkResult = await novuClient.subscribers.createBulk({
       subscribers: [
         {
@@ -51,7 +51,7 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', funct
     expect(failed?.length).to.equal(0);
   });
 
-  it('should create and update subscribers', async function () {
+  it('should create and update subscribers', async () => {
     const res = await novuClient.subscribers.createBulk({
       subscribers: [
         {
@@ -97,7 +97,7 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', funct
     expect(createdSubscriber?.data?.test1).to.equal('test value1');
   });
 
-  it('should throw an error when sending more than 500 subscribers', async function () {
+  it('should throw an error when sending more than 500 subscribers', async () => {
     const payload = {
       subscriberId: 'test2',
       firstName: 'sub2',
@@ -116,7 +116,7 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST) #novu-v2', funct
     );
   });
 
-  it('should recreate deleted subscribers', async function () {
+  it('should recreate deleted subscribers', async () => {
     const existingSubscriber = { subscriberId: subscriber.subscriberId, firstName: 'existingSubscriber' };
     const newSubscriber1 = {
       subscriberId: 'test1',

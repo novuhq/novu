@@ -1,10 +1,10 @@
+import { GetSubscriberPreferencesDto } from '@novu/api/models/components';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchSubscriberPreferences } from '@/api/subscribers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { GetSubscriberPreferencesDto } from '@novu/api/models/components';
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 
 type PatchSubscriberPreferencesParameters = OmitEnvironmentFromParameters<typeof patchSubscriberPreferences>;
 

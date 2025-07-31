@@ -1,4 +1,7 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import { RiGroup2Line } from 'react-icons/ri';
 import { Separator } from '@/components/primitives/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Preferences } from '@/components/subscribers/preferences/preferences';
@@ -8,13 +11,10 @@ import { SubscriberOverviewForm } from '@/components/subscribers/subscriber-over
 import { SubscriberOverviewSkeleton } from '@/components/subscribers/subscriber-overview-skeleton';
 import { SubscriberSubscriptions } from '@/components/subscribers/subscriptions/subscriber-subscriptions';
 import TruncatedText from '@/components/truncated-text';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import useFetchSubscriberPreferences from '@/hooks/use-fetch-subscriber-preferences';
 import { useFormProtection } from '@/hooks/use-form-protection';
-import { useState } from 'react';
-import { RiGroup2Line } from 'react-icons/ri';
-import { motion } from 'motion/react';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type SubscriberOverviewProps = {
   subscriberId: string;

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
 import { IPaginationWithQueryParams } from '@novu/shared';
+import { IsOptional, IsString } from 'class-validator';
 
 import { Constructor } from '../types';
 import { PaginationRequestDto } from './pagination-request';

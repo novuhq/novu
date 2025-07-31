@@ -1,7 +1,7 @@
-import * as React from 'react';
 import { Slottable } from '@radix-ui/react-slot';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import mergeRefs from 'merge-refs';
+import * as React from 'react';
 
 import { useTabObserver } from '@/hooks/use-tab-observer';
 import { cn } from '../../utils/ui';
@@ -95,7 +95,7 @@ SegmentedControlContent.displayName = 'SegmentedControlContent';
 
 export {
   SegmentedControlRoot as SegmentedControl,
-  SegmentedControlList as SegmentedControlList,
-  SegmentedControlTrigger as SegmentedControlTrigger,
-  SegmentedControlContent as SegmentedControlContent,
+  SegmentedControlList,
+  SegmentedControlTrigger,
+  SegmentedControlContent,
 };

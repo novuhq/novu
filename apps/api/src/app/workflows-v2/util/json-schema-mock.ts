@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { JSONSchemaFaker } from 'json-schema-faker';
+import _ from 'lodash';
 
 /**
  * JSON Schema Mock Generator
@@ -14,7 +14,7 @@ export class JsonSchemaMock {
    * Configure JSON Schema Faker with optimal settings for human-readable mock data
    */
   static configure(): void {
-    if (this.isConfigured) return;
+    if (JsonSchemaMock.isConfigured) return;
 
     // Configure JSON Schema Faker for better mock data generation
     JSONSchemaFaker.option({
@@ -40,16 +40,16 @@ export class JsonSchemaMock {
     JSONSchemaFaker.format('date', () => new Date().toISOString().split('T')[0]);
     JSONSchemaFaker.format('time', () => new Date().toTimeString().split(' ')[0]);
 
-    this.isConfigured = true;
+    JsonSchemaMock.isConfigured = true;
   }
 
   /**
    * Generate mock data from a JSON schema with intelligent property detection
    */
   static generate(schema: unknown): unknown {
-    this.configure();
+    JsonSchemaMock.configure();
 
-    const enhancedSchema = this.addExamplesToSchema(schema);
+    const enhancedSchema = JsonSchemaMock.addExamplesToSchema(schema);
 
     return JSONSchemaFaker.generate(enhancedSchema);
   }
@@ -69,24 +69,45 @@ export class JsonSchemaMock {
     if (prop.format === 'uuid') return '123e4567-e89b-12d3-a456-426614174000';
 
     // Email patterns
-    if (this.matchesPattern(lowerKey, ['email', 'mail', 'e_mail', 'emailaddress', 'email_address'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['email', 'mail', 'e_mail', 'emailaddress', 'email_address'])) {
       return 'user@example.com';
     }
 
     // URL/Link patterns
-    if (this.matchesPattern(lowerKey, ['url', 'uri', 'link', 'href', 'website', 'homepage', 'site', 'web', 'domain'])) {
+    if (
+      JsonSchemaMock.matchesPattern(lowerKey, [
+        'url',
+        'uri',
+        'link',
+        'href',
+        'website',
+        'homepage',
+        'site',
+        'web',
+        'domain',
+      ])
+    ) {
       return 'https://example.com';
     }
 
     // Name patterns
-    if (this.matchesPattern(lowerKey, ['firstname', 'first_name', 'fname', 'givenname', 'given_name'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['firstname', 'first_name', 'fname', 'givenname', 'given_name'])) {
       return 'John';
     }
-    if (this.matchesPattern(lowerKey, ['lastname', 'last_name', 'lname', 'surname', 'familyname', 'family_name'])) {
+    if (
+      JsonSchemaMock.matchesPattern(lowerKey, [
+        'lastname',
+        'last_name',
+        'lname',
+        'surname',
+        'familyname',
+        'family_name',
+      ])
+    ) {
       return 'Doe';
     }
     if (
-      this.matchesPattern(lowerKey, [
+      JsonSchemaMock.matchesPattern(lowerKey, [
         'fullname',
         'full_name',
         'name',
@@ -98,43 +119,62 @@ export class JsonSchemaMock {
     ) {
       return 'John Doe';
     }
-    if (this.matchesPattern(lowerKey, ['title', 'jobtitle', 'job_title', 'position', 'role'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['title', 'jobtitle', 'job_title', 'position', 'role'])) {
       return 'Software Engineer';
     }
 
     // Address patterns
     if (
-      this.matchesPattern(lowerKey, ['address', 'street', 'streetaddress', 'street_address', 'address1', 'address_1'])
+      JsonSchemaMock.matchesPattern(lowerKey, [
+        'address',
+        'street',
+        'streetaddress',
+        'street_address',
+        'address1',
+        'address_1',
+      ])
     ) {
       return '123 Main Street';
     }
-    if (this.matchesPattern(lowerKey, ['address2', 'address_2', 'apartment', 'apt', 'suite', 'unit'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['address2', 'address_2', 'apartment', 'apt', 'suite', 'unit'])) {
       return 'Apt 4B';
     }
-    if (this.matchesPattern(lowerKey, ['city', 'town', 'locality'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['city', 'town', 'locality'])) {
       return 'New York';
     }
-    if (this.matchesPattern(lowerKey, ['state', 'province', 'region', 'county'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['state', 'province', 'region', 'county'])) {
       return 'NY';
     }
-    if (this.matchesPattern(lowerKey, ['country', 'nation'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['country', 'nation'])) {
       return 'United States';
     }
-    if (this.matchesPattern(lowerKey, ['zipcode', 'zip_code', 'zip', 'postalcode', 'postal_code', 'postcode'])) {
+    if (
+      JsonSchemaMock.matchesPattern(lowerKey, ['zipcode', 'zip_code', 'zip', 'postalcode', 'postal_code', 'postcode'])
+    ) {
       return '10001';
     }
 
     // Phone patterns
-    if (this.matchesPattern(lowerKey, ['phone', 'telephone', 'tel', 'mobile', 'cell', 'phonenumber', 'phone_number'])) {
+    if (
+      JsonSchemaMock.matchesPattern(lowerKey, [
+        'phone',
+        'telephone',
+        'tel',
+        'mobile',
+        'cell',
+        'phonenumber',
+        'phone_number',
+      ])
+    ) {
       return '+1-555-123-4567';
     }
-    if (this.matchesPattern(lowerKey, ['fax', 'faxnumber', 'fax_number'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['fax', 'faxnumber', 'fax_number'])) {
       return '+1-555-123-4568';
     }
 
     // Company/Organization patterns
     if (
-      this.matchesPattern(lowerKey, [
+      JsonSchemaMock.matchesPattern(lowerKey, [
         'company',
         'organization',
         'org',
@@ -146,37 +186,37 @@ export class JsonSchemaMock {
     ) {
       return 'Example Corp';
     }
-    if (this.matchesPattern(lowerKey, ['department', 'dept', 'division', 'team'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['department', 'dept', 'division', 'team'])) {
       return 'Engineering';
     }
 
     // ID patterns
-    if (this.matchesPattern(lowerKey, ['id', 'identifier', 'uuid', 'guid', 'key'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['id', 'identifier', 'uuid', 'guid', 'key'])) {
       // Generate a more unique ID for digest events
       const timestamp = Date.now().toString().slice(-6);
 
       return `example-id-${timestamp}`;
     }
-    if (this.matchesPattern(lowerKey, ['userid', 'user_id', 'customerid', 'customer_id'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['userid', 'user_id', 'customerid', 'customer_id'])) {
       return 'user_12345';
     }
 
     // Description/Content patterns
-    if (this.matchesPattern(lowerKey, ['description', 'desc', 'summary', 'bio', 'biography', 'about'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['description', 'desc', 'summary', 'bio', 'biography', 'about'])) {
       return 'This is an example description with some sample content.';
     }
-    if (this.matchesPattern(lowerKey, ['message', 'msg', 'text', 'content', 'body', 'note', 'comment'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['message', 'msg', 'text', 'content', 'body', 'note', 'comment'])) {
       return 'This is an example message.';
     }
-    if (this.matchesPattern(lowerKey, ['subject', 'topic', 'headline', 'header'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['subject', 'topic', 'headline', 'header'])) {
       return 'Example Subject';
     }
 
     // Date/Time patterns (when not using format)
-    if (this.matchesPattern(lowerKey, ['date', 'created', 'updated', 'modified', 'timestamp'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['date', 'created', 'updated', 'modified', 'timestamp'])) {
       return new Date().toISOString().split('T')[0];
     }
-    if (this.matchesPattern(lowerKey, ['time', 'hour', 'minute'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['time', 'hour', 'minute'])) {
       // For digest events, return full ISO date string instead of just time
       if (lowerKey === 'time') {
         const eventDate = new Date();
@@ -188,48 +228,48 @@ export class JsonSchemaMock {
 
       return new Date().toTimeString().split(' ')[0];
     }
-    if (this.matchesPattern(lowerKey, ['datetime', 'createdat', 'created_at', 'updatedat', 'updated_at'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['datetime', 'createdat', 'created_at', 'updatedat', 'updated_at'])) {
       return new Date().toISOString();
     }
 
     // Color patterns
-    if (this.matchesPattern(lowerKey, ['color', 'colour', 'hex', 'rgb'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['color', 'colour', 'hex', 'rgb'])) {
       return '#3B82F6';
     }
 
     // Currency/Money patterns
-    if (this.matchesPattern(lowerKey, ['currency', 'money', 'price', 'cost', 'amount', 'value', 'fee'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['currency', 'money', 'price', 'cost', 'amount', 'value', 'fee'])) {
       return '$99.99';
     }
 
     // Status/State patterns
-    if (this.matchesPattern(lowerKey, ['status', 'state', 'stage', 'phase'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['status', 'state', 'stage', 'phase'])) {
       return 'active';
     }
-    if (this.matchesPattern(lowerKey, ['type', 'kind', 'category', 'class'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['type', 'kind', 'category', 'class'])) {
       return 'standard';
     }
 
     // Language/Locale patterns
-    if (this.matchesPattern(lowerKey, ['language', 'lang', 'locale', 'timezone', 'tz'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['language', 'lang', 'locale', 'timezone', 'tz'])) {
       return 'en_US';
     }
 
     // Version patterns
-    if (this.matchesPattern(lowerKey, ['version', 'ver', 'revision', 'build'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['version', 'ver', 'revision', 'build'])) {
       return '1.0.0';
     }
 
     // Social media patterns
-    if (this.matchesPattern(lowerKey, ['twitter', 'facebook', 'linkedin', 'instagram', 'github'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['twitter', 'facebook', 'linkedin', 'instagram', 'github'])) {
       return '@example';
     }
 
     // File patterns
-    if (this.matchesPattern(lowerKey, ['filename', 'file_name', 'filepath', 'file_path', 'path'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['filename', 'file_name', 'filepath', 'file_path', 'path'])) {
       return 'example-file.txt';
     }
-    if (this.matchesPattern(lowerKey, ['extension', 'ext', 'mimetype', 'mime_type'])) {
+    if (JsonSchemaMock.matchesPattern(lowerKey, ['extension', 'ext', 'mimetype', 'mime_type'])) {
       return 'txt';
     }
 
@@ -279,7 +319,7 @@ export class JsonSchemaMock {
 
           // Add examples for string properties to override lorem ipsum
           if (prop.type === 'string' && !prop.examples && !prop.example) {
-            prop.examples = [this.getExampleValueForStringProperty(key, prop)];
+            prop.examples = [JsonSchemaMock.getExampleValueForStringProperty(key, prop)];
           }
 
           // Add examples for number properties to override large random numbers
@@ -295,15 +335,17 @@ export class JsonSchemaMock {
             } else {
               // Smart defaults based on property name
               const lowerKey = key.toLowerCase();
-              if (this.matchesPattern(lowerKey, ['age', 'years', 'year'])) {
+              if (JsonSchemaMock.matchesPattern(lowerKey, ['age', 'years', 'year'])) {
                 prop.examples = [25];
-              } else if (this.matchesPattern(lowerKey, ['count', 'quantity', 'qty', 'number', 'num'])) {
+              } else if (JsonSchemaMock.matchesPattern(lowerKey, ['count', 'quantity', 'qty', 'number', 'num'])) {
                 prop.examples = [5];
-              } else if (this.matchesPattern(lowerKey, ['price', 'cost', 'amount', 'value', 'fee', 'salary'])) {
+              } else if (
+                JsonSchemaMock.matchesPattern(lowerKey, ['price', 'cost', 'amount', 'value', 'fee', 'salary'])
+              ) {
                 prop.examples = [prop.type === 'integer' ? 99 : 99.99];
-              } else if (this.matchesPattern(lowerKey, ['percent', 'percentage', 'rate', 'ratio'])) {
+              } else if (JsonSchemaMock.matchesPattern(lowerKey, ['percent', 'percentage', 'rate', 'ratio'])) {
                 prop.examples = [15];
-              } else if (this.matchesPattern(lowerKey, ['weight', 'height', 'length', 'width', 'size'])) {
+              } else if (JsonSchemaMock.matchesPattern(lowerKey, ['weight', 'height', 'length', 'width', 'size'])) {
                 prop.examples = [prop.type === 'integer' ? 100 : 100.5];
               } else {
                 // Default to reasonable numbers
@@ -316,9 +358,9 @@ export class JsonSchemaMock {
           if (prop.type === 'boolean' && !prop.examples && !prop.example) {
             const lowerKey = key.toLowerCase();
             // Smart defaults for boolean properties
-            if (this.matchesPattern(lowerKey, ['active', 'enabled', 'verified', 'confirmed', 'approved'])) {
+            if (JsonSchemaMock.matchesPattern(lowerKey, ['active', 'enabled', 'verified', 'confirmed', 'approved'])) {
               prop.examples = [true];
-            } else if (this.matchesPattern(lowerKey, ['disabled', 'deleted', 'archived', 'hidden'])) {
+            } else if (JsonSchemaMock.matchesPattern(lowerKey, ['disabled', 'deleted', 'archived', 'hidden'])) {
               prop.examples = [false];
             } else {
               prop.examples = [true];
@@ -327,12 +369,12 @@ export class JsonSchemaMock {
 
           // Recursively process nested objects
           if (prop.type === 'object' || prop.properties) {
-            enhancedSchema.properties[key] = this.addExamplesToSchema(prop);
+            enhancedSchema.properties[key] = JsonSchemaMock.addExamplesToSchema(prop);
           }
 
           // Process array items
           if (prop.type === 'array' && prop.items) {
-            prop.items = this.addExamplesToSchema(prop.items);
+            prop.items = JsonSchemaMock.addExamplesToSchema(prop.items);
           }
         }
       }

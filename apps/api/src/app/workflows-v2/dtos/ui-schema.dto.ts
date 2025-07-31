@@ -1,6 +1,6 @@
 import { ApiExtraModels, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsOptional, ValidateNested } from 'class-validator';
 import { UiSchemaGroupEnum } from '@novu/shared';
+import { IsOptional, ValidateNested } from 'class-validator';
 import { UiSchemaProperty } from './ui-schema-property.dto';
 
 @ApiExtraModels(UiSchemaProperty)

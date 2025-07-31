@@ -1,4 +1,4 @@
-import { ControlValuesRepository, NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
 
 export interface IWorkflowWithControlValues {

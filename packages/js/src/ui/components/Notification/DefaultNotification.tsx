@@ -11,12 +11,12 @@ import {
   type NotificationClickHandler,
   type SubjectRenderer,
 } from '../../types';
-import Markdown from '../elements/Markdown';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';
+import Markdown from '../elements/Markdown';
 import { Button } from '../primitives';
 import { Badge } from '../primitives/Badge';
-import { renderNotificationActions } from './NotificationActions';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
+import { renderNotificationActions } from './NotificationActions';
 
 type DefaultNotificationProps = {
   notification: Notification;

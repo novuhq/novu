@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IPaginationParams } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
-import { IPaginationParams } from '@novu/shared';
 
 import { Constructor } from '../types';
 

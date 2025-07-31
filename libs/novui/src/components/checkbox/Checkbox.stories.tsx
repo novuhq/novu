@@ -1,6 +1,6 @@
-import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
 import { Group } from '@mantine/core';
+import { Meta, StoryFn } from '@storybook/react';
+import React from 'react';
 import { Checkbox } from './Checkbox';
 
 export default {

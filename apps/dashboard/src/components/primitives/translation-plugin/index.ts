@@ -1,7 +1,7 @@
 import { Decoration, EditorView, ViewPlugin } from '@uiw/react-codemirror';
-import { TranslationPluginView } from './plugin-view';
 import { MutableRefObject } from 'react';
 import { TranslationKey } from '@/types/translations';
+import { TranslationPluginView } from './plugin-view';
 
 interface TranslationPluginState {
   viewRef: MutableRefObject<EditorView | null>;

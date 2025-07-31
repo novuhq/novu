@@ -2,14 +2,14 @@ import {
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   UiComponentEnum,
-  UiSchemaGroupEnum,
   type UiSchema,
+  UiSchemaGroupEnum,
 } from '@novu/shared';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
-import { cn } from '../../../../utils/ui';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { cn } from '../../../../utils/ui';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 type EmailEditorProps = { uiSchema: UiSchema; isEditorV2?: boolean };

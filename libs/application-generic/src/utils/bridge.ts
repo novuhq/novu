@@ -1,5 +1,5 @@
-import { DigestTypeEnum } from '@novu/shared';
 import { DigestOutput, DigestRegularOutput, DigestTimedOutput } from '@novu/framework/internal';
+import { DigestTypeEnum } from '@novu/shared';
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
   if (isTimedDigestOutput(outputs)) {
@@ -34,7 +34,6 @@ export const BRIDGE_EXECUTION_ERROR = {
   TUNNEL_NOT_FOUND: {
     code: 'TunnelNotFound',
     message: (url: string) =>
-      // eslint-disable-next-line max-len
       `Unable to establish tunnel connection to \`${url}\`. Run npx novu@latest dev in Local mode, or ensure your Tunnel app deployment is available.`,
   },
   BRIDGE_ENDPOINT_NOT_FOUND: {
@@ -45,13 +44,11 @@ export const BRIDGE_EXECUTION_ERROR = {
   BRIDGE_ENDPOINT_UNAVAILABLE: {
     code: 'BridgeEndpointUnavailable',
     message: (url: string) =>
-      // eslint-disable-next-line max-len
       `Unable to reach Bridge Endpoint at \`${url}\`. Run npx novu@latest dev in Local mode, or ensure your Bridge app deployment is available.`,
   },
   BRIDGE_METHOD_NOT_CONFIGURED: {
     code: 'BridgeMethodNotConfigured',
     message: (url: string) =>
-      // eslint-disable-next-line max-len
       `Bridge Endpoint at \`${url}\` is not correctly configured. Ensure your \`@novu/framework\` integration exposes the \`POST\`, \`GET\`, and \`OPTIONS\` methods.`,
   },
   BRIDGE_REQUEST_TIMEOUT: {

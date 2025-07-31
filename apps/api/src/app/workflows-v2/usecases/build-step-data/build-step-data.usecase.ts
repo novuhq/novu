@@ -1,13 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ControlValuesLevelEnum, ShortIsPrefixEnum, ResourceOriginEnum } from '@novu/shared';
-import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { GetWorkflowByIdsUseCase, Instrument, InstrumentUsecase } from '@novu/application-generic';
-
-import { BuildStepDataCommand } from './build-step-data.command';
-import { InvalidStepException } from '../../exceptions/invalid-step.exception';
-import { BuildVariableSchemaUsecase } from '../build-variable-schema';
+import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
+import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum } from '@novu/shared';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 import { StepResponseDto } from '../../dtos';
+import { InvalidStepException } from '../../exceptions/invalid-step.exception';
+import { BuildVariableSchemaUsecase } from '../build-variable-schema';
+import { BuildStepDataCommand } from './build-step-data.command';
 
 @Injectable()
 export class BuildStepDataUsecase {

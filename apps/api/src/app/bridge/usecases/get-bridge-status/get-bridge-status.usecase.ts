@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { HealthCheck, GetActionEnum } from '@novu/framework/internal';
 import { ExecuteBridgeRequest, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from '@novu/application-generic';
+import { GetActionEnum, HealthCheck } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
 import { GetBridgeStatusCommand } from './get-bridge-status.command';
 

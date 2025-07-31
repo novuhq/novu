@@ -1,8 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { setUser as sentrySetUser, setTags as setSentryTags } from '@sentry/react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useEffect, useRef } from 'react';
 import { useAuth } from './auth/hooks';
 import { useSegment } from './segment/hooks';
-import { setUser as sentrySetUser, setTags as setSentryTags } from '@sentry/react';
 
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const ldClient = useLDClient();

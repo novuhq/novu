@@ -1,13 +1,13 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserSessionData } from '@novu/shared';
 import { ExecutionDetailsResponseDto } from '@novu/application-generic';
-import { UserSession } from '../shared/framework/user.decorator';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
-import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
+import { UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { UserSession } from '../shared/framework/user.decorator';
+import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
+import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 
 @ApiCommonResponses()
 @Controller('/execution-details')

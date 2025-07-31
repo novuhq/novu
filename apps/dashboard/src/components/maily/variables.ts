@@ -1,16 +1,15 @@
-import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
 import { Variable } from '@maily-to/core/extensions';
-
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
+import { VariableFrom } from '@/components/maily/types';
+import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import {
+  isInsideRepeatBlock,
   REPEAT_BLOCK_ITERABLE_ALIAS,
   resolveRepeatBlockAlias,
-  isInsideRepeatBlock,
   updateRepeatBlockChildAliases,
 } from './repeat-block-aliases';
-import { VariableFrom } from '@/components/maily/types';
-import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 
 export type CalculateVariablesProps = {
   query: string;

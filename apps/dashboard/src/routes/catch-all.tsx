@@ -1,5 +1,5 @@
-import { Navigate, useLocation } from 'react-router-dom';
 import { RiLoader4Line } from 'react-icons/ri';
+import { Navigate, useLocation } from 'react-router-dom';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '../context/environment/hooks';
 

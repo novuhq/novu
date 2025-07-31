@@ -1,21 +1,15 @@
-import _get from 'lodash.get';
 import { EventEmitter } from 'events';
+import _get from 'lodash.get';
 
 import { IContentEngine } from '../content/content.engine';
-
+import { ChatHandler } from '../handler/chat.handler';
 import { EmailHandler } from '../handler/email.handler';
 import { SmsHandler } from '../handler/sms.handler';
 import { INovuConfig } from '../novu.interface';
 import { ProviderStore } from '../provider/provider.store';
-import {
-  ChannelTypeEnum,
-  IMessage,
-  ITemplate,
-  ITriggerPayload,
-} from '../template/template.interface';
+import { ChannelTypeEnum, IMessage, ITemplate, ITriggerPayload } from '../template/template.interface';
 import { TemplateStore } from '../template/template.store';
 import { ThemeStore } from '../theme/theme.store';
-import { ChatHandler } from '../handler/chat.handler';
 
 export class TriggerEngine {
   constructor(
@@ -24,30 +18,23 @@ export class TriggerEngine {
     private themeStore: ThemeStore,
     private contentEngine: IContentEngine,
     private config: INovuConfig,
-    private eventEmitter: EventEmitter,
+    private eventEmitter: EventEmitter
   ) {}
 
   async trigger(eventId: string, data: ITriggerPayload) {
     const template = await this.templateStore.getTemplateById(eventId);
     if (!template) {
-      throw new Error(
-        `Template on event: ${eventId} was not found in the template store`,
-      );
+      throw new Error(`Template on event: ${eventId} was not found in the template store`);
     }
 
-    const activeMessages: IMessage[] =
-      await this.templateStore.getActiveMessages(template, data);
+    const activeMessages: IMessage[] = await this.templateStore.getActiveMessages(template, data);
 
     for (const message of activeMessages) {
       await this.processTemplateMessage(template, message, data);
     }
   }
 
-  async processTemplateMessage(
-    template: ITemplate,
-    message: IMessage,
-    data: ITriggerPayload,
-  ) {
+  async processTemplateMessage(template: ITemplate, message: IMessage, data: ITriggerPayload) {
     const provider = message.providerId
       ? await this.providerStore.getProviderById(message.providerId)
       : await this.providerStore.getProviderByChannel(message.channel);
@@ -58,9 +45,7 @@ export class TriggerEngine {
 
     const missingVariables = this.getMissingVariables(message, data);
     if (missingVariables.length && this.config.variableProtection) {
-      throw new Error(
-        `Missing variables passed. ${missingVariables.toString()}`,
-      );
+      throw new Error(`Missing variables passed. ${missingVariables.toString()}`);
     }
 
     await this.validate(message, data);
@@ -119,24 +104,16 @@ export class TriggerEngine {
     const mergedResults: string[] = [];
 
     if (message.template && typeof message.template === 'string') {
-      mergedResults.push(
-        ...this.contentEngine.extractMessageVariables(message.template),
-      );
+      mergedResults.push(...this.contentEngine.extractMessageVariables(message.template));
     }
 
     if (message.subject) {
       if (typeof message.subject === 'string') {
-        mergedResults.push(
-          ...this.contentEngine.extractMessageVariables(message.subject),
-        );
+        mergedResults.push(...this.contentEngine.extractMessageVariables(message.subject));
       } else if (typeof message.subject === 'function') {
-        mergedResults.push(
-          ...this.contentEngine.extractMessageVariables(message.subject(data)),
-        );
+        mergedResults.push(...this.contentEngine.extractMessageVariables(message.subject(data)));
       } else {
-        throw new Error(
-          "Subject must be either of 'string' or 'function' type",
-        );
+        throw new Error("Subject must be either of 'string' or 'function' type");
       }
     }
 

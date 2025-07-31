@@ -1,7 +1,4 @@
-import { expect } from 'chai';
-import axios from 'axios';
-
-import { UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
 import {
   MessageEntity,
   MessageRepository,
@@ -10,7 +7,9 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
-import { Novu } from '@novu/api';
+import { UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
@@ -50,7 +49,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
     await pruneMessages(messageRepository);
   });
 
-  it('should change the seen status', async function () {
+  it('should change the seen status', async () => {
     await novuClient.subscribers.messages.markAllAs(
       {
         messageId: message._id,
@@ -67,7 +66,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
     expect(updatedMessage.lastReadDate).to.be.not.ok;
   });
 
-  it('should change the read status', async function () {
+  it('should change the read status', async () => {
     await novuClient.subscribers.messages.markAllAs(
       {
         messageId: message._id,
@@ -84,7 +83,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
     expect(updatedMessage.lastReadDate).to.be.ok;
   });
 
-  it('should change the seen status to unseen', async function () {
+  it('should change the seen status to unseen', async () => {
     // simulate user seen
     await novuClient.subscribers.messages.markAllAs(
       {
@@ -115,7 +114,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
     expect(updatedMessage.lastReadDate).to.be.not.ok;
   });
 
-  it('should change the read status to unread', async function () {
+  it('should change the read status to unread', async () => {
     // simulate user read
     await novuClient.subscribers.messages.markAllAs(
       {
@@ -145,7 +144,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v2', async () =>
     expect(updateMessage.lastReadDate).to.be.ok;
   });
 
-  it('should throw exception if messages were not provided', async function () {
+  it('should throw exception if messages were not provided', async () => {
     const failureMessage = 'should not reach here, should throw error';
 
     try {

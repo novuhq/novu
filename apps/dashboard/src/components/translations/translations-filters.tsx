@@ -1,32 +1,30 @@
+import { DEFAULT_LOCALE, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import {
-  RiLoader4Line,
-  RiSettingsLine,
-  RiDownload2Line,
-  RiUpload2Line,
   RiCheckLine,
   RiCloseLine,
+  RiDownload2Line,
+  RiLoader4Line,
+  RiSettingsLine,
+  RiUpload2Line,
 } from 'react-icons/ri';
-import { AnimatePresence, motion } from 'motion/react';
 import { useNavigate, useParams } from 'react-router-dom';
-
+import { TranslationsFilter } from '@/api/translations';
+import { FlagCircle } from '@/components/flag-circle';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '@/components/primitives/form/form';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { FlagCircle } from '@/components/flag-circle';
-import { cn } from '@/utils/ui';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { DEFAULT_LOCALE, PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
-import { useHasPermission } from '@/hooks/use-has-permission';
 import { useEnvironment } from '@/context/environment/hooks';
-
-import { defaultTranslationsFilter } from './hooks/use-translations-url-state';
 import { useExportMasterJson } from '@/hooks/use-export-master-json';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useUploadMasterJson } from '@/hooks/use-upload-master-json';
-import { TranslationsFilter } from '@/api/translations';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { defaultTranslationsFilter } from './hooks/use-translations-url-state';
 
 type SearchFilterProps = {
   value: string;

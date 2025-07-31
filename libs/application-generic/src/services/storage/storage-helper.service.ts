@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { IAttachmentOptionsExtended } from '@novu/stateless';
-
+import { Instrument } from '../../instrumentation';
 import { NonExistingFileError } from './non-existing-file.error';
 import { StorageService } from './storage.service';
-import { Instrument } from '../../instrumentation';
 
 @Injectable()
 export class StorageHelperService {
@@ -21,11 +20,7 @@ export class StorageHelperService {
 
     const promises = attachments.map(async (attachment) => {
       if (attachment.file) {
-        await this.storageService.uploadFile(
-          attachment.storagePath,
-          attachment.file,
-          attachment.mime,
-        );
+        await this.storageService.uploadFile(attachment.storagePath, attachment.file, attachment.mime);
       }
     });
     await Promise.all(promises);
@@ -38,14 +33,9 @@ export class StorageHelperService {
 
     for (const attachment of attachments) {
       try {
-        attachment.file = await this.storageService.getFile(
-          attachment.storagePath,
-        );
+        attachment.file = await this.storageService.getFile(attachment.storagePath);
       } catch (error: any) {
-        if (
-          error instanceof NonExistingFileError ||
-          error.name === 'NonExistingFileError'
-        ) {
+        if (error instanceof NonExistingFileError || error.name === 'NonExistingFileError') {
           attachment.file = null;
         } else {
           throw error;

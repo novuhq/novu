@@ -1,13 +1,12 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { ConflictException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import { LayoutRepository, ControlValuesRepository } from '@novu/dal';
+import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-
-import { DeleteLayoutUseCase } from './delete-layout.use-case';
-import { DeleteLayoutCommand } from './delete-layout.command';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { GetLayoutUseCase } from '../get-layout';
+import { DeleteLayoutCommand } from './delete-layout.command';
+import { DeleteLayoutUseCase } from './delete-layout.use-case';
 
 describe('DeleteLayoutUseCase', () => {
   let getLayoutUseCaseMock: sinon.SinonStubbedInstance<GetLayoutUseCase>;

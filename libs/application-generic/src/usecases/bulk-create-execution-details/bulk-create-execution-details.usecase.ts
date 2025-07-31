@@ -1,15 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  ExecutionDetailsRepository,
-  ExecutionDetailsEntity,
-  DalException,
-} from '@novu/dal';
-
-import { BulkCreateExecutionDetailsCommand } from './bulk-create-execution-details.command';
-
-import { mapExecutionDetailsCommandToEntity } from '../create-execution-details';
+import { DalException, ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { InstrumentUsecase } from '../../instrumentation';
 import { PlatformException } from '../../utils/exceptions';
+import { mapExecutionDetailsCommandToEntity } from '../create-execution-details';
+import { BulkCreateExecutionDetailsCommand } from './bulk-create-execution-details.command';
 
 const LOG_CONTEXT = 'BulkCreateExecutionDetails';
 
@@ -30,17 +24,9 @@ export class BulkCreateExecutionDetails {
 
     try {
       await this.executionDetailsRepository.insertMany(entities);
-      Logger.verbose(
-        { entities },
-        'Bulk execution details created',
-        LOG_CONTEXT,
-      );
+      Logger.verbose({ entities }, 'Bulk execution details created', LOG_CONTEXT);
     } catch (error) {
-      Logger.error(
-        { entities, error },
-        'Bulk execution details creation failed',
-        LOG_CONTEXT,
-      );
+      Logger.error({ entities, error }, 'Bulk execution details creation failed', LOG_CONTEXT);
 
       if (error instanceof DalException) {
         throw new PlatformException(error.message);
@@ -50,7 +36,7 @@ export class BulkCreateExecutionDetails {
   }
 
   private cleanFromNulls(
-    entity: Omit<ExecutionDetailsEntity, 'createdAt' | '_id'>,
+    entity: Omit<ExecutionDetailsEntity, 'createdAt' | '_id'>
   ): Omit<ExecutionDetailsEntity, 'createdAt' | '_id'> {
     const cleanEntity = { ...entity };
 

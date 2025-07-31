@@ -1,6 +1,6 @@
-import { RiRouteFill, RiTranslate2, RiLayout5Line } from 'react-icons/ri';
-import { formatDateSimple } from '@/utils/format-date';
+import { RiLayout5Line, RiRouteFill, RiTranslate2 } from 'react-icons/ri';
 import type { IResourceDiffResult } from '@/api/environments';
+import { formatDateSimple } from '@/utils/format-date';
 
 type ResourceRowProps = {
   resource: IResourceDiffResult;

@@ -1,7 +1,4 @@
-import {
-  IContentEngine,
-  HandlebarsContentEngine,
-} from '../content/content.engine';
+import { HandlebarsContentEngine, IContentEngine } from '../content/content.engine';
 import { IChatProvider } from '../provider/provider.interface';
 import { IMessage, ITriggerPayload } from '../template/template.interface';
 
@@ -11,7 +8,7 @@ export class ChatHandler {
   constructor(
     private message: IMessage,
     private provider: IChatProvider,
-    contentEngine?: IContentEngine,
+    contentEngine?: IContentEngine
   ) {
     this.contentEngine = contentEngine ?? new HandlebarsContentEngine();
   }
@@ -26,7 +23,7 @@ export class ChatHandler {
 
     if (!data.$webhookUrl) {
       throw new Error(
-        'webhookUrl is missing in trigger payload. To send an a chat message you must specify a webhookUrl property.',
+        'webhookUrl is missing in trigger payload. To send an a chat message you must specify a webhookUrl property.'
       );
     }
 
@@ -35,7 +32,7 @@ export class ChatHandler {
         webhookUrl: data.$webhookUrl as string,
         content,
       },
-      {},
+      {}
     );
   }
 }

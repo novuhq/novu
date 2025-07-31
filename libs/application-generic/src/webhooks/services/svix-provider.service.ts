@@ -1,5 +1,5 @@
 import { Provider } from '@nestjs/common';
-// eslint-disable-next-line no-restricted-imports
+// biome-ignore lint/style/noRestrictedImports: <explanation>
 import { Svix } from 'svix';
 
 export type SvixClient = Svix | null;

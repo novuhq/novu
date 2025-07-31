@@ -1,31 +1,30 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { BadRequestException } from '@nestjs/common';
 import {
   AnalyticsService,
-  UpsertControlValuesUseCase,
   GetLayoutUseCase,
   layoutControlSchema,
+  UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
+  ContentIssueEnum,
   ControlValuesLevelEnum,
   LayoutControlValuesDto,
+  LayoutIssuesDto,
   ResourceOriginEnum,
   ResourceTypeEnum,
   slugify,
-  LayoutIssuesDto,
-  ContentIssueEnum,
 } from '@novu/shared';
-
-import { UpsertLayout } from './upsert-layout.usecase';
-import { UpsertLayoutCommand } from './upsert-layout.command';
-import { CreateLayoutUseCase, UpdateLayoutUseCase } from '../../../layouts-v1/usecases';
-import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { LayoutDto } from '../../../layouts-v1/dtos';
-import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
+import { CreateLayoutUseCase, UpdateLayoutUseCase } from '../../../layouts-v1/usecases';
 import { LayoutCreationSourceEnum } from '../../types';
+import { BuildLayoutIssuesUsecase } from '../build-layout-issues/build-layout-issues.usecase';
+import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
+import { UpsertLayoutCommand } from './upsert-layout.command';
+import { UpsertLayout } from './upsert-layout.usecase';
 
 // Mock the utility functions
 const isStringifiedMailyJSONContentStub = sinon.stub();

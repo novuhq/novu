@@ -1,8 +1,8 @@
 import { Check } from 'lucide-react';
 import { cn } from '../../../../../utils/ui';
+import { useKeyboardNavigation } from '../hooks/use-keyboard-navigation';
 import { FilterOption, SizeType } from '../types';
 import { BaseFilterContent } from './base-filter-content';
-import { useKeyboardNavigation } from '../hooks/use-keyboard-navigation';
 
 type MultiFilterContentProps = {
   inputRef: React.RefObject<HTMLInputElement>;

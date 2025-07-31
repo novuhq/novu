@@ -1,7 +1,7 @@
 import '../../src/config';
-import { MessageTemplateRepository, OrganizationRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
+import { MessageTemplateRepository, OrganizationRepository } from '@novu/dal';
 import { UiComponentEnum } from '@novu/shared';
 import { AppModule } from '../../src/app.module';
 

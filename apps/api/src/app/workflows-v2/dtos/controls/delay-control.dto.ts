@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, Min, ValidateIf } from 'class-validator';
 import { DelayTypeEnum, TimeUnitEnum } from '@novu/shared';
+import { IsEnum, IsNumber, Min, ValidateIf } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 export class DelayControlDto extends SkipControlDto {

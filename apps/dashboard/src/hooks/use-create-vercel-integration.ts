@@ -1,11 +1,10 @@
-import { useCallback, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-
-import { useVercelParams } from './use-vercel-params';
-import { createVercelIntegration } from '../api/partner-integrations';
+import { useCallback, useEffect } from 'react';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { useDataRef } from './use-data-ref';
 import { useEnvironment } from '@/context/environment/hooks';
+import { createVercelIntegration } from '../api/partner-integrations';
+import { useDataRef } from './use-data-ref';
+import { useVercelParams } from './use-vercel-params';
 
 export function useCreateVercelIntegration() {
   const { currentEnvironment } = useEnvironment();

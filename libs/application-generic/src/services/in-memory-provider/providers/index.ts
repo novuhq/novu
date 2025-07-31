@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
-
+import { PlatformException } from '../../../utils/exceptions';
+import { InMemoryProviderEnum, Redis } from '../types';
 import {
   getAzureCacheForRedisCluster,
   getAzureCacheForRedisClusterProviderConfig,
@@ -22,13 +23,6 @@ import {
   validateMemoryDbClusterProviderConfig,
 } from './memory-db-cluster-provider';
 import {
-  getRedisInstance,
-  getRedisProviderConfig,
-  IRedisProviderConfig,
-  isClientReady as isRedisClientReady,
-  validateRedisProviderConfig,
-} from './redis-provider';
-import {
   Cluster,
   ClusterOptions,
   getRedisCluster,
@@ -37,10 +31,13 @@ import {
   isClientReady as isRedisClusterClientReady,
   validateRedisClusterProviderConfig,
 } from './redis-cluster-provider';
-
-import { InMemoryProviderEnum, Redis } from '../types';
-
-import { PlatformException } from '../../../utils/exceptions';
+import {
+  getRedisInstance,
+  getRedisProviderConfig,
+  IRedisProviderConfig,
+  isClientReady as isRedisClientReady,
+  validateRedisProviderConfig,
+} from './redis-provider';
 
 export type InMemoryProviderConfig =
   | IAzureCacheForRedisClusterProviderConfig
@@ -68,7 +65,7 @@ export const getClientAndConfig = (): {
 };
 
 export const getClientAndConfigForCluster = (
-  providerId: InMemoryProviderEnum,
+  providerId: InMemoryProviderEnum
 ): {
   getClient: (enableAutoPipelining?: boolean) => Cluster | undefined;
   getConfig: () => InMemoryProviderConfig;
@@ -110,8 +107,7 @@ export const getClientAndConfigForCluster = (
   const provider = clusterProviders[providerId];
 
   if (!provider || !provider.validate()) {
-    const defaultProvider =
-      clusterProviders[InMemoryProviderEnum.REDIS_CLUSTER];
+    const defaultProvider = clusterProviders[InMemoryProviderEnum.REDIS_CLUSTER];
     if (!defaultProvider.validate()) {
       const message = `Provider ${providerId} is not properly configured in the environment variables`;
       Logger.error(message, LOG_CONTEXT);

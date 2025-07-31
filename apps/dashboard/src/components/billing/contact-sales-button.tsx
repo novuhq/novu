@@ -1,7 +1,7 @@
-import { Button } from '@/components/primitives/button';
+import { getCalApi } from '@calcom/embed-react';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useEffect } from 'react';
-import { getCalApi } from '@calcom/embed-react';
+import { Button } from '@/components/primitives/button';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 
@@ -14,7 +14,7 @@ export function ContactSalesButton({ className, variant = 'outline' }: ContactSa
   const track = useTelemetry();
 
   useEffect(() => {
-    (async function () {
+    (async () => {
       const cal = await getCalApi({ namespace: 'novu-meeting' });
       cal('ui', { hideEventTypeDetails: false, layout: 'month_view' });
     })();

@@ -1,8 +1,6 @@
-/* eslint-disable no-restricted-imports */
-
 'use client';
 
-import { Inbox as RInbox, type InboxProps } from '@novu/react';
+import { type InboxProps, Inbox as RInbox } from '@novu/react';
 import { buildSubscriber } from '@novu/react/internal';
 import { useRouter } from 'next/navigation';
 

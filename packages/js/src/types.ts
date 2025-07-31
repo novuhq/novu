@@ -1,7 +1,6 @@
 import { NovuError } from './utils/errors';
 
-export { type FiltersCountResponse, type ListNotificationsResponse } from './notifications';
-export type { Notification } from './notifications';
+export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
 export type { Preference } from './preferences/preference';
 export type { NovuError } from './utils/errors';
 
@@ -174,7 +173,6 @@ export type IPreferenceOverride = {
   source: PreferenceOverrideSourceEnum;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TODO = any;
 
 export type Result<D = undefined, E = NovuError> = Promise<{

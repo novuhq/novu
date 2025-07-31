@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
-import { IBaseComparator } from '../base/interfaces/base-comparator.interface';
 import { IResourceDiff } from '../../../types/sync.types';
+import { IBaseComparator } from '../base/interfaces/base-comparator.interface';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
 
 @Injectable()

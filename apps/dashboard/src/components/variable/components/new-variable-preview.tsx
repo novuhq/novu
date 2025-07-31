@@ -1,5 +1,5 @@
-import { VariablePreview } from './variable-preview';
 import { Badge } from '../../primitives/badge';
+import { VariablePreview } from './variable-preview';
 
 interface INewVariablePreviewProps {
   onCreateClick?: () => void;

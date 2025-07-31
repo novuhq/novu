@@ -69,7 +69,6 @@ export const useVariablesManager = (contents: string[]) => {
     } catch (e) {
       /* empty */
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textContent, variableArray]);
 
   return variablesArray;

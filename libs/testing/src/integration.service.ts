@@ -1,4 +1,3 @@
-import shortid from 'shortid';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -10,6 +9,7 @@ import {
   SmsProviderIdEnum,
   slugify,
 } from '@novu/shared';
+import shortid from 'shortid';
 
 export class IntegrationService {
   private integrationRepository = new IntegrationRepository();

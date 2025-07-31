@@ -1,11 +1,10 @@
-import { Server, Socket } from 'socket.io';
+import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
-import { Logger } from '@nestjs/common';
-import { instrument } from '@socket.io/admin-ui';
-
-import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { IDestroy } from '@novu/application-generic';
+import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { instrument } from '@socket.io/admin-ui';
+import { Server, Socket } from 'socket.io';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 
@@ -160,7 +159,6 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async sendMessage(userId: string, event: string, data: any) {
     if (!this.server) {
       Logger.error('No sw server available to send message', LOG_CONTEXT);

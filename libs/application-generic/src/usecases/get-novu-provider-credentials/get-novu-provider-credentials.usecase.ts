@@ -1,20 +1,9 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { EnvironmentEntity, OrganizationEntity, UserEntity, CommunityUserRepository } from '@novu/dal';
-import {
-  EmailProviderIdEnum,
-  FeatureFlagsKeysEnum,
-  ICredentials,
-  SmsProviderIdEnum,
-} from '@novu/shared';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { CommunityUserRepository, EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
+import { EmailProviderIdEnum, FeatureFlagsKeysEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
+import { FeatureFlagsService } from '../../services';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CalculateLimitNovuIntegration } from '../calculate-limit-novu-integration';
-
-import { FeatureFlagsService } from '../../services';
 import { GetNovuProviderCredentialsCommand } from './get-novu-provider-credentials.command';
 
 @Injectable()
@@ -23,16 +12,11 @@ export class GetNovuProviderCredentials {
     private analyticsService: AnalyticsService,
     protected calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private userRepository: CommunityUserRepository,
-    private featureFlagService: FeatureFlagsService,
+    private featureFlagService: FeatureFlagsService
   ) {}
 
-  async execute(
-    integration: GetNovuProviderCredentialsCommand,
-  ): Promise<ICredentials> {
-    if (
-      integration.providerId === EmailProviderIdEnum.Novu ||
-      integration.providerId === SmsProviderIdEnum.Novu
-    ) {
+  async execute(integration: GetNovuProviderCredentialsCommand): Promise<ICredentials> {
+    if (integration.providerId === EmailProviderIdEnum.Novu || integration.providerId === SmsProviderIdEnum.Novu) {
       const isTestProviderLimitsEnabled = await this.featureFlagService.getFlag({
         user: { _id: integration.userId } as UserEntity,
         environment: { _id: integration.environmentId } as EnvironmentEntity,
@@ -40,13 +24,17 @@ export class GetNovuProviderCredentials {
         key: FeatureFlagsKeysEnum.IS_TEST_PROVIDER_LIMITS_ENABLED,
         defaultValue: false,
       });
-      
-      if (integration.providerId === EmailProviderIdEnum.Novu && integration.recipientEmail && isTestProviderLimitsEnabled) {
+
+      if (
+        integration.providerId === EmailProviderIdEnum.Novu &&
+        integration.recipientEmail &&
+        isTestProviderLimitsEnabled
+      ) {
         const user = await this.userRepository.findById(integration.userId);
 
         if (user?.email && user?.email !== integration.recipientEmail) {
           throw new ForbiddenException(
-            `Recipient email (${integration.recipientEmail}) does not match the current logged-in user. Novu test provider can only be used to send emails to the current logged-in user. Connect your own email provider to send emails to other addresses.`,
+            `Recipient email (${integration.recipientEmail}) does not match the current logged-in user. Novu test provider can only be used to send emails to the current logged-in user. Connect your own email provider to send emails to other addresses.`
           );
         }
       }
@@ -59,25 +47,19 @@ export class GetNovuProviderCredentials {
 
       if (!limit) {
         throw new ConflictException(
-          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exist.`,
+          `Limit for Novu's ${integration.channelType.toLowerCase()} provider does not exist.`
         );
       }
 
       if (limit.count >= limit.limit) {
-        this.analyticsService.track(
-          '[Novu Integration] - Limit reached',
-          integration.userId,
-          {
-            channelType: integration.channelType,
-            environmentId: integration.environmentId,
-            organizationId: integration.organizationId,
-            providerId: integration.providerId,
-            ...limit,
-          },
-        );
-        throw new ConflictException(
-          `Limit for Novu's ${integration.channelType.toLowerCase()} provider was reached.`,
-        );
+        this.analyticsService.track('[Novu Integration] - Limit reached', integration.userId, {
+          channelType: integration.channelType,
+          environmentId: integration.environmentId,
+          organizationId: integration.organizationId,
+          providerId: integration.providerId,
+          ...limit,
+        });
+        throw new ConflictException(`Limit for Novu's ${integration.channelType.toLowerCase()} provider was reached.`);
       }
     }
 
@@ -99,7 +81,7 @@ export class GetNovuProviderCredentials {
     }
 
     throw new NotFoundException(
-      `Credentials for Novu's ${integration.channelType.toLowerCase()} provider could not be found`,
+      `Credentials for Novu's ${integration.channelType.toLowerCase()} provider could not be found`
     );
   }
 }

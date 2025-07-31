@@ -1,7 +1,7 @@
+import { ResourceOriginEnum, StepResponseDto } from '@novu/shared';
 import { RiArrowRightSLine, RiGuideFill } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link } from 'react-router-dom';
-import { StepResponseDto, ResourceOriginEnum } from '@novu/shared';
 
 import { Button } from '@/components/primitives/button';
 import { useConditionsCount } from '@/hooks/use-conditions-count';

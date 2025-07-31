@@ -1,8 +1,8 @@
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import { getSubscriberPreferences } from '@/api/subscribers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 
 export type GetSubscriberPreferencesResponse = Awaited<ReturnType<typeof getSubscriberPreferences>>;
 

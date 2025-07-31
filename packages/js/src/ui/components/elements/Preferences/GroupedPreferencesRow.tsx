@@ -3,14 +3,14 @@ import { createMemo, createSignal, Index, Show } from 'solid-js';
 import { ChannelPreference, ChannelType, Preference } from '../../../../types';
 import { useLocalization } from '../../../context';
 import { useStyle } from '../../../helpers';
+import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons/ArrowDropDown';
+import { Info as DefaultInfo } from '../../../icons/Info';
+import { NodeTree as DefaultNodeTree } from '../../../icons/NodeTree';
 import { Collapsible } from '../../primitives/Collapsible';
+import { Switch, SwitchState } from '../../primitives/Switch';
+import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 import { ChannelRow } from './ChannelRow';
 import { PreferencesRow } from './PreferencesRow';
-import { Switch, SwitchState } from '../../primitives/Switch';
-import { ArrowDropDown as DefaultArrowDropDown } from '../../../icons/ArrowDropDown';
-import { NodeTree as DefaultNodeTree } from '../../../icons/NodeTree';
-import { Info as DefaultInfo } from '../../../icons/Info';
-import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 
 export const GroupedPreferencesRow = (props: {
   group: { name: string; preferences: Preference[] };

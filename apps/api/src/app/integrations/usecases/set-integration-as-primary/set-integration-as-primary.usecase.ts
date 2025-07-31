@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { AnalyticsService, buildIntegrationKey, InvalidateCacheService, PinoLogger } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
-import { AnalyticsService, buildIntegrationKey, InvalidateCacheService, PinoLogger } from '@novu/application-generic';
 
 import { SetIntegrationAsPrimaryCommand } from './set-integration-as-primary.command';
 

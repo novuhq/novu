@@ -66,7 +66,6 @@ export const TemplateDetailsPageV2 = () => {
       workflowId: workflow?.name,
       env: 'cloud',
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

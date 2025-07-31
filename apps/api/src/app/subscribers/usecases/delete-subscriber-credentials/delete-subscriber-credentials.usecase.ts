@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { SubscriberRepository } from '@novu/dal';
 import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '@novu/application-generic';
-
+import { SubscriberRepository } from '@novu/dal';
+import { GetSubscriber, GetSubscriberCommand } from '../get-subscriber';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
-import { GetSubscriberCommand, GetSubscriber } from '../get-subscriber';
 
 @Injectable()
 export class DeleteSubscriberCredentials {

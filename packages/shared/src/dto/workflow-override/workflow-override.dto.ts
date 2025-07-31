@@ -1,5 +1,5 @@
-import { IPreferenceChannelsDto } from '../notification-templates';
 import { EnvironmentId, OrganizationId, WorkflowOverrideId } from '../../types';
+import { IPreferenceChannelsDto } from '../notification-templates';
 import { ITenantDto } from '../tenant';
 /*
  * TODO:

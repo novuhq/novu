@@ -1,13 +1,13 @@
+import { forwardRef, useCallback, useRef, useState } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
-import { Skeleton } from '@/components/primitives/skeleton';
-import { TranslationDrawerContent, TranslationDrawerContentRef } from './translation-drawer-content';
-import { EditorPanelSkeleton } from './editor-panel';
-import { LocaleListSkeleton } from './locale-list';
-import { useState, useRef, useCallback, forwardRef } from 'react';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { LocalizationResourceEnum } from '@/types/translations';
+import { EditorPanelSkeleton } from './editor-panel';
+import { LocaleListSkeleton } from './locale-list';
+import { TranslationDrawerContent, TranslationDrawerContentRef } from './translation-drawer-content';
 
 function TranslationDrawerSkeleton() {
   return (

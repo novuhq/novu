@@ -1,21 +1,18 @@
-import { MutableRefObject, useCallback, useMemo, useRef } from 'react';
 import { Completion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
-import { EditorView, Extension } from '@uiw/react-codemirror';
-import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { html, htmlCompletionSource } from '@codemirror/lang-html';
+import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { tags as t } from '@lezer/highlight';
-import { RiCodeSSlashFill } from 'react-icons/ri';
+import { EditorView, Extension } from '@uiw/react-codemirror';
 import { JSONSchema7 } from 'json-schema';
-
-import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
-import { cn } from '@/utils/ui';
-import { CompletionOption } from '@/utils/liquid-autocomplete';
-import { Tooltip } from '@/components/primitives/tooltip';
-import { TooltipContent } from '@/components/primitives/tooltip';
-import { TooltipTrigger } from '@/components/primitives/tooltip';
+import { MutableRefObject, useCallback, useMemo, useRef } from 'react';
+import { RiCodeSSlashFill } from 'react-icons/ri';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { LiquidVariable } from '@/utils/parseStepVariables';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
 import { formatHtml } from '@/utils/formatter';
+import { CompletionOption } from '@/utils/liquid-autocomplete';
+import { LiquidVariable } from '@/utils/parseStepVariables';
+import { cn } from '@/utils/ui';
 
 type HtmlEditorProps = {
   viewRef: MutableRefObject<EditorView | null>;

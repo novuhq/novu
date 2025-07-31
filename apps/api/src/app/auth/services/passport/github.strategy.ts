@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { AuthProviderEnum } from '@novu/shared';
 import githubPassport from 'passport-github2';
 import { Metadata, StateStoreStoreCallback, StateStoreVerifyCallback } from 'passport-oauth2';
-import { AuthProviderEnum } from '@novu/shared';
 import { AuthService } from '../auth.service';
 
 @Injectable()

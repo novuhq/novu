@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { randomBytes } from 'crypto';
 import { StorageService } from '@novu/application-generic';
-import { UploadTypesEnum, FILE_EXTENSION_TO_MIME_TYPE } from '@novu/shared';
+import { FILE_EXTENSION_TO_MIME_TYPE, UploadTypesEnum } from '@novu/shared';
+import { randomBytes } from 'crypto';
 
 import { UploadUrlResponse } from '../../dtos/upload-url-response.dto';
 import { GetSignedUrlCommand } from './get-signed-url.command';

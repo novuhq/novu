@@ -1,8 +1,7 @@
-import * as React from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-
-import { cn } from '@/utils/ui';
 import { cva, VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+import { cn } from '@/utils/ui';
 
 const TooltipProvider = TooltipPrimitive.Provider;
 

@@ -1,15 +1,14 @@
-import { expect } from '@playwright/test';
 import { workflow } from '@novu/framework';
 import { StepTypeEnum } from '@novu/shared';
-
-import { test } from './utils/fixtures';
+import { expect } from '@playwright/test';
 import { InAppStepEditor } from './page-object-models/in-app-step-editor';
-import { WorkflowsPage } from './page-object-models/workflows-page';
-import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
 import { StepConfigSidebar } from './page-object-models/step-config-sidebar';
 import { TriggerWorkflowPage } from './page-object-models/trigger-workflow-page';
-import { TestBridgeServer } from './utils/test-bridge-server';
+import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
+import { WorkflowsPage } from './page-object-models/workflows-page';
 import { syncBridge } from './utils/api';
+import { test } from './utils/fixtures';
+import { TestBridgeServer } from './utils/test-bridge-server';
 
 const workflowId = 'code-created-workflow';
 const inAppStepId = 'send-in-app';

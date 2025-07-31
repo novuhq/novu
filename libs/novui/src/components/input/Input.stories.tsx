@@ -1,9 +1,9 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
-import { Input } from './Input';
+import { stack } from '../../../styled-system/patterns/stack';
 import { IconContentCopy } from '../../icons';
 import { Button } from '../button';
-import { stack } from '../../../styled-system/patterns/stack';
+import { Input } from './Input';
 
 export default {
   title: 'Components/Input',

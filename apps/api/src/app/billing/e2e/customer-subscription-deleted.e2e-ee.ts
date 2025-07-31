@@ -1,7 +1,6 @@
-/* eslint-disable global-require */
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 const verifyCustomerMock = {
   customer: {

@@ -1,10 +1,10 @@
-import { PinoLogger, Instrument } from '@novu/application-generic';
+import { Instrument, PinoLogger } from '@novu/application-generic';
 import { LayoutEntity } from '@novu/dal';
-import { SyncResultBuilder } from '../../builders/sync-result.builder';
-import { ISyncContext, ISyncResult, ResourceTypeEnum, IResourceToPublish } from '../../../../types/sync.types';
-import { SYNC_ACTIONS, SKIP_REASONS } from '../../constants/sync.constants';
-import { IBaseRepositoryService, IBaseSyncService, IBaseDeleteService, IBaseComparator } from '../interfaces';
 import { capitalize } from '../../../../../shared/services/helper/helper.service';
+import { IResourceToPublish, ISyncContext, ISyncResult, ResourceTypeEnum } from '../../../../types/sync.types';
+import { SyncResultBuilder } from '../../builders/sync-result.builder';
+import { SKIP_REASONS, SYNC_ACTIONS } from '../../constants/sync.constants';
+import { IBaseComparator, IBaseDeleteService, IBaseRepositoryService, IBaseSyncService } from '../interfaces';
 
 interface IResourceSyncDecision<T> {
   resource: T;

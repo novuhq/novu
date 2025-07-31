@@ -1,13 +1,13 @@
-import { expect } from 'chai';
-import { UserSession, NotificationTemplateService } from '@novu/testing';
 import {
-  NotificationGroupRepository,
-  NotificationTemplateRepository,
+  ChannelTypeEnum,
   EnvironmentRepository,
   MessageTemplateRepository,
-  ChannelTypeEnum,
+  NotificationGroupRepository,
+  NotificationTemplateRepository,
 } from '@novu/dal';
 import { ChannelCTATypeEnum } from '@novu/shared';
+import { NotificationTemplateService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', async () => {
   let session: UserSession;
@@ -21,7 +21,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
     await session.initialize();
   });
 
-  it('should delete the workflow', async function () {
+  it('should delete the workflow', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -45,7 +45,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
     expect(deletedIntegration.deleted).to.equal(true);
   });
 
-  it('should delete the production workflow', async function () {
+  it('should delete the production workflow', async () => {
     const groups = await notificationGroupRepository.find({
       _environmentId: session.environment._id,
     });
@@ -97,7 +97,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
     expect(!isDeleted).to.equal(true);
   });
 
-  it('should only make one change on delete', async function () {
+  it('should only make one change on delete', async () => {
     const groups = await notificationGroupRepository.find({
       _environmentId: session.environment._id,
     });
@@ -123,7 +123,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
     expect(data.length).to.eq(1);
   });
 
-  it('should not display on listing workflows', async function () {
+  it('should not display on listing workflows', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -144,14 +144,14 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
     expect(templatesAfterDelete.data.length).to.equal(2);
   });
 
-  it('should fail for non-existing workflow', async function () {
+  it('should fail for non-existing workflow', async () => {
     const dummyId = '5f6651112efc19f33b34fc39';
     const response = await session.testAgent.delete(`/v1/workflows/${dummyId}`).send();
 
     expect(response.body.message).to.contains('Workflow cannot be found');
   });
 
-  it('should delete the workflow along with the message templates', async function () {
+  it('should delete the workflow along with the message templates', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -191,7 +191,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE) #novu-v0', asy
     expect(deletedMessageTemplates.length).to.equal(0);
   });
 
-  it('should delete the production message templates', async function () {
+  it('should delete the production message templates', async () => {
     const groups = await notificationGroupRepository.find({
       _environmentId: session.environment._id,
     });

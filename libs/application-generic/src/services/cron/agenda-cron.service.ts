@@ -1,8 +1,8 @@
 import { Agenda } from '@hokify/agenda';
 import { JobCronNameEnum } from '@novu/shared';
+import { MetricsService } from '../metrics';
 import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
-import { MetricsService } from '../metrics';
 
 export class AgendaCronService extends CronService {
   cronServiceName = 'AgendaCronService';
@@ -10,7 +10,7 @@ export class AgendaCronService extends CronService {
   constructor(
     metricsService: MetricsService,
     activeJobs: JobCronNameEnum[],
-    private agenda: Agenda,
+    private agenda: Agenda
   ) {
     super(metricsService, activeJobs);
   }
@@ -19,7 +19,7 @@ export class AgendaCronService extends CronService {
     jobName: JobCronNameEnum,
     processor: CronJobProcessor<TData>,
     interval: string,
-    options: CronOptions,
+    options: CronOptions
   ) {
     this.agenda.define(
       jobName,
@@ -35,7 +35,7 @@ export class AgendaCronService extends CronService {
         lockLimit: options.lockLimit,
         concurrency: options.concurrency,
         priority: options.priority,
-      },
+      }
     );
 
     await this.agenda.every(interval, jobName, {
@@ -58,17 +58,14 @@ export class AgendaCronService extends CronService {
   protected async getMetrics() {
     const stats = await this.agenda.getRunningStats();
 
-    const metrics = Object.entries(stats.jobStatus).reduce(
-      (acc, [jobName, status]) => {
-        acc[jobName] = {
-          active: status.running ?? 0,
-          waiting: status.locked ?? 0,
-        };
+    const metrics = Object.entries(stats.jobStatus).reduce((acc, [jobName, status]) => {
+      acc[jobName] = {
+        active: status.running ?? 0,
+        waiting: status.locked ?? 0,
+      };
 
-        return acc;
-      },
-      {} as CronMetrics,
-    );
+      return acc;
+    }, {} as CronMetrics);
 
     return metrics;
   }

@@ -76,7 +76,15 @@
         "noCommonJs": "warn",
         "noNamespace": "warn",
         "useConst": "warn",
-        "useImportType": "off"
+        "useImportType": "off",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'"
+            }
+          }
+        }
       },
       "suspicious": {
         "noAsyncPromiseExecutor": "warn",
@@ -166,14 +174,93 @@
             "useHookAtTopLevel": "error"
           },
           "style": {
-            "useComponentExportOnlyModules": "warn",
-            "useImportType": "error"
+            "useComponentExportOnlyModules": "warn"
           },
           "suspicious": {
             "noExtraNonNullAssertion": "error",
             "noMisleadingInstantiator": "error",
             "noUnsafeDeclarationMerging": "error",
             "useNamespaceKeyword": "error"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["apps/api/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@novu/*/**/*": "Please import only from the root package entry point. For example, use 'import { Client } from '@novu/api';' instead of 'import { Client } from '@novu/api/src';'",
+                  "@nestjs/common": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "@novu/application-generic": {
+                    "importNames": ["Logger"],
+                    "message": "Please use the PinoLogger from @novu/application-generic instead"
+                  },
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  },
+                  "@nestjs/swagger": {
+                    "importNames": [
+                      "ApiOkResponse",
+                      "ApiCreatedResponse",
+                      "ApiAcceptedResponse",
+                      "ApiNoContentResponse",
+                      "ApiMovedPermanentlyResponse",
+                      "ApiFoundResponse",
+                      "ApiBadRequestResponse",
+                      "ApiUnauthorizedResponse",
+                      "ApiTooManyRequestsResponse",
+                      "ApiNotFoundResponse",
+                      "ApiInternalServerErrorResponse",
+                      "ApiBadGatewayResponse",
+                      "ApiConflictResponse",
+                      "ApiForbiddenResponse",
+                      "ApiGatewayTimeoutResponse",
+                      "ApiGoneResponse",
+                      "ApiMethodNotAllowedResponse",
+                      "ApiNotAcceptableResponse",
+                      "ApiNotImplementedResponse",
+                      "ApiPreconditionFailedResponse",
+                      "ApiPayloadTooLargeResponse",
+                      "ApiRequestTimeoutResponse",
+                      "ApiServiceUnavailableResponse",
+                      "ApiUnprocessableEntityResponse",
+                      "ApiUnsupportedMediaTypeResponse",
+                      "ApiDefaultResponse"
+                    ],
+                    "message": "Use 'Api<Error>Response' from '/shared/framework/response.decorator' instead."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["libs/application-generic/**/*.{ts,tsx,js}"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "svix": {
+                    "importNames": ["Svix"],
+                    "message": "Please use the SvixClient from @novu/application-generic instead"
+                  }
+                }
+              }
+            }
           }
         }
       }

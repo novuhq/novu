@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository } from '@novu/dal';
-import { getDiff, applyDiff } from 'recursive-diff';
+import { applyDiff, getDiff } from 'recursive-diff';
 
 import { CreateChangeCommand } from './create-change.command';
 
@@ -12,7 +12,7 @@ export class CreateChange {
     const changes = await this.changeRepository.getEntityChanges(
       command.organizationId,
       command.type,
-      command.item._id,
+      command.item._id
     );
     const aggregatedItem = changes
       .filter((change) => change.enabled)
@@ -34,7 +34,7 @@ export class CreateChange {
         { _environmentId: command.environmentId, _id: command.changeId },
         {
           $set: change,
-        },
+        }
       );
 
       return change;

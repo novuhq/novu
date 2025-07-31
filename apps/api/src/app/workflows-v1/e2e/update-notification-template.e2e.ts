@@ -1,16 +1,16 @@
-import { expect } from 'chai';
-import { UserSession, NotificationTemplateService } from '@novu/testing';
+import { ChangeRepository } from '@novu/dal';
 import {
-  StepTypeEnum,
-  INotificationTemplate,
-  IUpdateNotificationTemplateDto,
-  FilterPartTypeEnum,
+  EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
+  FilterPartTypeEnum,
+  INotificationTemplate,
   INotificationTemplateStep,
-  EmailBlockTypeEnum,
+  IUpdateNotificationTemplateDto,
+  StepTypeEnum,
 } from '@novu/shared';
-import { ChangeRepository } from '@novu/dal';
+import { NotificationTemplateService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dtos';
 import { WorkflowResponse } from '../dtos/workflow-response.dto';
 
@@ -23,7 +23,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     await session.initialize();
   });
 
-  it('should update the workflow', async function () {
+  it('should update the workflow', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -117,7 +117,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(change._entityId).to.eq(foundTemplate._id);
   });
 
-  it('should throw error if trigger identifier already exists', async function () {
+  it('should throw error if trigger identifier already exists', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -136,7 +136,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(body.error).to.equal('Bad Request');
   });
 
-  it('should update the trigger identifier', async function () {
+  it('should update the trigger identifier', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -168,7 +168,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(change._entityId).to.eq(foundTemplate._id);
   });
 
-  it('should generate new variables on update', async function () {
+  it('should generate new variables on update', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -201,7 +201,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(foundTemplate.triggers[0].variables[0].name).to.equal('newVariableFromUpdate');
   });
 
-  it('should update the contentType and active of a message', async function () {
+  it('should update the contentType and active of a message', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -239,7 +239,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(step.template?.contentType).to.equal('customHtml');
   });
 
-  it('should be able to update empty message content', async function () {
+  it('should be able to update empty message content', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,
@@ -409,7 +409,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT) #novu-v0', async 
     expect(updatedTemplate.steps[0].replyCallback?.url).to.equal('acme-corp.com/webhook');
   });
 
-  it('should not able to update step with invalid action', async function () {
+  it('should not able to update step with invalid action', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,

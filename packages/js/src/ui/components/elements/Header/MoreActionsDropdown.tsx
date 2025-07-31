@@ -4,8 +4,8 @@ import { useStyle } from '../../../helpers';
 import { Dots as DefaultDots } from '../../../icons';
 import { NotificationStatus } from '../../../types';
 import { Button, Dropdown } from '../../primitives';
-import { MoreActionsOptions } from './MoreActionsOptions';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
+import { MoreActionsOptions } from './MoreActionsOptions';
 
 export const MoreActionsDropdown = () => {
   const style = useStyle();

@@ -1,4 +1,3 @@
-/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {

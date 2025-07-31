@@ -6,10 +6,10 @@ import { usePreferences } from '../../../api';
 import { setDynamicLocalization } from '../../../config';
 import { useInboxContext, useNovu } from '../../../context';
 import { useStyle } from '../../../helpers';
-import { PreferencesRow } from './PreferencesRow';
 import { DefaultPreferences } from './DefaultPreferences';
 import { GroupedPreferences } from './GroupedPreferences';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
+import { PreferencesRow } from './PreferencesRow';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {

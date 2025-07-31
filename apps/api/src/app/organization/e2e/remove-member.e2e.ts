@@ -1,7 +1,6 @@
-import { MemberEntity, EnvironmentRepository, CommunityMemberRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-
+import { CommunityMemberRepository, EnvironmentRepository, MemberEntity } from '@novu/dal';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { describe } from 'mocha';
 
@@ -44,7 +43,7 @@ describe('Remove organization member - /organizations/members/:memberId (DELETE)
     user3.organization = session.organization;
   });
 
-  it('should switch the apiKey association when api key creator removed', async function () {
+  it('should switch the apiKey association when api key creator removed', async () => {
     const members: MemberEntity[] = await getOrganizationMembers();
     const originalCreator = members.find((i) => i._userId === session.user._id);
     await user2.fetchJWT();

@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-
+import { useMemo } from 'react';
+import { getLayout } from '@/api/layouts';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getIdFromSlug, LAYOUT_DIVIDER } from '@/utils/id-utils';
 import { QueryKeys } from '@/utils/query-keys';
-import { getLayout } from '@/api/layouts';
 
 export const useFetchLayout = ({ layoutSlug }: { layoutSlug?: string }) => {
   const { currentEnvironment } = useEnvironment();

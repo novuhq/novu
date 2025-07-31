@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { cn } from '@/utils/ui';
 import { LoadingIndicator } from '@/components/primitives/loading-indicator';
+import { cn } from '@/utils/ui';
 
 type PanelHeaderProps = {
   icon?: React.ComponentType<{ className?: string }>;

@@ -18,8 +18,7 @@ test('emailHandler should be called correctly', async () => {
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -39,14 +38,7 @@ test('emailHandler should be called correctly', async () => {
     ],
   });
 
-  const triggerEngine = new TriggerEngine(
-    templateStore,
-    providerStore,
-    themeStore,
-    contentEngine,
-    {},
-    ee,
-  );
+  const triggerEngine = new TriggerEngine(templateStore, providerStore, themeStore, contentEngine, {}, ee);
 
   const emailSpy = jest.spyOn(EmailHandler.prototype, 'send');
 
@@ -76,14 +68,13 @@ test('variable protection should throw if missing variable provided', async () =
     {
       variableProtection: true,
     },
-    ee,
+    ee
   );
 
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -107,7 +98,7 @@ test('variable protection should throw if missing variable provided', async () =
     triggerEngine.trigger('test-notification', {
       $user_id: '12345',
       $email: 'test@gmail.com',
-    }),
+    })
   ).rejects.toEqual(new Error('Missing variables passed. firstName'));
 });
 
@@ -126,14 +117,13 @@ test('variable protection should throw if missing variable provided with templat
     {
       variableProtection: true,
     },
-    ee,
+    ee
   );
 
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -157,7 +147,7 @@ test('variable protection should throw if missing variable provided with templat
     triggerEngine.trigger('test-notification-promise', {
       $user_id: '12345',
       $email: 'test@gmail.com',
-    }),
+    })
   ).rejects.toEqual(new Error('Missing variables passed. firstName'));
 });
 
@@ -171,8 +161,7 @@ test('TriggerEngine should call validate if validator is provided', async () => 
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -197,14 +186,7 @@ test('TriggerEngine should call validate if validator is provided', async () => 
     ],
   });
 
-  const triggerEngine = new TriggerEngine(
-    templateStore,
-    providerStore,
-    themeStore,
-    contentEngine,
-    {},
-    ee,
-  );
+  const triggerEngine = new TriggerEngine(templateStore, providerStore, themeStore, contentEngine, {}, ee);
 
   await triggerEngine.trigger('test-notification', {
     $user_id: '12345',
@@ -228,8 +210,7 @@ test('Validation should throw error if validate method returns false', async () 
   await providerStore.addProvider('email', {
     channelType: ChannelTypeEnum.EMAIL,
     id: 'email-provider',
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -252,19 +233,12 @@ test('Validation should throw error if validate method returns false', async () 
     ],
   });
 
-  const triggerEngine = new TriggerEngine(
-    templateStore,
-    providerStore,
-    themeStore,
-    contentEngine,
-    {},
-    ee,
-  );
+  const triggerEngine = new TriggerEngine(templateStore, providerStore, themeStore, contentEngine, {}, ee);
 
   await expect(
     triggerEngine.trigger('test-notification', {
       $user_id: '12345',
       $email: 'test@gmail.com',
-    }),
+    })
   ).rejects.toEqual(new Error('Payload for email is invalid'));
 });

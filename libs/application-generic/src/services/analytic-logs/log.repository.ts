@@ -1,12 +1,10 @@
-import { PinoLogger } from 'nestjs-pino';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { addDays } from 'date-fns';
-
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-
-import { ClickHouseService, InsertOptions } from './clickhouse.service';
-import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
+import { PinoLogger } from 'nestjs-pino';
 import { generateObjectId } from '../../utils/generate-id';
+import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
+import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
 // Define operators as const assertion to maintain literal types
 const CLICKHOUSE_OPERATORS = [
@@ -37,7 +35,7 @@ const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
 export type WhereCondition<T> = {
-  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } }
+  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } };
 }[keyof T];
 
 export type Where<T> = WhereCondition<T>[];

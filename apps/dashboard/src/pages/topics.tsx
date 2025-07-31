@@ -1,10 +1,10 @@
+import { useEffect } from 'react';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { TopicList } from '@/components/topics/topic-list';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useEffect } from 'react';
 
 export const TopicsPage = () => {
   const track = useTelemetry();

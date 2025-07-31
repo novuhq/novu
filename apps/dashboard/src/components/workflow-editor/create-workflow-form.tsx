@@ -1,3 +1,13 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  type CreateWorkflowDto,
+  DuplicateWorkflowDto,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_TAG_ELEMENTS,
+  slugify,
+} from '@novu/shared';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import {
   Form,
   FormControl,
@@ -14,16 +24,6 @@ import { Textarea } from '@/components/primitives/textarea';
 import { workflowSchema } from '@/components/workflow-editor/schema';
 import { TranslationToggleSection } from '@/components/workflow-editor/translation-toggle-section';
 import { useTags } from '@/hooks/use-tags';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  type CreateWorkflowDto,
-  DuplicateWorkflowDto,
-  slugify,
-  MAX_DESCRIPTION_LENGTH,
-  MAX_TAG_ELEMENTS,
-} from '@novu/shared';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 interface CreateWorkflowFormProps {
   onSubmit: (values: z.infer<typeof workflowSchema>) => void;

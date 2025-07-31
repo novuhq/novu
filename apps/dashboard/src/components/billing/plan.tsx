@@ -1,6 +1,3 @@
-import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
-import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import {
   ApiServiceLevelEnum,
   FeatureFlags,
@@ -13,6 +10,9 @@ import {
 } from '@novu/shared';
 import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { ActionType } from '@/components/billing/utils/action.button.constants.ts';
+import { useFeatureFlagMap } from '@/hooks/use-feature-flag.tsx';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { cn } from '../../utils/ui';
@@ -94,7 +94,6 @@ export function Plan() {
         plan: data?.apiServiceLevel,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -103,7 +102,6 @@ export function Plan() {
       billingInterval: selectedBillingInterval,
       isTrialActive: data?.trial?.isActive,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleBillingIntervalChange = (interval: StripeBillingIntervalEnum) => {

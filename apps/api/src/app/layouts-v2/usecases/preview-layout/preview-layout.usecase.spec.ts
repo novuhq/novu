@@ -1,22 +1,21 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+import { EmailControlType, LayoutControlType } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
-  ResourceOriginEnum,
   LAYOUT_PREVIEW_EMAIL_STEP,
   LAYOUT_PREVIEW_WORKFLOW_ID,
+  ResourceOriginEnum,
 } from '@novu/shared';
-import { EmailControlType, LayoutControlType } from '@novu/application-generic';
-
-import { PreviewLayoutUsecase } from './preview-layout.usecase';
-import { PreviewLayoutCommand } from './preview-layout.command';
-import { GetLayoutUseCase } from '../get-layout';
-import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
-import { SchemaBuilderService } from '../../../workflows-v2/usecases/preview/services/schema-builder.service';
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
+import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
+import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
 import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
+import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
+import { SchemaBuilderService } from '../../../workflows-v2/usecases/preview/services/schema-builder.service';
+import { GetLayoutUseCase } from '../get-layout';
+import { PreviewLayoutCommand } from './preview-layout.command';
+import { PreviewLayoutUsecase } from './preview-layout.usecase';
 import { enhanceBodyForPreview } from './preview-utils';
 
 describe('PreviewLayoutUsecase', () => {

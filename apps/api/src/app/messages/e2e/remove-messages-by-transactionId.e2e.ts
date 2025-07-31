@@ -1,11 +1,11 @@
+import { Novu } from '@novu/api';
 import { MessageRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE) #novu-v2', function () {
+describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE) #novu-v2', () => {
   let session: UserSession;
   const messageRepository = new MessageRepository();
   let template: NotificationTemplateEntity;
@@ -22,13 +22,13 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE) 
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should fail to delete non existing message', async function () {
+  it('should fail to delete non existing message', async () => {
     const { error } = await expectSdkExceptionGeneric(() => novuClient.messages.deleteByTransactionId('abc-1234'));
     expect(error?.statusCode).to.equal(404);
     expect(error?.ctx?.error, JSON.stringify(error)).to.equal('Not Found');
   });
 
-  it('should delete messages by transactionId', async function () {
+  it('should delete messages by transactionId', async () => {
     await novuClient.subscribers.create({
       subscriberId: '123456',
       firstName: 'broadcast ',
@@ -70,7 +70,7 @@ describe('Delete Messages By TransactionId - /messages/?transactionId= (DELETE) 
     expect(result.length).to.equal(0);
   });
 
-  it('should delete messages by transactionId and channel', async function () {
+  it('should delete messages by transactionId and channel', async () => {
     const response = await novuClient.triggerBroadcast({
       name: template.triggers[0].identifier,
       payload: {

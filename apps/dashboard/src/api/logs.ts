@@ -1,6 +1,6 @@
 import { IEnvironment } from '@novu/shared';
-import { get } from './api.client';
 import { RequestLog } from '../types/logs';
+import { get } from './api.client';
 
 export interface GetRequestLogsParams {
   environment: IEnvironment;
