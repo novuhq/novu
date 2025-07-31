@@ -1,16 +1,16 @@
-import { ActivityFeedContent } from '@/components/activity/activity-feed-content';
-import { DashboardLayout } from '@/components/dashboard-layout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { ActivityFeedContent } from '@/components/activity/activity-feed-content';
+import { DashboardLayout } from '@/components/dashboard-layout';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { RequestsTable } from '../components/http-logs/logs-table';
 import { PageMeta } from '../components/page-meta';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 
 export function ActivityFeed() {
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
@@ -78,14 +78,14 @@ export function ActivityFeed() {
       >
         <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2">
           <TabsList variant="regular" className="border-t-0">
+            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
+              Workflow Runs
+            </TabsTrigger>
             {isHttpLogsPageEnabled && (
               <TabsTrigger value="requests" variant="regular" size="lg">
                 Requests
               </TabsTrigger>
             )}
-            <TabsTrigger value="workflow-runs" variant="regular" size="lg">
-              Workflow Runs
-            </TabsTrigger>
           </TabsList>
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
