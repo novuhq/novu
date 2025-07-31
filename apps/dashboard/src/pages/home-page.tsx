@@ -45,6 +45,25 @@ function WelcomeHeader() {
   );
 }
 
+const imgVector = 'http://localhost:3845/assets/393dfc00ea13a079c809c149114eb29aa2227901.svg';
+
+function TopLevelStats() {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-end gap-1">
+        <h2 className="text-[44px] font-medium text-[#0e121b]">31,718</h2>
+        <div className="pb-2">
+          <div className="flex items-center gap-0.5 bg-green-100 px-1 py-0.5 rounded-full">
+            <img alt="" className="h-1.5 w-[11px]" src={imgVector} />
+            <span className="text-[11px] font-medium text-green-600 uppercase tracking-wider">5%</span>
+          </div>
+        </div>
+      </div>
+      <p className="text-sm text-[#99a0ae]">Workflow runs during 30, Sept 2025 - 01, Oct 2025.</p>
+    </div>
+  );
+}
+
 const helpfulResources: Resource[] = [
   {
     title: 'Documentation',
@@ -132,6 +151,10 @@ export function HomePage(): ReactElement {
         <motion.div className="flex flex-col gap-8 p-9 pt-4" variants={pageVariants} initial="hidden" animate="show">
           <motion.div variants={sectionVariants}>
             <WelcomeHeader />
+          </motion.div>
+
+          <motion.div variants={sectionVariants}>
+            <TopLevelStats />
           </motion.div>
 
           <motion.div variants={sectionVariants}>
