@@ -7,6 +7,8 @@ import {
   RiDatabase2Line,
   RiDiscussLine,
   RiGroup2Line,
+  RiHome2Line,
+  RiHome6Line,
   RiKey2Line,
   RiLayout5Line,
   RiRouteFill,
@@ -114,6 +116,7 @@ export const SideNavigation = () => {
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
+  const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -134,12 +137,19 @@ export const SideNavigation = () => {
         <nav className="flex h-full flex-1 flex-col">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
+              {isNewHomePageEnabled && (
+                <NavigationLink to={buildRoute(ROUTES.HOME, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiHome6Line className="size-4" />
+                  <span>Home</span>
+                </NavigationLink>
+              )}
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                 <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                   <RiRouteFill className="size-4" />
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
+
               {isEmailLayoutsPageActive && (
                 <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                   <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>

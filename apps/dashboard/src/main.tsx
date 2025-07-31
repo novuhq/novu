@@ -46,6 +46,7 @@ import { EditTopicPage } from './pages/edit-topic';
 import { EditTranslationPage } from './pages/edit-translation';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
+import { HomePage } from './pages/home-page';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
@@ -113,6 +114,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.ENV,
             children: [
+              {
+                path: ROUTES.HOME,
+                element: <HomePage />,
+              },
               {
                 path: ROUTES.WELCOME,
                 element: <WelcomePage />,
