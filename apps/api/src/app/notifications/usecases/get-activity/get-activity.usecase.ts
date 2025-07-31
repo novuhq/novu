@@ -133,12 +133,12 @@ export class GetActivity {
 
     // Get traces for these entities
     const traceResult = await this.traceLogRepository.find({
-      where: {
-        entity_id: { operator: 'IN', value: entityIds },
-        entity_type: 'step_run',
-        environment_id: command.environmentId,
-        organization_id: command.organizationId,
-      },
+      where: [
+        { entity_id: { operator: 'IN', value: entityIds } },
+        { entity_type: { operator: '=', value: 'step_run' } },
+        { environment_id: { operator: '=', value: command.environmentId } },
+        { organization_id: { operator: '=', value: command.organizationId } },
+      ],
       orderBy: 'created_at',
       orderDirection: 'ASC',
     });
@@ -181,11 +181,11 @@ export class GetActivity {
     command: GetActivityCommand
   ): Promise<JobFeedItem[]> {
     const stepRunsResult = await this.stepRunRepository.find({
-      where: {
-        organization_id: command.organizationId,
-        environment_id: command.environmentId,
-        transaction_id: feedItem.transactionId,
-      },
+      where: [
+        { organization_id: { operator: '=', value: command.organizationId } },
+        { environment_id: { operator: '=', value: command.environmentId } },
+        { transaction_id: { operator: '=', value: feedItem.transactionId } },
+      ],
       orderBy: 'created_at',
       orderDirection: 'ASC',
       useFinal: true,
@@ -236,11 +236,11 @@ export class GetActivity {
   private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
       const workflowRunsResult = await this.workflowRunRepository.find({
-        where: {
-          organization_id: command.organizationId,
-          environment_id: command.environmentId,
-          workflow_run_id: command.notificationId,
-        },
+        where: [
+          { organization_id: { operator: '=', value: command.organizationId } },
+          { environment_id: { operator: '=', value: command.environmentId } },
+          { workflow_run_id: { operator: '=', value: command.notificationId } },
+        ],
         orderBy: 'created_at',
         orderDirection: 'ASC',
         limit: 1,

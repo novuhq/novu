@@ -13,35 +13,54 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    const where: Where<RequestLog> = {
-      organization_id: command.organizationId,
-      environment_id: command.environmentId,
-    };
+    const where: Where<RequestLog> = [
+      { organization_id: { operator: '=', value: command.organizationId } },
+      { environment_id: { operator: '=', value: command.environmentId } },
+    ];
 
     if (command.statusCodes) {
-      where.status_code = {
-        operator: 'IN',
-        value: command.statusCodes,
-      };
+      where.push({
+        status_code: {
+          operator: 'IN',
+          value: command.statusCodes,
+        },
+      });
     }
 
     if (command.url) {
-      where.url = { operator: 'LIKE', value: `%${command.url}%` };
+      where.push({
+        url: {
+          operator: 'LIKE',
+          value: `%${command.url}%`,
+        },
+      });
     }
 
     if (command.url_pattern) {
-      where.url = command.url_pattern;
+      where.push({
+        url: {
+          operator: '=',
+          value: command.url_pattern,
+        },
+      });
     }
 
     if (command.transactionId) {
-      where.transaction_id = { operator: 'LIKE', value: `%${command.transactionId}%` };
+      where.push({
+        transaction_id: {
+          operator: 'LIKE',
+          value: `%${command.transactionId}%`,
+        },
+      });
     }
 
     if (command.createdGte) {
-      where.created_at = {
-        operator: '>=',
-        value: LogRepository.formatDateTime64(new Date(command.createdGte)),
-      };
+      where.push({
+        created_at: {
+          operator: '>=',
+          value: LogRepository.formatDateTime64(new Date(command.createdGte)),
+        },
+      });
     }
 
     const [findResult, total] = await Promise.all([

@@ -274,7 +274,7 @@ function ResourceGroupCompact({
         <CollapsibleContent>
           {count > 0 && (
             <div className="rounded-md border border-gray-200 bg-white">
-              <div className="divide-y divide-gray-100">{children}</div>
+              <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">{children}</div>
             </div>
           )}
         </CollapsibleContent>

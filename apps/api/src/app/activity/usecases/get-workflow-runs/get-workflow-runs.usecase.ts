@@ -52,38 +52,46 @@ export class GetWorkflowRuns {
 
     try {
       // Build WHERE conditions object for LogRepository
-      const whereConditions: Where<WorkflowRun> = {
-        organization_id: command.organizationId,
-        environment_id: command.environmentId,
-      };
+      const whereConditions: Where<WorkflowRun> = [
+        { organization_id: { operator: '=', value: command.organizationId } },
+        { environment_id: { operator: '=', value: command.environmentId } },
+      ];
 
       // Add optional filters similar to legacy notifications endpoint
       if (command.workflowIds?.length) {
-        whereConditions.workflow_id = {
-          operator: 'IN',
-          value: command.workflowIds,
-        };
+        whereConditions.push({
+          workflow_id: {
+            operator: 'IN',
+            value: command.workflowIds,
+          },
+        });
       }
 
       if (command.subscriberIds?.length) {
-        whereConditions.subscriber_id = {
-          operator: 'IN',
-          value: command.subscriberIds,
-        };
+        whereConditions.push({
+          subscriber_id: {
+            operator: 'IN',
+            value: command.subscriberIds,
+          },
+        });
       }
 
       if (command.transactionIds?.length) {
-        whereConditions.transaction_id = {
-          operator: 'IN',
-          value: command.transactionIds,
-        };
+        whereConditions.push({
+          transaction_id: {
+            operator: 'IN',
+            value: command.transactionIds,
+          },
+        });
       }
 
       if (command.statuses?.length) {
-        whereConditions.status = {
-          operator: 'IN',
-          value: command.statuses,
-        };
+        whereConditions.push({
+          status: {
+            operator: 'IN',
+            value: command.statuses,
+          },
+        });
       }
 
       /*
@@ -92,17 +100,21 @@ export class GetWorkflowRuns {
        * we'll use separate field names that will be handled specially in the repository call
        */
       if (command.createdGte) {
-        (whereConditions as any).created_at_gte = {
-          operator: '>=',
-          value: new Date(command.createdGte),
-        };
+        whereConditions.push({
+          created_at: {
+            operator: '>=',
+            value: new Date(command.createdGte),
+          },
+        });
       }
 
       if (command.createdLte) {
-        (whereConditions as any).created_at_lte = {
-          operator: '<=',
-          value: new Date(command.createdLte),
-        };
+        whereConditions.push({
+          created_at: {
+            operator: '<=',
+            value: new Date(command.createdLte),
+          },
+        });
       }
 
       // Decode cursor if provided
@@ -283,14 +295,11 @@ export class GetWorkflowRuns {
       const transactionIds = workflowRuns.map((run) => run.transaction_id);
 
       const stepRunsResult = await this.stepRunRepository.find({
-        where: {
-          organization_id: command.organizationId,
-          environment_id: command.environmentId,
-          transaction_id: {
-            operator: 'IN',
-            value: transactionIds,
-          },
-        },
+        where: [
+          { organization_id: { operator: '=', value: command.organizationId } },
+          { environment_id: { operator: '=', value: command.environmentId } },
+          { transaction_id: { operator: 'IN', value: transactionIds } },
+        ],
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
