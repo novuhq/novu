@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
-
-import { GetLayoutUsageCommand } from './get-layout-usage.command';
 import { GetLayoutUsageResponseDto, WorkflowInfoDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { GetLayoutUsageCommand } from './get-layout-usage.command';
 
 @Injectable()
 export class GetLayoutUsageUseCase {
@@ -51,10 +50,7 @@ export class GetLayoutUsageUseCase {
             workflowId: workflow.triggers[0].identifier,
           });
         }
-      } catch (error) {
-        // Continue if workflow is not found or has issues
-        continue;
-      }
+      } catch (error) {}
     }
 
     return {

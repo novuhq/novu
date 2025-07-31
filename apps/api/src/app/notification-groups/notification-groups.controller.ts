@@ -9,25 +9,25 @@ import {
   Post,
   UseInterceptors,
 } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
-import { UserSession } from '../shared/framework/user.decorator';
-import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
-import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
-import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
-import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
-import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
+import { UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { GetNotificationGroup } from './usecases/get-notification-group/get-notification-group.usecase';
-import { GetNotificationGroupCommand } from './usecases/get-notification-group/get-notification-group.command';
-import { DeleteNotificationGroup } from './usecases/delete-notification-group/delete-notification-group.usecase';
-import { DeleteNotificationGroupCommand } from './usecases/delete-notification-group/delete-notification-group.command';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { UserSession } from '../shared/framework/user.decorator';
+import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
 import { DeleteNotificationGroupResponseDto } from './dtos/delete-notification-group-response.dto';
+import { NotificationGroupResponseDto } from './dtos/notification-group-response.dto';
+import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
+import { CreateNotificationGroup } from './usecases/create-notification-group/create-notification-group.usecase';
+import { DeleteNotificationGroupCommand } from './usecases/delete-notification-group/delete-notification-group.command';
+import { DeleteNotificationGroup } from './usecases/delete-notification-group/delete-notification-group.usecase';
+import { GetNotificationGroupCommand } from './usecases/get-notification-group/get-notification-group.command';
+import { GetNotificationGroup } from './usecases/get-notification-group/get-notification-group.usecase';
+import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
+import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { UpdateNotificationGroupCommand } from './usecases/update-notification-group/update-notification-group.command';
 import { UpdateNotificationGroup } from './usecases/update-notification-group/update-notification-group.usecase';
-import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @Controller('/notification-groups')

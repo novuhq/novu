@@ -1,10 +1,10 @@
+import { PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useTopicsNavigate } from '@/components/topics/hooks/use-topics-navigate';
 import { TopicDrawer } from '@/components/topics/topic-drawer';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { PermissionsEnum } from '@novu/shared';
-import { useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 export const EditTopicPage = () => {
   const { topicKey } = useParams<{ topicKey: string }>();

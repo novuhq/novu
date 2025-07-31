@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IPreferenceChannels } from '@novu/shared';
-import { Type, Transform } from 'class-transformer';
-import { IsOptional } from 'class-validator';
 import { parseSlugId } from '@novu/application-generic';
+import { IPreferenceChannels } from '@novu/shared';
+import { Transform, Type } from 'class-transformer';
+import { IsOptional } from 'class-validator';
 
 export class PatchPreferenceChannelsDto implements IPreferenceChannels {
   @ApiProperty({ description: 'Email channel preference' })

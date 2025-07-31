@@ -31,7 +31,6 @@ export type SignUpFormInputType = {
 
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const { setRedirectURL } = useRedirectURL();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setRedirectURL(), []);
   const location = useLocation();
 
@@ -57,7 +56,6 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     const origin = parsedSearchParams.get('origin');
     const anonymousId = parsedSearchParams.get('anonymous_id');
 
-    // eslint-disable-next-line no-unsafe-optional-chaining
     const [firstName, lastName] = data?.fullName.trim().split(' ');
     const itemData = {
       firstName,
@@ -163,7 +161,6 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
               pattern: {
                 value: passwordConstraints.pattern,
                 message:
-                  // eslint-disable-next-line max-len
                   'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-',
               },
             })}

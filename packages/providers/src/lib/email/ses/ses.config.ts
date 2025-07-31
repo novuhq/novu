@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface SESConfig {
   from: string;
   region: string;

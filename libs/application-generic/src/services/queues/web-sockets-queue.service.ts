@@ -1,11 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
-
-import { QueueBaseService } from './queue-base.service';
+import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
-import { IWebSocketBulkJobDto, IWebSocketJobDto } from '../../dtos/web-sockets-job.dto';
+import { QueueBaseService } from './queue-base.service';
 
 const LOG_CONTEXT = 'WebSocketsQueueService';
 

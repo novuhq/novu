@@ -1,8 +1,7 @@
-import { expect } from 'chai';
-
 import { EnvironmentRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureFlagsKeysEnum, NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { ApiServiceLevelEnum, NOVU_ENCRYPTION_SUB_MASK, EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { expect } from 'chai';
 
 async function createEnv(name: string, session) {
   const demoEnvironment = {
@@ -164,7 +163,7 @@ describe('Create Environment - /environments (POST)', async () => {
     expect(body.message[0]).to.contain('name should not be null');
   });
 
-  it('should create a default layout for environment', async function () {
+  it('should create a default layout for environment', async () => {
     const demoEnvironment = {
       name: 'Hello App',
     };
@@ -179,7 +178,7 @@ describe('Create Environment - /environments (POST)', async () => {
     expect(layouts.data[0].content.length).to.be.greaterThan(20);
   });
 
-  it('should not set apiRateLimits field on environment by default', async function () {
+  it('should not set apiRateLimits field on environment by default', async () => {
     const demoEnvironment = {
       name: 'Hello App',
     };

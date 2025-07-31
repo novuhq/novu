@@ -1,5 +1,5 @@
-import { spy } from 'sinon';
 import { expect } from 'chai';
+import { spy } from 'sinon';
 import { corsOptionsDelegate } from './cors.config';
 
 const dashboardOrigin = 'https://dashboard.novu.co';

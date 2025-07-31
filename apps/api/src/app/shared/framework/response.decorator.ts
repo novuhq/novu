@@ -17,11 +17,10 @@ import {
   ApiUriTooLongResponse,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { ErrorDto, ValidationErrorDto } from '../../../error-dto';
 import { DataWrapperDto } from '../dtos/data-wrapper-dto';
 import { COMMON_RESPONSES } from './constants/responses.schema';
 import { customResponseDecorators } from './swagger/responses.decorator';
-
-import { ErrorDto, ValidationErrorDto } from '../../../error-dto';
 
 export const { ApiOkResponse }: { ApiOkResponse: (options?: ApiResponseOptions) => MethodDecorator } =
   customResponseDecorators;

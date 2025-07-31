@@ -1,5 +1,3 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
-
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
 import { SubscriberEntity, TopicEntity } from '@novu/dal';
 import { DiscoverWorkflowOutput } from '@novu/framework/internal';
@@ -11,6 +9,7 @@ import {
   TriggerOverrides,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -18,7 +17,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   transactionId: string;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsDefined()
   @IsString()

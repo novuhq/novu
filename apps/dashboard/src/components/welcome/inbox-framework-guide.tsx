@@ -1,14 +1,14 @@
-import { Loader } from 'lucide-react';
-import { Card, CardContent } from '../primitives/card';
-import { useState, useEffect } from 'react';
 import { IEnvironment } from '@novu/shared';
-import { motion, AnimatePresence } from 'motion/react';
-import { Framework, getFrameworks } from './framework-guides.instructions';
-import { FrameworkInstructions, FrameworkCliInstructions } from './framework-guides';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { Loader } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { fadeIn } from '@/utils/animation';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { Card, CardContent } from '../primitives/card';
+import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { FrameworkCliInstructions, FrameworkInstructions } from './framework-guides';
+import { Framework, getFrameworks } from './framework-guides.instructions';
 
 const containerVariants = {
   hidden: {},

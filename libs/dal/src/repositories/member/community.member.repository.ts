@@ -1,11 +1,11 @@
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
-import { MemberEntity, MemberDBModel } from './member.entity';
-import { BaseRepository } from '../base-repository';
-import { Member } from './member.schema';
 import type { EnforceOrgId } from '../../types/enforce';
-import { IMemberRepository } from './member-repository.interface';
+import { BaseRepository } from '../base-repository';
+import { MemberDBModel, MemberEntity } from './member.entity';
 import { IAddMemberData } from './member.repository';
+import { Member } from './member.schema';
+import { IMemberRepository } from './member-repository.interface';
 
 type MemberQuery = FilterQuery<MemberDBModel> & EnforceOrgId;
 
@@ -55,7 +55,6 @@ export class CommunityMemberRepository
     );
     if (!members) return [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const membersEntity: any = this.mapEntities(members);
 
     return [
@@ -96,7 +95,6 @@ export class CommunityMemberRepository
         .map((member) => {
           return {
             ...member,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             _userId: member._userId ? (member._userId as any)._id : null,
             user: member._userId,
           };

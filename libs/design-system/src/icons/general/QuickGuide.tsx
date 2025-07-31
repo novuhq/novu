@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export function QuickGuide(props: React.ComponentPropsWithoutRef<'svg'>) {

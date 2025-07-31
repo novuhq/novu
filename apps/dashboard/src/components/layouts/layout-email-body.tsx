@@ -1,21 +1,20 @@
-import { useFormContext, useWatch } from 'react-hook-form';
-import { EditorView } from '@uiw/react-codemirror';
 import { Variable } from '@maily-to/core/extensions';
 import { Editor } from '@tiptap/core';
-
-import { FormField } from '@/components/primitives/form/form';
-import { Maily } from '@/components/maily/maily';
-import { HtmlEditor } from '@/components/html-editor';
-import { isMailyJson } from '@/components/maily/maily-utils';
+import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
-import { createEditorBlocks } from '../maily/maily-config';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { BubbleMenuVariablePill, createVariableNodeView } from '../maily/views/variable-view';
-import { VariableFrom } from '../maily/types';
-import { useLayoutEditor } from './layout-editor-provider';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { HtmlEditor } from '@/components/html-editor';
+import { Maily } from '@/components/maily/maily';
+import { isMailyJson } from '@/components/maily/maily-utils';
+import { FormField } from '@/components/primitives/form/form';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { CompletionRange } from '../primitives/variable-editor';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { createEditorBlocks } from '../maily/maily-config';
+import { VariableFrom } from '../maily/types';
 import { MailyVariablesListView, VariableSuggestionsPopoverRef } from '../maily/views/maily-variables-list-view';
+import { BubbleMenuVariablePill, createVariableNodeView } from '../maily/views/variable-view';
+import { CompletionRange } from '../primitives/variable-editor';
+import { useLayoutEditor } from './layout-editor-provider';
 
 const MailyVariablesListViewForLayouts = React.forwardRef<
   VariableSuggestionsPopoverRef,

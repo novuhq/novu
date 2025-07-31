@@ -3,6 +3,7 @@ import { CreateIntegrationRequestDto, TriggerEventResponseDto } from '@novu/api/
 import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriberpayloaddto';
 import { DetailEnum } from '@novu/application-generic';
 import {
+  CommunityOrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
   IntegrationRepository,
@@ -15,10 +16,10 @@ import {
   SubscriberEntity,
   SubscriberRepository,
   TenantRepository,
-  CommunityOrganizationRepository,
 } from '@novu/dal';
 import {
   ActorTypeEnum,
+  ApiServiceLevelEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   CreateWorkflowDto,
@@ -39,7 +40,6 @@ import {
   TemplateVariableTypeEnum,
   WorkflowCreationSourceEnum,
   WorkflowResponseDto,
-  ApiServiceLevelEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
@@ -55,7 +55,7 @@ const promiseTimeout = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
-describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
+describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -85,8 +85,8 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     novuClient = initNovuClassSdk(session);
   });
 
-  describe(`Trigger Event - /v1/events/trigger (POST)`, function () {
-    it('should filter delay step', async function () {
+  describe(`Trigger Event - /v1/events/trigger (POST)`, () => {
+    it('should filter delay step', async () => {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
         steps: [
@@ -158,7 +158,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(1);
     });
 
-    it('should filter a delay that is the first step in the workflow', async function () {
+    it('should filter a delay that is the first step in the workflow', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -222,7 +222,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(1);
     });
 
-    it('should filter digest step', async function () {
+    it('should filter digest step', async () => {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
         steps: [
@@ -294,7 +294,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(1);
     });
 
-    it('should filter multiple digest steps', async function () {
+    it('should filter multiple digest steps', async () => {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
         steps: [
@@ -416,7 +416,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(2);
     });
 
-    it('should not filter digest step', async function () {
+    it('should not filter digest step', async () => {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
         steps: [
@@ -489,7 +489,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(0);
     });
 
-    it('should digest events with filters', async function () {
+    it('should digest events with filters', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -560,7 +560,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     });
 
     // TODO: Fix this test
-    it.skip('should not aggregate a filtered digest into a non filtered digest', async function () {
+    it.skip('should not aggregate a filtered digest into a non filtered digest', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -629,7 +629,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(1);
     });
 
-    it('should not filter delay step', async function () {
+    it('should not filter delay step', async () => {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
         steps: [
@@ -702,7 +702,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(executionDetails.length).to.equal(0);
     });
 
-    it('should use conditions to select integration', async function () {
+    it('should use conditions to select integration', async () => {
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
         channel: 'email',
@@ -741,7 +741,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message?.providerId).to.equal(payload.providerId);
     });
 
-    it('should use or conditions to select integration', async function () {
+    it('should use or conditions to select integration', async () => {
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
         channel: 'email',
@@ -801,7 +801,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(firstMessage?._id).to.not.equal(secondMessage?._id);
     });
 
-    it('should return correct status when using a non existing tenant', async function () {
+    it('should return correct status when using a non existing tenant', async () => {
       const payload = {
         providerId: EmailProviderIdEnum.Mailgun,
         channel: 'email',
@@ -825,7 +825,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(result.status).to.equal('no_tenant_found');
     });
 
-    it('should trigger an event successfully', async function () {
+    it('should trigger an event successfully', async () => {
       const response = await novuClient.trigger({
         workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
@@ -842,7 +842,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(body.acknowledged).to.equal(true);
     });
 
-    it('should store jobs & message provider id successfully', async function () {
+    it('should store jobs & message provider id successfully', async () => {
       await novuClient.trigger({
         workflowId: template.triggers[0].identifier,
         to: [subscriber.subscriberId],
@@ -875,7 +875,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(emailJob?.providerId).to.equal(EmailProviderIdEnum.SendGrid);
     });
 
-    it('should create a subscriber based on event', async function () {
+    it('should create a subscriber based on event', async () => {
       const subscriberId = SubscriberRepository.createObjectId();
       const payload: SubscriberPayloadDto = {
         subscriberId,
@@ -905,7 +905,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(createdSubscriber?.data).to.deep.equal(payload.data);
     });
 
-    it('should update a subscribers email if one dont exists', async function () {
+    it('should update a subscribers email if one dont exists', async () => {
       const subscriberId = SubscriberRepository.createObjectId();
       const payload = {
         subscriberId,
@@ -960,8 +960,8 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(updatedSubscriber?.locale).to.equal(payload.locale);
     });
 
-    describe('Subscriber channels', function () {
-      it('should set a new subscriber with channels array', async function () {
+    describe('Subscriber channels', () => {
+      it('should set a new subscriber with channels array', async () => {
         const subscriberId = SubscriberRepository.createObjectId();
         const payload: SubscriberPayloadDto = {
           subscriberId,
@@ -1010,7 +1010,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         expect(deviceTokens?.length).to.equal(2);
       });
 
-      it('should update a subscribers channels array', async function () {
+      it('should update a subscribers channels array', async () => {
         const subscriberId = SubscriberRepository.createObjectId();
         const payload: SubscriberPayloadDto = {
           subscriberId,
@@ -1079,7 +1079,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
     });
 
-    it('should not unset a subscriber email', async function () {
+    it('should not unset a subscriber email', async () => {
       const subscriberId = SubscriberRepository.createObjectId();
       const payload = {
         subscriberId,
@@ -1134,7 +1134,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(updatedSubscriber?.locale).to.equal(payload.locale);
     });
 
-    it('should override subscriber email based on event data', async function () {
+    it('should override subscriber email based on event data', async () => {
       const subscriberId = SubscriberRepository.createObjectId();
       const transactionId = SubscriberRepository.createObjectId();
 
@@ -1171,7 +1171,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages[0].email).to.equal('new-test-email@gmail.com');
     });
 
-    it('should generate message and notification based on event', async function () {
+    it('should generate message and notification based on event', async () => {
       await novuClient.trigger({
         workflowId: template.triggers[0].identifier,
         to: [
@@ -1236,7 +1236,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(email.channel).to.equal(ChannelTypeEnum.EMAIL);
     });
 
-    it('should correctly set expiration date (TTL) for notification and messages', async function () {
+    it('should correctly set expiration date (TTL) for notification and messages', async () => {
       const templateName = template.triggers[0].identifier;
 
       const response = await novuClient.trigger({
@@ -1292,7 +1292,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       createdAt = new Date(email?.createdAt as string);
     });
 
-    it('should trigger SMS notification', async function () {
+    it('should trigger SMS notification', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -1322,7 +1322,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.phone).to.equal(subscriber.phone);
     });
 
-    it('should trigger SMS notification for all subscribers', async function () {
+    it('should trigger SMS notification for all subscribers', async () => {
       const subscriberId = SubscriberRepository.createObjectId();
       template = await session.createTemplate({
         steps: [
@@ -1362,7 +1362,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message2!.phone).to.equal('+972541111111');
     });
 
-    it('should trigger an sms error', async function () {
+    it('should trigger an sms error', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -1392,7 +1392,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.errorText).to.contains('Currently 3rd-party packages test are not support on test env');
     });
 
-    it('should trigger in-app notification', async function () {
+    it('should trigger in-app notification', async () => {
       const channelType = ChannelTypeEnum.IN_APP;
 
       template = await createTemplate(session, channelType);
@@ -1433,7 +1433,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.content).to.equal('Hello smith_with_type, Welcome to Umbrella Corp');
     });
 
-    it('should trigger SMS notification with subscriber data', async function () {
+    it('should trigger SMS notification with subscriber data', async () => {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.SMS;
 
@@ -1457,7 +1457,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.content).to.equal('Hello Smith, Welcome to Umbrella Corp');
     });
 
-    it('should trigger E-Mail notification with subscriber data', async function () {
+    it('should trigger E-Mail notification with subscriber data', async () => {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
 
@@ -1504,7 +1504,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.subject).to.equal('Test email a subject nested');
     });
 
-    it('should trigger E-Mail notification with actor data', async function () {
+    it('should trigger E-Mail notification with actor data', async () => {
       const newSubscriberId = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
       const actorSubscriber = await subscriberService.createSubscriber({ firstName: 'Actor' });
@@ -1542,7 +1542,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(block.content).to.equal('Hello Actor, Welcome to Umbrella Corp');
     });
 
-    it('should not trigger notification with subscriber data if integration is inactive', async function () {
+    it('should not trigger notification with subscriber data if integration is inactive', async () => {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.SMS;
 
@@ -1597,7 +1597,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message).to.be.null;
     });
 
-    it('should use Novu integration for new orgs', async function () {
+    it('should use Novu integration for new orgs', async () => {
       process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'true';
 
       const existingIntegrations = await integrationRepository.find({
@@ -1676,7 +1676,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message!.providerId).to.equal(EmailProviderIdEnum.Novu);
     });
 
-    it('should trigger message with active integration', async function () {
+    it('should trigger message with active integration', async () => {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
 
@@ -1748,7 +1748,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
     });
 
-    it('should fail to trigger with missing variables', async function () {
+    it('should fail to trigger with missing variables', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -1818,7 +1818,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         .expect(201);
     });
 
-    it('should fill trigger payload with default variables', async function () {
+    it('should fill trigger payload with default variables', async () => {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.EMAIL;
 
@@ -1902,7 +1902,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(body.error).to.equal('Unprocessable Entity');
     });
 
-    it('should handle empty workflow scenario', async function () {
+    it('should handle empty workflow scenario', async () => {
       template = await session.createTemplate({
         steps: [],
       });
@@ -1922,7 +1922,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(acknowledged).to.equal(true);
     });
 
-    it('should trigger with given required variables', async function () {
+    it('should trigger with given required variables', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -1994,7 +1994,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(subscriberIds.length).to.equal(4);
     });
 
-    it('should not filter a message with correct payload', async function () {
+    it('should not filter a message with correct payload', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -2086,7 +2086,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages).to.equal(1);
     });
 
-    it('should filter a message based on webhook filter', async function () {
+    it('should filter a message based on webhook filter', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -2171,7 +2171,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages).to.equal(2);
     });
 
-    it('should throw exception on webhook filter - demo unavailable server', async function () {
+    it('should throw exception on webhook filter - demo unavailable server', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -2226,7 +2226,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages).to.equal(1);
     });
 
-    it('should backoff on exception while webhook filter (original request + 2 retries)', async function () {
+    it('should backoff on exception while webhook filter (original request + 2 retries)', async () => {
       template = await session.createTemplate({
         steps: [
           {
@@ -2323,7 +2323,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages).to.equal(2);
     });
 
-    it('should choose variant by tenant data', async function () {
+    it('should choose variant by tenant data', async () => {
       const tenant = await tenantRepository.create({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
@@ -2413,7 +2413,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(messages[0].subject).to.equal('Better Variant subject');
     });
 
-    describe('Post Mortem', function () {
+    describe('Post Mortem', () => {
       // Repeat the test 3 times
 
       it(`should not create multiple subscribers when multiple triggers are made        
@@ -2454,7 +2454,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         subscriber = await subscriberService.createSubscriber();
       });
 
-      it('should filter a message with variables', async function () {
+      it('should filter a message with variables', async () => {
         template = await session.createTemplate({
           steps: [
             {
@@ -2536,7 +2536,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         expect(messages).to.equal(1);
       });
 
-      it('should filter a message with value that includes variables and strings', async function () {
+      it('should filter a message with value that includes variables and strings', async () => {
         const actorSubscriber = await subscriberService.createSubscriber({
           firstName: 'Actor',
         });
@@ -2592,7 +2592,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
         expect(messages).to.equal(1);
       });
 
-      it('should filter by tenant variables data', async function () {
+      it('should filter by tenant variables data', async () => {
         const tenant = await tenantRepository.create({
           _organizationId: session.organization._id,
           _environmentId: session.environment._id,
@@ -2661,7 +2661,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
 
         expect(messages.length).to.equal(1);
       });
-      it('should trigger message with override integration identifier', async function () {
+      it('should trigger message with override integration identifier', async () => {
         const newSubscriberId = SubscriberRepository.createObjectId();
         const channelType = ChannelTypeEnum.EMAIL;
 
@@ -2837,7 +2837,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       });
 
       describe('seen/read filter', () => {
-        it('should filter in app seen/read step', async function () {
+        it('should filter in app seen/read step', async () => {
           const firstStepUuid = uuid();
           template = await session.createTemplate({
             steps: [
@@ -2922,7 +2922,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           expect(messagesAfter.length).to.equal(1);
         });
 
-        it('should filter email seen/read step', async function () {
+        it('should filter email seen/read step', async () => {
           const firstStepUuid = uuid();
           template = await session.createTemplate({
             steps: [
@@ -3022,7 +3022,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
           });
         });
 
-        it('should override - active false', async function () {
+        it('should override - active false', async () => {
           const subscriberOverride = SubscriberRepository.createObjectId();
 
           // Create active workflow
@@ -3091,7 +3091,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
          * TODO: we need to add support for Tenants in V2 Preferences
          * This test is skipped for now as the tenant-level active flag is not taken into account for V2 Preferences
          */
-        it.skip('should override - active true', async function () {
+        it.skip('should override - active true', async () => {
           const subscriberOverride = SubscriberRepository.createObjectId();
 
           // Create active workflow
@@ -3160,7 +3160,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
          * TODO: we need to add support for Tenants in V2 Preferences
          * This test is skipped for now as the tenant-level active flag is not taken into account for V2 Preferences
          */
-        it.skip('should override - preference - should disable in app channel', async function () {
+        it.skip('should override - preference - should disable in app channel', async () => {
           const subscriberOverride = SubscriberRepository.createObjectId();
 
           // Create a workflow with in app channel enabled
@@ -3202,7 +3202,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
          * TODO: we need to add support for Tenants in V2 Preferences
          * This test is skipped for now as the tenant-level active flag is not taken into account for V2 Preferences
          */
-        it.skip('should override - preference - should enable in app channel', async function () {
+        it.skip('should override - preference - should enable in app channel', async () => {
           const subscriberOverride = SubscriberRepository.createObjectId();
 
           // Create a workflow with in-app channel disabled
@@ -3277,7 +3277,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
     return (await novuClient.trigger(request)).result;
   }
 
-  describe('Trigger Event v2 workflow - /v1/events/trigger (POST)', function () {
+  describe('Trigger Event v2 workflow - /v1/events/trigger (POST)', () => {
     let organizationRepository: CommunityOrganizationRepository;
 
     beforeEach(async () => {
@@ -3397,7 +3397,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(message[0].content).to.include(`Hello ${subscriber.lastName},`);
     });
 
-    it('should execute step based on conditions', async function () {
+    it('should execute step based on conditions', async () => {
       const workflowBody: CreateWorkflowDto = {
         name: 'Test Step Conditions Workflow',
         workflowId: 'test-step-conditions-workflow',
@@ -3449,7 +3449,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(notSkippedMessages.length).to.equal(1);
     });
 
-    it('should successfully trigger a workflow with SMS followed by in-app notification', async function () {
+    it('should successfully trigger a workflow with SMS followed by in-app notification', async () => {
       const workflowBody: CreateWorkflowDto = {
         name: 'Test SMS -> In-App Workflow',
         workflowId: 'test-sms-inapp-workflow',
@@ -3512,7 +3512,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(inAppMessage?.content).to.equal('Welcome John! This is an in-app notification');
     });
 
-    it('should handle complex conditions logic with subscriber data', async function () {
+    it('should handle complex conditions logic with subscriber data', async () => {
       const workflowBody: CreateWorkflowDto = {
         name: 'Test Complex Conditions Logic',
         workflowId: 'test-complex-conditions-workflow',
@@ -3614,7 +3614,7 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', function () {
       expect(skippedMessages2.length).to.equal(0);
     });
 
-    it('should exit execution if skip condition execution throws an error', async function () {
+    it('should exit execution if skip condition execution throws an error', async () => {
       const workflowBody: CreateWorkflowDto = {
         name: 'Test Complex Skip Logic',
         workflowId: 'test-complex-skip-workflow',

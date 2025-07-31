@@ -100,7 +100,6 @@ const messageSchema = new Schema<MessageDBModel>(
     },
     errorId: Schema.Types.String,
     errorText: Schema.Types.String,
-    providerResponse: Schema.Types.Mixed,
     transactionId: {
       type: Schema.Types.String,
     },

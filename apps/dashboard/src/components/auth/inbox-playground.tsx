@@ -1,12 +1,12 @@
+import { useOrganization } from '@clerk/clerk-react';
+import { useState } from 'react';
+import { RiFileCopyLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Notification5Fill } from '@/components/icons';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useInitDemoWorkflow } from '@/hooks/use-init-demo-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { useOrganization } from '@clerk/clerk-react';
-import { useState } from 'react';
-import { RiFileCopyLine } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
 import { API_HOSTNAME, ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { ROUTES } from '../../utils/routes';

@@ -1,17 +1,17 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMemo } from 'react';
 import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
-import { Button } from '@/components/primitives/button';
-import { Badge } from '@/components/primitives/badge';
-import { Skeleton } from '@/components/primitives/skeleton';
-import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { FlagCircle } from '@/components/flag-circle';
+import { Badge } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { cn } from '@/utils/ui';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
-import { getLocaleDisplayName, formatTranslationDate, formatTranslationTime } from '../utils';
 import { TranslationStatus } from '../translation-status';
-import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { DEFAULT_LOCALE } from '@novu/shared';
+import { formatTranslationDate, formatTranslationTime, getLocaleDisplayName } from '../utils';
 
 export function LocaleListSkeleton() {
   return (

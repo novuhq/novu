@@ -15,16 +15,16 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, PreferencesRepository } from '@novu/dal';
 import { SharedModule } from '../shared/shared.module';
-import { BridgeController } from './bridge.controller';
-import { USECASES } from './usecases';
-import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
 import { CreateVariablesObject } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
 import { WebhooksModule } from '../webhooks/webhooks.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
-import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { UpdateWorkflow } from '../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { BuildVariableSchemaUsecase } from '../workflows-v2/usecases';
+import { BuildStepIssuesUsecase } from '../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { BridgeController } from './bridge.controller';
+import { USECASES } from './usecases';
 
 const PROVIDERS = [
   CreateWorkflow,

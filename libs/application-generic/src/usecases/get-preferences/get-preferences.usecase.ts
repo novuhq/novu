@@ -7,11 +7,11 @@ import {
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
+import { InstrumentUsecase } from '../../instrumentation';
+import { MergePreferencesCommand } from '../merge-preferences/merge-preferences.command';
+import { MergePreferences } from '../merge-preferences/merge-preferences.usecase';
 import { GetPreferencesCommand } from './get-preferences.command';
 import { GetPreferencesResponseDto } from './get-preferences.dto';
-import { InstrumentUsecase } from '../../instrumentation';
-import { MergePreferences } from '../merge-preferences/merge-preferences.usecase';
-import { MergePreferencesCommand } from '../merge-preferences/merge-preferences.command';
 
 export type PreferenceSet = {
   workflowResourcePreference?: PreferencesEntity & {

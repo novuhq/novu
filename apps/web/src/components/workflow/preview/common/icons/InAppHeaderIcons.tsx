@@ -1,6 +1,5 @@
 import { useMantineColorScheme } from '@mantine/core';
 
-/* eslint-disable max-len */
 export const InAppHeaderIcons = (props) => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';

@@ -1,16 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-
-import { UserSessionData } from '@novu/shared';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-
-import { GetWorkflowCommand } from './get-workflow.command';
-import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
-import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
-import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
-import { generatePayloadExample } from '../../util/generate-payload-example';
-import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { UserSessionData } from '@novu/shared';
 import { GetWorkflowWithPreferencesCommand } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
+import { toResponseWorkflowDto } from '../../mappers/notification-template-mapper';
+import { generatePayloadExample } from '../../util/generate-payload-example';
+import { BuildStepDataCommand, BuildStepDataUsecase } from '../build-step-data';
+import { GetWorkflowCommand } from './get-workflow.command';
 
 @Injectable()
 export class GetWorkflowUseCase {

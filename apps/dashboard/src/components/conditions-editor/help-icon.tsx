@@ -1,8 +1,7 @@
-import { RiInformationLine, RiErrorWarningLine } from 'react-icons/ri';
-
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
-import { Badge } from '@/components/primitives/badge';
+import { RiErrorWarningLine, RiInformationLine } from 'react-icons/ri';
 import type { HelpTextInfo } from '@/components/conditions-editor/field-type-editors';
+import { Badge } from '@/components/primitives/badge';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 
 type HelpIconProps = {
   hasError: boolean;

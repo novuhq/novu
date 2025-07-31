@@ -1,7 +1,7 @@
-import { expect, test } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
-import { MsTeamsProvider } from './msTeams.provider';
+import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { MsTeamsProvider } from './msTeams.provider';
 
 test('should trigger msTeams webhook correctly', async () => {
   const { mockPost: fakePost } = axiosSpy({

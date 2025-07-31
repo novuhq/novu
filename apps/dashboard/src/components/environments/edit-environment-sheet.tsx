@@ -1,3 +1,9 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { IEnvironment } from '@novu/shared';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiArrowRightSLine } from 'react-icons/ri';
+import { z } from 'zod';
 import { Button } from '@/components/primitives/button';
 import {
   Form,
@@ -21,12 +27,6 @@ import {
 } from '@/components/primitives/sheet';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useUpdateEnvironment } from '@/hooks/use-environments';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { IEnvironment } from '@novu/shared';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiArrowRightSLine } from 'react-icons/ri';
-import { z } from 'zod';
 import { ColorPicker } from '../primitives/color-picker';
 import { showErrorToast, showSuccessToast } from '../primitives/sonner-helpers';
 

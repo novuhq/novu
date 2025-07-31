@@ -1,4 +1,4 @@
-import { useQuery, UseQueryOptions } from '@tanstack/react-query';
+import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 
 import { fetchVercelIntegration, GetVercelConfigurationDetails } from '@/api/partner-integrations';
 import { useEnvironment } from '@/context/environment/hooks';

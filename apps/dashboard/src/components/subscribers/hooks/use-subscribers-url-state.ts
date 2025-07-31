@@ -1,9 +1,9 @@
 import { DirectionEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useDebounce } from '../../../hooks/use-debounce';
-import { useQueryClient } from '@tanstack/react-query';
 import { QueryKeys } from '@/utils/query-keys';
+import { useDebounce } from '../../../hooks/use-debounce';
 
 export type SubscribersSortableColumn = '_id' | 'updatedAt';
 export interface SubscribersFilter {

@@ -1,3 +1,8 @@
+import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
+import { ChannelTypeEnum } from '@novu/shared';
+import { motion } from 'motion/react';
+import { useMemo } from 'react';
+import { RiQuestionLine } from 'react-icons/ri';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
@@ -7,11 +12,6 @@ import { usePatchSubscriberPreferences } from '@/hooks/use-patch-subscriber-pref
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { itemVariants, sectionVariants } from '@/utils/animation';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { GetSubscriberPreferencesDto, PatchPreferenceChannelsDto } from '@novu/api/models/components';
-import { ChannelTypeEnum } from '@novu/shared';
-import { motion } from 'motion/react';
-import { useMemo } from 'react';
-import { RiQuestionLine } from 'react-icons/ri';
 import { PreferencesBlank } from './preferences-blank';
 
 type PreferencesProps = {

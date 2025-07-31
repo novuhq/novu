@@ -1,2 +1,2 @@
-export * from './segment-provider';
 export * from './hooks';
+export * from './segment-provider';

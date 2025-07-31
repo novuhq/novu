@@ -8,9 +8,9 @@ import { cn, useStyle } from '../../../helpers';
 import { Cogs, ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
 import { AppearanceKey, IconKey, IconOverrides } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
-import { ChannelRow, getLabel } from './ChannelRow';
 import { SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
+import { ChannelRow, getLabel } from './ChannelRow';
 
 type IconComponentType = (props?: JSX.HTMLAttributes<SVGSVGElement>) => JSXElement;
 

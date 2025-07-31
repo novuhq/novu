@@ -1,7 +1,4 @@
-import {
-  IBulkJobParams,
-  IJobParams,
-} from '../services/queues/queue-base.service';
+import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 
 export interface IInboundParseDataDto {
   html: string;

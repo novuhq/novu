@@ -1,16 +1,16 @@
-import { PageMeta } from '@/components/page-meta';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { useEffect } from 'react';
-import { CreateEnvironmentButton } from '../components/environments/create-environment-button';
+import { PageMeta } from '@/components/page-meta';
 import { DashboardLayout } from '../components/dashboard-layout';
+import { CreateEnvironmentButton } from '../components/environments/create-environment-button';
 import { FreeTierState } from '../components/environments/environments-free-state';
 import { EnvironmentsList } from '../components/environments/environments-list';
+import { IS_SELF_HOSTED } from '../config';
 import { useAuth } from '../context/auth/hooks';
 import { useFetchEnvironments } from '../context/environment/hooks';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
-import { IS_SELF_HOSTED } from '../config';
 
 export function EnvironmentsPage() {
   const { currentOrganization } = useAuth();

@@ -1,8 +1,8 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
-import { NotificationStepEntity, JobEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { JobEntity, NotificationStepEntity } from '@novu/dal';
 import { ExecuteOutput } from '@novu/framework/internal';
-import { WorkflowPreferences, TriggerOverrides } from '@novu/shared';
+import { TriggerOverrides, WorkflowPreferences } from '@novu/shared';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -10,10 +10,10 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   identifier: string;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsOptional()
-  compileContext?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  compileContext?: any;
 
   @IsDefined()
   overrides: TriggerOverrides;

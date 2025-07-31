@@ -1,6 +1,6 @@
 import { createParamDecorator, UnauthorizedException } from '@nestjs/common';
-import jwt from 'jsonwebtoken';
 import { UserSession } from '@novu/application-generic';
+import jwt from 'jsonwebtoken';
 
 export { UserSession };
 

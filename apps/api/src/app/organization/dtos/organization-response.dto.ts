@@ -1,6 +1,6 @@
-import { PartnerTypeEnum, DirectionEnum } from '@novu/dal';
-import { IsObject, IsArray, IsString, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { DirectionEnum, PartnerTypeEnum } from '@novu/dal';
+import { IsArray, IsEnum, IsObject, IsString } from 'class-validator';
 import { UpdateBrandingDetailsDto } from './update-branding-details.dto';
 
 export class IPartnerConfigurationResponseDto {

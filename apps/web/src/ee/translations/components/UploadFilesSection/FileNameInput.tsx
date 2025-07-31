@@ -9,7 +9,6 @@ export function FileNameInput({ currentFileName, readonly }: { currentFileName: 
 
   useEffect(() => {
     setFileName(currentFileName);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentFileName]);
 
   return (

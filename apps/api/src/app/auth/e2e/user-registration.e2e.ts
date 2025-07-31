@@ -1,8 +1,8 @@
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import jwt from 'jsonwebtoken';
-import { expect } from 'chai';
 import { MemberRoleEnum, UserSessionData } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import jwt from 'jsonwebtoken';
 
 describe('User registration - /auth/register (POST) #novu-v0-os', async () => {
   let session: UserSession;
@@ -101,7 +101,6 @@ describe('User registration - /auth/register (POST) #novu-v0-os', async () => {
     });
 
     expect(body.message[0]).to.contain(
-      // eslint-disable-next-line max-len
       'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'
     );
   });

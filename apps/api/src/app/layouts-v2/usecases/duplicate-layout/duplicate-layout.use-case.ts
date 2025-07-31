@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
-
-import { DuplicateLayoutCommand } from './duplicate-layout.command';
 import { LayoutResponseDto } from '../../dtos';
-import { UpsertLayoutCommand, UpsertLayout } from '../upsert-layout';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { UpsertLayout, UpsertLayoutCommand } from '../upsert-layout';
+import { DuplicateLayoutCommand } from './duplicate-layout.command';
 
 @Injectable()
 export class DuplicateLayoutUseCase {

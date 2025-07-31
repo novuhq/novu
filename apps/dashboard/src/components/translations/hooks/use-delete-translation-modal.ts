@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { TranslationGroup } from '@/api/translations';
 import { useDeleteTranslationGroup } from '@/hooks/use-delete-translation-group';
 

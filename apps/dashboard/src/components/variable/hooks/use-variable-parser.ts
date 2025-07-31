@@ -1,5 +1,5 @@
 import { Tokenizer, TokenKind } from 'liquidjs';
-import { useMemo, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { getFilters } from '../constants';
 import { FilterWithParam } from '../types';
 

@@ -14,8 +14,6 @@
  *
  */
 
-/* eslint-disable @typescript-eslint/naming-convention */
-
 export interface IResponseError {
   error: string;
   message: string;

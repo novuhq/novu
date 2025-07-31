@@ -1,5 +1,5 @@
-import { RulesLogic, AdditionalOperation } from 'json-logic-js';
 import { expect } from 'chai';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 import { QueryIssueTypeEnum, QueryValidatorService } from './query-validator.service';
 import { COMPARISON_OPERATORS, JsonLogicOperatorEnum } from './types';

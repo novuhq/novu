@@ -1,3 +1,3 @@
 export * from './Notification';
-export { NotificationList } from './NotificationList';
 export * from './NotificationActions';
+export { NotificationList } from './NotificationList';

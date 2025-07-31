@@ -1,6 +1,5 @@
 import React from 'react';
 
-/* eslint-disable max-len */
 export function ActiveLabel(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="72" height="24" viewBox="0 0 72 24" fill="none" {...props}>

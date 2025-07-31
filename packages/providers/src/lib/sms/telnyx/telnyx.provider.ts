@@ -2,17 +2,16 @@ import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
+  ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
   SmsEventStatusEnum,
-  ISMSEventBody,
 } from '@novu/stateless';
 
 import Telnyx from 'telnyx';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-
-import { ITelnyxCLient } from './telnyx.interface';
 import { WithPassthrough } from '../../../utils/types';
+import { ITelnyxCLient } from './telnyx.interface';
 
 export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
   id = SmsProviderIdEnum.Telnyx;
@@ -60,7 +59,6 @@ export class TelnyxSmsProvider extends BaseProvider implements ISmsProvider {
 
   parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
-      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.data.id === identifier);
     }
 

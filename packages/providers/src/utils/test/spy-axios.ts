@@ -36,7 +36,6 @@ export const axiosSpy = ({
       post: mockPost,
       get: mockGet,
       request: mockRequest,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 

@@ -1,14 +1,12 @@
-import { expect } from 'chai';
 import { faker } from '@faker-js/faker';
-
-import { UserSession } from '@novu/testing';
 import { MessageRepository, MessageTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
-
-import { normalizeMessageTemplateCtaAction } from './normalize-message-template-cta-action-migration';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { normalizeMessageCtaAction } from './normalize-message-cta-action-migration';
+import { normalizeMessageTemplateCtaAction } from './normalize-message-template-cta-action-migration';
 
-describe('Normalize cta action', function () {
+describe('Normalize cta action', () => {
   let session: UserSession;
   const messageTemplateRepository = new MessageTemplateRepository();
   const messageRepository = new MessageRepository();
@@ -18,7 +16,7 @@ describe('Normalize cta action', function () {
     await session.initialize();
   });
 
-  it('normalize message template cta action', async function () {
+  it('normalize message template cta action', async () => {
     await messageTemplateRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -61,7 +59,7 @@ describe('Normalize cta action', function () {
     expect(normalizedMessages.length).to.equal(0);
   });
 
-  it('normalize message cta action', async function () {
+  it('normalize message cta action', async () => {
     await messageRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,

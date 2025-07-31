@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 /**
  * Migration to centralize workflow and subscriber preferences.
  * Preferences are migrated in the following order:

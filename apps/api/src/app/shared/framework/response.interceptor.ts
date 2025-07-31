@@ -1,10 +1,9 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { instanceToPlain } from 'class-transformer';
+import { isArray, isObject } from 'lodash';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { isObject, isArray } from 'lodash';
-import { instanceToPlain } from 'class-transformer';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface Response<T> {
   data: T;
 }

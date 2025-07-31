@@ -1,17 +1,16 @@
-import { useMemo, useEffect, useRef, useState } from 'react';
-import { CustomNodeDefinition, JsonEditor, UpdateFunctionProps } from 'json-edit-react';
-import { cn } from '@/utils/ui';
-import JSON5 from 'json5';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
-
-import { EditableJsonViewerProps } from './types';
-import { CUSTOM_THEME } from './constants';
-import { SingleClickEditableValue } from './single-click-editable-value';
-import { CustomTextEditor } from './custom-text-editor';
-import { useHideRootNode } from './use-hide-root-node';
-import { JSON_EDITOR_ICONS } from './icons';
+import { CustomNodeDefinition, JsonEditor, UpdateFunctionProps } from 'json-edit-react';
+import JSON5 from 'json5';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { cn } from '@/utils/ui';
+import { CUSTOM_THEME } from './constants';
+import { CustomTextEditor } from './custom-text-editor';
+import { JSON_EDITOR_ICONS } from './icons';
+import { SingleClickEditableValue } from './single-click-editable-value';
+import { EditableJsonViewerProps } from './types';
+import { useHideRootNode } from './use-hide-root-node';
 
 /**
  * EditableJsonViewer - A JSON editor component with optional schema validation

@@ -1,11 +1,11 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
+  CheckIntegrationResponseEnum,
+  ICheckIntegrationResponse,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-  ICheckIntegrationResponse,
-  CheckIntegrationResponseEnum,
 } from '@novu/stateless';
 import formData from 'form-data';
 import Mailgun from 'mailgun.js';

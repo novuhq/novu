@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export function NovuIcon(props: React.ComponentPropsWithoutRef<'svg'>) {

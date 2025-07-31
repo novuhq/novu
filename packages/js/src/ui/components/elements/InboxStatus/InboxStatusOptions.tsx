@@ -1,12 +1,12 @@
 import { For, Show } from 'solid-js';
 import { JSX } from 'solid-js/jsx-runtime';
-import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
+import { StringLocalizationKey, useAppearance, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Clock, Check as DefaultCheck, MarkAsArchived, MarkAsUnread, Unread } from '../../../icons';
 import { IconKey, NotificationStatus } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives/Dropdown';
-import { notificationStatusOptionsLocalizationKeys } from './constants';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
+import { notificationStatusOptionsLocalizationKeys } from './constants';
 
 const cases = [
   {

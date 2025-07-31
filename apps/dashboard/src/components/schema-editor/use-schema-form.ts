@@ -1,22 +1,21 @@
-import { useCallback, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-
-import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
-import {
-  editorSchema,
-  type SchemaEditorFormValues,
-  type PropertyListItem,
-  convertSchemaToPropertyList,
-  convertPropertyListToSchema,
-  parsePropertyPath,
-  createPropertyItem,
-  findOrCreatePropertyPath,
-  propertyExists,
-  type PropertyData,
-} from './utils';
-import type { UseSchemaFormProps, UseSchemaFormReturn, SchemaFormPath } from './types';
+import { useCallback, useEffect } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { MAX_NESTING_DEPTH } from './constants';
+import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
+import type { SchemaFormPath, UseSchemaFormProps, UseSchemaFormReturn } from './types';
+import {
+  convertPropertyListToSchema,
+  convertSchemaToPropertyList,
+  createPropertyItem,
+  editorSchema,
+  findOrCreatePropertyPath,
+  type PropertyData,
+  type PropertyListItem,
+  parsePropertyPath,
+  propertyExists,
+  type SchemaEditorFormValues,
+} from './utils';
 
 const defaultFormValues: SchemaEditorFormValues = {
   propertyList: [],

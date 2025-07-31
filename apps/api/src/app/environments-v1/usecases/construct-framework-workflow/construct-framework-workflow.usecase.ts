@@ -1,18 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import {
-  EnvironmentRepository,
-  NotificationStepEntity,
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-} from '@novu/dal';
-import {
-  FeatureFlagsKeysEnum,
-  LAYOUT_PREVIEW_EMAIL_STEP,
-  LAYOUT_PREVIEW_WORKFLOW_ID,
-  StepTypeEnum,
-} from '@novu/shared';
 import {
   emailControlSchema,
   FeatureFlagsService,
@@ -20,9 +6,24 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
+import {
+  EnvironmentRepository,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import { workflow } from '@novu/framework/express';
+import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
+import {
+  FeatureFlagsKeysEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
-import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
+import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
+import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
 import {
   ChatOutputRendererUsecase,
   EmailOutputRendererUsecase,
@@ -33,8 +34,7 @@ import {
 } from '../output-renderers';
 import { DelayOutputRendererUsecase } from '../output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from '../output-renderers/digest-output-renderer.usecase';
-import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
-import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
+import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 

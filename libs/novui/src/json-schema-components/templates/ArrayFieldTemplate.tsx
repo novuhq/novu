@@ -9,8 +9,8 @@ import { css } from '../../../styled-system/css';
 import { Box } from '../../../styled-system/jsx';
 import { jsonSchemaFormArrayToolbar, jsonSchemaFormSection } from '../../../styled-system/recipes';
 import { FormGroupTitle, SectionTitleToggle } from '../shared';
-import { calculateSectionDepth, getVariantFromDepth } from '../utils';
 import { useExpandToggle } from '../useExpandToggle';
+import { calculateSectionDepth, getVariantFromDepth } from '../utils';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const [isExpanded, toggleExpanded] = useExpandToggle();
@@ -21,9 +21,7 @@ export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
     ButtonTemplates: { AddButton },
   } = registry.templates;
   const uiOptions = getUiOptions(uiSchema);
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   const ArrayFieldTitleTemplate = getTemplate('ArrayFieldTitleTemplate', registry, uiOptions);
-  // eslint-disable-next-line @typescript-eslint/no-shadow
   const ArrayFieldItemTemplate = getTemplate('ArrayFieldItemTemplate', registry, uiOptions);
 
   const sectionDepth = calculateSectionDepth({ sectionId: props.idSchema.$id });

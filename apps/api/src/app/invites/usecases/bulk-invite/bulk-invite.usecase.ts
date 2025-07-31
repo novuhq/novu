@@ -1,7 +1,7 @@
-import { captureException } from '@sentry/node';
 import { Injectable, Scope } from '@nestjs/common';
-import { MemberRoleEnum } from '@novu/shared';
 import { PinoLogger } from '@novu/application-generic';
+import { MemberRoleEnum } from '@novu/shared';
+import { captureException } from '@sentry/node';
 import { InviteMemberCommand } from '../invite-member/invite-member.command';
 import { InviteMember } from '../invite-member/invite-member.usecase';
 import { BulkInviteCommand } from './bulk-invite.command';

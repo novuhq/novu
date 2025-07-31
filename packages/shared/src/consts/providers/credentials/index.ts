@@ -1,2 +1,2 @@
-export * from './secure-credentials';
 export * from './provider-credentials';
+export * from './secure-credentials';

@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { PinoLogger } from 'nestjs-pino';
+import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
-import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
 import { getInsertOptions } from '../shared';
+import { EventType, ORDER_BY, TABLE_NAME, Trace, traceLogSchema } from './trace-log.schema';
 
 const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.TRACES_ASYNC_INSERT,
@@ -271,11 +271,11 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'execution_detail':
       return 'Execution detail';
 
-    default:
+    default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
-      // eslint-disable-next-line no-case-declarations
       const _exhaustiveCheck: never = eventType;
 
       return _exhaustiveCheck;
+    }
   }
 }

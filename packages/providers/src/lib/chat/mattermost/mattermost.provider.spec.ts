@@ -1,5 +1,5 @@
-import { expect, test, vi } from 'vitest';
 import axios from 'axios';
+import { expect, test, vi } from 'vitest';
 import { MattermostProvider } from './mattermost.provider';
 
 test('should trigger mattermost library correctly, default channel', async () => {
@@ -11,7 +11,6 @@ test('should trigger mattermost library correctly, default channel', async () =>
   vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: fakePostDefaultChannel,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 
@@ -38,7 +37,6 @@ test('should trigger mattermost library correctly, override channel', async () =
   vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: fakePostUserChannel,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 
@@ -67,7 +65,6 @@ test('should trigger mattermost library correctly, default channel with _passthr
   vi.spyOn(axios, 'create').mockImplementation(() => {
     return {
       post: fakePostDefaultChannel,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 

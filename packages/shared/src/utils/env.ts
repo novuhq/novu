@@ -4,12 +4,10 @@ type CloudflareEnv = { env: Record<string, string> };
  * https://remix.run/blog/remix-vite-stable#cloudflare-pages-support
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const hasCloudflareProxyContext = (context: any): context is { cloudflare: CloudflareEnv } => {
   return !!context?.cloudflare?.env;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const hasCloudflareContext = (context: any): context is CloudflareEnv => {
   return !!context?.env;
 };

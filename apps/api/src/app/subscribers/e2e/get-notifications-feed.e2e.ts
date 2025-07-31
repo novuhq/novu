@@ -1,10 +1,10 @@
+import { Novu } from '@novu/api';
+import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu-v2', function () {
+describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriberId: string;
@@ -21,7 +21,7 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     subscriberId = SubscriberRepository.createObjectId();
   });
 
-  it('should throw exception on invalid subscriber id', async function () {
+  it('should throw exception on invalid subscriber id', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.waitForJobCompletion(template._id);
@@ -43,7 +43,7 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     );
   });
 
-  it('should throw exception when invalid payload query param is passed', async function () {
+  it('should throw exception when invalid payload query param is passed', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.waitForJobCompletion(template._id);
@@ -59,7 +59,7 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     expect(err?.message).to.eq(`Invalid payload, the JSON object should be encoded to base64 string.`);
   });
 
-  it('should allow filtering by custom data from the payload', async function () {
+  it('should allow filtering by custom data from the payload', async () => {
     const partialPayload = { foo: 123 };
     const payload = { ...partialPayload, bar: 'bar' };
 
@@ -76,7 +76,7 @@ describe('Get Notifications feed - /:subscriberId/notifications/feed (GET) #novu
     expect(data[0].payload).to.deep.equal(payload);
   });
 
-  it('should allow filtering by custom nested data from the payload', async function () {
+  it('should allow filtering by custom nested data from the payload', async () => {
     const partialPayload = { foo: { bar: 123 } };
     const payload = { ...partialPayload, baz: 'baz' };
 

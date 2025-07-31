@@ -1,7 +1,7 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { FeedRepository, FeedEntity } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
+import { FeedEntity, FeedRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { CreateFeedCommand } from './create-feed.command';
 
 @Injectable()

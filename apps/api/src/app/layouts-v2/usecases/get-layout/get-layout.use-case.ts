@@ -6,12 +6,11 @@ import {
 } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-
-import { GetLayoutCommand } from './get-layout.command';
 import { LayoutResponseDto } from '../../dtos';
-import { mapToResponseDto } from '../mapper';
 import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
 import { LayoutVariablesSchemaCommand } from '../layout-variables-schema/layout-variables-schema.command';
+import { mapToResponseDto } from '../mapper';
+import { GetLayoutCommand } from './get-layout.command';
 
 @Injectable()
 export class GetLayoutUseCase {

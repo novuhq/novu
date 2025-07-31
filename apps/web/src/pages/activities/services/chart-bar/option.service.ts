@@ -12,10 +12,8 @@ export function getOptions(this: any, isTriggerSent: boolean, daysCount: number)
 
     onHover: (event, el) => {
       if (el.length > 0) {
-        // eslint-disable-next-line no-param-reassign
         event.native.target.style.cursor = 'pointer';
       } else {
-        // eslint-disable-next-line no-param-reassign
         event.native.target.style.cursor = 'default';
       }
     },
@@ -163,11 +161,9 @@ function updateTableInnerHtml(tooltipEl: HTMLElement, innerHtml: string) {
 function updateToolTipStyles(context, tooltipEl: HTMLElement, tooltipModel) {
   const position = context.chart.canvas.getBoundingClientRect();
 
-  /* eslint-disable no-param-reassign */
   tooltipEl.style.opacity = '1';
   tooltipEl.style.left = `${position.left + window.scrollX + tooltipModel.caretX - tooltipModel.width - 30}px`;
   tooltipEl.style.top = `${position.top + window.scrollY + tooltipModel.caretY - tooltipModel.height - 30}px`;
-  /* eslint-enable no-param-reassign */
 }
 
 function getBodyText(body: string[]): string | string[] {

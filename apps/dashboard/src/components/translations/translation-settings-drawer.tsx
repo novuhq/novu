@@ -1,21 +1,21 @@
-import { forwardRef, useEffect, useCallback } from 'react';
+import { DEFAULT_LOCALE, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { forwardRef, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
+import { RiSettings4Line } from 'react-icons/ri';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormRoot } from '@/components/primitives/form/form';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { LocaleSelect } from '@/components/primitives/locale-select';
 import { Separator } from '@/components/primitives/separator';
+import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { RiSettings4Line } from 'react-icons/ri';
-import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { DEFAULT_LOCALE, PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
-import { useHasPermission } from '@/hooks/use-has-permission';
 import { useEnvironment } from '@/context/environment/hooks';
-import { PermissionButton } from '../primitives/permission-button';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { useFormProtection } from '@/hooks/use-form-protection';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { useFormProtection } from '@/hooks/use-form-protection';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
+import { PermissionButton } from '../primitives/permission-button';
 
 interface TranslationSettingsFormData {
   defaultLocale: string;

@@ -1,6 +1,4 @@
 /* cspell:disable */
-/* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable no-param-reassign */
 /*
  * 15/11/2024
  *

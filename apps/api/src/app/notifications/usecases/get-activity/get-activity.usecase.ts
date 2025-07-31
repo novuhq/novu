@@ -1,21 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  NotificationRepository,
+  AnalyticsService,
+  FeatureFlagsService,
+  PinoLogger,
+  StepRun,
+  StepRunRepository,
+  TraceLogRepository,
+  WorkflowRunRepository,
+} from '@novu/application-generic';
+import {
   ExecutionDetailFeedItem,
+  JobFeedItem,
   JobStatusEnum,
   NotificationFeedItemEntity,
-  JobFeedItem,
+  NotificationRepository,
   NotificationStepEntity,
 } from '@novu/dal';
-import {
-  AnalyticsService,
-  TraceLogRepository,
-  StepRunRepository,
-  WorkflowRunRepository,
-  StepRun,
-  PinoLogger,
-  FeatureFlagsService,
-} from '@novu/application-generic';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -26,8 +26,8 @@ import {
 } from '@novu/shared';
 
 import { ActivityNotificationResponseDto } from '../../dtos/activities-response.dto';
-import { GetActivityCommand } from './get-activity.command';
 import { mapFeedItemToDto } from '../get-activity-feed/map-feed-item-to.dto';
+import { GetActivityCommand } from './get-activity.command';
 
 @Injectable()
 export class GetActivity {

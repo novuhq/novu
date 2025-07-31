@@ -1,15 +1,14 @@
-import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import {
-  chatWebhookConfig,
-  grafanaOnCallConfig,
-  slackConfig,
-  getstreamConfig,
-  rocketChatConfig,
-  whatsAppBusinessConfig,
-} from '../credentials';
-
 import { ChannelTypeEnum, ChatProviderIdEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
+import {
+  chatWebhookConfig,
+  getstreamConfig,
+  grafanaOnCallConfig,
+  rocketChatConfig,
+  slackConfig,
+  whatsAppBusinessConfig,
+} from '../credentials';
+import { IConfigCredentials, IProviderConfig } from '../provider.interface';
 
 export const chatProviders: IProviderConfig[] = [
   {

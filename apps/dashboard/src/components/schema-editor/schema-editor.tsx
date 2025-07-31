@@ -1,13 +1,13 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { type Control, type FieldArrayWithId, FormProvider, type UseFormReturn } from 'react-hook-form';
 import { RiAddLine } from 'react-icons/ri';
-import { FormProvider, type Control, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
-import { SchemaPropertyRow } from './schema-property-row';
-import type { SchemaEditorFormValues, PropertyListItem } from './utils/validation-schema';
-import { checkVariableUsageInWorkflow, type VariableUsageInfo } from './utils/check-variable-usage';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { SchemaPropertyRow } from './schema-property-row';
+import { checkVariableUsageInWorkflow, type VariableUsageInfo } from './utils/check-variable-usage';
+import type { PropertyListItem, SchemaEditorFormValues } from './utils/validation-schema';
 
 interface SchemaEditorProps {
   control: Control<SchemaEditorFormValues>;

@@ -1,7 +1,7 @@
+import { ISubscriber } from '@novu/shared';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
-import { ISubscriber } from '@novu/shared';
 import { ActivityStatusBadge } from './status-badge';
 import { StepIndicators } from './step-indicators';
 

@@ -26,19 +26,34 @@ import {
   PreferenceLevelEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
+import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
+import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
+import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/response.decorator';
+import { SubscriberSession } from '../shared/framework/user.decorator';
+import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
+import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
+import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../subscribers/usecases/get-subscriber-preference';
-
-import { SubscriberSession } from '../shared/framework/user.decorator';
+import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
 import { LogUsageRequestDto } from './dtos/log-usage-request.dto';
 import { LogUsageResponseDto } from './dtos/log-usage-response.dto';
+import { MessageMarkAsRequestDto } from './dtos/mark-as-request.dto';
+import { MessageResponseDto } from './dtos/message-response.dto';
 import { OrganizationResponseDto } from './dtos/organization-response.dto';
+import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
+import { RemoveMessagesBulkRequestDto } from './dtos/remove-messages-bulk-request.dto';
 import { SessionInitializeRequestDto } from './dtos/session-initialize-request.dto';
 import { SessionInitializeResponseDto } from './dtos/session-initialize-response.dto';
 import { UnseenCountResponse } from './dtos/unseen-count-response.dto';
+import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
 import { UpdateSubscriberPreferenceResponseDto } from './dtos/update-subscriber-preference-response.dto';
+import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
+import { GetCountQuery } from './queries/get-count.query';
+import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
+import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
 import { GetNotificationsFeedCommand } from './usecases/get-notifications-feed/get-notifications-feed.command';
 import { GetNotificationsFeed } from './usecases/get-notifications-feed/get-notifications-feed.usecase';
 import { GetOrganizationDataCommand } from './usecases/get-organization-data/get-organization-data.command';
@@ -47,34 +62,18 @@ import { InitializeSessionCommand } from './usecases/initialize-session/initiali
 import { InitializeSession } from './usecases/initialize-session/initialize-session.usecase';
 import { UpdateMessageActionsCommand } from './usecases/mark-action-as-done/update-message-actions.command';
 import { UpdateMessageActions } from './usecases/mark-action-as-done/update-message-actions.usecase';
-import { UpdateSubscriberPreferenceRequestDto } from './dtos/update-subscriber-preference-request.dto';
-import { GetFeedCountCommand } from './usecases/get-feed-count/get-feed-count.command';
-import { GetFeedCount } from './usecases/get-feed-count/get-feed-count.usecase';
-import { GetCountQuery } from './queries/get-count.query';
-import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
-import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
-import { MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
-import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
 import { MarkAllMessagesAsCommand } from './usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from './usecases/mark-all-messages-as/mark-all-messages-as.usecase';
-import { GetNotificationsFeedDto } from './dtos/get-notifications-feed-request.dto';
-import { LimitPipe } from './pipes/limit-pipe/limit-pipe';
+import { MarkMessageAsCommand } from './usecases/mark-message-as/mark-message-as.command';
+import { MarkMessageAs } from './usecases/mark-message-as/mark-message-as.usecase';
+import { MarkMessageAsByMarkCommand } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
+import { MarkMessageAsByMark } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
+import { RemoveMessageCommand } from './usecases/remove-message/remove-message.command';
+import { RemoveMessage } from './usecases/remove-message/remove-message.usecase';
 import { RemoveAllMessagesCommand } from './usecases/remove-messages/remove-all-messages.command';
 import { RemoveAllMessages } from './usecases/remove-messages/remove-all-messages.usecase';
-import { RemoveAllMessagesDto } from './dtos/remove-all-messages.dto';
-import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
-import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
-import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
-import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { RemoveMessagesBulkCommand } from './usecases/remove-messages-bulk/remove-messages-bulk.command';
 import { RemoveMessagesBulk } from './usecases/remove-messages-bulk/remove-messages-bulk.usecase';
-import { RemoveMessagesBulkRequestDto } from './dtos/remove-messages-bulk-request.dto';
-import { MessageMarkAsRequestDto } from './dtos/mark-as-request.dto';
-import { MarkMessageAsByMark } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
-import { MarkMessageAsByMarkCommand } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
-import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
-import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
-import { MessageResponseDto } from './dtos/message-response.dto';
 
 @ApiCommonResponses()
 @Controller('/widgets')
@@ -154,7 +153,6 @@ export class WidgetsController {
     const feedsQuery = this.toArray(feedId);
 
     if (seen === undefined) {
-      // eslint-disable-next-line no-param-reassign
       seen = false;
     }
 
@@ -181,7 +179,6 @@ export class WidgetsController {
     const feedsQuery = this.toArray(feedId);
 
     if (read === undefined) {
-      // eslint-disable-next-line no-param-reassign
       read = false;
     }
 
@@ -207,7 +204,6 @@ export class WidgetsController {
     const feedsQuery = this.toArray(query.feedIdentifier);
 
     if (query.seen === undefined && query.read === undefined) {
-      // eslint-disable-next-line no-param-reassign
       query.seen = false;
     }
 
@@ -384,7 +380,7 @@ export class WidgetsController {
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Param('messageId') messageId: string,
     @Param('type') type: ButtonTypeEnum,
-    @Body() body: { payload: any; status: MessageActionStatusEnum } // eslint-disable-line @typescript-eslint/no-explicit-any
+    @Body() body: { payload: any; status: MessageActionStatusEnum }
   ): Promise<MessageEntity> {
     return await this.updateMessageActionsUsecase.execute(
       UpdateMessageActionsCommand.create({

@@ -1,13 +1,13 @@
-import { ActionIcon, ButtonVariant as ExternalButtonVariant, ActionIconStylesNames } from '@mantine/core';
+import { ActionIcon, ActionIconStylesNames, ButtonVariant as ExternalButtonVariant } from '@mantine/core';
 import React from 'react';
-import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
-import { JsxStyleProps } from '../../../styled-system/types';
 import { css, cx } from '../../../styled-system/css';
-import { button, type ButtonVariant } from '../../../styled-system/recipes';
+import { splitCssProps } from '../../../styled-system/jsx';
+import { type ButtonVariant, button } from '../../../styled-system/recipes';
 import { token } from '../../../styled-system/tokens';
+import { JsxStyleProps } from '../../../styled-system/types';
 import { IconType } from '../../icons';
 import { CoreProps } from '../../types';
-import { splitCssProps } from '../../../styled-system/jsx';
+import { forwardRefWithAs, PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
 import { BUTTON_SIZE_TO_ICON_SIZE, DEFAULT_SIZE } from './Button.const';
 
 interface IIconButtonProps {
@@ -33,7 +33,10 @@ type PolymorphicComponent = <C extends React.ElementType = IconButtonDefaultElem
  *
  * TODO: there are not specifications for these in the Design System, so this just follows the Button recipe.
  */
-export const IconButton: PolymorphicComponent = forwardRefWithAs<IconButtonDefaultElement, JsxStyleProps & Partial<ButtonVariant> & CoreProps & IIconButtonProps>(
+export const IconButton: PolymorphicComponent = forwardRefWithAs<
+  IconButtonDefaultElement,
+  JsxStyleProps & Partial<ButtonVariant> & CoreProps & IIconButtonProps
+>(
   <C extends React.ElementType = IconButtonDefaultElement>(
     { variant = DEFAULT_VARIANT, ...props }: IconButtonProps<C>,
     ref?: PolymorphicRef<C>

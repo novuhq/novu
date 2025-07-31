@@ -10,39 +10,39 @@ import {
   Put,
   UseInterceptors,
 } from '@nestjs/common';
-import { OrganizationEntity } from '@novu/dal';
-import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
+import { OrganizationEntity } from '@novu/dal';
+import { MemberRoleEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
-import { CreateOrganizationCommand } from './usecases/create-organization/create-organization.command';
-import { CreateOrganization } from './usecases/create-organization/create-organization.usecase';
-import { RemoveMember } from './usecases/membership/remove-member/remove-member.usecase';
-import { RemoveMemberCommand } from './usecases/membership/remove-member/remove-member.command';
-import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
-import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
-import { ChangeMemberRoleCommand } from './usecases/membership/change-member-role/change-member-role.command';
-import { ChangeMemberRole } from './usecases/membership/change-member-role/change-member-role.usecase';
-import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
-import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
-import { GetOrganizationsCommand } from './usecases/get-organizations/get-organizations.command';
-import { GetOrganizations } from './usecases/get-organizations/get-organizations.usecase';
-import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
-import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
-import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
-import { RenameOrganizationCommand } from './usecases/rename-organization/rename-organization-command';
-import { RenameOrganization } from './usecases/rename-organization/rename-organization.usecase';
+import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
+import { MemberResponseDto } from './dtos/member-response.dto';
+import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { RenameOrganizationDto } from './dtos/rename-organization.dto';
 import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { UpdateMemberRolesDto } from './dtos/update-member-roles.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
-import { MemberResponseDto } from './dtos/member-response.dto';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { CreateOrganizationCommand } from './usecases/create-organization/create-organization.command';
+import { CreateOrganization } from './usecases/create-organization/create-organization.usecase';
+import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
+import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
+import { GetOrganizationsCommand } from './usecases/get-organizations/get-organizations.command';
+import { GetOrganizations } from './usecases/get-organizations/get-organizations.usecase';
+import { ChangeMemberRoleCommand } from './usecases/membership/change-member-role/change-member-role.command';
+import { ChangeMemberRole } from './usecases/membership/change-member-role/change-member-role.usecase';
+import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
+import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
+import { RemoveMemberCommand } from './usecases/membership/remove-member/remove-member.command';
+import { RemoveMember } from './usecases/membership/remove-member/remove-member.usecase';
+import { RenameOrganization } from './usecases/rename-organization/rename-organization.usecase';
+import { RenameOrganizationCommand } from './usecases/rename-organization/rename-organization-command';
+import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
+import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)

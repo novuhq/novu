@@ -1,12 +1,10 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ChannelTypeEnum, DirectionEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-
-import { ListLayoutsUseCase } from './list-layouts.use-case';
-import { ListLayoutsCommand } from './list-layouts.command';
-// eslint-disable-next-line
+import { expect } from 'chai';
+import sinon from 'sinon';
 import * as mapperModule from '../mapper';
+import { ListLayoutsCommand } from './list-layouts.command';
+import { ListLayoutsUseCase } from './list-layouts.use-case';
 
 describe('ListLayoutsUseCase', () => {
   let layoutRepositoryMock: sinon.SinonStubbedInstance<LayoutRepository>;

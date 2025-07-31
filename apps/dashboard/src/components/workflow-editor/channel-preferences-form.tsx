@@ -22,7 +22,7 @@ import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
-import { StepTypeEnum, ResourceOriginEnum } from '@/utils/enums';
+import { ResourceOriginEnum, StepTypeEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';

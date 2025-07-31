@@ -1,5 +1,5 @@
-import sinon from 'sinon';
 import { testServer } from '@novu/testing';
+import sinon from 'sinon';
 
 import mailin from '../src/main';
 

@@ -1,36 +1,35 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
-
-import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
+  buildFeedKey,
+  buildMessageCountKey,
+  CompileInAppTemplate,
+  CompileInAppTemplateCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  InvalidateCacheService,
+  SelectIntegration,
+  SelectVariant,
+  WebSocketsQueueService,
+} from '@novu/application-generic';
+
+import { MessageEntity, MessageRepository, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
+import { InAppOutput } from '@novu/framework/internal';
+import {
+  ActorTypeEnum,
   ChannelTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ActorTypeEnum,
-  WebSocketEventEnum,
   inAppMessageFromBridgeOutputs,
+  WebSocketEventEnum,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  InvalidateCacheService,
-  DetailEnum,
-  SelectIntegration,
-  buildFeedKey,
-  buildMessageCountKey,
-  GetNovuProviderCredentials,
-  SelectVariant,
-  CompileInAppTemplate,
-  CompileInAppTemplateCommand,
-  WebSocketsQueueService,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '@novu/application-generic';
-import { InAppOutput } from '@novu/framework/internal';
-
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
+import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageCommand } from './send-message.command';
 import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()

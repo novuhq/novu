@@ -64,7 +64,6 @@ export const StudioOnboardingSuccess = () => {
 
     setNovuOnboardingStepCookie();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

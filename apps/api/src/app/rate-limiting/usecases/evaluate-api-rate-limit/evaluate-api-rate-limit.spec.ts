@@ -1,5 +1,4 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
 import {
   ApiRateLimitAlgorithmEnum,
   ApiRateLimitCategoryEnum,
@@ -8,15 +7,16 @@ import {
   IApiRateLimitAlgorithm,
   IApiRateLimitCost,
 } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
-import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
-import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
-import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
 import { EvaluateTokenBucketRateLimit } from '../evaluate-token-bucket-rate-limit';
+import { GetApiRateLimitAlgorithmConfig } from '../get-api-rate-limit-algorithm-config';
+import { GetApiRateLimitCostConfig } from '../get-api-rate-limit-cost-config';
+import { GetApiRateLimitMaximum } from '../get-api-rate-limit-maximum';
+import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from './index';
 
 const mockApiRateLimitAlgorithm: IApiRateLimitAlgorithm = {
   [ApiRateLimitAlgorithmEnum.BURST_ALLOWANCE]: 0.2,

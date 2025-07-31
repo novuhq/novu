@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { execSync } from 'child_process';
 import dns from 'dns/promises';
 import url from 'url';

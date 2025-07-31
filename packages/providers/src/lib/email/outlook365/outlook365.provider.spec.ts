@@ -1,6 +1,6 @@
-import { expect, test, vi } from 'vitest';
 import { CheckIntegrationResponseEnum, ICheckIntegrationResponse } from '@novu/stateless';
 import nodemailer from 'nodemailer';
+import { expect, test, vi } from 'vitest';
 import { Outlook365Provider } from './outlook365.provider';
 
 const sendMailMock = vi.fn().mockReturnValue(() => {

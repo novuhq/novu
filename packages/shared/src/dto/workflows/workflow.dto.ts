@@ -1,4 +1,4 @@
-import { StepTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, WorkflowPreferences } from '../../types';
+import { ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowPreferences } from '../../types';
 import { Slug } from '../../types/utils';
 import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';

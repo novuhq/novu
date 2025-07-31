@@ -14,16 +14,12 @@ declare module 'mixpanel-browser' {
   export function init(token: string, config: Partial<BetaConfig>, name: string): Mixpanel;
   export function init(token: string, config: Partial<BetaConfig>): Mixpanel;
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   export function start_session_recording(): void;
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   export function set_config(config: Partial<BetaConfig>): void;
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   export function stop_session_recording(): void;
 
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   export function get_session_recording_properties(): {
     $mp_replay_id?: string;
   };

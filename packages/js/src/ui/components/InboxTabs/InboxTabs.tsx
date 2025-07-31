@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/no-class-without-style */
 import { createMemo, For, Show } from 'solid-js';
 import { useInboxContext, useUnreadCounts } from '../../context';
 import { cn, getTagsFromTab, useStyle } from '../../helpers';
@@ -16,8 +15,8 @@ import {
 } from '../../types';
 import { NotificationList } from '../Notification';
 import { Button, Dropdown, Tabs } from '../primitives';
-import { InboxDropdownTab, InboxTab as InboxTabComponent, InboxTabUnreadNotificationsCount } from './InboxTab';
 import { IconRendererWrapper } from '../shared/IconRendererWrapper';
+import { InboxDropdownTab, InboxTab as InboxTabComponent, InboxTabUnreadNotificationsCount } from './InboxTab';
 
 const tabsDropdownTriggerVariants = () =>
   `nt-relative after:nt-absolute after:nt-content-[''] after:nt-bottom-0 after:nt-left-0 ` +

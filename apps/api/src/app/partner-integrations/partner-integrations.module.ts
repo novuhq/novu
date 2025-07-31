@@ -1,11 +1,11 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
-import { CommunityUserRepository, CommunityOrganizationRepository } from '@novu/dal';
-import { USE_CASES } from './usecases';
-import { PartnerIntegrationsController } from './partner-integrations.controller';
-import { SharedModule } from '../shared/shared.module';
-import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
+import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { BridgeModule } from '../bridge';
+import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
+import { SharedModule } from '../shared/shared.module';
+import { PartnerIntegrationsController } from './partner-integrations.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, HttpModule, EnvironmentsModuleV1, BridgeModule],

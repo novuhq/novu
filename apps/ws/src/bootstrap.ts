@@ -1,10 +1,9 @@
 import './instrument';
-import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
-
-import { CONTEXT_PATH, validateEnv } from './config';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { CONTEXT_PATH, validateEnv } from './config';
 import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
 import { prepareAppInfra, startAppInfra } from './socket/services';
 

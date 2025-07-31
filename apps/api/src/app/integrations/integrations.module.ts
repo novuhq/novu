@@ -1,10 +1,10 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { CompileTemplate, CreateExecutionDetails } from '@novu/application-generic';
-import { SharedModule } from '../shared/shared.module';
-import { USE_CASES } from './usecases';
-import { IntegrationsController } from './integrations.controller';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
+import { SharedModule } from '../shared/shared.module';
+import { IntegrationsController } from './integrations.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, forwardRef(() => AuthModule)],

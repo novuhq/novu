@@ -7,7 +7,6 @@ import { MessageTemplateDBModel, MessageTemplateEntity } from './message-templat
 import { MessageTemplate } from './message-template.schema';
 
 type MessageTemplateQuery = FilterQuery<MessageTemplateDBModel>;
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface DeleteMsgByIdQuery {
   _id: string;
   _environmentId: string;

@@ -1,6 +1,6 @@
 import { type APIGatewayEvent, type APIGatewayProxyEventV2, type APIGatewayProxyResult } from 'aws-lambda';
 import { NovuRequestHandler, type ServeHandlerOptions } from '../handler';
-import { type SupportedFrameworkName, type Either } from '../types';
+import { type Either, type SupportedFrameworkName } from '../types';
 
 /*
  * Re-export all top level exports from the main package.

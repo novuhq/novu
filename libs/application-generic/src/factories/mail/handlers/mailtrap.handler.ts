@@ -1,9 +1,5 @@
-import {
-  ChannelTypeEnum,
-  ICredentials,
-  EmailProviderIdEnum,
-} from '@novu/shared';
 import { MailtrapEmailProvider } from '@novu/providers';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
 import { BaseHandler } from './base.handler';
 
 export class MailtrapHandler extends BaseHandler {

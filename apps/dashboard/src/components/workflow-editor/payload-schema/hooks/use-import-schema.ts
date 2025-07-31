@@ -1,11 +1,11 @@
+import type { WorkflowResponseDto } from '@novu/shared';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import type { WorkflowResponseDto } from '@novu/shared';
-import { useEnvironment } from '@/context/environment/hooks';
 import { getActivityList } from '@/api/activity';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/utils/schema-converter';
-import { generateSchemaFromJson, cleanPayloadData } from '../utils/generate-schema';
+import { useEnvironment } from '@/context/environment/hooks';
 import { showErrorToast, showSuccessToast } from '../../../primitives/sonner-helpers';
+import { cleanPayloadData, generateSchemaFromJson } from '../utils/generate-schema';
 
 export function useImportSchema(workflow?: WorkflowResponseDto, formMethods?: any) {
   const [isImportMode, setIsImportMode] = useState(false);

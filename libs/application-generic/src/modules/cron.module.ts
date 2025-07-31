@@ -1,16 +1,11 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
-import { DalService } from '@novu/dal';
-import os from 'os';
 import { Agenda } from '@hokify/agenda';
-import {
-  ACTIVE_CRON_JOBS_TOKEN,
-  AgendaCronService,
-  CronService,
-  MetricsService,
-} from '../services';
-import { MetricsModule } from './metrics.module';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { DalService } from '@novu/dal';
+import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
+import os from 'os';
 import { dalService as customDalService } from '../custom-providers';
+import { ACTIVE_CRON_JOBS_TOKEN, AgendaCronService, CronService, MetricsService } from '../services';
+import { MetricsModule } from './metrics.module';
 
 /**
  * This map is a little uncomfortable because it depends on the Job topic name, coupling the Cron jobs to the
@@ -19,22 +14,13 @@ import { dalService as customDalService } from '../custom-providers';
  * Moving forward, we should consider specifying an enum for Workers to decouple the Worker names from
  * the job names. This would allow us to specify the cron jobs in a more explicit way for each worker.
  */
-const cronJobsFromWorkers: Partial<
-  Record<JobTopicNameEnum, Array<JobCronNameEnum>>
-> = {
-  [JobTopicNameEnum.STANDARD]: [
-    JobCronNameEnum.CREATE_BILLING_USAGE_RECORDS,
-    JobCronNameEnum.SEND_CRON_METRICS,
-  ],
+const cronJobsFromWorkers: Partial<Record<JobTopicNameEnum, Array<JobCronNameEnum>>> = {
+  [JobTopicNameEnum.STANDARD]: [JobCronNameEnum.CREATE_BILLING_USAGE_RECORDS, JobCronNameEnum.SEND_CRON_METRICS],
 };
 
 export const cronService = {
   provide: CronService,
-  useFactory: async (
-    metricsService: MetricsService,
-    activeCronJobs: JobCronNameEnum[],
-    dalService: DalService,
-  ) => {
+  useFactory: async (metricsService: MetricsService, activeCronJobs: JobCronNameEnum[], dalService: DalService) => {
     const agenda = new Agenda({
       mongo: dalService.connection.getClient().db() as any,
       /**
@@ -45,11 +31,7 @@ export const cronService = {
        */
       name: `${os.hostname}-${process.pid}`,
     });
-    const service = new AgendaCronService(
-      metricsService,
-      activeCronJobs,
-      agenda,
-    );
+    const service = new AgendaCronService(metricsService, activeCronJobs, agenda);
 
     return service;
   },
@@ -68,16 +50,13 @@ export class CronModule {
         {
           provide: ACTIVE_CRON_JOBS_TOKEN,
           useFactory: async () => {
-            const activeJobs: JobCronNameEnum[] = activeWorkers.reduce(
-              (acc, worker) => {
-                if (cronJobsFromWorkers[worker]) {
-                  return [...acc, ...cronJobsFromWorkers[worker]];
-                }
+            const activeJobs: JobCronNameEnum[] = activeWorkers.reduce((acc, worker) => {
+              if (cronJobsFromWorkers[worker]) {
+                return [...acc, ...cronJobsFromWorkers[worker]];
+              }
 
-                return acc;
-              },
-              [] as JobCronNameEnum[],
-            );
+              return acc;
+            }, [] as JobCronNameEnum[]);
 
             const uniqueActiveJobs = [...new Set(activeJobs)];
 

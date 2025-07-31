@@ -1,6 +1,5 @@
 import { useColorScheme } from '@novu/design-system';
 
-/* eslint-disable max-len */
 export const Ide = () => {
   const { colorScheme } = useColorScheme();
 

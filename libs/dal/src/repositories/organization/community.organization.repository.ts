@@ -1,7 +1,7 @@
-import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
-import { Organization } from './organization.schema';
 import { CommunityMemberRepository } from '../member';
+import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
+import { Organization } from './organization.schema';
 import { IOrganizationRepository } from './organization-repository.interface';
 
 export class CommunityOrganizationRepository

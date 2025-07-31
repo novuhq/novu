@@ -1,11 +1,10 @@
-import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
-
-import { CheckLayoutIsUsedCommand } from './check-layout-is-used.command';
+import { LayoutEntity, LayoutRepository } from '@novu/dal';
 import {
   FindMessageTemplatesByLayoutCommand,
   FindMessageTemplatesByLayoutUseCase,
 } from '../../../message-template/usecases';
+import { CheckLayoutIsUsedCommand } from './check-layout-is-used.command';
 
 @Injectable()
 export class CheckLayoutIsUsedUseCase {

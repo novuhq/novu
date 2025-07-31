@@ -1,5 +1,5 @@
-import { IsDefined } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
+import { IsDefined } from 'class-validator';
 
 import { WebhookTypes } from '../../interfaces/webhook.interface';
 

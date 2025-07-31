@@ -1,7 +1,7 @@
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 import { LayoutResponseDto } from '@novu/shared';
-import { useEnvironment } from '@/context/environment/hooks';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { duplicateLayout } from '@/api/layouts';
+import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 

@@ -1,10 +1,10 @@
-import { AddSubscriberIllustration } from '@/components/icons/add-subscriber-illustration';
+import { PermissionsEnum } from '@novu/shared';
 import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { AddSubscriberIllustration } from '@/components/icons/add-subscriber-illustration';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import { LinkButton } from '../primitives/button-link';
 import { PermissionButton } from '../primitives/permission-button';
-import { PermissionsEnum } from '@novu/shared';
-import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 
 export const SubscriberListBlank = () => {
   const { navigateToCreateSubscriberPage } = useSubscribersNavigate();

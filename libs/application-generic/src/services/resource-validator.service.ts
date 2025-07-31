@@ -17,9 +17,8 @@ import {
   ResourceTypeEnum,
   UNLIMITED_VALUE,
 } from '@novu/shared';
-
-import { FeatureFlagsService } from './feature-flags';
 import { NotificationStep } from '../value-objects/notification.step';
+import { FeatureFlagsService } from './feature-flags';
 
 export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DEMO_WORKFLOWS_IDENTIFIER = [

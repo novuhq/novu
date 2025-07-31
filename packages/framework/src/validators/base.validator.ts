@@ -1,4 +1,4 @@
-import type { FromSchema, FromSchemaUnvalidated, Schema, JsonSchema, ZodSchema } from '../types/schema.types';
+import type { FromSchema, FromSchemaUnvalidated, JsonSchema, Schema, ZodSchema } from '../types/schema.types';
 import type { ValidateResult } from '../types/validator.types';
 import { JsonSchemaValidator } from './json-schema.validator';
 import { ZodValidator } from './zod.validator';

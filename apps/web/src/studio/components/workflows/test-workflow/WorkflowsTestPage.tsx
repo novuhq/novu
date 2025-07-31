@@ -43,7 +43,6 @@ export const WorkflowsTestPage = () => {
       workflowName: workflow?.name,
     });
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isLoading = useMemo(

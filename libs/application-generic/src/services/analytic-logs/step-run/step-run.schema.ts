@@ -1,8 +1,8 @@
 import {
-  CHNullable,
-  CHString,
   CHDateTime64,
   CHLowCardinality,
+  CHNullable,
+  CHString,
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';

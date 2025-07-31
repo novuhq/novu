@@ -1,13 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
 import { ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
-
-import { CreateExecutionDetails } from './create-execution-details.usecase';
+import { UserSession } from '@novu/testing';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
+import { CreateExecutionDetails } from './create-execution-details.usecase';
 import { DetailEnum } from './types';
 
-describe('Create Execution Details', function () {
+describe('Create Execution Details', () => {
   let useCase: CreateExecutionDetails;
   let session: UserSession;
 
@@ -23,7 +22,7 @@ describe('Create Execution Details', function () {
     useCase = moduleRef.get<CreateExecutionDetails>(CreateExecutionDetails);
   });
 
-  it('should create the execution details for a job of a notification', async function () {
+  it('should create the execution details for a job of a notification', async () => {
     const command = CreateExecutionDetailsCommand.create({
       organizationId: session.organization._id,
       environmentId: session.environment._id,

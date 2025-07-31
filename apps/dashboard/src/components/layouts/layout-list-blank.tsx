@@ -1,10 +1,10 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { RiAddCircleLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { EmptyLayoutsIllustration } from './empty-layouts-illustration';
-import { ROUTES } from '@/utils/routes';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ROUTES } from '@/utils/routes';
 import { CreateLayoutButton } from './create-layout-btn';
+import { EmptyLayoutsIllustration } from './empty-layouts-illustration';
 
 export const LayoutListBlank = () => {
   const { subscription } = useFetchSubscription();

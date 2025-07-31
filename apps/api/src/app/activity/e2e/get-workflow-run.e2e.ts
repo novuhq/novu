@@ -1,9 +1,9 @@
-import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { StepTypeEnum, EmailBlockTypeEnum } from '@novu/shared';
-import { SubscribersService, UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
 import { WorkflowRunRepository } from '@novu/application-generic';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2', () => {

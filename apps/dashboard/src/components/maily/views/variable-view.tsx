@@ -1,18 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
 import type { Editor as TiptapEditor } from '@tiptap/core';
 import { NodeViewProps } from '@tiptap/core';
 import { NodeViewWrapper } from '@tiptap/react';
 import { JSONSchema7 } from 'json-schema';
-
+import { useCallback, useMemo, useState } from 'react';
+import { VariableFrom } from '@/components/maily/types';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
-import { validateEnhancedDigestFilters } from '@/components/variable/utils';
-import { VariablePill } from '@/components/variable/variable-pill';
 import { useVariableValidation } from '@/components/variable/hooks/use-variable-validation';
+import { validateEnhancedDigestFilters } from '@/components/variable/utils';
+import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
+import { VariablePill } from '@/components/variable/variable-pill';
 import { parseVariable } from '@/utils/liquid';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import { resolveRepeatBlockAlias } from '../repeat-block-aliases';
-import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
-import { VariableFrom } from '@/components/maily/types';
 
 interface ParsedVariableData {
   name: string;

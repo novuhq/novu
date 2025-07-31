@@ -57,7 +57,6 @@ export default function Content({
     if (bridge) {
       mutateAsync(controlVariables);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bridge, controlVariables]);
 
   return (

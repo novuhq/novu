@@ -41,11 +41,7 @@ export class SupportService {
       },
     });
     if (res.error) {
-      Logger.error(
-        { emailAddress, fullName, error: res.error },
-        res.error.message,
-        LOG_CONTEXT,
-      );
+      Logger.error({ emailAddress, fullName, error: res.error }, res.error.message, LOG_CONTEXT);
       throw new Error(res.error.message);
     } else {
       return res;
@@ -67,11 +63,7 @@ export class SupportService {
     });
 
     if (res.error) {
-      Logger.error(
-        { plainCustomerId, threadText, error: res.error },
-        res.error.message,
-        LOG_CONTEXT,
-      );
+      Logger.error({ plainCustomerId, threadText, error: res.error }, res.error.message, LOG_CONTEXT);
       throw new Error(res.error.message);
     } else {
       return res;

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import fs from 'fs';
 
 export async function isWriteable(directory: string): Promise<boolean> {

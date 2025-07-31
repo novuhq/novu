@@ -9,14 +9,7 @@ const SERVICE_NAME = 'ActiveJobsMetricQueueService';
 
 @Injectable()
 export class ActiveJobsMetricQueueServiceHealthIndicator extends QueueHealthIndicator {
-  constructor(
-    private activeJobsMetricQueueService: ActiveJobsMetricQueueService,
-  ) {
-    super(
-      activeJobsMetricQueueService,
-      INDICATOR_KEY,
-      SERVICE_NAME,
-      LOG_CONTEXT,
-    );
+  constructor(private activeJobsMetricQueueService: ActiveJobsMetricQueueService) {
+    super(activeJobsMetricQueueService, INDICATOR_KEY, SERVICE_NAME, LOG_CONTEXT);
   }
 }

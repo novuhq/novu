@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import got, { HTTPError, RequestError } from 'got';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
 import { MessageRepository } from '@novu/dal';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, WebSocketEventEnum } from '@novu/shared';
+import got, { HTTPError, RequestError } from 'got';
 
 import { FeatureFlagsService } from '../feature-flags';
 

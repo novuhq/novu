@@ -1,7 +1,7 @@
-import { IsDefined, IsString } from 'class-validator';
+import { EnvironmentWithUserCommand, IFilterVariables } from '@novu/application-generic';
 
 import { JobEntity } from '@novu/dal';
-import { EnvironmentWithUserCommand, IFilterVariables } from '@novu/application-generic';
+import { IsDefined, IsString } from 'class-validator';
 
 export class ExecuteBridgeJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()

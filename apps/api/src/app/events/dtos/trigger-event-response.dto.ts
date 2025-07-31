@@ -1,6 +1,6 @@
-import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-import { TriggerEventStatusEnum } from '@novu/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { TriggerEventStatusEnum } from '@novu/shared';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class TriggerEventResponseDto {
   @ApiProperty({

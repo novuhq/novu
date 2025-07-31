@@ -1,26 +1,15 @@
+import { FILTER_TO_LABEL, FieldOperatorEnum, IBaseFieldFilterPart, ICondition } from '@novu/shared';
 import _ from 'lodash';
-import {
-  IBaseFieldFilterPart,
-  FieldOperatorEnum,
-  FILTER_TO_LABEL,
-  ICondition,
-} from '@novu/shared';
 
-import {
-  FilterProcessingDetails,
-  IFilterVariables,
-} from './filter-processing-details';
+import { FilterProcessingDetails, IFilterVariables } from './filter-processing-details';
 
 export abstract class Filter {
   protected processFilterEquality(
     variables: IFilterVariables,
     fieldFilter: IBaseFieldFilterPart,
-    filterProcessingDetails: FilterProcessingDetails,
+    filterProcessingDetails: FilterProcessingDetails
   ): boolean {
-    const actualValue = _.get(
-      variables,
-      `${fieldFilter.on}.${fieldFilter.field}`,
-    );
+    const actualValue = _.get(variables, `${fieldFilter.on}.${fieldFilter.field}`);
     const filterValue = this.parseValue(actualValue, fieldFilter.value);
     let result = false;
 
@@ -51,9 +40,7 @@ export abstract class Filter {
     if (fieldFilter.operator === FieldOperatorEnum.IS_DEFINED) {
       result = actualValue !== undefined;
     }
-    const actualValueString: string = Array.isArray(actualValue)
-      ? JSON.stringify(actualValue)
-      : `${actualValue ?? ''}`;
+    const actualValueString: string = Array.isArray(actualValue) ? JSON.stringify(actualValue) : `${actualValue ?? ''}`;
 
     filterProcessingDetails.addCondition({
       filter: FILTER_TO_LABEL[fieldFilter.on],
@@ -74,14 +61,12 @@ export abstract class Filter {
       passedFilters: string[];
     },
     condition: ICondition,
-    type?: string,
+    type?: string
   ) {
     if (!type) {
-      // eslint-disable-next-line no-param-reassign
       type = condition.filter;
     }
 
-    // eslint-disable-next-line no-param-reassign
     type = type?.toLowerCase();
 
     if (condition.passed && !summary.passedFilters.includes(type)) {
@@ -114,10 +99,7 @@ export abstract class Filter {
     }
   }
 
-  protected async findAsync<T>(
-    array: T[],
-    predicate: (t: T) => Promise<boolean>,
-  ): Promise<T | undefined> {
+  protected async findAsync<T>(array: T[], predicate: (t: T) => Promise<boolean>): Promise<T | undefined> {
     for (const t of array) {
       if (await predicate(t)) {
         return t;
@@ -127,16 +109,11 @@ export abstract class Filter {
     return undefined;
   }
 
-  protected async filterAsync<T>(
-    arr: T[],
-    callback: (item: T) => Promise<boolean>,
-  ): Promise<T[]> {
+  protected async filterAsync<T>(arr: T[], callback: (item: T) => Promise<boolean>): Promise<T[]> {
     const fail = Symbol('Filter Async failure');
 
-    return (
-      await Promise.all(
-        arr.map(async (item) => ((await callback(item)) ? item : fail)),
-      )
-    ).filter((i) => i !== fail) as T[];
+    return (await Promise.all(arr.map(async (item) => ((await callback(item)) ? item : fail)))).filter(
+      (i) => i !== fail
+    ) as T[];
   }
 }

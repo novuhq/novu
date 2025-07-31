@@ -1,11 +1,11 @@
-import axios from 'axios';
+import { Novu } from '@novu/api';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
+import axios from 'axios';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Mark all as read - /widgets/messages/seen (POST) #novu-v0', function () {
+describe('Mark all as read - /widgets/messages/seen (POST) #novu-v0', () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -42,7 +42,7 @@ describe('Mark all as read - /widgets/messages/seen (POST) #novu-v0', function (
     subscriberProfile = profile;
   });
 
-  it('should mark all as seen', async function () {
+  it('should mark all as seen', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -66,7 +66,7 @@ describe('Mark all as read - /widgets/messages/seen (POST) #novu-v0', function (
     expect(unseenMessagesAfter.data.count).to.equal(0);
   });
 
-  it('should mark all as read', async function () {
+  it('should mark all as read', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });

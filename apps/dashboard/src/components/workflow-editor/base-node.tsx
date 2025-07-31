@@ -1,7 +1,7 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { cva, VariantProps } from 'class-variance-authority';
 import { ReactNode, useState } from 'react';
 import { RiErrorWarningFill } from 'react-icons/ri';
-import { cva, VariantProps } from 'class-variance-authority';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';

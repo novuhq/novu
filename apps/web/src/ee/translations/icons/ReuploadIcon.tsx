@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export const ReuploadIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {

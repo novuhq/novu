@@ -1,19 +1,18 @@
+import mailchimp from '@mailchimp/mailchimp_transactional';
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
+  CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
+  ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-  ICheckIntegrationResponse,
-  CheckIntegrationResponseEnum,
-  IEmailEventBody,
-  EmailEventStatusEnum,
 } from '@novu/stateless';
-
-import mailchimp from '@mailchimp/mailchimp_transactional';
-import { EmailProviderIdEnum } from '@novu/shared';
-import { IMandrilInterface, IMandrillSendOptions, IMandrillTemplateSendOptions } from './mandril.interface';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
+import { IMandrilInterface, IMandrillSendOptions, IMandrillTemplateSendOptions } from './mandril.interface';
 
 export enum MandrillStatusEnum {
   OPENED = 'open',
@@ -164,7 +163,6 @@ export class MandrillProvider extends BaseProvider implements IEmailProvider {
 
   parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
-      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item._id === identifier);
     }
 

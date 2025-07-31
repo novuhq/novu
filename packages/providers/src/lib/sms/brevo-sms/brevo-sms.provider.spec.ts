@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { ISmsOptions } from '@novu/stateless';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { BrevoSmsProvider } from './brevo-sms.provider';
 
 const mockConfig = {

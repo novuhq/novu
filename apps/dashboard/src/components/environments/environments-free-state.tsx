@@ -1,8 +1,10 @@
+import { RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { ROUTES } from '@/utils/routes';
-import { RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
-import { Link, useNavigate } from 'react-router-dom';
+import { openInNewTab } from '@/utils/url';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Badge } from '../primitives/badge';
@@ -13,8 +15,6 @@ import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Separator } from '../primitives/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../primitives/table';
 import TruncatedText from '../truncated-text';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { openInNewTab } from '@/utils/url';
 
 export function FreeTierState() {
   const track = useTelemetry();

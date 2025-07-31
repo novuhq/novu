@@ -336,7 +336,7 @@
 
     --radius: 0.5rem;
 
-    --font-code: 'JetBrains Mono';
+    --font-code: "JetBrains Mono";
     --font-code-fallback: monospace;
   }
 }
@@ -346,7 +346,7 @@
     @apply border-neutral-alpha-200 focus-visible:outline-primary;
   }
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: "Inter", system-ui, sans-serif;
   }
   body {
     @apply bg-background text-foreground-950 text-base;

@@ -1,9 +1,9 @@
+import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import difference from 'lodash/difference';
 import isArray from 'lodash/isArray';
 import isObject from 'lodash/isObject';
 import reduce from 'lodash/reduce';
 import set from 'lodash/set';
-import { LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { DIGEST_EVENTS_VARIABLE_PATTERN } from '../../shared/utils/template-parser/parser-utils';

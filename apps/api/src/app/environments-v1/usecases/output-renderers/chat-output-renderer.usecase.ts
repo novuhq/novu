@@ -1,10 +1,10 @@
-import { ChatRenderOutput } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { InstrumentUsecase, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { RenderCommand } from './render-command';
+import { ChatRenderOutput } from '@novu/shared';
 import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { RenderCommand } from './render-command';
 
 export class ChatOutputRendererCommand extends RenderCommand {
   dbWorkflow: NotificationTemplateEntity;

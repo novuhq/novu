@@ -1,18 +1,18 @@
-import { ActivityFilters } from '@/api/activity';
-import { Skeleton } from '@/components/primitives/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { parsePageParam } from '@/utils/parse-page-param';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { ActivityFilters } from '@/api/activity';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { parsePageParam } from '@/utils/parse-page-param';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
+import { ActivityTableRow } from './components/activity-table-row';
 import { ArrowPagination } from './components/arrow-pagination';
 import { CursorPagination } from './components/cursor-pagination';
-import { ActivityTableRow } from './components/activity-table-row';
 
 export interface ActivityTableProps {
   selectedActivityId: string | null;

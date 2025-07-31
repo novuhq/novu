@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import {
   NotificationGroupRepository,
   NotificationTemplateRepository,
@@ -6,7 +7,6 @@ import {
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import { ICreateWorkflowOverrideRequestDto } from '@novu/shared';
-import { faker } from '@faker-js/faker';
 
 export class WorkflowOverrideService {
   constructor(private config: { organizationId: string; environmentId: string }) {}

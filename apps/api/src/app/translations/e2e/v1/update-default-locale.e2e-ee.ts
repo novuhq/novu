@@ -1,6 +1,6 @@
-import { UserSession, getEERepository } from '@novu/testing';
-import { expect } from 'chai';
 import { OrganizationRepository } from '@novu/dal';
+import { getEERepository, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Update default locale and add new translations - /translations/language (PATCH) #novu-v1', async () => {
   let session: UserSession;

@@ -1,4 +1,4 @@
-import { Controller, Req, Res, Inject, Get, Post, Options } from '@nestjs/common';
+import { Controller, Get, Inject, Options, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { NovuClient } from './nest.client';
 

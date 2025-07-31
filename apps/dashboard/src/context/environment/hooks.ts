@@ -1,9 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
 import type { IEnvironment } from '@novu/shared';
-import { QueryKeys } from '@/utils/query-keys';
-import { EnvironmentContext } from './environment-context';
+import { useQuery } from '@tanstack/react-query';
 import { getEnvironments } from '@/api/environments';
 import { createContextHook } from '@/utils/context';
+import { QueryKeys } from '@/utils/query-keys';
+import { EnvironmentContext } from './environment-context';
 
 const useEnvironmentContext = createContextHook(EnvironmentContext);
 

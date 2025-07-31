@@ -1,11 +1,11 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { EnvironmentRepository, NotificationTemplateRepository, LocalizationResourceEnum } from '@novu/dal';
-import { StepTypeEnum, ResourceOriginEnum, ResourceTypeEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
-import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { EnvironmentRepository, LocalizationResourceEnum, NotificationTemplateRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, ResourceOriginEnum, ResourceTypeEnum, StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { LayoutCreationSourceEnum } from '../../layouts-v2/types';
+import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #novu-v2', async () => {
   let session: UserSession;

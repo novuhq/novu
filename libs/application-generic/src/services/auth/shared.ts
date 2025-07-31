@@ -11,11 +11,7 @@ export const buildOauthRedirectUrl = (request): string => {
    * Make sure we only allow localhost redirects for CLI use and our own success route
    * https://github.com/novuhq/novu/security/code-scanning/3
    */
-  if (
-    redirectUrl &&
-    redirectUrl.startsWith('http://127.0.0.1:') &&
-    !redirectUrl.includes('@')
-  ) {
+  if (redirectUrl && redirectUrl.startsWith('http://127.0.0.1:') && !redirectUrl.includes('@')) {
     url = redirectUrl;
   }
 

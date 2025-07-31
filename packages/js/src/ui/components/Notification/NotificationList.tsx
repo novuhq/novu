@@ -1,4 +1,4 @@
-import { createEffect, createMemo, For, JSX, Show, onCleanup } from 'solid-js';
+import { createEffect, createMemo, For, JSX, onCleanup, Show } from 'solid-js';
 import type { NotificationFilter } from '../../../types';
 import { useNotificationsInfiniteScroll } from '../../api';
 import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../context';

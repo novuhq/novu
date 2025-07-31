@@ -1,12 +1,11 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
+import { BadRequestException } from '@nestjs/common';
+import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
 import { MessageRepository, OrganizationRepository, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { buildMessageCountKey, CachedQuery } from '@novu/application-generic';
-
-import { BadRequestException } from '@nestjs/common';
-import { NotificationsCount } from './notifications-count.usecase';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { NotificationsCountCommand } from './notifications-count.command';
+import { NotificationsCount } from './notifications-count.usecase';
 
 sinon.stub(CachedQuery);
 sinon.stub(buildMessageCountKey);

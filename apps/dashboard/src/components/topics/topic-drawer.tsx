@@ -1,3 +1,6 @@
+import { motion } from 'motion/react';
+import { forwardRef, useEffect, useState } from 'react';
+import { RiDiscussLine } from 'react-icons/ri';
 import { TopicSubscription } from '@/api/topics';
 import { Separator } from '@/components/primitives/separator';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
@@ -7,9 +10,6 @@ import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import TruncatedText from '@/components/truncated-text';
 import { useFormProtection } from '@/hooks/use-form-protection';
 import { itemVariants, listVariants } from '@/utils/animation';
-import { motion } from 'motion/react';
-import { forwardRef, useEffect, useState } from 'react';
-import { RiDiscussLine } from 'react-icons/ri';
 import { cn } from '../../utils/ui';
 import { AddSubscriberForm } from './add-subscriber-form';
 import { EmptyTopicsIllustration } from './empty-topics-illustration';

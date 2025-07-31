@@ -135,7 +135,6 @@ export abstract class BaseTranslationRendererUsecase {
 
   private getTranslationModule() {
     try {
-      // eslint-disable-next-line global-require
       return this.moduleRef.get(require('@novu/ee-translation')?.Translate, { strict: false });
     } catch (error) {
       this.logger.debug('Translation module not found', error);

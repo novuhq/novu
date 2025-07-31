@@ -1,10 +1,10 @@
 import { Show } from 'solid-js';
+import { useAppearance } from '../../../context';
 import { useStyle } from '../../../helpers';
 import { Cogs as DefaultCogs } from '../../../icons';
-import { useAppearance } from '../../../context';
 import { Button } from '../../primitives';
-import { MoreActionsDropdown } from './MoreActionsDropdown';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
+import { MoreActionsDropdown } from './MoreActionsDropdown';
 
 type ActionsContainerProps = {
   showPreferences?: () => void;

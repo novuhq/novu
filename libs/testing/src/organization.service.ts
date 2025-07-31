@@ -1,6 +1,6 @@
-import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { faker } from '@faker-js/faker';
 import { CommunityMemberRepository, CommunityOrganizationRepository, OrganizationRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 
 export class OrganizationService {
   private organizationRepository = new CommunityOrganizationRepository();

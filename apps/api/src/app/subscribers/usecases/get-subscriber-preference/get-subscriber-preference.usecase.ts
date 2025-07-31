@@ -1,5 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
+  filteredPreference,
+  GetPreferences,
+  GetPreferencesResponseDto,
+  Instrument,
+  InstrumentUsecase,
+  MergePreferences,
+  MergePreferencesCommand,
+  mapTemplateConfiguration,
+  overridePreferences,
+  PreferenceSet,
+} from '@novu/application-generic';
+import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   PreferencesEntity,
@@ -14,19 +26,6 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import _ from 'lodash';
-
-import {
-  GetPreferences,
-  GetPreferencesResponseDto,
-  Instrument,
-  InstrumentUsecase,
-  MergePreferences,
-  MergePreferencesCommand,
-  PreferenceSet,
-  filteredPreference,
-  mapTemplateConfiguration,
-  overridePreferences,
-} from '@novu/application-generic';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
 
 @Injectable()

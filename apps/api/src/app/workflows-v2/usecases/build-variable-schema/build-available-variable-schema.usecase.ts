@@ -1,21 +1,20 @@
 import { Injectable } from '@nestjs/common';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
   ControlValuesRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
-
-import { computeResultSchema } from '../../shared';
-import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
-import { parsePayloadSchema } from '../../shared/parse-payload-schema';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { emptyJsonSchema } from '../../util/jsonToSchema';
 import { buildSubscriberSchema, buildVariablesSchema } from '../../../shared/utils/create-schema';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { computeResultSchema } from '../../shared';
+import { parsePayloadSchema } from '../../shared/parse-payload-schema';
+import { emptyJsonSchema } from '../../util/jsonToSchema';
+import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-available-variable-schema.command';
 
 @Injectable()
 export class BuildVariableSchemaUsecase {
@@ -45,9 +44,8 @@ export class BuildVariableSchemaUsecase {
       );
 
       workflowControlValues = controls
-        .map((item) => item.controls)
-        .flat()
-        .flatMap((obj) => Object.values(obj));
+        .flatMap((item) => item.controls)
+        .flatMap((obj) => Object.values(obj as Record<string, unknown>));
     }
 
     const optimisticControlValues = Object.values(command.optimisticControlValues || {});

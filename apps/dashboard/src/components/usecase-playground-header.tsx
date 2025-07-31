@@ -1,8 +1,8 @@
 import { RiArrowLeftSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { Stepper } from './onboarding/stepper';
 import { CompactButton } from './primitives/button-compact';
 import { LinkButton } from './primitives/button-link';
-import { Stepper } from './onboarding/stepper';
 
 interface UsecasePlaygroundHeaderProps {
   title: string;

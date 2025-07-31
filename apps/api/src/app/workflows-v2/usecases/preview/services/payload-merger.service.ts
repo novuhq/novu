@@ -1,13 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
+import { FeatureFlagsService } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum, UserSessionData } from '@novu/shared';
-import { FeatureFlagsService } from '@novu/application-generic';
+import _ from 'lodash';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
 import { mergeCommonObjectKeys } from '../../../util/utils';
-import { MockDataGeneratorService } from './mock-data-generator.service';
 import { BuildStepDataUsecase } from '../../build-step-data';
+import { MockDataGeneratorService } from './mock-data-generator.service';
 
 @Injectable()
 export class PayloadMergerService {

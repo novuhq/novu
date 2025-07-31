@@ -205,7 +205,6 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
 
   form.steps = template.steps.map((item) => {
     if (!item.uuid) {
-      // eslint-disable-next-line no-param-reassign
       item.uuid = uuid4();
     }
 
@@ -315,7 +314,6 @@ const mapFormStepDigestMetadata = (formStep: IFormStep): IWorkflowStepMetadata |
   }
 
   if (formStep.digestMetadata?.digestKey === '') {
-    // eslint-disable-next-line no-param-reassign
     delete formStep.digestMetadata.digestKey;
   }
 

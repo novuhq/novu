@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { InstrumentUsecase } from '@novu/application-generic';
+import { JobRepository, JobStatusEnum } from '@novu/dal';
 
 import { SetJobAsFailedCommand } from './set-job-as.command';
 import { UpdateJobStatusCommand } from './update-job-status.command';

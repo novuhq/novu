@@ -1,4 +1,11 @@
+import type { WorkflowResponseDto } from '@novu/shared';
+import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { useCallback, useMemo, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { FaCode } from 'react-icons/fa6';
+import { RiSendPlaneFill } from 'react-icons/ri';
 import { Editor } from '@/components/primitives/editor';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import {
   type CodeSnippet,
   createCurlSnippet,
@@ -10,12 +17,6 @@ import {
 } from '@/utils/code-snippets';
 import { ResourceOriginEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
-import type { WorkflowResponseDto } from '@novu/shared';
-import { loadLanguage } from '@uiw/codemirror-extensions-langs';
-import { useCallback, useMemo, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-import { FaCode } from 'react-icons/fa6';
-import { RiSendPlaneFill } from 'react-icons/ri';
 import { Code2 } from '../../icons/code-2';
 import { Button } from '../../primitives/button';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '../../primitives/form/form';
@@ -23,11 +24,10 @@ import { Input } from '../../primitives/input';
 import { Panel, PanelContent, PanelHeader } from '../../primitives/panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../primitives/tabs';
 import { TestWorkflowFormType } from '../schema';
+import { EditableJsonViewer } from '../steps/shared/editable-json-viewer/editable-json-viewer';
 import { SnippetEditor } from './snippet-editor';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
 import { SnippetLanguage } from './types';
-import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { EditableJsonViewer } from '../steps/shared/editable-json-viewer/editable-json-viewer';
 
 const tabsTriggerClassName = 'pt-1';
 const codePanelClassName = 'h-full';

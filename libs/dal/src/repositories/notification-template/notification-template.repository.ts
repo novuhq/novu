@@ -1,7 +1,6 @@
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-
-import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';

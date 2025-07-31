@@ -1,17 +1,16 @@
-import { useState, useMemo, useCallback } from 'react';
+import { type ISubscriberResponseDto, type WorkflowResponseDto } from '@novu/shared';
+import { useCallback, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { RiInformationLine, RiPencilLine, RiSearchLine } from 'react-icons/ri';
-import { type WorkflowResponseDto, type ISubscriberResponseDto } from '@novu/shared';
-
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Button } from '@/components/primitives/button';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SubscriberAutocomplete } from '@/components/subscribers/subscriber-autocomplete';
+import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/preview-context.constants';
 import { EditableJsonViewer } from '@/components/workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { ACCORDION_STYLES } from '@/components/workflow-editor/steps/constants/preview-context.constants';
 import { cn } from '@/utils/ui';
 
 type TestWorkflowFormType = {
@@ -98,7 +97,12 @@ export function TestWorkflowContent({
           <h2 className="text-label-lg text-text-strong">Test workflow</h2>
           <p className="text-paragraph-xs text-text-soft">
             Time to test the workflow you just built.{' '}
-            <a href="https://docs.novu.co/platform/concepts/trigger" target="_blank" className="underline">
+            <a
+              href="https://docs.novu.co/platform/concepts/trigger"
+              target="_blank"
+              className="underline"
+              rel="noopener"
+            >
               Learn more ↗
             </a>
           </p>

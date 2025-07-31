@@ -1,9 +1,9 @@
+import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { buttonVariants } from '@/components/primitives/button';
 import { CLERK_PUBLISHABLE_KEY } from '@/config';
 import { ROUTES } from '@/utils/routes';
-import { buttonVariants } from '@/components/primitives/button';
 
 type ClerkProviderProps = PropsWithChildren;
 

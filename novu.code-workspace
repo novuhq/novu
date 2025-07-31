@@ -2,84 +2,84 @@
   "folders": [
     {
       "name": "✨ novu root",
-      "path": ".",
+      "path": "."
     },
     {
       "name": "🚀 @novu/api-service",
-      "path": "apps/api",
+      "path": "apps/api"
     },
     {
       "name": "🚀 @novu/worker",
-      "path": "apps/worker",
+      "path": "apps/worker"
     },
     {
       "name": "🚀 @novu/web",
-      "path": "apps/web",
+      "path": "apps/web"
     },
     {
       "name": "🚀 @novu/dashboard",
-      "path": "apps/dashboard",
+      "path": "apps/dashboard"
     },
     {
       "name": "🚀 @novu/ws",
-      "path": "apps/ws",
+      "path": "apps/ws"
     },
     {
       "name": "🚀 @novu/webhook",
-      "path": "apps/webhook",
+      "path": "apps/webhook"
     },
     {
       "name": "📦 @novu/dal",
-      "path": "libs/dal",
+      "path": "libs/dal"
     },
     {
       "name": "📦 @novu/design-system",
-      "path": "libs/design-system",
+      "path": "libs/design-system"
     },
     {
       "name": "📦 @novu/novui",
-      "path": "libs/novui",
+      "path": "libs/novui"
     },
     {
       "name": "📦 novu",
-      "path": "packages/novu",
+      "path": "packages/novu"
     },
     {
       "name": "📦 @novu/shared",
-      "path": "packages/shared",
+      "path": "packages/shared"
     },
     {
       "name": "📦 @novu/testing",
-      "path": "libs/testing",
+      "path": "libs/testing"
     },
     {
       "name": "📦 @novu/application-generic",
-      "path": "libs/application-generic",
+      "path": "libs/application-generic"
     },
     {
       "name": "📦 @novu/stateless",
-      "path": "packages/stateless",
+      "path": "packages/stateless"
     },
     {
       "name": "📦 @novu/react-native",
-      "path": "packages/react-native",
+      "path": "packages/react-native"
     },
     {
       "name": "📦 @novu/js",
-      "path": "packages/js",
+      "path": "packages/js"
     },
     {
       "name": "📦 @novu/react",
-      "path": "packages/react",
+      "path": "packages/react"
     },
     {
       "name": "📦 @novu/nextjs",
-      "path": "packages/nextjs",
+      "path": "packages/nextjs"
     },
     {
       "name": "🎮 @novu/nextjs-playground",
-      "path": "playground/nextjs",
-    },
+      "path": "playground/nextjs"
+    }
   ],
   "settings": {
     "typescript.tsdk": "node_modules/typescript/lib",
@@ -88,9 +88,9 @@
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
     "cSpell.words": ["Chainable", "usecases"],
-    "vsicons.presets.nestjs": true,
+    "vsicons.presets.nestjs": true
   },
   "extensions": {
-    "recommendations": ["biomejs.biome"],
-  },
+    "recommendations": ["biomejs.biome"]
+  }
 }

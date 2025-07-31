@@ -1,14 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-
-import { UserSession } from '@novu/testing';
-import { MessageTemplateRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum, ResourceTypeEnum } from '@novu/shared';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '@novu/application-generic';
-
-import { createLayout } from './helpers';
+import { MessageTemplateRepository } from '@novu/dal';
+import { EmailBlockTypeEnum, ResourceTypeEnum, StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { MessageTemplateModule } from '../../message-template/message-template.module';
 import { SharedModule } from '../../shared/shared.module';
+import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
 

@@ -1,11 +1,11 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
+  ICheckIntegrationResponse,
   IEmailOptions,
   IEmailProvider,
+  ISendMessageSuccessResponse,
 } from '@novu/stateless';
 import { Resend } from 'resend';
 import { BaseProvider, CasingEnum } from '../../../base.provider';

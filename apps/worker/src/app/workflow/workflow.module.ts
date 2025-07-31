@@ -1,5 +1,5 @@
-/* eslint-disable global-require */
 import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
+import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import {
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
@@ -31,9 +31,9 @@ import {
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
-
-import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { JobTopicNameEnum } from '@novu/shared';
+import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
+import { SharedModule } from '../shared/shared.module';
 import {
   Digest,
   ExecuteBridgeJob,
@@ -55,9 +55,6 @@ import {
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
 } from './usecases';
-
-import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
-import { SharedModule } from '../shared/shared.module';
 import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';

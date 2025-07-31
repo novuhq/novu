@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { ComponentProps } from 'react';
 
 export const IOSIndicatorsIcon = (props: ComponentProps<'svg'>) => {

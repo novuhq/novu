@@ -1,7 +1,7 @@
-import { Queue } from 'bullmq';
 import { setTimeout } from 'node:timers/promises';
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import { JobTopicNameEnum } from '@novu/shared';
+import { Queue } from 'bullmq';
 import { TestingQueueService } from './testing-queue.service';
 
 /**

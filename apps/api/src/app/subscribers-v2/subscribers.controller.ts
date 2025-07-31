@@ -15,19 +15,19 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   ExternalApiAccessible,
-  UserSession,
   RequirePermissions,
+  UserSession,
 } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
+  PermissionsEnum,
   SubscriberCustomData,
   UserSessionData,
-  PermissionsEnum,
 } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { SubscriberResponseDto } from '../subscribers/dtos';
 import { ListSubscriberSubscriptionsQueryDto } from '../topics-v2/dtos/list-subscriber-subscriptions-query.dto';
@@ -38,13 +38,13 @@ import { CreateSubscriberRequestDto } from './dtos/create-subscriber.dto';
 import { GetSubscriberPreferencesDto } from './dtos/get-subscriber-preferences.dto';
 import { ListSubscribersQueryDto } from './dtos/list-subscribers-query.dto';
 import { ListSubscribersResponseDto } from './dtos/list-subscribers-response.dto';
-import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { PatchSubscriberRequestDto } from './dtos/patch-subscriber.dto';
+import { PatchSubscriberPreferencesDto } from './dtos/patch-subscriber-preferences.dto';
 import { RemoveSubscriberResponseDto } from './dtos/remove-subscriber.dto';
-import { GetSubscriberPreferencesCommand } from './usecases/get-subscriber-preferences/get-subscriber-preferences.command';
-import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { GetSubscriberCommand } from './usecases/get-subscriber/get-subscriber.command';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
+import { GetSubscriberPreferencesCommand } from './usecases/get-subscriber-preferences/get-subscriber-preferences.command';
+import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { ListSubscribersCommand } from './usecases/list-subscribers/list-subscribers.command';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
 import { mapSubscriberEntityToDto } from './usecases/list-subscribers/map-subscriber-entity-to.dto';

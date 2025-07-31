@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsUrl } from 'class-validator';
 import type { IUpdateUserProfile } from '@novu/shared';
+import { IsOptional, IsUrl } from 'class-validator';
 
 import { IsImageUrl } from '../../shared/validators/image.validator';
 

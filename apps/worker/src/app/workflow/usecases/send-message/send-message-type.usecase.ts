@@ -1,6 +1,6 @@
-import { captureException } from '@sentry/node';
-import { MessageEntity, MessageRepository } from '@novu/dal';
 import { CreateExecutionDetails } from '@novu/application-generic';
+import { MessageEntity, MessageRepository } from '@novu/dal';
+import { captureException } from '@sentry/node';
 import { SendMessageCommand } from './send-message.command';
 
 export type SendMessageResult = {

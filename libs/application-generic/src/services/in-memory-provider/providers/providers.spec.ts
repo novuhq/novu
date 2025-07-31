@@ -1,10 +1,8 @@
-import { IElasticacheClusterProviderConfig } from './elasticache-cluster-provider';
-import { IRedisClusterProviderConfig } from './redis-cluster-provider';
-import { IMemoryDbClusterProviderConfig } from './memory-db-cluster-provider';
-
-import { getClientAndConfigForCluster } from './index';
-
 import { InMemoryProviderEnum } from '../types';
+import { IElasticacheClusterProviderConfig } from './elasticache-cluster-provider';
+import { getClientAndConfigForCluster } from './index';
+import { IMemoryDbClusterProviderConfig } from './memory-db-cluster-provider';
+import { IRedisClusterProviderConfig } from './redis-cluster-provider';
 
 describe('Client and config for cluster', () => {
   const elasticacheUrl = 'http://elasticache.com';
@@ -12,9 +10,7 @@ describe('Client and config for cluster', () => {
   const memoryDbUrl = 'http://memory-db.com';
   const memoryDbPort = '10001';
   const redisClusterUrl = 'http://redis.com';
-  const redisClusterPorts = JSON.stringify([
-    9991, 9992, 9993, 9994, 9995, 9996,
-  ]);
+  const redisClusterPorts = JSON.stringify([9991, 9992, 9993, 9994, 9995, 9996]);
 
   it('should return Elasticache config after validating it', () => {
     process.env.ELASTICACHE_CLUSTER_SERVICE_HOST = elasticacheUrl;
@@ -22,9 +18,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
-    const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.ELASTICACHE,
-    );
+    const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
     const config: IElasticacheClusterProviderConfig = getConfig();
     expect(config.host).toEqual(elasticacheUrl);
     expect(config.port).toEqual(Number(elasticachePort));
@@ -37,9 +31,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
-    const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.MEMORY_DB,
-    );
+    const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.MEMORY_DB);
     const config: IMemoryDbClusterProviderConfig = getConfig();
     expect(config.host).toEqual(memoryDbUrl);
     expect(config.port).toEqual(Number(memoryDbPort));
@@ -52,9 +44,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
-    const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.ELASTICACHE,
-    );
+    const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
     const config: IRedisClusterProviderConfig = getConfig();
     expect(config.host).toEqual(redisClusterUrl);
     expect(config.ports).toEqual(JSON.parse(redisClusterPorts));
@@ -67,9 +57,7 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_HOST = redisClusterUrl;
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
-    const { getConfig } = getClientAndConfigForCluster(
-      InMemoryProviderEnum.ELASTICACHE,
-    );
+    const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
 
     const config: IRedisClusterProviderConfig = getConfig();
     expect(config.host).toEqual(redisClusterUrl);
@@ -84,17 +72,13 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_PORTS = redisClusterPorts;
 
     try {
-      const { getConfig } = getClientAndConfigForCluster(
-        InMemoryProviderEnum.ELASTICACHE,
-      );
+      const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
 
       fail('should not reach here');
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
       const { message } = error as Error;
-      expect(message).toEqual(
-        'Provider Elasticache is not properly configured in the environment variables',
-      );
+      expect(message).toEqual('Provider Elasticache is not properly configured in the environment variables');
     }
   });
 
@@ -105,17 +89,13 @@ describe('Client and config for cluster', () => {
     process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
     try {
-      const { getConfig } = getClientAndConfigForCluster(
-        InMemoryProviderEnum.ELASTICACHE,
-      );
+      const { getConfig } = getClientAndConfigForCluster(InMemoryProviderEnum.ELASTICACHE);
 
       fail('should not reach here');
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
       const { message } = error as Error;
-      expect(message).toEqual(
-        'Provider Elasticache is not properly configured in the environment variables',
-      );
+      expect(message).toEqual('Provider Elasticache is not properly configured in the environment variables');
     }
   });
 });

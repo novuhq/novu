@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
 import { PreferencesTypeEnum, WorkflowPreferences, WorkflowPreferencesPartial } from '@novu/shared';
-import { UpsertWorkflowPreferencesCommand } from './upsert-workflow-preferences.command';
+import { Instrument } from '../../instrumentation';
+import { deepMerge } from '../../utils';
 import { UpsertSubscriberGlobalPreferencesCommand } from './upsert-subscriber-global-preferences.command';
 import { UpsertSubscriberWorkflowPreferencesCommand } from './upsert-subscriber-workflow-preferences.command';
 import { UpsertUserWorkflowPreferencesCommand } from './upsert-user-workflow-preferences.command';
-import { deepMerge } from '../../utils';
-import { Instrument } from '../../instrumentation';
+import { UpsertWorkflowPreferencesCommand } from './upsert-workflow-preferences.command';
 
 export type WorkflowPreferencesFull = Omit<PreferencesEntity, 'preferences'> & {
   preferences: WorkflowPreferences;

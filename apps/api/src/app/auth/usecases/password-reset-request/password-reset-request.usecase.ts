@@ -1,10 +1,9 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { v4 as uuidv4 } from 'uuid';
-import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
-import { IUserResetTokenCount, UserEntity, UserRepository } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
-
+import { IUserResetTokenCount, UserEntity, UserRepository } from '@novu/dal';
 import { normalizeEmail, PasswordResetFlowEnum } from '@novu/shared';
+import { differenceInHours, differenceInSeconds, parseISO } from 'date-fns';
+import { v4 as uuidv4 } from 'uuid';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 
 @Injectable()

@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { JobStatusEnum } from '@novu/shared';
-
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { ActivityResponse } from '@/api/activity';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchActivity } from '@/hooks/use-fetch-activity';
 import { QueryKeys } from '@/utils/query-keys';
-import { ActivityResponse } from '@/api/activity';
 
 export const usePullActivity = (activityId?: string | null) => {
   const queryClient = useQueryClient();

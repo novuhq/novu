@@ -1,8 +1,8 @@
 import { ExecutionDetailsRepository, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { IEmailEventBody } from '@novu/stateless';
-import { expect } from 'chai';
 import axios from 'axios';
+import { expect } from 'chai';
 
 const axiosInstance = axios.create();
 
@@ -22,11 +22,11 @@ const callWebhook = async (
   return { data, status };
 };
 
-describe('Email webhook - /organizations/:organizationId/environments/:environmentId/email/:providerId (POST)', function () {
+describe('Email webhook - /organizations/:organizationId/environments/:environmentId/email/:providerId (POST)', () => {
   const messageRepository = new MessageRepository();
   const integrationRepository = new IntegrationRepository();
 
-  it('should handle webhook', async function () {
+  it('should handle webhook', async () => {
     const envId = MessageRepository.createObjectId();
     const orgId = MessageRepository.createObjectId();
     const id = MessageRepository.createObjectId();
@@ -83,7 +83,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
     expect(event.row).to.eql(webhookBody);
   });
 
-  it('should allow calling webhook with the integrationId', async function () {
+  it('should allow calling webhook with the integrationId', async () => {
     const envId = MessageRepository.createObjectId();
     const orgId = MessageRepository.createObjectId();
     const id = MessageRepository.createObjectId();
@@ -140,7 +140,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
     expect(event.row).to.eql(webhookBody);
   });
 
-  it("should throw bad request error when integration doesn't have credentials configured", async function () {
+  it("should throw bad request error when integration doesn't have credentials configured", async () => {
     const envId = MessageRepository.createObjectId();
     const orgId = MessageRepository.createObjectId();
 
@@ -166,7 +166,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
     }
   });
 
-  it("should throw not found error when integration doesn't exist", async function () {
+  it("should throw not found error when integration doesn't exist", async () => {
     const envId = MessageRepository.createObjectId();
     const orgId = MessageRepository.createObjectId();
     const notExistingIntegrationId = MessageRepository.createObjectId();
@@ -183,7 +183,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
     }
   });
 
-  it('should create execution details after processing the response of a webhook', async function () {
+  it('should create execution details after processing the response of a webhook', async () => {
     const environmentId = MessageRepository.createObjectId();
     const id = MessageRepository.createObjectId();
     const messageTemplateId = MessageRepository.createObjectId();

@@ -1,9 +1,9 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
+import { CalendarDays } from 'lucide-react';
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { ApiServiceLevelEnum } from '@novu/shared';
-import { CalendarDays } from 'lucide-react';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
 import { PlanActionButton } from './plan-action-button';

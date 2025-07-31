@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
 import { ChannelTypeEnum, FeatureFlagsKeysEnum, type GeneratePreviewResponseDto } from '@novu/shared';
+import { ReactNode } from 'react';
 import {
   InAppPreview,
   InAppPreviewActions,

@@ -1,10 +1,10 @@
+import { useEffect } from 'react';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { SubscriberList } from '@/components/subscribers/subscriber-list';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useEffect } from 'react';
 
 export const SubscribersPage = () => {
   const track = useTelemetry();

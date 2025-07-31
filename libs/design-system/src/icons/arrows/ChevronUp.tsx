@@ -1,6 +1,5 @@
 import { useMantineTheme } from '@mantine/core';
 import { colors } from '../../config';
-/* eslint-disable */
 export const ChevronUp = () => {
   const theme = useMantineTheme();
 

@@ -29,7 +29,6 @@ export const TemplateTabs = ({
     if (tabsValue === 'preview') {
       previewStep?.();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabsValue]);
 
   return (

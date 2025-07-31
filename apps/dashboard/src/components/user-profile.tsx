@@ -1,6 +1,6 @@
 import { UserButton, useOrganization } from '@clerk/clerk-react';
-import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
 import { RiSignpostFill } from 'react-icons/ri';
+import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
 import { ROUTES } from '../utils/routes';
 
 export function UserProfile() {

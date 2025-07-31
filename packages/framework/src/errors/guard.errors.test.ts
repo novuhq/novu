@@ -1,9 +1,9 @@
-import { expect, it, describe } from 'vitest';
-import { isFrameworkError, isPlatformError } from './guard.errors';
-import { isNativeError, FrameworkError } from './base.errors';
-import { PlatformError } from './platform.errors';
+import { describe, expect, it } from 'vitest';
 import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
+import { FrameworkError, isNativeError } from './base.errors';
 import { BridgeError } from './bridge.errors';
+import { isFrameworkError, isPlatformError } from './guard.errors';
+import { PlatformError } from './platform.errors';
 
 class TestFrameworkError extends FrameworkError {
   statusCode = HttpStatusEnum.BAD_REQUEST;

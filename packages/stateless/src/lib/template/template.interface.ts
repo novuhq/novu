@@ -16,9 +16,7 @@ export interface IMessage {
   channel: ChannelTypeEnum;
   template: string | ((payload: ITriggerPayload) => Promise<string> | string);
   // used to provide a text version in emails
-  textTemplate?:
-    | string
-    | ((payload: ITriggerPayload) => Promise<string> | string);
+  textTemplate?: string | ((payload: ITriggerPayload) => Promise<string> | string);
   active?: boolean | ((payload: ITriggerPayload) => Promise<boolean> | boolean);
   validator?: IMessageValidator;
 }

@@ -7,9 +7,8 @@ import {
   TenantRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
-
-import { CreateWorkflowOverrideCommand } from './create-workflow-override.command';
 import { CreateWorkflowOverrideResponseDto } from '../../dtos';
+import { CreateWorkflowOverrideCommand } from './create-workflow-override.command';
 
 @Injectable()
 export class CreateWorkflowOverride {

@@ -1,5 +1,5 @@
-import { IsOptional, IsArray, IsEnum } from 'class-validator';
 import { ChannelTypeEnum, EnvironmentEnum } from '@novu/shared';
+import { IsArray, IsEnum, IsOptional } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {

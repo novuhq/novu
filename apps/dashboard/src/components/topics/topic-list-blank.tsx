@@ -1,6 +1,6 @@
-import { LinkButton } from '@/components/primitives/button-link';
 import { RiBookMarkedLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { LinkButton } from '@/components/primitives/button-link';
 import { EmptyTopicsIllustration } from './empty-topics-illustration';
 import { CreateTopicButton } from './topic-list';
 

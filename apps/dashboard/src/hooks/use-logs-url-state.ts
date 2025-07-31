@@ -1,8 +1,8 @@
+import { useOrganization } from '@clerk/clerk-react';
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { getMaxAvailableLogsDateRange } from '@/utils/logs-filters.utils';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { useOrganization } from '@clerk/clerk-react';
+import { getMaxAvailableLogsDateRange } from '@/utils/logs-filters.utils';
 
 export interface LogsFilters {
   status: string[];

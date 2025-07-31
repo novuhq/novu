@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationRepository } from '@novu/dal';
-
-import { GetActivityStatsCommand } from './get-activity-stats.command';
-
 import { ActivityStatsResponseDto } from '../../dtos/activity-stats-response.dto';
+import { GetActivityStatsCommand } from './get-activity-stats.command';
 
 @Injectable()
 export class GetActivityStats {

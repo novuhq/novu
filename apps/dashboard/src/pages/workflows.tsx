@@ -1,3 +1,15 @@
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import {
+  RiArrowDownSLine,
+  RiArrowRightSLine,
+  RiFileAddLine,
+  RiFileMarkedLine,
+  RiLoader4Line,
+  RiRouteFill,
+} from 'react-icons/ri';
+import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -19,23 +31,11 @@ import { SortableColumn, WorkflowList } from '@/components/workflow-list';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDebounce } from '@/hooks/use-debounce';
 import { useFetchWorkflows } from '@/hooks/use-fetch-workflows';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTags } from '@/hooks/use-tags';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import {
-  RiArrowDownSLine,
-  RiArrowRightSLine,
-  RiFileAddLine,
-  RiFileMarkedLine,
-  RiLoader4Line,
-  RiRouteFill,
-} from 'react-icons/ri';
-import { Outlet, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface WorkflowFilters {
   query: string;
@@ -320,7 +320,12 @@ const CreateWorkflowButton = () => {
             ? 'Create the workflow in your development environment.'
             : "Almost there! Your role just doesn't have permission for this one."}{' '}
           {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
-            <a href="https://docs.novu.co/platform/account/roles-and-permissions" target="_blank" className="underline">
+            <a
+              href="https://docs.novu.co/platform/account/roles-and-permissions"
+              target="_blank"
+              className="underline"
+              rel="noopener"
+            >
               Learn More ↗
             </a>
           )}

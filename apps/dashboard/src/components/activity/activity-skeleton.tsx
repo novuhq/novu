@@ -1,8 +1,8 @@
 import { motion } from 'motion/react';
 
 import { Skeleton } from '@/components/primitives/skeleton';
-import { cn } from '@/utils/ui';
 import { fadeIn } from '@/utils/animation';
+import { cn } from '@/utils/ui';
 
 export function ActivitySkeleton({ headerClassName }: { headerClassName?: string }) {
   return (

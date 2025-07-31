@@ -1,10 +1,9 @@
 import { Test } from '@nestjs/testing';
-
-import { WebSocketsQueueService } from './web-sockets-queue.service';
+import { IWebSocketJobDto } from '../../dtos';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 import { SocketWorkerService } from '../socket-worker';
-import { IWebSocketJobDto } from '../../dtos';
+import { WebSocketsQueueService } from './web-sockets-queue.service';
 
 let webSocketsQueueService: WebSocketsQueueService;
 

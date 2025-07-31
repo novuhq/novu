@@ -1,23 +1,23 @@
-import { Card } from '@/components/primitives/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { ROUTES } from '@/utils/routes';
 import { OrganizationProfile, UserProfile } from '@clerk/clerk-react';
 import { Appearance } from '@clerk/types';
-import { motion } from 'motion/react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Plan } from '../components/billing/plan';
-import { DashboardLayout } from '../components/dashboard-layout';
-import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
-  getFeatureForTierAsBoolean,
   GetSubscriptionDto,
+  getFeatureForTierAsBoolean,
 } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { motion } from 'motion/react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card } from '@/components/primitives/card';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { OrganizationSettings } from '@/components/settings/organization-settings';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { ROUTES } from '@/utils/routes';
+import { Plan } from '../components/billing/plan';
+import { DashboardLayout } from '../components/dashboard-layout';
+import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },

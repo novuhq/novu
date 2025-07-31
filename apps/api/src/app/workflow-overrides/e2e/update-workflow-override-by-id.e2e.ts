@@ -1,9 +1,9 @@
-import { expect } from 'chai';
-
-import { UserSession, WorkflowOverrideService } from '@novu/testing';
 import { IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
 
-describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT) #novu-v0', function () {
+import { UserSession, WorkflowOverrideService } from '@novu/testing';
+import { expect } from 'chai';
+
+describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT) #novu-v0', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -11,7 +11,7 @@ describe('Update Workflow Override By ID - /workflow-overrides/:overrideId (PUT)
     await session.initialize();
   });
 
-  it('should successfully update workflow override by ID', async function () {
+  it('should successfully update workflow override by ID', async () => {
     const workflowOverrideService = new WorkflowOverrideService({
       organizationId: session.organization._id,
       environmentId: session.environment._id,

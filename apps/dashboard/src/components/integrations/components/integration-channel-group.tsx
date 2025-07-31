@@ -1,7 +1,7 @@
 import { ChannelTypeEnum, IEnvironment, IIntegration, IProviderConfig } from '@novu/shared';
+import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
 import { TableIntegration } from '../types';
 import { IntegrationCard } from './integration-card';
-import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
 
 type IntegrationChannelGroupProps = {
   channel: ChannelTypeEnum;

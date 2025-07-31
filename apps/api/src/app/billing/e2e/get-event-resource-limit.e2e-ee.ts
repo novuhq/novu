@@ -1,11 +1,11 @@
+import { randomUUID } from 'node:crypto';
+import { Test } from '@nestjs/testing';
+import { CacheService, MockCacheService } from '@novu/application-generic';
+import { GetEventResourceUsage, GetSubscription } from '@novu/ee-billing';
+import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { Test } from '@nestjs/testing';
-import { CacheService, MockCacheService } from '@novu/application-generic';
-import { ApiServiceLevelEnum, GetSubscriptionDto } from '@novu/shared';
-import { GetEventResourceUsage, GetSubscription } from '@novu/ee-billing';
-import { randomUUID } from 'node:crypto';
 import { AppModule } from '../../../app.module';
 
 describe('GetEventResourceUsage #novu-v2', async () => {

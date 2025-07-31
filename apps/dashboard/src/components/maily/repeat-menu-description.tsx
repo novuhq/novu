@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
 import { Editor } from '@tiptap/react';
-import { AnimatePresence, motion } from 'motion/react';
 import { Lightbulb } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { Separator } from '@/components/primitives/separator';
 import { REPEAT_BLOCK_ITERABLE_ALIAS } from './repeat-block-aliases';
 

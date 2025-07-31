@@ -1,7 +1,7 @@
 // @ts-nocheck
-import { HandlebarHelpersEnum } from './handlebarHelpers';
 
 import { TemplateVariableTypeEnum } from '../../types';
+import { HandlebarHelpersEnum } from './handlebarHelpers';
 
 export interface IMustacheVariable {
   type: TemplateVariableTypeEnum;

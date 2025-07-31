@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import {
   EnvironmentRepository,
@@ -16,16 +15,16 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../../services/analytics.service';
-import { BadRequestException } from '@nestjs/common';
+import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
 import { TriggerEventCommand } from './trigger-event.command';
-import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 

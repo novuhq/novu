@@ -1,18 +1,18 @@
-import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors, Param } from '@nestjs/common';
+import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { ExternalApiAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum } from '@novu/shared';
-import { GetRequests } from './usecases/get-requests/get-requests.usecase';
-import { GetRequestsCommand } from './usecases/get-requests/get-requests.command';
-import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
-import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
-import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
-import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-run.command';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
+import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
 import { GetWorkflowRunsRequestDto } from './dtos/workflow-runs-request.dto';
 import { GetWorkflowRunsResponseDto } from './dtos/workflow-runs-response.dto';
-import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
+import { GetRequestsCommand } from './usecases/get-requests/get-requests.command';
+import { GetRequests } from './usecases/get-requests/get-requests.usecase';
+import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-run.command';
+import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
+import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
+import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
 
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)

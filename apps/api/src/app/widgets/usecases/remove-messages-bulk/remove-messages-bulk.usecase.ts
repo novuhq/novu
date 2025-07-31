@@ -1,13 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { DalException, MessageRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  WebSocketsQueueService,
   AnalyticsService,
-  InvalidateCacheService,
   buildFeedKey,
   buildMessageCountKey,
+  InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
+import { DalException, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
 import { RemoveMessagesBulkCommand } from './remove-messages-bulk.command';

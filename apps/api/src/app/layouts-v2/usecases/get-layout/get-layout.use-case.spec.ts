@@ -1,5 +1,3 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import {
   AnalyticsService,
   GetLayoutCommand as GetLayoutCommandV1,
@@ -7,10 +5,11 @@ import {
 } from '@novu/application-generic';
 import { ControlValuesRepository } from '@novu/dal';
 import { ChannelTypeEnum, ControlValuesLevelEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-
-import { GetLayoutUseCase } from './get-layout.use-case';
-import { GetLayoutCommand } from './get-layout.command';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
+import { GetLayoutCommand } from './get-layout.command';
+import { GetLayoutUseCase } from './get-layout.use-case';
 
 describe('GetLayoutUseCase', () => {
   let getLayoutUseCaseV1Mock: sinon.SinonStubbedInstance<GetLayoutUseCaseV1>;

@@ -1,4 +1,9 @@
+import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 import {
+  brazeEmailConfig,
+  emailWebhookConfig,
+  infobipEmailConfig,
   mailerSendConfig,
   mailgunConfig,
   mailjetConfig,
@@ -6,21 +11,16 @@ import {
   mandrillConfig,
   netCoreConfig,
   nodemailerConfig,
+  outlook365Config,
+  plunkConfig,
   postmarkConfig,
+  resendConfig,
   sendgridConfig,
   sendinblueConfig,
   sesConfig,
-  outlook365Config,
-  infobipEmailConfig,
-  resendConfig,
-  plunkConfig,
   sparkpostConfig,
-  emailWebhookConfig,
-  brazeEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '../../../types';
-import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const emailProviders: IProviderConfig[] = [
   {

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -11,8 +11,8 @@ import { WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
-import { UpdateAllNotificationsCommand } from './update-all-notifications.command';
 import { validateDataStructure } from '../../utils/validate-data';
+import { UpdateAllNotificationsCommand } from './update-all-notifications.command';
 
 @Injectable()
 export class UpdateAllNotifications {

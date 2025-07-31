@@ -1,8 +1,8 @@
+import { Command } from 'cmdk';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/primitives/command';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
-import { Command } from 'cmdk';
-import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Tag } from './tag';
 
 type TagInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {

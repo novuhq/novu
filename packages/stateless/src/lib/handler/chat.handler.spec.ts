@@ -6,8 +6,7 @@ test('send chat should call the provider method correctly', async () => {
   const provider: IChatProvider = {
     id: 'chat-provider',
     channelType: ChannelTypeEnum.CHAT,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
   const spy = jest.spyOn(provider, 'sendMessage');
@@ -17,7 +16,7 @@ test('send chat should call the provider method correctly', async () => {
       channel: ChannelTypeEnum.CHAT,
       template: `Name: {{firstName}}`,
     },
-    provider,
+    provider
   );
 
   await chatHandler.send({
@@ -34,7 +33,7 @@ test('send chat should call the provider method correctly', async () => {
       content: 'Name: test name',
       webhookUrl: 'https://test.com',
     },
-    {},
+    {}
   );
   spy.mockRestore();
 });
@@ -43,13 +42,10 @@ test('send chat should template method correctly', async () => {
   const provider: IChatProvider = {
     id: 'chat-provider',
     channelType: ChannelTypeEnum.CHAT,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
   };
 
-  const spyTemplateFunction = jest
-    .fn()
-    .mockImplementation(() => Promise.resolve('test'));
+  const spyTemplateFunction = jest.fn().mockImplementation(() => Promise.resolve('test'));
 
   const chatHandler = new ChatHandler(
     {
@@ -57,7 +53,7 @@ test('send chat should template method correctly', async () => {
       channel: ChannelTypeEnum.CHAT,
       template: spyTemplateFunction,
     },
-    provider,
+    provider
   );
 
   await chatHandler.send({

@@ -1,7 +1,7 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
-import { Select } from './Select';
 import { IconBakeryDining, IconRamenDining } from '../../icons';
+import { Select } from './Select';
 
 export default {
   title: 'Components/Select',

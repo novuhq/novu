@@ -1,25 +1,23 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags, ApiExcludeEndpoint } from '@nestjs/swagger';
-import { ChannelTypeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
-
+import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
+import { ChannelTypeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
 import { ActivitiesRequestDto } from './dtos/activities-request.dto';
 import { ActivitiesResponseDto, ActivityNotificationResponseDto } from './dtos/activities-response.dto';
 import { ActivityGraphStatesResponse } from './dtos/activity-graph-states-response.dto';
 import { ActivityStatsResponseDto } from './dtos/activity-stats-response.dto';
+import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
+import { GetActivity } from './usecases/get-activity/get-activity.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityGraphStatsCommand } from './usecases/get-activity-graph-states/get-activity-graph-states.command';
 import { GetActivityGraphStats } from './usecases/get-activity-graph-states/get-activity-graph-states.usecase';
 import { GetActivityStats, GetActivityStatsCommand } from './usecases/get-activity-stats';
-import { GetActivityCommand } from './usecases/get-activity/get-activity.command';
-import { GetActivity } from './usecases/get-activity/get-activity.usecase';
-
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
-import { UserSession } from '../shared/framework/user.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 @ApiCommonResponses()
 @RequireAuthentication()

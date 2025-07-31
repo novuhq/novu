@@ -1,8 +1,4 @@
 import { Test } from '@nestjs/testing';
-import axios from 'axios';
-import { expect } from 'chai';
-import sinon from 'sinon';
-
 import {
   IProcessSubscriberBulkJobDto,
   mapSubscribersToJobs,
@@ -23,6 +19,9 @@ import {
   TriggerRecipientsTypeEnum,
 } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { SharedModule } from '../../shared/shared.module';

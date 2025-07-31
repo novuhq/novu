@@ -1,11 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { HealthIndicatorResult, HealthIndicatorStatus } from '@nestjs/terminus';
 import { setTimeout } from 'timers/promises';
-
-import { Worker } from '../bull-mq';
-
 import { IHealthIndicator } from '../../health';
 import { IDestroy } from '../../modules';
+import { Worker } from '../bull-mq';
 
 export interface INovuWorker extends IDestroy {
   readonly DEFAULT_ATTEMPTS: number;
@@ -21,7 +19,7 @@ const LOG_CONTEXT = 'ReadinessService';
 export class ReadinessService {
   constructor(
     @Inject('QUEUE_HEALTH_INDICATORS')
-    private healthIndicators: IHealthIndicator[],
+    private healthIndicators: IHealthIndicator[]
   ) {}
 
   async areQueuesEnabled(): Promise<boolean> {
@@ -39,7 +37,7 @@ export class ReadinessService {
 
       Logger.warn(
         `Some health indicator returned false when checking if queues are enabled ${i}/${retries}`,
-        LOG_CONTEXT,
+        LOG_CONTEXT
       );
 
       await setTimeout(delay);
@@ -50,21 +48,13 @@ export class ReadinessService {
 
   private async checkServicesHealth() {
     try {
-      const healths = await Promise.all(
-        this.healthIndicators.map((health) => health.isHealthy()),
-      );
+      const healths = await Promise.all(this.healthIndicators.map((health) => health.isHealthy()));
 
-      const statuses = healths.map(
-        (health: HealthIndicatorResult) => Object.values(health)[0].status,
-      );
+      const statuses = healths.map((health: HealthIndicatorResult) => Object.values(health)[0].status);
 
       return statuses.every((status: HealthIndicatorStatus) => status === 'up');
     } catch (error) {
-      Logger.error(
-        error,
-        'Some health indicator throw an error when checking if queues are enabled',
-        LOG_CONTEXT,
-      );
+      Logger.error(error, 'Some health indicator throw an error when checking if queues are enabled', LOG_CONTEXT);
 
       return false;
     }
@@ -77,11 +67,7 @@ export class ReadinessService {
 
         await worker.pause();
       } catch (error) {
-        Logger.error(
-          error,
-          `Failed to pause worker ${worker.topic}.`,
-          LOG_CONTEXT,
-        );
+        Logger.error(error, `Failed to pause worker ${worker.topic}.`, LOG_CONTEXT);
 
         throw error;
       }
@@ -98,11 +84,7 @@ export class ReadinessService {
 
           await worker.resume();
         } catch (error) {
-          Logger.error(
-            error,
-            `Failed to resume worker ${worker.topic}.`,
-            LOG_CONTEXT,
-          );
+          Logger.error(error, `Failed to resume worker ${worker.topic}.`, LOG_CONTEXT);
 
           throw error;
         }

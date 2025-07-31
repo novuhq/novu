@@ -1,15 +1,14 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, PinoLogger } from '@novu/application-generic';
-import { JobEntity, JobRepository, MessageRepository, MessageEntity } from '@novu/dal';
+import { JobEntity, JobRepository, MessageEntity, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
-
-import { UnsnoozeNotification } from './unsnooze-notification.usecase';
-import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
-import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
-import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { InboxNotification } from '../../utils/types';
+import { MarkNotificationAsCommand } from '../mark-notification-as/mark-notification-as.command';
+import { MarkNotificationAs } from '../mark-notification-as/mark-notification-as.usecase';
+import { UnsnoozeNotificationCommand } from './unsnooze-notification.command';
+import { UnsnoozeNotification } from './unsnooze-notification.usecase';
 
 describe('UnsnoozeNotification', () => {
   const validNotificationId = '507f1f77bcf86cd799439011';

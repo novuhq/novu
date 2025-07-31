@@ -1,5 +1,5 @@
-import mongoose, { Schema } from 'mongoose';
 import { ChannelTypeEnum } from '@novu/shared';
+import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { PreferencesDBModel } from './preferences.entity';
 

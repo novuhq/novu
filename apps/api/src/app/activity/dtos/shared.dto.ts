@@ -1,6 +1,6 @@
-import { IsString, IsOptional, IsDate, IsIn } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { WorkflowRunStatusEnum } from '@novu/application-generic';
+import { IsDate, IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowRunStatusDtoEnum {
   SUCCESS = 'success',

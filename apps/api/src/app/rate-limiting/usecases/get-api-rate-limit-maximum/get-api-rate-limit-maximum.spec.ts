@@ -1,5 +1,6 @@
+import { Test } from '@nestjs/testing';
+import { CacheService, MockCacheService } from '@novu/application-generic';
 import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCategoryToFeatureName,
@@ -7,14 +8,13 @@ import {
   FeatureFlagsKeysEnum,
   getFeatureForTierAsNumber,
 } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { Test } from '@nestjs/testing';
-import { CacheService, MockCacheService } from '@novu/application-generic';
-import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
 import { CUSTOM_API_SERVICE_LEVEL } from './get-api-rate-limit-maximum.dto';
+import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
 
 const mockDefaultApiRateLimits = {
   [ApiServiceLevelEnum.FREE]: {

@@ -1,7 +1,4 @@
-import { expect } from 'chai';
-
-import { UserSession } from '@novu/testing';
-import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
@@ -10,9 +7,10 @@ import {
   INotificationTemplateStep,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { GroupedBlueprintResponse } from '../dtos/grouped-blueprint.response.dto';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { CreateWorkflowRequestDto } from '../../workflows-v1/dtos';
+import { GroupedBlueprintResponse } from '../dtos/grouped-blueprint.response.dto';
 
 describe('Get blueprints by id - /blueprints/:templateId (GET) #novu-v0', async () => {
   let session: UserSession;
@@ -26,7 +24,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET) #novu-v0', async 
 
   afterEach(() => {});
 
-  it('should get the blueprint by id', async function () {
+  it('should get the blueprint by id', async () => {
     const prodEnv = await getProductionEnvironment();
 
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
@@ -54,7 +52,7 @@ describe('Get blueprints by id - /blueprints/:templateId (GET) #novu-v0', async 
     );
   });
 
-  it('should get the blueprint by trigger identifier', async function () {
+  it('should get the blueprint by trigger identifier', async () => {
     const prodEnv = await getProductionEnvironment();
 
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });

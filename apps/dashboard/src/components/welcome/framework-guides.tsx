@@ -1,10 +1,10 @@
-import { motion, AnimatePresence } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useState } from 'react';
+import { fadeIn } from '@/utils/animation';
 import { CodeBlock, Language } from '../primitives/code-block';
 import { InlineToast } from '../primitives/inline-toast';
-import { Framework, InstallationStep } from './framework-guides.instructions';
-import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
-import { fadeIn } from '@/utils/animation';
+import { Framework, InstallationStep } from './framework-guides.instructions';
 
 type PackageManager = 'npm' | 'pnpm' | 'yarn';
 

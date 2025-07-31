@@ -1,9 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ResourceOriginEnum, Slug, StepTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { Slug, StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { ControlsMetadataDto } from './controls-metadata.dto';
+import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
+import { ControlsMetadataDto } from './controls-metadata.dto';
 import { StepIssuesDto } from './step-issues.dto';
 
 export class StepResponseDto<T = Record<string, unknown>> {

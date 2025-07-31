@@ -1,15 +1,15 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  WorkflowRunRepository,
-  WorkflowRun,
   PinoLogger,
-  Where,
-  StepRunRepository,
   StepRun,
+  StepRunRepository,
+  Where,
+  WorkflowRun,
+  WorkflowRunRepository,
 } from '@novu/application-generic';
-import { GetWorkflowRunsResponseDto, GetWorkflowRunsDto } from '../../dtos/workflow-runs-response.dto';
-import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
+import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
 type CursorData = {
   created_at: string;

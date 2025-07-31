@@ -1,11 +1,11 @@
-import { randomBytes } from 'crypto';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { SubscribersControllerSearchSubscribersRequest } from '@novu/api/src/models/operations';
-import { OrderDirection } from '@novu/api/models/operations';
 import { Novu } from '@novu/api';
 import { SubscriberResponseDto } from '@novu/api/models/components';
+import { OrderDirection } from '@novu/api/models/operations';
+import { SubscribersControllerSearchSubscribersRequest } from '@novu/api/src/models/operations';
 import { SubscriberRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { randomBytes } from 'crypto';
 import { initNovuClassSdk } from '../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 let session: UserSession;

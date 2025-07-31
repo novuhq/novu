@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  InvalidateCacheService,
-  WebSocketsQueueService,
   buildFeedKey,
   buildMessageCountKey,
+  InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 import { DalException, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';

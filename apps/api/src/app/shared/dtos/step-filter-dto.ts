@@ -1,3 +1,4 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   BuilderFieldOperator,
   BuilderFieldType,
@@ -7,7 +8,6 @@ import {
   PreviousStepTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class BaseFilterPart {
   on: FilterPartTypeEnum;

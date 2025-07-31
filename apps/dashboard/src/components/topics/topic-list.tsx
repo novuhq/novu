@@ -1,19 +1,20 @@
 // Use pagination primitives from the dashboard project
-import { CursorPagination } from '@/components/cursor-pagination';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { useFetchTopics } from '@/hooks/use-fetch-topics';
-import { cn } from '@/utils/ui';
+
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, useCallback } from 'react';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
+import { CursorPagination } from '@/components/cursor-pagination';
+import { PermissionButton } from '@/components/primitives/permission-button';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import { useFetchTopics } from '@/hooks/use-fetch-topics';
+import { cn } from '@/utils/ui';
+import { ListNoResults } from '../list-no-results';
 import { useTopicsNavigate } from './hooks/use-topics-navigate';
 import { TopicsFilter, TopicsSortableColumn, TopicsUrlState, useTopicsUrlState } from './hooks/use-topics-url-state';
 import { TopicListBlank } from './topic-list-blank';
 import { TopicRow, TopicRowSkeleton } from './topic-row';
 import { TopicsFilters } from './topics-filters';
-import { PermissionButton } from '@/components/primitives/permission-button';
-import { ListNoResults } from '../list-no-results';
 
 // Use type alias instead of interface for component props
 type TopicListProps = HTMLAttributes<HTMLDivElement>;

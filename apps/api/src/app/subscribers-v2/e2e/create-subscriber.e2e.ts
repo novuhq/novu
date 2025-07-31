@@ -1,6 +1,6 @@
-import { expect } from 'chai';
 import { Novu } from '@novu/api';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 

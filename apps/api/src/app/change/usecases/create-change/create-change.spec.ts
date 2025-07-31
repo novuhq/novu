@@ -1,13 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
-import { ChangeEntityTypeEnum } from '@novu/shared';
-import { expect } from 'chai';
-
 import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
-import { ChangeModule } from '../../change.module';
+import { ChangeEntityTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
+import { ChangeModule } from '../../change.module';
 
-describe('Create Change', function () {
+describe('Create Change', () => {
   let useCase: CreateChange;
   let session: UserSession;
 
@@ -23,7 +22,7 @@ describe('Create Change', function () {
     useCase = moduleRef.get<CreateChange>(CreateChange);
   });
 
-  it('should create a change', async function () {
+  it('should create a change', async () => {
     const _id = '6256ade0099f90172d1cc435';
 
     const result = await useCase.execute(
@@ -46,7 +45,7 @@ describe('Create Change', function () {
     expect(result.type).to.be.eq(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
   });
 
-  it('should find diff for item', async function () {
+  it('should find diff for item', async () => {
     const _id = '6256ade0099f90172d1cc436';
 
     await useCase.execute(

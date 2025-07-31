@@ -10,10 +10,10 @@ import {
   AlertDialogTitle,
 } from '@/components/primitives/alert-dialog';
 import { Badge } from '@/components/primitives/badge';
-import { Separator } from '@/components/primitives/separator';
 import { buttonVariants } from '@/components/primitives/button';
+import { Separator } from '@/components/primitives/separator';
 import { cn } from '@/utils/ui';
-import type { SchemaChanges, SchemaChange } from '../schema-editor/utils/schema-change-detection';
+import type { SchemaChange, SchemaChanges } from '../schema-editor/utils/schema-change-detection';
 
 interface SchemaChangeConfirmationModalProps {
   isOpen: boolean;

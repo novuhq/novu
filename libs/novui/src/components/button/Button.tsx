@@ -2,11 +2,11 @@ import { Button as ExternalButton, ButtonProps as ExternalButtonProps } from '@m
 import React from 'react';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { button, type ButtonVariant } from '../../../styled-system/recipes';
+import { type ButtonVariant, button } from '../../../styled-system/recipes';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { IconType } from '../../icons';
 import { CoreProps, CorePropsWithChildren } from '../../types';
-import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
+import { forwardRefWithAs, PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
 import {
   BUTTON_SIZE_TO_EXTERNAL_BUTTON_SIZE,
   BUTTON_SIZE_TO_ICON_SIZE,
@@ -34,7 +34,10 @@ type PolymorphicComponent = <C extends React.ElementType = ButtonDefaultElement>
   props: ButtonProps<C>
 ) => JSX.Element | null;
 
-export const Button: PolymorphicComponent = forwardRefWithAs<ButtonDefaultElement, JsxStyleProps & Partial<ButtonVariant> & CoreProps & ButtonCoreProps>(
+export const Button: PolymorphicComponent = forwardRefWithAs<
+  ButtonDefaultElement,
+  JsxStyleProps & Partial<ButtonVariant> & CoreProps & ButtonCoreProps
+>(
   <C extends React.ElementType = ButtonDefaultElement>(
     { variant = DEFAULT_VARIANT, size = DEFAULT_SIZE, ...props }: ButtonProps<C>,
     ref?: PolymorphicRef<C>

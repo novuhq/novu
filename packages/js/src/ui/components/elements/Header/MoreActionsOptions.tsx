@@ -1,10 +1,10 @@
-import { JSX, Show, JSXElement } from 'solid-js';
+import { JSX, JSXElement, Show } from 'solid-js';
 import { JSX as SolidJSX } from 'solid-js/jsx-runtime';
 import { useArchiveAll, useArchiveAllRead, useReadAll } from '../../../api';
-import { StringLocalizationKey, useInboxContext, useLocalization, useAppearance } from '../../../context';
+import { StringLocalizationKey, useAppearance, useInboxContext, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { MarkAsArchived, MarkAsArchivedRead, MarkAsRead } from '../../../icons';
-import { IconOverrides, IconKey } from '../../../types';
+import { IconKey, IconOverrides } from '../../../types';
 import { Dropdown, dropdownItemVariants } from '../../primitives';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
 

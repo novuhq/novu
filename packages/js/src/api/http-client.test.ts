@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { HttpClient } from './http-client';
 
 // Mock the global fetch function

@@ -1,20 +1,18 @@
 import { Injectable } from '@nestjs/common';
-
-import { JobRepository, JobEntity } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
-  DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
   InstrumentUsecase,
-  WorkflowRunRepository,
   PinoLogger,
+  WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-
-import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
-import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { JobEntity, JobRepository } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
+import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 
 @Injectable()
 export class HandleLastFailedJob {

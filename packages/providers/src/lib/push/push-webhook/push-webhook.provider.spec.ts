@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { PushWebhookPushProvider } from './push-webhook.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { PushWebhookPushProvider } from './push-webhook.provider';
 
 test('should trigger push-webhook library correctly', async () => {
   const { mockPost: fakePost } = axiosSpy({

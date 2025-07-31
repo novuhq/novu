@@ -1,10 +1,10 @@
-import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useRef, useState } from 'react';
 import { RiCloseFill } from 'react-icons/ri';
 import { toast } from 'sonner';
+import { ToggleGroup, ToggleGroupItem } from '@/components/primitives/toggle-group';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { CompactButton } from '../primitives/button-compact';
 import { Card, CardContent } from '../primitives/card';
 
@@ -64,7 +64,6 @@ export function usePromotionalBanner(props: UsePromotionalBannerProps): UsePromo
       toast.dismiss(toastId.current);
       toastId.current = undefined;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const show = useCallback(() => {
@@ -94,7 +93,6 @@ export function usePromotionalBanner(props: UsePromotionalBannerProps): UsePromo
     );
 
     toastId.current = id;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props]);
 
   return { show, hide };

@@ -1,8 +1,7 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-
-import { IntegrationRepository, EnvironmentRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 import {
   addIntegrationIdentifierMigration,
@@ -10,7 +9,7 @@ import {
   genIntegrationIdentificationDetails,
 } from './add-integration-identifier-migration';
 
-describe('Add default identifier and name to integration entity', function () {
+describe('Add default identifier and name to integration entity', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
@@ -21,7 +20,7 @@ describe('Add default identifier and name to integration entity', function () {
     await pruneIntegration(integrationRepository);
   });
 
-  it('should identifier and name to integration entity', async function () {
+  it('should identifier and name to integration entity', async () => {
     await integrationRepository.create({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
@@ -73,7 +72,7 @@ describe('Add default identifier and name to integration entity', function () {
     }
   });
 
-  it('should identifier and name to integration entity (batched)', async function () {
+  it('should identifier and name to integration entity (batched)', async () => {
     await integrationRepository.create({
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
