@@ -3,22 +3,41 @@ import { ReactElement, useEffect } from 'react';
 import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
-import { ProgressSection } from '../components/welcome/progress-section';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 
+const welcomeMessages = [
+  'Good to have you back 👋',
+  'Welcome back, superstar! ⭐',
+  'Hey there! 🚀',
+  'Great to see you again! 🎉',
+  'Hello, notification ninja! 🥷',
+  'Welcome back, creator! ✨',
+  "Look who's back! 🌟",
+  'Ready to make some magic happen? 🪄',
+  'The notification master returns! 🎯',
+  'Welcome aboard, captain! ⚓',
+  'Back in action, legend! 💪',
+  'Your dashboard awaits, chief! 👑',
+  'Let the notifications flow! 🌊',
+  'Welcome to your command center! 🎛️',
+  'Ready to rock and roll? 🎸',
+];
+
+const subtitle = "Everything's wired up so your subscribers get the right update, right on time.";
+
 function WelcomeHeader() {
+  const randomGreeting = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+
   return (
     <div className="flex flex-col gap-0.5 items-start justify-center">
       <div className="flex flex-col font-medium justify-center text-[#0e121b] text-[24px] text-left tracking-[-0.36px]">
-        <p className="leading-[32px] whitespace-pre">Good to have you back, John 👋</p>
+        <p className="leading-[32px] whitespace-pre">{randomGreeting}</p>
       </div>
       <div className="flex flex-col items-start justify-start w-full">
         <div className="flex flex-col font-medium justify-center text-[#99a0ae] text-[16px] text-left tracking-[-0.176px] w-full">
-          <p className="leading-[24px]">
-            Everything's wired up so your subscribers get the right update, right on time.
-          </p>
+          <p className="leading-[24px]">{subtitle}</p>
         </div>
       </div>
     </div>
