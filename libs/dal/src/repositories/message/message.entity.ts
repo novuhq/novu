@@ -91,7 +91,6 @@ export class MessageEntity {
 
   errorText: string;
 
-  @Exclude()
   payload: Record<string, unknown>;
 
   data?: Record<string, unknown>;
