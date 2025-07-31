@@ -1,6 +1,6 @@
-import { Transform, Type } from 'class-transformer';
-import { IsOptional, IsString, IsArray, IsInt, Min, Max, IsISO8601, IsIn } from 'class-validator';
 import { WorkflowRunStatusEnum } from '@novu/application-generic';
+import { Transform, Type } from 'class-transformer';
+import { IsArray, IsIn, IsInt, IsISO8601, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class GetWorkflowRunsRequestDto {
   @IsOptional()
@@ -40,6 +40,16 @@ export class GetWorkflowRunsRequestDto {
     each: true,
   })
   statuses?: WorkflowRunStatusEnum[];
+
+  @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsString({ each: true })
+  channels?: string[];
+
+  @IsOptional()
+  @IsString()
+  topicKey?: string;
 
   @IsOptional()
   @IsISO8601()
