@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { RequestLogRepository, TraceLogRepository } from '@novu/application-generic';
-import { GetRequestCommand } from './get-request.command';
 import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request-traces.response.dto';
 import { mapRequestLogToResponseDto, mapTraceToResponseDto } from '../../shared/mappers';
+import { GetRequestCommand } from './get-request.command';
 
 @Injectable()
 export class GetRequest {
@@ -13,11 +13,13 @@ export class GetRequest {
 
   async execute(command: GetRequestCommand): Promise<GetRequestResponseDto> {
     const request = await this.requestLogRepository.findOne({
-      where: {
-        transaction_id: command.transactionId,
-        organization_id: command.organizationId,
-        environment_id: command.environmentId,
-      },
+      where: [
+        {
+          transaction_id: { operator: '=', value: command.transactionId },
+          organization_id: { operator: '=', value: command.organizationId },
+          environment_id: { operator: '=', value: command.environmentId },
+        },
+      ],
     });
 
     if (!request) {
@@ -25,12 +27,14 @@ export class GetRequest {
     }
 
     const traceResult = await this.traceLogRepository.find({
-      where: {
-        entity_id: command.transactionId,
-        entity_type: 'request',
-        environment_id: command.environmentId,
-        organization_id: command.organizationId,
-      },
+      where: [
+        {
+          entity_id: { operator: '=', value: command.transactionId },
+          entity_type: { operator: '=', value: 'request' },
+          environment_id: { operator: '=', value: command.environmentId },
+          organization_id: { operator: '=', value: command.organizationId },
+        },
+      ],
       orderBy: 'created_at',
       orderDirection: 'ASC',
     });
@@ -43,4 +47,4 @@ export class GetRequest {
       traces: mappedTraces,
     };
   }
-} 
+}
