@@ -72,4 +72,4 @@ function HintIcon<T extends React.ElementType>({
 
 HintIcon.displayName = HINT_ICON_NAME;
 
-export { HintRoot as Hint, HintIcon as HintIcon, HintRoot as Root };
+export { HintRoot as Hint, HintIcon, HintRoot as Root };

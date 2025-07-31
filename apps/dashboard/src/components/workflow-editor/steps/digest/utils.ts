@@ -132,7 +132,7 @@ function replaceAlternatives(str: string, min: number, alt?: string[]) {
  */
 function fixSunday(values: number[], unit: Unit) {
   if (unit.type === PeriodValues.WEEK) {
-    values = values.map(function (value) {
+    values = values.map((value) => {
       if (value === 7) {
         return 0;
       }
@@ -237,7 +237,7 @@ function parsePartString(str: string, unit: Unit) {
       fixSunday(
         replaceAlternatives(str, unit.min, unit.alt)
           .split(',')
-          .map((value) => {
+          .flatMap((value) => {
             const valueParts = value.split('/');
 
             if (valueParts.length > 2) {
@@ -258,8 +258,7 @@ function parsePartString(str: string, unit: Unit) {
             const intervalValues = applyInterval(parsedValues, step);
 
             return intervalValues;
-          })
-          .flat(),
+          }),
         unit
       )
     )

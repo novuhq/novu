@@ -35,7 +35,7 @@ const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
 export type WhereCondition<T> = {
-  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } }
+  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } };
 }[keyof T];
 
 export type Where<T> = WhereCondition<T>[];

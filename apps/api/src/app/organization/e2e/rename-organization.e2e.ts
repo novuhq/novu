@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Rename Organization - /organizations (PATCH) #novu-v0-os', function () {
+describe('Rename Organization - /organizations (PATCH) #novu-v0-os', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -9,7 +9,7 @@ describe('Rename Organization - /organizations (PATCH) #novu-v0-os', function ()
     await session.initialize();
   });
 
-  it('should rename the organization', async function () {
+  it('should rename the organization', async () => {
     const payload = {
       name: 'Liberty Powers',
     };

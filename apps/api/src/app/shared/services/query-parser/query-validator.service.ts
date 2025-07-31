@@ -155,8 +155,6 @@ export class QueryValidatorService {
             type: QueryIssueTypeEnum.MISSING_VALUE,
           });
         }
-
-        continue;
       }
     }
   }

@@ -3,7 +3,7 @@ import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 
-export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req: Request, callback) {
+export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = (req: Request, callback) => {
   const corsOptions: Parameters<typeof callback>[1] = {
     origin: false as boolean | string | string[],
     preflightContinue: false,
