@@ -1,8 +1,8 @@
 import {
-  CHNullable,
-  CHString,
   CHDateTime64,
   CHLowCardinality,
+  CHNullable,
+  CHString,
   ClickhouseSchema,
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
@@ -104,7 +104,11 @@ export type EventType =
   | 'chat_webhook_missing'
   | 'chat_all_channels_failed'
   | 'chat_phone_missing'
+  | 'chat_some_channels_skipped'
   | 'push_tokens_missing'
+  | 'push_some_channels_skipped'
+  | 'subscriber_missing_email_address'
+  | 'subscriber_missing_phone_number'
   | 'reply_callback_missing'
   | 'reply_callback_misconfigured'
   | 'reply_mx_record_missing'

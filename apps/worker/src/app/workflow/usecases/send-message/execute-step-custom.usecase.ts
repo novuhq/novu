@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
-
-import { JobRepository, MessageRepository } from '@novu/dal';
 import { CreateExecutionDetails, InstrumentUsecase } from '@novu/application-generic';
+import { JobRepository, MessageRepository } from '@novu/dal';
 
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
 
 @Injectable()
@@ -17,7 +16,7 @@ export class ExecuteStepCustom extends SendMessageType {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     await this.jobRepository.updateOne(
       { _id: command.job._id, _environmentId: command.environmentId },
       {

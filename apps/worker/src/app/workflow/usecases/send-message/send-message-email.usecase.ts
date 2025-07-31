@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { addBreadcrumb } from '@sentry/node';
-import inlineCss from 'inline-css';
-
 import {
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -22,7 +19,6 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationEntity,
-  LayoutEntity,
   LayoutRepository,
   MessageEntity,
   MessageRepository,
@@ -40,11 +36,13 @@ import {
   IAttachmentOptions,
   IEmailOptions,
 } from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
+import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult } from './send-message-type.usecase';
 import { SendMessageBase } from './send-message.base';
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -78,10 +76,10 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     let integration: IntegrationEntity | undefined;
     const { subscriber } = command.compileContext;
-    const email = command.overrides?.email?.toRecipient || subscriber.email;
+    const email: string | undefined = command.overrides?.email?.toRecipient || subscriber?.email;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
@@ -225,7 +223,7 @@ export class SendMessageEmail extends SendMessageBase {
       const i18nInstance = await this.initiateTranslations(
         command.environmentId,
         command.organizationId,
-        subscriber.locale
+        subscriber?.locale
       );
 
       if (!command.bridgeData) {
@@ -308,8 +306,13 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
+    if (!email || !integration) {
+      return await this.sendErrors(email, integration, message, command);
+    }
+
     const mailData: IEmailOptions = createMailData(
       {
+        // @ts-ignore
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
@@ -335,14 +338,10 @@ export class SendMessageEmail extends SendMessageBase {
       mailData.payloadDetails = payload;
     }
 
-    if (!email || !integration) {
-      return await this.sendErrors(email, integration, message, command);
-    }
-
     return await this.sendMessage(integration, mailData, message, command);
   }
 
-  private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
+  private async getReplyTo(command: SendMessageChannelCommand, messageId: string): Promise<string | null> {
     if (!command.step.replyCallback?.url) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -392,10 +391,10 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   private async sendErrors(
-    email,
-    integration,
+    email: string | undefined,
+    integration: IntegrationEntity | undefined,
     message: MessageEntity,
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
     const errorMessage = 'Subscriber does not have an';
     const status = 'warning';
@@ -410,7 +409,7 @@ export class SendMessageEmail extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          detail: DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -419,8 +418,8 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+        status: 'skipped',
+        reason: DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS,
       };
     }
 
@@ -457,7 +456,7 @@ export class SendMessageEmail extends SendMessageBase {
     integration: IntegrationEntity,
     mailData: IEmailOptions,
     message: MessageEntity,
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
     const mailFactory = new MailFactory();
     const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration), mailData.from);
@@ -548,7 +547,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  private async getOverrideLayoutId(command: SendMessageCommand, isBridge: boolean) {
+  private async getOverrideLayoutId(command: SendMessageChannelCommand, isBridge: boolean) {
     const { overrides, step } = command;
     let layoutId: string | null | undefined;
     let overrideSource: string | undefined;
@@ -615,7 +614,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity) {
     return {
       ...integration,
       credentials: {

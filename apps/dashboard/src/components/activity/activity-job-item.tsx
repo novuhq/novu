@@ -1,10 +1,16 @@
-import { Badge } from '@/components/primitives/badge';
-import { Button } from '@/components/primitives/button';
-import { cn } from '@/utils/ui';
-import { IActivityJob, IDelayRegularMetadata, IDigestRegularMetadata, JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import {
+  type IActivityJob,
+  type IDelayRegularMetadata,
+  type IDigestRegularMetadata,
+  JobStatusEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { format } from 'date-fns';
 import { ChevronDown, Info, Route } from 'lucide-react';
 import { useState } from 'react';
+import { Badge } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
+import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_COLOR } from '../../utils/color';
 import { formatJSONString } from '../../utils/string';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
@@ -105,7 +111,7 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
   }
 
   if (job.status === JobStatusEnum.CANCELED) {
-    return 'Step was skipped by step conditions';
+    return 'Step was skipped';
   }
 
   if (job.status === JobStatusEnum.FAILED && job.executionDetails?.length > 0) {

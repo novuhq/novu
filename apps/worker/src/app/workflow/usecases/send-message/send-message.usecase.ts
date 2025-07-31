@@ -1,15 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
-import {
-  DigestTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IDigestRegularMetadata,
-  IPreferenceChannels,
-  PreferencesTypeEnum,
-  StepTypeEnum,
-  ResourceTypeEnum,
-} from '@novu/shared';
 import {
   AnalyticsService,
   buildSubscriberKey,
@@ -32,25 +21,33 @@ import {
 } from '@novu/application-generic';
 import {
   JobEntity,
-  JobRepository,
-  JobStatusEnum,
   NotificationTemplateRepository,
   SubscriberRepository,
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
 import { ExecuteOutput } from '@novu/framework/internal';
-
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageDelay } from './send-message-delay.usecase';
-import { SendMessageEmail } from './send-message-email.usecase';
-import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageInApp } from './send-message-in-app.usecase';
-import { SendMessageChat } from './send-message-chat.usecase';
-import { SendMessagePush } from './send-message-push.usecase';
+import {
+  DigestTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IDigestRegularMetadata,
+  IPreferenceChannels,
+  PreferencesTypeEnum,
+  ResourceTypeEnum,
+  StepTypeEnum,
+} from '@novu/shared';
+import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteStepCustom } from './execute-step-custom.usecase';
-import { ExecuteBridgeJob } from '../execute-bridge-job';
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageChat } from './send-message-chat.usecase';
+import { SendMessageDelay } from './send-message-delay.usecase';
+import { SendMessageEmail } from './send-message-email.usecase';
+import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessagePush } from './send-message-push.usecase';
+import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
@@ -65,7 +62,6 @@ export class SendMessage {
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
     private executeStepCustom: ExecuteStepCustom,
     private conditionsFilter: ConditionsFilter,
@@ -109,8 +105,6 @@ export class SendMessage {
     }
 
     if (!stepCondition?.passed || !channelPreference || isBridgeSkipped) {
-      await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
-
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -134,7 +128,7 @@ export class SendMessage {
         })
       );
 
-      return { status: 'skippedByConditionsOrPreferences' };
+      return { status: 'skipped' };
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
@@ -160,7 +154,7 @@ export class SendMessage {
       );
     }
 
-    const sendMessageCommand = SendMessageCommand.create({
+    const sendMessageChannelCommand = SendMessageChannelCommand.create({
       ...command,
       compileContext: payload,
       bridgeData: bridgeResponse,
@@ -171,19 +165,19 @@ export class SendMessage {
         return { status: 'success' };
       }
       case StepTypeEnum.SMS: {
-        return await this.sendMessageSms.execute(sendMessageCommand);
+        return await this.sendMessageSms.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.IN_APP: {
-        return await this.sendMessageInApp.execute(sendMessageCommand);
+        return await this.sendMessageInApp.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.EMAIL: {
-        return await this.sendMessageEmail.execute(sendMessageCommand);
+        return await this.sendMessageEmail.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.CHAT: {
-        return await this.sendMessageChat.execute(sendMessageCommand);
+        return await this.sendMessageChat.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.PUSH: {
-        return await this.sendMessagePush.execute(sendMessageCommand);
+        return await this.sendMessagePush.execute(sendMessageChannelCommand);
       }
       case StepTypeEnum.DIGEST: {
         return await this.digest.execute(command);
@@ -192,7 +186,7 @@ export class SendMessage {
         return await this.sendMessageDelay.execute(command);
       }
       case StepTypeEnum.CUSTOM: {
-        return await this.executeStepCustom.execute(sendMessageCommand);
+        return await this.executeStepCustom.execute(sendMessageChannelCommand);
       }
       default: {
         throw new Error(`Unsupported step type: ${stepType}`);
@@ -374,7 +368,7 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async buildCompileContext(command: SendMessageCommand): Promise<IFilterVariables> {
+  private async buildCompileContext(command: SendMessageCommand): Promise<SendMessageChannelCommand['compileContext']> {
     const [subscriber, actor, tenant] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
