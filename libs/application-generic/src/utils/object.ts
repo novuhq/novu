@@ -2,10 +2,7 @@ import { Logger } from '@nestjs/common';
 
 const LOG_CONTEXT = 'GetNestedValue';
 
-export function getNestedValue<ObjectType>(
-  payload: ObjectType,
-  path?: string,
-): ObjectType | undefined {
+export function getNestedValue<ObjectType>(payload: ObjectType, path?: string): ObjectType | undefined {
   if (!path || !payload) {
     return undefined;
   }
@@ -23,11 +20,7 @@ export function getNestedValue<ObjectType>(
 
     return result;
   } catch (error) {
-    Logger.error(
-      error,
-      'Failure when parsing digest payload nested key',
-      LOG_CONTEXT,
-    );
+    Logger.error(error, 'Failure when parsing digest payload nested key', LOG_CONTEXT);
 
     return undefined;
   }

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '../context/environment/hooks';
 import { setAsPrimaryIntegration } from '../api/integrations';
+import { useEnvironment } from '../context/environment/hooks';
 import { QueryKeys } from '../utils/query-keys';
 
 type SetPrimaryIntegrationParams = {

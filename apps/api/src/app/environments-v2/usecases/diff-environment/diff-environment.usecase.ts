@@ -1,13 +1,13 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { UserSessionData } from '@novu/shared';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { BaseRepository, ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
-import { DiffEnvironmentCommand } from './diff-environment.command';
-import { ISyncStrategy, IEnvironmentDiffResult, IDiffResult } from '../../types/sync.types';
-import { EnvironmentValidationService, DependencyAnalyzerService } from '../../services';
-import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
-import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
+import { UserSessionData } from '@novu/shared';
 import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
+import { DependencyAnalyzerService, EnvironmentValidationService } from '../../services';
+import { IDiffResult, IEnvironmentDiffResult, ISyncStrategy } from '../../types/sync.types';
+import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
+import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
+import { DiffEnvironmentCommand } from './diff-environment.command';
 
 @Injectable()
 export class DiffEnvironmentUseCase {

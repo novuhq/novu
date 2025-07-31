@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -9,10 +10,9 @@ import {
   Post,
   Query,
   UseGuards,
-  Headers,
 } from '@nestjs/common';
-import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { SubscriberEntity } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -21,53 +21,52 @@ import {
   TriggerRequestCategoryEnum,
   UserSessionData,
 } from '@novu/shared';
-
-import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
-import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
-import { SessionCommand } from './usecases/session/session.command';
-import { Session } from './usecases/session/session.usecase';
+import { TriggerEventRequestDto } from '../events/dtos';
+import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
+import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
+import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
-import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
-import { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
-import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
-import { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
+import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
+import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
 import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
 import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
-import { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
-import { NotificationsCountCommand } from './usecases/notifications-count/notifications-count.command';
-import type { InboxNotification, InboxPreference } from './utils/types';
+import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
+import { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
+import { GetPreferencesRequestDto } from './dtos/get-preferences-request.dto';
+import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
+import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
+import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
+import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
+import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
+import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
+import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
+import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
+import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
+import { GetInboxPreferencesCommand } from './usecases/get-inbox-preferences/get-inbox-preferences.command';
+import { GetInboxPreferences } from './usecases/get-inbox-preferences/get-inbox-preferences.usecase';
+import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
+import { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
 import { MarkNotificationAsCommand } from './usecases/mark-notification-as/mark-notification-as.command';
 import { MarkNotificationAs } from './usecases/mark-notification-as/mark-notification-as.usecase';
-import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
-import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
-import { UpdateNotificationActionCommand } from './usecases/update-notification-action/update-notification-action.command';
-import { UpdateAllNotificationsRequestDto } from './dtos/update-all-notifications-request.dto';
-import { UpdateAllNotificationsCommand } from './usecases/update-all-notifications/update-all-notifications.command';
-import { UpdateAllNotifications } from './usecases/update-all-notifications/update-all-notifications.usecase';
-import { GetInboxPreferences } from './usecases/get-inbox-preferences/get-inbox-preferences.usecase';
-import { GetInboxPreferencesCommand } from './usecases/get-inbox-preferences/get-inbox-preferences.command';
-import { GetPreferencesResponseDto } from './dtos/get-preferences-response.dto';
-import { UpdatePreferencesRequestDto } from './dtos/update-preferences-request.dto';
-import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
-import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
-import { GetPreferencesRequestDto } from './dtos/get-preferences-request.dto';
-import { SnoozeNotificationRequestDto } from './dtos/snooze-notification-request.dto';
+import { MarkNotificationsAsSeenCommand } from './usecases/mark-notifications-as-seen/mark-notifications-as-seen.command';
+import { MarkNotificationsAsSeen } from './usecases/mark-notifications-as-seen/mark-notifications-as-seen.usecase';
+import { NotificationsCountCommand } from './usecases/notifications-count/notifications-count.command';
+import { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
+import { SessionCommand } from './usecases/session/session.command';
+import { Session } from './usecases/session/session.usecase';
 import { SnoozeNotificationCommand } from './usecases/snooze-notification/snooze-notification.command';
 import { SnoozeNotification } from './usecases/snooze-notification/snooze-notification.usecase';
 import { UnsnoozeNotificationCommand } from './usecases/unsnooze-notification/unsnooze-notification.command';
 import { UnsnoozeNotification } from './usecases/unsnooze-notification/unsnooze-notification.usecase';
-import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
-import { BulkUpdatePreferences } from './usecases/bulk-update-preferences/bulk-update-preferences.usecase';
-import { BulkUpdatePreferencesCommand } from './usecases/bulk-update-preferences/bulk-update-preferences.command';
-import { MarkNotificationsAsSeenRequestDto } from './dtos/mark-notifications-as-seen-request.dto';
-import { MarkNotificationsAsSeen } from './usecases/mark-notifications-as-seen/mark-notifications-as-seen.usecase';
-import { MarkNotificationsAsSeenCommand } from './usecases/mark-notifications-as-seen/mark-notifications-as-seen.command';
-import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
-import { TriggerEventResponseDto } from '../events/dtos/trigger-event-response.dto';
-import { TriggerEventRequestDto } from '../events/dtos';
-import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-event-request.usecase';
-import { ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
+import { UpdateAllNotificationsCommand } from './usecases/update-all-notifications/update-all-notifications.command';
+import { UpdateAllNotifications } from './usecases/update-all-notifications/update-all-notifications.usecase';
+import { UpdateNotificationActionCommand } from './usecases/update-notification-action/update-notification-action.command';
+import { UpdateNotificationAction } from './usecases/update-notification-action/update-notification-action.usecase';
+import { UpdatePreferencesCommand } from './usecases/update-preferences/update-preferences.command';
+import { UpdatePreferences } from './usecases/update-preferences/update-preferences.usecase';
+import type { InboxNotification, InboxPreference } from './utils/types';
 
 @ApiCommonResponses()
 @Controller('/inbox')

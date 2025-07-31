@@ -1,10 +1,10 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useQueryClient } from '@tanstack/react-query';
 
 import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { QueryKeys } from '@/utils/query-keys';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 export const useSubscribersNavigate = () => {
   const location = useLocation();

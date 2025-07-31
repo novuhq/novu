@@ -1,11 +1,11 @@
+import { useState } from 'react';
+import { RiAlertFill, RiArrowRightSLine, RiSidebarUnfoldLine, RiTranslate2 } from 'react-icons/ri';
 import { Dot, StatusBadge } from '@/components/primitives/status-badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
 import { useFetchTranslationGroup } from '@/hooks/use-fetch-translation-group';
 import { useIsTranslationEnabled } from '@/hooks/use-is-translation-enabled';
 import { LocalizationResourceEnum } from '@/types/translations';
-import { useState } from 'react';
-import { RiAlertFill, RiArrowRightSLine, RiSidebarUnfoldLine, RiTranslate2 } from 'react-icons/ri';
 
 type WorkflowTranslationStatusProps = {
   workflowId: string;

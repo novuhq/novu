@@ -1,15 +1,15 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   buildFeedKey,
   buildMessageCountKey,
-  InvalidateCacheService,
-  WebSocketsQueueService,
-  TraceLogRepository,
-  PinoLogger,
-  mapEventTypeToTitle,
-  LogRepository,
-  Trace,
   EventType,
+  InvalidateCacheService,
+  LogRepository,
+  mapEventTypeToTitle,
+  PinoLogger,
+  Trace,
+  TraceLogRepository,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';

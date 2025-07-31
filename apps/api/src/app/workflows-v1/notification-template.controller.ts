@@ -11,38 +11,37 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   buildWorkflowPreferencesFromPreferenceChannels,
   DEFAULT_WORKFLOW_PREFERENCES,
-  UserSessionData,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  UserSessionData,
 } from '@novu/shared';
-
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { UserSession } from '../shared/framework/user.decorator';
-import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
-import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
-import { ChangeWorkflowStatusRequestDto, CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from './dtos';
-import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
-import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
-import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
-import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
-import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
+import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
+import { UserSession } from '../shared/framework/user.decorator';
+import { ChangeWorkflowStatusRequestDto, CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from './dtos';
 import { WorkflowResponse } from './dtos/workflow-response.dto';
 import { WorkflowsResponseDto } from './dtos/workflows.response.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dtos/workflows-request.dto';
-import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
-import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
-import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { CreateWorkflow } from './usecases/create-workflow/create-workflow.usecase';
+import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
+import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { CreateWorkflowCommand } from './usecases/create-workflow/create-workflow.command';
-import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.usecase';
+import { CreateWorkflow } from './usecases/create-workflow/create-workflow.usecase';
+import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
+import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
+import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
+import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
+import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
+import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { UpdateWorkflowCommand } from './usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow } from './usecases/update-workflow/update-workflow.usecase';
 
 /**
  * @deprecated use controller in /workflows directory

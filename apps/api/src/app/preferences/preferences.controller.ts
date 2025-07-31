@@ -8,6 +8,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import {
   DeletePreferencesCommand,
   DeletePreferencesUseCase,
@@ -18,7 +19,6 @@ import {
   UserSession,
 } from '@novu/application-generic';
 import { PreferencesTypeEnum, UserSessionData } from '@novu/shared';
-import { ApiExcludeController } from '@nestjs/swagger';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { UpsertPreferencesDto } from './dtos/upsert-preferences.dto';
 

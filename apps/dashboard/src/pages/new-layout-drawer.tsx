@@ -1,9 +1,9 @@
+import { DuplicateLayoutDto, LayoutCreationSourceEnum } from '@novu/shared';
 import { useState } from 'react';
-import { ExternalToast } from 'sonner';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { DuplicateLayoutDto, LayoutCreationSourceEnum } from '@novu/shared';
-
+import { ExternalToast } from 'sonner';
+import { CreateLayoutForm } from '@/components/layouts/create-layout-form';
 import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -15,19 +15,18 @@ import {
   SheetMain,
   SheetTitle,
 } from '@/components/primitives/sheet';
-import { ExternalLink } from '@/components/shared/external-link';
-import { CreateLayoutForm } from '@/components/layouts/create-layout-form';
-import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { useFetchLayout } from '@/hooks/use-fetch-layout';
-import { useDuplicateLayout } from '@/hooks/use-duplicate-layout';
-import { showErrorToast, showSuccessToast, showToast } from '@/components/primitives/sonner-helpers';
-import { ToastIcon } from '@/components/primitives/sonner';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { useCreateLayout } from '@/hooks/use-create-layout';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { ToastIcon } from '@/components/primitives/sonner';
+import { showErrorToast, showSuccessToast, showToast } from '@/components/primitives/sonner-helpers';
+import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useCreateLayout } from '@/hooks/use-create-layout';
+import { useDuplicateLayout } from '@/hooks/use-duplicate-layout';
+import { useFetchLayout } from '@/hooks/use-fetch-layout';
+import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 type NewLayoutDrawerProps = {
   mode: 'create' | 'duplicate';

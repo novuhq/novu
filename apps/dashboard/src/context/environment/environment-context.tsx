@@ -1,5 +1,5 @@
-import React from 'react';
 import type { IEnvironment } from '@novu/shared';
+import React from 'react';
 
 export type EnvironmentContextValue = {
   currentEnvironment?: IEnvironment;

@@ -1,14 +1,14 @@
+import { NotificationTemplateEntity, StepFilter } from '@novu/dal';
 import {
-  IEmailBlock,
-  ITemplateVariable,
-  StepTypeEnum,
-  IPreferenceChannels,
+  ActorTypeEnum,
+  DelayTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
-  DelayTypeEnum,
-  ActorTypeEnum,
+  IEmailBlock,
+  IPreferenceChannels,
+  ITemplateVariable,
+  StepTypeEnum,
 } from '@novu/shared';
-import { NotificationTemplateEntity, StepFilter } from '@novu/dal';
 
 interface IVariant {
   cta?: {};
@@ -48,7 +48,6 @@ interface IStep extends IVariant {
   variants?: IStep[];
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface CreateTemplatePayload extends Omit<NotificationTemplateEntity, 'steps'> {
   noFeedId?: boolean;
   noLayoutId?: boolean;

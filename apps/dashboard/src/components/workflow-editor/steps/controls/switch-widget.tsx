@@ -1,10 +1,10 @@
-import { useMemo } from 'react';
 import { type WidgetProps } from '@rjsf/utils';
+import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
 import { Switch } from '@/components/primitives/switch';
-import { capitalize } from '@/utils/string';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { capitalize } from '@/utils/string';
 import { getFieldName } from './template-utils';
 
 export function SwitchWidget(props: WidgetProps) {

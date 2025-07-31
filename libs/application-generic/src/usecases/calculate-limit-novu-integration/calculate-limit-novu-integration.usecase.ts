@@ -1,41 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { startOfMonth, endOfMonth } from 'date-fns';
 import { MessageRepository } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  SmsProviderIdEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { endOfMonth, startOfMonth } from 'date-fns';
 
-import {
-  areNovuEmailCredentialsSet,
-  areNovuSmsCredentialsSet,
-} from '../../utils/novu-integrations';
+import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '../../utils/novu-integrations';
 import { CalculateLimitNovuIntegrationCommand } from './calculate-limit-novu-integration.command';
 
 @Injectable()
 export class CalculateLimitNovuIntegration {
   constructor(private messageRepository: MessageRepository) {}
 
-  static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(
-    process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300',
-    10,
-  );
+  static MAX_NOVU_INTEGRATION_MAIL_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_MAIL_REQUESTS || '300', 10);
 
-  static MAX_NOVU_INTEGRATION_SMS_REQUESTS = parseInt(
-    process.env.MAX_NOVU_INTEGRATION_SMS_REQUESTS || '20',
-    10,
-  );
+  static MAX_NOVU_INTEGRATION_SMS_REQUESTS = parseInt(process.env.MAX_NOVU_INTEGRATION_SMS_REQUESTS || '20', 10);
 
-  async execute(
-    command: CalculateLimitNovuIntegrationCommand,
-  ): Promise<{ limit: number; count: number } | undefined> {
+  async execute(command: CalculateLimitNovuIntegrationCommand): Promise<{ limit: number; count: number } | undefined> {
     const { channelType } = command;
 
-    if (
-      channelType === ChannelTypeEnum.EMAIL &&
-      !areNovuEmailCredentialsSet()
-    ) {
+    if (channelType === ChannelTypeEnum.EMAIL && !areNovuEmailCredentialsSet()) {
       return;
     }
 
@@ -63,7 +45,7 @@ export class CalculateLimitNovuIntegration {
           $lte: endOfMonth(new Date()),
         },
       },
-      limit,
+      limit
     );
 
     return {

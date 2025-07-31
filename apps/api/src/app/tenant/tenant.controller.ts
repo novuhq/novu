@@ -14,21 +14,23 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-
-import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
 import {
   CreateTenant,
   CreateTenantCommand,
+  FeatureFlagsService,
   GetTenant,
   GetTenantCommand,
   UpdateTenant,
   UpdateTenantCommand,
-  FeatureFlagsService,
 } from '@novu/application-generic';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
 import { EnvironmentEntity, OrganizationEntity, UserEntity } from '@novu/dal';
-import { UserSession } from '../shared/framework/user.decorator';
+import { ApiRateLimitCategoryEnum, FeatureFlagsKeysEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ThrottlerCategory } from '../rate-limiting/guards';
+import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
+import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
 import {
   ApiCommonResponses,
   ApiConflictResponse,
@@ -36,12 +38,8 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
-import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
-import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
-import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
-import { GetTenants } from './usecases/get-tenants/get-tenants.usecase';
-import { GetTenantsCommand } from './usecases/get-tenants/get-tenants.command';
+import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
 import {
   CreateTenantRequestDto,
   CreateTenantResponseDto,
@@ -50,10 +48,10 @@ import {
   UpdateTenantRequestDto,
   UpdateTenantResponseDto,
 } from './dtos';
-import { ThrottlerCategory } from '../rate-limiting/guards';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
-
-import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
+import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
+import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
+import { GetTenantsCommand } from './usecases/get-tenants/get-tenants.command';
+import { GetTenants } from './usecases/get-tenants/get-tenants.usecase';
 
 const v2TenantsApiDescription = ' Tenants is not supported in code first version of the API.';
 

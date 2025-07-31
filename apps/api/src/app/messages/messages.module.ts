@@ -1,11 +1,11 @@
 import { forwardRef, Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { SharedModule } from '../shared/shared.module';
-import { USE_CASES } from './usecases';
-import { MessagesController } from './messages.controller';
 import { AuthModule } from '../auth/auth.module';
-import { WidgetsModule } from '../widgets/widgets.module';
+import { SharedModule } from '../shared/shared.module';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
+import { WidgetsModule } from '../widgets/widgets.module';
+import { MessagesController } from './messages.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, SubscribersV1Module, AuthModule, TerminusModule, forwardRef(() => WidgetsModule)],

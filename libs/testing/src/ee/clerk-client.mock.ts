@@ -1,11 +1,11 @@
 import type { Organization, OrganizationMembership, User } from '@clerk/backend';
-import type { UserAPI, OrganizationAPI } from '@clerk/backend/dist/api/endpoints';
+import type { OrganizationAPI, UserAPI } from '@clerk/backend/dist/api/endpoints';
 import {
+  CLERK_ORGANIZATION_1,
+  CLERK_ORGANIZATION_1_MEMBERSHIP_1,
+  CLERK_ORGANIZATION_2,
   CLERK_USER_1,
   CLERK_USER_2,
-  CLERK_ORGANIZATION_1,
-  CLERK_ORGANIZATION_2,
-  CLERK_ORGANIZATION_1_MEMBERSHIP_1,
 } from './clerk-mock-data';
 
 export class ClerkClientMock {

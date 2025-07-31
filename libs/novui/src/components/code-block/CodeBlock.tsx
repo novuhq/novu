@@ -1,11 +1,11 @@
-import { CodeHighlightProps as ExternalCodeProps, CodeHighlight as ExternalCode } from '@mantine/code-highlight';
+import { CodeHighlight as ExternalCode, CodeHighlightProps as ExternalCodeProps } from '@mantine/code-highlight';
 import React from 'react';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { codeBlock, CodeBlockVariantProps } from '../../../styled-system/recipes';
+import { CodeBlockVariantProps, codeBlock } from '../../../styled-system/recipes';
 import type { JsxStyleProps } from '../../../styled-system/types';
 import { CoreProps } from '../../types';
-import { PolymorphicComponentPropWithRef, PolymorphicRef, forwardRefWithAs } from '../../types/props-helpers';
+import { forwardRefWithAs, PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
 
 // TODO: use @mantine/code-highlight/styles.layer.css instead
 import '@mantine/code-highlight/styles.css';
@@ -33,23 +33,24 @@ type PolymorphicComponent = <C extends React.ElementType = CodeBlockElement>(
  * - no line numbers are built-in to Highlight JS
  *
  */
-export const CodeBlock: PolymorphicComponent = forwardRefWithAs<CodeBlockElement, JsxStyleProps & CodeBlockVariantProps & CoreProps & CodeBlockCoreProps>(
-  <C extends React.ElementType = CodeBlockElement>(props: CodeBlockProps<C>, ref?: PolymorphicRef<C>) => {
-    const [variantProps, codeBlockProps] = codeBlock.splitVariantProps(props);
-    const [cssProps, localProps] = splitCssProps(codeBlockProps);
-    const { className, as, code, ...otherProps } = localProps;
-    const classNames = codeBlock(variantProps);
-    const Component = props.as || DEFAULT_CODE_BLOCK_ELEMENT;
+export const CodeBlock: PolymorphicComponent = forwardRefWithAs<
+  CodeBlockElement,
+  JsxStyleProps & CodeBlockVariantProps & CoreProps & CodeBlockCoreProps
+>(<C extends React.ElementType = CodeBlockElement>(props: CodeBlockProps<C>, ref?: PolymorphicRef<C>) => {
+  const [variantProps, codeBlockProps] = codeBlock.splitVariantProps(props);
+  const [cssProps, localProps] = splitCssProps(codeBlockProps);
+  const { className, as, code, ...otherProps } = localProps;
+  const classNames = codeBlock(variantProps);
+  const Component = props.as || DEFAULT_CODE_BLOCK_ELEMENT;
 
-    return (
-      <ExternalCode
-        ref={ref}
-        component={Component}
-        classNames={classNames}
-        className={cx(css(cssProps), className)}
-        code={code}
-        {...otherProps}
-      />
-    );
-  }
-);
+  return (
+    <ExternalCode
+      ref={ref}
+      component={Component}
+      classNames={classNames}
+      className={cx(css(cssProps), className)}
+      code={code}
+      {...otherProps}
+    />
+  );
+});

@@ -1,9 +1,9 @@
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum } from '@novu/shared';
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 
 @Controller('/rate-limiting')
 @RequireAuthentication()

@@ -13,9 +13,7 @@ describe('MetricsService', () => {
         NewRelicMetricsService,
         {
           provide: 'MetricsServices',
-          useFactory: (newRelicMetricsService: NewRelicMetricsService) => [
-            newRelicMetricsService,
-          ],
+          useFactory: (newRelicMetricsService: NewRelicMetricsService) => [newRelicMetricsService],
           inject: [NewRelicMetricsService],
         },
       ],
@@ -33,10 +31,7 @@ describe('MetricsService', () => {
       const metricName = 'testMetric';
       const metricValue = 123;
 
-      const spyNewRelic = jest.spyOn(
-        NewRelicMetricsService.prototype,
-        'recordMetric',
-      );
+      const spyNewRelic = jest.spyOn(NewRelicMetricsService.prototype, 'recordMetric');
       service.recordMetric(metricName, metricValue);
 
       expect(spyNewRelic).toHaveBeenCalledWith(metricName, metricValue);
@@ -47,11 +42,7 @@ describe('MetricsService', () => {
     const createServices = async () =>
       (
         (await Test.createTestingModule({
-          providers: [
-            metricsServiceList,
-            MetricsService,
-            NewRelicMetricsService,
-          ],
+          providers: [metricsServiceList, MetricsService, NewRelicMetricsService],
         }).compile()) as TestingModule
       ).get<IMetricsService[]>('MetricsServices');
 
@@ -60,12 +51,7 @@ describe('MetricsService', () => {
         process.env.NEW_RELIC_LICENSE_KEY = 'test';
         const metricsServices = await createServices();
 
-        expect(
-          metricsServices.some(
-            (metricsService) =>
-              metricsService instanceof NewRelicMetricsService,
-          ),
-        ).toBe(true);
+        expect(metricsServices.some((metricsService) => metricsService instanceof NewRelicMetricsService)).toBe(true);
         delete process.env.NEW_RELIC_LICENSE_KEY;
       });
     });

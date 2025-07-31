@@ -5,9 +5,7 @@ export const metricsServiceList = {
   useFactory: (newRelicMetricsService: NewRelicMetricsService) => {
     const allMetricsServices = [newRelicMetricsService];
 
-    const activeMetricsServices = allMetricsServices.filter((service) =>
-      service.isActive(process.env),
-    );
+    const activeMetricsServices = allMetricsServices.filter((service) => service.isActive(process.env));
 
     return activeMetricsServices;
   },

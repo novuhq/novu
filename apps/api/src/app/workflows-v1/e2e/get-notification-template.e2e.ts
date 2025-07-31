@@ -1,7 +1,7 @@
-import { expect } from 'chai';
-import { NotificationTemplateService, UserSession } from '@novu/testing';
-import { ChannelCTATypeEnum, INotificationTemplate, INotificationTemplateStep, StepTypeEnum } from '@novu/shared';
 import { PreferencesRepository } from '@novu/dal';
+import { ChannelCTATypeEnum, INotificationTemplate, INotificationTemplateStep, StepTypeEnum } from '@novu/shared';
+import { NotificationTemplateService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { CreateWorkflowRequestDto } from '../dtos';
 
 describe('Get workflow by id - /workflows/:workflowId (GET) #novu-v0', async () => {
@@ -12,7 +12,7 @@ describe('Get workflow by id - /workflows/:workflowId (GET) #novu-v0', async () 
     await session.initialize();
   });
 
-  it('should return the workflow by its id', async function () {
+  it('should return the workflow by its id', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,

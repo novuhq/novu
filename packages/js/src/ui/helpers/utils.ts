@@ -1,5 +1,5 @@
 import clsx, { ClassValue } from 'clsx';
-import { extendTailwindMerge, type ClassNameValue } from 'tailwind-merge';
+import { type ClassNameValue, extendTailwindMerge } from 'tailwind-merge';
 import type { CSSProperties, Elements, Tab, Variables } from '../types';
 
 const twMerge = extendTailwindMerge({
@@ -163,7 +163,6 @@ export function generateBorderRadiusRules(props: { id: string; baseRadius: strin
   const rules: string[] = [];
 
   Object.entries(radiusRatios).forEach(([key, ratio]) => {
-    // eslint-disable-next-line no-nested-ternary
     const value = key === 'none' ? '0px' : key === 'full' ? '9999px' : `calc(${baseRadius} * ${ratio})`;
 
     const cssVariableRule = `.${id} { --nv-radius-${key}: ${value}; }`;

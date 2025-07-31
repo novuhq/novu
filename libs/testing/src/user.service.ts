@@ -1,11 +1,10 @@
 import { faker } from '@faker-js/faker';
-import { UserEntity, CommunityUserRepository } from '@novu/dal';
+import { CommunityUserRepository, UserEntity } from '@novu/dal';
 import { normalizeEmail } from '@novu/shared';
 import { hash } from 'bcrypt';
-
+import { TEST_USER_PASSWORD } from './constants';
 import { EnvironmentService } from './environment.service';
 import { OrganizationService } from './organization.service';
-import { TEST_USER_PASSWORD } from './constants';
 
 export class UserService {
   private environmentService = new EnvironmentService();

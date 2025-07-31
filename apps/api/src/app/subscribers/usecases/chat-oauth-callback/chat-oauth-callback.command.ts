@@ -1,4 +1,5 @@
 import { BaseCommand } from '@novu/application-generic';
+import { ChatProviderIdEnum } from '@novu/shared';
 import {
   IsEnum,
   IsMongoId,
@@ -8,10 +9,9 @@ import {
   ValidationArguments,
   ValidationOptions,
 } from 'class-validator';
-import { ChatProviderIdEnum } from '@novu/shared';
 
 export function IsNotEmpty(validationOptions?: ValidationOptions) {
-  return function (object: object, propertyName: string) {
+  return (object: object, propertyName: string) => {
     registerDecorator({
       name: 'isNotEmpty',
       target: object.constructor,

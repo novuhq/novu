@@ -1,6 +1,6 @@
+import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
-import { ContentIssueEnum, RuntimeIssue, StepTypeEnum } from '@novu/shared';
 
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { capitalize } from '../services/helper/helper.service';
@@ -155,10 +155,8 @@ export const processControlValuesByLiquid = ({
     if (liquidTemplateIssues.invalidVariables.length > 0) {
       const controlKey = currentPath.join('.');
 
-      // eslint-disable-next-line no-param-reassign
       issues.controls = issues.controls || {};
 
-      // eslint-disable-next-line no-param-reassign
       issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
         const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
         if ('filterMessage' in invalidVariable) {
@@ -179,9 +177,7 @@ export const processControlValuesByLiquid = ({
       const contentControlKey = currentPath.join('.');
       const contentIssue = validateContentCompilation(contentControlKey, currentValue);
       if (contentIssue) {
-        // eslint-disable-next-line no-param-reassign
         issues.controls = issues.controls || {};
-        // eslint-disable-next-line no-param-reassign
         issues.controls[contentControlKey] = [contentIssue];
 
         return;

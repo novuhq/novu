@@ -1,7 +1,7 @@
-import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
-import { StepTypeEnum, WorkflowCreationSourceEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { LocalizationResourceEnum } from '@novu/dal';
+import { ApiServiceLevelEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { initNovuClassSdkInternalAuth } from '../../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Delete translation group - /v2/translations/:resourceType/:resourceId (DELETE) #novu-v2', async () => {

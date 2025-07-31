@@ -1,12 +1,12 @@
-import { DalService } from '@novu/dal';
 import { forwardRef } from '@nestjs/common';
+import { DalService } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import {
   AnalyticsService,
   CacheInMemoryProviderService,
   CacheService,
-  FeatureFlagsService,
   ClickHouseService,
+  FeatureFlagsService,
 } from '../services';
 
 export const featureFlagsService = {

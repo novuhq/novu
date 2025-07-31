@@ -1,6 +1,6 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { Badge } from '@/components/primitives/badge';
 import { Card } from '@/components/primitives/card';
-import { ApiServiceLevelEnum } from '@novu/shared';
 
 export interface HighlightsRowParams {
   highlightsArray: Partial<PlanHighlights>;

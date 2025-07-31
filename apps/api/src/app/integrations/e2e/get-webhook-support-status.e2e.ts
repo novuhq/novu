@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -8,9 +7,10 @@ import {
   PushProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
-describe('Get Webhook Support Status - /webhook/provider/:providerOrIntegrationId/status (GET) #novu-v0', function () {
+describe('Get Webhook Support Status - /webhook/provider/:providerOrIntegrationId/status (GET) #novu-v0', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 

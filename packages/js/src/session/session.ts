@@ -1,7 +1,7 @@
-import { isBrowser } from '../utils/is-browser';
-import { NovuEventEmitter } from '../event-emitter';
-import { InitializeSessionArgs } from './types';
 import type { InboxService } from '../api';
+import { NovuEventEmitter } from '../event-emitter';
+import { isBrowser } from '../utils/is-browser';
+import { InitializeSessionArgs } from './types';
 
 export class Session {
   #emitter: NovuEventEmitter;

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',

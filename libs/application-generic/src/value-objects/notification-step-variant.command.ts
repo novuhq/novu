@@ -1,9 +1,9 @@
 import { IStepVariant, IWorkflowStepMetadata } from '@novu/shared';
-import { IsArray, IsBoolean, IsMongoId, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { StepIssues } from './step.issues';
+import { IsArray, IsBoolean, IsMongoId, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { IStepControl } from './i-step.control';
 import { MessageFilter } from './message.filter';
+import { StepIssues } from './step.issues';
 
 export class NotificationStepVariantCommand implements IStepVariant {
   @IsString()

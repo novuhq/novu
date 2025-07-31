@@ -1,6 +1,6 @@
 import { Novu, NovuOptions } from '@novu/js';
 import { buildSubscriber } from '@novu/js/internal';
-import { ReactNode, createContext, useContext, useMemo, useEffect } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useMemo } from 'react';
 
 // @ts-ignore
 const version = PACKAGE_VERSION;

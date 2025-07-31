@@ -1,6 +1,6 @@
-import { IsAllowedVariable } from '@/utils/parseStepVariables';
 import { EditorView } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
+import { IsAllowedVariable } from '@/utils/parseStepVariables';
 
 export type PluginState = {
   viewRef: MutableRefObject<EditorView | null>;

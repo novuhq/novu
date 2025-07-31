@@ -1,9 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-
-import { createLayout } from './helpers';
-
 import { LayoutDto } from '../dtos';
+import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
 
@@ -110,7 +108,7 @@ describe('Layout update - /layouts (PATCH) #novu-v0', async () => {
     expect(updateResponse.body.statusCode).to.eql(409);
   });
 
-  it('should throw error for an update of layout identifier that already exists in the environment', async function () {
+  it('should throw error for an update of layout identifier that already exists in the environment', async () => {
     const updatedLayoutIdentifier = 'second-layout-identifier-update';
 
     await createLayout(session, 'second-layout-name-update', false, updatedLayoutIdentifier);

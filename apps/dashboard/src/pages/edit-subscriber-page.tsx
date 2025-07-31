@@ -1,10 +1,10 @@
-import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
-import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
-import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
+import { PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { PermissionsEnum } from '@novu/shared';
+import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
+import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 
 export function EditSubscriberPage() {
   const { subscriberId } = useParams<{ subscriberId: string }>();

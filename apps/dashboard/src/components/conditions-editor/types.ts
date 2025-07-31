@@ -1,4 +1,4 @@
-import { BaseOption, RuleGroupTypeAny, RuleType, Path } from 'react-querybuilder';
+import { BaseOption, Path, RuleGroupTypeAny, RuleType } from 'react-querybuilder';
 
 export interface ConditionsEditorContextType {
   removeRuleOrGroup: (path: Path) => void;

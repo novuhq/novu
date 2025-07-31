@@ -1,2 +1,2 @@
-export * from './parseMarkdown';
 export * from './buildSubscriber';
+export * from './parseMarkdown';

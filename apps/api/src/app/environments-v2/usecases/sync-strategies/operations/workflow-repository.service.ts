@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
+import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 
 @Injectable()
 export class WorkflowRepositoryService {

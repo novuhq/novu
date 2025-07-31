@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ExecutionDetailsRepository, ExecutionDetailsEntity } from '@novu/dal';
+import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { EntityType, EventType, TraceLogRepository } from '../../services/analytic-logs/trace-log';
-
-import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
-import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { LogRepository } from '../../services';
+import { EntityType, EventType, TraceLogRepository } from '../../services/analytic-logs/trace-log';
+import { CreateExecutionDetailsCommand } from './create-execution-details.command';
+import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
 
 // Using satisfies ensures all DetailEnum values are mapped at compile time

@@ -1,6 +1,5 @@
 import { JSX } from 'solid-js';
 
-/* eslint-disable max-len */
 export function Key(props?: JSX.HTMLAttributes<SVGSVGElement>) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" {...props}>

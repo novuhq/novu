@@ -1,11 +1,10 @@
-import { SoftDeleteModel } from 'mongoose-delete';
 import { ControlValuesLevelEnum } from '@novu/shared';
-import { ControlValuesModel, ControlValues } from './control-values.schema';
-import { ControlValuesEntity } from './control-values.entity';
-import { BaseRepository } from '../base-repository';
+import { SoftDeleteModel } from 'mongoose-delete';
 import { EnforceEnvOrOrgIds } from '../../types';
+import { BaseRepository } from '../base-repository';
+import { ControlValuesEntity } from './control-values.entity';
+import { ControlValues, ControlValuesModel } from './control-values.schema';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface DeleteManyValuesQuery {
   _environmentId: string;
   _organizationId: string;
@@ -15,7 +14,6 @@ export interface DeleteManyValuesQuery {
   level?: ControlValuesLevelEnum;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface FindControlValuesQuery {
   _environmentId: string;
   _organizationId: string;

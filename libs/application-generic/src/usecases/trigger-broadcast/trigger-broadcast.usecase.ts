@@ -5,10 +5,10 @@ import { SubscriberSourceEnum } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
+import { CacheService, FeatureFlagsService } from '../../services';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
-import { CacheService, FeatureFlagsService } from '../../services';
 
 const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 

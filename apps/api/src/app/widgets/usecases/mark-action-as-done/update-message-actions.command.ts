@@ -1,5 +1,5 @@
-import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class UpdateMessageActionsCommand extends EnvironmentWithSubscriber {
@@ -13,5 +13,5 @@ export class UpdateMessageActionsCommand extends EnvironmentWithSubscriber {
   status: MessageActionStatusEnum;
 
   @IsOptional()
-  payload?: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload?: any;
 }

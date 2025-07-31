@@ -1,11 +1,11 @@
-import React, { FormEventHandler } from 'react';
-import { StoryFn, Meta } from '@storybook/react';
 import { RJSFSchema } from '@rjsf/utils';
-import { JsonSchemaForm } from './JsonSchemaForm';
-import { HStack } from '../../styled-system/jsx';
-import { IconOutlineSave } from '../icons';
-import { Title, Button } from '../components';
+import { Meta, StoryFn } from '@storybook/react';
+import React, { FormEventHandler } from 'react';
 import { css } from '../../styled-system/css';
+import { HStack } from '../../styled-system/jsx';
+import { Button, Title } from '../components';
+import { IconOutlineSave } from '../icons';
+import { JsonSchemaForm } from './JsonSchemaForm';
 
 export default {
   title: 'Components/JsonSchemaForm',

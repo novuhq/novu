@@ -1,13 +1,13 @@
-import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
-import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
-import { RemoveSubscriber } from './remove-subscriber.usecase';
-import { RemoveSubscriberCommand } from './remove-subscriber.command';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { SharedModule } from '../../../shared/shared.module';
 import { SubscribersV1Module } from '../../subscribersV1.module';
+import { RemoveSubscriberCommand } from './remove-subscriber.command';
+import { RemoveSubscriber } from './remove-subscriber.usecase';
 
-describe('Remove Subscriber', function () {
+describe('Remove Subscriber', () => {
   let useCase: RemoveSubscriber;
   let session: UserSession;
 
@@ -23,7 +23,7 @@ describe('Remove Subscriber', function () {
     useCase = moduleRef.get<RemoveSubscriber>(RemoveSubscriber);
   });
 
-  it('should remove a subscriber', async function () {
+  it('should remove a subscriber', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
 

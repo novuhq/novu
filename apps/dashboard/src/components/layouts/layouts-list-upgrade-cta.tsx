@@ -1,7 +1,11 @@
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { RiArrowRightSLine, RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
+import { formatDateSimple } from '@/utils/format-date';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { openInNewTab } from '@/utils/url';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { Badge } from '../primitives/badge';
@@ -10,14 +14,10 @@ import { LinkButton } from '../primitives/button-link';
 import { CopyButton } from '../primitives/copy-button';
 import { Separator } from '../primitives/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../primitives/table';
-import TruncatedText from '../truncated-text';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { openInNewTab } from '@/utils/url';
-import { EmptyLayoutsIllustration } from './empty-layouts-illustration';
-import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
-import { useLayoutsUrlState } from './hooks/use-layouts-url-state';
-import { formatDateSimple } from '@/utils/format-date';
 import { TimeDisplayHoverCard } from '../time-display-hover-card';
+import TruncatedText from '../truncated-text';
+import { EmptyLayoutsIllustration } from './empty-layouts-illustration';
+import { useLayoutsUrlState } from './hooks/use-layouts-url-state';
 
 export const LayoutsListUpgradeCta = () => {
   const track = useTelemetry();

@@ -1,3 +1,7 @@
+import { PermissionsEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { PageMeta } from '@/components/page-meta';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { CopyButton } from '@/components/primitives/copy-button';
@@ -6,19 +10,15 @@ import { Input } from '@/components/primitives/input';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
+import { Button } from '../components/primitives/button';
 import { Container } from '../components/primitives/container';
 import { HelpTooltipIndicator } from '../components/primitives/help-tooltip-indicator';
+import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
+import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
 import { API_HOSTNAME } from '../config';
 import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
-import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialog';
-import { showErrorToast, showSuccessToast } from '../components/primitives/sonner-helpers';
-import { Button } from '../components/primitives/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../components/primitives/tooltip';
-import { PermissionsEnum } from '@novu/shared';
 import { useHasPermission } from '../hooks/use-has-permission';
 
 interface ApiKeysFormData {

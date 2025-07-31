@@ -1,7 +1,7 @@
 import { CommunityMemberRepository } from '@novu/dal';
+import { MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { MemberRoleEnum } from '@novu/shared';
 
 describe('Get members - /organization/members (GET) #novu-v0-os', async () => {
   let session: UserSession;

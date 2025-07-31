@@ -2,9 +2,9 @@
 import css from 'directcss:../index.directcss';
 import { For, onCleanup, onMount } from 'solid-js';
 import { MountableElement, Portal } from 'solid-js/web';
-import { NovuUI } from '..';
 import { Novu } from '../../novu';
 import type { NovuOptions } from '../../types';
+import { NovuUI } from '..';
 import {
   AppearanceProvider,
   CountProvider,
@@ -13,10 +13,10 @@ import {
   LocalizationProvider,
   NovuProvider,
 } from '../context';
+import { NOVU_DEFAULT_CSS_ID } from '../helpers/utils';
 import type { Appearance, Localization, PreferenceGroups, PreferencesFilter, RouterPush, Tab } from '../types';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
-import { NOVU_DEFAULT_CSS_ID } from '../helpers/utils';
 
 export const novuComponents = {
   Inbox,
@@ -123,7 +123,6 @@ export const Renderer = (props: RendererProps) => {
                       if (!['Notifications', 'Preferences', 'InboxContent'].includes(novuComponent().name)) return;
 
                       if (node instanceof HTMLElement) {
-                        // eslint-disable-next-line no-param-reassign
                         node.style.height = '100%';
                       }
                       if (portalDivElement) {

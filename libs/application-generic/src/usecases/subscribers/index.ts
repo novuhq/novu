@@ -1,2 +1,2 @@
-export * from './update-subscriber-channel';
 export * from './types';
+export * from './update-subscriber-channel';

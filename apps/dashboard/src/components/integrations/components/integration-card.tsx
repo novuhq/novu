@@ -1,7 +1,3 @@
-import { Badge } from '@/components/primitives/badge';
-import { Button } from '@/components/primitives/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
@@ -17,6 +13,11 @@ import {
   RiStarSmileLine,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { Badge } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
+import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
 import { ROUTES } from '../../../utils/routes';
 import { cn } from '../../../utils/ui';
 import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon';
@@ -24,7 +25,6 @@ import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
 import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
 import { isDemoIntegration } from './utils/helpers';
-import { useFetchSubscription } from '../../../hooks/use-fetch-subscription';
 
 type IntegrationCardProps = {
   integration: IIntegration;

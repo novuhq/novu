@@ -1,5 +1,5 @@
-import { expect, test, vi } from 'vitest';
 import Pushpad from 'pushpad';
+import { expect, test, vi } from 'vitest';
 import { PushpadPushProvider } from './pushpad.provider';
 
 test('should trigger pushpad library correctly', async () => {

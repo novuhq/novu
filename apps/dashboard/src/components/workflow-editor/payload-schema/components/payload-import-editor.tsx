@@ -1,8 +1,8 @@
-import { RiInformation2Line, RiCloseLine } from 'react-icons/ri';
+import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { Editor } from '@/components/primitives/editor';
 import { isValidJson } from '../utils/generate-schema';
-import { loadLanguage } from '@uiw/codemirror-extensions-langs';
 
 type PayloadImportEditorProps = {
   isLoadingActivity: boolean;

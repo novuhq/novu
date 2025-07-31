@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React from 'react';
 
 export function Pencil(props: React.ComponentPropsWithoutRef<'svg'>) {

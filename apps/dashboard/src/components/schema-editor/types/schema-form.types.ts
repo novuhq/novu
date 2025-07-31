@@ -1,6 +1,6 @@
 import type { Control, FieldArrayWithId, UseFormReturn } from 'react-hook-form';
 import type { JSONSchema7, JSONSchema7TypeName } from '../json-schema';
-import type { SchemaEditorFormValues, PropertyListItem } from '../utils/validation-schema';
+import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
 
 export type SchemaFormPath =
   | 'propertyList'

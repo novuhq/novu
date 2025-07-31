@@ -1,13 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, IsBoolean, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ResourceOriginEnum, ResourceTypeEnum, Slug } from '@novu/shared';
-
-import { CreateLayoutDto } from './create-layout.dto';
-import { UpdateLayoutDto } from './update-layout.dto';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { ControlsMetadataDto } from '../../workflows-v2/dtos/controls-metadata.dto';
-import { LayoutControlValuesDto } from './layout-controls.dto';
 import { UserResponseDto } from '../../workflows-v2/dtos/user-response.dto';
+import { CreateLayoutDto } from './create-layout.dto';
+import { LayoutControlValuesDto } from './layout-controls.dto';
+import { UpdateLayoutDto } from './update-layout.dto';
 
 export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayoutDto;
 

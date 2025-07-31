@@ -1,19 +1,19 @@
+import type { Subscriber } from '@novu/js';
 import type {
-  Notification,
-  NotificationClickHandler,
-  NotificationActionClickHandler,
-  Tab,
+  IconKey,
+  InboxPage,
+  InboxProps,
   Appearance as JsAppearance,
   Theme as JsTheme,
-  IconKey,
   Localization,
-  RouterPush,
-  PreferencesFilter,
+  Notification,
+  NotificationActionClickHandler,
+  NotificationClickHandler,
   PreferenceGroups,
-  InboxProps,
-  InboxPage,
+  PreferencesFilter,
+  RouterPush,
+  Tab,
 } from '@novu/js/ui';
-import type { Subscriber } from '@novu/js';
 import type { ReactNode } from 'react';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;

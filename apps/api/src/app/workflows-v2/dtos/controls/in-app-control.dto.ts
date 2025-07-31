@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, ValidateNested, MinLength, IsUrl, IsEnum, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsOptional, IsString, IsUrl, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 import { SkipControlDto } from './skip.dto';
 
 // Define enum for redirect target based on Zod schema

@@ -482,7 +482,6 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       .query({ statuses: [WorkflowRunStatusEnum.SUCCESS] })
       .expect(200);
 
-    // eslint-disable-next-line no-console
     console.log('BODY', JSON.stringify(body, null, 2));
 
     expect(body.data.length).to.be.equal(2);

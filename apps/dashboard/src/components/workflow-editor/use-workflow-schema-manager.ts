@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
-import type { UseFormReturn, Control, FieldArrayWithId } from 'react-hook-form';
+import type { IEnvironment, PatchWorkflowDto, WorkflowResponseDto } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Control, FieldArrayWithId, UseFormReturn } from 'react-hook-form';
+import type { JSONSchema7, JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
 import { useSchemaForm } from '@/components/schema-editor/use-schema-form';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/utils';
-import type { JSONSchema7, JSONSchema7TypeName } from '@/components/schema-editor/json-schema';
-import type { SchemaEditorFormValues, PropertyListItem } from '@/components/schema-editor/utils/validation-schema';
-import { patchWorkflow } from '../../api/workflows';
-import type { WorkflowResponseDto, IEnvironment, PatchWorkflowDto } from '@novu/shared';
+import type { PropertyListItem, SchemaEditorFormValues } from '@/components/schema-editor/utils/validation-schema';
 import { QueryKeys } from '@/utils/query-keys';
+import { patchWorkflow } from '../../api/workflows';
 
 interface ExtendedPatchWorkflowDto extends PatchWorkflowDto {
   validatePayload?: boolean;

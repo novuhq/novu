@@ -1,9 +1,9 @@
+import { SubscriberEntity } from '@novu/dal';
+import { workflow } from '@novu/framework';
+import { SubscribersService, UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
 import getPort from 'get-port';
-import { UserSession, SubscribersService } from '@novu/testing';
-import { SubscriberEntity } from '@novu/dal';
-import { workflow } from '@novu/framework';
 import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 describe('Bridge Health Check #novu-v2', async () => {

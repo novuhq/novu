@@ -1,6 +1,5 @@
-import { TemplateSystemVariables, ITemplateVariable } from '@novu/shared';
-
 import { BadRequestException } from '@nestjs/common';
+import { ITemplateVariable, TemplateSystemVariables } from '@novu/shared';
 
 export class VerifyPayloadService {
   checkRequired(variables: ITemplateVariable[], payload: Record<string, unknown>): string[] {
@@ -56,7 +55,6 @@ export class VerifyPayloadService {
   private setNestedKey(obj, path, value) {
     if (path.length === 1) {
       if (value !== '') {
-        // eslint-disable-next-line no-param-reassign
         obj[path[0]] = value;
       }
 
@@ -64,7 +62,6 @@ export class VerifyPayloadService {
     }
 
     if (!obj[path[0]]) {
-      // eslint-disable-next-line no-param-reassign
       obj[path[0]] = {};
     }
 

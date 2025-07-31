@@ -1,6 +1,6 @@
+import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { Notification5Fill } from '@/components/icons';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
-import { GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 import { InboxPreview } from './inbox-preview';
 

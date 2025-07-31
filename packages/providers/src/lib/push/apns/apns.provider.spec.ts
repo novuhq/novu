@@ -1,5 +1,5 @@
-import { expect, test, vi } from 'vitest';
 import apn from '@parse/node-apn';
+import { expect, test, vi } from 'vitest';
 import { APNSPushProvider } from './apns.provider';
 
 test('should trigger apns library correctly', async () => {

@@ -1,7 +1,7 @@
-import { useRef, useCallback, ReactElement, cloneElement } from 'react';
+import { cloneElement, ReactElement, useCallback, useRef } from 'react';
 import { useUploadTranslations } from '@/hooks/use-upload-translations';
-import { ACCEPTED_FILE_EXTENSION } from './constants';
 import { TranslationResource } from '@/types/translations';
+import { ACCEPTED_FILE_EXTENSION } from './constants';
 
 type TranslationImportTriggerProps = {
   resource: TranslationResource;

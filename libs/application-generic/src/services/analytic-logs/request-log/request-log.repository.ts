@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
-import { LogRepository } from '../log.repository';
-import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { requestLogSchema, ORDER_BY, RequestLog } from './request-log.schema';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
+import { ORDER_BY, RequestLog, requestLogSchema } from './request-log.schema';
 
 export const TABLE_NAME = 'requests';
 

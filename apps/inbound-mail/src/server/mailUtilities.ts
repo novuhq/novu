@@ -1,7 +1,6 @@
-/* eslint-disable import/no-import-module-exports */
 import child_process from 'node:child_process';
-import shell from 'shelljs';
 import path from 'node:path';
+import shell from 'shelljs';
 import Spamc from 'spamc';
 import logger from './logger';
 
@@ -34,11 +33,11 @@ module.exports = {
     const verifyDkimPath = path.join(__dirname, '../python/verifydkim.py');
     const verifyDkim = child_process.spawn('python', [verifyDkimPath]);
 
-    verifyDkim.stdout.on('data', function (data) {
+    verifyDkim.stdout.on('data', (data) => {
       logger.verbose(data.toString());
     });
 
-    verifyDkim.on('close', function (code) {
+    verifyDkim.on('close', (code) => {
       logger.verbose(`closed with return code ${code}`);
 
       /* Convert return code to appropriate boolean. */
@@ -58,7 +57,7 @@ module.exports = {
     const cmd = 'python ';
     const args = [verifySpfPath, ip, address, host];
 
-    child_process.execFile(cmd, args, function (err, stdout) {
+    child_process.execFile(cmd, args, (err, stdout) => {
       logger.verbose(stdout);
       let code = 0;
       if (err) {
@@ -78,7 +77,7 @@ module.exports = {
       return callback(null, 0.0);
     }
 
-    spamc.report(rawEmail, function (err, result) {
+    spamc.report(rawEmail, (err, result) => {
       logger.verbose(result);
       if (err) logger.error(err);
       if (err) return callback(new Error('Unable to compute spam score.'));

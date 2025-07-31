@@ -1,3 +1,4 @@
+import type { JSONSchemaDto, UiSchema } from '../../dto';
 import {
   ChannelCTATypeEnum,
   EnvironmentId,
@@ -9,7 +10,6 @@ import {
   TemplateVariableTypeEnum,
   TriggerContextTypeEnum,
 } from '../../types';
-import type { JSONSchemaDto, UiSchema } from '../../dto';
 import { IActor } from '../actor';
 
 export interface IMessageTemplate {
@@ -33,7 +33,6 @@ export interface IMessageTemplate {
     data: {
       url?: string;
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     action?: any;
   };
   active?: boolean;

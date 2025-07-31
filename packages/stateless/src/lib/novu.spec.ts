@@ -8,8 +8,7 @@ test('should register an SMS provider and return it', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     setSubscriberCredentials: () => '123',
     checkIntegration: () =>
       Promise.resolve({
@@ -32,8 +31,7 @@ test('should call 2 hooks together', async () => {
   const template = {
     id: 'test',
     channelType: ChannelTypeEnum.SMS as ChannelTypeEnum,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     setSubscriberCredentials: () => '123',
     checkIntegration: () =>
       Promise.resolve({

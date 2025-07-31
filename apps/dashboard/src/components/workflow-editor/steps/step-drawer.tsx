@@ -1,15 +1,14 @@
-import { useCallback, useId } from 'react';
-import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
-
+import { motion } from 'motion/react';
+import { useCallback, useId } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { PageMeta } from '@/components/page-meta';
 import { Sheet, SheetContentBase, SheetDescription, SheetPortal, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
-import { PageMeta } from '@/components/page-meta';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { cn } from '@/utils/ui';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
+import { cn } from '@/utils/ui';
 
 const transitionSetting = { ease: [0.29, 0.83, 0.57, 0.99], duration: 0.4 };
 const stepTypeToClassname: Record<string, string | undefined> = {

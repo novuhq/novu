@@ -1,7 +1,4 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
-import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
-import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { BadRequestException } from '@nestjs/common';
 import {
   buildFeedKey,
   buildMessageCountKey,
@@ -10,8 +7,10 @@ import {
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-
-import { BadRequestException } from '@nestjs/common';
+import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as.usecase';

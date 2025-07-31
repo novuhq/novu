@@ -1,12 +1,11 @@
-import { OrganizationList as OrganizationListForm } from '@clerk/clerk-react';
-import { useOrganization } from '@clerk/clerk-react';
+import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
 import { useEffect } from 'react';
-import { ROUTES } from '../../utils/routes';
-import { clerkSignupAppearance } from '../../utils/clerk-appearance';
-import { AuthCard } from './auth-card';
-import { UsecasePlaygroundHeader } from '../usecase-playground-header';
 import { useTelemetry } from '../../hooks/use-telemetry';
+import { clerkSignupAppearance } from '../../utils/clerk-appearance';
+import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
+import { UsecasePlaygroundHeader } from '../usecase-playground-header';
+import { AuthCard } from './auth-card';
 
 // Constants
 const HEADER_CONFIG = {

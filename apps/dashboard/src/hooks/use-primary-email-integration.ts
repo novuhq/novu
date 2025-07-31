@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import { ChannelTypeEnum, IIntegration } from '@novu/shared';
+import { useMemo } from 'react';
 import { useFetchIntegrations } from './use-fetch-integrations';
 
 type PrimaryEmailIntegrationResult = {

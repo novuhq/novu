@@ -1,6 +1,7 @@
+import { PermissionsEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -8,13 +9,11 @@ import { DashboardLayout } from '../components/dashboard-layout';
 import { IntegrationsList } from '../components/integrations/components/integrations-list';
 import { TableIntegration } from '../components/integrations/types';
 import { Badge } from '../components/primitives/badge';
-import { PermissionsEnum } from '@novu/shared';
-import { PermissionButton } from '@/components/primitives/permission-button';
 
 export function IntegrationsListPage() {
   const navigate = useNavigate();
 
-  const onItemClick = function (item: TableIntegration) {
+  const onItemClick = (item: TableIntegration) => {
     navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: item.integrationId }));
   };
 

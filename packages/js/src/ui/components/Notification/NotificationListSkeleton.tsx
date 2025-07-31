@@ -1,12 +1,12 @@
 import { Show } from 'solid-js';
+import { useInboxContext, useNovu } from '../../context';
 import { useLocalization } from '../../context/LocalizationContext';
 import { useStyle } from '../../helpers/useStyle';
-import { Motion } from '../primitives/Motion';
-import { SkeletonAvatar, SkeletonText } from '../primitives/Skeleton';
-import { useInboxContext, useNovu } from '../../context';
-import { Button } from '../primitives/Button';
 import { Bell } from '../../icons';
 import { Key } from '../../icons/Key';
+import { Button } from '../primitives/Button';
+import { Motion } from '../primitives/Motion';
+import { SkeletonAvatar, SkeletonText } from '../primitives/Skeleton';
 
 type NotificationListSkeletonProps = {
   loading?: boolean;
@@ -103,7 +103,6 @@ function KeylessEmptyState() {
             size="sm"
             class={style(
               'notificationListEmptyNotice',
-              // eslint-disable-next-line max-len
               'nt-h-8 nt-px-4 nt-flex nt-items-center nt-justify-center nt-gap-2 nt-bg-white nt-border nt-border-neutral-alpha-100 nt-shadow-sm nt-text-[12px] nt-font-medium'
             )}
             onClick={() => window.open('https://go.novu.co/keyless', '_blank', 'noopener noreferrer')}
@@ -117,7 +116,6 @@ function KeylessEmptyState() {
               size="sm"
               class={style(
                 'notificationListEmptyNotice',
-                // eslint-disable-next-line max-len
                 'nt-h-8 nt-px-4 nt-flex nt-items-center nt-justify-center nt-gap-2 nt-bg-neutral-900 nt-text-white nt-shadow-sm nt-text-[12px] nt-font-medium'
               )}
               onClick={() => novu.notifications.triggerHelloWorldEvent()}

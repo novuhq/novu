@@ -1,7 +1,7 @@
 import React from 'react';
 import { createContextHook } from '../context';
 import { DecodedJwt } from '.';
-import { SelfHostedUser, createUserFromJwt } from './user.types';
+import { createUserFromJwt, SelfHostedUser } from './user.types';
 
 export const UserContext = React.createContext<{
   user: SelfHostedUser;
@@ -11,7 +11,6 @@ export const UserContext = React.createContext<{
   isLoaded: false,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function UserContextProvider({ children }: any) {
   const jwt = localStorage.getItem('self-hosted-jwt');
   const decodedJwt: DecodedJwt | null = jwt ? JSON.parse(atob(jwt.split('.')[1])) : null;
@@ -23,5 +22,4 @@ export function UserContextProvider({ children }: any) {
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
 }
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useUser = createContextHook(UserContext);

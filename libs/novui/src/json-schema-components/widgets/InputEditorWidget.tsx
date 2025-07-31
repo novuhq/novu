@@ -1,13 +1,12 @@
-import { useEffect, useMemo, useRef } from 'react';
-
 import { Input } from '@mantine/core';
 import { RichTextEditor } from '@mantine/tiptap';
 import { ErrorSchema, WidgetProps } from '@rjsf/utils';
 import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
 import HistoryExtension from '@tiptap/extension-history';
+import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
-import { Editor, ReactRenderer, useEditor, type Extensions } from '@tiptap/react';
+import { Editor, type Extensions, ReactRenderer, useEditor } from '@tiptap/react';
+import { useEffect, useMemo, useRef } from 'react';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
 import { input, inputEditorWidget } from '../../../styled-system/recipes';
@@ -19,8 +18,8 @@ import {
   getInitContentWithVariableNodeView,
 } from '../utils';
 import { CustomMention } from './customMentionExtension';
-import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
 import { SuggestionListExtension, SuggestionListStorage } from './SuggestionListExtension';
+import { SuggestionListRef, VariableItem, VariableSuggestionList } from './VariableSuggestionList';
 
 const inputEditorClassNames = inputEditorWidget();
 

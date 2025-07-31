@@ -1,6 +1,4 @@
-import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { UserSession, NotificationTemplateService } from '@novu/testing';
 import {
   ChannelCTATypeEnum,
   FieldLogicalOperatorEnum,
@@ -10,6 +8,8 @@ import {
   TemplateVariableTypeEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
+import { NotificationTemplateService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Get workflows - /workflows (GET) #novu-v0', async () => {
   let session: UserSession;

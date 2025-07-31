@@ -1,25 +1,24 @@
-/* eslint-disable global-require */
 import {
+  DynamicModule,
+  ForwardReference,
+  forwardRef,
   MiddlewareConsumer,
   Module,
-  DynamicModule,
   NestModule,
   RequestMethod,
-  forwardRef,
-  ForwardReference,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import { Type } from '@nestjs/common/interfaces/type.interface';
+import { AuthGuard } from '@nestjs/passport';
 import { isClerkEnabled } from '@novu/shared';
+import { AuthModule } from '../auth/auth.module';
 import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
 import { IntegrationModule } from '../integrations/integrations.module';
+import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 import { SharedModule } from '../shared/shared.module';
 import { UserModule } from '../user/user.module';
+import { EEOrganizationController } from './ee.organization.controller';
 import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
-import { AuthModule } from '../auth/auth.module';
-import { EEOrganizationController } from './ee.organization.controller';
-import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];

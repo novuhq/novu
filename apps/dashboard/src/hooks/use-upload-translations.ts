@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
+import { NovuApiError } from '@/api/api.client';
 import { uploadTranslations } from '@/api/translations';
+import { showErrorToast, showSuccessToast, showWarningToast } from '@/components/primitives/sonner-helpers';
+import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { showErrorToast, showSuccessToast, showWarningToast } from '@/components/primitives/sonner-helpers';
-import { NovuApiError } from '@/api/api.client';
 
 type UploadTranslationsParameters = OmitEnvironmentFromParameters<typeof uploadTranslations>;
 

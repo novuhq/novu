@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsOptional } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class GetMyEnvironmentsCommand extends BaseCommand {
   @IsNotEmpty()

@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
 import {
   MessageEntity,
   MessageRepository,
@@ -15,8 +14,8 @@ import {
   SystemAvatarIconEnum,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
-
-import { Novu } from '@novu/api';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2', async () => {
   let session: UserSession;
@@ -93,7 +92,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       });
     });
 
-    it('should mark specific notifications as seen by providing IDs', async function () {
+    it('should mark specific notifications as seen by providing IDs', async () => {
       const messageIds = [messages[0]._id, messages[1]._id];
       const { status } = await markNotificationsAsSeen({ notificationIds: messageIds });
 
@@ -143,7 +142,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       });
     });
 
-    it('should mark all notifications as seen when no filters provided', async function () {
+    it('should mark all notifications as seen when no filters provided', async () => {
       const { status } = await markNotificationsAsSeen({});
 
       expect(status).to.equal(204);
@@ -160,7 +159,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       });
     });
 
-    it('should mark notifications as seen by tags filter', async function () {
+    it('should mark notifications as seen by tags filter', async () => {
       // Create template with tags
       const taggedTemplate = await session.createTemplate({
         tags: ['important'],
@@ -215,7 +214,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       });
     });
 
-    it('should prioritize notificationIds over filters when both are provided', async function () {
+    it('should prioritize notificationIds over filters when both are provided', async () => {
       const messageIds = [messages[0]._id];
       const { status } = await markNotificationsAsSeen({
         notificationIds: messageIds,
@@ -241,7 +240,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
   });
 
   describe('Error handling', () => {
-    it('should handle non-existent notification IDs gracefully', async function () {
+    it('should handle non-existent notification IDs gracefully', async () => {
       const nonExistentId = '507f1f77bcf86cd799439011'; // Valid ObjectId format but doesn't exist
       const { status } = await markNotificationsAsSeen({ notificationIds: [nonExistentId] });
 
@@ -283,7 +282,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       });
     });
 
-    it('should not affect read status when marking as seen', async function () {
+    it('should not affect read status when marking as seen', async () => {
       // First mark one message as read
       await messageRepository.update(
         {
@@ -311,7 +310,7 @@ describe('Mark Notifications As Seen - /inbox/notifications/seen (POST) #novu-v2
       expect(updatedMessage2?.read).to.be.false; // Should remain unread
     });
 
-    it('should not affect archived status when marking as seen', async function () {
+    it('should not affect archived status when marking as seen', async () => {
       // First mark one message as archived
       await messageRepository.update(
         {

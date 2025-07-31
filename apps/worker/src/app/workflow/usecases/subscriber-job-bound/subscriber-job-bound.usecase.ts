@@ -17,8 +17,8 @@ import {
   InAppProviderIdEnum,
   ISubscribersDefine,
   ProvidersIdEnum,
-  STEP_TYPE_TO_CHANNEL_TYPE,
   ResourceTypeEnum,
+  STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
@@ -247,7 +247,6 @@ export class SubscriberJobBound {
   ): Promise<Record<ChannelTypeEnum, ProvidersIdEnum>> {
     const providers = {} as Record<ChannelTypeEnum, ProvidersIdEnum>;
 
-    // eslint-disable-next-line no-unsafe-optional-chaining
     for (const step of template?.steps) {
       const type = step.template?.type;
       if (!type) continue;

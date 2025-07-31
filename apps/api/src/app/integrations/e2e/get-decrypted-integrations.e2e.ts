@@ -1,9 +1,9 @@
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { IntegrationRepository } from '@novu/dal';
 
-describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', function () {
+describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -12,7 +12,7 @@ describe('Get Decrypted Integrations - /integrations (GET) #novu-v2', function (
     await session.initialize();
   });
 
-  it('should get active decrypted integration', async function () {
+  it('should get active decrypted integration', async () => {
     const payload = {
       providerId: EmailProviderIdEnum.Mailgun,
       channel: ChannelTypeEnum.EMAIL,

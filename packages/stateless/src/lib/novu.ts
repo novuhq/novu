@@ -1,22 +1,14 @@
-import merge from 'lodash.merge';
 import { EventEmitter } from 'events';
+import merge from 'lodash.merge';
+import { HandlebarsContentEngine, IContentEngine } from './content/content.engine';
 import { INovuConfig } from './novu.interface';
-import {
-  IEmailProvider,
-  ISmsProvider,
-  IChatProvider,
-  IPushProvider,
-} from './provider/provider.interface';
+import { IChatProvider, IEmailProvider, IPushProvider, ISmsProvider } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
 import { TemplateStore } from './template/template.store';
-import { TriggerEngine } from './trigger/trigger.engine';
-import { ThemeStore } from './theme/theme.store';
 import { ITheme } from './theme/theme.interface';
-import {
-  HandlebarsContentEngine,
-  IContentEngine,
-} from './content/content.engine';
+import { ThemeStore } from './theme/theme.store';
+import { TriggerEngine } from './trigger/trigger.engine';
 
 export class NovuStateless extends EventEmitter {
   private readonly templateStore: TemplateStore;
@@ -39,8 +31,7 @@ export class NovuStateless extends EventEmitter {
     this.themeStore = this.config?.themeStore || new ThemeStore();
     this.templateStore = this.config?.templateStore || new TemplateStore();
     this.providerStore = this.config?.providerStore || new ProviderStore();
-    this.contentEngine =
-      this.config?.contentEngine || new HandlebarsContentEngine();
+    this.contentEngine = this.config?.contentEngine || new HandlebarsContentEngine();
   }
 
   async registerTheme(id: string, theme: ITheme) {
@@ -57,32 +48,19 @@ export class NovuStateless extends EventEmitter {
     return await this.templateStore.getTemplateById(template.id);
   }
 
-  async registerProvider(
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
-  ): Promise<void>;
+  async registerProvider(provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider): Promise<void>;
 
   async registerProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
+    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   ): Promise<void>;
 
   async registerProvider(
-    providerOrProviderId:
-      | string
-      | IEmailProvider
-      | ISmsProvider
-      | IChatProvider
-      | IPushProvider,
-    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
+    providerOrProviderId: string | IEmailProvider | ISmsProvider | IChatProvider | IPushProvider,
+    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
   ): Promise<void> {
-    const providerId =
-      typeof providerOrProviderId === 'string'
-        ? providerOrProviderId
-        : provider?.id || '';
-    const finalProvider =
-      typeof providerOrProviderId === 'string'
-        ? provider
-        : providerOrProviderId;
+    const providerId = typeof providerOrProviderId === 'string' ? providerOrProviderId : provider?.id || '';
+    const finalProvider = typeof providerOrProviderId === 'string' ? provider : providerOrProviderId;
 
     if (!finalProvider) {
       throw new Error('Provider is required');
@@ -102,7 +80,7 @@ export class NovuStateless extends EventEmitter {
       this.themeStore,
       this.contentEngine,
       this.config,
-      this,
+      this
     );
 
     return await triggerEngine.trigger(eventId, data);

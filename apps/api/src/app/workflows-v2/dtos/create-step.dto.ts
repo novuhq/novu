@@ -1,15 +1,15 @@
-import { IsEnum, IsOptional, IsString, IsObject } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { StepTypeEnum } from '@novu/shared';
+import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import {
-  InAppControlDto,
-  EmailControlDto,
-  SmsControlDto,
-  PushControlDto,
   ChatControlDto,
+  CustomControlDto,
   DelayControlDto,
   DigestControlDto,
-  CustomControlDto,
+  EmailControlDto,
+  InAppControlDto,
+  PushControlDto,
+  SmsControlDto,
 } from './controls';
 
 // Base DTO for common properties

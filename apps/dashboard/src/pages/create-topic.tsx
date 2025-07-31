@@ -1,7 +1,7 @@
+import { useState } from 'react';
 import { CreateTopicDrawer } from '@/components/topics/create-topic-drawer';
 import { useTopicsNavigate } from '@/components/topics/hooks/use-topics-navigate';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
-import { useState } from 'react';
 
 export const CreateTopicPage = () => {
   const [isOpen, setIsOpen] = useState(true);

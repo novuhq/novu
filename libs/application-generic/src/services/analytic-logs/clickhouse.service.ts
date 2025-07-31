@@ -1,4 +1,4 @@
-import { createClient, ClickHouseClient, PingResult, ClickHouseSettings } from '@clickhouse/client';
+import { ClickHouseClient, ClickHouseSettings, createClient, PingResult } from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
 
 export { ClickHouseClient };
@@ -37,10 +37,8 @@ export class ClickHouseService implements OnModuleDestroy {
         await defaultClient.query({
           query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
         });
-        // eslint-disable-next-line no-console
         console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
       } catch (error) {
-        // eslint-disable-next-line no-console
         console.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
       }
     }
@@ -73,7 +71,6 @@ export class ClickHouseService implements OnModuleDestroy {
       return { success: false, error: new Error('Ping failed: ClickHouse client not initialized') };
     }
 
-    // eslint-disable-next-line no-useless-catch
     try {
       const isAlive = await this._client.ping();
       // this.logger.info('ClickHouse server ping successful');

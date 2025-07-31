@@ -1,24 +1,16 @@
 import {
-  IsBoolean,
-  IsOptional,
-  IsObject,
-  ValidateNested,
-  ValidateIf,
-} from 'class-validator';
-import {
   ChannelPreference as ChannelPreferenceType,
-  WorkflowPreferencesPartial,
-  WorkflowPreference as WorkflowPreferenceType,
   ChannelTypeEnum,
   WorkflowPreferences,
+  WorkflowPreferencesPartial,
+  WorkflowPreference as WorkflowPreferenceType,
 } from '@novu/shared';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsObject, IsOptional, ValidateIf, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../commands';
 
 // PARTIAL PREFERENCES
-export class WorkflowPreferencePartial
-  implements Partial<WorkflowPreferenceType>
-{
+export class WorkflowPreferencePartial implements Partial<WorkflowPreferenceType> {
   @IsOptional()
   @IsBoolean()
   readonly enabled?: boolean;
@@ -28,17 +20,13 @@ export class WorkflowPreferencePartial
   readonly readOnly?: boolean;
 }
 
-export class ChannelPreferencePartial
-  implements Partial<ChannelPreferenceType>
-{
+export class ChannelPreferencePartial implements Partial<ChannelPreferenceType> {
   @IsOptional()
   @IsBoolean()
   readonly enabled?: boolean;
 }
 
-export class ChannelPreferencesPartial
-  implements Partial<Record<ChannelTypeEnum, ChannelPreferencePartial>>
-{
+export class ChannelPreferencesPartial implements Partial<Record<ChannelTypeEnum, ChannelPreferencePartial>> {
   @IsOptional()
   @IsObject()
   @ValidateNested()
@@ -104,9 +92,7 @@ export class ChannelPreferenceRequired implements ChannelPreferenceType {
   readonly enabled: boolean;
 }
 
-export class ChannelPreferencesRequired
-  implements Record<ChannelTypeEnum, ChannelPreferenceRequired>
-{
+export class ChannelPreferencesRequired implements Record<ChannelTypeEnum, ChannelPreferenceRequired> {
   @IsObject()
   @ValidateNested()
   @Type(() => ChannelPreferenceRequired)

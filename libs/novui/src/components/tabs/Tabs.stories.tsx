@@ -1,4 +1,4 @@
-import { StoryFn, Meta } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 import React, { ReactNode } from 'react';
 import { IconOutlineCode, IconOutlineMiscellaneousServices, IconOutlineVisibility } from '../../icons';
 import { LocalizedMessage } from '../../types';

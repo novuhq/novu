@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsObject, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsObject, IsOptional } from 'class-validator';
 
 import { LayoutPreviewPayloadDto } from './layout-preview-payload.dto';
 

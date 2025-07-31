@@ -1,15 +1,15 @@
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import {
-  InAppControlDto,
-  EmailControlDto,
-  SmsControlDto,
-  PushControlDto,
   ChatControlDto,
+  CustomControlDto,
   DelayControlDto,
   DigestControlDto,
-  CustomControlDto,
+  EmailControlDto,
+  InAppControlDto,
+  PushControlDto,
+  SmsControlDto,
 } from '../dtos/controls';
 
 const STEP_CONTROL_DTO_MAP = {

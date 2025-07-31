@@ -1,9 +1,9 @@
+import type { InboxPage, NotificationActionClickHandler, NotificationClickHandler } from '@novu/js/ui';
 import React from 'react';
-import type { NotificationClickHandler, NotificationActionClickHandler, InboxPage } from '@novu/js/ui';
-import { Mounter } from './Mounter';
-import { NoRendererProps, SubjectBodyRendererProps, NotificationRendererProps } from '../utils/types';
-import { useRenderer } from '../context/RendererContext';
 import { useNovuUI } from '../context/NovuUIContext';
+import { useRenderer } from '../context/RendererContext';
+import { NoRendererProps, NotificationRendererProps, SubjectBodyRendererProps } from '../utils/types';
+import { Mounter } from './Mounter';
 import { withRenderer } from './Renderer';
 
 export type InboxContentProps = {

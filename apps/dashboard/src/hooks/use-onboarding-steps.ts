@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
-import { useFetchWorkflows } from './use-fetch-workflows';
 import { useOrganization } from '@clerk/clerk-react';
 import { ChannelTypeEnum, IIntegration } from '@novu/shared';
+import { useMemo } from 'react';
+import { IS_SELF_HOSTED, ONBOARDING_DEMO_WORKFLOW_ID } from '../config';
 import { useFetchIntegrations } from './use-fetch-integrations';
-import { ONBOARDING_DEMO_WORKFLOW_ID } from '../config';
-import { IS_SELF_HOSTED } from '../config';
+import { useFetchWorkflows } from './use-fetch-workflows';
 
 export enum StepIdEnum {
   ACCOUNT_CREATION = 'account-creation',

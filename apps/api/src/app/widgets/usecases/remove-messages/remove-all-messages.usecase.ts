@@ -1,24 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
-  MessageEntity,
-  DalException,
-  MessageRepository,
-  SubscriberRepository,
-  SubscriberEntity,
-  FeedRepository,
-  EnforceEnvId,
-} from '@novu/dal';
-import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
-import {
-  WebSocketsQueueService,
   AnalyticsService,
-  InvalidateCacheService,
   buildFeedKey,
   buildMessageCountKey,
+  InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
-
-import { RemoveAllMessagesCommand } from './remove-all-messages.command';
+import {
+  DalException,
+  EnforceEnvId,
+  FeedRepository,
+  MessageEntity,
+  MessageRepository,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
+import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { MarkEnum } from '../mark-message-as/mark-message-as.command';
+import { RemoveAllMessagesCommand } from './remove-all-messages.command';
 
 @Injectable()
 export class RemoveAllMessages {

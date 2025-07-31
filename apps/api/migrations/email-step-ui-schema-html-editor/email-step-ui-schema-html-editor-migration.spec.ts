@@ -1,7 +1,7 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { StepTypeEnum, UiComponentEnum, UiSchemaGroupEnum, WorkflowCreationSourceEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
+import { StepTypeEnum, UiComponentEnum, UiSchemaGroupEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { run } from './email-step-ui-schema-html-editor-migration';
 
 describe('Update email step ui schema migration test #novu-v2', () => {

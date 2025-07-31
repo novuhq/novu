@@ -1,6 +1,6 @@
-import { Button } from '@/components/primitives/button';
 import { Settings } from 'lucide-react';
 import { RiAddFill } from 'react-icons/ri';
+import { Button } from '@/components/primitives/button';
 
 type IntegrationsEmptyStateProps = {
   onAddIntegrationClick: () => void;

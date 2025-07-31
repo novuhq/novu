@@ -1,6 +1,6 @@
+import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { NOVU_ENCRYPTION_SUB_MASK } from '@novu/shared';
 
 describe('Get My Environments - /environments (GET)', async () => {
   let session: UserSession;

@@ -1,6 +1,6 @@
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 export const useTranslationsNavigate = () => {
   const navigate = useNavigate();

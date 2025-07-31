@@ -1,7 +1,7 @@
-import { ConfirmationModal } from '@/components/confirmation-modal';
-import { SelectPrimaryIntegrationModal } from './select-primary-integration-modal';
 import { IIntegration } from '@novu/shared';
 import { useState } from 'react';
+import { ConfirmationModal } from '@/components/confirmation-modal';
+import { SelectPrimaryIntegrationModal } from './select-primary-integration-modal';
 
 export type DeleteIntegrationModalProps = {
   isOpen: boolean;

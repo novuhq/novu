@@ -1,10 +1,10 @@
 import type { WorkflowPreferencesPartial } from '@novu/shared';
 import { PreferencesTypeEnum } from '@novu/shared';
-import type { OrganizationId } from '../organization';
+import type { ChangePropsValueType } from '../../types';
 import type { EnvironmentId } from '../environment';
+import type { OrganizationId } from '../organization';
 import type { SubscriberId } from '../subscriber';
 import type { UserId } from '../user';
-import type { ChangePropsValueType } from '../../types';
 
 export type PreferencesDBModel = ChangePropsValueType<
   PreferencesEntity,

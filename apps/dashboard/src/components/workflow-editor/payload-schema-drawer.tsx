@@ -1,5 +1,11 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
+import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { RiFileMarkedLine, RiInformation2Line, RiShieldCheckLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
+import { Badge } from '@/components/primitives/badge';
+import { Button } from '@/components/primitives/button';
+import { Form, FormRoot } from '@/components/primitives/form/form';
 import {
   Sheet,
   SheetContent,
@@ -9,29 +15,22 @@ import {
   SheetMain,
   SheetTitle,
 } from '@/components/primitives/sheet';
-import { Button } from '@/components/primitives/button';
-import { Badge } from '@/components/primitives/badge';
-import { Form, FormRoot } from '@/components/primitives/form/form';
+import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/utils';
-import { useWorkflowSchema } from './workflow-schema-provider';
-import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
-import { ExternalLink } from '../shared/external-link';
-import { TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Tooltip } from '../primitives/tooltip';
-import { RiFileMarkedLine, RiInformation2Line, RiShieldCheckLine } from 'react-icons/ri';
-import { Separator } from '../primitives/separator';
-import { Link } from 'react-router-dom';
-import { SchemaChangeConfirmationModal } from './schema-change-confirmation-modal';
-import { detectSchemaChanges, type SchemaChanges } from '../schema-editor/utils/schema-change-detection';
-import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-variable-usage';
-import { Switch } from '../primitives/switch';
-import { Hint, HintIcon } from '../primitives/hint';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { useFormProtection } from '../../hooks/use-form-protection';
-import { PayloadSchemaEmptyState, PayloadImportEditor } from './payload-schema/components';
+import { Hint, HintIcon } from '../primitives/hint';
+import { Separator } from '../primitives/separator';
+import { Switch } from '../primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { checkVariableUsageInWorkflow } from '../schema-editor/utils/check-variable-usage';
+import { detectSchemaChanges, type SchemaChanges } from '../schema-editor/utils/schema-change-detection';
+import { ExternalLink } from '../shared/external-link';
+import { PayloadImportEditor, PayloadSchemaEmptyState } from './payload-schema/components';
 import { useImportSchema } from './payload-schema/hooks';
-import { useForm, FormProvider } from 'react-hook-form';
+import { SchemaChangeConfirmationModal } from './schema-change-confirmation-modal';
+import { useWorkflowSchema } from './workflow-schema-provider';
 
 type PayloadSchemaDrawerProps = {
   isOpen: boolean;
@@ -140,7 +139,6 @@ export function PayloadSchemaDrawer({
     if (workflow?.payloadSchema && workflow.payloadSchema !== drawerSchema) {
       setDrawerSchema(workflow.payloadSchema);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflow?.payloadSchema]);
 
   // Store original schema when drawer opens

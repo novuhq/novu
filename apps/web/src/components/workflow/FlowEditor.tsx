@@ -108,7 +108,6 @@ export function FlowEditor({
     setTimeout(() => {
       initializeWorkflowTree();
     }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [steps, dragging, errors, readonly]);
 
   const addNewNode = useCallback(
@@ -128,7 +127,6 @@ export function FlowEditor({
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
-    // eslint-disable-next-line no-param-reassign
     event.dataTransfer.dropEffect = 'move';
   }, []);
 

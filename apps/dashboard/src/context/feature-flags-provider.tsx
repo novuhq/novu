@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
+import { lazy, Suspense } from 'react';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@/config';
 
 const LD_CONFIG = {

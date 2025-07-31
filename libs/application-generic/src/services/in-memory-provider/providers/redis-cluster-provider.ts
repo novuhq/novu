@@ -1,6 +1,6 @@
+import { Logger } from '@nestjs/common';
 import Redis, { ChainableCommander, Cluster, ClusterNode, ClusterOptions } from 'ioredis';
 import { ConnectionOptions } from 'tls';
-import { Logger } from '@nestjs/common';
 
 import { convertStringValues } from './variable-mappers';
 

@@ -1,14 +1,14 @@
+import {
+  ControlValuesRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import { workflow } from '@novu/framework';
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import getPort from 'get-port';
-import {
-  EnvironmentRepository,
-  NotificationTemplateRepository,
-  MessageTemplateRepository,
-  ControlValuesRepository,
-} from '@novu/dal';
-import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
-import { workflow } from '@novu/framework';
 import { TestBridgeServer } from '../../../../e2e/test-bridge-server';
 
 describe('Bridge Sync - /bridge/sync (POST) #novu-v2', async () => {

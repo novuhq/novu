@@ -1,7 +1,7 @@
 import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
-import { EnvironmentProvider } from '@/context/environment/environment-provider';
-import { ReactNode } from 'react';
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
+import { ReactNode } from 'react';
+import { EnvironmentProvider } from '@/context/environment/environment-provider';
 import { PermissionProtectedRoute } from './permission-protected-route';
 
 interface ProtectedRouteProps {

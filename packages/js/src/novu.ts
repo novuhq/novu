@@ -5,9 +5,9 @@ import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
 import type { NovuOptions, Subscriber } from './types';
-import type { BaseSocketInterface } from './ws/base-socket';
-import { createSocket } from './ws';
 import { buildSubscriber } from './ui/internal';
+import { createSocket } from './ws';
+import type { BaseSocketInterface } from './ws/base-socket';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;

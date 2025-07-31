@@ -1,14 +1,14 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
+  CheckIntegrationResponseEnum,
+  ICheckIntegrationResponse,
   IEmailOptions,
   IEmailProvider,
-  ICheckIntegrationResponse,
-  CheckIntegrationResponseEnum,
+  ISendMessageSuccessResponse,
 } from '@novu/stateless';
 
-import MailerSend, { EmailParams, Recipient, Attachment } from 'mailersend';
+import MailerSend, { Attachment, EmailParams, Recipient } from 'mailersend';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 

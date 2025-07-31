@@ -1,5 +1,5 @@
-import { cn } from '@/utils/ui';
 import { HTMLAttributes } from 'react';
+import { cn } from '@/utils/ui';
 
 type InAppTabsSectionProps = HTMLAttributes<HTMLDivElement>;
 

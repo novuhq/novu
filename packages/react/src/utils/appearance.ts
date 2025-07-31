@@ -1,7 +1,6 @@
-import type { Appearance as JsAppearance, IconRenderer, IconOverrides as JsIconOverrides, IconKey } from '@novu/js/ui';
-
-import type { ReactAppearance, ReactIconRenderer } from './types';
+import type { IconKey, IconRenderer, Appearance as JsAppearance, IconOverrides as JsIconOverrides } from '@novu/js/ui';
 import { MountedElement } from '../context/RendererContext';
+import type { ReactAppearance, ReactIconRenderer } from './types';
 
 export function adaptAppearanceForJs(
   appearance: ReactAppearance,

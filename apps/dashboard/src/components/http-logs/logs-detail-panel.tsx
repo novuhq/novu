@@ -1,10 +1,10 @@
 import { motion } from 'motion/react';
 import { RequestLog } from '../../types/logs';
-import { LogsDetailHeader } from './logs-detail-header';
 import { LogsDetailContent } from './logs-detail-content';
-import { LogsDetailSkeleton } from './logs-detail-skeleton';
-import { LogsDetailError } from './logs-detail-error';
 import { RequestLogDetailEmptyState } from './logs-detail-empty';
+import { LogsDetailError } from './logs-detail-error';
+import { LogsDetailHeader } from './logs-detail-header';
+import { LogsDetailSkeleton } from './logs-detail-skeleton';
 import { WorkflowRunsContent } from './workflow-runs-content';
 
 type LogsDetailPanelProps = {

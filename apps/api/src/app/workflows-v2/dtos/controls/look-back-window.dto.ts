@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, Min } from 'class-validator';
 import { TimeUnitEnum } from '@novu/shared';
+import { IsEnum, IsNumber, Min } from 'class-validator';
 
 export class LookBackWindowDto {
   @ApiProperty({

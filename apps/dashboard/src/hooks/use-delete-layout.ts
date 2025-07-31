@@ -1,6 +1,6 @@
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteLayout } from '@/api/layouts';
+import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 

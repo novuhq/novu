@@ -1,15 +1,15 @@
 import { Variable } from '@maily-to/core/extensions';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
-import { VariableList, VariableListRef } from '@/components/variable/variable-list';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 import {
   DIGEST_PREVIEW_MAP,
   DIGEST_VARIABLES_ENUM,
   DIGEST_VARIABLES_FILTER_MAP,
   getDynamicDigestVariable,
 } from '@/components/variable/utils/digest-variables';
+import { VariableList, VariableListRef } from '@/components/variable/variable-list';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
 
 interface ExtendedVariable extends Variable {
   type?: string;

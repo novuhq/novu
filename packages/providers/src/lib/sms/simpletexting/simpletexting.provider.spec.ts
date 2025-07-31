@@ -1,7 +1,6 @@
 import { expect, test } from 'vitest';
-import { SimpletextingSmsProvider } from './simpletexting.provider';
-
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { SimpletextingSmsProvider } from './simpletexting.provider';
 
 test('should trigger SimpletextingSmsProvider library correctly', async () => {
   const { mockPost } = axiosSpy({

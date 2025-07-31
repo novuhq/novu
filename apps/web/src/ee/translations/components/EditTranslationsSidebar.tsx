@@ -180,7 +180,6 @@ export const EditTranslationsSidebar = ({
     if (group) {
       setGroupIdentifier(group?.identifier);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [group]);
 
   const isUploadingPage = uploadFiles.length > 0;

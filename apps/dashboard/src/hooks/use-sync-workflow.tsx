@@ -1,3 +1,9 @@
+import type { IEnvironment, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
+import { ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { getV2, NovuApiError } from '@/api/api.client';
 import { syncWorkflow } from '@/api/workflows';
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -8,12 +14,6 @@ import TruncatedText from '@/components/truncated-text';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import type { IEnvironment, WorkflowListResponseDto, WorkflowResponseDto } from '@novu/shared';
-import { ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResponseDto) {
   const { currentEnvironment } = useEnvironment();
@@ -25,7 +25,7 @@ export function useSyncWorkflow(workflow: WorkflowResponseDto | WorkflowListResp
   const [targetEnvironmentId, setTargetEnvironmentId] = useState<string>();
   const navigate = useNavigate();
 
-  let loadingToast: string | number | undefined = undefined;
+  let loadingToast: string | number | undefined;
 
   const isSyncable = useMemo(
     () => workflow.origin === ResourceOriginEnum.NOVU_CLOUD && workflow.status !== WorkflowStatusEnum.ERROR,

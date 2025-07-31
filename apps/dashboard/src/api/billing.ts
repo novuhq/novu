@@ -1,4 +1,4 @@
-import type { IEnvironment, GetSubscriptionDto } from '@novu/shared';
+import type { GetSubscriptionDto, IEnvironment } from '@novu/shared';
 import { get } from './api.client';
 
 export async function getSubscription({ environment }: { environment: IEnvironment }) {

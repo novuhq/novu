@@ -1,14 +1,33 @@
 import { Injectable } from '@nestjs/common';
-
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  dashboardSanitizeControlValues,
+  ExecuteBridgeRequest,
+  ExecuteBridgeRequestCommand,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   ControlValuesRepository,
-  NotificationTemplateEntity,
   EnvironmentRepository,
-  JobRepository,
-  NotificationTemplateRepository,
-  MessageRepository,
   JobEntity,
+  JobRepository,
+  MessageRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
 } from '@novu/dal';
+import {
+  DelayResult,
+  DigestResult,
+  Event,
+  ExecuteOutput,
+  InAppResult,
+  PostActionEnum,
+  State,
+} from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   ExecutionDetailsSourceEnum,
@@ -18,27 +37,6 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '@novu/shared';
-import {
-  DigestResult,
-  Event,
-  State,
-  PostActionEnum,
-  ExecuteOutput,
-  DelayResult,
-  InAppResult,
-} from '@novu/framework/internal';
-
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  dashboardSanitizeControlValues,
-  DetailEnum,
-  ExecuteBridgeRequest,
-  ExecuteBridgeRequestCommand,
-  Instrument,
-  InstrumentUsecase,
-  PinoLogger,
-} from '@novu/application-generic';
 import { ExecuteBridgeJobCommand } from './execute-bridge-job.command';
 
 @Injectable()
@@ -171,7 +169,6 @@ export class ExecuteBridgeJob {
 
   private normalizePayload(originalPayload: ITriggerPayload = {}) {
     // Remove internal params
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { __source, ...payload } = originalPayload;
 
     return payload;

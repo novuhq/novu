@@ -1,13 +1,13 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
-import { LoadingOverlay } from './LoadingOverlay';
-import { Input } from '../input';
-import { Button } from '../button';
-import { stack } from '../../../styled-system/patterns/stack';
-import { Title } from '../title';
-import { Text } from '../text';
-import { Box } from '../../../styled-system/jsx';
 import { css } from '../../../styled-system/css';
+import { Box } from '../../../styled-system/jsx';
+import { stack } from '../../../styled-system/patterns/stack';
+import { Button } from '../button';
+import { Input } from '../input';
+import { Text } from '../text';
+import { Title } from '../title';
+import { LoadingOverlay } from './LoadingOverlay';
 
 export default {
   title: 'Components/LoadingOverlay',

@@ -1,11 +1,11 @@
+import { ChannelTypeEnum, LAYOUT_CONTENT_VARIABLE, UiComponentEnum } from '@novu/shared';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { ChannelTypeEnum, LAYOUT_CONTENT_VARIABLE, UiComponentEnum } from '@novu/shared';
 
 import { EmailEditorSelect } from '@/components/email-editor-select';
-import { LayoutEmailBody } from './layout-email-body';
-import { useLayoutEditor } from './layout-editor-provider';
 import { formatHtml } from '@/utils/formatter';
+import { useLayoutEditor } from './layout-editor-provider';
+import { LayoutEmailBody } from './layout-email-body';
 
 const EmailEditorSelectInternal = () => {
   const { setValue } = useFormContext();

@@ -1,6 +1,4 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-
-import { ObservabilityBackgroundTransactionEnum, JobStatusEnum } from '@novu/shared';
 import {
   BullMqService,
   getStandardWorkerOptions,
@@ -8,21 +6,21 @@ import {
   Job,
   PinoLogger,
   StandardWorkerService,
-  storage,
   Store,
+  storage,
   WorkerOptions,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
-
 import { CommunityOrganizationRepository, JobRepository } from '@novu/dal';
+import { JobStatusEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
+  HandleLastFailedJob,
+  HandleLastFailedJobCommand,
   RunJob,
   RunJobCommand,
   SetJobAsFailed,
   SetJobAsFailedCommand,
   WebhookFilterBackoffStrategy,
-  HandleLastFailedJobCommand,
-  HandleLastFailedJob,
 } from '../usecases';
 
 const nr = require('newrelic');

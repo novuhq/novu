@@ -1,3 +1,4 @@
+import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,7 +10,6 @@ import {
   AlertDialogTitle,
 } from '@/components/primitives/alert-dialog';
 import { Separator } from '@/components/primitives/separator';
-import { RiAlertFill, RiArrowRightSLine } from 'react-icons/ri';
 import { Button } from './primitives/button';
 
 type UnsavedChangesAlertDialogProps = {

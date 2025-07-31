@@ -1,13 +1,13 @@
-import { Card, CardContent } from '../primitives/card';
-import { RiArrowRightDoubleFill, RiCheckLine, RiLoader3Line } from 'react-icons/ri';
-import { useOnboardingSteps, StepIdEnum } from '../../hooks/use-onboarding-steps';
-import { Link, useParams } from 'react-router-dom';
-import { buildRoute, ROUTES } from '../../utils/routes';
 import { motion } from 'motion/react';
-import { mainCard, leftSection, textItem, stepsList, stepItem, logo } from './progress-section.animations';
-import { PointingArrow, NovuLogo } from './icons';
+import { RiArrowRightDoubleFill, RiCheckLine, RiLoader3Line } from 'react-icons/ri';
+import { Link, useParams } from 'react-router-dom';
+import { StepIdEnum, useOnboardingSteps } from '../../hooks/use-onboarding-steps';
 import { useTelemetry } from '../../hooks/use-telemetry';
+import { buildRoute, ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
+import { Card, CardContent } from '../primitives/card';
+import { NovuLogo, PointingArrow } from './icons';
+import { leftSection, logo, mainCard, stepItem, stepsList, textItem } from './progress-section.animations';
 
 interface StepItemProps {
   step: {

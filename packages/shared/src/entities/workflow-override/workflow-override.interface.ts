@@ -1,7 +1,7 @@
-import { IPreferenceChannels } from '../subscriber-preference';
 import { EnvironmentId, OrganizationId, WorkflowOverrideId } from '../../types';
-import { ITenantEntity } from '../tenant';
 import { INotificationTemplate } from '../notification-template';
+import { IPreferenceChannels } from '../subscriber-preference';
+import { ITenantEntity } from '../tenant';
 
 export interface IWorkflowOverride {
   _id?: WorkflowOverrideId;

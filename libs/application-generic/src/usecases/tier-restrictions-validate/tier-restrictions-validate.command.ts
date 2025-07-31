@@ -1,6 +1,6 @@
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { StepTypeEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
+import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { OrganizationLevelCommand } from '../../commands';
 
 export class TierRestrictionsValidateCommand extends OrganizationLevelCommand {

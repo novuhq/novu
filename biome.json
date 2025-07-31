@@ -166,8 +166,7 @@
             "useHookAtTopLevel": "error"
           },
           "style": {
-            "useComponentExportOnlyModules": "warn",
-            "useImportType": "error"
+            "useComponentExportOnlyModules": "warn"
           },
           "suspicious": {
             "noExtraNonNullAssertion": "error",

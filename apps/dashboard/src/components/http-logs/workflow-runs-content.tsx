@@ -1,20 +1,20 @@
-import { useMemo, useState } from 'react';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
-import { RiLoader4Fill, RiArrowDownSLine, RiArrowRightUpLine } from 'react-icons/ri';
+import { useMemo, useState } from 'react';
+import { RiArrowDownSLine, RiArrowRightUpLine, RiLoader4Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
-import { Button } from '@/components/primitives/button';
-import { LinkButton } from '@/components/primitives/button-link';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
-import { useFetchActivities } from '@/hooks/use-fetch-activities';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { RequestLog } from '../../types/logs';
-import { WorkflowRunsFilters } from './workflow-runs-filters';
-import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 import { type ActivityFilters } from '@/api/activity';
 import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
+import { Button } from '@/components/primitives/button';
+import { LinkButton } from '@/components/primitives/button-link';
+import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchActivities } from '@/hooks/use-fetch-activities';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { RequestLog } from '../../types/logs';
+import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 import { WorkflowRunActivityDrawer } from './workflow-run-activity-drawer';
+import { WorkflowRunsFilters } from './workflow-runs-filters';
 
 type WorkflowRunsContentProps = {
   log: RequestLog;

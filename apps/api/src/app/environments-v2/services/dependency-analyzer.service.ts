@@ -2,14 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
-import {
-  IDiffResult,
-  IResourceDiff,
-  IResourceDependency,
-  ResourceTypeEnum,
-  DependencyReasonEnum,
-} from '../types/sync.types';
 import { WorkflowDataContainer } from '../../shared/containers/workflow-data.container';
+import {
+  DependencyReasonEnum,
+  IDiffResult,
+  IResourceDependency,
+  IResourceDiff,
+  ResourceTypeEnum,
+} from '../types/sync.types';
 
 @Injectable()
 export class DependencyAnalyzerService {

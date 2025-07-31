@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, buildFeedKey, InvalidateCacheService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { ButtonTypeEnum } from '@novu/shared';

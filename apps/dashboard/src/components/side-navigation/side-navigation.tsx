@@ -1,11 +1,3 @@
-import { Badge } from '@/components/primitives/badge';
-import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { Protect } from '@/utils/protect';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
@@ -24,6 +16,14 @@ import {
   RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
+import { Badge } from '@/components/primitives/badge';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';

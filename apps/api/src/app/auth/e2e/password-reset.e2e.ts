@@ -1,10 +1,10 @@
 import { CommunityUserRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { v4 as uuidv4 } from 'uuid';
-import { expect } from 'chai';
-import { stub, SinonStubbedMember } from 'sinon';
-import { subDays, subMinutes } from 'date-fns';
 import { PasswordResetFlowEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { subDays, subMinutes } from 'date-fns';
+import { SinonStubbedMember, stub } from 'sinon';
+import { v4 as uuidv4 } from 'uuid';
 
 describe('Password reset - /auth/reset (POST) #novu-v0-os', async () => {
   let session: UserSession;
@@ -107,7 +107,6 @@ describe('Password reset - /auth/reset (POST) #novu-v0-os', async () => {
 
     // RLD-68 A debug case to catch the error state message origin
     if (!loginBody || !loginBody.data) {
-      // eslint-disable-next-line no-console
       console.info(loginBody);
     }
 
@@ -295,7 +294,6 @@ describe('Password reset - /auth/reset (POST) #novu-v0-os', async () => {
 
     expect(plainToken).to.not.equal(foundUser?.resetToken);
     expect(resetChange.message[0]).to.contain(
-      // eslint-disable-next-line max-len
       'The password must contain minimum 8 and maximum 64 characters, at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-'
     );
   });

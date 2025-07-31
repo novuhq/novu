@@ -3,10 +3,10 @@ import type {
   Awaitable,
   CustomStep,
   DiscoverWorkflowOutput,
-  StepType,
-  StepOutput,
-  StepOptions,
   Schema,
+  StepOptions,
+  StepOutput,
+  StepType,
 } from '../../types';
 import { transformSchema } from '../../validators';
 import { discoverStep } from './discover-step';
@@ -49,7 +49,6 @@ export async function discoverCustomStepFactory(
         },
       },
       // TODO: fix typing for `resolve` to use generic typings
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as Awaited<StepOutput<any>>;
   };
 }

@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsOptional } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { LayoutId } from '../../types';
 

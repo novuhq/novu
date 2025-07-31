@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
-
 import { Transform } from 'class-transformer';
+import { IsOptional, IsString } from 'class-validator';
 import { TopicDto } from './topic.dto';
 
 export class FilterTopicsRequestDto {

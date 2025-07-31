@@ -1,7 +1,7 @@
-import { cn } from '@/utils/ui';
 import { IEnvironment } from '@novu/shared';
 import { cva } from 'class-variance-authority';
 import { RiGitBranchLine } from 'react-icons/ri';
+import { cn } from '@/utils/ui';
 
 const logoVariants = cva('', {
   variants: {

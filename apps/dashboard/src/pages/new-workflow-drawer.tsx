@@ -1,3 +1,7 @@
+import { DuplicateWorkflowDto } from '@novu/shared';
+import { useState } from 'react';
+import { RiArrowRightSLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import {
@@ -18,10 +22,6 @@ import { useDuplicateWorkflow } from '@/hooks/use-duplicate-workflow';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
 import { useOnElementUnmount } from '@/hooks/use-on-element-unmount';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { DuplicateWorkflowDto } from '@novu/shared';
-import { useState } from 'react';
-import { RiArrowRightSLine } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
 
 type NewWorkflowDrawerProps = {
   mode: 'create' | 'duplicate';

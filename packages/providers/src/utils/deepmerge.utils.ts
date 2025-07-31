@@ -32,9 +32,9 @@ function defaultArrayMerge(
   source: Record<string, unknown>[],
   options: IOptions
 ): Record<string, unknown>[] {
-  return target.concat(source).map(function (element) {
-    return cloneUnlessOtherwiseSpecified(element, options) as Record<string, unknown>;
-  });
+  return target
+    .concat(source)
+    .map((element) => cloneUnlessOtherwiseSpecified(element, options) as Record<string, unknown>);
 }
 
 function getMergeFunction(key: string, options: IOptions) {
@@ -80,7 +80,7 @@ function mergeObject(
       destination[key] = cloneUnlessOtherwiseSpecified(target[key] as Record<string, unknown>, options);
     });
   }
-  getKeys(source).forEach(function (key: string) {
+  getKeys(source).forEach((key: string) => {
     if (propertyIsUnsafe(target, key as string)) {
       return;
     }
@@ -146,17 +146,13 @@ function deepMergeObjects<T extends Record<string, unknown> | Record<string, unk
   source: Record<string, unknown> | Record<string, unknown>[],
   options?: IDeepMergeOptions
 ): T {
-  // eslint-disable-next-line no-param-reassign
   options = options || {};
-  // eslint-disable-next-line no-param-reassign
   options.arrayMerge = options.arrayMerge || defaultArrayMerge;
-  // eslint-disable-next-line no-param-reassign
   options.isMergeableObject = options.isMergeableObject || isMergeableObject;
   /*
    * cloneUnlessOtherwiseSpecified is added to `options` so that custom arrayMerge()
    * implementations can use it. The caller may not replace it.
    */
-  // eslint-disable-next-line no-param-reassign
   options.cloneUnlessOtherwiseSpecified = cloneUnlessOtherwiseSpecified;
 
   const sourceIsArray = Array.isArray(source);
@@ -190,7 +186,5 @@ export function deepMerge<T extends Record<string, unknown>>(array: T[], options
     throw new Error('first argument should be an array');
   }
 
-  return array.reduce(function (prev, next) {
-    return deepMergeObjects(prev, next, options);
-  }, {} as T);
+  return array.reduce((prev, next) => deepMergeObjects(prev, next, options), {} as T);
 }

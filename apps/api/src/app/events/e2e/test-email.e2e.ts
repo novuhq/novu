@@ -1,12 +1,12 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { MessageRepository, IntegrationRepository } from '@novu/dal';
+import { IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 import { TestSendEmailRequestDto } from '../dtos';
 
 // TODO: Fix these tests
-describe.skip('Events - Test email - /v1/events/test/email (POST) #novu-v2', function () {
+describe.skip('Events - Test email - /v1/events/test/email (POST) #novu-v2', () => {
   const requestDto: TestSendEmailRequestDto = {
     contentType: 'customHtml',
     payload: {},
@@ -65,13 +65,13 @@ describe.skip('Events - Test email - /v1/events/test/email (POST) #novu-v2', fun
     }
   };
 
-  it('should allow sending test email with email provider', async function () {
+  it('should allow sending test email with email provider', async () => {
     const response = await sendTestEmail(requestDto);
 
     expect(response.status).to.equal(201);
   });
 
-  it('should allow sending test email with Novu provider', async function () {
+  it('should allow sending test email with Novu provider', async () => {
     await deleteEmailIntegration();
 
     const response = await sendTestEmail(requestDto);
@@ -79,7 +79,7 @@ describe.skip('Events - Test email - /v1/events/test/email (POST) #novu-v2', fun
     expect(response.status).to.equal(201);
   });
 
-  it('should send test email fallbacking to Novu provider when there is no active integration', async function () {
+  it('should send test email fallbacking to Novu provider when there is no active integration', async () => {
     await deactivateEmailIntegration();
 
     const response = await sendTestEmail(requestDto);
@@ -87,7 +87,7 @@ describe.skip('Events - Test email - /v1/events/test/email (POST) #novu-v2', fun
     expect(response.status).to.equal(201);
   });
 
-  it('should not allow sending test email when Novu provider limit is reached', async function () {
+  it('should not allow sending test email when Novu provider limit is reached', async () => {
     await deleteEmailIntegration();
     await reachNovuProviderLimit();
 

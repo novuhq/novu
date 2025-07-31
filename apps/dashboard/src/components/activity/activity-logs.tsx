@@ -1,18 +1,17 @@
-import { motion } from 'motion/react';
-import { RiFullscreenLine, RiCloseFill } from 'react-icons/ri';
 import { IActivity } from '@novu/shared';
-import { useState, useRef } from 'react';
-
-import { cn } from '@/utils/ui';
-import { InlineToast } from '@/components/primitives/inline-toast';
+import { motion } from 'motion/react';
+import { useRef, useState } from 'react';
+import { RiCloseFill, RiFullscreenLine } from 'react-icons/ri';
 import { ActivityJobItem } from '@/components/activity/activity-job-item';
-import { fadeIn } from '@/utils/animation';
-import { Popover, PopoverContent } from '@/components/primitives/popover';
 import { CodeBlock } from '@/components/primitives/code-block';
-import { Dialog, DialogContent, DialogTitle, DialogClose, DialogHeader } from '@/components/primitives/dialog';
-import { CopyToClipboard } from '../primitives/copy-to-clipboard';
-import { CompactButton } from '../primitives/button-compact';
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle } from '@/components/primitives/dialog';
+import { InlineToast } from '@/components/primitives/inline-toast';
+import { Popover, PopoverContent } from '@/components/primitives/popover';
+import { fadeIn } from '@/utils/animation';
+import { cn } from '@/utils/ui';
 import { CollapsibleSection } from '../http-logs/logs-detail-content';
+import { CompactButton } from '../primitives/button-compact';
+import { CopyToClipboard } from '../primitives/copy-to-clipboard';
 
 export function ActivityLogs({
   activity,

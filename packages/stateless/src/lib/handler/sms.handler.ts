@@ -1,13 +1,6 @@
-import {
-  HandlebarsContentEngine,
-  IContentEngine,
-} from '../content/content.engine';
+import { HandlebarsContentEngine, IContentEngine } from '../content/content.engine';
 import { ISmsProvider } from '../provider/provider.interface';
-import {
-  ChannelTypeEnum,
-  IMessage,
-  ITriggerPayload,
-} from '../template/template.interface';
+import { ChannelTypeEnum, IMessage, ITriggerPayload } from '../template/template.interface';
 
 export class SmsHandler {
   private readonly contentEngine: IContentEngine;
@@ -15,16 +8,14 @@ export class SmsHandler {
   constructor(
     private message: IMessage,
     private provider: ISmsProvider,
-    contentEngine?: IContentEngine,
+    contentEngine?: IContentEngine
   ) {
     this.contentEngine = contentEngine ?? new HandlebarsContentEngine();
   }
 
   async send(data: ITriggerPayload) {
     const attachments = data.$attachments?.filter((item) =>
-      item.channels?.length
-        ? item.channels?.includes(ChannelTypeEnum.SMS)
-        : true,
+      item.channels?.length ? item.channels?.includes(ChannelTypeEnum.SMS) : true
     );
 
     let content = '';
@@ -35,9 +26,7 @@ export class SmsHandler {
     }
 
     if (!data.$phone) {
-      throw new Error(
-        '$phone is missing in trigger payload. To send an SMS You must specify a $phone property.',
-      );
+      throw new Error('$phone is missing in trigger payload. To send an SMS You must specify a $phone property.');
     }
 
     return await this.provider.sendMessage(
@@ -46,7 +35,7 @@ export class SmsHandler {
         content,
         attachments,
       },
-      {},
+      {}
     );
   }
 }

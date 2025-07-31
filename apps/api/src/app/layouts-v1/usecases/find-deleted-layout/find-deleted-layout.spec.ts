@@ -1,21 +1,18 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
 import { LayoutRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, TemplateVariableTypeEnum } from '@novu/shared';
-
-import { FindDeletedLayoutUseCase } from './find-deleted-layout.use-case';
-import { FindDeletedLayoutCommand } from './find-deleted-layout.command';
-
-import { CreateLayoutUseCase, CreateLayoutCommand } from '../create-layout';
-import { DeleteLayoutUseCase, DeleteLayoutCommand } from '../delete-layout';
-
-import { SharedModule } from '../../../shared/shared.module';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { ChangeModule } from '../../../change/change.module';
 import { MessageTemplateModule } from '../../../message-template/message-template.module';
+import { SharedModule } from '../../../shared/shared.module';
 import { LayoutsV1Module } from '../../layouts-v1.module';
+import { CreateLayoutCommand, CreateLayoutUseCase } from '../create-layout';
+import { DeleteLayoutCommand, DeleteLayoutUseCase } from '../delete-layout';
+import { FindDeletedLayoutCommand } from './find-deleted-layout.command';
+import { FindDeletedLayoutUseCase } from './find-deleted-layout.use-case';
 
-describe('Find Deleted Layout Usecase', function () {
+describe('Find Deleted Layout Usecase', () => {
   let createLayoutUseCase: CreateLayoutUseCase;
   let deleteLayoutUseCase: DeleteLayoutUseCase;
   let findDeletedLayoutUseCase: FindDeletedLayoutUseCase;

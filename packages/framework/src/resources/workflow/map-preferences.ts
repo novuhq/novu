@@ -1,5 +1,5 @@
-import { ChannelTypeEnum, WorkflowPreferencesPartial } from '../../shared';
 import { WorkflowChannelEnum } from '../../constants';
+import { ChannelTypeEnum, WorkflowPreferencesPartial } from '../../shared';
 import { WorkflowPreferences } from '../../types';
 
 /** Correlate user-friendly channels to system-friendly channels */

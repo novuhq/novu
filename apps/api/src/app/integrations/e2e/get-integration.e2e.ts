@@ -1,9 +1,9 @@
+import { IntegrationEntity } from '@novu/dal';
+import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
-import { IntegrationEntity } from '@novu/dal';
 
-describe('Get Integrations - /integrations (GET) #novu-v2', function () {
+describe('Get Integrations - /integrations (GET) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -43,7 +43,7 @@ describe('Get Integrations - /integrations (GET) #novu-v2', function () {
     expect(inAppIntegrations.length).to.eql(2);
   });
 
-  it('should get custom SMTP integration details with TLS options', async function () {
+  it('should get custom SMTP integration details with TLS options', async () => {
     const nodeMailerProviderPayload = {
       providerId: EmailProviderIdEnum.CustomSMTP,
       channel: ChannelTypeEnum.EMAIL,

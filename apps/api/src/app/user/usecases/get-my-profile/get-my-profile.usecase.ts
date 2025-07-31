@@ -1,11 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-
-import { UserRepository } from '@novu/dal';
 import { createHash, PinoLogger } from '@novu/application-generic';
-
-import { GetMyProfileCommand } from './get-my-profile.dto';
+import { UserRepository } from '@novu/dal';
 import type { UserResponseDto } from '../../dtos/user-response.dto';
 import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
+import { GetMyProfileCommand } from './get-my-profile.dto';
 
 @Injectable()
 export class GetMyProfileUsecase extends BaseUserProfileUsecase {

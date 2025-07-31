@@ -1,15 +1,15 @@
-import { useCallback, useEffect } from 'react';
 import { ISubscriberResponseDto, SubscriberDto } from '@novu/shared';
+import { useCallback, useEffect } from 'react';
 
 import { Accordion } from '@/components/primitives/accordion';
-import { PreviewSubscriberSection } from '../preview-subscriber-section';
-import { usePreviewContext } from '@/hooks/use-preview-context';
-import { clearSubscriberData, loadSubscriberData, saveSubscriberData } from './utils/layout-preview-context-storage';
-import { useLayoutEditor } from './layout-editor-provider';
 import { useEnvironment } from '@/context/environment/hooks';
-import { createSubscriberData } from '../workflow-editor/steps/utils/preview-context.utils';
-import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { usePreviewContext } from '@/hooks/use-preview-context';
+import { PreviewSubscriberSection } from '../preview-subscriber-section';
+import { createSubscriberData } from '../workflow-editor/steps/utils/preview-context.utils';
+import { useLayoutEditor } from './layout-editor-provider';
+import { clearSubscriberData, loadSubscriberData, saveSubscriberData } from './utils/layout-preview-context-storage';
 
 type ParsedData = { subscriber: Partial<SubscriberDto> };
 

@@ -1,5 +1,5 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { ContentIssueEnum } from '@novu/shared';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class ContentIssue {
   @IsOptional()

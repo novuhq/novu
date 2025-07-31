@@ -1,6 +1,6 @@
-import { ICredentials, ChatProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum } from '@novu/stateless';
 import { RocketChatProvider } from '@novu/providers';
+import { ChatProviderIdEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/stateless';
 import { BaseChatHandler } from './base.handler';
 
 export class RocketChatHandler extends BaseChatHandler {

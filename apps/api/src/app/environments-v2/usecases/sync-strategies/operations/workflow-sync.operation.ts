@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ResourceTypeEnum } from '../../../types/sync.types';
-import { BaseSyncOperation } from '../base/operations/base-sync.operation';
 import {
+  WorkflowComparatorAdapter,
+  WorkflowDeleteAdapter,
   WorkflowRepositoryAdapter,
   WorkflowSyncAdapter,
-  WorkflowDeleteAdapter,
-  WorkflowComparatorAdapter,
 } from '../adapters';
+import { BaseSyncOperation } from '../base/operations/base-sync.operation';
 
 @Injectable()
 export class WorkflowSyncOperation extends BaseSyncOperation<NotificationTemplateEntity> {

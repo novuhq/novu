@@ -1,4 +1,4 @@
-import { RuleGroupType, RQBJsonLogic } from 'react-querybuilder';
+import { RQBJsonLogic, RuleGroupType } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 
 // Custom JsonLogic operations for parsing relative date operators

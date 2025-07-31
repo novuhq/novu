@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 
 import { useMutationObserver } from './use-mutation-observer';
 

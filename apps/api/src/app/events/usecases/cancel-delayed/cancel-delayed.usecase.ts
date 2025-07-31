@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-
-import { JobStatusEnum, JobRepository, JobEntity } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
 import { isActionStepType, isMainDigest, StepRunRepository } from '@novu/application-generic';
+import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
 
 import { CancelDelayedCommand } from './cancel-delayed.command';
 

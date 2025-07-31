@@ -4,9 +4,8 @@ import { DropdownItem } from './DropdownItem';
 import { DropdownRoot } from './DropdownRoot';
 import { DropdownTrigger } from './DropdownTrigger';
 
-export { dropdownItemVariants } from './DropdownItem';
-
 export { dropdownContentVariants } from './DropdownContent';
+export { dropdownItemVariants } from './DropdownItem';
 export { dropdownTriggerButtonVariants } from './DropdownTrigger';
 
 export const Dropdown = {

@@ -1,9 +1,9 @@
+import { Novu } from '@novu/api';
 import { MessageEntity, MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v0', async () => {
@@ -20,7 +20,7 @@ describe('Mark as Seen - /widgets/messages/markAs (POST) #novu-v0', async () => 
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should change the seen status', async function () {
+  it('should change the seen status', async () => {
     const { body } = await session.testAgent
       .post('/v1/widgets/session/initialize')
       .send({

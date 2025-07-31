@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '../../types';
-import { ISubscriberFeedResponseDto } from '../subscriber';
 import { IActorDto, IMessageCTADto } from '../message-template';
+import { ISubscriberFeedResponseDto } from '../subscriber';
 
 export interface INotificationDto {
   _id: string;

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { IResourceDiffResult, IResourceDependency, IEnvironmentDiffResponse } from '@/api/environments';
+import type { IEnvironmentDiffResponse, IResourceDependency, IResourceDiffResult } from '@/api/environments';
 
 type ResourceSelection = {
   [resourceId: string]: {

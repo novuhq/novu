@@ -1,12 +1,12 @@
-import { ControlInput } from '@/components/workflow-editor/control-input';
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
-import { Input, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useParseVariables } from '@/hooks/use-parse-variables';
-import { capitalize } from '@/utils/string';
 import { type WidgetProps } from '@rjsf/utils';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { Input, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { capitalize } from '@/utils/string';
 import { getFieldName } from './template-utils';
 
 export function TextWidget(props: WidgetProps) {

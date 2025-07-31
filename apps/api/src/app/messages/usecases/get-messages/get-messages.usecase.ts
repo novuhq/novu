@@ -1,10 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { FeatureFlagsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, OrganizationEntity, SubscriberEntity } from '@novu/dal';
 import { ActorTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-
-import { FeatureFlagsService } from '@novu/application-generic';
-import { GetMessagesCommand } from './get-messages.command';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
+import { GetMessagesCommand } from './get-messages.command';
 
 @Injectable()
 export class GetMessages {

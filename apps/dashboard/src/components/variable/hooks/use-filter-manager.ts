@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getFilters } from '../constants';
 import type { FilterWithParam } from '../types';
 

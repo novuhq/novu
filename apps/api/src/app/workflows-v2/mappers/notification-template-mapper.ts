@@ -1,12 +1,13 @@
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   ShortIsPrefixEnum,
   StepTypeEnum,
-  ResourceOriginEnum,
   WorkflowStatusEnum,
-  ResourceTypeEnum,
 } from '@novu/shared';
 import { buildSlug } from '../../shared/helpers/build-slug';
+import { WorkflowWithPreferencesResponseDto } from '../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 import {
   RuntimeIssueDto,
   StepResponseDto,
@@ -15,7 +16,6 @@ import {
   WorkflowPreferencesResponseDto,
   WorkflowResponseDto,
 } from '../dtos';
-import { WorkflowWithPreferencesResponseDto } from '../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 export function toResponseWorkflowDto(
   workflow: WorkflowWithPreferencesResponseDto,

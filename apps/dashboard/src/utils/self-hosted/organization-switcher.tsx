@@ -1,19 +1,19 @@
-import { useOrganization } from './index';
-import { Button } from '@/components/primitives/button';
+import { ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { Avatar } from '@/components/primitives/avatar';
+import { Button } from '@/components/primitives/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
-import { ChevronDown } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
-import { NovuLogoBlackBg } from './icons';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/primitives/tooltip';
-import { openInNewTab } from '../url';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
+import { openInNewTab } from '../url';
+import { NovuLogoBlackBg } from './icons';
+import { useOrganization } from './index';
 
 export function OrganizationSwitcher() {
   const { organization } = useOrganization() as { organization: { name: string } | undefined };

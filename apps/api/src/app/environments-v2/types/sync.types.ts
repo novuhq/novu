@@ -1,5 +1,5 @@
-import { UserSessionData } from '@novu/shared';
 import { ClientSession } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
 
 export enum ResourceTypeEnum {
   WORKFLOW = 'workflow',

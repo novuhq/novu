@@ -2,14 +2,14 @@ import { SmsProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   ISendMessageSuccessResponse,
+  ISMSEventBody,
   ISmsOptions,
   ISmsProvider,
   SmsEventStatusEnum,
-  ISMSEventBody,
 } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
-import { SmsParams, MessageChannel, SmsJsonResponse } from './sms';
+import { MessageChannel, SmsJsonResponse, SmsParams } from './sms';
 
 export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
   public static readonly BASE_URL = 'https://api.ng.termii.com/api/sms/send';
@@ -74,7 +74,6 @@ export class TermiiSmsProvider extends BaseProvider implements ISmsProvider {
 
   parseEventBody(body: any | any[], identifier: string): ISMSEventBody | undefined {
     if (Array.isArray(body)) {
-      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.message_id === identifier);
     }
 

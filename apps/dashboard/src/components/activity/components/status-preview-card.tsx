@@ -1,10 +1,10 @@
-import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
-import { STEP_TYPE_LABELS } from '@/utils/constants';
-import { Badge } from '@/components/primitives/badge';
-import { cn } from '@/utils/ui';
 import { IActivityJob, JobStatusEnum, StepTypeEnum } from '@novu/shared';
 import { format } from 'date-fns';
 import { RiCheckLine, RiCloseCircleLine, RiLoader4Line, RiPauseLine, RiStopLine } from 'react-icons/ri';
+import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
+import { Badge } from '@/components/primitives/badge';
+import { STEP_TYPE_LABELS } from '@/utils/constants';
+import { cn } from '@/utils/ui';
 import { JOB_STATUS_CONFIG } from '../constants';
 
 function getStepIcon(type?: StepTypeEnum) {

@@ -1,15 +1,15 @@
-import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { PageMeta } from '@/components/page-meta';
-import { Form, FormRoot } from '@/components/primitives/form/form';
-import { getControlsDefaultValues } from '@/utils/default-values';
-import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
-import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
-import { useDataRef } from '@/hooks/use-data-ref';
-import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { StepUpdateDto } from '@novu/shared';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { PageMeta } from '@/components/page-meta';
+import { Form, FormRoot } from '@/components/primitives/form/form';
+import { flattenIssues, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
+import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-context';
+import { StepEditorLayout } from '@/components/workflow-editor/steps/step-editor-layout';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useDataRef } from '@/hooks/use-data-ref';
+import { useFormAutosave } from '@/hooks/use-form-autosave';
+import { getControlsDefaultValues } from '@/utils/default-values';
 
 export function EditStepTemplateV2Page() {
   const { workflow, update, step } = useWorkflow();
@@ -42,7 +42,6 @@ export function EditStepTemplateV2Page() {
   const saveFormRef = useDataRef(saveForm);
   useEffect(() => {
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       saveFormRef.current();
     };
   }, [saveFormRef]);

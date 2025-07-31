@@ -1,7 +1,6 @@
 import { WebSocketEventEnum } from '@novu/shared';
-
-import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 import { JobsOptions } from '../services/bull-mq';
+import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 
 export interface IWebSocketDataDto {
   event: WebSocketEventEnum;

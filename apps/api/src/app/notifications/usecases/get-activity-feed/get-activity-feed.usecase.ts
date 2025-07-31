@@ -20,7 +20,6 @@ export class GetActivityFeed {
     private organizationRepository: CommunityOrganizationRepository
   ) {}
 
-  /* eslint-disable no-param-reassign */
   async execute(command: GetActivityFeedCommand): Promise<ActivitiesResponseDto> {
     let subscriberIds: string[] | undefined;
 

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { expect } from 'chai';
 import { ChangeRepository, EnvironmentRepository, LayoutRepository } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
@@ -11,6 +9,7 @@ import {
   TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Promote Layout Changes #novu-v0', () => {
   let session: UserSession;

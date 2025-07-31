@@ -1,3 +1,8 @@
+import { useOrganization } from '@clerk/clerk-react';
+import { ChannelTypeEnum } from '@novu/shared';
+import { CalendarIcon } from 'lucide-react';
+import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
@@ -5,16 +10,11 @@ import { ActivityFiltersData } from '@/types/activity';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useOrganization } from '@clerk/clerk-react';
-import { ChannelTypeEnum } from '@novu/shared';
-import { CalendarIcon } from 'lucide-react';
-import { useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { IS_SELF_HOSTED } from '../../config';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { CHANNEL_OPTIONS } from './constants';
-import { IS_SELF_HOSTED } from '../../config';
 
 type Fields = 'dateRange' | 'workflows' | 'channels' | 'transactionId' | 'subscriberId' | 'topicKey';
 

@@ -1,11 +1,9 @@
 import { useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
+import { BsFillInfoCircleFill } from 'react-icons/bs';
 import { EuFlag } from '../icons/flags/eu';
 import { USFlag } from '../icons/flags/us';
-import { BsFillInfoCircleFill } from 'react-icons/bs';
-import { Tooltip, TooltipTrigger } from '../primitives/tooltip';
-import { TooltipProvider } from '../primitives/tooltip';
-import { TooltipContent } from '../primitives/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../primitives/tooltip';
 
 const REGION_MAP = {
   US: 'US',

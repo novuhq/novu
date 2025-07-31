@@ -1,15 +1,15 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
-  MessageRepository,
   MessageEntity,
+  MessageRepository,
   NotificationEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import axios from 'axios';
-import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
 import { StepTypeEnum } from '@novu/shared';
+import axios from 'axios';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
 
 const LOG_CONTEXT = 'InboundEmailParse';

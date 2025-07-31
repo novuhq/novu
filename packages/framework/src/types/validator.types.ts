@@ -1,8 +1,8 @@
 import type { ValidateFunction as AjvValidateFunction } from 'ajv';
 import type { ParseReturnType } from 'zod';
-import type { Schema, FromSchema, FromSchemaUnvalidated } from './schema.types';
-import type { JsonSchema } from './schema.types/json.schema.types';
 import type { ImportRequirement } from './import.types';
+import type { FromSchema, FromSchemaUnvalidated, Schema } from './schema.types';
+import type { JsonSchema } from './schema.types/json.schema.types';
 
 export type ValidateFunction<T = unknown> = AjvValidateFunction<T> | ((data: T) => ParseReturnType<T>);
 

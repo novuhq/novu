@@ -1,12 +1,12 @@
-import { expect } from 'chai';
-import { CacheService, cacheService as inMemoryCacheService } from '@novu/application-generic';
 import { Test } from '@nestjs/testing';
+import { CacheService, cacheService as inMemoryCacheService } from '@novu/application-generic';
+import { expect } from 'chai';
 import sinon from 'sinon';
 import { v4 as uuid } from 'uuid';
-import { EvaluateTokenBucketRateLimit } from './evaluate-token-bucket-rate-limit.usecase';
 import { SharedModule } from '../../../shared/shared.module';
 import { RateLimitingModule } from '../../rate-limiting.module';
 import { EvaluateTokenBucketRateLimitCommand } from './evaluate-token-bucket-rate-limit.command';
+import { EvaluateTokenBucketRateLimit } from './evaluate-token-bucket-rate-limit.usecase';
 
 describe('EvaluateTokenBucketRateLimit', () => {
   let useCase: EvaluateTokenBucketRateLimit;

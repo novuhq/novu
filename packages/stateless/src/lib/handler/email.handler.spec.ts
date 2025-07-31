@@ -1,10 +1,7 @@
 // @ts-nocheck
 import { CheckIntegrationResponseEnum } from '../provider/provider.enum';
 import { IEmailProvider } from '../provider/provider.interface';
-import {
-  ChannelTypeEnum,
-  ITriggerPayload,
-} from '../template/template.interface';
+import { ChannelTypeEnum, ITriggerPayload } from '../template/template.interface';
 import { IEmailTemplate, ITheme } from '../theme/theme.interface';
 import { EmailHandler } from './email.handler';
 
@@ -12,8 +9,7 @@ test('it should be able to accept subject as a function and read message configu
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -57,7 +53,7 @@ test('it should be able to accept subject as a function and read message configu
       subject: 'should pass',
       to: ['test@email.com'],
     },
-    {},
+    {}
   );
   spy.mockRestore();
 });
@@ -66,8 +62,7 @@ test('it should be able to accept subject as a function and access outer scope',
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -95,7 +90,7 @@ test('it should be able to accept subject as a function and access outer scope',
       template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
     },
     provider,
-    theme,
+    theme
   );
 
   await emailHandler.send({
@@ -113,7 +108,7 @@ test('it should be able to accept subject as a function and access outer scope',
       subject: 'test',
       to: ['test@email.com'],
     },
-    {},
+    {}
   );
   spy.mockRestore();
 });
@@ -122,8 +117,7 @@ test('it should be able to accept subject as a function', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -149,7 +143,7 @@ test('it should be able to accept subject as a function', async () => {
       template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
     },
     provider,
-    theme,
+    theme
   );
 
   await emailHandler.send({
@@ -167,7 +161,7 @@ test('it should be able to accept subject as a function', async () => {
       subject: 'test',
       to: ['test@email.com'],
     },
-    {},
+    {}
   );
   spy.mockRestore();
 });
@@ -176,8 +170,7 @@ test('send should call the provider method correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -201,7 +194,7 @@ test('send should call the provider method correctly', async () => {
       template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
     },
     provider,
-    theme,
+    theme
   );
 
   await emailHandler.send({
@@ -219,7 +212,7 @@ test('send should call the provider method correctly', async () => {
       subject: 'test',
       to: ['test@email.com'],
     },
-    {},
+    {}
   );
   spy.mockRestore();
 });
@@ -228,8 +221,7 @@ test('send should call template method correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -245,9 +237,7 @@ test('send should call template method correctly', async () => {
     emailTemplate: new EmailTemplate('logo-url'),
   };
 
-  const spyTemplateFunction = jest
-    .fn()
-    .mockImplementation(() => Promise.resolve('test'));
+  const spyTemplateFunction = jest.fn().mockImplementation(() => Promise.resolve('test'));
 
   const emailHandler = new EmailHandler(
     {
@@ -256,7 +246,7 @@ test('send should call template method correctly', async () => {
       template: spyTemplateFunction,
     },
     provider,
-    theme,
+    theme
   );
 
   await emailHandler.send({
@@ -278,8 +268,7 @@ test('send should handle attachments correctly', async () => {
   const provider: IEmailProvider = {
     id: 'email-provider',
     channelType: ChannelTypeEnum.EMAIL,
-    sendMessage: () =>
-      Promise.resolve({ id: '1', date: new Date().toString() }),
+    sendMessage: () => Promise.resolve({ id: '1', date: new Date().toString() }),
     checkIntegration: () =>
       Promise.resolve({
         message: 'test',
@@ -303,7 +292,7 @@ test('send should handle attachments correctly', async () => {
       template: `<div><h1>Test Header</div> Name: {{firstName}}</div>`,
     },
     provider,
-    theme,
+    theme
   );
 
   await emailHandler.send({

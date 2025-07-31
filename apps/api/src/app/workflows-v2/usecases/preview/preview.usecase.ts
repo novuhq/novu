@@ -1,23 +1,23 @@
 import { Injectable } from '@nestjs/common';
-import { ChannelTypeEnum, ResourceOriginEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import {
+  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
-  FeatureFlagsService,
 } from '@novu/application-generic';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { BuildStepDataUsecase } from '../build-step-data';
-import { PreviewCommand } from './preview.command';
+// Import new services
+import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
 import { GeneratePreviewResponseDto, PreviewPayloadDto, StepResponseDto } from '../../dtos';
-// Import new services
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
+import { BuildStepDataUsecase } from '../build-step-data';
+import { PreviewCommand } from './preview.command';
 import { PayloadMergerService } from './services/payload-merger.service';
-import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewPayloadProcessorService } from './services/preview-payload-processor.service';
+import { SchemaBuilderService } from './services/schema-builder.service';
 import { PreviewErrorHandler } from './utils/preview-error-handler';
 
 @Injectable()

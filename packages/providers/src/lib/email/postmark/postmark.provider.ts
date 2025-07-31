@@ -1,15 +1,15 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
+  CheckIntegrationResponseEnum,
+  EmailEventStatusEnum,
+  ICheckIntegrationResponse,
+  IEmailEventBody,
   IEmailOptions,
   IEmailProvider,
   ISendMessageSuccessResponse,
-  ICheckIntegrationResponse,
-  CheckIntegrationResponseEnum,
-  IEmailEventBody,
-  EmailEventStatusEnum,
 } from '@novu/stateless';
-import { Errors, ServerClient, Message, Models } from 'postmark';
+import { Errors, Message, Models, ServerClient } from 'postmark';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -103,7 +103,6 @@ export class PostmarkEmailProvider extends BaseProvider implements IEmailProvide
 
   parseEventBody(body: any | any[], identifier: string): IEmailEventBody | undefined {
     if (Array.isArray(body)) {
-      // eslint-disable-next-line no-param-reassign
       body = body.find((item) => item.MessageID === identifier);
     }
 

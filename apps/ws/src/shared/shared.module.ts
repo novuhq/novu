@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
-import { DalService, SubscriberRepository, NotificationRepository, MessageRepository } from '@novu/dal';
 import {
   AnalyticsService,
   DalServiceHealthIndicator,
-  WebSocketsInMemoryProviderService,
   QueuesModule,
+  WebSocketsInMemoryProviderService,
 } from '@novu/application-generic';
+import { DalService, MessageRepository, NotificationRepository, SubscriberRepository } from '@novu/dal';
 
 import { JobTopicNameEnum } from '@novu/shared';
 import { SubscriberOnlineService } from './subscriber-online';

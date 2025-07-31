@@ -1,7 +1,7 @@
-import { Switch } from '@/components/primitives/switch';
 import { PermissionsEnum } from '@novu/shared';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
+import { Switch } from '@/components/primitives/switch';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 export interface PermissionSwitchProps {
   /** The permission required to access this switch functionality */
@@ -28,7 +28,12 @@ export const PermissionSwitch = ({ permission, onCheckedChange, ...switchProps }
         </TooltipTrigger>
         <TooltipContent>
           Almost there! Your role just doesn't have permission for this one.{' '}
-          <a href="https://docs.novu.co/platform/account/roles-and-permissions" target="_blank" className="underline">
+          <a
+            href="https://docs.novu.co/platform/account/roles-and-permissions"
+            target="_blank"
+            className="underline"
+            rel="noopener"
+          >
             Learn More ↗
           </a>
         </TooltipContent>

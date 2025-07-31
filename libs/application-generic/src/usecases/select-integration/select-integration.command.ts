@@ -1,5 +1,5 @@
-import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 import { ChannelTypeEnum, ITenantDefine, ProvidersIdEnum } from '@novu/shared';
+import { IsDefined, IsMongoId, IsOptional } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 

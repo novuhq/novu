@@ -1,6 +1,8 @@
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
 
 import { Filter, Output, RenderError, Template, TokenKind } from 'liquidjs';
+import { JSONSchemaDto } from '../../dtos/json-schema.dto';
+import { buildLiquidParser } from './liquid-engine';
 import {
   DIGEST_EVENTS_VARIABLE_PATTERN,
   extractLiquidExpressions,
@@ -8,9 +10,7 @@ import {
   isValidDynamicPath,
   isValidTemplate,
 } from './parser-utils';
-import { JSONSchemaDto } from '../../dtos/json-schema.dto';
-import type { VariableDetails, Variable } from './types';
-import { buildLiquidParser } from './liquid-engine';
+import type { Variable, VariableDetails } from './types';
 
 const parserEngine = buildLiquidParser();
 
@@ -118,15 +118,12 @@ function isPropertyAllowed(schema: JSONSchemaDto | undefined, propertyPath: stri
     return false;
   }
 
-  const pathParts = propertyPath
-    .split('.')
-    .map((part) => {
-      // Split array notation into [propName, index]
-      const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
+  const pathParts = propertyPath.split('.').flatMap((part) => {
+    // Split array notation into [propName, index]
+    const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
 
-      return arrayMatch ? [arrayMatch[1], arrayMatch[2]] : [part];
-    })
-    .flat();
+    return arrayMatch ? [arrayMatch[1], arrayMatch[2]] : [part];
+  });
 
   for (const part of pathParts) {
     const { properties, additionalProperties, type } = currentSchema;

@@ -12,7 +12,7 @@ import {
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
 import { NOVU_DEFAULT_CSS_ID, parseElements, parseVariables } from '../helpers';
-import type { Appearance, Elements, Variables, IconOverrides } from '../types';
+import type { Appearance, Elements, IconOverrides, Variables } from '../types';
 
 type AppearanceContextType = {
   variables: Accessor<Variables>;

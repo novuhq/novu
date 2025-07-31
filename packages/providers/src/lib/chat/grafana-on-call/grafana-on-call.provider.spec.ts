@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { GrafanaOnCallChatProvider } from './grafana-on-call.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { GrafanaOnCallChatProvider } from './grafana-on-call.provider';
 
 test('should trigger grafana-on-call library correctly', async () => {
   const date = new Date();

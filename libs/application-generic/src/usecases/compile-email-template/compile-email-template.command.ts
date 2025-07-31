@@ -1,6 +1,6 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { IEmailBlock } from '@novu/dal';
 import { LayoutId, MessageTemplateContentType } from '@novu/shared';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
 
@@ -12,7 +12,7 @@ export class CompileEmailTemplateCommand extends EnvironmentWithUserCommand {
   contentType: MessageTemplateContentType;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsString()
   subject: string;

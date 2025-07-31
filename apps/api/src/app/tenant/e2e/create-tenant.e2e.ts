@@ -1,10 +1,9 @@
 // noinspection ExceptionCaughtLocallyJS
 
-import { expect } from 'chai';
-import axios, { AxiosError, AxiosResponse } from 'axios';
-
-import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import axios, { AxiosError, AxiosResponse } from 'axios';
+import { expect } from 'chai';
 
 function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: string) {
   if (!(e instanceof AxiosError)) {
@@ -15,7 +14,7 @@ function assertValidationMessages(e: AxiosError<any, any>, field: string, msg1: 
   expect(messages).to.be.an('array').that.includes(msg1);
 }
 
-describe('Create Tenant - /tenants (POST) #novu-v0', function () {
+describe('Create Tenant - /tenants (POST) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -24,7 +23,7 @@ describe('Create Tenant - /tenants (POST) #novu-v0', function () {
     await session.initialize();
   });
 
-  it('should create a new tenant', async function () {
+  it('should create a new tenant', async () => {
     const response = await createTenant({
       session,
       identifier: 'identifier_123',
@@ -46,7 +45,7 @@ describe('Create Tenant - /tenants (POST) #novu-v0', function () {
     expect(createdTenant?.data).to.deep.equal({ test1: 'test value1', test2: 'test value2' });
   });
 
-  it('should throw error if a tenant is already exist in the environment', async function () {
+  it('should throw error if a tenant is already exist in the environment', async () => {
     await createTenant({
       session,
       identifier: 'identifier_123',
@@ -69,7 +68,7 @@ describe('Create Tenant - /tenants (POST) #novu-v0', function () {
     }
   });
 
-  it('should throw error if a missing tenant identifier', async function () {
+  it('should throw error if a missing tenant identifier', async () => {
     try {
       await createTenant({
         session,

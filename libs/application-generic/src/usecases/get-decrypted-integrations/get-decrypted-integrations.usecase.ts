@@ -44,7 +44,6 @@ export class GetDecryptedIntegrations {
   }
 
   public static getDecryptedCredentials(integration: IntegrationEntity) {
-    // eslint-disable-next-line no-param-reassign
     integration.credentials = decryptCredentials(integration.credentials);
 
     return integration;

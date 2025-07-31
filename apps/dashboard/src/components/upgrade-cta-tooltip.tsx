@@ -1,8 +1,8 @@
 import { ReactNode } from 'react';
+import { RiExternalLinkLine, RiLockStarLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { RiLockStarLine, RiExternalLinkLine } from 'react-icons/ri';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { SELF_HOSTED_UPGRADE_REDIRECT_URL, IS_SELF_HOSTED } from '@/config';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { ROUTES } from '@/utils/routes';
 import { openInNewTab } from '@/utils/url';
 

@@ -1,10 +1,10 @@
 import {
-  ResourceTypeEnum,
+  DiffActionEnum,
   IDiffResult,
   IResourceDiff,
-  DiffActionEnum,
-  IUserInfo,
   IResourceInfo,
+  IUserInfo,
+  ResourceTypeEnum,
 } from '../../../types/sync.types';
 
 export class DiffResultBuilder {

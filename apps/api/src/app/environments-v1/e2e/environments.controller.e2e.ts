@@ -1,7 +1,7 @@
+import { Novu } from '@novu/api';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { Novu } from '@novu/api';
 import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Env Controller', async () => {

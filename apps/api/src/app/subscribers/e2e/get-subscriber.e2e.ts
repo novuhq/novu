@@ -1,9 +1,9 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
 import { Novu } from '@novu/api';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
+describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', () => {
   let session: UserSession;
   let novuClient: Novu;
   beforeEach(async () => {
@@ -13,7 +13,7 @@ describe('Get Subscriber - /subscribers/:id (GET) #novu-v2', function () {
   });
 
   const subscriberId = 'sub_42';
-  it('should return a subscriber by id', async function () {
+  it('should return a subscriber by id', async () => {
     const createResponse = await novuClient.subscribers.create({
       subscriberId,
       firstName: 'John',

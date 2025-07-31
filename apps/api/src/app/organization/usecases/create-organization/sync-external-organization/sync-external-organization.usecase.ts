@@ -1,20 +1,17 @@
-/* eslint-disable global-require */
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-
-import { ModuleRef } from '@nestjs/core';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
-import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
-import { GetOrganization } from '../../get-organization/get-organization.usecase';
-
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 import { UpsertLayout, UpsertLayoutCommand } from '../../../../layouts-v2/usecases/upsert-layout';
 import { createDefaultLayout } from '../../../../layouts-v2/utils/layout-templates';
+import { GetOrganizationCommand } from '../../get-organization/get-organization.command';
+import { GetOrganization } from '../../get-organization/get-organization.usecase';
+import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
 // TODO: eventually move to @novu/ee-auth
 

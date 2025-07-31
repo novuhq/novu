@@ -1,6 +1,6 @@
+import { ResourceOriginEnum } from '@novu/shared';
 import { RiCloseLine, RiGuideFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { ResourceOriginEnum } from '@novu/shared';
 
 import { CompactButton } from '@/components/primitives/button-compact';
 import { EditStepConditionsForm } from '@/components/workflow-editor/steps/conditions/edit-step-conditions-form';

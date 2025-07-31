@@ -1,8 +1,8 @@
 import { UiSchemaGroupEnum } from '@novu/shared';
-import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { Separator } from '@/components/primitives/separator';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 
 export const DigestControlValues = () => {
   const { step } = useWorkflow();

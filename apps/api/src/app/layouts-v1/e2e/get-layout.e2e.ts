@@ -1,10 +1,8 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-
-import { createLayout } from './helpers';
-
 import { LayoutDto } from '../dtos';
 import { ChannelTypeEnum, TemplateVariableTypeEnum } from '../types';
+import { createLayout } from './helpers';
 
 const BASE_PATH = '/v1/layouts';
 

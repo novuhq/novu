@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
 import { getSubscriberSubscriptions } from '@/api/subscribers';
+import { useEnvironment } from '@/context/environment/hooks';
 
 export function useFetchSubscriberSubscriptions({
   subscriberId,

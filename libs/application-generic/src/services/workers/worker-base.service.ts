@@ -1,15 +1,12 @@
-import { JobTopicNameEnum } from '@novu/shared';
 import { Logger } from '@nestjs/common';
+import { JobTopicNameEnum } from '@novu/shared';
 
 import { BullMqService, Processor, Worker, WorkerOptions } from '../bull-mq';
 import { INovuWorker } from '../readiness';
 
 const LOG_CONTEXT = 'WorkerService';
 
-export type WorkerProcessor =
-  | string
-  | Processor<any, unknown, string>
-  | undefined;
+export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
 export { WorkerOptions };
 
@@ -20,7 +17,7 @@ export class WorkerBaseService implements INovuWorker {
 
   constructor(
     public readonly topic: JobTopicNameEnum,
-    public bullMqServiceInstance: BullMqService,
+    public bullMqServiceInstance: BullMqService
   ) {
     this.instance = bullMqServiceInstance;
   }
@@ -35,10 +32,7 @@ export class WorkerBaseService implements INovuWorker {
     this.createWorker(processor, options);
   }
 
-  public createWorker(
-    processor: WorkerProcessor,
-    options: WorkerOptions,
-  ): void {
+  public createWorker(processor: WorkerProcessor, options: WorkerOptions): void {
     this.instance.createWorker(this.topic, processor, options);
   }
 
@@ -67,10 +61,7 @@ export class WorkerBaseService implements INovuWorker {
 
     await this.instance.gracefulShutdown();
 
-    Logger.log(
-      `Shutting down the ${this.topic} worker service has finished`,
-      LOG_CONTEXT,
-    );
+    Logger.log(`Shutting down the ${this.topic} worker service has finished`, LOG_CONTEXT);
   }
 
   async onModuleDestroy(): Promise<void> {

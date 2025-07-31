@@ -1,4 +1,4 @@
-import { expect, it, describe } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { IErrorCodeKey, IErrorCodeVal, testErrorCodeEnumValidity } from './error.types';
 
 describe('Error Codes', () => {

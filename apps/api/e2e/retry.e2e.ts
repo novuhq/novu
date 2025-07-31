@@ -1,6 +1,6 @@
 import { Novu } from '@novu/api';
-import { expect } from 'chai';
 import { topicsList } from '@novu/api/funcs/topicsList';
+import { expect } from 'chai';
 import { expectSdkExceptionGeneric } from '../src/app/shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { ErrorDto } from '../src/error-dto';
 import { MockHTTPClient } from './mock-http-client';

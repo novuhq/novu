@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsNumber, ValidateNested } from 'class-validator';
 import { LayoutResponseDto } from './layout-response.dto';
 
 export class ListLayoutResponseDto {

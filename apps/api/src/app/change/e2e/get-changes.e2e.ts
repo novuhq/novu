@@ -1,13 +1,13 @@
-import { expect } from 'chai';
 import { ChangeRepository } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
-  StepTypeEnum,
-  FilterPartTypeEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
+  FilterPartTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows-v1/dtos';
 
 describe('Get changes #novu-v0', () => {

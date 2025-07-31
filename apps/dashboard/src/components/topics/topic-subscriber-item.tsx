@@ -1,3 +1,9 @@
+import { ISubscriber } from '@novu/shared';
+import { format } from 'date-fns';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import { RiDeleteBinLine, RiMailLine } from 'react-icons/ri';
+import { TopicSubscription } from '@/api/topics';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import {
@@ -10,17 +16,11 @@ import {
 } from '@/components/primitives/dialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { itemVariants } from '@/utils/animation';
-import { ISubscriber } from '@novu/shared';
-import { motion } from 'motion/react';
-import { useState } from 'react';
-import { RiDeleteBinLine, RiMailLine } from 'react-icons/ri';
-import { SubscriberDrawerButton } from '../subscribers/subscriber-drawer';
-import { useRemoveTopicSubscriber } from './hooks/use-topic-subscribers';
-import { TimeDisplayHoverCard } from '../time-display-hover-card';
-import { format } from 'date-fns';
-import { TopicSubscription } from '@/api/topics';
 import { ConfirmationModal } from '../confirmation-modal';
+import { SubscriberDrawerButton } from '../subscribers/subscriber-drawer';
+import { TimeDisplayHoverCard } from '../time-display-hover-card';
 import TruncatedText from '../truncated-text';
+import { useRemoveTopicSubscriber } from './hooks/use-topic-subscribers';
 
 interface TopicSubscriberItemProps {
   topicKey: string;

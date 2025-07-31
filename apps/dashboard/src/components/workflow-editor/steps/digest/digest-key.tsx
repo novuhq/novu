@@ -1,14 +1,14 @@
+import { X } from 'lucide-react';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { X } from 'lucide-react';
 
 import { Code2 } from '@/components/icons/code-2';
-import { FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { VariableSelect } from '../../../conditions-editor/variable-select';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { Button } from '@/components/primitives/button';
+import { FormField, FormItem, FormLabel, FormMessage } from '@/components/primitives/form/form';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '../../../../hooks/use-parse-variables';
+import { VariableSelect } from '../../../conditions-editor/variable-select';
 
 function parseLiquidVariables(value: string | undefined): string {
   const matches = value?.match(/{{(.*?)}}/g) || [];

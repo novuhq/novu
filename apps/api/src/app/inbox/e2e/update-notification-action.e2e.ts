@@ -1,5 +1,4 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
 import {
   MessageEntity,
   MessageRepository,
@@ -15,9 +14,10 @@ import {
   SystemAvatarIconEnum,
   TemplateVariableTypeEnum,
 } from '@novu/shared';
-import { Novu } from '@novu/api';
-import { mapToDto } from '../utils/notification-mapper';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { mapToDto } from '../utils/notification-mapper';
 
 describe('Update Notification Action - /inbox/notifications/:id/{complete/revert} (PATCH) #novu-v2', async () => {
   let session: UserSession;
@@ -116,7 +116,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     })) as MessageEntity;
   });
 
-  it('should throw bad request error when the notification id is not mongo id', async function () {
+  it('should throw bad request error when the notification id is not mongo id', async () => {
     const id = 'fake';
     const { body, status } = await updateNotificationAction({
       id,
@@ -129,7 +129,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     expect(body.errors.notificationId.messages[0]).to.equal(`notificationId must be a mongodb id`);
   });
 
-  it("should throw not found error when the message doesn't exist", async function () {
+  it("should throw not found error when the message doesn't exist", async () => {
     const id = '666c0dfa0b55d0f06f4aaa6c';
     const { body, status } = await updateNotificationAction({
       id,
@@ -141,7 +141,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     expect(body.message).to.equal(`Notification with id: ${id} is not found.`);
   });
 
-  it('should throw bad request error when the action cannot be performed on the primary button', async function () {
+  it('should throw bad request error when the action cannot be performed on the primary button', async () => {
     const templateNoButtons = await session.createTemplate({
       noFeedId: true,
       steps: [
@@ -168,7 +168,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     expect(body.message).to.equal(`Could not perform action on the primary button because it does not exist.`);
   });
 
-  it('should throw bad request error when the action cannot be performed on the secondary button', async function () {
+  it('should throw bad request error when the action cannot be performed on the secondary button', async () => {
     const templateNoButtons = await session.createTemplate({
       noFeedId: true,
       steps: [
@@ -195,7 +195,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     expect(body.message).to.equal(`Could not perform action on the secondary button because it does not exist.`);
   });
 
-  it('should update the primary action status', async function () {
+  it('should update the primary action status', async () => {
     const { body, status } = await updateNotificationAction({
       id: message._id,
       action: 'complete',
@@ -213,7 +213,7 @@ describe('Update Notification Action - /inbox/notifications/:id/{complete/revert
     expect(body.data.secondaryAction.isCompleted).to.be.false;
   });
 
-  it('should update the secondary action status', async function () {
+  it('should update the secondary action status', async () => {
     const { body, status } = await updateNotificationAction({
       id: message._id,
       action: 'complete',

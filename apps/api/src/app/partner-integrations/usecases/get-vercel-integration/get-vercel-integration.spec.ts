@@ -1,12 +1,12 @@
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { stub, restore, assert } from 'sinon';
 import { OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { assert, restore, stub } from 'sinon';
 
 import { GetVercelIntegration } from './get-vercel-integration.usecase';
 
-describe('GetVercelIntegration', function () {
+describe('GetVercelIntegration', () => {
   let getVercelIntegration: GetVercelIntegration;
   let session: UserSession;
   let organizationRepositoryMock;
@@ -52,7 +52,7 @@ describe('GetVercelIntegration', function () {
     restore();
   });
 
-  it('should get vercel configuration details', async function () {
+  it('should get vercel configuration details', async () => {
     const command = {
       userId: session.user._id,
       organizationId: session.organization._id,
@@ -78,7 +78,7 @@ describe('GetVercelIntegration', function () {
     });
   });
 
-  it('should return empty array when no configurations found', async function () {
+  it('should return empty array when no configurations found', async () => {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     const command = {

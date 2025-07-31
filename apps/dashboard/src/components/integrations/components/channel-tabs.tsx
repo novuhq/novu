@@ -1,8 +1,8 @@
+import { IProviderConfig } from '@novu/shared';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { CHANNEL_TYPE_TO_STRING } from '@/utils/channels';
-import { IProviderConfig } from '@novu/shared';
-import { IntegrationListItem } from './integration-list-item';
 import { INTEGRATION_CHANNELS } from '../utils/channels';
+import { IntegrationListItem } from './integration-list-item';
 
 type ChannelTabsProps = {
   integrationsByChannel: Record<string, IProviderConfig[]>;

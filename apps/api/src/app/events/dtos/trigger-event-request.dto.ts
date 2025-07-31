@@ -1,16 +1,16 @@
-import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   ProvidersIdEnum,
+  TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
-  TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
-import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 
 export class WorkflowToStepControlValuesDto {
   /**

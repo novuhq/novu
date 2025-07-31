@@ -1,8 +1,7 @@
 import { Filter, TokenKind } from 'liquidjs';
-import { z } from 'zod';
-import pluralize from 'pluralize';
-
 import { NumberToken, QuotedToken } from 'liquidjs/dist/tokens';
+import pluralize from 'pluralize';
+import { z } from 'zod';
 import { getNestedValue } from '../utils/object.utils';
 import { LiquidFilterIssue } from './types';
 

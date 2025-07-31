@@ -14,9 +14,7 @@ export class GetMembers {
       .map((member) => {
         if (!command.user.roles.includes(MemberRoleEnum.OSS_ADMIN)) {
           if (member.memberStatus === MemberStatusEnum.INVITED) return null;
-          // eslint-disable-next-line no-param-reassign
           if (member.user) member.user.email = '';
-          // eslint-disable-next-line no-param-reassign
           if (member.invite) member.invite.email = '';
         }
 

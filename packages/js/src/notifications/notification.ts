@@ -1,7 +1,7 @@
 import { InboxService } from '../api';
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, InboxNotification, Result } from '../types';
-import { archive, completeAction, read, revertAction, unarchive, unread, snooze, unsnooze, seen } from './helpers';
+import { archive, completeAction, read, revertAction, seen, snooze, unarchive, unread, unsnooze } from './helpers';
 
 export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotification {
   #emitter: NovuEventEmitter;

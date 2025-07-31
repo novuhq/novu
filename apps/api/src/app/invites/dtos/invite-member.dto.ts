@@ -1,6 +1,6 @@
-import { IsEmail, IsNotEmpty, IsObject, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
+import { Type } from 'class-transformer';
+import { IsEmail, IsNotEmpty, IsObject, ValidateNested } from 'class-validator';
 
 export class InviteMemberDto {
   @IsEmail()

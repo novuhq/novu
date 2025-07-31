@@ -1,6 +1,6 @@
 import React from 'react';
-import { Mounter } from './Mounter';
 import { useNovuUI } from '../context/NovuUIContext';
+import { Mounter } from './Mounter';
 
 export const Preferences = () => {
   const { novuUI } = useNovuUI();

@@ -1,7 +1,7 @@
-import { PropsWithChildren, useEffect } from 'react';
-import { NewDashboardOptInStatusEnum } from '@novu/shared';
-import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
 import { useUser } from '@clerk/clerk-react';
+import { NewDashboardOptInStatusEnum } from '@novu/shared';
+import { PropsWithChildren, useEffect } from 'react';
+import { useNewDashboardOptIn } from '@/hooks/use-new-dashboard-opt-in';
 
 export const OptInProvider = (props: PropsWithChildren) => {
   const { children } = props;

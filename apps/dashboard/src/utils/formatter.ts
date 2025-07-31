@@ -1,6 +1,6 @@
-import { format } from 'prettier/standalone';
-import * as parserHtml from 'prettier/plugins/html';
 import * as parserLiquid from '@shopify/prettier-plugin-liquid/standalone';
+import * as parserHtml from 'prettier/plugins/html';
+import { format } from 'prettier/standalone';
 
 export const formatHtml = (html: string) => {
   return format(html, {

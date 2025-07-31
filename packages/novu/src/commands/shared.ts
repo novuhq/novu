@@ -26,11 +26,9 @@ export async function showWelcomeScreen() {
 
   await new Promise<void>((resolve) => {
     setTimeout(() => {
-      /* eslint-disable no-console */
       console.log(chalk.bold(`                      Welcome to NOVU!`));
       console.log(chalk.bold(textGradient(`         The open-source notification framework\n`)));
       resolve();
-      /* eslint-enable  no-console */
     }, 600);
   });
 }

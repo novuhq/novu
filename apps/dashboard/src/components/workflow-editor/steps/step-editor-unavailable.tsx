@@ -1,9 +1,8 @@
+import { RiArrowRightSLine, RiLockLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-
 import { Button } from '@/components/primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { RiArrowRightSLine, RiLockLine } from 'react-icons/ri';
 import { useStepEditor } from './context/step-editor-context';
 
 export const StepEditorUnavailable = () => {

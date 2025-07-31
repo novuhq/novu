@@ -1,8 +1,8 @@
+import { motion } from 'motion/react';
 import { TopicSubscription } from '@/api/topics';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useFetchSubscriberSubscriptions } from '@/hooks/use-fetch-subscriber-subscriptions';
 import { itemVariants, listVariants } from '@/utils/animation';
-import { motion } from 'motion/react';
 import { SubscriptionItem } from './subscription-item';
 import { SubscriptionsEmptyState } from './subscriptions-empty-state';
 

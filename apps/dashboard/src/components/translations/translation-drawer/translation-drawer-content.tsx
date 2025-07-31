@@ -1,15 +1,15 @@
-import { forwardRef, useImperativeHandle, useCallback, useState } from 'react';
+import { EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import { TranslationGroup } from '@/api/translations';
-import { PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { useEnvironment } from '@/context/environment/hooks';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
-import { TranslationHeader } from './translation-header';
-import { LocaleList } from './locale-list';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { EditorPanel } from './editor-panel';
+import { LocaleList } from './locale-list';
+import { TranslationHeader } from './translation-header';
 import { useTranslationDrawerLogic } from './use-translation-drawer-logic';
-import { InlineToast } from '@/components/primitives/inline-toast';
 
 export type TranslationDrawerContentRef = {
   hasUnsavedChanges: () => boolean;

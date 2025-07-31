@@ -1,5 +1,5 @@
-import { TableCell, TableRow } from '@/components/primitives/table';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { TableCell, TableRow } from '@/components/primitives/table';
 
 export function LogsTableSkeletonRow() {
   return (

@@ -1,13 +1,13 @@
-import * as z from 'zod';
 import {
-  type JSONSchemaDefinition,
   ChannelTypeEnum,
-  VALID_ID_REGEX,
+  type JSONSchemaDefinition,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NAME_LENGTH,
   MAX_TAG_ELEMENTS,
   MAX_TAG_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_DESCRIPTION_LENGTH,
+  VALID_ID_REGEX,
 } from '@novu/shared';
+import * as z from 'zod';
 
 export const workflowSchema = z.object({
   active: z.boolean().optional(),

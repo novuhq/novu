@@ -1,6 +1,5 @@
-/* eslint-disable */
-import { yellow } from 'picocolors';
 import spawn from 'cross-spawn';
+import { yellow } from 'picocolors';
 import type { PackageManager } from './get-pkg-manager';
 
 /**

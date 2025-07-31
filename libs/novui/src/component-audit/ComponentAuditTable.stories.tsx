@@ -1,7 +1,7 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
-import { ComponentAuditTable } from './ComponentAuditTable';
 import { css } from '../../styled-system/css';
+import { ComponentAuditTable } from './ComponentAuditTable';
 
 import scanJson from './component-scans/scan.json';
 
