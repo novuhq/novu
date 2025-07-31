@@ -3,6 +3,7 @@ import { ReactElement, useEffect } from 'react';
 import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
+import { AnalyticsCard } from '../components/primitives/analytics-card';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
@@ -131,6 +132,42 @@ export function HomePage(): ReactElement {
         <motion.div className="flex flex-col gap-8 p-9 pt-4" variants={pageVariants} initial="hidden" animate="show">
           <motion.div variants={sectionVariants}>
             <WelcomeHeader />
+          </motion.div>
+
+          <motion.div variants={sectionVariants}>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              <AnalyticsCard
+                value="30,613"
+                title="Messages delivered"
+                description="+40 compared to prior 30 days"
+                percentageChange={3}
+                trendDirection="up"
+              />
+
+              <AnalyticsCard
+                value="1,718"
+                title="Active subscribers"
+                description="+400 compared to prior 30 days"
+                percentageChange={3}
+                trendDirection="up"
+              />
+
+              <AnalyticsCard
+                value="78%"
+                title="Interaction rate"
+                description="+10% compared to prior 30 days"
+                percentageChange={3}
+                trendDirection="up"
+              />
+
+              <AnalyticsCard
+                value="18"
+                title="Avg. Messages per subscriber"
+                description="+5 compared to prior 30 days"
+                percentageChange={3}
+                trendDirection="up"
+              />
+            </div>
           </motion.div>
 
           <motion.div variants={sectionVariants}>
