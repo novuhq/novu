@@ -1,4 +1,4 @@
-import { IActivityJob, JobStatusEnum } from '@novu/shared';
+import { type IActivityJob, JobStatusEnum } from '@novu/shared';
 import { StatusBadge as StatusBadgeComponent, StatusBadgeIcon } from '../../primitives/status-badge';
 import { JOB_STATUS_CONFIG } from '../constants';
 import { getActivityStatus } from '../helpers';
