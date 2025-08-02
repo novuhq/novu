@@ -3,7 +3,10 @@ import {
   PinoLogger,
   StepRun,
   StepRunRepository,
+  Trace,
   TraceLogRepository,
+  TenantContext,
+  QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
@@ -35,12 +38,19 @@ export class GetWorkflowRun {
     });
 
     try {
-      const workflowRunResult = await this.workflowRunRepository.findOne({
-        where: [
-          { workflow_run_id: { operator: '=', value: command.workflowRunId } },
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-        ],
+      // Build tenant context for safe query enforcement
+      const tenant: TenantContext = {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      };
+
+      // Use QueryBuilder for workflow run query with tenant enforcement
+      const workflowRunQuery = new QueryBuilder<WorkflowRun>(tenant)
+        .whereEquals('workflow_run_id', command.workflowRunId)
+        .build();
+
+      const workflowRunResult = await this.workflowRunRepository.findOneSafe({
+        where: workflowRunQuery as any, // TODO: Fix type mismatch in future phase
         useFinal: true,
       });
 
@@ -71,13 +81,20 @@ export class GetWorkflowRun {
     workflowRun: WorkflowRun
   ): Promise<IStepRunWithDetails[]> {
     try {
-      const stepRunsResult = await this.stepRunRepository.find({
-        where: [
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { transaction_id: { operator: '=', value: workflowRun.transaction_id } },
-          { workflow_run_id: { operator: '=', value: workflowRun.workflow_run_id } },
-        ],
+      // Build tenant context for safe query enforcement
+      const tenant: TenantContext = {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      };
+
+      // Use QueryBuilder for step runs query with automatic tenant enforcement
+      const stepRunsQuery = new QueryBuilder<StepRun>(tenant)
+        .whereEquals('transaction_id', workflowRun.transaction_id)
+        .whereEquals('workflow_run_id', workflowRun.workflow_run_id)
+        .build();
+
+      const stepRunsResult = await this.stepRunRepository.findSafe({
+        where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
@@ -114,14 +131,20 @@ export class GetWorkflowRun {
     }
 
     try {
-      // Get traces for these entities
-      const traceResult = await this.traceLogRepository.find({
-        where: [
-          { entity_id: { operator: 'IN', value: entityIds } },
-          { entity_type: { operator: '=', value: 'step_run' } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { organization_id: { operator: '=', value: command.organizationId } },
-        ],
+      // Build tenant context for safe query enforcement
+      const tenant: TenantContext = {
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      };
+
+      // Use QueryBuilder for trace logs query with automatic tenant enforcement
+      const traceQuery = new QueryBuilder<Trace>(tenant)
+        .whereIn('entity_id', entityIds)
+        .whereEquals('entity_type', 'step_run')
+        .build();
+
+      const traceResult = await this.traceLogRepository.findSafe({
+        where: traceQuery as any, // TODO: Fix type mismatch in future phase
         orderBy: 'created_at',
         orderDirection: 'ASC',
       });

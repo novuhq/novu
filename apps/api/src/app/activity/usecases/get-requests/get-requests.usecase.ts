@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { LogRepository, RequestLog, RequestLogRepository, Where } from '@novu/application-generic';
+import { 
+  LogRepository, 
+  RequestLog, 
+  RequestLogRepository, 
+  SafeWhere, 
+  TenantContext,
+  QueryBuilder 
+} from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { mapRequestLogToResponseDto } from '../../shared/mappers';
 import { GetRequestsCommand } from './get-requests.command';
@@ -13,65 +20,55 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    const where: Where<RequestLog> = [
-      { organization_id: { operator: '=', value: command.organizationId } },
-      { environment_id: { operator: '=', value: command.environmentId } },
-    ];
+    // Build tenant context for safe query enforcement
+    const tenant: TenantContext = {
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    };
 
-    if (command.statusCodes) {
-      where.push({
-        status_code: {
-          operator: 'IN',
-          value: command.statusCodes,
-        },
-      });
+    // Use QueryBuilder for better ergonomics and type safety
+    const queryBuilder = new QueryBuilder<RequestLog>(tenant);
+
+    // Add status codes filter
+    if (command.statusCodes?.length) {
+      queryBuilder.whereIn('status_code', command.statusCodes);
     }
 
+    // Add URL filter (partial match)
     if (command.url) {
-      where.push({
-        url: {
-          operator: 'LIKE',
-          value: `%${command.url}%`,
-        },
-      });
+      queryBuilder.whereLike('url', `%${command.url}%`);
     }
 
+    // Add URL pattern filter (exact match)
     if (command.url_pattern) {
-      where.push({
-        url: {
-          operator: '=',
-          value: command.url_pattern,
-        },
-      });
+      queryBuilder.whereEquals('url', command.url_pattern);
     }
 
+    // Add transaction ID filter (partial match)
     if (command.transactionId) {
-      where.push({
-        transaction_id: {
-          operator: 'LIKE',
-          value: `%${command.transactionId}%`,
-        },
-      });
+      queryBuilder.whereLike('transaction_id', `%${command.transactionId}%`);
     }
 
+    // Add date range filter
     if (command.createdGte) {
-      where.push({
-        created_at: {
-          operator: '>=',
-          value: LogRepository.formatDateTime64(new Date(command.createdGte)),
-        },
-      });
+      queryBuilder.whereGreaterThanOrEqual(
+        'created_at', 
+        LogRepository.formatDateTime64(new Date(command.createdGte))
+      );
     }
 
+    const safeWhere = queryBuilder.build();
+
+    // Execute both queries in parallel using safe methods
     const [findResult, total] = await Promise.all([
-      this.requestLogRepository.find({
-        where,
+      this.requestLogRepository.findSafe({
+        where: safeWhere,
         limit,
         offset,
         orderBy: 'created_at',
         orderDirection: 'DESC',
       }),
-      this.requestLogRepository.count({ where }),
+      this.requestLogRepository.countSafe({ where: safeWhere }),
     ]);
 
     const mappedData: RequestLogResponseDto[] = findResult.data.map(mapRequestLogToResponseDto);

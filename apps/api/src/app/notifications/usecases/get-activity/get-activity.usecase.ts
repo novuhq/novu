@@ -5,7 +5,10 @@ import {
   PinoLogger,
   StepRun,
   StepRunRepository,
+  Trace,
   TraceLogRepository,
+  TenantContext,
+  QueryBuilder,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -131,14 +134,20 @@ export class GetActivity {
       return new Map();
     }
 
-    // Get traces for these entities
-    const traceResult = await this.traceLogRepository.find({
-      where: [
-        { entity_id: { operator: 'IN', value: entityIds } },
-        { entity_type: { operator: '=', value: 'step_run' } },
-        { environment_id: { operator: '=', value: command.environmentId } },
-        { organization_id: { operator: '=', value: command.organizationId } },
-      ],
+    // Build tenant context for safe query enforcement
+    const tenant: TenantContext = {
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    };
+
+    // Use QueryBuilder for trace logs query with automatic tenant enforcement
+    const traceQuery = new QueryBuilder<Trace>(tenant)
+      .whereIn('entity_id', entityIds)
+      .whereEquals('entity_type', 'step_run')
+      .build();
+
+    const traceResult = await this.traceLogRepository.findSafe({
+      where: traceQuery as any, // TODO: Fix type mismatch in future phase
       orderBy: 'created_at',
       orderDirection: 'ASC',
     });
@@ -180,12 +189,19 @@ export class GetActivity {
     feedItem: NotificationFeedItemEntity,
     command: GetActivityCommand
   ): Promise<JobFeedItem[]> {
-    const stepRunsResult = await this.stepRunRepository.find({
-      where: [
-        { organization_id: { operator: '=', value: command.organizationId } },
-        { environment_id: { operator: '=', value: command.environmentId } },
-        { transaction_id: { operator: '=', value: feedItem.transactionId } },
-      ],
+    // Build tenant context for safe query enforcement
+    const tenant: TenantContext = {
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    };
+
+    // Use QueryBuilder for step runs query with automatic tenant enforcement
+    const stepRunsQuery = new QueryBuilder<StepRun>(tenant)
+      .whereEquals('transaction_id', feedItem.transactionId)
+      .build();
+
+    const stepRunsResult = await this.stepRunRepository.findSafe({
+      where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
       orderBy: 'created_at',
       orderDirection: 'ASC',
       useFinal: true,

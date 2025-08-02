@@ -5,7 +5,7 @@ import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
-import { LogRepository, SchemaKeys, Where } from '../log.repository';
+import { LogRepository, SchemaKeys, Where, SafeWhere } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
@@ -388,6 +388,137 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       params,
       cursor: cursor ? 'present' : 'none',
       selectedColumns: select ? select.length : 'all',
+    });
+
+    const result = await this.clickhouseService.query({
+      query,
+      params,
+    });
+
+    return {
+      data: result.data as any,
+      rows: result.rows,
+    };
+  }
+
+  // Safe version with tenant enforcement - Overload for when select is provided
+  async findWithCursorSafe<T extends readonly WorkflowRunColumns[]>(options: {
+    where: SafeWhere<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    cursor?: {
+      created_at: string;
+      workflow_run_id: string;
+    };
+    limit?: number;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select: T;
+  }): Promise<{
+    data: SelectedWorkflowRun<T>[];
+    rows: number;
+  }>;
+
+  // Safe version with tenant enforcement - Overload for when select is not provided
+  async findWithCursorSafe(options: {
+    where: SafeWhere<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    cursor?: {
+      created_at: string;
+      workflow_run_id: string;
+    };
+    limit?: number;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select?: undefined;
+  }): Promise<{
+    data: WorkflowRun[];
+    rows: number;
+  }>;
+
+  /**
+   * Safe compound cursor-based pagination for workflow runs with tenant enforcement.
+   * Handles timestamp collisions by using both created_at and workflow_run_id.
+   * Automatically enforces tenant isolation.
+   */
+  async findWithCursorSafe<T extends readonly WorkflowRunColumns[]>(options: {
+    where: SafeWhere<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    cursor?: {
+      created_at: string;
+      workflow_run_id: string;
+    };
+    limit?: number;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+    select?: T;
+  }): Promise<{
+    data: WorkflowRun[] | SelectedWorkflowRun<T>[];
+    rows: number;
+  }> {
+    const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false, select } = options;
+    const isBoundaryCase = cursor?.workflow_run_id === '1';
+
+    if (limit < 0 || limit > 1000) {
+      throw new Error('Limit must be between 0 and 1000');
+    }
+
+    // Build the base WHERE clause using safe method with tenant enforcement
+    const { clause: baseClause, params: baseParams } = this.buildSafeWhereClause(where);
+    
+    let whereClause = baseClause || 'WHERE 1=1';
+    const params = { ...baseParams };
+
+    // Add compound cursor conditions if cursor is provided
+    if (cursor) {
+      const cursorTimestamp = new Date(cursor.created_at);
+      const cursorId = cursor.workflow_run_id;
+
+      const timestampParam = 'cursor_timestamp';
+      const timestampEqualParam = 'cursor_timestamp_eq';
+      const idParam = 'cursor_id';
+
+      const timeOperator = orderDirection === 'DESC' ? '<' : '>';
+      const idOperator = orderDirection === 'DESC' ? '<' : '>';
+
+      if (!isBoundaryCase) {
+        params[timestampParam] = cursorTimestamp;
+        params[timestampEqualParam] = cursorTimestamp;
+        params[idParam] = cursorId;
+      } else {
+        params[timestampParam] = timeOperator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
+        params[timestampEqualParam] = timeOperator === '>' ? new Date(0) : new Date('2099-12-31T23:59:59.999Z');
+        params[idParam] = timeOperator === '>' ? '1' : '9999999999999999999999999999999999999999';
+      }
+
+      const cursorCondition = `
+        (created_at ${timeOperator} {${timestampParam}:DateTime64(3, 'UTC')})
+        OR (
+          created_at = {${timestampEqualParam}:DateTime64(3, 'UTC')} 
+          AND workflow_run_id ${idOperator} {${idParam}:String}
+        )
+      `;
+
+      if (whereClause && whereClause !== 'WHERE 1=1') {
+        whereClause = `${whereClause} AND (${cursorCondition})`;
+      } else {
+        whereClause = `WHERE ${cursorCondition}`;
+      }
+    }
+
+    const finalModifier = useFinal ? ' FINAL' : '';
+    const orderByClause = `ORDER BY created_at ${orderDirection}, workflow_run_id ${orderDirection}`;
+    const selectClause = select && select.length > 0 ? select.join(', ') : '*';
+
+    const query = `
+      SELECT ${selectClause}
+      FROM ${this.table}${finalModifier}
+      ${whereClause}
+      ${orderByClause}
+      LIMIT ${limit}
+    `;
+
+    this.logger.debug('Executing safe compound cursor query with tenant enforcement', {
+      query: query.replace(/\s+/g, ' ').trim(),
+      cursor: cursor ? 'present' : 'none',
+      selectedColumns: select ? select.length : 'all',
+      tenantEnforcement: '__unsafe' in where ? 'bypassed' : 'enforced',
     });
 
     const result = await this.clickhouseService.query({
