@@ -39,12 +39,10 @@ export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERA
 const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
-// Tenant-safe querying types (all queries are now safe by default)
-export interface TenantContext {
+export type EnforcedContext = {
   organizationId: string;
   environmentId: string;
-  userId?: string; // Optional for some schemas
-}
+};
 
 type WhereCondition<T> = {
   [K in keyof T]: {
@@ -57,7 +55,7 @@ type WhereCondition<T> = {
 }[keyof T];
 
 export interface EnforcedWhere<T> {
-  tenant: TenantContext;
+  enforced: EnforcedContext;
   conditions?: WhereCondition<T>[];
 }
 
@@ -173,38 +171,27 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       allConditions = rawWhere.conditions;
     } else {
       // Safe mode - enforce tenant context
-      const tenantConditions = this.buildTenantConditions(rawWhere.tenant);
-      allConditions = [...tenantConditions, ...(rawWhere.conditions || [])];
+      const enforcedConditions = this.buildEnforcedConditions(rawWhere.enforced);
+      allConditions = [...enforcedConditions, ...(rawWhere.conditions || [])];
     }
 
     return this.buildWhereClauseFromConditions(allConditions);
   }
 
-  /**
-   * Build mandatory tenant isolation conditions
-   */
-  private buildTenantConditions(tenant: TenantContext): WhereCondition<InferClickhouseSchemaType<T_Schema>>[] {
+ 
+  private buildEnforcedConditions(enforced: EnforcedContext): WhereCondition<InferClickhouseSchemaType<T_Schema>>[] {
     const conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [
       {
-        field: 'organization_id' as keyof InferClickhouseSchemaType<T_Schema>,
+        field: 'organization_id',
         operator: '=',
-        value: tenant.organizationId,
+        value: enforced.organizationId,
       },
       {
-        field: 'environment_id' as keyof InferClickhouseSchemaType<T_Schema>,
+        field: 'environment_id',
         operator: '=',
-        value: tenant.environmentId,
+        value: enforced.environmentId,
       },
     ];
-
-    // Add user_id if provided and schema supports it
-    if (tenant.userId && this.schema.schema['user_id']) {
-      conditions.push({
-        field: 'user_id' as keyof InferClickhouseSchemaType<T_Schema>,
-        operator: '=',
-        value: tenant.userId,
-      });
-    }
 
     return conditions;
   }
@@ -390,7 +377,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 export class QueryBuilder<T> {
   private conditions: WhereCondition<T>[] = [];
 
-  constructor(private tenant: TenantContext) {}
+  constructor(private enforced: EnforcedContext) {}
 
   where<K extends keyof T, O extends ClickhouseOperator>(
     field: K, 
@@ -443,7 +430,7 @@ export class QueryBuilder<T> {
 
   build(): EnforcedWhere<T> {
     return {
-      tenant: this.tenant,
+      enforced: this.enforced,
       conditions: this.conditions,
     };
   }

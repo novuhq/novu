@@ -4,7 +4,7 @@ import {
   RequestLog, 
   RequestLogRepository, 
   Where, 
-  TenantContext,
+  EnforcedContext,
   QueryBuilder 
 } from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
@@ -20,12 +20,12 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    const tenant: TenantContext = {
+    const enforced: EnforcedContext = {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
     };
 
-    const queryBuilder = new QueryBuilder<RequestLog>(tenant);
+    const queryBuilder = new QueryBuilder<RequestLog>(enforced);
 
     if (command.statusCodes?.length) {
       queryBuilder.whereIn('status_code', command.statusCodes);

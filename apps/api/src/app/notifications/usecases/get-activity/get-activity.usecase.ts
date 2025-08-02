@@ -7,7 +7,6 @@ import {
   StepRunRepository,
   Trace,
   TraceLogRepository,
-  TenantContext,
   QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
@@ -135,14 +134,10 @@ export class GetActivity {
       return new Map();
     }
 
-    // Build tenant context for safe query enforcement
-    const tenant: TenantContext = {
+    const traceQuery = new QueryBuilder<Trace>({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
-    };
-
-    // Use QueryBuilder for trace logs query with automatic tenant enforcement
-    const traceQuery = new QueryBuilder<Trace>(tenant)
+    })
       .whereIn('entity_id', entityIds)
       .whereEquals('entity_type', 'step_run')
       .build();
@@ -190,14 +185,10 @@ export class GetActivity {
     feedItem: NotificationFeedItemEntity,
     command: GetActivityCommand
   ): Promise<JobFeedItem[]> {
-    // Build tenant context for safe query enforcement
-    const tenant: TenantContext = {
+    const stepRunsQuery = new QueryBuilder<StepRun>({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
-    };
-
-    // Use QueryBuilder for step runs query with automatic tenant enforcement
-    const stepRunsQuery = new QueryBuilder<StepRun>(tenant)
+    })
       .whereEquals('transaction_id', feedItem.transactionId)
       .build();
 

@@ -5,7 +5,6 @@ import {
   StepRunRepository,
   Trace,
   TraceLogRepository,
-  TenantContext,
   QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
@@ -79,14 +78,10 @@ export class GetWorkflowRun {
     workflowRun: WorkflowRun
   ): Promise<IStepRunWithDetails[]> {
     try {
-      // Build tenant context for safe query enforcement
-      const tenant: TenantContext = {
+      const stepRunsQuery = new QueryBuilder<StepRun>({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      };
-
-      // Use QueryBuilder for step runs query with automatic tenant enforcement
-      const stepRunsQuery = new QueryBuilder<StepRun>(tenant)
+      })
         .whereEquals('transaction_id', workflowRun.transaction_id)
         .whereEquals('workflow_run_id', workflowRun.workflow_run_id)
         .build();
@@ -129,14 +124,10 @@ export class GetWorkflowRun {
     }
 
     try {
-      // Build tenant context for safe query enforcement
-      const tenant: TenantContext = {
+      const traceQuery = new QueryBuilder<Trace>({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      };
-
-      // Use QueryBuilder for trace logs query with automatic tenant enforcement
-      const traceQuery = new QueryBuilder<Trace>(tenant)
+      })
         .whereIn('entity_id', entityIds)
         .whereEquals('entity_type', 'step_run')
         .build();
@@ -149,7 +140,6 @@ export class GetWorkflowRun {
 
       const executionDetailsByEntityId = new Map<string, any[]>();
 
-      // Group traces by entity ID
       for (const trace of traceResult.data) {
         if (!executionDetailsByEntityId.has(trace.entity_id)) {
           executionDetailsByEntityId.set(trace.entity_id, []);

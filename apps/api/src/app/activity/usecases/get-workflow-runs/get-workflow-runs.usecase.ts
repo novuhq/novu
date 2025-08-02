@@ -4,7 +4,7 @@ import {
   StepRun,
   StepRunRepository,
   Where,
-  TenantContext,
+  EnforcedContext,
   QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
@@ -53,16 +53,11 @@ export class GetWorkflowRuns {
     });
 
     try {
-      // Build tenant context for safe query enforcement
-      const tenant: TenantContext = {
+      const queryBuilder = new QueryBuilder<WorkflowRun>({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      };
+      });
 
-      // Use QueryBuilder for better ergonomics and automatic tenant enforcement
-      const queryBuilder = new QueryBuilder<WorkflowRun>(tenant);
-
-      // Add optional filters
       if (command.workflowIds?.length) {
         queryBuilder.whereIn('workflow_id', command.workflowIds);
       }
@@ -79,7 +74,6 @@ export class GetWorkflowRuns {
         queryBuilder.whereIn('status', command.statuses);
       }
 
-      // Handle date range conditions - QueryBuilder supports multiple conditions on same field!
       if (command.createdGte) {
         queryBuilder.whereGreaterThanOrEqual('created_at', new Date(command.createdGte));
       }
@@ -266,15 +260,10 @@ export class GetWorkflowRuns {
 
     try {
       const transactionIds = workflowRuns.map((run) => run.transaction_id);
-
-      // Build tenant context for safe query enforcement
-      const tenant: TenantContext = {
+      const stepRunsQuery = new QueryBuilder<StepRun>({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      };
-
-      // Use QueryBuilder for step runs query with automatic tenant enforcement
-      const stepRunsQuery = new QueryBuilder<StepRun>(tenant)
+      })
         .whereIn('transaction_id', transactionIds)
         .build();
 
