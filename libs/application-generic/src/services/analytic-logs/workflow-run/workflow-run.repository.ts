@@ -175,7 +175,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
  
  
           
-      const query = new QueryBuilder<InferClickhouseSchemaType<typeof workflowRunSchema>>({        
+      const query = new QueryBuilder<WorkflowRun>({        
         organizationId: context.organizationId,
         environmentId: context.environmentId})
         .whereEquals('workflow_run_id', workflowRunId) 
@@ -250,7 +250,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   // Overload for when select is provided  
   async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
-    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
       workflow_run_id: string;
@@ -266,7 +266,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   // Overload for when select is not provided
   async findWithCursor(options: {
-    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
       workflow_run_id: string;
@@ -286,7 +286,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    * All queries are secure by default with mandatory tenant isolation.
    */
   async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
-    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
       workflow_run_id: string;

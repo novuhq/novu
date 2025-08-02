@@ -48,7 +48,7 @@ export class GetWorkflowRun {
         .build();
 
       const workflowRunResult = await this.workflowRunRepository.findOne({
-        where: workflowRunQuery as any, // TODO: Fix type mismatch in future phase
+        where: workflowRunQuery,
         useFinal: true,
       });
 
@@ -92,7 +92,7 @@ export class GetWorkflowRun {
         .build();
 
       const stepRunsResult = await this.stepRunRepository.find({
-        where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
+        where: stepRunsQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
@@ -142,7 +142,7 @@ export class GetWorkflowRun {
         .build();
 
       const traceResult = await this.traceLogRepository.find({
-        where: traceQuery as any, // TODO: Fix type mismatch in future phase
+        where: traceQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
       });

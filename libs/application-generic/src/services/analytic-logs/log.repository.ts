@@ -155,26 +155,26 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
 
 
-  /**
-   * Build WHERE clause with mandatory tenant enforcement
-   */
-  protected buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
+
+  protected buildWhereClause(where: Where<T_Enhanced_Type>): {
     clause: string;
     params: Record<string, any>;
   } {
+    // Cast enhanced type to raw schema type only at this lowest level
+    const rawWhere = where as unknown as Where<InferClickhouseSchemaType<T_Schema>>;
     let allConditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [];
 
-    if ('__unsafe' in where) {
+    if ('__unsafe' in rawWhere) {
       // Unsafe mode - log for monitoring but allow
       this.logger.warn('Using unsafe WHERE clause without tenant enforcement', {
         table: this.table,
-        conditionsCount: where.conditions.length,
+        conditionsCount: rawWhere.conditions.length,
       });
-      allConditions = where.conditions;
+      allConditions = rawWhere.conditions;
     } else {
       // Safe mode - enforce tenant context
-      const tenantConditions = this.buildTenantConditions(where.tenant);
-      allConditions = [...tenantConditions, ...(where.conditions || [])];
+      const tenantConditions = this.buildTenantConditions(rawWhere.tenant);
+      allConditions = [...tenantConditions, ...(rawWhere.conditions || [])];
     }
 
     return this.buildWhereClauseFromConditions(allConditions);
@@ -285,7 +285,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
   // Query methods with mandatory tenant enforcement
   async find(options: {
-    where: Where<InferClickhouseSchemaType<T_Schema>>;
+    where: Where<T_Enhanced_Type>;
     limit?: number;
     offset?: number;
     // todo make a type validation for available orderBy columns
@@ -341,7 +341,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
   }
 
   async findOne(options: {
-    where: Where<InferClickhouseSchemaType<T_Schema>>;
+    where: Where<T_Enhanced_Type>;
     limit?: number;
     offset?: number;
     orderBy?: SchemaKeys<T_Schema>;
@@ -353,7 +353,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return { data: result.data[0], rows: result.rows };
   }
 
-  async count(options: { where: Where<InferClickhouseSchemaType<T_Schema>> }): Promise<number> {
+  async count(options: { where: Where<T_Enhanced_Type> }): Promise<number> {
     const { where } = options;
     const { clause, params } = this.buildWhereClause(where);
 

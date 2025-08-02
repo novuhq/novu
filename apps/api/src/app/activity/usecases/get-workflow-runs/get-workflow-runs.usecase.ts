@@ -105,7 +105,7 @@ export class GetWorkflowRuns {
       }
 
       const result = (await this.workflowRunRepository.findWithCursor({
-        where: safeWhere as any, // TODO: Fix type mismatch between DTO and schema types in future phase
+        where: safeWhere,
         cursor,
         limit: command.limit + 1, // Get one extra to determine if there are more results
         orderDirection: 'DESC',
@@ -178,7 +178,7 @@ export class GetWorkflowRuns {
 
     try {
       const backwardResult = await this.workflowRunRepository.findWithCursor({
-        where: safeWhere as any, // TODO: Fix type mismatch between DTO and schema types in future phase
+        where: safeWhere,
         cursor: currentCursor,
         limit,
         orderDirection: 'ASC', // Get older items
@@ -279,7 +279,7 @@ export class GetWorkflowRuns {
         .build();
 
       const stepRunsResult = await this.stepRunRepository.find({
-        where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
+        where: stepRunsQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
