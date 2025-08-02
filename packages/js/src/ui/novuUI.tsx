@@ -17,7 +17,7 @@ import type {
 export type NovuUIOptions = NovuProviderProps;
 export type BaseNovuUIOptions = BaseNovuProviderProps;
 export class NovuUI {
-  #dispose: { (): void } | null = null;
+  #dispose: (() => void) | null = null;
   #container: Accessor<Node | null | undefined>;
   #setContainer: Setter<Node | null | undefined>;
   #rootElement: HTMLElement;

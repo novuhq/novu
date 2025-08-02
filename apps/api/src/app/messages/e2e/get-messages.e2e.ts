@@ -5,7 +5,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Message - /messages (GET) #novu-v2', function () {
+describe('Get Message - /messages (GET) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -22,7 +22,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should fetch existing messages', async function () {
+  it('should fetch existing messages', async () => {
     const subscriber2 = await subscriberService.createSubscriber();
 
     await novuClient.trigger({
@@ -50,7 +50,7 @@ describe('Get Message - /messages (GET) #novu-v2', function () {
     expect(response.result.data.length).to.be.equal(2);
   });
 
-  it('should fetch messages using transactionId filter', async function () {
+  it('should fetch messages using transactionId filter', async () => {
     const subscriber3 = await subscriberService.createSubscriber();
 
     const transactionId1 = '1566f9d0-6037-48c1-b356-42667921cadd';

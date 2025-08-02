@@ -22,7 +22,7 @@ export default mailin.start(
     disableDNSValidation: !env.enableDnsValidation,
     smtpOptions: env.smtpOptions,
   },
-  function (err) {
+  (err) => {
     if (err) process.exit(1);
 
     if (mailin.configuration.disableDkim) logger.info('Dkim checking is disabled');

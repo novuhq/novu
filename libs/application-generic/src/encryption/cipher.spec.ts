@@ -1,7 +1,7 @@
 import { decrypt, encrypt } from './cipher';
 
-describe('Encrypt secret', function () {
-  it('should encrypt a credential', async function () {
+describe('Encrypt secret', () => {
+  it('should encrypt a credential', async () => {
     const password = '123';
     const encrypted = encrypt(password);
 
@@ -9,7 +9,7 @@ describe('Encrypt secret', function () {
     expect(encrypted.length).toEqual(65);
   });
 
-  it('should decrypt a credential', async function () {
+  it('should decrypt a credential', async () => {
     const password = '123';
     const encrypted = encrypt(password);
     const decrypted = decrypt(encrypted);

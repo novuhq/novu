@@ -27,7 +27,7 @@ const buildCSS = async () => {
 const isProd = process.env.NODE_ENV === 'production';
 const isPreview = process.env.IS_PREVIEW === 'true';
 
-let previewLastCommitHash: string | undefined = undefined; // Default value
+let previewLastCommitHash: string | undefined; // Default value
 if (isPreview) {
   try {
     previewLastCommitHash = execSync('git rev-parse HEAD').toString().trim();

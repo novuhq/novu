@@ -15,7 +15,7 @@ import { expect } from 'chai';
 import { AuthModule } from '../auth/auth.module';
 import { PreferencesModule } from './preferences.module';
 
-describe('Preferences', function () {
+describe('Preferences', () => {
   let getPreferences: GetPreferences;
   const subscriberId = SubscriberRepository.createObjectId();
   const workflowId = PreferencesRepository.createObjectId();
@@ -35,8 +35,8 @@ describe('Preferences', function () {
     upsertPreferences = moduleRef.get<UpsertPreferences>(UpsertPreferences);
   });
 
-  describe('Upsert preferences', function () {
-    it('should create workflow preferences', async function () {
+  describe('Upsert preferences', () => {
+    it('should create workflow preferences', async () => {
       const workflowPreferences = await upsertPreferences.upsertWorkflowPreferences(
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
@@ -76,7 +76,7 @@ describe('Preferences', function () {
       expect(workflowPreferences.type).to.equal(PreferencesTypeEnum.WORKFLOW_RESOURCE);
     });
 
-    it('should create user workflow preferences', async function () {
+    it('should create user workflow preferences', async () => {
       const userPreferences = await upsertPreferences.upsertUserWorkflowPreferences(
         UpsertUserWorkflowPreferencesCommand.create({
           preferences: {
@@ -117,7 +117,7 @@ describe('Preferences', function () {
       expect(userPreferences.type).to.equal(PreferencesTypeEnum.USER_WORKFLOW);
     });
 
-    it('should create global subscriber preferences', async function () {
+    it('should create global subscriber preferences', async () => {
       const subscriberGlobalPreferences = await upsertPreferences.upsertSubscriberGlobalPreferences(
         UpsertSubscriberGlobalPreferencesCommand.create({
           preferences: {
@@ -157,7 +157,7 @@ describe('Preferences', function () {
       expect(subscriberGlobalPreferences.type).to.equal(PreferencesTypeEnum.SUBSCRIBER_GLOBAL);
     });
 
-    it('should create subscriber workflow preferences', async function () {
+    it('should create subscriber workflow preferences', async () => {
       const subscriberWorkflowPreferences = await upsertPreferences.upsertSubscriberWorkflowPreferences(
         UpsertSubscriberWorkflowPreferencesCommand.create({
           preferences: {
@@ -198,7 +198,7 @@ describe('Preferences', function () {
       expect(subscriberWorkflowPreferences.type).to.equal(PreferencesTypeEnum.SUBSCRIBER_WORKFLOW);
     });
 
-    it('should update preferences', async function () {
+    it('should update preferences', async () => {
       let workflowPreferences = await upsertPreferences.upsertWorkflowPreferences(
         UpsertWorkflowPreferencesCommand.create({
           preferences: {
@@ -272,8 +272,8 @@ describe('Preferences', function () {
     });
   });
 
-  describe('Get preferences', function () {
-    it('should merge preferences when get preferences', async function () {
+  describe('Get preferences', () => {
+    it('should merge preferences when get preferences', async () => {
       // Workflow preferences
       await upsertPreferences.upsertWorkflowPreferences(
         UpsertWorkflowPreferencesCommand.create({
@@ -784,8 +784,8 @@ describe('Preferences', function () {
     });
   });
 
-  describe('Preferences endpoints', function () {
-    it('should get preferences', async function () {
+  describe('Preferences endpoints', () => {
+    it('should get preferences', async () => {
       const useCase: UpsertPreferences = session.testServer?.getService(UpsertPreferences);
 
       await useCase.upsertWorkflowPreferences(
@@ -877,7 +877,7 @@ describe('Preferences', function () {
       });
     });
 
-    it('should upsert preferences', async function () {
+    it('should upsert preferences', async () => {
       const { body } = await session.testAgent.post('/v1/preferences').send({
         workflowId,
         preferences: {

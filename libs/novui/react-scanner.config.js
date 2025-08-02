@@ -76,7 +76,7 @@ function getComponentName({ imported, local, moduleName, importType }) {
  * https://github.com/moroshko/react-scanner/blob/master/src/processors/count-components-and-props.js
  */
 function countComponentsAndPropsProcessor({ minNumInstances = 1 } = {}) {
-  return function ({ forEachComponent, sortObjectKeysByValue, output }) {
+  return ({ forEachComponent, sortObjectKeysByValue, output }) => {
     let result = {};
 
     forEachComponent(({ componentName, component }) => {

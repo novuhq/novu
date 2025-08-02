@@ -57,4 +57,4 @@ function LabelSub({ children, className, ...rest }: React.HTMLAttributes<HTMLSpa
   );
 }
 
-export { LabelRoot as Label, LabelAsterisk as LabelAsterisk, LabelSub as LabelSub, LabelRoot as Root };
+export { LabelRoot as Label, LabelAsterisk, LabelSub, LabelRoot as Root };

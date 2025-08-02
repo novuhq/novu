@@ -7,7 +7,7 @@ import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const subscriberId = '123';
-describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', function () {
+describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', () => {
   let session: UserSession;
   let subscriberService: SubscribersService;
   const subscriberRepository = new SubscriberRepository();
@@ -20,7 +20,7 @@ describe('Delete Subscriber - /subscribers/:subscriberId (DELETE) #novu-v2', fun
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should delete an existing subscriber', async function () {
+  it('should delete an existing subscriber', async () => {
     await novuClient.subscribers.create({
       subscriberId,
       firstName: 'John',
