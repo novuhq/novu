@@ -9,6 +9,7 @@ import {
   TraceLogRepository,
   TenantContext,
   QueryBuilder,
+  WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -146,7 +147,7 @@ export class GetActivity {
       .whereEquals('entity_type', 'step_run')
       .build();
 
-    const traceResult = await this.traceLogRepository.findSafe({
+    const traceResult = await this.traceLogRepository.find({
       where: traceQuery as any, // TODO: Fix type mismatch in future phase
       orderBy: 'created_at',
       orderDirection: 'ASC',
@@ -200,7 +201,7 @@ export class GetActivity {
       .whereEquals('transaction_id', feedItem.transactionId)
       .build();
 
-    const stepRunsResult = await this.stepRunRepository.findSafe({
+    const stepRunsResult = await this.stepRunRepository.find({
       where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
       orderBy: 'created_at',
       orderDirection: 'ASC',
@@ -251,12 +252,15 @@ export class GetActivity {
 
   private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
+      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      })
+        .whereEquals('workflow_run_id', command.notificationId)
+        .build();
+
       const workflowRunsResult = await this.workflowRunRepository.find({
-        where: [
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { workflow_run_id: { operator: '=', value: command.notificationId } },
-        ],
+        where: workflowRunQuery as any, // TODO: Fix type mismatch in future phase
         orderBy: 'created_at',
         orderDirection: 'ASC',
         limit: 1,

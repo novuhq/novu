@@ -3,7 +3,7 @@ import {
   LogRepository, 
   RequestLog, 
   RequestLogRepository, 
-  SafeWhere, 
+  Where, 
   TenantContext,
   QueryBuilder 
 } from '@novu/application-generic';
@@ -20,36 +20,29 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    // Build tenant context for safe query enforcement
     const tenant: TenantContext = {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
     };
 
-    // Use QueryBuilder for better ergonomics and type safety
     const queryBuilder = new QueryBuilder<RequestLog>(tenant);
 
-    // Add status codes filter
     if (command.statusCodes?.length) {
       queryBuilder.whereIn('status_code', command.statusCodes);
     }
 
-    // Add URL filter (partial match)
     if (command.url) {
       queryBuilder.whereLike('url', `%${command.url}%`);
     }
 
-    // Add URL pattern filter (exact match)
     if (command.url_pattern) {
       queryBuilder.whereEquals('url', command.url_pattern);
     }
 
-    // Add transaction ID filter (partial match)
     if (command.transactionId) {
       queryBuilder.whereLike('transaction_id', `%${command.transactionId}%`);
     }
 
-    // Add date range filter
     if (command.createdGte) {
       queryBuilder.whereGreaterThanOrEqual(
         'created_at', 
@@ -59,16 +52,16 @@ export class GetRequests {
 
     const safeWhere = queryBuilder.build();
 
-    // Execute both queries in parallel using safe methods
+    // Execute both queries in parallel (all queries are secure by default)
     const [findResult, total] = await Promise.all([
-      this.requestLogRepository.findSafe({
+      this.requestLogRepository.find({
         where: safeWhere,
         limit,
         offset,
         orderBy: 'created_at',
         orderDirection: 'DESC',
       }),
-      this.requestLogRepository.countSafe({ where: safeWhere }),
+      this.requestLogRepository.count({ where: safeWhere }),
     ]);
 
     const mappedData: RequestLogResponseDto[] = findResult.data.map(mapRequestLogToResponseDto);

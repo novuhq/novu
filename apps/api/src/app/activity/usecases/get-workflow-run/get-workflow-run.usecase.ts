@@ -38,18 +38,16 @@ export class GetWorkflowRun {
     });
 
     try {
-      // Build tenant context for safe query enforcement
-      const tenant: TenantContext = {
+ 
+
+      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-      };
-
-      // Use QueryBuilder for workflow run query with tenant enforcement
-      const workflowRunQuery = new QueryBuilder<WorkflowRun>(tenant)
+      })
         .whereEquals('workflow_run_id', command.workflowRunId)
         .build();
 
-      const workflowRunResult = await this.workflowRunRepository.findOneSafe({
+      const workflowRunResult = await this.workflowRunRepository.findOne({
         where: workflowRunQuery as any, // TODO: Fix type mismatch in future phase
         useFinal: true,
       });
@@ -93,7 +91,7 @@ export class GetWorkflowRun {
         .whereEquals('workflow_run_id', workflowRun.workflow_run_id)
         .build();
 
-      const stepRunsResult = await this.stepRunRepository.findSafe({
+      const stepRunsResult = await this.stepRunRepository.find({
         where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
         orderBy: 'created_at',
         orderDirection: 'ASC',
@@ -143,7 +141,7 @@ export class GetWorkflowRun {
         .whereEquals('entity_type', 'step_run')
         .build();
 
-      const traceResult = await this.traceLogRepository.findSafe({
+      const traceResult = await this.traceLogRepository.find({
         where: traceQuery as any, // TODO: Fix type mismatch in future phase
         orderBy: 'created_at',
         orderDirection: 'ASC',

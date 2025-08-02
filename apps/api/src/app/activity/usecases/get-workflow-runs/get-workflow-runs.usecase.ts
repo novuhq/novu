@@ -3,7 +3,7 @@ import {
   PinoLogger,
   StepRun,
   StepRunRepository,
-  SafeWhere,
+  Where,
   TenantContext,
   QueryBuilder,
   WorkflowRun,
@@ -104,7 +104,7 @@ export class GetWorkflowRuns {
         }
       }
 
-      const result = (await this.workflowRunRepository.findWithCursorSafe({
+      const result = (await this.workflowRunRepository.findWithCursor({
         where: safeWhere as any, // TODO: Fix type mismatch between DTO and schema types in future phase
         cursor,
         limit: command.limit + 1, // Get one extra to determine if there are more results
@@ -166,7 +166,7 @@ export class GetWorkflowRuns {
    * Query backwards from current cursor and use the last item as the boundary
    */
   private async generatePreviousCursor(
-    safeWhere: SafeWhere<WorkflowRun>,
+    safeWhere: Where<WorkflowRun>,
     currentCursor: CursorData,
     limit: number
   ): Promise<string | null> {
@@ -177,7 +177,7 @@ export class GetWorkflowRuns {
     }
 
     try {
-      const backwardResult = await this.workflowRunRepository.findWithCursorSafe({
+      const backwardResult = await this.workflowRunRepository.findWithCursor({
         where: safeWhere as any, // TODO: Fix type mismatch between DTO and schema types in future phase
         cursor: currentCursor,
         limit,
@@ -278,7 +278,7 @@ export class GetWorkflowRuns {
         .whereIn('transaction_id', transactionIds)
         .build();
 
-      const stepRunsResult = await this.stepRunRepository.findSafe({
+      const stepRunsResult = await this.stepRunRepository.find({
         where: stepRunsQuery as any, // TODO: Fix type mismatch in future phase
         orderBy: 'created_at',
         orderDirection: 'ASC',

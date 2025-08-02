@@ -25,47 +25,49 @@ const CLICKHOUSE_OPERATORS = [
   'GLOBAL NOT IN',
 ] as const;
 
+// Define array operators that require array values
+type ArrayOperators = 'IN' | 'NOT IN' | 'GLOBAL IN' | 'GLOBAL NOT IN';
+
 // Generate the type from the const array - this ensures single source of truth
 export type ClickhouseOperator = (typeof CLICKHOUSE_OPERATORS)[number];
 
 // Export the array for runtime validation
 export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERATORS;
 
+
+
 const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
-// Legacy types for backward compatibility
-export type WhereCondition<T> = {
-  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } };
-}[keyof T];
-
-export type Where<T> = WhereCondition<T>[];
-
-// New enhanced types for tenant-safe querying
+// Tenant-safe querying types (all queries are now safe by default)
 export interface TenantContext {
   organizationId: string;
   environmentId: string;
   userId?: string; // Optional for some schemas
 }
 
-export interface SafeWhereCondition<T> {
-  field: keyof T;
-  operator: ClickhouseOperator;
-  value: T[keyof T] | T[keyof T][];
-}
+type WhereCondition<T> = {
+  [K in keyof T]: {
+    [O in ClickhouseOperator]: {
+      field: K;
+      operator: O;
+      value: O extends ArrayOperators ? T[K][] : T[K];
+    }
+  }[ClickhouseOperator]
+}[keyof T];
 
 export interface EnforcedWhere<T> {
   tenant: TenantContext;
-  conditions?: SafeWhereCondition<T>[];
+  conditions?: WhereCondition<T>[];
 }
 
-// For backward compatibility and advanced use cases
+// For system operations that need to bypass tenant enforcement (logged for monitoring)
 export interface UnsafeWhere<T> {
-  conditions: SafeWhereCondition<T>[];
+  conditions: WhereCondition<T>[];
   __unsafe: true; // Explicit opt-in to bypass enforcement
 }
 
-export type SafeWhere<T> = EnforcedWhere<T> | UnsafeWhere<T>;
+export type Where<T> = EnforcedWhere<T> | UnsafeWhere<T>;
 
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
@@ -151,79 +153,16 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     }
   }
 
+
+
   /**
-   * Builds a WHERE clause with parameterized values for ClickHouse queries.
-   * @param where - Array of condition objects, each with a single property mapping column names to values or {operator, value} objects
-   * @returns Object with SQL WHERE clause string and parameter map for safe query execution
-   * @example
-   * Input: [
-   *   { user_id: 123 },
-   *   { name: { operator: 'LIKE', value: 'John%' } },
-   *   { age: { operator: '>', value: 18 } },
-   *   { age: { operator: '<', value: 65 } }
-   * ]
-   * Output: {
-   *   clause: "WHERE user_id = {param_0_userid:String} AND name LIKE {param_1_name:String} AND age > {param_2_age:String} AND age < {param_3_age:String}",
-   *   params: { param_0_userid: 123, param_1_name: 'John%', param_2_age: 18, param_3_age: 65 }
-   * }
+   * Build WHERE clause with mandatory tenant enforcement
    */
   protected buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
     clause: string;
     params: Record<string, any>;
   } {
-    const params: Record<string, any> = {};
-    const clauses = where
-      .map((condition, index) => {
-        const entries = Object.entries(condition);
-        if (entries.length !== 1) {
-          throw new Error('Each where condition must have exactly one property');
-        }
-
-        const [key, value] = entries[0];
-        this.validateColumnName(key);
-
-        let operator: ClickhouseOperator = '=';
-        let actualValue = value;
-
-        if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
-          operator = value.operator;
-          actualValue = value.value;
-        }
-
-        this.validateOperator(operator);
-
-        const paramName = `param_${index}_${key.replace(/[^a-zA-Z0-9]/g, '')}`;
-
-        if (actualValue === null || actualValue === undefined) {
-          throw new Error(`Invalid value for column '${key}': value cannot be null or undefined`);
-        }
-
-        params[paramName] = actualValue;
-
-        // Determine the correct parameter type based on operator and value
-        let paramType = this.getColumnType(key);
-
-        // For array-based operators, use Array() type wrapper
-        const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
-        if (arrayOperators.includes(operator) && Array.isArray(actualValue)) {
-          paramType = `Array(${paramType})`;
-        }
-
-        return `${key} ${operator} {${paramName}:${paramType}}`;
-      })
-      .join(' AND ');
-
-    return { clause: clauses ? `WHERE ${clauses}` : '', params };
-  }
-
-  /**
-   * Build WHERE clause with mandatory tenant enforcement
-   */
-  protected buildSafeWhereClause(where: SafeWhere<InferClickhouseSchemaType<T_Schema>>): {
-    clause: string;
-    params: Record<string, any>;
-  } {
-    let allConditions: SafeWhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [];
+    let allConditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [];
 
     if ('__unsafe' in where) {
       // Unsafe mode - log for monitoring but allow
@@ -244,8 +183,8 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
   /**
    * Build mandatory tenant isolation conditions
    */
-  private buildTenantConditions(tenant: TenantContext): SafeWhereCondition<InferClickhouseSchemaType<T_Schema>>[] {
-    const conditions: SafeWhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [
+  private buildTenantConditions(tenant: TenantContext): WhereCondition<InferClickhouseSchemaType<T_Schema>>[] {
+    const conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [
       {
         field: 'organization_id' as keyof InferClickhouseSchemaType<T_Schema>,
         operator: '=',
@@ -274,7 +213,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
    * Convert conditions array to SQL WHERE clause
    */
   private buildWhereClauseFromConditions(
-    conditions: SafeWhereCondition<InferClickhouseSchemaType<T_Schema>>[]
+    conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[]
   ): {
     clause: string;
     params: Record<string, any>;
@@ -342,110 +281,9 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     );
   }
 
-  async findOne(options: {
-    where: Where<InferClickhouseSchemaType<T_Schema>>;
-    limit?: number;
-    offset?: number;
-    // todo make a type validation for available orderBy columns
-    orderBy?: SchemaKeys<T_Schema>;
-    orderDirection?: 'ASC' | 'DESC';
-    useFinal?: boolean;
-  }): Promise<{ data: T_Enhanced_Type; rows: number }> {
-    const result = await this.find({ ...options, limit: 1 });
 
-    return { data: result.data[0], rows: result.rows };
-  }
 
-  // Enhanced query methods with tenant enforcement
-  async findSafe(options: {
-    where: SafeWhere<InferClickhouseSchemaType<T_Schema>>;
-    limit?: number;
-    offset?: number;
-    orderBy?: SchemaKeys<T_Schema>;
-    orderDirection?: 'ASC' | 'DESC';
-    useFinal?: boolean;
-  }): Promise<{ data: T_Enhanced_Type[]; rows: number }> {
-    const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false } = options;
-
-    if (limit < 0 || limit > LIMIT_MAX_THRESHOLD) {
-      throw new Error(`Limit must be between 0 and ${LIMIT_MAX_THRESHOLD}`);
-    }
-    if (offset < 0) {
-      throw new Error('Offset must be non-negative');
-    }
-
-    const { clause, params } = this.buildSafeWhereClause(where);
-
-    if (orderBy) {
-      this.validateColumnName(String(orderBy));
-
-      if (!this.schemaOrderBy.includes(orderBy)) {
-        this.logger.warn(
-          {
-            orderBy,
-            schemaOrderBy: this.schemaOrderBy,
-          },
-          `Column '${orderBy as string}' cannot be used for ordering. Available columns: ${this.schemaOrderBy.join(', ')}`
-        );
-      }
-    }
-
-    if (orderDirection && !ORDER_DIRECTION.includes(orderDirection)) {
-      throw new Error(`Invalid order direction: ${orderDirection}. Allowed directions: ${ORDER_DIRECTION.join(', ')}`);
-    }
-
-    const finalModifier = useFinal ? ' FINAL' : '';
-    const query = `
-      SELECT *
-      FROM ${this.table}${finalModifier}
-      ${clause}
-      ${orderBy ? `ORDER BY ${String(orderBy)} ${orderDirection}` : ''}
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `;
-
-    const result = await this.clickhouseService.query<T_Enhanced_Type>({
-      query,
-      params,
-    });
-
-    return result;
-  }
-
-  async findOneSafe(options: {
-    where: SafeWhere<InferClickhouseSchemaType<T_Schema>>;
-    limit?: number;
-    offset?: number;
-    orderBy?: SchemaKeys<T_Schema>;
-    orderDirection?: 'ASC' | 'DESC';
-    useFinal?: boolean;
-  }): Promise<{ data: T_Enhanced_Type; rows: number }> {
-    const result = await this.findSafe({ ...options, limit: 1 });
-
-    return { data: result.data[0], rows: result.rows };
-  }
-
-  async countSafe(options: { where: SafeWhere<InferClickhouseSchemaType<T_Schema>> }): Promise<number> {
-    const { where } = options;
-    const { clause, params } = this.buildSafeWhereClause(where);
-
-    const query = `
-      SELECT toInt64(count()) as total
-      FROM ${this.table}
-      ${clause}
-    `;
-
-    const result = await this.clickhouseService.query<{ total: number | string }>({
-      query,
-      params,
-    });
-
-    const total = result.data[0]?.total;
-
-    return Number(total || 0);
-  }
-
-  // Legacy methods for backward compatibility
+  // Query methods with mandatory tenant enforcement
   async find(options: {
     where: Where<InferClickhouseSchemaType<T_Schema>>;
     limit?: number;
@@ -502,6 +340,19 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return result;
   }
 
+  async findOne(options: {
+    where: Where<InferClickhouseSchemaType<T_Schema>>;
+    limit?: number;
+    offset?: number;
+    orderBy?: SchemaKeys<T_Schema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+  }): Promise<{ data: T_Enhanced_Type; rows: number }> {
+    const result = await this.find({ ...options, limit: 1 });
+
+    return { data: result.data[0], rows: result.rows };
+  }
+
   async count(options: { where: Where<InferClickhouseSchemaType<T_Schema>> }): Promise<number> {
     const { where } = options;
     const { clause, params } = this.buildWhereClause(where);
@@ -522,6 +373,8 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return Number(total || 0);
   }
 
+
+
   static formatDateTime64(date: Date) {
     // Use toISOString() to get UTC time, then format for ClickHouse
     const isoString = date.toISOString();
@@ -535,49 +388,53 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
  * Optional fluent query builder for better ergonomics
  */
 export class QueryBuilder<T> {
-  private conditions: SafeWhereCondition<T>[] = [];
+  private conditions: WhereCondition<T>[] = [];
 
   constructor(private tenant: TenantContext) {}
 
-  where(field: keyof T, operator: ClickhouseOperator, value: any): this {
-    this.conditions.push({ field, operator, value });
+  where<K extends keyof T, O extends ClickhouseOperator>(
+    field: K, 
+    operator: O, 
+    value: O extends ArrayOperators ? T[K][] : T[K]
+  ): this {
+    this.conditions.push({ field, operator, value } as WhereCondition<T>);
 
     return this;
   }
 
-  whereEquals(field: keyof T, value: any): this {
+  whereEquals<K extends keyof T>(field: K, value: T[K]): this {
     return this.where(field, '=', value);
   }
 
-  whereIn(field: keyof T, values: any[]): this {
+  whereIn<K extends keyof T>(field: K, values: T[K][]): this {
     return this.where(field, 'IN', values);
   }
 
-  whereNotIn(field: keyof T, values: any[]): this {
+  whereNotIn<K extends keyof T>(field: K, values: T[K][]): this {
     return this.where(field, 'NOT IN', values);
   }
 
-  whereLike(field: keyof T, value: string): this {
+  whereLike<K extends keyof T>(field: K, value: T[K]): this {
     return this.where(field, 'LIKE', value);
   }
 
-  whereGreaterThan(field: keyof T, value: any): this {
+  whereGreaterThan<K extends keyof T>(field: K, value: T[K]): this {
     return this.where(field, '>', value);
   }
 
-  whereGreaterThanOrEqual(field: keyof T, value: any): this {
+  whereGreaterThanOrEqual<K extends keyof T>(field: K, value: T[K]): this {
     return this.where(field, '>=', value);
   }
 
-  whereLessThan(field: keyof T, value: any): this {
+  whereLessThan<K extends keyof T>(field: K, value: T[K]): this {
     return this.where(field, '<', value);
   }
 
-  whereLessThanOrEqual(field: keyof T, value: any): this {
+  whereLessThanOrEqual<K extends keyof T>(field: K, value: T[K]): this {
     return this.where(field, '<=', value);
   }
 
-  whereBetween(field: keyof T, min: any, max: any): this {
+  whereBetween<K extends keyof T>(field: K, min: T[K], max: T[K]): this {
     this.where(field, '>=', min);
     this.where(field, '<=', max);
 
