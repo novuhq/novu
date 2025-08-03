@@ -56,7 +56,7 @@ export function toResponseWorkflowDto(
     lastTriggeredAt: workflow.lastTriggeredAt,
     payloadSchema: workflow.payloadSchema,
     payloadExample,
-    validatePayload: workflow.validatePayload,
+    validatePayload: workflow.validatePayload || false,
     isTranslationEnabled: workflow.isTranslationEnabled || false,
   };
 }
