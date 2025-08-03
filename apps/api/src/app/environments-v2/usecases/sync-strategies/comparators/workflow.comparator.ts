@@ -32,8 +32,7 @@ export class WorkflowComparator {
         throw new Error('Source and target workflows must not be null');
       }
 
-      // TODO: GetWorkflowUseCase needs to be updated to accept WorkflowDataContainer
-      // For now, we'll call it without the container, but this is where we'll optimize
+      // Use WorkflowDataContainer if available for optimized workflow fetching
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -42,8 +41,8 @@ export class WorkflowComparator {
               environmentId: sourceWorkflow._environmentId,
             },
             workflowIdOrInternalId: sourceWorkflow._id,
-          })
-          // TODO: Pass workflowDataContainer as second parameter once GetWorkflowUseCase is updated
+          }),
+          workflowDataContainer
         ),
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -52,8 +51,8 @@ export class WorkflowComparator {
               environmentId: targetWorkflow._environmentId,
             },
             workflowIdOrInternalId: targetWorkflow._id,
-          })
-          // TODO: Pass workflowDataContainer as second parameter once GetWorkflowUseCase is updated
+          }),
+          workflowDataContainer
         ),
       ]);
 
@@ -136,9 +135,15 @@ export class WorkflowComparator {
     const processedSteps = new Set<string>();
 
     sourceSteps.forEach((sourceStep, sourceIndex) => {
+      // Skip steps without stepId as they can't be properly compared
+      if (!sourceStep.stepId) {
+        return;
+      }
+
       const targetStepData = targetStepMap.get(sourceStep.stepId);
 
       if (!targetStepData) {
+        console.log(`Step detected as ADDED: ${sourceStep.stepId} (${sourceStep.name})`);
         stepDiffs.push(this.createStepAddedDiff(sourceStep, sourceIndex));
       } else {
         const { step: targetStep, index: targetIndex } = targetStepData;
@@ -155,6 +160,11 @@ export class WorkflowComparator {
     });
 
     targetSteps.forEach((targetStep, targetIndex) => {
+      // Skip steps without stepId
+      if (!targetStep.stepId) {
+        return;
+      }
+
       if (!processedSteps.has(targetStep.stepId)) {
         stepDiffs.push(this.createStepDeletedDiff(targetStep, targetIndex));
       }

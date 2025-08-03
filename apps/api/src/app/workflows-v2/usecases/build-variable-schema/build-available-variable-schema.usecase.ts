@@ -7,6 +7,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
@@ -24,28 +25,51 @@ export class BuildVariableSchemaUsecase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: BuildVariableSchemaCommand): Promise<JSONSchemaDto> {
+  async execute(
+    command: BuildVariableSchemaCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<JSONSchemaDto> {
     const { workflow, stepInternalId, optimisticSteps } = command;
 
     let workflowControlValues: unknown[] = [];
     if (workflow) {
-      const controls = await this.controlValuesRepository.find(
-        {
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          _workflowId: workflow._id,
-          level: ControlValuesLevelEnum.STEP_CONTROLS,
-          controls: { $ne: null },
-        },
-        {
-          controls: 1,
-          _id: 0,
+      // Try to use cached control values from container first
+      if (workflowDataContainer) {
+        const workflowIdentifier = workflow.triggers?.[0]?.identifier;
+        if (workflowIdentifier) {
+          const cachedControlValues = workflowDataContainer.getControlValuesForWorkflow(
+            workflowIdentifier,
+            command.environmentId
+          );
+          if (cachedControlValues && cachedControlValues.length > 0) {
+            workflowControlValues = cachedControlValues
+              .flatMap((item: unknown) => (item as { controls?: Record<string, unknown> })?.controls)
+              .filter(Boolean)
+              .flatMap((obj) => Object.values(obj as Record<string, unknown>));
+          }
         }
-      );
+      }
 
-      workflowControlValues = controls
-        .flatMap((item) => item.controls)
-        .flatMap((obj) => Object.values(obj as Record<string, unknown>));
+      // Fallback to database query if no cached values
+      if (workflowControlValues.length === 0) {
+        const controls = await this.controlValuesRepository.find(
+          {
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            _workflowId: workflow._id,
+            level: ControlValuesLevelEnum.STEP_CONTROLS,
+            controls: { $ne: null },
+          },
+          {
+            controls: 1,
+            _id: 0,
+          }
+        );
+
+        workflowControlValues = controls
+          .flatMap((item) => item.controls)
+          .flatMap((obj) => Object.values(obj as Record<string, unknown>));
+      }
     }
 
     const optimisticControlValues = Object.values(command.optimisticControlValues || {});

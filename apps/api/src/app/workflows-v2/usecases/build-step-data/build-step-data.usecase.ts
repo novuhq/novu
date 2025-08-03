@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { GetWorkflowByIdsUseCase, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
-import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum, StepTypeEnum } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 import { StepResponseDto } from '../../dtos';
 import { InvalidStepException } from '../../exceptions/invalid-step.exception';
@@ -17,20 +18,40 @@ export class BuildStepDataUsecase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: BuildStepDataCommand): Promise<StepResponseDto> {
-    const workflow = await this.fetchWorkflow(command);
+  async execute(
+    command: BuildStepDataCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<StepResponseDto> {
+    // Check container for cached step data first
+    if (workflowDataContainer) {
+      const workflowIdentifier = await this.getWorkflowIdentifier(command, workflowDataContainer);
+      if (workflowIdentifier) {
+        const cachedStep = workflowDataContainer.getStepData(
+          workflowIdentifier,
+          command.stepIdOrInternalId,
+          command.user.environmentId
+        );
+        if (cachedStep) {
+          return cachedStep;
+        }
+      }
+    }
+
+    const workflow = await this.fetchWorkflow(command, workflowDataContainer);
 
     const currentStep: NotificationStepEntity | undefined = await this.loadStepsFromDb(command, workflow);
-    if (!currentStep || !currentStep._templateId || currentStep.stepId === undefined || !currentStep?.template?.type) {
+
+    if (!currentStep || !currentStep._templateId) {
       throw new InvalidStepException(command.stepIdOrInternalId);
     }
-    const controlValues = await this.getControlValues(command, currentStep, workflow._id);
+
+    const controlValues = await this.getControlValues(command, currentStep, workflow._id, workflowDataContainer);
     const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
-    const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow);
+    const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow, workflowDataContainer);
 
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
 
-    return {
+    const stepResponse = {
       controls: {
         dataSchema: currentStep.template?.controls?.schema,
         uiSchema: currentStep.template?.controls?.uiSchema,
@@ -48,24 +69,54 @@ export class BuildStepDataUsecase {
       workflowDatabaseId: workflow._id,
       issues: currentStep.issues,
     } as StepResponseDto;
+
+    // Cache the result in container if available
+    if (workflowDataContainer) {
+      const workflowIdentifier = workflow.triggers?.[0]?.identifier;
+      if (workflowIdentifier) {
+        workflowDataContainer.setStepData(
+          workflowIdentifier,
+          command.stepIdOrInternalId,
+          stepResponse,
+          command.user.environmentId
+        );
+      }
+    }
+
+    return stepResponse;
   }
 
   private async buildAvailableVariableSchema(
     command: BuildStepDataCommand,
     currentStep: NotificationStepEntity,
-    workflow: NotificationTemplateEntity
+    workflow: NotificationTemplateEntity,
+    workflowDataContainer?: WorkflowDataContainer
   ) {
-    return await this.buildAvailableVariableSchemaUsecase.execute({
-      environmentId: command.user.environmentId,
-      organizationId: command.user.organizationId,
-      userId: command.user._id,
-      stepInternalId: currentStep._templateId,
-      workflow,
-    });
+    return await this.buildAvailableVariableSchemaUsecase.execute(
+      {
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
+        userId: command.user._id,
+        stepInternalId: currentStep._templateId,
+        workflow,
+      },
+      workflowDataContainer
+    );
   }
 
   @Instrument()
-  private async fetchWorkflow(command: BuildStepDataCommand) {
+  private async fetchWorkflow(command: BuildStepDataCommand, workflowDataContainer?: WorkflowDataContainer) {
+    // Try to get workflow from container first
+    if (workflowDataContainer) {
+      const workflowIdentifier = await this.getWorkflowIdentifier(command, workflowDataContainer);
+      if (workflowIdentifier) {
+        const cachedWorkflow = workflowDataContainer.getWorkflow(workflowIdentifier, command.user.environmentId);
+        if (cachedWorkflow) {
+          return cachedWorkflow;
+        }
+      }
+    }
+
     return await this.getWorkflowByIdsUseCase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.user.environmentId,
@@ -77,8 +128,24 @@ export class BuildStepDataUsecase {
   private async getControlValues(
     command: BuildStepDataCommand,
     currentStep: NotificationStepEntity,
-    _workflowId: string
+    _workflowId: string,
+    workflowDataContainer?: WorkflowDataContainer
   ) {
+    // Try to get control values from container first
+    if (workflowDataContainer) {
+      const workflowIdentifier = await this.getWorkflowIdentifier(command, workflowDataContainer);
+      if (workflowIdentifier) {
+        const cachedControlValues = workflowDataContainer.getControlValuesForStep(
+          workflowIdentifier,
+          currentStep._templateId,
+          command.user.environmentId
+        );
+        if (cachedControlValues) {
+          return cachedControlValues.controls || {};
+        }
+      }
+    }
+
     const controlValuesEntity = await this.controlValuesRepository.findOne({
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,
@@ -108,5 +175,27 @@ export class BuildStepDataUsecase {
     }
 
     return currentStep;
+  }
+
+  private async getWorkflowIdentifier(
+    command: BuildStepDataCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<string | undefined> {
+    // If workflowIdOrInternalId is already an identifier, try it first
+    if (workflowDataContainer?.hasWorkflow(command.workflowIdOrInternalId, command.user.environmentId)) {
+      return command.workflowIdOrInternalId;
+    }
+
+    // Otherwise, try to fetch the workflow to get its identifier
+    try {
+      const workflow = await this.getWorkflowByIdsUseCase.execute({
+        workflowIdOrInternalId: command.workflowIdOrInternalId,
+        environmentId: command.user.environmentId,
+        organizationId: command.user.organizationId,
+      });
+      return workflow.triggers?.[0]?.identifier;
+    } catch {
+      return undefined;
+    }
   }
 }

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import {
   GetPreferences,
   GetPreferencesCommand,
-  GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
 } from '@novu/application-generic';
-import { ClientSession, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { buildWorkflowPreferencesFromPreferenceChannels, DEFAULT_WORKFLOW_PREFERENCES } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesCommand } from './get-workflow-with-preferences.command';
 
@@ -20,7 +20,10 @@ export class GetWorkflowWithPreferencesUseCase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: GetWorkflowWithPreferencesCommand): Promise<WorkflowWithPreferencesResponseDto> {
+  async execute(
+    command: GetWorkflowWithPreferencesCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<WorkflowWithPreferencesResponseDto> {
     const workflowEntity = await this.getWorkflowByIdsUseCase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.environmentId,
@@ -29,7 +32,7 @@ export class GetWorkflowWithPreferencesUseCase {
       session: command.session,
     });
 
-    const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity);
+    const workflowPreferences = await this.getWorkflowPreferences(command, workflowEntity, workflowDataContainer);
 
     /**
      * @deprecated - use `userPreferences` and `defaultPreferences` instead
@@ -55,8 +58,14 @@ export class GetWorkflowWithPreferencesUseCase {
   @Instrument()
   private async getWorkflowPreferences(
     command: GetWorkflowWithPreferencesCommand,
-    workflowEntity: NotificationTemplateEntity
+    workflowEntity: NotificationTemplateEntity,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    workflowDataContainer?: WorkflowDataContainer
   ) {
+    // Note: For now, we'll continue using the original preferences logic
+    // Future optimization: use cached preferences from workflowDataContainer
+    // This would require converting the cached format to match GetPreferences output
+
     return await this.getPreferences.safeExecute(
       GetPreferencesCommand.create({
         environmentId: command.environmentId,

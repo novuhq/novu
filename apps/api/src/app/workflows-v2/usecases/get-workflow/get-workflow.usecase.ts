@@ -2,6 +2,7 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { GetWorkflowWithPreferencesCommand } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
 import { StepResponseDto, WorkflowResponseDto } from '../../dtos';
@@ -21,28 +22,55 @@ export class GetWorkflowUseCase {
   }
 
   @InstrumentUsecase()
-  async execute(command: GetWorkflowCommand): Promise<WorkflowResponseDto> {
+  async execute(
+    command: GetWorkflowCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<WorkflowResponseDto> {
+    // Check container for cached workflow DTO first
+    if (workflowDataContainer) {
+      const cachedDto = workflowDataContainer.getWorkflowDto(
+        command.workflowIdOrInternalId,
+        command.user.environmentId
+      );
+      if (cachedDto) {
+        this.logger.debug(`Using cached workflow DTO for ${command.workflowIdOrInternalId}`);
+        return cachedDto;
+      }
+    }
+
     const workflowWithPreferences = await this.getWorkflowWithPreferencesUseCase.execute(
       GetWorkflowWithPreferencesCommand.create({
         environmentId: command.user.environmentId,
         organizationId: command.user.organizationId,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
         userId: command.user._id,
-      })
+      }),
+      workflowDataContainer
     );
 
-    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
+    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user, workflowDataContainer);
     const payloadExample = await generatePayloadExample(workflowWithPreferences);
 
-    return toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
+    const workflowDto = toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
+
+    // Cache the result in container if available
+    if (workflowDataContainer) {
+      const workflowIdentifier = workflowWithPreferences.triggers?.[0]?.identifier;
+      if (workflowIdentifier) {
+        workflowDataContainer.setWorkflowDto(workflowIdentifier, workflowDto, command.user.environmentId);
+      }
+    }
+
+    return workflowDto;
   }
 
   private async getFullWorkflowSteps(
     workflowWithPreferences: NotificationTemplateEntity,
-    user: UserSessionData
+    user: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<StepResponseDto[]> {
     const stepPromises = workflowWithPreferences.steps.map((step: NotificationStepEntity & { _id: string }) =>
-      this.buildStepForWorkflow(workflowWithPreferences, step, user)
+      this.buildStepForWorkflow(workflowWithPreferences, step, user, workflowDataContainer)
     );
 
     return Promise.all(stepPromises);
@@ -51,7 +79,8 @@ export class GetWorkflowUseCase {
   private async buildStepForWorkflow(
     workflow: NotificationTemplateEntity,
     step: NotificationStepEntity & { _id: string },
-    user: UserSessionData
+    user: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<StepResponseDto> {
     try {
       return await this.buildStepDataUsecase.execute(
@@ -59,7 +88,8 @@ export class GetWorkflowUseCase {
           workflowIdOrInternalId: workflow._id,
           stepIdOrInternalId: step._id,
           user,
-        })
+        }),
+        workflowDataContainer
       );
     } catch (error) {
       throw new InternalServerErrorException({
