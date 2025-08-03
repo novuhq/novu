@@ -176,11 +176,13 @@ export class WorkflowDataContainer {
 
   getControlValuesForWorkflow(identifier: string, environmentId?: string): unknown[] {
     const data = this.getWorkflowData(identifier, environmentId);
+
     return data?.controlValues || [];
   }
 
   getControlValuesForStep(identifier: string, stepId: string, environmentId?: string): ControlValuesEntity | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
+
     return data?.controlValuesByStep?.get(stepId);
   }
 
@@ -193,27 +195,10 @@ export class WorkflowDataContainer {
     if (environmentId) {
       return this.workflowsByIdentifier.has(this.makeKey(environmentId, identifier));
     }
+
     return this.workflowsByIdentifier.has(identifier);
   }
 
-  getAllLoadedIdentifiers(): string[] {
-    return Array.from(this.workflowsByIdentifier.keys());
-  }
-
-  // Preferences methods
-  getPreferencesForWorkflow(identifier: string, environmentId?: string): IWorkflowPreferences | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
-    return data?.preferences;
-  }
-
-  setPreferencesForWorkflow(identifier: string, preferences: IWorkflowPreferences, environmentId?: string): void {
-    const data = this.getWorkflowData(identifier, environmentId);
-    if (data) {
-      data.preferences = preferences;
-    }
-  }
-
-  // Workflow DTO methods
   getWorkflowDto(identifier: string, environmentId?: string): WorkflowResponseDto | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.workflowDto;
@@ -226,12 +211,6 @@ export class WorkflowDataContainer {
     }
   }
 
-  hasWorkflowDto(identifier: string, environmentId?: string): boolean {
-    const data = this.getWorkflowData(identifier, environmentId);
-    return data?.workflowDto !== undefined;
-  }
-
-  // Step data methods
   getStepData(identifier: string, stepId: string, environmentId?: string): StepResponseDto | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.steps?.get(stepId);
@@ -242,60 +221,5 @@ export class WorkflowDataContainer {
     if (data?.steps) {
       data.steps.set(stepId, stepData);
     }
-  }
-
-  // Legacy methods for backward compatibility
-  setWorkflowDetails(identifier: string, workflowDetails: WorkflowResponseDto): void {
-    // This method now maps to setWorkflowDto
-    this.setWorkflowDto(identifier, workflowDetails);
-  }
-
-  getWorkflowDetails(identifier: string): WorkflowResponseDto | undefined {
-    // This method now maps to getWorkflowDto
-    return this.getWorkflowDto(identifier);
-  }
-
-  hasWorkflowDetails(identifier: string): boolean {
-    // This method now maps to hasWorkflowDto
-    return this.hasWorkflowDto(identifier);
-  }
-
-  async getWorkflowObjectIdsFromIdentifiers(
-    workflowIdentifiers: string[],
-    environmentId: string,
-    organizationId: string
-  ): Promise<{
-    identifierToObjectId: Map<string, string>;
-    objectIdToIdentifier: Map<string, string>;
-  }> {
-    const identifierToObjectId = new Map<string, string>();
-    const objectIdToIdentifier = new Map<string, string>();
-
-    for (const identifier of workflowIdentifiers) {
-      const workflowData = this.getWorkflowData(identifier, environmentId);
-      if (workflowData?.workflow._id) {
-        identifierToObjectId.set(identifier, workflowData.workflow._id);
-        objectIdToIdentifier.set(workflowData.workflow._id, identifier);
-      }
-    }
-
-    if (identifierToObjectId.size < workflowIdentifiers.length) {
-      const missingIdentifiers = workflowIdentifiers.filter((id) => !identifierToObjectId.has(id));
-      const workflows = await this.workflowRepository.find({
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        'triggers.identifier': { $in: missingIdentifiers },
-      });
-
-      for (const workflow of workflows) {
-        const identifier = workflow.triggers?.[0]?.identifier;
-        if (identifier && workflow._id) {
-          identifierToObjectId.set(identifier, workflow._id);
-          objectIdToIdentifier.set(workflow._id, identifier);
-        }
-      }
-    }
-
-    return { identifierToObjectId, objectIdToIdentifier };
   }
 }

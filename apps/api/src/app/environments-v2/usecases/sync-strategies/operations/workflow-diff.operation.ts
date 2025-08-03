@@ -312,7 +312,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         return [];
       }
 
-      let workflowDto = workflowDataContainer.getWorkflowDetails(workflowIdentifier);
+      let workflowDto = workflowDataContainer.getWorkflowDto(workflowIdentifier, workflow._environmentId);
 
       // If workflow details are not cached, load them using GetWorkflowUseCase
       if (!workflowDto) {
@@ -330,7 +330,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         );
 
         // Cache the loaded workflow details
-        workflowDataContainer.setWorkflowDetails(workflowIdentifier, workflowDto);
+        workflowDataContainer.setWorkflowDto(workflowIdentifier, workflowDto, workflow._environmentId);
       }
 
       this.logger.debug(`Using workflow data for step extraction: ${workflowIdentifier}`);
