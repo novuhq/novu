@@ -30,6 +30,7 @@ export interface IWorkflowWithControlValues {
 
 export class WorkflowDataContainer {
   private workflowsByIdentifier = new Map<string, IWorkflowWithControlValues>();
+  private workflowsByObjectId = new Map<string, string>(); // objectId:environmentId -> key
   private isDataLoaded = false;
 
   constructor(
@@ -42,17 +43,13 @@ export class WorkflowDataContainer {
     workflowIdentifiers: string[],
     environmentId: string,
     organizationId: string,
-    targetEnvironmentId?: string
+    targetEnvironmentId: string
   ): Promise<void> {
     if (this.isDataLoaded || workflowIdentifiers.length === 0) {
       return;
     }
 
-    // Load workflows from both environments
-    const environmentIds = [environmentId];
-    if (targetEnvironmentId) {
-      environmentIds.push(targetEnvironmentId);
-    }
+    const environmentIds = [environmentId, targetEnvironmentId];
 
     const workflows = await this.workflowRepository.findWithTemplates({
       _environmentId: { $in: environmentIds },
@@ -60,112 +57,98 @@ export class WorkflowDataContainer {
       'triggers.identifier': { $in: workflowIdentifiers },
     });
 
-    // Single map to store workflow lookup information
-    const workflowLookup = new Map<
-      string,
-      {
-        objectId: string;
-        identifier: string;
-        environmentId: string;
-      }
-    >();
-
+    // Create efficient lookup maps
+    const workflowLookup = new Map<string, { objectId: string; identifier: string; environmentId: string }>();
+    const objectIdToKeyLookup = new Map<string, string>();
     const workflowObjectIds: string[] = [];
 
     for (const workflow of workflows) {
       const identifier = workflow.triggers?.[0]?.identifier;
       if (identifier && workflow._id) {
         const lookupKey = `${workflow._environmentId}:${identifier}`;
+        const objectIdKey = `${workflow._id}:${workflow._environmentId}`;
+
         workflowLookup.set(lookupKey, {
           objectId: workflow._id,
           identifier,
           environmentId: workflow._environmentId,
         });
+        objectIdToKeyLookup.set(objectIdKey, lookupKey);
         workflowObjectIds.push(workflow._id);
       }
     }
 
-    const allControlValues = await this.controlValuesRepository.find({
-      _environmentId: { $in: environmentIds },
-      _organizationId: organizationId,
-      _workflowId: { $in: workflowObjectIds },
-      level: ControlValuesLevelEnum.STEP_CONTROLS,
-    });
+    const [allControlValues, preferences] = await Promise.all([
+      this.controlValuesRepository.find({
+        _environmentId: { $in: environmentIds },
+        _organizationId: organizationId,
+        _workflowId: { $in: workflowObjectIds },
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
+      }),
+      this.preferencesRepository.find({
+        _environmentId: { $in: environmentIds },
+        _organizationId: organizationId,
+        _templateId: { $in: workflowObjectIds },
+        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+      }),
+    ]);
 
-    const preferences = await this.preferencesRepository.find({
-      _environmentId: { $in: environmentIds },
-      _organizationId: organizationId,
-      _templateId: { $in: workflowObjectIds },
-      type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
-    });
-
+    // Initialize maps with better structure
     const controlValuesByWorkflowId = new Map<string, ControlValuesEntity[]>();
     const controlValuesByWorkflowAndStep = new Map<string, Map<string, ControlValuesEntity>>();
-
-    // Helper function to find workflow info by object ID
-    const findWorkflowByObjectId = (objectId: string, environmentId: string) => {
-      for (const [key, info] of workflowLookup) {
-        if (info.objectId === objectId && info.environmentId === environmentId) {
-          return { key, ...info };
-        }
-      }
-      return null;
-    };
+    const preferencesByWorkflow = new Map<string, IWorkflowPreferences>();
 
     for (const cv of allControlValues) {
-      const workflowObjectId = cv._workflowId;
-      if (!workflowObjectId) continue;
+      if (!cv._workflowId) continue;
 
-      const workflowInfo = findWorkflowByObjectId(workflowObjectId, cv._environmentId);
-      if (workflowInfo) {
-        const key = workflowInfo.key;
+      const lookupKey = objectIdToKeyLookup.get(`${cv._workflowId}:${cv._environmentId}`);
+      if (!lookupKey) continue;
 
-        if (!controlValuesByWorkflowId.has(key)) {
-          controlValuesByWorkflowId.set(key, []);
-        }
+      // Initialize arrays/maps if needed
+      if (!controlValuesByWorkflowId.has(lookupKey)) {
+        controlValuesByWorkflowId.set(lookupKey, []);
+      }
+      if (!controlValuesByWorkflowAndStep.has(lookupKey)) {
+        controlValuesByWorkflowAndStep.set(lookupKey, new Map());
+      }
 
-        const workflowControlValues = controlValuesByWorkflowId.get(key);
-        if (workflowControlValues) {
-          workflowControlValues.push(cv);
-        }
+      const workflowControlValues = controlValuesByWorkflowId.get(lookupKey);
+      if (workflowControlValues) {
+        workflowControlValues.push(cv);
+      }
 
-        if (!controlValuesByWorkflowAndStep.has(key)) {
-          controlValuesByWorkflowAndStep.set(key, new Map());
-        }
-
-        if (cv._stepId) {
-          const stepMap = controlValuesByWorkflowAndStep.get(key);
-          if (stepMap) {
-            stepMap.set(cv._stepId, cv);
-          }
+      if (cv._stepId) {
+        const stepMap = controlValuesByWorkflowAndStep.get(lookupKey);
+        if (stepMap) {
+          stepMap.set(cv._stepId, cv);
         }
       }
     }
 
-    const preferencesByWorkflow = new Map<string, IWorkflowPreferences>();
     for (const pref of preferences) {
       if (!pref._templateId) continue;
 
-      const workflowInfo = findWorkflowByObjectId(pref._templateId, pref._environmentId);
-      if (workflowInfo) {
-        const key = workflowInfo.key;
-        if (!preferencesByWorkflow.has(key)) {
-          preferencesByWorkflow.set(key, {});
-        }
+      const lookupKey = objectIdToKeyLookup.get(`${pref._templateId}:${pref._environmentId}`);
+      if (!lookupKey) continue;
 
-        const workflowPrefs = preferencesByWorkflow.get(key);
-        if (workflowPrefs) {
-          if (pref.type === PreferencesTypeEnum.WORKFLOW_RESOURCE) {
-            workflowPrefs.workflowResourcePreference = pref;
-          } else if (pref.type === PreferencesTypeEnum.USER_WORKFLOW) {
-            workflowPrefs.workflowUserPreference = pref;
-          }
+      if (!preferencesByWorkflow.has(lookupKey)) {
+        preferencesByWorkflow.set(lookupKey, {});
+      }
+
+      const workflowPrefs = preferencesByWorkflow.get(lookupKey);
+      if (workflowPrefs) {
+        if (pref.type === PreferencesTypeEnum.WORKFLOW_RESOURCE) {
+          workflowPrefs.workflowResourcePreference = pref;
+        } else if (pref.type === PreferencesTypeEnum.USER_WORKFLOW) {
+          workflowPrefs.workflowUserPreference = pref;
         }
       }
     }
 
     for (const workflow of workflows) {
       const identifier = workflow.triggers?.[0]?.identifier;
+      if (!identifier) continue;
+
       const key = `${workflow._environmentId}:${identifier}`;
       const controlValuesByStep = controlValuesByWorkflowAndStep.get(key) || new Map();
       const preferences = preferencesByWorkflow.get(key);
@@ -190,10 +173,8 @@ export class WorkflowDataContainer {
         return BuildStepDataUsecase.mapToStepResponse(workflow, step, controlValues?.controls || {}, emptyJsonSchema());
       });
 
-      const stepsMap = new Map();
-      for (const stepDto of stepDtos) {
-        stepsMap.set(stepDto._id, stepDto);
-      }
+      // Create steps map more efficiently
+      const stepsMap = new Map(stepDtos.map((stepDto) => [stepDto._id, stepDto]));
 
       this.workflowsByIdentifier.set(key, {
         workflow,
@@ -204,6 +185,10 @@ export class WorkflowDataContainer {
         workflowDto: toResponseWorkflowDto(workflowWithPreferences, stepDtos),
         steps: stepsMap,
       });
+
+      if (workflow._id) {
+        this.workflowsByObjectId.set(`${workflow._id}:${workflow._environmentId}`, key);
+      }
     }
 
     this.isDataLoaded = true;
@@ -221,15 +206,15 @@ export class WorkflowDataContainer {
     identifierOrId: string,
     environmentId: string
   ): IWorkflowWithControlValues | undefined {
+    // Try identifier-based lookup first
     const byIdentifier = this.getWorkflowData(identifierOrId, environmentId);
     if (byIdentifier) {
       return byIdentifier;
     }
 
-    for (const [, workflowData] of this.workflowsByIdentifier) {
-      if (workflowData.workflow._environmentId === environmentId && workflowData.workflow._id === identifierOrId) {
-        return workflowData;
-      }
+    const keyByObjectId = this.workflowsByObjectId.get(`${identifierOrId}:${environmentId}`);
+    if (keyByObjectId) {
+      return this.workflowsByIdentifier.get(keyByObjectId);
     }
 
     return undefined;
@@ -261,13 +246,7 @@ export class WorkflowDataContainer {
       return true;
     }
 
-    for (const [, workflowData] of this.workflowsByIdentifier) {
-      if (workflowData.workflow._environmentId === environmentId && workflowData.workflow._id === identifierOrId) {
-        return true;
-      }
-    }
-
-    return false;
+    return this.workflowsByObjectId.has(`${identifierOrId}:${environmentId}`);
   }
 
   getWorkflowDto(identifierOrId: string, environmentId: string): WorkflowResponseDto | undefined {
