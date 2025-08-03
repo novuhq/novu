@@ -22,18 +22,15 @@ export class BuildStepDataUsecase {
     command: BuildStepDataCommand,
     workflowDataContainer?: WorkflowDataContainer
   ): Promise<StepResponseDto> {
-    // Check container for cached step data first
+    // Check container for cached step data first (now supports both MongoDB ID and identifier)
     if (workflowDataContainer) {
-      const workflowIdentifier = await this.getWorkflowIdentifier(command, workflowDataContainer);
-      if (workflowIdentifier) {
-        const cachedStep = workflowDataContainer.getStepData(
-          workflowIdentifier,
-          command.stepIdOrInternalId,
-          command.user.environmentId
-        );
-        if (cachedStep) {
-          return cachedStep;
-        }
+      const cachedStep = workflowDataContainer.getStepData(
+        command.workflowIdOrInternalId,
+        command.stepIdOrInternalId,
+        command.user.environmentId
+      );
+      if (cachedStep) {
+        return cachedStep;
       }
     }
 
@@ -70,19 +67,6 @@ export class BuildStepDataUsecase {
       issues: currentStep.issues,
     } as StepResponseDto;
 
-    // Cache the result in container if available
-    if (workflowDataContainer) {
-      const workflowIdentifier = workflow.triggers?.[0]?.identifier;
-      if (workflowIdentifier) {
-        workflowDataContainer.setStepData(
-          workflowIdentifier,
-          command.stepIdOrInternalId,
-          stepResponse,
-          command.user.environmentId
-        );
-      }
-    }
-
     return stepResponse;
   }
 
@@ -106,14 +90,14 @@ export class BuildStepDataUsecase {
 
   @Instrument()
   private async fetchWorkflow(command: BuildStepDataCommand, workflowDataContainer?: WorkflowDataContainer) {
-    // Try to get workflow from container first
+    // Try to get workflow from container first (now supports both MongoDB ID and identifier)
     if (workflowDataContainer) {
-      const workflowIdentifier = await this.getWorkflowIdentifier(command, workflowDataContainer);
-      if (workflowIdentifier) {
-        const cachedWorkflow = workflowDataContainer.getWorkflow(workflowIdentifier, command.user.environmentId);
-        if (cachedWorkflow) {
-          return cachedWorkflow;
-        }
+      const cachedWorkflow = workflowDataContainer.getWorkflow(
+        command.workflowIdOrInternalId,
+        command.user.environmentId
+      );
+      if (cachedWorkflow) {
+        return cachedWorkflow;
       }
     }
 
@@ -131,18 +115,15 @@ export class BuildStepDataUsecase {
     _workflowId: string,
     workflowDataContainer?: WorkflowDataContainer
   ) {
-    // Try to get control values from container first
+    // Try to get control values from container first (now supports both MongoDB ID and identifier)
     if (workflowDataContainer) {
-      const workflowIdentifier = await this.getWorkflowIdentifier(command, workflowDataContainer);
-      if (workflowIdentifier) {
-        const cachedControlValues = workflowDataContainer.getControlValuesForStep(
-          workflowIdentifier,
-          currentStep._templateId,
-          command.user.environmentId
-        );
-        if (cachedControlValues) {
-          return cachedControlValues.controls || {};
-        }
+      const cachedControlValues = workflowDataContainer.getControlValuesForStep(
+        command.workflowIdOrInternalId,
+        currentStep._templateId,
+        command.user.environmentId
+      );
+      if (cachedControlValues) {
+        return cachedControlValues.controls || {};
       }
     }
 

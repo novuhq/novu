@@ -312,27 +312,16 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         return [];
       }
 
-      let workflowDto = workflowDataContainer.getWorkflowDto(workflowIdentifier, workflow._environmentId);
+      this.logger.debug(`Generating workflow DTO for step extraction: ${workflowIdentifier}`);
 
-      // If workflow details are not cached, load them using GetWorkflowUseCase
-      if (!workflowDto) {
-        this.logger.debug(`Workflow details not cached, loading for ${workflowIdentifier}`);
-
-        workflowDto = await this.getWorkflowUseCase.execute(
-          GetWorkflowCommand.create({
-            workflowIdOrInternalId: workflow._id,
-            user: {
-              ...userContext,
-              environmentId: workflow._environmentId,
-            },
-          }),
-          workflowDataContainer
-        );
-
-        workflowDataContainer.setWorkflowDto(workflowIdentifier, workflowDto, workflow._environmentId);
-      }
-
-      this.logger.debug(`Using workflow data for step extraction: ${workflowIdentifier}`);
+      // Generate the workflow DTO using the GetWorkflowUseCase with the pre-loaded data container
+      const workflowDto = await this.getWorkflowUseCase.execute(
+        {
+          workflowIdOrInternalId: workflowIdentifier,
+          user: userContext,
+        },
+        workflowDataContainer
+      );
 
       // Normalize the workflow to get steps
       const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);

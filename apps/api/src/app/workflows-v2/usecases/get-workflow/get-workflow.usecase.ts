@@ -53,14 +53,6 @@ export class GetWorkflowUseCase {
 
     const workflowDto = toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
 
-    // Cache the result in container if available
-    if (workflowDataContainer) {
-      const workflowIdentifier = workflowWithPreferences.triggers?.[0]?.identifier;
-      if (workflowIdentifier) {
-        workflowDataContainer.setWorkflowDto(workflowIdentifier, workflowDto, command.user.environmentId);
-      }
-    }
-
     return workflowDto;
   }
 

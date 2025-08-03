@@ -24,6 +24,7 @@ export class DependencyAnalyzerService {
 
   async analyzeDependencies(
     resources: IDiffResult[],
+    sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
     workflowDataContainer?: WorkflowDataContainer
@@ -63,10 +64,7 @@ export class DependencyAnalyzerService {
         );
 
         const preloadedControlValues =
-          workflowDataContainer.getControlValuesForWorkflow(
-            resource.sourceResource?.id!,
-            resource.sourceResource?.environmentId!
-          ) || [];
+          workflowDataContainer.getControlValuesForWorkflow(resource.sourceResource?.id!, sourceEnvId) || [];
 
         const dependencies = await this.getWorkflowDependencies(
           resource,

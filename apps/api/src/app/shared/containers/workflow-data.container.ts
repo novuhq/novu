@@ -6,9 +6,11 @@ import {
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, PreferencesTypeEnum } from '@novu/shared';
+import { ControlValuesLevelEnum, PreferencesTypeEnum, ShortIsPrefixEnum, UserSessionData } from '@novu/shared';
 import { StepResponseDto } from '../../workflows-v2/dtos';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
+import { toResponseWorkflowDto } from '../../workflows-v2/mappers/notification-template-mapper';
+import { buildSlug } from '../helpers/build-slug';
 
 export interface IWorkflowPreferences {
   workflowResourcePreference?: PreferencesEntity;
@@ -32,13 +34,14 @@ export class WorkflowDataContainer {
   constructor(
     private controlValuesRepository: ControlValuesRepository,
     private workflowRepository: NotificationTemplateRepository,
-    private preferencesRepository?: PreferencesRepository
+    private preferencesRepository: PreferencesRepository
   ) {}
 
   async loadWorkflowsWithControlValues(
     workflowIdentifiers: string[],
     environmentId: string,
     organizationId: string,
+    userContext: UserSessionData,
     targetEnvironmentId?: string
   ): Promise<void> {
     if (this.isDataLoaded || workflowIdentifiers.length === 0) {
@@ -70,7 +73,6 @@ export class WorkflowDataContainer {
 
     const workflowObjectIds = Array.from(identifierToObjectId.values());
 
-    // Load ALL control values (not just those with layoutId)
     const allControlValues = await this.controlValuesRepository.find({
       _environmentId: { $in: environmentIds },
       _organizationId: organizationId,
@@ -78,18 +80,13 @@ export class WorkflowDataContainer {
       level: ControlValuesLevelEnum.STEP_CONTROLS,
     });
 
-    // Load preferences in bulk if repository is available
-    let preferences: PreferencesEntity[] = [];
-    if (this.preferencesRepository) {
-      preferences = await this.preferencesRepository.find({
-        _environmentId: { $in: environmentIds },
-        _organizationId: organizationId,
-        _templateId: { $in: workflowObjectIds },
-        type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
-      });
-    }
+    const preferences = await this.preferencesRepository.find({
+      _environmentId: { $in: environmentIds },
+      _organizationId: organizationId,
+      _templateId: { $in: workflowObjectIds },
+      type: { $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW] },
+    });
 
-    // Organize control values by workflow and step
     const controlValuesByWorkflowId = new Map<string, ControlValuesEntity[]>();
     const controlValuesByWorkflowAndStep = new Map<string, Map<string, ControlValuesEntity>>();
 
@@ -121,7 +118,6 @@ export class WorkflowDataContainer {
       }
     }
 
-    // Organize preferences by workflow
     const preferencesByWorkflow = new Map<string, IWorkflowPreferences>();
     for (const pref of preferences) {
       if (!pref._templateId) continue;
@@ -143,7 +139,6 @@ export class WorkflowDataContainer {
       }
     }
 
-    // Store everything in the container
     for (const workflow of workflows) {
       const identifier = workflow.triggers?.[0]?.identifier;
       if (identifier) {
@@ -154,12 +149,67 @@ export class WorkflowDataContainer {
           controlValues: controlValuesByWorkflowId.get(key) || [],
           controlValuesByStep: controlValuesByWorkflowAndStep.get(key) || new Map(),
           preferences: preferencesByWorkflow.get(key),
+          workflowDto: undefined, // Will be populated below
           steps: new Map(),
         });
       }
     }
 
+    await this.preComputeWorkflowDtos(userContext);
+
     this.isDataLoaded = true;
+  }
+
+  private async preComputeWorkflowDtos(_userContext: UserSessionData): Promise<void> {
+    // Process all workflows and directly map them to DTOs using bulk-loaded data
+    for (const [, workflowData] of this.workflowsByIdentifier) {
+      try {
+        // Create workflow with preferences from loaded data
+        const workflowWithPreferences = {
+          ...workflowData.workflow,
+          userPreferences: workflowData.preferences?.workflowUserPreference?.preferences || null,
+          defaultPreferences: workflowData.preferences?.workflowResourcePreference?.preferences || null,
+        };
+
+        // Map steps to step DTOs using bulk-loaded control values
+        const stepDtos = workflowWithPreferences.steps.map((step) => {
+          const controlValues = workflowData.controlValuesByStep.get(step._templateId);
+          const slug = buildSlug(step.name!, ShortIsPrefixEnum.STEP, step._templateId);
+
+          return {
+            controls: {
+              dataSchema: step.template?.controls?.schema,
+              uiSchema: step.template?.controls?.uiSchema,
+              values: controlValues?.controls || {},
+            },
+            controlValues: controlValues?.controls || {},
+            variables: {}, // Will be populated later if needed
+            name: step.name!,
+            slug,
+            _id: step._templateId,
+            stepId: step.stepId || 'Missing Step Id',
+            type: step.template?.type!,
+            origin: workflowData.workflow.origin!,
+            workflowId: workflowData.identifier,
+            workflowDatabaseId: workflowData.workflow._id,
+            issues: step.issues,
+          };
+        });
+
+        // Cache step DTOs
+        for (const stepDto of stepDtos) {
+          if (workflowData.steps) {
+            workflowData.steps.set(stepDto._id, stepDto);
+          }
+        }
+
+        const workflowDto = toResponseWorkflowDto(workflowWithPreferences as any, stepDtos);
+        workflowData.workflowDto = workflowDto;
+      } catch (error) {
+        console.error(`Failed to pre-compute workflow DTO for ${workflowData.identifier}:`, error);
+        // Continue processing other workflows even if one fails
+      }
+    }
   }
 
   private makeKey(environmentId: string, identifier: string): string {
@@ -170,48 +220,70 @@ export class WorkflowDataContainer {
     return this.workflowsByIdentifier.get(this.makeKey(environmentId, identifier));
   }
 
-  getControlValuesForWorkflow(identifier: string, environmentId: string): unknown[] {
-    const data = this.getWorkflowData(identifier, environmentId);
+  getWorkflowDataByIdentifierOrId(
+    identifierOrId: string,
+    environmentId: string
+  ): IWorkflowWithControlValues | undefined {
+    // First try to find by identifier (fast lookup)
+    const byIdentifier = this.getWorkflowData(identifierOrId, environmentId);
+    if (byIdentifier) {
+      return byIdentifier;
+    }
+
+    // If not found, search by MongoDB ID (slower lookup)
+    for (const [, workflowData] of this.workflowsByIdentifier) {
+      if (workflowData.workflow._environmentId === environmentId && workflowData.workflow._id === identifierOrId) {
+        return workflowData;
+      }
+    }
+
+    return undefined;
+  }
+
+  getControlValuesForWorkflow(identifierOrId: string, environmentId: string): unknown[] {
+    const data = this.getWorkflowDataByIdentifierOrId(identifierOrId, environmentId);
 
     return data?.controlValues || [];
   }
 
-  getControlValuesForStep(identifier: string, stepId: string, environmentId: string): ControlValuesEntity | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
+  getControlValuesForStep(
+    identifierOrId: string,
+    stepId: string,
+    environmentId: string
+  ): ControlValuesEntity | undefined {
+    const data = this.getWorkflowDataByIdentifierOrId(identifierOrId, environmentId);
 
     return data?.controlValuesByStep?.get(stepId);
   }
 
-  getWorkflow(identifier: string, environmentId: string): NotificationTemplateEntity | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
+  getWorkflow(identifierOrId: string, environmentId: string): NotificationTemplateEntity | undefined {
+    const data = this.getWorkflowDataByIdentifierOrId(identifierOrId, environmentId);
     return data?.workflow;
   }
 
-  hasWorkflow(identifier: string, environmentId: string): boolean {
-    return this.workflowsByIdentifier.has(this.makeKey(environmentId, identifier));
+  hasWorkflow(identifierOrId: string, environmentId: string): boolean {
+    // First try to find by identifier (fast lookup)
+    if (this.workflowsByIdentifier.has(this.makeKey(environmentId, identifierOrId))) {
+      return true;
+    }
+
+    // If not found, search by MongoDB ID (slower lookup)
+    for (const [, workflowData] of this.workflowsByIdentifier) {
+      if (workflowData.workflow._environmentId === environmentId && workflowData.workflow._id === identifierOrId) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  getWorkflowDto(identifier: string, environmentId: string): WorkflowResponseDto | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
+  getWorkflowDto(identifierOrId: string, environmentId: string): WorkflowResponseDto | undefined {
+    const data = this.getWorkflowDataByIdentifierOrId(identifierOrId, environmentId);
     return data?.workflowDto;
   }
 
-  setWorkflowDto(identifier: string, dto: WorkflowResponseDto, environmentId: string): void {
-    const data = this.getWorkflowData(identifier, environmentId);
-    if (data) {
-      data.workflowDto = dto;
-    }
-  }
-
-  getStepData(identifier: string, stepId: string, environmentId: string): StepResponseDto | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
+  getStepData(identifierOrId: string, stepId: string, environmentId: string): StepResponseDto | undefined {
+    const data = this.getWorkflowDataByIdentifierOrId(identifierOrId, environmentId);
     return data?.steps?.get(stepId);
-  }
-
-  setStepData(identifier: string, stepId: string, stepData: StepResponseDto, environmentId: string): void {
-    const data = this.getWorkflowData(identifier, environmentId);
-    if (data?.steps) {
-      data.steps.set(stepId, stepData);
-    }
   }
 }

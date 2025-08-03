@@ -70,6 +70,7 @@ export class DiffEnvironmentUseCase {
           workflowIdentifiers,
           sourceEnvironmentId,
           command.user.organizationId,
+          command.user, // Pass user context for DTO pre-computation
           command.targetEnvironmentId // Also load target environment data
         );
       }
@@ -95,6 +96,7 @@ export class DiffEnvironmentUseCase {
 
       const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
         resources,
+        sourceEnvironmentId,
         command.targetEnvironmentId,
         command.user.organizationId,
         workflowDataContainer
