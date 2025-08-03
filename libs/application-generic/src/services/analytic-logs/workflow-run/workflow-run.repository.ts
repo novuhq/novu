@@ -53,7 +53,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   async create(
     notification: NotificationEntity,
-    template: NotificationTemplateEntity,
+    workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions = {}
   ): Promise<void> {
     try {
@@ -69,7 +69,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunData = this.mapNotificationToWorkflowRun(notification, template, options);
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, options);
 
       await this.insert(
         workflowRunData,
@@ -96,7 +96,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   async createWorkflowRunBatch(
     notifications: Array<{
       notification: NotificationEntity;
-      template: NotificationTemplateEntity;
+      workflow: NotificationTemplateEntity;
       options?: IWorkflowRunOptions;
     }>
   ): Promise<void> {
@@ -117,7 +117,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunsData = notifications.map(({ notification, template, options = {} }) =>
+      const workflowRunsData = notifications.map(({ notification, workflow: template, options = {} }) =>
         this.mapNotificationToWorkflowRun(notification, template, options)
       );
 
@@ -198,12 +198,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const template = await this.notificationTemplateRepository.findById(
+      const workflow = await this.notificationTemplateRepository.findById(
         notification._templateId,
         context.environmentId
       );
 
-      if (!template) {
+      if (!workflow) {
         this.logger.warn(
           {
             workflowRunId,
@@ -215,7 +215,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunData = this.mapNotificationToWorkflowRun(notification, template, {
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
         status,
         userId: null,
         externalSubscriberId: notification.to?.subscriberId || null,
@@ -408,7 +408,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   private mapNotificationToWorkflowRun(
     notification: NotificationEntity,
-    template: NotificationTemplateEntity,
+    workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions
   ): WorkflowRunInsertData {
     const now = new Date();
@@ -421,7 +421,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       // Core workflow run identification
       workflow_run_id: notification._id,
       workflow_id: notification._templateId,
-      workflow_name: template.name,
+      workflow_name: workflow.name,
 
       // Context
       organization_id: notification._organizationId,
@@ -432,7 +432,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       // Execution metadata
       status: options.status || 'pending',
-      trigger_identifier: this.getTriggerIdentifier(template),
+      trigger_identifier: this.getTriggerIdentifier(workflow),
 
       // Correlation and grouping
       transaction_id: notification.transactionId,
