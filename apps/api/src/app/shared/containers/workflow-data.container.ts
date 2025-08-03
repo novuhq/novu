@@ -102,6 +102,7 @@ export class WorkflowDataContainer {
         if (!controlValuesByWorkflowId.has(key)) {
           controlValuesByWorkflowId.set(key, []);
         }
+
         const workflowControlValues = controlValuesByWorkflowId.get(key);
         if (workflowControlValues) {
           workflowControlValues.push(cv);
@@ -110,6 +111,7 @@ export class WorkflowDataContainer {
         if (!controlValuesByWorkflowAndStep.has(key)) {
           controlValuesByWorkflowAndStep.set(key, new Map());
         }
+
         if (cv._stepId) {
           const stepMap = controlValuesByWorkflowAndStep.get(key);
           if (stepMap) {
