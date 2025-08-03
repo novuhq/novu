@@ -63,7 +63,10 @@ export class DependencyAnalyzerService {
         );
 
         const preloadedControlValues =
-          workflowDataContainer.getControlValuesForWorkflow(resource.sourceResource?.id!) || [];
+          workflowDataContainer.getControlValuesForWorkflow(
+            resource.sourceResource?.id!,
+            resource.sourceResource?.environmentId!
+          ) || [];
 
         const dependencies = await this.getWorkflowDependencies(
           resource,

@@ -166,57 +166,49 @@ export class WorkflowDataContainer {
     return `${environmentId}:${identifier}`;
   }
 
-  getWorkflowData(identifier: string, environmentId?: string): IWorkflowWithControlValues | undefined {
-    if (environmentId) {
-      return this.workflowsByIdentifier.get(this.makeKey(environmentId, identifier));
-    }
-    // Fallback to searching without environment prefix for backward compatibility
-    return this.workflowsByIdentifier.get(identifier);
+  getWorkflowData(identifier: string, environmentId: string): IWorkflowWithControlValues | undefined {
+    return this.workflowsByIdentifier.get(this.makeKey(environmentId, identifier));
   }
 
-  getControlValuesForWorkflow(identifier: string, environmentId?: string): unknown[] {
+  getControlValuesForWorkflow(identifier: string, environmentId: string): unknown[] {
     const data = this.getWorkflowData(identifier, environmentId);
 
     return data?.controlValues || [];
   }
 
-  getControlValuesForStep(identifier: string, stepId: string, environmentId?: string): ControlValuesEntity | undefined {
+  getControlValuesForStep(identifier: string, stepId: string, environmentId: string): ControlValuesEntity | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
 
     return data?.controlValuesByStep?.get(stepId);
   }
 
-  getWorkflow(identifier: string, environmentId?: string): NotificationTemplateEntity | undefined {
+  getWorkflow(identifier: string, environmentId: string): NotificationTemplateEntity | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.workflow;
   }
 
-  hasWorkflow(identifier: string, environmentId?: string): boolean {
-    if (environmentId) {
-      return this.workflowsByIdentifier.has(this.makeKey(environmentId, identifier));
-    }
-
-    return this.workflowsByIdentifier.has(identifier);
+  hasWorkflow(identifier: string, environmentId: string): boolean {
+    return this.workflowsByIdentifier.has(this.makeKey(environmentId, identifier));
   }
 
-  getWorkflowDto(identifier: string, environmentId?: string): WorkflowResponseDto | undefined {
+  getWorkflowDto(identifier: string, environmentId: string): WorkflowResponseDto | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.workflowDto;
   }
 
-  setWorkflowDto(identifier: string, dto: WorkflowResponseDto, environmentId?: string): void {
+  setWorkflowDto(identifier: string, dto: WorkflowResponseDto, environmentId: string): void {
     const data = this.getWorkflowData(identifier, environmentId);
     if (data) {
       data.workflowDto = dto;
     }
   }
 
-  getStepData(identifier: string, stepId: string, environmentId?: string): StepResponseDto | undefined {
+  getStepData(identifier: string, stepId: string, environmentId: string): StepResponseDto | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.steps?.get(stepId);
   }
 
-  setStepData(identifier: string, stepId: string, stepData: StepResponseDto, environmentId?: string): void {
+  setStepData(identifier: string, stepId: string, stepData: StepResponseDto, environmentId: string): void {
     const data = this.getWorkflowData(identifier, environmentId);
     if (data?.steps) {
       data.steps.set(stepId, stepData);

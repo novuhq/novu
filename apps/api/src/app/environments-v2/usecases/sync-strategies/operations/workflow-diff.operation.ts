@@ -329,7 +329,6 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
           workflowDataContainer
         );
 
-        // Cache the loaded workflow details
         workflowDataContainer.setWorkflowDto(workflowIdentifier, workflowDto, workflow._environmentId);
       }
 
