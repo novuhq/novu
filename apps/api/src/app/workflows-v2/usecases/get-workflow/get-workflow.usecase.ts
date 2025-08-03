@@ -44,8 +44,7 @@ export class GetWorkflowUseCase {
         organizationId: command.user.organizationId,
         workflowIdOrInternalId: command.workflowIdOrInternalId,
         userId: command.user._id,
-      }),
-      workflowDataContainer
+      })
     );
 
     const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user, workflowDataContainer);

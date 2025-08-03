@@ -241,12 +241,10 @@ export class WorkflowDataContainer {
   }
 
   hasWorkflow(identifierOrId: string, environmentId: string): boolean {
-    // First try to find by identifier (fast lookup)
     if (this.workflowsByIdentifier.has(this.makeKey(environmentId, identifierOrId))) {
       return true;
     }
 
-    // If not found, search by MongoDB ID (slower lookup)
     for (const [, workflowData] of this.workflowsByIdentifier) {
       if (workflowData.workflow._environmentId === environmentId && workflowData.workflow._id === identifierOrId) {
         return true;
