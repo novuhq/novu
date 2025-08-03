@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
+import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
 import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowComparatorAdapter, WorkflowRepositoryAdapter } from '../adapters';
 import { BaseDiffOperation } from '../base/operations/base-diff.operation';
@@ -15,7 +16,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     protected logger: PinoLogger,
     protected repositoryAdapter: WorkflowRepositoryAdapter,
     protected comparatorAdapter: WorkflowComparatorAdapter,
-    private workflowNormalizer: WorkflowNormalizer
+    private workflowNormalizer: WorkflowNormalizer,
+    private getWorkflowUseCase: GetWorkflowUseCase
   ) {
     super(logger, repositoryAdapter, comparatorAdapter);
   }
@@ -310,16 +312,31 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         return [];
       }
 
-      if (!workflowDataContainer.hasWorkflowDetails(workflowIdentifier)) {
-        this.logger.error(`Workflow data not found in container for ${workflowIdentifier}`);
-        throw new Error(`Workflow data must be pre-loaded in container for ${workflowIdentifier}`);
+      let workflowDto = workflowDataContainer.getWorkflowDetails(workflowIdentifier);
+
+      // If workflow details are not cached, load them using GetWorkflowUseCase
+      if (!workflowDto) {
+        this.logger.debug(`Workflow details not cached, loading for ${workflowIdentifier}`);
+
+        workflowDto = await this.getWorkflowUseCase.execute(
+          GetWorkflowCommand.create({
+            workflowIdOrInternalId: workflow._id,
+            user: {
+              ...userContext,
+              environmentId: workflow._environmentId,
+            },
+          }),
+          workflowDataContainer
+        );
+
+        // Cache the loaded workflow details
+        workflowDataContainer.setWorkflowDetails(workflowIdentifier, workflowDto);
       }
 
-      this.logger.debug(`Using pre-loaded workflow data for ${workflowIdentifier}`);
-      const workflowDto = workflowDataContainer.getWorkflowDetails(workflowIdentifier);
+      this.logger.debug(`Using workflow data for step extraction: ${workflowIdentifier}`);
 
       // Normalize the workflow to get steps
-      const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto!);
+      const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);
 
       // Create step diffs for each step as "added"
       return normalizedWorkflow.steps.map((step, index) => ({

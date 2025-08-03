@@ -37,6 +37,10 @@ export class WorkflowNormalizer {
   normalizeStep(step: StepResponseDto): INormalizedStep {
     const { _id, slug, origin, workflowId, workflowDatabaseId, issues, controls, variables, ...normalizedStep } = step;
 
-    return normalizedStep;
+    return {
+      ...normalizedStep,
+      // Ensure controlValues is available for dependency analysis by using controls.values if controlValues is not set
+      controlValues: normalizedStep.controlValues || controls?.values,
+    };
   }
 }

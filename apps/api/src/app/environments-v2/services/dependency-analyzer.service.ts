@@ -124,11 +124,8 @@ export class DependencyAnalyzerService {
           const isStepChange = change.resourceType === ResourceTypeEnum.STEP;
           const isEmailStep = change.stepType === StepTypeEnum.EMAIL;
 
-          if (isStepChange && isEmailStep) {
-            this.logger.debug(`Found email step change: ${change.sourceResource?.name || change.targetResource?.name}`);
-
+          if (isStepChange) {
             const layoutIds = this.extractLayoutIdsFromStepChange(change);
-            this.logger.debug(`Extracted layout IDs: ${layoutIds.join(', ')}`);
 
             for (const layoutId of layoutIds) {
               if (processedLayoutIds.has(layoutId)) continue;
@@ -151,8 +148,6 @@ export class DependencyAnalyzerService {
           }
         }
       }
-
-      this.logger.debug(`Found ${preloadedControlValues.length} control values with layoutId references`);
 
       for (const controlValue of preloadedControlValues) {
         const layoutId = (controlValue as { controls?: { layoutId?: string } })?.controls?.layoutId;
@@ -259,8 +254,8 @@ export class DependencyAnalyzerService {
 
     // Check current/new layout ID - this is what the workflow actually depends on
     const newLayoutId = stepChange.diffs?.new?.controlValues?.layoutId;
+
     if (newLayoutId && typeof newLayoutId === 'string') {
-      this.logger.debug(`Found new layoutId in step change: ${newLayoutId}`);
       layoutIds.push(newLayoutId);
     }
 
