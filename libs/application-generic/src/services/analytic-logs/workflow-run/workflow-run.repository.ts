@@ -180,11 +180,27 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const notification = await this.notificationRepository.findOne({
-        _id: workflowRunId,
-        _organizationId: context.organizationId,
-        _environmentId: context.environmentId,
-      });
+      const notification = await this.notificationRepository.findOne(
+        {
+          _id: workflowRunId,
+          _organizationId: context.organizationId,
+          _environmentId: context.environmentId,
+        },
+        {
+          _id: 1,
+          _templateId: 1,
+          _organizationId: 1,
+          _environmentId: 1,
+          _subscriberId: 1,
+          transactionId: 1,
+          channels: 1,
+          to: 1,
+          payload: 1,
+          controls: 1,
+          topics: 1,
+          _digestedNotificationId: 1,
+        }
+      );
 
       if (!notification) {
         this.logger.warn(
@@ -198,9 +214,15 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflow = await this.notificationTemplateRepository.findById(
-        notification._templateId,
-        context.environmentId
+      const workflow = await this.notificationTemplateRepository.findOne(
+        {
+          _id: notification._templateId,
+          _environmentId: context.environmentId,
+        },
+        {
+          name: 1,
+          triggers: 1,
+        }
       );
 
       if (!workflow) {
