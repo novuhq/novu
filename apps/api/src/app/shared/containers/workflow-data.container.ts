@@ -6,11 +6,12 @@ import {
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, PreferencesTypeEnum, ShortIsPrefixEnum, UserSessionData } from '@novu/shared';
+import { ControlValuesLevelEnum, PreferencesTypeEnum, UserSessionData } from '@novu/shared';
 import { StepResponseDto } from '../../workflows-v2/dtos';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
 import { toResponseWorkflowDto } from '../../workflows-v2/mappers/notification-template-mapper';
-import { buildSlug } from '../helpers/build-slug';
+import { BuildStepDataUsecase } from '../../workflows-v2/usecases/build-step-data/build-step-data.usecase';
+import { emptyJsonSchema } from '../../workflows-v2/util/jsonToSchema';
 
 export interface IWorkflowPreferences {
   workflowResourcePreference?: PreferencesEntity;
@@ -161,54 +162,34 @@ export class WorkflowDataContainer {
   }
 
   private async preComputeWorkflowDtos(_userContext: UserSessionData): Promise<void> {
-    // Process all workflows and directly map them to DTOs using bulk-loaded data
     for (const [, workflowData] of this.workflowsByIdentifier) {
-      try {
-        // Create workflow with preferences from loaded data
-        const workflowWithPreferences = {
-          ...workflowData.workflow,
-          userPreferences: workflowData.preferences?.workflowUserPreference?.preferences || null,
-          defaultPreferences: workflowData.preferences?.workflowResourcePreference?.preferences || null,
-        };
+      const workflowWithPreferences = {
+        ...workflowData.workflow,
+        userPreferences: workflowData.preferences?.workflowUserPreference?.preferences || null,
+        defaultPreferences: workflowData.preferences?.workflowResourcePreference?.preferences || null,
+      };
 
-        // Map steps to step DTOs using bulk-loaded control values
-        const stepDtos = workflowWithPreferences.steps.map((step) => {
-          const controlValues = workflowData.controlValuesByStep.get(step._templateId);
-          const slug = buildSlug(step.name!, ShortIsPrefixEnum.STEP, step._templateId);
+      // Map steps to step DTOs using bulk-loaded control values
+      const stepDtos = workflowWithPreferences.steps.map((step) => {
+        const controlValues = workflowData.controlValuesByStep.get(step._templateId);
 
-          return {
-            controls: {
-              dataSchema: step.template?.controls?.schema,
-              uiSchema: step.template?.controls?.uiSchema,
-              values: controlValues?.controls || {},
-            },
-            controlValues: controlValues?.controls || {},
-            variables: {}, // Will be populated later if needed
-            name: step.name!,
-            slug,
-            _id: step._templateId,
-            stepId: step.stepId || 'Missing Step Id',
-            type: step.template?.type!,
-            origin: workflowData.workflow.origin!,
-            workflowId: workflowData.identifier,
-            workflowDatabaseId: workflowData.workflow._id,
-            issues: step.issues,
-          };
-        });
+        return BuildStepDataUsecase.mapToStepResponse(
+          workflowData.workflow,
+          step,
+          controlValues?.controls || {},
+          emptyJsonSchema() // Will be populated later if needed
+        );
+      });
 
-        // Cache step DTOs
-        for (const stepDto of stepDtos) {
-          if (workflowData.steps) {
-            workflowData.steps.set(stepDto._id, stepDto);
-          }
+      // Cache step DTOs
+      for (const stepDto of stepDtos) {
+        if (workflowData.steps) {
+          workflowData.steps.set(stepDto._id, stepDto);
         }
-
-        const workflowDto = toResponseWorkflowDto(workflowWithPreferences as any, stepDtos);
-        workflowData.workflowDto = workflowDto;
-      } catch (error) {
-        console.error(`Failed to pre-compute workflow DTO for ${workflowData.identifier}:`, error);
-        // Continue processing other workflows even if one fails
       }
+
+      const workflowDto = toResponseWorkflowDto(workflowWithPreferences as any, stepDtos);
+      workflowData.workflowDto = workflowDto;
     }
   }
 
@@ -224,13 +205,11 @@ export class WorkflowDataContainer {
     identifierOrId: string,
     environmentId: string
   ): IWorkflowWithControlValues | undefined {
-    // First try to find by identifier (fast lookup)
     const byIdentifier = this.getWorkflowData(identifierOrId, environmentId);
     if (byIdentifier) {
       return byIdentifier;
     }
 
-    // If not found, search by MongoDB ID (slower lookup)
     for (const [, workflowData] of this.workflowsByIdentifier) {
       if (workflowData.workflow._environmentId === environmentId && workflowData.workflow._id === identifierOrId) {
         return workflowData;
