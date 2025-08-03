@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationEntity, NotificationTemplateEntity } from '@novu/dal';
+import {
+  NotificationEntity,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
@@ -38,7 +43,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    private readonly notificationRepository: NotificationRepository,
+    private readonly notificationTemplateRepository: NotificationTemplateRepository
   ) {
     super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService);
     this.logger.setContext(this.constructor.name);
@@ -173,50 +180,48 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const existingRuns = await this.find({
-        where: [
-          { workflow_run_id: { operator: '=', value: workflowRunId } },
-          { organization_id: { operator: '=', value: context.organizationId } },
-          { environment_id: { operator: '=', value: context.environmentId } },
-        ],
-        limit: 1,
-        useFinal: true,
+      const notification = await this.notificationRepository.findOne({
+        _id: workflowRunId,
+        _organizationId: context.organizationId,
+        _environmentId: context.environmentId,
       });
 
-      if (existingRuns.data.length === 0) {
-        this.logger.warn(`Workflow run ${workflowRunId} not found for status update`);
-
+      if (!notification) {
+        this.logger.warn(
+          {
+            workflowRunId,
+            organizationId: context.organizationId,
+            environmentId: context.environmentId,
+          },
+          'Notification not found for workflow run status update'
+        );
         return;
       }
 
-      const existingRun = existingRuns.data[0];
-
-      await this.insert(
-        {
-          created_at: existingRun.created_at,
-          updated_at: LogRepository.formatDateTime64(new Date()),
-          workflow_run_id: existingRun.workflow_run_id,
-          workflow_id: existingRun.workflow_id,
-          workflow_name: existingRun.workflow_name,
-          organization_id: existingRun.organization_id,
-          environment_id: existingRun.environment_id,
-          user_id: existingRun.user_id,
-          subscriber_id: existingRun.subscriber_id,
-          external_subscriber_id: existingRun.external_subscriber_id,
-          status,
-          trigger_identifier: existingRun.trigger_identifier,
-          transaction_id: existingRun.transaction_id,
-          channels: existingRun.channels,
-          subscriber_to: existingRun.subscriber_to,
-          payload: existingRun.payload,
-          control_values: existingRun.control_values,
-          topics: existingRun.topics,
-          is_digest: existingRun.is_digest,
-          digested_workflow_run_id: existingRun.digested_workflow_run_id,
-        },
-        context,
-        WORKFLOW_RUN_INSERT_OPTIONS
+      const template = await this.notificationTemplateRepository.findById(
+        notification._templateId,
+        context.environmentId
       );
+
+      if (!template) {
+        this.logger.warn(
+          {
+            workflowRunId,
+            templateId: notification._templateId,
+            environmentId: context.environmentId,
+          },
+          'Notification template not found for workflow run status update'
+        );
+        return;
+      }
+
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, template, {
+        status,
+        userId: null,
+        externalSubscriberId: notification.to?.subscriberId || null,
+      });
+
+      await this.insert(workflowRunData, context, WORKFLOW_RUN_INSERT_OPTIONS);
 
       this.logger.debug(
         {
