@@ -26,7 +26,6 @@ export interface IWorkflowPreferences {
 export interface IWorkflowWithControlValues {
   workflow: NotificationTemplateEntity;
   identifier: string;
-  controlValues: ControlValuesEntity[];
   controlValuesByStep: Map<string, ControlValuesEntity>;
   preferences?: IWorkflowPreferences;
   workflowDto?: WorkflowResponseDto;
@@ -70,10 +69,10 @@ export class WorkflowDataContainer {
       organizationId
     );
 
-    const controlValuesByWorkflow = this.organizeControlValues(controlValues, lookupMaps.objectIdToKey);
+    const controlValuesByWorkflowAndStep = this.organizeControlValues(controlValues, lookupMaps.objectIdToKey);
     const preferencesByWorkflow = this.organizePreferences(preferences, lookupMaps.objectIdToKey);
 
-    this.processWorkflows(workflows, controlValuesByWorkflow, preferencesByWorkflow);
+    this.processWorkflows(workflows, controlValuesByWorkflowAndStep, preferencesByWorkflow);
     this.isDataLoaded = true;
   }
 
@@ -133,23 +132,18 @@ export class WorkflowDataContainer {
   }
 
   private organizeControlValues(controlValues: ControlValuesEntity[], objectIdToKey: Map<string, string>) {
-    const byWorkflow = new Map<string, ControlValuesEntity[]>();
     const byWorkflowAndStep = new Map<string, Map<string, ControlValuesEntity>>();
 
     for (const cv of controlValues) {
-      if (!cv._workflowId) continue;
+      if (!cv._workflowId || !cv._stepId) continue;
 
       const lookupKey = objectIdToKey.get(`${cv._workflowId}:${cv._environmentId}`);
       if (!lookupKey) continue;
 
-      this.ensureMapEntry(byWorkflow, lookupKey, []).push(cv);
-
-      if (cv._stepId) {
-        this.ensureMapEntry(byWorkflowAndStep, lookupKey, new Map()).set(cv._stepId, cv);
-      }
+      this.ensureMapEntry(byWorkflowAndStep, lookupKey, new Map()).set(cv._stepId, cv);
     }
 
-    return { byWorkflow, byWorkflowAndStep };
+    return byWorkflowAndStep;
   }
 
   private organizePreferences(
@@ -178,10 +172,7 @@ export class WorkflowDataContainer {
 
   private processWorkflows(
     workflows: NotificationTemplateEntity[],
-    controlValuesByWorkflow: {
-      byWorkflow: Map<string, ControlValuesEntity[]>;
-      byWorkflowAndStep: Map<string, Map<string, ControlValuesEntity>>;
-    },
+    controlValuesByWorkflowAndStep: Map<string, Map<string, ControlValuesEntity>>,
     preferencesByWorkflow: Map<string, IWorkflowPreferences>
   ) {
     for (const workflow of workflows) {
@@ -189,14 +180,13 @@ export class WorkflowDataContainer {
       if (!identifier) continue;
 
       const key = this.makeKey(workflow._environmentId, identifier);
-      const controlValuesByStep = controlValuesByWorkflow.byWorkflowAndStep.get(key) || new Map();
+      const controlValuesByStep = controlValuesByWorkflowAndStep.get(key) || new Map();
       const preferences = preferencesByWorkflow.get(key);
 
       const workflowWithPreferences = this.buildWorkflowWithPreferences(workflow, preferences);
       const stepDtos = this.buildStepDtos(workflow, workflowWithPreferences, controlValuesByStep);
 
       this.storeWorkflowData(key, workflow, identifier, {
-        controlValues: controlValuesByWorkflow.byWorkflow.get(key) || [],
         controlValuesByStep,
         preferences,
         workflowDto: toResponseWorkflowDto(workflowWithPreferences, stepDtos),
@@ -267,7 +257,11 @@ export class WorkflowDataContainer {
 
   getControlValuesForWorkflow(identifier: string, environmentId: string): ControlValuesEntity[] {
     const data = this.getWorkflowData(identifier, environmentId);
-    return data?.controlValues || [];
+    if (!data?.controlValuesByStep) {
+      return [];
+    }
+
+    return Array.from(data.controlValuesByStep.values());
   }
 
   getControlValuesForStep(identifier: string, stepId: string, environmentId: string): ControlValuesEntity | undefined {
