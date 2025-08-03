@@ -41,13 +41,11 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     const resultBuilder = new DiffResultBuilder(this.getResourceType());
 
     try {
-      const [sourceResources, targetResources] = await Promise.all([
-        this.repositoryService.fetchSyncableResources(sourceEnvId, organizationId),
-        this.repositoryService.fetchSyncableResources(targetEnvId, organizationId),
-      ]);
+      const sourceResources = workflowDataContainer.getWorkflowsByEnvironment(sourceEnvId);
+      const targetResources = workflowDataContainer.getWorkflowsByEnvironment(targetEnvId);
 
       this.logger.info(
-        `Fetched ${sourceResources.length} source resources and ${targetResources.length} target resources`
+        `Filtered ${sourceResources.length} source resources and ${targetResources.length} target resources from container`
       );
 
       await this.processWorkflowResourceDiffs(

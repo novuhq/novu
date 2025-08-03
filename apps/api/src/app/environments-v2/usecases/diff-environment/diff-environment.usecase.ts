@@ -48,31 +48,20 @@ export class DiffEnvironmentUseCase {
       this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
       // Create workflow data container and pre-load workflow data for optimization
-      const workflowDataContainer = new WorkflowDataContainer(
-        this.controlValuesRepository,
-        this.workflowRepository,
-        this.preferencesRepository
-      );
+      const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.preferencesRepository);
 
-      // Pre-load workflow identifiers from source environment
-      const sourceWorkflows = await this.workflowRepository.find({
-        _environmentId: sourceEnvironmentId,
+      const workflows = await this.workflowRepository.findWithTemplates({
+        _environmentId: { $in: [sourceEnvironmentId, command.targetEnvironmentId] },
         _organizationId: command.user.organizationId,
       });
 
-      const workflowIdentifiers = sourceWorkflows
-        .map((workflow) => workflow.triggers?.[0]?.identifier)
-        .filter((id): id is string => id !== null && id !== undefined);
-
-      if (workflowIdentifiers.length > 0) {
-        this.logger.info(`Pre-loading data for ${workflowIdentifiers.length} workflows before diff`);
-        await workflowDataContainer.loadWorkflowsWithControlValues(
-          workflowIdentifiers,
-          sourceEnvironmentId,
-          command.user.organizationId,
-          command.targetEnvironmentId // Also load target environment data
-        );
-      }
+      this.logger.info(`Pre-loading data for ${workflows.length} workflows before diff`);
+      await workflowDataContainer.loadWorkflowsWithControlValues(
+        workflows,
+        sourceEnvironmentId,
+        command.user.organizationId,
+        command.targetEnvironmentId
+      );
 
       // Execute diff with workflow container optimization and layout strategy normally
       const [workflowDiffResults, layoutDiffResults] = await Promise.all([

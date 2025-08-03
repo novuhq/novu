@@ -44,23 +44,26 @@ export class WorkflowDataContainer {
 
   constructor(
     private controlValuesRepository: ControlValuesRepository,
-    private workflowRepository: NotificationTemplateRepository,
     private preferencesRepository: PreferencesRepository
   ) {}
 
   async loadWorkflowsWithControlValues(
-    workflowIdentifiers: string[],
+    workflows: NotificationTemplateEntity[],
     environmentId: string,
     organizationId: string,
     targetEnvironmentId: string
   ): Promise<void> {
-    if (this.isDataLoaded || workflowIdentifiers.length === 0) {
+    if (this.isDataLoaded) {
+      return;
+    }
+
+    if (workflows.length === 0) {
+      this.isDataLoaded = true;
       return;
     }
 
     const environmentIds = [environmentId, targetEnvironmentId];
 
-    const workflows = await this.fetchWorkflows(workflowIdentifiers, environmentIds, organizationId);
     const lookupMaps = this.buildLookupMaps(workflows);
 
     const [controlValues, preferences] = await this.fetchRelatedData(
@@ -74,18 +77,6 @@ export class WorkflowDataContainer {
 
     this.processWorkflows(workflows, controlValuesByWorkflowAndStep, preferencesByWorkflow);
     this.isDataLoaded = true;
-  }
-
-  private async fetchWorkflows(
-    identifiers: string[],
-    environmentIds: string[],
-    organizationId: string
-  ): Promise<NotificationTemplateEntity[]> {
-    return this.workflowRepository.findWithTemplates({
-      _environmentId: { $in: environmentIds },
-      _organizationId: organizationId,
-      'triggers.identifier': { $in: identifiers },
-    });
   }
 
   private buildLookupMaps(workflows: NotificationTemplateEntity[]) {
@@ -276,5 +267,17 @@ export class WorkflowDataContainer {
   getStepData(identifier: string, stepId: string, environmentId: string): StepResponseDto | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.steps?.get(stepId);
+  }
+
+  getWorkflowsByEnvironment(environmentId: string): NotificationTemplateEntity[] {
+    const workflows: NotificationTemplateEntity[] = [];
+
+    for (const workflowData of this.workflowsByIdentifier.values()) {
+      if (workflowData.workflow._environmentId === environmentId) {
+        workflows.push(workflowData.workflow);
+      }
+    }
+
+    return workflows;
   }
 }
