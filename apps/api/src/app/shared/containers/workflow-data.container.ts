@@ -6,7 +6,7 @@ import {
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, PreferencesTypeEnum, UserSessionData } from '@novu/shared';
+import { buildWorkflowPreferences, ControlValuesLevelEnum, PreferencesTypeEnum, UserSessionData } from '@novu/shared';
 import { StepResponseDto } from '../../workflows-v2/dtos';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
 import { toResponseWorkflowDto } from '../../workflows-v2/mappers/notification-template-mapper';
@@ -165,13 +165,20 @@ export class WorkflowDataContainer {
 
   private async preComputeWorkflowDtos(_userContext: UserSessionData): Promise<void> {
     for (const [, workflowData] of this.workflowsByIdentifier) {
+      const userPreferences = workflowData.preferences?.workflowUserPreference?.preferences
+        ? buildWorkflowPreferences(workflowData.preferences.workflowUserPreference.preferences)
+        : null;
+
+      const defaultPreferences = workflowData.preferences?.workflowResourcePreference?.preferences
+        ? buildWorkflowPreferences(workflowData.preferences.workflowResourcePreference.preferences)
+        : buildWorkflowPreferences(null);
+
       const workflowWithPreferences = {
         ...workflowData.workflow,
-        userPreferences: workflowData.preferences?.workflowUserPreference?.preferences || null,
-        defaultPreferences: workflowData.preferences?.workflowResourcePreference?.preferences || null,
+        userPreferences,
+        defaultPreferences,
       };
 
-      // Map steps to step DTOs using bulk-loaded control values
       const stepDtos = workflowWithPreferences.steps.map((step) => {
         const controlValues = workflowData.controlValuesByStep.get(step._templateId);
 
@@ -179,19 +186,17 @@ export class WorkflowDataContainer {
           workflowData.workflow,
           step,
           controlValues?.controls || {},
-          emptyJsonSchema() // Will be populated later if needed
+          emptyJsonSchema()
         );
       });
 
-      // Cache step DTOs
       for (const stepDto of stepDtos) {
         if (workflowData.steps) {
           workflowData.steps.set(stepDto._id, stepDto);
         }
       }
 
-      const workflowDto = toResponseWorkflowDto(workflowWithPreferences as any, stepDtos);
-      workflowData.workflowDto = workflowDto;
+      workflowData.workflowDto = toResponseWorkflowDto(workflowWithPreferences, stepDtos);
     }
   }
 
