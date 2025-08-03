@@ -252,30 +252,20 @@ export class WorkflowDataContainer {
   }
 
   getWorkflowData(identifier: string, environmentId: string): IWorkflowWithControlValues | undefined {
-    return this.workflowsByIdentifier.get(this.makeKey(environmentId, identifier));
-  }
-
-  getControlValuesForWorkflow(identifier: string, environmentId: string): ControlValuesEntity[] {
-    const data = this.getWorkflowData(identifier, environmentId);
-    if (!data?.controlValuesByStep) {
-      return [];
+    // First try to find by identifier
+    const data = this.workflowsByIdentifier.get(this.makeKey(environmentId, identifier));
+    if (data) {
+      return data;
     }
 
-    return Array.from(data.controlValuesByStep.values());
-  }
+    // Fallback: search by MongoDB workflow ID
+    for (const workflowData of this.workflowsByIdentifier.values()) {
+      if (workflowData.workflow._id === identifier && workflowData.workflow._environmentId === environmentId) {
+        return workflowData;
+      }
+    }
 
-  getControlValuesForStep(identifier: string, stepId: string, environmentId: string): ControlValuesEntity | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
-    return data?.controlValuesByStep?.get(stepId);
-  }
-
-  getWorkflow(identifier: string, environmentId: string): NotificationTemplateEntity | undefined {
-    const data = this.getWorkflowData(identifier, environmentId);
-    return data?.workflow;
-  }
-
-  hasWorkflow(identifier: string, environmentId: string): boolean {
-    return this.workflowsByIdentifier.has(this.makeKey(environmentId, identifier));
+    return undefined;
   }
 
   getWorkflowDto(identifier: string, environmentId: string): WorkflowResponseDto | undefined {
@@ -286,13 +276,5 @@ export class WorkflowDataContainer {
   getStepData(identifier: string, stepId: string, environmentId: string): StepResponseDto | undefined {
     const data = this.getWorkflowData(identifier, environmentId);
     return data?.steps?.get(stepId);
-  }
-
-  // Temporary backward compatibility method - should be removed after updating all callers
-  getWorkflowDataByIdentifierOrId(
-    identifierOrId: string,
-    environmentId: string
-  ): IWorkflowWithControlValues | undefined {
-    return this.getWorkflowData(identifierOrId, environmentId);
   }
 }

@@ -26,14 +26,15 @@ export class GetWorkflowUseCase {
     command: GetWorkflowCommand,
     workflowDataContainer?: WorkflowDataContainer
   ): Promise<WorkflowResponseDto> {
-    // Check container for cached workflow DTO first
     if (workflowDataContainer) {
       const cachedDto = workflowDataContainer.getWorkflowDto(
         command.workflowIdOrInternalId,
         command.user.environmentId
       );
+
       if (cachedDto) {
         this.logger.debug(`Using cached workflow DTO for ${command.workflowIdOrInternalId}`);
+
         return cachedDto;
       }
     }

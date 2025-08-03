@@ -35,15 +35,15 @@ export class BuildStepDataUsecase {
       }
     }
 
-    const workflow = await this.fetchWorkflow(command, workflowDataContainer);
+    const workflow = await this.fetchWorkflow(command);
     const currentStep: NotificationStepEntity | undefined = await this.loadStepsFromDb(command, workflow);
 
     if (!currentStep || !currentStep._templateId) {
       throw new InvalidStepException(command.stepIdOrInternalId);
     }
 
-    const controlValues = await this.getControlValues(command, currentStep, workflow._id, workflowDataContainer);
-    const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow, workflowDataContainer);
+    const controlValues = await this.getControlValues(command, currentStep, workflow._id);
+    const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow);
 
     return BuildStepDataUsecase.mapToStepResponse(workflow, currentStep, controlValues, variables);
   }
@@ -80,34 +80,19 @@ export class BuildStepDataUsecase {
   private async buildAvailableVariableSchema(
     command: BuildStepDataCommand,
     currentStep: NotificationStepEntity,
-    workflow: NotificationTemplateEntity,
-    workflowDataContainer?: WorkflowDataContainer
+    workflow: NotificationTemplateEntity
   ) {
-    return await this.buildAvailableVariableSchemaUsecase.execute(
-      {
-        environmentId: command.user.environmentId,
-        organizationId: command.user.organizationId,
-        userId: command.user._id,
-        stepInternalId: currentStep._templateId,
-        workflow,
-      },
-      workflowDataContainer
-    );
+    return await this.buildAvailableVariableSchemaUsecase.execute({
+      environmentId: command.user.environmentId,
+      organizationId: command.user.organizationId,
+      userId: command.user._id,
+      stepInternalId: currentStep._templateId,
+      workflow,
+    });
   }
 
   @Instrument()
-  private async fetchWorkflow(command: BuildStepDataCommand, workflowDataContainer?: WorkflowDataContainer) {
-    // Try to get workflow from container first (now supports both MongoDB ID and identifier)
-    if (workflowDataContainer) {
-      const cachedWorkflow = workflowDataContainer.getWorkflow(
-        command.workflowIdOrInternalId,
-        command.user.environmentId
-      );
-      if (cachedWorkflow) {
-        return cachedWorkflow;
-      }
-    }
-
+  private async fetchWorkflow(command: BuildStepDataCommand) {
     return await this.getWorkflowByIdsUseCase.execute({
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.user.environmentId,
@@ -119,21 +104,8 @@ export class BuildStepDataUsecase {
   private async getControlValues(
     command: BuildStepDataCommand,
     currentStep: NotificationStepEntity,
-    _workflowId: string,
-    workflowDataContainer?: WorkflowDataContainer
+    _workflowId: string
   ) {
-    // Try to get control values from container first (now supports both MongoDB ID and identifier)
-    if (workflowDataContainer) {
-      const cachedControlValues = workflowDataContainer.getControlValuesForStep(
-        command.workflowIdOrInternalId,
-        currentStep._templateId,
-        command.user.environmentId
-      );
-      if (cachedControlValues) {
-        return cachedControlValues.controls || {};
-      }
-    }
-
     const controlValuesEntity = await this.controlValuesRepository.findOne({
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,
