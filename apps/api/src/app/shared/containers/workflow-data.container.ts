@@ -6,7 +6,7 @@ import {
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
-import { buildWorkflowPreferences, ControlValuesLevelEnum, PreferencesTypeEnum, UserSessionData } from '@novu/shared';
+import { buildWorkflowPreferences, ControlValuesLevelEnum, PreferencesTypeEnum } from '@novu/shared';
 import { StepResponseDto } from '../../workflows-v2/dtos';
 import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
 import { toResponseWorkflowDto } from '../../workflows-v2/mappers/notification-template-mapper';
@@ -42,7 +42,6 @@ export class WorkflowDataContainer {
     workflowIdentifiers: string[],
     environmentId: string,
     organizationId: string,
-    userContext: UserSessionData,
     targetEnvironmentId?: string
   ): Promise<void> {
     if (this.isDataLoaded || workflowIdentifiers.length === 0) {
@@ -61,18 +60,30 @@ export class WorkflowDataContainer {
       'triggers.identifier': { $in: workflowIdentifiers },
     });
 
-    const identifierToObjectId = new Map<string, string>();
-    const objectIdToIdentifier = new Map<string, string>();
+    // Single map to store workflow lookup information
+    const workflowLookup = new Map<
+      string,
+      {
+        objectId: string;
+        identifier: string;
+        environmentId: string;
+      }
+    >();
+
+    const workflowObjectIds: string[] = [];
 
     for (const workflow of workflows) {
       const identifier = workflow.triggers?.[0]?.identifier;
       if (identifier && workflow._id) {
-        identifierToObjectId.set(`${workflow._environmentId}:${identifier}`, workflow._id);
-        objectIdToIdentifier.set(workflow._id, identifier);
+        const lookupKey = `${workflow._environmentId}:${identifier}`;
+        workflowLookup.set(lookupKey, {
+          objectId: workflow._id,
+          identifier,
+          environmentId: workflow._environmentId,
+        });
+        workflowObjectIds.push(workflow._id);
       }
     }
-
-    const workflowObjectIds = Array.from(identifierToObjectId.values());
 
     const allControlValues = await this.controlValuesRepository.find({
       _environmentId: { $in: environmentIds },
@@ -91,13 +102,23 @@ export class WorkflowDataContainer {
     const controlValuesByWorkflowId = new Map<string, ControlValuesEntity[]>();
     const controlValuesByWorkflowAndStep = new Map<string, Map<string, ControlValuesEntity>>();
 
+    // Helper function to find workflow info by object ID
+    const findWorkflowByObjectId = (objectId: string, environmentId: string) => {
+      for (const [key, info] of workflowLookup) {
+        if (info.objectId === objectId && info.environmentId === environmentId) {
+          return { key, ...info };
+        }
+      }
+      return null;
+    };
+
     for (const cv of allControlValues) {
       const workflowObjectId = cv._workflowId;
       if (!workflowObjectId) continue;
 
-      const workflowIdentifier = objectIdToIdentifier.get(workflowObjectId);
-      if (workflowIdentifier) {
-        const key = `${cv._environmentId}:${workflowIdentifier}`;
+      const workflowInfo = findWorkflowByObjectId(workflowObjectId, cv._environmentId);
+      if (workflowInfo) {
+        const key = workflowInfo.key;
 
         if (!controlValuesByWorkflowId.has(key)) {
           controlValuesByWorkflowId.set(key, []);
@@ -124,9 +145,10 @@ export class WorkflowDataContainer {
     const preferencesByWorkflow = new Map<string, IWorkflowPreferences>();
     for (const pref of preferences) {
       if (!pref._templateId) continue;
-      const workflowIdentifier = objectIdToIdentifier.get(pref._templateId);
-      if (workflowIdentifier) {
-        const key = `${pref._environmentId}:${workflowIdentifier}`;
+
+      const workflowInfo = findWorkflowByObjectId(pref._templateId, pref._environmentId);
+      if (workflowInfo) {
+        const key = workflowInfo.key;
         if (!preferencesByWorkflow.has(key)) {
           preferencesByWorkflow.set(key, {});
         }
@@ -144,60 +166,47 @@ export class WorkflowDataContainer {
 
     for (const workflow of workflows) {
       const identifier = workflow.triggers?.[0]?.identifier;
-      if (identifier) {
-        const key = `${workflow._environmentId}:${identifier}`;
-        this.workflowsByIdentifier.set(key, {
-          workflow,
-          identifier,
-          controlValues: controlValuesByWorkflowId.get(key) || [],
-          controlValuesByStep: controlValuesByWorkflowAndStep.get(key) || new Map(),
-          preferences: preferencesByWorkflow.get(key),
-          workflowDto: undefined, // Will be populated below
-          steps: new Map(),
-        });
-      }
-    }
+      const key = `${workflow._environmentId}:${identifier}`;
+      const controlValuesByStep = controlValuesByWorkflowAndStep.get(key) || new Map();
+      const preferences = preferencesByWorkflow.get(key);
 
-    await this.preComputeWorkflowDtos(userContext);
-
-    this.isDataLoaded = true;
-  }
-
-  private async preComputeWorkflowDtos(_userContext: UserSessionData): Promise<void> {
-    for (const [, workflowData] of this.workflowsByIdentifier) {
-      const userPreferences = workflowData.preferences?.workflowUserPreference?.preferences
-        ? buildWorkflowPreferences(workflowData.preferences.workflowUserPreference.preferences)
+      const userPreferences = preferences?.workflowUserPreference?.preferences
+        ? buildWorkflowPreferences(preferences.workflowUserPreference.preferences)
         : null;
 
-      const defaultPreferences = workflowData.preferences?.workflowResourcePreference?.preferences
-        ? buildWorkflowPreferences(workflowData.preferences.workflowResourcePreference.preferences)
+      const defaultPreferences = preferences?.workflowResourcePreference?.preferences
+        ? buildWorkflowPreferences(preferences.workflowResourcePreference.preferences)
         : buildWorkflowPreferences(null);
 
       const workflowWithPreferences = {
-        ...workflowData.workflow,
+        ...workflow,
         userPreferences,
         defaultPreferences,
       };
 
       const stepDtos = workflowWithPreferences.steps.map((step) => {
-        const controlValues = workflowData.controlValuesByStep.get(step._templateId);
+        const controlValues = controlValuesByStep.get(step._templateId);
 
-        return BuildStepDataUsecase.mapToStepResponse(
-          workflowData.workflow,
-          step,
-          controlValues?.controls || {},
-          emptyJsonSchema()
-        );
+        return BuildStepDataUsecase.mapToStepResponse(workflow, step, controlValues?.controls || {}, emptyJsonSchema());
       });
 
+      const stepsMap = new Map();
       for (const stepDto of stepDtos) {
-        if (workflowData.steps) {
-          workflowData.steps.set(stepDto._id, stepDto);
-        }
+        stepsMap.set(stepDto._id, stepDto);
       }
 
-      workflowData.workflowDto = toResponseWorkflowDto(workflowWithPreferences, stepDtos);
+      this.workflowsByIdentifier.set(key, {
+        workflow,
+        identifier,
+        controlValues: controlValuesByWorkflowId.get(key) || [],
+        controlValuesByStep,
+        preferences,
+        workflowDto: toResponseWorkflowDto(workflowWithPreferences, stepDtos),
+        steps: stepsMap,
+      });
     }
+
+    this.isDataLoaded = true;
   }
 
   private makeKey(environmentId: string, identifier: string): string {
