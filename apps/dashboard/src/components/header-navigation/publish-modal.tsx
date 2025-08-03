@@ -274,7 +274,7 @@ function ResourceGroupCompact({
         <CollapsibleContent>
           {count > 0 && (
             <div className="rounded-md border border-gray-200 bg-white">
-              <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">{children}</div>
+              <div className="max-h-64 overflow-y-auto divide-y divide-gray-100 overflow-x-hidden">{children}</div>
             </div>
           )}
         </CollapsibleContent>
@@ -310,7 +310,7 @@ function CompactResourceRow({
   const statusBadge = <ResourceStatusBadge resource={resource} />;
 
   const rowContent = (
-    <div className="flex items-center gap-1.5 p-1">
+    <div className="flex items-center gap-1.5 p-1 min-w-0">
       {disabled ? (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -329,15 +329,9 @@ function CompactResourceRow({
       <div className="min-w-0 flex-1">
         {resource.resourceType === 'layout' ? (
           // Layout: name and ID side by side
-          <div className="leading-0 flex w-full items-center gap-1 text-nowrap text-left">
-            <span className="overflow-hidden truncate overflow-ellipsis text-xs font-medium leading-4 text-gray-900">
+          <div className="leading-0 flex w-full items-center gap-1 text-left min-w-0">
+            <span className="overflow-hidden truncate overflow-ellipsis text-xs font-medium leading-4 text-gray-900 flex-shrink min-w-0">
               {displayName}
-            </span>
-            <span
-              className="font-mono text-xs leading-[14px] tracking-tight text-gray-400"
-              style={{ fontSize: '10px', letterSpacing: '-0.2px' }}
-            >
-              {slug}
             </span>
             {hasDependencies && (
               <Tooltip>
