@@ -47,7 +47,7 @@ export class GetWorkflowUseCase {
       })
     );
 
-    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user, workflowDataContainer);
+    const fullSteps = await this.getFullWorkflowSteps(workflowWithPreferences, command.user);
     const payloadExample = await generatePayloadExample(workflowWithPreferences);
 
     const workflowDto = toResponseWorkflowDto(workflowWithPreferences, fullSteps, payloadExample);
@@ -57,11 +57,10 @@ export class GetWorkflowUseCase {
 
   private async getFullWorkflowSteps(
     workflowWithPreferences: NotificationTemplateEntity,
-    user: UserSessionData,
-    workflowDataContainer?: WorkflowDataContainer
+    user: UserSessionData
   ): Promise<StepResponseDto[]> {
     const stepPromises = workflowWithPreferences.steps.map((step: NotificationStepEntity & { _id: string }) =>
-      this.buildStepForWorkflow(workflowWithPreferences, step, user, workflowDataContainer)
+      this.buildStepForWorkflow(workflowWithPreferences, step, user)
     );
 
     return Promise.all(stepPromises);
@@ -70,8 +69,7 @@ export class GetWorkflowUseCase {
   private async buildStepForWorkflow(
     workflow: NotificationTemplateEntity,
     step: NotificationStepEntity & { _id: string },
-    user: UserSessionData,
-    workflowDataContainer?: WorkflowDataContainer
+    user: UserSessionData
   ): Promise<StepResponseDto> {
     try {
       return await this.buildStepDataUsecase.execute(
@@ -79,8 +77,7 @@ export class GetWorkflowUseCase {
           workflowIdOrInternalId: workflow._id,
           stepIdOrInternalId: step._id,
           user,
-        }),
-        workflowDataContainer
+        })
       );
     } catch (error) {
       throw new InternalServerErrorException({
