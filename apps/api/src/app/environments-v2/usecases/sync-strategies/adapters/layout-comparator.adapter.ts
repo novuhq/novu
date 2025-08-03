@@ -13,9 +13,7 @@ export class LayoutComparatorAdapter implements IBaseComparator<LayoutEntity> {
   async compareResources(
     sourceResource: LayoutEntity,
     targetResource: LayoutEntity,
-    _: UserSessionData,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    __?: WorkflowDataContainer
+    _: UserSessionData
   ): Promise<{
     resourceChanges: {
       previous: Record<string, unknown> | null;
