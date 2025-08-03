@@ -117,7 +117,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         const { resourceChanges, otherDiffs } = await this.comparatorAdapter.compareResources(
           sourceResource,
           targetResource,
-          userContext
+          userContext,
+          workflowDataContainer
         );
 
         const allDiffs = this.createWorkflowResourceDiffs(
@@ -318,7 +319,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       const workflowDto = workflowDataContainer.getWorkflowDetails(workflowIdentifier);
 
       // Normalize the workflow to get steps
-      const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);
+      const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto!);
 
       // Create step diffs for each step as "added"
       return normalizedWorkflow.steps.map((step, index) => ({

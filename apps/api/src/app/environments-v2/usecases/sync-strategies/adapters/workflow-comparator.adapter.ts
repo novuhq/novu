@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
 import { IResourceDiff } from '../../../types/sync.types';
 import { IBaseComparator } from '../base/interfaces/base-comparator.interface';
 import { WorkflowComparator } from '../comparators/workflow.comparator';
@@ -12,18 +13,20 @@ export class WorkflowComparatorAdapter implements IBaseComparator<NotificationTe
   async compareResources(
     sourceResource: NotificationTemplateEntity,
     targetResource: NotificationTemplateEntity,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<{
     resourceChanges: {
-      previous: Record<string, any> | null;
-      new: Record<string, any> | null;
+      previous: Record<string, unknown> | null;
+      new: Record<string, unknown> | null;
     } | null;
     otherDiffs?: IResourceDiff[];
   }> {
     const { workflowChanges, otherDiffs } = await this.workflowComparator.compareWorkflows(
       sourceResource,
       targetResource,
-      userContext
+      userContext,
+      workflowDataContainer
     );
 
     return {

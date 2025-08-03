@@ -4,6 +4,7 @@ import { Instrument, PinoLogger } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { diff } from 'deep-object-diff';
+import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
 import { DiffActionEnum, IResourceDiff, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
@@ -23,13 +24,16 @@ export class WorkflowComparator {
   async compareWorkflows(
     sourceWorkflow: NotificationTemplateEntity,
     targetWorkflow: NotificationTemplateEntity,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<IWorkflowComparison> {
     try {
       if (!sourceWorkflow || !targetWorkflow) {
         throw new Error('Source and target workflows must not be null');
       }
 
+      // TODO: GetWorkflowUseCase needs to be updated to accept WorkflowDataContainer
+      // For now, we'll call it without the container, but this is where we'll optimize
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -39,6 +43,7 @@ export class WorkflowComparator {
             },
             workflowIdOrInternalId: sourceWorkflow._id,
           })
+          // TODO: Pass workflowDataContainer as second parameter once GetWorkflowUseCase is updated
         ),
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -48,6 +53,7 @@ export class WorkflowComparator {
             },
             workflowIdOrInternalId: targetWorkflow._id,
           })
+          // TODO: Pass workflowDataContainer as second parameter once GetWorkflowUseCase is updated
         ),
       ]);
 
