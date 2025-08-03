@@ -120,11 +120,10 @@ export class DependencyAnalyzerService {
         this.logger.debug(`Analyzing ${workflowDiff.changes.length} changes in workflow`);
 
         for (const change of workflowDiff.changes) {
-          // Handle both enum and string values for resourceType
           const isStepChange = change.resourceType === ResourceTypeEnum.STEP;
           const isEmailStep = change.stepType === StepTypeEnum.EMAIL;
 
-          if (isStepChange) {
+          if (isStepChange && isEmailStep) {
             const layoutIds = this.extractLayoutIdsFromStepChange(change);
 
             for (const layoutId of layoutIds) {

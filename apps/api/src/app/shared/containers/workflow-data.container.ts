@@ -51,7 +51,7 @@ export class WorkflowDataContainer {
       environmentIds.push(targetEnvironmentId);
     }
 
-    const workflows = await this.workflowRepository.find({
+    const workflows = await this.workflowRepository.findWithTemplates({
       _environmentId: { $in: environmentIds },
       _organizationId: organizationId,
       'triggers.identifier': { $in: workflowIdentifiers },

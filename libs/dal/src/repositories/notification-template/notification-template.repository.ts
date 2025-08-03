@@ -393,6 +393,16 @@ export class NotificationTemplateRepository extends BaseRepository<
       return 0;
     }
   }
+
+  async findWithTemplates(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity[]> {
+    const items = await this.MongooseModel.find(query)
+      .populate('steps.template')
+      .populate('steps.variants.template')
+      .populate('updatedBy')
+      .lean();
+
+    return this.mapEntities(items);
+  }
 }
 
 function regExpEscape(literalString: string): string {

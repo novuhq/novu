@@ -143,7 +143,6 @@ export class WorkflowComparator {
       const targetStepData = targetStepMap.get(sourceStep.stepId);
 
       if (!targetStepData) {
-        console.log(`Step detected as ADDED: ${sourceStep.stepId} (${sourceStep.name})`);
         stepDiffs.push(this.createStepAddedDiff(sourceStep, sourceIndex));
       } else {
         const { step: targetStep, index: targetIndex } = targetStepData;
