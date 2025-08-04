@@ -21,6 +21,8 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false):
 
   if (!isLaunchDarklyEnabled()) {
     const envValue =
+      // Check runtime env first (for self-hosted flexibility)
+      (window as unknown as { _env_?: Record<string, string> })?._env_?.[`VITE_${key}`] ??
       // Check if the feature flag is exported as an environment variable
       import.meta.env[`VITE_${key}`] ??
       // Then check process.env if process exists
