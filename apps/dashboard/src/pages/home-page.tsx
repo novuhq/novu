@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { ReactElement, useEffect } from 'react';
 import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
+import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
 import { PageMeta } from '../components/page-meta';
 import { AnalyticsCard } from '../components/primitives/analytics-card';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
@@ -191,6 +192,10 @@ export function HomePage(): ReactElement {
                 trendDirection="up"
               />
             </div>
+          </motion.div>
+
+          <motion.div variants={sectionVariants}>
+            <DeliveryTrendsChart />
           </motion.div>
 
           <motion.div variants={sectionVariants}>
