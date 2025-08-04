@@ -345,10 +345,10 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     expect(body.data).to.be.an('array');
 
-    body.data.forEach((workflowRun: any) => {
+    for (const workflowRun of body.data) {
       expect(workflowRun.workflowId).to.equal(template._id);
       expect(workflowRun.steps, 'workflow run should have steps').to.be.an('array');
-    });
+    }
   });
 
   it('should filter results by multiple workflowIds', async () => {
@@ -379,9 +379,9 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(body.data).to.be.an('array');
 
     const allowedIds = [template._id, secondTemplate._id];
-    body.data.forEach((workflowRun: any) => {
+    for (const workflowRun of body.data) {
       expect(allowedIds).to.include(workflowRun.workflowId);
-    });
+    }
   });
 
   it('should filter results by single subscriberId', async () => {
@@ -409,9 +409,9 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     expect(body.data).to.be.an('array');
 
-    body.data.forEach((workflowRun: any) => {
+    for (const workflowRun of body.data) {
       expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
-    });
+    }
   });
 
   it('should filter results by transactionId', async () => {
@@ -440,9 +440,9 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     expect(body.data).to.be.an('array');
 
-    body.data.forEach((workflowRun: any) => {
+    for (const workflowRun of body.data) {
       expect(workflowRun.transactionId).to.equal(customTransactionId);
-    });
+    }
   });
 
   it('should filter results by status', async () => {
@@ -464,13 +464,11 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       .query({ statuses: [WorkflowRunStatusEnum.SUCCESS] })
       .expect(200);
 
-    console.log('BODY', JSON.stringify(body, null, 2));
-
     expect(body.data.length).to.be.equal(2);
 
-    body.data.forEach((workflowRun: any) => {
+    for (const workflowRun of body.data) {
       expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
-    });
+    }
   });
 
   it('should filter results by date range', async () => {
@@ -518,14 +516,15 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     expect(body.data).to.be.an('array');
     expect(body.data.length, 'body.data.length').to.be.greaterThan(0);
-    body.data.forEach(async (workflowRun: any) => {
+
+    for (const workflowRun of body.data) {
       const workflowRunEntity = await workflowRunRepository.findOne({
         where: [{ workflow_run_id: { operator: '=', value: workflowRun.id } }],
       });
       expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
       expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
       expect(JSON.parse(workflowRunEntity.data.payload || '{}')?.testText).to.contain('second trigger');
-    });
+    }
   });
 
   it('should support combining multiple filters', async () => {
@@ -550,11 +549,11 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     expect(body.data).to.be.an('array');
 
-    body.data.forEach((workflowRun: any) => {
+    for (const workflowRun of body.data) {
       expect(workflowRun.workflowId).to.equal(template._id);
       expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
       expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
-    });
+    }
   });
 
   it('should handle empty results gracefully', async () => {

@@ -65,18 +65,14 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
     try {
       await this.clickhouseService.exec({ query });
+      console.log('Table created', this.table);
     } catch (error) {
       this.logger.error('Failed to create ClickHouse table', error);
     }
   }
 
   private getColumnType(column: string): string {
-    const columnSchema = this.schema.schema[column];
-    if (columnSchema && columnSchema.type) {
-      return columnSchema.type.toString();
-    }
-
-    return 'String';
+    return this.schema.schema[column]?.type?.toString() || 'String';
   }
 
   private validateColumnName(columnName: SchemaKeys<T_Schema>): void {
