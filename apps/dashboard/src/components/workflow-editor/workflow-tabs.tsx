@@ -11,6 +11,7 @@ import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
+import { generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Button } from '../primitives/button';
@@ -22,29 +23,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
 import { WorkflowActivity } from './workflow-activity';
 import { WorkflowCanvas } from './workflow-canvas';
-
-const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: string; apiKey: string }) => {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-
-  let parsedPayload = {};
-
-  try {
-    parsedPayload = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload;
-  } catch {
-    parsedPayload = {};
-  }
-
-  const body = {
-    name: data.workflowId,
-    to: data.to,
-    payload: { ...parsedPayload, __source: 'dashboard' },
-  };
-
-  return `curl -X POST "${baseUrl}/v1/events/trigger" \\
-  -H "Authorization: ApiKey ${data.apiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(body, null, 2)}'`;
-};
 
 export const WorkflowTabs = () => {
   const { workflow } = useWorkflow();
@@ -165,7 +143,7 @@ export const WorkflowTabs = () => {
         email: currentUser.email ?? undefined,
       };
 
-      const curlCommand = generateCurlCommand({
+      const curlCommand = generateTriggerCurlCommand({
         workflowId: workflow.workflowId,
         to: subscriberData,
         payload: JSON.stringify(payload),
@@ -407,13 +385,13 @@ export const WorkflowTabs = () => {
                           <RiPlayCircleLine />
                           Quick Trigger
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleCopyPostmanCollection} className="cursor-pointer">
-                          <RiFileCopyLine />
-                          Copy postman collection
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
                           <RiFileCopyLine />
                           Copy cURL
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleCopyPostmanCollection} className="cursor-pointer">
+                          <RiFileCopyLine />
+                          Copy postman collection
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
