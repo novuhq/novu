@@ -1,5 +1,5 @@
 import { FILTER_VALIDATORS, LiquidFilterIssue } from '@novu/framework/internal';
-import { TRANSLATION_NAMESPACE_SEPARATOR, LAYOUT_CONTENT_VARIABLE } from '@novu/shared';
+import { LAYOUT_CONTENT_VARIABLE, TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 
 import {
   AssignTag,
@@ -8,6 +8,7 @@ import {
   Filter,
   ForTag,
   IfTag,
+  LiquidError,
   Output,
   RenderError,
   TablerowTag,
@@ -15,12 +16,11 @@ import {
   Template,
   TokenKind,
   UnlessTag,
-  LiquidError,
 } from 'liquidjs';
-import { DIGEST_EVENTS_VARIABLE_PATTERN, isLiquidErrors, isValidDynamicPath, isValidTemplate } from './parser-utils';
 import { JSONSchemaDto } from '../../dtos/json-schema.dto';
-import type { ProcessContext, VariableDetails, Variable } from './types';
 import { buildLiquidParser } from './liquid-engine';
+import { DIGEST_EVENTS_VARIABLE_PATTERN, isLiquidErrors, isValidDynamicPath, isValidTemplate } from './parser-utils';
+import type { ProcessContext, Variable, VariableDetails } from './types';
 
 const parserEngine = buildLiquidParser();
 
@@ -178,15 +178,12 @@ function isPropertyAllowed(schema: JSONSchemaDto | undefined, propertyPath: stri
     return false;
   }
 
-  const pathParts = propertyPath
-    .split('.')
-    .map((part) => {
-      // Split array notation into [propName, index]
-      const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
+  const pathParts = propertyPath.split('.').flatMap((part) => {
+    // Split array notation into [propName, index]
+    const arrayMatch = part.match(/^(.+?)\[(\d+)\]$/);
 
-      return arrayMatch ? [arrayMatch[1], arrayMatch[2]] : [part];
-    })
-    .flat();
+    return arrayMatch ? [arrayMatch[1], arrayMatch[2]] : [part];
+  });
 
   for (const part of pathParts) {
     const { properties, additionalProperties, type } = currentSchema;

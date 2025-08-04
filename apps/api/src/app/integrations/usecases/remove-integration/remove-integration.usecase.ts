@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { IntegrationRepository, DalException, IntegrationEntity } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { buildIntegrationKey, InvalidateCacheService } from '@novu/application-generic';
+import { DalException, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY, ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 
 import { RemoveIntegrationCommand } from './remove-integration.command';
 

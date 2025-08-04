@@ -1,31 +1,35 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  ResourceOriginEnum,
+  StepCreateDto,
+} from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
-import { ComponentProps } from 'react';
-import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
+import { AnimatePresence } from 'motion/react';
+import { ComponentProps, useCallback, useRef, useState } from 'react';
+import { RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { StepTypeEnum } from '@/utils/enums';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
-import { useHasPermission } from '@/hooks/use-has-permission';
+import { ConditionBadge } from './condition-badge';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
-import { useEnvironment } from '@/context/environment/hooks';
-import { AnimatePresence } from 'motion/react';
-import { ConfirmationModal } from '@/components/confirmation-modal';
-import { useState, useCallback, useRef } from 'react';
-import { StepCreateDto } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -258,65 +262,31 @@ const StepNode = (props: StepNodeProps) => {
     }
   }, [data.stepSlug, currentEnvironment?.slug, navigate, type, isV2TemplateEditorEnabled, currentWorkflow]);
 
-  if (hasConditions) {
-    return (
-      <>
-        <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-          <Node
-            aria-selected={isSelected}
-            className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
-            pill={
-              <>
-                <RiFilter3Fill className="text-foreground-400 size-3" />
-                <span className="text-foreground-400 text-xs">{conditionsCount}</span>
-              </>
-            }
-            onPillClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
-            }}
-            {...rest}
-          >
-            {rest.children}
-          </Node>
-          <AnimatePresence>
-            {isHovered && !data.isTemplateStorePreview && type && (
-              <WorkflowNodeActionBar
-                stepType={type}
-                stepName={data.name || 'Untitled Step'}
-                onRemoveClick={handleRemoveStep}
-                onEditContentClick={handleEditContent}
-                onCopyClick={handleCopyStep}
-                isReadOnly={isReadOnly}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </>
-    );
-  }
-
   return (
-    <>
-      <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
-          {rest.children}
-        </Node>
-        <AnimatePresence>
-          {isHovered && !data.isTemplateStorePreview && type && (
-            <WorkflowNodeActionBar
-              stepType={type}
-              stepName={data.name || 'Untitled Step'}
-              onRemoveClick={handleRemoveStep}
-              onEditContentClick={handleEditContent}
-              onCopyClick={handleCopyStep}
-              isReadOnly={isReadOnly}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-    </>
+    <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
+        {rest.children}
+      </Node>
+      {hasConditions && (
+        <ConditionBadge
+          conditionsCount={conditionsCount}
+          stepSlug={data.stepSlug ?? ''}
+          conditionsData={data.controlValues?.skip as RQBJsonLogic}
+        />
+      )}
+      <AnimatePresence>
+        {isHovered && !data.isTemplateStorePreview && type && (
+          <WorkflowNodeActionBar
+            stepType={type}
+            stepName={data.name || 'Untitled Step'}
+            onRemoveClick={handleRemoveStep}
+            onEditContentClick={handleEditContent}
+            onCopyClick={handleCopyStep}
+            isReadOnly={isReadOnly}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 

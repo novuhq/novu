@@ -1,2 +1,2 @@
-export * from './environment-validation.service';
 export * from './dependency-analyzer.service';
+export * from './environment-validation.service';

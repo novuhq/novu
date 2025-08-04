@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { addBreadcrumb } from '@sentry/node';
-import inlineCss from 'inline-css';
-
 import {
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -40,11 +37,13 @@ import {
   IAttachmentOptions,
   IEmailOptions,
 } from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
+import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult } from './send-message-type.usecase';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageCommand } from './send-message.command';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -368,7 +367,6 @@ export class SendMessageEmail extends SendMessageBase {
       return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);
     } else {
       const detailEnum =
-        // eslint-disable-next-line no-nested-ternary
         !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
           ? DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION
           : !environment.dns?.mxRecordConfigured
@@ -524,7 +522,6 @@ export class SendMessageEmail extends SendMessageBase {
        * TODO: Handle this at the handler level globally
        */
       if (error?.isAxiosError && error.response) {
-        // eslint-disable-next-line no-ex-assign
         error = error.response;
       }
 

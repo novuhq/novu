@@ -1,12 +1,12 @@
-import { useState } from 'react';
 import { ResourceOriginEnum } from '@novu/shared';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { StepEditorProps } from '@/components/workflow-editor/steps/configure-step-template-form';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
 import { CustomStepControls } from '../controls/custom-step-controls';
 import { TemplateTabs } from '../template-tabs';
-import { PushEditorPreview } from './push-editor-preview';
-import { useFormContext } from 'react-hook-form';
 import { useEditorPreview } from '../use-editor-preview';
+import { PushEditorPreview } from './push-editor-preview';
 
 export const PushTabs = (props: StepEditorProps) => {
   const { workflow, step } = props;

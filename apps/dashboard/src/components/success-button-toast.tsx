@@ -1,7 +1,7 @@
-import { Button } from '@/components/primitives/button';
-import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 import { ReactNode } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
+import { Button } from '@/components/primitives/button';
+import { ToastClose, ToastIcon } from '@/components/primitives/sonner';
 
 interface SuccessToastProps {
   title: string;

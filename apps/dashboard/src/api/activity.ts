@@ -1,4 +1,4 @@
-import { getDateRangeInMs, IActivity, IEnvironment } from '@novu/shared';
+import { getDateRangeInMs, type IActivity, type IEnvironment } from '@novu/shared';
 import { get } from './api.client';
 
 export type ActivityFilters = {
@@ -207,15 +207,15 @@ export function getActivityList({
   searchParams.append('limit', limit.toString());
 
   if (filters?.channels?.length) {
-    filters.channels.forEach((channel) => {
+    for (const channel of filters.channels) {
       searchParams.append('channels', channel);
-    });
+    }
   }
 
   if (filters?.workflows?.length) {
-    filters.workflows.forEach((workflow) => {
+    for (const workflow of filters.workflows) {
       searchParams.append('templates', workflow);
-    });
+    }
   }
 
   if (filters?.email) {
@@ -234,9 +234,9 @@ export function getActivityList({
       .filter(Boolean);
 
     if (transactionIds.length > 1) {
-      transactionIds.forEach((id) => {
+      for (const id of transactionIds) {
         searchParams.append('transactionId', id);
-      });
+      }
     } else {
       searchParams.append('transactionId', filters.transactionId);
     }
@@ -320,6 +320,16 @@ export async function getWorkflowRunsList({
   const searchParams = new URLSearchParams();
   searchParams.append('limit', limit.toString());
 
+  if (filters?.channels?.length) {
+    for (const channel of filters.channels) {
+      searchParams.append('channels', channel);
+    }
+  }
+
+  if (filters?.topicKey) {
+    searchParams.append('topicKey', filters.topicKey);
+  }
+
   // Use cursor if provided, otherwise fall back to page-based
   if (cursor) {
     searchParams.append('cursor', cursor);
@@ -329,9 +339,9 @@ export async function getWorkflowRunsList({
   }
 
   if (filters?.workflows?.length) {
-    filters.workflows.forEach((workflow) => {
+    for (const workflow of filters.workflows) {
       searchParams.append('workflowIds', workflow);
-    });
+    }
   }
 
   if (filters?.subscriberId) {
@@ -346,9 +356,9 @@ export async function getWorkflowRunsList({
       .filter(Boolean);
 
     if (transactionIds.length > 1) {
-      transactionIds.forEach((id) => {
+      for (const id of transactionIds) {
         searchParams.append('transactionId', id);
-      });
+      }
     } else {
       searchParams.append('transactionIds', filters.transactionId);
     }

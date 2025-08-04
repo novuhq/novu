@@ -1,5 +1,5 @@
-import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Internal Controller (GET /v1/internal) - #novu-v2', () => {
   let session: UserSession;

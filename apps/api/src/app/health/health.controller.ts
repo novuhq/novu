@@ -1,24 +1,23 @@
 import { Controller, Get, NotFoundException } from '@nestjs/common';
+import { Body, Post } from '@nestjs/common/decorators';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckResult, HealthCheckService, HealthIndicatorFunction } from '@nestjs/terminus';
 import {
   CacheServiceHealthIndicator,
   DalServiceHealthIndicator,
   ExternalApiAccessible,
-  WorkflowQueueServiceHealthIndicator,
   SkipPermissionsCheck,
+  WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
-
-import { Body, Post } from '@nestjs/common/decorators';
-import { ApiExcludeController } from '@nestjs/swagger';
 import { version } from '../../../package.json';
-import { DocumentationIgnore, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ApiCommonResponses, ApiCreatedResponse } from '../shared/framework/response.decorator';
+import { DocumentationIgnore, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import {
   IdempotenceTestingResponse,
   IdempotencyBehaviorEnum,
   IdempotencyTestingDto,
 } from '../testing/dtos/idempotency.dto';
-import { ApiCommonResponses, ApiCreatedResponse } from '../shared/framework/response.decorator';
 
 @Controller('health-check')
 @ApiExcludeController()

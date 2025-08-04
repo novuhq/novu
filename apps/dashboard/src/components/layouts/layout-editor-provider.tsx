@@ -1,22 +1,21 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams, useBlocker, useLocation } from 'react-router-dom';
-import { useForm, UseFormReturn } from 'react-hook-form';
-import { ExternalToast } from 'sonner';
 import { GeneratePreviewResponseDto, LayoutResponseDto, ResourceOriginEnum, RuntimeIssue } from '@novu/shared';
-
-import { useFetchLayout } from '@/hooks/use-fetch-layout';
-import { createContextHook } from '@/utils/context';
-import { parse, stringify } from '@/utils/json';
-import { useLayoutPreview } from '@/hooks/use-layout-preview';
-import { getLayoutControlsDefaultValues } from '@/utils/default-values';
-import { useDebounce } from '@/hooks/use-debounce';
-import { useBeforeUnload } from '@/hooks/use-before-unload';
-import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
-import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layout';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import { UseFormReturn, useForm } from 'react-hook-form';
+import { useBlocker, useLocation, useParams } from 'react-router-dom';
+import { ExternalToast } from 'sonner';
 import { NovuApiError } from '@/api/api.client';
-import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { useDebounce } from '@/hooks/use-debounce';
+import { useFetchLayout } from '@/hooks/use-fetch-layout';
+import { useLayoutPreview } from '@/hooks/use-layout-preview';
+import { UpdateLayoutParameters, useUpdateLayout } from '@/hooks/use-update-layout';
+import { createContextHook } from '@/utils/context';
+import { getLayoutControlsDefaultValues } from '@/utils/default-values';
+import { parse, stringify } from '@/utils/json';
+import { UnsavedChangesAlertDialog } from '../unsaved-changes-alert-dialog';
+import { flattenIssues, getFirstErrorMessage } from '../workflow-editor/step-utils';
 
 const toastOptions: ExternalToast = {
   duration: 5000,

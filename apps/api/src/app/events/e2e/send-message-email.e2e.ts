@@ -1,6 +1,6 @@
-import { expect } from 'chai';
 import { CompileEmailTemplate } from '@novu/application-generic';
 import { IEmailOptions } from '@novu/stateless';
+import { expect } from 'chai';
 
 export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
@@ -19,8 +19,8 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
   };
 };
 
-describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v2', function () {
-  it('should merge mail data', function () {
+describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v2', () => {
+  it('should merge mail data', () => {
     const defaultMailData = {
       to: ['to-reply@novu.co'],
       subject: 'subject',
@@ -61,7 +61,7 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v
     expect(result.to).to.deep.equal(['override-to@novu.co']);
   });
 
-  it('should add a preheader to html string after <body>', async function () {
+  it('should add a preheader to html string after <body>', async () => {
     let result = CompileEmailTemplate.addPreheader('');
 
     expect(result).to.equal('');
@@ -96,7 +96,7 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v
         {{/if}}<div>Hello World</div></body></html>`);
   });
 
-  it('should only add preheader to first occurrence of body', async function () {
+  it('should only add preheader to first occurrence of body', async () => {
     let result = CompileEmailTemplate.addPreheader('');
 
     expect(result).to.equal('');

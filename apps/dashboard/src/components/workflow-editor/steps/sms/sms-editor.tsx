@@ -1,12 +1,12 @@
-import { Sms } from '@/components/icons';
 import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/shared';
+import { Sms } from '@/components/icons';
 
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '../../../../hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
-import { useEnvironment } from '@/context/environment/hooks';
 
 type SmsEditorProps = { uiSchema: UiSchema };
 

@@ -1,6 +1,6 @@
 import { Editor } from '@/components/primitives/editor';
+import { BASIC_SETUP, JSON_EXTENSIONS } from './constants';
 import { CustomTextEditorProps } from './types';
-import { JSON_EXTENSIONS, BASIC_SETUP } from './constants';
 
 export function CustomTextEditor({ value, onChange, onKeyDown }: CustomTextEditorProps) {
   return (

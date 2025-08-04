@@ -26,7 +26,6 @@ export class ChangeResponseDto {
   type: ChangeEntityTypeEnum;
 
   @ApiProperty()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   change: any;
 
   @ApiProperty()

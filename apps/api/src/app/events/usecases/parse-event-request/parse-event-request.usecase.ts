@@ -1,4 +1,3 @@
-import { randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, Trace } from '@novu/application-generic';

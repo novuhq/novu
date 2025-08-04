@@ -1,6 +1,6 @@
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { StepDrawer } from './step-drawer';
 import { ConfigureStepTemplateForm } from './configure-step-template-form';
+import { StepDrawer } from './step-drawer';
 
 export const ConfigureStepTemplate = () => {
   const { workflow, update, step } = useWorkflow();

@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { expect } from '@playwright/test';
 import os from 'node:os';
 import { test } from './utils/baseTest';

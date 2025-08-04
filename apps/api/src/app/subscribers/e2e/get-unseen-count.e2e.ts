@@ -1,11 +1,11 @@
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { Novu } from '@novu/api';
 import { SubscribersV1ControllerGetUnseenCountRequest } from '@novu/api/models/operations';
+import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { expectSdkExceptionGeneric, initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET) #novu-v2', function () {
+describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriberId: string;
@@ -22,7 +22,7 @@ describe('Get Unseen Count - /:subscriberId/notifications/unseen (GET) #novu-v2'
     subscriberId = SubscriberRepository.createObjectId();
   });
 
-  it('should throw exception on invalid subscriber id', async function () {
+  it('should throw exception on invalid subscriber id', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
 
     await session.waitForJobCompletion(template._id);

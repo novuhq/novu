@@ -1,14 +1,14 @@
-import { expect } from 'chai';
+import { Novu } from '@novu/api';
+import { DetailEnum } from '@novu/application-generic';
 import {
   ExecutionDetailsRepository,
   IntegrationRepository,
   MessageRepository,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { DetailEnum } from '@novu/application-generic';
 import { ChannelTypeEnum, PushProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
-import { Novu } from '@novu/api';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #novu-v2', () => {

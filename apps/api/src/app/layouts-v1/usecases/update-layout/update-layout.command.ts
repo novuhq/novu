@@ -1,8 +1,7 @@
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-import { ResourceTypeEnum, ResourceOriginEnum } from '@novu/shared';
-
-import { LayoutDescription, LayoutId, LayoutIdentifier, LayoutName, LayoutVariables } from '../../types';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { LayoutDescription, LayoutId, LayoutIdentifier, LayoutName, LayoutVariables } from '../../types';
 
 export class UpdateLayoutCommand extends EnvironmentWithUserCommand {
   @IsString()

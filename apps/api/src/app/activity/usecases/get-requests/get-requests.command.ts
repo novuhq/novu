@@ -1,5 +1,5 @@
-import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '@novu/application-generic';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class GetRequestsCommand extends EnvironmentCommand {
   @IsNumber()

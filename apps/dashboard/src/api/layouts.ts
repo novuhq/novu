@@ -1,12 +1,12 @@
 import {
-  ListLayoutsResponse,
-  IEnvironment,
   CreateLayoutDto,
-  LayoutResponseDto,
-  UpdateLayoutDto,
   GeneratePreviewResponseDto,
+  IEnvironment,
+  LayoutResponseDto,
+  ListLayoutsResponse,
+  UpdateLayoutDto,
 } from '@novu/shared';
-import { getV2, postV2, putV2, delV2 } from './api.client';
+import { delV2, getV2, postV2, putV2 } from './api.client';
 
 export type WorkflowInfo = {
   name: string;

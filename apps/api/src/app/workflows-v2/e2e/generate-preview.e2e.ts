@@ -1,9 +1,5 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { Novu } from '@novu/api';
-import { beforeEach } from 'mocha';
 import { randomUUID } from 'node:crypto';
+import { Novu } from '@novu/api';
 import {
   ChannelTypeEnum,
   CreateWorkflowDto,
@@ -11,19 +7,23 @@ import {
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   PreviewPayloadDto,
+  ResourceOriginEnum,
   StepTypeEnum,
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
-  ResourceOriginEnum,
   WorkflowResponseDto,
 } from '@novu/api/models/components';
-import { CronExpressionEnum, RedirectTargetEnum, slugify } from '@novu/shared';
 import { EmailControlType } from '@novu/application-generic';
+import { EnvironmentRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
+import { CronExpressionEnum, RedirectTargetEnum, slugify } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { beforeEach } from 'mocha';
 import { initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { buildWorkflow } from '../workflow.controller.e2e';
-import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
 import { DEFAULT_ARRAY_ELEMENTS } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { fullCodeSnippet, previewPayloadExample } from '../maily-test-data';
+import { buildWorkflow } from '../workflow.controller.e2e';
 
 const TEST_WORKFLOW_NAME = 'Test Workflow Name';
 const SUBJECT_TEST_PAYLOAD = '{{payload.subject.test.payload}}';

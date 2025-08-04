@@ -32,7 +32,7 @@
     "@codemirror/lang-html": "^6.4.9",
     "@codemirror/lang-liquid": "^6.2.3",
     "@codemirror/language": "^6.11.1",
-    "@hookform/resolvers": "^3.9.0",
+    "@hookform/resolvers": "^3.10.0",
     "@lezer/highlight": "^1.2.1",
     "@maily-to/core": "github:novuhq/maily.to.git#release/v0.2.7-novu.16-core&path:/packages/core",
     "@novu/api": "workspace:*",

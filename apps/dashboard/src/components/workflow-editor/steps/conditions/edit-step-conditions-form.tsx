@@ -3,24 +3,24 @@ import { ContentIssueEnum, type StepUpdateDto } from '@novu/shared';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import {
+  defaultRuleProcessorJsonLogic,
   formatQuery,
   generateID,
   RQBJsonLogic,
   RuleGroupType,
   RuleType,
-  defaultRuleProcessorJsonLogic,
 } from 'react-querybuilder';
 import { parseJsonLogic } from 'react-querybuilder/parseJsonLogic';
 import { z } from 'zod';
 
 import { ConditionsEditor } from '@/components/conditions-editor/conditions-editor';
+import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
 import { Form, FormField } from '@/components/primitives/form/form';
 import { updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { type EnhancedLiquidVariable } from '@/utils/parseStepVariables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import {
   countConditions,
@@ -28,8 +28,8 @@ import {
   getUniqueOperators,
   parseJsonLogicOptions,
 } from '@/utils/conditions';
+import { type EnhancedLiquidVariable } from '@/utils/parseStepVariables';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { isRelativeDateOperator } from '@/components/conditions-editor/field-type-operators';
 import { EditStepConditionsLayout } from './edit-step-conditions-layout';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
@@ -259,7 +259,6 @@ export const EditStepConditionsForm = () => {
   const saveFormRef = useDataRef(saveForm);
   useEffect(() => {
     return () => {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       saveFormRef.current();
     };
   }, [saveFormRef]);

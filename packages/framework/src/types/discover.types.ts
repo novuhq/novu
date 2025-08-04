@@ -1,11 +1,11 @@
-import type { WorkflowPreferencesPartial } from '../shared';
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import type { JsonSchema, Schema } from './schema.types';
-import type { StepOptions } from './step.types';
-import type { Execute } from './workflow.types';
-import type { Awaitable, Prettify } from './util.types';
+import type { WorkflowPreferencesPartial } from '../shared';
 import type { EventTriggerParams, EventTriggerResult } from './event.types';
 import type { WithPassthrough } from './provider.types';
+import type { JsonSchema, Schema } from './schema.types';
+import type { StepOptions } from './step.types';
+import type { Awaitable, Prettify } from './util.types';
+import type { Execute } from './workflow.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 

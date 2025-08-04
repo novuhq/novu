@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { USE_CASES } from './usecases';
-import { MessageTemplateController } from './message-template.controller';
-import { SharedModule } from '../shared/shared.module';
 import { ChangeModule } from '../change/change.module';
+import { SharedModule } from '../shared/shared.module';
+import { MessageTemplateController } from './message-template.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, ChangeModule],

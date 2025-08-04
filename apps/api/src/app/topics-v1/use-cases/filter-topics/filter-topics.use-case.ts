@@ -1,10 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { TopicEntity, TopicRepository } from '@novu/dal';
-
-import { FilterTopicsCommand } from './filter-topics.command';
-
 import { TopicDto } from '../../dtos/topic.dto';
 import { ExternalSubscriberId } from '../../types';
+import { FilterTopicsCommand } from './filter-topics.command';
 
 const DEFAULT_TOPIC_LIMIT = 10;
 

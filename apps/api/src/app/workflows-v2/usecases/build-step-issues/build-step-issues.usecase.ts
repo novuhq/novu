@@ -1,19 +1,4 @@
-import merge from 'lodash/merge';
-import isEmpty from 'lodash/isEmpty';
-import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
-import {
-  ControlValuesLevelEnum,
-  FeatureFlagsKeysEnum,
-  ContentIssueEnum,
-  IntegrationIssueEnum,
-  StepIssuesDto,
-  StepTypeEnum,
-  UserSessionData,
-  ResourceOriginEnum,
-  RuntimeIssue,
-} from '@novu/shared';
 import {
   dashboardSanitizeControlValues,
   FeatureFlagsService,
@@ -23,20 +8,34 @@ import {
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
-
-import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
-import { BuildStepIssuesCommand } from './build-step-issues.command';
+import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
+import {
+  ContentIssueEnum,
+  ControlValuesLevelEnum,
+  FeatureFlagsKeysEnum,
+  IntegrationIssueEnum,
+  ResourceOriginEnum,
+  RuntimeIssue,
+  StepIssuesDto,
+  StepTypeEnum,
+  UserSessionData,
+} from '@novu/shared';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
+import isEmpty from 'lodash/isEmpty';
+import merge from 'lodash/merge';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import {
   QueryIssueTypeEnum,
   QueryValidatorService,
 } from '../../../shared/services/query-parser/query-validator.service';
-import { parseStepVariables } from '../../util/parse-step-variables';
-import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import {
   ControlIssues,
   processControlValuesByLiquid,
   processControlValuesBySchema,
 } from '../../../shared/utils/issues';
+import { parseStepVariables } from '../../util/parse-step-variables';
+import { BuildVariableSchemaCommand, BuildVariableSchemaUsecase } from '../build-variable-schema';
+import { BuildStepIssuesCommand } from './build-step-issues.command';
 
 const PAYLOAD_FIELD_PREFIX = 'payload.';
 const SUBSCRIBER_DATA_FIELD_PREFIX = 'subscriber.data.';

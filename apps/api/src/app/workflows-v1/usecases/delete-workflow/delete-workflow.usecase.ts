@@ -1,6 +1,15 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
+  DeletePreferencesCommand,
+  DeletePreferencesUseCase,
+  GetWorkflowByIdsUseCase,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  SendWebhookMessage,
+} from '@novu/application-generic';
+import {
   ControlValuesRepository,
   LocalizationResourceEnum,
   MessageTemplateRepository,
@@ -8,18 +17,8 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
-
-import {
-  GetWorkflowByIdsUseCase,
-  DeletePreferencesUseCase,
-  DeletePreferencesCommand,
-  Instrument,
-  InstrumentUsecase,
-  SendWebhookMessage,
-  PinoLogger,
-} from '@novu/application-generic';
-import { DeleteWorkflowCommand } from './delete-workflow.command';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { DeleteWorkflowCommand } from './delete-workflow.command';
 
 @Injectable()
 export class DeleteWorkflowUseCase {
@@ -116,7 +115,6 @@ export class DeleteWorkflowUseCase {
     }
 
     try {
-      // eslint-disable-next-line global-require
       const deleteTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.DeleteTranslationGroup, {
         strict: false,
       });

@@ -34,38 +34,30 @@ export class WebSocketWorker extends WebSocketsWorkerService {
 
         Logger.log(`Job ${job.id} / ${job.data.event} is being processed WebSocketWorker`, LOG_CONTEXT);
 
-        nr.startBackgroundTransaction(
-          ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,
-          'WS Service',
-          function () {
-            const transaction = nr.getTransaction();
-            const { data: jobData } = job;
-            const data: IWebSocketDataDto = jobData;
+        nr.startBackgroundTransaction(ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE, 'WS Service', () => {
+          const transaction = nr.getTransaction();
+          const { data: jobData } = job;
+          const data: IWebSocketDataDto = jobData;
 
-            _this.externalServicesRoute
-              .execute(
-                ExternalServicesRouteCommand.create({
-                  userId: data.userId,
-                  event: data.event,
-                  payload: data.payload,
-                  _environmentId: data._environmentId,
-                })
-              )
-              .then(resolve)
-              .catch((error) => {
-                Logger.error(
-                  error,
-                  'Unexpected exception occurred while handling external services route ',
-                  LOG_CONTEXT
-                );
-
-                reject(error);
+          _this.externalServicesRoute
+            .execute(
+              ExternalServicesRouteCommand.create({
+                userId: data.userId,
+                event: data.event,
+                payload: data.payload,
+                _environmentId: data._environmentId,
               })
-              .finally(() => {
-                transaction.end();
-              });
-          }
-        );
+            )
+            .then(resolve)
+            .catch((error) => {
+              Logger.error(error, 'Unexpected exception occurred while handling external services route ', LOG_CONTEXT);
+
+              reject(error);
+            })
+            .finally(() => {
+              transaction.end();
+            });
+        });
       });
     };
   }

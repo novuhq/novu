@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsDate, IsObject, IsIn } from 'class-validator';
-import { Type } from 'class-transformer';
 import { StepRunStatus } from '@novu/application-generic';
+import { Type } from 'class-transformer';
+import { IsDate, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
 import { GetWorkflowRunResponseBaseDto } from './shared.dto';
 
 export class StepRunDto {

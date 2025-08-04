@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
-import { ChannelTypeEnum, ISendMessageSuccessResponse, IChatOptions, IChatProvider } from '@novu/stateless';
+import { ChannelTypeEnum, IChatOptions, IChatProvider, ISendMessageSuccessResponse } from '@novu/stateless';
 import axios from 'axios';
 import { v4 as uuid } from 'uuid';
 import { BaseProvider, CasingEnum } from '../../../base.provider';

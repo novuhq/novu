@@ -1,16 +1,15 @@
-import { useMemo, useRef } from 'react';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
-
-import { cn } from '@/utils/ui';
+import { useMemo, useRef } from 'react';
+import { EditorOverlays } from '@/components/editor-overlays';
 import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
-import { EditorOverlays } from '@/components/editor-overlays';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { cn } from '@/utils/ui';
 
 const variants = cva('relative w-full', {
   variants: {

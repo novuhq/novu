@@ -1,6 +1,6 @@
-import { useFeatureFlag } from './use-feature-flag';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from './use-feature-flag';
 
 export function useIsPayloadSchemaEnabled(): boolean {
   const isFeatureFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);

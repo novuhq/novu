@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsArray, IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
 import { SubscriberChannelDto } from './create-subscriber-request.dto';
 
 // Define the type for custom data, allowing for additional properties

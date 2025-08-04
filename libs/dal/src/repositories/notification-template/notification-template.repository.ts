@@ -1,7 +1,6 @@
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-
-import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -393,6 +392,16 @@ export class NotificationTemplateRepository extends BaseRepository<
     } else {
       return 0;
     }
+  }
+
+  async findWithTemplates(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity[]> {
+    const items = await this.MongooseModel.find(query)
+      .populate('steps.template')
+      .populate('steps.variants.template')
+      .populate('updatedBy')
+      .lean();
+
+    return this.mapEntities(items);
   }
 }
 

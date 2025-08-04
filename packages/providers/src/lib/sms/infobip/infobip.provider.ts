@@ -1,6 +1,6 @@
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-import { Infobip, AuthType } from '@infobip-api/sdk';
+import { AuthType, Infobip } from '@infobip-api/sdk';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 

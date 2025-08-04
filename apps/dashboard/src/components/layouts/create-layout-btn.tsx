@@ -1,18 +1,18 @@
+import { ApiServiceLevelEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { IconType } from 'react-icons/lib';
 import { RiAddCircleLine } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ApiServiceLevelEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import { Button } from '../primitives/button';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { Button } from '../primitives/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { useLayoutsUrlState } from './hooks/use-layouts-url-state';
-import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 
 export const CreateLayoutButton = ({
   icon = RiAddCircleLine,

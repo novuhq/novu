@@ -2,9 +2,9 @@ import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema } from '@novu/
 
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { TabsSection } from '@/components/workflow-editor/steps/tabs-section';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '../../../../hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
-import { useEnvironment } from '@/context/environment/hooks';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 
 type PushEditorProps = { uiSchema: UiSchema };

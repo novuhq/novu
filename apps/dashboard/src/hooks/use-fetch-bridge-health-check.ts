@@ -1,10 +1,10 @@
+import type { HealthCheck } from '@novu/framework/internal';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { getBridgeHealthCheck } from '@/api/bridge';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { ConnectionStatus } from '@/utils/types';
-import type { HealthCheck } from '@novu/framework/internal';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 
 const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 10 * 1000;
 

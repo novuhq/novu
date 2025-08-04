@@ -1,4 +1,4 @@
-import { type Component, JSX, createEffect, createSignal, onCleanup } from 'solid-js';
+import { type Component, createEffect, createSignal, JSX, onCleanup } from 'solid-js';
 import { useStyle } from '../../helpers';
 
 type CollapsibleProps = JSX.IntrinsicElements['div'] & {

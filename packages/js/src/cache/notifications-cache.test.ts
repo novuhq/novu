@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
-import { NotificationsCache } from './notifications-cache';
 import { ChannelType } from '../types';
-import { InboxService } from '../api';
+import { NotificationsCache } from './notifications-cache';
 
 describe('NotificationsCache', () => {
   let notificationsCache: NotificationsCache;

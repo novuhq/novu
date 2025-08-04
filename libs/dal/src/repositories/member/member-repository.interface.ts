@@ -1,4 +1,4 @@
-import { MemberRoleEnum, MemberStatusEnum, IMemberInvite } from '@novu/shared';
+import { IMemberInvite, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Types } from 'mongoose';
 import { MemberEntity } from './member.entity';
 import { IAddMemberData } from './member.repository';

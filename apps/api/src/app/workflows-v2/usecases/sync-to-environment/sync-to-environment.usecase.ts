@@ -1,15 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
-  PreferencesEntity,
-  PreferencesRepository,
   ClientSession,
   LocalizationResourceEnum,
   NotificationTemplateRepository,
+  PreferencesEntity,
+  PreferencesRepository,
 } from '@novu/dal';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
-import { SyncToEnvironmentCommand } from './sync-to-environment.command';
+import { PreferencesTypeEnum, ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  LayoutSyncToEnvironmentCommand,
+  LayoutSyncToEnvironmentUseCase,
+} from '../../../layouts-v2/usecases/sync-to-environment';
+import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
+import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import {
   UpsertStepDataCommand,
@@ -17,12 +22,7 @@ import {
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
 } from '../upsert-workflow';
-import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
-import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
-import {
-  LayoutSyncToEnvironmentCommand,
-  LayoutSyncToEnvironmentUseCase,
-} from '../../../layouts-v2/usecases/sync-to-environment';
+import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 
 export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
@@ -116,7 +116,6 @@ export class SyncToEnvironmentUseCase {
       return;
     }
 
-    // eslint-disable-next-line global-require
     const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
       strict: false,
     });

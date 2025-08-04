@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { LayoutEntity } from '@novu/dal';
-import { IBaseSyncService } from '../base/interfaces/base-sync.interface';
-import { ISyncContext } from '../../../types/sync.types';
 import {
   LayoutSyncToEnvironmentCommand,
   LayoutSyncToEnvironmentUseCase,
 } from '../../../../layouts-v2/usecases/sync-to-environment';
+import { ISyncContext } from '../../../types/sync.types';
+import { IBaseSyncService } from '../base/interfaces/base-sync.interface';
 
 @Injectable()
 export class LayoutSyncAdapter implements IBaseSyncService<LayoutEntity> {

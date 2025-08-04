@@ -1,9 +1,8 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { DirectionEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { getLayouts } from '@/api/layouts';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '../context/environment/hooks';
-import { getLayouts } from '@/api/layouts';
 import { useFeatureFlag } from './use-feature-flag';
 
 interface UseLayoutsParams {

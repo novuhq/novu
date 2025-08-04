@@ -1,15 +1,15 @@
-import axios from 'axios';
-import { expect } from 'chai';
+import { Novu } from '@novu/api';
 import { JobRepository, JobStatusEnum, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { DelayTypeEnum, DigestTypeEnum, DigestUnitEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
-import { Novu } from '@novu/api';
+import axios from 'axios';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
 
 const axiosInstance = axios.create();
 
-describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', function () {
+describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -35,7 +35,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should cancel a digest step', async function () {
+  it('should cancel a digest step', async () => {
     template = await session.createTemplate({
       steps: [
         {
@@ -82,7 +82,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     expect(cancelledDigestJobs?.length).to.eql(1);
   });
 
-  it('should cancel a delay step for all subscribers', async function () {
+  it('should cancel a delay step for all subscribers', async () => {
     const secondSubscriber = await subscriberService.createSubscriber();
     template = await session.createTemplate({
       steps: [
@@ -132,7 +132,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     expect(delayedJobs?.[1]?.status).to.equal(JobStatusEnum.CANCELED);
   });
 
-  it.skip('should cancel a digest after it has already digested some triggers', async function () {
+  it.skip('should cancel a digest after it has already digested some triggers', async () => {
     template = await session.createTemplate({
       steps: [
         {
@@ -226,7 +226,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     expect(thirdMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
   });
 
-  it.skip('should be able to cancel 1st main digest', async function () {
+  it.skip('should be able to cancel 1st main digest', async () => {
     template = await session.createTemplate({
       steps: [
         {
@@ -332,7 +332,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     expect(thirdMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
   });
 
-  it.skip('should be able to cancel 1st main digest and then its follower', async function () {
+  it.skip('should be able to cancel 1st main digest and then its follower', async () => {
     template = await session.createTemplate({
       steps: [
         {
@@ -452,7 +452,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', f
     expect(fourthMergedTrigger.status).to.eql(JobStatusEnum.MERGED);
   });
 
-  it.skip('should be able to cancel 1st main digest and then its follower and last merged notification', async function () {
+  it.skip('should be able to cancel 1st main digest and then its follower and last merged notification', async () => {
     template = await session.createTemplate({
       steps: [
         {

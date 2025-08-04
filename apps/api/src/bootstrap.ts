@@ -10,11 +10,14 @@ import {
   PinoLogger,
   RequestLogRepository,
 } from '@novu/application-generic';
+
 import bodyParser from 'body-parser';
 import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+
 import { TransactionIdMiddleware } from './app/shared/middleware/transaction-id.middleware';
+
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
@@ -49,7 +52,7 @@ export async function bootstrap(
 
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     rawBodyBuffer = (_req, _res, buffer, _encoding): void => {
-      if (buffer && buffer.length) {
+      if (buffer?.length) {
         // eslint-disable-next-line no-param-reassign
         (_req as any).rawBody = Buffer.from(buffer);
       }

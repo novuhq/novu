@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { RiAddBoxLine, RiDeleteBin2Line, RiGitCommitFill } from 'react-icons/ri';
+import type { IResourceDiffResult } from '@/api/environments';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
-import type { IResourceDiffResult } from '@/api/environments';
 
 type WorkflowChangeType = {
   type: 'configuration' | 'steps' | 'translations';

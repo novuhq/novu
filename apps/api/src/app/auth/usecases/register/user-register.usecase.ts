@@ -1,12 +1,12 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { OrganizationEntity, UserRepository } from '@novu/dal';
-import { hash } from 'bcrypt';
-import { SignUpOriginEnum, normalizeEmail } from '@novu/shared';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService, createHash } from '@novu/application-generic';
+import { OrganizationEntity, UserRepository } from '@novu/dal';
+import { normalizeEmail, SignUpOriginEnum } from '@novu/shared';
+import { hash } from 'bcrypt';
+import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
+import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { AuthService } from '../../services/auth.service';
 import { UserRegisterCommand } from './user-register.command';
-import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
-import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
 
 @Injectable()
 export class UserRegister {

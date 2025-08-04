@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { GetNotificationTemplatesCommand } from './get-notification-templates.command';
-import { WorkflowsResponseDto } from '../../dtos/workflows.response.dto';
-import { GetActiveIntegrationsStatus } from '../get-active-integrations-status/get-active-integrations-status.usecase';
 import { WorkflowResponse } from '../../dtos/workflow-response.dto';
+import { WorkflowsResponseDto } from '../../dtos/workflows.response.dto';
 import { GetActiveIntegrationsStatusCommand } from '../get-active-integrations-status/get-active-integrations-status.command';
+import { GetActiveIntegrationsStatus } from '../get-active-integrations-status/get-active-integrations-status.usecase';
+import { GetNotificationTemplatesCommand } from './get-notification-templates.command';
 
 /**
  * D@deprecated

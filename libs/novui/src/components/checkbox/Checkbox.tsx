@@ -1,11 +1,11 @@
 import { Checkbox as ExternalCheckbox } from '@mantine/core';
 import { ChangeEventHandler, forwardRef } from 'react';
-import { PolymorphicRef } from '../../types/props-helpers';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
 import { checkbox } from '../../../styled-system/recipes';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { CoreProps, LocalizedMessage, LocalizedString } from '../../types';
+import { PolymorphicRef } from '../../types/props-helpers';
 
 export type CheckboxProps = JsxStyleProps &
   CoreProps & {

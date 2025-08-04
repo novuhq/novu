@@ -1,10 +1,10 @@
+import { FeatureFlagsKeysEnum, IActivity } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { IActivity, FeatureFlagsKeysEnum } from '@novu/shared';
 
-import { getActivityList, getWorkflowRunsList, ActivityFilters } from '@/api/activity';
-import { useEnvironment } from '../context/environment/hooks';
+import { ActivityFilters, getActivityList, getWorkflowRunsList } from '@/api/activity';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { QueryKeys } from '@/utils/query-keys';
+import { useEnvironment } from '../context/environment/hooks';
 
 interface UseActivitiesOptions {
   filters?: ActivityFilters;

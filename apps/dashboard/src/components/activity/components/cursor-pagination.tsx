@@ -1,5 +1,5 @@
-import { Button } from '@/components/primitives/button';
 import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { Button } from '@/components/primitives/button';
 import { cn } from '../../../utils/ui';
 
 interface CursorPaginationProps {

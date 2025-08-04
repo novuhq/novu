@@ -1,10 +1,10 @@
-import { Button } from '@/components/primitives/button';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber, PermissionsEnum } from '@novu/shared';
+import { Button } from '@/components/primitives/button';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useBillingPortal } from '../../hooks/use-billing-portal';
 import { useCheckoutSession } from '../../hooks/use-checkout-session';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { cn } from '../../utils/ui';
-import { useHasPermission } from '@/hooks/use-has-permission';
 
 interface PlanActionButtonProps {
   billingInterval: 'month' | 'year';

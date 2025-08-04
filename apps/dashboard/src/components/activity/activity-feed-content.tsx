@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityFilters } from '@/components/activity/activity-filters';
@@ -13,8 +13,8 @@ import { defaultActivityFilters } from '@/components/activity/constants';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
-import { usePullActivity } from '@/hooks/use-pull-activity';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
+import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
 import { cn } from '../../utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';

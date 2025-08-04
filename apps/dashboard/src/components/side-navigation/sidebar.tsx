@@ -1,6 +1,6 @@
-import { cn } from '@/utils/ui';
 import { cva, VariantProps } from 'class-variance-authority';
 import { HTMLAttributes } from 'react';
+import { cn } from '@/utils/ui';
 
 type SidebarHeaderProps = HTMLAttributes<HTMLDivElement>;
 

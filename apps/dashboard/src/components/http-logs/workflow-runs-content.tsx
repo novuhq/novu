@@ -1,4 +1,3 @@
-import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiLoader4Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
@@ -6,7 +5,7 @@ import type { ActivityFilters } from '@/api/activity';
 import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
+import { Table, TableBody } from '@/components/primitives/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';

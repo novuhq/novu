@@ -1,3 +1,4 @@
+import { JobEntity } from '@novu/dal';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
@@ -6,7 +7,6 @@ import {
   JobStatusEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import { JobEntity } from '@novu/dal';
 import { getNestedValue } from './object';
 
 export const isRegularDigest = (type: DigestTypeEnum | DelayTypeEnum) => {

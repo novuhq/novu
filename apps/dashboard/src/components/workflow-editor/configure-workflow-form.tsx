@@ -1,10 +1,29 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  MAX_DESCRIPTION_LENGTH,
+  PermissionsEnum,
+  ResourceOriginEnum,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { FilesIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import {
+  RiArrowRightSLine,
+  RiCodeSSlashLine,
+  RiDeleteBin2Line,
+  RiGitPullRequestFill,
+  RiListView,
+  RiMore2Fill,
+  RiSettingsLine,
+} from 'react-icons/ri';
+import { Link, useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
 import { z } from 'zod';
-
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';
 import { RouteFill } from '@/components/icons/route-fill';
@@ -52,28 +71,13 @@ import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
+import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
-import { FilesIcon } from 'lucide-react';
-import {
-  RiArrowRightSLine,
-  RiCodeSSlashLine,
-  RiDeleteBin2Line,
-  RiGitPullRequestFill,
-  RiListView,
-  RiMore2Fill,
-  RiSettingsLine,
-} from 'react-icons/ri';
-import { Link } from 'react-router-dom';
-import { Protect } from '@/utils/protect';
-
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
 import { TranslationToggleSection } from './translation-toggle-section';
-import { ResourceOriginEnum, WorkflowResponseDto, UpdateWorkflowDto, MAX_DESCRIPTION_LENGTH } from '@novu/shared';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
 
 interface ConfigureWorkflowFormProps {
   workflow: WorkflowResponseDto;

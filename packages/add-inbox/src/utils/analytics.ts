@@ -1,6 +1,6 @@
 import Analytics from '@segment/analytics-node';
 import { v4 as uuidv4 } from 'uuid';
-import { SEGMENTS_WRITE_KEY, ANALYTICS_ENABLED } from '../constants';
+import { ANALYTICS_ENABLED, SEGMENTS_WRITE_KEY } from '../constants';
 
 const ANALYTICS_SOURCE = '[CLI add-inbox]';
 

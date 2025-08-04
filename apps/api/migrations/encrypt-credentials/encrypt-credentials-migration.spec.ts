@@ -1,10 +1,10 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/stateless';
 import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/stateless';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { encryptOldCredentialsMigration } from './encrypt-credentials-migration';
 
-describe('Encrypt Old Credentials', function () {
+describe('Encrypt Old Credentials', () => {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
 
@@ -13,7 +13,7 @@ describe('Encrypt Old Credentials', function () {
     await session.initialize();
   });
 
-  it('should decrypt all old credentials', async function () {
+  it('should decrypt all old credentials', async () => {
     await pruneIntegration(integrationRepository);
 
     const data = {

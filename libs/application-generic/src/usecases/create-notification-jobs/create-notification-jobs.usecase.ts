@@ -13,13 +13,12 @@ import {
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { PlatformException } from '../../utils/exceptions';
-import { getNestedValue } from '../../utils';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from '../../services/analytic-logs';
+import { getNestedValue } from '../../utils';
+import { PlatformException } from '../../utils/exceptions';
+import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
+import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -104,7 +103,6 @@ export class CreateNotificationJobs {
         externalSubscriberId: command.subscriber.subscriberId,
       });
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error(
         { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
         'Failed to create workflow run'

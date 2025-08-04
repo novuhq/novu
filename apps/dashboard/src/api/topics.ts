@@ -1,5 +1,5 @@
-import { Topic } from '@/components/topics/types';
 import type { DirectionEnum, IEnvironment } from '@novu/shared';
+import { Topic } from '@/components/topics/types';
 import { delV2, getV2, patchV2, postV2 } from './api.client';
 
 export type ListTopicsResponse = {

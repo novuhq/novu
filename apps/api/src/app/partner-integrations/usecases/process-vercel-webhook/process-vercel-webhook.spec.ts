@@ -1,8 +1,7 @@
 import crypto from 'node:crypto';
-import { Test } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
-import { expect } from 'chai';
-import { stub, restore, assert } from 'sinon';
+import { Test } from '@nestjs/testing';
+import { PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
@@ -10,12 +9,12 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-
-import { PinoLogger } from '@novu/application-generic';
-import { ProcessVercelWebhook } from './process-vercel-webhook.usecase';
+import { expect } from 'chai';
+import { assert, restore, stub } from 'sinon';
 import { Sync } from '../../../bridge/usecases/sync';
+import { ProcessVercelWebhook } from './process-vercel-webhook.usecase';
 
-describe('ProcessVercelWebhook', function () {
+describe('ProcessVercelWebhook', () => {
   let processVercelWebhook: ProcessVercelWebhook;
   let session: UserSession;
   let organizationRepositoryMock;
@@ -102,7 +101,7 @@ describe('ProcessVercelWebhook', function () {
     restore();
   });
 
-  it('should skip non-deployment events', async function () {
+  it('should skip non-deployment events', async () => {
     const result = await processVercelWebhook.execute({
       body: {
         type: 'other-event',
@@ -114,7 +113,7 @@ describe('ProcessVercelWebhook', function () {
     assert.notCalled(organizationRepositoryMock.find);
   });
 
-  it('should process deployment succeeded event', async function () {
+  it('should process deployment succeeded event', async () => {
     const body = {
       type: 'deployment.succeeded',
       payload: {
@@ -162,7 +161,7 @@ describe('ProcessVercelWebhook', function () {
     });
   });
 
-  it('should throw error for invalid signature', async function () {
+  it('should throw error for invalid signature', async () => {
     const body = {
       type: 'deployment.succeeded',
       payload: {
@@ -186,7 +185,7 @@ describe('ProcessVercelWebhook', function () {
     }
   });
 
-  it('should throw error for missing signature', async function () {
+  it('should throw error for missing signature', async () => {
     const body = {
       type: 'deployment.succeeded',
       payload: {

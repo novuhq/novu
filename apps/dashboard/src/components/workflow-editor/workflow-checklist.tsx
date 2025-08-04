@@ -1,12 +1,5 @@
-import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { StepTypeEnum } from '@/utils/enums';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { Step } from '@/utils/types';
 import { useUser } from '@clerk/clerk-react';
-import { ChannelTypeEnum, WorkflowResponseDto } from '@novu/shared';
+import { ChannelTypeEnum, FeatureFlagsKeysEnum, WorkflowResponseDto } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -17,12 +10,18 @@ import {
   RiSparkling2Fill,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { StepTypeEnum } from '@/utils/enums';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { Step } from '@/utils/types';
 import { cn } from '../../utils/ui';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { Popover, PopoverClose, PopoverContent, PopoverTrigger } from '../primitives/popover';
 import { useWorkflow } from './workflow-provider';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 interface WorkflowChecklistProps {
   steps: Step[];

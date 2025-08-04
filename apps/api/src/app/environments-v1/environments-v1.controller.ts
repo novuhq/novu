@@ -10,17 +10,19 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import {
+  ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  getFeatureForTierAsBoolean,
   PermissionsEnum,
   ProductFeatureKeyEnum,
   UserSessionData,
-  getFeatureForTierAsBoolean,
-  FeatureNameEnum,
-  ApiServiceLevelEnum,
 } from '@novu/shared';
-import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
+import { ErrorDto } from '../../error-dto';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
@@ -42,8 +44,6 @@ import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environ
 import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api-keys.usecase';
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
-import { ErrorDto } from '../../error-dto';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 
 /**
  * @deprecated use EnvironmentsControllerV2

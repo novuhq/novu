@@ -1,9 +1,8 @@
 import { EnvironmentTypeEnum, UiComponentEnum } from '@novu/shared';
-
+import { EmailEditorSelect } from '@/components/email-editor-select';
 import { DelayAmount } from '@/components/workflow-editor/steps/delay/delay-amount';
 import { DigestKey } from '@/components/workflow-editor/steps/digest/digest-key';
 import { DigestWindow } from '@/components/workflow-editor/steps/digest/digest-window';
-import { EmailEditorSelect } from '@/components/email-editor-select';
 import { EmailBody } from '@/components/workflow-editor/steps/email/email-body';
 import { EmailSubject } from '@/components/workflow-editor/steps/email/email-subject';
 import { InAppAction } from '@/components/workflow-editor/steps/in-app/in-app-action';
@@ -11,14 +10,14 @@ import { InAppAvatar } from '@/components/workflow-editor/steps/in-app/in-app-av
 import { InAppBody } from '@/components/workflow-editor/steps/in-app/in-app-body';
 import { InAppRedirect } from '@/components/workflow-editor/steps/in-app/in-app-redirect';
 import { InAppSubject } from '@/components/workflow-editor/steps/in-app/in-app-subject';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useWorkflow } from '../workflow-provider';
 import { BaseBody } from './base/base-body';
 import { BaseSubject } from './base/base-subject';
 import { DataObject } from './base/data-object';
-import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
-import { useWorkflow } from '../workflow-provider';
-import { useSaveForm } from './save-form-context';
 import { LayoutSelect } from './email/layout-select';
-import { useEnvironment } from '@/context/environment/hooks';
+import { useSaveForm } from './save-form-context';
+import { BypassSanitizationSwitch } from './shared/bypass-sanitization-switch';
 
 const EmailEditorSelectInternal = () => {
   const { isUpdatePatchPending } = useWorkflow();

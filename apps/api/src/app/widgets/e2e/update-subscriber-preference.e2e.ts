@@ -1,12 +1,12 @@
 import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import axios from 'axios';
 import { expect } from 'chai';
-import { ChannelTypeEnum } from '@novu/shared';
 import { UpdateSubscriberPreferenceRequestDto } from '../dtos/update-subscriber-preference-request.dto';
 import { getSubscriberPreference } from './get-subscriber-preference.e2e';
 
-describe('PATCH /widgets/preferences/:templateId #novu-v0', function () {
+describe('PATCH /widgets/preferences/:templateId #novu-v0', () => {
   let template: NotificationTemplateEntity;
   let session: UserSession;
   let subscriberId: string;
@@ -22,7 +22,7 @@ describe('PATCH /widgets/preferences/:templateId #novu-v0', function () {
   });
 
   // `enabled` flag is not used anymore. The presence of a preference object means that the subscriber has enabled notifications.
-  it.skip('should create user preference', async function () {
+  it.skip('should create user preference', async () => {
     const updateData = {
       enabled: false,
     };
@@ -38,7 +38,7 @@ describe('PATCH /widgets/preferences/:templateId #novu-v0', function () {
     expect(data.preference.channels.in_app).to.equal(true);
   });
 
-  it('should update user preference', async function () {
+  it('should update user preference', async () => {
     const createData = {
       enabled: true,
     };
@@ -65,7 +65,7 @@ describe('PATCH /widgets/preferences/:templateId #novu-v0', function () {
   it(
     'should not update empty object should throw exception if ' +
       'no channel and not template enable param - user preference',
-    async function () {
+    async () => {
       const createData = {
         templateId: template._id,
         enabled: true,
@@ -88,7 +88,7 @@ describe('PATCH /widgets/preferences/:templateId #novu-v0', function () {
     }
   );
 
-  it('should override template preference defaults after subscriber update', async function () {
+  it('should override template preference defaults after subscriber update', async () => {
     const templateDefaultSettings = await session.createTemplate({
       preferenceSettingsOverride: { email: false, chat: true, push: true, sms: true, in_app: true },
       noFeedId: true,

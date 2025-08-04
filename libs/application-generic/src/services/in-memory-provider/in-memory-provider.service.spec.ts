@@ -6,10 +6,7 @@ let inMemoryProviderService: InMemoryProviderService;
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.REDIS,
-        false,
-      );
+      inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS, false);
 
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -24,14 +21,10 @@ describe('In-memory Provider Service', () => {
       it('should have the right config', () => {
         const { inMemoryProviderConfig } = inMemoryProviderService;
 
-        expect(inMemoryProviderConfig.host).toEqual(
-          process.env.REDIS_CACHE_SERVICE_HOST,
-        );
+        expect(inMemoryProviderConfig.host).toEqual(process.env.REDIS_CACHE_SERVICE_HOST);
 
         if ('port' in inMemoryProviderConfig) {
-          expect(inMemoryProviderConfig.port).toEqual(
-            Number(process.env.REDIS_CACHE_SERVICE_PORT),
-          );
+          expect(inMemoryProviderConfig.port).toEqual(Number(process.env.REDIS_CACHE_SERVICE_PORT));
         }
 
         expect(inMemoryProviderConfig.connectTimeout).toEqual(50_000);
@@ -52,9 +45,7 @@ describe('In-memory Provider Service', () => {
         const options = inMemoryProviderService.getOptions();
 
         expect(options?.host).toEqual(process.env.REDIS_CACHE_SERVICE_HOST);
-        expect(options?.port).toEqual(
-          Number(process.env.REDIS_CACHE_SERVICE_PORT),
-        );
+        expect(options?.port).toEqual(Number(process.env.REDIS_CACHE_SERVICE_PORT));
         expect(options?.role).toEqual('master');
         expect(options?.username).toEqual(null);
         expect(options?.password).toEqual(null);
@@ -62,17 +53,12 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should we able to operate in the in-memory database', async () => {
-        const pingCommandResult =
-          await inMemoryProviderService.inMemoryProviderClient.ping();
+        const pingCommandResult = await inMemoryProviderService.inMemoryProviderClient.ping();
         expect(pingCommandResult).toEqual('PONG');
 
         const valueToStore = 'non cluster mode';
-        await inMemoryProviderService.inMemoryProviderClient.set(
-          'novu',
-          valueToStore,
-        );
-        const value =
-          await inMemoryProviderService.inMemoryProviderClient.get('novu');
+        await inMemoryProviderService.inMemoryProviderClient.set('novu', valueToStore);
+        const value = await inMemoryProviderService.inMemoryProviderClient.get('novu');
         expect(value).toEqual('non cluster mode');
       });
     });
@@ -80,10 +66,7 @@ describe('In-memory Provider Service', () => {
 
   describe('Cluster mode', () => {
     beforeEach(async () => {
-      inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.REDIS,
-        true,
-      );
+      inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS, true);
       await inMemoryProviderService.delayUntilReadiness();
 
       expect(inMemoryProviderService.getStatus()).toEqual('ready');
@@ -95,18 +78,11 @@ describe('In-memory Provider Service', () => {
 
     describe('TEMP: Check if enableAutoPipelining true is set properly in Cluster', () => {
       it('enableAutoPipelining is enabled', async () => {
-        const clusterWithPipelining = new InMemoryProviderService(
-          InMemoryProviderEnum.REDIS,
-          true,
-          true,
-        );
+        const clusterWithPipelining = new InMemoryProviderService(InMemoryProviderEnum.REDIS, true, true);
         await clusterWithPipelining.delayUntilReadiness();
 
         expect(clusterWithPipelining.getStatus()).toEqual('ready');
-        expect(
-          clusterWithPipelining.inMemoryProviderClient.options
-            .enableAutoPipelining,
-        ).toEqual(true);
+        expect(clusterWithPipelining.inMemoryProviderClient.options.enableAutoPipelining).toEqual(true);
       });
     });
 
@@ -114,13 +90,9 @@ describe('In-memory Provider Service', () => {
       it('should have the right config', () => {
         const { inMemoryProviderConfig } = inMemoryProviderService;
 
-        expect(inMemoryProviderConfig.host).toEqual(
-          process.env.REDIS_CLUSTER_SERVICE_HOST,
-        );
+        expect(inMemoryProviderConfig.host).toEqual(process.env.REDIS_CLUSTER_SERVICE_HOST);
         if ('ports' in inMemoryProviderConfig) {
-          const ports =
-            process.env.REDIS_CLUSTER_SERVICE_PORTS &&
-            JSON.parse(process.env.REDIS_CLUSTER_SERVICE_PORTS);
+          const ports = process.env.REDIS_CLUSTER_SERVICE_PORTS && JSON.parse(process.env.REDIS_CLUSTER_SERVICE_PORTS);
           expect(inMemoryProviderConfig.ports).toEqual(ports);
         }
 
@@ -147,15 +119,12 @@ describe('In-memory Provider Service', () => {
 
         expect(inMemoryProviderClient.status).toEqual('ready');
         expect(inMemoryProviderClient.isCluster).toEqual(true);
-        expect(inMemoryProviderClient.options.enableAutoPipelining).toEqual(
-          false,
-        );
+        expect(inMemoryProviderClient.options.enableAutoPipelining).toEqual(false);
 
         const options = inMemoryProviderService.getOptions();
         expect(options).toEqual(undefined);
 
-        const clusterOptions =
-          await inMemoryProviderService.getClusterOptions();
+        const clusterOptions = await inMemoryProviderService.getClusterOptions();
         expect(clusterOptions.enableOfflineQueue).toEqual(false);
         expect(clusterOptions.enableReadyCheck).toEqual(true);
         expect(clusterOptions.maxRedirections).toEqual(16);
@@ -165,17 +134,12 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should we able to operate in the in-memory database', async () => {
-        const pingCommandResult =
-          await inMemoryProviderService.inMemoryProviderClient.ping();
+        const pingCommandResult = await inMemoryProviderService.inMemoryProviderClient.ping();
         expect(pingCommandResult).toEqual('PONG');
 
         const valueToStore = 'cluster mode';
-        await inMemoryProviderService.inMemoryProviderClient.set(
-          'novu',
-          valueToStore,
-        );
-        const value =
-          await inMemoryProviderService.inMemoryProviderClient.get('novu');
+        await inMemoryProviderService.inMemoryProviderClient.set('novu', valueToStore);
+        const value = await inMemoryProviderService.inMemoryProviderClient.get('novu');
         expect(value).toEqual('cluster mode');
       });
     });

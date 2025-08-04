@@ -1,15 +1,4 @@
 import { Injectable } from '@nestjs/common';
-
-import {
-  DigestTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IDigestRegularMetadata,
-  IPreferenceChannels,
-  PreferencesTypeEnum,
-  StepTypeEnum,
-  ResourceTypeEnum,
-} from '@novu/shared';
 import {
   AnalyticsService,
   buildSubscriberKey,
@@ -40,17 +29,26 @@ import {
   TenantRepository,
 } from '@novu/dal';
 import { ExecuteOutput } from '@novu/framework/internal';
-
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageDelay } from './send-message-delay.usecase';
-import { SendMessageEmail } from './send-message-email.usecase';
-import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageInApp } from './send-message-in-app.usecase';
-import { SendMessageChat } from './send-message-chat.usecase';
-import { SendMessagePush } from './send-message-push.usecase';
+import {
+  DigestTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IDigestRegularMetadata,
+  IPreferenceChannels,
+  PreferencesTypeEnum,
+  ResourceTypeEnum,
+  StepTypeEnum,
+} from '@novu/shared';
+import { ExecuteBridgeJob } from '../execute-bridge-job';
 import { Digest } from './digest';
 import { ExecuteStepCustom } from './execute-step-custom.usecase';
-import { ExecuteBridgeJob } from '../execute-bridge-job';
+import { SendMessageCommand } from './send-message.command';
+import { SendMessageChat } from './send-message-chat.usecase';
+import { SendMessageDelay } from './send-message-delay.usecase';
+import { SendMessageEmail } from './send-message-email.usecase';
+import { SendMessageInApp } from './send-message-in-app.usecase';
+import { SendMessagePush } from './send-message-push.usecase';
+import { SendMessageSms } from './send-message-sms.usecase';
 import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
@@ -251,7 +249,6 @@ export class SendMessage {
     });
 
     const { digest } = command.job;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let timedInfo: any = {};
 
     if (digest && digest.type === DigestTypeEnum.TIMED && digest.timed) {

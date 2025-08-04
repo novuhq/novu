@@ -1,9 +1,5 @@
-import {
-  ChannelTypeEnum,
-  ICredentials,
-  PushProviderIdEnum,
-} from '@novu/shared';
 import { ExpoPushProvider } from '@novu/providers';
+import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { BasePushHandler } from './base.handler';
 
 export class ExpoHandler extends BasePushHandler {

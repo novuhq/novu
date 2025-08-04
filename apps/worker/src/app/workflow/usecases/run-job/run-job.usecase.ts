@@ -1,25 +1,24 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import { setUser } from '@sentry/node';
 import {
   getJobDigest,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
-  StorageHelperService,
   StepRunRepository,
+  StorageHelperService,
   WorkflowRunRepository,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-
-import { RunJobCommand } from './run-job.command';
-import { SendMessage, SendMessageCommand } from '../send-message';
-import { PlatformException, EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, shouldHaltOnStepFailure } from '../../../shared/utils';
-import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
+import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
+import { setUser } from '@sentry/node';
+import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
 import { AddJob } from '../add-job';
-import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
 import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
+import { SendMessage, SendMessageCommand } from '../send-message';
+import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
+import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
+import { RunJobCommand } from './run-job.command';
 
 const nr = require('newrelic');
 

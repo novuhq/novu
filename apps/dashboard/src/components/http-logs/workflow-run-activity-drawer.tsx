@@ -1,11 +1,10 @@
-import React, { forwardRef, useState, useEffect } from 'react';
-
-import { ActivityPanel } from '@/components/activity/activity-panel';
-import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
-import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
+import React, { forwardRef, useEffect, useState } from 'react';
 import { ActivityError } from '@/components/activity/activity-error';
-import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { ActivityLogs } from '@/components/activity/activity-logs';
+import { ActivityPanel } from '@/components/activity/activity-panel';
+import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
+import { ActivityOverview } from '@/components/activity/components/activity-overview';
+import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 
 type WorkflowRunActivityDrawerProps = {

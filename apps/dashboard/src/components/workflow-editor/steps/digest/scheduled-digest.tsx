@@ -1,20 +1,19 @@
-import { useMemo } from 'react';
 import cronParser from 'cron-parser';
+import { useMemo } from 'react';
 import { RiInformationLine } from 'react-icons/ri';
-
+import { Hint, HintIcon } from '@/components/primitives/hint';
+import { DaysOfWeek } from '@/components/workflow-editor/steps/digest/days-of-week';
+import { NumbersPicker } from '@/components/workflow-editor/steps/digest/numbers-picker';
+import { Period } from '@/components/workflow-editor/steps/digest/period';
 import {
   getCronBasedOnPeriod,
   getPeriodFromCronParts,
-  parseCronString,
   PeriodValues,
+  parseCronString,
   toCronFields,
   toUiFields,
   UiCronFields,
 } from '@/components/workflow-editor/steps/digest/utils';
-import { Period } from '@/components/workflow-editor/steps/digest/period';
-import { NumbersPicker } from '@/components/workflow-editor/steps/digest/numbers-picker';
-import { DaysOfWeek } from '@/components/workflow-editor/steps/digest/days-of-week';
-import { Hint, HintIcon } from '@/components/primitives/hint';
 
 export const ScheduledDigest = ({
   value,

@@ -1,5 +1,5 @@
-import { Test } from '@nestjs/testing';
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import { CommunityOrganizationRepository, NotificationRepository, SubscriberRepository } from '@novu/dal';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { expect } from 'chai';

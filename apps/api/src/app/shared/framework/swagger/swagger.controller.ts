@@ -1,18 +1,17 @@
-/* eslint-disable max-len */
-import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import packageJson from '../../../../../package.json';
 import { INestApplication } from '@nestjs/common';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
+import packageJson from '../../../../../package.json';
+import metadata from '../../../../metadata';
+import { webhookEvents } from '../../../webhooks/webhooks.const';
+import { WorkflowResponseDto } from '../../../workflows-v2/dtos/workflow-response.dto';
 import { injectDocumentComponents } from './injection';
 import {
   overloadDocumentForSdkGeneration,
   removeEndpointsWithoutApiKey,
   sortOpenAPIDocument,
 } from './open.api.manipulation.component';
-import metadata from '../../../../metadata';
-import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
-import { webhookEvents } from '../../../webhooks/webhooks.const';
-import { WorkflowResponseDto } from '../../../workflows-v2/dtos/workflow-response.dto';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'apiKey',

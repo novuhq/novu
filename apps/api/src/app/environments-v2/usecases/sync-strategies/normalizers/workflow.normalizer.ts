@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { WorkflowResponseDto } from '../../../../workflows-v2/dtos/workflow-response.dto';
 import { StepResponseDto } from '../../../../workflows-v2/dtos/step.response.dto';
-import { INormalizedWorkflow, INormalizedStep } from '../types/workflow-sync.types';
+import { WorkflowResponseDto } from '../../../../workflows-v2/dtos/workflow-response.dto';
+import { INormalizedStep, INormalizedWorkflow } from '../types/workflow-sync.types';
 
 @Injectable()
 export class WorkflowNormalizer {

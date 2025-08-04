@@ -1,5 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 
 import {
   EnvironmentRepository,
@@ -16,19 +15,18 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
+import type { EventType, Trace } from '../../services/analytic-logs';
+import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
-import { BadRequestException } from '@nestjs/common';
+import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
 import { TriggerEventCommand } from './trigger-event.command';
-import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
-import { TraceLogRepository, LogRepository, mapEventTypeToTitle } from '../../services/analytic-logs';
-import type { Trace, EventType } from '../../services/analytic-logs';
-
 
 function getActiveWorker() {
   return process.env.ACTIVE_WORKER;
@@ -134,7 +132,7 @@ export class TriggerEvent {
               mappedCommand.tenant.identifier
             )} of organization ${mappedCommand.organizationId} in transaction ${
               mappedCommand.transactionId
-            } could not be processed.`,
+            } could not be processed.`
           );
         }
       }
@@ -196,7 +194,6 @@ export class TriggerEvent {
           break;
         }
       }
-
     } catch (e) {
       const error = e as Error;
       await this.createWorkflowTrace(

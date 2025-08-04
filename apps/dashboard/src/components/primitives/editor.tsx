@@ -1,16 +1,6 @@
-import {
-  autocompleteFooter,
-  autocompleteHeader,
-  codeIcon,
-  digestIcon,
-  functionIcon,
-  keyIcon,
-} from '@/components/primitives/constants';
-import { useDataRef } from '@/hooks/use-data-ref';
+import { type TagStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
-import { type TagStyle } from '@codemirror/language';
-
 import {
   default as CodeMirror,
   EditorView,
@@ -20,6 +10,15 @@ import {
 import { cva } from 'class-variance-authority';
 import React, { useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
+import {
+  autocompleteFooter,
+  autocompleteHeader,
+  codeIcon,
+  digestIcon,
+  functionIcon,
+  keyIcon,
+} from '@/components/primitives/constants';
+import { useDataRef } from '@/hooks/use-data-ref';
 
 const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {

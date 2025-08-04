@@ -1,5 +1,5 @@
-import { IsDate, ValidationArguments, registerDecorator, ValidationOptions, IsDefined } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsDate, IsDefined, registerDecorator, ValidationArguments, ValidationOptions } from 'class-validator';
 
 function IsFutureDate(
   options?: {
@@ -9,7 +9,7 @@ function IsFutureDate(
 ) {
   const leewayMs = options?.leewayMs ?? 1000 * 60; // default 1 minute
 
-  return function (object: Object, propertyName: string) {
+  return (object: Object, propertyName: string) => {
     registerDecorator({
       name: 'isFutureDate',
       target: object.constructor,

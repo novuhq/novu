@@ -1,5 +1,5 @@
-import { useCallback, useRef, useState } from 'react';
 import { EditorView } from '@uiw/react-codemirror';
+import { useCallback, useRef, useState } from 'react';
 import { useDataRef } from '@/hooks/use-data-ref';
 import { parseVariable } from '@/utils/liquid';
 

@@ -1,6 +1,6 @@
-import { expect, test, vi, beforeEach, describe } from 'vitest';
 import { IPushOptions } from '@novu/stateless';
 import app from 'firebase-admin/app';
+import { beforeEach, describe, expect, test, vi } from 'vitest';
 
 import { FcmPushProvider } from './fcm.provider';
 
@@ -86,7 +86,6 @@ describe.skip('FcmPushProvider', () => {
       // @ts-expect-error
       .spyOn(provider.messaging, 'sendEachForMulticast')
       .mockImplementation(async () => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return {} as any;
       });
   });

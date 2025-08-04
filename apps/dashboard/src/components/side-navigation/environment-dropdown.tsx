@@ -1,11 +1,11 @@
-import { IEnvironment, EnvironmentTypeEnum } from '@novu/shared';
+import { EnvironmentTypeEnum, IEnvironment } from '@novu/shared';
+import { useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
+import TruncatedText from '../../components/truncated-text';
 import { cn } from '../../utils/ui';
 import { EnvironmentBranchIcon } from '../primitives/environment-branch-icon';
 import { Select, SelectContent, SelectIcon, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
 import { Separator } from '../primitives/separator';
-import TruncatedText from '../../components/truncated-text';
-import { useState } from 'react';
 
 type EnvironmentDropdownProps = {
   currentEnvironment?: IEnvironment;

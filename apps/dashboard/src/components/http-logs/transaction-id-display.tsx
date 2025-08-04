@@ -1,5 +1,5 @@
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { CopyButton } from '@/components/primitives/copy-button';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
 import { cn } from '@/utils/ui';
 
 type TransactionIdDisplayProps = {

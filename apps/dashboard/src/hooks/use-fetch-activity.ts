@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { QueryKeys } from '@/utils/query-keys';
 import type { IActivity } from '@novu/shared';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
+import { getNotification, getWorkflowRun } from '@/api/activity';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { getNotification, getWorkflowRun } from '@/api/activity';
+import { QueryKeys } from '@/utils/query-keys';
 
 export function useFetchActivity(
   { activityId }: { activityId?: string | null },

@@ -1,6 +1,6 @@
-import { RequestLog, WorkflowRunStatusEnum, StepRunNonFinalStatus, StepRun, Trace } from '@novu/application-generic';
-import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
+import { RequestLog, StepRun, StepRunNonFinalStatus, Trace, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { TraceResponseDto } from '../dtos/get-request-traces.response.dto';
+import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 
 export function mapRequestLogToResponseDto(log: RequestLog): RequestLogResponseDto {
@@ -53,6 +53,7 @@ export function mapWorkflowRunStatusToDto(
       case 'failed' as WorkflowRunStatusEnum: // legacy
         return WorkflowRunStatusDtoEnum.ERROR;
       case WorkflowRunStatusEnum.PENDING:
+        return WorkflowRunStatusDtoEnum.PENDING;
       default:
         return WorkflowRunStatusDtoEnum.PENDING;
     }

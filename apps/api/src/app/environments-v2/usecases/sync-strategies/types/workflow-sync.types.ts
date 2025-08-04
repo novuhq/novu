@@ -1,6 +1,6 @@
-import { IResourceDiff } from '../../../types/sync.types';
-import { WorkflowResponseDto } from '../../../../workflows-v2/dtos/workflow-response.dto';
 import { StepResponseDto } from '../../../../workflows-v2/dtos/step.response.dto';
+import { WorkflowResponseDto } from '../../../../workflows-v2/dtos/workflow-response.dto';
+import { IResourceDiff } from '../../../types/sync.types';
 
 export type INormalizedWorkflow = Omit<
   WorkflowResponseDto,

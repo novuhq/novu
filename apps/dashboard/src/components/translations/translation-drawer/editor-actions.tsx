@@ -1,16 +1,16 @@
-import { RiFileUploadLine, RiDownloadLine, RiCheckLine, RiCloseLine } from 'react-icons/ri';
-import { useState, useEffect } from 'react';
+import { PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { RiCheckLine, RiCloseLine, RiDownloadLine, RiFileUploadLine } from 'react-icons/ri';
+import { FlagCircle } from '@/components/flag-circle';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { FlagCircle } from '@/components/flag-circle';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 import { TranslationImportTrigger } from '../translation-import-trigger';
 import { getLocaleDisplayName } from '../utils';
 import { useTranslationFileOperations } from './hooks';
-import { PermissionsEnum } from '@novu/shared';
-import { PermissionButton } from '@/components/primitives/permission-button';
-import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 
 function UploadButton({
   isUploading,

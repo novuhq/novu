@@ -1,6 +1,6 @@
 import { IEnvironment } from '@novu/shared';
-import { get } from './api.client';
 import { RequestLog, RequestTraces } from '../types/logs';
+import { get } from './api.client';
 
 export interface GetRequestLogsParams {
   environment: IEnvironment;
@@ -46,7 +46,7 @@ export async function getRequestTraces(params: GetRequestTracesParams): Promise<
   const { environment, requestId } = params;
   const endpoint = `/activity/requests/${requestId}`;
 
-  const response = await get<{data: RequestTraces}>(endpoint, { environment });
+  const response = await get<{ data: RequestTraces }>(endpoint, { environment });
 
   return response?.data;
 }

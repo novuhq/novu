@@ -25,7 +25,6 @@ export const StudioOnboarding = () => {
 
   useEffect(() => {
     track('Add endpoint step started - [Onboarding - Signup]');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -36,7 +35,6 @@ export const StudioOnboarding = () => {
       setNovuOnboardingStepCookie();
       navigate(ROUTES.STUDIO_FLOWS);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   const welcomeMessage = `${`Welcome ${capitalizeFirstLetter(testUser?.firstName || '')}`.trim()}. Let's get started!`;

@@ -1,21 +1,21 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import { ModuleRef } from '@nestjs/core';
 import { CreateExecutionDetails, DetailEnum, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
 import {
   ControlValuesLevelEnum,
-  ExecutionDetailsStatusEnum,
   ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  JobStatusEnum,
   LAYOUT_CONTENT_VARIABLE,
   StepTypeEnum,
-  JobStatusEnum,
 } from '@novu/shared';
-import { ModuleRef } from '@nestjs/core';
+import { expect } from 'chai';
+import sinon from 'sinon';
+import { GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { EmailOutputRendererCommand, EmailOutputRendererUsecase } from './email-output-renderer.usecase';
 import { FullPayloadForRender } from './render-command';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
 
 describe('EmailOutputRendererUsecase', () => {
   let featureFlagsServiceMock: sinon.SinonStubbedInstance<FeatureFlagsService>;

@@ -1,11 +1,11 @@
-import { expect } from 'chai';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { sendTrigger } from '../../src/app/events/e2e/trigger-event.e2e';
 import { inAppAsSeen, notInAppAsUnseen, seenToRead } from './seen-read-support.migration';
 
-describe('Update seen/read', function () {
+describe('Update seen/read', () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -30,7 +30,7 @@ describe('Update seen/read', function () {
     await new Promise((r) => setTimeout(r, 1000));
   });
 
-  it('should update all seen to read', async function () {
+  it('should update all seen to read', async () => {
     await seenToRead();
 
     const messages = await messageRepository.find({});
@@ -40,7 +40,7 @@ describe('Update seen/read', function () {
     });
   });
 
-  it('should add not in app seen as false', async function () {
+  it('should add not in app seen as false', async () => {
     await seenToRead();
 
     await inAppAsSeen();

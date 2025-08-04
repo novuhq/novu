@@ -1,7 +1,7 @@
 import { Reorder } from 'motion/react';
+import { LiquidVariable } from '@/utils/parseStepVariables';
 import { FilterWithParam } from '../types';
 import { ReorderFilterItem } from './reorder-filter-item';
-import { LiquidVariable } from '@/utils/parseStepVariables';
 
 type FiltersListProps = {
   variables: LiquidVariable[];

@@ -1,8 +1,19 @@
-/* eslint-disable no-param-reassign */
-import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
+import { JSONContent as MailyJSONContent, render as mailyRender } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Liquid } from 'liquidjs';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  EmailControlType,
+  FeatureFlagsService,
+  InstrumentUsecase,
+  LayoutControlType,
+  PinoLogger,
+  sanitizeHTML,
+} from '@novu/application-generic';
+import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
+import { createLiquidEngine } from '@novu/framework/internal';
 import {
   ControlValuesLevelEnum,
   EmailRenderOutput,
@@ -11,21 +22,10 @@ import {
   FeatureFlagsKeysEnum,
   LAYOUT_CONTENT_VARIABLE,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  sanitizeHTML,
-  FeatureFlagsService,
-  PinoLogger,
-  EmailControlType,
-  LayoutControlType,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '@novu/application-generic';
-import { createLiquidEngine } from '@novu/framework/internal';
-import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
-
-import { FullPayloadForRender, RenderCommand } from './render-command';
+import { Liquid } from 'liquidjs';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import {
   hasShow,
@@ -37,12 +37,10 @@ import {
   replaceMailyNodesByCondition,
   wrapMailyInLiquid,
 } from '../../../shared/helpers/maily-utils';
-import { NOVU_BRANDING_HTML } from './novu-branding-html';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
-import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { removeBrandingFromHtml } from '../../../shared/utils/html';
-import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
+import { NOVU_BRANDING_HTML } from './novu-branding-html';
+import { FullPayloadForRender, RenderCommand } from './render-command';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 

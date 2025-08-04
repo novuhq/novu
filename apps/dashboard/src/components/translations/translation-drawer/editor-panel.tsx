@@ -1,11 +1,11 @@
+import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { RiFileTextLine } from 'react-icons/ri';
 import { Editor } from '@/components/primitives/editor';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 import { cn } from '@/utils/ui';
-import { loadLanguage } from '@uiw/codemirror-extensions-langs';
-import { RiFileTextLine } from 'react-icons/ri';
 import { DATE_FORMAT_OPTIONS, TIME_FORMAT_OPTIONS } from '../constants';
 import { formatTranslationDate, formatTranslationTime } from '../utils';
 import { EditorActions } from './editor-actions';

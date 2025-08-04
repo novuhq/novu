@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
-import { TranslationKey } from '@/types/translations';
 import { useTranslationValidation } from '@/hooks/use-translation-validation';
+import { TranslationKey } from '@/types/translations';
 
 export const useTranslationForm = (
   editKey: string,

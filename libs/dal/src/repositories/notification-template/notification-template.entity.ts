@@ -10,20 +10,20 @@ import {
   IPreferenceChannels,
   ITriggerReservedVariable,
   IWorkflowStepMetadata,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  RuntimeIssue,
   StepIssues,
   TriggerTypeEnum,
   WorkflowIssueTypeEnum,
-  ResourceOriginEnum,
   WorkflowStatusEnum,
-  ResourceTypeEnum,
-  RuntimeIssue,
 } from '@novu/shared';
 import { Types } from 'mongoose';
 import type { ChangePropsValueType } from '../../types';
 import type { EnvironmentId } from '../environment';
+import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
-import { MessageTemplateEntity } from '../message-template';
 import { UserEntity } from '../user';
 
 export class NotificationTemplateEntity {

@@ -1,15 +1,15 @@
-import { createStep } from '@/components/workflow-editor/step-utils';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
 import { useNavigate } from 'react-router-dom';
-import { AddStepMenu } from './add-step-menu';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { createStep } from '@/components/workflow-editor/step-utils';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { AddStepMenu } from './add-step-menu';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 

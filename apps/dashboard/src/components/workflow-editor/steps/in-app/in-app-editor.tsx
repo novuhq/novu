@@ -1,14 +1,13 @@
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, UiSchemaGroupEnum, type UiSchema } from '@novu/shared';
-
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
+import { RiInstanceLine } from 'react-icons/ri';
 import { Notification5Fill } from '@/components/icons';
 import { Separator } from '@/components/primitives/separator';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { InAppTabsSection } from '@/components/workflow-editor/steps/in-app/in-app-tabs-section';
-import { RiInstanceLine } from 'react-icons/ri';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '../../../../hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
-import { useEnvironment } from '@/context/environment/hooks';
 
 const avatarKey = 'avatar';
 const subjectKey = 'subject';

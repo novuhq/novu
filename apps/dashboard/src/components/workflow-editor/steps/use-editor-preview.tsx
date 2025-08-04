@@ -1,12 +1,12 @@
-import * as Sentry from '@sentry/react';
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import type { PreviewPayload } from '@novu/shared';
+import * as Sentry from '@sentry/react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { previewStep } from '@/api/steps';
-import { usePreviewStep } from '@/hooks/use-preview-step';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { usePreviewStep } from '@/hooks/use-preview-step';
 import { parse, stringify } from '@/utils/json';
 import { QueryKeys } from '@/utils/query-keys';
 

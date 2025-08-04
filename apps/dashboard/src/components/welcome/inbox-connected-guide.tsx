@@ -1,16 +1,16 @@
-import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { IEnvironment } from '@novu/shared';
 import { RiCheckboxCircleFill, RiLoader3Line } from 'react-icons/ri';
-import { Notification5Fill } from '@/components/icons';
 import { useNavigate } from 'react-router-dom';
-import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
-import { ROUTES } from '../../utils/routes';
-import { Button } from '../primitives/button';
-import { showToast } from '../primitives/sonner-helpers';
-import { ToastIcon } from '../primitives/sonner';
-import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
-import { generateCurlCommand } from '../auth/inbox-playground';
+import { Notification5Fill } from '@/components/icons';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
+import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
+import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
+import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
+import { ROUTES } from '../../utils/routes';
+import { generateCurlCommand } from '../auth/inbox-playground';
+import { Button } from '../primitives/button';
+import { ToastIcon } from '../primitives/sonner';
+import { showToast } from '../primitives/sonner-helpers';
 
 type InboxConnectedGuideProps = {
   subscriberId: string;

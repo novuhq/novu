@@ -1,4 +1,4 @@
-import { it, describe, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { sanitizeHtmlInObject } from './sanitize.utils';
 
 const scriptBody = `<script>alert('Hello there')</script>`;

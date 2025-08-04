@@ -1,6 +1,6 @@
 import { CreateTopicSubscriptionsUsecase } from './create-topic-subscriptions/create-topic-subscriptions.usecase';
-import { DeleteTopicSubscriptionsUsecase } from './delete-topic-subscriptions/delete-topic-subscriptions.usecase';
 import { DeleteTopicUseCase } from './delete-topic/delete-topic.usecase';
+import { DeleteTopicSubscriptionsUsecase } from './delete-topic-subscriptions/delete-topic-subscriptions.usecase';
 import { GetTopicUseCase } from './get-topic/get-topic.usecase';
 import { ListSubscriberSubscriptionsUseCase } from './list-subscriber-subscriptions/list-subscriber-subscriptions.usecase';
 import { ListTopicSubscriptionsUseCase } from './list-topic-subscriptions/list-topic-subscriptions.usecase';

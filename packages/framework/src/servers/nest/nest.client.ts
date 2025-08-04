@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import type { Request, Response } from 'express';
 
 import { NovuRequestHandler, type ServeHandlerOptions } from '../../handler';

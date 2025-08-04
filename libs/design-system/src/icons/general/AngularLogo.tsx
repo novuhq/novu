@@ -7,7 +7,6 @@ export const AngularLogo = (props: React.ComponentPropsWithoutRef<'svg'>) => {
         <path fill="#C52A37" d="m2.009 4.84 1.518 13.2 8.411 4.687V1.285L2.008 4.84Z" />
         <path
           fill="#fff"
-          // eslint-disable-next-line max-len
           d="m14.744 12.7-2.806 1.318H8.981l-1.39 3.494-2.586.048 6.933-15.496L14.744 12.7Zm-.271-.663-2.516-5.004-2.064 4.917h2.045l2.535.087Z"
         />
         <path

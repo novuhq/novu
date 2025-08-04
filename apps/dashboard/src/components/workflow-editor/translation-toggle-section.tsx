@@ -1,21 +1,21 @@
-import { FormField } from '@/components/primitives/form/form';
-import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
-import { TranslationSwitch } from '@/components/translations/translation-switch';
-import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InfoIcon } from 'lucide-react';
+import { motion } from 'motion/react';
+import { useState } from 'react';
 import { Control, FieldValues, Path } from 'react-hook-form';
+import { RiArrowRightSLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { FormField } from '@/components/primitives/form/form';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
+import { TranslationDrawer } from '@/components/translations/translation-drawer/translation-drawer';
+import { TranslationSwitch } from '@/components/translations/translation-switch';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
+import { LocalizationResourceEnum } from '@/types/translations';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { Badge } from '../primitives/badge';
 import { Button } from '../primitives/button';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { RiArrowRightSLine } from 'react-icons/ri';
-import { motion } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
-import { LocalizationResourceEnum } from '@/types/translations';
-import { useState } from 'react';
 
 interface TranslationToggleSectionProps<T extends FieldValues> {
   control: Control<T>;

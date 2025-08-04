@@ -1,3 +1,5 @@
+import { AuthType, Infobip } from '@infobip-api/sdk';
+import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
@@ -6,8 +8,6 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import { Infobip, AuthType } from '@infobip-api/sdk';
-import { EmailProviderIdEnum } from '@novu/shared';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 

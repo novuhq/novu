@@ -1,8 +1,7 @@
 import { Logger } from '@nestjs/common';
+import { IOrganizationEntity } from '@novu/shared';
 import { Analytics } from '@segment/analytics-node';
 import Mixpanel from 'mixpanel';
-
-import { IOrganizationEntity } from '@novu/shared';
 
 interface IUser {
   _id?: string | null;

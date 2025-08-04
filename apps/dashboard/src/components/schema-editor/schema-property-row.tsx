@@ -1,23 +1,22 @@
 import { memo, useMemo } from 'react';
-import { Controller, Path, useFormContext, useWatch, type Control } from 'react-hook-form';
+import { type Control, Controller, Path, useFormContext, useWatch } from 'react-hook-form';
 
 import { Checkbox } from '@/components/primitives/checkbox';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
-
-import type { JSONSchema7 } from './json-schema';
-import { getMarginClassPx } from './utils/ui-helpers';
-import type { PropertyListItem, SchemaEditorFormValues } from './utils/validation-schema';
-import type { VariableUsageInfo } from './utils/check-variable-usage';
+import { ArraySection } from './components/array-section';
+import { EnumSection } from './components/enum-section';
+import { ObjectSection } from './components/object-section';
+import { PropertyActions } from './components/property-actions';
 
 import { PropertyNameInput } from './components/property-name-input';
 import { PropertyTypeSelector } from './components/property-type-selector';
-import { PropertyActions } from './components/property-actions';
-import { EnumSection } from './components/enum-section';
-import { ObjectSection } from './components/object-section';
-import { ArraySection } from './components/array-section';
-import { useSchemaPropertyType } from './hooks/use-schema-property-type';
 import { usePropertyPaths } from './hooks/use-property-paths';
+import { useSchemaPropertyType } from './hooks/use-schema-property-type';
+import type { JSONSchema7 } from './json-schema';
+import type { VariableUsageInfo } from './utils/check-variable-usage';
+import { getMarginClassPx } from './utils/ui-helpers';
+import type { PropertyListItem, SchemaEditorFormValues } from './utils/validation-schema';
 
 export interface SchemaPropertyRowProps {
   control: Control<SchemaEditorFormValues>;
@@ -78,11 +77,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
       )}
     >
       <div className={cn('flex items-center gap-2', getMarginClassPx(indentationLevel))}>
-        <PropertyNameInput 
-          fieldPath={paths.keyName} 
-          control={control} 
-          autoFocus={isKeyNameEmpty}
-        />
+        <PropertyNameInput fieldPath={paths.keyName} control={control} autoFocus={isKeyNameEmpty} />
         <PropertyTypeSelector
           definitionPath={paths.definition}
           control={control}

@@ -1,9 +1,9 @@
+import { EnvironmentTypeEnum, LayoutResponseDto, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import { ComponentProps, useState } from 'react';
 import { RiDeleteBin2Line, RiFileCopyLine, RiMore2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
-import { PermissionsEnum, LayoutResponseDto, ResourceOriginEnum, EnvironmentTypeEnum } from '@novu/shared';
-
+import { DeleteLayoutDialog } from '@/components/layouts/delete-layout-dialog';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
 import {
@@ -14,20 +14,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { ToastIcon } from '@/components/primitives/sonner';
+import { showToast } from '@/components/primitives/sonner-helpers';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
-import { formatDateSimple } from '@/utils/format-date';
-import { Protect } from '@/utils/protect';
-import { cn } from '@/utils/ui';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDeleteLayout } from '@/hooks/use-delete-layout';
-import { DeleteLayoutDialog } from '@/components/layouts/delete-layout-dialog';
-import { ToastIcon } from '@/components/primitives/sonner';
-import { showToast } from '@/components/primitives/sonner-helpers';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
+import { formatDateSimple } from '@/utils/format-date';
+import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
 import { Badge } from '../primitives/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 const toastOptions: ExternalToast = {
   position: 'bottom-right',

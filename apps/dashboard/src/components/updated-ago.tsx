@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useEffect, useMemo, useState } from 'react';
 import { RiLoopRightLine, RiRefreshLine, RiRepeatOneLine } from 'react-icons/ri';
 
 type UpdatedAgoProps = {

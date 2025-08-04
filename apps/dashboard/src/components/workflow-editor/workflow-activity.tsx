@@ -1,9 +1,9 @@
+import { useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ActivityFeedContent } from '@/components/activity/activity-feed-content';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 export function WorkflowActivity() {
   const { workflow } = useWorkflow();

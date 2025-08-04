@@ -1,14 +1,13 @@
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-
-import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
-import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { RiLayout5Line } from 'react-icons/ri';
-import { useSaveForm } from '../save-form-context';
+import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
-import { EnvironmentTypeEnum } from '@novu/shared';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
+import { useSaveForm } from '../save-form-context';
 
 export const LayoutSelect = () => {
   const { currentEnvironment } = useEnvironment();

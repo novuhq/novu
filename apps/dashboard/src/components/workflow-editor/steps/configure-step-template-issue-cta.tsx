@@ -1,12 +1,12 @@
+import { RuntimeIssue, StepResponseDto } from '@novu/shared';
+import { PropsWithChildren } from 'react';
+import { RiArrowRightUpLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { titleize } from '@/utils/titleize';
 import { cn } from '@/utils/ui';
-import { RuntimeIssue, StepResponseDto } from '@novu/shared';
-import { PropsWithChildren } from 'react';
-import { RiArrowRightUpLine } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 import { ExternalLink } from '../../shared/external-link';
 
 export const ConfigureStepTemplateIssuesContainer = (props: PropsWithChildren) => {

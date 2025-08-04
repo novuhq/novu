@@ -1,41 +1,40 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
+import {
+  ChatFactory,
+  CompileTemplate,
+  CompileTemplateCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  SelectIntegration,
+  SelectVariant,
+} from '@novu/application-generic';
 
 import {
+  IChannelSettings,
+  IntegrationEntity,
+  MessageEntity,
+  MessageRepository,
   NotificationStepEntity,
   SubscriberRepository,
-  MessageRepository,
-  MessageEntity,
-  IntegrationEntity,
-  IChannelSettings,
 } from '@novu/dal';
+import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
-  LogCodeEnum,
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  ProvidersIdEnum,
   ITenantDefine,
+  LogCodeEnum,
+  ProvidersIdEnum,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
-  CompileTemplate,
-  CompileTemplateCommand,
-  ChatFactory,
-  SelectIntegration,
-  GetNovuProviderCredentials,
-  SelectVariant,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '@novu/application-generic';
-import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
-
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
+import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageCommand } from './send-message.command';
 import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';

@@ -1,10 +1,10 @@
+import { TRANSLATION_KEY_REGEX } from '@novu/shared';
 import { Decoration, DecorationSet, EditorView, Range } from '@uiw/react-codemirror';
 import { MutableRefObject } from 'react';
-import { TRANSLATION_KEY_REGEX } from '@novu/shared';
-import { isTypingTranslation, parseTranslation } from './utils';
-import { TranslationPillWidget } from './pill-widget';
 import { validateTranslationKey } from '@/hooks/use-translation-validation';
 import { TranslationKey } from '@/types/translations';
+import { TranslationPillWidget } from './pill-widget';
+import { isTypingTranslation, parseTranslation } from './utils';
 
 export class TranslationPluginView {
   decorations: DecorationSet;

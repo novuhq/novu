@@ -1,21 +1,21 @@
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
-import { Form, FormRoot } from '@/components/primitives/form/form';
-import { Label } from '@/components/primitives/label';
-import { Separator } from '@/components/primitives/separator';
-import { useEnvironment } from '@/context/environment/hooks';
-import { ROUTES } from '@/utils/routes';
 import { ChannelTypeEnum, IIntegration, IProviderConfig, PermissionsEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
+import { Form, FormRoot } from '@/components/primitives/form/form';
+import { Label } from '@/components/primitives/label';
+import { Separator } from '@/components/primitives/separator';
+import { useEnvironment } from '@/context/environment/hooks';
+import { Protect } from '@/utils/protect';
+import { ROUTES } from '@/utils/routes';
 import { InlineToast } from '../../../components/primitives/inline-toast';
 import { cn } from '../../../utils/ui';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialsSection } from './integration-credentials';
 import { GeneralSettings } from './integration-general-settings';
 import { isDemoIntegration } from './utils/helpers';
-import { Protect } from '@/utils/protect';
 
 type IntegrationFormData = {
   name: string;

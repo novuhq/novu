@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { buildGroupedBlueprintsKey, CachedResponse, PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { IGroupedBlueprint } from '@novu/shared';
 
 import { GroupedBlueprintResponse } from '../../dtos/grouped-blueprint.response.dto';
@@ -46,7 +46,7 @@ export class GetGroupedBlueprints {
   }
 
   private groupedToBlueprintsArray(groups: { name: string; blueprints: NotificationTemplateEntity[] }[]) {
-    return groups.map((group) => group.blueprints).flat();
+    return groups.flatMap((group) => group.blueprints);
   }
 
   private getPopularGroupBlueprints(

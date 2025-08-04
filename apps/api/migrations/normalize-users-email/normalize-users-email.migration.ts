@@ -1,8 +1,7 @@
-/* eslint-disable no-console */
 import '../../src/config';
 
-import { UserRepository, SubscriberRepository, MemberRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
+import { MemberRepository, SubscriberRepository, UserRepository } from '@novu/dal';
 
 import { normalizeEmail } from '@novu/shared';
 import { AppModule } from '../../src/app.module';

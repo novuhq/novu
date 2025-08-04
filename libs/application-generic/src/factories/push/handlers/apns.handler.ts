@@ -1,9 +1,5 @@
-import {
-  ChannelTypeEnum,
-  ICredentials,
-  PushProviderIdEnum,
-} from '@novu/shared';
 import { APNSPushProvider } from '@novu/providers';
+import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { BasePushHandler } from './base.handler';
 
 export class APNSHandler extends BasePushHandler {
@@ -12,11 +8,7 @@ export class APNSHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    if (
-      !credentials.secretKey ||
-      !credentials.apiKey ||
-      !credentials.projectName
-    ) {
+    if (!credentials.secretKey || !credentials.apiKey || !credentials.projectName) {
       throw new Error('Config is not valid for apns');
     }
     this.provider = new APNSPushProvider({

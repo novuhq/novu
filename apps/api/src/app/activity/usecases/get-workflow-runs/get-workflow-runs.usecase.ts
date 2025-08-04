@@ -1,15 +1,15 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  WorkflowRunRepository,
-  WorkflowRun,
   PinoLogger,
-  Where,
-  StepRunRepository,
   StepRun,
+  StepRunRepository,
+  Where,
+  WorkflowRun,
+  WorkflowRunRepository,
 } from '@novu/application-generic';
-import { GetWorkflowRunsResponseDto, GetWorkflowRunsDto } from '../../dtos/workflow-runs-response.dto';
-import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
+import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
 
 type CursorData = {
   created_at: string;
@@ -69,7 +69,7 @@ export class GetWorkflowRuns {
 
       if (command.subscriberIds?.length) {
         whereConditions.push({
-          subscriber_id: {
+          external_subscriber_id: {
             operator: 'IN',
             value: command.subscriberIds,
           },
@@ -94,11 +94,6 @@ export class GetWorkflowRuns {
         });
       }
 
-      /*
-       * Handle date range conditions properly to avoid overwriting
-       * Since the current query builder doesn't support multiple conditions on the same field,
-       * we'll use separate field names that will be handled specially in the repository call
-       */
       if (command.createdGte) {
         whereConditions.push({
           created_at: {
@@ -113,6 +108,26 @@ export class GetWorkflowRuns {
           created_at: {
             operator: '<=',
             value: new Date(command.createdLte),
+          },
+        });
+      }
+
+      if (command.channels?.length) {
+        whereConditions.push({
+          $or: command.channels.map((channel) => ({
+            channels: {
+              operator: 'LIKE',
+              value: `%"${channel}"%`,
+            },
+          })),
+        });
+      }
+
+      if (command.topicKey) {
+        whereConditions.push({
+          topics: {
+            operator: 'LIKE',
+            value: `%${command.topicKey}%`,
           },
         });
       }

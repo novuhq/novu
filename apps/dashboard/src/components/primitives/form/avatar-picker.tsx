@@ -8,9 +8,9 @@ import { Label } from '@/components/primitives/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Separator } from '@/components/primitives/separator';
 import TextSeparator from '@/components/primitives/text-separator';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
-import { ControlInput } from '@/components/workflow-editor/control-input';
 import { InputRoot } from '../input';
 import { useFormField } from './form-context';
 

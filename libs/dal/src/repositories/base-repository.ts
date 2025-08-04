@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { DirectionEnum } from '@novu/shared';
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import {
@@ -398,7 +397,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
         error.message?.includes('transaction') ||
         error.codeName === 'IllegalOperation'
       ) {
-        // eslint-disable-next-line no-console
         console.warn('MongoDB is not running in replica set mode, execute without transaction');
 
         // MongoDB is not running in replica set mode, execute without transaction

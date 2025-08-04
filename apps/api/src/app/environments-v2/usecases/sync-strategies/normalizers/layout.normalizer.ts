@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { INormalizedLayout } from '../types/layout-sync.types';
 import { LayoutResponseDto } from '../../../../layouts-v2/dtos';
+import { INormalizedLayout } from '../types/layout-sync.types';
 
 @Injectable()
 export class LayoutNormalizer {

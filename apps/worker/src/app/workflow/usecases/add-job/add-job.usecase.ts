@@ -1,22 +1,4 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { parseExpression as parseCronExpression } from 'cron-parser';
-import { differenceInMilliseconds } from 'date-fns';
-import _ from 'lodash';
-
-import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
-import {
-  castUnitToDigestUnitEnum,
-  DigestCreationResultEnum,
-  DigestTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IDigestBaseMetadata,
-  IDigestRegularMetadata,
-  IDigestTimedMetadata,
-  IWorkflowStepMetadata,
-  StepTypeEnum,
-} from '@novu/shared';
-import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,
@@ -39,13 +21,29 @@ import {
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
 } from '@novu/application-generic';
-
+import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
+import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
+import {
+  castUnitToDigestUnitEnum,
+  DigestCreationResultEnum,
+  DigestTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  IDigestBaseMetadata,
+  IDigestRegularMetadata,
+  IDigestTimedMetadata,
+  IWorkflowStepMetadata,
+  StepTypeEnum,
+} from '@novu/shared';
+import { parseExpression as parseCronExpression } from 'cron-parser';
+import { differenceInMilliseconds } from 'date-fns';
+import _ from 'lodash';
+import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddDelayJob } from './add-delay-job.usecase';
+import { AddJobCommand } from './add-job.command';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
-import { AddJobCommand } from './add-job.command';
 import { validateDigest } from './validation';
-import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -400,7 +398,6 @@ export class AddJob {
     }
 
     // Update the job digest directly to avoid an extra database call
-    // eslint-disable-next-line no-param-reassign
     command.job.digest = { ...command.job.digest, ...metadata } as IWorkflowStepMetadata;
 
     const subscriber = await this.subscriberRepository.findOne(
@@ -416,7 +413,6 @@ export class AddJob {
 
     validateDigest(job);
 
-    // eslint-disable-next-line no-param-reassign
     digestAmount =
       bridgeAmount ??
       this.computeJobWaitDurationService.calculateDelay({
@@ -524,7 +520,6 @@ export class AddJob {
 
     if (delay) {
       const logMessage =
-        // eslint-disable-next-line no-nested-ternary
         job.type === StepTypeEnum.DELAY
           ? 'Delay is active, Creating execution details'
           : job.type === StepTypeEnum.DIGEST

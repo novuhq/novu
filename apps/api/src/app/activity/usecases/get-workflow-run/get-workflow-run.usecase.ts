@@ -1,16 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  WorkflowRunRepository,
-  WorkflowRun,
   PinoLogger,
-  StepRunRepository,
   StepRun,
+  StepRunRepository,
   TraceLogRepository,
+  WorkflowRun,
+  WorkflowRunRepository,
 } from '@novu/application-generic';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto';
-import { GetWorkflowRunCommand } from './get-workflow-run.command';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 interface IStepRunWithDetails extends StepRun {
   executionDetails?: any[];

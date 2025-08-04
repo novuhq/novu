@@ -1,11 +1,12 @@
+import { ISubscriberResponseDto } from '@novu/shared';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { Accordion } from '@/components/primitives/accordion';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
 import { StepTypeEnum } from '@/utils/enums';
-import { ISubscriberResponseDto } from '@novu/shared';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePreviewContext } from '../../../hooks/use-preview-context';
 import { PayloadSchemaDrawer } from '../payload-schema-drawer';
 import { PreviewPayloadSection, PreviewStepResultsSection, PreviewSubscriberSection } from './components';
@@ -20,7 +21,6 @@ import {
   ValidationErrors,
 } from './types/preview-context.types';
 import { createSubscriberData, parseJsonValue } from './utils/preview-context.utils';
-import { useDefaultSubscriberData } from '@/hooks/use-default-subscriber-data';
 
 function usePrevious<T>(value: T): T | undefined {
   const ref = useRef<T>();

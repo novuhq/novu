@@ -1,9 +1,9 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ResourceOriginEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { StepTypeEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { WorkflowResponseDto } from './workflow-response.dto';
+import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { UserResponseDto } from './user-response.dto';
+import { WorkflowResponseDto } from './workflow-response.dto';
 
 export class WorkflowListResponseDto {
   @ApiProperty({ description: 'Name of the workflow' })

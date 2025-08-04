@@ -1,17 +1,16 @@
-import { Test } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
-import { expect } from 'chai';
-import { stub, restore, assert } from 'sinon';
-import { UserSession } from '@novu/testing';
-import { of } from 'rxjs';
-import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-
 import { BadRequestException } from '@nestjs/common';
-import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
+import { Test } from '@nestjs/testing';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { of } from 'rxjs';
+import { assert, restore, stub } from 'sinon';
 import { Sync } from '../../../bridge/usecases/sync';
+import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
 
-describe('UpdateVercelIntegration', function () {
+describe('UpdateVercelIntegration', () => {
   let updateVercelIntegration: UpdateVercelIntegration;
   let session: UserSession;
   let httpServiceMock;
@@ -151,7 +150,7 @@ describe('UpdateVercelIntegration', function () {
     restore();
   });
 
-  it('should update vercel configuration successfully', async function () {
+  it('should update vercel configuration successfully', async () => {
     const command = {
       userId: session.user._id,
       organizationId: session.organization._id,
@@ -279,7 +278,7 @@ describe('UpdateVercelIntegration', function () {
     );
   });
 
-  it('should handle projects with no environment variables', async function () {
+  it('should handle projects with no environment variables', async () => {
     // Reset the stub before creating a new behavior
     httpServiceMock.get.reset();
     httpServiceMock.get.callsFake((url) => {
@@ -315,7 +314,7 @@ describe('UpdateVercelIntegration', function () {
     assert.notCalled(httpServiceMock.delete);
   });
 
-  it('should handle projects with missing Novu environment variables', async function () {
+  it('should handle projects with missing Novu environment variables', async () => {
     // Reset the stub before creating a new behavior
     httpServiceMock.get.reset();
     httpServiceMock.get.callsFake((url) => {
@@ -351,7 +350,7 @@ describe('UpdateVercelIntegration', function () {
     assert.notCalled(httpServiceMock.delete);
   });
 
-  it('should throw BadRequestException when configuration not found', async function () {
+  it('should throw BadRequestException when configuration not found', async () => {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     try {
@@ -371,7 +370,7 @@ describe('UpdateVercelIntegration', function () {
     }
   });
 
-  it('should handle errors during project fetch', async function () {
+  it('should handle errors during project fetch', async () => {
     httpServiceMock.get.throws(new Error('HTTP Error'));
 
     try {
@@ -392,7 +391,7 @@ describe('UpdateVercelIntegration', function () {
     }
   });
 
-  it('should handle errors during environment variable deletion', async function () {
+  it('should handle errors during environment variable deletion', async () => {
     httpServiceMock.delete.onCall(0).throws(new Error('Delete Error'));
 
     try {
@@ -414,7 +413,7 @@ describe('UpdateVercelIntegration', function () {
     }
   });
 
-  it('should handle multiple projects with environment variables', async function () {
+  it('should handle multiple projects with environment variables', async () => {
     // Reset the stub before creating a new behavior
     httpServiceMock.get.reset();
     httpServiceMock.get.callsFake((url) => {

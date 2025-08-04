@@ -1,18 +1,17 @@
-import { Link, useNavigate, useMatch } from 'react-router-dom';
+import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
-
+import { RiCodeSSlashLine, RiPlayCircleLine } from 'react-icons/ri';
+import { Link, useMatch, useNavigate } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
-import { Button } from '../primitives/button';
-import { WorkflowCanvas } from './workflow-canvas';
-import { WorkflowActivity } from './workflow-activity';
 import { Protect } from '@/utils/protect';
-import { PermissionsEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { RiPlayCircleLine, RiCodeSSlashLine } from 'react-icons/ri';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { Button } from '../primitives/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../primitives/tabs';
 import { TestWorkflowInstructions } from './test-workflow/test-workflow-instructions';
+import { WorkflowActivity } from './workflow-activity';
+import { WorkflowCanvas } from './workflow-canvas';
 
 export const WorkflowTabs = () => {
   const { workflow } = useWorkflow();

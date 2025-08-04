@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-
-import { JobRepository, MessageRepository } from '@novu/dal';
 import { CreateExecutionDetails, InstrumentUsecase } from '@novu/application-generic';
+import { JobRepository, MessageRepository } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
 import { SendMessageResult, SendMessageType } from './send-message-type.usecase';

@@ -453,7 +453,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     id: string,
     status: 'error' | 'sent' | 'warning',
-    // eslint-disable-next-line
     providerPayload: any = {},
     errorId: string,
     errorText: string

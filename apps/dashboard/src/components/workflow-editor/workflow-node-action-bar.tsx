@@ -1,11 +1,11 @@
 import { motion } from 'motion/react';
-import { RiDeleteBin2Line, RiEdit2Line, RiFileCopyLine } from 'react-icons/ri';
 import { useState } from 'react';
-import { Button } from '@/components/primitives/button';
+import { RiDeleteBin2Line, RiEdit2Line, RiFileCopyLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { StepTypeEnum } from '@/utils/enums';
 import TruncatedText from '@/components/truncated-text';
+import { StepTypeEnum } from '@/utils/enums';
 
 const CHANNEL_STEP_TYPES = [
   StepTypeEnum.EMAIL,

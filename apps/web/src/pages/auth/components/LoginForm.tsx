@@ -29,7 +29,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
 
   const { setRedirectURL } = useRedirectURL();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => setRedirectURL(), []);
 
   const { login, currentUser, currentOrganization } = useAuth();
@@ -97,7 +96,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   useEffect(() => {
     handleLoginInUseEffect();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [login, currentUser]);
 
   const {

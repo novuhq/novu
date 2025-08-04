@@ -5,12 +5,12 @@ import { SubscriberSourceEnum } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
+import { CacheService, FeatureFlagsService } from '../../services';
+import type { EventType, Trace } from '../../services/analytic-logs';
+import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
-import { CacheService, FeatureFlagsService } from '../../services';
-import { TraceLogRepository, LogRepository, mapEventTypeToTitle } from '../../services/analytic-logs';
-import type { Trace, EventType } from '../../services/analytic-logs';
 
 const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 
@@ -30,7 +30,6 @@ export class TriggerBroadcast extends TriggerBase {
 
   @InstrumentUsecase()
   async execute(command: TriggerBroadcastCommand) {
- 
     try {
       const subscriberFetchBatchSize = 500;
       let subscribers: SubscriberEntity[] = [];
@@ -53,15 +52,15 @@ export class TriggerBroadcast extends TriggerBase {
         }
       }
 
-        await this.createBroadcastTrace(
+      await this.createBroadcastTrace(
         command,
         'request_subscriber_processing_completed',
         'success',
         'Subscriber processing completed successfully',
-        { 
-          addressingType: 'broadcast', 
+        {
+          addressingType: 'broadcast',
           workflowId: command.template._id,
-          totalSubscribers: totalProcessed
+          totalSubscribers: totalProcessed,
         }
       );
 
@@ -69,8 +68,6 @@ export class TriggerBroadcast extends TriggerBase {
         await this.sendToProcessSubscriberService(command, subscribers, SubscriberSourceEnum.BROADCAST);
         totalProcessed += subscribers.length;
       }
-
-
     } catch (e) {
       const error = e as Error;
       await this.createBroadcastTrace(
@@ -78,11 +75,11 @@ export class TriggerBroadcast extends TriggerBase {
         'request_failed',
         'error',
         `Broadcast processing failed: ${error.message || 'Unknown error'}`,
-        { 
-          addressingType: 'broadcast', 
+        {
+          addressingType: 'broadcast',
           workflowId: command.template._id,
-          error: error.message, 
-          stack: error.stack 
+          error: error.message,
+          stack: error.stack,
         }
       );
 

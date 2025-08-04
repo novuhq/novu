@@ -1,9 +1,8 @@
-/* eslint-disable global-require */
-import sinon from 'sinon';
-import { expect } from 'chai';
-// eslint-disable-next-line no-restricted-imports
+// biome-ignore lint/style/noRestrictedImports: <explanation>
 import { Logger } from '@nestjs/common';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 const { StripeUsageTypeEnum } = require('@novu/ee-billing/src/stripe/types');
 

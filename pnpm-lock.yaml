@@ -570,8 +570,8 @@ importers:
         specifier: ^6.11.1
         version: 6.11.1
       '@hookform/resolvers':
-        specifier: ^3.9.0
-        version: 3.9.0(react-hook-form@7.53.2(react@18.3.1))
+        specifier: ^3.10.0
+        version: 3.10.0(react-hook-form@7.53.2(react@18.3.1))
       '@lezer/highlight':
         specifier: ^1.2.1
         version: 1.2.1
@@ -8109,8 +8109,8 @@ packages:
     peerDependencies:
       react-hook-form: ^7.0.0
 
-  '@hookform/resolvers@3.9.0':
-    resolution: {integrity: sha512-bU0Gr4EepJ/EQsH/IwEzYLsT/PEj5C0ynLQ4m+GSHS+xKH4TfSelhluTgOaoc4kA5s7eCsQbM4wvZLzELmWzUg==}
+  '@hookform/resolvers@3.10.0':
+    resolution: {integrity: sha512-79Dv+3mDF7i+2ajj7SkypSKHhl1cbln1OGavqrsF7p6mbUv11xpqpacPsGDCTRvCSjEEIez2ef1NveSVL3b0Ag==}
     peerDependencies:
       react-hook-form: ^7.0.0
 
@@ -29544,6 +29544,7 @@ packages:
   superagent@10.1.0:
     resolution: {integrity: sha512-JMmik7PbnXGlq7g528Gi6apHbVbTz2vrE3du6fuG4kIPSb2PnLoSOPvfjKn8aQYuJcBWAKW6ZG90qPPsE5jZxQ==}
     engines: {node: '>=14.18.0'}
+    deprecated: Please upgrade to superagent v10.2.2+, see release notes at https://github.com/forwardemail/superagent/releases/tag/v10.2.2 - maintenance is supported by Forward Email @ https://forwardemail.net
 
   superagent@8.1.2:
     resolution: {integrity: sha512-6WTxW1EB6yCxV5VFOIPQruWGHqc3yI7hEmZK6h+pyk69Lk/Ut7rLUY6W/ONF2MjBuGjvmMiIpsrVJ2vjrHlslA==}
@@ -38555,7 +38556,7 @@ snapshots:
     dependencies:
       react-hook-form: 7.43.9(react@18.3.1)
 
-  '@hookform/resolvers@3.9.0(react-hook-form@7.53.2(react@18.3.1))':
+  '@hookform/resolvers@3.10.0(react-hook-form@7.53.2(react@18.3.1))':
     dependencies:
       react-hook-form: 7.53.2(react@18.3.1)
 

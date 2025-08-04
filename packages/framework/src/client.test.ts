@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from './client';
+import { PostActionEnum } from './constants';
 import {
   ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
@@ -11,7 +12,6 @@ import {
 } from './errors';
 import { workflow } from './resources';
 import { Event, Step } from './types';
-import { PostActionEnum } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -2007,7 +2007,6 @@ describe('Novu Client', () => {
 
       const executionResult = await client.executeWorkflow(event);
       expect(executionResult.outputs).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((executionResult.outputs.data as any).someVal).toBe(link);
     });
 

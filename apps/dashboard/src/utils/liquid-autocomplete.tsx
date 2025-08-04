@@ -1,6 +1,3 @@
-import { getFilters } from '@/components/variable/constants';
-import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
-import { LiquidVariable } from '@/utils/parseStepVariables';
 import {
   Completion,
   CompletionContext,
@@ -8,11 +5,14 @@ import {
   CompletionSource,
   startCompletion,
 } from '@codemirror/autocomplete';
-import { EditorView } from '@uiw/react-codemirror';
-import { createRoot } from 'react-dom/client';
-import React from 'react';
-import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
 import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
+import { EditorView } from '@uiw/react-codemirror';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import { NewVariablePreview } from '@/components/variable/components/new-variable-preview';
+import { getFilters } from '@/components/variable/constants';
+import { LiquidVariable } from '@/utils/parseStepVariables';
+import { getVariablesAtPositionWithLoopProperties } from './liquid-scope-analyzer';
 
 export interface CompletionOption {
   label: string;

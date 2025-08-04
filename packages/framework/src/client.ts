@@ -17,6 +17,8 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
+import { mockSchema } from './jsonSchemaFaker';
+import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
 import type {
   ActionStep,
   ClientOptions,
@@ -37,12 +39,9 @@ import type {
 } from './types';
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
-import { validateData } from './validators';
-
-import { mockSchema } from './jsonSchemaFaker';
-import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
-import { deepMerge } from './utils/object.utils';
 import { createLiquidEngine } from './utils/liquid.utils';
+import { deepMerge } from './utils/object.utils';
+import { validateData } from './validators';
 
 function isRuntimeInDevelopment() {
   return ['development', undefined].includes(process.env.NODE_ENV);
@@ -199,15 +198,12 @@ export class Client {
         case 'event':
           this.throwInvalidEvent(dataType, workflowId, result.errors);
 
-        // eslint-disable-next-line no-fallthrough
         case 'step':
           this.throwInvalidStep(stepId, dataType, workflowId, result.errors);
 
-        // eslint-disable-next-line no-fallthrough
         case 'provider':
           this.throwInvalidProvider(stepId, providerId, dataType, workflowId, result.errors);
 
-        // eslint-disable-next-line no-fallthrough
         default:
           throw new Error(`Invalid component: '${component}'`);
       }
@@ -316,7 +312,6 @@ export class Client {
            * Return an empty object for results when a step is skipped.
            * TODO: fix typings when `skip` is specified to return `Partial<T_Result>`
            */
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           return {} as any;
         }
       }
@@ -329,7 +324,6 @@ export class Client {
         ...step,
         providers: step.providers.map((provider) => {
           // TODO: Update return type to include ChannelStep and fix typings
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const providerResolve = (options as any)?.providers?.[provider.type] as typeof provider.resolve;
 
           if (!providerResolve) {
@@ -393,7 +387,6 @@ export class Client {
     const actionMessage = actionMessages[event.action];
 
     const actionMessageFormatted = `${actionMessage} workflowId:`;
-    // eslint-disable-next-line no-console
     console.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
     const workflow = this.getWorkflow(event.workflowId);
 
@@ -483,7 +476,6 @@ export class Client {
     } as const;
     const resultMessage = resultMessages[event.action];
 
-    // eslint-disable-next-line no-console
     console.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
 
     this.prettyPrintExecute(event, elapsedTimeInMilliseconds, executionError);
@@ -536,13 +528,9 @@ export class Client {
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
     const logMessage = `${successPrefix} ${message} workflowId: '${event.workflowId}`;
-    // eslint-disable-next-line no-console
     console.log(`\n  ${log.bold(executionLog(logMessage))}'`);
-    // eslint-disable-next-line no-console
     console.log(`  ├ ${EMOJI.STEP} stepId: '${event.stepId}'`);
-    // eslint-disable-next-line no-console
     console.log(`  ├ ${EMOJI.ACTION} action: '${event.action}'`);
-    // eslint-disable-next-line no-console
     console.log(`  └ ${EMOJI.DURATION} duration: '${duration.toFixed(2)}ms'\n`);
   }
 
@@ -576,7 +564,6 @@ export class Client {
 
     outputs: Record<string, unknown>
   ): Record<string, unknown> {
-    // eslint-disable-next-line no-console
     console.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
     const mockOutput = this.mock(provider.outputs.schema);
 

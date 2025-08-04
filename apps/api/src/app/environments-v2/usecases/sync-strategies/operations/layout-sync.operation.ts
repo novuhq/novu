@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { LayoutEntity } from '@novu/dal';
 import { ResourceTypeEnum } from '../../../types/sync.types';
-import { BaseSyncOperation } from '../base/operations/base-sync.operation';
+import { LayoutComparatorAdapter } from '../adapters/layout-comparator.adapter';
+import { LayoutDeleteAdapter } from '../adapters/layout-delete.adapter';
 import { LayoutRepositoryAdapter } from '../adapters/layout-repository.adapter';
 import { LayoutSyncAdapter } from '../adapters/layout-sync.adapter';
-import { LayoutDeleteAdapter } from '../adapters/layout-delete.adapter';
-import { LayoutComparatorAdapter } from '../adapters/layout-comparator.adapter';
+import { BaseSyncOperation } from '../base/operations/base-sync.operation';
 
 @Injectable()
 export class LayoutSyncOperation extends BaseSyncOperation<LayoutEntity> {

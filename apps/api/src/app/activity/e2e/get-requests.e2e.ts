@@ -1,12 +1,12 @@
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { format, subHours, isBefore, isAfter } from 'date-fns';
 import { Novu } from '@novu/api';
 import { LogRepository, RequestLog, RequestLogRepository } from '@novu/application-generic';
-import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { format, isAfter, isBefore, subHours } from 'date-fns';
 import { generateTransactionId } from '../../shared/helpers';
-import { mapRequestLogToResponseDto } from '../shared/mappers';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
+import { mapRequestLogToResponseDto } from '../shared/mappers';
 
 describe('Activity - /activity/requests (GET) #novu-v2', () => {
   let session: UserSession;

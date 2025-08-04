@@ -13,7 +13,7 @@ describe('Delete a Translation group - /translations/group/:id (Delete) #novu-v1
     });
   });
 
-  it('should delete the translation group', async function () {
+  it('should delete the translation group', async () => {
     const createTranslationGroup = {
       name: 'test',
       identifier: 'test',
@@ -35,7 +35,7 @@ describe('Delete a Translation group - /translations/group/:id (Delete) #novu-v1
     expect(translationGroupListAfterDelete.data.length).to.equal(0);
   });
 
-  it('should also delete the translations of the group', async function () {
+  it('should also delete the translations of the group', async () => {
     const createTranslationGroup = {
       name: 'test',
       identifier: 'test',

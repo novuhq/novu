@@ -1,34 +1,34 @@
-import { expect } from 'chai';
-import { SubscribersService, testServer, UserSession } from '@novu/testing';
 import {
+  ChangeRepository,
+  CommunityOrganizationRepository,
+  EnvironmentRepository,
+  MessageTemplateRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+  OrganizationRepository,
+  SubscriberEntity,
+} from '@novu/dal';
+import {
+  ChangeEntityTypeEnum,
   ChannelCTATypeEnum,
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  EmailProviderIdEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
-  StepTypeEnum,
-  INotificationTemplate,
-  TriggerTypeEnum,
-  IFieldFilterPart,
   FilterPartTypeEnum,
-  EmailProviderIdEnum,
-  ChangeEntityTypeEnum,
+  IFieldFilterPart,
+  INotificationTemplate,
   INotificationTemplateStep,
   isClerkEnabled,
   ResourceTypeEnum,
+  StepTypeEnum,
+  TriggerTypeEnum,
 } from '@novu/shared';
-import {
-  ChangeRepository,
-  NotificationTemplateRepository,
-  MessageTemplateRepository,
-  EnvironmentRepository,
-  SubscriberEntity,
-  OrganizationRepository,
-  NotificationTemplateEntity,
-  CommunityOrganizationRepository,
-} from '@novu/dal';
-import { isSameDay } from 'date-fns';
+import { SubscribersService, testServer, UserSession } from '@novu/testing';
 import axios from 'axios';
+import { expect } from 'chai';
+import { isSameDay } from 'date-fns';
 import { CreateWorkflowRequestDto } from '../dtos';
 
 describe('Create Workflow - /workflows (POST) #novu-v0', async () => {
@@ -49,7 +49,7 @@ describe('Create Workflow - /workflows (POST) #novu-v0', async () => {
     subscriber = await subscriberService.createSubscriber();
   });
 
-  it('should be able to create a notification with the API Key', async function () {
+  it('should be able to create a notification with the API Key', async () => {
     const templateBody: Partial<CreateWorkflowRequestDto> = {
       name: 'test api template',
       description: 'This is a test description',
@@ -67,7 +67,7 @@ describe('Create Workflow - /workflows (POST) #novu-v0', async () => {
     expect(response.data.data.name).to.equal(templateBody.name);
   });
 
-  it('should create email template', async function () {
+  it('should create email template', async () => {
     const defaultMessageIsActive = true;
 
     const templateRequestPayload: Partial<CreateWorkflowRequestDto> = {
@@ -380,7 +380,7 @@ describe('Create Workflow - /workflows (POST) #novu-v0', async () => {
     expect(steps[0]._id).to.equal(steps[1]._parentId);
   });
 
-  it('should use sender name in email template', async function () {
+  it('should use sender name in email template', async () => {
     const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
@@ -469,7 +469,7 @@ describe('Create Workflow - /workflows (POST) #novu-v0', async () => {
     expect(result.credentials.senderName).to.equal('senderName');
   });
 
-  it('should not promote deleted template that is not existing in prod', async function () {
+  it('should not promote deleted template that is not existing in prod', async () => {
     const testTemplate: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
@@ -520,7 +520,7 @@ describe('Create Notification template from blueprint - /notification-templates 
     await session.initialize();
   });
 
-  it('should create template from blueprint', async function () {
+  it('should create template from blueprint', async () => {
     const prodEnv = await getProductionEnvironment();
 
     const { testTemplateRequestDto, testTemplate, blueprintId, createdTemplate } = await createTemplateFromBlueprint({
@@ -543,7 +543,7 @@ describe('Create Notification template from blueprint - /notification-templates 
     expect(response.body.statusCode).to.equal(404);
   });
 
-  it('should create notification group change from blueprint creation', async function () {
+  it('should create notification group change from blueprint creation', async () => {
     const prodEnv = await getProductionEnvironment();
 
     const { blueprintId } = await buildBlueprint(session, prodEnv, notificationTemplateRepository);
@@ -570,7 +570,7 @@ describe('Create Notification template from blueprint - /notification-templates 
     expect(newWorkflowChanges[1].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_GROUP);
   });
 
-  it('should create workflow from blueprint (full blueprint mock)', async function () {
+  it('should create workflow from blueprint (full blueprint mock)', async () => {
     const createdTemplate: NotificationTemplateEntity = (
       await session.testAgent.post(`/v1/workflows`).send(blueprintTemplateMock)
     ).body.data;

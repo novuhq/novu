@@ -1,7 +1,7 @@
 import { DynamicModule, Module, OnApplicationShutdown, Provider } from '@nestjs/common';
-
-import { JobTopicNameEnum } from '@novu/shared';
 import { MessageRepository } from '@novu/dal';
+import { JobTopicNameEnum } from '@novu/shared';
+import { featureFlagsService } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
@@ -10,7 +10,7 @@ import {
   WebSocketsQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../health';
-import { ReadinessService, WorkflowInMemoryProviderService, SocketWorkerService } from '../services';
+import { ReadinessService, SocketWorkerService, WorkflowInMemoryProviderService } from '../services';
 import {
   ActiveJobsMetricQueueService,
   InboundParseQueueService,
@@ -20,7 +20,6 @@ import {
   WorkflowQueueService,
 } from '../services/queues';
 import { ActiveJobsMetricWorkerService } from '../services/workers';
-import { featureFlagsService } from '../custom-providers';
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,
@@ -43,7 +42,6 @@ const BASE_PROVIDERS: Provider[] = [ReadinessService];
 export class QueuesModule implements OnApplicationShutdown {
   static forRoot(entities: JobTopicNameEnum[] = []): DynamicModule {
     if (!entities.length) {
-      // eslint-disable-next-line no-param-reassign
       entities = Object.values(JobTopicNameEnum);
     }
 

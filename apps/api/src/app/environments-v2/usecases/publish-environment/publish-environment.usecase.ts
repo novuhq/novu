@@ -1,11 +1,11 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { BaseRepository } from '@novu/dal';
-import { PublishEnvironmentCommand } from './publish-environment.command';
-import { ISyncStrategy, IPublishResult, ISyncContext, ISyncOptions, ISyncResult } from '../../types/sync.types';
 import { EnvironmentValidationService } from '../../services';
-import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
+import { IPublishResult, ISyncContext, ISyncOptions, ISyncResult, ISyncStrategy } from '../../types/sync.types';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
+import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
+import { PublishEnvironmentCommand } from './publish-environment.command';
 
 const PUBLISH_BATCH_SIZE = 100;
 

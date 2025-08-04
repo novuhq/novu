@@ -1,9 +1,9 @@
-import { RiCheckboxCircleFill, RiCloseFill, RiArrowRightSLine } from 'react-icons/ri';
-import { Dialog, DialogContent, DialogClose } from '../primitives/dialog';
-import { Button } from '../primitives/button';
-import { useEnvironment } from '@/context/environment/hooks';
 import type { IEnvironment } from '@novu/shared';
+import { RiArrowRightSLine, RiCheckboxCircleFill, RiCloseFill } from 'react-icons/ri';
 import type { IEnvironmentPublishResponse } from '@/api/environments';
+import { useEnvironment } from '@/context/environment/hooks';
+import { Button } from '../primitives/button';
+import { Dialog, DialogClose, DialogContent } from '../primitives/dialog';
 
 type PublishSuccessModalProps = {
   isOpen: boolean;

@@ -5,18 +5,18 @@ import {
   ITopic,
   SubscriberSourceEnum,
   TriggerRecipient,
-  TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
+  TriggerRecipientsTypeEnum,
 } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
+import { CacheService, FeatureFlagsService } from '../../services';
+import type { EventType, Trace } from '../../services/analytic-logs';
+import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
-import { CacheService, FeatureFlagsService } from '../../services';
-import { TraceLogRepository, LogRepository, mapEventTypeToTitle } from '../../services/analytic-logs';
-import type { Trace, EventType } from '../../services/analytic-logs';
 
 const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
 const SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE = Number(process.env.SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE) || 100;
@@ -44,8 +44,6 @@ export class TriggerMulticast extends TriggerBase {
   @InstrumentUsecase()
   async execute(command: TriggerMulticastCommand) {
     const { environmentId, organizationId, to: recipients, actor } = command;
-
- 
 
     try {
       const mappedRecipients = Array.isArray(recipients) ? recipients : [recipients];
@@ -101,13 +99,13 @@ export class TriggerMulticast extends TriggerBase {
         'request_subscriber_processing_completed',
         'success',
         'Subscriber processing completed successfully',
-        { 
-          addressingType: 'multicast', 
+        {
+          addressingType: 'multicast',
           workflowId: command.template._id,
           totalSubscribers: totalProcessed,
           singleSubscribers: subscribersToProcess.length,
           topicSubscribers: totalProcessed - subscribersToProcess.length,
-          topicsUsed: topics.length
+          topicsUsed: topics.length,
         }
       );
 
@@ -115,8 +113,6 @@ export class TriggerMulticast extends TriggerBase {
         await this.sendToProcessSubscriberService(command, subscribersList, SubscriberSourceEnum.TOPIC);
         totalProcessed += subscribersList.length;
       }
-
-
     } catch (e) {
       const error = e as Error;
       await this.createMulticastTrace(
@@ -124,11 +120,11 @@ export class TriggerMulticast extends TriggerBase {
         'request_failed',
         'error',
         `Multicast processing failed: ${error.message}`,
-        { 
-          addressingType: 'multicast', 
+        {
+          addressingType: 'multicast',
           workflowId: command.template._id,
-          error: error.message, 
-          stack: error.stack 
+          error: error.message,
+          stack: error.stack,
         }
       );
 
@@ -201,7 +197,11 @@ export class TriggerMulticast extends TriggerBase {
     );
   }
 
-  private async validateTopicExist(command: TriggerMulticastCommand, topics: Pick<TopicEntity, '_id' | 'key'>[], topicKeys: Set<string>) {
+  private async validateTopicExist(
+    command: TriggerMulticastCommand,
+    topics: Pick<TopicEntity, '_id' | 'key'>[],
+    topicKeys: Set<string>
+  ) {
     if (topics.length === topicKeys.size) {
       return;
     }
@@ -211,17 +211,11 @@ export class TriggerMulticast extends TriggerBase {
 
     if (notFoundTopics.length > 0) {
       this.logger.warn(`Topic with key ${notFoundTopics.join()} not found in current environment`);
-      await this.createMulticastTrace(
-        command,
-        'topic_not_found',
-        'warning',
-        'Multicast processing failed',
-        { 
-          addressingType: 'multicast', 
-          workflowId: command.template._id,
-          topicKeys: notFoundTopics
-        }
-      );
+      await this.createMulticastTrace(command, 'topic_not_found', 'warning', 'Multicast processing failed', {
+        addressingType: 'multicast',
+        workflowId: command.template._id,
+        topicKeys: notFoundTopics,
+      });
     }
   }
 }

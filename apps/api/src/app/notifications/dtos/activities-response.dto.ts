@@ -11,9 +11,9 @@ import {
   OrdinalValueEnum,
   ProvidersIdEnum,
   ProvidersIdEnumConst,
+  ResourceOriginEnum,
   StepTypeEnum,
   TriggerTypeEnum,
-  ResourceOriginEnum,
 } from '@novu/shared';
 import { IsArray, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
 import { StepFilterDto } from '../../shared/dtos/step-filter-dto';

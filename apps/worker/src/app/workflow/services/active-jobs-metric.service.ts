@@ -1,3 +1,4 @@
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
@@ -6,7 +7,6 @@ import {
   WorkerOptions,
 } from '@novu/application-generic';
 import { CronExpressionEnum } from '@novu/shared';
-import { Inject, Injectable, Logger } from '@nestjs/common';
 
 const nr = require('newrelic');
 
@@ -92,7 +92,6 @@ export class ActiveJobsMetricService {
 
   private getWorkerProcessor() {
     return async () => {
-      // eslint-disable-next-line no-async-promise-executor
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
         Logger.log('metric job started', LOG_CONTEXT);
         const deploymentName = process.env.FLEET_NAME ?? 'default';
@@ -112,10 +111,8 @@ export class ActiveJobsMetricService {
             this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
           }
 
-          // eslint-disable-next-line no-promise-executor-return
           return resolve();
         } catch (error) {
-          // eslint-disable-next-line no-promise-executor-return
           return reject(error);
         }
       });

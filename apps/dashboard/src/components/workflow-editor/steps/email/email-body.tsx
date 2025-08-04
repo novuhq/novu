@@ -1,35 +1,34 @@
+import { Variable } from '@maily-to/core/extensions';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Editor, NodeViewProps } from '@tiptap/core';
+import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { Variable } from '@maily-to/core/extensions';
-
-import { FormField } from '@/components/primitives/form/form';
-import { Maily } from '../../../maily/maily';
+import { EditorOverlays } from '@/components/editor-overlays';
 import { HtmlEditor } from '@/components/html-editor';
-import { isMailyJson } from '../../../maily/maily-utils';
-import { useParseVariables } from '@/hooks/use-parse-variables';
-import { useWorkflow } from '../../workflow-provider';
-import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
-import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
-import { useWorkflowSchema } from '../../workflow-schema-provider';
-import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
-import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { createEditorBlocks, DEFAULT_BLOCK_CONFIG } from '../../../maily/maily-config';
+import { VariableFrom } from '@/components/maily/types';
 import {
   MailyVariablesListView,
   VariableSuggestionsPopoverRef,
 } from '@/components/maily/views/maily-variables-list-view';
 import { BubbleMenuVariablePill, NodeVariablePill } from '@/components/maily/views/variable-view';
-import { Editor, NodeViewProps } from '@tiptap/core';
-import { VariableFrom } from '@/components/maily/types';
-import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { FormField } from '@/components/primitives/form/form';
 import { CompletionRange } from '@/components/primitives/variable-editor';
-import { EditorView } from '@uiw/react-codemirror';
+import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
+import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
-import { EditorOverlays } from '@/components/editor-overlays';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { EnhancedParsedVariables, IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { Maily } from '../../../maily/maily';
+import { createEditorBlocks, DEFAULT_BLOCK_CONFIG } from '../../../maily/maily-config';
+import { isMailyJson } from '../../../maily/maily-utils';
+import { useWorkflow } from '../../workflow-provider';
+import { useWorkflowSchema } from '../../workflow-schema-provider';
 
 const MailyVariablesListViewForWorkflows = React.forwardRef<
   VariableSuggestionsPopoverRef,

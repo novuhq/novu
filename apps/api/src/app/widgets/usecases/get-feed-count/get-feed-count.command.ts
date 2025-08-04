@@ -1,5 +1,5 @@
-import { IsArray, IsOptional, Max, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsArray, IsOptional, Max, Min } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
 export class GetFeedCountCommand extends EnvironmentWithSubscriber {

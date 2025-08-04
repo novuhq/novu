@@ -5,6 +5,7 @@ import {
   AzureSmsHandler,
   BandwidthHandler,
   BrevoSmsHandler,
+  BulkSmsHandler,
   BurstSmsHandler,
   ClickatellHandler,
   ClicksendSmsHandler,
@@ -32,7 +33,6 @@ import {
   TelnyxHandler,
   TermiiSmsHandler,
   TwilioHandler,
-  BulkSmsHandler,
 } from './handlers';
 import { ISmsFactory, ISmsHandler } from './interfaces';
 

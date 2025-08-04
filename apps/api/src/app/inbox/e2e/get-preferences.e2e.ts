@@ -1,8 +1,8 @@
+import { StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { StepTypeEnum } from '@novu/shared';
 
-describe('Get all preferences - /inbox/preferences (GET) #novu-v2', function () {
+describe('Get all preferences - /inbox/preferences (GET) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -10,7 +10,7 @@ describe('Get all preferences - /inbox/preferences (GET) #novu-v2', function () 
     await session.initialize();
   });
 
-  it('should return no global preferences if workflow preferences are not present', async function () {
+  it('should return no global preferences if workflow preferences are not present', async () => {
     const response = await session.testAgent
       .get('/v1/inbox/preferences')
       .set('Authorization', `Bearer ${session.subscriberToken}`);
@@ -23,7 +23,7 @@ describe('Get all preferences - /inbox/preferences (GET) #novu-v2', function () 
     expect(response.body.data.length).to.equal(1);
   });
 
-  it('should get both global preferences for active channels and workflow preferences if workflow is present', async function () {
+  it('should get both global preferences for active channels and workflow preferences if workflow is present', async () => {
     await session.createTemplate({
       noFeedId: true,
       steps: [
@@ -51,13 +51,13 @@ describe('Get all preferences - /inbox/preferences (GET) #novu-v2', function () 
     expect(workflowPreference.level).to.equal('template');
   });
 
-  it('should throw error when made unauthorized call', async function () {
+  it('should throw error when made unauthorized call', async () => {
     const response = await session.testAgent.get(`/v1/inbox/preferences`).set('Authorization', `Bearer InvalidToken`);
 
     expect(response.status).to.equal(401);
   });
 
-  it('should allow filtering preferences by tags', async function () {
+  it('should allow filtering preferences by tags', async () => {
     const newsletterTag = 'newsletter';
     const securityTag = 'security';
     const marketingTag = 'marketing';
@@ -95,7 +95,7 @@ describe('Get all preferences - /inbox/preferences (GET) #novu-v2', function () 
     });
   });
 
-  it('should fetch only non-critical/readOnly=false workflows', async function () {
+  it('should fetch only non-critical/readOnly=false workflows', async () => {
     await session.createTemplate({
       noFeedId: true,
       critical: true,

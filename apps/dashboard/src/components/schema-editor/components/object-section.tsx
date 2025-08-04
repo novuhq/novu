@@ -1,17 +1,16 @@
 import { memo, useCallback, useMemo } from 'react';
-import { Path, useFieldArray, useWatch, type Control } from 'react-hook-form';
+import { type Control, Path, useFieldArray, useWatch } from 'react-hook-form';
 import { RiAddLine } from 'react-icons/ri';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Button } from '@/components/primitives/button';
 import { cn } from '@/utils/ui';
-
-import { getMarginClassPx } from '../utils/ui-helpers';
-import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
+import { MAX_NESTING_DEPTH } from '../constants';
+import { SchemaPropertyRow } from '../schema-property-row';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
 import { newProperty } from '../utils/json-helpers';
-import { SchemaPropertyRow } from '../schema-property-row';
-import { MAX_NESTING_DEPTH } from '../constants';
+import { getMarginClassPx } from '../utils/ui-helpers';
+import type { PropertyListItem, SchemaEditorFormValues } from '../utils/validation-schema';
 
 interface NestedPropertyProps {
   nestedField: any;

@@ -1,7 +1,15 @@
-import { HTMLAttributes } from 'react';
 import { ApiServiceLevelEnum, DirectionEnum } from '@novu/shared';
-
-import { cn } from '@/utils/ui';
+import { HTMLAttributes } from 'react';
+import {
+  LayoutsFilter,
+  LayoutsSortableColumn,
+  LayoutsUrlState,
+  useLayoutsUrlState,
+} from '@/components/layouts/hooks/use-layouts-url-state';
+import { LayoutListBlank } from '@/components/layouts/layout-list-blank';
+import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
+import { LayoutsFilters } from '@/components/layouts/layouts-filters';
+import { ListNoResults } from '@/components/list-no-results';
 import {
   Table,
   TableBody,
@@ -11,21 +19,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/primitives/table';
-import {
-  LayoutsFilter,
-  LayoutsSortableColumn,
-  LayoutsUrlState,
-  useLayoutsUrlState,
-} from '@/components/layouts/hooks/use-layouts-url-state';
-import { LayoutListBlank } from '@/components/layouts/layout-list-blank';
-import { ListNoResults } from '@/components/list-no-results';
-import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
-import { LayoutsFilters } from '@/components/layouts/layouts-filters';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
-import { Skeleton } from '../primitives/skeleton';
-import { DefaultPagination } from '../default-pagination';
-import { CreateLayoutButton } from './create-layout-btn';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { cn } from '@/utils/ui';
+import { DefaultPagination } from '../default-pagination';
+import { Skeleton } from '../primitives/skeleton';
+import { CreateLayoutButton } from './create-layout-btn';
 import { LayoutsListUpgradeCta } from './layouts-list-upgrade-cta';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &

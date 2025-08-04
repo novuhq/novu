@@ -1,16 +1,16 @@
-import { InlineDecoratorExtension, getInlineDecoratorSuggestionsReact } from '@maily-to/core/extensions';
-import { TranslationPill } from './translation-pill';
-import { AnyExtension } from '@tiptap/core';
+import { getInlineDecoratorSuggestionsReact, InlineDecoratorExtension } from '@maily-to/core/extensions';
 import {
+  TRANSLATION_DEFAULT_TEMPLATE,
+  TRANSLATION_DELIMITER_CLOSE,
+  TRANSLATION_DELIMITER_OPEN,
   TRANSLATION_KEY_SINGLE_REGEX,
   TRANSLATION_TRIGGER_CHARACTER,
-  TRANSLATION_DELIMITER_OPEN,
-  TRANSLATION_DELIMITER_CLOSE,
-  TRANSLATION_DEFAULT_TEMPLATE,
 } from '@novu/shared';
-import { TranslationSuggestionsListView, TranslationKeyItem } from './translation-suggestions-list-view';
-import { TranslationKey } from '@/types/translations';
+import { AnyExtension } from '@tiptap/core';
 import { forwardRef } from 'react';
+import { TranslationKey } from '@/types/translations';
+import { TranslationPill } from './translation-pill';
+import { TranslationKeyItem, TranslationSuggestionsListView } from './translation-suggestions-list-view';
 
 export const createTranslationExtension = (
   isTranslationEnabled: boolean,

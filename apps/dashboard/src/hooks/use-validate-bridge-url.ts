@@ -1,7 +1,7 @@
-import { validateBridgeUrl } from '@/api/bridge';
-import { useMutation, UseMutationOptions } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
 import type { IValidateBridgeUrlResponse } from '@novu/shared';
+import { UseMutationOptions, useMutation } from '@tanstack/react-query';
+import { validateBridgeUrl } from '@/api/bridge';
+import { useEnvironment } from '@/context/environment/hooks';
 import type { OmitEnvironmentFromParameters } from '@/utils/types';
 
 type ValidateBridgeUrlParameters = OmitEnvironmentFromParameters<typeof validateBridgeUrl>;

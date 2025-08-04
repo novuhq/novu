@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
 import { DEFAULT_LOCALE, SubscriberDto } from '@novu/shared';
+import { useCallback } from 'react';
 
 type PreviewSubscriberData = Partial<SubscriberDto>;
 

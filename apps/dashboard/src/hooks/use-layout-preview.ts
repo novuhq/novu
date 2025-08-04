@@ -1,8 +1,8 @@
-import { useMutation } from '@tanstack/react-query';
-import { parse } from '@/utils/json';
-import { useEnvironment } from '@/context/environment/hooks';
-import { previewLayout } from '@/api/layouts';
 import { GeneratePreviewResponseDto } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
+import { previewLayout } from '@/api/layouts';
+import { useEnvironment } from '@/context/environment/hooks';
+import { parse } from '@/utils/json';
 
 export const useLayoutPreview = () => {
   const { currentEnvironment } = useEnvironment();

@@ -1,8 +1,7 @@
-import React from 'react';
 import { WorkflowResponseDto } from '@novu/shared';
-
-import { EditTranslationPopover } from '@/components/workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
+import React from 'react';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
+import { EditTranslationPopover } from '@/components/workflow-editor/steps/email/translations/edit-translation-popover/edit-translation-popover';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 
 type EditorOverlaysProps = {

@@ -1,13 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   IEnvironment,
+  ResourceOriginEnum,
   StepResponseDto,
   StepTypeEnum,
   StepUpdateDto,
-  ResourceOriginEnum,
   WorkflowResponseDto,
-  EnvironmentTypeEnum,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { HTMLAttributes, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
@@ -35,7 +35,6 @@ import { Separator } from '@/components/primitives/separator';
 import { SidebarContent, SidebarFooter, SidebarHeader } from '@/components/side-navigation/sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { stepSchema } from '@/components/workflow-editor/schema';
-import { getControlsDefaultValues } from '@/utils/default-values';
 import { flattenIssues, getFirstErrorMessage, updateStepInWorkflow } from '@/components/workflow-editor/step-utils';
 import { ConfigureChatStepPreview } from '@/components/workflow-editor/steps/chat/configure-chat-step-preview';
 import {
@@ -51,12 +50,12 @@ import { SaveFormContext } from '@/components/workflow-editor/steps/save-form-co
 import { SdkBanner } from '@/components/workflow-editor/steps/sdk-banner';
 import { SkipConditionsButton } from '@/components/workflow-editor/steps/skip-conditions-button';
 import { ConfigureSmsStepPreview } from '@/components/workflow-editor/steps/sms/configure-sms-step-preview';
-
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { INLINE_CONFIGURABLE_STEP_TYPES, STEP_TYPE_LABELS, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
+import { getControlsDefaultValues } from '@/utils/default-values';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 const STEP_TYPE_TO_INLINE_CONTROL_VALUES: Record<StepTypeEnum, () => React.JSX.Element | null> = {
   [StepTypeEnum.DELAY]: DelayControlValues,

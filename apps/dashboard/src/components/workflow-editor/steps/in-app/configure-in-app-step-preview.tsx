@@ -1,9 +1,7 @@
+import { ChannelTypeEnum } from '@novu/shared';
+import * as Sentry from '@sentry/react';
 import { HTMLAttributes, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import * as Sentry from '@sentry/react';
-import { ChannelTypeEnum } from '@novu/shared';
-
-import { usePreviewStep } from '@/hooks/use-preview-step';
 import {
   InAppPreview,
   InAppPreviewAvatar,
@@ -14,6 +12,7 @@ import {
   InAppPreviewSubject,
 } from '@/components/workflow-editor/in-app-preview';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { usePreviewStep } from '@/hooks/use-preview-step';
 
 type ConfigureInAppStepPreviewProps = HTMLAttributes<HTMLDivElement>;
 

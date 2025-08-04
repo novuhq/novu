@@ -2,10 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 
 import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
 import { ICondition } from '@novu/shared';
-import { SelectVariantCommand } from './select-variant.command';
-import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
 import { IFilterVariables, PlatformException } from '../../utils';
+import { ConditionsFilter, ConditionsFilterCommand } from '../conditions-filter';
 import { NormalizeVariables, NormalizeVariablesCommand } from '../normalize-variables';
+import { SelectVariantCommand } from './select-variant.command';
 
 const LOG_CONTEXT = 'SelectVariant';
 

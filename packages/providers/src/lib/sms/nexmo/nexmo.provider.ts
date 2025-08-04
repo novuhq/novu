@@ -1,8 +1,7 @@
-import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
-
-import { Vonage } from '@vonage/server-sdk';
-import { Auth } from '@vonage/auth';
 import { SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ISendMessageSuccessResponse, ISmsOptions, ISmsProvider } from '@novu/stateless';
+import { Auth } from '@vonage/auth';
+import { Vonage } from '@vonage/server-sdk';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 

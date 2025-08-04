@@ -16,31 +16,31 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
-import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { buildOauthRedirectUrl, PinoLogger } from '@novu/application-generic';
-import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
-import { UserRegister } from './usecases/register/user-register.usecase';
-import { UserRegisterCommand } from './usecases/register/user-register.command';
-import { Login } from './usecases/login/login.usecase';
-import { LoginBodyDto } from './dtos/login.dto';
-import { LoginCommand } from './usecases/login/login.command';
+import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
+import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
-import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
+import { LoginBodyDto } from './dtos/login.dto';
+import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
+import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
+import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
+import { RequireAuthentication } from './framework/auth.decorator';
+import { AuthService } from './services/auth.service';
+import { LoginCommand } from './usecases/login/login.command';
+import { Login } from './usecases/login/login.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
 import { PasswordReset } from './usecases/password-reset/password-reset.usecase';
-import { PasswordResetBodyDto, PasswordResetRequestBodyDto } from './dtos/password-reset.dto';
-import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
-import { UpdatePassword } from './usecases/update-password/update-password.usecase';
-import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
+import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
+import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
+import { UserRegisterCommand } from './usecases/register/user-register.command';
+import { UserRegister } from './usecases/register/user-register.usecase';
 import { SwitchOrganizationCommand } from './usecases/switch-organization/switch-organization.command';
 import { SwitchOrganization } from './usecases/switch-organization/switch-organization.usecase';
-import { AuthService } from './services/auth.service';
-import { RequireAuthentication } from './framework/auth.decorator';
+import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
+import { UpdatePassword } from './usecases/update-password/update-password.usecase';
 
 @ApiCommonResponses()
 @Controller('/auth')

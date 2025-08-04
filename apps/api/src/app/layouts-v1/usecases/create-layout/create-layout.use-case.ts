@@ -1,7 +1,4 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
-
-import { ControlSchemas, LayoutEntity, LayoutRepository } from '@novu/dal';
-import { isReservedVariableName, ResourceTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   ContentService,
@@ -9,12 +6,13 @@ import {
   layoutUiSchema,
   ResourceValidatorService,
 } from '@novu/application-generic';
-
-import { CreateLayoutCommand } from './create-layout.command';
-import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
+import { ControlSchemas, LayoutEntity, LayoutRepository } from '@novu/dal';
+import { isReservedVariableName, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
+import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
+import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
+import { CreateLayoutCommand } from './create-layout.command';
 
 @Injectable()
 export class CreateLayoutUseCase {

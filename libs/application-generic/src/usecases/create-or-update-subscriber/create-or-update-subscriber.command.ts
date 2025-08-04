@@ -1,7 +1,7 @@
-import { IsBoolean, IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
 import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
+import { Transform } from 'class-transformer';
+import { IsBoolean, IsEmail, IsLocale, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands';
 

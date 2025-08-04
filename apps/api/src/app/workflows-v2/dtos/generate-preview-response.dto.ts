@@ -1,9 +1,9 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ActionTypeEnum, ChannelTypeEnum } from '@novu/shared';
-import { PreviewPayloadDto } from './preview-payload.dto';
+import { Type } from 'class-transformer';
+import { IsEnum, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
+import { PreviewPayloadDto } from './preview-payload.dto';
 
 export enum TimeUnitEnum {
   SECONDS = 'seconds',

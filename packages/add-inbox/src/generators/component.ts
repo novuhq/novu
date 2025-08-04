@@ -1,10 +1,10 @@
+import { IFramework } from '../config/framework';
 import { FRAMEWORKS, FrameworkType } from '../constants';
 import fileUtils from '../utils/file';
 import logger from '../utils/logger';
 import { generateNextJsComponent } from './frameworks/nextjs';
-import { generateModernReactComponent, generateLegacyReactComponent } from './frameworks/react';
+import { generateLegacyReactComponent, generateModernReactComponent } from './frameworks/react';
 import { isModernReact } from './react-version';
-import { IFramework } from '../config/framework';
 
 export async function createComponentStructure(
   framework: IFramework,

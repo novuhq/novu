@@ -9,7 +9,6 @@ test('should trigger getstream correctly', async () => {
   const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
     return {
       dateCreated: new Date(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any;
   });
 

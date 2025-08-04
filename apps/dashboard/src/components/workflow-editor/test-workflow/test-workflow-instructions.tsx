@@ -1,3 +1,6 @@
+import type { WorkflowResponseDto } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
+import { useEffect } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -20,13 +23,10 @@ import {
   createPythonSnippet,
 } from '@/utils/code-snippets';
 import { TelemetryEvent } from '@/utils/telemetry';
-import type { WorkflowResponseDto } from '@novu/shared';
-import { PermissionsEnum } from '@novu/shared';
-import { useEffect } from 'react';
 import { CodeBlock, Language } from '../../primitives/code-block';
 import { InlineToast } from '../../primitives/inline-toast';
 import { Separator } from '../../primitives/separator';
-import { TimelineStep, TimelineContainer } from '../../primitives/timeline';
+import { TimelineContainer, TimelineStep } from '../../primitives/timeline';
 import { ExternalLink } from '../../shared/external-link';
 import { SnippetLanguage } from './types';
 
