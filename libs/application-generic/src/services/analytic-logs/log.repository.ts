@@ -387,6 +387,61 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
 /**
  * Optional fluent query builder for better ergonomics
+ *
+ * @example Basic usage with OR conditions:
+ * ```typescript
+ * // Using the fluent callback approach
+ * const query1 = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+ *   .whereEquals('organization_id', 'org456')
+ *   .whereIn('status', ['pending', 'running'])
+ *   .or(builder => {
+ *     builder
+ *       .whereLike('channels', '%email%')
+ *       .whereLike('channels', '%sms%');
+ *   })
+ *   .build();
+ *
+ * // Using the direct array approach
+ * const query2 = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+ *   .whereEquals('organization_id', 'org456')
+ *   .orWhere([
+ *     { field: 'priority', operator: '=', value: 'high' },
+ *     { field: 'urgent', operator: '=', value: true }
+ *   ])
+ *   .build();
+ *
+ * // Both generate ClickHouse SQL with proper parameter binding:
+ * // query1: WHERE environment_id = 'env123' AND organization_id = 'org456'
+ * //           AND status IN ['pending', 'running']
+ * //           AND (channels LIKE '%email%' OR channels LIKE '%sms%')
+ * // query2: WHERE environment_id = 'env123' AND organization_id = 'org456'
+ * //           AND (priority = 'high' OR urgent = true)
+ * ```
+ *
+ * @example Real-world usage (from GetWorkflowRuns use case):
+ * ```typescript
+ * const queryBuilder = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+ *   .whereEquals('organization_id', 'org456')
+ *   .whereIn('status', ['completed', 'failed'])
+ *   .whereGreaterThanOrEqual('created_at', new Date('2024-01-01'))
+ *   .orWhere(
+ *     channels.map(channel => ({
+ *       field: 'channels',
+ *       operator: 'LIKE',
+ *       value: `%"${channel}"%`
+ *     }))
+ *   );
+ *
+ * const where = queryBuilder.build();
+ * const result = await repository.find({ where, limit: 100 });
+ *
+ * // Generates SQL:
+ * // WHERE environment_id = 'env123'
+ * //   AND organization_id = 'org456'
+ * //   AND status IN ['completed', 'failed']
+ * //   AND created_at >= '2024-01-01T00:00:00.000'
+ * //   AND (channels LIKE '%"email"%' OR channels LIKE '%"sms"%' OR channels LIKE '%"push"%')
+ * ```
  */
 export class QueryBuilder<T> {
   private conditions: WhereCondition<T>[] = [];
@@ -438,6 +493,106 @@ export class QueryBuilder<T> {
   whereBetween<K extends keyof T>(field: K, min: T[K], max: T[K]): this {
     this.where(field, '>=', min);
     this.where(field, '<=', max);
+
+    return this;
+  }
+
+  /**
+   * Add an OR condition using a callback to build the OR conditions
+   * @param callback Function that receives a new QueryBuilder instance to build OR conditions
+   *
+   * @example
+   * ```typescript
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .whereEquals('status', 'active')
+   *   .or(builder => {
+   *     builder
+   *       .whereEquals('priority', 'high')
+   *       .whereEquals('priority', 'urgent');
+   *   })
+   *   .build();
+   *
+   * // Generates SQL:
+   * // WHERE environment_id = 'env123'
+   * //   AND status = 'active'
+   * //   AND (priority = 'high' OR priority = 'urgent')
+   * ```
+   */
+  or(callback: (builder: Omit<QueryBuilder<T>, 'build' | 'or'>) => void): this {
+    const orBuilder = new QueryBuilder<T>(this.enforced);
+    callback(orBuilder);
+
+    if (orBuilder.conditions.length > 0) {
+      const orCondition: OrCondition<T> = {
+        $or: orBuilder.conditions,
+      };
+      this.conditions.push(orCondition);
+    }
+
+    return this;
+  }
+
+  /**
+   * Add a simple OR condition with field, operator, and value
+   * @param orConditions Array of OR conditions to add
+   *
+   * @example
+   * ```typescript
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .whereEquals('organization_id', 'org456')
+   *   .orWhere([
+   *     { field: 'status', operator: '=', value: 'completed' },
+   *     { field: 'status', operator: '=', value: 'failed' }
+   *   ])
+   *   .orWhere([
+   *     { field: 'channels', operator: 'LIKE', value: '%email%' },
+   *     { field: 'channels', operator: 'LIKE', value: '%sms%' }
+   *   ])
+   *   .build();
+   *
+   * // Generates SQL:
+   * // WHERE environment_id = 'env123'
+   * //   AND organization_id = 'org456'
+   * //   AND (status = 'completed' OR status = 'failed')
+   * //   AND (channels LIKE '%email%' OR channels LIKE '%sms%')
+   * ```
+   *
+   * @example Array operators (IN, NOT IN):
+   * ```typescript
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .orWhere([
+   *     { field: 'workflow_id', operator: 'IN', value: ['wf1', 'wf2'] },
+   *     { field: 'status', operator: '=', value: 'urgent' }
+   *   ])
+   *   .build();
+   *
+   * // Generates SQL:
+   * // WHERE environment_id = 'env123'
+   * //   AND (workflow_id IN ['wf1', 'wf2'] OR status = 'urgent')
+   * ```
+   */
+  orWhere<K extends keyof T, O extends ClickhouseOperator>(
+    orConditions: Array<{
+      field: K;
+      operator: O;
+      value: O extends ArrayOperators ? T[K][] : T[K];
+    }>
+  ): this {
+    if (orConditions.length > 0) {
+      const conditions: WhereCondition<T>[] = orConditions.map(
+        ({ field, operator, value }) =>
+          ({
+            field,
+            operator,
+            value,
+          }) as WhereCondition<T>
+      );
+
+      const orCondition: OrCondition<T> = {
+        $or: conditions,
+      };
+      this.conditions.push(orCondition);
+    }
 
     return this;
   }

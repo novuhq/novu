@@ -54,7 +54,6 @@ export class GetWorkflowRuns {
 
     try {
       const queryBuilder = new QueryBuilder<WorkflowRun>({
-        organizationId: command.organizationId,
         environmentId: command.environmentId,
       });
 
@@ -83,7 +82,13 @@ export class GetWorkflowRuns {
       }
 
       if (command.channels?.length) {
-        queryBuilder.where('channels', command.channels);
+        queryBuilder.orWhere(
+          command.channels.map((channel) => ({
+            field: 'channels',
+            operator: 'LIKE',
+            value: `%"${channel}"%`,
+          }))
+        );
       }
 
       if (command.topicKey) {
@@ -91,28 +96,7 @@ export class GetWorkflowRuns {
       }
 
       const safeWhere = queryBuilder.build();
-      if (command.channels?.length) {
-        whereConditions.push({
-          $or: command.channels.map((channel) => ({
-            channels: {
-              operator: 'LIKE',
-              value: `%"${channel}"%`,
-            },
-          })),
-        });
-      }
 
-      if (command.topicKey) {
-        whereConditions.push({
-          topics: {
-            operator: 'LIKE',
-            value: `%${command.topicKey}%`,
-          },
-        });
-      }
-      >>>>>>> next
-
-      // Decode cursor if provided
       let cursor: CursorData | undefined;
       if (command.cursor) {
         try {
@@ -289,7 +273,6 @@ export class GetWorkflowRuns {
     try {
       const transactionIds = workflowRuns.map((run) => run.transaction_id);
       const stepRunsQuery = new QueryBuilder<StepRun>({
-        organizationId: command.organizationId,
         environmentId: command.environmentId,
       })
         .whereIn('transaction_id', transactionIds)

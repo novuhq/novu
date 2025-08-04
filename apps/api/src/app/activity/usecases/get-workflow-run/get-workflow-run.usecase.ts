@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   PinoLogger,
+  QueryBuilder,
   StepRun,
   StepRunRepository,
   Trace,
   TraceLogRepository,
-  QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
@@ -37,10 +37,7 @@ export class GetWorkflowRun {
     });
 
     try {
- 
-
       const workflowRunQuery = new QueryBuilder<WorkflowRun>({
-        organizationId: command.organizationId,
         environmentId: command.environmentId,
       })
         .whereEquals('workflow_run_id', command.workflowRunId)
@@ -79,7 +76,6 @@ export class GetWorkflowRun {
   ): Promise<IStepRunWithDetails[]> {
     try {
       const stepRunsQuery = new QueryBuilder<StepRun>({
-        organizationId: command.organizationId,
         environmentId: command.environmentId,
       })
         .whereEquals('transaction_id', workflowRun.transaction_id)
@@ -125,7 +121,6 @@ export class GetWorkflowRun {
 
     try {
       const traceQuery = new QueryBuilder<Trace>({
-        organizationId: command.organizationId,
         environmentId: command.environmentId,
       })
         .whereIn('entity_id', entityIds)

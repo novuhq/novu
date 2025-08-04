@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { 
-  LogRepository, 
-  RequestLog, 
-  RequestLogRepository, 
-  Where, 
+import {
   EnforcedContext,
-  QueryBuilder 
+  LogRepository,
+  QueryBuilder,
+  RequestLog,
+  RequestLogRepository,
+  Where,
 } from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { mapRequestLogToResponseDto } from '../../shared/mappers';
@@ -20,12 +20,9 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    const enforced: EnforcedContext = {
-      organizationId: command.organizationId,
+    const queryBuilder = new QueryBuilder<RequestLog>({
       environmentId: command.environmentId,
-    };
-
-    const queryBuilder = new QueryBuilder<RequestLog>(enforced);
+    });
 
     if (command.statusCodes?.length) {
       queryBuilder.whereIn('status_code', command.statusCodes);
@@ -44,10 +41,7 @@ export class GetRequests {
     }
 
     if (command.createdGte) {
-      queryBuilder.whereGreaterThanOrEqual(
-        'created_at', 
-        LogRepository.formatDateTime64(new Date(command.createdGte))
-      );
+      queryBuilder.whereGreaterThanOrEqual('created_at', LogRepository.formatDateTime64(new Date(command.createdGte)));
     }
 
     const safeWhere = queryBuilder.build();

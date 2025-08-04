@@ -3,11 +3,11 @@ import {
   AnalyticsService,
   FeatureFlagsService,
   PinoLogger,
+  QueryBuilder,
   StepRun,
   StepRunRepository,
   Trace,
   TraceLogRepository,
-  QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
@@ -135,7 +135,6 @@ export class GetActivity {
     }
 
     const traceQuery = new QueryBuilder<Trace>({
-      organizationId: command.organizationId,
       environmentId: command.environmentId,
     })
       .whereIn('entity_id', entityIds)
@@ -186,7 +185,6 @@ export class GetActivity {
     command: GetActivityCommand
   ): Promise<JobFeedItem[]> {
     const stepRunsQuery = new QueryBuilder<StepRun>({
-      organizationId: command.organizationId,
       environmentId: command.environmentId,
     })
       .whereEquals('transaction_id', feedItem.transactionId)
@@ -244,7 +242,6 @@ export class GetActivity {
   private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
       const workflowRunQuery = new QueryBuilder<WorkflowRun>({
-        organizationId: command.organizationId,
         environmentId: command.environmentId,
       })
         .whereEquals('workflow_run_id', command.notificationId)
