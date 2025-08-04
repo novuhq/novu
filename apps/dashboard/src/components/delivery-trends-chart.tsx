@@ -38,7 +38,7 @@ const chartConfig = {
 
 export function DeliveryTrendsChart() {
   return (
-    <Card>
+    <Card className="shadow-md">
       <CardHeader className="bg-transparent p-3 pb-0">
         <CardTitle className="text-label-sm text-text-sub">Delivery trend</CardTitle>
       </CardHeader>

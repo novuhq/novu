@@ -1,8 +1,12 @@
 import { motion } from 'motion/react';
 import { ReactElement, useEffect } from 'react';
-import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
+import { RiBookletFill, RiBookmark2Fill, RiCopperCoinLine, RiGroup2Fill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
+import { InboxBellFilled } from '../components/icons/inbox-bell-filled';
+import { StackedDots } from '../components/icons/stacked-dots';
+import { TargetArrow } from '../components/icons/target-arrow';
+import { TrendLineUp } from '../components/icons/trend-line-up';
 import { InteractionTrendChart } from '../components/interaction-trend-chart';
 import { PageMeta } from '../components/page-meta';
 import { AnalyticsCard } from '../components/primitives/analytics-card';
@@ -36,29 +40,27 @@ function WelcomeHeader() {
 
   return (
     <div className="flex flex-col gap-0.5 items-start justify-center">
-      <div className="flex flex-col font-medium justify-center text-[#0e121b] text-[24px] text-left tracking-[-0.36px]">
-        <p className="leading-[32px] whitespace-pre">{randomGreeting}</p>
+      <div className="text-label-xl text-text-strong">
+        <p>{randomGreeting}</p>
       </div>
       <div className="flex flex-col items-start justify-start w-full">
-        <div className="flex flex-col font-medium justify-center text-[#99a0ae] text-[16px] text-left tracking-[-0.176px] w-full">
-          <p className="leading-[24px]">{subtitle}</p>
+        <div className="text-label-md text-text-soft">
+          <p>{subtitle}</p>
         </div>
       </div>
     </div>
   );
 }
 
-const imgVector = 'http://localhost:3845/assets/393dfc00ea13a079c809c149114eb29aa2227901.svg';
-
 function TopLevelStats() {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-end gap-1">
-        <h2 className="text-[44px] font-medium text-[#0e121b]">31,718</h2>
+        <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">31,718</h2>
         <div className="pb-2">
-          <div className="flex items-center gap-0.5 bg-green-100 px-1 py-0.5 rounded-full">
-            <img alt="" className="h-1.5 w-[11px]" src={imgVector} />
-            <span className="text-[11px] font-medium text-green-600 uppercase tracking-wider">5%</span>
+          <div className="flex items-center gap-0.5 bg-green-100 px-1 h-4 rounded-full text-green-600 text-subheading-2xs uppercase">
+            <TrendLineUp />
+            <span className="text-subheading-2xs uppercase">5%</span>
           </div>
         </div>
       </div>
@@ -163,7 +165,8 @@ export function HomePage(): ReactElement {
           <motion.div variants={sectionVariants}>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
               <AnalyticsCard
-                value="30,613"
+                icon={InboxBellFilled}
+                value="34,613,001"
                 title="Messages delivered"
                 description="+40 compared to prior 30 days"
                 percentageChange={3}
@@ -171,7 +174,8 @@ export function HomePage(): ReactElement {
               />
 
               <AnalyticsCard
-                value="1,718"
+                icon={RiGroup2Fill}
+                value="1,718,030"
                 title="Active subscribers"
                 description="+400 compared to prior 30 days"
                 percentageChange={3}
@@ -179,6 +183,7 @@ export function HomePage(): ReactElement {
               />
 
               <AnalyticsCard
+                icon={TargetArrow}
                 value="78%"
                 title="Interaction rate"
                 description="+10% compared to prior 30 days"
@@ -187,6 +192,7 @@ export function HomePage(): ReactElement {
               />
 
               <AnalyticsCard
+                icon={StackedDots}
                 value="18"
                 title="Avg. Messages per subscriber"
                 description="+5 compared to prior 30 days"
