@@ -25,6 +25,7 @@ export type IWorkflowDataDto = {
   environmentId: string;
   organizationId: string;
   userId: string;
+  requestId: string;
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;

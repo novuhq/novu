@@ -25,8 +25,9 @@ export class GetRequestContext {
   /**
    * Get the transaction ID without fallback, returns undefined if not present
    */
-  getRequestId(): string | undefined {
-    return getRequestId(this.request);
+  getRequestId(): string {
+    // biome-ignore lint/style/noNonNullAssertion: Request ID is guaranteed by middleware
+    return getRequestId(this.request)!;
   }
 
   /**

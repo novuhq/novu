@@ -359,7 +359,7 @@ export class ParseEventRequest {
     environment,
     organization,
   }: {
-    requestId: string | undefined;
+    requestId: string;
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
@@ -419,6 +419,7 @@ export class ParseEventRequest {
       actor: command.actor,
       transactionId,
       bridgeWorkflow: discoveredWorkflow ?? undefined,
+      requestId,
     };
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });

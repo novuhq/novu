@@ -20,7 +20,7 @@ export class GetRequest {
       ],
     });
 
-    if (!request) {
+    if (!request?.data) {
       throw new NotFoundException(`Request with requestId ${command.requestId} not found`);
     }
 

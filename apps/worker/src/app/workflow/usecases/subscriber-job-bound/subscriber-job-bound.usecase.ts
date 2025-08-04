@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-
+import type { EventType, Trace } from '@novu/application-generic';
 import {
   AnalyticsService,
   CreateNotificationJobs,
@@ -8,10 +8,10 @@ import {
   CreateOrUpdateSubscriberUseCase,
   Instrument,
   InstrumentUsecase,
-  PinoLogger,
-  TraceLogRepository,
   LogRepository,
   mapEventTypeToTitle,
+  PinoLogger,
+  TraceLogRepository,
 } from '@novu/application-generic';
 import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import {
@@ -25,7 +25,6 @@ import {
 } from '@novu/shared';
 import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
-import type { Trace, EventType } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
@@ -128,7 +127,7 @@ export class SubscriberJobBound {
         } in transaction ${command.transactionId} was not processed. No jobs are created.`,
         LOG_CONTEXT
       );
-      
+
       await this.createSubscriberTrace(
         command,
         'subscriber_validation_failed',
@@ -236,7 +235,10 @@ export class SubscriberJobBound {
   }
 
   @Instrument()
-  private async validateSubscriberIdProperty(command: SubscriberJobBoundCommand, subscriber: ISubscribersDefine): Promise<boolean> {
+  private async validateSubscriberIdProperty(
+    command: SubscriberJobBoundCommand,
+    subscriber: ISubscribersDefine
+  ): Promise<boolean> {
     const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
     if (!subscriberIdExists) {
@@ -309,7 +311,7 @@ export class SubscriberJobBound {
         raw_data: rawData ? JSON.stringify(rawData) : null,
         status,
         entity_type: 'request',
-        entity_id: command.transactionId,
+        entity_id: command.requestId,
       };
 
       await this.traceLogRepository.create(traceData);

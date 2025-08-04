@@ -119,7 +119,7 @@ export class TriggerBroadcast extends TriggerBase {
         raw_data: rawData ? JSON.stringify(rawData) : null,
         status,
         entity_type: 'request',
-        entity_id: command.transactionId,
+        entity_id: command.requestId,
       };
 
       await this.traceLogRepository.create(traceData);

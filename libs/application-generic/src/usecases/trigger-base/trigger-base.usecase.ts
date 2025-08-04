@@ -31,6 +31,7 @@ export type BaseTriggerCommand = {
   organizationId: string;
   userId: string;
   transactionId: string;
+  requestId: string;
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;

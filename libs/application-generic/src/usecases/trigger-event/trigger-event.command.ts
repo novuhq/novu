@@ -28,6 +28,10 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   transactionId: string;
 
+  @IsString()
+  @IsDefined()
+  requestId: string;
+
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()

@@ -16,6 +16,10 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   transactionId: string;
 
+  @IsString()
+  @IsDefined()
+  requestId: string;
+
   @IsDefined()
   payload: any;
 

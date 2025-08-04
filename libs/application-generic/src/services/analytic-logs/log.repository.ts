@@ -216,7 +216,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
   }
 
   protected async insert(
-    data: Omit<InferClickhouseSchemaType<T_Schema>, 'expires_at'> & { id?: InferClickhouseSchemaType<T_Schema>['id'] },
+    data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'> & { id?: string },
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -224,7 +224,8 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     },
     options: InsertOptions
   ): Promise<void> {
-    const id = data.id || `${this.identifierPrefix}${generateObjectId()}`;
+    // Use provided id (e.g., ID for request entities), otherwise generate a new unique id
+    const id: string = data?.id || `${this.identifierPrefix}${generateObjectId()}`;
     const expirationDate = await this.getExpirationDate(context);
     const expiresAt = LogRepository.formatDateTime64(expirationDate);
 
