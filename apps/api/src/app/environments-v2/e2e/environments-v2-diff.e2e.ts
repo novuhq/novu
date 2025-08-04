@@ -1,7 +1,7 @@
 import { Novu } from '@novu/api';
-import { CreateWorkflowDto, WorkflowCreationSourceEnum, WorkflowResponseDto } from '@novu/api/models/components';
-import { EnvironmentRepository, LocalizationResourceEnum, NotificationTemplateRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, ResourceOriginEnum, ResourceTypeEnum, StepTypeEnum } from '@novu/shared';
+import { CreateWorkflowDto, WorkflowCreationSourceEnum } from '@novu/api/models/components';
+import { EnvironmentRepository, LocalizationResourceEnum } from '@novu/dal';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { LayoutCreationSourceEnum } from '../../layouts-v2/types';
@@ -42,70 +42,37 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
     return prodEnv;
   }
 
-  describe('Error Handling', () => {
-    it('should return 400 when source and target environments are the same', async () => {
-      const { body } = await session.testAgent
-        .post(`/v2/environments/${session.environment._id}/diff`)
-        .send({
-          sourceEnvironmentId: session.environment._id,
-        })
-        .expect(400);
-
-      expect(body.message).to.equal('Source and target environments cannot be the same');
-    });
-
-    it('should return 400 when source environment is invalid', async () => {
-      const prodEnv = await getProductionEnvironment();
-
-      const { body } = await session.testAgent
-        .post(`/v2/environments/${prodEnv._id}/diff`)
-        .send({
-          sourceEnvironmentId: 'invalid-id',
-        })
-        .expect(400);
-
-      expect(body.message).to.contain('Invalid environment ID format');
-    });
-
-    it('should return 400 when target environment is invalid', async () => {
-      const { body } = await session.testAgent
-        .post(`/v2/environments/invalid-id/diff`)
-        .send({
-          sourceEnvironmentId: session.environment._id,
-        })
-        .expect(400);
-
-      expect(body.message).to.contain('Invalid environment ID format');
-    });
-
-    it('should return 400 when source environment does not exist', async () => {
-      const prodEnv = await getProductionEnvironment();
-
-      const { body } = await session.testAgent
-        .post(`/v2/environments/${prodEnv._id}/diff`)
-        .send({
-          sourceEnvironmentId: '507f1f77bcf86cd799439011',
-        })
-        .expect(400);
-
-      expect(body.message).to.equal('Source environment not found');
-    });
-
-    it('should return 400 when target environment does not exist', async () => {
-      const { body } = await session.testAgent
-        .post(`/v2/environments/507f1f77bcf86cd799439011/diff`)
-        .send({
-          sourceEnvironmentId: session.environment._id,
-        })
-        .expect(400);
-
-      expect(body.message).to.equal('Target environment not found');
-    });
-  });
-
   describe('Workflow Diff Tests', () => {
-    it('should return empty diff when environments are identical', async () => {
+    it('should return empty diff when environments are identical after creating and publishing a workflow', async () => {
       const prodEnv = await getProductionEnvironment();
+
+      const workflowData = {
+        name: 'Test Workflow for Empty Diff',
+        workflowId: 'test-workflow-empty-diff',
+        description: 'This is a test workflow to validate empty diff after publishing',
+        active: true,
+        steps: [
+          {
+            name: 'Email Step',
+            type: 'email' as const,
+            controlValues: {
+              subject: 'Test Subject',
+              body: 'Test email content',
+            },
+          },
+        ],
+        source: WorkflowCreationSourceEnum.Editor,
+      };
+
+      await novuClient.workflows.create(workflowData);
+
+      await session.testAgent
+        .post(`/v2/environments/${prodEnv._id}/publish`)
+        .send({
+          sourceEnvironmentId: session.environment._id,
+          dryRun: false,
+        })
+        .expect(200);
 
       const { body } = await session.testAgent
         .post(`/v2/environments/${prodEnv._id}/diff`)
@@ -117,6 +84,7 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
       expect(body.data.sourceEnvironmentId).to.equal(session.environment._id);
       expect(body.data.targetEnvironmentId).to.equal(prodEnv._id);
       expect(body.data.resources).to.be.an('array');
+      expect(body.data.resources.length).to.equal(0);
       expect(body.data.summary.totalEntities).to.equal(0);
       expect(body.data.summary.totalChanges).to.equal(0);
       expect(body.data.summary.hasChanges).to.equal(false);

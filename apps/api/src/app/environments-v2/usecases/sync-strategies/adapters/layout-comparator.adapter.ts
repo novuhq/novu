@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { LayoutEntity, NotificationTemplateEntity } from '@novu/dal';
+import { LayoutEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
 import { IResourceDiff } from '../../../types/sync.types';
 import { IBaseComparator } from '../base/interfaces/base-comparator.interface';
 import { LayoutComparator } from '../comparators/layout.comparator';
-import { WorkflowComparator } from '../comparators/workflow.comparator';
 
 @Injectable()
 export class LayoutComparatorAdapter implements IBaseComparator<LayoutEntity> {
@@ -16,8 +16,8 @@ export class LayoutComparatorAdapter implements IBaseComparator<LayoutEntity> {
     _: UserSessionData
   ): Promise<{
     resourceChanges: {
-      previous: Record<string, any> | null;
-      new: Record<string, any> | null;
+      previous: Record<string, unknown> | null;
+      new: Record<string, unknown> | null;
     } | null;
     otherDiffs?: IResourceDiff[];
   }> {

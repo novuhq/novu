@@ -2,6 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { GetWorkflowByIdsUseCase, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import { ControlValuesLevelEnum, ResourceOriginEnum, ShortIsPrefixEnum } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { buildSlug } from '../../../shared/helpers/build-slug';
 import { StepResponseDto } from '../../dtos';
 import { InvalidStepException } from '../../exceptions/invalid-step.exception';
@@ -17,17 +19,42 @@ export class BuildStepDataUsecase {
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: BuildStepDataCommand): Promise<StepResponseDto> {
-    const workflow = await this.fetchWorkflow(command);
+  async execute(
+    command: BuildStepDataCommand,
+    workflowDataContainer?: WorkflowDataContainer
+  ): Promise<StepResponseDto> {
+    // Check container for cached step data first (now supports both MongoDB ID and identifier)
+    if (workflowDataContainer) {
+      const cachedStep = workflowDataContainer.getStepData(
+        command.workflowIdOrInternalId,
+        command.stepIdOrInternalId,
+        command.user.environmentId
+      );
+      if (cachedStep) {
+        return cachedStep;
+      }
+    }
 
+    const workflow = await this.fetchWorkflow(command);
     const currentStep: NotificationStepEntity | undefined = await this.loadStepsFromDb(command, workflow);
-    if (!currentStep || !currentStep._templateId || currentStep.stepId === undefined || !currentStep?.template?.type) {
+
+    if (!currentStep || !currentStep._templateId) {
       throw new InvalidStepException(command.stepIdOrInternalId);
     }
+
     const controlValues = await this.getControlValues(command, currentStep, workflow._id);
-    const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const variables = await this.buildAvailableVariableSchema(command, currentStep, workflow);
 
+    return BuildStepDataUsecase.mapToStepResponse(workflow, currentStep, controlValues, variables);
+  }
+
+  static mapToStepResponse(
+    workflow: NotificationTemplateEntity,
+    currentStep: NotificationStepEntity,
+    controlValues: Record<string, unknown>,
+    variables: JSONSchemaDto
+  ): StepResponseDto {
+    const stepName = currentStep.name || 'MISSING STEP NAME - PLEASE UPDATE IMMEDIATELY';
     const slug = buildSlug(stepName, ShortIsPrefixEnum.STEP, currentStep._templateId);
 
     return {

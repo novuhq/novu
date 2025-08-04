@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
+import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
 import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowComparatorAdapter, WorkflowRepositoryAdapter } from '../adapters';
 import { BaseDiffOperation } from '../base/operations/base-diff.operation';
@@ -15,7 +16,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     protected logger: PinoLogger,
     protected repositoryAdapter: WorkflowRepositoryAdapter,
     protected comparatorAdapter: WorkflowComparatorAdapter,
-    private workflowNormalizer: WorkflowNormalizer
+    private workflowNormalizer: WorkflowNormalizer,
+    private getWorkflowUseCase: GetWorkflowUseCase
   ) {
     super(logger, repositoryAdapter, comparatorAdapter);
   }
@@ -39,13 +41,11 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
     const resultBuilder = new DiffResultBuilder(this.getResourceType());
 
     try {
-      const [sourceResources, targetResources] = await Promise.all([
-        this.repositoryService.fetchSyncableResources(sourceEnvId, organizationId),
-        this.repositoryService.fetchSyncableResources(targetEnvId, organizationId),
-      ]);
+      const sourceResources = workflowDataContainer.getWorkflowsByEnvironment(sourceEnvId);
+      const targetResources = workflowDataContainer.getWorkflowsByEnvironment(targetEnvId);
 
       this.logger.info(
-        `Fetched ${sourceResources.length} source resources and ${targetResources.length} target resources`
+        `Filtered ${sourceResources.length} source resources and ${targetResources.length} target resources from container`
       );
 
       await this.processWorkflowResourceDiffs(
@@ -117,7 +117,8 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         const { resourceChanges, otherDiffs } = await this.comparatorAdapter.compareResources(
           sourceResource,
           targetResource,
-          userContext
+          userContext,
+          workflowDataContainer
         );
 
         const allDiffs = this.createWorkflowResourceDiffs(
@@ -309,13 +310,16 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         return [];
       }
 
-      if (!workflowDataContainer.hasWorkflowDetails(workflowIdentifier)) {
-        this.logger.error(`Workflow data not found in container for ${workflowIdentifier}`);
-        throw new Error(`Workflow data must be pre-loaded in container for ${workflowIdentifier}`);
-      }
+      this.logger.debug(`Generating workflow DTO for step extraction: ${workflowIdentifier}`);
 
-      this.logger.debug(`Using pre-loaded workflow data for ${workflowIdentifier}`);
-      const workflowDto = workflowDataContainer.getWorkflowDetails(workflowIdentifier);
+      // Generate the workflow DTO using the GetWorkflowUseCase with the pre-loaded data container
+      const workflowDto = await this.getWorkflowUseCase.execute(
+        {
+          workflowIdOrInternalId: workflowIdentifier,
+          user: userContext,
+        },
+        workflowDataContainer
+      );
 
       // Normalize the workflow to get steps
       const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);

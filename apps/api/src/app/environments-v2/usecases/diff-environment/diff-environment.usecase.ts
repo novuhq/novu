@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { BaseRepository, ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
-import { UserSessionData } from '@novu/shared';
+import {
+  BaseRepository,
+  ControlValuesRepository,
+  NotificationTemplateRepository,
+  PreferencesRepository,
+} from '@novu/dal';
 import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { DependencyAnalyzerService, EnvironmentValidationService } from '../../services';
-import { IDiffResult, IEnvironmentDiffResult, ISyncStrategy } from '../../types/sync.types';
+import { IDiffResult, IEnvironmentDiffResult } from '../../types/sync.types';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { DiffEnvironmentCommand } from './diff-environment.command';
@@ -18,7 +22,8 @@ export class DiffEnvironmentUseCase {
     private layoutSyncStrategy: LayoutSyncStrategy,
     private dependencyAnalyzerService: DependencyAnalyzerService,
     private controlValuesRepository: ControlValuesRepository,
-    private workflowRepository: NotificationTemplateRepository
+    private workflowRepository: NotificationTemplateRepository,
+    private preferencesRepository: PreferencesRepository
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -43,26 +48,20 @@ export class DiffEnvironmentUseCase {
       this.logger.info(`Starting environment diff between ${sourceEnvironmentId} and ${command.targetEnvironmentId}`);
 
       // Create workflow data container and pre-load workflow data for optimization
-      const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.workflowRepository);
+      const workflowDataContainer = new WorkflowDataContainer(this.controlValuesRepository, this.preferencesRepository);
 
-      // Pre-load workflow identifiers from source environment
-      const sourceWorkflows = await this.workflowRepository.find({
-        _environmentId: sourceEnvironmentId,
+      const workflows = await this.workflowRepository.findWithTemplates({
+        _environmentId: { $in: [sourceEnvironmentId, command.targetEnvironmentId] },
         _organizationId: command.user.organizationId,
       });
 
-      const workflowIdentifiers = sourceWorkflows
-        .map((workflow) => workflow.triggers?.[0]?.identifier)
-        .filter((id): id is string => id !== null && id !== undefined);
-
-      if (workflowIdentifiers.length > 0) {
-        this.logger.info(`Pre-loading data for ${workflowIdentifiers.length} workflows before diff`);
-        await workflowDataContainer.loadWorkflowsWithControlValues(
-          workflowIdentifiers,
-          sourceEnvironmentId,
-          command.user.organizationId
-        );
-      }
+      this.logger.info(`Pre-loading data for ${workflows.length} workflows before diff`);
+      await workflowDataContainer.loadWorkflowsWithControlValues(
+        workflows,
+        sourceEnvironmentId,
+        command.user.organizationId,
+        command.targetEnvironmentId
+      );
 
       // Execute diff with workflow container optimization and layout strategy normally
       const [workflowDiffResults, layoutDiffResults] = await Promise.all([
@@ -85,6 +84,7 @@ export class DiffEnvironmentUseCase {
 
       const dependencyMap = await this.dependencyAnalyzerService.analyzeDependencies(
         resources,
+        sourceEnvironmentId,
         command.targetEnvironmentId,
         command.user.organizationId,
         workflowDataContainer
@@ -118,23 +118,6 @@ export class DiffEnvironmentUseCase {
       this.logger.error('Environment diff failed', error);
       throw error;
     }
-  }
-
-  private async executeDiff(
-    strategies: ISyncStrategy[],
-    sourceEnvId: string,
-    targetEnvId: string,
-    organizationId: string,
-    userContext: UserSessionData
-  ): Promise<IDiffResult[]> {
-    const results: IDiffResult[] = [];
-
-    for (const strategy of strategies) {
-      const strategyResults = await strategy.diff(sourceEnvId, targetEnvId, organizationId, userContext);
-      results.push(...strategyResults);
-    }
-
-    return results;
   }
 
   private calculateSummary(resources: IDiffResult[]) {
