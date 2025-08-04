@@ -34,25 +34,28 @@ export type ClickhouseOperator = (typeof CLICKHOUSE_OPERATORS)[number];
 // Export the array for runtime validation
 export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERATORS;
 
-
-
 const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
+export type OrCondition<T> = {
+  $or: WhereCondition<T>[];
+};
+
 export type EnforcedContext = {
-  organizationId: string;
   environmentId: string;
 };
 
-type WhereCondition<T> = {
+type FieldCondition<T> = {
   [K in keyof T]: {
     [O in ClickhouseOperator]: {
       field: K;
       operator: O;
       value: O extends ArrayOperators ? T[K][] : T[K];
-    }
-  }[ClickhouseOperator]
+    };
+  }[ClickhouseOperator];
 }[keyof T];
+
+type WhereCondition<T> = FieldCondition<T> | OrCondition<T>;
 
 export interface EnforcedWhere<T> {
   enforced: EnforcedContext;
@@ -92,18 +95,14 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
     try {
       await this.clickhouseService.exec({ query });
+      console.log('Table created', this.table);
     } catch (error) {
       this.logger.error('Failed to create ClickHouse table', error);
     }
   }
 
   private getColumnType(column: string): string {
-    const columnSchema = this.schema.schema[column];
-    if (columnSchema && columnSchema.type) {
-      return columnSchema.type.toString();
-    }
-
-    return 'String';
+    return this.schema.schema[column]?.type?.toString() || 'String';
   }
 
   private validateColumnName(columnName: SchemaKeys<T_Schema>): void {
@@ -151,9 +150,6 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     }
   }
 
-
-
-
   protected buildWhereClause(where: Where<T_Enhanced_Type>): {
     clause: string;
     params: Record<string, any>;
@@ -178,56 +174,78 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return this.buildWhereClauseFromConditions(allConditions);
   }
 
- 
   private buildEnforcedConditions(enforced: EnforcedContext): WhereCondition<InferClickhouseSchemaType<T_Schema>>[] {
-    const conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [
-      {
-        field: 'organization_id',
-        operator: '=',
-        value: enforced.organizationId,
-      },
-      {
-        field: 'environment_id',
-        operator: '=',
-        value: enforced.environmentId,
-      },
-    ];
+    const condition = {
+      field: 'environment_id' as keyof InferClickhouseSchemaType<T_Schema>,
+      operator: '=' as const,
+      value: enforced.environmentId,
+    };
+
+    const conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[] = [condition];
 
     return conditions;
   }
 
-  /**
-   * Convert conditions array to SQL WHERE clause
-   */
-  private buildWhereClauseFromConditions(
-    conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[]
-  ): {
+  private buildWhereClauseFromConditions(conditions: WhereCondition<InferClickhouseSchemaType<T_Schema>>[]): {
     clause: string;
     params: Record<string, any>;
   } {
     const params: Record<string, any> = {};
-    const clauses = conditions
-      .map((condition, index) => {
-        this.validateColumnName(String(condition.field));
-        this.validateOperator(condition.operator);
+    let paramIndex = 0;
 
-        const paramName = `param_${index}_${String(condition.field).replace(/[^a-zA-Z0-9]/g, '')}`;
+    const buildSingleCondition = (condition: any): string => {
+      const entries = Object.entries(condition);
+      if (entries.length !== 1) {
+        throw new Error('Each where condition must have exactly one property');
+      }
 
-        if (condition.value === null || condition.value === undefined) {
-          throw new Error(`Invalid value for column '${String(condition.field)}': value cannot be null or undefined`);
+      const [key, value] = entries[0];
+
+      // Handle OR conditions
+      if (key === '$or') {
+        if (!Array.isArray(value)) {
+          throw new Error('$or condition must contain an array of conditions');
         }
 
-        params[paramName] = condition.value;
+        const orClauses = value.map((orCondition) => buildSingleCondition(orCondition));
+        return `(${orClauses.join(' OR ')})`;
+      }
 
-        let paramType = this.getColumnType(String(condition.field));
-        const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
-        if (arrayOperators.includes(condition.operator) && Array.isArray(condition.value)) {
-          paramType = `Array(${paramType})`;
-        }
+      // Handle regular conditions
+      this.validateColumnName(key as SchemaKeys<T_Schema>);
 
-        return `${String(condition.field)} ${condition.operator} {${paramName}:${paramType}}`;
-      })
-      .join(' AND ');
+      let operator: ClickhouseOperator = '=';
+      let actualValue = value;
+
+      if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
+        operator = value.operator as ClickhouseOperator;
+        actualValue = value.value;
+      }
+
+      this.validateOperator(operator);
+
+      const paramName = `param_${paramIndex}_${key.replace(/[^a-zA-Z0-9]/g, '')}`;
+      paramIndex++;
+
+      if (actualValue === null || actualValue === undefined) {
+        throw new Error(`Invalid value for column '${key}': value cannot be null or undefined`);
+      }
+
+      params[paramName] = actualValue;
+
+      // Determine the correct parameter type based on operator and value
+      let paramType = this.getColumnType(key);
+
+      // For array-based operators, use Array() type wrapper
+      const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
+      if (arrayOperators.includes(operator) && Array.isArray(actualValue)) {
+        paramType = `Array(${paramType})`;
+      }
+
+      return `${key} ${operator} {${paramName}:${paramType}}`;
+    };
+
+    const clauses = conditions.map((condition) => buildSingleCondition(condition)).join(' AND ');
 
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }
@@ -267,8 +285,6 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       options
     );
   }
-
-
 
   // Query methods with mandatory tenant enforcement
   async find(options: {
@@ -360,8 +376,6 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return Number(total || 0);
   }
 
-
-
   static formatDateTime64(date: Date) {
     // Use toISOString() to get UTC time, then format for ClickHouse
     const isoString = date.toISOString();
@@ -380,8 +394,8 @@ export class QueryBuilder<T> {
   constructor(private enforced: EnforcedContext) {}
 
   where<K extends keyof T, O extends ClickhouseOperator>(
-    field: K, 
-    operator: O, 
+    field: K,
+    operator: O,
     value: O extends ArrayOperators ? T[K][] : T[K]
   ): this {
     this.conditions.push({ field, operator, value } as WhereCondition<T>);

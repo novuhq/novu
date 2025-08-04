@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  EnforcedContext,
   PinoLogger,
+  QueryBuilder,
   StepRun,
   StepRunRepository,
   Where,
-  EnforcedContext,
-  QueryBuilder,
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
@@ -63,7 +63,7 @@ export class GetWorkflowRuns {
       }
 
       if (command.subscriberIds?.length) {
-        queryBuilder.whereIn('subscriber_id', command.subscriberIds);
+        queryBuilder.whereIn('external_subscriber_id', command.subscriberIds);
       }
 
       if (command.transactionIds?.length) {
@@ -82,7 +82,35 @@ export class GetWorkflowRuns {
         queryBuilder.whereLessThanOrEqual('created_at', new Date(command.createdLte));
       }
 
+      if (command.channels?.length) {
+        queryBuilder.where('channels', command.channels);
+      }
+
+      if (command.topicKey) {
+        queryBuilder.whereLike('topics', `%${command.topicKey}%`);
+      }
+
       const safeWhere = queryBuilder.build();
+      if (command.channels?.length) {
+        whereConditions.push({
+          $or: command.channels.map((channel) => ({
+            channels: {
+              operator: 'LIKE',
+              value: `%"${channel}"%`,
+            },
+          })),
+        });
+      }
+
+      if (command.topicKey) {
+        whereConditions.push({
+          topics: {
+            operator: 'LIKE',
+            value: `%${command.topicKey}%`,
+          },
+        });
+      }
+      >>>>>>> next
 
       // Decode cursor if provided
       let cursor: CursorData | undefined;
