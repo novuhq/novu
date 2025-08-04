@@ -67,12 +67,16 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
 
     await cancelEvent(transactionId!);
 
-    const cancelledDigestJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: JobStatusEnum.CANCELED,
-      type: StepTypeEnum.DIGEST,
-      transactionId,
+    const cancelledDigestJobs = await pollForJobStatusChange({
+      jobRepository,
+      query: {
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+        status: JobStatusEnum.CANCELED,
+        type: StepTypeEnum.DIGEST,
+        transactionId,
+      },
+      findMultiple: true,
     });
 
     expect(cancelledDigestJobs.length).to.eql(1);
