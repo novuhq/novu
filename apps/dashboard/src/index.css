@@ -375,16 +375,6 @@
   scrollbar-width: none; /* Firefox */
 }
 
-/* Recharts Bar Hover Styles */
-.recharts-bar-rectangle:hover {
-  fill-opacity: 1 !important;
-  opacity: 1 !important;
-}
-
-.recharts-bar-rectangle {
-  transition: none !important;
-}
-
 @layer utilities {
   .hide-inbox-footer
     .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {

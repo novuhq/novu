@@ -3,9 +3,11 @@ import { ReactElement, useEffect } from 'react';
 import { RiBookletFill, RiBookmark2Fill } from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
+import { InteractionTrendChart } from '../components/interaction-trend-chart';
 import { PageMeta } from '../components/page-meta';
 import { AnalyticsCard } from '../components/primitives/analytics-card';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
+import { WorkflowsByVolume } from '../components/workflows-by-volume';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 
@@ -195,7 +197,11 @@ export function HomePage(): ReactElement {
           </motion.div>
 
           <motion.div variants={sectionVariants}>
-            <DeliveryTrendsChart />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <DeliveryTrendsChart />
+              <WorkflowsByVolume />
+              <InteractionTrendChart />
+            </div>
           </motion.div>
 
           <motion.div variants={sectionVariants}>

@@ -1,5 +1,5 @@
-import { Bar, BarChart, CartesianGrid, Cell, XAxis } from 'recharts';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './primitives/card';
+import { Bar, BarChart, XAxis } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './primitives/chart';
 
 const chartData = [
@@ -15,9 +15,6 @@ const chartData = [
   { date: 'Jul 23', email: 135, push: 100, sms: 50, inApp: 75 },
   { date: 'Jul 24', email: 120, push: 90, sms: 40, inApp: 60 },
   { date: 'Jul 25', email: 110, push: 85, sms: 35, inApp: 55 },
-  { date: 'Jul 26', email: 130, push: 95, sms: 45, inApp: 70 },
-  { date: 'Jul 27', email: 125, push: 90, sms: 50, inApp: 65 },
-  { date: 'Jul 28', email: 140, push: 100, sms: 55, inApp: 80 },
 ];
 
 const chartConfig = {
@@ -42,15 +39,12 @@ const chartConfig = {
 export function DeliveryTrendsChart() {
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium text-[#525866]">Delivery trend</CardTitle>
-        <CardDescription className="text-xs text-[#99a0ae]">
-          Daily message volume by channel, across all workflows.
-        </CardDescription>
+      <CardHeader className="bg-transparent p-3 pb-0">
+        <CardTitle className="text-label-sm text-text-sub">Delivery trend</CardTitle>
       </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig}>
-          <BarChart accessibilityLayer data={chartData}>
+      <CardContent className="p-3">
+        <ChartContainer config={chartConfig} className="h-[160px] w-full">
+          <BarChart accessibilityLayer data={chartData} barCategoryGap={5}>
             <XAxis
               dataKey="date"
               tickLine={false}
@@ -58,16 +52,33 @@ export function DeliveryTrendsChart() {
               axisLine={false}
               tick={{ fontSize: 10, fill: '#99a0ae' }}
               tickFormatter={(value) => {
-                if (value === 'Jul 14') return 'Jul 14, 2025';
-                if (value === 'Jul 28') return 'Jul 28';
+                if (value === 'Jul 14') return 'Jul 14';
+                if (value === 'Jul 25') return 'Jul 25';
+
                 return '';
               }}
             />
-            <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-            <Bar dataKey="email" stackId="a" fill="#8b5cf6" radius={6} stroke="#ffffff" strokeWidth={4} />
-            <Bar dataKey="push" stackId="a" fill="#06b6d4" radius={6} stroke="#ffffff" strokeWidth={4} />
-            <Bar dataKey="sms" stackId="a" fill="#facc15" radius={6} stroke="#ffffff" strokeWidth={4} />
-            <Bar dataKey="inApp" stackId="a" fill="#f97316" radius={[14, 14, 6, 6]} stroke="#ffffff" strokeWidth={4} />
+            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <Bar
+              dataKey="email"
+              stackId="a"
+              barSize={20}
+              fill="#8b5cf6"
+              radius={[3, 3, 6, 6]}
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
+            <Bar dataKey="push" stackId="a" barSize={20} fill="#06b6d4" radius={3} stroke="#ffffff" strokeWidth={2} />
+            <Bar dataKey="sms" stackId="a" barSize={20} fill="#facc15" radius={3} stroke="#ffffff" strokeWidth={2} />
+            <Bar
+              dataKey="inApp"
+              stackId="a"
+              barSize={20}
+              fill="#f97316"
+              radius={[6, 6, 3, 3]}
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
           </BarChart>
         </ChartContainer>
       </CardContent>
