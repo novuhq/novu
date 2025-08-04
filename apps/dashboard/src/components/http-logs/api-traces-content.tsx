@@ -136,7 +136,7 @@ export function ApiTracesContent({ log }: ApiTracesContentProps) {
     error,
   } = useFetchRequestTraces(
     {
-      requestId: log.transactionId || '',
+      requestId: log.id || '',
     },
     {
       refetchOnWindowFocus: false,

@@ -14,19 +14,19 @@ export class GetRequest {
   async execute(command: GetRequestCommand): Promise<GetRequestResponseDto> {
     const request = await this.requestLogRepository.findOne({
       where: [
-        { transaction_id: { operator: '=', value: command.transactionId } },
+        { id: { operator: '=', value: command.requestId } },
         { organization_id: { operator: '=', value: command.organizationId } },
         { environment_id: { operator: '=', value: command.environmentId } },
       ],
     });
 
     if (!request) {
-      throw new NotFoundException(`Request with transactionId ${command.transactionId} not found`);
+      throw new NotFoundException(`Request with requestId ${command.requestId} not found`);
     }
 
     const traceResult = await this.traceLogRepository.find({
       where: [
-        { entity_id: { operator: '=', value: command.transactionId } },
+        { entity_id: { operator: '=', value: command.requestId } },
         { entity_type: { operator: '=', value: 'request' } },
         { environment_id: { operator: '=', value: command.environmentId } },
         { organization_id: { operator: '=', value: command.organizationId } },

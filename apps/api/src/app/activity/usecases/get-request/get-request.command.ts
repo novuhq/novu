@@ -3,5 +3,5 @@ import { EnvironmentCommand } from '@novu/application-generic';
 
 export class GetRequestCommand extends EnvironmentCommand {
   @IsString()
-  transactionId: string;
-} 
+  requestId: string;
+}

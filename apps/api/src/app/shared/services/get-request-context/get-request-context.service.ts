@@ -1,40 +1,32 @@
 import { IncomingHttpHeaders } from 'node:http';
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
-import { RequestWithTransactionId } from '../../middleware/transaction-id.middleware';
-import { getRequestTransactionId, getRequestTransactionIdSafe } from '../../utils/request-transaction.util';
+import { RequestWithReqId } from '../../middleware/request-id.middleware';
+import { getRequestId } from '../../utils/request-transaction.util';
 
 @Injectable({ scope: Scope.REQUEST })
 export class GetRequestContext {
-  constructor(@Inject(REQUEST) private readonly request: RequestWithTransactionId) {}
+  constructor(@Inject(REQUEST) private readonly request: RequestWithReqId) {}
 
   async execute() {
     return {
       request: this.request,
-      transactionId: this.getTransactionId(),
-      transactionIdSafe: this.getTransactionIdSafe(),
+      requestId: this.getRequestId(),
     };
   }
 
   /**
    * Get the current request object
    */
-  getRequest(): RequestWithTransactionId {
+  getRequest(): RequestWithReqId {
     return this.request;
-  }
-
-  /**
-   * Get the transaction ID with fallback generation
-   */
-  getTransactionId(): string {
-    return getRequestTransactionId(this.request);
   }
 
   /**
    * Get the transaction ID without fallback, returns undefined if not present
    */
-  getTransactionIdSafe(): string | undefined {
-    return getRequestTransactionIdSafe(this.request);
+  getRequestId(): string | undefined {
+    return getRequestId(this.request);
   }
 
   /**

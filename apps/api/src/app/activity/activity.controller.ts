@@ -46,16 +46,13 @@ export class ActivityController {
     );
   }
 
-  @Get('requests/:transactionId')
+  @Get('requests/:requestId')
   @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
   @ExternalApiAccessible()
-  async getRequestTraces(
-    @UserSession() user,
-    @Param('transactionId') transactionId: string
-  ): Promise<GetRequestResponseDto> {
+  async getRequestTraces(@UserSession() user, @Param('requestId') requestId: string): Promise<GetRequestResponseDto> {
     return this.getRequestUsecase.execute(
       GetRequestCommand.create({
-        transactionId,
+        requestId,
         organizationId: user.organizationId,
         environmentId: user.environmentId,
       })

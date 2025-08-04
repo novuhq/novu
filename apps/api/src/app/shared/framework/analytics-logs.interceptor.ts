@@ -79,7 +79,6 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const duration = Date.now() - start;
         const basicLog = buildLog(req, res.statusCode, data, user, duration);
         if (!basicLog) {
-          this.logger.debug('Analytics log construction failed - unable to track request metrics');
           this.logger.warn('Analytics log construction failed - unable to track request metrics');
 
           return;
@@ -89,13 +88,11 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
         try {
           this.logger.debug({ analyticsLog }, 'Analytics log Inserting');
-          await retryWithBackoff(() =>
-            this.requestLogRepository.create(analyticsLog, {
-              organizationId: user?.organizationId,
-              environmentId: user?.environmentId,
-              userId: user?._id,
-            })
-          );
+          this.requestLogRepository.create(analyticsLog, {
+            organizationId: user?.organizationId,
+            environmentId: user?.environmentId,
+            userId: user?._id,
+          });
           this.logger.debug('Analytics log Inserted');
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
@@ -122,9 +119,9 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
 
   private buildLogByStrategy(
     context: ExecutionContext,
-    analyticsLog: Omit<RequestLog, 'id' | 'expires_at'>,
+    analyticsLog: Omit<RequestLog, 'expires_at'>,
     res: unknown
-  ): Omit<RequestLog, 'id' | 'expires_at'> {
+  ): Omit<RequestLog, 'expires_at'> {
     const strategy = this.getAnalyticsStrategy(context);
 
     if (strategy === AnalyticsStrategyEnum.EVENTS) {

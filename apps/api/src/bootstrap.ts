@@ -16,7 +16,7 @@ import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 
-import { TransactionIdMiddleware } from './app/shared/middleware/transaction-id.middleware';
+import { RequestIdMiddleware } from './app/shared/middleware/request-id.middleware';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
@@ -90,7 +90,7 @@ export async function bootstrap(
   app.use(passport.initialize());
 
   // Apply transaction ID middleware early in the request lifecycle
-  const transactionIdMiddleware = new TransactionIdMiddleware();
+  const transactionIdMiddleware = new RequestIdMiddleware();
   app.use((req, res, next) => transactionIdMiddleware.use(req, res, next));
 
   app.useGlobalPipes(

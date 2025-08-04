@@ -43,6 +43,7 @@ import { addBreadcrumb } from '@sentry/node';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { merge } from 'lodash';
+import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
 import { GetRequestContext } from '../../../shared/services/get-request-context';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
@@ -76,9 +77,17 @@ export class ParseEventRequest {
 
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
-    const transactionId = this.getRequestContext.getTransactionId();
+    const transactionId = command.transactionId || generateTransactionId();
+    const requestId = this.getRequestContext.getRequestId();
 
-    await this.createRequestTrace(command, 'request_received', transactionId, 'success', 'Event request received');
+    await this.createRequestTrace(
+      requestId,
+      command,
+      'request_received',
+      transactionId,
+      'success',
+      'Event request received'
+    );
 
     try {
       const [environment, organization] = await Promise.all([
@@ -88,6 +97,7 @@ export class ParseEventRequest {
 
       if (!organization) {
         await this.createRequestTrace(
+          requestId,
           command,
           'request_organization_not_found',
           transactionId,
@@ -99,6 +109,7 @@ export class ParseEventRequest {
 
       if (!environment) {
         await this.createRequestTrace(
+          requestId,
           command,
           'request_environment_not_found',
           transactionId,
@@ -115,6 +126,7 @@ export class ParseEventRequest {
 
         if (!discoveredWorkflow) {
           await this.createRequestTrace(
+            requestId,
             command,
             'request_workflow_not_found',
             transactionId,
@@ -125,6 +137,7 @@ export class ParseEventRequest {
         }
 
         return await this.dispatchEventToWorkflowQueue({
+          requestId,
           command,
           transactionId,
           discoveredWorkflow,
@@ -140,6 +153,7 @@ export class ParseEventRequest {
 
       if (!template) {
         await this.createRequestTrace(
+          requestId,
           command,
           'request_workflow_not_found',
           transactionId,
@@ -160,6 +174,7 @@ export class ParseEventRequest {
         } catch (error) {
           if (error instanceof PayloadValidationException) {
             await this.createRequestTrace(
+              requestId,
               command,
               'request_payload_validation_failed',
               transactionId,
@@ -245,12 +260,19 @@ export class ParseEventRequest {
       // eslint-disable-next-line no-param-reassign
       command.payload = merge({}, defaultPayload, command.payload);
 
-      const result = await this.dispatchEventToWorkflowQueue({ command, transactionId, environment, organization });
+      const result = await this.dispatchEventToWorkflowQueue({
+        requestId,
+        command,
+        transactionId,
+        environment,
+        organization,
+      });
 
       return result;
     } catch (error) {
       // Trace: Request failed
       await this.createRequestTrace(
+        requestId,
         command,
         'request_failed',
         transactionId,
@@ -264,6 +286,7 @@ export class ParseEventRequest {
   }
 
   private async createRequestTrace(
+    requestId: string | undefined,
     command: ParseEventRequestCommand,
     eventType: EventType,
     transactionId: string,
@@ -271,6 +294,14 @@ export class ParseEventRequest {
     message?: string,
     rawData?: any
   ): Promise<void> {
+    if (!requestId) {
+      this.logger.warn(
+        { command, eventType, transactionId, status, message, rawData },
+        'Request trace skipped, no request ID found'
+      );
+      return;
+    }
+
     try {
       const traceData: Omit<Trace, 'id' | 'expires_at'> = {
         created_at: LogRepository.formatDateTime64(new Date()),
@@ -285,7 +316,7 @@ export class ParseEventRequest {
         raw_data: rawData ? JSON.stringify(rawData) : null,
         status,
         entity_type: 'request',
-        entity_id: transactionId,
+        entity_id: requestId,
       };
 
       await this.traceLogRepository.create(traceData);
@@ -321,12 +352,14 @@ export class ParseEventRequest {
   }
 
   private async dispatchEventToWorkflowQueue({
+    requestId,
     command,
     transactionId,
     discoveredWorkflow,
     environment,
     organization,
   }: {
+    requestId: string | undefined;
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;
     transactionId: string;
     discoveredWorkflow?: DiscoverWorkflowOutput | null;
@@ -360,6 +393,7 @@ export class ParseEventRequest {
        */
       if (!validRecipients && !isDryRun) {
         await this.createRequestTrace(
+          requestId,
           command,
           'request_invalid_recipients',
           transactionId,
@@ -393,8 +427,8 @@ export class ParseEventRequest {
       'Event dispatched to [Workflow] Queue'
     );
 
-    // Trace: Request successfully dispatched
     await this.createRequestTrace(
+      requestId,
       command,
       'request_queued',
       transactionId,
