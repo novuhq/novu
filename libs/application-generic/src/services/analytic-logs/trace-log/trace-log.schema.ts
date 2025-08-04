@@ -92,6 +92,7 @@ export type EventType =
   | 'delay_limit_exceeded'
   | 'bridge_response_received'
   | 'bridge_execution_failed'
+  | 'bridge_execution_skipped'
   | 'webhook_filter_retrying'
   | 'webhook_filter_failed'
   | 'integration_selected'

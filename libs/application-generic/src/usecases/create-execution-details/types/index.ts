@@ -19,7 +19,7 @@ export enum DetailEnum {
   MESSAGE_UNSNOOZE_FAILED = 'Message unsnooze failed',
   SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED = 'Successful Bridge response received',
   FAILED_BRIDGE_EXECUTION = 'Bridge execution failed',
-  SKIPPED_BRIDGE_EXECUTION = 'Bridge step execution skipped',
+  SKIPPED_BRIDGE_EXECUTION = 'Bridge execution skipped',
   SUBSCRIBER_NO_ACTIVE_INTEGRATION = 'Subscriber does not have an active integration',
   LAYOUT_SELECTED = 'Layout selected',
   LAYOUT_NOT_FOUND = 'Layout not found ',
