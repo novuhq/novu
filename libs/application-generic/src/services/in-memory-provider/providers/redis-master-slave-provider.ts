@@ -30,6 +30,8 @@ interface IRedisMasterSlaveConfig {
 export interface IRedisMasterSlaveProviderConfig {
   connectTimeout: number;
   family: number;
+  host?: string; // Master host (for compatibility with generic provider interface)
+  port?: number; // Master port (for compatibility with generic provider interface)
   masterHost?: string;
   masterPort?: number;
   slaveHost?: string;
@@ -94,6 +96,8 @@ export const getRedisMasterSlaveProviderConfig = (): IRedisMasterSlaveProviderCo
   }
 
   return {
+    host: masterHost, // Alias for masterHost (for compatibility)
+    port: masterPort, // Alias for masterPort (for compatibility)
     masterHost,
     masterPort,
     slaveHost,
