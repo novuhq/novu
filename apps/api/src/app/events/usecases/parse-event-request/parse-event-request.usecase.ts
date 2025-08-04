@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import type { EventType, Trace } from '@novu/application-generic';
@@ -39,6 +40,7 @@ import {
   TriggerRecipientsPayload,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
+import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { merge } from 'lodash';
 import { GetRequestContext } from '../../../shared/services/get-request-context';
