@@ -27,7 +27,7 @@ import { TranslationOnboardingPage } from './translation-onboarding-page';
 import { TranslationRow, TranslationRowSkeleton } from './translation-row';
 import { TranslationsFilters } from './translations-filters';
 
-import { IS_SELF_HOSTED } from '@/config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { DeleteTranslationGroupDialog } from './delete-translation-modal';
@@ -218,7 +218,8 @@ export function TranslationList(props: TranslationListProps) {
     getFeatureForTierAsBoolean(
       FeatureNameEnum.AUTO_TRANSLATIONS,
       subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE
-    ) && !IS_SELF_HOSTED;
+    ) &&
+    (!IS_SELF_HOSTED || IS_ENTERPRISE);
 
   const limit = data?.limit || DEFAULT_TRANSLATIONS_LIMIT;
 
