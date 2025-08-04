@@ -1,5 +1,5 @@
 import { Novu } from '@novu/api';
-import { WorkflowRunRepository, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { ClickHouseService, WorkflowRunRepository, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { NotificationEntity, NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
@@ -15,6 +15,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
   let subscriberService: SubscribersService;
   let novuClient: Novu;
   let workflowRunRepository: WorkflowRunRepository;
+  const clickHouseService = new ClickHouseService();
 
   // Helper function to create multiple workflow triggers with 5ms delay between each
   async function createMultipleWorkflowRuns(options: {
@@ -89,6 +90,8 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
   }
 
   beforeEach(async () => {
+    await clickHouseService.init();
+
     // Enable workflow run logs writing for testing
     (process.env as any).IS_WORKFLOW_RUN_LOGS_WRITE_ENABLED = 'true';
 
@@ -125,6 +128,12 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
+
+    // Force ClickHouse merge to deduplicate workflow runs
+    const databaseName = process.env.CLICK_HOUSE_DATABASE || 'test_logs';
+    await clickHouseService.exec({
+      query: `OPTIMIZE TABLE ${databaseName}.workflow_runs FINAL`,
+    });
 
     const { body: firstPage }: { body: GetWorkflowRunsResponseDto } = await session.testAgent
       .get('/v1/activity/workflow-runs')
