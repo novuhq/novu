@@ -22,6 +22,8 @@ export async function run() {
 
   const organizations = await organizationRepository.find({});
 
+  logger.info(`Found ${organizations.length} organizations`);
+
   for (const organization of organizations) {
     // Find all email message templates that have controls but don't have layoutId in the schema
     const emailTemplates = await messageTemplateRepository.find({
@@ -31,6 +33,7 @@ export async function run() {
       'controls.uiSchema': { $exists: true },
       'controls.schema.properties.layoutId': { $exists: false },
       'controls.uiSchema.properties.layoutId': { $exists: false },
+      deleted: false,
     });
 
     logger.info(
@@ -72,4 +75,12 @@ export async function run() {
   await app.close();
 }
 
-run();
+run()
+  .then(() => {
+    console.log('Migration completed successfully');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
