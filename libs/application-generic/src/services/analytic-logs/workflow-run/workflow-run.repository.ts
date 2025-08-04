@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationEntity, NotificationTemplateEntity } from '@novu/dal';
+import {
+  NotificationEntity,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
@@ -38,7 +43,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    private readonly notificationRepository: NotificationRepository,
+    private readonly notificationTemplateRepository: NotificationTemplateRepository
   ) {
     super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService);
     this.logger.setContext(this.constructor.name);
@@ -46,7 +53,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   async create(
     notification: NotificationEntity,
-    template: NotificationTemplateEntity,
+    workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions = {}
   ): Promise<void> {
     try {
@@ -62,7 +69,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunData = this.mapNotificationToWorkflowRun(notification, template, options);
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, options);
 
       await this.insert(
         workflowRunData,
@@ -89,7 +96,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   async createWorkflowRunBatch(
     notifications: Array<{
       notification: NotificationEntity;
-      template: NotificationTemplateEntity;
+      workflow: NotificationTemplateEntity;
       options?: IWorkflowRunOptions;
     }>
   ): Promise<void> {
@@ -110,7 +117,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunsData = notifications.map(({ notification, template, options = {} }) =>
+      const workflowRunsData = notifications.map(({ notification, workflow: template, options = {} }) =>
         this.mapNotificationToWorkflowRun(notification, template, options)
       );
 
@@ -173,50 +180,70 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const existingRuns = await this.find({
-        where: [
-          { workflow_run_id: { operator: '=', value: workflowRunId } },
-          { organization_id: { operator: '=', value: context.organizationId } },
-          { environment_id: { operator: '=', value: context.environmentId } },
-        ],
-        limit: 1,
-        useFinal: true,
-      });
+      const notification = await this.notificationRepository.findOne(
+        {
+          _id: workflowRunId,
+          _organizationId: context.organizationId,
+          _environmentId: context.environmentId,
+        },
+        {
+          _id: 1,
+          _templateId: 1,
+          _organizationId: 1,
+          _environmentId: 1,
+          _subscriberId: 1,
+          transactionId: 1,
+          channels: 1,
+          to: 1,
+          payload: 1,
+          controls: 1,
+          topics: 1,
+          _digestedNotificationId: 1,
+        }
+      );
 
-      if (existingRuns.data.length === 0) {
-        this.logger.warn(`Workflow run ${workflowRunId} not found for status update`);
-
+      if (!notification) {
+        this.logger.warn(
+          {
+            workflowRunId,
+            organizationId: context.organizationId,
+            environmentId: context.environmentId,
+          },
+          'Notification not found for workflow run status update'
+        );
         return;
       }
 
-      const existingRun = existingRuns.data[0];
-
-      await this.insert(
+      const workflow = await this.notificationTemplateRepository.findOne(
         {
-          created_at: existingRun.created_at,
-          updated_at: LogRepository.formatDateTime64(new Date()),
-          workflow_run_id: existingRun.workflow_run_id,
-          workflow_id: existingRun.workflow_id,
-          workflow_name: existingRun.workflow_name,
-          organization_id: existingRun.organization_id,
-          environment_id: existingRun.environment_id,
-          user_id: existingRun.user_id,
-          subscriber_id: existingRun.subscriber_id,
-          external_subscriber_id: existingRun.external_subscriber_id,
-          status,
-          trigger_identifier: existingRun.trigger_identifier,
-          transaction_id: existingRun.transaction_id,
-          channels: existingRun.channels,
-          subscriber_to: existingRun.subscriber_to,
-          payload: existingRun.payload,
-          control_values: existingRun.control_values,
-          topics: existingRun.topics,
-          is_digest: existingRun.is_digest,
-          digested_workflow_run_id: existingRun.digested_workflow_run_id,
+          _id: notification._templateId,
+          _environmentId: context.environmentId,
         },
-        context,
-        WORKFLOW_RUN_INSERT_OPTIONS
+        {
+          name: 1,
+          triggers: 1,
+        }
       );
+
+      if (!workflow) {
+        this.logger.warn(
+          {
+            workflowRunId,
+            templateId: notification._templateId,
+            environmentId: context.environmentId,
+          },
+          'Notification template not found for workflow run status update'
+        );
+        return;
+      }
+
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
+        status,
+        userId: null,
+        externalSubscriberId: notification.to?.subscriberId || null,
+      });
+
+      await this.insert(workflowRunData, context, WORKFLOW_RUN_INSERT_OPTIONS);
 
       this.logger.debug(
         {
@@ -403,7 +430,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   private mapNotificationToWorkflowRun(
     notification: NotificationEntity,
-    template: NotificationTemplateEntity,
+    workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions
   ): WorkflowRunInsertData {
     const now = new Date();
@@ -416,7 +443,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       // Core workflow run identification
       workflow_run_id: notification._id,
       workflow_id: notification._templateId,
-      workflow_name: template.name,
+      workflow_name: workflow.name,
 
       // Context
       organization_id: notification._organizationId,
@@ -427,7 +454,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       // Execution metadata
       status: options.status || 'pending',
-      trigger_identifier: this.getTriggerIdentifier(template),
+      trigger_identifier: this.getTriggerIdentifier(workflow),
 
       // Correlation and grouping
       transaction_id: notification.transactionId,
