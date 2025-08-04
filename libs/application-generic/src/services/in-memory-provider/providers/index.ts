@@ -37,6 +37,13 @@ import {
   isClientReady as isRedisClusterClientReady,
   validateRedisClusterProviderConfig,
 } from './redis-cluster-provider';
+import {
+  getRedisMasterSlaveCluster,
+  getRedisMasterSlaveProviderConfig,
+  IRedisMasterSlaveProviderConfig,
+  isClientReady as isRedisMasterSlaveClientReady,
+  validateRedisMasterSlaveProviderConfig,
+} from './redis-master-slave-provider';
 
 import { InMemoryProviderEnum, Redis } from '../types';
 
@@ -47,7 +54,8 @@ export type InMemoryProviderConfig =
   | IElasticacheClusterProviderConfig
   | IMemoryDbClusterProviderConfig
   | IRedisProviderConfig
-  | IRedisClusterProviderConfig;
+  | IRedisClusterProviderConfig
+  | IRedisMasterSlaveProviderConfig;
 
 const LOG_CONTEXT = 'InMemoryProviders';
 
@@ -104,6 +112,13 @@ export const getClientAndConfigForCluster = (
       isClientReady: isRedisClusterClientReady,
       provider: InMemoryProviderEnum.REDIS_CLUSTER,
       validate: validateRedisClusterProviderConfig,
+    },
+    [InMemoryProviderEnum.REDIS_MASTER_SLAVE]: {
+      getClient: getRedisMasterSlaveCluster,
+      getConfig: getRedisMasterSlaveProviderConfig,
+      isClientReady: isRedisMasterSlaveClientReady,
+      provider: InMemoryProviderEnum.REDIS_MASTER_SLAVE,
+      validate: validateRedisMasterSlaveProviderConfig,
     },
   };
 
