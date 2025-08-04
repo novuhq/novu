@@ -109,6 +109,61 @@ export const generateTriggerCurlCommand = ({
   -d '${JSON.stringify(body, null, 2)}'`;
 };
 
+export type PostmanCollectionOptions = {
+  workflowId: string;
+  to: unknown;
+  payload: string | Record<string, unknown>;
+  apiKey: string;
+  baseUrl?: string;
+  addDashboardSource?: boolean;
+};
+
+export const generatePostmanCollection = ({
+  workflowId,
+  to,
+  payload,
+  apiKey,
+  baseUrl = API_HOSTNAME ?? 'https://api.novu.co',
+  addDashboardSource = true,
+}: PostmanCollectionOptions) => {
+  const body = createTriggerRequestBody({ workflowId, to, payload, addDashboardSource });
+
+  return {
+    info: {
+      name: `Novu - Trigger ${workflowId}`,
+      schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+    },
+    item: [
+      {
+        name: `Trigger ${workflowId}`,
+        request: {
+          method: 'POST',
+          header: [
+            {
+              key: 'Authorization',
+              value: `ApiKey ${apiKey}`,
+            },
+            {
+              key: 'Content-Type',
+              value: 'application/json',
+            },
+          ],
+          body: {
+            mode: 'raw',
+            raw: JSON.stringify(body, null, 2),
+            options: {
+              raw: {
+                language: 'json',
+              },
+            },
+          },
+          url: `${baseUrl}/v1/events/trigger`,
+        },
+      },
+    ],
+  };
+};
+
 export const createFrameworkSnippet = ({ identifier, to, payload }: CodeSnippet) => {
   return `import { workflow } from '@novu/framework';
 

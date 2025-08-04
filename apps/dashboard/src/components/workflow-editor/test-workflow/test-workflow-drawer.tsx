@@ -21,14 +21,14 @@ import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
 import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
-import { API_HOSTNAME } from '@/config';
+
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
-import { createTriggerRequestBody, generateTriggerCurlCommand } from '@/utils/code-snippets';
+import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useWorkflow } from '../workflow-provider';
 
@@ -252,47 +252,12 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     try {
       const formData = form.getValues();
 
-      const body = createTriggerRequestBody({
+      const postmanCollection = generatePostmanCollection({
         workflowId: workflow.workflowId,
         to: subscriberData,
         payload: formData.payload,
+        apiKey,
       });
-
-      const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-      const postmanCollection = {
-        info: {
-          name: `Novu - Trigger ${workflow.workflowId}`,
-          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-        },
-        item: [
-          {
-            name: `Trigger ${workflow.workflowId}`,
-            request: {
-              method: 'POST',
-              header: [
-                {
-                  key: 'Authorization',
-                  value: `ApiKey ${apiKey}`,
-                },
-                {
-                  key: 'Content-Type',
-                  value: 'application/json',
-                },
-              ],
-              body: {
-                mode: 'raw',
-                raw: JSON.stringify(body, null, 2),
-                options: {
-                  raw: {
-                    language: 'json',
-                  },
-                },
-              },
-              url: `${baseUrl}/v1/events/trigger`,
-            },
-          },
-        ],
-      };
 
       await navigator.clipboard.writeText(JSON.stringify(postmanCollection, null, 2));
       showToast({

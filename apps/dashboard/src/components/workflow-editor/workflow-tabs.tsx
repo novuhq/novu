@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useMatch, useNavigate } from 'react-router-dom';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { API_HOSTNAME } from '@/config';
+
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -11,7 +11,7 @@ import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
-import { generateTriggerCurlCommand } from '@/utils/code-snippets';
+import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Button } from '../primitives/button';
@@ -64,47 +64,12 @@ export const WorkflowTabs = () => {
         email: currentUser.email ?? undefined,
       };
 
-      const body = {
-        name: workflow.workflowId,
+      const postmanCollection = generatePostmanCollection({
+        workflowId: workflow.workflowId,
         to: subscriberData,
-        payload: { ...payload, __source: 'dashboard' },
-      };
-
-      const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-      const postmanCollection = {
-        info: {
-          name: `Novu - Trigger ${workflow.workflowId}`,
-          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-        },
-        item: [
-          {
-            name: `Trigger ${workflow.workflowId}`,
-            request: {
-              method: 'POST',
-              header: [
-                {
-                  key: 'Authorization',
-                  value: `ApiKey ${apiKey}`,
-                },
-                {
-                  key: 'Content-Type',
-                  value: 'application/json',
-                },
-              ],
-              body: {
-                mode: 'raw',
-                raw: JSON.stringify(body, null, 2),
-                options: {
-                  raw: {
-                    language: 'json',
-                  },
-                },
-              },
-              url: `${baseUrl}/v1/events/trigger`,
-            },
-          },
-        ],
-      };
+        payload,
+        apiKey,
+      });
 
       await navigator.clipboard.writeText(JSON.stringify(postmanCollection, null, 2));
       showToast({
