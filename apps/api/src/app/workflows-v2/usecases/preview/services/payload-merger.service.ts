@@ -34,13 +34,6 @@ export class PayloadMergerService {
     stepIdOrInternalId?: string;
     user: UserSessionData;
   }): Promise<Record<string, unknown>> {
-    const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-    });
-
     const isV2TemplateEditorEnabled = await this.featureFlagService.getFlag({
       key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
       defaultValue: false,
@@ -49,8 +42,7 @@ export class PayloadMergerService {
     });
 
     const shouldUsePayloadSchema =
-      workflow?.origin === ResourceOriginEnum.EXTERNAL ||
-      (isPayloadSchemaEnabled && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD);
+      workflow?.origin === ResourceOriginEnum.EXTERNAL || workflow?.origin === ResourceOriginEnum.NOVU_CLOUD;
 
     if (shouldUsePayloadSchema && workflow?.payloadSchema) {
       return this.mergeWithPayloadSchema({
@@ -59,7 +51,6 @@ export class PayloadMergerService {
         userPayloadExample,
         stepIdOrInternalId,
         user,
-        isPayloadSchemaEnabled,
         isV2TemplateEditorEnabled,
       });
     }
@@ -79,7 +70,6 @@ export class PayloadMergerService {
     userPayloadExample,
     stepIdOrInternalId,
     user,
-    isPayloadSchemaEnabled,
     isV2TemplateEditorEnabled,
   }: {
     workflow: NotificationTemplateEntity;
@@ -87,28 +77,20 @@ export class PayloadMergerService {
     userPayloadExample: PreviewPayloadDto | undefined;
     stepIdOrInternalId?: string;
     user: UserSessionData;
-    isPayloadSchemaEnabled: boolean;
     isV2TemplateEditorEnabled: boolean;
   }): Promise<Record<string, unknown>> {
     let schemaBasedPayloadExample: Record<string, unknown>;
 
-    if (isPayloadSchemaEnabled) {
-      try {
-        const schema = {
-          type: 'object' as const,
-          properties: { payload: workflow.payloadSchema },
-          additionalProperties: false,
-        };
+    try {
+      const schema = {
+        type: 'object' as const,
+        properties: { payload: workflow.payloadSchema },
+        additionalProperties: false,
+      };
 
-        const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
-        schemaBasedPayloadExample = mockData;
-      } catch (error) {
-        schemaBasedPayloadExample = createMockObjectFromSchema({
-          type: 'object',
-          properties: { payload: workflow.payloadSchema },
-        });
-      }
-    } else {
+      const mockData = JsonSchemaMock.generate(schema) as Record<string, unknown>;
+      schemaBasedPayloadExample = mockData;
+    } catch (error) {
       schemaBasedPayloadExample = createMockObjectFromSchema({
         type: 'object',
         properties: { payload: workflow.payloadSchema },

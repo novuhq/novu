@@ -103,7 +103,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { currentOrganization } = useAuth();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
   const isNewChangeMechanismEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
 
   const { show: showComingSoonBanner } = usePromotionalBanner({
@@ -469,7 +469,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                   <span className="ml-auto" />
                 </Button>
               </Link>
-              {isPayloadSchemaEnabled && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
+              {workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
                 <Button
                   variant="secondary"
                   mode="outline"

@@ -1,11 +1,11 @@
-import { FeatureFlagsKeysEnum, type WorkflowResponseDto } from '@novu/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { type WorkflowResponseDto } from '@novu/shared';
+import { useCallback, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { RiFileMarkedLine, RiInformation2Line, RiShieldCheckLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
-import { Form, FormRoot } from '@/components/primitives/form/form';
+import { FormRoot } from '@/components/primitives/form/form';
 import {
   Sheet,
   SheetContent,
@@ -18,7 +18,7 @@ import {
 import type { JSONSchema7 } from '@/components/schema-editor/json-schema';
 import { SchemaEditor } from '@/components/schema-editor/schema-editor';
 import { convertSchemaToPropertyList } from '@/components/schema-editor/utils';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
+
 import { useFormProtection } from '../../hooks/use-form-protection';
 import { Hint, HintIcon } from '../primitives/hint';
 import { Separator } from '../primitives/separator';
@@ -57,7 +57,6 @@ export function PayloadSchemaDrawer({
   const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
   const [pendingChanges, setPendingChanges] = useState<SchemaChanges | null>(null);
-  const isPayloadSchemaFFEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
 
   const {
     currentSchema,
@@ -285,7 +284,7 @@ export function PayloadSchemaDrawer({
                   ) : (
                     <PayloadSchemaEmptyState
                       onAddProperty={addProperty}
-                      isPayloadSchemaEnabled={isPayloadSchemaFFEnabled}
+                      isPayloadSchemaEnabled={true}
                       hasNoSchema={!workflow?.payloadSchema}
                       onImportSchema={handleImportSchema}
                       onImportFromJson={handleImportFromJson}

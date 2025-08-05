@@ -33,7 +33,6 @@ import {
 import {
   ChangeEntityTypeEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  FeatureFlagsKeysEnum,
   INotificationTemplateStep,
   INotificationTrigger,
   IStepVariant,
@@ -83,14 +82,7 @@ export class CreateWorkflow {
 
       const templateSteps = await this.storeTemplateSteps(command, parentChangeId, session);
       const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
-      const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        environment: { _id: command.environmentId },
-      });
-
-      if (isPayloadSchemaEnabled && !command.payloadSchema) {
+      if (!command.payloadSchema) {
         command.payloadSchema = {
           type: JsonSchemaTypeEnum.OBJECT,
           additionalProperties: true,
