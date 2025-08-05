@@ -6,12 +6,11 @@ import {
   StepCreateDto,
 } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
-import { AnimatePresence } from 'motion/react';
-import { ComponentProps, useCallback, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { ComponentProps, useCallback, useState } from 'react';
 import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ConfirmationModal } from '@/components/confirmation-modal';
 import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -27,10 +26,12 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
-import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { useDragContext } from './workflow-canvas';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
 
 export type NodeData = {
+  id: string;
   addStepIndex?: number;
   content?: string;
   error?: string;
@@ -107,38 +108,30 @@ const StepNode = (props: StepNodeProps) => {
   const has = useHasPermission();
   const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const [isHovered, setIsHovered] = useState(false);
-  const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
-
+  const { onNodeDragEnd, onNodeDragMove, onNodeDragStart, draggedNodeId, intersectingNodeId } = useDragContext();
+  const id = data.id;
+  const isAnyNodeDragging = draggedNodeId !== null;
+  const areActionsVisible = !isAnyNodeDragging && isHovered && !data.isTemplateStorePreview && !!type;
   const isSelected =
     getIdFromSlug({ slug: stepSlug ?? '', divider: STEP_DIVIDER }) ===
       getIdFromSlug({ slug: data.stepSlug ?? '', divider: STEP_DIVIDER }) &&
     !!stepSlug &&
     !!data.stepSlug;
-
   const hasConditions = conditionsCount > 0;
   const isReadOnly =
     currentWorkflow?.origin === ResourceOriginEnum.EXTERNAL ||
     !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
     currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+  const isDraggable = !isReadOnly && !data.isTemplateStorePreview;
 
   const handleMouseEnter = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-
-    hoverTimeoutRef.current = setTimeout(() => {
+    if (!isAnyNodeDragging) {
       setIsHovered(true);
-    }, 150);
+    }
   };
 
   const handleMouseLeave = () => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-      hoverTimeoutRef.current = null;
-    }
-
     setIsHovered(false);
   };
 
@@ -261,13 +254,37 @@ const StepNode = (props: StepNodeProps) => {
     }
   }, [data.stepSlug, currentEnvironment?.slug, navigate, type, isV2TemplateEditorEnabled, currentWorkflow]);
 
+  const handleNodeDragEnd = useCallback(() => {
+    setIsHovered(false);
+    onNodeDragEnd();
+  }, [onNodeDragEnd]);
+
   if (hasConditions) {
     return (
-      <>
-        <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <AnimatePresence>
+        <motion.div
+          layout
+          className="relative pt-1 pl-6 -ml-6"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          key={id}
+        >
           <Node
             aria-selected={isSelected}
-            className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
+            className={cn(
+              'group rounded-tl-none [&>span]:rounded-tl-none transition-all',
+              {
+                'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
+                'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:[background-image:none]':
+                  isAnyNodeDragging && id === intersectingNodeId,
+              },
+              className
+            )}
+            nodeId={id}
+            isDraggable={isDraggable}
+            onNodeDragStart={onNodeDragStart}
+            onNodeDragMove={onNodeDragMove}
+            onNodeDragEnd={handleNodeDragEnd}
             pill={
               <>
                 <RiFilter3Fill className="text-foreground-400 size-3" />
@@ -283,43 +300,61 @@ const StepNode = (props: StepNodeProps) => {
           >
             {rest.children}
           </Node>
-          <AnimatePresence>
-            {isHovered && !data.isTemplateStorePreview && type && (
-              <WorkflowNodeActionBar
-                stepType={type}
-                stepName={data.name || 'Untitled Step'}
-                onRemoveClick={handleRemoveStep}
-                onEditContentClick={handleEditContent}
-                onCopyClick={handleCopyStep}
-                isReadOnly={isReadOnly}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </>
+          <WorkflowNodeActionBar
+            isVisible={areActionsVisible}
+            stepType={type}
+            stepName={data.name || 'Untitled Step'}
+            onRemoveClick={handleRemoveStep}
+            onEditContentClick={handleEditContent}
+            onCopyClick={handleCopyStep}
+            isReadOnly={isReadOnly}
+          />
+        </motion.div>
+      </AnimatePresence>
     );
   }
 
   return (
-    <>
-      <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
+    <AnimatePresence>
+      <motion.div
+        layout
+        className="relative pt-1 pl-6 -ml-6"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        key={id}
+      >
+        <Node
+          aria-selected={isSelected}
+          className={cn(
+            'group transition-all',
+            {
+              'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
+              'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:[background-image:none]':
+                isAnyNodeDragging && id === intersectingNodeId,
+            },
+            className
+          )}
+          nodeId={id}
+          isDraggable={isDraggable}
+          isDragHandleVisible={areActionsVisible}
+          onNodeDragStart={onNodeDragStart}
+          onNodeDragMove={onNodeDragMove}
+          onNodeDragEnd={handleNodeDragEnd}
+          {...rest}
+        >
           {rest.children}
         </Node>
-        <AnimatePresence>
-          {isHovered && !data.isTemplateStorePreview && type && (
-            <WorkflowNodeActionBar
-              stepType={type}
-              stepName={data.name || 'Untitled Step'}
-              onRemoveClick={handleRemoveStep}
-              onEditContentClick={handleEditContent}
-              onCopyClick={handleCopyStep}
-              isReadOnly={isReadOnly}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-    </>
+        <WorkflowNodeActionBar
+          isVisible={areActionsVisible}
+          stepType={type}
+          stepName={data.name || 'Untitled Step'}
+          onRemoveClick={handleRemoveStep}
+          onEditContentClick={handleEditContent}
+          onCopyClick={handleCopyStep}
+          isReadOnly={isReadOnly}
+        />
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
@@ -556,7 +591,9 @@ export const CustomNode = (props: NodeProps<NodeType>) => {
   );
 };
 
-export const AddNode = (_props: NodeProps<NodeType>) => {
+export const AddNode = (props: NodeProps<NodeType>) => {
+  const { intersectingNodeId } = useDragContext();
+  const isIntersecting = intersectingNodeId === props.id;
   const { workflow, update } = useWorkflow();
   const navigate = useNavigate();
   const has = useHasPermission();
@@ -585,44 +622,66 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   }
 
   return (
-    <div className="flex w-[300px] cursor-pointer justify-center">
+    <div
+      className="flex cursor-pointer justify-center items-center"
+      data-droppable-add-node-id={props.id}
+      style={{ width: NODE_WIDTH, height: 32 }}
+    >
       <Handle isConnectable={false} className={handleClassName} type="target" position={Position.Top} id="a" />
-      <AddStepMenu
-        visible
-        onMenuItemClick={(stepType) => {
-          update(
-            {
-              ...workflow,
-              steps: [...workflow.steps, createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined)],
-            },
-            {
-              onSuccess: (data) => {
-                if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                  if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
+      <div
+        className="bg-background rounded-lg border border-dashed border-bg-soft flex items-center justify-center gap-1"
+        style={{
+          position: 'absolute',
+          transition: 'opacity 0.2s ease-in-out',
+          fontSize: 12,
+          pointerEvents: 'all',
+          width: NODE_WIDTH,
+          height: 32,
+          opacity: isIntersecting ? 1 : 0,
+        }}
+      >
+        <RiInsertRowTop className="size-3.5 text-text-soft" />
+        <span className="text-label-xs text-text-soft">Drop here</span>
+      </div>
+      {!isIntersecting && (
+        <AddStepMenu
+          visible
+          className="-mt-1"
+          onMenuItemClick={(stepType) => {
+            update(
+              {
+                ...workflow,
+                steps: [...workflow.steps, createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined)],
+              },
+              {
+                onSuccess: (data) => {
+                  if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
+                    if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
+                      navigate(
+                        buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                          stepSlug: data.steps[data.steps.length - 1].slug,
+                        })
+                      );
+                    } else {
+                      navigate(
+                        buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                          stepSlug: data.steps[data.steps.length - 1].slug,
+                        })
+                      );
+                    }
+                  } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                     navigate(
-                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-                        stepSlug: data.steps[data.steps.length - 1].slug,
-                      })
-                    );
-                  } else {
-                    navigate(
-                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                      buildRoute(ROUTES.EDIT_STEP, {
                         stepSlug: data.steps[data.steps.length - 1].slug,
                       })
                     );
                   }
-                } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                  navigate(
-                    buildRoute(ROUTES.EDIT_STEP, {
-                      stepSlug: data.steps[data.steps.length - 1].slug,
-                    })
-                  );
-                }
-              },
-            }
-          );
-        }}
-      />
+                },
+              }
+            );
+          }}
+        />
+      )}
     </div>
   );
 };
