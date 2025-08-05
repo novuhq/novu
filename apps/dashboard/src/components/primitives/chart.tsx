@@ -155,7 +155,7 @@ const ChartTooltipContent = React.forwardRef<
       <div
         ref={ref}
         className={cn(
-          'grid min-w-[8rem] items-start gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl',
+          'grid min-w-32 items-start gap-1.5 rounded-8 border border-stroke-soft bg-background px-2.5 py-1.5 text-paragraph-2xs shadow-xl',
           className
         )}
       >
@@ -170,7 +170,7 @@ const ChartTooltipContent = React.forwardRef<
               <div
                 key={item.dataKey}
                 className={cn(
-                  'flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground',
+                  'flex w-full flex-wrap items-stretch gap-2 [&>svg]:size-2.5 [&>svg]:text-text-soft',
                   indicator === 'dot' && 'items-center'
                 )}
               >
@@ -183,8 +183,8 @@ const ChartTooltipContent = React.forwardRef<
                     ) : (
                       !hideIndicator && (
                         <div
-                          className={cn('shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]', {
-                            'h-2.5 w-2.5': indicator === 'dot',
+                          className={cn('shrink-0 rounded-4 border-[--color-border] bg-[--color-bg]', {
+                            'size-2.5': indicator === 'dot',
                             'w-1': indicator === 'line',
                             'w-0 border-[1.5px] border-dashed bg-transparent': indicator === 'dashed',
                             'my-0.5': nestLabel && indicator === 'dashed',
@@ -206,10 +206,10 @@ const ChartTooltipContent = React.forwardRef<
                     >
                       <div className="grid gap-1.5">
                         {nestLabel ? tooltipLabel : null}
-                        <span className="text-muted-foreground">{itemConfig?.label || item.name}</span>
+                        <span className="text-text-soft">{itemConfig?.label || item.name}</span>
                       </div>
                       {item.value && (
-                        <span className="font-mono font-medium tabular-nums text-foreground">
+                        <span className="font-code font-medium tabular-nums text-text-strong">
                           {item.value.toLocaleString()}
                         </span>
                       )}
@@ -245,22 +245,19 @@ const ChartLegendContent = React.forwardRef<
   return (
     <div
       ref={ref}
-      className={cn('flex items-center justify-center gap-4', verticalAlign === 'top' ? 'pb-3' : 'pt-3', className)}
+      className={cn('flex items-center justify-center gap-4', verticalAlign === 'top' ? 'pb-12' : 'pt-12', className)}
     >
       {payload.map((item) => {
         const key = `${nameKey || item.dataKey || 'value'}`;
         const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
         return (
-          <div
-            key={item.value}
-            className={cn('flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3 [&>svg]:text-muted-foreground')}
-          >
+          <div key={item.value} className={cn('flex items-center gap-1.5 [&>svg]:size-3 [&>svg]:text-text-soft')}>
             {itemConfig?.icon && !hideIcon ? (
               <itemConfig.icon />
             ) : (
               <div
-                className="h-2 w-2 shrink-0 rounded-[2px]"
+                className="size-2 shrink-0 rounded-4"
                 style={{
                   backgroundColor: item.color,
                 }}
@@ -347,35 +344,35 @@ const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
     const total = tooltipRows.reduce((sum, row) => sum + row.value, 0);
     const shouldShowTotal = showTotal && tooltipRows.length > 1;
 
-    const displayTitle = title || (dateFormatter ? dateFormatter(label || '') : ``);
+    const displayTitle = title || (dateFormatter ? dateFormatter(label || '') : label);
 
     return (
-      <div ref={ref} className="bg-white relative rounded-md border border-[#f2f5f8] shadow-xl">
+      <div ref={ref} className="bg-bg-white relative rounded-8 border border-stroke-soft shadow-xl">
         <div className="flex flex-col gap-1.5 items-start justify-start p-1.5">
-          <div className="flex flex-col font-medium justify-center text-[#99a0ae] text-[10px] text-left leading-[14px]">
+          <div className="flex flex-col font-medium justify-center text-text-soft text-paragraph-2xs text-left">
             <p>{displayTitle}</p>
           </div>
-          <div className="flex flex-col gap-1 items-start justify-start min-w-[150px] w-full">
+          <div className="flex flex-col gap-1 items-start justify-start min-w-40 w-full">
             {tooltipRows.map((row) => (
               <div key={row.key} className="flex flex-row items-center justify-between w-full gap-4">
                 <div className="flex flex-row items-center min-w-0 flex-1">
                   <div className="flex flex-row gap-1 items-center justify-start">
                     <div className="flex flex-row gap-2 items-center justify-start">
-                      <div className="h-[14px] rounded-[1px] w-[3px]" style={{ backgroundColor: row.color }} />
+                      <div className="h-3.5 rounded-4 w-1" style={{ backgroundColor: row.color }} />
                     </div>
                     {row.icon && (
                       <div className="flex flex-row gap-2 items-center justify-center size-3">
                         <div className="flex items-center justify-center size-3.5">
-                          <row.icon className="size-full text-[#525866]" />
+                          <row.icon className="size-full text-text-sub" />
                         </div>
                       </div>
                     )}
-                    <div className="flex flex-col font-medium justify-center text-[#525866] text-[10px] text-left leading-[14px] max-w-[120px]">
+                    <div className="flex flex-col font-medium justify-center text-text-sub text-paragraph-2xs text-left max-w-30">
                       <p className="capitalize truncate">{row.label}</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col font-normal justify-center text-[#525866] text-[10px] text-nowrap text-right leading-[14px] font-mono flex-shrink-0">
+                <div className="flex flex-col font-normal justify-center text-text-sub text-code-2xs text-nowrap text-right font-code flex-shrink-0">
                   <p className="whitespace-pre">{row.value.toLocaleString()}</p>
                 </div>
               </div>
@@ -384,20 +381,20 @@ const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
           {shouldShowTotal && (
             <>
               <div className="flex flex-row gap-2 items-center justify-center w-full">
-                <div className="grow h-0 border-t border-[#f2f5f8]" />
+                <div className="grow h-0 border-t border-stroke-soft" />
               </div>
               <div className="flex flex-row items-center justify-between w-full gap-4">
                 <div className="flex flex-row items-center min-w-0 flex-1">
                   <div className="flex flex-row gap-1 items-center justify-start">
                     <div className="flex flex-row gap-2 items-center justify-start">
-                      <div className="bg-[#e1e4ea] h-[14px] rounded-[1px] w-[3px]" />
+                      <div className="bg-neutral-200 h-3.5 rounded-4 w-1" />
                     </div>
-                    <div className="flex flex-col font-medium justify-center text-[#525866] text-[10px] text-left leading-[14px]">
+                    <div className="flex flex-col font-medium justify-center text-text-sub text-paragraph-2xs text-left">
                       <p className="capitalize">Total</p>
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col font-normal justify-center text-[#525866] text-[10px] text-nowrap text-right leading-[14px] font-mono flex-shrink-0">
+                <div className="flex flex-col font-normal justify-center text-text-sub text-code-2xs text-nowrap text-right font-code flex-shrink-0">
                   <p className="whitespace-pre">{total.toLocaleString()}</p>
                 </div>
               </div>

@@ -19,14 +19,14 @@ interface StepItemProps {
   environmentSlug?: string;
 }
 
-export function ProgressSection() {
+export function ProgressSection({ isNewHomePageEnabled }: { isNewHomePageEnabled?: boolean }) {
   const { environmentSlug } = useParams<{ environmentSlug?: string }>();
   const { steps } = useOnboardingSteps();
 
   return (
     <motion.div variants={mainCard} initial="hidden" animate="show">
       <Card className="relative flex items-stretch gap-2 rounded-xl border-neutral-100 shadow-none">
-        <WelcomeHeader />
+        {isNewHomePageEnabled ? null : <WelcomeHeader />}
 
         <motion.div className="flex flex-1 flex-col gap-3 p-6" variants={stepsList}>
           {steps.map((step, index) => (

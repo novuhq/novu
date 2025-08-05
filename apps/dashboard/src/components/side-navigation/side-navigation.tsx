@@ -31,7 +31,7 @@ import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { FreeTrialCard } from './free-trial-card';
-import { GettingStartedMenuItem } from './getting-started-menu-item';
+import { HomeMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
@@ -77,7 +77,7 @@ const BottomSection = ({
     return (
       <div className="relative mt-auto gap-8 pt-4">
         <ChangelogStack />
-        <GettingStartedMenuItem />
+        <HomeMenuItem />
       </div>
     );
   }
@@ -101,7 +101,7 @@ const BottomSection = ({
           <RiUserAddLine className="size-4" />
           <span>Invite teammates</span>
         </NavigationLink>
-        <GettingStartedMenuItem />
+        <HomeMenuItem />
       </NavigationGroup>
     </div>
   );
@@ -137,12 +137,7 @@ export const SideNavigation = () => {
         <nav className="flex h-full flex-1 flex-col">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
-              {isNewHomePageEnabled && (
-                <NavigationLink to={buildRoute(ROUTES.HOME, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                  <RiHome6Line className="size-4" />
-                  <span>Home</span>
-                </NavigationLink>
-              )}
+              {isNewHomePageEnabled && <HomeMenuItem />}
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                 <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                   <RiRouteFill className="size-4" />

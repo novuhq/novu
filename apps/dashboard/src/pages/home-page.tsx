@@ -10,6 +10,7 @@ import { TrendLineUp } from '../components/icons/trend-line-up';
 import { InteractionTrendChart } from '../components/interaction-trend-chart';
 import { PageMeta } from '../components/page-meta';
 import { AnalyticsCard } from '../components/primitives/analytics-card';
+import { ProgressSection } from '../components/welcome/progress-section';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { WorkflowsByVolume } from '../components/workflows-by-volume';
 import { useTelemetry } from '../hooks/use-telemetry';
@@ -210,17 +211,23 @@ export function HomePage(): ReactElement {
             </div>
           </motion.div>
 
-          <motion.div variants={sectionVariants}>
-            <ResourcesList
-              title="Helpful resources"
-              icon={<RiBookmark2Fill className="h-4 w-4" />}
-              resources={helpfulResources}
-            />
-          </motion.div>
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
+              <motion.div variants={sectionVariants}>
+                <ResourcesList
+                  title="Helpful resources"
+                  icon={<RiBookmark2Fill className="h-4 w-4" />}
+                  resources={helpfulResources}
+                />
+              </motion.div>
 
-          <motion.div variants={sectionVariants}>
-            <ResourcesList title="Learn" icon={<RiBookletFill className="h-4 w-4" />} resources={learnResources} />
-          </motion.div>
+              <motion.div variants={sectionVariants}>
+                <ResourcesList title="Learn" icon={<RiBookletFill className="h-4 w-4" />} resources={learnResources} />
+              </motion.div>
+            </div>
+
+            <ProgressSection isNewHomePageEnabled={true} />
+          </div>
         </motion.div>
       </DashboardLayout>
     </>
