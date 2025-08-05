@@ -28,13 +28,12 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ITenantDefine,
-  LogCodeEnum,
   ProvidersIdEnum,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
@@ -65,7 +64,7 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Chat',
     });
@@ -113,6 +112,7 @@ export class SendMessageChat extends SendMessageBase {
       ) || [];
 
     const { phone } = subscriber;
+    // @ts-ignore
     chatChannels.push({
       providerId: ChatProviderIdEnum.WhatsAppBusiness,
       credentials: {
@@ -138,12 +138,14 @@ export class SendMessageChat extends SendMessageBase {
       };
     }
 
-    let allFailed = true;
+    let status: SendMessageResult['status'] = 'failed';
     for (const channel of chatChannels) {
       try {
         const result = await this.sendChannelMessage(command, channel, step, content);
         if (result.status === 'success') {
-          allFailed = false;
+          status = 'success';
+        } else if (result.status === 'skipped' && status !== 'success') {
+          status = 'skipped';
         }
       } catch (e) {
         /*
@@ -154,7 +156,7 @@ export class SendMessageChat extends SendMessageBase {
       }
     }
 
-    if (allFailed) {
+    if (status === 'failed') {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -167,18 +169,34 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
+        status,
         reason: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+      };
+    } else if (status === 'skipped') {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.CHAT_SOME_CHANNELS_SKIPPED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return {
+        status,
+        reason: DetailEnum.CHAT_SOME_CHANNELS_SKIPPED,
       };
     }
 
     return {
-      status: 'success',
+      status,
     };
   }
 
   private async sendChannelMessage(
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     subscriberChannel: IChannelSettings,
     chatChannel: NotificationStepEntity,
     content: string
@@ -331,7 +349,7 @@ export class SendMessageChat extends SendMessageBase {
     chatWebhookUrl: string,
     integration: IntegrationEntity,
     message: MessageEntity,
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     phoneNumber?: string
   ): Promise<SendMessageResult> {
     if (integration?.providerId === ChatProviderIdEnum.WhatsAppBusiness && !phoneNumber) {
@@ -360,7 +378,7 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
+        status: 'skipped',
         reason: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
       };
     } else if (!chatWebhookUrl) {
@@ -389,7 +407,7 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
+        status: 'skipped',
         reason: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
       };
     }
@@ -434,7 +452,7 @@ export class SendMessageChat extends SendMessageBase {
     integration: IntegrationEntity,
     content: string,
     message: MessageEntity,
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     channelSpecification?: string | undefined,
     phoneNumber?: string | undefined
   ): Promise<SendMessageResult> {

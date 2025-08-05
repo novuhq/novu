@@ -170,7 +170,8 @@ export class RunJob {
             _templateId: job._templateId,
           });
         }
-      } else if (sendMessageResult.status === 'skippedByConditionsOrPreferences') {
+      } else if (sendMessageResult.status === 'skipped') {
+        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.CANCELED);
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.CANCELED,
         });

@@ -31,7 +31,7 @@ import { format } from 'date-fns';
 import i18next from 'i18next';
 import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
 
 export abstract class SendMessageBase extends SendMessageType {
@@ -143,7 +143,7 @@ export abstract class SendMessageBase extends SendMessageType {
     );
   }
 
-  protected async processVariants(command: SendMessageCommand): Promise<MessageTemplateEntity> {
+  protected async processVariants(command: SendMessageChannelCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,
