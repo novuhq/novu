@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { FeatureFlagsService } from '@novu/application-generic';
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum, UserSessionData } from '@novu/shared';
+import { createMockObjectFromSchema, ResourceOriginEnum, UserSessionData } from '@novu/shared';
 import _ from 'lodash';
 import { PreviewPayloadDto, StepResponseDto } from '../../../dtos';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
@@ -34,13 +34,6 @@ export class PayloadMergerService {
     stepIdOrInternalId?: string;
     user: UserSessionData;
   }): Promise<Record<string, unknown>> {
-    const isV2TemplateEditorEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-      environment: { _id: user.environmentId },
-    });
-
     const shouldUsePayloadSchema =
       workflow?.origin === ResourceOriginEnum.EXTERNAL || workflow?.origin === ResourceOriginEnum.NOVU_CLOUD;
 
@@ -51,7 +44,6 @@ export class PayloadMergerService {
         userPayloadExample,
         stepIdOrInternalId,
         user,
-        isV2TemplateEditorEnabled,
       });
     }
 
@@ -70,14 +62,12 @@ export class PayloadMergerService {
     userPayloadExample,
     stepIdOrInternalId,
     user,
-    isV2TemplateEditorEnabled,
   }: {
     workflow: NotificationTemplateEntity;
     payloadExample: Record<string, unknown>;
     userPayloadExample: PreviewPayloadDto | undefined;
     stepIdOrInternalId?: string;
     user: UserSessionData;
-    isV2TemplateEditorEnabled: boolean;
   }): Promise<Record<string, unknown>> {
     let schemaBasedPayloadExample: Record<string, unknown>;
 
@@ -97,38 +87,22 @@ export class PayloadMergerService {
       });
     }
 
-    let mergedPayload = isV2TemplateEditorEnabled
-      ? _.merge({}, schemaBasedPayloadExample)
-      : _.merge({}, payloadExample, schemaBasedPayloadExample);
+    let mergedPayload = _.merge({}, schemaBasedPayloadExample);
 
-    if (isV2TemplateEditorEnabled) {
-      if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-        // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
-        const filteredUserPayload = this.filterPayloadBySchema(
-          userPayloadExample as Record<string, unknown>,
-          schemaBasedPayloadExample
-        );
-
-        mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
-          if (Array.isArray(srcValue)) {
-            return srcValue;
-          }
-
-          return undefined;
-        });
-      }
-    } else if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
-      mergedPayload = _.mergeWith(
-        mergedPayload,
+    if (userPayloadExample && Object.keys(userPayloadExample).length > 0) {
+      // Filter userPayloadExample to only include keys that exist in schemaBasedPayloadExample
+      const filteredUserPayload = this.filterPayloadBySchema(
         userPayloadExample as Record<string, unknown>,
-        (objValue, srcValue) => {
-          if (Array.isArray(srcValue)) {
-            return srcValue;
-          }
-
-          return undefined;
-        }
+        schemaBasedPayloadExample
       );
+
+      mergedPayload = _.mergeWith(mergedPayload, filteredUserPayload, (objValue, srcValue) => {
+        if (Array.isArray(srcValue)) {
+          return srcValue;
+        }
+
+        return undefined;
+      });
     }
 
     const fullSubscriberSchema = this.mockDataGenerator.createFullSubscriberObject();
