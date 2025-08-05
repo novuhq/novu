@@ -11,6 +11,7 @@ import { GetWorkflowRunsResponseDto } from '../dtos/workflow-runs-response.dto';
 describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs #novu-v2', () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
+  let inAppWorkflow: NotificationTemplateEntity;
   let emailTemplate: NotificationTemplateEntity;
   let inAppTemplate: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
@@ -110,6 +111,16 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
           type: StepTypeEnum.EMAIL,
           subject: 'Test subject',
           content: [{ type: EmailBlockTypeEnum.TEXT, content: 'Hello {{firstName}}' }],
+        },
+      ],
+    });
+
+    inAppWorkflow = await session.createTemplate({
+      name: 'In App Workflow',
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'In-app notification content {{firstName}}',
         },
       ],
     });
@@ -556,7 +567,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
   it('should support combining multiple filters', async () => {
     await novuClient.trigger({
-      workflowId: template.triggers[0].identifier,
+      workflowId: inAppWorkflow.triggers[0].identifier,
       to: subscriber.subscriberId,
       payload: { firstName: 'John' },
     });
@@ -567,17 +578,17 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     const { body } = await session.testAgent
       .get('/v1/activity/workflow-runs')
       .query({
-        workflowIds: [template._id],
+        workflowIds: [inAppWorkflow._id],
         subscriberIds: subscriber.subscriberId,
         statuses: [WorkflowRunStatusEnum.SUCCESS],
         limit: 10,
       })
       .expect(200);
 
-    expect(body.data).to.be.an('array');
+    expect(body.data.length, 'expected body.data.length to be greater than 0').to.be.greaterThan(0);
 
     for (const workflowRun of body.data) {
-      expect(workflowRun.workflowId).to.equal(template._id);
+      expect(workflowRun.workflowId).to.equal(inAppWorkflow._id);
       expect(workflowRun.subscriberId).to.equal(subscriber.subscriberId);
       expect(workflowRun.status).to.equal(WorkflowRunStatusEnum.SUCCESS);
     }
