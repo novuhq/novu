@@ -357,15 +357,13 @@ export const Node = (props: BaseNodeProps) => {
     <>
       <div
         ref={nodeRef}
-        className={cn(nodeVariants({ variant, className }))}
-        onMouseDown={handleMouseDown}
-        style={{ cursor: isDragging ? 'grabbing' : isPotentialDrag ? 'grab' : 'pointer' }}
+        className={cn('cursor-pointer', nodeVariants({ variant, className }))}
         data-droppable-node-id={nodeId}
         {...rest}
       >
         {isDragHandleVisible && (
           <motion.div
-            className="action-bar-trigger pointer-events-auto absolute top-2 -left-6 z-50 bg-background rounded-4 shadow-md size-4 flex items-center justify-center cursor-grab border border-neutral-200"
+            className="action-bar-trigger pointer-events-auto absolute top-0 -left-8 z-50 p-2"
             initial={{ opacity: 0 }}
             animate={{
               opacity: 1,
@@ -381,8 +379,12 @@ export const Node = (props: BaseNodeProps) => {
                 ease: 'easeInOut',
               },
             }}
+            onMouseDown={handleMouseDown}
+            style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
           >
-            <RiDraggable className="size-3 text-text-soft" />
+            <div className="bg-background rounded-4 shadow-md size-4 flex items-center justify-center cursor-grab border border-neutral-200">
+              <RiDraggable className="size-3 text-text-soft" />
+            </div>
           </motion.div>
         )}
         {pill && (
