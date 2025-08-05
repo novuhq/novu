@@ -174,7 +174,10 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     expect(secondPage.data.length, 'secondPage dataLength').to.be.equal(2);
 
     const secondPageWorkflowRun = await workflowRunRepository.findOne({
-      where: [{ workflow_run_id: { operator: '=', value: secondPage.data[0].id } }],
+      where: {
+        enforced: { environmentId: session.environment._id },
+        conditions: [{ field: 'workflow_run_id', operator: '=', value: secondPage.data[0].id }],
+      },
     });
     expect(secondPageWorkflowRun, 'secondPageWorkflowRun should exist').to.not.be.null;
     expect(secondPageWorkflowRun.data, 'secondPageWorkflowRun.data should exist').to.not.be.undefined;
@@ -239,7 +242,10 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       // Check for duplicates and collect runNumbers
       for (const workflowRun of body.data) {
         const workflowRunEntity = await workflowRunRepository.findOne({
-          where: [{ workflow_run_id: { operator: '=', value: workflowRun.id } }],
+          where: {
+            enforced: { environmentId: session.environment._id },
+            conditions: [{ field: 'workflow_run_id', operator: '=', value: workflowRun.id }],
+          },
         });
         expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
         expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
@@ -546,7 +552,10 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
 
     for (const workflowRun of body.data) {
       const workflowRunEntity = await workflowRunRepository.findOne({
-        where: [{ workflow_run_id: { operator: '=', value: workflowRun.id } }],
+        where: {
+          enforced: { environmentId: session.environment._id },
+          conditions: [{ field: 'workflow_run_id', operator: '=', value: workflowRun.id }],
+        },
       });
       expect(workflowRunEntity, 'workflowRunEntity should exist').to.not.be.null;
       expect(workflowRunEntity.data, 'workflowRunEntity.data should exist').to.not.be.undefined;
