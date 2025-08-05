@@ -1,7 +1,7 @@
 import { RiRouteFill } from 'react-icons/ri';
 import { Bar, BarChart, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './primitives/chart';
+import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
 
 const chartData = [
   { workflow: 'Password reset workflow', volume: 17762, fill: '#8b5cf6' },
@@ -31,6 +31,18 @@ function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value:
   );
 }
 
+function WorkflowTooltip(props: { payload?: any[]; label?: string; [key: string]: any }) {
+  const rows = props.payload?.map((item) => ({
+    key: 'volume',
+    label: item.payload?.workflow || 'Workflow',
+    value: item.value || 0,
+    color: item.payload?.fill || item.color || '#000',
+    icon: RiRouteFill,
+  }));
+
+  return <NovuTooltip {...props} rows={rows} showTotal={false} title="" />;
+}
+
 export function WorkflowsByVolume() {
   return (
     <Card className="w-full">
@@ -50,7 +62,7 @@ export function WorkflowsByVolume() {
               width={190}
               tick={CustomTick}
             />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <ChartTooltip cursor={false} content={<WorkflowTooltip />} />
             <Bar dataKey="volume" radius={6} barSize={16} />
           </BarChart>
         </ChartContainer>

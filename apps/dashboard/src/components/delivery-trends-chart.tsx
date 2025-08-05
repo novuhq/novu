@@ -1,6 +1,8 @@
 import { Bar, BarChart, XAxis } from 'recharts';
+import { StepTypeEnum } from '@/utils/enums';
+import { STEP_TYPE_TO_ICON } from './icons/utils';
 import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './primitives/chart';
+import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
 
 const chartData = [
   { date: 'Jul 14', email: 120, push: 80, sms: 40, inApp: 60 },
@@ -36,6 +38,41 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+function DeliveryTooltip(props: { payload?: any[]; [key: string]: any }) {
+  const channels = [
+    {
+      key: 'email',
+      label: 'Email',
+      value: props.payload?.[0]?.payload?.email || 0,
+      color: '#8b5cf6',
+      icon: STEP_TYPE_TO_ICON[StepTypeEnum.EMAIL],
+    },
+    {
+      key: 'push',
+      label: 'Push',
+      value: props.payload?.[0]?.payload?.push || 0,
+      color: '#06b6d4',
+      icon: STEP_TYPE_TO_ICON[StepTypeEnum.PUSH],
+    },
+    {
+      key: 'sms',
+      label: 'SMS',
+      value: props.payload?.[0]?.payload?.sms || 0,
+      color: '#facc15',
+      icon: STEP_TYPE_TO_ICON[StepTypeEnum.SMS],
+    },
+    {
+      key: 'inApp',
+      label: 'In-app (Inbox)',
+      value: props.payload?.[0]?.payload?.inApp || 0,
+      color: '#f97316',
+      icon: STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP],
+    },
+  ];
+
+  return <NovuTooltip {...props} rows={channels} showTotal={true} />;
+}
+
 export function DeliveryTrendsChart() {
   return (
     <Card className="shadow-md">
@@ -58,7 +95,7 @@ export function DeliveryTrendsChart() {
                 return '';
               }}
             />
-            <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+            <ChartTooltip cursor={false} content={<DeliveryTooltip />} />
             <Bar
               dataKey="email"
               stackId="a"

@@ -1,6 +1,6 @@
-import { Line, LineChart, XAxis, YAxis } from 'recharts';
+import { Line, LineChart, XAxis } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from './primitives/chart';
+import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
 
 const chartData = [
   { date: 'Jul 14', delivered: 120, opened: 85, clicked: 35, engaged: 28 },
@@ -62,7 +62,7 @@ export function InteractionTrendChart() {
               domain={['dataMin', 'dataMax']}
             />
 
-            <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+            <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />
             <Line dataKey="delivered" stroke="#a5b4fc" strokeWidth={2} dot={false} type="monotone" />
             <Line dataKey="opened" stroke="#60a5fa" strokeWidth={2} dot={false} type="monotone" />
             <Line dataKey="clicked" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />

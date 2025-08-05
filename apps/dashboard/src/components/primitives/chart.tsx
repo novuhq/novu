@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { IconType } from 'react-icons/lib';
 import * as RechartsPrimitive from 'recharts';
 
 import { cn } from '@/utils/ui';
@@ -300,4 +301,113 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
   return configLabelKey in config ? config[configLabelKey] : config[key as keyof typeof config];
 }
 
-export { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, ChartStyle };
+type NovuTooltipRow = {
+  key: string;
+  label: string;
+  value: number;
+  color: string;
+  icon?: IconType;
+};
+
+type TooltipPayloadItem = {
+  dataKey: string;
+  name?: string;
+  value: number;
+  color?: string;
+  stroke?: string;
+  fill?: string;
+};
+
+type NovuTooltipProps = {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  label?: string;
+  rows?: NovuTooltipRow[];
+  showTotal?: boolean;
+  title?: string;
+  dateFormatter?: (date: string) => string;
+};
+
+const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
+  ({ active, payload, label, rows, showTotal = true, title, dateFormatter }, ref) => {
+    if (!active || !payload || !payload.length) {
+      return null;
+    }
+
+    // Generate rows from payload if not provided
+    const tooltipRows: NovuTooltipRow[] =
+      rows ||
+      payload.map((item) => ({
+        key: item.dataKey,
+        label: item.name || item.dataKey,
+        value: item.value,
+        color: item.color || item.stroke || item.fill || '#000',
+      }));
+
+    const total = tooltipRows.reduce((sum, row) => sum + row.value, 0);
+    const shouldShowTotal = showTotal && tooltipRows.length > 1;
+
+    const displayTitle = title || (dateFormatter ? dateFormatter(label || '') : ``);
+
+    return (
+      <div ref={ref} className="bg-white relative rounded-md border border-[#f2f5f8] shadow-xl">
+        <div className="flex flex-col gap-1.5 items-start justify-start p-1.5">
+          <div className="flex flex-col font-medium justify-center text-[#99a0ae] text-[10px] text-left leading-[14px]">
+            <p>{displayTitle}</p>
+          </div>
+          <div className="flex flex-col gap-1 items-start justify-start min-w-[150px] w-full">
+            {tooltipRows.map((row) => (
+              <div key={row.key} className="flex flex-row items-center justify-between w-full gap-4">
+                <div className="flex flex-row items-center min-w-0 flex-1">
+                  <div className="flex flex-row gap-1 items-center justify-start">
+                    <div className="flex flex-row gap-2 items-center justify-start">
+                      <div className="h-[14px] rounded-[1px] w-[3px]" style={{ backgroundColor: row.color }} />
+                    </div>
+                    {row.icon && (
+                      <div className="flex flex-row gap-2 items-center justify-center size-3">
+                        <div className="flex items-center justify-center size-3.5">
+                          <row.icon className="size-full text-[#525866]" />
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex flex-col font-medium justify-center text-[#525866] text-[10px] text-left leading-[14px] max-w-[120px]">
+                      <p className="capitalize truncate">{row.label}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col font-normal justify-center text-[#525866] text-[10px] text-nowrap text-right leading-[14px] font-mono flex-shrink-0">
+                  <p className="whitespace-pre">{row.value.toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {shouldShowTotal && (
+            <>
+              <div className="flex flex-row gap-2 items-center justify-center w-full">
+                <div className="grow h-0 border-t border-[#f2f5f8]" />
+              </div>
+              <div className="flex flex-row items-center justify-between w-full gap-4">
+                <div className="flex flex-row items-center min-w-0 flex-1">
+                  <div className="flex flex-row gap-1 items-center justify-start">
+                    <div className="flex flex-row gap-2 items-center justify-start">
+                      <div className="bg-[#e1e4ea] h-[14px] rounded-[1px] w-[3px]" />
+                    </div>
+                    <div className="flex flex-col font-medium justify-center text-[#525866] text-[10px] text-left leading-[14px]">
+                      <p className="capitalize">Total</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col font-normal justify-center text-[#525866] text-[10px] text-nowrap text-right leading-[14px] font-mono flex-shrink-0">
+                  <p className="whitespace-pre">{total.toLocaleString()}</p>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+);
+NovuTooltip.displayName = 'NovuTooltip';
+
+export { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, NovuTooltip, ChartStyle };
