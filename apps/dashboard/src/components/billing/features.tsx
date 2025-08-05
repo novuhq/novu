@@ -1,60 +1,74 @@
-import { ApiServiceLevelEnum, FeatureNameEnum } from '@novu/shared';
-import { cn } from '../../utils/ui';
+import {
+  ApiServiceLevelEnum,
+  FeatureNameEnum,
+  getFeatureForTier,
+  getFeatureForTierAsText,
+  isDetailedPriceListItem,
+} from '@novu/shared';
+import { Check, Minus } from 'lucide-react';
+import { FEATURE_SECTIONS } from './features-config';
 
-export type PlanFeatureValue = {
-  value: React.ReactNode;
-};
+const PLAN_ORDER: ApiServiceLevelEnum[] = [
+  ApiServiceLevelEnum.FREE,
+  ApiServiceLevelEnum.PRO,
+  ApiServiceLevelEnum.BUSINESS,
+  ApiServiceLevelEnum.ENTERPRISE,
+];
 
-export type Feature = {
-  label: string;
-  isTitle?: boolean;
-  values: Partial<Record<ApiServiceLevelEnum, PlanFeatureValue>>;
-};
+// Get feature display info for a specific plan
+function getFeatureDisplay(featureName: FeatureNameEnum, plan: ApiServiceLevelEnum) {
+  const rawFeature = getFeatureForTier(featureName, plan);
+  const textValue = getFeatureForTierAsText(featureName, plan);
 
-export interface BuildValuesParams {
-  featureName?: FeatureNameEnum;
-  isBoolean?: boolean;
-  prefix?: string | React.ReactNode;
-  suffix?: string | React.ReactNode;
+  // Disabled if value is null or empty text
+  const isDisabled =
+    (isDetailedPriceListItem(rawFeature) && !rawFeature.value) || textValue === '-' || textValue === '';
+
+  return {
+    content: textValue,
+    disabled: isDisabled,
+  };
 }
 
-function FeatureRow({ feature, index }: { feature: Feature; index: number }) {
-  return (
-    <div
-      className={cn('divide-border grid grid-cols-5 divide-x bg-neutral-50', {
-        'bg-muted/50': index % 2 === 1,
-        'border-border border-y': feature.isTitle,
-      })}
-    >
-      <div className="p-4">
-        <span
-          className={cn('text-sm', {
-            'text-foreground font-semibold': feature.isTitle,
-            'text-muted-foreground': !feature.isTitle,
-          })}
-        >
-          {feature.label}
-        </span>
-      </div>
+// Individual feature row component
+function FeatureItem({ featureName, plan }: { featureName: FeatureNameEnum; plan: ApiServiceLevelEnum }) {
+  const { content, disabled } = getFeatureDisplay(featureName, plan);
 
-      {Object.entries(feature.values).map(([plan, value]) => (
-        <div key={plan} className="flex items-center justify-center p-4">
-          <span className="text-muted-foreground text-sm">{value.value}</span>
-        </div>
-      ))}
+  return (
+    <div className={`flex items-center gap-2 text-label-xs ${disabled ? 'text-text-disabled' : 'text-text-sub'}`}>
+      {typeof content === 'string' ? (
+        <>
+          {disabled ? <Minus className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+          {content !== '-' && content !== '' && <span>{content}</span>}
+        </>
+      ) : (
+        content
+      )}
     </div>
   );
 }
 
-export interface FeaturesProps {
-  features: Feature[];
-}
-
-export function Features({ features }: FeaturesProps) {
+// Main features component
+export function Features() {
   return (
     <div className="flex flex-col">
-      {features.map((feature, index) => (
-        <FeatureRow key={index} feature={feature} index={index} />
+      {FEATURE_SECTIONS.map((section) => (
+        <div
+          key={section.title}
+          className="flex flex-col items-start gap-6 self-stretch p-6 border-t border-stroke-weak"
+        >
+          <h3 className="text-text-sub text-sm font-medium">{section.title}</h3>
+
+          <div className="grid grid-cols-4 gap-6 self-stretch">
+            {PLAN_ORDER.map((plan) => (
+              <div key={plan} className="flex flex-col gap-2">
+                {section.features.map((featureName) => (
+                  <FeatureItem key={featureName} featureName={featureName} plan={plan} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   );

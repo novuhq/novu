@@ -7,10 +7,9 @@ import { TelemetryEvent } from '../../utils/telemetry';
 
 interface ContactSalesButtonProps {
   className?: string;
-  variant?: 'filled' | 'outline';
 }
 
-export function ContactSalesButton({ className, variant = 'outline' }: ContactSalesButtonProps) {
+export function ContactSalesButton({ className }: ContactSalesButtonProps) {
   const track = useTelemetry();
 
   useEffect(() => {
@@ -28,18 +27,17 @@ export function ContactSalesButton({ className, variant = 'outline' }: ContactSa
   };
 
   return (
-    <>
-      <Button
-        mode={variant}
-        size="sm"
-        className={className}
-        data-cal-namespace="novu-meeting"
-        data-cal-link="team/novu/novu-meeting"
-        data-cal-config='{"layout":"month_view"}'
-        onClick={handleContactSales}
-      >
-        Contact sales
-      </Button>
-    </>
+    <Button
+      mode="lighter"
+      variant="secondary"
+      size="xs"
+      className={className}
+      data-cal-namespace="novu-meeting"
+      data-cal-link="team/novu/novu-meeting"
+      data-cal-config='{"layout":"month_view"}'
+      onClick={handleContactSales}
+    >
+      Contact sales
+    </Button>
   );
 }
