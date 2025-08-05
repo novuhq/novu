@@ -8,7 +8,7 @@ import {
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ComponentProps, useCallback, useState } from 'react';
-import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
+import { RiFilter3Fill, RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { createStep } from '@/components/workflow-editor/step-utils';
