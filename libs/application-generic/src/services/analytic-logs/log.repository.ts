@@ -34,9 +34,17 @@ export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERA
 const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
-export type WhereCondition<T> = {
-  [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } };
-}[keyof T];
+// Add OR condition type
+export type OrCondition<T> = {
+  $or: WhereCondition<T>[];
+};
+
+// Update WhereCondition to support OR operations
+export type WhereCondition<T> =
+  | {
+      [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } };
+    }[keyof T]
+  | OrCondition<T>;
 
 export type Where<T> = WhereCondition<T>[];
 
@@ -65,18 +73,14 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
     try {
       await this.clickhouseService.exec({ query });
+      console.log('Table created', this.table);
     } catch (error) {
       this.logger.error('Failed to create ClickHouse table', error);
     }
   }
 
   private getColumnType(column: string): string {
-    const columnSchema = this.schema.schema[column];
-    if (columnSchema && columnSchema.type) {
-      return columnSchema.type.toString();
-    }
-
-    return 'String';
+    return this.schema.schema[column]?.type?.toString() || 'String';
   }
 
   private validateColumnName(columnName: SchemaKeys<T_Schema>): void {
@@ -126,18 +130,21 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
   /**
    * Builds a WHERE clause with parameterized values for ClickHouse queries.
-   * @param where - Array of condition objects, each with a single property mapping column names to values or {operator, value} objects
+   * Now supports OR conditions using $or wrapper.
+   * @param where - Array of condition objects, supports both regular conditions and OR conditions
    * @returns Object with SQL WHERE clause string and parameter map for safe query execution
    * @example
    * Input: [
    *   { user_id: 123 },
-   *   { name: { operator: 'LIKE', value: 'John%' } },
-   *   { age: { operator: '>', value: 18 } },
-   *   { age: { operator: '<', value: 65 } }
+   *   { $or: [
+   *     { name: { operator: 'LIKE', value: 'John%' } },
+   *     { name: { operator: 'LIKE', value: 'Jane%' } }
+   *   ] },
+   *   { age: { operator: '>', value: 18 } }
    * ]
    * Output: {
-   *   clause: "WHERE user_id = {param_0_userid:String} AND name LIKE {param_1_name:String} AND age > {param_2_age:String} AND age < {param_3_age:String}",
-   *   params: { param_0_userid: 123, param_1_name: 'John%', param_2_age: 18, param_3_age: 65 }
+   *   clause: "WHERE user_id = {param_0_userid:String} AND (name LIKE {param_1_name:String} OR name LIKE {param_2_name:String}) AND age > {param_3_age:String}",
+   *   params: { param_0_userid: 123, param_1_name: 'John%', param_2_name: 'Jane%', param_3_age: 18 }
    * }
    */
   protected buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
@@ -145,46 +152,61 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     params: Record<string, any>;
   } {
     const params: Record<string, any> = {};
-    const clauses = where
-      .map((condition, index) => {
-        const entries = Object.entries(condition);
-        if (entries.length !== 1) {
-          throw new Error('Each where condition must have exactly one property');
+    let paramIndex = 0;
+
+    const buildSingleCondition = (condition: any): string => {
+      const entries = Object.entries(condition);
+      if (entries.length !== 1) {
+        throw new Error('Each where condition must have exactly one property');
+      }
+
+      const [key, value] = entries[0];
+
+      // Handle OR conditions
+      if (key === '$or') {
+        if (!Array.isArray(value)) {
+          throw new Error('$or condition must contain an array of conditions');
         }
 
-        const [key, value] = entries[0];
-        this.validateColumnName(key);
+        const orClauses = value.map((orCondition) => buildSingleCondition(orCondition));
+        return `(${orClauses.join(' OR ')})`;
+      }
 
-        let operator: ClickhouseOperator = '=';
-        let actualValue = value;
+      // Handle regular conditions
+      this.validateColumnName(key as SchemaKeys<T_Schema>);
 
-        if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
-          operator = value.operator;
-          actualValue = value.value;
-        }
+      let operator: ClickhouseOperator = '=';
+      let actualValue = value;
 
-        this.validateOperator(operator);
+      if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
+        operator = value.operator as ClickhouseOperator;
+        actualValue = value.value;
+      }
 
-        const paramName = `param_${index}_${key.replace(/[^a-zA-Z0-9]/g, '')}`;
+      this.validateOperator(operator);
 
-        if (actualValue === null || actualValue === undefined) {
-          throw new Error(`Invalid value for column '${key}': value cannot be null or undefined`);
-        }
+      const paramName = `param_${paramIndex}_${key.replace(/[^a-zA-Z0-9]/g, '')}`;
+      paramIndex++;
 
-        params[paramName] = actualValue;
+      if (actualValue === null || actualValue === undefined) {
+        throw new Error(`Invalid value for column '${key}': value cannot be null or undefined`);
+      }
 
-        // Determine the correct parameter type based on operator and value
-        let paramType = this.getColumnType(key);
+      params[paramName] = actualValue;
 
-        // For array-based operators, use Array() type wrapper
-        const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
-        if (arrayOperators.includes(operator) && Array.isArray(actualValue)) {
-          paramType = `Array(${paramType})`;
-        }
+      // Determine the correct parameter type based on operator and value
+      let paramType = this.getColumnType(key);
 
-        return `${key} ${operator} {${paramName}:${paramType}}`;
-      })
-      .join(' AND ');
+      // For array-based operators, use Array() type wrapper
+      const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
+      if (arrayOperators.includes(operator) && Array.isArray(actualValue)) {
+        paramType = `Array(${paramType})`;
+      }
+
+      return `${key} ${operator} {${paramName}:${paramType}}`;
+    };
+
+    const clauses = where.map((condition) => buildSingleCondition(condition)).join(' AND ');
 
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }

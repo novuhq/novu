@@ -218,6 +218,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Bridge response received';
     case 'bridge_execution_failed':
       return 'Bridge execution failed';
+    case 'bridge_execution_skipped':
+      return 'Bridge execution skipped';
 
     // Webhook events
     case 'webhook_filter_retrying':

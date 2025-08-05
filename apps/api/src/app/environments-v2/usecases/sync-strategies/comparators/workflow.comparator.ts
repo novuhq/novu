@@ -4,6 +4,7 @@ import { Instrument, PinoLogger } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
 import { diff } from 'deep-object-diff';
+import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
 import { DiffActionEnum, IResourceDiff, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
@@ -23,13 +24,15 @@ export class WorkflowComparator {
   async compareWorkflows(
     sourceWorkflow: NotificationTemplateEntity,
     targetWorkflow: NotificationTemplateEntity,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<IWorkflowComparison> {
     try {
       if (!sourceWorkflow || !targetWorkflow) {
         throw new Error('Source and target workflows must not be null');
       }
 
+      // Use WorkflowDataContainer if available for optimized workflow fetching
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -38,7 +41,8 @@ export class WorkflowComparator {
               environmentId: sourceWorkflow._environmentId,
             },
             workflowIdOrInternalId: sourceWorkflow._id,
-          })
+          }),
+          workflowDataContainer
         ),
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -47,7 +51,8 @@ export class WorkflowComparator {
               environmentId: targetWorkflow._environmentId,
             },
             workflowIdOrInternalId: targetWorkflow._id,
-          })
+          }),
+          workflowDataContainer
         ),
       ]);
 
@@ -130,6 +135,11 @@ export class WorkflowComparator {
     const processedSteps = new Set<string>();
 
     sourceSteps.forEach((sourceStep, sourceIndex) => {
+      // Skip steps without stepId as they can't be properly compared
+      if (!sourceStep.stepId) {
+        return;
+      }
+
       const targetStepData = targetStepMap.get(sourceStep.stepId);
 
       if (!targetStepData) {
@@ -149,6 +159,11 @@ export class WorkflowComparator {
     });
 
     targetSteps.forEach((targetStep, targetIndex) => {
+      // Skip steps without stepId
+      if (!targetStep.stepId) {
+        return;
+      }
+
       if (!processedSteps.has(targetStep.stepId)) {
         stepDiffs.push(this.createStepDeletedDiff(targetStep, targetIndex));
       }

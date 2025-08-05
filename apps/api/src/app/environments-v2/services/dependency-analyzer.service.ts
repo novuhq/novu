@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { ControlValuesRepository, LayoutRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
 import { WorkflowDataContainer } from '../../shared/containers/workflow-data.container';
+import { WorkflowResponseDto } from '../../workflows-v2/dtos/workflow-response.dto';
 import {
   DependencyReasonEnum,
   IDiffResult,
@@ -24,6 +25,7 @@ export class DependencyAnalyzerService {
 
   async analyzeDependencies(
     resources: IDiffResult[],
+    sourceEnvId: string,
     targetEnvId: string,
     organizationId: string,
     workflowDataContainer?: WorkflowDataContainer
@@ -62,15 +64,14 @@ export class DependencyAnalyzerService {
           `Analyzing dependencies for workflow: ${resource.sourceResource!.name} (${resource.sourceResource!.id})`
         );
 
-        const preloadedControlValues =
-          workflowDataContainer.getControlValuesForWorkflow(resource.sourceResource?.id!) || [];
+        const workflowDto = workflowDataContainer.getWorkflowDto(resource.sourceResource?.id!, sourceEnvId);
 
         const dependencies = await this.getWorkflowDependencies(
           resource,
           layoutResourceByIdMap,
           targetEnvId,
           organizationId,
-          preloadedControlValues
+          workflowDto
         );
 
         if (dependencies.length > 0) {
@@ -110,7 +111,7 @@ export class DependencyAnalyzerService {
     layoutResourceByIdMap: Map<string, IDiffResult>,
     targetEnvId: string,
     organizationId: string,
-    preloadedControlValues: unknown[] = []
+    workflowDto?: WorkflowResponseDto
   ): Promise<IResourceDependency[]> {
     const dependencies: IResourceDependency[] = [];
     const processedLayoutIds = new Set<string>();
@@ -120,15 +121,11 @@ export class DependencyAnalyzerService {
         this.logger.debug(`Analyzing ${workflowDiff.changes.length} changes in workflow`);
 
         for (const change of workflowDiff.changes) {
-          // Handle both enum and string values for resourceType
           const isStepChange = change.resourceType === ResourceTypeEnum.STEP;
           const isEmailStep = change.stepType === StepTypeEnum.EMAIL;
 
           if (isStepChange && isEmailStep) {
-            this.logger.debug(`Found email step change: ${change.sourceResource?.name || change.targetResource?.name}`);
-
             const layoutIds = this.extractLayoutIdsFromStepChange(change);
-            this.logger.debug(`Extracted layout IDs: ${layoutIds.join(', ')}`);
 
             for (const layoutId of layoutIds) {
               if (processedLayoutIds.has(layoutId)) continue;
@@ -152,25 +149,30 @@ export class DependencyAnalyzerService {
         }
       }
 
-      this.logger.debug(`Found ${preloadedControlValues.length} control values with layoutId references`);
+      // Extract layout dependencies from workflow DTO steps
+      if (workflowDto?.steps) {
+        for (const step of workflowDto.steps) {
+          // Check for layout ID in control values
+          const controlValues = step.controlValues as Record<string, unknown> | undefined;
+          const controlsValues = (step.controls as { values?: Record<string, unknown> })?.values;
+          const layoutId = controlValues?.layoutId || controlsValues?.layoutId;
 
-      for (const controlValue of preloadedControlValues) {
-        const layoutId = (controlValue as { controls?: { layoutId?: string } })?.controls?.layoutId;
-        if (!layoutId || processedLayoutIds.has(layoutId)) continue;
-        processedLayoutIds.add(layoutId);
+          if (!layoutId || typeof layoutId !== 'string' || processedLayoutIds.has(layoutId)) continue;
+          processedLayoutIds.add(layoutId);
 
-        const dependency = await this.createLayoutDependency(
-          layoutId,
-          layoutResourceByIdMap,
-          targetEnvId,
-          organizationId
-        );
-
-        if (dependency) {
-          this.logger.debug(
-            `Created dependency from control values: workflow -> layout ${dependency.resourceName} (blocking: ${dependency.isBlocking})`
+          const dependency = await this.createLayoutDependency(
+            layoutId as string,
+            layoutResourceByIdMap,
+            targetEnvId,
+            organizationId
           );
-          dependencies.push(dependency);
+
+          if (dependency) {
+            this.logger.debug(
+              `Created dependency from step ${step.name}: workflow -> layout ${dependency.resourceName} (blocking: ${dependency.isBlocking})`
+            );
+            dependencies.push(dependency);
+          }
         }
       }
     } catch (error) {
@@ -259,8 +261,8 @@ export class DependencyAnalyzerService {
 
     // Check current/new layout ID - this is what the workflow actually depends on
     const newLayoutId = stepChange.diffs?.new?.controlValues?.layoutId;
+
     if (newLayoutId && typeof newLayoutId === 'string') {
-      this.logger.debug(`Found new layoutId in step change: ${newLayoutId}`);
       layoutIds.push(newLayoutId);
     }
 

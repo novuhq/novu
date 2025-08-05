@@ -42,6 +42,16 @@ export class GetWorkflowRunsRequestDto {
   statuses?: WorkflowRunStatusEnum[];
 
   @IsOptional()
+  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @IsArray()
+  @IsString({ each: true })
+  channels?: string[];
+
+  @IsOptional()
+  @IsString()
+  topicKey?: string;
+
+  @IsOptional()
   @IsISO8601()
   createdGte?: string;
 

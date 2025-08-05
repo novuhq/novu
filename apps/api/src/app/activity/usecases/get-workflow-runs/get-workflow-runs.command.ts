@@ -33,6 +33,15 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   statuses?: WorkflowRunStatusEnum[];
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  channels?: string[];
+
+  @IsOptional()
+  @IsString()
+  topicKey?: string;
+
+  @IsOptional()
   @IsISO8601()
   createdGte?: string;
 

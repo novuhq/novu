@@ -27,6 +27,7 @@ import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { NODE_WIDTH, Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
+import { ConditionBadge } from './condition-badge';
 import { useDragContext } from './workflow-canvas';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
 
@@ -344,6 +345,13 @@ const StepNode = (props: StepNodeProps) => {
         >
           {rest.children}
         </Node>
+        {hasConditions && (
+          <ConditionBadge
+            conditionsCount={conditionsCount}
+            stepSlug={data.stepSlug ?? ''}
+            conditionsData={data.controlValues?.skip as RQBJsonLogic}
+          />
+        )}
         <WorkflowNodeActionBar
           isVisible={areActionsVisible}
           stepType={type}

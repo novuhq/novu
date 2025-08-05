@@ -60,6 +60,7 @@ const mapDetailToEventType = {
   // Bridge events
   [DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED]: 'bridge_response_received',
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
+  [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
 
   // Webhook events
   [DetailEnum.WEBHOOK_FILTER_FAILED_RETRY]: 'webhook_filter_retrying',
