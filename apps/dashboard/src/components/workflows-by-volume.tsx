@@ -45,7 +45,7 @@ function WorkflowTooltip(props: { payload?: any[]; label?: string; [key: string]
 
 export function WorkflowsByVolume() {
   return (
-    <Card className="w-full">
+    <Card className="w-full shadow-box-xs border-none">
       <CardHeader className="bg-transparent p-3 pb-0">
         <CardTitle className="text-label-sm text-text-sub">Top workflows by volume</CardTitle>
       </CardHeader>

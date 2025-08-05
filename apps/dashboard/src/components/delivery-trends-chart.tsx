@@ -75,7 +75,7 @@ function DeliveryTooltip(props: { payload?: any[]; [key: string]: any }) {
 
 export function DeliveryTrendsChart() {
   return (
-    <Card className="shadow-md">
+    <Card className="shadow-box-xs border-none">
       <CardHeader className="bg-transparent p-3 pb-0">
         <CardTitle className="text-label-sm text-text-sub">Delivery trend</CardTitle>
       </CardHeader>

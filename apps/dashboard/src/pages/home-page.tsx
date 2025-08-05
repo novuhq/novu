@@ -1,6 +1,13 @@
 import { motion } from 'motion/react';
 import { ReactElement, useEffect } from 'react';
-import { RiBookletFill, RiBookmark2Fill, RiCopperCoinLine, RiGroup2Fill } from 'react-icons/ri';
+import {
+  RiBookletFill,
+  RiBookmark2Fill,
+  RiCopperCoinLine,
+  RiGroup2Fill,
+  RiListCheck3,
+  RiTodoLine,
+} from 'react-icons/ri';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
 import { InboxBellFilled } from '../components/icons/inbox-bell-filled';
@@ -10,6 +17,7 @@ import { TrendLineUp } from '../components/icons/trend-line-up';
 import { InteractionTrendChart } from '../components/interaction-trend-chart';
 import { PageMeta } from '../components/page-meta';
 import { AnalyticsCard } from '../components/primitives/analytics-card';
+import { Separator } from '../components/primitives/separator';
 import { ProgressSection } from '../components/welcome/progress-section';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { WorkflowsByVolume } from '../components/workflows-by-volume';
@@ -163,55 +171,58 @@ export function HomePage(): ReactElement {
             <TopLevelStats />
           </motion.div>
 
-          <motion.div variants={sectionVariants}>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-              <AnalyticsCard
-                icon={InboxBellFilled}
-                value="34,613,001"
-                title="Messages delivered"
-                description="+40 compared to prior 30 days"
-                percentageChange={3}
-                trendDirection="up"
-              />
+          <div className="flex flex-col gap-2">
+            <motion.div variants={sectionVariants}>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+                <AnalyticsCard
+                  icon={InboxBellFilled}
+                  value="34,613,001"
+                  title="Messages delivered"
+                  description="+40 compared to prior 30 days"
+                  percentageChange={3}
+                  trendDirection="up"
+                />
 
-              <AnalyticsCard
-                icon={RiGroup2Fill}
-                value="1,718,030"
-                title="Active subscribers"
-                description="+400 compared to prior 30 days"
-                percentageChange={3}
-                trendDirection="up"
-              />
+                <AnalyticsCard
+                  icon={RiGroup2Fill}
+                  value="1,718,030"
+                  title="Active subscribers"
+                  description="+400 compared to prior 30 days"
+                  percentageChange={3}
+                  trendDirection="up"
+                />
 
-              <AnalyticsCard
-                icon={TargetArrow}
-                value="78%"
-                title="Interaction rate"
-                description="+10% compared to prior 30 days"
-                percentageChange={3}
-                trendDirection="up"
-              />
+                <AnalyticsCard
+                  icon={TargetArrow}
+                  value="78%"
+                  title="Interaction rate"
+                  description="+10% compared to prior 30 days"
+                  percentageChange={3}
+                  trendDirection="up"
+                />
 
-              <AnalyticsCard
-                icon={StackedDots}
-                value="18"
-                title="Avg. Messages per subscriber"
-                description="+5 compared to prior 30 days"
-                percentageChange={3}
-                trendDirection="up"
-              />
-            </div>
-          </motion.div>
+                <AnalyticsCard
+                  icon={StackedDots}
+                  value="18"
+                  title="Avg. Messages per subscriber"
+                  description="+5 compared to prior 30 days"
+                  percentageChange={3}
+                  trendDirection="up"
+                />
+              </div>
+            </motion.div>
 
-          <motion.div variants={sectionVariants}>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <DeliveryTrendsChart />
-              <WorkflowsByVolume />
-              <InteractionTrendChart />
-            </div>
-          </motion.div>
+            <motion.div variants={sectionVariants}>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+                <DeliveryTrendsChart />
+                <WorkflowsByVolume />
+                <InteractionTrendChart />
+              </div>
+            </motion.div>
+          </div>
+          <Separator />
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-row gap-6 w-full">
             <div className="flex flex-col gap-6">
               <motion.div variants={sectionVariants}>
                 <ResourcesList
@@ -226,7 +237,12 @@ export function HomePage(): ReactElement {
               </motion.div>
             </div>
 
-            <ProgressSection isNewHomePageEnabled={true} />
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-1 text-label-xs text-text-sub">
+                <RiListCheck3 className="size-3.5 text-icon-soft" /> Things to do
+              </div>
+              <ProgressSection isNewHomePageEnabled={true} />
+            </div>
           </div>
         </motion.div>
       </DashboardLayout>

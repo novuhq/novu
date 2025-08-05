@@ -41,7 +41,7 @@ const chartConfig = {
 
 export function InteractionTrendChart() {
   return (
-    <Card>
+    <Card className="shadow-box-xs border-none">
       <CardHeader className="bg-transparent p-3 pb-0">
         <CardTitle className="text-label-sm text-text-sub">Interaction trend</CardTitle>
       </CardHeader>

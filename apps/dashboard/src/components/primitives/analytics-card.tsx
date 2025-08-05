@@ -81,7 +81,7 @@ export function AnalyticsCard({
   const formattedValue = formatValue(value);
 
   return (
-    <div className={cn('bg-bg-white rounded-12 p-3 shadow-sm w-full', className)}>
+    <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
