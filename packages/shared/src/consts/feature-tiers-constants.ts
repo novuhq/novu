@@ -74,8 +74,8 @@ class DetailedPriceListItem {
 
 const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, FeatureValue>> = {
   [FeatureNameEnum.PLATFORM_SUPPORT_SLA]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Support SLA', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Support SLA', value: false },
+    [ApiServiceLevelEnum.FREE]: { label: 'Standard support SLA', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'Standard support SLA', value: false },
     [ApiServiceLevelEnum.BUSINESS]: { label: '48 hours support SLA', value: 48, timeSuffix: 'h' },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: '24 hours support SLA', value: 24, timeSuffix: 'h' },
     [ApiServiceLevelEnum.UNLIMITED]: { label: '24 hours support SLA', value: 24, timeSuffix: 'h' },
@@ -110,9 +110,9 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   },
   [FeatureNameEnum.PLATFORM_SUPPORT_CHANNELS]: {
     [ApiServiceLevelEnum.FREE]: { label: 'Community support', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Community support', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'Chat & Email support', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Slack & Email support', value: true },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Slack & Email support', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Slack & Email priority support', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Slack & Email support', value: true },
   },
   [FeatureNameEnum.PLATFORM_MONTHLY_COST]: {
@@ -196,8 +196,8 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.FREE]: { label: 'No additional events', value: null },
     [ApiServiceLevelEnum.PRO]: { label: '$1.20 per 1,000 additional events', value: 1.2 },
     [ApiServiceLevelEnum.BUSINESS]: { label: '$1.20 per 1,000 additional events', value: 1.2 },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom pricing for additional events', value: 0 },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom pricing for additional events', value: 0 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom pricing for additional events', value: 1.2 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom pricing for additional events', value: 1.2 },
   },
   [FeatureNameEnum.PLATFORM_CHANNELS_SUPPORTED_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: { label: 'Email, InApp, SMS, Chat, Push channels', value: true },
@@ -229,10 +229,10 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   },
   [FeatureNameEnum.PLATFORM_MAX_LAYOUTS]: {
     [ApiServiceLevelEnum.FREE]: { label: '1 layout', value: 1 },
-    [ApiServiceLevelEnum.PRO]: { label: 'Unlimited layouts', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited layouts', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited layouts', value: UNLIMITED_VALUE },
-    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited layouts', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.PRO]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom layouts', value: UNLIMITED_VALUE },
   },
   [FeatureNameEnum.PLATFORM_GUI_BASED_WORKFLOW_MANAGEMENT_BOOLEAN]: {
     [ApiServiceLevelEnum.FREE]: 1,
@@ -429,19 +429,22 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: 0,
-    [ApiServiceLevelEnum.PRO]: 0,
-    [ApiServiceLevelEnum.BUSINESS]: 0,
-    [ApiServiceLevelEnum.ENTERPRISE]: 1,
-    [ApiServiceLevelEnum.UNLIMITED]: 1,
+    [ApiServiceLevelEnum.FREE]: { label: 'HIPAA compliance', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'HIPAA compliance', value: false },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'HIPAA compliance', value: false },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'HIPAA compliance', value: true },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'HIPAA compliance', value: true },
   },
   [FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: false },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: false },
-    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
+    [ApiServiceLevelEnum.FREE]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
+    [ApiServiceLevelEnum.ENTERPRISE]: {
+      label: 'Custom security reviews: SOC 2 and ISO 27001 upon request',
+      value: true,
+    },
     [ApiServiceLevelEnum.UNLIMITED]: {
-      label: 'Custom Security reviews: SOC 2 and ISO 27001 upon request',
+      label: 'Custom security reviews: SOC 2 and ISO 27001 upon request',
       value: true,
     },
   },

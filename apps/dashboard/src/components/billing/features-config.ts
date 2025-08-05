@@ -56,8 +56,9 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
     features: [
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
-      FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN,
       FeatureNameEnum.COMPLIANCE_GDPR_BOOLEAN,
+      FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN,
+      FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN,
     ],
   },
   {
@@ -68,9 +69,9 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
     title: 'Legal & Vendor management',
     features: [
       FeatureNameEnum.PAYMENT_METHOD,
+      FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS,
       FeatureNameEnum.PLATFORM_TERMS_OF_SERVICE,
       FeatureNameEnum.COMPLIANCE_DATA_PROCESSING_AGREEMENTS,
-      FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS,
     ],
   },
 ];
@@ -123,7 +124,7 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
   },
   [ApiServiceLevelEnum.ENTERPRISE]: {
     included: [
-      'Custom events',
+      'Volume discounts',
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,

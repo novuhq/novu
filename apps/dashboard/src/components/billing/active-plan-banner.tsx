@@ -15,6 +15,7 @@ import { LinkButton } from '@/components/primitives/button-link';
 import { Card } from '@/components/primitives/card';
 import { Progress } from '@/components/primitives/progress';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { useFetchWorkflows } from '../../hooks/use-fetch-workflows';
 import { getPlanFeatures, type PlanFeature } from './features-config';
@@ -46,6 +47,20 @@ function formatDate(date: string | number): string {
 
 function formatLimit(limit: number): string {
   return limit === UNLIMITED_VALUE ? '∞' : limit.toLocaleString();
+}
+
+function getEventsTooltipContent(
+  usageData: { included: number },
+  subscription: ReturnType<typeof useFetchSubscription>['subscription']
+): string {
+  const currentPlan = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+  const isFreePlan = currentPlan === ApiServiceLevelEnum.FREE;
+
+  const limitMessage = isFreePlan
+    ? "Further events won't be allowed after the free limit is exceeded."
+    : 'Pay as you grow. No hard limit.';
+
+  return `Includes ${formatLimit(usageData.included)} events — ${limitMessage}`;
 }
 
 function formatDateRange(
@@ -88,7 +103,7 @@ function getUsageData(
         included:
           subscription?.events.included ??
           getFeatureForTierAsNumber(FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED, currentPlan, false),
-        label: 'events',
+        label: 'included',
       };
     case 'workflows':
       return {
@@ -165,7 +180,19 @@ function UsageMetricRow({ metric, subscription, workflowsData, organization }: U
         <span className="text-label-xs">
           <span className="text-text-sub">{usageData.current.toLocaleString()}</span> /{' '}
           <span className="text-text-soft">
-            {formatLimit(usageData.included)} {usageData.label}
+            {formatLimit(usageData.included)}{' '}
+            {metric.type === 'events' ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="border-b border-dotted border-text-soft/40 cursor-help">{usageData.label}</span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{getEventsTooltipContent(usageData, subscription)}</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              usageData.label
+            )}
           </span>
         </span>
       </div>
