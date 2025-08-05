@@ -8,7 +8,7 @@ import {
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ComponentProps, useCallback, useState } from 'react';
-import { RiFilter3Fill, RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
+import { RiInsertRowTop, RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { createStep } from '@/components/workflow-editor/step-utils';
@@ -260,66 +260,11 @@ const StepNode = (props: StepNodeProps) => {
     onNodeDragEnd();
   }, [onNodeDragEnd]);
 
-  if (hasConditions) {
-    return (
-      <AnimatePresence>
-        <motion.div
-          layout
-          className="relative pt-1 pl-6 -ml-6"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          key={id}
-        >
-          <Node
-            aria-selected={isSelected}
-            className={cn(
-              'group rounded-tl-none [&>span]:rounded-tl-none transition-all',
-              {
-                'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
-                'pointer-events-none scale-95 border border-dashed border-bg-soft bg-transparent aria-selected:[background-image:none]':
-                  isAnyNodeDragging && id === intersectingNodeId,
-              },
-              className
-            )}
-            nodeId={id}
-            isDraggable={isDraggable}
-            onNodeDragStart={onNodeDragStart}
-            onNodeDragMove={onNodeDragMove}
-            onNodeDragEnd={handleNodeDragEnd}
-            pill={
-              <>
-                <RiFilter3Fill className="text-foreground-400 size-3" />
-                <span className="text-foreground-400 text-xs">{conditionsCount}</span>
-              </>
-            }
-            onPillClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
-            }}
-            {...rest}
-          >
-            {rest.children}
-          </Node>
-          <WorkflowNodeActionBar
-            isVisible={areActionsVisible}
-            stepType={type}
-            stepName={data.name || 'Untitled Step'}
-            onRemoveClick={handleRemoveStep}
-            onEditContentClick={handleEditContent}
-            onCopyClick={handleCopyStep}
-            isReadOnly={isReadOnly}
-          />
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
   return (
     <AnimatePresence>
       <motion.div
         layout
-        className="relative pt-1 pl-6 -ml-6"
+        className={cn('relative pt-1 pl-6 -ml-6')}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         key={id}
@@ -350,6 +295,10 @@ const StepNode = (props: StepNodeProps) => {
             conditionsCount={conditionsCount}
             stepSlug={data.stepSlug ?? ''}
             conditionsData={data.controlValues?.skip as RQBJsonLogic}
+            className={cn('ml-6 transition-all', {
+              'pointer-events-none opacity-40': isAnyNodeDragging && id === draggedNodeId,
+              'pointer-events-none scale-95 -mt-[2px]': isAnyNodeDragging && id === intersectingNodeId,
+            })}
           />
         )}
         <WorkflowNodeActionBar

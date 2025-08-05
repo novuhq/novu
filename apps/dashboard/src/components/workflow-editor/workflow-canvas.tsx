@@ -54,7 +54,6 @@ const nodeTypes = {
 };
 
 const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: EdgeProps) => {
-  console.log('DefaultEdge re-render');
   return <BaseEdge key={id} id={id} path={`M ${sourceX} ${sourceY} L ${targetX} ${targetY}`} style={style} />;
 };
 
