@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
+  EnforcedContext,
   PinoLogger,
+  QueryBuilder,
   StepRun,
   StepRunRepository,
   Where,
@@ -51,73 +53,50 @@ export class GetWorkflowRuns {
     });
 
     try {
-      // Build WHERE conditions object for LogRepository
-      const whereConditions: Where<WorkflowRun> = [
-        { organization_id: { operator: '=', value: command.organizationId } },
-        { environment_id: { operator: '=', value: command.environmentId } },
-      ];
+      const queryBuilder = new QueryBuilder<WorkflowRun>({
+        environmentId: command.environmentId,
+      });
 
-      // Add optional filters similar to legacy notifications endpoint
       if (command.workflowIds?.length) {
-        whereConditions.push({
-          workflow_id: {
-            operator: 'IN',
-            value: command.workflowIds,
-          },
-        });
+        queryBuilder.whereIn('workflow_id', command.workflowIds);
       }
 
       if (command.subscriberIds?.length) {
-        whereConditions.push({
-          subscriber_id: {
-            operator: 'IN',
-            value: command.subscriberIds,
-          },
-        });
+        queryBuilder.whereIn('external_subscriber_id', command.subscriberIds);
       }
 
       if (command.transactionIds?.length) {
-        whereConditions.push({
-          transaction_id: {
-            operator: 'IN',
-            value: command.transactionIds,
-          },
-        });
+        queryBuilder.whereIn('transaction_id', command.transactionIds);
       }
 
       if (command.statuses?.length) {
-        whereConditions.push({
-          status: {
-            operator: 'IN',
-            value: command.statuses,
-          },
-        });
+        queryBuilder.whereIn('status', command.statuses);
       }
 
-      /*
-       * Handle date range conditions properly to avoid overwriting
-       * Since the current query builder doesn't support multiple conditions on the same field,
-       * we'll use separate field names that will be handled specially in the repository call
-       */
       if (command.createdGte) {
-        whereConditions.push({
-          created_at: {
-            operator: '>=',
-            value: new Date(command.createdGte),
-          },
-        });
+        queryBuilder.whereGreaterThanOrEqual('created_at', new Date(command.createdGte));
       }
 
       if (command.createdLte) {
-        whereConditions.push({
-          created_at: {
-            operator: '<=',
-            value: new Date(command.createdLte),
-          },
-        });
+        queryBuilder.whereLessThanOrEqual('created_at', new Date(command.createdLte));
       }
 
-      // Decode cursor if provided
+      if (command.channels?.length) {
+        queryBuilder.orWhere(
+          command.channels.map((channel) => ({
+            field: 'channels',
+            operator: 'LIKE',
+            value: `%"${channel}"%`,
+          }))
+        );
+      }
+
+      if (command.topicKey) {
+        queryBuilder.whereLike('topics', `%${command.topicKey}%`);
+      }
+
+      const safeWhere = queryBuilder.build();
+
       let cursor: CursorData | undefined;
       if (command.cursor) {
         try {
@@ -132,7 +111,7 @@ export class GetWorkflowRuns {
       }
 
       const result = (await this.workflowRunRepository.findWithCursor({
-        where: whereConditions,
+        where: safeWhere,
         cursor,
         limit: command.limit + 1, // Get one extra to determine if there are more results
         orderDirection: 'DESC',
@@ -161,7 +140,7 @@ export class GetWorkflowRuns {
       // Generate previous cursor if we're not on the first page
       let previousCursor: string | null = null;
       if (command.cursor && workflowRuns.length > 0) {
-        previousCursor = await this.generatePreviousCursor(whereConditions, cursor!, command.limit);
+        previousCursor = await this.generatePreviousCursor(safeWhere, cursor!, command.limit);
       }
 
       // Fetch step runs for all workflow runs efficiently
@@ -193,7 +172,7 @@ export class GetWorkflowRuns {
    * Query backwards from current cursor and use the last item as the boundary
    */
   private async generatePreviousCursor(
-    whereConditions: Where<WorkflowRun>,
+    safeWhere: Where<WorkflowRun>,
     currentCursor: CursorData,
     limit: number
   ): Promise<string | null> {
@@ -205,7 +184,7 @@ export class GetWorkflowRuns {
 
     try {
       const backwardResult = await this.workflowRunRepository.findWithCursor({
-        where: whereConditions,
+        where: safeWhere,
         cursor: currentCursor,
         limit,
         orderDirection: 'ASC', // Get older items
@@ -293,13 +272,14 @@ export class GetWorkflowRuns {
 
     try {
       const transactionIds = workflowRuns.map((run) => run.transaction_id);
+      const stepRunsQuery = new QueryBuilder<StepRun>({
+        environmentId: command.environmentId,
+      })
+        .whereIn('transaction_id', transactionIds)
+        .build();
 
       const stepRunsResult = await this.stepRunRepository.find({
-        where: [
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { transaction_id: { operator: 'IN', value: transactionIds } },
-        ],
+        where: stepRunsQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,

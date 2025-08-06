@@ -6,6 +6,7 @@ import {
   BullMqService,
   FeatureFlagsService,
   getErrorInterceptor,
+  // biome-ignore lint/style/noRestrictedImports: <explanation>
   Logger,
   PinoLogger,
   RequestLogRepository,

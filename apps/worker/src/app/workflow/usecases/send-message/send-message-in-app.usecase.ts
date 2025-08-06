@@ -29,7 +29,7 @@ import {
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult } from './send-message-type.usecase';
 
 @Injectable()
@@ -60,7 +60,7 @@ export class SendMessageInApp extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     if (!command.step.template) throw new PlatformException('Template not found');
 
     addBreadcrumb({

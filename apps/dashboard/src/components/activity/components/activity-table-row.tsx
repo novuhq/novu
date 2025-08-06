@@ -63,7 +63,10 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
             {activity.template?.name || 'Deleted workflow'}
           </span>
           <span className="text-foreground-400 text-[10px] leading-[14px]">
-            <div className="bg-bg-weak font-code inline-block rounded-sm px-1.5" title={`${activity.transactionId}${subscriberDisplay ? ` • ${subscriberDisplay}` : ''}`}>
+            <div
+              className="bg-bg-weak font-code inline-block rounded-sm px-1.5"
+              title={`${activity.transactionId}${subscriberDisplay ? ` • ${subscriberDisplay}` : ''}`}
+            >
               {truncatedTransactionId}
               {truncatedSubscriberDisplay ? ` • ${truncatedSubscriberDisplay}` : ''}
             </div>

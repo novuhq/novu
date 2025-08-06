@@ -32,62 +32,21 @@ describe('Upsert Workflow #novu-v2', () => {
 
   describe('PUT /v2/workflows/:workflowId', () => {
     describe('single step workflows', () => {
-      it('when step is deleted it should also remove the associated variables', async () => {
-        const workflow = await createWorkflow({
-          name: 'Test Workflow',
-          workflowId: `test-workflow-${Date.now()}`,
-          source: WorkflowCreationSourceEnum.Editor,
-          active: true,
-          steps: [
-            {
-              name: `IN_APP 1`,
-              type: StepTypeEnum.InApp,
-              controlValues: {
-                body: '{{payload.first_variable}}',
-              },
-            },
-            {
-              name: `IN_APP 2`,
-              type: StepTypeEnum.InApp,
-              controlValues: {
-                body: '{{payload.second_variable}}',
-              },
-            },
-            {
-              name: `CHAT 1`,
-              type: StepTypeEnum.Chat,
-              controlValues: {
-                body: 'chat body',
-              },
-            },
-          ],
-        });
-        const chatStep = workflow.steps[2];
-        const chatPayloadVariables = chatStep.variables.properties?.payload;
-
-        expect(chatPayloadVariables).to.exist;
-        expect((chatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('first_variable');
-        expect((chatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('second_variable');
-
-        // delete the first step
-        const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...mapResponseToUpdateDto(workflow),
-          steps: mapResponseToUpdateDto(workflow).steps.slice(1),
-        });
-
-        const updatedChatStep = updatedWorkflow.steps[0];
-        const updatedChatPayloadVariables = updatedChatStep.variables.properties?.payload;
-        expect(updatedChatPayloadVariables).to.exist;
-        expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).not.to.have.property('first_variable');
-        expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('second_variable');
-      });
-
       it('when step is deleted it should not remove variable if it is used in another step', async () => {
         const workflow = await createWorkflow({
           name: 'Test Workflow',
           workflowId: `test-workflow-${Date.now()}`,
           source: WorkflowCreationSourceEnum.Editor,
           active: true,
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              first_variable: { type: 'string' },
+              second_variable: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          },
           steps: [
             {
               name: `IN_APP 1`,
@@ -130,56 +89,6 @@ describe('Upsert Workflow #novu-v2', () => {
         expect(updatedChatPayloadVariables).to.exist;
         expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('first_variable');
         expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('second_variable');
-      });
-
-      it('when all steps are removed it should remove all associated variables', async () => {
-        const workflow = await createWorkflow({
-          name: 'Test Workflow',
-          workflowId: `test-workflow-${Date.now()}`,
-          source: WorkflowCreationSourceEnum.Editor,
-          active: true,
-          steps: [
-            {
-              name: `IN_APP 1`,
-              type: StepTypeEnum.InApp,
-              controlValues: {
-                body: '{{payload.first_variable}}',
-              },
-            },
-            {
-              name: `IN_APP 2`,
-              type: StepTypeEnum.InApp,
-              controlValues: {
-                body: '{{payload.second_variable}}',
-              },
-            },
-            {
-              name: `CHAT 1`,
-              type: StepTypeEnum.Chat,
-              controlValues: {
-                body: 'test',
-              },
-            },
-          ],
-        });
-        const chatStep = workflow.steps[2];
-        const chatPayloadVariables = chatStep.variables.properties?.payload;
-
-        expect(chatPayloadVariables).to.exist;
-        expect((chatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('first_variable');
-        expect((chatPayloadVariables as JSONSchemaDto)?.properties).to.have.property('second_variable');
-
-        // delete all previous steps
-        const updatedWorkflow = await updateWorkflow(workflow.slug, {
-          ...mapResponseToUpdateDto(workflow),
-          steps: [mapResponseToUpdateDto(workflow).steps[2]],
-        });
-
-        const updatedChatStep = updatedWorkflow.steps[0];
-        const updatedChatPayloadVariables = updatedChatStep.variables.properties?.payload;
-        expect(updatedChatPayloadVariables).to.exist;
-        expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).not.to.have.property('first_variable');
-        expect((updatedChatPayloadVariables as JSONSchemaDto)?.properties).not.to.have.property('second_variable');
       });
     });
 

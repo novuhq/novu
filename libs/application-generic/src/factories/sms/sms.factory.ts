@@ -34,6 +34,7 @@ import {
   TermiiSmsHandler,
   TwilioHandler,
 } from './handlers';
+import { SmsmodeHandler } from './handlers/smsmode.handler';
 import { ISmsFactory, ISmsHandler } from './interfaces';
 
 export class SmsFactory implements ISmsFactory {
@@ -70,6 +71,7 @@ export class SmsFactory implements ISmsFactory {
     new EazySmsHandler(),
     new MobishastraHandler(),
     new AfroSmsHandler(),
+    new SmsmodeHandler(),
     new BulkSmsHandler(),
   ];
 

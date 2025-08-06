@@ -162,7 +162,7 @@ export class NotificationTemplateService {
     const data = {
       _notificationGroupId: override.noGroupId ? undefined : groups[0]._id,
       _environmentId: this.environmentId,
-      name: faker.name.jobTitle(),
+      name: override.name ?? faker.name.jobTitle(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,
       active: true,

@@ -178,7 +178,7 @@ test('should trigger whatsapp-business library correctly with template message w
 });
 
 function baseUrl(phoneNumberIdentification: string) {
-  return `https://graph.facebook.com/v18.0/${phoneNumberIdentification}/messages`;
+  return `https://graph.facebook.com/v22.0/${phoneNumberIdentification}/messages`;
 }
 
 function expectedHeaders(accessToken: string) {

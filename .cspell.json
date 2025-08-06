@@ -154,6 +154,7 @@
     "dnscount",
     "dnscounttype",
     "dnsfunc",
+    "Prefs",
     "dnslookup",
     "dnsplug",
     "dnspython",

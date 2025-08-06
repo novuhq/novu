@@ -9,7 +9,7 @@ import { Navigate } from 'react-router-dom';
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
 import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step';
-import { ConfigureStepTemplate } from '@/components/workflow-editor/steps/configure-step-template';
+
 import {
   ActivityFeed,
   ApiKeysPage,
@@ -331,13 +331,10 @@ const router = createBrowserRouter([
                     element: <ConfigureStep />,
                     path: ROUTES.EDIT_STEP,
                   },
-                  {
-                    element: <ConfigureStepTemplate />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE,
-                  },
+
                   {
                     element: <EditStepTemplateV2Page />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE_V2,
+                    path: ROUTES.EDIT_STEP_TEMPLATE,
                   },
                   {
                     element: <EditStepConditions />,

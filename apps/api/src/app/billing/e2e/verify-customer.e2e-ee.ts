@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noRestrictedImports: <explanation>
 import { Logger } from '@nestjs/common';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import { VerifyCustomerCommand } from '@novu/ee-billing';

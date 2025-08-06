@@ -86,7 +86,7 @@ function TooltipLabel({
   isLimitReached: boolean;
 }) {
   const label = isLimitReached
-    ? `You have run out of available ${unit} for this month. Configure a different ${channel} provider to send more.`
+    ? `You have run out of available ${unit} for this month. Configure a different ${channel} provider to send more.` :
       `The predefined free Novu provider allows sending ${limit} ${unit} per month. Configure a different ${channel} provider to send more.`;
 
   return (

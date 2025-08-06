@@ -23,8 +23,8 @@ export const ROUTES = {
   WELCOME: '/env/:environmentSlug/welcome',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
   EDIT_STEP: 'steps/:stepSlug',
-  EDIT_STEP_TEMPLATE: 'steps/:stepSlug/edit',
-  EDIT_STEP_TEMPLATE_V2: 'steps/:stepSlug/editor',
+
+  EDIT_STEP_TEMPLATE: 'steps/:stepSlug/editor',
   EDIT_STEP_CONDITIONS: 'steps/:stepSlug/conditions',
   INTEGRATIONS: '/integrations',
   INTEGRATIONS_CONNECT: '/integrations/connect',

@@ -7,6 +7,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
+import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';

@@ -26,6 +26,7 @@ const subscriberSchema = new Schema<SubscriberDBModel>(
     isOnline: {
       type: Schema.Types.Boolean,
       required: false,
+      default: false,
     },
     lastOnlineAt: Schema.Types.Date,
     data: Schema.Types.Mixed,

@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { type ISubscriberResponseDto, PermissionsEnum, type WorkflowTestDataResponseDto } from '@novu/shared';
 import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { RiArrowDownSLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiFileCopyLine } from 'react-icons/ri';
 import * as z from 'zod';
 import { Button } from '@/components/primitives/button';
 import { ButtonGroupItem, ButtonGroupRoot } from '@/components/primitives/button-group';
@@ -21,13 +21,14 @@ import { SubscriberDrawer } from '@/components/subscribers/subscriber-drawer';
 import { PayloadData } from '@/components/workflow-editor/steps/types/preview-context.types';
 import { TestWorkflowActivityDrawer } from '@/components/workflow-editor/test-workflow/test-workflow-activity-drawer';
 import { TestWorkflowContent } from '@/components/workflow-editor/test-workflow/test-workflow-content';
-import { API_HOSTNAME } from '@/config';
+
 import { useAuth } from '@/context/auth/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useWorkflowPayloadPersistence } from '@/hooks/use-workflow-payload-persistence';
+import { generatePostmanCollection, generateTriggerCurlCommand } from '@/utils/code-snippets';
 import { useEnvironment } from '../../../context/environment/hooks';
 import { useWorkflow } from '../workflow-provider';
 
@@ -44,7 +45,7 @@ const buildPayloadOnlyFormSchema = () => {
     payload: z.string().transform((str, ctx) => {
       try {
         return JSON.parse(str);
-      } catch (e) {
+      } catch {
         ctx.addIssue({ code: 'custom', message: 'Payload must be valid JSON' });
         return z.NEVER;
       }
@@ -53,30 +54,7 @@ const buildPayloadOnlyFormSchema = () => {
 };
 
 type TestWorkflowFormType = {
-  payload: any; // This will be the parsed JSON payload
-};
-
-const generateCurlCommand = (data: { workflowId: string; to: unknown; payload: string; apiKey: string }) => {
-  const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-
-  let parsedPayload = {};
-
-  try {
-    parsedPayload = typeof data.payload === 'string' ? JSON.parse(data.payload) : data.payload;
-  } catch {
-    parsedPayload = {};
-  }
-
-  const body = {
-    name: data.workflowId,
-    to: data.to,
-    payload: { ...parsedPayload, __source: 'dashboard' },
-  };
-
-  return `curl -X POST "${baseUrl}/v1/events/trigger" \\
-  -H "Authorization: ApiKey ${data.apiKey}" \\
-  -H "Content-Type: application/json" \\
-  -d '${JSON.stringify(body, null, 2)}'`;
+  payload: string; // JSON string that gets parsed
 };
 
 export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerProps>((props, forwardedRef) => {
@@ -240,7 +218,7 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
 
     try {
       const formData = form.getValues();
-      const curlCommand = generateCurlCommand({
+      const curlCommand = generateTriggerCurlCommand({
         workflowId: workflow.workflowId,
         to: subscriberData,
         payload: formData.payload,
@@ -274,55 +252,12 @@ export const TestWorkflowDrawer = forwardRef<HTMLDivElement, TestWorkflowDrawerP
     try {
       const formData = form.getValues();
 
-      let parsedPayload = {};
-
-      try {
-        parsedPayload = typeof formData.payload === 'string' ? JSON.parse(formData.payload) : formData.payload;
-      } catch {
-        parsedPayload = {};
-      }
-
-      const body = {
-        name: workflow.workflowId,
+      const postmanCollection = generatePostmanCollection({
+        workflowId: workflow.workflowId,
         to: subscriberData,
-        payload: { ...parsedPayload, __source: 'dashboard' },
-      };
-
-      const baseUrl = API_HOSTNAME ?? 'https://api.novu.co';
-      const postmanCollection = {
-        info: {
-          name: `Novu - Trigger ${workflow.workflowId}`,
-          schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-        },
-        item: [
-          {
-            name: `Trigger ${workflow.workflowId}`,
-            request: {
-              method: 'POST',
-              header: [
-                {
-                  key: 'Authorization',
-                  value: `ApiKey ${apiKey}`,
-                },
-                {
-                  key: 'Content-Type',
-                  value: 'application/json',
-                },
-              ],
-              body: {
-                mode: 'raw',
-                raw: JSON.stringify(body, null, 2),
-                options: {
-                  raw: {
-                    language: 'json',
-                  },
-                },
-              },
-              url: `${baseUrl}/v1/events/trigger`,
-            },
-          },
-        ],
-      };
+        payload: formData.payload,
+        apiKey,
+      });
 
       await navigator.clipboard.writeText(JSON.stringify(postmanCollection, null, 2));
       showToast({

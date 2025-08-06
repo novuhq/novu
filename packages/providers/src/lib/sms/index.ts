@@ -26,6 +26,7 @@ export * from './sendchamp/sendchamp.provider';
 export * from './simpletexting/simpletexting.provider';
 export * from './sms-central/sms-central.provider';
 export * from './sms77/sms77.provider';
+export * from './smsmode/smsmode.provider';
 export * from './sns/sns.config';
 export * from './sns/sns.provider';
 export * from './telnyx/telnyx.interface';

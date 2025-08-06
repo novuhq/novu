@@ -24,7 +24,10 @@ export type TriggerOverrides = {
       layoutId?: string | null;
     };
   };
-  email?: Record<string, unknown>;
+  email?: Record<string, unknown> & {
+    toRecipient?: string;
+    integrationIdentifier?: string;
+  };
   sms?: Record<string, unknown>;
   push?: Record<string, unknown>;
   inApp?: Record<string, unknown>;

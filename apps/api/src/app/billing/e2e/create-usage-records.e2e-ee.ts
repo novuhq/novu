@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noRestrictedImports: <explanation>
 import { Logger } from '@nestjs/common';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
 import { expect } from 'chai';

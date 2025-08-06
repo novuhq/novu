@@ -1,11 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationEntity, NotificationTemplateEntity } from '@novu/dal';
+import {
+  NotificationEntity,
+  NotificationRepository,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
-import { LogRepository, SchemaKeys, Where } from '../log.repository';
+import { LogRepository, QueryBuilder, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
@@ -38,7 +43,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly featureFlagsService: FeatureFlagsService
+    protected readonly featureFlagsService: FeatureFlagsService,
+    private readonly notificationRepository: NotificationRepository,
+    private readonly notificationTemplateRepository: NotificationTemplateRepository
   ) {
     super(clickhouseService, logger, workflowRunSchema, ORDER_BY, featureFlagsService);
     this.logger.setContext(this.constructor.name);
@@ -46,7 +53,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   async create(
     notification: NotificationEntity,
-    template: NotificationTemplateEntity,
+    workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions = {}
   ): Promise<void> {
     try {
@@ -62,7 +69,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunData = this.mapNotificationToWorkflowRun(notification, template, options);
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, options);
 
       await this.insert(
         workflowRunData,
@@ -89,7 +96,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   async createWorkflowRunBatch(
     notifications: Array<{
       notification: NotificationEntity;
-      template: NotificationTemplateEntity;
+      workflow: NotificationTemplateEntity;
       options?: IWorkflowRunOptions;
     }>
   ): Promise<void> {
@@ -110,7 +117,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const workflowRunsData = notifications.map(({ notification, template, options = {} }) =>
+      const workflowRunsData = notifications.map(({ notification, workflow: template, options = {} }) =>
         this.mapNotificationToWorkflowRun(notification, template, options)
       );
 
@@ -173,50 +180,86 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
+      const query = new QueryBuilder<WorkflowRun>({
+        environmentId: context.environmentId,
+      })
+        .whereEquals('workflow_run_id', workflowRunId)
+        .build();
+
       const existingRuns = await this.find({
-        where: [
-          { workflow_run_id: { operator: '=', value: workflowRunId } },
-          { organization_id: { operator: '=', value: context.organizationId } },
-          { environment_id: { operator: '=', value: context.environmentId } },
-        ],
+        where: query,
         limit: 1,
         useFinal: true,
       });
 
       if (existingRuns.data.length === 0) {
         this.logger.warn(`Workflow run ${workflowRunId} not found for status update`);
+      }
 
+      const notification = await this.notificationRepository.findOne(
+        {
+          _id: workflowRunId,
+          _organizationId: context.organizationId,
+          _environmentId: context.environmentId,
+        },
+        {
+          _id: 1,
+          _templateId: 1,
+          _organizationId: 1,
+          _environmentId: 1,
+          _subscriberId: 1,
+          transactionId: 1,
+          channels: 1,
+          to: 1,
+          payload: 1,
+          controls: 1,
+          topics: 1,
+          _digestedNotificationId: 1,
+        }
+      );
+
+      if (!notification) {
+        this.logger.warn(
+          {
+            workflowRunId,
+            organizationId: context.organizationId,
+            environmentId: context.environmentId,
+          },
+          'Notification not found for workflow run status update'
+        );
         return;
       }
 
-      const existingRun = existingRuns.data[0];
-
-      await this.insert(
+      const workflow = await this.notificationTemplateRepository.findOne(
         {
-          created_at: existingRun.created_at,
-          updated_at: LogRepository.formatDateTime64(new Date()),
-          workflow_run_id: existingRun.workflow_run_id,
-          workflow_id: existingRun.workflow_id,
-          workflow_name: existingRun.workflow_name,
-          organization_id: existingRun.organization_id,
-          environment_id: existingRun.environment_id,
-          user_id: existingRun.user_id,
-          subscriber_id: existingRun.subscriber_id,
-          external_subscriber_id: existingRun.external_subscriber_id,
-          status,
-          trigger_identifier: existingRun.trigger_identifier,
-          transaction_id: existingRun.transaction_id,
-          channels: existingRun.channels,
-          subscriber_to: existingRun.subscriber_to,
-          payload: existingRun.payload,
-          control_values: existingRun.control_values,
-          topics: existingRun.topics,
-          is_digest: existingRun.is_digest,
-          digested_workflow_run_id: existingRun.digested_workflow_run_id,
+          _id: notification._templateId,
+          _environmentId: context.environmentId,
         },
-        context,
-        WORKFLOW_RUN_INSERT_OPTIONS
+        {
+          name: 1,
+          triggers: 1,
+        }
       );
+
+      if (!workflow) {
+        this.logger.warn(
+          {
+            workflowRunId,
+            templateId: notification._templateId,
+            environmentId: context.environmentId,
+          },
+          'Notification template not found for workflow run status update'
+        );
+        return;
+      }
+
+      const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
+        status,
+        userId: null,
+        externalSubscriberId: notification.to?.subscriberId || null,
+      });
+
+      await this.insert(workflowRunData, context, WORKFLOW_RUN_INSERT_OPTIONS);
 
       this.logger.debug(
         {
@@ -244,7 +287,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
   // Overload for when select is provided
   async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
-    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
       workflow_run_id: string;
@@ -258,9 +301,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     rows: number;
   }>;
 
-  // Overload for when select is not provided (fallback to full WorkflowRun)
+  // Overload for when select is not provided
   async findWithCursor(options: {
-    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
       workflow_run_id: string;
@@ -275,15 +318,12 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   }>;
 
   /**
-   * Compound cursor-based pagination for workflow runs.
+   * Compound cursor-based pagination for workflow runs with automatic tenant enforcement.
    * Handles timestamp collisions by using both created_at and workflow_run_id.
-   *
-   * This implements industry best practices.
-   * The compound condition ensures no records are skipped or duplicated when
-   * multiple workflow runs have identical timestamps.
+   * All queries are secure by default with mandatory tenant isolation.
    */
   async findWithCursor<T extends readonly WorkflowRunColumns[]>(options: {
-    where: Where<InferClickhouseSchemaType<typeof workflowRunSchema>>;
+    where: Where<WorkflowRun>;
     cursor?: {
       created_at: string;
       workflow_run_id: string;
@@ -297,49 +337,27 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     rows: number;
   }> {
     const { where, cursor, limit = 100, orderDirection = 'DESC', useFinal = false, select } = options;
-    const isBoundaryCase = cursor?.workflow_run_id === '1'; // first or last item
+    const isBoundaryCase = cursor?.workflow_run_id === '1';
 
     if (limit < 0 || limit > 1000) {
       throw new Error('Limit must be between 0 and 1000');
     }
 
-    // Extract and handle date range conditions
-    const processedWhere = where;
-    const dateRangeConditions: string[] = [];
-    const dateRangeParams: Record<string, any> = {};
+    // Build the base WHERE clause with automatic tenant enforcement
+    const { clause: baseClause, params: baseParams } = this.buildWhereClause(where);
 
-    // Build the base WHERE clause with processed conditions
-    const { clause: baseClause, params: baseParams } = this.buildWhereClause(processedWhere);
-
-    // Use 'WHERE 1=1' as neutral base to simplify dynamic AND condition appending
     let whereClause = baseClause || 'WHERE 1=1';
-    const params = { ...baseParams, ...dateRangeParams };
-
-    // Add date range conditions to the WHERE clause
-    if (dateRangeConditions.length > 0) {
-      const dateRangeClause = dateRangeConditions.join(' AND ');
-      if (baseClause) {
-        whereClause = `${baseClause} AND ${dateRangeClause}`;
-      } else {
-        whereClause = `WHERE ${dateRangeClause}`;
-      }
-    }
+    const params = { ...baseParams };
 
     // Add compound cursor conditions if cursor is provided
     if (cursor) {
       const cursorTimestamp = new Date(cursor.created_at);
       const cursorId = cursor.workflow_run_id;
 
-      // Generate unique parameter names for cursor conditions
       const timestampParam = 'cursor_timestamp';
       const timestampEqualParam = 'cursor_timestamp_eq';
       const idParam = 'cursor_id';
 
-      /*
-       * Build compound cursor condition
-       * For DESC: (created_at < cursor_timestamp) OR (created_at = cursor_timestamp AND workflow_run_id < cursor_id)
-       * For ASC: (created_at > cursor_timestamp) OR (created_at = cursor_timestamp AND workflow_run_id > cursor_id)
-       */
       const timeOperator = orderDirection === 'DESC' ? '<' : '>';
       const idOperator = orderDirection === 'DESC' ? '<' : '>';
 
@@ -361,7 +379,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         )
       `;
 
-      // Combine existing WHERE clause with cursor conditions
       if (whereClause && whereClause !== 'WHERE 1=1') {
         whereClause = `${whereClause} AND (${cursorCondition})`;
       } else {
@@ -371,8 +388,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     const finalModifier = useFinal ? ' FINAL' : '';
     const orderByClause = `ORDER BY created_at ${orderDirection}, workflow_run_id ${orderDirection}`;
-
-    // Build SELECT clause - use selected columns or fallback to wildcard
     const selectClause = select && select.length > 0 ? select.join(', ') : '*';
 
     const query = `
@@ -383,11 +398,11 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       LIMIT ${limit}
     `;
 
-    this.logger.debug('Executing compound cursor query', {
+    this.logger.debug('Executing compound cursor query with tenant enforcement', {
       query: query.replace(/\s+/g, ' ').trim(),
-      params,
       cursor: cursor ? 'present' : 'none',
       selectedColumns: select ? select.length : 'all',
+      tenantEnforcement: '__unsafe' in where ? 'bypassed' : 'enforced',
     });
 
     const result = await this.clickhouseService.query({
@@ -396,14 +411,14 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     });
 
     return {
-      data: result.data as any,
+      data: result.data as WorkflowRun[] | SelectedWorkflowRun<T>[],
       rows: result.rows,
     };
   }
 
   private mapNotificationToWorkflowRun(
     notification: NotificationEntity,
-    template: NotificationTemplateEntity,
+    workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions
   ): WorkflowRunInsertData {
     const now = new Date();
@@ -416,7 +431,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       // Core workflow run identification
       workflow_run_id: notification._id,
       workflow_id: notification._templateId,
-      workflow_name: template.name,
+      workflow_name: workflow.name,
 
       // Context
       organization_id: notification._organizationId,
@@ -427,7 +442,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       // Execution metadata
       status: options.status || 'pending',
-      trigger_identifier: this.getTriggerIdentifier(template),
+      trigger_identifier: this.getTriggerIdentifier(workflow),
 
       // Correlation and grouping
       transaction_id: notification.transactionId,

@@ -34,7 +34,8 @@ const mapDetailToEventType = {
 
   // Subscriber events
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION]: 'subscriber_integration_missing',
-  [DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS]: 'subscriber_channel_missing',
+  [DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS]: 'subscriber_missing_email_address',
+  [DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER]: 'subscriber_missing_phone_number',
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL]: 'subscriber_channel_missing',
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
@@ -59,6 +60,7 @@ const mapDetailToEventType = {
   // Bridge events
   [DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED]: 'bridge_response_received',
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
+  [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
 
   // Webhook events
   [DetailEnum.WEBHOOK_FILTER_FAILED_RETRY]: 'webhook_filter_retrying',
@@ -85,9 +87,11 @@ const mapDetailToEventType = {
   [DetailEnum.CHAT_WEBHOOK_URL_MISSING]: 'chat_webhook_missing',
   [DetailEnum.CHAT_ALL_CHANNELS_FAILED]: 'chat_all_channels_failed',
   [DetailEnum.CHAT_MISSING_PHONE_NUMBER]: 'chat_phone_missing',
+  [DetailEnum.CHAT_SOME_CHANNELS_SKIPPED]: 'chat_some_channels_skipped',
 
   // Push events
   [DetailEnum.PUSH_MISSING_DEVICE_TOKENS]: 'push_tokens_missing',
+  [DetailEnum.PUSH_SOME_CHANNELS_SKIPPED]: 'push_some_channels_skipped',
 
   // Reply/Inbound mail events
   [DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL]: 'reply_callback_missing',

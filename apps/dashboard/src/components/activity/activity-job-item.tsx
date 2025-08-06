@@ -1,4 +1,10 @@
-import { IActivityJob, IDelayRegularMetadata, IDigestRegularMetadata, JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import {
+  type IActivityJob,
+  type IDelayRegularMetadata,
+  type IDigestRegularMetadata,
+  JobStatusEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { format } from 'date-fns';
 import { ChevronDown, Info, Route } from 'lucide-react';
 import { useState } from 'react';
@@ -104,25 +110,26 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
     return 'Step was skipped';
   }
 
-  if (job.status === JobStatusEnum.CANCELED) {
-    return 'Step was skipped by step conditions';
-  }
-
-  if (job.status === JobStatusEnum.FAILED && job.executionDetails?.length > 0) {
+  if (
+    (job.status === JobStatusEnum.FAILED || job.status === JobStatusEnum.CANCELED) &&
+    job.executionDetails?.length > 0
+  ) {
     const lastExecutionDetail = job.executionDetails[job.executionDetails.length - 1];
 
     return lastExecutionDetail ? (
       <div className="flex items-center gap-2">
         {lastExecutionDetail.raw ? (
-          <ErrorTooltip message={lastExecutionDetail.detail} raw={lastExecutionDetail.raw} />
+          <TraceTooltip message={lastExecutionDetail.detail} raw={lastExecutionDetail.raw} variant="info" />
         ) : (
-          <span className="text-destructive">
+          <span className={job.status === JobStatusEnum.FAILED ? 'text-destructive' : 'text-text-soft'}>
             <TruncatedText>{lastExecutionDetail.detail}</TruncatedText>
           </span>
         )}
       </div>
-    ) : (
+    ) : job.status === JobStatusEnum.FAILED ? (
       'Step execution failed'
+    ) : (
+      'Step was skipped'
     );
   }
 
@@ -175,13 +182,15 @@ function getStatusMessage(job: IActivityJob): string | React.ReactNode {
   }
 }
 
-function ErrorTooltip({ message, raw }: { message: string; raw: any }) {
+function TraceTooltip({ message, raw, variant = 'error' }: { message: string; raw: any; variant?: 'error' | 'info' }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <button type="button" className="flex items-center gap-1 text-left hover:cursor-default">
-          <span className="text-destructive">{message}</span>
-          <Info className="text-destructive h-3 w-3 shrink-0" />
+          <span className={cn('text-destructive', variant === 'error' ? 'text-destructive' : 'text-text-soft')}>
+            {message}
+          </span>
+          <Info className={cn('h-3 w-3 shrink-0', variant === 'error' ? 'text-destructive' : 'text-text-soft')} />
         </button>
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-[400px] border border-neutral-200 bg-white p-3 shadow-lg">
