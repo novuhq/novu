@@ -13,9 +13,9 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
   RuntimeIssue,
+  SeverityLevel,
   StepIssues,
   TriggerTypeEnum,
-  WorkflowIssueTypeEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Types } from 'mongoose';
@@ -104,6 +104,8 @@ export class NotificationTemplateEntity {
   _lastPublishedBy?: string;
 
   readonly lastPublishedBy?: UserEntity;
+
+  severity?: SeverityLevel;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
