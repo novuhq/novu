@@ -1,7 +1,6 @@
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
-import { JobEntity, NotificationStepEntity } from '@novu/dal';
-import { ExecuteOutput } from '@novu/framework/internal';
-import { TriggerOverrides, WorkflowPreferences } from '@novu/shared';
+import type { JobEntity, NotificationStepEntity } from '@novu/dal';
+import type { TriggerOverrides, WorkflowPreferences } from '@novu/shared';
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
@@ -11,9 +10,6 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   payload: any;
-
-  @IsOptional()
-  compileContext?: any;
 
   @IsDefined()
   overrides: TriggerOverrides;
@@ -45,9 +41,6 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   job: JobEntity;
-
-  @IsOptional()
-  bridgeData?: ExecuteOutput | null;
 
   @IsDefined()
   tags: string[];

@@ -8,7 +8,8 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
-import { TABLE_NAME } from './request-log.repository';
+
+export const TABLE_NAME = 'requests';
 
 const schemaDefinition = {
   id: { type: CHString() },

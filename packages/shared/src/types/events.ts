@@ -1,5 +1,5 @@
-import { ChannelTypeEnum } from './channel';
-import { TopicKey } from './topic';
+import type { ChannelTypeEnum } from './channel';
+import type { TopicKey } from './topic';
 
 export enum TriggerEventStatusEnum {
   ERROR = 'error',

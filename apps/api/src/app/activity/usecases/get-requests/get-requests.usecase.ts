@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { LogRepository, RequestLog, RequestLogRepository, Where } from '@novu/application-generic';
+import {
+  EnforcedContext,
+  LogRepository,
+  QueryBuilder,
+  RequestLog,
+  RequestLogRepository,
+  Where,
+} from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { mapRequestLogToResponseDto } from '../../shared/mappers';
 import { GetRequestsCommand } from './get-requests.command';
@@ -13,65 +20,42 @@ export class GetRequests {
     const page = command.page || 0;
     const offset = page * limit;
 
-    const where: Where<RequestLog> = [
-      { organization_id: { operator: '=', value: command.organizationId } },
-      { environment_id: { operator: '=', value: command.environmentId } },
-    ];
+    const queryBuilder = new QueryBuilder<RequestLog>({
+      environmentId: command.environmentId,
+    });
 
-    if (command.statusCodes) {
-      where.push({
-        status_code: {
-          operator: 'IN',
-          value: command.statusCodes,
-        },
-      });
+    if (command.statusCodes?.length) {
+      queryBuilder.whereIn('status_code', command.statusCodes);
     }
 
     if (command.url) {
-      where.push({
-        url: {
-          operator: 'LIKE',
-          value: `%${command.url}%`,
-        },
-      });
+      queryBuilder.whereLike('url', `%${command.url}%`);
     }
 
     if (command.url_pattern) {
-      where.push({
-        url: {
-          operator: '=',
-          value: command.url_pattern,
-        },
-      });
+      queryBuilder.whereEquals('url', command.url_pattern);
     }
 
     if (command.transactionId) {
-      where.push({
-        transaction_id: {
-          operator: 'LIKE',
-          value: `%${command.transactionId}%`,
-        },
-      });
+      queryBuilder.whereLike('transaction_id', `%${command.transactionId}%`);
     }
 
     if (command.createdGte) {
-      where.push({
-        created_at: {
-          operator: '>=',
-          value: LogRepository.formatDateTime64(new Date(command.createdGte)),
-        },
-      });
+      queryBuilder.whereGreaterThanOrEqual('created_at', LogRepository.formatDateTime64(new Date(command.createdGte)));
     }
 
+    const safeWhere = queryBuilder.build();
+
+    // Execute both queries in parallel (all queries are secure by default)
     const [findResult, total] = await Promise.all([
       this.requestLogRepository.find({
-        where,
+        where: safeWhere,
         limit,
         offset,
         orderBy: 'created_at',
         orderDirection: 'DESC',
       }),
-      this.requestLogRepository.count({ where }),
+      this.requestLogRepository.count({ where: safeWhere }),
     ]);
 
     const mappedData: RequestLogResponseDto[] = findResult.data.map(mapRequestLogToResponseDto);

@@ -350,7 +350,13 @@ export class ConstructFrameworkWorkflow {
       return false;
     }
 
-    const { result, error } = evaluateRules(skipRules, variables);
+    const { result, error } = evaluateRules(skipRules, {
+      ...variables,
+      subscriber: {
+        ...variables.subscriber,
+        isOnline: variables.subscriber.isOnline ?? false,
+      },
+    });
 
     if (error) {
       this.logger.error({ err: error }, 'Failed to evaluate skip rule', LOG_CONTEXT);

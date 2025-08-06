@@ -4,9 +4,7 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { ORDER_BY, RequestLog, requestLogSchema } from './request-log.schema';
-
-export const TABLE_NAME = 'requests';
+import { ORDER_BY, RequestLog, requestLogSchema, TABLE_NAME } from './request-log.schema';
 
 const REQUEST_LOG_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.REQUEST_LOGS_ASYNC_INSERT,

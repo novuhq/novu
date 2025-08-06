@@ -1,6 +1,7 @@
 export * from './digest';
 export { SendMessageCommand } from './send-message.command';
 export { SendMessage } from './send-message.usecase';
+export { SendMessageChannelCommand } from './send-message-channel.command';
 export { SendMessageChat } from './send-message-chat.usecase';
 export { SendMessageDelay } from './send-message-delay.usecase';
 export { SendMessageEmail } from './send-message-email.usecase';

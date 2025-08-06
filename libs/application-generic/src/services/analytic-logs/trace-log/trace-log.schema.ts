@@ -71,7 +71,6 @@ export type EventType =
   | 'message_unsnooze_failed'
   | 'message_content_failed'
   | 'message_sending_started'
-  
   | 'step_created'
   | 'step_queued'
   | 'step_delayed'
@@ -79,17 +78,12 @@ export type EventType =
   | 'step_filtered'
   | 'step_filter_processing'
   | 'step_filter_failed'
-  
-  
   | 'subscriber_integration_missing'
   | 'subscriber_channel_missing'
   | 'subscriber_validation_failed'
-
   | 'topic_not_found'
-
   | 'provider_error'
   | 'provider_limit_exceeded'
-
   | 'digest_merged'
   | 'digest_skipped'
   | 'digest_triggered'
@@ -97,38 +91,33 @@ export type EventType =
   | 'delay_completed'
   | 'delay_misconfigured'
   | 'delay_limit_exceeded'
-
   | 'bridge_response_received'
   | 'bridge_execution_failed'
-  
+  | 'bridge_execution_skipped'
   | 'webhook_filter_retrying'
   | 'webhook_filter_failed'
-  
   | 'integration_selected'
-
   | 'layout_not_found'
   | 'layout_selected'
-
   | 'tenant_selected'
   | 'tenant_not_found'
-  
-  
   | 'chat_webhook_missing'
   | 'chat_all_channels_failed'
   | 'chat_phone_missing'
-  
   | 'push_tokens_missing'
-  
+  | 'chat_some_channels_skipped'
+  | 'push_tokens_missing'
+  | 'push_some_channels_skipped'
+  | 'subscriber_missing_email_address'
+  | 'subscriber_missing_phone_number'
   | 'reply_callback_missing'
   | 'reply_callback_misconfigured'
   | 'reply_mx_record_missing'
   | 'reply_mx_domain_missing'
-  
   | 'variant_selected'
   | 'notification_error'
   | 'execution_detail'
   | 'step_completed'
-
   | 'request_received'
   | 'request_queued'
   | 'request_failed'
@@ -138,7 +127,6 @@ export type EventType =
   | 'request_invalid_recipients'
   | 'request_payload_validation_failed'
   | 'request_subscriber_processing_completed'
-
   | 'workflow_execution_started'
   | 'workflow_environment_not_found'
   | 'workflow_template_not_found'
