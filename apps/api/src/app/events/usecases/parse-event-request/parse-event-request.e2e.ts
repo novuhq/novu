@@ -5,7 +5,7 @@ import { AddressingTypeEnum, TriggerRecipients, TriggerRequestCategoryEnum } fro
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { v4 as uuid } from 'uuid';
-
+import { GetRequestContext } from '../../../shared/services/get-request-context';
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
 import { ParseEventRequestCommand, ParseEventRequestMulticastCommand } from './parse-event-request.command';
@@ -18,10 +18,25 @@ describe('ParseEventRequest Usecase - #novu-v2', () => {
   let template: NotificationTemplateEntity;
 
   beforeEach(async () => {
+    const mockGetRequestContext = {
+      getRequestId: () => uuid(),
+      getRequest: () => ({}),
+      getHeaders: () => ({}),
+      getMethod: () => 'POST',
+      getUrl: () => '/events/trigger',
+      getUserAgent: () => 'test-agent',
+      execute: async () => ({
+        request: {},
+        requestId: uuid(),
+      }),
+    };
+
     const moduleRef = await Test.createTestingModule({
       imports: [SharedModule, EventsModule],
-      providers: [],
-    }).compile();
+    })
+      .overrideProvider(GetRequestContext)
+      .useValue(mockGetRequestContext)
+      .compile();
 
     session = new UserSession();
     await session.initialize();
