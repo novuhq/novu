@@ -297,6 +297,10 @@ export class SubscriberJobBound {
     message?: string,
     rawData?: any
   ): Promise<void> {
+    if (!command.requestId) {
+      return;
+    }
+
     try {
       const traceData: Omit<Trace, 'id' | 'expires_at'> = {
         created_at: LogRepository.formatDateTime64(new Date()),

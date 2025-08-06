@@ -28,9 +28,10 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   transactionId: string;
 
+  // TODO: remove optional flag after all the workers are migrated to use requestId NV-6475
   @IsString()
-  @IsDefined()
-  requestId: string;
+  @IsOptional()
+  requestId?: string;
 
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   BullMqService,
   getWorkflowWorkerOptions,
@@ -17,8 +17,6 @@ import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const nr = require('newrelic');
 
-const LOG_CONTEXT = 'WorkflowWorker';
-
 @Injectable()
 export class WorkflowWorker extends WorkflowWorkerService {
   constructor(
@@ -28,7 +26,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
     private logger: PinoLogger
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
-
+    this.logger.setContext(this.constructor.name);
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
 
@@ -41,7 +39,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       const organizationExists = await this.organizationExist(data);
 
       if (!organizationExists) {
-        Logger.log(`Organization not found for organizationId ${data.organizationId}. Skipping job.`, LOG_CONTEXT);
+        this.logger.warn(`Organization not found for organizationId ${data.organizationId}. Skipping job.`);
 
         return;
       }
@@ -49,7 +47,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
       return await new Promise((resolve, reject) => {
         const _this = this;
 
-        Logger.verbose(`Job ${data.identifier} is being processed in the new instance workflow worker`, LOG_CONTEXT);
+        this.logger.trace(`Job ${data.identifier} is being processed in the new instance workflow worker`);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.TRIGGER_HANDLER_QUEUE,
