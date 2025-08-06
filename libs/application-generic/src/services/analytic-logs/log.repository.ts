@@ -25,6 +25,9 @@ const CLICKHOUSE_OPERATORS = [
   'GLOBAL NOT IN',
 ] as const;
 
+// Define array operators that require array values
+type ArrayOperators = 'IN' | 'NOT IN' | 'GLOBAL IN' | 'GLOBAL NOT IN';
+
 // Generate the type from the const array - this ensures single source of truth
 export type ClickhouseOperator = (typeof CLICKHOUSE_OPERATORS)[number];
 
@@ -34,31 +37,50 @@ export const ALLOWED_OPERATORS: readonly ClickhouseOperator[] = CLICKHOUSE_OPERA
 const LIMIT_MAX_THRESHOLD = 1000;
 export const ORDER_DIRECTION = ['ASC', 'DESC'];
 
-// Add OR condition type
 export type OrCondition<T> = {
   $or: WhereCondition<T>[];
 };
 
-// Update WhereCondition to support OR operations
-export type WhereCondition<T> =
-  | {
-      [K in keyof T]: { [P in K]: T[P] | { operator: ClickhouseOperator; value: T[P] | T[P][] } };
-    }[keyof T]
-  | OrCondition<T>;
+export type EnforcedContext = {
+  environmentId: string;
+};
 
-export type Where<T> = WhereCondition<T>[];
+type FieldCondition<T> = {
+  [K in keyof T]: {
+    [O in ClickhouseOperator]: {
+      field: K;
+      operator: O;
+      value: O extends ArrayOperators ? T[K][] : T[K];
+    };
+  }[ClickhouseOperator];
+}[keyof T];
+
+type WhereCondition<T> = FieldCondition<T> | OrCondition<T>;
+
+export interface EnforcedWhere<T> {
+  enforced: EnforcedContext;
+  conditions?: WhereCondition<T>[];
+}
+
+// For system operations that need to bypass tenant enforcement (logged for monitoring)
+export interface UnsafeWhere<T> {
+  conditions: WhereCondition<T>[];
+  __unsafe: true; // Explicit opt-in to bypass enforcement
+}
+
+export type Where<T> = EnforcedWhere<T> | UnsafeWhere<T>;
 
 export type SchemaKeys<T extends ClickhouseSchema<any>> = keyof InferClickhouseSchemaType<T>;
 
-export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_Enhanced_Type> {
+export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnhancedType> {
   readonly table: string;
   readonly identifierPrefix: string;
 
   constructor(
     protected readonly clickhouseService: ClickHouseService,
     protected readonly logger: PinoLogger,
-    protected readonly schema: T_Schema,
-    protected readonly schemaOrderBy: SchemaKeys<T_Schema>[],
+    protected readonly schema: TSchema,
+    protected readonly schemaOrderBy: SchemaKeys<TSchema>[],
     protected readonly featureFlagsService: FeatureFlagsService
   ) {
     this.initialize();
@@ -83,7 +105,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return this.schema.schema[column]?.type?.toString() || 'String';
   }
 
-  private validateColumnName(columnName: SchemaKeys<T_Schema>): void {
+  private validateColumnName(columnName: SchemaKeys<TSchema>): void {
     if (!columnName || typeof columnName !== 'string') {
       throw new Error('Invalid column name: must be a non-empty string');
     }
@@ -128,91 +150,93 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     }
   }
 
-  /**
-   * Builds a WHERE clause with parameterized values for ClickHouse queries.
-   * Now supports OR conditions using $or wrapper.
-   * @param where - Array of condition objects, supports both regular conditions and OR conditions
-   * @returns Object with SQL WHERE clause string and parameter map for safe query execution
-   * @example
-   * Input: [
-   *   { user_id: 123 },
-   *   { $or: [
-   *     { name: { operator: 'LIKE', value: 'John%' } },
-   *     { name: { operator: 'LIKE', value: 'Jane%' } }
-   *   ] },
-   *   { age: { operator: '>', value: 18 } }
-   * ]
-   * Output: {
-   *   clause: "WHERE user_id = {param_0_userid:String} AND (name LIKE {param_1_name:String} OR name LIKE {param_2_name:String}) AND age > {param_3_age:String}",
-   *   params: { param_0_userid: 123, param_1_name: 'John%', param_2_name: 'Jane%', param_3_age: 18 }
-   * }
-   */
-  protected buildWhereClause(where: Where<InferClickhouseSchemaType<T_Schema>>): {
+  protected buildWhereClause(where: Where<TEnhancedType>): {
     clause: string;
-    params: Record<string, any>;
+    params: Record<string, unknown>;
   } {
-    const params: Record<string, any> = {};
+    // Cast enhanced type to raw schema type only at this lowest level
+    const rawWhere = where as unknown as Where<InferClickhouseSchemaType<TSchema>>;
+    let allConditions: WhereCondition<InferClickhouseSchemaType<TSchema>>[] = [];
+
+    if ('__unsafe' in rawWhere) {
+      // Unsafe mode - log for monitoring but allow
+      this.logger.warn('Using unsafe WHERE clause without tenant enforcement', {
+        table: this.table,
+        conditionsCount: rawWhere.conditions.length,
+      });
+      allConditions = rawWhere.conditions;
+    } else {
+      // Safe mode - enforce tenant context
+      const enforcedConditions = this.buildEnforcedConditions(rawWhere.enforced);
+      allConditions = [...enforcedConditions, ...(rawWhere.conditions || [])];
+    }
+
+    return this.buildWhereClauseFromConditions(allConditions);
+  }
+
+  private buildEnforcedConditions(enforced: EnforcedContext): WhereCondition<InferClickhouseSchemaType<TSchema>>[] {
+    const condition = {
+      field: 'environment_id' as keyof InferClickhouseSchemaType<TSchema>,
+      operator: '=' as const,
+      value: enforced.environmentId,
+    };
+
+    const conditions: WhereCondition<InferClickhouseSchemaType<TSchema>>[] = [condition];
+
+    return conditions;
+  }
+
+  private buildWhereClauseFromConditions(conditions: WhereCondition<InferClickhouseSchemaType<TSchema>>[]): {
+    clause: string;
+    params: Record<string, unknown>;
+  } {
+    const params: Record<string, unknown> = {};
     let paramIndex = 0;
 
-    const buildSingleCondition = (condition: any): string => {
-      const entries = Object.entries(condition);
-      if (entries.length !== 1) {
-        throw new Error('Each where condition must have exactly one property');
-      }
-
-      const [key, value] = entries[0];
-
+    const buildSingleCondition = (condition: WhereCondition<InferClickhouseSchemaType<TSchema>>): string => {
       // Handle OR conditions
-      if (key === '$or') {
-        if (!Array.isArray(value)) {
+      if ('$or' in condition) {
+        if (!Array.isArray(condition.$or)) {
           throw new Error('$or condition must contain an array of conditions');
         }
 
-        const orClauses = value.map((orCondition) => buildSingleCondition(orCondition));
+        const orClauses = condition.$or.map((orCondition) => buildSingleCondition(orCondition));
         return `(${orClauses.join(' OR ')})`;
       }
 
-      // Handle regular conditions
-      this.validateColumnName(key as SchemaKeys<T_Schema>);
-
-      let operator: ClickhouseOperator = '=';
-      let actualValue = value;
-
-      if (typeof value === 'object' && value !== null && 'operator' in value && 'value' in value) {
-        operator = value.operator as ClickhouseOperator;
-        actualValue = value.value;
+      // Handle structured conditions {field, operator, value}
+      if (!('field' in condition) || !('operator' in condition) || !('value' in condition)) {
+        throw new Error('Each condition must have field, operator, and value properties');
       }
 
+      const { field, operator, value } = condition;
+      this.validateColumnName(field as SchemaKeys<TSchema>);
       this.validateOperator(operator);
 
-      const paramName = `param_${paramIndex}_${key.replace(/[^a-zA-Z0-9]/g, '')}`;
-      paramIndex++;
-
-      if (actualValue === null || actualValue === undefined) {
-        throw new Error(`Invalid value for column '${key}': value cannot be null or undefined`);
+      if (value === null || value === undefined) {
+        throw new Error(`Invalid value for column '${String(field)}': value cannot be null or undefined`);
       }
 
-      params[paramName] = actualValue;
+      const paramName = `param_${paramIndex}_${String(field).replace(/[^a-zA-Z0-9]/g, '')}`;
+      paramIndex++;
+      params[paramName] = value;
 
-      // Determine the correct parameter type based on operator and value
-      let paramType = this.getColumnType(key);
-
-      // For array-based operators, use Array() type wrapper
-      const arrayOperators = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
-      if (arrayOperators.includes(operator) && Array.isArray(actualValue)) {
+      let paramType = this.getColumnType(String(field));
+      const arrayOperators: ArrayOperators[] = ['IN', 'NOT IN', 'GLOBAL IN', 'GLOBAL NOT IN'];
+      if (arrayOperators.includes(operator as ArrayOperators) && Array.isArray(value)) {
         paramType = `Array(${paramType})`;
       }
 
-      return `${key} ${operator} {${paramName}:${paramType}}`;
+      return `${String(field)} ${operator} {${paramName}:${paramType}}`;
     };
 
-    const clauses = where.map((condition) => buildSingleCondition(condition)).join(' AND ');
+    const clauses = conditions.map((condition) => buildSingleCondition(condition)).join(' AND ');
 
     return { clause: clauses ? `WHERE ${clauses}` : '', params };
   }
 
   protected async insert(
-    data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'>,
+    data: Omit<InferClickhouseSchemaType<TSchema>, 'id' | 'expires_at'>,
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -228,7 +252,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
   }
 
   protected async insertMany(
-    data: Omit<InferClickhouseSchemaType<T_Schema>, 'id' | 'expires_at'>[],
+    data: Omit<InferClickhouseSchemaType<TSchema>, 'id' | 'expires_at'>[],
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -247,29 +271,16 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     );
   }
 
-  async findOne(options: {
-    where: Where<InferClickhouseSchemaType<T_Schema>>;
-    limit?: number;
-    offset?: number;
-    // todo make a type validation for available orderBy columns
-    orderBy?: SchemaKeys<T_Schema>;
-    orderDirection?: 'ASC' | 'DESC';
-    useFinal?: boolean;
-  }): Promise<{ data: T_Enhanced_Type; rows: number }> {
-    const result = await this.find({ ...options, limit: 1 });
-
-    return { data: result.data[0], rows: result.rows };
-  }
-
+  // Query methods with mandatory tenant enforcement
   async find(options: {
-    where: Where<InferClickhouseSchemaType<T_Schema>>;
+    where: Where<TEnhancedType>;
     limit?: number;
     offset?: number;
     // todo make a type validation for available orderBy columns
-    orderBy?: SchemaKeys<T_Schema>;
+    orderBy?: SchemaKeys<TSchema>;
     orderDirection?: 'ASC' | 'DESC';
     useFinal?: boolean;
-  }): Promise<{ data: T_Enhanced_Type[]; rows: number }> {
+  }): Promise<{ data: TEnhancedType[]; rows: number }> {
     const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false } = options;
 
     if (limit < 0 || limit > LIMIT_MAX_THRESHOLD) {
@@ -309,7 +320,7 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
       OFFSET ${offset}
     `;
 
-    const result = await this.clickhouseService.query<T_Enhanced_Type>({
+    const result = await this.clickhouseService.query<TEnhancedType>({
       query,
       params,
     });
@@ -317,7 +328,20 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
     return result;
   }
 
-  async count(options: { where: Where<InferClickhouseSchemaType<T_Schema>> }): Promise<number> {
+  async findOne(options: {
+    where: Where<TEnhancedType>;
+    limit?: number;
+    offset?: number;
+    orderBy?: SchemaKeys<TSchema>;
+    orderDirection?: 'ASC' | 'DESC';
+    useFinal?: boolean;
+  }): Promise<{ data: TEnhancedType; rows: number }> {
+    const result = await this.find({ ...options, limit: 1 });
+
+    return { data: result.data[0], rows: result.rows };
+  }
+
+  async count(options: { where: Where<TEnhancedType> }): Promise<number> {
     const { where } = options;
     const { clause, params } = this.buildWhereClause(where);
 
@@ -343,5 +367,244 @@ export abstract class LogRepository<T_Schema extends ClickhouseSchema<any>, T_En
 
     // Remove the 'Z' suffix since ClickHouse DateTime64 with UTC timezone handles it
     return isoString.slice(0, -1) as unknown as Date;
+  }
+}
+
+/**
+ * Optional fluent query builder for better ergonomics
+ *
+ * @example Basic usage with OR conditions:
+ * ```typescript
+ * // Using the fluent callback approach
+ * const query1 = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+ *   .whereEquals('organization_id', 'org456')
+ *   .whereIn('status', ['pending', 'running'])
+ *   .or(builder => {
+ *     builder
+ *       .whereLike('channels', '%email%')
+ *       .whereLike('channels', '%sms%');
+ *   })
+ *   .build();
+ *
+ * // Using the direct array approach
+ * const query2 = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+ *   .whereEquals('organization_id', 'org456')
+ *   .orWhere([
+ *     { field: 'priority', operator: '=', value: 'high' },
+ *     { field: 'urgent', operator: '=', value: true }
+ *   ])
+ *   .build();
+ *
+ * // Both generate ClickHouse SQL with proper parameter binding:
+ * // query1: WHERE environment_id = 'env123' AND organization_id = 'org456'
+ * //           AND status IN ['pending', 'running']
+ * //           AND (channels LIKE '%email%' OR channels LIKE '%sms%')
+ * // query2: WHERE environment_id = 'env123' AND organization_id = 'org456'
+ * //           AND (priority = 'high' OR urgent = true)
+ * ```
+ *
+ * @example Real-world usage (from GetWorkflowRuns use case):
+ * ```typescript
+ * const queryBuilder = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+ *   .whereEquals('organization_id', 'org456')
+ *   .whereIn('status', ['completed', 'failed'])
+ *   .whereGreaterThanOrEqual('created_at', new Date('2024-01-01'))
+ *   .orWhere(
+ *     channels.map(channel => ({
+ *       field: 'channels',
+ *       operator: 'LIKE',
+ *       value: `%"${channel}"%`
+ *     }))
+ *   );
+ *
+ * const where = queryBuilder.build();
+ * const result = await repository.find({ where, limit: 100 });
+ *
+ * // Generates SQL:
+ * // WHERE environment_id = 'env123'
+ * //   AND organization_id = 'org456'
+ * //   AND status IN ['completed', 'failed']
+ * //   AND created_at >= '2024-01-01T00:00:00.000'
+ * //   AND (channels LIKE '%"email"%' OR channels LIKE '%"sms"%' OR channels LIKE '%"push"%')
+ * ```
+ */
+export class QueryBuilder<T> {
+  private conditions: WhereCondition<T>[] = [];
+
+  constructor(private enforced: EnforcedContext) {}
+
+  where<K extends keyof T, O extends ClickhouseOperator>(
+    field: K,
+    operator: O,
+    value: O extends ArrayOperators ? T[K][] : T[K]
+  ): this {
+    this.conditions.push({ field, operator, value } as WhereCondition<T>);
+
+    return this;
+  }
+
+  whereEquals<K extends keyof T>(field: K, value: T[K]): this {
+    return this.where(field, '=', value);
+  }
+
+  whereIn<K extends keyof T>(field: K, values: T[K][]): this {
+    return this.where(field, 'IN', values);
+  }
+
+  whereNotIn<K extends keyof T>(field: K, values: T[K][]): this {
+    return this.where(field, 'NOT IN', values);
+  }
+
+  whereLike<K extends keyof T>(field: K, value: T[K]): this {
+    return this.where(field, 'LIKE', value);
+  }
+
+  whereGreaterThan<K extends keyof T>(field: K, value: T[K]): this {
+    return this.where(field, '>', value);
+  }
+
+  whereGreaterThanOrEqual<K extends keyof T>(field: K, value: T[K]): this {
+    return this.where(field, '>=', value);
+  }
+
+  whereLessThan<K extends keyof T>(field: K, value: T[K]): this {
+    return this.where(field, '<', value);
+  }
+
+  whereLessThanOrEqual<K extends keyof T>(field: K, value: T[K]): this {
+    return this.where(field, '<=', value);
+  }
+
+  whereBetween<K extends keyof T>(field: K, min: T[K], max: T[K]): this {
+    this.where(field, '>=', min);
+    this.where(field, '<=', max);
+
+    return this;
+  }
+
+  /**
+   * Add an OR condition using a callback to build the OR conditions
+   *
+   * **Use this when:** You need complex, mixed condition types or want to use different
+   * query builder methods (whereEquals, whereLike, whereIn, etc.) within the OR group.
+   *
+   * @param callback Function that receives a new QueryBuilder instance to build OR conditions
+   *
+   * @example
+   * ```typescript
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .whereEquals('status', 'active')
+   *   .or(builder => {
+   *     builder
+   *       .whereEquals('priority', 'high')
+   *       .whereIn('status', ['failed', 'timeout'])
+   *       .whereLike('error_message', '%timeout%');
+   *   })
+   *   .build();
+   *
+   * // Generates SQL:
+   * // WHERE environment_id = 'env123'
+   * //   AND status = 'active'
+   * //   AND (priority = 'high' OR status IN ['failed', 'timeout'] OR error_message LIKE '%timeout%')
+   * ```
+   */
+  or(callback: (builder: Omit<QueryBuilder<T>, 'build' | 'or'>) => void): this {
+    const orBuilder = new QueryBuilder<T>(this.enforced);
+    callback(orBuilder);
+
+    if (orBuilder.conditions.length > 0) {
+      const orCondition: OrCondition<T> = {
+        $or: orBuilder.conditions,
+      };
+      this.conditions.push(orCondition);
+    }
+
+    return this;
+  }
+
+  /**
+   * Add a simple OR condition with field, operator, and value
+   *
+   * **Use this when:** You have simple, uniform OR conditions that can be mapped from an array.
+   * More performant than or() for simple cases like filtering by multiple channel types.
+   *
+   * @param orConditions Array of OR conditions to add
+   *
+   * @example Simple filtering (recommended approach):
+   * ```typescript
+   * // Filtering by multiple channels
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .whereEquals('organization_id', 'org456')
+   *   .orWhere(
+   *     channels.map(channel => ({
+   *       field: 'channels',
+   *       operator: 'LIKE',
+   *       value: `%"${channel}"%`
+   *     }))
+   *   )
+   *   .build();
+   * ```
+   *
+   * @example Multiple status filtering:
+   * ```typescript
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .whereEquals('organization_id', 'org456')
+   *   .orWhere([
+   *     { field: 'status', operator: '=', value: 'completed' },
+   *     { field: 'status', operator: '=', value: 'failed' }
+   *   ])
+   *   .build();
+   *
+   * // Generates SQL:
+   * // WHERE environment_id = 'env123'
+   * //   AND organization_id = 'org456'
+   * //   AND (status = 'completed' OR status = 'failed')
+   * ```
+   *
+   * @example Array operators (IN, NOT IN):
+   * ```typescript
+   * const query = new QueryBuilder<WorkflowRun>({ environmentId: 'env123' })
+   *   .orWhere([
+   *     { field: 'workflow_id', operator: 'IN', value: ['wf1', 'wf2'] },
+   *     { field: 'status', operator: '=', value: 'urgent' }
+   *   ])
+   *   .build();
+   *
+   * // Generates SQL:
+   * // WHERE environment_id = 'env123'
+   * //   AND (workflow_id IN ['wf1', 'wf2'] OR status = 'urgent')
+   * ```
+   */
+  orWhere<K extends keyof T, O extends ClickhouseOperator>(
+    orConditions: Array<{
+      field: K;
+      operator: O;
+      value: O extends ArrayOperators ? T[K][] : T[K];
+    }>
+  ): this {
+    if (orConditions.length > 0) {
+      const conditions: WhereCondition<T>[] = orConditions.map(
+        ({ field, operator, value }) =>
+          ({
+            field,
+            operator,
+            value,
+          }) as WhereCondition<T>
+      );
+
+      const orCondition: OrCondition<T> = {
+        $or: conditions,
+      };
+      this.conditions.push(orCondition);
+    }
+
+    return this;
+  }
+
+  build(): EnforcedWhere<T> {
+    return {
+      enforced: this.enforced,
+      conditions: this.conditions,
+    };
   }
 }

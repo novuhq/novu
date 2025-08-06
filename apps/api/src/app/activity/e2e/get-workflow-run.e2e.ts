@@ -48,11 +48,13 @@ describe('Workflow Run - GET /v1/activity/workflow-runs/:workflowRunId #novu-v2'
     await session.waitForSubscriberQueueCompletion();
 
     const workflowRun = await workflowRunRepository.findOne({
-      where: [
-        { environment_id: { operator: '=', value: session.environment._id } },
-        { organization_id: { operator: '=', value: session.organization._id } },
-        { subscriber_id: { operator: '=', value: subscriber._id } },
-      ],
+      where: {
+        enforced: { environmentId: session.environment._id },
+        conditions: [
+          { field: 'organization_id', operator: '=', value: session.organization._id },
+          { field: 'subscriber_id', operator: '=', value: subscriber._id },
+        ],
+      },
     });
 
     const workflowRunId = workflowRun?.data?.workflow_run_id;
