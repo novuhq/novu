@@ -179,6 +179,7 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
         AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
       GROUP BY date, step_type
       ORDER BY date, step_type
     `;
