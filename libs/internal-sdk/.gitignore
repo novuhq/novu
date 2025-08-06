@@ -1,10 +1,13 @@
+/examples/node_modules
+.env
+.env.local
+.env.*.local
 **/.speakeasy/temp/
 **/.speakeasy/logs/
 .speakeasy/temp/
 .DS_Store
 /mcp-server
 /bin
-/.eslintcache
 /models
 /models/errors
 /types

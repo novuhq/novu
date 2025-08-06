@@ -1,11 +1,11 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getTranslation, saveTranslation } from '@/api/translations';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { saveTranslation, getTranslation } from '@/api/translations';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
-import { DEFAULT_LOCALE } from '@novu/shared';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 export type UpdateTranslationValueParams = {
   workflowId: string;
@@ -95,14 +95,14 @@ export const useUpdateTranslationValue = () => {
         ],
       });
 
-      // Invalidate the translations list
-      queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
-      });
-
       // Invalidate all preview-step queries to update the preview
       queryClient.invalidateQueries({
-        queryKey: ['preview-step'],
+        queryKey: [QueryKeys.previewStep],
+      });
+
+      // Invalidate diff environment queries when translations are updated
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
       });
     },
     onError: (error, variables) => {

@@ -1,7 +1,7 @@
+import { IProviderConfig } from '@novu/shared';
 import { ReactNode } from 'react';
 import { Sheet, SheetContent } from '@/components/primitives/sheet';
 import { IntegrationSheetHeader } from './integration-sheet-header';
-import { IProviderConfig } from '@novu/shared';
 
 type IntegrationSheetProps = {
   isOpened: boolean;

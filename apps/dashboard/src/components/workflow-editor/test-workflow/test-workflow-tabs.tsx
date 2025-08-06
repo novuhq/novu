@@ -1,3 +1,9 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createMockObjectFromSchema, type WorkflowTestDataResponseDto } from '@novu/shared';
+import { useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { RiPlayCircleLine } from 'react-icons/ri';
+import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
@@ -7,15 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitive
 import { buildDynamicFormSchema, TestWorkflowFormType } from '@/components/workflow-editor/schema';
 import { TestWorkflowForm } from '@/components/workflow-editor/test-workflow/test-workflow-form';
 import { TestWorkflowLogsSidebar } from '@/components/workflow-editor/test-workflow/test-workflow-logs-sidebar';
-import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createMockObjectFromSchema, type WorkflowTestDataResponseDto } from '@novu/shared';
-import { useMemo, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { RiPlayCircleLine } from 'react-icons/ri';
-import { Link, useParams } from 'react-router-dom';
 import { useWorkflow } from '../workflow-provider';
 
 export const TestWorkflowTabs = ({ testData }: { testData?: WorkflowTestDataResponseDto }) => {

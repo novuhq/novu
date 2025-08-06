@@ -208,6 +208,14 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.Date,
       default: null,
     },
+    lastPublishedAt: {
+      type: Schema.Types.Date,
+      default: null,
+    },
+    _lastPublishedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -217,6 +225,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       ref: 'Organization',
     },
     _creatorId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    _updatedBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
@@ -265,6 +277,30 @@ notificationTemplateSchema.virtual('notificationGroup', {
   localField: '_notificationGroupId',
   foreignField: '_id',
   justOne: true,
+});
+
+notificationTemplateSchema.virtual('updatedBy', {
+  ref: 'User',
+  localField: '_updatedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
+});
+
+notificationTemplateSchema.virtual('lastPublishedBy', {
+  ref: 'User',
+  localField: '_lastPublishedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
+});
+
+notificationTemplateSchema.virtual('lastPublishedByUser', {
+  ref: 'User',
+  localField: '_lastPublishedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
 });
 
 notificationTemplateSchema.index({

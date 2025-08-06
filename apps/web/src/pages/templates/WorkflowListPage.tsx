@@ -75,7 +75,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
             position="top"
           >
             <div>
-              {/* eslint-disable-next-line no-nested-ternary */}
+              {}
               {original.workflowIntegrationStatus?.hasActiveIntegrations &&
               original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
                 !original.bridge ? (
@@ -252,6 +252,7 @@ function WorkflowListPage() {
 
       return;
     }
+
     setSearchValue(value);
     debouncedSearchChange(value);
   };

@@ -1,22 +1,21 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
-import { format } from 'prettier';
-
 import {
   AnalyticsService,
+  EmailControlType,
+  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
   NotificationStep,
+  PinoLogger,
+  SendWebhookMessage,
   shortId,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
-  SendWebhookMessage,
-  EmailControlType,
-  PinoLogger,
-  FeatureFlagsService,
 } from '@novu/application-generic';
 import {
+  ClientSession,
   ControlSchemas,
   ControlValuesRepository,
   NotificationGroupRepository,
@@ -26,32 +25,32 @@ import {
 import {
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  slugify,
+  FeatureFlagsKeysEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   StepTypeEnum,
+  slugify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
-  ResourceOriginEnum,
-  ResourceTypeEnum,
-  FeatureFlagsKeysEnum,
 } from '@novu/shared';
-
+import { format } from 'prettier';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
+import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow as UpdateWorkflowV0Usecase } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
+import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 import { stepTypeToControlSchema } from '../../shared';
 import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
-import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
-import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
-import { PreviewUsecase } from '../preview/preview.usecase';
 import { PreviewCommand } from '../preview';
-import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
-import { removeBrandingFromHtml } from '../../../shared/utils/html';
-import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
-import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
-import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
-import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
-import { UpdateWorkflow as UpdateWorkflowV0Usecase } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { PreviewUsecase } from '../preview/preview.usecase';
+import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -75,14 +74,13 @@ export class UpsertWorkflowUseCase {
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    // TODO: use transaction to ensure that the workflows, steps and controls are upserted atomically
-
     const existingWorkflow = command.workflowIdOrInternalId
       ? await this.getWorkflowByIdsUseCase.execute(
           GetWorkflowByIdsCommand.create({
             environmentId: command.user.environmentId,
             organizationId: command.user.organizationId,
             workflowIdOrInternalId: command.workflowIdOrInternalId,
+            session: command.session,
           })
         )
       : null;
@@ -93,13 +91,19 @@ export class UpsertWorkflowUseCase {
       this.mixpanelTrack(command, 'Workflow Update - [API]');
 
       upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
-        UpdateWorkflowCommand.create(await this.buildUpdateWorkflowCommand(command, existingWorkflow))
+        UpdateWorkflowCommand.create({
+          ...(await this.buildUpdateWorkflowCommand(command, existingWorkflow)),
+          session: command.session,
+        })
       );
     } else {
       this.mixpanelTrack(command, 'Workflow Created - [API]');
 
       upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
-        CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
+        CreateWorkflowCommand.create({
+          ...(await this.buildCreateWorkflowCommand(command)),
+          session: command.session,
+        })
       );
     }
 
@@ -140,10 +144,11 @@ export class UpsertWorkflowUseCase {
     return updatedWorkflow;
   }
 
+  @Instrument()
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
     const { user, workflowDto, preserveWorkflowId } = command;
     const isWorkflowActive = workflowDto?.active ?? true;
-    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId);
+    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId, command.session);
 
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
@@ -154,6 +159,7 @@ export class UpsertWorkflowUseCase {
       notificationGroupId,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
+      updatedBy: user._id,
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
@@ -173,6 +179,7 @@ export class UpsertWorkflowUseCase {
     };
   }
 
+  @Instrument()
   private async buildUpdateWorkflowCommand(
     command: UpsertWorkflowCommand,
     existingWorkflow: NotificationTemplateEntity
@@ -184,6 +191,7 @@ export class UpsertWorkflowUseCase {
     return {
       id: existingWorkflow._id,
       environmentId: existingWorkflow._environmentId,
+      updatedBy: user._id,
       organizationId: user.organizationId,
       userId: user._id,
       name: workflowDto.name,
@@ -202,6 +210,7 @@ export class UpsertWorkflowUseCase {
     };
   }
 
+  @Instrument()
   private async buildSteps(
     command: UpsertWorkflowCommand,
     existingWorkflow?: NotificationTemplateEntity
@@ -216,7 +225,6 @@ export class UpsertWorkflowUseCase {
 
     for (const step of command.workflowDto.steps) {
       const existingStep: NotificationStepEntity | null | undefined =
-        // eslint-disable-next-line id-length
         '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
       const {
@@ -267,6 +275,7 @@ export class UpsertWorkflowUseCase {
     return steps;
   }
 
+  @Instrument()
   private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
     const slug = slugify(step.name);
 
@@ -303,14 +312,18 @@ export class UpsertWorkflowUseCase {
     return finalStepId;
   }
 
-  private async getNotificationGroup(environmentId: string): Promise<string | undefined> {
+  private async getNotificationGroup(
+    environmentId: string,
+    session?: ClientSession | null
+  ): Promise<string | undefined> {
     return (
       await this.notificationGroupRepository.findOne(
         {
           name: 'General',
           _environmentId: environmentId,
         },
-        '_id'
+        '_id',
+        { session }
       )
     )?._id;
   }
@@ -328,6 +341,7 @@ export class UpsertWorkflowUseCase {
     );
   }
 
+  @Instrument()
   private getControlValuesUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
     return updatedSteps
       .map((step) => {
@@ -343,6 +357,7 @@ export class UpsertWorkflowUseCase {
       .filter((update): update is NonNullable<typeof update> => update !== null);
   }
 
+  @Instrument()
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -353,13 +368,16 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      return this.controlValuesRepository.delete({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
-        _workflowId: workflowId,
-        _stepId: step._templateId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
+      return this.controlValuesRepository.delete(
+        {
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          _workflowId: workflowId,
+          _stepId: step._templateId,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+        },
+        { session: command.session }
+      );
     }
 
     const newControlValues = controlValues || {};
@@ -382,18 +400,7 @@ export class UpsertWorkflowUseCase {
         organization: { _id: command.user.organizationId },
       });
 
-      // Assign default layoutId if null (but not if undefined)
-      if (isLayoutsPageActive && emailControlValues.layoutId === null) {
-        const defaultLayout = await this.getLayoutUseCase.execute(
-          GetLayoutCommand.create({
-            environmentId: command.user.environmentId,
-            organizationId: command.user.organizationId,
-            userId: command.user._id,
-            skipAdditionalFields: true,
-          })
-        );
-        emailControlValues.layoutId = defaultLayout.layoutId;
-      } else if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
+      if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
         const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: emailControlValues.layoutId,
@@ -416,6 +423,7 @@ export class UpsertWorkflowUseCase {
             generatePreviewRequestDto: {
               controlValues: emailControlValues,
             },
+            skipLayoutRendering: true,
           })
         );
         let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
@@ -449,6 +457,7 @@ export class UpsertWorkflowUseCase {
     );
   }
 
+  @Instrument()
   private findControlValueInRequest(
     updatedStep: NotificationStepEntity,
     commandSteps: UpsertStepDataCommand[]

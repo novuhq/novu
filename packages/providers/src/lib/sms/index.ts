@@ -12,6 +12,7 @@ export * from './firetext/firetext.provider';
 export * from './forty-six-elks/forty-six-elks.provider';
 export * from './generic-sms/generic-sms.provider';
 export * from './gupshup/gupshup.provider';
+export * from './imedia/imedia.provider';
 export * from './infobip/infobip.provider';
 export * from './isend-sms/isend-sms.provider';
 export * from './kannel/kannel.provider';

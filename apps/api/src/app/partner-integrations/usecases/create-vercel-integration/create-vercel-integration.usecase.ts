@@ -1,8 +1,8 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { lastValueFrom } from 'rxjs';
-import { OrganizationRepository, PartnerTypeEnum } from '@novu/dal';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
+import { OrganizationRepository, PartnerTypeEnum } from '@novu/dal';
+import { lastValueFrom } from 'rxjs';
 
 import { CreateVercelIntegrationResponseDto } from '../../dtos/create-vercel-integration-response.dto';
 import { CreateVercelIntegrationCommand } from './create-vercel-integration.command';

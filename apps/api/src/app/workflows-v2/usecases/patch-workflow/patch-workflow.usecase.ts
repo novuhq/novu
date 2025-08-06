@@ -1,15 +1,15 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { UserSessionData, WebhookObjectTypeEnum, WebhookEventEnum, WorkflowStatusEnum } from '@novu/shared';
+import { Instrument, InstrumentUsecase, PinoLogger, SendWebhookMessage } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { SendWebhookMessage, PinoLogger } from '@novu/application-generic';
-import { PatchWorkflowCommand } from './patch-workflow.command';
-import { GetWorkflowUseCase } from '../get-workflow';
-import { WorkflowResponseDto } from '../../dtos';
-import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
-import { stepTypeToControlSchema } from '../../shared';
-import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { UserSessionData, WebhookEventEnum, WebhookObjectTypeEnum, WorkflowStatusEnum } from '@novu/shared';
 import { WorkflowWithPreferencesResponseDto } from '../../../workflows-v1/dtos/get-workflow-with-preferences.dto';
+import { GetWorkflowWithPreferencesUseCase } from '../../../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
+import { WorkflowResponseDto } from '../../dtos';
+import { stepTypeToControlSchema } from '../../shared';
+import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
+import { GetWorkflowUseCase } from '../get-workflow';
+import { PatchWorkflowCommand } from './patch-workflow.command';
 
 @Injectable()
 export class PatchWorkflowUsecase {
@@ -24,6 +24,7 @@ export class PatchWorkflowUsecase {
     private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
+  @InstrumentUsecase()
   async execute(command: PatchWorkflowCommand): Promise<WorkflowResponseDto> {
     const persistedWorkflow = await this.fetchWorkflow(command);
 
@@ -73,6 +74,7 @@ export class PatchWorkflowUsecase {
     );
   }
 
+  @Instrument()
   private async recalculateStepIssues(
     workflow: NotificationTemplateEntity,
     userSessionData: UserSessionData
@@ -148,6 +150,7 @@ export class PatchWorkflowUsecase {
       workflowIdOrInternalId: command.workflowIdOrInternalId,
       environmentId: command.user.environmentId,
       organizationId: command.user.organizationId,
+      session: command.session,
     });
   }
 
@@ -160,7 +163,6 @@ export class PatchWorkflowUsecase {
     }
 
     try {
-      // eslint-disable-next-line global-require
       const manageTranslations = this.moduleRef.get(require('@novu/ee-translation')?.ManageTranslations, {
         strict: false,
       });
@@ -172,6 +174,7 @@ export class PatchWorkflowUsecase {
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
         userId: command.user._id,
+        session: command.session,
       });
     } catch (error) {
       this.logger.error(

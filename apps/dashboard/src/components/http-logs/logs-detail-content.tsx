@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { RiArrowUpSLine, RiArrowDownSLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
 import { RequestLog } from '../../types/logs';
-import { HttpStatusBadge } from './http-status-badge';
-import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { CopyButton } from '../primitives/copy-button';
 import { Separator } from '../primitives/separator';
+import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
+import { HttpStatusBadge } from './http-status-badge';
+import { TransactionIdDisplay } from './transaction-id-display';
 
 type LogsDetailContentProps = {
   log: RequestLog;
@@ -171,14 +172,7 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
 
             <div className="flex items-center justify-between">
               <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Transaction ID</span>
-              <div className="flex items-center gap-1">
-                {log.transactionId && (
-                  <CopyButton valueToCopy={log.transactionId} className="text-text-soft size-6 p-1" size="2xs" />
-                )}
-                <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">
-                  {log.transactionId || 'N/A'}
-                </span>
-              </div>
+              <TransactionIdDisplay transactionId={log.transactionId} />
             </div>
 
             <div className="flex items-center justify-between">

@@ -1,11 +1,6 @@
 import { JobTopicNameEnum } from '@novu/shared';
-
-import {
-  BullMqService,
-  QueueBaseOptions,
-  WorkerOptions,
-} from './bull-mq.service';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { BullMqService, QueueBaseOptions, WorkerOptions } from './bull-mq.service';
 
 let bullMqService: BullMqService;
 
@@ -67,10 +62,7 @@ describe('BullMQ Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
       bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
-      const queue = bullMqService.createQueue(
-        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-        {},
-      );
+      const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
       expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
 
@@ -79,10 +71,7 @@ describe('BullMQ Service', () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
       bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
-      const queue = bullMqService.createQueue(
-        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-        {},
-      );
+      const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
       expect(queue.opts.prefix).toEqual('bull');
     });
 
@@ -91,10 +80,7 @@ describe('BullMQ Service', () => {
       process.env.MEMORY_DB_CLUSTER_SERVICE_HOST = '';
 
       bullMqService = new BullMqService(new WorkflowInMemoryProviderService());
-      const queue = bullMqService.createQueue(
-        JobTopicNameEnum.ACTIVE_JOBS_METRIC,
-        {},
-      );
+      const queue = bullMqService.createQueue(JobTopicNameEnum.ACTIVE_JOBS_METRIC, {});
       expect(queue.opts.prefix).toEqual('{metric-active-jobs}');
     });
   });

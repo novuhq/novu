@@ -1,21 +1,20 @@
-import { useMemo, useState } from 'react';
 import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
-import { RiLoader4Fill, RiArrowDownSLine, RiArrowRightUpLine } from 'react-icons/ri';
+import { useMemo, useState } from 'react';
+import { RiArrowDownSLine, RiArrowRightUpLine, RiLoader4Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
+import { type ActivityFilters } from '@/api/activity';
+import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
-import { useFetchActivities } from '@/hooks/use-fetch-activities';
+import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { RequestLog } from '../../types/logs';
-import { WorkflowRunsFilters } from './workflow-runs-filters';
 import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
-import { type ActivityFilters } from '@/api/activity';
-import { formatDateSimple } from '../../utils/format-date';
-import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { WorkflowRunActivityDrawer } from './workflow-run-activity-drawer';
+import { WorkflowRunsFilters } from './workflow-runs-filters';
 
 type WorkflowRunsContentProps = {
   log: RequestLog;
@@ -34,7 +33,12 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
   const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
 
   const activityFilters = useMemo(() => {
-    const filters: ActivityFilters = { transactionId: log.transactionId || '' };
+    const filters: ActivityFilters = {};
+
+    // Handle transaction ID - join comma-separated values into a single string
+    if (log.transactionId) {
+      filters.transactionId = log.transactionId;
+    }
 
     // Only apply other filters if they are explicitly set by the user
     // Map channels from workflow runs format to activity format
@@ -47,12 +51,16 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
       filters.workflows = filterValues.workflows;
     }
 
-    if (filterValues.subscriberId && filterValues.subscriberId.trim()) {
+    if (filterValues.subscriberId) {
       filters.subscriberId = filterValues.subscriberId;
     }
 
+    if (filterValues.dateRange) {
+      filters.dateRange = filterValues.dateRange;
+    }
+
     return filters;
-  }, [filterValues, log.transactionId]);
+  }, [log.transactionId, filterValues]);
 
   const { activities, isLoading, error } = useFetchActivities(
     {
@@ -87,21 +95,25 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
     const params = new URLSearchParams();
 
     if (log.transactionId) {
-      params.set('transactionId', log.transactionId);
+      const transactionIds = log.transactionId
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean);
+
+      if (transactionIds.length > 1) {
+        transactionIds.forEach((id) => params.append('transactionId', id));
+      } else {
+        params.set('transactionId', log.transactionId);
+      }
     }
 
-    const runsUrl = buildRoute(ROUTES.ACTIVITY_RUNS, { environmentSlug: currentEnvironment.slug });
+    const runsUrl = buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug });
     navigate(`${runsUrl}?${params.toString()}`);
   };
 
   const handleActivityClick = (activityId: string) => {
     setSelectedActivityId(activityId);
     setIsActivityDrawerOpen(true);
-  };
-
-  const handleActivityDrawerClose = () => {
-    setIsActivityDrawerOpen(false);
-    setSelectedActivityId(undefined);
   };
 
   if (error) {

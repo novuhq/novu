@@ -1,9 +1,9 @@
-import { NotificationTemplateEntity, NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
-import { StepTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
 import { ActivityNotificationResponseDto, ChannelTypeEnum } from '@novu/api/models/components';
+import { NotificationTemplateEntity, NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
+import { StepTypeEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
@@ -32,7 +32,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
       .expect(201);
   });
 
-  it('should get the current activity feed of user', async function () {
+  it('should get the current activity feed of user', async () => {
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
       to: subscriberId,
@@ -62,7 +62,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     expect(activity.channels).to.include.oneOf(Object.keys(ChannelTypeEnum).map((i) => ChannelTypeEnum[i]));
   });
 
-  it('should filter by channel', async function () {
+  it('should filter by channel', async () => {
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
       to: subscriberId,
@@ -102,7 +102,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     expect(activity.channels).to.include(ChannelTypeEnum.Sms);
   });
 
-  it('should filter by templateId', async function () {
+  it('should filter by templateId', async () => {
     await novuClient.trigger({
       workflowId: smsOnlyTemplate.triggers[0].identifier,
       to: subscriberId,
@@ -144,7 +144,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     return activity;
   }
 
-  it('should filter by email', async function () {
+  it('should filter by email', async () => {
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
       to: {
@@ -196,7 +196,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     expect(getActivity(activities, 0).template?.id).to.equal(template._id);
   });
 
-  it('should filter by subscriberId', async function () {
+  it('should filter by subscriberId', async () => {
     const subscriberIdToCreate = `${SubscriberRepository.createObjectId()}some-test`;
 
     await novuClient.trigger({
@@ -240,7 +240,7 @@ describe('Get activity feed - /notifications (GET) #novu-v2', async () => {
     expect(activities[0].template?.id, JSON.stringify(template)).to.equal(template._id);
   });
 
-  it('should return with deleted workflow and subscriber data', async function () {
+  it('should return with deleted workflow and subscriber data', async () => {
     const notificationTemplateRepository = new NotificationTemplateRepository();
     const subscriberRepository = new SubscriberRepository();
     const templateToDelete = await session.createTemplate();

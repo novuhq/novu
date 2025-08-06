@@ -1,12 +1,9 @@
+import { EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useCallback } from 'react';
 import { RiDeleteBin2Line, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
-
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { TranslationGroup } from '@/api/translations';
-import { formatDateSimple } from '@/utils/format-date';
-import { cn } from '@/utils/ui';
-
+import { StackedFlagCircles } from '@/components/flag-circle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
 import {
@@ -21,7 +18,12 @@ import { TableCell, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
-import { StackedFlagCircles } from '@/components/flag-circle';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { formatDateSimple } from '@/utils/format-date';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { TranslationStatus } from './translation-status';
 
 type TranslationTableCellProps = ComponentProps<typeof TableCell>;
 
@@ -75,9 +77,19 @@ type TranslationActionsMenuProps = {
   onGoToWorkflow: (e: React.MouseEvent) => void;
   onStopPropagation: (e: React.MouseEvent) => void;
   onDeleteClick: (e: React.MouseEvent) => void;
+  canWrite: boolean;
+  isDevEnvironment: boolean;
 };
 
-function TranslationActionsMenu({ onGoToWorkflow, onStopPropagation, onDeleteClick }: TranslationActionsMenuProps) {
+function TranslationActionsMenu({
+  onGoToWorkflow,
+  onStopPropagation,
+  onDeleteClick,
+  canWrite,
+  isDevEnvironment,
+}: TranslationActionsMenuProps) {
+  const canDelete = canWrite && isDevEnvironment;
+
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild onClick={onStopPropagation}>
@@ -89,10 +101,22 @@ function TranslationActionsMenu({ onGoToWorkflow, onStopPropagation, onDeleteCli
             <RiRouteFill className="h-4 w-4" />
             <span>Go to workflow</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onDeleteClick} className="text-destructive flex cursor-pointer items-center gap-2">
-            <RiDeleteBin2Line className="h-4 w-4" />
-            <span>Disable & delete translation</span>
-          </DropdownMenuItem>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuItem
+                onClick={canDelete ? onDeleteClick : undefined}
+                className={cn(
+                  'flex cursor-pointer items-center gap-2',
+                  canDelete ? 'text-destructive' : 'cursor-not-allowed text-neutral-400'
+                )}
+                disabled={!canDelete}
+              >
+                <RiDeleteBin2Line className="h-4 w-4" />
+                <span>Disable & delete translation</span>
+              </DropdownMenuItem>
+            </TooltipTrigger>
+            {!canDelete && <TooltipContent>Edit translations in your development environment.</TooltipContent>}
+          </Tooltip>
         </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -169,6 +193,10 @@ type TranslationRowProps = {
 
 export function TranslationRow({ translation, onTranslationClick, onDeleteClick }: TranslationRowProps) {
   const { stopPropagation, handleGoToWorkflow } = useTranslationRowLogic(translation);
+  const has = useHasPermission();
+  const { currentEnvironment } = useEnvironment();
+  const canWrite = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const isDevEnvironment = currentEnvironment?.type === EnvironmentTypeEnum.DEV;
 
   const handleRowClick = useCallback(() => {
     onTranslationClick?.(translation);
@@ -186,6 +214,10 @@ export function TranslationRow({ translation, onTranslationClick, onDeleteClick 
     <TableRow key={translation.resourceId} className="group relative isolate cursor-pointer" onClick={handleRowClick}>
       <TranslationTableCell className="font-medium">
         <ResourceInfo resourceId={translation.resourceId} resourceName={translation.resourceName} />
+      </TranslationTableCell>
+
+      <TranslationTableCell>
+        <TranslationStatus outdatedLocales={translation.outdatedLocales} />
       </TranslationTableCell>
 
       <TranslationTableCell>
@@ -210,6 +242,8 @@ export function TranslationRow({ translation, onTranslationClick, onDeleteClick 
             onGoToWorkflow={handleGoToWorkflow}
             onStopPropagation={stopPropagation}
             onDeleteClick={handleDeleteClick}
+            canWrite={canWrite}
+            isDevEnvironment={isDevEnvironment}
           />
         </div>
       </TranslationTableCell>

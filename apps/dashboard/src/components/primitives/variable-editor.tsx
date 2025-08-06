@@ -1,24 +1,26 @@
-import { cn } from '@/utils/ui';
-import { autocompletion, CompletionSource, CompletionContext } from '@codemirror/autocomplete';
-import { EditorView, Extension } from '@uiw/react-codemirror';
-import { useCallback, useMemo, useRef, useState, useEffect, MutableRefObject } from 'react';
-import { JSONSchema7 } from 'json-schema';
+import { autocompletion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-
+import { EditorView, Extension } from '@uiw/react-codemirror';
+import { JSONSchema7 } from 'json-schema';
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Editor, EditorProps } from '@/components/primitives/editor';
+import { createVariableExtension } from '@/components/primitives/variable-plugin';
+import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
+import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import {
+  DIGEST_VARIABLES_ENUM,
+  DIGEST_VARIABLES_FILTER_MAP,
+  getDynamicDigestVariable,
+} from '@/components/variable/utils/digest-variables';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useVariables } from '../../hooks/use-variables';
-import { createVariableExtension } from '@/components/primitives/variable-plugin';
-import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
-import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
-import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
-import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
+import { cn } from '@/utils/ui';
+import { useVariables } from '../../hooks/use-variables';
 import { DEFAULT_SIDE_OFFSET } from './popover';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export type CompletionRange = {
   from: number;
@@ -35,12 +37,14 @@ type VariableEditorProps = {
   indentWithTab?: boolean;
   completionSources?: CompletionSource[];
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   onManageSchemaClick?: (variableName: string) => void;
   skipContainerClick?: boolean;
   children?: React.ReactNode;
+  disabled?: boolean;
 } & Pick<
   EditorProps,
   | 'className'
@@ -83,12 +87,14 @@ export function VariableEditor({
   tagStyles,
   completionSources,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
   digestStepName,
   skipContainerClick = false,
   getSchemaPropertyByKey = () => undefined,
   onCreateNewVariable = () => Promise.resolve(),
   onManageSchemaClick = () => {},
   children,
+  disabled = false,
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -143,7 +149,7 @@ export function VariableEditor({
     [digestStepName]
   );
 
-  // Create extensions only once and never recreate them
+  // Create extensions only once and never recreate them unless external extensions change
   const extensionsRef = useRef<Extension[]>();
   const callbacksRef = useRef({
     onVariableSelect,
@@ -154,9 +160,25 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   });
+
+  // Update callbacks ref on every render
+  callbacksRef.current = {
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    isTranslationEnabled,
+    multiline,
+    extensions,
+  };
 
   // Update callbacks without triggering re-renders
   callbacksRef.current = {
@@ -168,6 +190,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   };
@@ -178,18 +201,23 @@ export function VariableEditor({
         callbacksRef.current.variables,
         (completion: CompletionOption) => callbacksRef.current.onVariableSelect(completion),
         async (variableName: string) => callbacksRef.current.onCreateNewVariable(variableName),
-        callbacksRef.current.isPayloadSchemaEnabled
+        callbacksRef.current.isPayloadSchemaEnabled,
+        callbacksRef.current.isTranslationEnabled
       )(context);
     };
   }, []);
 
   const autocompletionExtension = useMemo(() => {
     const dynamicCompletionSource: CompletionSource = (context) => {
-      const sources = [variableCompletionSource];
+      const sources = [];
 
+      // Put translation completion sources first to give them higher priority
       if (callbacksRef.current.completionSources) {
         sources.push(...callbacksRef.current.completionSources);
       }
+
+      // Add variable completion source last
+      sources.push(variableCompletionSource);
 
       for (const source of sources) {
         const result = source(context);
@@ -210,7 +238,6 @@ export function VariableEditor({
         return '';
       },
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const variablePluginExtension = useMemo(() => {
@@ -222,26 +249,28 @@ export function VariableEditor({
       isDigestEventsVariable: (variableName: string) => callbacksRef.current.isDigestEventsVariable(variableName),
       isCustomHtmlEditorEnabled,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const editorExtensions = useMemo(() => {
-    if (!extensionsRef.current) {
-      // For props that rarely change, we can check them dynamically
-      const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-      const allExtensions = [...baseExtensions, autocompletionExtension, variablePluginExtension];
+    // Clear cache when extensions change
+    extensionsRef.current = undefined;
 
-      // Handle external extensions
-      if (callbacksRef.current.extensions) {
-        allExtensions.push(...callbacksRef.current.extensions);
-      }
+    // For props that rarely change, we can check them dynamically
+    const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
+    const allExtensions = [...baseExtensions, autocompletionExtension];
 
-      extensionsRef.current = allExtensions;
+    // Add external extensions (including translation plugin) BEFORE variable plugin
+    // This ensures translation patterns are processed first
+    if (callbacksRef.current.extensions) {
+      allExtensions.push(...callbacksRef.current.extensions);
     }
 
+    // Add variable plugin last so it doesn't interfere with translation patterns
+    allExtensions.push(variablePluginExtension);
+
+    extensionsRef.current = allExtensions;
     return extensionsRef.current;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [extensions]);
 
   const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
@@ -320,6 +349,7 @@ export function VariableEditor({
         onChange={onChange}
         onBlur={onBlur}
         tagStyles={tagStyles}
+        editable={!disabled}
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover

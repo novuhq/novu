@@ -1,10 +1,9 @@
 import { ChannelTypeEnum, ShortIsPrefixEnum } from '@novu/shared';
-
-import { LayoutResponseDto } from '../dtos';
 import { LayoutDto } from '../../layouts-v1/dtos/layout.dto';
 import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
-import { EmailControlsDto } from '../dtos/layout-controls.dto';
 import { buildSlug } from '../../shared/helpers/build-slug';
+import { LayoutResponseDto } from '../dtos';
+import { EmailControlsDto } from '../dtos/layout-controls.dto';
 
 export const mapToResponseDto = ({
   layout,
@@ -24,12 +23,18 @@ export const mapToResponseDto = ({
     slug: buildSlug(layout.name, ShortIsPrefixEnum.LAYOUT, layout._id!),
     isDefault: layout.isDefault,
     updatedAt: layout.updatedAt!,
+    updatedBy: layout.updatedBy
+      ? {
+          _id: layout.updatedBy._id,
+          firstName: layout.updatedBy.firstName,
+          lastName: layout.updatedBy.lastName,
+          externalId: layout.updatedBy.externalId,
+        }
+      : undefined,
     createdAt: layout.createdAt!,
     origin: layout.origin!,
     type: layout.type!,
     variables,
-    // TODO: implement issues
-    issues: undefined,
     controls: {
       uiSchema: layout.controls?.uiSchema,
       dataSchema: layout.controls?.dataSchema,

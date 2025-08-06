@@ -1,10 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity } from '@novu/dal';
 import { PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
-import { MockStepResultOptions } from '../preview.types';
 import { LOG_CONTEXT } from '../preview.constants';
+import { MockStepResultOptions } from '../preview.types';
 
 const DEFAULT_DIGEST_EVENTS_COUNT = 3;
 
@@ -116,7 +117,8 @@ export class MockDataGeneratorService {
       email: 'user@example.com',
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
-      locale: 'en-US',
+      locale: DEFAULT_LOCALE,
+      timezone: 'America/New_York',
       data: {},
     };
   }

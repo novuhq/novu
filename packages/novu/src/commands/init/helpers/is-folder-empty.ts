@@ -1,7 +1,6 @@
-/* eslint-disable */
-import { green, blue } from 'picocolors';
 import fs from 'fs';
 import path from 'path';
+import { blue, green } from 'picocolors';
 
 export function isFolderEmpty(root: string, name: string): boolean {
   const validFiles = [

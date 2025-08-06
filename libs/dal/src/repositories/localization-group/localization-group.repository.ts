@@ -1,11 +1,12 @@
+import { ClientSession } from 'mongoose';
+import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
 import {
-  LocalizationGroupEntity,
   LocalizationGroupDBModel,
+  LocalizationGroupEntity,
   LocalizationResourceEnum,
 } from './localization-group.entity';
 import { LocalizationGroup } from './localization-group.schema';
-import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 
 export class LocalizationGroupRepository extends BaseRepository<
   LocalizationGroupDBModel,
@@ -44,19 +45,23 @@ export class LocalizationGroupRepository extends BaseRepository<
     resourceName: string,
     _resourceInternalId: string,
     environmentId: string,
-    organizationId: string
+    organizationId: string,
+    session?: ClientSession | null
   ) {
     let group = await this.findByResource(resourceType, _resourceInternalId, environmentId, organizationId);
 
     if (!group) {
-      group = await this.create({
-        resourceType,
-        resourceId,
-        resourceName,
-        _resourceInternalId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      });
+      group = await this.create(
+        {
+          resourceType,
+          resourceId,
+          resourceName,
+          _resourceInternalId,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        { session }
+      );
     } else if (group.resourceName !== resourceName) {
       // Update resource name if it has changed
       await this.update(
@@ -65,7 +70,8 @@ export class LocalizationGroupRepository extends BaseRepository<
           _environmentId: environmentId,
           _organizationId: organizationId,
         },
-        { resourceName }
+        { resourceName },
+        { session }
       );
 
       group = await this.findByResource(resourceType, _resourceInternalId, environmentId, organizationId);

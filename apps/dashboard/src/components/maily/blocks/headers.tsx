@@ -1,10 +1,10 @@
+import { BlockItem } from '@maily-to/core/blocks';
 import { EmailHeader } from '@/components/icons/email-header';
 import { EmailHeaderCenteredLogoWithBorder } from '@/components/icons/email-header-centered-logo-with-border';
 import { EmailHeaderLogoWithCoverImage } from '@/components/icons/email-header-logo-with-cover-image';
 import { EmailHeaderLogoWithText } from '@/components/icons/email-header-logo-with-text';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { BlockItem } from '@maily-to/core/blocks';
 
 export const createHeaderCenteredLogoWithBorder: (props: { track: ReturnType<typeof useTelemetry> }) => BlockItem = (
   props

@@ -1,8 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-
-import { GetWorkflowByIdsCommand } from './get-workflow-by-ids.command';
 import { InstrumentUsecase } from '../../../instrumentation';
+import { GetWorkflowByIdsCommand } from './get-workflow-by-ids.command';
 
 @Injectable()
 export class GetWorkflowByIdsUseCase {
@@ -16,12 +15,14 @@ export class GetWorkflowByIdsUseCase {
     if (isInternalId) {
       workflowEntity = await this.notificationTemplateRepository.findById(
         command.workflowIdOrInternalId,
-        command.environmentId
+        command.environmentId,
+        command.session
       );
     } else {
       workflowEntity = await this.notificationTemplateRepository.findByTriggerIdentifier(
         command.environmentId,
-        command.workflowIdOrInternalId
+        command.workflowIdOrInternalId,
+        command.session
       );
     }
 

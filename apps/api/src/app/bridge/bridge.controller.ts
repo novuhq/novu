@@ -13,37 +13,34 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-
-import { HttpHeaderKeysEnum } from '@novu/framework/internal';
-import {
-  ControlValuesLevelEnum,
-  UserSessionData,
-  ResourceOriginEnum,
-  ResourceTypeEnum,
-  PermissionsEnum,
-} from '@novu/shared';
+import { ApiExcludeController } from '@nestjs/swagger';
 import {
   AnalyticsService,
   ExternalApiAccessible,
-  UserSession,
   RequirePermissions,
   SkipPermissionsCheck,
+  UserSession,
 } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
-
-import { ApiExcludeController } from '@nestjs/swagger';
-
-import { StoreControlValuesCommand, StoreControlValuesUseCase } from './usecases/store-control-values';
-import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
-import { SyncCommand } from './usecases/sync';
-import { Sync } from './usecases/sync/sync.usecase';
-import { ValidateBridgeUrlRequestDto } from './dtos/validate-bridge-url-request.dto';
-import { ValidateBridgeUrlResponseDto } from './dtos/validate-bridge-url-response.dto';
-import { GetBridgeStatus } from './usecases/get-bridge-status/get-bridge-status.usecase';
-import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-status.command';
+import { HttpHeaderKeysEnum } from '@novu/framework/internal';
+import {
+  ControlValuesLevelEnum,
+  PermissionsEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  UserSessionData,
+} from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { CreateBridgeRequestDto } from './dtos/create-bridge-request.dto';
 import { CreateBridgeResponseDto } from './dtos/create-bridge-response.dto';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ValidateBridgeUrlRequestDto } from './dtos/validate-bridge-url-request.dto';
+import { ValidateBridgeUrlResponseDto } from './dtos/validate-bridge-url-response.dto';
+import { GetBridgeStatusCommand } from './usecases/get-bridge-status/get-bridge-status.command';
+import { GetBridgeStatus } from './usecases/get-bridge-status/get-bridge-status.usecase';
+import { PreviewStep, PreviewStepCommand } from './usecases/preview-step';
+import { StoreControlValuesCommand, StoreControlValuesUseCase } from './usecases/store-control-values';
+import { SyncCommand } from './usecases/sync';
+import { Sync } from './usecases/sync/sync.usecase';
 
 @Controller('/bridge')
 @UseInterceptors(ClassSerializerInterceptor)

@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest';
 import nock from 'nock';
+import { expect, test } from 'vitest';
 import { MailgunEmailProvider } from './mailgun.provider';
 
 const mockConfig = {

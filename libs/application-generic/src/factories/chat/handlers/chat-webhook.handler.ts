@@ -1,6 +1,6 @@
+import { ChatWebhookProvider } from '@novu/providers';
 import { ChatProviderIdEnum, ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { ChatWebhookProvider } from '@novu/providers';
 
 import { BaseChatHandler } from './base.handler';
 
@@ -16,4 +16,4 @@ export class ChatWebhookHandler extends BaseChatHandler {
 
     this.provider = new ChatWebhookProvider(config);
   }
-} 
+}

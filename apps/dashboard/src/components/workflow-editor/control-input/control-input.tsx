@@ -1,16 +1,15 @@
-import { useMemo, useRef } from 'react';
 import { EditorView } from '@uiw/react-codemirror';
 import { cva } from 'class-variance-authority';
-
-import { cn } from '@/utils/ui';
+import { useMemo, useRef } from 'react';
+import { EditorOverlays } from '@/components/editor-overlays';
 import { CompletionRange, VariableEditor } from '@/components/primitives/variable-editor';
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
-import { EditorOverlays } from '@/components/editor-overlays';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { cn } from '@/utils/ui';
 
 const variants = cva('relative w-full', {
   variants: {
@@ -40,6 +39,7 @@ type ControlInputProps = {
   multiline?: boolean;
   indentWithTab?: boolean;
   enableTranslations?: boolean;
+  disabled?: boolean;
 };
 
 export function ControlInput({
@@ -56,6 +56,7 @@ export function ControlInput({
   indentWithTab,
   isAllowedVariable,
   enableTranslations = false,
+  disabled = false,
 }: ControlInputProps) {
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
@@ -117,12 +118,14 @@ export function ControlInput({
       size={size}
       completionSources={translationCompletionSource}
       isPayloadSchemaEnabled={isPayloadSchemaEnabled}
+      isTranslationEnabled={shouldEnableTranslations}
       getSchemaPropertyByKey={getSchemaPropertyByKey}
       extensions={extensions}
       digestStepName={digestStepBeforeCurrent?.stepId}
       skipContainerClick={isTranslationPopoverOpen}
       onManageSchemaClick={openSchemaDrawer}
       onCreateNewVariable={handleCreateNewVariable}
+      disabled={disabled}
     >
       <EditorOverlays
         isTranslationPopoverOpen={isTranslationPopoverOpen}

@@ -1,12 +1,11 @@
 import { Test } from '@nestjs/testing';
-import { SubscribersService, UserSession } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
+import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-
-import { SearchByExternalSubscriberIds, SearchByExternalSubscriberIdsCommand } from './index';
+import { SharedModule } from '../../../shared/shared.module';
 
 import { SubscribersV1Module } from '../../subscribersV1.module';
-import { SharedModule } from '../../../shared/shared.module';
+import { SearchByExternalSubscriberIds, SearchByExternalSubscriberIdsCommand } from './index';
 
 describe('SearchByExternalSubscriberIdsUseCase', () => {
   let session: UserSession;

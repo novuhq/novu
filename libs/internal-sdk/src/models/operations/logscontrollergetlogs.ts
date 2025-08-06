@@ -13,8 +13,9 @@ export type LogsControllerGetLogsRequest = {
   limit?: number | undefined;
   statusCodes?: Array<number> | undefined;
   url?: string | undefined;
+  urlPattern?: string | undefined;
   transactionId?: string | undefined;
-  created?: number | undefined;
+  createdGte?: number | undefined;
   /**
    * A header for idempotency purposes
    */
@@ -33,11 +34,13 @@ export const LogsControllerGetLogsRequest$inboundSchema: z.ZodType<
   limit: z.number().optional(),
   statusCodes: z.array(z.number()).optional(),
   url: z.string().optional(),
+  url_pattern: z.string().optional(),
   transactionId: z.string().optional(),
-  created: z.number().optional(),
+  createdGte: z.number().optional(),
   "idempotency-key": z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
+    "url_pattern": "urlPattern",
     "idempotency-key": "idempotencyKey",
   });
 });
@@ -48,8 +51,9 @@ export type LogsControllerGetLogsRequest$Outbound = {
   limit?: number | undefined;
   statusCodes?: Array<number> | undefined;
   url?: string | undefined;
+  url_pattern?: string | undefined;
   transactionId?: string | undefined;
-  created?: number | undefined;
+  createdGte?: number | undefined;
   "idempotency-key"?: string | undefined;
 };
 
@@ -63,11 +67,13 @@ export const LogsControllerGetLogsRequest$outboundSchema: z.ZodType<
   limit: z.number().optional(),
   statusCodes: z.array(z.number()).optional(),
   url: z.string().optional(),
+  urlPattern: z.string().optional(),
   transactionId: z.string().optional(),
-  created: z.number().optional(),
+  createdGte: z.number().optional(),
   idempotencyKey: z.string().optional(),
 }).transform((v) => {
   return remap$(v, {
+    urlPattern: "url_pattern",
     idempotencyKey: "idempotency-key",
   });
 });

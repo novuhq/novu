@@ -1,4 +1,3 @@
-import type { JSXElement } from 'solid-js';
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
 import type { NotificationFilter, NovuOptions, Preference } from '../types';

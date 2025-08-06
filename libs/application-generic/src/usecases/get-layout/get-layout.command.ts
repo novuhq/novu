@@ -1,5 +1,5 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { LayoutId, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 

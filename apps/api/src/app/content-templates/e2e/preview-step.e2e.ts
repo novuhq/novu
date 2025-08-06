@@ -1,14 +1,14 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Preview sms - /v1/content-templates/preview/sms (POST) #novu-v0', function () {
+describe('Preview sms - /v1/content-templates/preview/sms (POST) #novu-v0', () => {
   let session: UserSession;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
   });
 
-  it('should generate preview sms content', async function () {
+  it('should generate preview sms content', async () => {
     const {
       body: {
         data: { content },
@@ -23,14 +23,14 @@ describe('Preview sms - /v1/content-templates/preview/sms (POST) #novu-v0', func
   });
 });
 
-describe('Preview chat - /v1/content-templates/preview/chat (POST)', function () {
+describe('Preview chat - /v1/content-templates/preview/chat (POST)', () => {
   let session: UserSession;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
   });
 
-  it('should generate preview chat content', async function () {
+  it('should generate preview chat content', async () => {
     const {
       body: {
         data: { content },
@@ -45,14 +45,14 @@ describe('Preview chat - /v1/content-templates/preview/chat (POST)', function ()
   });
 });
 
-describe('Preview push - /v1/content-templates/preview/push (POST)', function () {
+describe('Preview push - /v1/content-templates/preview/push (POST)', () => {
   let session: UserSession;
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
   });
 
-  it('should generate preview push content', async function () {
+  it('should generate preview push content', async () => {
     const {
       body: {
         data: { content },

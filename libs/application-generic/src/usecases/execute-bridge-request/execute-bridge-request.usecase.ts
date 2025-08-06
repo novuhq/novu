@@ -1,4 +1,14 @@
+import { createHmac } from 'node:crypto';
 import { BadRequestException, HttpException, HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { EnvironmentRepository } from '@novu/dal';
+import {
+  GetActionEnum,
+  HttpHeaderKeysEnum,
+  HttpQueryKeysEnum,
+  isFrameworkError,
+  PostActionEnum,
+} from '@novu/framework/internal';
+import { ResourceOriginEnum } from '@novu/shared';
 import got, {
   CacheError,
   HTTPError,
@@ -11,22 +21,12 @@ import got, {
   UnsupportedProtocolError,
   UploadError,
 } from 'got';
-import { createHmac } from 'node:crypto';
-import {
-  GetActionEnum,
-  HttpHeaderKeysEnum,
-  HttpQueryKeysEnum,
-  isFrameworkError,
-  PostActionEnum,
-} from '@novu/framework/internal';
-import { EnvironmentRepository } from '@novu/dal';
-import { ResourceOriginEnum } from '@novu/shared';
-import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
-import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
-import { BRIDGE_EXECUTION_ERROR } from '../../utils';
 import { HttpRequestHeaderKeysEnum } from '../../http';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
+import { BRIDGE_EXECUTION_ERROR } from '../../utils';
+import { GetDecryptedSecretKey, GetDecryptedSecretKeyCommand } from '../get-decrypted-secret-key';
+import { BridgeError, ExecuteBridgeRequestCommand, ExecuteBridgeRequestDto } from './execute-bridge-request.command';
 
 const inTestEnv = process.env.NODE_ENV === 'test';
 

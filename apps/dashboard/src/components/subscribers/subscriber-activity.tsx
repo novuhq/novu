@@ -1,19 +1,19 @@
+import { useOrganization } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { AnimatePresence } from 'motion/react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ActivityFilters } from '@/components/activity/activity-filters';
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { ActivityDetailsDrawer } from '@/components/subscribers/subscriber-activity-drawer';
 import { SubscriberActivityList } from '@/components/subscribers/subscriber-activity-list';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ActivityFiltersData } from '@/types/activity';
 import { getMaxAvailableActivityFeedDateRange } from '@/utils/activityFilters';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useOrganization } from '@clerk/clerk-react';
-import { AnimatePresence } from 'motion/react';
-import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 
 const getInitialFilters = (subscriberId: string, dateRange: string): ActivityFiltersData => ({
   channels: [],
@@ -118,7 +118,7 @@ export const SubscriberActivity = ({ subscriberId }: { subscriberId: string }) =
           To view more detailed activity, View{' '}
           <Link
             className="underline"
-            to={`${buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_RUNS : ROUTES.ACTIVITY_FEED, {
+            to={`${buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
               environmentSlug: currentEnvironment?.slug ?? '',
             })}?${searchParams.toString()}`}
           >

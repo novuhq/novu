@@ -1,9 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-
-import { FilterLayoutsCommand } from './filter-layouts.command';
-
 import { LayoutDto } from '../../dtos/layout.dto';
+import { FilterLayoutsCommand } from './filter-layouts.command';
 
 const DEFAULT_LAYOUT_LIMIT = 10;
 const MAX_LAYOUT_LIMIT = 1000;

@@ -1,16 +1,15 @@
-/* eslint-disable no-restricted-syntax */
+import { useAuth } from '@clerk/clerk-react';
+import { CheckAuthorizationWithCustomPermissions } from '@clerk/types';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  GetSubscriptionDto,
+  getFeatureForTierAsBoolean,
+} from '@novu/shared';
 import { useMemo } from 'react';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import {
-  FeatureFlagsKeysEnum,
-  ApiServiceLevelEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsBoolean,
-  GetSubscriptionDto,
-} from '@novu/shared';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { CheckAuthorizationWithCustomPermissions } from '@clerk/types';
-import { useAuth } from '@clerk/clerk-react';
 
 function isRbacEnabled(isRbacFlagEnabled: boolean, subscription: GetSubscriptionDto | undefined): boolean {
   return (

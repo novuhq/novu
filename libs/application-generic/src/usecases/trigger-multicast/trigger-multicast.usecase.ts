@@ -5,16 +5,16 @@ import {
   ITopic,
   SubscriberSourceEnum,
   TriggerRecipient,
-  TriggerRecipientsTypeEnum,
   TriggerRecipientSubscriber,
+  TriggerRecipientsTypeEnum,
 } from '@novu/shared';
 
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../instrumentation';
+import { CacheService, FeatureFlagsService } from '../../services';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBase } from '../trigger-base';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
-import { CacheService, FeatureFlagsService } from '../../services';
 
 const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
 const SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE = Number(process.env.SUBSCRIBER_TOPIC_DISTINCT_BATCH_SIZE) || 100;

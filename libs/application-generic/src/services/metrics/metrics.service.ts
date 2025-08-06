@@ -12,7 +12,7 @@ export class MetricsService {
       `MetricsService running with: [${this.services
         .map((metricService) => metricService.constructor.name)
         .join(', ')}]`,
-      LOG_CONTEXT,
+      LOG_CONTEXT
     );
   }
 
@@ -22,7 +22,7 @@ export class MetricsService {
       return service.recordMetric(name, value).catch((e) => {
         Logger.error(
           `Failed to record metric ${name} with value ${value} for service ${service.constructor.name}.\nError: ${e}`,
-          LOG_CONTEXT,
+          LOG_CONTEXT
         );
       });
     });

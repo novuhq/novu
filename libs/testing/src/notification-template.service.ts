@@ -1,24 +1,24 @@
 import { faker } from '@faker-js/faker';
 import {
-  buildWorkflowPreferencesFromPreferenceChannels,
-  ChannelCTATypeEnum,
-  DEFAULT_WORKFLOW_PREFERENCES,
-  EmailBlockTypeEnum,
-  PreferencesTypeEnum,
-  StepTypeEnum,
-  TemplateVariableTypeEnum,
-  IWorkflowStepMetadata,
-} from '@novu/shared';
-import {
+  FeedRepository,
+  LayoutRepository,
   MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
-  FeedRepository,
-  LayoutRepository,
   PreferencesRepository,
 } from '@novu/dal';
+import {
+  buildWorkflowPreferencesFromPreferenceChannels,
+  ChannelCTATypeEnum,
+  DEFAULT_WORKFLOW_PREFERENCES,
+  EmailBlockTypeEnum,
+  IWorkflowStepMetadata,
+  PreferencesTypeEnum,
+  StepTypeEnum,
+  TemplateVariableTypeEnum,
+} from '@novu/shared';
 import { v4 as uuid } from 'uuid';
 
 import { CreateTemplatePayload } from './create-notification-template.interface';
@@ -162,7 +162,7 @@ export class NotificationTemplateService {
     const data = {
       _notificationGroupId: override.noGroupId ? undefined : groups[0]._id,
       _environmentId: this.environmentId,
-      name: faker.name.jobTitle(),
+      name: override.name ?? faker.name.jobTitle(),
       _organizationId: this.organizationId,
       _creatorId: this.userId,
       active: true,

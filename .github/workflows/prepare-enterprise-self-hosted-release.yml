@@ -1,0 +1,151 @@
+name: Prepare Enterprise Self-hosted Release
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.0)'
+        required: true
+        type: string
+      services:
+        description: 'Services to build'
+        required: true
+        type: choice
+        options:
+          - 'all'
+          - 'api'
+          - 'worker'
+          - 'dashboard'
+          - 'ws'
+        default: 'all'
+
+permissions:
+  contents: write
+  packages: write
+  deployments: write
+  id-token: write
+
+jobs:
+  setup_matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set up build matrix
+        id: set-matrix
+        run: |
+          if [ "${{ github.event.inputs.services }}" = "all" ]; then
+            echo 'matrix=["novu/api-ee", "novu/worker-ee", "novu/dashboard-ee", "novu/ws-ee"]' >> $GITHUB_OUTPUT
+          else
+            echo 'matrix=["novu/${{ github.event.inputs.services }}-ee"]' >> $GITHUB_OUTPUT
+          fi
+
+  build_docker:
+    needs: setup_matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        name: ${{ fromJson(needs.setup_matrix.outputs.matrix) }}
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+
+      - name: Variables
+        shell: bash
+        run: |
+          service=${{ matrix.name }}
+          LATEST_VERSION="${{ github.event.inputs.version }}"
+          SERVICE_NAME=$(basename "${service//-/-}")
+          SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
+          echo "LATEST_VERSION=$LATEST_VERSION" >> $GITHUB_ENV
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+          echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
+          echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
+          echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.19.0
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Docker
+        uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.13.1'
+
+      - uses: ./.github/actions/free-space
+        name: Extend space in Action Container
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build ${{ env.SERVICE_NAME }} Enterprise Docker Image
+        shell: bash
+        env:
+          DOCKER_BUILD_ARGUMENTS: >
+            --platform=linux/amd64
+            --output=type=image,name=ghcr.io/$REGISTRY_OWNER/${{ matrix.name }},push-by-digest=true,name-canonical=true
+        run: |
+          cp scripts/dotenvcreate.mjs apps/$SERVICE_COMMON_NAME/src/dotenvcreate.mjs
+          cd apps/$SERVICE_COMMON_NAME
+
+          if [[ "${{ env.SERVICE_COMMON_NAME }}" =~ ^(api|worker|ws)$ ]]; then
+            cd src/ && echo -e "\nIS_SELF_HOSTED=true\nNOVU_ENTERPRISE=true" >> .example.env && cd ..
+          fi
+
+          # Switch from PM2 cluster mode to single node process to support K8s deployments
+          if [[ "${{ env.SERVICE_NAME }}" =~ ^(api|worker|ws)$ ]]; then
+            echo "Switching ${{ env.SERVICE_NAME }} from PM2 cluster mode to single node process to support K8s deployments"
+            sed -i.bak 's/pm2-runtime start dist\/main\.js -i max/node dist\/main.js/g' Dockerfile && rm -f Dockerfile.bak
+          fi
+
+          pnpm run docker:build
+          docker images
+
+      - name: Tag and Push docker image
+        shell: bash
+        run: |
+          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
+          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
+          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+
+      - name: Output image details
+        run: |
+          echo "Successfully built and pushed:"
+          echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}"
+          echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest"
+          echo "Platform: linux/amd64 (x86)"
+          echo "Type: Enterprise Self-hosted"

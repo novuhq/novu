@@ -1,12 +1,12 @@
-import { cyan, green, red, bold } from 'picocolors';
-import path from 'path';
-import prompts from 'prompts';
-import type { InitialReturnValue } from 'prompts';
 import fs from 'fs';
-import { createApp } from './create-app';
-import { validateNpmName } from './helpers/validate-pkg';
-import { isFolderEmpty } from './helpers/is-folder-empty';
+import path from 'path';
+import { bold, cyan, green, red } from 'picocolors';
+import type { InitialReturnValue } from 'prompts';
+import prompts from 'prompts';
 import { AnalyticService } from '../../services/analytics.service';
+import { createApp } from './create-app';
+import { isFolderEmpty } from './helpers/is-folder-empty';
+import { validateNpmName } from './helpers/validate-pkg';
 
 const analytics = new AnalyticService();
 
@@ -60,7 +60,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
           return true;
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return `Invalid project name: ${(validation as any).problems[0]}`;
       },
     });
@@ -88,7 +87,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   if (!validation.valid) {
     console.error(`Could not create a project called ${red(`"${projectName}"`)} because of npm naming restrictions:`);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (validation as any).problems.forEach((problem: string) => console.error(`    ${red(bold('*'))} ${problem}`));
     process.exit(1);
   }
@@ -97,7 +95,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
   let userId: string;
   // if no secret key is supplied set to empty string
   if (!program.secretKey) {
-    // eslint-disable-next-line no-param-reassign
     program.secretKey = '';
   } else {
     try {
@@ -130,7 +127,6 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
       });
     } catch (error) {
       console.error(
-        // eslint-disable-next-line max-len
         `Failed to verify your secret key against ${program.apiUrl}. For EU instances use --api-url https://eu.api.novu.co or provide the correct secret key`
       );
 

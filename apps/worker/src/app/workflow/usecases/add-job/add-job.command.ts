@@ -1,7 +1,7 @@
-import { IsDefined } from 'class-validator';
-import { JobEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { JobEntity } from '@novu/dal';
 import { StatelessControls } from '@novu/shared';
+import { IsDefined } from 'class-validator';
 
 export class AddJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()

@@ -24,7 +24,7 @@ export class LocaleValidator {
     // Normalize hyphens to underscores (en-US -> en_US) to maintain consistency with database format
     const normalizedLocale = value.replace(/-/g, '_');
 
-    if (!this.LOCALE_PATTERN.test(normalizedLocale)) {
+    if (!LocaleValidator.LOCALE_PATTERN.test(normalizedLocale)) {
       return {
         isValid: false,
         errorMessage: `${context} must be a valid locale code with language and country (e.g., en_US, fr_FR, zh_Hans_CN). Received: '${value}'.`,
@@ -60,7 +60,7 @@ export class LocaleValidator {
     }
 
     // Validate the locale part
-    const localeResult = this.validate(parts[0], 'filename locale');
+    const localeResult = LocaleValidator.validate(parts[0], 'filename locale');
     if (!localeResult.isValid) {
       return {
         isValid: false,
@@ -82,7 +82,7 @@ export class LocaleValidator {
    * @throws Error if locale is invalid
    */
   static validateOrThrow(value: unknown, context: string = 'locale'): string {
-    const result = this.validate(value, context);
+    const result = LocaleValidator.validate(value, context);
     if (!result.isValid) {
       throw new Error(result.errorMessage);
     }

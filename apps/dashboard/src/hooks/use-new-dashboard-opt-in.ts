@@ -1,8 +1,8 @@
+import { useUser } from '@clerk/clerk-react';
+import { NewDashboardOptInStatusEnum } from '@novu/shared';
 import { LEGACY_DASHBOARD_URL } from '@/config';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useUser } from '@clerk/clerk-react';
-import { NewDashboardOptInStatusEnum } from '@novu/shared';
 
 export function useNewDashboardOptIn() {
   const { user, isLoaded } = useUser();

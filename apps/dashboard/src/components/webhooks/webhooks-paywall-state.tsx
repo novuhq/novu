@@ -1,11 +1,11 @@
-import { Button } from '@/components/primitives/button';
-import { ROUTES } from '@/utils/routes';
 import { RiSparkling2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { TelemetryEvent } from '../../utils/telemetry';
+import { Button } from '@/components/primitives/button';
+import { ROUTES } from '@/utils/routes';
+import { openInNewTab } from '@/utils/url';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
-import { openInNewTab } from '@/utils/url';
+import { TelemetryEvent } from '../../utils/telemetry';
 
 export function WebhooksPaywallState() {
   const track = useTelemetry();

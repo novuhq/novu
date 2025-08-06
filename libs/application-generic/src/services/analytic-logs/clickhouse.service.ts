@@ -1,57 +1,83 @@
-import { createClient, ClickHouseClient, ClickHouseClientConfigOptions, PingResult } from '@clickhouse/client';
+import { ClickHouseClient, ClickHouseSettings, createClient, PingResult } from '@clickhouse/client';
 import { Injectable, OnModuleDestroy } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
+
+export { ClickHouseClient };
+
+export type InsertOptions = {
+  asyncInsert?: boolean;
+  waitForAsyncInsert?: boolean;
+};
 
 @Injectable()
 export class ClickHouseService implements OnModuleDestroy {
-  private client: ClickHouseClient | undefined;
-
-  constructor(private readonly logger: PinoLogger) {
-    this.logger.setContext(this.constructor.name);
-  }
+  private _client: ClickHouseClient | undefined;
 
   async init() {
-    const requiredConnectionConfig = {
+    if (!process.env.CLICK_HOUSE_URL || !process.env.CLICK_HOUSE_DATABASE) {
+      /*
+       * this.logger.warn(
+       *   'ClickHouse client is not initialized due to missing environment configuration. ' +
+       *     'Please provide CLICK_HOUSE_URL and CLICK_HOUSE_DATABASE.'
+       * );
+       */
+      this._client = undefined;
+
+      return;
+    }
+
+    if (process.env.NODE_ENV === 'local' || process.env.NODE_ENV === 'test') {
+      const defaultClient = createClient({
+        host: 'http://localhost:8123',
+        username: 'default',
+        password: '',
+        database: 'default',
+      });
+
+      try {
+        await defaultClient.query({
+          query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
+        });
+        console.log(`Database "${process.env.CLICK_HOUSE_DATABASE}" ensured.`);
+      } catch (error) {
+        console.error(`Failed to create database ${process.env.CLICK_HOUSE_DATABASE}:`, error);
+      }
+    }
+
+    this._client = createClient({
       url: process.env.CLICK_HOUSE_URL,
       username: process.env.CLICK_HOUSE_USER,
       password: process.env.CLICK_HOUSE_PASSWORD,
       database: process.env.CLICK_HOUSE_DATABASE,
-    };
+      max_open_connections: process.env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS
+        ? parseInt(process.env.CLICK_HOUSE_MAX_OPEN_CONNECTIONS, 10)
+        : 10,
+    });
+  }
 
-    if (Object.values(requiredConnectionConfig).some((value) => !value)) {
-      this.logger.warn(
-        'ClickHouse client is not initialized due to missing environment configuration. Please provide CLICK_HOUSE_URL, CLICK_HOUSE_USER, CLICK_HOUSE_PASSWORD, and CLICK_HOUSE_DATABASE.'
-      );
-      this.client = undefined;
-
-      return;
-    }
-
-    this.client = createClient(requiredConnectionConfig as ClickHouseClientConfigOptions);
-
-    this.logger.info('ClickHouse client created');
+  get client(): ClickHouseClient | undefined {
+    return this._client;
   }
 
   async onModuleDestroy() {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
-    await this.client.close();
-    this.logger.info('ClickHouse client closed');
+    await this._client.close();
+    // this.logger.info('ClickHouse client closed');
   }
 
   async ping(): Promise<PingResult> {
-    if (!this.client) {
-      return { success: false, error: new Error('ClickHouse client not initialized') };
+    if (!this._client) {
+      return { success: false, error: new Error('Ping failed: ClickHouse client not initialized') };
     }
 
     try {
-      const isAlive = await this.client.ping();
-      this.logger.info('ClickHouse server ping successful');
+      const isAlive = await this._client.ping();
+      // this.logger.info('ClickHouse server ping successful');
 
       return isAlive;
     } catch (error) {
-      this.logger.error('ClickHouse server ping failed', error);
+      // this.logger.error('ClickHouse server ping failed', error);
       throw error;
     }
   }
@@ -63,11 +89,11 @@ export class ClickHouseService implements OnModuleDestroy {
     query: string;
     params: Record<string, unknown>;
   }): Promise<{ data: T[]; rows: number }> {
-    if (!this.client) {
-      throw new Error('ClickHouse client not initialized');
+    if (!this._client) {
+      throw new Error('Query failed: ClickHouse client not initialized');
     }
 
-    const resultSet = await this.client.query({
+    const resultSet = await this._client.query({
       query,
       query_params: params,
       format: 'JSON',
@@ -81,24 +107,37 @@ export class ClickHouseService implements OnModuleDestroy {
     return data;
   }
 
-  public async insert<T extends Record<string, unknown>>(table: string, values: T[]) {
-    if (!this.client) {
+  public async insert<T extends Record<string, unknown>>(
+    table: string,
+    values: T[],
+    clickhouseSettings?: InsertOptions
+  ) {
+    if (!this._client) {
       return;
     }
 
-    await this.client.insert({
+    const settings: ClickHouseSettings = {};
+    if (clickhouseSettings?.asyncInsert !== undefined) {
+      settings.async_insert = clickhouseSettings.asyncInsert ? 1 : 0;
+    }
+    if (clickhouseSettings?.waitForAsyncInsert !== undefined) {
+      settings.wait_for_async_insert = clickhouseSettings.waitForAsyncInsert ? 1 : 0;
+    }
+
+    await this._client.insert({
       table,
       values,
       format: 'JSONEachRow',
+      clickhouse_settings: settings,
     });
   }
 
   public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {
-    if (!this.client) {
+    if (!this._client) {
       return;
     }
 
-    await this.client.exec({
+    await this._client.exec({
       query,
       query_params: params,
     });

@@ -1,11 +1,10 @@
-import sinon from 'sinon';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
-
 import { Types } from 'mongoose';
-import { ExternalServicesRoute } from './external-services-route.usecase';
-import { ExternalServicesRouteCommand } from './external-services-route.command';
+import sinon from 'sinon';
 import { WSGateway } from '../../ws.gateway';
+import { ExternalServicesRouteCommand } from './external-services-route.command';
+import { ExternalServicesRoute } from './external-services-route.usecase';
 
 const environmentId = new Types.ObjectId().toString();
 const messageId = 'message-id-1';

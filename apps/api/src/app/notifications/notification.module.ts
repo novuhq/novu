@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { CommunityOrganizationRepository } from '@novu/dal';
-import { USE_CASES } from './usecases';
-import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
+import { SharedModule } from '../shared/shared.module';
 import { NotificationsController } from './notification.controller';
+import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, AuthModule],

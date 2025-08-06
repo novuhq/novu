@@ -11,7 +11,11 @@ export type StepsOverrides = {
   /**
    * Passing the provider id and the provider specific configurations
    */
-  providers: { [k: string]: { [k: string]: any } };
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  /**
+   * Override the or remove the layout for this specific step
+   */
+  layoutId?: string | null | undefined;
 };
 
 /** @internal */
@@ -20,12 +24,14 @@ export const StepsOverrides$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  providers: z.record(z.record(z.any())),
+  providers: z.record(z.record(z.any())).optional(),
+  layoutId: z.nullable(z.string()).optional(),
 });
 
 /** @internal */
 export type StepsOverrides$Outbound = {
-  providers: { [k: string]: { [k: string]: any } };
+  providers?: { [k: string]: { [k: string]: any } } | undefined;
+  layoutId?: string | null | undefined;
 };
 
 /** @internal */
@@ -34,7 +40,8 @@ export const StepsOverrides$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   StepsOverrides
 > = z.object({
-  providers: z.record(z.record(z.any())),
+  providers: z.record(z.record(z.any())).optional(),
+  layoutId: z.nullable(z.string()).optional(),
 });
 
 /**

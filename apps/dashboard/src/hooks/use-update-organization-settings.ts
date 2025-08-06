@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import {
+  GetOrganizationSettingsDto,
+  UpdateOrganizationSettingsDto,
+  updateOrganizationSettings,
+} from '../api/organization';
 import { useEnvironment } from '../context/environment/hooks';
 import { QueryKeys } from '../utils/query-keys';
-import {
-  updateOrganizationSettings,
-  UpdateOrganizationSettingsDto,
-  GetOrganizationSettingsDto,
-} from '../api/organization';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
 
 export function useUpdateOrganizationSettings() {
   const { currentEnvironment } = useEnvironment();
@@ -33,6 +33,15 @@ export function useUpdateOrganizationSettings() {
       }
     },
     onSuccess: async (response) => {
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchTranslationGroups],
+        exact: false,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
+      });
+
       const queryKey = [QueryKeys.organizationSettings, currentEnvironment?._id];
 
       // Update with the actual server response

@@ -7,9 +7,7 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export type PayloadValidationErrorDtoValue5 = string | number | boolean | {
-  [k: string]: any;
-};
+export type Value5 = string | number | boolean | { [k: string]: any };
 
 export type Value4 = {};
 
@@ -50,56 +48,43 @@ export type PayloadValidationErrorDto = {
 };
 
 /** @internal */
-export const PayloadValidationErrorDtoValue5$inboundSchema: z.ZodType<
-  PayloadValidationErrorDtoValue5,
-  z.ZodTypeDef,
-  unknown
-> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Value5$inboundSchema: z.ZodType<Value5, z.ZodTypeDef, unknown> = z
+  .union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /** @internal */
-export type PayloadValidationErrorDtoValue5$Outbound =
-  | string
-  | number
-  | boolean
-  | { [k: string]: any };
+export type Value5$Outbound = string | number | boolean | { [k: string]: any };
 
 /** @internal */
-export const PayloadValidationErrorDtoValue5$outboundSchema: z.ZodType<
-  PayloadValidationErrorDtoValue5$Outbound,
+export const Value5$outboundSchema: z.ZodType<
+  Value5$Outbound,
   z.ZodTypeDef,
-  PayloadValidationErrorDtoValue5
+  Value5
 > = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace PayloadValidationErrorDtoValue5$ {
-  /** @deprecated use `PayloadValidationErrorDtoValue5$inboundSchema` instead. */
-  export const inboundSchema = PayloadValidationErrorDtoValue5$inboundSchema;
-  /** @deprecated use `PayloadValidationErrorDtoValue5$outboundSchema` instead. */
-  export const outboundSchema = PayloadValidationErrorDtoValue5$outboundSchema;
-  /** @deprecated use `PayloadValidationErrorDtoValue5$Outbound` instead. */
-  export type Outbound = PayloadValidationErrorDtoValue5$Outbound;
+export namespace Value5$ {
+  /** @deprecated use `Value5$inboundSchema` instead. */
+  export const inboundSchema = Value5$inboundSchema;
+  /** @deprecated use `Value5$outboundSchema` instead. */
+  export const outboundSchema = Value5$outboundSchema;
+  /** @deprecated use `Value5$Outbound` instead. */
+  export type Outbound = Value5$Outbound;
 }
 
-export function payloadValidationErrorDtoValue5ToJSON(
-  payloadValidationErrorDtoValue5: PayloadValidationErrorDtoValue5,
-): string {
-  return JSON.stringify(
-    PayloadValidationErrorDtoValue5$outboundSchema.parse(
-      payloadValidationErrorDtoValue5,
-    ),
-  );
+export function value5ToJSON(value5: Value5): string {
+  return JSON.stringify(Value5$outboundSchema.parse(value5));
 }
 
-export function payloadValidationErrorDtoValue5FromJSON(
+export function value5FromJSON(
   jsonString: string,
-): SafeParseResult<PayloadValidationErrorDtoValue5, SDKValidationError> {
+): SafeParseResult<Value5, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => PayloadValidationErrorDtoValue5$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'PayloadValidationErrorDtoValue5' from JSON`,
+    (x) => Value5$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Value5' from JSON`,
   );
 }
 

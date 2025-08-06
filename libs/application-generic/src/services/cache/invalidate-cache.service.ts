@@ -1,8 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-
-import { CacheKeyPrefixEnum } from './key-builders';
 import { CacheService } from './cache.service';
 import { buildKey, CacheInterceptorTypeEnum } from './interceptors/shared-cache';
+import { CacheKeyPrefixEnum } from './key-builders';
 
 const LOG_CONTEXT = 'InvalidateCache';
 

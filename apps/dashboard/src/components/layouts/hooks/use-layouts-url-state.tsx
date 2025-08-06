@@ -1,6 +1,6 @@
+import { DirectionEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { createSearchParams, useSearchParams } from 'react-router-dom';
-import { DirectionEnum } from '@novu/shared';
 
 export type LayoutsSortableColumn = 'name' | 'createdAt' | 'updatedAt';
 

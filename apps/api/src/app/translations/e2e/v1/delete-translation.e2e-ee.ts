@@ -13,7 +13,7 @@ describe('Delete a Translation - /translations/group/:id/locale/:locale (Delete)
     });
   });
 
-  it('should delete the translation file', async function () {
+  it('should delete the translation file', async () => {
     const createTranslationGroup = {
       name: 'test',
       identifier: 'test',

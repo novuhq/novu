@@ -1,6 +1,6 @@
-import { buildSubscriberKey, buildUserKey } from './entities';
-import { CacheKeyTypeEnum, CacheKeyPrefixEnum, IdentifierPrefixEnum, OrgScopePrefixEnum } from './identifiers';
 import { buildUnscopedKey } from './builder.base';
+import { buildSubscriberKey, buildUserKey } from './entities';
+import { CacheKeyPrefixEnum, CacheKeyTypeEnum, IdentifierPrefixEnum, OrgScopePrefixEnum } from './identifiers';
 
 describe('Key builder for entities', () => {
   describe('buildSubscriberKey', () => {

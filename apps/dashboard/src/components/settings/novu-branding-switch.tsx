@@ -1,7 +1,7 @@
+import { ApiServiceLevelEnum, PermissionsEnum } from '@novu/shared';
 import { Switch } from '@/components/primitives/switch';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum, PermissionsEnum } from '@novu/shared';
 import { PermissionSwitch } from '../primitives/permission-switch';
 
 type NovuBrandingSwitchProps = {

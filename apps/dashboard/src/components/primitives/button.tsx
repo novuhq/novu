@@ -59,17 +59,17 @@ export const buttonVariants = tv({
         icon: '',
       },
       xs: {
-        root: 'h-8 gap-2.5 rounded-lg px-1.5 text-label-xs',
+        root: 'h-8 gap-2.5 rounded-lg px-3 text-label-xs',
         icon: 'size-4',
       },
       '2xs': {
-        root: 'h-7 gap-2.5 rounded-lg px-1.5 text-label-xs',
+        root: 'h-7 gap-2.5 rounded-lg px-2 text-label-xs',
         icon: 'size-4',
       },
     },
   },
   compoundVariants: [
-    //#region variant=primary
+    // #region variant=primary
     {
       variant: 'primary',
       mode: 'filled',
@@ -140,9 +140,9 @@ export const buttonVariants = tv({
         ],
       },
     },
-    //#endregion
+    // #endregion
 
-    //#region variant=neutral
+    // #region variant=neutral
     {
       variant: 'secondary',
       mode: 'filled',
@@ -213,9 +213,9 @@ export const buttonVariants = tv({
         ],
       },
     },
-    //#endregion
+    // #endregion
 
-    //#region variant=error
+    // #region variant=error
     {
       variant: 'error',
       mode: 'filled',
@@ -286,7 +286,7 @@ export const buttonVariants = tv({
         ],
       },
     },
-    //#endregion
+    // #endregion
   ],
   defaultVariants: {
     variant: 'primary',

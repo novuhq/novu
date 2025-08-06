@@ -1,9 +1,15 @@
+import { ApiServiceLevelEnum, DirectionEnum } from '@novu/shared';
 import { HTMLAttributes } from 'react';
-import { RiAddCircleLine } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
-
-import { cn } from '@/utils/ui';
+import {
+  LayoutsFilter,
+  LayoutsSortableColumn,
+  LayoutsUrlState,
+  useLayoutsUrlState,
+} from '@/components/layouts/hooks/use-layouts-url-state';
+import { LayoutListBlank } from '@/components/layouts/layout-list-blank';
+import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
+import { LayoutsFilters } from '@/components/layouts/layouts-filters';
+import { ListNoResults } from '@/components/list-no-results';
 import {
   Table,
   TableBody,
@@ -13,22 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/primitives/table';
-import {
-  LayoutsFilter,
-  LayoutsSortableColumn,
-  LayoutsUrlState,
-  useLayoutsUrlState,
-} from '@/components/layouts/hooks/use-layouts-url-state';
-import { LayoutListBlank } from '@/components/layouts/layout-list-blank';
-import { ListNoResults } from '@/components/list-no-results';
-import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
-import { LayoutsFilters } from '@/components/layouts/layouts-filters';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
-import { PermissionButton } from '@/components/primitives/permission-button';
-import { Skeleton } from '../primitives/skeleton';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { cn } from '@/utils/ui';
 import { DefaultPagination } from '../default-pagination';
-import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { Skeleton } from '../primitives/skeleton';
+import { CreateLayoutButton } from './create-layout-btn';
+import { LayoutsListUpgradeCta } from './layouts-list-upgrade-cta';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<LayoutsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -37,16 +34,9 @@ type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
 
 const LayoutListWrapper = (props: LayoutListFiltersProps) => {
   const { className, children, filterValues, handleFiltersChange, resetFilters, isFetching, ...rest } = props;
-  const navigate = useNavigate();
-  const { currentEnvironment } = useEnvironment();
-  const { search } = useLocation();
-
-  const handleCreateLayout = () => {
-    navigate(`${buildRoute(ROUTES.LAYOUTS_CREATE, { environmentSlug: currentEnvironment?.slug ?? '' })}${search}`);
-  };
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex h-full flex-col', className)} {...rest}>
       <div className="flex items-center justify-between">
         <LayoutsFilters
           onFiltersChange={handleFiltersChange}
@@ -55,17 +45,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
           isFetching={isFetching}
           className="py-2.5"
         />
-        <PermissionButton
-          permission={PermissionsEnum.LAYOUT_WRITE}
-          mode="gradient"
-          className="rounded-l-lg border-none px-1.5 py-2 text-white"
-          variant="primary"
-          size="xs"
-          leadingIcon={RiAddCircleLine}
-          onClick={handleCreateLayout}
-        >
-          Create layout
-        </PermissionButton>
+        <CreateLayoutButton disabled={isFetching} />
       </div>
       {children}
     </div>
@@ -177,6 +157,9 @@ export const LayoutList = (props: LayoutListProps) => {
     query: filterValues.query,
   });
 
+  const { subscription } = useFetchSubscription();
+  const tier = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+
   const currentPage = Math.floor(filterValues.offset / filterValues.limit) + 1;
   const totalPages = Math.ceil((data?.totalCount || 0) / filterValues.limit);
 
@@ -207,6 +190,10 @@ export const LayoutList = (props: LayoutListProps) => {
         </LayoutListTable>
       </LayoutListWrapper>
     );
+  }
+
+  if (tier === ApiServiceLevelEnum.FREE && data?.layouts.length === 1) {
+    return <LayoutsListUpgradeCta />;
   }
 
   if (!areFiltersApplied && !data?.layouts.length) {

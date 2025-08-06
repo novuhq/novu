@@ -9,7 +9,8 @@
     "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "test": "echo 'skip test in the ci'",
-    "lint": "eslint src --no-error-on-unmatched-pattern",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' NODE_ENV=test mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
@@ -21,12 +22,15 @@
     "@novu/shared": "workspace:*",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
+    "deep-object-diff": "^1.1.9",
     "i18next": "^23.7.11",
+    "lodash": "^4.17.15",
     "multer": "^2.0.0",
     "shortid": "^2.2.16"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
+    "@types/lodash": "^4.17.7",
     "@types/mocha": "^8.0.1",
     "@types/multer": "^1.4.12",
     "@types/node": "^20.15.0",

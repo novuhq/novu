@@ -1,4 +1,23 @@
 import {
+  ContentIssue,
+  EnvironmentWithUserCommand,
+  IStepControl,
+  JSONSchema,
+  NotificationStep,
+  PreferencesRequired,
+} from '@novu/application-generic';
+import { ClientSession } from '@novu/dal';
+import {
+  CustomDataType,
+  MAX_DESCRIPTION_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_TAG_LENGTH,
+  ResourceTypeEnum,
+  RuntimeIssue,
+  WorkflowStatusEnum,
+} from '@novu/shared';
+import { Exclude, Type } from 'class-transformer';
+import {
   ArrayUnique,
   IsArray,
   IsBoolean,
@@ -12,26 +31,6 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-
-import {
-  CustomDataType,
-  WorkflowStatusEnum,
-  ResourceTypeEnum,
-  MAX_DESCRIPTION_LENGTH,
-  MAX_NAME_LENGTH,
-  MAX_TAG_LENGTH,
-} from '@novu/shared';
-
-import { Type } from 'class-transformer';
-import { RuntimeIssue } from '@novu/dal';
-import {
-  EnvironmentWithUserCommand,
-  PreferencesRequired,
-  ContentIssue,
-  IStepControl,
-  JSONSchema,
-  NotificationStep,
-} from '@novu/application-generic';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -104,7 +103,7 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   rawData?: Record<string, unknown>;
 
   @IsOptional()
-  payloadSchema?: JSONSchema;
+  payloadSchema?: JSONSchema | null;
 
   @IsOptional()
   @IsBoolean()
@@ -131,4 +130,15 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsEnum(WorkflowStatusEnum)
   @IsOptional()
   status?: WorkflowStatusEnum;
+
+  @IsOptional()
+  @IsString()
+  updatedBy?: string;
+
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
+  @IsOptional()
+  @Exclude()
+  session?: ClientSession | null;
 }

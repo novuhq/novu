@@ -1,18 +1,4 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { workflow } from '@novu/framework/express';
-import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import {
-  EnvironmentRepository,
-  NotificationStepEntity,
-  NotificationTemplateEntity,
-  NotificationTemplateRepository,
-} from '@novu/dal';
-import {
-  FeatureFlagsKeysEnum,
-  LAYOUT_PREVIEW_EMAIL_STEP,
-  LAYOUT_PREVIEW_WORKFLOW_ID,
-  StepTypeEnum,
-} from '@novu/shared';
 import {
   emailControlSchema,
   FeatureFlagsService,
@@ -20,9 +6,24 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
+import {
+  EnvironmentRepository,
+  NotificationStepEntity,
+  NotificationTemplateEntity,
+  NotificationTemplateRepository,
+} from '@novu/dal';
+import { workflow } from '@novu/framework/express';
+import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
+import {
+  FeatureFlagsKeysEnum,
+  LAYOUT_PREVIEW_EMAIL_STEP,
+  LAYOUT_PREVIEW_WORKFLOW_ID,
+  StepTypeEnum,
+} from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
-import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
+import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
+import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
 import {
   ChatOutputRendererUsecase,
   EmailOutputRendererUsecase,
@@ -33,8 +34,7 @@ import {
 } from '../output-renderers';
 import { DelayOutputRendererUsecase } from '../output-renderers/delay-output-renderer.usecase';
 import { DigestOutputRendererUsecase } from '../output-renderers/digest-output-renderer.usecase';
-import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
-import { isMatchingJsonSchema } from '../../../workflows-v2/util/jsonToSchema';
+import { ConstructFrameworkWorkflowCommand } from './construct-framework-workflow.command';
 
 const LOG_CONTEXT = 'ConstructFrameworkWorkflow';
 
@@ -73,7 +73,11 @@ export class ConstructFrameworkWorkflow {
       }
     }
 
-    return this.constructFrameworkWorkflow(dbWorkflow);
+    return this.constructFrameworkWorkflow({
+      dbWorkflow,
+      skipLayoutRendering: command.skipLayoutRendering,
+      jobId: command.jobId,
+    });
   }
 
   private async constructLayoutPreviewWorkflow(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
@@ -94,6 +98,7 @@ export class ConstructFrameworkWorkflow {
             environmentId: environment._id,
             organizationId: environment._organizationId,
             locale: subscriber.locale ?? undefined,
+            stepId: LAYOUT_PREVIEW_EMAIL_STEP,
           });
         },
         {
@@ -107,19 +112,29 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructFrameworkWorkflow(dbWorkflow: NotificationTemplateEntity): Workflow {
+  private constructFrameworkWorkflow({
+    dbWorkflow,
+    skipLayoutRendering,
+    jobId,
+  }: {
+    dbWorkflow: NotificationTemplateEntity;
+    skipLayoutRendering?: boolean;
+    jobId?: string;
+  }): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
         const fullPayloadForRender: FullPayloadForRender = { payload, subscriber, steps: {} };
         for (const staticStep of dbWorkflow.steps) {
-          fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep(
+          fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep({
             step,
             staticStep,
             fullPayloadForRender,
             dbWorkflow,
-            subscriber.locale ?? undefined
-          );
+            locale: subscriber.locale ?? undefined,
+            skipLayoutRendering,
+            jobId,
+          });
         }
       },
       {
@@ -138,13 +153,23 @@ export class ConstructFrameworkWorkflow {
   }
 
   @Instrument()
-  private constructStep(
-    step: Step,
-    staticStep: NotificationStepEntity,
-    fullPayloadForRender: FullPayloadForRender,
-    dbWorkflow: NotificationTemplateEntity,
-    locale?: string
-  ): StepOutput<Record<string, unknown>> {
+  private constructStep({
+    step,
+    staticStep,
+    fullPayloadForRender,
+    dbWorkflow,
+    locale,
+    skipLayoutRendering,
+    jobId,
+  }: {
+    step: Step;
+    staticStep: NotificationStepEntity;
+    fullPayloadForRender: FullPayloadForRender;
+    dbWorkflow: NotificationTemplateEntity;
+    locale?: string;
+    skipLayoutRendering?: boolean;
+    jobId?: string;
+  }): StepOutput<Record<string, unknown>> {
     const stepTemplate = staticStep.template;
 
     if (!stepTemplate) {
@@ -190,6 +215,9 @@ export class ConstructFrameworkWorkflow {
               organizationId: dbWorkflow._organizationId,
               workflowId: dbWorkflow._id,
               locale,
+              skipLayoutRendering,
+              jobId,
+              stepId,
             });
           },
           this.constructChannelStepOptions(staticStep, fullPayloadForRender)
@@ -322,7 +350,13 @@ export class ConstructFrameworkWorkflow {
       return false;
     }
 
-    const { result, error } = evaluateRules(skipRules, variables);
+    const { result, error } = evaluateRules(skipRules, {
+      ...variables,
+      subscriber: {
+        ...variables.subscriber,
+        isOnline: variables.subscriber.isOnline ?? false,
+      },
+    });
 
     if (error) {
       this.logger.error({ err: error }, 'Failed to evaluate skip rule', LOG_CONTEXT);

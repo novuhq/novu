@@ -1,16 +1,15 @@
-import { Test } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
-import { expect } from 'chai';
-import { stub, restore, assert, match } from 'sinon';
+import { BadRequestException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationRepository, PartnerTypeEnum } from '@novu/dal';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { of } from 'rxjs';
-import { AnalyticsService } from '@novu/application-generic';
-
-import { BadRequestException } from '@nestjs/common';
+import { assert, match, restore, stub } from 'sinon';
 import { CreateVercelIntegration } from './create-vercel-integration.usecase';
 
-describe('CreateVercelIntegration', function () {
+describe('CreateVercelIntegration', () => {
   let createVercelIntegration: CreateVercelIntegration;
   let session: UserSession;
   let httpServiceMock;
@@ -69,7 +68,7 @@ describe('CreateVercelIntegration', function () {
     restore();
   });
 
-  it('should successfully set vercel configuration', async function () {
+  it('should successfully set vercel configuration', async () => {
     const command = {
       organizationId: session.organization._id,
       vercelIntegrationCode: 'test-code',
@@ -121,7 +120,7 @@ describe('CreateVercelIntegration', function () {
     );
   });
 
-  it('should throw BadRequestException when Vercel returns an error', async function () {
+  it('should throw BadRequestException when Vercel returns an error', async () => {
     httpServiceMock.post.throws(new Error('Vercel error'));
 
     try {

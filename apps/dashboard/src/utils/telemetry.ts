@@ -69,4 +69,9 @@ export enum TelemetryEvent {
   TOPICS_PAGE_VISIT = 'Topics Page Visit',
   DIGEST_VARIABLE_SELECTED = 'Digest variable selected',
   LAYOUTS_PAGE_VISIT = 'Layouts page visit',
+  LAYOUTS_CREATE_CLICKED = 'Layouts create clicked',
+  LAYOUT_CREATED = 'Layout created',
+  LAYOUT_DUPLICATED = 'Layout duplicated',
+  REQUEST_LOGS_PAGE_VISIT = 'Request logs page visit',
+  REQUEST_LOG_ENTRY_CLICKED = 'Request log entry clicked',
 }

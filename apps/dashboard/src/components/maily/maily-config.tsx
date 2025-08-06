@@ -1,6 +1,6 @@
-import { searchSlashCommands, Variable } from '@maily-to/core/extensions';
 import {
   BlockGroupItem,
+  BlockItem,
   blockquote,
   bulletList,
   button,
@@ -20,42 +20,130 @@ import {
 } from '@maily-to/core/blocks';
 import {
   ButtonExtension,
-  ButtonAttributes as MailyButtonAttributes,
-  ImageExtension,
-  ImageAttributes as MailyImageAttributes,
-  InlineImageExtension,
-  InlineImageAttributes as MailyInlineImageAttributes,
-  LogoAttributes as MailyLogoAttributes,
-  LinkExtension,
-  LinkAttributes as MailyLinkAttributes,
   getSlashCommandSuggestions,
   getVariableSuggestions,
   HTMLCodeBlockExtension,
+  ImageExtension,
+  InlineImageExtension,
+  LinkExtension,
+  ButtonAttributes as MailyButtonAttributes,
+  ImageAttributes as MailyImageAttributes,
+  InlineImageAttributes as MailyInlineImageAttributes,
+  LinkAttributes as MailyLinkAttributes,
+  LogoAttributes as MailyLogoAttributes,
   RepeatExtension,
   SlashCommandExtension,
+  searchSlashCommands,
+  Variable,
   VariableExtension,
   Variables,
 } from '@maily-to/core/extensions';
+import { StepResponseDto, TRANSLATION_NAMESPACE_SEPARATOR, TRANSLATION_TRIGGER_CHARACTER } from '@novu/shared';
+import type { Editor, NodeViewProps, Editor as TiptapEditor } from '@tiptap/core';
 import { ReactNodeViewRenderer } from '@tiptap/react';
-import type { Editor, Editor as TiptapEditor, NodeViewProps } from '@tiptap/core';
-import { StepResponseDto } from '@novu/shared';
-
+import { ForwardRefExoticComponent } from 'react';
+import { createCards } from '@/components/maily//blocks/cards';
+import { createDigestBlock } from '@/components/maily//blocks/digest';
 import { createFooters } from '@/components/maily/blocks/footers';
 import { createHeaders } from '@/components/maily/blocks/headers';
 import { createHtmlCodeBlock } from '@/components/maily/blocks/html';
-import { createDigestBlock } from '@/components/maily//blocks/digest';
-import { createCards } from '@/components/maily//blocks/cards';
 import { ForView } from '@/components/maily/views/for-view';
 import { HTMLCodeBlockView } from '@/components/maily/views/html-view';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './repeat-block-aliases';
-import { IsAllowedVariable, LiquidVariable, ParsedVariables } from '@/utils/parseStepVariables';
 import { TranslationKey } from '@/types/translations';
-import { CalculateVariablesProps, insertVariableToEditor } from './variables';
+import { IsAllowedVariable, LiquidVariable, ParsedVariables } from '@/utils/parseStepVariables';
 import { createTranslationExtension } from '../workflow-editor/steps/email/translations';
-import { ForwardRefExoticComponent } from 'react';
+import { isInsideRepeatBlock, resolveRepeatBlockAlias } from './repeat-block-aliases';
+import { CalculateVariablesProps, insertVariableToEditor } from './variables';
 
 export const VARIABLE_TRIGGER_CHARACTER = '{{';
+
+type BlockType =
+  | 'blockquote'
+  | 'bulletList'
+  | 'button'
+  | 'columns'
+  | 'divider'
+  | 'hardBreak'
+  | 'heading1'
+  | 'heading2'
+  | 'heading3'
+  | 'image'
+  | 'inlineImage'
+  | 'orderedList'
+  | 'repeat'
+  | 'section'
+  | 'spacer'
+  | 'text'
+  | 'cards'
+  | 'headers'
+  | 'footers'
+  | 'digest'
+  | 'htmlCodeBlock';
+
+export type BlockConfig = {
+  highlights: {
+    enabled: boolean;
+    title: string;
+    blocks: Array<{
+      type: BlockType;
+      enabled: boolean;
+      order: number;
+    }>;
+  };
+  allBlocks: {
+    enabled: boolean;
+    title: string;
+    blocks: Array<{
+      type: BlockType;
+      enabled: boolean;
+      order: number;
+    }>;
+    sortAlphabetically: boolean;
+  };
+};
+
+export const DEFAULT_BLOCK_CONFIG: BlockConfig = {
+  highlights: {
+    enabled: true,
+    title: 'Highlights',
+    blocks: [
+      { type: 'cards', enabled: true, order: 0 },
+      { type: 'htmlCodeBlock', enabled: true, order: 1 },
+      { type: 'headers', enabled: true, order: 2 },
+      { type: 'footers', enabled: true, order: 3 },
+      { type: 'digest', enabled: true, order: 4 },
+    ],
+  },
+  allBlocks: {
+    enabled: true,
+    title: 'All blocks',
+    blocks: [
+      { type: 'blockquote', enabled: true, order: 0 },
+      { type: 'bulletList', enabled: true, order: 1 },
+      { type: 'button', enabled: true, order: 2 },
+      { type: 'cards', enabled: true, order: 3 },
+      { type: 'columns', enabled: true, order: 4 },
+      { type: 'digest', enabled: true, order: 4 },
+      { type: 'divider', enabled: true, order: 5 },
+      { type: 'footers', enabled: true, order: 3 },
+      { type: 'hardBreak', enabled: true, order: 6 },
+      { type: 'headers', enabled: true, order: 2 },
+      { type: 'heading1', enabled: true, order: 7 },
+      { type: 'heading2', enabled: true, order: 8 },
+      { type: 'heading3', enabled: true, order: 9 },
+      { type: 'htmlCodeBlock', enabled: true, order: 1 },
+      { type: 'image', enabled: true, order: 10 },
+      { type: 'inlineImage', enabled: true, order: 11 },
+      { type: 'orderedList', enabled: true, order: 12 },
+      { type: 'repeat', enabled: true, order: 13 },
+      { type: 'section', enabled: true, order: 14 },
+      { type: 'spacer', enabled: true, order: 15 },
+      { type: 'text', enabled: true, order: 16 },
+    ],
+    sortAlphabetically: true,
+  },
+};
 
 declare module '@tiptap/core' {
   interface ButtonAttributes extends MailyButtonAttributes {
@@ -107,52 +195,91 @@ export const DEFAULT_EDITOR_CONFIG = {
 export const createEditorBlocks = (props: {
   track: ReturnType<typeof useTelemetry>;
   digestStepBeforeCurrent?: StepResponseDto;
+  blockConfig?: Partial<BlockConfig>;
 }): BlockGroupItem[] => {
-  const { track, digestStepBeforeCurrent } = props;
+  const { track, digestStepBeforeCurrent, blockConfig: userConfig } = props;
+
+  // Merge user config with defaults
+  const config: BlockConfig = {
+    highlights: { ...DEFAULT_BLOCK_CONFIG.highlights, ...userConfig?.highlights },
+    allBlocks: { ...DEFAULT_BLOCK_CONFIG.allBlocks, ...userConfig?.allBlocks },
+  };
+
   const blocks: BlockGroupItem[] = [];
 
-  const highlightBlocks = [createHtmlCodeBlock({ track }), createHeaders({ track }), createFooters({ track })];
+  // Create block type to command mapping for highlights
+  const blocksMap: Record<BlockType, () => BlockItem | null> = {
+    cards: () => createCards({ track }),
+    htmlCodeBlock: () => createHtmlCodeBlock({ track }),
+    headers: () => createHeaders({ track }),
+    footers: () => createFooters({ track }),
+    digest: () => (digestStepBeforeCurrent ? createDigestBlock({ track, digestStepBeforeCurrent }) : null),
+    blockquote: () => blockquote,
+    bulletList: () => bulletList,
+    button: () => button,
+    columns: () => columns,
+    divider: () => divider,
+    hardBreak: () => hardBreak,
+    heading1: () => heading1,
+    heading2: () => heading2,
+    heading3: () => heading3,
+    image: () => image,
+    inlineImage: () => inlineImage,
+    orderedList: () => orderedList,
+    repeat: () => repeat,
+    section: () => section,
+    spacer: () => spacer,
+    text: () => text,
+  };
 
-  highlightBlocks.unshift(createCards({ track }));
+  // Build highlights section
+  if (config.highlights.enabled) {
+    const enabledHighlightBlocks = config.highlights.blocks
+      .filter((block) => block.enabled)
+      .filter((block) => block.type !== 'digest' || digestStepBeforeCurrent) // Only include digest if available
+      .sort((a, b) => a.order - b.order)
+      .map((blockConfig) => {
+        const createCommand = blocksMap[blockConfig.type];
+        return createCommand?.();
+      })
+      .filter((command): command is NonNullable<typeof command> => command !== null);
 
-  if (digestStepBeforeCurrent) {
-    highlightBlocks.unshift(createDigestBlock({ track, digestStepBeforeCurrent }));
+    if (enabledHighlightBlocks.length > 0) {
+      blocks.push({
+        title: config.highlights.title,
+        commands: enabledHighlightBlocks,
+      });
+    }
   }
 
-  blocks.push({
-    title: 'Highlights',
-    commands: highlightBlocks,
-  });
+  // Build all blocks section
+  if (config.allBlocks.enabled) {
+    const allBlockCommands = [];
 
-  const allBlocks = [
-    blockquote,
-    bulletList,
-    button,
-    columns,
-    divider,
-    hardBreak,
-    heading1,
-    heading2,
-    heading3,
-    image,
-    inlineImage,
-    orderedList,
-    repeat,
-    section,
-    spacer,
-    text,
-    ...highlightBlocks,
-  ];
+    // Add base blocks
+    const enabledBaseBlocks = config.allBlocks.blocks
+      .filter((block) => block.enabled)
+      .sort((a, b) => a.order - b.order)
+      .map((blockConfig) => {
+        const createCommand = blocksMap[blockConfig.type];
+        return createCommand?.();
+      })
+      .filter((el) => !!el);
 
-  blocks.push({
-    title: 'All blocks',
-    commands: allBlocks,
-  });
+    allBlockCommands.push(...enabledBaseBlocks);
 
-  // sort command titles alphabetically within each block group
-  blocks.forEach((blockGroup) => {
-    blockGroup.commands.sort((a, b) => a.title.localeCompare(b.title));
-  });
+    // Sort alphabetically if enabled
+    if (config.allBlocks.sortAlphabetically) {
+      allBlockCommands.sort((a, b) => a?.title?.localeCompare(b?.title ?? '') ?? 0);
+    }
+
+    if (allBlockCommands.length > 0) {
+      blocks.push({
+        title: config.allBlocks.title,
+        commands: allBlockCommands,
+      });
+    }
+  }
 
   return blocks;
 };
@@ -272,6 +399,13 @@ export const createExtensions = ({
             !existsInSchema &&
             props.id !== 'payload' &&
             props.id !== 'current.payload';
+
+          if (props.id === TRANSLATION_NAMESPACE_SEPARATOR) {
+            // just insert "{{t." (not closed) to trigger the translation extension
+            editor.chain().focus().insertContentAt(range, TRANSLATION_TRIGGER_CHARACTER).run();
+
+            return;
+          }
 
           if (isNewVariable) {
             const variableName = props.id.replace('current.payload.', '').replace('payload.', '');

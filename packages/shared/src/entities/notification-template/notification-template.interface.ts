@@ -1,3 +1,4 @@
+import { JSONSchemaDto } from '../../dto/workflows';
 import type {
   BuilderFieldType,
   BuilderGroupValues,
@@ -6,13 +7,12 @@ import type {
   ResourceOriginEnum,
   ResourceTypeEnum,
 } from '../../types';
-import { JSONSchemaDto } from '../../dto/workflows';
-import type { StepContentIssue, StepIntegrationIssue, StepIssue } from '../../dto/workflows/step.dto';
+import { RuntimeIssue } from '../../utils/issues';
 import { ControlSchemas, IMessageTemplate } from '../message-template';
 import { INotificationGroup } from '../notification-group';
 import { INotificationBridgeTrigger, INotificationTrigger } from '../notification-trigger';
-import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
+import { IPreferenceChannels } from '../subscriber-preference';
 
 export interface INotificationTemplate {
   _id?: string;
@@ -33,9 +33,7 @@ export interface INotificationTemplate {
   isBlueprint?: boolean;
   blueprintId?: string;
   type?: ResourceTypeEnum;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payloadSchema?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   rawData?: any;
   data?: CustomDataType;
   origin?: ResourceOriginEnum;
@@ -52,8 +50,8 @@ export interface IBlueprint extends INotificationTemplate {
 }
 
 export class StepIssues {
-  controls?: Record<string, StepContentIssue[]>;
-  integration?: Record<string, StepIntegrationIssue[]>;
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }
 
 export interface IStepVariant {

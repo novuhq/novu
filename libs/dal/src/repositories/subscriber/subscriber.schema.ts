@@ -1,8 +1,7 @@
 import mongoose, { IndexOptions, Schema } from 'mongoose';
-
+import { IndexDefinition } from '../../shared/types';
 import { schemaOptions } from '../schema-default.options';
 import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
-import { IndexDefinition } from '../../shared/types';
 
 const mongooseDelete = require('mongoose-delete');
 
@@ -27,6 +26,7 @@ const subscriberSchema = new Schema<SubscriberDBModel>(
     isOnline: {
       type: Schema.Types.Boolean,
       required: false,
+      default: false,
     },
     lastOnlineAt: Schema.Types.Date,
     data: Schema.Types.Mixed,

@@ -1,6 +1,6 @@
-import { NotificationTemplateEntity } from '@novu/dal';
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { IsDefined, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { IOptimisticStepInfo } from '../build-variable-schema/build-available-variable-schema.command';

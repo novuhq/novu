@@ -20,9 +20,13 @@ export const QueryKeys = Object.freeze({
   organizationSettings: 'organizationSettings',
   fetchLayouts: 'fetchLayouts',
   fetchLayout: 'fetchLayout',
+  fetchLayoutUsage: 'fetchLayoutUsage',
   previewLayout: 'previewLayout',
   fetchTranslations: 'fetchTranslations',
   fetchTranslationGroups: 'fetchTranslationGroups',
+  fetchTranslationGroup: 'fetchTranslationGroup',
   fetchTranslation: 'fetchTranslation',
   fetchTranslationKeys: 'fetchTranslationKeys',
+  diffEnvironments: 'diff-environments',
+  previewStep: 'preview-step',
 });

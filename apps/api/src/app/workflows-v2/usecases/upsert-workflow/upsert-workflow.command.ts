@@ -1,26 +1,26 @@
+import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
+import { ClientSession } from '@novu/dal';
 import {
-  IsOptional,
-  IsString,
-  ValidateNested,
+  ChannelTypeEnum,
+  MAX_NAME_LENGTH,
+  ResourceOriginEnum,
+  StepTypeEnum,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
+import { Exclude, Type } from 'class-transformer';
+import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
+  IsDefined,
   IsEnum,
   IsNotEmpty,
-  Length,
   IsObject,
-  IsDefined,
+  IsOptional,
+  IsString,
+  Length,
+  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-
-import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import {
-  StepTypeEnum,
-  WorkflowCreationSourceEnum,
-  ChannelTypeEnum,
-  ResourceOriginEnum,
-  MAX_NAME_LENGTH,
-} from '@novu/shared';
 import { IsValidJsonSchema } from '../../../shared/validators/json-schema.validator';
 
 export class ChannelPreferenceData {
@@ -126,8 +126,9 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsValidJsonSchema({
     message: 'payloadSchema must be a valid JSON schema',
+    nullable: true,
   })
-  payloadSchema?: object;
+  payloadSchema?: object | null;
 
   @IsOptional()
   @IsBoolean()
@@ -150,4 +151,11 @@ export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
   @IsOptional()
   @IsString()
   workflowIdOrInternalId?: string;
+
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
+  @IsOptional()
+  @Exclude()
+  session?: ClientSession | null;
 }

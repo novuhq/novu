@@ -1,12 +1,12 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
-  ISendMessageSuccessResponse,
-  IEmailOptions,
-  IEmailProvider,
+  CheckIntegrationResponseEnum,
   ICheckIntegrationResponse,
   IEmailEventBody,
-  CheckIntegrationResponseEnum,
+  IEmailOptions,
+  IEmailProvider,
+  ISendMessageSuccessResponse,
 } from '@novu/stateless';
 
 import Plunk from '@plunk/node';

@@ -1,10 +1,29 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  MAX_DESCRIPTION_LENGTH,
+  PermissionsEnum,
+  ResourceOriginEnum,
+  UpdateWorkflowDto,
+  WorkflowResponseDto,
+} from '@novu/shared';
+import { FilesIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { useMemo, useState, useCallback } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import {
+  RiArrowRightSLine,
+  RiCodeSSlashLine,
+  RiDeleteBin2Line,
+  RiGitPullRequestFill,
+  RiListView,
+  RiMore2Fill,
+  RiSettingsLine,
+} from 'react-icons/ri';
+import { Link, useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
 import { z } from 'zod';
-
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { DeleteWorkflowDialog } from '@/components/delete-workflow-dialog';
 import { RouteFill } from '@/components/icons/route-fill';
@@ -52,28 +71,13 @@ import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFormAutosave } from '@/hooks/use-form-autosave';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
 import { useTags } from '@/hooks/use-tags';
+import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
-import { FilesIcon } from 'lucide-react';
-import {
-  RiArrowRightSLine,
-  RiCodeSSlashLine,
-  RiDeleteBin2Line,
-  RiGitPullRequestFill,
-  RiListView,
-  RiMore2Fill,
-  RiSettingsLine,
-} from 'react-icons/ri';
-import { Link } from 'react-router-dom';
-import { Protect } from '@/utils/protect';
-
+import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { PayloadSchemaDrawer } from './payload-schema-drawer';
 import { TranslationToggleSection } from './translation-toggle-section';
-import { ResourceOriginEnum, WorkflowResponseDto, UpdateWorkflowDto, MAX_DESCRIPTION_LENGTH } from '@novu/shared';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
 
 interface ConfigureWorkflowFormProps {
   workflow: WorkflowResponseDto;
@@ -99,7 +103,8 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
   const { currentOrganization } = useAuth();
   const { environments = [] } = useFetchEnvironments({ organizationId: currentOrganization?._id });
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-  const isPayloadSchemaEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED);
+
+  const isNewChangeMechanismEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
 
   const { show: showComingSoonBanner } = usePromotionalBanner({
     content: {
@@ -111,7 +116,8 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
     },
   });
 
-  const isReadOnly = workflow.origin === ResourceOriginEnum.EXTERNAL;
+  const isReadOnly =
+    workflow.origin === ResourceOriginEnum.EXTERNAL || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   const { deleteWorkflow, isPending: isDeleteWorkflowPending } = useDeleteWorkflow({
     onSuccess: () => {
@@ -251,43 +257,44 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                       Export to Code
                     </DropdownMenuItem>
                   )}
-                  {isSyncable ? (
-                    otherEnvironments.length === 1 ? (
-                      <DropdownMenuItem onClick={() => safeSync(otherEnvironments[0]._id)}>
-                        <RiGitPullRequestFill />
-                        {`Sync to ${otherEnvironments[0].name}`}
-                      </DropdownMenuItem>
-                    ) : (
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className="gap-2">
+                  {!isNewChangeMechanismEnabled &&
+                    (isSyncable ? (
+                      otherEnvironments.length === 1 ? (
+                        <DropdownMenuItem onClick={() => safeSync(otherEnvironments[0]._id)}>
                           <RiGitPullRequestFill />
-                          Sync workflow
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                          <DropdownMenuSubContent>
-                            {otherEnvironments.map((env) => (
-                              <DropdownMenuItem key={env._id} onClick={() => safeSync(env._id)}>
-                                {env.name}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                      </DropdownMenuSub>
-                    )
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <DropdownMenuItem disabled>
-                          <RiGitPullRequestFill />
-                          Sync workflow
+                          {`Sync to ${otherEnvironments[0].name}`}
                         </DropdownMenuItem>
-                      </TooltipTrigger>
-                      <TooltipPortal>
-                        <TooltipContent>{tooltipContent}</TooltipContent>
-                      </TooltipPortal>
-                    </Tooltip>
-                  )}
-                  {isDuplicable && (
+                      ) : (
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger className="gap-2">
+                            <RiGitPullRequestFill />
+                            Sync workflow
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              {otherEnvironments.map((env) => (
+                                <DropdownMenuItem key={env._id} onClick={() => safeSync(env._id)}>
+                                  {env.name}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                      )
+                    ) : (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <DropdownMenuItem disabled>
+                            <RiGitPullRequestFill />
+                            Sync workflow
+                          </DropdownMenuItem>
+                        </TooltipTrigger>
+                        <TooltipPortal>
+                          <TooltipContent>{tooltipContent}</TooltipContent>
+                        </TooltipPortal>
+                      </Tooltip>
+                    ))}
+                  {isDuplicable && currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
                     <Link
                       to={buildRoute(ROUTES.WORKFLOWS_DUPLICATE, {
                         environmentSlug: currentEnvironment?.slug ?? '',
@@ -301,19 +308,23 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                     </Link>
                   )}
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup className="*:cursor-pointer">
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    disabled={workflow.origin === ResourceOriginEnum.EXTERNAL}
-                    onClick={() => {
-                      setIsDeleteModalOpen(true);
-                    }}
-                  >
-                    <RiDeleteBin2Line />
-                    Delete workflow
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
+                {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup className="*:cursor-pointer">
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        disabled={workflow.origin === ResourceOriginEnum.EXTERNAL}
+                        onClick={() => {
+                          setIsDeleteModalOpen(true);
+                        }}
+                      >
+                        <RiDeleteBin2Line />
+                        Delete workflow
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </Protect>
@@ -399,7 +410,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel optional>Description</FormLabel>
+                    <FormLabel>Description</FormLabel>
                     <FormControl>
                       <Textarea
                         className="min-h-36"
@@ -420,7 +431,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                 render={({ field }) => (
                   <FormItem className="group" tabIndex={-1}>
                     <div className="flex items-center gap-1">
-                      <FormLabel optional>Tags</FormLabel>
+                      <FormLabel>Tags</FormLabel>
                     </div>
                     <FormControl className="text-xs text-neutral-600">
                       <TagInput
@@ -441,50 +452,53 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
           </FormRoot>
         </Form>
-        <Separator />
-        <SidebarContent size="lg">
-          <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
-            <Button
-              variant="secondary"
-              mode="outline"
-              leadingIcon={RiSettingsLine}
-              className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
-              type="button"
-              trailingIcon={RiArrowRightSLine}
-            >
-              Configure channel preferences
-              <span className="ml-auto" />
-            </Button>
-          </Link>
-          {isPayloadSchemaEnabled && workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
-            <Button
-              variant="secondary"
-              mode="outline"
-              leadingIcon={RiListView}
-              className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
-              type="button"
-              onClick={() => setIsPayloadSchemaDrawerOpen(true)}
-              trailingIcon={RiArrowRightSLine}
-            >
-              Manage payload schema
-              <span className="ml-auto" />
-            </Button>
-          )}
-          <TranslationToggleSection
-            control={form.control}
-            fieldName="isTranslationEnabled"
-            onChange={(checked) => {
-              form.setValue('isTranslationEnabled', checked, {
-                shouldValidate: true,
-                shouldDirty: true,
-              });
-              saveForm();
-            }}
-            isReadOnly={isReadOnly}
-            workflowId={workflow.workflowId}
-          />
-        </SidebarContent>
-        <Separator />
+        {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+          <>
+            <Separator />
+            <SidebarContent size="lg">
+              <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
+                <Button
+                  variant="secondary"
+                  mode="outline"
+                  leadingIcon={RiSettingsLine}
+                  className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+                  type="button"
+                  trailingIcon={RiArrowRightSLine}
+                >
+                  Configure channel preferences
+                  <span className="ml-auto" />
+                </Button>
+              </Link>
+              {workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
+                <Button
+                  variant="secondary"
+                  mode="outline"
+                  leadingIcon={RiListView}
+                  className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+                  type="button"
+                  onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+                  trailingIcon={RiArrowRightSLine}
+                >
+                  Manage payload schema
+                  <span className="ml-auto" />
+                </Button>
+              )}
+              <TranslationToggleSection
+                control={form.control}
+                fieldName="isTranslationEnabled"
+                onChange={(checked) => {
+                  form.setValue('isTranslationEnabled', checked, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                  saveForm();
+                }}
+                isReadOnly={isReadOnly}
+              />
+            </SidebarContent>
+            <Separator />
+          </>
+        )}
       </motion.div>
     </>
   );

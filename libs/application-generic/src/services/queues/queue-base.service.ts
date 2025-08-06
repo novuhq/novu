@@ -1,13 +1,7 @@
-import { IJobData, JobTopicNameEnum } from '@novu/shared';
 import { Logger } from '@nestjs/common';
+import { IJobData, JobTopicNameEnum } from '@novu/shared';
 
-import {
-  BullMqService,
-  JobsOptions,
-  BulkJobOptions,
-  Queue,
-  QueueOptions,
-} from '../bull-mq';
+import { BulkJobOptions, BullMqService, JobsOptions, Queue, QueueOptions } from '../bull-mq';
 
 const LOG_CONTEXT = 'QueueService';
 
@@ -19,7 +13,7 @@ export class QueueBaseService {
 
   constructor(
     public readonly topic: JobTopicNameEnum,
-    private bullMqService: BullMqService,
+    private bullMqService: BullMqService
   ) {
     this.instance = bullMqService;
   }
@@ -80,10 +74,7 @@ export class QueueBaseService {
     this.queue = undefined;
     await this.instance.gracefulShutdown();
 
-    Logger.log(
-      `Shutting down the ${this.topic} queue service has finished`,
-      LOG_CONTEXT,
-    );
+    Logger.log(`Shutting down the ${this.topic} queue service has finished`, LOG_CONTEXT);
   }
 
   public async add(params: IJobParams) {
@@ -93,12 +84,7 @@ export class QueueBaseService {
       ...params.options,
     };
 
-    await this.instance.add(
-      params.name,
-      params.data,
-      jobOptions,
-      params.groupId,
-    );
+    await this.instance.add(params.name, params.data, jobOptions, params.groupId);
   }
 
   public async addBulk(data: IBulkJobParams[]) {

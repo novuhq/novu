@@ -1,11 +1,9 @@
-import { LayoutRepository, ChangeRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
 import { Injectable } from '@nestjs/common';
-
 import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
-import { CreateLayoutChangeCommand } from './create-layout-change.command';
-
+import { ChangeRepository, LayoutRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import { FindDeletedLayoutCommand, FindDeletedLayoutUseCase } from '../find-deleted-layout';
+import { CreateLayoutChangeCommand } from './create-layout-change.command';
 
 @Injectable()
 export class CreateLayoutChangeUseCase {

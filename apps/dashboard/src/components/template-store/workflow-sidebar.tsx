@@ -1,9 +1,9 @@
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { Calendar, Code2, ExternalLink, FileCode2, FileText, KeyRound, LayoutGrid, Users } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { buildRoute, ROUTES } from '../../utils/routes';
 import { Badge } from '../primitives/badge';
 import { WorkflowMode } from './types';

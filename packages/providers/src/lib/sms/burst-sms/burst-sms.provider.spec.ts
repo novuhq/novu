@@ -1,5 +1,5 @@
-import { expect, test } from 'vitest';
 import { v4 as uuidv4 } from 'uuid';
+import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
 import { BurstSmsProvider } from './burst-sms.provider';
 

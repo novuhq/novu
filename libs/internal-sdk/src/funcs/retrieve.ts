@@ -83,12 +83,13 @@ async function $do(
   const path = pathToFunc("/v1/logs/requests")();
 
   const query = encodeFormQuery({
-    "created": payload.created,
+    "createdGte": payload.createdGte,
     "limit": payload.limit,
     "page": payload.page,
     "statusCodes": payload.statusCodes,
     "transactionId": payload.transactionId,
     "url": payload.url,
+    "url_pattern": payload.url_pattern,
   });
 
   const headers = new Headers(compactMap({

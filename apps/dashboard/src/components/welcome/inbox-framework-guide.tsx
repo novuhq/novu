@@ -1,14 +1,14 @@
-import { Loader } from 'lucide-react';
-import { Card, CardContent } from '../primitives/card';
-import { useState, useEffect } from 'react';
 import { IEnvironment } from '@novu/shared';
-import { motion, AnimatePresence } from 'motion/react';
-import { Framework, getFrameworks } from './framework-guides.instructions';
-import { FrameworkInstructions, FrameworkCliInstructions } from './framework-guides';
-import { TelemetryEvent } from '../../utils/telemetry';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { Loader } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { fadeIn } from '@/utils/animation';
+import { useTelemetry } from '../../hooks/use-telemetry';
+import { TelemetryEvent } from '../../utils/telemetry';
+import { Card, CardContent } from '../primitives/card';
+import { Tabs, TabsList, TabsTrigger } from '../primitives/tabs';
+import { FrameworkCliInstructions, FrameworkInstructions } from './framework-guides';
+import { Framework, getFrameworks } from './framework-guides.instructions';
 
 const containerVariants = {
   hidden: {},
@@ -20,7 +20,8 @@ const containerVariants = {
   },
 };
 
-const TABS_TRIGGER_CLASSES = 'relative text-xs font-medium text-[#525866] transition-colors hover:text-[#dd2476]';
+const TABS_TRIGGER_CLASSES =
+  'relative text-xs font-medium text-[#99A0AE] transition-all data-[state=active]:text-[#0E121B] data-[state=active]:bg-white data-[state=active]:shadow-[0px_4px_10px_rgba(14,18,27,0.06),0px_2px_4px_rgba(14,18,27,0.03)] hover:text-[#0E121B] px-1.5 py-0.5 rounded data-[state=active]:rounded-sm h-5 flex items-center justify-center min-w-fit';
 
 const cardVariants = {
   hidden: {
@@ -211,7 +212,7 @@ export function InboxFrameworkGuide({
                 value={installationMethod}
                 onValueChange={(value) => setInstallationMethod(value as 'cli' | 'manual')}
               >
-                <TabsList className="ml-4 h-6 bg-transparent p-0 shadow-none">
+                <TabsList className="ml-4 h-7 w-[159px] gap-1 rounded-md bg-[#FBFBFB] p-1 shadow-none">
                   <TabsTrigger value="cli" className={TABS_TRIGGER_CLASSES}>
                     CLI Installation
                   </TabsTrigger>

@@ -53,7 +53,7 @@ jobs:
 
   get-affected:
     name: Get Affected Packages
-    runs-on: blacksmith-8vcpu-ubuntu-2404
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     outputs:
       test-unit: ${{ steps.get-projects-arrays.outputs.test-unit }}
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
@@ -83,11 +83,18 @@ jobs:
           fi
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - uses: ./.github/actions/setup-project
-        with:
-          slim: 'true'
+          # Fetch enough history to find the merge base between base and head
+          # This is typically much faster than fetch-depth: 0
+          fetch-depth: 50
+          # Also fetch the base branch to ensure we have the comparison point
+          ref: ${{ github.event.pull_request.head.sha }}
 
+      # Ensure we have the base branch for comparison
+      - name: Fetch base branch
+        if: github.event.pull_request.base.ref != ''
+        run: |
+          git fetch origin ${{ github.event.pull_request.base.ref }} --depth=50
+      - uses: ./.github/actions/setup-project-minimal
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
         uses: nrwl/nx-set-shas@v2
@@ -117,6 +124,7 @@ jobs:
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
+
   test_unit_providers:
     name: Unit test @novu/providers
     runs-on: blacksmith-4vcpu-ubuntu-2404

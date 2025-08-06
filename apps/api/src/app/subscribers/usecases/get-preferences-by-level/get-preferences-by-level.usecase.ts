@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PreferenceLevelEnum } from '@novu/shared';
-
-import { GetPreferencesByLevelCommand } from './get-preferences-by-level.command';
-import { GetSubscriberPreference, GetSubscriberPreferenceCommand } from '../get-subscriber-preference';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../get-subscriber-global-preference';
+import { GetSubscriberPreference, GetSubscriberPreferenceCommand } from '../get-subscriber-preference';
+import { GetPreferencesByLevelCommand } from './get-preferences-by-level.command';
 
 @Injectable()
 export class GetPreferencesByLevel {

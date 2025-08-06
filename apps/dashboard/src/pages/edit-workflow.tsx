@@ -1,14 +1,14 @@
+import { useLocation, useMatch } from 'react-router-dom';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { FullPageLayout } from '@/components/full-page-layout';
 import { EditorBreadcrumbs } from '@/components/workflow-editor/editor-breadcrumbs';
 import { WorkflowProvider } from '@/components/workflow-editor/workflow-provider';
 import { WorkflowTabs } from '@/components/workflow-editor/workflow-tabs';
-import { useLocation, useMatch } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 
 // Define routes that should render without WorkflowTabs (full-page routes)
 const FULL_PAGE_ROUTES = [
-  ROUTES.EDIT_STEP_TEMPLATE_V2,
+  ROUTES.EDIT_STEP_TEMPLATE,
   // Add more full-page routes here as needed
 ];
 

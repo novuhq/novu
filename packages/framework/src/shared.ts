@@ -14,8 +14,6 @@
  *
  */
 
-/* eslint-disable @typescript-eslint/naming-convention */
-
 export interface IResponseError {
   error: string;
   message: string;
@@ -157,6 +155,7 @@ export enum SmsProviderIdEnum {
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
   AfroSms = 'afro-message',
+  IMedia = 'imedia',
 }
 
 export enum ChatProviderIdEnum {

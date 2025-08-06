@@ -1,38 +1,35 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { addBreadcrumb } from '@sentry/node';
 import { ModuleRef } from '@nestjs/core';
-import { merge } from 'lodash';
-
-import { MessageRepository, SubscriberRepository, MessageEntity, IntegrationEntity, JobEntity } from '@novu/dal';
+import {
+  CompileTemplate,
+  CompileTemplateCommand,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  InstrumentUsecase,
+  IPushHandler,
+  PushFactory,
+  SelectIntegration,
+  SelectVariant,
+} from '@novu/application-generic';
+import { IntegrationEntity, JobEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import { PushOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
-  PushProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IChannelSettings,
   ProvidersIdEnum,
+  PushProviderIdEnum,
   TriggerOverrides,
 } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
-  SelectIntegration,
-  CompileTemplate,
-  CompileTemplateCommand,
-  IPushHandler,
-  PushFactory,
-  GetNovuProviderCredentials,
-  SelectVariant,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-} from '@novu/application-generic';
 import { IPushOptions } from '@novu/stateless';
-import { PushOutput } from '@novu/framework/internal';
-
-import { SendMessageCommand } from './send-message.command';
-import { SendMessageBase } from './send-message.base';
-
+import { addBreadcrumb } from '@sentry/node';
+import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageBase } from './send-message.base';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
@@ -69,7 +66,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     addBreadcrumb({
       message: 'Sending Push',
     });
@@ -149,19 +146,34 @@ export class SendMessagePush extends SendMessageBase {
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
-    let integrationsWithErrors = 0;
+    let status: SendMessageResult['status'] = 'failed';
     for (const channel of allPushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
-      let isChannelMissingDeviceTokens;
+      const isChannelMissingDeviceTokens = await this.isChannelMissingDeviceTokens(channel);
+      if (isChannelMissingDeviceTokens) {
+        await this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.PUSH_MISSING_DEVICE_TOKENS,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            providerId: channel.providerId,
+            raw: JSON.stringify(channel),
+          })
+        );
+
+        if (status !== 'success') {
+          status = 'skipped';
+        }
+      }
+
       let integration;
       try {
-        [isChannelMissingDeviceTokens, integration] = await Promise.all([
-          this.isChannelMissingDeviceTokens(channel, command),
-          this.getSubscriberIntegration(channel, command),
-        ]);
+        integration = await this.getSubscriberIntegration(channel, command);
       } catch (error) {
-        integrationsWithErrors += 1;
         Logger.error(
           { jobId: command.jobId },
           `Unexpected error while processing channel for jobId ${command.jobId} ${error.message || error.toString()}`,
@@ -172,7 +184,6 @@ export class SendMessagePush extends SendMessageBase {
 
       // We avoid to send a message if subscriber has not an integration or if the subscriber has no device tokens for said integration
       if ((!deviceTokens || !integration || isChannelMissingDeviceTokens) && !uniqueOverrideChannels?.length) {
-        integrationsWithErrors += 1;
         continue;
       }
 
@@ -181,14 +192,14 @@ export class SendMessagePush extends SendMessageBase {
 
       await this.sendSelectedIntegrationExecution(command.job, integration);
 
-      const message = await this.createMessage(command, integration, title, content, target, overrides);
-
-      const bridgeProviderData = this.combineOverrides(
-        command.bridgeData,
-        command.overrides,
-        command.step.stepId,
-        integration.providerId
-      );
+      const message = await this.createMessage({
+        command,
+        integration,
+        title,
+        content,
+        deviceTokens: target,
+        overrides,
+      });
 
       /**
        * There are no targets available for the subscriber, but credentials provided in the overrides
@@ -205,13 +216,12 @@ export class SendMessagePush extends SendMessageBase {
           title,
           content,
           overrides,
-          stepData,
-          bridgeProviderData
+          stepData
         );
 
-        if (!result.success) {
-          integrationsWithErrors += 1;
-
+        if (result.success) {
+          status = 'success';
+        } else {
           Logger.error(
             { jobId: command.jobId },
             `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
@@ -222,7 +232,8 @@ export class SendMessagePush extends SendMessageBase {
         continue;
       }
 
-      for (const deviceToken of target) {
+      const targetDeviceTokens = target || [];
+      for (const deviceToken of targetDeviceTokens) {
         const result = await this.sendMessage(
           command,
           message,
@@ -232,13 +243,12 @@ export class SendMessagePush extends SendMessageBase {
           title,
           content,
           overrides,
-          stepData,
-          bridgeProviderData
+          stepData
         );
 
-        if (!result.success) {
-          integrationsWithErrors += 1;
-
+        if (result.success) {
+          status = 'success';
+        } else {
           Logger.error(
             { jobId: command.jobId },
             `Error sending push notification for jobId ${command.jobId} ${result.error.message || result.error.toString()}`,
@@ -248,7 +258,23 @@ export class SendMessagePush extends SendMessageBase {
       }
     }
 
-    if (integrationsWithErrors > 0) {
+    if (status === 'skipped') {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.PUSH_SOME_CHANNELS_SKIPPED,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+        })
+      );
+
+      return {
+        status,
+        reason: DetailEnum.PUSH_SOME_CHANNELS_SKIPPED,
+      };
+    } else if (status === 'failed') {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -261,13 +287,13 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
+        status,
         reason: DetailEnum.NOTIFICATION_ERROR,
       };
     }
 
     return {
-      status: 'success',
+      status,
     };
   }
 
@@ -348,20 +374,15 @@ export class SendMessagePush extends SendMessageBase {
     );
   }
 
-  private async isChannelMissingDeviceTokens(channel: IChannelSettings, command: SendMessageCommand): Promise<boolean> {
+  private async isChannelMissingDeviceTokens(channel: IChannelSettings): Promise<boolean> {
     const { deviceTokens } = channel.credentials || {};
-    if (!deviceTokens || (Array.isArray(deviceTokens) && deviceTokens.length === 0)) {
-      await this.sendPushMissingDeviceTokensError(command.job, channel);
 
-      return true;
-    }
-
-    return false;
+    return !deviceTokens || (Array.isArray(deviceTokens) && deviceTokens.length === 0);
   }
 
   private async getSubscriberIntegration(
     channel: IChannelSettings,
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<IntegrationEntity | undefined> {
     const integration = await this.getIntegration({
       id: channel._integrationId,
@@ -382,14 +403,6 @@ export class SendMessagePush extends SendMessageBase {
     }
 
     return integration;
-  }
-
-  private async sendPushMissingDeviceTokensError(job: JobEntity, channel: IChannelSettings): Promise<void> {
-    const raw = JSON.stringify(channel);
-    await this.createExecutionDetailsError(DetailEnum.PUSH_MISSING_DEVICE_TOKENS, job, {
-      raw,
-      providerId: channel.providerId,
-    });
   }
 
   private async createExecutionDetailsError(
@@ -417,7 +430,7 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async sendMessage(
-    command: SendMessageCommand,
+    command: SendMessageChannelCommand,
     message: MessageEntity,
     subscriber: IPushOptions['subscriber'],
     integration: IntegrationEntity,
@@ -425,8 +438,7 @@ export class SendMessagePush extends SendMessageBase {
     title: string,
     content: string,
     overrides: object,
-    step: IPushOptions['step'],
-    bridgeProviderData: IPushOptions['bridgeProviderData']
+    step: IPushOptions['step']
   ): Promise<{ success: false; error: Error } | { success: true; error: undefined }> {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
@@ -452,12 +464,12 @@ export class SendMessagePush extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: `${DetailEnum.MESSAGE_SENT}: ${integration.providerId}`,
+          detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ result, deviceToken }),
+          raw: JSON.stringify({ providerId: integration.providerId, result, deviceToken }),
         })
       );
 
@@ -491,14 +503,21 @@ export class SendMessagePush extends SendMessageBase {
     }
   }
 
-  private async createMessage(
-    command: SendMessageCommand,
-    integration: IntegrationEntity,
-    title: string,
-    content: string,
-    deviceTokens: string[],
-    overrides: object
-  ): Promise<MessageEntity> {
+  private async createMessage({
+    command,
+    integration,
+    title,
+    content,
+    deviceTokens,
+    overrides,
+  }: {
+    command: SendMessageChannelCommand;
+    integration: IntegrationEntity;
+    title: string;
+    content: string;
+    deviceTokens?: string[];
+    overrides: object;
+  }): Promise<MessageEntity> {
     const message = await this.messageRepository.create({
       _notificationId: command.notificationId,
       _environmentId: command.environmentId,
@@ -521,13 +540,16 @@ export class SendMessagePush extends SendMessageBase {
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
+        detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         messageId: message._id,
         isTest: false,
         isRetry: false,
-        raw: this.storeContent() ? JSON.stringify(content) : null,
+        raw: JSON.stringify({
+          providerId: integration.providerId,
+          content: this.storeContent() ? JSON.stringify(content) : null,
+        }),
       })
     );
 
@@ -548,7 +570,7 @@ export class SendMessagePush extends SendMessageBase {
 
   private async constructChannelSettingsFromOverrides(
     providersWithCredentialOverrides: IPushProviderOverride[],
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<IChannelSettings[]> {
     const channelSettings: IChannelSettings[] = [];
 

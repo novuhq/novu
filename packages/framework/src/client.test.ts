@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Client } from './client';
+import { PostActionEnum } from './constants';
 import {
   ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
@@ -11,7 +12,6 @@ import {
 } from './errors';
 import { workflow } from './resources';
 import { Event, Step } from './types';
-import { PostActionEnum } from './constants';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -1154,6 +1154,65 @@ describe('Novu Client', () => {
       expect(body).toBe('body');
     });
 
+    it('should not parse translation patterns as liquid variables', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: { name: 'John' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: { email: 'test@example.com' },
+        state: [],
+        controls: {
+          body: 'Hello {{t.welcome}} {{payload.name}}! Click {{t.button.submit}} to continue.',
+          subject: 'Welcome {{t.title}} - {{payload.name}}',
+        },
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(event);
+
+      // Translation patterns should be preserved when t.* values are undefined
+      expect(emailExecutionResult.outputs).toEqual({
+        body: 'Hello {{t.welcome}} John! Click {{t.button.submit}} to continue.',
+        subject: 'Welcome {{t.title}} - John',
+      });
+    });
+
     it('should throw error on execute action without payload', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
@@ -1948,7 +2007,6 @@ describe('Novu Client', () => {
 
       const executionResult = await client.executeWorkflow(event);
       expect(executionResult.outputs).toBeDefined();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expect((executionResult.outputs.data as any).someVal).toBe(link);
     });
 

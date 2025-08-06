@@ -1,4 +1,4 @@
-import { IChannelCredentials, SubscriberCustomData, ChatProviderIdEnum, PushProviderIdEnum } from '../../types';
+import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '../../types';
 
 export interface ISubscriber {
   _id?: string;

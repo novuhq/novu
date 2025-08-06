@@ -78,7 +78,7 @@ export type CustomStepResponseDto = {
    */
   type: StepTypeEnum;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**

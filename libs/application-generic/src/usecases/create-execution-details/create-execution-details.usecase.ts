@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ExecutionDetailsRepository, ExecutionDetailsEntity } from '@novu/dal';
+import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { EntityType, EventType, TraceLogRepository } from '../../services/analytic-logs/trace-log';
-
-import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
-import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { LogRepository } from '../../services';
+import { EntityType, EventType, TraceLogRepository } from '../../services/analytic-logs/trace-log';
+import { CreateExecutionDetailsCommand } from './create-execution-details.command';
+import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
 
 // Using satisfies ensures all DetailEnum values are mapped at compile time
@@ -35,7 +34,8 @@ const mapDetailToEventType = {
 
   // Subscriber events
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION]: 'subscriber_integration_missing',
-  [DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS]: 'subscriber_channel_missing',
+  [DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS]: 'subscriber_missing_email_address',
+  [DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER]: 'subscriber_missing_phone_number',
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL]: 'subscriber_channel_missing',
   [DetailEnum.SUBSCRIBER_NOT_MEMBER_OF_ORGANIZATION]: 'subscriber_validation_failed',
 
@@ -54,9 +54,13 @@ const mapDetailToEventType = {
   [DetailEnum.DELAY_MISCONFIGURATION]: 'delay_misconfigured',
   [DetailEnum.DEFER_DURATION_LIMIT_EXCEEDED]: 'delay_limit_exceeded',
 
+  // Workflow events
+  [DetailEnum.STEP_COMPLETED]: 'step_completed',
+
   // Bridge events
   [DetailEnum.SUCCESSFUL_BRIDGE_RESPONSE_RECEIVED]: 'bridge_response_received',
   [DetailEnum.FAILED_BRIDGE_EXECUTION]: 'bridge_execution_failed',
+  [DetailEnum.SKIPPED_BRIDGE_EXECUTION]: 'bridge_execution_skipped',
 
   // Webhook events
   [DetailEnum.WEBHOOK_FILTER_FAILED_RETRY]: 'webhook_filter_retrying',
@@ -64,7 +68,10 @@ const mapDetailToEventType = {
 
   // Integration events
   [DetailEnum.INTEGRATION_INSTANCE_SELECTED]: 'integration_selected',
+
+  // Layout events
   [DetailEnum.LAYOUT_NOT_FOUND]: 'layout_not_found',
+  [DetailEnum.LAYOUT_SELECTED]: 'layout_selected',
 
   // Tenant events
   [DetailEnum.TENANT_CONTEXT_SELECTED]: 'tenant_selected',
@@ -80,9 +87,11 @@ const mapDetailToEventType = {
   [DetailEnum.CHAT_WEBHOOK_URL_MISSING]: 'chat_webhook_missing',
   [DetailEnum.CHAT_ALL_CHANNELS_FAILED]: 'chat_all_channels_failed',
   [DetailEnum.CHAT_MISSING_PHONE_NUMBER]: 'chat_phone_missing',
+  [DetailEnum.CHAT_SOME_CHANNELS_SKIPPED]: 'chat_some_channels_skipped',
 
   // Push events
   [DetailEnum.PUSH_MISSING_DEVICE_TOKENS]: 'push_tokens_missing',
+  [DetailEnum.PUSH_SOME_CHANNELS_SKIPPED]: 'push_some_channels_skipped',
 
   // Reply/Inbound mail events
   [DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL]: 'reply_callback_missing',

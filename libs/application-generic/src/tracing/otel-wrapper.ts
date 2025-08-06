@@ -1,22 +1,19 @@
+import { Injectable, PipeTransform, Type } from '@nestjs/common';
+import { MetricOptions, SpanOptions, Tracer } from '@opentelemetry/api';
 import {
   Span,
-  TraceService as setTraceService,
   MetricService as setMetricService,
-  OtelInstanceCounter as setOtelInstanceCounter,
-  OtelUpDownCounter as setOtelUpDownCounter,
-  OtelHistogram as setOtelHistogram,
-  OtelObservableGauge as setOtelObservableGauge,
-  OtelObservableCounter as setOtelObservableCounter,
-  OtelObservableUpDownCounter as setOtelObservableUpDownCounter,
   OtelCounter as setOtelCounter,
+  OtelHistogram as setOtelHistogram,
+  OtelInstanceCounter as setOtelInstanceCounter,
+  OtelObservableCounter as setOtelObservableCounter,
+  OtelObservableGauge as setOtelObservableGauge,
+  OtelObservableUpDownCounter as setOtelObservableUpDownCounter,
+  OtelUpDownCounter as setOtelUpDownCounter,
+  TraceService as setTraceService,
 } from 'nestjs-otel';
-import { MetricOptions, SpanOptions, Tracer } from '@opentelemetry/api';
-import { Injectable, PipeTransform, Type } from '@nestjs/common';
 
-export type OtelDataOrPipe =
-  | string
-  | PipeTransform<any, any>
-  | Type<PipeTransform<any, any>>;
+export type OtelDataOrPipe = string | PipeTransform<any, any> | Type<PipeTransform<any, any>>;
 
 export function OtelSpan(name?: string, options?: SpanOptions) {
   return Span(name, options);
@@ -42,10 +39,7 @@ export function OtelObservableCounter(name: string, options?: MetricOptions) {
   return setOtelObservableCounter(name, options);
 }
 
-export function OtelObservableUpDownCounter(
-  name: string,
-  options?: MetricOptions,
-) {
+export function OtelObservableUpDownCounter(name: string, options?: MetricOptions) {
   return setOtelObservableUpDownCounter(name, options);
 }
 

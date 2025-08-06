@@ -7,16 +7,16 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  StepContentIssueEnum,
-  StepContentIssueEnum$inboundSchema,
-  StepContentIssueEnum$outboundSchema,
-} from "./stepcontentissueenum.js";
+  ContentIssueEnum,
+  ContentIssueEnum$inboundSchema,
+  ContentIssueEnum$outboundSchema,
+} from "./contentissueenum.js";
 
 export type StepContentIssueDto = {
   /**
    * Type of step content issue
    */
-  issueType: StepContentIssueEnum;
+  issueType: ContentIssueEnum;
   /**
    * Name of the variable related to the issue
    */
@@ -33,7 +33,7 @@ export const StepContentIssueDto$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
-  issueType: StepContentIssueEnum$inboundSchema,
+  issueType: ContentIssueEnum$inboundSchema,
   variableName: z.string().optional(),
   message: z.string(),
 });
@@ -51,7 +51,7 @@ export const StepContentIssueDto$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   StepContentIssueDto
 > = z.object({
-  issueType: StepContentIssueEnum$outboundSchema,
+  issueType: ContentIssueEnum$outboundSchema,
   variableName: z.string().optional(),
   message: z.string(),
 });

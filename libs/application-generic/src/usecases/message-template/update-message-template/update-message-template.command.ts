@@ -1,13 +1,13 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
   IActor,
   IEmailBlock,
   IMessageCTA,
   ITemplateVariable,
   MessageTemplateContentType,
-  StepTypeEnum,
   ResourceTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema } from '../../../value-objects';
 

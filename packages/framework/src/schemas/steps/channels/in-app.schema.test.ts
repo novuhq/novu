@@ -1,4 +1,4 @@
-import { it, describe, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { validateData } from '../../../validators';
 import { inAppChannelSchemas } from './in-app.schema';
 

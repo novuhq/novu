@@ -1,5 +1,5 @@
 import { InfobipSmsProvider } from '@novu/providers';
-import { ChannelTypeEnum, SmsProviderIdEnum, ICredentials } from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 
 export class InfobipSmsHandler extends BaseSmsHandler {

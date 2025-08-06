@@ -1,15 +1,16 @@
 import {
-  SetMetadata,
   applyDecorators,
+  CallHandler,
   ExecutionContext,
   Injectable,
-  CallHandler,
   NestInterceptor,
+  SetMetadata,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { Reflector } from '@nestjs/core';
 import { PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
 import { buildLog } from '../utils/mappers';
@@ -19,56 +20,48 @@ const LOG_ANALYTICS_KEY = 'logAnalytics';
 export enum AnalyticsStrategyEnum {
   BASIC = 'basic',
   EVENTS = 'events',
+  EVENTS_BULK = 'events_bulk',
 }
-
-/**
- * Analytics Logs Decorator & Interceptor
- *
- * Usage:
- *   1. Add @LogAnalytics() to a controller or route handler to enable analytics logging for that endpoint.
- *      - At the controller level: all routes in the controller will be logged.
- *      - At the method level: only that route will be logged.
- *   2. The AnalyticsLogsInterceptor is registered globally and will log requests to ClickHouse
- *      only for endpoints decorated with @LogAnalytics().
- *
- * Example (controller-level):
- *   @LogAnalytics()
- *   @Controller('events')
- *   export class EventsController { ... }
- *
- * Example (method-level):
- *   @Post('/trigger')
- *   @LogAnalytics()
- *   async trigger(...) { ... }
- *
- * Notes:
- *   - Logging is opt-in and non-intrusive.
- *   - The interceptor is extensible for future options (e.g., sampling, custom log fields).
- */
 
 export function LogAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC): MethodDecorator {
   return applyDecorators(SetMetadata(LOG_ANALYTICS_KEY, strategy));
-}
-
-function getAnalyticsStrategy(context: ExecutionContext): AnalyticsStrategyEnum {
-  return context.getHandler && Reflect.getMetadata(LOG_ANALYTICS_KEY, context.getHandler());
-}
-
-function shouldLogAnalytics(context: ExecutionContext): boolean {
-  return getAnalyticsStrategy(context) !== undefined;
 }
 
 @Injectable()
 export class AnalyticsLogsInterceptor implements NestInterceptor {
   constructor(
     private readonly requestLogRepository: RequestLogRepository,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly reflector: Reflector
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
+  private shouldLogAnalytics(context: ExecutionContext): boolean {
+    const strategy = this.getAnalyticsStrategy(context);
+
+    this.logger.debug(`Analytics logs should log strategy: ${strategy}`);
+
+    return strategy !== undefined;
+  }
+
+  private getAnalyticsStrategy(context: ExecutionContext): AnalyticsStrategyEnum {
+    const globalHandler = context.getHandler && Reflect.getMetadata(LOG_ANALYTICS_KEY, context.getHandler());
+    const handlerMetadata = this.reflector.get(LOG_ANALYTICS_KEY, context.getHandler());
+    const handler = context.getHandler();
+    const customDecorator = handler && (handler as any)._analyticsStrategy;
+
+    this.logger.debug(`Analytics logs globalHandler strategy: ${globalHandler}`);
+    this.logger.debug(`Analytics logs handlerMetadata strategy: ${handlerMetadata}`);
+    this.logger.debug(`Analytics logs customDecorator strategy: ${customDecorator}`);
+
+    return globalHandler || handlerMetadata || customDecorator;
+  }
+
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const shouldRun = await this.shouldRun(context);
+
+    this.logger.debug(`Analytics logs should run LOG_ANALYTICS_KEY: ${shouldRun}`);
 
     if (!shouldRun) {
       return next.handle();
@@ -79,11 +72,14 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     const start = Date.now();
     const res = context.switchToHttp().getResponse();
 
+    this.logger.debug('Analytics logs interceptor started');
+
     return next.handle().pipe(
       tap(async (data) => {
         const duration = Date.now() - start;
         const basicLog = buildLog(req, res.statusCode, data, user, duration);
         if (!basicLog) {
+          this.logger.debug('Analytics log construction failed - unable to track request metrics');
           this.logger.warn('Analytics log construction failed - unable to track request metrics');
 
           return;
@@ -92,13 +88,15 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
         const analyticsLog = this.buildLogByStrategy(context, basicLog, data);
 
         try {
+          this.logger.debug({ analyticsLog }, 'Analytics log Inserting');
           await retryWithBackoff(() =>
-            this.requestLogRepository.insert(analyticsLog, {
+            this.requestLogRepository.create(analyticsLog, {
               organizationId: user?.organizationId,
               environmentId: user?.environmentId,
               userId: user?._id,
             })
           );
+          this.logger.debug('Analytics log Inserted');
         } catch (err) {
           this.logger.error({ err }, 'Failed to log analytics to ClickHouse after retries');
         }
@@ -107,10 +105,15 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
   }
 
   private async shouldRun(context: ExecutionContext): Promise<boolean> {
-    const shouldLog = shouldLogAnalytics(context);
+    const shouldLog = this.shouldLogAnalytics(context);
+
     if (!shouldLog) return false;
 
     const isEnabled = process.env.IS_ANALYTICS_LOGS_ENABLED === 'true';
+
+    this.logger.debug(
+      `Analytics logs should run IS_ANALYTICS_LOGS_ENABLED: ${process.env.IS_ANALYTICS_LOGS_ENABLED}, isEnabled: ${isEnabled}`
+    );
 
     if (!isEnabled) return false;
 
@@ -122,7 +125,7 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
     analyticsLog: Omit<RequestLog, 'id' | 'expires_at'>,
     res: unknown
   ): Omit<RequestLog, 'id' | 'expires_at'> {
-    const strategy = getAnalyticsStrategy(context);
+    const strategy = this.getAnalyticsStrategy(context);
 
     if (strategy === AnalyticsStrategyEnum.EVENTS) {
       const eventResponse = (res as any).data as TriggerEventResponseDto;
@@ -132,6 +135,24 @@ export class AnalyticsLogsInterceptor implements NestInterceptor {
           ...analyticsLog,
           transaction_id: eventResponse.transactionId,
         };
+      }
+    }
+
+    if (strategy === AnalyticsStrategyEnum.EVENTS_BULK) {
+      const bulkEventResponse = (res as any).data as TriggerEventResponseDto[];
+
+      if (Array.isArray(bulkEventResponse)) {
+        const transactionIds = bulkEventResponse
+          .map((response) => response.transactionId)
+          .filter(Boolean)
+          .join(',');
+
+        if (transactionIds) {
+          return {
+            ...analyticsLog,
+            transaction_id: transactionIds,
+          };
+        }
       }
     }
 

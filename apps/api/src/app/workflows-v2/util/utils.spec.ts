@@ -1,7 +1,6 @@
 import { expect } from 'chai';
-
-import { keysToObject } from './utils';
 import { ArrayVariable } from '../../shared/usecases/create-variables-object/create-variables-object.usecase';
+import { keysToObject } from './utils';
 
 describe('keysToObject', () => {
   it('should convert simple paths into a nested object', () => {

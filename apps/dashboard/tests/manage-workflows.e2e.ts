@@ -1,13 +1,12 @@
-import { expect } from '@playwright/test';
 import { StepTypeEnum } from '@novu/shared';
-
-import { test } from './utils/fixtures';
-import { InAppStepEditor } from './page-object-models/in-app-step-editor';
-import { WorkflowsPage } from './page-object-models/workflows-page';
+import { expect } from '@playwright/test';
 import { CreateWorkflowSidebar } from './page-object-models/create-workflow-sidebar';
-import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
+import { InAppStepEditor } from './page-object-models/in-app-step-editor';
 import { StepConfigSidebar } from './page-object-models/step-config-sidebar';
 import { TriggerWorkflowPage } from './page-object-models/trigger-workflow-page';
+import { WorkflowEditorPage } from './page-object-models/workflow-editor-page';
+import { WorkflowsPage } from './page-object-models/workflows-page';
+import { test } from './utils/fixtures';
 
 test('manage workflows', async ({ page }) => {
   const workflowName = 'test-workflow';

@@ -1,8 +1,7 @@
 import { ReactNode } from 'react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 // @ts-ignore
 import { SideNavigation } from '@/components/side-navigation/side-navigation';
-import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 
 export const DashboardLayout = ({
   children,
@@ -21,7 +20,7 @@ export const DashboardLayout = ({
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <HeaderNavigation startItems={headerStartItems} hideBridgeUrl={!showBridgeUrl} />
 
-        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden">{children}</div>
+        <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden p-2">{children}</div>
       </div>
     </div>
   );

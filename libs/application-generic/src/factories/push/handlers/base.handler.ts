@@ -1,10 +1,6 @@
-import { IPushOptions, IPushProvider } from '@novu/stateless';
-import {
-  ChannelTypeEnum,
-  ICredentials,
-  PushProviderIdEnum,
-} from '@novu/shared';
 import {} from '@novu/dal';
+import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
+import { IPushOptions, IPushProvider } from '@novu/stateless';
 import { IPushHandler } from '../interfaces';
 
 export abstract class BasePushHandler implements IPushHandler {
@@ -12,7 +8,7 @@ export abstract class BasePushHandler implements IPushHandler {
 
   protected constructor(
     private providerId: PushProviderIdEnum,
-    private channelType: string,
+    private channelType: string
   ) {}
 
   canHandle(providerId: string, channelType: ChannelTypeEnum) {
@@ -21,9 +17,7 @@ export abstract class BasePushHandler implements IPushHandler {
 
   async send(options: IPushOptions) {
     if (process.env.NODE_ENV === 'test') {
-      throw new Error(
-        'Currently 3rd-party packages test are not support on test env',
-      );
+      throw new Error('Currently 3rd-party packages test are not support on test env');
     }
 
     const { bridgeProviderData, ...otherOptions } = options;

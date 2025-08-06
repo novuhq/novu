@@ -17,12 +17,6 @@
       "options": {
         "packageRoot": "dist/{projectRoot}"
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["./src", "./package.json", "generators.json"]
-      }
     }
   }
 }

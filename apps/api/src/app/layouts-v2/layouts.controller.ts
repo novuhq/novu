@@ -11,35 +11,38 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common/decorators';
-import { ApiExcludeController, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ExternalApiAccessible,
-  UserSession,
-  RequirePermissions,
   ParseSlugEnvironmentIdPipe,
   ParseSlugIdPipe,
+  RequirePermissions,
+  UserSession,
 } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, UserSessionData, PermissionsEnum } from '@novu/shared';
-import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import {
   CreateLayoutDto,
   DuplicateLayoutDto,
   GetLayoutListQueryParamsDto,
+  GetLayoutUsageResponseDto,
   LayoutResponseDto,
-  UpdateLayoutDto,
   ListLayoutResponseDto,
+  UpdateLayoutDto,
 } from './dtos';
-import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
-import { UpsertLayoutCommand, UpsertLayoutUseCase } from './usecases/upsert-layout';
-import { GetLayoutCommand, GetLayoutUseCase } from './usecases/get-layout';
+import { GenerateLayoutPreviewResponseDto } from './dtos/generate-layout-preview-response.dto';
+import { LayoutPreviewRequestDto } from './dtos/layout-preview-request.dto';
 import { DeleteLayoutCommand, DeleteLayoutUseCase } from './usecases/delete-layout';
 import { DuplicateLayoutCommand, DuplicateLayoutUseCase } from './usecases/duplicate-layout';
+import { GetLayoutCommand, GetLayoutUseCase } from './usecases/get-layout';
+import { GetLayoutUsageCommand, GetLayoutUsageUseCase } from './usecases/get-layout-usage';
 import { ListLayoutsCommand, ListLayoutsUseCase } from './usecases/list-layouts';
-import { LayoutPreviewRequestDto } from './dtos/layout-preview-request.dto';
-import { GenerateLayoutPreviewResponseDto } from './dtos/generate-layout-preview-response.dto';
 import { PreviewLayoutCommand, PreviewLayoutUsecase } from './usecases/preview-layout';
-import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UpsertLayout, UpsertLayoutCommand } from './usecases/upsert-layout';
+import { EMPTY_LAYOUT } from './utils/layout-templates';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -50,12 +53,13 @@ import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 @ApiTags('Layouts')
 export class LayoutsController {
   constructor(
-    private upsertLayoutUseCase: UpsertLayoutUseCase,
+    private upsertLayoutUseCase: UpsertLayout,
     private getLayoutUseCase: GetLayoutUseCase,
     private deleteLayoutUseCase: DeleteLayoutUseCase,
     private duplicateLayoutUseCase: DuplicateLayoutUseCase,
     private listLayoutsUseCase: ListLayoutsUseCase,
-    private previewLayoutUsecase: PreviewLayoutUsecase
+    private previewLayoutUsecase: PreviewLayoutUsecase,
+    private getLayoutUsageUseCase: GetLayoutUsageUseCase
   ) {}
 
   @Post('')
@@ -66,7 +70,7 @@ export class LayoutsController {
   @ExternalApiAccessible()
   @ApiBody({ type: CreateLayoutDto, description: 'Layout creation details' })
   @ApiResponse(LayoutResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async create(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Body() createLayoutDto: CreateLayoutDto
@@ -75,8 +79,16 @@ export class LayoutsController {
       UpsertLayoutCommand.create({
         layoutDto: {
           ...createLayoutDto,
+          controlValues: {
+            email: {
+              body: JSON.stringify(EMPTY_LAYOUT),
+              editorType: 'block',
+            },
+          },
         },
-        user,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }
@@ -89,7 +101,7 @@ export class LayoutsController {
   })
   @ApiBody({ type: UpdateLayoutDto, description: 'Layout update details' })
   @ApiResponse(LayoutResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async update(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string,
@@ -100,7 +112,9 @@ export class LayoutsController {
         layoutDto: {
           ...updateLayoutDto,
         },
-        user,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
         layoutIdOrInternalId,
       })
     );
@@ -113,7 +127,7 @@ export class LayoutsController {
     description: 'Fetches details of a specific layout by its unique identifier **layoutId**',
   })
   @ApiResponse(LayoutResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async get(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string
@@ -135,7 +149,7 @@ export class LayoutsController {
     summary: 'Delete a layout',
     description: 'Removes a specific layout by its unique identifier **layoutId**',
   })
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   async delete(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string
@@ -143,7 +157,9 @@ export class LayoutsController {
     await this.deleteLayoutUseCase.execute(
       DeleteLayoutCommand.create({
         layoutIdOrInternalId,
-        user,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }
@@ -157,7 +173,7 @@ export class LayoutsController {
   })
   @ApiBody({ type: DuplicateLayoutDto })
   @ApiResponse(LayoutResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.LAYOUT_WRITE)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_WRITE)
   @SdkMethodName('duplicate')
   async duplicate(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -168,7 +184,9 @@ export class LayoutsController {
       DuplicateLayoutCommand.create({
         layoutIdOrInternalId,
         overrides: duplicateLayoutDto,
-        user,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
       })
     );
   }
@@ -180,7 +198,7 @@ export class LayoutsController {
     description: 'Retrieves a list of layouts with optional filtering and pagination',
   })
   @ApiResponse(ListLayoutResponseDto)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   async list(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
     @Query() query: GetLayoutListQueryParamsDto
@@ -205,7 +223,7 @@ export class LayoutsController {
   })
   @ApiBody({ type: LayoutPreviewRequestDto, description: 'Layout preview generation details' })
   @ApiResponse(GenerateLayoutPreviewResponseDto, 201)
-  @RequirePermissions(PermissionsEnum.LAYOUT_READ)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
   @SdkMethodName('generatePreview')
   async generatePreview(
     @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
@@ -217,6 +235,29 @@ export class LayoutsController {
         user,
         layoutIdOrInternalId,
         layoutPreviewRequestDto,
+      })
+    );
+  }
+
+  @Get(':layoutId/usage')
+  @ExternalApiAccessible()
+  @ApiOperation({
+    summary: 'Get layout usage',
+    description:
+      'Retrieves information about workflows that use the specified layout by its unique identifier **layoutId**',
+  })
+  @ApiResponse(GetLayoutUsageResponseDto)
+  @RequirePermissions(PermissionsEnum.WORKFLOW_READ)
+  @SdkMethodName('usage')
+  async getUsage(
+    @UserSession(ParseSlugEnvironmentIdPipe) user: UserSessionData,
+    @Param('layoutId', ParseSlugIdPipe) layoutIdOrInternalId: string
+  ): Promise<GetLayoutUsageResponseDto> {
+    return this.getLayoutUsageUseCase.execute(
+      GetLayoutUsageCommand.create({
+        layoutIdOrInternalId,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
       })
     );
   }

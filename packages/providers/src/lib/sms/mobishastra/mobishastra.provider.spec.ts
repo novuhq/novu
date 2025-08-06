@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
-import { MobishastraProvider } from './mobishastra.provider';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { MobishastraProvider } from './mobishastra.provider';
 
 const baseUrl = 'https://mshastra.com/sendsms_api_json.aspx';
 const senderName = 'sender-name';

@@ -1,10 +1,8 @@
-import { expect } from 'chai';
-
 import { FieldLogicalOperatorEnum, FieldOperatorEnum, FilterPartTypeEnum } from '@novu/shared';
-
-import { isVariantEmpty } from './isVariantEmpty';
-import { NotificationStepVariantCommand } from '../../value-objects/notification-step-variant.command';
+import { expect } from 'chai';
 import { MessageFilter } from '../../value-objects/message.filter';
+import { NotificationStepVariantCommand } from '../../value-objects/notification-step-variant.command';
+import { isVariantEmpty } from './isVariantEmpty';
 
 const testFilter: MessageFilter = {
   value: FieldLogicalOperatorEnum.AND,

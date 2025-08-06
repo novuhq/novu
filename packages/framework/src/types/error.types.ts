@@ -41,5 +41,6 @@ type PascalToConstant<T extends string> = T extends `${infer First}${infer Rest}
  * type Test = PascalToConstant<"FirstName">; // "FIRST_NAME"
  * ```
  */
-export type ToConstantCaseForString<T extends string> =
-  PascalToConstant<T> extends `_${infer WithoutUnderscore}` ? WithoutUnderscore : PascalToConstant<T>;
+export type ToConstantCaseForString<T extends string> = PascalToConstant<T> extends `_${infer WithoutUnderscore}`
+  ? WithoutUnderscore
+  : PascalToConstant<T>;

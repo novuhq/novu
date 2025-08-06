@@ -1,5 +1,5 @@
-import { IMessage } from '../entities/messages';
 import { IMessageCTADto } from '../dto';
+import { IMessage } from '../entities/messages';
 import { ButtonTypeEnum, ChannelCTATypeEnum, Redirect, ResourceTypeEnum } from '../types';
 
 export const isBridgeWorkflow = (workflowType?: ResourceTypeEnum): boolean => {

@@ -1,5 +1,6 @@
-import { StepTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum, WorkflowPreferences } from '../../types';
+import { ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowPreferences } from '../../types';
 import { Slug } from '../../types/utils';
+import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
 import { StepCreateDto, StepResponseDto, StepUpdateDto } from './step.dto';
 import { WorkflowStatusEnum } from './workflow-status-enum';
@@ -25,7 +26,17 @@ export type ListWorkflowResponse = {
 
 export type WorkflowListResponseDto = Pick<
   WorkflowResponseDto,
-  'name' | 'tags' | 'updatedAt' | 'createdAt' | '_id' | 'workflowId' | 'slug' | 'status' | 'origin' | 'lastTriggeredAt'
+  | 'name'
+  | 'tags'
+  | 'updatedAt'
+  | 'createdAt'
+  | '_id'
+  | 'workflowId'
+  | 'slug'
+  | 'status'
+  | 'origin'
+  | 'lastTriggeredAt'
+  | 'isTranslationEnabled'
 > & {
   stepTypeOverviews: StepTypeEnum[];
 };
@@ -59,19 +70,13 @@ export type WorkflowResponseDto = WorkflowCommonsFields & {
   origin: ResourceOriginEnum;
   preferences: PreferencesResponseDto;
   status: WorkflowStatusEnum;
-  issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssueDto>;
+  issues?: Record<WorkflowCreateAndUpdateKeys, RuntimeIssue>;
   lastTriggeredAt?: string;
   payloadSchema?: Record<string, any>;
   payloadExample?: object;
 };
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;
-
-export class RuntimeIssueDto {
-  issueType: WorkflowIssueTypeEnum;
-  variableName?: string;
-  message: string;
-}
 
 export enum WorkflowIssueTypeEnum {
   MISSING_VALUE = 'MISSING_VALUE',

@@ -1,12 +1,12 @@
-import { green, cyan } from 'picocolors';
 import fs from 'fs';
 import path from 'path';
+import { cyan, green } from 'picocolors';
 import type { RepoInfo } from './helpers/examples';
+import type { PackageManager } from './helpers/get-pkg-manager';
 import { tryGitInit } from './helpers/git';
 import { isFolderEmpty } from './helpers/is-folder-empty';
 import { getOnline } from './helpers/is-online';
 import { isWriteable } from './helpers/is-writeable';
-import type { PackageManager } from './helpers/get-pkg-manager';
 
 import type { TemplateMode, TemplateType } from './templates';
 import { installTemplate } from './templates';

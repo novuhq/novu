@@ -2,7 +2,6 @@ export const ROUTES = {
   SIGN_IN: '/auth/sign-in',
   SIGN_UP: '/auth/sign-up',
   SIGNUP_ORGANIZATION_LIST: '/auth/organization-list',
-  SIGNUP_QUESTIONNAIRE: '/onboarding/questionnaire',
   USECASE_SELECT: '/onboarding/usecase',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
@@ -24,8 +23,8 @@ export const ROUTES = {
   WELCOME: '/env/:environmentSlug/welcome',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
   EDIT_STEP: 'steps/:stepSlug',
-  EDIT_STEP_TEMPLATE: 'steps/:stepSlug/edit',
-  EDIT_STEP_TEMPLATE_V2: 'steps/:stepSlug/editor',
+
+  EDIT_STEP_TEMPLATE: 'steps/:stepSlug/editor',
   EDIT_STEP_CONDITIONS: 'steps/:stepSlug/conditions',
   INTEGRATIONS: '/integrations',
   INTEGRATIONS_CONNECT: '/integrations/connect',
@@ -34,8 +33,8 @@ export const ROUTES = {
   API_KEYS: '/env/:environmentSlug/api-keys',
   ENVIRONMENTS: '/env/:environmentSlug/environments',
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
-  ACTIVITY_RUNS: '/env/:environmentSlug/activity/runs',
-  ACTIVITY_LOGS: '/env/:environmentSlug/activity/requests',
+  ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',
+  ACTIVITY_REQUESTS: '/env/:environmentSlug/activity/requests',
   LOGS: '/env/:environmentSlug/requests',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
   WORKFLOWS_CREATE: '/env/:environmentSlug/workflows/create',
@@ -55,8 +54,10 @@ export const ROUTES = {
   TOPICS_EDIT: '/env/:environmentSlug/topics/:topicKey/edit',
   LAYOUTS: '/env/:environmentSlug/layouts',
   LAYOUTS_CREATE: '/env/:environmentSlug/layouts/create',
+  LAYOUTS_DUPLICATE: '/env/:environmentSlug/layouts/duplicate/:layoutId',
   LAYOUTS_EDIT: '/env/:environmentSlug/layouts/:layoutSlug',
   TRANSLATIONS: '/env/:environmentSlug/translations',
+  TRANSLATIONS_EDIT: '/env/:environmentSlug/translations/:resourceType/:resourceId/:locale',
 } as const;
 
 export const buildRoute = (route: string, params: Record<string, string>) => {

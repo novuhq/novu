@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { cn } from '@/utils/ui';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 export const HeaderButton = ({
   children,

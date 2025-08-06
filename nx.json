@@ -11,24 +11,28 @@
     "lint": {
       "cache": true
     },
-    "@nx/eslint:lint": {
-      "cache": true,
-      "inputs": ["default", "{workspaceRoot}/tools/eslint-rules/**/*"]
+
+    "lint-biome": {
+      "inputs": ["default", "{workspaceRoot}/biome.json"],
+      "cache": true
     }
   },
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": [
       "default",
-      "!{projectRoot}/.eslintrc.json",
-      "!{projectRoot}/eslint.config.js",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
       "!{projectRoot}/tsconfig.spec.json",
       "!{projectRoot}/jest.config.[jt]s",
       "!{projectRoot}/src/test-setup.[jt]s",
-      "!{projectRoot}/test-setup.[jt]s"
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/biome.json"
     ],
-    "sharedGlobals": [{ "runtime": "node --version" }]
+    "sharedGlobals": [
+      {
+        "runtime": "node --version"
+      }
+    ]
   },
   "release": {
     "changelog": {
