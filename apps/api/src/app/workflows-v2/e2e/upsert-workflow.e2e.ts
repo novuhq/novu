@@ -38,6 +38,15 @@ describe('Upsert Workflow #novu-v2', () => {
           workflowId: `test-workflow-${Date.now()}`,
           source: WorkflowCreationSourceEnum.Editor,
           active: true,
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              first_variable: { type: 'string' },
+              second_variable: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          },
           steps: [
             {
               name: `IN_APP 1`,
@@ -88,6 +97,15 @@ describe('Upsert Workflow #novu-v2', () => {
           workflowId: `test-workflow-${Date.now()}`,
           source: WorkflowCreationSourceEnum.Editor,
           active: true,
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              first_variable: { type: 'string' },
+              second_variable: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          },
           steps: [
             {
               name: `IN_APP 1`,
@@ -138,6 +156,15 @@ describe('Upsert Workflow #novu-v2', () => {
           workflowId: `test-workflow-${Date.now()}`,
           source: WorkflowCreationSourceEnum.Editor,
           active: true,
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              first_variable: { type: 'string' },
+              second_variable: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          },
           steps: [
             {
               name: `IN_APP 1`,

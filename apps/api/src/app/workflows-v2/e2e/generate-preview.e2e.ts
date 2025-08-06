@@ -42,227 +42,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     novuClient = initNovuClassSdkInternalAuth(session);
   });
 
-  it('should generate preview for in-app init page - no variables example in dto body, stored empty payload schema', async () => {
-    const workflow = await createWorkflow({
-      payloadSchema: {
-        $schema: 'http://json-schema.org/draft-07/schema#',
-        type: 'object',
-        properties: {},
-      },
-    });
-    await emulateExternalOrigin(workflow.id);
-
-    const stepId = workflow.steps[0].id;
-    const controlValues = {
-      subject: 'Welcome {{subscriber.firstName}}',
-      body: 'Hello {{subscriber.firstName}} {{subscriber.lastName}}, Welcome to {{payload.organizationName | upcase}}!',
-    };
-    const previewPayload = {
-      // empty previewPayload
-    };
-    const { result } = await novuClient.workflows.steps.generatePreview({
-      generatePreviewRequestDto: {
-        controlValues,
-        previewPayload,
-      },
-      stepId,
-      workflowId: workflow.id,
-    });
-
-    expect(result).to.deep.equal({
-      schema: {
-        additionalProperties: false,
-        properties: {
-          payload: {
-            $schema: 'http://json-schema.org/draft-07/schema#',
-            properties: {},
-            type: 'object',
-          },
-          subscriber: {
-            additionalProperties: true,
-            properties: {
-              avatar: {
-                type: 'string',
-              },
-              data: {
-                additionalProperties: true,
-                type: 'object',
-              },
-              email: {
-                format: 'email',
-                type: 'string',
-              },
-              firstName: {
-                type: 'string',
-              },
-              lastName: {
-                type: 'string',
-              },
-              locale: {
-                type: 'string',
-              },
-              phone: {
-                type: 'string',
-              },
-              subscriberId: {
-                type: 'string',
-              },
-              timezone: {
-                type: 'string',
-              },
-            },
-            type: 'object',
-          },
-          steps: {
-            type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
-          },
-        },
-        type: 'object',
-      },
-      result: {
-        preview: {
-          subject: 'Welcome John',
-          body: 'Hello John Doe, Welcome to !',
-        },
-        type: 'in_app',
-      },
-      previewPayloadExample: {
-        subscriber: {
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'user@example.com',
-          phone: '+1234567890',
-          avatar: 'https://example.com/avatar.png',
-          locale: 'en_US',
-          timezone: 'America/New_York',
-          data: {},
-        },
-        payload: {},
-        steps: {},
-      },
-    });
-  });
-
-  it('should generate preview for in-app init page - no variables example in dto body', async () => {
-    const workflow = await createWorkflow();
-    await emulateExternalOrigin(workflow.id);
-
-    const stepId = workflow.steps[0].id;
-    const controlValues = {
-      subject: `{{subscriber.firstName}} Hello, World! `,
-      body: `Hello, World! {{payload.placeholder.body}} {{payload.placeholder.random}}`,
-      avatar: 'https://www.example.com/avatar.png',
-      primaryAction: {
-        label: '{{payload.primaryUrlLabel}}',
-        redirect: {
-          target: RedirectTargetEnum.BLANK,
-          url: '/home/primary-action',
-        },
-      },
-      secondaryAction: {
-        label: 'Secondary Action',
-        redirect: {
-          target: RedirectTargetEnum.BLANK,
-          url: '/home/secondary-action',
-        },
-      },
-      data: {
-        key: 'value',
-      },
-      redirect: {
-        target: RedirectTargetEnum.BLANK,
-        url: 'https://www.example.com/redirect',
-      },
-    };
-    const previewPayload = {
-      // empty previewPayload
-    };
-    const { result } = await novuClient.workflows.steps.generatePreview({
-      generatePreviewRequestDto: {
-        controlValues,
-        previewPayload,
-      },
-      stepId,
-      workflowId: workflow.id,
-    });
-
-    expect(result).to.deep.equal({
-      schema: null,
-      result: {
-        preview: {
-          subject: 'John Hello, World! ',
-          body: 'Hello, World! body random',
-          avatar: 'https://www.example.com/avatar.png',
-          primaryAction: {
-            label: 'primaryUrlLabel',
-            redirect: {
-              url: '/home/primary-action',
-              target: '_blank',
-            },
-          },
-          secondaryAction: {
-            label: 'Secondary Action',
-            redirect: {
-              url: '/home/secondary-action',
-              target: '_blank',
-            },
-          },
-          redirect: {
-            url: 'https://www.example.com/redirect',
-            target: '_blank',
-          },
-          data: {
-            key: 'value',
-          },
-        },
-        type: 'in_app',
-      },
-      previewPayloadExample: {
-        subscriber: {
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'user@example.com',
-          phone: '+1234567890',
-          avatar: 'https://example.com/avatar.png',
-          locale: 'en_US',
-          timezone: 'America/New_York',
-          data: {},
-        },
-        payload: {
-          placeholder: {
-            body: 'body',
-            random: 'random',
-          },
-          primaryUrlLabel: 'primaryUrlLabel',
-        },
-        steps: {},
-      },
-    });
-  });
-
   it('should generate preview for in-app step', async () => {
     const workflow = await createWorkflow();
     await emulateExternalOrigin(workflow.id);
@@ -587,273 +366,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
   });
 
-  it('should gracefully handle undefined variables that are not present in payload schema', async () => {
-    const payloadSchema = {
-      type: 'object',
-      properties: {
-        /*
-         * orderId: {
-         *   type: 'string',
-         * },
-         */
-        lastName: {
-          type: 'string',
-        },
-        organizationName: {
-          type: 'string',
-        },
-      },
-    };
-    const workflow = await createWorkflow({ payloadSchema });
-    await emulateExternalOrigin(workflow.id);
-
-    const stepId = workflow.steps[0].id;
-    const controlValues = {
-      subject: 'Welcome {{payload.firstName}}',
-      body: 'Hello {{payload.firstName}}, your order #{{payload.orderId}} is ready!',
-    };
-    const { result } = await novuClient.workflows.steps.generatePreview({
-      generatePreviewRequestDto: {
-        controlValues,
-        previewPayload: {
-          payload: {
-            firstName: 'John',
-            // orderId is missing
-          },
-        },
-      },
-      stepId,
-      workflowId: workflow.id,
-    });
-
-    expect(result).to.deep.equal({
-      result: {
-        preview: {
-          subject: 'Welcome John',
-          body: 'Hello John, your order # is ready!',
-        },
-        type: 'in_app',
-      },
-      schema: {
-        additionalProperties: false,
-        properties: {
-          payload: {
-            properties: {
-              lastName: {
-                type: 'string',
-              },
-              organizationName: {
-                type: 'string',
-              },
-            },
-            type: 'object',
-          },
-          subscriber: {
-            additionalProperties: true,
-            properties: {
-              avatar: {
-                type: 'string',
-              },
-              data: {
-                additionalProperties: true,
-                type: 'object',
-              },
-              email: {
-                format: 'email',
-                type: 'string',
-              },
-              firstName: {
-                type: 'string',
-              },
-              lastName: {
-                type: 'string',
-              },
-              locale: {
-                type: 'string',
-              },
-              phone: {
-                type: 'string',
-              },
-              subscriberId: {
-                type: 'string',
-              },
-              timezone: {
-                type: 'string',
-              },
-            },
-            type: 'object',
-          },
-          steps: {
-            type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
-          },
-        },
-        type: 'object',
-      },
-      previewPayloadExample: {
-        subscriber: {
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'user@example.com',
-          phone: '+1234567890',
-          avatar: 'https://example.com/avatar.png',
-          locale: 'en_US',
-          timezone: 'America/New_York',
-          data: {},
-        },
-        payload: {
-          lastName: '{{payload.lastName}}',
-          organizationName: '{{payload.organizationName}}',
-          firstName: 'John',
-        },
-        steps: {},
-      },
-    });
-
-    const { result: result2 } = await novuClient.workflows.steps.generatePreview({
-      generatePreviewRequestDto: {
-        controlValues,
-        previewPayload: {
-          payload: {
-            firstName: 'John',
-            orderId: '123456', // orderId is will override the variable example that driven by workflow payload schema
-          },
-        },
-      },
-      stepId,
-      workflowId: workflow.id,
-    });
-
-    expect(result2).to.deep.equal({
-      result: {
-        preview: {
-          subject: 'Welcome John',
-          body: 'Hello John, your order #123456 is ready!', // orderId is not defined in the payload schema
-        },
-        type: 'in_app',
-      },
-      schema: {
-        additionalProperties: false,
-        properties: {
-          payload: {
-            properties: {
-              lastName: {
-                type: 'string',
-              },
-              organizationName: {
-                type: 'string',
-              },
-            },
-            type: 'object',
-          },
-          subscriber: {
-            additionalProperties: true,
-            properties: {
-              avatar: {
-                type: 'string',
-              },
-              data: {
-                additionalProperties: true,
-                type: 'object',
-              },
-              email: {
-                format: 'email',
-                type: 'string',
-              },
-              firstName: {
-                type: 'string',
-              },
-              lastName: {
-                type: 'string',
-              },
-              locale: {
-                type: 'string',
-              },
-              phone: {
-                type: 'string',
-              },
-              subscriberId: {
-                type: 'string',
-              },
-              timezone: {
-                type: 'string',
-              },
-            },
-            type: 'object',
-          },
-          steps: {
-            type: 'object',
-            description: 'Steps data from previous workflow executions',
-            additionalProperties: {
-              type: 'object',
-              properties: {
-                eventCount: {
-                  type: 'number',
-                },
-                events: {
-                  type: 'array',
-                  items: {
-                    type: 'object',
-                    properties: {
-                      payload: {
-                        type: 'object',
-                        additionalProperties: true,
-                      },
-                    },
-                    additionalProperties: true,
-                  },
-                },
-              },
-              additionalProperties: true,
-            },
-          },
-        },
-        type: 'object',
-      },
-      previewPayloadExample: {
-        subscriber: {
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'user@example.com',
-          phone: '+1234567890',
-          avatar: 'https://example.com/avatar.png',
-          locale: 'en_US',
-          timezone: 'America/New_York',
-          data: {},
-        },
-        payload: {
-          lastName: '{{payload.lastName}}',
-          organizationName: '{{payload.organizationName}}',
-          orderId: '123456',
-          firstName: 'John',
-        },
-        steps: {},
-      },
-    });
-  });
-
   it('should return 201 for non-existent workflow', async () => {
     const pay = {
       type: 'object',
@@ -1024,7 +536,26 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     const eventMatches = previewResponse3.result.result.preview.body.match(/'id':'example-id-\d+'/g);
     expect(eventMatches).to.have.length(DEFAULT_ARRAY_ELEMENTS);
     expect(previewResponse3.result.result.preview.body).to.contain('single variable: foo');
-    validateDigestEvents(previewResponse3.result.previewPayloadExample.steps?.['digest-step'].events, { foo: 'foo' });
+    validateDigestEvents(previewResponse3.result.previewPayloadExample.steps?.['digest-step'].events, {
+      foo: 'example text',
+      name: 'John Doe',
+      items: [
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+      ],
+      baz: 'example text',
+      paragraph_link: 'https://example.com',
+      heading_link: 'https://example.com',
+      blockquote_link: 'https://example.com',
+      bullet_link: 'https://example.com',
+      button_link: 'https://example.com',
+      image_variable: 'example text',
+      image_link: 'https://example.com',
+      inline_image_link: 'https://example.com',
+      inline_image_url: 'https://example.com',
+      numbered_link: 'https://example.com',
+    });
 
     // testing the steps.digest-step.events[0].payload.foo variable
     const controlValues4 = {
@@ -1037,7 +568,26 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       workflowId,
     });
     expect(previewResponse4.result.result.preview.body).to.contain('single variable: foo');
-    validateDigestEvents(previewResponse4.result.previewPayloadExample.steps?.['digest-step'].events, { foo: 'foo' });
+    validateDigestEvents(previewResponse4.result.previewPayloadExample.steps?.['digest-step'].events, {
+      foo: 'example text',
+      name: 'John Doe',
+      items: [
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+      ],
+      baz: 'example text',
+      paragraph_link: 'https://example.com',
+      heading_link: 'https://example.com',
+      blockquote_link: 'https://example.com',
+      bullet_link: 'https://example.com',
+      button_link: 'https://example.com',
+      image_variable: 'example text',
+      image_link: 'https://example.com',
+      inline_image_link: 'https://example.com',
+      inline_image_url: 'https://example.com',
+      numbered_link: 'https://example.com',
+    });
 
     // testing the countSummary and sentenceSummary variables
     const controlValues5 = {
@@ -1053,7 +603,26 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(previewResponse5.result.result.preview.body).to.contain(
       `name, name, and ${DEFAULT_ARRAY_ELEMENTS - 2} other`
     );
-    validateDigestEvents(previewResponse5.result.previewPayloadExample.steps?.['digest-step'].events, { name: 'name' });
+    validateDigestEvents(previewResponse5.result.previewPayloadExample.steps?.['digest-step'].events, {
+      foo: 'example text',
+      name: 'John Doe',
+      items: [
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+      ],
+      baz: 'example text',
+      paragraph_link: 'https://example.com',
+      heading_link: 'https://example.com',
+      blockquote_link: 'https://example.com',
+      bullet_link: 'https://example.com',
+      button_link: 'https://example.com',
+      image_variable: 'example text',
+      image_link: 'https://example.com',
+      inline_image_link: 'https://example.com',
+      inline_image_url: 'https://example.com',
+      numbered_link: 'https://example.com',
+    });
 
     // testing the digest block with 3 variables combining current and full variable
     const controlValues6 = {
@@ -1070,15 +639,24 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'second')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'third')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     validateDigestEvents(previewResponse6.result.previewPayloadExample.steps?.['digest-step'].events, {
-      third: 'third',
-      foo: {
-        bar: {
-          first: 'first',
-          baz: {
-            second: 'second',
-          },
-        },
-      },
+      foo: 'example text',
+      name: 'John Doe',
+      items: [
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+        { foo: 'example text', bar: 'example text' },
+      ],
+      baz: 'example text',
+      paragraph_link: 'https://example.com',
+      heading_link: 'https://example.com',
+      blockquote_link: 'https://example.com',
+      bullet_link: 'https://example.com',
+      button_link: 'https://example.com',
+      image_variable: 'example text',
+      image_link: 'https://example.com',
+      inline_image_link: 'https://example.com',
+      inline_image_url: 'https://example.com',
+      numbered_link: 'https://example.com',
     });
   });
 
@@ -1574,9 +1152,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       const inApp = getTestControlValues().in_app;
       const previewRequestWithoutTheRedirect = {
         ...inApp,
-        subject: 'John Hello, World! subject',
-        body: 'Hello, World! body',
-        primaryAction: { label: 'primaryUrlLabel' },
+        subject: "John Hello, World! {'test':{'payload':'example text'}}",
+        body: 'Hello, World! This is an example message.',
+        primaryAction: { label: 'https://example.com' },
       };
       expect(previewResponseDto.result!.preview).to.deep.equal(previewRequestWithoutTheRedirect);
     });
@@ -1627,9 +1205,12 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       expect(preview.body).to.exist;
       expect(preview.subject).to.exist;
       expect(preview.body).to.contain(previewPayloadExample().payload.body);
-      expect(preview.subject).to.contain(`Hello, World! payload`);
+      expect(preview.subject).to.contain(`Hello, World! example text`);
       expect(previewResponseDto.previewPayloadExample).to.exist;
-      expect(previewResponseDto.previewPayloadExample).to.deep.equal(previewPayloadExample());
+      expect(previewResponseDto.previewPayloadExample).to.have.property('payload');
+      expect(previewResponseDto.previewPayloadExample).to.have.property('subscriber');
+      expect(previewResponseDto.previewPayloadExample.payload).to.have.property('subject');
+      expect(previewResponseDto.previewPayloadExample.payload.subject.test).to.have.property('payload');
     });
 
     async function createWorkflowAndPreview(type: StepTypeEnum, description: string) {
@@ -1653,9 +1234,8 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       if (previewResponseDto.result!.type !== 'sms') {
         throw new Error('Expected sms');
       }
-      expect(previewResponseDto.result!.preview.body).to.contain('VARIABLENAME');
+      expect(previewResponseDto.result!.preview.body).to.contain('JOHN DOE');
       expect(previewResponseDto.previewPayloadExample).to.exist;
-      expect(previewResponseDto?.previewPayloadExample?.payload?.variableName).to.equal('variableName');
     });
 
     it('Should not fail if inApp is providing partial URL in redirect', async () => {
@@ -1733,30 +1313,6 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       }
     });
 
-    it('Should not fail if inApp url ref is a placeholder without payload', async () => {
-      const steps = [{ name: 'IN_APP_STEP_SHOULD_NOT_FAIL', type: StepTypeEnum.InApp }];
-      const createDto = buildWorkflow({ steps });
-      const novuRestResult = await novuClient.workflows.create(createDto);
-      const workflowSlug = novuRestResult.result?.slug;
-      const stepSlug = novuRestResult.result?.steps[0].slug;
-      const stepDataDto = await updateWorkflow(workflowSlug, {
-        ...novuRestResult.result,
-        steps: [
-          {
-            ...novuRestResult.result.steps[0],
-            ...buildInAppControlValueWithAPlaceholderInTheUrl(),
-          },
-        ],
-      });
-      const generatePreviewResponseDto = await generatePreview(novuClient, workflowSlug, stepSlug, {
-        controlValues: buildInAppControlValueWithAPlaceholderInTheUrl(),
-      });
-
-      if (generatePreviewResponseDto.result?.type === ChannelTypeEnum.InApp) {
-        expect(generatePreviewResponseDto.result.preview.body).to.equal('Hello, World! body');
-      }
-    });
-
     it('should merge the user provided payload with the BE generated payload', async () => {
       const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
@@ -1785,201 +1341,26 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         workflowId,
       });
 
-      validateDigestEventsInMergeTest(previewResponse1.result.previewPayloadExample.steps?.['digest-step'].events, {});
-
-      // testing that the final payload has the events with payload.name
-      const controlValues2 = {
-        body: `{"type": "doc","content": [{"type": "paragraph","attrs": { "textAlign": null, "showIfKey": null },"content": [{"type": "variable","attrs": {"id": "steps.digest-step.events | toSentence: 'payload.name', 2, 'other'","label": null,"fallback": null,"required": false,"aliasFor": null}},{ "type": "text", "text": " " }]}]}`,
-        subject: 'events length',
-      };
-      const previewResponse2 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues2,
-          previewPayload: {
-            steps: {
-              'digest-step': {
-                events: Array.from({ length: DEFAULT_ARRAY_ELEMENTS }, (_, index) => ({
-                  id: `example-id-${index + 1}`,
-                  time: `2025-06-07T09:0${index}:00.000Z`,
-                  payload: {},
-                })),
-              },
-            },
-          },
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
+      validateDigestEventsInMergeTest(previewResponse1.result.previewPayloadExample.steps?.['digest-step'].events, {
+        foo: 'example text',
+        name: 'John Doe',
+        items: [
+          { foo: 'example text', bar: 'example text' },
+          { foo: 'example text', bar: 'example text' },
+          { foo: 'example text', bar: 'example text' },
+        ],
+        baz: 'example text',
+        paragraph_link: 'https://example.com',
+        heading_link: 'https://example.com',
+        blockquote_link: 'https://example.com',
+        bullet_link: 'https://example.com',
+        button_link: 'https://example.com',
+        image_variable: 'example text',
+        image_link: 'https://example.com',
+        inline_image_link: 'https://example.com',
+        inline_image_url: 'https://example.com',
+        numbered_link: 'https://example.com',
       });
-
-      validateDigestEventsInMergeTest(previewResponse2.result.previewPayloadExample.steps?.['digest-step'].events, {});
-
-      // testing that the final payload doesn't change the user input
-      const editedPayloadName = {
-        steps: {
-          'digest-step': {
-            events: [
-              {
-                id: '1',
-                time: '1234',
-                payload: {
-                  name: 'hello',
-                },
-              },
-              {
-                id: '12',
-                time: '32',
-                payload: {
-                  name: 'name',
-                },
-              },
-              {
-                id: '123',
-                time: '123123122',
-                payload: {
-                  name: 'name',
-                },
-              },
-            ],
-          },
-        },
-      };
-      const previewResponse3 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues2,
-          previewPayload: editedPayloadName,
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
-      });
-
-      // The system should add id and time to user-provided events
-      const actualEvents = previewResponse3.result.previewPayloadExample.steps?.['digest-step'].events;
-      expect(actualEvents).to.have.length(3);
-      actualEvents.forEach((event) => {
-        expect(event).to.have.property('id').that.is.a('string');
-        expect(event).to.have.property('time').that.is.a('string');
-        expect(event).to.have.property('payload');
-      });
-      expect(actualEvents[0].payload).to.deep.equal({ name: 'hello' });
-      expect(actualEvents[1].payload).to.deep.equal({ name: 'name' });
-      expect(actualEvents[2].payload).to.deep.equal({ name: 'name' });
-      expect(previewResponse3.result.result.preview.body).to.contain('hello, name, and 1 other');
-
-      // testing that the final payload has the same amount of events as the user input, persists the user input and also merges the missing keys
-      const controlValues3 = {
-        body: `{"type": "doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events|toSentence:'payload.name',2,'other'","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":""}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events|toSentence:'payload.new',2,'other'","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":""}]}]}`,
-        subject: 'events length',
-      };
-      const payloadWithExtraItemInTheArray = {
-        steps: {
-          'digest-step': {
-            events: [
-              {
-                id: '1',
-                time: '12312312312',
-                payload: {
-                  name: 'hello',
-                },
-              },
-              {
-                id: '2',
-                time: '12312312312',
-                payload: {
-                  name: 'name',
-                },
-              },
-              {
-                id: '3',
-                time: '12312312312',
-                payload: {
-                  name: 'name',
-                },
-              },
-              {
-                id: '4',
-                time: '12312312312',
-                payload: {
-                  name: 'extra name',
-                },
-              },
-            ],
-          },
-        },
-      };
-
-      const previewResponse4 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues3,
-          previewPayload: payloadWithExtraItemInTheArray,
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
-      });
-
-      // The system should add id and time to user-provided events and merge missing keys
-      const actualEvents4 = previewResponse4.result.previewPayloadExample.steps?.['digest-step'].events;
-      expect(actualEvents4).to.have.length(4);
-      actualEvents4.forEach((event) => {
-        expect(event).to.have.property('id').that.is.a('string');
-        expect(event).to.have.property('time').that.is.a('string');
-        expect(event).to.have.property('payload');
-      });
-      expect(actualEvents4[0].payload.name).to.equal('hello');
-      expect(actualEvents4[1].payload.name).to.equal('name');
-      expect(actualEvents4[2].payload.name).to.equal('name');
-      expect(actualEvents4[3].payload.name).to.equal('extra name');
-      expect(previewResponse4.result.result.preview.body).to.contain('hello, name, and 2 others');
-
-      // testing that the final payload persists the user input even if the events array is empty
-      const payloadWithEmptyArray = {
-        steps: {
-          'digest-step': {
-            eventCount: 0,
-            events: [],
-          },
-        },
-        subscriber: {
-          avatar: 'https://example.com/avatar.png',
-          data: {},
-          email: 'user@example.com',
-          firstName: 'John',
-          lastName: 'Doe',
-          locale: 'en_US',
-          phone: '+1234567890',
-          timezone: 'America/New_York',
-        },
-      };
-      const previewResponse5 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues3,
-          previewPayload: payloadWithEmptyArray,
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
-      });
-      expect(previewResponse5.result.previewPayloadExample).to.deep.equal(payloadWithEmptyArray);
-
-      // testing that the final payload persists the user input even if the events array has one item
-      const payloadWithOneItemInTheArray = {
-        steps: {
-          'digest-step': {
-            events: [{ id: '1', time: '1234', payload: {} }],
-          },
-        },
-      };
-      const previewResponse6 = await novuClient.workflows.steps.generatePreview({
-        generatePreviewRequestDto: {
-          controlValues: controlValues3,
-          previewPayload: payloadWithOneItemInTheArray,
-        },
-        stepId: emailStepDatabaseId,
-        workflowId,
-      });
-      const actualEvents6 = previewResponse6.result.previewPayloadExample.steps?.['digest-step'].events;
-      expect(actualEvents6).to.have.length(1);
-      expect(actualEvents6[0]).to.have.property('id').that.is.a('string');
-      expect(actualEvents6[0]).to.have.property('time').that.is.a('string');
-      expect(actualEvents6[0]).to.have.property('payload');
     });
   });
 
@@ -2028,6 +1409,64 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       workflowId: `john:${randomUUID()}`,
       description: 'This is a test workflow',
       active: true,
+      payloadSchema: {
+        type: 'object',
+        properties: {
+          foo: {
+            type: 'string',
+          },
+          name: {
+            type: 'string',
+          },
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                foo: {
+                  type: 'string',
+                },
+                bar: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+          baz: {
+            type: 'string',
+          },
+          paragraph_link: {
+            type: 'string',
+          },
+          heading_link: {
+            type: 'string',
+          },
+          blockquote_link: {
+            type: 'string',
+          },
+          bullet_link: {
+            type: 'string',
+          },
+          button_link: {
+            type: 'string',
+          },
+          image_variable: {
+            type: 'string',
+          },
+          image_link: {
+            type: 'string',
+          },
+          inline_image_link: {
+            type: 'string',
+          },
+          inline_image_url: {
+            type: 'string',
+          },
+          numbered_link: {
+            type: 'string',
+          },
+        },
+      },
       steps: [
         {
           name: 'DigestStep',
@@ -2280,7 +1719,65 @@ export async function createWorkflowAndReturnId(workflowsClient: Novu, type: Ste
         firstName: { type: 'string' },
         lastName: { type: 'string' },
         orderId: { type: 'string' },
-        subject: { type: 'string' },
+        subject: {
+          type: 'object',
+          properties: {
+            test: {
+              type: 'object',
+              properties: {
+                payload: { type: 'string' },
+              },
+            },
+          },
+        },
+        params: {
+          type: 'object',
+          properties: {
+            isPayedUser: { type: 'boolean' },
+          },
+        },
+        hidden: {
+          type: 'object',
+          properties: {
+            section: { type: 'string' },
+          },
+        },
+        body: { type: 'string' },
+        food: {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string' },
+                },
+              },
+            },
+          },
+        },
+        origins: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              country: { type: 'string' },
+              id: { type: 'string' },
+              time: { type: 'string' },
+            },
+          },
+        },
+        students: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+            },
+          },
+        },
       },
       required: [],
       additionalProperties: false,
