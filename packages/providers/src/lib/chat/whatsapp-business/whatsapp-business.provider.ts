@@ -12,7 +12,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
   private readonly axiosClient: AxiosInstance;
-  private readonly baseUrl = 'https://graph.facebook.com/v18.0/';
+  private readonly baseUrl = 'https://graph.facebook.com/v22.0/';
 
   constructor(
     private config: {
