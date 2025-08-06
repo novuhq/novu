@@ -63,3 +63,7 @@ export class GetWorkflowRunResponseBaseDto {
   @IsString()
   updatedAt: string;
 }
+
+export enum ReportTypeEnum {
+  DELIVERY_TREND = 'delivery-trend',
+}

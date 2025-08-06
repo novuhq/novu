@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
-import { format } from 'date-fns';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
@@ -161,14 +160,72 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     }
   }
 
+  async getDeliveryTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; step_type: string; count: string }>> {
+    // Use ClickHouse aggregation query to get counts by date and step_type
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        step_type,
+        count(*) as count
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+      GROUP BY date, step_type
+      ORDER BY date, step_type
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    try {
+      const result = await this.clickhouseService.query<{
+        date: string;
+        step_type: string;
+        count: string;
+      }>({
+        query,
+        params,
+      });
+
+      return result.data;
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+        'Failed to fetch step runs aggregated data'
+      );
+
+      return [];
+    }
+  }
+
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
-    const createdAt = new Date(job.createdAt || now);
+    const createdAt = new Date(now);
     const stepType = this.mapStepTypeEnumToStepType(job.type || job.step.template?.type);
 
     return {
-      created_at: this.formatDateTime64(createdAt),
-      updated_at: this.formatDateTime64(now),
+      created_at: LogRepository.formatDateTime64(createdAt),
+      updated_at: LogRepository.formatDateTime64(now),
 
       // Core step run identification
       step_run_id: job._id,
@@ -198,9 +255,5 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       // Correlation
       transaction_id: job.transactionId,
     };
-  }
-
-  private formatDateTime64(date: Date): Date {
-    return format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS") as unknown as Date;
   }
 }
