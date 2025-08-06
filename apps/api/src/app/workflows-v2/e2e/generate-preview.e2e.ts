@@ -1660,7 +1660,24 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     it('Should not fail if inApp is providing partial URL in redirect', async () => {
       const steps = [{ name: 'IN_APP_STEP_SHOULD_NOT_FAIL', type: StepTypeEnum.InApp }];
-      const createDto = buildWorkflow({ steps });
+      const createDto = buildWorkflow({
+        steps,
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            placeholder: {
+              type: 'object',
+              properties: {
+                body: { type: 'string' },
+              },
+            },
+            secondaryUrl: { type: 'string' },
+            subject: { type: 'string' },
+          },
+          required: [],
+          additionalProperties: false,
+        },
+      });
       const novuRestResult = await novuClient.workflows.create(createDto);
       const controlValues = {
         subject: `{{subscriber.firstName}} Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
@@ -2245,7 +2262,30 @@ export const getTestControlValues = (stepId?: string) => ({
 });
 
 export async function createWorkflowAndReturnId(workflowsClient: Novu, type: StepTypeEnum) {
-  const createWorkflowDto = buildWorkflow();
+  const createWorkflowDto = buildWorkflow({
+    payloadSchema: {
+      type: 'object',
+      properties: {
+        variableName: { type: 'string' },
+        placeholder: {
+          type: 'object',
+          properties: {
+            body: { type: 'string' },
+            random: { type: 'string' },
+          },
+        },
+        primaryUrlLabel: { type: 'string' },
+        secondaryUrl: { type: 'string' },
+        organizationName: { type: 'string' },
+        firstName: { type: 'string' },
+        lastName: { type: 'string' },
+        orderId: { type: 'string' },
+        subject: { type: 'string' },
+      },
+      required: [],
+      additionalProperties: false,
+    },
+  });
   createWorkflowDto.steps[0].type = type as any;
   const workflowResult = await workflowsClient.workflows.create(createWorkflowDto);
 
