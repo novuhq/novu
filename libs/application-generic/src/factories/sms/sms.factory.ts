@@ -1,4 +1,4 @@
-import { IntegrationEntity } from "@novu/dal";
+import { IntegrationEntity } from '@novu/dal';
 import {
   AfricasTalkingSmsHandler,
   AfroSmsHandler,
@@ -33,9 +33,9 @@ import {
   TelnyxHandler,
   TermiiSmsHandler,
   TwilioHandler,
-} from "./handlers";
-import { ISmsFactory, ISmsHandler } from "./interfaces";
-import { SmsmodeHandler } from "./handlers/smsmode.handler";
+} from './handlers';
+import { SmsmodeHandler } from './handlers/smsmode.handler';
+import { ISmsFactory, ISmsHandler } from './interfaces';
 
 export class SmsFactory implements ISmsFactory {
   handlers: ISmsHandler[] = [
@@ -77,9 +77,7 @@ export class SmsFactory implements ISmsFactory {
 
   getHandler(integration: IntegrationEntity) {
     const handler =
-      this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(integration.providerId, integration.channel)
-      ) ?? null;
+      this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
     if (!handler) return null;
 

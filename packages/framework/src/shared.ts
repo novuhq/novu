@@ -24,21 +24,15 @@ export interface IResponseError {
  * Validate (type-guard) that an error response matches our IResponseError interface.
  */
 export function checkIsResponseError(err: unknown): err is IResponseError {
-  return (
-    !!err &&
-    typeof err === "object" &&
-    "error" in err &&
-    "message" in err &&
-    "statusCode" in err
-  );
+  return !!err && typeof err === 'object' && 'error' in err && 'message' in err && 'statusCode' in err;
 }
 
 export enum ChannelTypeEnum {
-  IN_APP = "in_app",
-  EMAIL = "email",
-  SMS = "sms",
-  CHAT = "chat",
-  PUSH = "push",
+  IN_APP = 'in_app',
+  EMAIL = 'email',
+  SMS = 'sms',
+  CHAT = 'chat',
+  PUSH = 'push',
 }
 
 export interface IAttachmentOptions {
@@ -87,115 +81,110 @@ export interface IChannelCredentials {
 }
 
 export interface ITopic {
-  type: "Topic";
+  type: 'Topic';
   topicKey: string;
 }
 
-export type TriggerRecipientsPayload =
-  | string
-  | ISubscriberPayload
-  | ITopic
-  | ISubscriberPayload[]
-  | ITopic[];
+export type TriggerRecipientsPayload = string | ISubscriberPayload | ITopic | ISubscriberPayload[] | ITopic[];
 
 export enum TriggerEventStatusEnum {
-  ERROR = "error",
-  NOT_ACTIVE = "trigger_not_active",
-  NO_WORKFLOW_ACTIVE_STEPS = "no_workflow_active_steps_defined",
-  NO_WORKFLOW_STEPS = "no_workflow_steps_defined",
-  PROCESSED = "processed",
+  ERROR = 'error',
+  NOT_ACTIVE = 'trigger_not_active',
+  NO_WORKFLOW_ACTIVE_STEPS = 'no_workflow_active_steps_defined',
+  NO_WORKFLOW_STEPS = 'no_workflow_steps_defined',
+  PROCESSED = 'processed',
   // TODO: Seems not used. Remove.
-  SUBSCRIBER_MISSING = "subscriber_id_missing",
-  TENANT_MISSING = "no_tenant_found",
+  SUBSCRIBER_MISSING = 'subscriber_id_missing',
+  TENANT_MISSING = 'no_tenant_found',
 }
 
 export enum EmailProviderIdEnum {
-  EmailJS = "emailjs",
-  Mailgun = "mailgun",
-  Mailjet = "mailjet",
-  Mandrill = "mandrill",
-  CustomSMTP = "nodemailer",
-  Postmark = "postmark",
-  SendGrid = "sendgrid",
-  Sendinblue = "sendinblue",
-  SES = "ses",
-  NetCore = "netcore",
-  Infobip = "infobip-email",
-  Resend = "resend",
-  Plunk = "plunk",
-  MailerSend = "mailersend",
-  Mailtrap = "mailtrap",
-  Clickatell = "clickatell",
-  Outlook365 = "outlook365",
-  Novu = "novu-email",
-  SparkPost = "sparkpost",
-  EmailWebhook = "email-webhook",
-  Braze = "braze",
+  EmailJS = 'emailjs',
+  Mailgun = 'mailgun',
+  Mailjet = 'mailjet',
+  Mandrill = 'mandrill',
+  CustomSMTP = 'nodemailer',
+  Postmark = 'postmark',
+  SendGrid = 'sendgrid',
+  Sendinblue = 'sendinblue',
+  SES = 'ses',
+  NetCore = 'netcore',
+  Infobip = 'infobip-email',
+  Resend = 'resend',
+  Plunk = 'plunk',
+  MailerSend = 'mailersend',
+  Mailtrap = 'mailtrap',
+  Clickatell = 'clickatell',
+  Outlook365 = 'outlook365',
+  Novu = 'novu-email',
+  SparkPost = 'sparkpost',
+  EmailWebhook = 'email-webhook',
+  Braze = 'braze',
 }
 
 export enum SmsProviderIdEnum {
-  Nexmo = "nexmo",
-  Plivo = "plivo",
-  Sms77 = "sms77",
-  SmsCentral = "sms-central",
-  SNS = "sns",
-  Telnyx = "telnyx",
-  Twilio = "twilio",
-  Gupshup = "gupshup",
-  Firetext = "firetext",
-  Infobip = "infobip-sms",
-  BurstSms = "burst-sms",
-  BulkSms = "bulk-sms",
-  ISendSms = "isend-sms",
-  Clickatell = "clickatell",
-  FortySixElks = "forty-six-elks",
-  Kannel = "kannel",
-  Maqsam = "maqsam",
-  Termii = "termii",
-  AfricasTalking = "africas-talking",
-  Novu = "novu-sms",
-  Sendchamp = "sendchamp",
-  GenericSms = "generic-sms",
-  Clicksend = "clicksend",
-  Bandwidth = "bandwidth",
-  MessageBird = "messagebird",
-  Simpletexting = "simpletexting",
-  AzureSms = "azure-sms",
-  RingCentral = "ring-central",
-  BrevoSms = "brevo-sms",
-  EazySms = "eazy-sms",
-  Mobishastra = "mobishastra",
-  AfroSms = "afro-message",
-  Smsmode = "smsmode",
-  IMedia = "imedia",
+  Nexmo = 'nexmo',
+  Plivo = 'plivo',
+  Sms77 = 'sms77',
+  SmsCentral = 'sms-central',
+  SNS = 'sns',
+  Telnyx = 'telnyx',
+  Twilio = 'twilio',
+  Gupshup = 'gupshup',
+  Firetext = 'firetext',
+  Infobip = 'infobip-sms',
+  BurstSms = 'burst-sms',
+  BulkSms = 'bulk-sms',
+  ISendSms = 'isend-sms',
+  Clickatell = 'clickatell',
+  FortySixElks = 'forty-six-elks',
+  Kannel = 'kannel',
+  Maqsam = 'maqsam',
+  Termii = 'termii',
+  AfricasTalking = 'africas-talking',
+  Novu = 'novu-sms',
+  Sendchamp = 'sendchamp',
+  GenericSms = 'generic-sms',
+  Clicksend = 'clicksend',
+  Bandwidth = 'bandwidth',
+  MessageBird = 'messagebird',
+  Simpletexting = 'simpletexting',
+  AzureSms = 'azure-sms',
+  RingCentral = 'ring-central',
+  BrevoSms = 'brevo-sms',
+  EazySms = 'eazy-sms',
+  Mobishastra = 'mobishastra',
+  AfroSms = 'afro-message',
+  Smsmode = 'smsmode',
+  IMedia = 'imedia',
 }
 
 export enum ChatProviderIdEnum {
-  Slack = "slack",
-  Discord = "discord",
-  MsTeams = "msteams",
-  Mattermost = "mattermost",
-  Ryver = "ryver",
-  Zulip = "zulip",
-  GrafanaOnCall = "grafana-on-call",
-  GetStream = "getstream",
-  RocketChat = "rocket-chat",
-  WhatsAppBusiness = "whatsapp-business",
-  ChatWebhook = "chat-webhook",
+  Slack = 'slack',
+  Discord = 'discord',
+  MsTeams = 'msteams',
+  Mattermost = 'mattermost',
+  Ryver = 'ryver',
+  Zulip = 'zulip',
+  GrafanaOnCall = 'grafana-on-call',
+  GetStream = 'getstream',
+  RocketChat = 'rocket-chat',
+  WhatsAppBusiness = 'whatsapp-business',
+  ChatWebhook = 'chat-webhook',
 }
 
 export enum PushProviderIdEnum {
-  FCM = "fcm",
-  APNS = "apns",
-  EXPO = "expo",
-  OneSignal = "one-signal",
-  Pushpad = "pushpad",
-  PushWebhook = "push-webhook",
-  PusherBeams = "pusher-beams",
+  FCM = 'fcm',
+  APNS = 'apns',
+  EXPO = 'expo',
+  OneSignal = 'one-signal',
+  Pushpad = 'pushpad',
+  PushWebhook = 'push-webhook',
+  PusherBeams = 'pusher-beams',
 }
 
 export enum InAppProviderIdEnum {
-  Novu = "novu",
+  Novu = 'novu',
 }
 
 /**
