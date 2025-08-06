@@ -51,23 +51,3 @@ jobs:
       clerk_is_ee_auth_enabled: true
       new_dashboard_url: https://dashboard.novu.co
     secrets: inherit
-
-  webhook_notification:
-    needs: [deploy_web_eu, deploy_web_us]
-    runs-on: ubuntu-latest
-    if: always() && needs.deploy_web_eu.result == 'success' && needs.deploy_web_us.result == 'success'
-    
-    steps:
-      - name: Send webhook notification for US production
-        run: |
-          curl -X POST https://webhooks.bug0.com/integrations/test/run \
-            -H "Content-Type: application/json" \
-            -H "x-api-key: ${{ secrets.SECRET_KEY }}" \
-            -d '{"url": "https://dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
-      
-      - name: Send webhook notification for EU production
-        run: |
-          curl -X POST https://webhooks.bug0.com/integrations/test/run \
-            -H "Content-Type: application/json" \
-            -H "x-api-key: ${{ secrets.SECRET_KEY }}" \
-            -d '{"url": "https://eu.dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
