@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 export enum CredentialsKeyEnum {
   ApiKey = 'apiKey',
   User = 'user',
@@ -106,6 +104,8 @@ export enum SmsProviderIdEnum {
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
   AfroSms = 'afro-message',
+  Smsmode = 'smsmode',
+  IMedia = 'imedia',
 }
 
 export enum ChatProviderIdEnum {

@@ -1,11 +1,11 @@
-import { locales } from '@/utils/locales';
-import { cn } from '@/utils/ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowDownSLine, RiCheckLine } from 'react-icons/ri';
-import { Button, ButtonProps } from './button';
-import { Input } from './input';
+import { locales } from '@/utils/locales';
+import { cn } from '@/utils/ui';
 import { FlagCircle, StackedFlagCircles } from '../flag-circle';
 import TruncatedText from '../truncated-text';
+import { Button, ButtonProps } from './button';
+import { Input } from './input';
 
 type BaseLocaleSelectProps = {
   disabled?: boolean;

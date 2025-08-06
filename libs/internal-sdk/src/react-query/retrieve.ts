@@ -80,7 +80,7 @@ export function setRetrieveData(
       url?: string | undefined;
       urlPattern?: string | undefined;
       transactionId?: string | undefined;
-      created?: number | undefined;
+      createdGte?: number | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -101,7 +101,7 @@ export function invalidateRetrieve(
       url?: string | undefined;
       urlPattern?: string | undefined;
       transactionId?: string | undefined;
-      created?: number | undefined;
+      createdGte?: number | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -139,7 +139,7 @@ export function buildRetrieveQuery(
       url: request.url,
       urlPattern: request.urlPattern,
       transactionId: request.transactionId,
-      created: request.created,
+      createdGte: request.createdGte,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function retrieveQueryFn(ctx): Promise<RetrieveQueryData> {
@@ -166,7 +166,7 @@ export function queryKeyRetrieve(
     url?: string | undefined;
     urlPattern?: string | undefined;
     transactionId?: string | undefined;
-    created?: number | undefined;
+    createdGte?: number | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

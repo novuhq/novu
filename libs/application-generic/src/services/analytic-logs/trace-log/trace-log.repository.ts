@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { PinoLogger } from 'nestjs-pino';
+import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository } from '../log.repository';
-import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
-import { traceLogSchema, ORDER_BY, TABLE_NAME, Trace, EventType } from './trace-log.schema';
 import { getInsertOptions } from '../shared';
+import { EventType, ORDER_BY, TABLE_NAME, Trace, traceLogSchema } from './trace-log.schema';
 
 const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
   process.env.TRACES_ASYNC_INSERT,
@@ -184,6 +184,10 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Subscriber channel missing';
     case 'subscriber_validation_failed':
       return 'Subscriber validation failed';
+    case 'subscriber_missing_email_address':
+      return 'Subscriber missing email address';
+    case 'subscriber_missing_phone_number':
+      return 'Subscriber missing phone number';
 
     // Provider events
     case 'provider_error':
@@ -214,6 +218,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Bridge response received';
     case 'bridge_execution_failed':
       return 'Bridge execution failed';
+    case 'bridge_execution_skipped':
+      return 'Bridge execution skipped';
 
     // Webhook events
     case 'webhook_filter_retrying':
@@ -252,10 +258,14 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Chat all channels failed';
     case 'chat_phone_missing':
       return 'Chat phone missing';
+    case 'chat_some_channels_skipped':
+      return 'Chat some channels skipped';
 
     // Push events
     case 'push_tokens_missing':
       return 'Push tokens missing';
+    case 'push_some_channels_skipped':
+      return 'Push some channels skipped';
 
     // Reply events
     case 'reply_callback_missing':
@@ -271,11 +281,11 @@ export function mapEventTypeToTitle(eventType: EventType): string {
     case 'execution_detail':
       return 'Execution detail';
 
-    default:
+    default: {
       // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
-      // eslint-disable-next-line no-case-declarations
       const _exhaustiveCheck: never = eventType;
 
       return _exhaustiveCheck;
+    }
   }
 }

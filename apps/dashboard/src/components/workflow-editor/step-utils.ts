@@ -1,3 +1,6 @@
+import type { RuntimeIssue, StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
+import { flatten } from 'flat';
 import {
   DEFAULT_CONTROL_DELAY_AMOUNT,
   DEFAULT_CONTROL_DELAY_TYPE,
@@ -8,9 +11,6 @@ import {
   DEFAULT_CONTROL_DIGEST_UNIT,
   STEP_TYPE_LABELS,
 } from '@/utils/constants';
-import type { StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto, RuntimeIssue } from '@novu/shared';
-import { StepTypeEnum } from '@novu/shared';
-import { flatten } from 'flat';
 
 export const getFirstErrorMessage = (
   issues?: {

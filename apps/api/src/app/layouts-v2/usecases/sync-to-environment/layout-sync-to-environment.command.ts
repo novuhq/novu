@@ -1,7 +1,7 @@
 import { EnvironmentWithUserObjectCommand } from '@novu/application-generic';
-import { IsDefined, IsString, IsOptional } from 'class-validator';
-import { Exclude } from 'class-transformer';
 import { ClientSession } from '@novu/dal';
+import { Exclude } from 'class-transformer';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class LayoutSyncToEnvironmentCommand extends EnvironmentWithUserObjectCommand {
   @IsString()

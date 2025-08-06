@@ -1,13 +1,16 @@
-import { createEnvironment, deleteEnvironment, updateEnvironment } from '@/api/environments';
-import { QueryKeys } from '@/utils/query-keys';
 import { IEnvironment } from '@novu/shared';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  createEnvironment,
+  deleteEnvironment,
   diffEnvironments,
-  publishEnvironments,
   type IEnvironmentDiffResponse,
   type IEnvironmentPublishResponse,
+  publishEnvironments,
+  type ResourceToPublish,
+  updateEnvironment,
 } from '@/api/environments';
+import { QueryKeys } from '@/utils/query-keys';
 
 export function useCreateEnvironment() {
   const queryClient = useQueryClient();
@@ -65,7 +68,15 @@ export const useDiffEnvironments = ({
 export const usePublishEnvironments = () => {
   const queryClient = useQueryClient();
 
-  return useMutation<IEnvironmentPublishResponse, Error, { sourceEnvironmentId: string; targetEnvironmentId: string }>({
+  return useMutation<
+    IEnvironmentPublishResponse,
+    Error,
+    {
+      sourceEnvironmentId: string;
+      targetEnvironmentId: string;
+      resources?: ResourceToPublish[];
+    }
+  >({
     mutationFn: publishEnvironments,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });

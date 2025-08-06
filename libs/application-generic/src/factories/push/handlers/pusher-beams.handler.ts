@@ -1,9 +1,5 @@
 import { PusherBeamsPushProvider } from '@novu/providers';
-import {
-  ChannelTypeEnum,
-  ICredentials,
-  PushProviderIdEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, ICredentials, PushProviderIdEnum } from '@novu/shared';
 import { BasePushHandler } from './base.handler';
 
 export class PusherBeamsHandler extends BasePushHandler {

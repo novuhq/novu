@@ -1156,6 +1156,17 @@ export const eazySmsConfig: IConfigCredentials[] = [
   },
 ];
 
+export const iMediaConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+    description: 'Your iMedia API token',
+  },
+  ...smsConfigBase,
+];
+
 export const whatsAppBusinessConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
@@ -1207,6 +1218,17 @@ export const afroSmsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.SenderName,
     displayName: 'Sender Name',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const smsmodeProviderConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'API key provided by smsmode',
     type: 'string',
     required: true,
   },

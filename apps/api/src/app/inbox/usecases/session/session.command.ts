@@ -1,6 +1,6 @@
-import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
 import { Type } from 'class-transformer';
+import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 

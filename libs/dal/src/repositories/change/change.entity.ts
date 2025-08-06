@@ -1,8 +1,8 @@
-import { Types } from 'mongoose';
 import { ChangeEntityTypeEnum } from '@novu/shared';
+import { Types } from 'mongoose';
+import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
-import type { ChangePropsValueType } from '../../types/helpers';
 import { UserEntity } from '../user';
 
 export class ChangeEntity {
@@ -20,7 +20,6 @@ export class ChangeEntity {
 
   type: ChangeEntityTypeEnum;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   change: any;
 
   createdAt: string;

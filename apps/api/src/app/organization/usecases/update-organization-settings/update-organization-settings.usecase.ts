@@ -1,9 +1,9 @@
-import { Injectable, NotFoundException, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { AnalyticsService } from '@novu/application-generic';
 import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { ApiServiceLevelEnum, DEFAULT_LOCALE, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
-import { UpdateOrganizationSettingsCommand } from './update-organization-settings.command';
 import { GetOrganizationSettingsDto } from '../../dtos/get-organization-settings.dto';
+import { UpdateOrganizationSettingsCommand } from './update-organization-settings.command';
 
 @Injectable()
 export class UpdateOrganizationSettings {

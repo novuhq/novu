@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { addBreadcrumb } from '@sentry/node';
-import inlineCss from 'inline-css';
-
 import {
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
@@ -10,6 +7,8 @@ import {
   CreateExecutionDetailsCommand,
   DetailEnum,
   FeatureFlagsService,
+  GetLayoutCommand,
+  GetLayoutUseCase as GetLayoutUseCaseV1,
   GetNovuProviderCredentials,
   InstrumentUsecase,
   MailFactory,
@@ -37,11 +36,13 @@ import {
   IAttachmentOptions,
   IEmailOptions,
 } from '@novu/shared';
+import { addBreadcrumb } from '@sentry/node';
+import inlineCss from 'inline-css';
 
 import { PlatformException } from '../../../shared/utils';
-import { SendMessageResult } from './send-message-type.usecase';
 import { SendMessageBase } from './send-message.base';
-import { SendMessageCommand } from './send-message.command';
+import { SendMessageChannelCommand } from './send-message-channel.command';
+import { SendMessageResult } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -60,7 +61,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    private featureFlagService: FeatureFlagsService
+    private featureFlagService: FeatureFlagsService,
+    private getLayoutUseCaseV1: GetLayoutUseCaseV1
   ) {
     super(
       messageRepository,
@@ -74,10 +76,10 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
+  public async execute(command: SendMessageChannelCommand): Promise<SendMessageResult> {
     let integration: IntegrationEntity | undefined;
     const { subscriber } = command.compileContext;
-    const email = command.overrides?.email?.toRecipient || subscriber.email;
+    const email: string | undefined = command.overrides?.email?.toRecipient || subscriber?.email;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
     try {
@@ -151,9 +153,10 @@ export class SendMessageEmail extends SendMessageBase {
       };
     }
 
+    const bridgeOutputs = command.bridgeData?.outputs;
     const [template, overrideLayoutId] = await Promise.all([
       this.processVariants(command),
-      this.getOverrideLayoutId(command),
+      this.getOverrideLayoutId(command, !!bridgeOutputs),
       this.sendSelectedIntegrationExecution(command.job, integration),
     ]);
 
@@ -165,7 +168,6 @@ export class SendMessageEmail extends SendMessageBase {
       ...(command.overrides?.email || {}),
       ...(command.overrides?.[integration?.providerId] || {}),
     };
-    const bridgeOutputs = command.bridgeData?.outputs;
 
     let html;
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
@@ -177,7 +179,7 @@ export class SendMessageEmail extends SendMessageBase {
       subject,
       preheader: step.template.preheader,
       content: step.template.content,
-      layoutId: overrideLayoutId ?? step.template._layoutId,
+      layoutId: overrideLayoutId || (overrideLayoutId === null ? null : step.template._layoutId),
       contentType: step.template.contentType ? step.template.contentType : 'editor',
       payload: this.getCompilePayload(command.compileContext),
     };
@@ -221,7 +223,7 @@ export class SendMessageEmail extends SendMessageBase {
       const i18nInstance = await this.initiateTranslations(
         command.environmentId,
         command.organizationId,
-        subscriber.locale
+        subscriber?.locale
       );
 
       if (!command.bridgeData) {
@@ -304,8 +306,13 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
+    if (!email || !integration) {
+      return await this.sendErrors(email, integration, message, command);
+    }
+
     const mailData: IEmailOptions = createMailData(
       {
+        // @ts-ignore
         to: email,
         subject,
         html: (bridgeOutputs as EmailOutput)?.body || html,
@@ -331,14 +338,10 @@ export class SendMessageEmail extends SendMessageBase {
       mailData.payloadDetails = payload;
     }
 
-    if (!email || !integration) {
-      return await this.sendErrors(email, integration, message, command);
-    }
-
     return await this.sendMessage(integration, mailData, message, command);
   }
 
-  private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
+  private async getReplyTo(command: SendMessageChannelCommand, messageId: string): Promise<string | null> {
     if (!command.step.replyCallback?.url) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
@@ -364,7 +367,6 @@ export class SendMessageEmail extends SendMessageBase {
       return getReplyToAddress(command.transactionId, environment._id, environment?.dns?.inboundParseDomain);
     } else {
       const detailEnum =
-        // eslint-disable-next-line no-nested-ternary
         !environment.dns?.mxRecordConfigured && !environment.dns?.inboundParseDomain
           ? DetailEnum.REPLY_CALLBACK_NOT_CONFIGURATION
           : !environment.dns?.mxRecordConfigured
@@ -388,10 +390,10 @@ export class SendMessageEmail extends SendMessageBase {
   }
 
   private async sendErrors(
-    email,
-    integration,
+    email: string | undefined,
+    integration: IntegrationEntity | undefined,
     message: MessageEntity,
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
     const errorMessage = 'Subscriber does not have an';
     const status = 'warning';
@@ -406,7 +408,7 @@ export class SendMessageEmail extends SendMessageBase {
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
-          detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+          detail: DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
@@ -415,8 +417,8 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
+        status: 'skipped',
+        reason: DetailEnum.SUBSCRIBER_MISSING_EMAIL_ADDRESS,
       };
     }
 
@@ -453,7 +455,7 @@ export class SendMessageEmail extends SendMessageBase {
     integration: IntegrationEntity,
     mailData: IEmailOptions,
     message: MessageEntity,
-    command: SendMessageCommand
+    command: SendMessageChannelCommand
   ): Promise<SendMessageResult> {
     const mailFactory = new MailFactory();
     const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration), mailData.from);
@@ -520,7 +522,6 @@ export class SendMessageEmail extends SendMessageBase {
        * TODO: Handle this at the handler level globally
        */
       if (error?.isAxiosError && error.response) {
-        // eslint-disable-next-line no-ex-assign
         error = error.response;
       }
 
@@ -544,38 +545,74 @@ export class SendMessageEmail extends SendMessageBase {
     }
   }
 
-  private async getOverrideLayoutId(command: SendMessageCommand) {
-    const overrideLayoutIdentifier = command.overrides?.layoutIdentifier;
+  private async getOverrideLayoutId(command: SendMessageChannelCommand, isBridge: boolean) {
+    const { overrides, step } = command;
+    let layoutId: string | null | undefined;
+    let overrideSource: string | undefined;
 
-    if (overrideLayoutIdentifier) {
-      const layoutOverride = await this.layoutRepository.findOne(
-        {
-          _environmentId: command.environmentId,
-          identifier: overrideLayoutIdentifier,
-        },
-        '_id'
+    // Step 1: Check step-level override (highest priority)
+    const stepId = overrides?.steps?.[step._id ?? ''] ? step._id : step.stepId;
+    const stepOverrides = overrides?.steps?.[stepId ?? ''];
+    if (stepOverrides?.layoutId !== undefined) {
+      layoutId = stepOverrides.layoutId;
+      overrideSource = 'step';
+    }
+    // Step 2: Check channel-level override for email
+    else if (overrides?.channels?.email?.layoutId !== undefined) {
+      layoutId = overrides.channels.email.layoutId;
+      overrideSource = 'channel';
+    }
+    // Step 3: Check deprecated layoutIdentifier (backward compatibility)
+    else if (overrides?.layoutIdentifier) {
+      layoutId = overrides.layoutIdentifier;
+      overrideSource = 'layoutIdentifier';
+    }
+
+    // If no override is specified, return undefined (use step configuration)
+    if (layoutId === undefined) {
+      return undefined;
+    }
+
+    // If explicitly set to null, return null (no layout)
+    if (layoutId === null) {
+      return null;
+    }
+
+    if (isBridge) {
+      return layoutId;
+    }
+
+    // Look up layout by identifier or MongoDB ObjectId
+    try {
+      const layout = await this.getLayoutUseCaseV1.execute(
+        GetLayoutCommand.create({
+          layoutIdOrInternalId: layoutId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
       );
-      if (!layoutOverride) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-            detail: DetailEnum.LAYOUT_NOT_FOUND,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.FAILED,
-            isTest: false,
-            isRetry: false,
-            raw: JSON.stringify({
-              layoutIdentifier: overrideLayoutIdentifier,
-            }),
-          })
-        );
-      }
 
-      return layoutOverride?._id;
+      return layout._id;
+    } catch (error) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.LAYOUT_NOT_FOUND,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            layoutId,
+            overrideSource,
+            error: error.message,
+          }),
+        })
+      );
     }
   }
 
-  public buildFactoryIntegration(integration: IntegrationEntity, senderName?: string) {
+  public buildFactoryIntegration(integration: IntegrationEntity) {
     return {
       ...integration,
       credentials: {

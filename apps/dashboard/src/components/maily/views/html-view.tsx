@@ -1,8 +1,8 @@
-import { cn } from '@/utils/ui';
 import { NodeViewProps, NodeViewRendererProps } from '@tiptap/core';
 import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
 import { useEffect, useMemo, useRef } from 'react';
 import { RiCodeBlock } from 'react-icons/ri';
+import { cn } from '@/utils/ui';
 
 type HtmlCodeBlockAttributes = {
   activeTab: string;

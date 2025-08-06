@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   MessageTemplateRepository,
   NotificationTemplateEntity,
@@ -18,12 +18,10 @@ import {
   PreferencesTypeEnum,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
-
-import { GetPreferences } from '../get-preferences';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { buildSubscriberKey, CachedResponse } from '../../services';
+import { GetPreferences } from '../get-preferences';
+import { GetSubscriberTemplatePreferenceCommand } from './get-subscriber-template-preference.command';
 
 const PRIORITY_ORDER = [
   PreferenceOverrideSourceEnum.TEMPLATE,
@@ -228,7 +226,6 @@ function updateOverrideReasons(
   const notFoundFlag = -1;
   const existsInOverrideReasons = index !== notFoundFlag;
   if (existsInOverrideReasons) {
-    // eslint-disable-next-line no-param-reassign
     overrideReasons[index] = currentOverride;
   } else {
     overrideReasons.push(currentOverride);

@@ -1,19 +1,18 @@
 import { Injectable } from '@nestjs/common';
-
-import { JobRepository, JobEntity } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import {
-  DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
   InstrumentUsecase,
-  WorkflowRunRepository,
   PinoLogger,
+  WorkflowRunRepository,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-
-import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
-import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { JobEntity, JobRepository } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
+import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 
 @Injectable()
 export class HandleLastFailedJob {
@@ -73,7 +72,7 @@ export class HandleLastFailedJob {
 
   private async updateWorkflowRunStatusToFailed(job: JobEntity): Promise<void> {
     try {
-      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, 'failed', {
+      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, WorkflowRunStatusEnum.ERROR, {
         organizationId: job._organizationId,
         environmentId: job._environmentId,
       });

@@ -1,9 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import _ from 'lodash';
-import get from 'lodash/get';
-import Ajv, { ErrorObject } from 'ajv';
-import addFormats from 'ajv-formats';
-import { ResourceOriginEnum } from '@novu/shared';
 import {
   dashboardSanitizeControlValues,
   layoutControlSchema,
@@ -11,14 +6,19 @@ import {
   SanitizationType,
 } from '@novu/application-generic';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
+import { ResourceOriginEnum } from '@novu/shared';
+import Ajv, { ErrorObject } from 'ajv';
+import addFormats from 'ajv-formats';
+import _ from 'lodash';
+import get from 'lodash/get';
+import { previewControlValueDefault } from '../../workflows-v2/usecases/preview/preview.constants';
+import { ControlValueProcessingResult, PreviewTemplateData } from '../../workflows-v2/usecases/preview/preview.types';
+import { replaceAll } from '../../workflows-v2/usecases/preview/utils/variable-helpers';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
+import { isObjectMailyJSONContent, isStringifiedMailyJSONContent, replaceMailyVariables } from '../helpers/maily-utils';
+import { buildVariables } from '../utils/build-variables';
 import { buildLiquidParser } from '../utils/template-parser/liquid-engine';
 import type { Variable } from '../utils/template-parser/types';
-import { buildVariables } from '../utils/build-variables';
-import { isStringifiedMailyJSONContent, isObjectMailyJSONContent, replaceMailyVariables } from '../helpers/maily-utils';
-import { previewControlValueDefault } from '../../workflows-v2/usecases/preview/preview.constants';
-import { replaceAll } from '../../workflows-v2/usecases/preview/utils/variable-helpers';
-import { PreviewTemplateData, ControlValueProcessingResult } from '../../workflows-v2/usecases/preview/preview.types';
 
 @Injectable()
 export class ControlValueSanitizerService {

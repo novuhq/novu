@@ -1,12 +1,12 @@
+import { Button } from '@/components/primitives/button';
+import { openInNewTab } from '@/utils/url';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { CircleCheck } from '../icons/circle-check';
 import { Plug } from '../icons/plug';
 import { ShieldZap } from '../icons/shield-zap';
 import { Sparkling } from '../icons/sparkling';
 import { AuthFeatureRow } from './auth-feature-row';
 import { TrustedCompanies } from './trusted-companies';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { Button } from '@/components/primitives/button';
-import { openInNewTab } from '@/utils/url';
 
 export function AuthSideBanner() {
   return (

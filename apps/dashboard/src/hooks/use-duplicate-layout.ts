@@ -1,7 +1,7 @@
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 import { LayoutResponseDto } from '@novu/shared';
-import { useEnvironment } from '@/context/environment/hooks';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { duplicateLayout } from '@/api/layouts';
+import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
 
@@ -19,6 +19,10 @@ export const useDuplicateLayout = (
     onSuccess: async (data, variables, ctx) => {
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id],
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       options?.onSuccess?.(data, variables, ctx);

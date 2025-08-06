@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
 import crypto from 'node:crypto';
-
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   CommunityUserRepository,
@@ -8,10 +8,8 @@ import {
   EnvironmentRepository,
   MemberRepository,
 } from '@novu/dal';
-
-import { PinoLogger } from '@novu/application-generic';
-import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 import { Sync } from '../../../bridge/usecases/sync';
+import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 
 @Injectable()
 export class ProcessVercelWebhook {

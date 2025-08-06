@@ -1,8 +1,9 @@
 // cSpell:ignore RRULE, BYSETPOS, BYMONTHDAY, bysetpos, byweekday, bymonthday, byhour, byminute, bysecond, dtstart
-import { differenceInMilliseconds, addMinutes, addHours, addDays, addWeeks, addMonths } from 'date-fns';
-import { fromZonedTime, toZonedTime } from 'date-fns-tz';
-import { RRule, Frequency, Weekday } from 'rrule';
+
 import { DaysEnum, DigestUnitEnum, ITimedConfig, MonthlyTypeEnum, OrdinalEnum, OrdinalValueEnum } from '@novu/shared';
+import { addDays, addHours, addMinutes, addMonths, addWeeks, differenceInMilliseconds } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { Frequency, RRule, Weekday } from 'rrule';
 
 const UNIT_TO_RRULE_FREQUENCY = {
   [DigestUnitEnum.MINUTES]: Frequency.MINUTELY,
@@ -74,7 +75,7 @@ export class TimedDigestDelayService {
     const dateStartTz = timezone ? toZonedTime(dateStart, timezone) : dateStart;
     const currentTimeTz = timezone ? toZonedTime(new Date(), timezone) : new Date();
 
-    const { bysetpos, byweekday, bymonthday } = this.calculateByFields({
+    const { bysetpos, byweekday, bymonthday } = TimedDigestDelayService.calculateByFields({
       weekDays,
       monthDays,
       monthlyType,
@@ -84,7 +85,7 @@ export class TimedDigestDelayService {
 
     const rule = new RRule({
       dtstart: dateStartTz,
-      until: this.getUntilDate(dateStartTz, unit, amount, timezone),
+      until: TimedDigestDelayService.getUntilDate(dateStartTz, unit, amount, timezone),
       freq: UNIT_TO_RRULE_FREQUENCY[unit],
       interval: amount,
       bysetpos,

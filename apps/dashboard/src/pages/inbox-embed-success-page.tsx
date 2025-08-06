@@ -1,6 +1,6 @@
-import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { AuthCard } from '../components/auth/auth-card';
 import { Button } from '../components/primitives/button';
 import { useTelemetry } from '../hooks/use-telemetry';

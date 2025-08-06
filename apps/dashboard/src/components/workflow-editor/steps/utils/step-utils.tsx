@@ -1,4 +1,4 @@
-import { StepTypeEnum, ResourceOriginEnum, WorkflowResponseDto, StepResponseDto } from '@novu/shared';
+import { ResourceOriginEnum, StepResponseDto, StepTypeEnum, WorkflowResponseDto } from '@novu/shared';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
 import { getStepTypeIcon } from './preview-context.utils';
 

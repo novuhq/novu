@@ -1,7 +1,7 @@
-import { expect, test } from 'vitest';
 import crypto from 'crypto';
-import { GenericSmsProvider } from './generic-sms.provider';
+import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { GenericSmsProvider } from './generic-sms.provider';
 
 test('should trigger generic-sms library correctly', async () => {
   const { mockRequest: spy } = axiosSpy({

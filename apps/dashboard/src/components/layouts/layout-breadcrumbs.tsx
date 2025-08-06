@@ -1,8 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { RiArrowLeftSLine, RiLayout5Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { Badge } from '../primitives/badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,11 +13,9 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../primitives/breadcrumb';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { CompactButton } from '../primitives/button-compact';
 import TruncatedText from '../truncated-text';
 import { useLayoutEditor } from './layout-editor-provider';
-import { Badge } from '../primitives/badge';
 
 type BreadcrumbData = {
   label: string;

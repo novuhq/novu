@@ -1,8 +1,7 @@
-/* eslint-disable no-console */
+import { ClickHouseClient, ClickHouseService, createClickHouseClient, PinoLogger } from '@novu/application-generic';
 import { DalService } from '@novu/dal';
 import { testServer } from '@novu/testing';
 import sinon from 'sinon';
-import { ClickHouseClient, ClickHouseService, createClickHouseClient, PinoLogger } from '@novu/application-generic';
 import { bootstrap } from '../src/bootstrap';
 
 const dalService = new DalService();

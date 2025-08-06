@@ -1,10 +1,9 @@
-import { RiErrorWarningLine, RiErrorWarningFill, RiInformationLine } from 'react-icons/ri';
-import { motion, AnimatePresence } from 'motion/react';
 import { RuntimeIssue } from '@novu/shared';
-
-import { countIssues, getFirstErrorMessage, getAllStepIssues } from '@/components/workflow-editor/step-utils';
-import { cn } from '@/utils/ui';
+import { AnimatePresence, motion } from 'motion/react';
+import { RiErrorWarningFill, RiErrorWarningLine, RiInformationLine } from 'react-icons/ri';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/primitives/hover-card';
+import { countIssues, getAllStepIssues, getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
+import { cn } from '@/utils/ui';
 
 type IssuesPanelProps = {
   issues?: {

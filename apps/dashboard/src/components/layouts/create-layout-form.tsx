@@ -1,7 +1,8 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { slugify } from '@novu/shared';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { slugify } from '@novu/shared';
-
+import { layoutSchema } from '@/components/layouts/schema';
 import {
   Form,
   FormControl,
@@ -12,8 +13,6 @@ import {
   FormMessage,
   FormRoot,
 } from '@/components/primitives/form/form';
-import { layoutSchema } from '@/components/layouts/schema';
-import { zodResolver } from '@hookform/resolvers/zod';
 
 interface CreateLayoutFormProps {
   onSubmit: (formData: z.infer<typeof layoutSchema>) => void;

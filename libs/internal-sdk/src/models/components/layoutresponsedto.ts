@@ -24,6 +24,33 @@ import {
   ResourceTypeEnum$outboundSchema,
 } from "./resourcetypeenum.js";
 
+/**
+ * User last name
+ */
+export type LastName = {};
+
+/**
+ * User who last updated the layout
+ */
+export type UpdatedBy = {
+  /**
+   * User ID
+   */
+  id: string;
+  /**
+   * User first name
+   */
+  firstName?: string | null | undefined;
+  /**
+   * User last name
+   */
+  lastName?: LastName | null | undefined;
+  /**
+   * User external ID
+   */
+  externalId?: string | null | undefined;
+};
+
 export type LayoutResponseDto = {
   /**
    * Unique internal identifier of the layout
@@ -50,11 +77,15 @@ export type LayoutResponseDto = {
    */
   updatedAt: string;
   /**
+   * User who last updated the layout
+   */
+  updatedBy?: UpdatedBy | null | undefined;
+  /**
    * Creation timestamp
    */
   createdAt: string;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**
@@ -72,6 +103,117 @@ export type LayoutResponseDto = {
 };
 
 /** @internal */
+export const LastName$inboundSchema: z.ZodType<
+  LastName,
+  z.ZodTypeDef,
+  unknown
+> = z.object({});
+
+/** @internal */
+export type LastName$Outbound = {};
+
+/** @internal */
+export const LastName$outboundSchema: z.ZodType<
+  LastName$Outbound,
+  z.ZodTypeDef,
+  LastName
+> = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace LastName$ {
+  /** @deprecated use `LastName$inboundSchema` instead. */
+  export const inboundSchema = LastName$inboundSchema;
+  /** @deprecated use `LastName$outboundSchema` instead. */
+  export const outboundSchema = LastName$outboundSchema;
+  /** @deprecated use `LastName$Outbound` instead. */
+  export type Outbound = LastName$Outbound;
+}
+
+export function lastNameToJSON(lastName: LastName): string {
+  return JSON.stringify(LastName$outboundSchema.parse(lastName));
+}
+
+export function lastNameFromJSON(
+  jsonString: string,
+): SafeParseResult<LastName, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => LastName$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'LastName' from JSON`,
+  );
+}
+
+/** @internal */
+export const UpdatedBy$inboundSchema: z.ZodType<
+  UpdatedBy,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  _id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.lazy(() => LastName$inboundSchema)).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    "_id": "id",
+  });
+});
+
+/** @internal */
+export type UpdatedBy$Outbound = {
+  _id: string;
+  firstName?: string | null | undefined;
+  lastName?: LastName$Outbound | null | undefined;
+  externalId?: string | null | undefined;
+};
+
+/** @internal */
+export const UpdatedBy$outboundSchema: z.ZodType<
+  UpdatedBy$Outbound,
+  z.ZodTypeDef,
+  UpdatedBy
+> = z.object({
+  id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(z.lazy(() => LastName$outboundSchema)).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    id: "_id",
+  });
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace UpdatedBy$ {
+  /** @deprecated use `UpdatedBy$inboundSchema` instead. */
+  export const inboundSchema = UpdatedBy$inboundSchema;
+  /** @deprecated use `UpdatedBy$outboundSchema` instead. */
+  export const outboundSchema = UpdatedBy$outboundSchema;
+  /** @deprecated use `UpdatedBy$Outbound` instead. */
+  export type Outbound = UpdatedBy$Outbound;
+}
+
+export function updatedByToJSON(updatedBy: UpdatedBy): string {
+  return JSON.stringify(UpdatedBy$outboundSchema.parse(updatedBy));
+}
+
+export function updatedByFromJSON(
+  jsonString: string,
+): SafeParseResult<UpdatedBy, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => UpdatedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'UpdatedBy' from JSON`,
+  );
+}
+
+/** @internal */
 export const LayoutResponseDto$inboundSchema: z.ZodType<
   LayoutResponseDto,
   z.ZodTypeDef,
@@ -83,6 +225,7 @@ export const LayoutResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   isDefault: z.boolean(),
   updatedAt: z.string(),
+  updatedBy: z.nullable(z.lazy(() => UpdatedBy$inboundSchema)).optional(),
   createdAt: z.string(),
   origin: ResourceOriginEnum$inboundSchema,
   type: ResourceTypeEnum$inboundSchema,
@@ -102,6 +245,7 @@ export type LayoutResponseDto$Outbound = {
   name: string;
   isDefault: boolean;
   updatedAt: string;
+  updatedBy?: UpdatedBy$Outbound | null | undefined;
   createdAt: string;
   origin: string;
   type: string;
@@ -121,6 +265,7 @@ export const LayoutResponseDto$outboundSchema: z.ZodType<
   name: z.string(),
   isDefault: z.boolean(),
   updatedAt: z.string(),
+  updatedBy: z.nullable(z.lazy(() => UpdatedBy$outboundSchema)).optional(),
   createdAt: z.string(),
   origin: ResourceOriginEnum$outboundSchema,
   type: ResourceTypeEnum$outboundSchema,

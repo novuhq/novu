@@ -1,5 +1,5 @@
-import { IsArray, IsDefined, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsDefined, IsString, ValidateNested } from 'class-validator';
 
 import { UpdatePreferencesRequestDto } from './update-preferences-request.dto';
 

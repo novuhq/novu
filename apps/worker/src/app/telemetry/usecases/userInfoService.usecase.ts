@@ -2,8 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import {
-  CommunityUserRepository,
   CommunityOrganizationRepository,
+  CommunityUserRepository,
   IntegrationRepository,
   NotificationRepository,
   NotificationTemplateRepository,
@@ -53,7 +53,7 @@ export class UserInfoService {
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async sendDailyUserTelemetry() {
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false';
     const telemetryEnabled = process.env.NOVU_TELEMETRY !== 'false';
 
     if (isSelfHosted && telemetryEnabled) {

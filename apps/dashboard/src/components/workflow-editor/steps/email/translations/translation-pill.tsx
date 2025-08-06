@@ -1,12 +1,12 @@
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
+import { VariableIcon } from '@/components/variable/components/variable-icon';
+import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
+import { useParseVariables } from '@/hooks/use-parse-variables';
+import { useTranslationValidation } from '@/hooks/use-translation-validation';
 import { cn } from '@/utils/ui';
 import { EditTranslationPopover } from './edit-translation-popover/edit-translation-popover';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useParseVariables } from '@/hooks/use-parse-variables';
 import { TranslationTooltip } from './translation-tooltip';
-import { VariableIcon } from '@/components/variable/components/variable-icon';
-import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
-import { useTranslationValidation } from '@/hooks/use-translation-validation';
 
 interface TranslationPillProps {
   decoratorKey: string; // "common.submit"

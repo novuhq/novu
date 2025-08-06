@@ -1,11 +1,9 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
 import { SubscriberRepository } from '@novu/dal';
-
-import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
-
+import { UserSession } from '@novu/testing';
 import { CacheInMemoryProviderService, CacheService, InvalidateCacheService } from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
+import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 import { CreateOrUpdateSubscriberUseCase } from './create-or-update-subscriber.usecase';
 
 const cacheInMemoryProviderService = {
@@ -27,7 +25,7 @@ const cacheService = {
   },
 };
 
-describe('Create Subscriber', function () {
+describe('Create Subscriber', () => {
   let useCase: CreateOrUpdateSubscriberUseCase;
   let session: UserSession;
 
@@ -43,7 +41,7 @@ describe('Create Subscriber', function () {
     useCase = moduleRef.get<CreateOrUpdateSubscriberUseCase>(CreateOrUpdateSubscriberUseCase);
   });
 
-  it('should create a subscriber', async function () {
+  it('should create a subscriber', async () => {
     const locale = 'en';
     const result = await useCase.execute(
       CreateOrUpdateSubscriberCommand.create({
@@ -59,7 +57,7 @@ describe('Create Subscriber', function () {
     expect(result.locale).toEqual(locale);
   });
 
-  it('should update the subscriber when same id provided', async function () {
+  it('should update the subscriber when same id provided', async () => {
     const subscriberId = '1234';
     const email = 'dima@asdasdas.com';
     const noLocale = 'no';

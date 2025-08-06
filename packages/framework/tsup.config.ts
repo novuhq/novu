@@ -1,4 +1,4 @@
-import { type Options, defineConfig } from 'tsup';
+import { defineConfig, type Options } from 'tsup';
 import { version } from './package.json';
 import { type SupportedFrameworkName } from './src/internal';
 

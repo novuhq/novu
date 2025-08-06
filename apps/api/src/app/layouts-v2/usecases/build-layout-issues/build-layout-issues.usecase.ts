@@ -1,12 +1,4 @@
-import merge from 'lodash/merge';
 import { Injectable } from '@nestjs/common';
-import {
-  ContentIssueEnum,
-  FeatureFlagsKeysEnum,
-  LAYOUT_CONTENT_VARIABLE,
-  LayoutIssuesDto,
-  ResourceOriginEnum,
-} from '@novu/shared';
 import {
   dashboardSanitizeControlValues,
   FeatureFlagsService,
@@ -14,15 +6,22 @@ import {
   InstrumentUsecase,
   PinoLogger,
 } from '@novu/application-generic';
-
-import { LayoutVariablesSchemaCommand, LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
-import { BuildLayoutIssuesCommand } from './build-layout-issues.command';
+import {
+  ContentIssueEnum,
+  FeatureFlagsKeysEnum,
+  LAYOUT_CONTENT_VARIABLE,
+  LayoutIssuesDto,
+  ResourceOriginEnum,
+} from '@novu/shared';
+import merge from 'lodash/merge';
+import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
   ControlIssues,
   processControlValuesByLiquid,
   processControlValuesBySchema,
 } from '../../../shared/utils/issues';
-import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { LayoutVariablesSchemaCommand, LayoutVariablesSchemaUseCase } from '../layout-variables-schema';
+import { BuildLayoutIssuesCommand } from './build-layout-issues.command';
 
 @Injectable()
 export class BuildLayoutIssuesUsecase {

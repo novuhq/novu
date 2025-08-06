@@ -1,4 +1,4 @@
-import { InternalServerErrorException, Logger, createParamDecorator } from '@nestjs/common';
+import { createParamDecorator, InternalServerErrorException, Logger } from '@nestjs/common';
 
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;

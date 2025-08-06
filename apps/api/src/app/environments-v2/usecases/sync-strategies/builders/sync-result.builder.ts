@@ -1,4 +1,4 @@
-import { ResourceTypeEnum, ISyncResult, ISyncedEntity, IFailedEntity, ISkippedEntity } from '../../../types/sync.types';
+import { IFailedEntity, ISkippedEntity, ISyncedEntity, ISyncResult, ResourceTypeEnum } from '../../../types/sync.types';
 
 export class SyncResultBuilder {
   private successful: ISyncedEntity[] = [];

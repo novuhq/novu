@@ -82,7 +82,6 @@ export class MockHTTPClient extends HTTPClient {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export interface MockConfig {
   baseUrl: string;
   path: string;

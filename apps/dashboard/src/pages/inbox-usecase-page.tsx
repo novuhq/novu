@@ -1,6 +1,6 @@
+import { useOrganization, useUser } from '@clerk/clerk-react';
 import type { IEnvironment } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
-
 import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { AuthCard } from '../components/auth/auth-card';
 import { InboxPlayground } from '../components/auth/inbox-playground';
@@ -9,7 +9,6 @@ import { useAuth } from '../context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '../context/environment/hooks';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
-import { useOrganization, useUser } from '@clerk/clerk-react';
 
 interface RequiredData {
   appId: string;

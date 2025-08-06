@@ -1,14 +1,9 @@
+import { EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { ComponentProps, useCallback } from 'react';
 import { RiDeleteBin2Line, RiMore2Fill, RiRouteFill } from 'react-icons/ri';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { PermissionsEnum, EnvironmentTypeEnum } from '@novu/shared';
-
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { TranslationGroup } from '@/api/translations';
-import { formatDateSimple } from '@/utils/format-date';
-import { cn } from '@/utils/ui';
-
+import { StackedFlagCircles } from '@/components/flag-circle';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { CopyButton } from '@/components/primitives/copy-button';
 import {
@@ -23,9 +18,12 @@ import { TableCell, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import TruncatedText from '@/components/truncated-text';
-import { StackedFlagCircles } from '@/components/flag-circle';
-import { TranslationStatus } from './translation-status';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { formatDateSimple } from '@/utils/format-date';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { cn } from '@/utils/ui';
+import { TranslationStatus } from './translation-status';
 
 type TranslationTableCellProps = ComponentProps<typeof TableCell>;
 

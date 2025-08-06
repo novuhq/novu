@@ -1,4 +1,4 @@
-import type { ChannelTypeEnum, Redirect, IPreferenceChannels, PreferenceLevelEnum, CustomDataType } from '@novu/shared';
+import type { ChannelTypeEnum, CustomDataType, IPreferenceChannels, PreferenceLevelEnum, Redirect } from '@novu/shared';
 
 export type Subscriber = {
   id: string;

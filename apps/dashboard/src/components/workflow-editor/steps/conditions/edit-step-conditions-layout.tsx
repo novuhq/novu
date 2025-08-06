@@ -1,9 +1,8 @@
+import { ComponentProps } from 'react';
 import { RiInputField, RiQuestionLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-
 import { FormRoot } from '@/components/primitives/form/form';
 import { Panel, PanelContent, PanelHeader } from '@/components/primitives/panel';
-import { ComponentProps } from 'react';
 
 type EditStepConditionsLayoutProps = ComponentProps<typeof FormRoot> & {
   stepName?: string;

@@ -1,13 +1,13 @@
+import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import {
   AddressingTypeEnum,
   StatelessControls,
   TriggerOverrides,
-  TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
+  TriggerRecipientsPayload,
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
 } from '@novu/shared';
-import { DiscoverWorkflowOutput } from '@novu/framework/internal';
 import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 
 export type AddressingBroadcast = {
@@ -26,7 +26,7 @@ export type IWorkflowDataDto = {
   organizationId: string;
   userId: string;
   identifier: string;
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
   overrides: TriggerOverrides;
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;

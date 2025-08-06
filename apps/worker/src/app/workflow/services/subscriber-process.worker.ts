@@ -1,19 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-
-import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
-  getSubscriberProcessWorkerOptions,
-  SubscriberProcessWorkerService,
-  PinoLogger,
-  storage,
-  Store,
-  WorkerOptions,
   BullMqService,
-  WorkflowInMemoryProviderService,
+  getSubscriberProcessWorkerOptions,
   IProcessSubscriberDataDto,
+  PinoLogger,
+  Store,
+  SubscriberProcessWorkerService,
+  storage,
+  WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
-
 import { CommunityOrganizationRepository } from '@novu/dal';
+import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-job-bound.usecase';
 
 const nr = require('newrelic');

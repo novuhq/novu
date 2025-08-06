@@ -1,10 +1,10 @@
+import { format } from 'date-fns';
+import { motion } from 'motion/react';
 import { TopicSubscription } from '@/api/topics';
+import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { TopicDrawerButton } from '@/components/topics/topic-drawer';
 import TruncatedText from '@/components/truncated-text';
 import { cn } from '@/utils/ui';
-import { motion } from 'motion/react';
-import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { format } from 'date-fns';
 
 type SubscriptionItemProps = {
   subscription: TopicSubscription;

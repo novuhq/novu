@@ -1,17 +1,19 @@
-import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { useEffect, useMemo, useState } from 'react';
 import { CursorPagination } from '@/components/cursor-pagination';
+import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { UpdatedAgo } from '@/components/updated-ago';
+import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
+import { useLogsUrlState } from '@/hooks/use-logs-url-state';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { RequestLog } from '../../types/logs';
+import { LogsDetailPanel } from './logs-detail-panel';
+import { RequestLogsEmptyState } from './logs-empty-state';
+import { RequestsFilters } from './logs-filters';
 import { LogsTableRow } from './logs-table-row';
 import { LogsTableSkeletonRow } from './logs-table-skeleton-row';
-import { LogsDetailPanel } from './logs-detail-panel';
-import { RequestsFilters } from './logs-filters';
-import { useLogsUrlState } from '@/hooks/use-logs-url-state';
-import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
-import { RequestLogsEmptyState } from './logs-empty-state';
 
 type RequestsTableProps = {
   onLogClick?: (log: RequestLog) => void;
@@ -31,6 +33,8 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     limit,
     filters,
   } = useLogsUrlState();
+
+  const track = useTelemetry();
 
   const {
     data: logsResponse,
@@ -71,6 +75,11 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     const logId = log.id;
     handleLogSelect(logId);
     onLogClick?.(log);
+
+    track(TelemetryEvent.REQUEST_LOG_ENTRY_CLICKED, {
+      urlPattern: log.urlPattern,
+      method: log.method,
+    });
   };
 
   const handleRefresh = async () => {

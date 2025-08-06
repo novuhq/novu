@@ -1,9 +1,9 @@
-import { PinoLogger, Instrument } from '@novu/application-generic';
+import { Instrument, PinoLogger } from '@novu/application-generic';
 import { UserSessionData } from '@novu/shared';
-import { DiffResultBuilder } from '../../builders/diff-result.builder';
-import { IDiffResult, IResourceDiff, DiffActionEnum, ResourceTypeEnum, IUserInfo } from '../../../../types/sync.types';
-import { IBaseRepositoryService, IBaseComparator } from '../interfaces';
 import { capitalize } from '../../../../../shared/services/helper/helper.service';
+import { DiffActionEnum, IDiffResult, IResourceDiff, IUserInfo, ResourceTypeEnum } from '../../../../types/sync.types';
+import { DiffResultBuilder } from '../../builders/diff-result.builder';
+import { IBaseComparator, IBaseRepositoryService } from '../interfaces';
 
 export abstract class BaseDiffOperation<T> {
   private static readonly BATCH_SIZE = 10;
@@ -95,12 +95,7 @@ export abstract class BaseDiffOperation<T> {
       const targetResource = targetResourceMap.get(sourceIdentifier);
 
       if (!targetResource) {
-        resultBuilder.addResourceAdded({
-          id: this.repositoryService.getResourceIdentifier(sourceResource),
-          name: this.getResourceName(sourceResource),
-          updatedBy: this.extractUpdatedByInfo(sourceResource),
-          updatedAt: this.extractUpdatedAtInfo(sourceResource),
-        });
+        await this.handleNewResource(sourceResource, resultBuilder, userContext);
 
         return;
       }
@@ -168,6 +163,19 @@ export abstract class BaseDiffOperation<T> {
         });
       }
     }
+  }
+
+  protected async handleNewResource(
+    sourceResource: T,
+    resultBuilder: DiffResultBuilder,
+    userContext: UserSessionData
+  ): Promise<void> {
+    resultBuilder.addResourceAdded({
+      id: this.repositoryService.getResourceIdentifier(sourceResource),
+      name: this.getResourceName(sourceResource),
+      updatedBy: this.extractUpdatedByInfo(sourceResource),
+      updatedAt: this.extractUpdatedAtInfo(sourceResource),
+    });
   }
 
   private createResourceDiffs(

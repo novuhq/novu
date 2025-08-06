@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsDefined, IsMongoId, IsDate } from 'class-validator';
+import { IsBoolean, IsDate, IsDefined, IsMongoId, IsOptional } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 

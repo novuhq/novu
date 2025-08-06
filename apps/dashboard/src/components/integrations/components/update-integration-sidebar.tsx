@@ -1,10 +1,11 @@
-import { Button } from '@/components/primitives/button';
-import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
-import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { ChannelTypeEnum, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '@/components/primitives/button';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useHasPermission } from '@/hooks/use-has-permission';
+import { useSetPrimaryIntegration } from '@/hooks/use-set-primary-integration';
+import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { showSuccessToast } from '../../../components/primitives/sonner-helpers';
 import { useDeleteIntegration } from '../../../hooks/use-delete-integration';
 import { ROUTES } from '../../../utils/routes';
@@ -16,7 +17,6 @@ import { DeleteIntegrationModal } from './modals/delete-integration-modal';
 import { SelectPrimaryIntegrationModal } from './modals/select-primary-integration-modal';
 import { handleIntegrationError } from './utils/handle-integration-error';
 import { isDemoIntegration } from './utils/helpers';
-import { useHasPermission } from '@/hooks/use-has-permission';
 
 type UpdateIntegrationSidebarProps = {
   isOpened: boolean;

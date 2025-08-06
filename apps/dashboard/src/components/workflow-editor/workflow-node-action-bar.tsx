@@ -1,11 +1,11 @@
 import { motion } from 'motion/react';
-import { RiDeleteBin2Line, RiEdit2Line, RiFileCopyLine } from 'react-icons/ri';
 import { useState } from 'react';
-import { Button } from '@/components/primitives/button';
+import { RiDeleteBin2Line, RiEdit2Line, RiFileCopyLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { StepTypeEnum } from '@/utils/enums';
 import TruncatedText from '@/components/truncated-text';
+import { StepTypeEnum } from '@/utils/enums';
 
 const CHANNEL_STEP_TYPES = [
   StepTypeEnum.EMAIL,
@@ -21,6 +21,7 @@ type WorkflowNodeActionBarProps = {
   onRemoveClick: () => void;
   onEditContentClick: () => void;
   onCopyClick: () => void;
+  isReadOnly: boolean;
 };
 
 export const WorkflowNodeActionBar = ({
@@ -29,6 +30,7 @@ export const WorkflowNodeActionBar = ({
   onRemoveClick,
   onEditContentClick,
   onCopyClick,
+  isReadOnly,
 }: WorkflowNodeActionBarProps) => {
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -132,49 +134,53 @@ export const WorkflowNodeActionBar = ({
                 }}
               >
                 <RiEdit2Line className="h-3.5 w-3.5" />
-                Edit content
+                {isReadOnly ? 'View content' : 'Edit content'}
               </Button>
               <div className="h-6 w-px bg-neutral-100" />
             </>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="2xs"
-                variant="secondary"
-                mode="ghost"
-                className="pointer-events-auto gap-1.5 rounded-none px-2 py-1 text-xs"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsCopyModalOpen(true);
-                }}
-              >
-                <RiFileCopyLine className="h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Duplicate the current step</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="2xs"
-                variant="secondary"
-                mode="ghost"
-                className={`text-text-sub pointer-events-auto gap-1.5 px-2 py-1 text-xs ${
-                  isChannelStep ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
-                }`}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsDeleteModalOpen(true);
-                }}
-              >
-                <RiDeleteBin2Line className="text-error-base h-3.5 w-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Delete step</TooltipContent>
-          </Tooltip>
+          {!isReadOnly && (
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="2xs"
+                    variant="secondary"
+                    mode="ghost"
+                    className="pointer-events-auto gap-1.5 rounded-none px-2 py-1 text-xs"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsCopyModalOpen(true);
+                    }}
+                  >
+                    <RiFileCopyLine className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Duplicate the current step</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="2xs"
+                    variant="secondary"
+                    mode="ghost"
+                    className={`text-text-sub pointer-events-auto gap-1.5 px-2 py-1 text-xs ${
+                      isChannelStep ? 'rounded-l-none rounded-r-lg' : 'rounded-lg'
+                    }`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsDeleteModalOpen(true);
+                    }}
+                  >
+                    <RiDeleteBin2Line className="text-error-base h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Delete step</TooltipContent>
+              </Tooltip>
+            </>
+          )}
         </motion.div>
       </motion.div>
 

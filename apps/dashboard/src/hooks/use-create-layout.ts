@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 import { CreateLayoutDto, LayoutResponseDto } from '@novu/shared';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { createLayout } from '@/api/layouts';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -16,6 +16,8 @@ export function useCreateLayout(options?: UseMutationOptions<LayoutResponseDto, 
     mutationFn: async (layout: CreateLayoutDto) => createLayout({ environment: currentEnvironment!, layout }),
     onSuccess: async (data, variables, ctx) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id] });
+
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
 
       options?.onSuccess?.(data, variables, ctx);
     },

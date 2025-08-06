@@ -1,7 +1,7 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { TenantEntity } from '@novu/dal';
 
 import { CustomDataType } from '@novu/shared';
-import { TenantEntity } from '@novu/dal';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 

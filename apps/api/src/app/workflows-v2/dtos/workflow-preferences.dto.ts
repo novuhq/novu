@@ -1,7 +1,7 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { ValidateNested } from 'class-validator';
 import { ChannelPreferenceDto } from './channel-preference.dto';
 import { WorkflowPreferenceDto } from './workflow-preference.dto';
 

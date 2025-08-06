@@ -8,6 +8,12 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  EmailChannelOverrides,
+  EmailChannelOverrides$inboundSchema,
+  EmailChannelOverrides$Outbound,
+  EmailChannelOverrides$outboundSchema,
+} from "./emailchanneloverrides.js";
+import {
   StepsOverrides,
   StepsOverrides$inboundSchema,
   StepsOverrides$Outbound,
@@ -33,13 +39,27 @@ import {
 } from "./topicpayloaddto.js";
 
 /**
+ * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+ */
+export type Channels = {
+  /**
+   * Email channel specific overrides
+   */
+  email?: EmailChannelOverrides | undefined;
+};
+
+/**
  * This could be used to override provider specific configurations
  */
 export type Overrides = {
   /**
-   * This could be used to override provider specific configurations
+   * This could be used to override provider specific configurations or layout at the step level
    */
   steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+   */
+  channels?: Channels | undefined;
   /**
    * Overrides the provider configuration for the entire workflow and all steps
    */
@@ -129,7 +149,10 @@ export type TriggerEventRequestDto = {
     | Array<TopicPayloadDto | SubscriberPayloadDto | string>
     | string;
   /**
-   * A unique identifier for this transaction, we will generate a UUID if not provided.
+   * A unique identifier for deduplication. If the same **transactionId** is sent again,
+   *
+   * @remarks
+   *       the trigger is ignored. Useful to prevent duplicate notifications. The retention period depends on your billing tier.
    */
   transactionId?: string | undefined;
   /**
@@ -149,12 +172,63 @@ export type TriggerEventRequestDto = {
 };
 
 /** @internal */
+export const Channels$inboundSchema: z.ZodType<
+  Channels,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  email: EmailChannelOverrides$inboundSchema.optional(),
+});
+
+/** @internal */
+export type Channels$Outbound = {
+  email?: EmailChannelOverrides$Outbound | undefined;
+};
+
+/** @internal */
+export const Channels$outboundSchema: z.ZodType<
+  Channels$Outbound,
+  z.ZodTypeDef,
+  Channels
+> = z.object({
+  email: EmailChannelOverrides$outboundSchema.optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Channels$ {
+  /** @deprecated use `Channels$inboundSchema` instead. */
+  export const inboundSchema = Channels$inboundSchema;
+  /** @deprecated use `Channels$outboundSchema` instead. */
+  export const outboundSchema = Channels$outboundSchema;
+  /** @deprecated use `Channels$Outbound` instead. */
+  export type Outbound = Channels$Outbound;
+}
+
+export function channelsToJSON(channels: Channels): string {
+  return JSON.stringify(Channels$outboundSchema.parse(channels));
+}
+
+export function channelsFromJSON(
+  jsonString: string,
+): SafeParseResult<Channels, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Channels$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Channels' from JSON`,
+  );
+}
+
+/** @internal */
 export const Overrides$inboundSchema: z.ZodType<
   Overrides,
   z.ZodTypeDef,
   unknown
 > = z.object({
   steps: z.record(StepsOverrides$inboundSchema).optional(),
+  channels: z.lazy(() => Channels$inboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),
@@ -166,6 +240,7 @@ export const Overrides$inboundSchema: z.ZodType<
 /** @internal */
 export type Overrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  channels?: Channels$Outbound | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
   email?: { [k: string]: any } | undefined;
   push?: { [k: string]: any } | undefined;
@@ -181,6 +256,7 @@ export const Overrides$outboundSchema: z.ZodType<
   Overrides
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
+  channels: z.lazy(() => Channels$outboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),

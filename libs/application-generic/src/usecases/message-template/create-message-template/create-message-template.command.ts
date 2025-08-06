@@ -1,4 +1,4 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ClientSession } from '@novu/dal';
 
 import {
   IActor,
@@ -6,12 +6,11 @@ import {
   IMessageCTA,
   ITemplateVariable,
   MessageTemplateContentType,
-  StepTypeEnum,
   ResourceTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
-import { ClientSession } from '@novu/dal';
-
 import { Exclude } from 'class-transformer';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema } from '../../../value-objects';
 

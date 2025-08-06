@@ -1,7 +1,7 @@
+import { areTagsEqual, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
 import { useEffect, useState } from 'react';
-import { Notification, NotificationFilter, NovuError, areTagsEqual, isSameFilter } from '@novu/js';
-import { useNovu } from './NovuProvider';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
+import { useNovu } from './NovuProvider';
 
 type Count = {
   count: number;
@@ -55,7 +55,6 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     const existingCounts = counts ?? filters.map((filter) => ({ count: 0, filter }));
     let countFiltersToFetch: NotificationFilter[] = [];
     if (notification) {
-      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
         const filter = filters[i];
         if (areTagsEqual(filter.tags, notification.tags)) {
@@ -87,7 +86,6 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       const newCounts: Count[] = [];
       const countsReceived = data.counts;
 
-      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
         const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingCounts[i].filter));
         const count = countReceived || (oldCounts && oldCounts[i]);

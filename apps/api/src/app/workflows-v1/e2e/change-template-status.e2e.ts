@@ -1,6 +1,6 @@
-import { expect } from 'chai';
 import { NotificationTemplateRepository } from '@novu/dal';
-import { UserSession, NotificationTemplateService } from '@novu/testing';
+import { NotificationTemplateService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 describe('Change workflow status by id - /workflows/:workflowId/status (PUT) #novu-v0', async () => {
   let session: UserSession;
@@ -11,7 +11,7 @@ describe('Change workflow status by id - /workflows/:workflowId/status (PUT) #no
     await session.initialize();
   });
 
-  it('should change the status from active false to active true', async function () {
+  it('should change the status from active false to active true', async () => {
     const notificationTemplateService = new NotificationTemplateService(
       session.user._id,
       session.organization._id,

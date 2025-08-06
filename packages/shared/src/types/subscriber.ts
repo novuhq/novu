@@ -1,5 +1,5 @@
-import { CustomDataType } from './utils';
 import { ChatProviderIdEnum, PushProviderIdEnum } from './providers';
+import { CustomDataType } from './utils';
 
 export interface IChannelCredentials {
   webhookUrl?: string;

@@ -1,4 +1,7 @@
 import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import type { ChangePropsValueType } from '../../types/helpers';
+import { ControlSchemas } from '../message-template';
+import { UserEntity } from '../user';
 import {
   ChannelTypeEnum,
   EnvironmentId,
@@ -10,9 +13,6 @@ import {
   OrganizationId,
   UserId,
 } from './types';
-import type { ChangePropsValueType } from '../../types/helpers';
-import { ControlSchemas } from '../message-template';
-import { UserEntity } from '../user';
 
 export class LayoutEntity {
   _id: LayoutId;

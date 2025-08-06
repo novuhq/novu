@@ -1,5 +1,5 @@
-import { IsArray, IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { NotificationFilter } from '../../utils/types';

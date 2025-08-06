@@ -1,55 +1,51 @@
-/* eslint-disable global-require */
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-
 import {
+  AnalyticsService,
+  ContentService,
+  CreateChange,
+  CreateChangeCommand,
+  CreateMessageTemplate,
+  CreateMessageTemplateCommand,
+  FeatureFlagsService,
+  GetPreferences,
+  Instrument,
+  InstrumentUsecase,
+  isVariantEmpty,
+  NotificationStep,
+  NotificationStepVariantCommand,
+  PinoLogger,
+  PlatformException,
+  ResourceValidatorService,
+  shortId,
+  UpsertPreferences,
+  UpsertUserWorkflowPreferencesCommand,
+  UpsertWorkflowPreferencesCommand,
+} from '@novu/application-generic';
+import {
+  ClientSession,
   JsonSchemaTypeEnum,
   LocalizationResourceEnum,
   NotificationGroupEntity,
   NotificationGroupRepository,
   NotificationTemplateRepository,
-  ClientSession,
 } from '@novu/dal';
 import {
   ChangeEntityTypeEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  FeatureFlagsKeysEnum,
   INotificationTemplateStep,
   INotificationTrigger,
-  isBridgeWorkflow,
   IStepVariant,
-  slugify,
-  TriggerTypeEnum,
+  isBridgeWorkflow,
   ResourceOriginEnum,
   ResourceTypeEnum,
+  slugify,
+  TriggerTypeEnum,
 } from '@novu/shared';
-
-import {
-  CreateChange,
-  CreateChangeCommand,
-  AnalyticsService,
-  ContentService,
-  FeatureFlagsService,
-  CreateMessageTemplate,
-  CreateMessageTemplateCommand,
-  isVariantEmpty,
-  PlatformException,
-  shortId,
-  UpsertPreferences,
-  UpsertUserWorkflowPreferencesCommand,
-  UpsertWorkflowPreferencesCommand,
-  GetPreferences,
-  Instrument,
-  InstrumentUsecase,
-  ResourceValidatorService,
-  PinoLogger,
-  NotificationStep,
-  NotificationStepVariantCommand,
-} from '@novu/application-generic';
-import { CreateWorkflowCommand } from './create-workflow.command';
+import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
 import { GetWorkflowWithPreferencesUseCase } from '../get-workflow-with-preferences/get-workflow-with-preferences.usecase';
-import { WorkflowWithPreferencesResponseDto } from '../../dtos/get-workflow-with-preferences.dto';
+import { CreateWorkflowCommand } from './create-workflow.command';
 
 /**
  * @deprecated - use `UpsertWorkflow` instead
@@ -86,14 +82,7 @@ export class CreateWorkflow {
 
       const templateSteps = await this.storeTemplateSteps(command, parentChangeId, session);
       const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
-      const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        environment: { _id: command.environmentId },
-      });
-
-      if (isPayloadSchemaEnabled && !command.payloadSchema) {
+      if (!command.payloadSchema) {
         command.payloadSchema = {
           type: JsonSchemaTypeEnum.OBJECT,
           additionalProperties: true,

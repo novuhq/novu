@@ -1,9 +1,5 @@
 import { BrazeEmailProvider } from '@novu/providers';
-import {
-  ChannelTypeEnum,
-  EmailProviderIdEnum,
-  ICredentials,
-} from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, ICredentials } from '@novu/shared';
 import { BaseHandler } from './base.handler';
 
 export class BrazeEmailHandler extends BaseHandler {

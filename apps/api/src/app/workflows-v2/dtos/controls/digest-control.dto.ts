@@ -1,9 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { DigestTypeEnum, TimeUnitEnum } from '@novu/shared';
-import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength, ValidateNested, ValidateIf } from 'class-validator';
 import { Type } from 'class-transformer';
-import { SkipControlDto } from './skip.dto';
+import { IsEnum, IsNumber, IsOptional, IsString, Min, MinLength, ValidateIf, ValidateNested } from 'class-validator';
 import { LookBackWindowDto } from './look-back-window.dto';
+import { SkipControlDto } from './skip.dto';
 
 export class DigestControlDto extends SkipControlDto {
   @ApiPropertyOptional({

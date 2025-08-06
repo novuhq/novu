@@ -22,12 +22,21 @@ export interface IResourceInfo {
   updatedAt?: string | null;
 }
 
+export interface IResourceDependency {
+  resourceType: string;
+  resourceId: string;
+  resourceName: string;
+  isBlocking: boolean;
+  reason: 'LAYOUT_REQUIRED_FOR_WORKFLOW' | 'LAYOUT_EXISTS_IN_TARGET';
+}
+
 export interface IResourceDiffResult {
   resourceType: string;
   sourceResource?: IResourceInfo | null;
   targetResource?: IResourceInfo | null;
   changes: any[];
   summary: IDiffSummary;
+  dependencies?: IResourceDependency[];
 }
 
 export interface IEnvironmentDiffResponse {
@@ -73,6 +82,11 @@ export interface IEnvironmentPublishResponse {
     skipped: number;
   };
 }
+
+export type ResourceToPublish = {
+  resourceType: 'workflow' | 'layout' | 'localization_group' | 'step';
+  resourceId: string;
+};
 
 export async function getEnvironments() {
   const { data } = await get<{ data: IEnvironment[] }>('/environments');
@@ -136,12 +150,18 @@ export async function diffEnvironments({
 export async function publishEnvironments({
   sourceEnvironmentId,
   targetEnvironmentId,
+  resources,
 }: {
   sourceEnvironmentId: string;
   targetEnvironmentId: string;
+  resources?: ResourceToPublish[];
 }): Promise<IEnvironmentPublishResponse> {
   const { data } = await postV2<{ data: IEnvironmentPublishResponse }>(`/environments/${targetEnvironmentId}/publish`, {
-    body: { sourceEnvironmentId, dryRun: false },
+    body: {
+      sourceEnvironmentId,
+      dryRun: false,
+      ...(resources && { resources }),
+    },
   });
   return data;
 }

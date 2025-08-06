@@ -127,7 +127,7 @@ export type UpdateWorkflowDto = {
    */
   preferences: PreferencesRequestDto;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
 };

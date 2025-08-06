@@ -1,14 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { Instrument, PinoLogger } from '@novu/application-generic';
-import { diff } from 'deep-object-diff';
-import { UserSessionData } from '@novu/shared';
-import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
 import { ModuleRef } from '@nestjs/core';
-import { GetWorkflowUseCase, GetWorkflowCommand } from '../../../../workflows-v2/usecases/get-workflow';
+import { Instrument, PinoLogger } from '@novu/application-generic';
+import { LocalizationResourceEnum, NotificationTemplateEntity } from '@novu/dal';
+import { UserSessionData } from '@novu/shared';
+import { diff } from 'deep-object-diff';
+import { WorkflowDataContainer } from '../../../../shared/containers/workflow-data.container';
+import { GetWorkflowCommand, GetWorkflowUseCase } from '../../../../workflows-v2/usecases/get-workflow';
+import { DiffActionEnum, IResourceDiff, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowNormalizer } from '../normalizers/workflow.normalizer';
-import { IWorkflowComparison, INormalizedStep, INormalizedWorkflow } from '../types/workflow-sync.types';
-import { IResourceDiff, DiffActionEnum, ResourceTypeEnum } from '../../../types/sync.types';
 import { WorkflowRepositoryService } from '../operations/workflow-repository.service';
+import { INormalizedStep, INormalizedWorkflow, IWorkflowComparison } from '../types/workflow-sync.types';
 
 @Injectable()
 export class WorkflowComparator {
@@ -23,13 +24,15 @@ export class WorkflowComparator {
   async compareWorkflows(
     sourceWorkflow: NotificationTemplateEntity,
     targetWorkflow: NotificationTemplateEntity,
-    userContext: UserSessionData
+    userContext: UserSessionData,
+    workflowDataContainer?: WorkflowDataContainer
   ): Promise<IWorkflowComparison> {
     try {
       if (!sourceWorkflow || !targetWorkflow) {
         throw new Error('Source and target workflows must not be null');
       }
 
+      // Use WorkflowDataContainer if available for optimized workflow fetching
       const [sourceWorkflowDto, targetWorkflowDto] = await Promise.all([
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -38,7 +41,8 @@ export class WorkflowComparator {
               environmentId: sourceWorkflow._environmentId,
             },
             workflowIdOrInternalId: sourceWorkflow._id,
-          })
+          }),
+          workflowDataContainer
         ),
         this.getWorkflowUseCase.execute(
           GetWorkflowCommand.create({
@@ -47,7 +51,8 @@ export class WorkflowComparator {
               environmentId: targetWorkflow._environmentId,
             },
             workflowIdOrInternalId: targetWorkflow._id,
-          })
+          }),
+          workflowDataContainer
         ),
       ]);
 
@@ -75,8 +80,11 @@ export class WorkflowComparator {
       // Compare steps and generate step-level diffs
       const stepDiffs = this.compareStepsAsEntities(sourceSteps, targetSteps);
 
-      // Get localization group diffs for this workflow
-      const localizationDiffs = await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow, userContext._id);
+      // Get localization group diffs for this workflow only if translation is enabled
+      const localizationDiffs =
+        sourceWorkflow.isTranslationEnabled || targetWorkflow.isTranslationEnabled
+          ? await this.getLocalizationDiffs(sourceWorkflow, targetWorkflow, userContext._id)
+          : [];
 
       return { workflowChanges, otherDiffs: [...stepDiffs, ...localizationDiffs] };
     } catch (error) {
@@ -94,7 +102,6 @@ export class WorkflowComparator {
   ): Promise<IResourceDiff[]> {
     try {
       // Use the new DiffTranslationGroups use case from the translation module
-      // eslint-disable-next-line global-require
       const diffTranslationGroups = this.moduleRef.get(require('@novu/ee-translation')?.DiffTranslationGroups, {
         strict: false,
       });
@@ -110,7 +117,6 @@ export class WorkflowComparator {
         targetEnvironmentId: targetWorkflow._environmentId,
         resourceId: this.workflowRepositoryService.getWorkflowIdentifier(sourceWorkflow),
         resourceType: LocalizationResourceEnum.WORKFLOW,
-        organizationId: sourceWorkflow._organizationId,
         userId,
         environmentId: sourceWorkflow._environmentId, // Required by EnvironmentWithUserCommand
       });
@@ -129,6 +135,11 @@ export class WorkflowComparator {
     const processedSteps = new Set<string>();
 
     sourceSteps.forEach((sourceStep, sourceIndex) => {
+      // Skip steps without stepId as they can't be properly compared
+      if (!sourceStep.stepId) {
+        return;
+      }
+
       const targetStepData = targetStepMap.get(sourceStep.stepId);
 
       if (!targetStepData) {
@@ -148,6 +159,11 @@ export class WorkflowComparator {
     });
 
     targetSteps.forEach((targetStep, targetIndex) => {
+      // Skip steps without stepId
+      if (!targetStep.stepId) {
+        return;
+      }
+
       if (!processedSteps.has(targetStep.stepId)) {
         stepDiffs.push(this.createStepDeletedDiff(targetStep, targetIndex));
       }

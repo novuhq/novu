@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { RiSettings4Line, RiDeleteBin2Line } from 'react-icons/ri';
+import { RiDeleteBin2Line, RiSettings4Line } from 'react-icons/ri';
 
 import { Button } from '@/components/primitives/button';
 import { Popover, PopoverTrigger } from '@/components/primitives/popover';
+import { cn } from '@/utils/ui';
 import { SchemaPropertySettingsPopover } from '../schema-property-settings-popover';
 import type { VariableUsageInfo } from '../utils/check-variable-usage';
-import { cn } from '@/utils/ui';
 
 type PropertyActionsProps = {
   definitionPath: string;

@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { type Field, QueryBuilder, RuleGroupType, Translations } from 'react-querybuilder';
 import 'react-querybuilder/dist/query-builder.css';
 
@@ -7,21 +7,21 @@ import { AddGroupAction } from '@/components/conditions-editor/add-group-action'
 import { CombinatorSelector } from '@/components/conditions-editor/combinator-selector';
 import { ConditionsEditorProvider } from '@/components/conditions-editor/conditions-editor-context';
 import { FieldSelector } from '@/components/conditions-editor/field-selector';
+import {
+  getHelpTextForField,
+  getPlaceholderForField,
+  getValueEditorTypeForField,
+} from '@/components/conditions-editor/field-type-editors';
+import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
 import { OperatorSelector } from '@/components/conditions-editor/operator-selector';
 import { RuleActions } from '@/components/conditions-editor/rule-actions';
 import { ValueEditor } from '@/components/conditions-editor/value-editor';
 import {
-  IsAllowedVariable,
-  LiquidVariable,
   EnhancedLiquidVariable,
   type FieldDataType,
+  IsAllowedVariable,
+  LiquidVariable,
 } from '@/utils/parseStepVariables';
-import { getOperatorsForFieldType } from '@/components/conditions-editor/field-type-operators';
-import {
-  getValueEditorTypeForField,
-  getPlaceholderForField,
-  getHelpTextForField,
-} from '@/components/conditions-editor/field-type-editors';
 
 export interface EnhancedField extends Field {
   dataType: FieldDataType;

@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 
 'use-client';
 

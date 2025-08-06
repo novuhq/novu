@@ -1,6 +1,6 @@
-import { VariablePreview } from '@/components/variable/components/variable-preview';
-import { Badge } from '@/components/primitives/badge';
 import { DEFAULT_LOCALE } from '@novu/shared';
+import { Badge } from '@/components/primitives/badge';
+import { VariablePreview } from '@/components/variable/components/variable-preview';
 
 interface NewTranslationKeyPreviewProps {
   onCreateClick?: () => void;

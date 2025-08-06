@@ -4,7 +4,7 @@
 
   // MD024/no-duplicate-heading/no-duplicate-header - Multiple headings with the same content
   "MD024": {
-    "siblings_only": true,
+    "siblings_only": true
   },
 
   // no-multiple-blanks
@@ -33,14 +33,14 @@
   // MD044/proper-names - Proper names should have the correct capitalization
   "MD044": {
     "code_blocks": false,
-    "names": ["Cake.Markdownlint", "CommonMark", "JavaScript", "Markdown", "markdown-it", "markdownlint", "Node.js"],
+    "names": ["Cake.Markdownlint", "CommonMark", "JavaScript", "Markdown", "markdown-it", "markdownlint", "Node.js"]
   },
 
   // MD-46/code-block-style
   "MD046": {
-    "style": "fenced",
+    "style": "fenced"
   },
 
   // MD031/blanks-around-fences Fenced code blocks should be surrounded by blank lines
-  "MD031": false,
+  "MD031": false
 }

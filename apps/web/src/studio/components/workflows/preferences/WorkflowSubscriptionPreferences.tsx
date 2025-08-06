@@ -107,7 +107,6 @@ export const WorkflowSubscriptionPreferences: FC<WorkflowSubscriptionPreferences
     if (workflowUserPreferences !== null && isOverridingPreferences === false) {
       updateWorkflowPreferences(null);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOverridingPreferences, updateWorkflowPreferences]);
 
   const preferenceRows = useMemo(

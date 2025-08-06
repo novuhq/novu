@@ -47,7 +47,6 @@ export const SetupTimeline = ({
     <Stack align="center" sx={{ width: '100%' }} data-test-id="setup-timeline">
       <TimelineWrapper isDark={isDark}>
         <Timeline
-          // eslint-disable-next-line no-unsafe-optional-chaining
           active={instructions?.length + 1}
           bulletSize={40}
           lineWidth={2}
@@ -82,7 +81,6 @@ export const SetupTimeline = ({
           <Timeline.Item
             bullet={
               <div style={{}}>
-                {/* eslint-disable-next-line no-unsafe-optional-chaining */}
                 <Text>{instructions?.length + 1}</Text>
               </div>
             }

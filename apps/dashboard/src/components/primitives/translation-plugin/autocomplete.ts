@@ -1,11 +1,11 @@
 import { Completion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
+import { TRANSLATION_DELIMITER_CLOSE, TRANSLATION_TRIGGER_CHARACTER } from '@novu/shared';
 import { EditorView } from '@uiw/react-codemirror';
-import { TRANSLATION_TRIGGER_CHARACTER, TRANSLATION_DELIMITER_CLOSE } from '@novu/shared';
-import { isInsideVariableContext } from './utils';
-import { TranslationKey, TranslationCompletionOption, TranslationAutocompleteConfig } from '@/types/translations';
-import { createRoot } from 'react-dom/client';
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 import { NewTranslationKeyPreview } from '@/components/workflow-editor/steps/email/translations/new-translation-key-preview';
+import { TranslationAutocompleteConfig, TranslationCompletionOption, TranslationKey } from '@/types/translations';
+import { isInsideVariableContext } from './utils';
 
 /**
  * Create a DOM element to render the info panel in Codemirror.

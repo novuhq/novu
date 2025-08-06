@@ -1,22 +1,19 @@
 // June 27th, 2023
 
-import shortid from 'shortid';
-import { providers, slugify } from '@novu/shared';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { providers, slugify } from '@novu/shared';
+import shortid from 'shortid';
 
 export const ENVIRONMENT_NAME_TO_SHORT_NAME = { Development: 'dev', Production: 'prod', undefined: '' };
 
 export async function addIntegrationIdentifierMigrationBatched() {
-  // eslint-disable-next-line no-console
   console.log('start migration - add integration identifier migration');
 
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
   const batchSize = 500;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for await (const integration of integrationRepository.findBatch({} as any, '', {}, batchSize)) {
-    // eslint-disable-next-line no-console
     console.log(`integration ${integration._id}`);
 
     const updatePayload = await getUpdatePayload(integration, environmentRepository);
@@ -31,25 +28,20 @@ export async function addIntegrationIdentifierMigrationBatched() {
         $set: updatePayload,
       }
     );
-    // eslint-disable-next-line no-console
     console.log(`integration ${integration._id} - name & identifier updated`);
   }
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }
 
 export async function addIntegrationIdentifierMigration() {
-  // eslint-disable-next-line no-console
   console.log('start migration - add integration identifier migration');
 
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const integrations = await integrationRepository.find({} as any);
 
   for (const integration of integrations) {
-    // eslint-disable-next-line no-console
     console.log(`integration ${integration._id}`);
 
     const updatePayload = await getUpdatePayload(integration, environmentRepository);
@@ -64,10 +56,8 @@ export async function addIntegrationIdentifierMigration() {
         $set: updatePayload,
       }
     );
-    // eslint-disable-next-line no-console
     console.log(`integration ${integration._id} - name & identifier updated`);
   }
-  // eslint-disable-next-line no-console
   console.log('end migration');
 }
 

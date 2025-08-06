@@ -91,7 +91,6 @@ export const useCreateOnboardingExperimentWorkflow = () => {
               type: StepTypeEnum.EMAIL,
               contentType: 'customHtml',
               content:
-                // eslint-disable-next-line max-len
                 'It\'s that simple! <br/>Learn more about creating workflows <a href="https://docs.novu.co/workflows/notification-workflows">here</a>.',
             },
             uuid: uuid4(),

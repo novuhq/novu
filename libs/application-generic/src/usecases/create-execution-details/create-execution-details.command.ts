@@ -1,7 +1,7 @@
-import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository, JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
+import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../commands';
 import { DetailEnum } from './types';
 

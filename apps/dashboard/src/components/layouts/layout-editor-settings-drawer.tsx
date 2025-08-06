@@ -1,21 +1,14 @@
-import { forwardRef, useState, useCallback } from 'react';
-import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { PermissionsEnum } from '@novu/shared';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { formatDistanceToNow } from 'date-fns';
+import { forwardRef, useCallback, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { RiDeleteBin2Line, RiSettings4Line } from 'react-icons/ri';
-import { ExternalToast } from 'sonner';
 import { useBlocker, useNavigate } from 'react-router-dom';
-
+import { ExternalToast } from 'sonner';
+import { z } from 'zod';
 import { Button } from '@/components/primitives/button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetMain,
-  SheetTitle,
-} from '@/components/primitives/sheet';
 import {
   Form,
   FormControl,
@@ -26,24 +19,30 @@ import {
   FormRoot,
 } from '@/components/primitives/form/form';
 import { Input } from '@/components/primitives/input';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetMain,
+  SheetTitle,
+} from '@/components/primitives/sheet';
 import { showErrorToast, showSuccessToast, showToast } from '@/components/primitives/sonner-helpers';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
-import { useLayoutEditor } from './layout-editor-provider';
-import { useUpdateLayout } from '@/hooks/use-update-layout';
-import { useBeforeUnload } from '@/hooks/use-before-unload';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useBeforeUnload } from '@/hooks/use-before-unload';
+import { useDeleteLayout } from '@/hooks/use-delete-layout';
+import { useUpdateLayout } from '@/hooks/use-update-layout';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import TruncatedText from '../truncated-text';
-import { Separator } from '../primitives/separator';
 import { CopyButton } from '../primitives/copy-button';
-import { formatDistanceToNow } from 'date-fns';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { DeleteLayoutDialog } from './delete-layout-dialog';
-import { useDeleteLayout } from '@/hooks/use-delete-layout';
-import { ToastIcon } from '../primitives/sonner';
 import { PermissionButton } from '../primitives/permission-button';
-import { PermissionsEnum } from '@novu/shared';
+import { Separator } from '../primitives/separator';
+import { ToastIcon } from '../primitives/sonner';
+import TruncatedText from '../truncated-text';
+import { DeleteLayoutDialog } from './delete-layout-dialog';
+import { useLayoutEditor } from './layout-editor-provider';
 
 const layoutSettingsFormSchema = z.object({
   name: z.string().min(1),

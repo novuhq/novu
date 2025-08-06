@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-
+import { GetLayoutUsageResponse, getLayoutUsage } from '@/api/layouts';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
-import { getLayoutUsage, GetLayoutUsageResponse } from '@/api/layouts';
 
 export const useFetchLayoutUsage = ({ layoutSlug, enabled = true }: { layoutSlug: string; enabled?: boolean }) => {
   const { currentEnvironment } = useEnvironment();

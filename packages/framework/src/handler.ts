@@ -20,16 +20,15 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import type { Awaitable, EventTriggerParams, Workflow } from './types';
-import { initApiClient, createHmacSubtle } from './utils';
 import { isPlatformError } from './errors/guard.errors';
+import type { Awaitable, EventTriggerParams, Workflow } from './types';
+import { createHmacSubtle, initApiClient } from './utils';
 
 export type ServeHandlerOptions = {
   client?: Client;
   workflows: Array<Workflow>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
   frameworkName: string;
   client?: Client;
@@ -37,12 +36,9 @@ export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any
   handler: Handler<Input, Output>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Handler<Input extends any[] = any[], Output = any> = (...args: Input) => HandlerResponse<Output>;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HandlerResponse<Output = any> = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   body: () => Awaitable<any>;
   headers: (key: string) => Awaitable<string | null | undefined>;
   method: () => Awaitable<string>;
@@ -57,7 +53,6 @@ export type IActionResponse<TBody extends string = string> = {
   body: TBody;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
 
@@ -172,7 +167,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
   private getPostActionMap(
     // TODO: add validation for body per action.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     body: any,
     workflowId: string,
     stepId: string,
@@ -275,7 +269,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
          * Log bridge server errors to assist the Developer in debugging errors with their integration.
          * This path is reached when the Bridge application throws an error, ensuring they can see the error in their logs.
          */
-        // eslint-disable-next-line no-console
         console.error(error);
       }
 
@@ -284,7 +277,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       return this.createError(error);
     } else {
       const bridgeError = new BridgeError(error);
-      // eslint-disable-next-line no-console
       console.error(bridgeError);
 
       return this.createError(bridgeError);

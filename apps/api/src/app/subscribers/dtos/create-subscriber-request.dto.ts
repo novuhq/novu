@@ -1,4 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
+import { Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -13,8 +15,6 @@ import {
   Matches,
   ValidateNested,
 } from 'class-validator';
-import { ChatProviderIdEnum, IChannelCredentials, PushProviderIdEnum, SubscriberCustomData } from '@novu/shared';
-import { Type } from 'class-transformer';
 
 export class ChannelCredentialsDto implements IChannelCredentials {
   @ApiPropertyOptional({

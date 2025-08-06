@@ -1,11 +1,11 @@
-import { Controller, type Control, type Path } from 'react-hook-form';
-import { RiErrorWarningLine } from 'react-icons/ri';
 import { memo } from 'react';
+import { type Control, Controller, type Path } from 'react-hook-form';
+import { RiErrorWarningLine } from 'react-icons/ri';
 
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/primitives/tooltip';
-import { Code2 } from '../../icons/code-2';
 import { cn } from '@/utils/ui';
+import { Code2 } from '../../icons/code-2';
 import { SchemaEditorFormValues } from '../utils/validation-schema';
 
 // path: the direct RHF path to the keyName field, e.g., "propertyList.0.keyName"

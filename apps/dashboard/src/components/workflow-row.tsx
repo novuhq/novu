@@ -1,3 +1,28 @@
+import {
+  DEFAULT_LOCALE,
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  IEnvironment,
+  PermissionsEnum,
+  WorkflowListResponseDto,
+} from '@novu/shared';
+import { FilesIcon } from 'lucide-react';
+import { ComponentProps, useState } from 'react';
+import { CgBolt } from 'react-icons/cg';
+import { FaCode } from 'react-icons/fa6';
+import {
+  RiDeleteBin2Line,
+  RiFlashlightLine,
+  RiGitPullRequestFill,
+  RiMore2Fill,
+  RiPauseCircleLine,
+  RiPlayCircleLine,
+  RiPulseFill,
+  RiRouteFill,
+  RiTranslate2,
+} from 'react-icons/ri';
+import { Link, useNavigate } from 'react-router-dom';
+import { type ExternalToast } from 'sonner';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
 import {
   DropdownMenu,
@@ -22,49 +47,23 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useDeleteWorkflow } from '@/hooks/use-delete-workflow';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
 import { useSyncWorkflow } from '@/hooks/use-sync-workflow';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { ResourceOriginEnum, WorkflowStatusEnum } from '@/utils/enums';
 import { formatDateSimple } from '@/utils/format-date';
+import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import {
-  IEnvironment,
-  PermissionsEnum,
-  WorkflowListResponseDto,
-  FeatureFlagsKeysEnum,
-  EnvironmentTypeEnum,
-  DEFAULT_LOCALE,
-} from '@novu/shared';
-import { ComponentProps, useState } from 'react';
-import { CgBolt } from 'react-icons/cg';
-import { FaCode } from 'react-icons/fa6';
-import {
-  RiDeleteBin2Line,
-  RiFlashlightLine,
-  RiGitPullRequestFill,
-  RiMore2Fill,
-  RiPauseCircleLine,
-  RiPlayCircleLine,
-  RiPulseFill,
-  RiRouteFill,
-  RiTranslate2,
-} from 'react-icons/ri';
-
-import { FilesIcon } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { type ExternalToast } from 'sonner';
 import { ConfirmationModal } from './confirmation-modal';
 import { DeleteWorkflowDialog } from './delete-workflow-dialog';
+import { TranslatedWorkflowIcon } from './icons/translated-workflow';
 import { CompactButton } from './primitives/button-compact';
 import { CopyButton } from './primitives/copy-button';
 import { ToastIcon } from './primitives/sonner';
 import { showToast } from './primitives/sonner-helpers';
 import { TimeDisplayHoverCard } from './time-display-hover-card';
-import { Protect } from '@/utils/protect';
-import { useHasPermission } from '@/hooks/use-has-permission';
-import { TranslatedWorkflowIcon } from './icons/translated-workflow';
-import { LocalizationResourceEnum } from '@/types/translations';
 
 type WorkflowRowProps = {
   workflow: WorkflowListResponseDto;
@@ -98,7 +97,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const has = useHasPermission();
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+
   const isNewChangeManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
   const isDuplicable =
@@ -113,7 +112,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       });
   const triggerWorkflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId/test-workflow`, { workflowId: workflow._id })
-    : buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
+    : buildRoute(ROUTES.TRIGGER_WORKFLOW, {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: workflow.slug,
       });
@@ -291,7 +290,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
             <Tooltip delayDuration={300}>
               <TooltipTrigger>
                 {workflow.isTranslationEnabled ? (
-                  <TranslatedWorkflowIcon />
+                  <TranslatedWorkflowIcon className="text-feature size-4" />
                 ) : (
                   <RiRouteFill className="text-feature size-4" />
                 )}

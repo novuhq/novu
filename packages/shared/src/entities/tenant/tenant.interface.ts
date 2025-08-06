@@ -1,4 +1,4 @@
-import { EnvironmentId, OrganizationId, CustomDataType, TenantId } from '../../types';
+import { CustomDataType, EnvironmentId, OrganizationId, TenantId } from '../../types';
 
 export interface ITenantEntity {
   _id?: TenantId;

@@ -6,7 +6,6 @@ export interface IIconProps {
   height?: string;
 }
 
-/* eslint-disable */
 export function SmsGradient({ disabled = false, width = '31px', height = '31px' }: IIconProps) {
   return (
     <svg width={width} height={height} viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">

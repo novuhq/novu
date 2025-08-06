@@ -1,9 +1,9 @@
-import { Inbox, InboxContent, InboxProps } from '@novu/react';
-import { useFetchEnvironments } from '../../context/environment/hooks';
 import { useUser } from '@clerk/clerk-react';
-import { useAuth } from '../../context/auth/hooks';
-import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
+import { Inbox, InboxContent, InboxProps } from '@novu/react';
 import { useNavigate } from 'react-router-dom';
+import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
+import { useAuth } from '../../context/auth/hooks';
+import { useFetchEnvironments } from '../../context/environment/hooks';
 
 const defaultTabs = [
   {

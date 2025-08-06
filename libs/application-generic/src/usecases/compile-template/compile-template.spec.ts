@@ -1,9 +1,8 @@
 import { Test } from '@nestjs/testing';
-
-import { CompileTemplate } from './compile-template.usecase';
 import { CompileTemplateCommand } from './compile-template.command';
+import { CompileTemplate } from './compile-template.usecase';
 
-describe('Compile Template', function () {
+describe('Compile Template', () => {
   let useCase: CompileTemplate;
 
   beforeEach(async () => {
@@ -15,7 +14,7 @@ describe('Compile Template', function () {
     useCase = moduleRef.get<CompileTemplate>(CompileTemplate);
   });
 
-  it('should render custom html', async function () {
+  it('should render custom html', async () => {
     const result = await useCase.execute({
       data: {
         branding: {
@@ -29,7 +28,7 @@ describe('Compile Template', function () {
     expect(result).toEqual('<div>Test Name</div>');
   });
 
-  it('should render pluralisation in html', async function () {
+  it('should render pluralisation in html', async () => {
     const result = await useCase.execute({
       data: {
         branding: {
@@ -45,7 +44,7 @@ describe('Compile Template', function () {
     expect(result).toEqual('<div>1 dog and 2 sausages for him</div>');
   });
 
-  it('should render unique values of array', async function () {
+  it('should render unique values of array', async () => {
     const result = await useCase.execute({
       data: {
         names: [{ name: 'dog' }, { name: 'cat' }, { name: 'dog' }],
@@ -56,7 +55,7 @@ describe('Compile Template', function () {
     expect(result).toEqual('<div>dog-cat-</div>');
   });
 
-  it('should render groupBy values of array', async function () {
+  it('should render groupBy values of array', async () => {
     const result = await useCase.execute({
       data: {
         names: [
@@ -74,14 +73,13 @@ describe('Compile Template', function () {
           },
         ],
       },
-      template:
-        '{{#each (groupBy names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}',
+      template: '{{#each (groupBy names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}',
     });
 
     expect(result).toEqual('<h1>Name 1</h1>30-32-<h1>Name 2</h1>31-');
   });
 
-  it('should render sortBy values of array', async function () {
+  it('should render sortBy values of array', async () => {
     const result = await useCase.execute({
       data: {
         people: [
@@ -114,7 +112,7 @@ describe('Compile Template', function () {
     expect(result).toEqual('a75 - 1e77 - 2z32 - 3');
   });
 
-  it('should allow the user to specify handlebars helpers', async function () {
+  it('should allow the user to specify handlebars helpers', async () => {
     const result = await useCase.execute({
       data: {
         branding: {
@@ -123,16 +121,13 @@ describe('Compile Template', function () {
         message: 'hello world',
         messageTwo: 'hEllo world',
       },
-      template:
-        '<div>{{titlecase message}} and {{lowercase messageTwo}} and {{uppercase message}}</div>',
+      template: '<div>{{titlecase message}} and {{lowercase messageTwo}} and {{uppercase message}}</div>',
     });
 
-    expect(result).toEqual(
-      '<div>Hello World and hello world and HELLO WORLD</div>',
-    );
+    expect(result).toEqual('<div>Hello World and hello world and HELLO WORLD</div>');
   });
 
-  it('should allow apostrophes to be in data', async function () {
+  it('should allow apostrophes to be in data', async () => {
     const result = await useCase.execute({
       data: {
         message: "hello' world",
@@ -143,8 +138,8 @@ describe('Compile Template', function () {
     expect(result).toEqual("<div>hello' world</div>");
   });
 
-  describe('Date Formation', function () {
-    it('should allow user to format the date', async function () {
+  describe('Date Formation', () => {
+    it('should allow user to format the date', async () => {
       const result = await useCase.execute({
         data: {
           date: '2020-01-01',
@@ -154,7 +149,7 @@ describe('Compile Template', function () {
       expect(result).toEqual('<div>Wednesday, January 1st 2020</div>');
     });
 
-    it('should not fail and return same date for invalid date', async function () {
+    it('should not fail and return same date for invalid date', async () => {
       const result = await useCase.execute({
         data: {
           date: 'ABCD',
@@ -169,8 +164,7 @@ describe('Compile Template', function () {
     it('should format number', async () => {
       const result = await useCase.execute({
         data: { number: 1000000000 },
-        template:
-          '<div>{{numberFormat number decimalSep="," decimalLength="2" thousandsSep="|"}}</div>',
+        template: '<div>{{numberFormat number decimalSep="," decimalLength="2" thousandsSep="|"}}</div>',
       });
 
       expect(result).toEqual('<div>1|000|000|000,00</div>');
@@ -179,8 +173,7 @@ describe('Compile Template', function () {
     it('should not fail and return passed value', async () => {
       const result = await useCase.execute({
         data: { number: 'Not a number' },
-        template:
-          '<div>{{numberFormat number decimalSep="," decimalLength="2" thousandsSep="|"}}</div>',
+        template: '<div>{{numberFormat number decimalSep="," decimalLength="2" thousandsSep="|"}}</div>',
       });
 
       expect(result).toEqual('<div>Not a number</div>');

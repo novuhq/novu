@@ -1,24 +1,26 @@
-import { cn } from '@/utils/ui';
-import { autocompletion, CompletionSource, CompletionContext } from '@codemirror/autocomplete';
-import { EditorView, Extension } from '@uiw/react-codemirror';
-import { useCallback, useMemo, useRef, useState, useEffect, MutableRefObject } from 'react';
-import { JSONSchema7 } from 'json-schema';
+import { autocompletion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-
+import { EditorView, Extension } from '@uiw/react-codemirror';
+import { JSONSchema7 } from 'json-schema';
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Editor, EditorProps } from '@/components/primitives/editor';
+import { createVariableExtension } from '@/components/primitives/variable-plugin';
+import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
+import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import {
+  DIGEST_VARIABLES_ENUM,
+  DIGEST_VARIABLES_FILTER_MAP,
+  getDynamicDigestVariable,
+} from '@/components/variable/utils/digest-variables';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useVariables } from '../../hooks/use-variables';
-import { createVariableExtension } from '@/components/primitives/variable-plugin';
-import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
-import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
-import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
-import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
+import { cn } from '@/utils/ui';
+import { useVariables } from '../../hooks/use-variables';
 import { DEFAULT_SIDE_OFFSET } from './popover';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export type CompletionRange = {
   from: number;
@@ -35,12 +37,14 @@ type VariableEditorProps = {
   indentWithTab?: boolean;
   completionSources?: CompletionSource[];
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
   digestStepName?: string;
   getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
   onCreateNewVariable?: (variableName: string) => Promise<void>;
   onManageSchemaClick?: (variableName: string) => void;
   skipContainerClick?: boolean;
   children?: React.ReactNode;
+  disabled?: boolean;
 } & Pick<
   EditorProps,
   | 'className'
@@ -83,12 +87,14 @@ export function VariableEditor({
   tagStyles,
   completionSources,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
   digestStepName,
   skipContainerClick = false,
   getSchemaPropertyByKey = () => undefined,
   onCreateNewVariable = () => Promise.resolve(),
   onManageSchemaClick = () => {},
   children,
+  disabled = false,
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -154,6 +160,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   });
@@ -168,6 +175,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   };
@@ -182,6 +190,7 @@ export function VariableEditor({
     variables,
     completionSources,
     isPayloadSchemaEnabled,
+    isTranslationEnabled,
     multiline,
     extensions,
   };
@@ -192,7 +201,8 @@ export function VariableEditor({
         callbacksRef.current.variables,
         (completion: CompletionOption) => callbacksRef.current.onVariableSelect(completion),
         async (variableName: string) => callbacksRef.current.onCreateNewVariable(variableName),
-        callbacksRef.current.isPayloadSchemaEnabled
+        callbacksRef.current.isPayloadSchemaEnabled,
+        callbacksRef.current.isTranslationEnabled
       )(context);
     };
   }, []);
@@ -228,7 +238,6 @@ export function VariableEditor({
         return '';
       },
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const variablePluginExtension = useMemo(() => {
@@ -240,7 +249,6 @@ export function VariableEditor({
       isDigestEventsVariable: (variableName: string) => callbacksRef.current.isDigestEventsVariable(variableName),
       isCustomHtmlEditorEnabled,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const editorExtensions = useMemo(() => {
@@ -262,7 +270,6 @@ export function VariableEditor({
 
     extensionsRef.current = allExtensions;
     return extensionsRef.current;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extensions]);
 
   const handleVariablePopoverOpenChange = useCallback(
@@ -342,6 +349,7 @@ export function VariableEditor({
         onChange={onChange}
         onBlur={onBlur}
         tagStyles={tagStyles}
+        editable={!disabled}
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover

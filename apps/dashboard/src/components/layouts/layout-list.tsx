@@ -1,7 +1,15 @@
+import { ApiServiceLevelEnum, DirectionEnum } from '@novu/shared';
 import { HTMLAttributes } from 'react';
-import { DirectionEnum } from '@novu/shared';
-
-import { cn } from '@/utils/ui';
+import {
+  LayoutsFilter,
+  LayoutsSortableColumn,
+  LayoutsUrlState,
+  useLayoutsUrlState,
+} from '@/components/layouts/hooks/use-layouts-url-state';
+import { LayoutListBlank } from '@/components/layouts/layout-list-blank';
+import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
+import { LayoutsFilters } from '@/components/layouts/layouts-filters';
+import { ListNoResults } from '@/components/list-no-results';
 import {
   Table,
   TableBody,
@@ -11,20 +19,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/primitives/table';
-import {
-  LayoutsFilter,
-  LayoutsSortableColumn,
-  LayoutsUrlState,
-  useLayoutsUrlState,
-} from '@/components/layouts/hooks/use-layouts-url-state';
-import { LayoutListBlank } from '@/components/layouts/layout-list-blank';
-import { ListNoResults } from '@/components/list-no-results';
-import { LayoutRow, LayoutRowSkeleton } from '@/components/layouts/layout-row';
-import { LayoutsFilters } from '@/components/layouts/layouts-filters';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
-import { Skeleton } from '../primitives/skeleton';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { cn } from '@/utils/ui';
 import { DefaultPagination } from '../default-pagination';
+import { Skeleton } from '../primitives/skeleton';
 import { CreateLayoutButton } from './create-layout-btn';
+import { LayoutsListUpgradeCta } from './layouts-list-upgrade-cta';
 
 type LayoutListFiltersProps = HTMLAttributes<HTMLDivElement> &
   Pick<LayoutsUrlState, 'filterValues' | 'handleFiltersChange' | 'resetFilters'> & {
@@ -44,7 +45,7 @@ const LayoutListWrapper = (props: LayoutListFiltersProps) => {
           isFetching={isFetching}
           className="py-2.5"
         />
-        <CreateLayoutButton />
+        <CreateLayoutButton disabled={isFetching} />
       </div>
       {children}
     </div>
@@ -156,6 +157,9 @@ export const LayoutList = (props: LayoutListProps) => {
     query: filterValues.query,
   });
 
+  const { subscription } = useFetchSubscription();
+  const tier = subscription?.apiServiceLevel || ApiServiceLevelEnum.FREE;
+
   const currentPage = Math.floor(filterValues.offset / filterValues.limit) + 1;
   const totalPages = Math.ceil((data?.totalCount || 0) / filterValues.limit);
 
@@ -186,6 +190,10 @@ export const LayoutList = (props: LayoutListProps) => {
         </LayoutListTable>
       </LayoutListWrapper>
     );
+  }
+
+  if (tier === ApiServiceLevelEnum.FREE && data?.layouts.length === 1) {
+    return <LayoutsListUpgradeCta />;
   }
 
   if (!areFiltersApplied && !data?.layouts.length) {

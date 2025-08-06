@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
-import { RiExpandUpDownLine } from 'react-icons/ri';
-import { useFormContext } from 'react-hook-form';
 import { getTemplate, getUiOptions, ObjectFieldTemplateProps } from '@rjsf/utils';
+import { useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { RiExpandUpDownLine } from 'react-icons/ri';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
-import { getFieldName, ROOT_DELIMITER } from './template-utils';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
+import { getFieldName, ROOT_DELIMITER } from './template-utils';
 
 export function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
   const { idSchema, uiSchema, registry, required, title, schema, properties } = props;

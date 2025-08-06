@@ -2,10 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ControlValuesRepository, NotificationTemplateRepository } from '@novu/dal';
 import { ControlValuesLevelEnum } from '@novu/shared';
-
-import { GetLayoutUsageCommand } from './get-layout-usage.command';
 import { GetLayoutUsageResponseDto, WorkflowInfoDto } from '../../dtos';
 import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { GetLayoutUsageCommand } from './get-layout-usage.command';
 
 @Injectable()
 export class GetLayoutUsageUseCase {
@@ -27,7 +26,9 @@ export class GetLayoutUsageUseCase {
       })
     );
 
-    // Find all control values where the layoutId is referenced
+    const workflows: WorkflowInfoDto[] = [];
+
+    // Get control values that reference this layout
     const controlValues = await this.controlValuesRepository.find({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -39,8 +40,6 @@ export class GetLayoutUsageUseCase {
     const workflowIds = [...new Set(controlValues.map((cv) => cv._workflowId).filter(Boolean))] as string[];
 
     // Fetch workflow information for each workflow ID
-    const workflows: WorkflowInfoDto[] = [];
-
     for (const workflowId of workflowIds) {
       try {
         const workflow = await this.notificationTemplateRepository.findById(workflowId, command.environmentId);
@@ -51,10 +50,7 @@ export class GetLayoutUsageUseCase {
             workflowId: workflow.triggers[0].identifier,
           });
         }
-      } catch (error) {
-        // Continue if workflow is not found or has issues
-        continue;
-      }
+      } catch (error) {}
     }
 
     return {

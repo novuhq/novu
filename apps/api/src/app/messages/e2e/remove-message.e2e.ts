@@ -1,14 +1,14 @@
-import { SubscribersService, UserSession } from '@novu/testing';
-import { MessageRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
-import { expect } from 'chai';
-import axios from 'axios';
-import { ChannelTypeEnum } from '@novu/shared';
 import { Novu } from '@novu/api';
+import { MessageRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const axiosInstance = axios.create();
 
-describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', function () {
+describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', () => {
   let session: UserSession;
   const messageRepository = new MessageRepository();
   let template: NotificationTemplateEntity;
@@ -25,14 +25,14 @@ describe('Delete Message - /messages/:messageId (DELETE) #novu-v2', function () 
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should fail to delete non existing message', async function () {
+  it('should fail to delete non existing message', async () => {
     const response = await session.testAgent.delete(`/v1/messages/${MessageRepository.createObjectId()}`);
 
     expect(response.statusCode).to.equal(404);
     expect(response.body.error).to.equal('Not Found');
   });
 
-  it('should delete a existing message', async function () {
+  it('should delete a existing message', async () => {
     await novuClient.trigger({
       workflowId: template.triggers[0].identifier,
       to: [{ subscriberId: subscriber.subscriberId, email: 'gg@ff.com' }],

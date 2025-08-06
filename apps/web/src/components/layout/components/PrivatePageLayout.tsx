@@ -65,11 +65,9 @@ export function PrivatePageLayout() {
       // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
       window.location.replace(redirectURL);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (IS_EE_AUTH_ENABLED) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const shouldRedirect = useOptInRedirect();
 
     if (shouldRedirect) {

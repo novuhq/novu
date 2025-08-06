@@ -1,5 +1,5 @@
-import { defineConfig, Options } from 'tsup';
 import { esbuildPluginFilePathExtensions } from 'esbuild-plugin-file-path-extensions';
+import { defineConfig, Options } from 'tsup';
 import { name, version } from './package.json';
 
 const baseConfig: Options = {

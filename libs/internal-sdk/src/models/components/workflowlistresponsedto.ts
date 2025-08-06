@@ -88,7 +88,7 @@ export type WorkflowListResponseDto = {
    */
   status: WorkflowStatusEnum;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
   origin: ResourceOriginEnum;
   /**
@@ -102,7 +102,7 @@ export type WorkflowListResponseDto = {
   /**
    * Is translation enabled for the workflow
    */
-  isTranslationEnabled: boolean;
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -252,7 +252,7 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   origin: ResourceOriginEnum$inboundSchema,
   lastTriggeredAt: z.nullable(z.string()).optional(),
   stepTypeOverviews: z.array(StepTypeEnum$inboundSchema),
-  isTranslationEnabled: z.boolean(),
+  isTranslationEnabled: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -273,7 +273,7 @@ export type WorkflowListResponseDto$Outbound = {
   origin: string;
   lastTriggeredAt?: string | null | undefined;
   stepTypeOverviews: Array<string>;
-  isTranslationEnabled: boolean;
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -296,7 +296,7 @@ export const WorkflowListResponseDto$outboundSchema: z.ZodType<
   origin: ResourceOriginEnum$outboundSchema,
   lastTriggeredAt: z.nullable(z.string()).optional(),
   stepTypeOverviews: z.array(StepTypeEnum$outboundSchema),
-  isTranslationEnabled: z.boolean(),
+  isTranslationEnabled: z.boolean().optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

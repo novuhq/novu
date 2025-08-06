@@ -1,11 +1,10 @@
-/* eslint-disable global-require */
-import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { EnvironmentRepository } from '@novu/dal';
-import sinon from 'sinon';
-import { ApiAuthSchemeEnum, MemberRoleEnum, UserSessionData, ALL_PERMISSIONS } from '@novu/shared';
-import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { UnauthorizedException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
+import { ALL_PERMISSIONS, ApiAuthSchemeEnum, MemberRoleEnum, UserSessionData } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 describe('ClerkStrategy', () => {
   let eeAuth: any;

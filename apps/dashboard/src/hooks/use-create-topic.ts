@@ -1,9 +1,9 @@
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createTopic } from '@/api/topics';
 import { Topic } from '@/components/topics/types';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 
 export type CreateTopicParameters = OmitEnvironmentFromParameters<typeof createTopic>;
 

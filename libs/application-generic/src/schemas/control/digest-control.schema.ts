@@ -1,7 +1,7 @@
+import { JSONSchemaEntity } from '@novu/dal';
+import { DigestUnitEnum, TimeUnitEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { DigestUnitEnum, TimeUnitEnum, UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
-import { JSONSchemaEntity } from '@novu/dal';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
 const lookBackWindowZodSchema = z

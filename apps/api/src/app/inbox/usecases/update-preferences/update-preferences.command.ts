@@ -1,5 +1,5 @@
-import { IsBoolean, IsDefined, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 import { PreferenceLevelEnum } from '@novu/shared';
+import { IsBoolean, IsDefined, IsEnum, IsOptional, ValidateIf } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 

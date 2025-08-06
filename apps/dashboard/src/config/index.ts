@@ -8,7 +8,8 @@ export const HUBSPOT_PORTAL_ID = import.meta.env.VITE_HUBSPOT_EMBED;
 
 export const IS_EE_AUTH_ENABLED = import.meta.env.VITE_IS_EE_AUTH_ENABLED === 'true';
 
-export const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
+export const CLERK_PUBLISHABLE_KEY =
+  window._env_?.VITE_CLERK_PUBLISHABLE_KEY || import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '';
 
 export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 

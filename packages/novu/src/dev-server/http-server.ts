@@ -1,7 +1,6 @@
 import http from 'node:http';
-import { AddressInfo } from 'net';
-
 import getPort from 'get-port';
+import { AddressInfo } from 'net';
 import { DevCommandOptions } from '../commands';
 
 export const WELL_KNOWN_ROUTE = '/.well-known/novu';
@@ -34,7 +33,6 @@ export class DevServer {
             .end();
         }
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error(e);
       }
     });

@@ -8,7 +8,6 @@
 !/**/*.json
 !/**/*.map
 
-/eslint.config.mjs
 /cjs
 /.tshy
 /.tshy-*

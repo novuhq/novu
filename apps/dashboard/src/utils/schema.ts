@@ -1,5 +1,5 @@
-import * as z from 'zod';
 import { JSONSchemaDefinition, JSONSchemaDto, UiSchema } from '@novu/shared';
+import * as z from 'zod';
 import { capitalize } from './string';
 
 export type ZodValue =

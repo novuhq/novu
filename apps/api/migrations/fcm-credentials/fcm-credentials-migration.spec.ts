@@ -1,14 +1,14 @@
-import { expect } from 'chai';
-import { UserSession } from '@novu/testing';
-import { ChannelTypeEnum } from '@novu/stateless';
 import { IntegrationRepository } from '@novu/dal';
 import { PushProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/stateless';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { updateFcmCredentials } from './fcm-credentials-migration';
 
-describe('Update fcm credential type', function () {
+describe('Update fcm credential type', () => {
   const integrationRepository = new IntegrationRepository();
 
-  it('should update fcm credential user type', async function () {
+  it('should update fcm credential user type', async () => {
     const data = {
       providerId: 'fcm',
       channel: ChannelTypeEnum.PUSH,

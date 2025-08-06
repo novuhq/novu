@@ -1,7 +1,9 @@
 import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { CheckCircleIcon } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
-
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,11 +18,8 @@ import { useInvocationQueue } from '@/hooks/use-invocation-queue';
 import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
 import { useUpdateWorkflow } from '@/hooks/use-update-workflow';
 import { createContextHook } from '@/utils/context';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
-import { CheckCircleIcon } from 'lucide-react';
-import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
-import { toast } from 'sonner';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { showErrorToast, showSavingToast, showSuccessToast } from './toasts';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 

@@ -1,7 +1,3 @@
-import { IntegrationRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
 import {
   buildIntegrationKey,
   CacheInMemoryProviderService,
@@ -9,6 +5,10 @@ import {
   createHash,
   InvalidateCacheService,
 } from '@novu/application-generic';
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 // import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
 
@@ -33,7 +33,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     await setHmacConfig(subscriberId, session, invalidateCache);
   });
 
-  it('should create a valid app session for current widget user', async function () {
+  it('should create a valid app session for current widget user', async () => {
     const secretKey = session.environment.apiKeys[0].key;
     const hmacHash = createHash(secretKey, subscriberId);
 
@@ -60,7 +60,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     expect(body.data.profile.phone).to.equal(phone);
   });
 
-  it('should throw an error when an invalid environment Id passed', async function () {
+  it('should throw an error when an invalid environment Id passed', async () => {
     const { body } = await session.testAgent.post('/v1/widgets/session/initialize').send({
       applicationIdentifier: 'some-not-existing-id',
       subscriberId,
@@ -73,7 +73,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     expect(body.message).to.contain('Please provide a valid app identifier');
   });
 
-  it('should pass the test with valid HMAC hash', async function () {
+  it('should pass the test with valid HMAC hash', async () => {
     const secretKey = session.environment.apiKeys[0].key;
 
     const hmacHash = createHash(secretKey, subscriberId);
@@ -82,7 +82,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     expect(response.status).to.equal(201);
   });
 
-  it('should fail the test with invalid subscriber id', async function () {
+  it('should fail the test with invalid subscriber id', async () => {
     const validSecretKey = session.environment.apiKeys[0].key;
 
     const invalidSubscriberId = `invalid-suscriberId`;
@@ -93,7 +93,7 @@ describe('Initialize Session - /widgets/session/initialize (POST) #novu-v0', asy
     expect(responseInvalidSubscriberId.body.message).to.contain('Please provide a valid HMAC hash');
   });
 
-  it('should fail the test with invalid secret key', async function () {
+  it('should fail the test with invalid secret key', async () => {
     const validSecretKey = session.environment.apiKeys[0].key;
 
     const invalidSecretKey = 'invalid-secret-key';

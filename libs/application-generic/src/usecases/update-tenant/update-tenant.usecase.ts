@@ -1,14 +1,13 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { TenantRepository, TenantEntity } from '@novu/dal';
-
+import { TenantEntity, TenantRepository } from '@novu/dal';
+import { GetTenant, GetTenantCommand } from '../get-tenant';
 import { UpdateTenantCommand } from './update-tenant.command';
-import { GetTenantCommand, GetTenant } from '../get-tenant';
 
 @Injectable()
 export class UpdateTenant {
   constructor(
     private tenantRepository: TenantRepository,
-    private getTenantUsecase: GetTenant,
+    private getTenantUsecase: GetTenant
   ) {}
 
   async execute(command: UpdateTenantCommand): Promise<TenantEntity> {
@@ -19,7 +18,7 @@ export class UpdateTenant {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           identifier: command.identifier,
-        }),
+        })
       ));
 
     const updatePayload: Partial<TenantEntity> = {};
@@ -32,10 +31,7 @@ export class UpdateTenant {
       updatePayload.data = command.data;
     }
 
-    if (
-      command?.newIdentifier &&
-      command?.newIdentifier !== tenant?.identifier
-    ) {
+    if (command?.newIdentifier && command?.newIdentifier !== tenant?.identifier) {
       await this.validateIdentifierDuplication({
         environmentId: command.environmentId,
         identifier: command.newIdentifier,
@@ -53,7 +49,7 @@ export class UpdateTenant {
       },
       {
         $set: updatePayload,
-      },
+      }
     );
 
     return (await this.tenantRepository.findOne({
@@ -77,7 +73,7 @@ export class UpdateTenant {
 
     if (tenantExist) {
       throw new ConflictException(
-        `Tenant with identifier: ${identifier} already exists under environment ${environmentId}`,
+        `Tenant with identifier: ${identifier} already exists under environment ${environmentId}`
       );
     }
   }

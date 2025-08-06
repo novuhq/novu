@@ -1,7 +1,7 @@
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { cva, VariantProps } from 'class-variance-authority';
 import { ReactNode, useState } from 'react';
 import { RiErrorWarningFill } from 'react-icons/ri';
-import { cva, VariantProps } from 'class-variance-authority';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
@@ -130,7 +130,7 @@ export const NODE_WIDTH = 300;
 export const NODE_HEIGHT = 86;
 
 const nodeVariants = cva(
-  `relative bg-neutral-alpha-200 transition-colors aria-selected:bg-gradient-to-bl aria-selected:from-[#FFB84D] aria-selected:to-[#E300BD] [&>span]:bg-foreground-0 flex w-[300px] flex-col p-px shadow-xs flex [&>span]:flex-1 [&>span]:rounded-[calc(var(--radius)-1px)] [&>span]:p-1 [&>span]:flex [&>span]:flex-col [&>span]:gap-1`,
+  `relative bg-neutral-alpha-200 transition-colors aria-selected:bg-gradient-to-bl aria-selected:from-[#FFB84D] aria-selected:to-[#E300BD] [&>span]:bg-foreground-0 flex w-[300px] flex-col p-px drop-shadow-sm flex [&>span]:flex-1 [&>span]:rounded-[calc(var(--radius)-1px)] [&>span]:p-1 [&>span]:flex [&>span]:flex-col [&>span]:gap-1`,
   {
     variants: {
       variant: {

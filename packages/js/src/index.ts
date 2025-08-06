@@ -11,10 +11,10 @@ export {
   NotificationStatus,
   NovuError,
   NovuOptions,
-  StandardNovuOptions,
   Preference,
   PreferenceLevel,
   PreferencesResponse,
+  StandardNovuOptions,
   Subscriber,
   WebSocketEvent,
 } from './types';

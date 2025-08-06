@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { RiArrowUpSLine, RiArrowDownSLine } from 'react-icons/ri';
+import { RiArrowDownSLine, RiArrowUpSLine } from 'react-icons/ri';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
 import { RequestLog } from '../../types/logs';
-import { HttpStatusBadge } from './http-status-badge';
-import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
 import { CopyButton } from '../primitives/copy-button';
 import { Separator } from '../primitives/separator';
+import { EditableJsonViewer } from '../workflow-editor/steps/shared/editable-json-viewer/editable-json-viewer';
+import { HttpStatusBadge } from './http-status-badge';
 import { TransactionIdDisplay } from './transaction-id-display';
 
 type LogsDetailContentProps = {

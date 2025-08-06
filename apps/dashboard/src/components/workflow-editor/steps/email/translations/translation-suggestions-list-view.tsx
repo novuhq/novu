@@ -1,12 +1,12 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import React, { useImperativeHandle, useMemo, useRef } from 'react';
-import { VariableList, VariableListRef } from '@/components/variable/variable-list';
-import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
-import { NewTranslationKeyPreview } from './new-translation-key-preview';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useParams } from 'react-router-dom';
+import { VariableList, VariableListRef } from '@/components/variable/variable-list';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { DEFAULT_LOCALE } from '@novu/shared';
+import { LocalizationResourceEnum, TranslationKey } from '@/types/translations';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { NewTranslationKeyPreview } from './new-translation-key-preview';
 
 export type TranslationKeyItem = {
   name: string;

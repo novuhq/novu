@@ -1,23 +1,23 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
-  WebSocketsQueueService,
-  TraceLogRepository,
-  PinoLogger,
   LogRepository,
-  Trace,
   mapEventTypeToTitle,
+  PinoLogger,
+  Trace,
+  TraceLogRepository,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
-import { MarkNotificationsAsSeenCommand } from './mark-notifications-as-seen.command';
 import { validateDataStructure } from '../../utils/validate-data';
+import { MarkNotificationsAsSeenCommand } from './mark-notifications-as-seen.command';
 
 @Injectable()
 export class MarkNotificationsAsSeen {

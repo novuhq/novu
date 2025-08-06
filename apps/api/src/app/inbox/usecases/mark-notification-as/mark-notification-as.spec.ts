@@ -1,17 +1,16 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
-import { ChannelCTATypeEnum } from '@novu/shared';
-import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-
-import { MarkNotificationAs } from './mark-notification-as.usecase';
+import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { ChannelCTATypeEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
-import type { MarkNotificationAsCommand } from './mark-notification-as.command';
-import { mapToDto } from '../../utils/notification-mapper';
 import { AnalyticsEventsEnum } from '../../utils';
-import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
+import { mapToDto } from '../../utils/notification-mapper';
 import { MarkManyNotificationsAsCommand } from '../mark-many-notifications-as/mark-many-notifications-as.command';
+import { MarkManyNotificationsAs } from '../mark-many-notifications-as/mark-many-notifications-as.usecase';
+import type { MarkNotificationAsCommand } from './mark-notification-as.command';
+import { MarkNotificationAs } from './mark-notification-as.usecase';
 
 const mockSubscriber: any = { _id: '6447aff5d89122e250412c79', subscriberId: '6447aff5d89122e250412c79' };
 const mockMessage: any = {

@@ -208,6 +208,14 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.Date,
       default: null,
     },
+    lastPublishedAt: {
+      type: Schema.Types.Date,
+      default: null,
+    },
+    _lastPublishedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
@@ -274,6 +282,22 @@ notificationTemplateSchema.virtual('notificationGroup', {
 notificationTemplateSchema.virtual('updatedBy', {
   ref: 'User',
   localField: '_updatedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
+});
+
+notificationTemplateSchema.virtual('lastPublishedBy', {
+  ref: 'User',
+  localField: '_lastPublishedBy',
+  foreignField: '_id',
+  justOne: true,
+  select: '_id firstName lastName externalId',
+});
+
+notificationTemplateSchema.virtual('lastPublishedByUser', {
+  ref: 'User',
+  localField: '_lastPublishedBy',
   foreignField: '_id',
   justOne: true,
   select: '_id firstName lastName externalId',

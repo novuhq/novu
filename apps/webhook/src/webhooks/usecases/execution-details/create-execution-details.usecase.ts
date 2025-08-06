@@ -3,9 +3,8 @@ import { ExecutionDetailsEntity, ExecutionDetailsRepository, MessageEntity } fro
 import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
-import { CreateExecutionDetailsCommand, WebhookCommand } from './create-execution-details.command';
-
 import { IWebhookResult } from '../../dtos/webhooks-response.dto';
+import { CreateExecutionDetailsCommand, WebhookCommand } from './create-execution-details.command';
 
 const LOG_CONTEXT = 'CreateExecutionDetails';
 

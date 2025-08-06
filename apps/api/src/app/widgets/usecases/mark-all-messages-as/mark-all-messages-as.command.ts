@@ -1,5 +1,5 @@
-import { IsOptional, IsDefined } from 'class-validator';
 import { MessagesStatusEnum } from '@novu/shared';
+import { IsDefined, IsOptional } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 

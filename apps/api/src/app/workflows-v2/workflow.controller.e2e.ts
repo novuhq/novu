@@ -1,9 +1,6 @@
-import chai, { expect } from 'chai';
-import chaiSubset from 'chai-subset';
-import { UserSession } from '@novu/testing';
-import { PreferencesRepository } from '@novu/dal';
 import { Novu } from '@novu/api';
 import {
+  ContentIssueEnum,
   CreateWorkflowDto,
   DigestStepUpsertDto,
   EmailStepResponseDto,
@@ -12,16 +9,17 @@ import {
   InAppStepUpsertDto,
   JSONSchemaDto,
   ListWorkflowResponse,
-  ContentIssueEnum,
+  ResourceOriginEnum,
   StepTypeEnum,
   UpdateWorkflowDto,
   UpdateWorkflowDtoSteps,
   WorkflowCreationSourceEnum,
   WorkflowListResponseDto,
-  ResourceOriginEnum,
   WorkflowStatusEnum,
 } from '@novu/api/models/components';
+import { ErrorDto } from '@novu/api/models/errors';
 import { WorkflowResponseDto } from '@novu/api/src/models/components';
+import { PreferencesRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
@@ -30,7 +28,9 @@ import {
   ShortIsPrefixEnum,
   slugify,
 } from '@novu/shared';
-import { ErrorDto } from '@novu/api/models/errors';
+import { UserSession } from '@novu/testing';
+import chai, { expect } from 'chai';
+import chaiSubset from 'chai-subset';
 import { buildSlug } from '../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,
@@ -78,6 +78,7 @@ function buildEmailStep(overrides: Partial<EmailStepUpsertDto> = {}): EmailStepU
   } as EmailStepUpsertDto;
 }
 
+// biome-ignore lint/suspicious/noExportsInTest: <explanation>
 export function buildWorkflow(overrides: Partial<CreateWorkflowDto> = {}): CreateWorkflowDto {
   const name = overrides.name || 'Test Workflow';
 
@@ -161,7 +162,17 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
         } as UpdateWorkflowDtoSteps,
       ];
 
-      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps });
+      const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+        steps,
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string' },
+          },
+          required: [],
+          additionalProperties: false,
+        },
+      });
       const workflow = await createWorkflow(apiClient, createWorkflowDto);
 
       expect(workflow).to.be.ok;
@@ -836,7 +847,19 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           },
           { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{inAppSubjectText}}' } },
         ];
-        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps } as CreateWorkflowDto);
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          steps,
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              prefixBodyText2: { type: 'string' },
+              prefixBodyText: { type: 'string' },
+              prefixSubjectText: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          },
+        } as CreateWorkflowDto);
         const res = await createWorkflow(apiClient, createWorkflowDto);
         const stepData = await getStepData(res.id, res.steps[0].id);
         const { variables } = stepData;
@@ -856,7 +879,17 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
           buildDigestStep(),
           { ...buildInAppStep(), controlValues: { subject: 'Welcome to our newsletter {{payload.inAppSubjectText}}' } },
         ];
-        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({ steps } as CreateWorkflowDto);
+        const createWorkflowDto: CreateWorkflowDto = buildWorkflow({
+          steps,
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              inAppSubjectText: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          },
+        } as CreateWorkflowDto);
         const res = await createWorkflow(apiClient, createWorkflowDto);
         const novuRestResult = await apiClient.workflows.steps.retrieve(res.id, res.steps[1].id);
         const { variables } = novuRestResult.result;
@@ -1136,7 +1169,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     const slug = buildSlug(updateRequest.name, ShortIsPrefixEnum.WORKFLOW, updatedWorkflow.id);
 
     expect(updatedWorkflow.slug).to.equal(slug);
-    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < updateRequest.steps.length; i++) {
       const stepInRequest = updateRequest.steps[i];
       expect(stepInRequest.name).to.equal(updatedWorkflow.steps[i].name);
@@ -1157,7 +1189,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   async function create10Workflows(prefix: string = 'Test Workflow') {
-    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 10; i++) {
       await createWorkflowAndValidate(`${prefix}-${i}`);
     }
@@ -1233,7 +1264,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
   }
 
   function assertStepResponse(workflowResponseDto: WorkflowResponseDto, createWorkflowDto: CreateWorkflowDto) {
-    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < workflowResponseDto.steps.length; i++) {
       const stepInRequest = createWorkflowDto.steps[i];
       const step = workflowResponseDto.steps[i];
@@ -1259,7 +1289,6 @@ describe('Workflow Controller E2E API Testing #novu-v2', () => {
     let properties: string[] = [];
     // Check if the schema has properties
     if (schema.properties) {
-      // eslint-disable-next-line guard-for-in
       for (const key in schema.properties) {
         const propertySchema = schema.properties[key];
         if (!isJSONSchemaDto(propertySchema)) {

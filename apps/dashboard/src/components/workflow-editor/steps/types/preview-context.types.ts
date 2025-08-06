@@ -1,4 +1,4 @@
-import { WorkflowResponseDto, ISubscriberResponseDto, SubscriberDto } from '@novu/shared';
+import { ISubscriberResponseDto, SubscriberDto, WorkflowResponseDto } from '@novu/shared';
 
 export type PayloadData = Record<string, unknown>;
 export type PreviewSubscriberData = Partial<SubscriberDto>;

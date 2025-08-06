@@ -1,5 +1,4 @@
 import React from 'react';
-/* eslint-disable */
 
 export function MobileGradient(props: React.ComponentPropsWithoutRef<'svg'> & { disabled?: boolean }) {
   const { disabled, width, height } = props;

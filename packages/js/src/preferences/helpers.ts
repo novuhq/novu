@@ -1,11 +1,11 @@
 import { InboxService } from '../api';
+import { PreferencesCache } from '../cache/preferences-cache';
 import type { NovuEventEmitter } from '../event-emitter';
 import type { ChannelPreference, Result } from '../types';
 import { ChannelType, PreferenceLevel } from '../types';
+import { NovuError } from '../utils/errors';
 import { Preference } from './preference';
 import type { UpdatePreferenceArgs } from './types';
-import { NovuError } from '../utils/errors';
-import { PreferencesCache } from '../cache/preferences-cache';
 
 type UpdatePreferenceParams = {
   emitter: NovuEventEmitter;

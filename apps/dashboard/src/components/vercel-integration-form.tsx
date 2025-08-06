@@ -1,14 +1,14 @@
 import { useState } from 'react';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { RiAddLine } from 'react-icons/ri';
-import { useForm, useFieldArray } from 'react-hook-form';
 
 import type { GetVercelConfigurationDetails } from '@/api/partner-integrations';
+import { Button } from '@/components/primitives/button';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { Button } from '@/components/primitives/button';
+import { useUpdateVercelIntegration } from '@/hooks/use-update-vercel-integration';
 import { Delete } from './icons/delete';
 import { MultiSelect } from './primitives/multi-select';
-import { useUpdateVercelIntegration } from '@/hooks/use-update-vercel-integration';
 
 export type ProjectLinkFormValues = {
   projectLinkState: GetVercelConfigurationDetails[];

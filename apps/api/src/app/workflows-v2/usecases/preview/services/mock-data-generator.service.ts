@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { NotificationTemplateEntity } from '@novu/dal';
-import { DEFAULT_LOCALE } from '@novu/shared';
 import { PinoLogger } from '@novu/application-generic';
+import { NotificationTemplateEntity } from '@novu/dal';
 import { actionStepSchemas, channelStepSchemas } from '@novu/framework/internal';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { JsonSchemaMock } from '../../../util/json-schema-mock';
-import { MockStepResultOptions } from '../preview.types';
 import { LOG_CONTEXT } from '../preview.constants';
+import { MockStepResultOptions } from '../preview.types';
 
 const DEFAULT_DIGEST_EVENTS_COUNT = 3;
 

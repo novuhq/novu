@@ -1,5 +1,5 @@
-import { RulesLogic, AdditionalOperation } from 'json-logic-js';
 import { expect } from 'chai';
+import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 
 import { evaluateRules } from './query-parser.service';
 

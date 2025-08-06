@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
-import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
-import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
 import { RetryOnError } from '../../decorators/retry-on-error-decorator';
+import { AnalyticsService, buildSubscriberKey, InvalidateCacheService } from '../../services';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '../subscribers';
+import { UpdateSubscriber, UpdateSubscriberCommand } from '../update-subscriber';
 import { CreateOrUpdateSubscriberCommand } from './create-or-update-subscriber.command';
 
 @Injectable()
@@ -22,6 +22,9 @@ export class CreateOrUpdateSubscriberUseCase {
   })
   async execute(command: CreateOrUpdateSubscriberCommand) {
     const persistedSubscriber = await this.getExistingSubscriber(command);
+    if (command.failIfExists && persistedSubscriber) {
+      throw new ConflictException(`Subscriber with id "${command.subscriberId}" already exists`);
+    }
 
     if (persistedSubscriber) {
       if (command.allowUpdate) {

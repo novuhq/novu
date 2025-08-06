@@ -1,10 +1,9 @@
-import { useState, useMemo } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/primitives/tabs';
+import { AnimatePresence, motion } from 'motion/react';
+import { useMemo, useState } from 'react';
+import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { cn } from '@/utils/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import {
   EmailPreviewBody,
   EmailPreviewBodyMobile,
@@ -14,6 +13,7 @@ import {
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
+import { cn } from '@/utils/ui';
 
 type EmailCorePreviewProps = {
   previewData: any;

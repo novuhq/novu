@@ -1,6 +1,6 @@
 import { createSignal, JSX } from 'solid-js';
-import { Tooltip } from './Tooltip';
 import { useStyle } from '../../helpers';
+import { Tooltip } from './Tooltip';
 
 type CopyToClipboardProps = {
   textToCopy: string;
@@ -30,7 +30,6 @@ export function CopyToClipboard(props: CopyToClipboardProps) {
         timeoutId = undefined;
       }, props.tooltipDuration ?? defaultTooltipDuration);
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error('Failed to copy text: ', err);
     }
   }

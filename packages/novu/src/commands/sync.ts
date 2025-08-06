@@ -12,7 +12,6 @@ export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string)
 
   if (!apiUrl) {
     throw new Error(
-      // eslint-disable-next-line max-len
       'An API url is required for the sync command, please omit the configuration option entirely or supply a valid API url when running the command'
     );
   }
