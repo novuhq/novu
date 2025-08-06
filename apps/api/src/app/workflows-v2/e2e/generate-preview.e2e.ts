@@ -886,7 +886,10 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       subject: 'all email editor components that support links inside the repeat block',
     };
     const previewResponse = await novuClient.workflows.steps.generatePreview({
-      generatePreviewRequestDto: { controlValues, previewPayload: {} },
+      generatePreviewRequestDto: {
+        controlValues,
+        previewPayload: { payload: { items: Array(6).fill({ paragraph_link: 'paragraph_link' }) } },
+      },
       stepId: emailStepDatabaseId,
       workflowId,
     });
@@ -1295,7 +1298,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         expect(generatePreviewResponseDto.result.preview.body).to.equal(
           {
             subject: `{{subscriber.firstName}} Hello, World! ${PLACEHOLDER_SUBJECT_INAPP}`,
-            body: `Hello, World! body`,
+            body: `Hello, World! This is an example message.`,
             avatar: 'https://www.example.com/avatar.png',
             primaryAction: {
               label: '{{payload.secondaryUrl}}',
