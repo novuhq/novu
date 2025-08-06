@@ -176,6 +176,7 @@ export class UpsertWorkflowUseCase {
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,
+      severity: workflowDto.severity,
     };
   }
 
@@ -207,6 +208,7 @@ export class UpsertWorkflowUseCase {
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
       isTranslationEnabled: workflowDto.isTranslationEnabled,
+      severity: workflowDto.severity,
     };
   }
 

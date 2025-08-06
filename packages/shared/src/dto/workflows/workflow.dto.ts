@@ -1,3 +1,4 @@
+import { SeverityLevel } from '../../consts';
 import { ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum, WorkflowPreferences } from '../../types';
 import { Slug } from '../../types/utils';
 import { RuntimeIssue } from '../../utils/issues';
@@ -48,6 +49,7 @@ export type WorkflowCommonsFields = {
   active?: boolean;
   validatePayload?: boolean;
   isTranslationEnabled?: boolean;
+  severity?: SeverityLevel;
 };
 
 export type PreferencesResponseDto = {

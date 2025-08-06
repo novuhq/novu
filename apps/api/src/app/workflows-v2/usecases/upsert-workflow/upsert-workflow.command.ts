@@ -4,6 +4,7 @@ import {
   ChannelTypeEnum,
   MAX_NAME_LENGTH,
   ResourceOriginEnum,
+  SeverityLevel,
   StepTypeEnum,
   WorkflowCreationSourceEnum,
 } from '@novu/shared';
@@ -137,6 +138,10 @@ export class UpsertWorkflowDataCommand {
   @IsOptional()
   @IsBoolean()
   isTranslationEnabled?: boolean;
+
+  @IsOptional()
+  @IsEnum(SeverityLevel)
+  severity?: SeverityLevel;
 }
 
 export class UpsertWorkflowCommand extends EnvironmentWithUserObjectCommand {
