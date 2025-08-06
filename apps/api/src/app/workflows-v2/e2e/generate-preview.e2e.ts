@@ -108,7 +108,89 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
 
     expect(result).to.deep.equal({
-      schema: null,
+      schema: {
+        type: 'object',
+        properties: {
+          payload: {
+            type: 'object',
+            properties: {
+              placeholder: {
+                type: 'object',
+                properties: {
+                  body: {
+                    type: 'string',
+                  },
+                },
+              },
+              primaryUrlLabel: {
+                type: 'string',
+              },
+            },
+          },
+          subscriber: {
+            type: 'object',
+            properties: {
+              subscriberId: {
+                type: 'string',
+              },
+              firstName: {
+                type: 'string',
+              },
+              lastName: {
+                type: 'string',
+              },
+              email: {
+                type: 'string',
+                format: 'email',
+              },
+              phone: {
+                type: 'string',
+              },
+              avatar: {
+                type: 'string',
+              },
+              locale: {
+                type: 'string',
+              },
+              timezone: {
+                type: 'string',
+              },
+              data: {
+                type: 'object',
+                additionalProperties: true,
+              },
+            },
+            additionalProperties: true,
+          },
+          steps: {
+            type: 'object',
+            description: 'Steps data from previous workflow executions',
+            additionalProperties: {
+              type: 'object',
+              properties: {
+                eventCount: {
+                  type: 'number',
+                },
+                events: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      payload: {
+                        type: 'object',
+                        additionalProperties: true,
+                      },
+                    },
+                    additionalProperties: true,
+                  },
+                },
+              },
+              additionalProperties: true,
+            },
+          },
+        },
+        additionalProperties: false,
+      },
       result: {
         preview: {
           subject: 'John Hello, World! ',
@@ -186,7 +268,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         },
       },
     };
-    const workflow = await createWorkflow({ payloadSchema });
+    const workflow = await createWorkflow({}, payloadSchema);
     await emulateExternalOrigin(workflow.id);
 
     const stepId = workflow.steps[0].id;
@@ -240,7 +322,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       result: {
         preview: {
           subject: 'First Name Hello, World! ',
-          body: 'Hello, World! This is an example message. random',
+          body: 'Hello, World! Default body text random',
           avatar: 'https://www.example.com/avatar.png',
           primaryAction: {
             label: 'New Click Here',
@@ -375,7 +457,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             random: 'random',
           },
           primaryUrlLabel: 'New Click Here',
-          organizationName: 'Pokemon Organization',
+          organizationName: 'John Doe',
         },
         steps: {},
       },
@@ -520,7 +602,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
     expect(previewResponse1.result.result.preview.body).to.contain(`events length ${DEFAULT_ARRAY_ELEMENTS}`);
     validateDigestEvents(previewResponse1.result.previewPayloadExample.steps?.['digest-step'].events, {
-      foo: 'example text',
+      foo: {
+        bar: {
+          first: 'example text',
+          baz: {
+            second: 'example text',
+          },
+        },
+      },
       name: 'John Doe',
       items: [
         { foo: 'example text', bar: 'example text' },
@@ -538,6 +627,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       inline_image_link: 'https://example.com',
       inline_image_url: 'https://example.com',
       numbered_link: 'https://example.com',
+      third: 'example text',
     });
 
     // testing the steps.digest-step.eventCount variable
@@ -552,7 +642,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
     expect(previewResponse2.result.result.preview.body).to.contain(`eventCount ${DEFAULT_ARRAY_ELEMENTS}`);
     validateDigestEvents(previewResponse2.result.previewPayloadExample.steps?.['digest-step'].events, {
-      foo: 'example text',
+      foo: {
+        bar: {
+          first: 'example text',
+          baz: {
+            second: 'example text',
+          },
+        },
+      },
       name: 'John Doe',
       items: [
         { foo: 'example text', bar: 'example text' },
@@ -570,6 +667,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       inline_image_link: 'https://example.com',
       inline_image_url: 'https://example.com',
       numbered_link: 'https://example.com',
+      third: 'example text',
     });
 
     // testing the steps.digest-step.events array and direct access to the first item
@@ -584,14 +682,21 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
     // Check that the body contains the digest events array structure without asserting exact times
     expect(previewResponse3.result.result.preview.body).to.contain("'id':'example-id-1'");
-    expect(previewResponse3.result.result.preview.body).to.contain("'payload':{'foo':'example text'}");
+    expect(previewResponse3.result.result.preview.body).to.contain("'foo':'example text'");
     expect(previewResponse3.result.result.preview.body).to.contain("'time':");
     // Count the number of events in the rendered output
     const eventMatches = previewResponse3.result.result.preview.body.match(/'id':'example-id-\d+'/g);
     expect(eventMatches).to.have.length(DEFAULT_ARRAY_ELEMENTS);
     expect(previewResponse3.result.result.preview.body).to.contain('single variable: example text');
     validateDigestEvents(previewResponse3.result.previewPayloadExample.steps?.['digest-step'].events, {
-      foo: 'example text',
+      foo: {
+        bar: {
+          first: 'example text',
+          baz: {
+            second: 'example text',
+          },
+        },
+      },
       name: 'John Doe',
       items: [
         { foo: 'example text', bar: 'example text' },
@@ -609,6 +714,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       inline_image_link: 'https://example.com',
       inline_image_url: 'https://example.com',
       numbered_link: 'https://example.com',
+      third: 'example text',
     });
 
     // testing the steps.digest-step.events[0].payload.foo variable
@@ -621,9 +727,18 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       stepId: emailStepDatabaseId,
       workflowId,
     });
-    expect(previewResponse4.result.result.preview.body).to.contain('single variable: foo');
+    expect(previewResponse4.result.result.preview.body).to.contain(
+      "single variable: {'bar':{'first':'example text','baz':{'second':'example text'}}}"
+    );
     validateDigestEvents(previewResponse4.result.previewPayloadExample.steps?.['digest-step'].events, {
-      foo: 'example text',
+      foo: {
+        bar: {
+          first: 'example text',
+          baz: {
+            second: 'example text',
+          },
+        },
+      },
       name: 'John Doe',
       items: [
         { foo: 'example text', bar: 'example text' },
@@ -641,6 +756,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       inline_image_link: 'https://example.com',
       inline_image_url: 'https://example.com',
       numbered_link: 'https://example.com',
+      third: 'example text',
     });
 
     // testing the countSummary and sentenceSummary variables
@@ -655,10 +771,17 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
     expect(previewResponse5.result.result.preview.body).to.contain(`${DEFAULT_ARRAY_ELEMENTS} notifications`);
     expect(previewResponse5.result.result.preview.body).to.contain(
-      `name, name, and ${DEFAULT_ARRAY_ELEMENTS - 2} other`
+      `John Doe, John Doe, and ${DEFAULT_ARRAY_ELEMENTS - 2} other`
     );
     validateDigestEvents(previewResponse5.result.previewPayloadExample.steps?.['digest-step'].events, {
-      foo: 'example text',
+      foo: {
+        bar: {
+          first: 'example text',
+          baz: {
+            second: 'example text',
+          },
+        },
+      },
       name: 'John Doe',
       items: [
         { foo: 'example text', bar: 'example text' },
@@ -676,6 +799,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       inline_image_link: 'https://example.com',
       inline_image_url: 'https://example.com',
       numbered_link: 'https://example.com',
+      third: 'example text',
     });
 
     // testing the digest block with 3 variables combining current and full variable
@@ -693,7 +817,14 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'second')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     expect(countOccurrences(previewResponse6.result.result.preview.body, 'third')).to.equal(DEFAULT_ARRAY_ELEMENTS);
     validateDigestEvents(previewResponse6.result.previewPayloadExample.steps?.['digest-step'].events, {
-      foo: 'example text',
+      foo: {
+        bar: {
+          first: 'example text',
+          baz: {
+            second: 'example text',
+          },
+        },
+      },
       name: 'John Doe',
       items: [
         { foo: 'example text', bar: 'example text' },
@@ -711,6 +842,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       inline_image_link: 'https://example.com',
       inline_image_url: 'https://example.com',
       numbered_link: 'https://example.com',
+      third: 'example text',
     });
   });
 
@@ -1338,13 +1470,21 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
       });
 
       validateDigestEventsInMergeTest(previewResponse1.result.previewPayloadExample.steps?.['digest-step'].events, {
-        foo: 'example text',
+        third: 'example text',
         name: 'John Doe',
         items: [
           { foo: 'example text', bar: 'example text' },
           { foo: 'example text', bar: 'example text' },
           { foo: 'example text', bar: 'example text' },
         ],
+        foo: {
+          bar: {
+            first: 'example text',
+            baz: {
+              second: 'example text',
+            },
+          },
+        },
         baz: 'example text',
         paragraph_link: 'https://example.com',
         heading_link: 'https://example.com',
@@ -1401,7 +1541,25 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     type: 'object',
     properties: {
       foo: {
-        type: 'string',
+        type: 'object',
+        properties: {
+          bar: {
+            type: 'object',
+            properties: {
+              first: {
+                type: 'string',
+              },
+              baz: {
+                type: 'object',
+                properties: {
+                  second: {
+                    type: 'string',
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       name: {
         type: 'string',
@@ -1451,6 +1609,9 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
         type: 'string',
       },
       numbered_link: {
+        type: 'string',
+      },
+      third: {
         type: 'string',
       },
     },
