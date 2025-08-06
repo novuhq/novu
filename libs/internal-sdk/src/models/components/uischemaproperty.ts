@@ -40,6 +40,10 @@ export type UiSchemaProperty = {
    * Component type for the UI Schema Property
    */
   component: UiComponentEnum;
+  /**
+   * Properties of the UI Schema
+   */
+  properties?: { [k: string]: UiSchemaProperty } | undefined;
 };
 
 /** @internal */
@@ -164,6 +168,7 @@ export const UiSchemaProperty$inboundSchema: z.ZodType<
     ]),
   ).optional(),
   component: UiComponentEnum$inboundSchema,
+  properties: z.record(z.lazy(() => UiSchemaProperty$inboundSchema)).optional(),
 });
 
 /** @internal */
@@ -177,6 +182,7 @@ export type UiSchemaProperty$Outbound = {
     | null
     | undefined;
   component: string;
+  properties?: { [k: string]: UiSchemaProperty$Outbound } | undefined;
 };
 
 /** @internal */
@@ -197,6 +203,8 @@ export const UiSchemaProperty$outboundSchema: z.ZodType<
     ]),
   ).optional(),
   component: UiComponentEnum$outboundSchema,
+  properties: z.record(z.lazy(() => UiSchemaProperty$outboundSchema))
+    .optional(),
 });
 
 /**

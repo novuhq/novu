@@ -1,7 +1,7 @@
-import { cn } from '@/utils/ui';
 import React, { useMemo } from 'react';
+import { VariableFrom } from '@/components/maily/types';
+import { cn } from '@/utils/ui';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../primitives/tooltip';
-import { VariableFrom } from '../workflow-editor/steps/email/variables/variables';
 import { VariableIcon } from './components/variable-icon';
 import { getFirstFilterAndItsArgs, validateEnhancedDigestFilters } from './utils';
 import { VariableTooltip } from './variable-tooltip';

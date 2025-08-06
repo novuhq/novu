@@ -1,5 +1,5 @@
-import { IsDefined, IsString, IsEnum } from 'class-validator';
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { IsDefined, IsEnum, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../commands/project.command';
 
 export class SendWebhookMessageCommand extends EnvironmentCommand {

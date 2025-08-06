@@ -1,4 +1,3 @@
-/* eslint-disable */
 
 export const StarEmpty = (props: React.ComponentPropsWithoutRef<'svg'>) => {
   return (

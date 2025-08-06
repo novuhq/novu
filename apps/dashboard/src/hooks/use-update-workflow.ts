@@ -1,10 +1,10 @@
-import { getWorkflowIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/step';
-import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { QueryKeys } from '@/utils/query-keys';
+import type { WorkflowResponseDto } from '@novu/shared';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateWorkflow } from '@/api/workflows';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import type { WorkflowResponseDto } from '@novu/shared';
+import { getIdFromSlug, WORKFLOW_DIVIDER } from '@/utils/id-utils';
+import { QueryKeys } from '@/utils/query-keys';
+import { OmitEnvironmentFromParameters } from '@/utils/types';
 
 type UpdateWorkflowParameters = OmitEnvironmentFromParameters<typeof updateWorkflow>;
 
@@ -45,7 +45,7 @@ export const useUpdateWorkflow = (
     mutationFn: (args: UpdateWorkflowParameters) => updateWorkflow({ environment: currentEnvironment!, ...args }),
     ...options,
     onSuccess: async (data, variables, context) => {
-      const workflowId = getWorkflowIdFromSlug({ slug: data.slug, divider: WORKFLOW_DIVIDER });
+      const workflowId = getIdFromSlug({ slug: data.slug, divider: WORKFLOW_DIVIDER });
       const previousData = await queryClient.getQueryData<WorkflowResponseDto>([
         QueryKeys.fetchWorkflow,
         currentEnvironment?._id,
@@ -60,6 +60,11 @@ export const useUpdateWorkflow = (
       await queryClient.invalidateQueries({
         queryKey: [QueryKeys.fetchWorkflowTestData, currentEnvironment?._id, workflowId],
       });
+
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
+      });
+
       options?.onSuccess?.(data, variables, context);
     },
   });

@@ -1,28 +1,30 @@
-import { NotFoundError } from 'rxjs';
-import { Injectable, Logger } from '@nestjs/common';
-
-import { JobRepository } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { Injectable } from '@nestjs/common';
 import {
-  DetailEnum,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DetailEnum,
   InstrumentUsecase,
+  PinoLogger,
+  WorkflowRunRepository,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
-
-import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
-import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { JobEntity, JobRepository } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
-
-const LOG_CONTEXT = 'HandleLastFailedJob';
+import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
+import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
 
 @Injectable()
 export class HandleLastFailedJob {
   constructor(
     private createExecutionDetails: CreateExecutionDetails,
     private queueNextJob: QueueNextJob,
-    private jobRepository: JobRepository
-  ) {}
+    private jobRepository: JobRepository,
+    private workflowRunRepository: WorkflowRunRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   /**
    * This use case is only meant to be executed when a backed off job is in the last of the retry
@@ -37,7 +39,7 @@ export class HandleLastFailedJob {
     const job = await this.jobRepository.findOne({ _id: jobId, _environmentId: command.environmentId });
     if (!job) {
       const message = `Job ${jobId} not found when handling the failure of the latest attempt for a backed off job`;
-      Logger.error(message, new NotFoundError(message), LOG_CONTEXT);
+      this.logger.error(message);
       throw new PlatformException(message);
     }
 
@@ -61,6 +63,37 @@ export class HandleLastFailedJob {
           organizationId: job?._organizationId,
           userId: job?._userId,
         })
+      );
+    } else {
+      // Update workflow run status to failed when job fails and we should halt
+      await this.updateWorkflowRunStatusToFailed(job);
+    }
+  }
+
+  private async updateWorkflowRunStatusToFailed(job: JobEntity): Promise<void> {
+    try {
+      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, WorkflowRunStatusEnum.ERROR, {
+        organizationId: job._organizationId,
+        environmentId: job._environmentId,
+      });
+
+      this.logger.debug(
+        {
+          jobId: job._id,
+          notificationId: job._notificationId,
+          organizationId: job._organizationId,
+          environmentId: job._environmentId,
+        },
+        'Updated workflow run status to failed'
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          jobId: job._id,
+          notificationId: job._notificationId,
+        },
+        'Failed to update workflow run status to failed'
       );
     }
   }

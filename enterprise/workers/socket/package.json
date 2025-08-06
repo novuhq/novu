@@ -1,0 +1,27 @@
+{
+  "name": "@novu/socket-worker",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev",
+    "start": "wrangler dev",
+    "cf-typegen": "wrangler types",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production-us": "wrangler deploy --env production-us",
+    "deploy:production-eu": "wrangler deploy --env production-eu",
+    "deploy:local": "wrangler deploy --env local"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "typescript": "^5.5.2",
+    "wrangler": "^4.20.5"
+  },
+  "dependencies": {
+    "@tsndr/cloudflare-worker-jwt": "^3.2.0",
+    "@types/jsonwebtoken": "^8.5.9",
+    "hono": "^4.8.2",
+    "jsonwebtoken": "9.0.0",
+    "ws": "^8.18.0"
+  }
+}

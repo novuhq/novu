@@ -1,8 +1,8 @@
-import { WorkflowOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
+import { ResourceOriginEnum, StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import React from 'react';
 import { FaCode } from 'react-icons/fa6';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { RiArrowLeftSLine } from 'react-icons/ri';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { RouteFill } from '@/components/icons';
 import { Badge } from '@/components/primitives/badge';
@@ -18,10 +18,10 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import TruncatedText from '@/components/truncated-text';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchWorkflow } from '@/hooks/use-fetch-workflow';
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { STEP_TYPE_LABELS } from '@/utils/constants';
-import { useWorkflow } from './workflow-provider';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { getStepTypeIcon } from './steps/utils/preview-context.utils';
+import { useWorkflow } from './workflow-provider';
 
 type BreadcrumbData = {
   label: string;
@@ -105,8 +105,8 @@ function isOnStepEditingRoute(stepSlug: string | undefined, pathname: string): b
   );
 }
 
-function WorkflowIcon({ origin }: { origin: WorkflowOriginEnum }) {
-  if (origin === WorkflowOriginEnum.EXTERNAL) {
+function WorkflowIcon({ origin }: { origin: ResourceOriginEnum }) {
+  if (origin === ResourceOriginEnum.EXTERNAL) {
     return (
       <Badge color="yellow" size="sm" variant="lighter">
         <FaCode className="size-3.5" />

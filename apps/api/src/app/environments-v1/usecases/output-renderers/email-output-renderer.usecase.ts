@@ -1,12 +1,31 @@
-/* eslint-disable no-param-reassign */
-import { render as mailyRender, JSONContent as MailyJSONContent } from '@maily-to/render';
+import { JSONContent as MailyJSONContent, render as mailyRender } from '@maily-to/render';
 import { Injectable } from '@nestjs/common';
-import { EmailRenderOutput } from '@novu/shared';
-import { InstrumentUsecase, sanitizeHTML } from '@novu/application-generic';
+import { ModuleRef } from '@nestjs/core';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  EmailControlType,
+  FeatureFlagsService,
+  InstrumentUsecase,
+  LayoutControlType,
+  PinoLogger,
+  sanitizeHTML,
+} from '@novu/application-generic';
+import { ControlValuesEntity, ControlValuesRepository, JobEntity, JobRepository } from '@novu/dal';
 import { createLiquidEngine } from '@novu/framework/internal';
-
+import {
+  ControlValuesLevelEnum,
+  EmailRenderOutput,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
+  LAYOUT_CONTENT_VARIABLE,
+} from '@novu/shared';
 import { Liquid } from 'liquidjs';
-import { FullPayloadForRender, RenderCommand } from './render-command';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { MailyAttrsEnum } from '../../../shared/helpers/maily.types';
 import {
   hasShow,
@@ -15,17 +34,24 @@ import {
   isLinkNode,
   isRepeatNode,
   isVariableNode,
+  replaceMailyNodesByCondition,
   wrapMailyInLiquid,
 } from '../../../shared/helpers/maily-utils';
+import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import { BaseTranslationRendererUsecase } from './base-translation-renderer.usecase';
 import { NOVU_BRANDING_HTML } from './novu-branding-html';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { FullPayloadForRender, RenderCommand } from './render-command';
 
 type MailyJSONMarks = NonNullable<MailyJSONContent['marks']>[number];
 
 export class EmailOutputRendererCommand extends RenderCommand {
   environmentId: string;
   organizationId: string;
+  workflowId?: string;
+  locale?: string;
+  skipLayoutRendering?: boolean;
+  jobId?: string;
+  stepId: string;
 }
 
 function isJsonString(str: string): boolean {
@@ -39,15 +65,31 @@ function isJsonString(str: string): boolean {
 }
 
 @Injectable()
-export class EmailOutputRendererUsecase {
+export class EmailOutputRendererUsecase extends BaseTranslationRendererUsecase {
   private readonly liquidEngine: Liquid;
 
-  constructor(private getOrganizationSettings: GetOrganizationSettings) {
+  constructor(
+    private getOrganizationSettings: GetOrganizationSettings,
+    protected moduleRef: ModuleRef,
+    protected logger: PinoLogger,
+    protected featureFlagsService: FeatureFlagsService,
+    private controlValuesRepository: ControlValuesRepository,
+    private getLayoutUseCase: GetLayoutUseCase,
+    private jobRepository: JobRepository,
+    private createExecutionDetails: CreateExecutionDetails
+  ) {
+    super(moduleRef, logger, featureFlagsService);
     this.liquidEngine = createLiquidEngine();
   }
+
   @InstrumentUsecase()
   async execute(renderCommand: EmailOutputRendererCommand): Promise<EmailRenderOutput> {
-    const { body, subject: controlSubject, disableOutputSanitization } = renderCommand.controlValues;
+    const {
+      body,
+      subject: controlSubject,
+      disableOutputSanitization,
+      layoutId,
+    } = renderCommand.controlValues as EmailControlType;
 
     if (!body || typeof body !== 'string') {
       /**
@@ -55,63 +97,402 @@ export class EmailOutputRendererUsecase {
        * This passes responsibility to framework to throw type validation exceptions
        * rather than handling invalid types here.
        */
+
       return {
         subject: controlSubject as string,
         body: body as string,
       };
     }
 
-    let renderedHtml: string;
+    const {
+      fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      skipLayoutRendering,
+      jobId,
+      stepId,
+    } = renderCommand;
 
-    if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
-      const liquifiedMaily = wrapMailyInLiquid(body);
-      const transformedMaily = await this.transformMailyContent(liquifiedMaily, renderCommand.fullPayloadForRender);
-      const parsedMaily = await this.parseMailyContentByLiquid(transformedMaily, renderCommand.fullPayloadForRender);
-      const strippedMaily = this.removeTrailingEmptyLines(parsedMaily);
-      renderedHtml = await mailyRender(strippedMaily);
+    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+      defaultValue: false,
+      environment: { _id: environmentId },
+      organization: { _id: organizationId },
+    });
+
+    // Step 1: Apply translations to subject (already liquid-interpolated)
+    const translatedSubject = await this.processSubjectTranslations(
+      controlSubject as string,
+      fullPayloadForRender,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale
+    );
+
+    // Step 2: Process body content (with translations applied before rendering)
+    let renderedHtml = '';
+    if (isLayoutsPageActive) {
+      renderedHtml = await this.renderWithLayout({
+        body,
+        layoutId,
+        payload: fullPayloadForRender,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+        skipLayoutRendering,
+        jobId,
+        stepId,
+      });
     } else {
-      renderedHtml = await this.liquidEngine.parseAndRender(body, renderCommand.fullPayloadForRender);
+      renderedHtml = await this.processBodyContent({
+        body,
+        payload: fullPayloadForRender,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
     }
 
-    // Add Novu branding if 'removeNovuBranding' is false
-    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, renderCommand.organizationId);
+    // Step 3: Add Novu branding
+    const htmlWithBranding = await this.appendNovuBranding(renderedHtml, organizationId);
+    const cleanedHtml = this.cleanupRenderedHtml(htmlWithBranding);
 
-    /**
-     * Force type mapping in case undefined control.
-     * This passes responsibility to framework to throw type validation exceptions
-     * rather than handling invalid types here.
-     */
-    const subject = controlSubject as string;
-
+    // Step 4: Sanitize output if needed
     if (disableOutputSanitization) {
-      return { subject, body: htmlWithBranding };
+      return { subject: translatedSubject, body: cleanedHtml };
     }
 
-    return { subject: sanitizeHTML(subject), body: sanitizeHTML(htmlWithBranding) };
+    const sanitizedSubject = sanitizeHTML(translatedSubject);
+    const sanitizedBody = sanitizeHTML(cleanedHtml);
+
+    return {
+      subject: sanitizedSubject,
+      body: sanitizedBody,
+    };
   }
 
-  private removeTrailingEmptyLines(node: MailyJSONContent): MailyJSONContent {
-    if (!node.content || node.content.length === 0) return node;
+  private async getOverrideLayoutId({
+    job,
+    stepId,
+  }: {
+    job: JobEntity;
+    stepId: string;
+  }): Promise<string | null | undefined> {
+    const { overrides, step } = job;
+    let layoutIdentifier: string | null | undefined;
 
-    // Iterate from the end of the content and find the first non-empty node
-    let lastIndex = node.content.length;
-    // eslint-disable-next-line no-plusplus
-    for (let i = node.content.length - 1; i >= 0; i--) {
-      const childNode = node.content[i];
+    // Step 1: Check step-level override (highest priority)
+    const id = overrides?.steps?.[step._id ?? ''] ? step._id : stepId;
+    const stepOverrides = overrides?.steps?.[id ?? ''];
+    if (stepOverrides?.layoutId !== undefined) {
+      layoutIdentifier = stepOverrides.layoutId;
+    }
+    // Step 2: Check channel-level override for email
+    else if (overrides?.channels?.email?.layoutId !== undefined) {
+      layoutIdentifier = overrides.channels.email.layoutId;
+    }
+    // Step 3: Check deprecated layoutIdentifier (backward compatibility)
+    else if (overrides?.layoutIdentifier) {
+      layoutIdentifier = overrides.layoutIdentifier;
+    }
 
-      const isEmptyParagraph =
-        childNode.type === 'paragraph' && !childNode.text && (!childNode.content || childNode.content.length === 0);
+    // If no override is specified, return undefined (use step configuration)
+    if (layoutIdentifier === undefined) {
+      return undefined;
+    }
 
-      if (!isEmptyParagraph) {
-        lastIndex = i + 1; // Include this node in the result
-        break;
+    // If explicitly set to null, return null (no layout)
+    if (layoutIdentifier === null) {
+      return null;
+    }
+
+    return layoutIdentifier;
+  }
+
+  private async renderWithLayout({
+    body,
+    layoutId: controlValueLayoutId,
+    payload,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+    skipLayoutRendering,
+    jobId,
+    stepId,
+  }: {
+    body: string;
+    layoutId?: string | null;
+    payload: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+    skipLayoutRendering?: boolean;
+    jobId?: string;
+    stepId: string;
+  }): Promise<string> {
+    let job: JobEntity | null = null;
+    let overrideLayoutId: string | null | undefined;
+    if (jobId) {
+      job = await this.jobRepository.findOne({
+        _id: jobId,
+        _environmentId: environmentId,
+      });
+      if (job) {
+        overrideLayoutId = await this.getOverrideLayoutId({ job, stepId });
       }
     }
 
-    // Slice the content to remove trailing empty nodes
-    const filteredContent = node.content.slice(0, lastIndex);
+    const layoutId = overrideLayoutId || (overrideLayoutId === null ? null : controlValueLayoutId);
 
-    return { ...node, content: filteredContent };
+    let layoutControlsEntity: ControlValuesEntity | null = null;
+    // if the step control values have a layoutId then find layout controls entity
+    if (layoutId) {
+      try {
+        const layout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: layoutId,
+            environmentId,
+            organizationId,
+            skipAdditionalFields: true,
+          })
+        );
+        layoutControlsEntity = await this.controlValuesRepository.findOne({
+          _organizationId: organizationId,
+          _environmentId: environmentId,
+          _layoutId: layout._id,
+          level: ControlValuesLevelEnum.LAYOUT_CONTROLS,
+        });
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_SELECTED,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.PENDING,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({ name: layout.name, layoutId: layout.layoutId }),
+              })
+            )
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
+            });
+        }
+      } catch (error) {
+        if (job) {
+          this.createExecutionDetails
+            .execute(
+              CreateExecutionDetailsCommand.create({
+                ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+                detail: DetailEnum.LAYOUT_NOT_FOUND,
+                source: ExecutionDetailsSourceEnum.INTERNAL,
+                status: ExecutionDetailsStatusEnum.FAILED,
+                isTest: false,
+                isRetry: false,
+                raw: JSON.stringify({
+                  layoutId,
+                  error: error.message,
+                }),
+              })
+            )
+            .catch((promiseError) => {
+              this.logger.error({ error: promiseError }, 'Failed to create execution details');
+            });
+        }
+        throw error;
+      }
+    }
+
+    const stepBodyHtml = await this.processBodyContent({
+      body,
+      payload,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+      noHtmlWrappingTags: !!layoutControlsEntity,
+    });
+
+    const cleanedStepBodyHtml = stepBodyHtml
+      .replace(/<!DOCTYPE.*?>/g, '')
+      .replace(/<!--\$-->/g, '')
+      .replace(/<!--\/\$-->/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    if (!layoutControlsEntity || skipLayoutRendering) {
+      return cleanedStepBodyHtml;
+    }
+
+    const layoutControlValues = layoutControlsEntity.controls as LayoutControlType;
+
+    return this.processBodyContent({
+      body: layoutControlValues.email?.body ?? '',
+      payload: {
+        ...payload,
+        [LAYOUT_CONTENT_VARIABLE]: removeBrandingFromHtml(cleanedStepBodyHtml.replace(/\n/g, '')),
+      },
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+    });
+  }
+
+  private enhanceContentVariable(body: string) {
+    return JSON.stringify(
+      replaceMailyNodesByCondition(
+        body,
+        (node) => node.type === 'variable' && node.attrs?.id === LAYOUT_CONTENT_VARIABLE,
+        (node) =>
+          ({
+            ...node,
+            attrs: {
+              ...node.attrs,
+              shouldDangerouslySetInnerHTML: true,
+            },
+          }) satisfies MailyJSONContent
+      )
+    );
+  }
+
+  private async processBodyContent({
+    body,
+    payload,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+    noHtmlWrappingTags,
+  }: {
+    body: string;
+    payload: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+    noHtmlWrappingTags?: boolean;
+  }): Promise<string> {
+    if (typeof body === 'object' || (typeof body === 'string' && isJsonString(body))) {
+      const escapedPayloadForJson = this.deepEscapePayloadStrings(payload);
+      const liquifiedMaily = wrapMailyInLiquid(this.enhanceContentVariable(body));
+      const transformedMaily = await this.transformMailyContent(liquifiedMaily, escapedPayloadForJson);
+      const translatedMaily = await this.processMailyTranslations({
+        mailyContent: transformedMaily,
+        variables: escapedPayloadForJson,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
+      const parsedMaily = await this.parseMailyContentByLiquid(translatedMaily, escapedPayloadForJson);
+
+      return await mailyRender(parsedMaily, { noHtmlWrappingTags });
+    } else {
+      // For simple text body, apply translations directly
+      const processedHtml = await this.processTextTranslations({
+        text: body,
+        variables: payload,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
+
+      return processedHtml;
+    }
+  }
+
+  private async processSubjectTranslations(
+    subject: string,
+    variables: FullPayloadForRender,
+    environmentId: string,
+    organizationId: string,
+    workflowId?: string,
+    locale?: string
+  ): Promise<string> {
+    return this.processStringTranslations({
+      content: subject,
+      variables,
+      environmentId,
+      organizationId,
+      workflowId,
+      locale,
+    });
+  }
+
+  private async processMailyTranslations({
+    mailyContent,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    mailyContent: MailyJSONContent;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<MailyJSONContent> {
+    try {
+      const contentString = JSON.stringify(mailyContent);
+      const translatedContent = await this.processStringTranslations({
+        content: contentString,
+        variables,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
+
+      return JSON.parse(translatedContent);
+    } catch (error) {
+      this.logger.error('Maily translation processing failed, falling back to original content', error);
+
+      return mailyContent;
+    }
+  }
+
+  private async processTextTranslations({
+    text,
+    variables,
+    environmentId,
+    organizationId,
+    workflowId,
+    locale,
+  }: {
+    text: string;
+    variables: FullPayloadForRender;
+    environmentId: string;
+    organizationId: string;
+    workflowId?: string;
+    locale?: string;
+  }): Promise<string> {
+    try {
+      const translatedText = await this.processStringTranslations({
+        content: text,
+        variables,
+        environmentId,
+        organizationId,
+        workflowId,
+        locale,
+      });
+
+      return await this.liquidEngine.parseAndRender(translatedText, variables);
+    } catch (error) {
+      this.logger.error('Text translation processing failed, falling back to liquid processing', error);
+
+      return await this.liquidEngine.parseAndRender(text, variables);
+    }
   }
 
   private async parseMailyContentByLiquid(
@@ -398,5 +779,56 @@ export class EmailOutputRendererUsecase {
     const lastIndex = matches[matches.length - 1].index!;
 
     return html.slice(0, lastIndex) + NOVU_BRANDING_HTML + html.slice(lastIndex);
+  }
+
+  private deepEscapePayloadStrings(payload: FullPayloadForRender): FullPayloadForRender {
+    return this.deepEscapeObject(payload) as FullPayloadForRender;
+  }
+
+  private deepEscapeObject(obj: unknown): unknown {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    if (typeof obj === 'string') {
+      return this.escapeStringForJson(obj);
+    }
+
+    if (typeof obj === 'number' || typeof obj === 'boolean') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this.deepEscapeObject(item));
+    }
+
+    if (typeof obj === 'object') {
+      const escapedObj: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(obj)) {
+        escapedObj[key] = this.deepEscapeObject(value);
+      }
+
+      return escapedObj;
+    }
+
+    return obj;
+  }
+
+  private escapeStringForJson(str: string): string {
+    return str
+      .replace(/\\/g, '\\\\') // Escape backslashes
+      .replace(/"/g, '\\"') // Escape quotes
+      .replace(/\n/g, '\\n') // Escape newlines
+      .replace(/\r/g, '\\r') // Escape carriage returns
+      .replace(/\t/g, '\\t'); // Escape tabs
+  }
+
+  private cleanupRenderedHtml(html: string): string {
+    /*
+     * Convert paragraphs that contain only whitespace characters to empty paragraphs to prevent Gmail clipping.
+     * Gmail's clipping algorithm detects trailing whitespace content and marks emails as "message clipped".
+     * This preserves the intended spacing while removing the problematic whitespace content.
+     */
+    return html.replace(/<p([^>]*)>\s+<\/p>/g, '<p$1></p>');
   }
 }

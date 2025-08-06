@@ -1,4 +1,4 @@
-import { promises, existsSync } from 'node:fs';
+import { existsSync, promises } from 'node:fs';
 import { format } from 'date-fns';
 
 const backupFolder = `${__dirname}/backups`;

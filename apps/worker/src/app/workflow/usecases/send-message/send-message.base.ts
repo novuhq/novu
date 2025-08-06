@@ -1,6 +1,15 @@
-/* eslint-disable global-require */
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import {
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  GetNovuProviderCredentials,
+  SelectIntegration,
+  SelectIntegrationCommand,
+  SelectVariant,
+  SelectVariantCommand,
+} from '@novu/application-generic';
 import {
   IntegrationEntity,
   JobEntity,
@@ -16,24 +25,14 @@ import {
   ITenantDefine,
   ProvidersIdEnum,
   SmsProviderIdEnum,
+  TriggerOverrides,
 } from '@novu/shared';
 import { format } from 'date-fns';
 import i18next from 'i18next';
 import { merge } from 'lodash';
-
-import {
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  GetNovuProviderCredentials,
-  SelectIntegration,
-  SelectIntegrationCommand,
-  SelectVariant,
-  SelectVariantCommand,
-} from '@novu/application-generic';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageChannelCommand } from './send-message-channel.command';
 import { SendMessageResult, SendMessageType } from './send-message-type.usecase';
-import { SendMessageCommand } from './send-message.command';
 
 export abstract class SendMessageBase extends SendMessageType {
   abstract readonly channelType: ChannelTypeEnum;
@@ -51,13 +50,13 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected combineOverrides(
     bridgeData: Record<string, any> | null | undefined,
-    overrides: Record<string, any> | undefined,
+    overrides: TriggerOverrides | undefined,
     stepId: string | undefined,
     integrationId: string
   ): Record<string, unknown> {
     const bridgeProviderData = bridgeData?.providers?.[integrationId] || {};
     const workflowGlobalProviderOverrides = overrides?.providers?.[integrationId] || {};
-    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers[integrationId] || {} : {};
+    const triggerOverrides = stepId ? overrides?.steps?.[stepId]?.providers?.[integrationId] || {} : {};
 
     return merge({}, bridgeProviderData, workflowGlobalProviderOverrides, triggerOverrides);
   }
@@ -144,7 +143,7 @@ export abstract class SendMessageBase extends SendMessageType {
     );
   }
 
-  protected async processVariants(command: SendMessageCommand): Promise<MessageTemplateEntity> {
+  protected async processVariants(command: SendMessageChannelCommand): Promise<MessageTemplateEntity> {
     const { messageTemplate, conditions } = await this.selectVariant.execute(
       SelectVariantCommand.create({
         organizationId: command.organizationId,

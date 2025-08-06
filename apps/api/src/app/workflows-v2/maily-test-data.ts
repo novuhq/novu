@@ -1,4 +1,4 @@
-import { DEFAULT_ARRAY_ELEMENTS } from './usecases/create-variables-object/create-variables-object.usecase';
+import { DEFAULT_ARRAY_ELEMENTS } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
 
 export function fullCodeSnippet() {
   return {
@@ -503,7 +503,8 @@ export function previewPayloadExample() {
       email: 'user@example.com',
       phone: '+1234567890',
       avatar: 'https://example.com/avatar.png',
-      locale: 'en-US',
+      locale: 'en_US',
+      timezone: 'America/New_York',
       data: {},
     },
     steps: {},

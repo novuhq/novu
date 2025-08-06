@@ -42,7 +42,7 @@ export const envValidators = {
   SUBSCRIBER_WIDGET_JWT_EXPIRATION_TIME: str({ default: '15 days' }),
   NOVU_REGION: str({ default: 'local' }),
   NOVU_SECRET_KEY: str({ default: '' }),
-
+  INTERNAL_SERVICES_API_KEY: str({ default: undefined }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {
@@ -59,6 +59,11 @@ export const envValidators = {
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
+
+      CLICK_HOUSE_URL: str({ default: '' }),
+      CLICK_HOUSE_DATABASE: str({ default: '' }),
+      CLICK_HOUSE_USER: str({ default: '' }),
+      CLICK_HOUSE_PASSWORD: str({ default: '' }),
     }),
 
   // Feature Flags

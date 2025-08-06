@@ -149,9 +149,17 @@ export type NotificationFeedItemDto = {
    */
   payload?: { [k: string]: any } | undefined;
   /**
+   * The data sent with the notification.
+   */
+  data?: { [k: string]: any } | null | undefined;
+  /**
    * Provider-specific overrides used when triggering the notification.
    */
   overrides?: { [k: string]: any } | undefined;
+  /**
+   * Tags associated with the workflow that triggered the notification.
+   */
+  tags?: Array<string> | null | undefined;
 };
 
 /** @internal */
@@ -210,7 +218,9 @@ export const NotificationFeedItemDto$inboundSchema: z.ZodType<
   cta: MessageCTA$inboundSchema,
   status: NotificationFeedItemDtoStatus$inboundSchema,
   payload: z.record(z.any()).optional(),
+  data: z.nullable(z.record(z.any())).optional(),
   overrides: z.record(z.any()).optional(),
+  tags: z.nullable(z.array(z.string())).optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -252,7 +262,9 @@ export type NotificationFeedItemDto$Outbound = {
   cta: MessageCTA$Outbound;
   status: string;
   payload?: { [k: string]: any } | undefined;
+  data?: { [k: string]: any } | null | undefined;
   overrides?: { [k: string]: any } | undefined;
+  tags?: Array<string> | null | undefined;
 };
 
 /** @internal */
@@ -286,7 +298,9 @@ export const NotificationFeedItemDto$outboundSchema: z.ZodType<
   cta: MessageCTA$outboundSchema,
   status: NotificationFeedItemDtoStatus$outboundSchema,
   payload: z.record(z.any()).optional(),
+  data: z.nullable(z.record(z.any())).optional(),
   overrides: z.record(z.any()).optional(),
+  tags: z.nullable(z.array(z.string())).optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

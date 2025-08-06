@@ -91,6 +91,7 @@ const messageSchema = new Schema<MessageDBModel>(
       default: undefined,
     },
     lastSeenDate: Schema.Types.Date,
+    firstSeenDate: Schema.Types.Date,
     lastReadDate: Schema.Types.Date,
     archivedAt: Schema.Types.Date,
     status: {
@@ -99,7 +100,6 @@ const messageSchema = new Schema<MessageDBModel>(
     },
     errorId: Schema.Types.String,
     errorText: Schema.Types.String,
-    providerResponse: Schema.Types.Mixed,
     transactionId: {
       type: Schema.Types.String,
     },

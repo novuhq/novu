@@ -1,26 +1,26 @@
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import {
-  FeatureFlagsKeysEnum,
   ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
   IEnvironment,
 } from '@novu/shared';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { Button } from '@/components/primitives/button';
-import { DashboardLayout } from '../components/dashboard-layout';
-import { Navigate, useNavigate, useLocation, useParams } from 'react-router-dom';
-import { ROUTES, buildRoute } from '@/utils/routes';
-import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from '@tanstack/react-query';
-import { useEnvironment } from '@/context/environment/hooks';
-import { getWebhookPortalToken, createWebhookPortalToken } from '@/api/webhooks';
-import { AppPortal, SvixProvider } from 'svix-react';
+import { UseMutationResult, UseQueryResult, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { RiLoaderLine, RiWebhookLine } from 'react-icons/ri';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { AppPortal, SvixProvider } from 'svix-react';
+import { createWebhookPortalToken, getWebhookPortalToken } from '@/api/webhooks';
+import { Button } from '@/components/primitives/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { WebhooksPaywallState } from '@/components/webhooks/webhooks-paywall-state';
 import { IS_SELF_HOSTED } from '@/config';
-import { QueryKeys } from '../utils/query-keys';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { DashboardLayout } from '../components/dashboard-layout';
 import { Badge } from '../components/primitives/badge';
+import { QueryKeys } from '../utils/query-keys';
 
 interface WebhookPortalTokenResponse {
   url: string;
@@ -145,7 +145,7 @@ export function WebhooksPage() {
   if (currentEnvironment && !currentEnvironment?.webhookAppId) {
     return (
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
-        <div className="flex h-full flex-col items-center justify-center gap-4 p-4 text-center">
+        <div className="flex h-full flex-col items-center justify-center gap-4 p-2 text-center">
           <div className="bg-muted mb-3 flex h-16 w-16 items-center justify-center rounded-full">
             <RiWebhookLine className="text-muted-foreground h-8 w-8" />
           </div>

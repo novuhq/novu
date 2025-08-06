@@ -1,5 +1,5 @@
 import { NotificationTemplateEntity } from '@novu/dal';
-import { createMockObjectFromSchema, FeatureFlagsKeysEnum, WorkflowOriginEnum } from '@novu/shared';
+import { createMockObjectFromSchema, FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
 import { JsonSchemaMock } from './json-schema-mock';
 
 /**
@@ -11,7 +11,7 @@ export async function generatePayloadExample(workflow: NotificationTemplateEntit
   }
 
   const shouldUsePayloadSchema =
-    workflow.origin === WorkflowOriginEnum.EXTERNAL || workflow.origin === WorkflowOriginEnum.NOVU_CLOUD;
+    workflow.origin === ResourceOriginEnum.EXTERNAL || workflow.origin === ResourceOriginEnum.NOVU_CLOUD;
 
   if (!shouldUsePayloadSchema) {
     return undefined;

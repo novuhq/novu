@@ -1,8 +1,8 @@
-import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
 import { HttpRequestHeaderKeysEnum } from '@novu/application-generic';
 import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
+import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { AuthService } from '../auth.service';
 
 @Injectable()

@@ -1,3 +1,22 @@
+## v3.7.0 (2025-07-22)
+
+### 🚀 Features
+
+- **worker,js,react:** subscriber timezone aware delivery fixes NV-6239 ([#8674](https://github.com/novuhq/novu/pull/8674))
+- **root:** create keyless environment ([#8276](https://github.com/novuhq/novu/pull/8276))
+
+### 🩹 Fixes
+
+- **root:** bring back eslint and web app build ([#8505](https://github.com/novuhq/novu/pull/8505))
+- version bump react packages ([62ff7ee154](https://github.com/novuhq/novu/commit/62ff7ee154))
+- novu react rc 4 release ([b737df7335](https://github.com/novuhq/novu/commit/b737df7335))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
 ## v3.4.0 (2025-05-16)
 
 ### 🧱 Updated Dependencies

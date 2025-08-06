@@ -1,9 +1,9 @@
-import { UserSession } from '@novu/testing';
-import jwt from 'jsonwebtoken';
-import { subMinutes } from 'date-fns';
-import { expect } from 'chai';
 import { CommunityUserRepository } from '@novu/dal';
 import { UserSessionData } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
+import { subMinutes } from 'date-fns';
+import jwt from 'jsonwebtoken';
 
 describe('User login - /auth/login (POST) #novu-v0-os', async () => {
   let session: UserSession;

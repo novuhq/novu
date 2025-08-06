@@ -15,7 +15,6 @@ const SECRET_KEY_ENV_KEY = 'NOVU_SECRET_KEY';
 const normalizePayload = (originalPayload: Record<string, unknown>) => {
   if (originalPayload?.__source) {
     // Remove internal params
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { __source, ...payload } = originalPayload;
 
     return payload;

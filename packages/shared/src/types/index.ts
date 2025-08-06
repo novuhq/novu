@@ -8,6 +8,7 @@ export * from './environment';
 export * from './events';
 export * from './feature-flags';
 export * from './files';
+export * from './general';
 export * from './jobs';
 export * from './layout';
 export * from './message-templates';

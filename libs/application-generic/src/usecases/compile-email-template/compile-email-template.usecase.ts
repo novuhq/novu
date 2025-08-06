@@ -1,16 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { merge } from 'lodash';
-import { readFile } from 'fs/promises';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-
-import { IEmailBlock, CommunityOrganizationRepository } from '@novu/dal';
-
-import { CompileTemplate, CompileTemplateBase } from '../compile-template';
-import { BadRequestException } from '@nestjs/common';
-import { CompileEmailTemplateCommand } from './compile-email-template.command';
-import { LayoutDto, GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { CommunityOrganizationRepository, IEmailBlock } from '@novu/dal';
+import { readFile } from 'fs/promises';
+import { merge } from 'lodash';
 import { VerifyPayloadService } from '../../services';
+import { CompileTemplate, CompileTemplateBase } from '../compile-template';
+import { GetLayoutCommand, GetLayoutUseCase, LayoutDto } from '../get-layout';
 import { GetNovuLayout } from '../get-novu-layout';
+import { CompileEmailTemplateCommand } from './compile-email-template.command';
 
 @Injectable()
 export class CompileEmailTemplate extends CompileTemplateBase {
@@ -40,7 +37,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     if (command.layoutId) {
       layout = await this.getLayoutUsecase.execute(
         GetLayoutCommand.create({
-          layoutId: command.layoutId,
+          layoutIdOrInternalId: command.layoutId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
         })
@@ -64,7 +61,6 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     const { content } = command;
     let { preheader } = command;
 
-    // eslint-disable-next-line no-param-reassign
     command.payload = merge({}, defaultPayload, command.payload);
 
     const payload = {
@@ -148,8 +144,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
   public static addPreheader(content: string): string {
     // "&nbsp;&zwnj;&nbsp;&zwnj;" is needed to spacing away the rest of the email from the preheader area in email clients
     return content?.replace(
-      // eslint-disable-next-line no-useless-escape
-      /<body\b[^\<\>]*?>/,
+      /<body\b[^<>]*?>/,
       `$&{{#if preheader}}
           <div style="display: none; max-height: 0px; overflow: hidden;">
             {{preheader}}

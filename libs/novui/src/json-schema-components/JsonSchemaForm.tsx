@@ -1,17 +1,16 @@
 import Form, { FormProps } from '@rjsf/core';
 import { RegistryWidgetsType, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-
+import { css, cx } from '../../styled-system/css';
 import { splitCssProps } from '../../styled-system/jsx';
 import { JsxStyleProps } from '../../styled-system/types';
-import { css, cx } from '../../styled-system/css';
 
 import { CoreProps } from '../types';
+import { JSON_SCHEMA_FORM_ID_DELIMITER } from './constants';
 import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } from './templates/ArrayFieldTemplate';
 import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templates/IconButton';
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
-import { CheckboxWidget, SelectWidget, InputEditorWidget } from './widgets';
-import { JSON_SCHEMA_FORM_ID_DELIMITER } from './constants';
+import { CheckboxWidget, InputEditorWidget, SelectWidget } from './widgets';
 import { InputWidget } from './widgets/InputWidget';
 import { TextareaWidget } from './widgets/TextareaWidget';
 

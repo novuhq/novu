@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 
 export const BellWithNotification = (props: React.ComponentPropsWithoutRef<'svg'>) => {
   return (

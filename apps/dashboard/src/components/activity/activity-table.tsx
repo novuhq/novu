@@ -1,21 +1,18 @@
-import { ActivityFilters } from '@/api/activity';
-import { Skeleton } from '@/components/primitives/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
-import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
-import { formatDate } from '@/utils/format-date';
-import { parsePageParam } from '@/utils/parse-page-param';
-import { cn } from '@/utils/ui';
-import { ISubscriber } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
+import { ActivityFilters } from '@/api/activity';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { parsePageParam } from '@/utils/parse-page-param';
 import { useFetchActivities } from '../../hooks/use-fetch-activities';
 import { ActivityEmptyState } from './activity-empty-state';
+import { ActivityTableRow } from './components/activity-table-row';
 import { ArrowPagination } from './components/arrow-pagination';
-import { ActivityStatusBadge } from './components/status-badge';
-import { StepIndicators } from './components/step-indicators';
+import { CursorPagination } from './components/cursor-pagination';
 
 export interface ActivityTableProps {
   selectedActivityId: string | null;
@@ -38,11 +35,17 @@ export function ActivityTable({
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const isWorkflowRunMigrationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WORKFLOW_RUN_PAGE_MIGRATION_ENABLED);
+
+  // Get pagination parameters from URL
   const page = parsePageParam(searchParams.get('page'));
-  const { activities, isLoading, hasMore, error } = useFetchActivities(
+  const cursor = searchParams.get('cursor');
+
+  const { activities, isLoading, hasMore, next, previous, error } = useFetchActivities(
     {
       filters,
-      page,
+      page: isWorkflowRunMigrationEnabled ? undefined : page,
+      cursor: isWorkflowRunMigrationEnabled ? cursor : undefined,
     },
     {
       refetchOnWindowFocus: true,
@@ -63,7 +66,45 @@ export function ActivityTable({
       ...Object.fromEntries(searchParams),
       page: newPage.toString(),
     });
+    // Remove cursor when using page-based pagination
+    newParams.delete('cursor');
     navigate(`${location.pathname}?${newParams}`);
+  }
+
+  function handleCursorNavigation(newCursor: string | null, action: 'next' | 'previous' | 'first') {
+    const newParams = createSearchParams({
+      ...Object.fromEntries(searchParams),
+    });
+
+    // Remove page when using cursor-based pagination
+    newParams.delete('page');
+
+    if (action === 'first') {
+      // Go to first page by removing cursor
+      newParams.delete('cursor');
+    } else if (newCursor) {
+      newParams.set('cursor', newCursor);
+    } else {
+      newParams.delete('cursor');
+    }
+
+    navigate(`${location.pathname}?${newParams}`);
+  }
+
+  function handleNext() {
+    if (next) {
+      handleCursorNavigation(next, 'next');
+    }
+  }
+
+  function handlePrevious() {
+    if (previous) {
+      handleCursorNavigation(previous, 'previous');
+    }
+  }
+
+  function handleFirst() {
+    handleCursorNavigation(null, 'first');
   }
 
   return (
@@ -93,73 +134,43 @@ export function ActivityTable({
           transition={{ duration: 0.2 }}
           className="flex flex-col"
         >
-          <Table
-            isLoading={isLoading}
-            loadingRow={<SkeletonRow />}
-            containerClassname="border-x-0 border-b-0 border-t border-t-neutral-200 rounded-none shadow-none"
-          >
-            <TableHeader className="shadow-none">
-              <TableRow className="border-b border-neutral-200 shadow-none [&>th]:border-b [&>th]:border-neutral-200">
-                <TableHead className="h-9 px-3 py-0">Event</TableHead>
-                <TableHead className="h-9 px-3 py-0">Subscriber</TableHead>
-                <TableHead className="h-9 px-3 py-0">Status</TableHead>
-                <TableHead className="h-9 px-3 py-0">Steps</TableHead>
-                <TableHead className="h-9 px-3 py-0">Triggered at</TableHead>
+          <Table isLoading={isLoading} loadingRow={<SkeletonRow />}>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-text-strong h-8 px-2 py-0">Workflow runs</TableHead>
+                <TableHead className="h-8 w-[175px] px-2 py-0"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {activities.map((activity) => (
-                <TableRow
+                <ActivityTableRow
                   key={activity._id}
-                  className={cn(
-                    'relative cursor-pointer hover:bg-neutral-50',
-                    selectedActivityId === activity._id &&
-                      'bg-neutral-50 after:absolute after:right-0 after:top-0 after:h-[calc(100%-1px)] after:w-[5px] after:bg-neutral-200'
-                  )}
-                  onClick={() => onActivitySelect(activity._id)}
-                >
-                  <TableCell className="px-3">
-                    <div className="flex flex-col">
-                      <span className="text-foreground-950 font-medium">
-                        {activity.template?.name || 'Deleted workflow'}
-                      </span>
-                      <span className="text-foreground-400 text-[10px] leading-[14px]" title={'Transaction ID'}>
-                        {activity.transactionId || '-'}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground-600 px-3">
-                    <div className="flex flex-col">
-                      <span
-                        className="inline-block max-w-[200px] truncate"
-                        title={'Subscriber ID: ' + activity.subscriber?.subscriberId || ''}
-                      >
-                        {activity.subscriber?.subscriberId || '-'}
-                      </span>
-                      <span className="text-foreground-400 text-[10px] leading-[14px]" title={'Subscriber Name'}>
-                        {getSubscriberDisplay(
-                          activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
-                        )}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-3">
-                    <ActivityStatusBadge jobs={activity.jobs} />
-                  </TableCell>
-                  <TableCell className="px-3">
-                    <StepIndicators jobs={activity.jobs} />
-                  </TableCell>
-                  <TableCell className="text-foreground-600 px-3">
-                    <TimeDisplayHoverCard date={new Date(activity.createdAt)}>
-                      <span>{formatDate(activity.createdAt)}</span>
-                    </TimeDisplayHoverCard>
-                  </TableCell>
-                </TableRow>
+                  activity={activity}
+                  isSelected={selectedActivityId === activity._id}
+                  onClick={onActivitySelect}
+                />
               ))}
             </TableBody>
           </Table>
 
-          <ArrowPagination page={page} hasMore={hasMore} onPageChange={handlePageChange} />
+          {isWorkflowRunMigrationEnabled ? (
+            <CursorPagination
+              hasMore={hasMore}
+              hasPrevious={!!previous}
+              onNext={handleNext}
+              onPrevious={handlePrevious}
+              onFirst={handleFirst}
+              className="border-t-0 bg-transparent"
+              isLoading={isLoading}
+            />
+          ) : (
+            <ArrowPagination
+              page={page}
+              hasMore={hasMore}
+              onPageChange={handlePageChange}
+              className="border-t-0 bg-transparent"
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>
@@ -195,14 +206,4 @@ function SkeletonRow() {
       </TableCell>
     </TableRow>
   );
-}
-
-function getSubscriberDisplay(subscriber?: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>) {
-  if (!subscriber) return '';
-
-  if (subscriber.firstName || subscriber.lastName) {
-    return `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
-  }
-
-  return '';
 }

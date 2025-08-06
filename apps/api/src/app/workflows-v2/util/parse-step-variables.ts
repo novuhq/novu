@@ -1,5 +1,5 @@
 import { JsonSchemaTypeEnum } from '@novu/dal';
-import { JSONSchemaDto } from '../dtos';
+import { JSONSchemaDto } from '../../shared/dtos/json-schema.dto';
 
 export type LiquidVariable = {
   name: string;

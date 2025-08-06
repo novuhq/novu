@@ -1,8 +1,20 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
-import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase } from '@novu/application-generic';
-import { SyncToEnvironmentCommand } from './sync-to-environment.command';
+import {
+  ClientSession,
+  LocalizationResourceEnum,
+  NotificationTemplateRepository,
+  PreferencesEntity,
+  PreferencesRepository,
+} from '@novu/dal';
+import { PreferencesTypeEnum, ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  LayoutSyncToEnvironmentCommand,
+  LayoutSyncToEnvironmentUseCase,
+} from '../../../layouts-v2/usecases/sync-to-environment';
+import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
+import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import {
   UpsertStepDataCommand,
@@ -10,10 +22,9 @@ import {
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
 } from '../upsert-workflow';
-import { StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
-import { WorkflowNotSyncableException } from '../../exceptions/workflow-not-syncable-exception';
+import { SyncToEnvironmentCommand } from './sync-to-environment.command';
 
-export const SYNCABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
+export const SYNCABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 
 /**
  * This usecase is used to sync a workflow from one environment to another.
@@ -23,13 +34,17 @@ export const SYNCABLE_WORKFLOW_ORIGINS = [WorkflowOriginEnum.NOVU_CLOUD];
  * - the preferences (PreferencesEntity)
  * - the control values (ControlValuesEntity)
  * - the message template (MessageTemplateEntity)
+ * - the payload schema and validation settings
  */
 @Injectable()
 export class SyncToEnvironmentUseCase {
   constructor(
     private getWorkflowUseCase: GetWorkflowUseCase,
     private preferencesRepository: PreferencesRepository,
-    private upsertWorkflowUseCase: UpsertWorkflowUseCase
+    private upsertWorkflowUseCase: UpsertWorkflowUseCase,
+    private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
+    private moduleRef: ModuleRef,
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   @InstrumentUsecase()
@@ -49,23 +64,75 @@ export class SyncToEnvironmentUseCase {
       throw new WorkflowNotSyncableException(sourceWorkflow);
     }
 
-    const preferencesToClone = await this.getWorkflowPreferences(sourceWorkflow._id, command.user.environmentId);
+    const preferencesToClone = await this.getWorkflowPreferences(
+      sourceWorkflow._id,
+      command.user.environmentId,
+      command.session
+    );
     const externalId = sourceWorkflow.workflowId;
     const targetWorkflow = await this.findWorkflowInTargetEnvironment(command, externalId);
     const workflowDto = await this.buildRequestDto(sourceWorkflow, preferencesToClone, targetWorkflow);
 
-    return await this.upsertWorkflowUseCase.execute(
+    for (const step of workflowDto.steps) {
+      if (step.type === StepTypeEnum.EMAIL && step.controlValues?.layoutId) {
+        await this.layoutSyncToEnvironmentUseCase.execute(
+          LayoutSyncToEnvironmentCommand.create({
+            user: command.user,
+            layoutIdOrInternalId: step.controlValues.layoutId as string,
+            targetEnvironmentId: command.targetEnvironmentId,
+          })
+        );
+      }
+    }
+
+    const upsertedWorkflow = await this.upsertWorkflowUseCase.execute(
       UpsertWorkflowCommand.create({
         preserveWorkflowId: true,
         user: { ...command.user, environmentId: command.targetEnvironmentId },
         workflowIdOrInternalId: targetWorkflow?._id,
         workflowDto,
+        session: command.session,
       })
     );
+
+    await this.publishTranslationGroup(sourceWorkflow.workflowId, command);
+
+    // Update the source workflow with publish information
+    await this.notificationTemplateRepository.updatePublishFields(
+      sourceWorkflow._id,
+      command.user.environmentId,
+      command.user._id,
+      command.session
+    );
+
+    return upsertedWorkflow;
+  }
+
+  private async publishTranslationGroup(workflowIdentifier: string, command: SyncToEnvironmentCommand): Promise<void> {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+
+    if (!isEnterprise || isSelfHosted) {
+      return;
+    }
+
+    const publishTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.PublishTranslationGroup, {
+      strict: false,
+    });
+
+    const { user, targetEnvironmentId } = command;
+
+    await publishTranslationGroup.execute({
+      user,
+      resourceId: workflowIdentifier,
+      resourceType: LocalizationResourceEnum.WORKFLOW,
+      sourceEnvironmentId: user.environmentId,
+      targetEnvironmentId,
+    });
   }
 
   private isSyncable(workflow: WorkflowResponseDto): boolean {
-    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin) && workflow.status !== WorkflowStatusEnum.ERROR;
+    return SYNCABLE_WORKFLOW_ORIGINS.includes(workflow.origin);
   }
 
   private async buildRequestDto(
@@ -103,7 +170,10 @@ export class SyncToEnvironmentUseCase {
   ): Promise<UpsertWorkflowDataCommand> {
     return {
       workflowId: sourceWorkflow.workflowId,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      payloadSchema: sourceWorkflow.payloadSchema || null,
+      validatePayload: sourceWorkflow.validatePayload,
+      isTranslationEnabled: sourceWorkflow.isTranslationEnabled,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       name: sourceWorkflow.name,
       active: sourceWorkflow.active,
       tags: sourceWorkflow.tags,
@@ -120,8 +190,11 @@ export class SyncToEnvironmentUseCase {
     preferencesToClone: PreferencesEntity[]
   ): Promise<UpsertWorkflowDataCommand> {
     return {
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+      payloadSchema: sourceWorkflow.payloadSchema || null,
+      validatePayload: sourceWorkflow.validatePayload,
       workflowId: sourceWorkflow.workflowId,
+      isTranslationEnabled: sourceWorkflow.isTranslationEnabled,
       name: sourceWorkflow.name,
       active: sourceWorkflow.active,
       tags: sourceWorkflow.tags,
@@ -169,13 +242,21 @@ export class SyncToEnvironmentUseCase {
     };
   }
 
-  private async getWorkflowPreferences(workflowId: string, environmentId: string): Promise<PreferencesEntity[]> {
-    return await this.preferencesRepository.find({
-      _templateId: workflowId,
-      _environmentId: environmentId,
-      type: {
-        $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW],
+  private async getWorkflowPreferences(
+    workflowId: string,
+    environmentId: string,
+    session?: ClientSession | null
+  ): Promise<PreferencesEntity[]> {
+    return await this.preferencesRepository.find(
+      {
+        _templateId: workflowId,
+        _environmentId: environmentId,
+        type: {
+          $in: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW],
+        },
       },
-    });
+      '',
+      { session }
+    );
   }
 }

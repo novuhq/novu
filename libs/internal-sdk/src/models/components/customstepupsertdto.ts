@@ -8,19 +8,22 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  CustomControlDto,
+  CustomControlDto$inboundSchema,
+  CustomControlDto$Outbound,
+  CustomControlDto$outboundSchema,
+} from "./customcontroldto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Custom step
+ * Control values for the Custom step.
  */
-export type CustomStepUpsertDtoControlValues = {
-  /**
-   * Custom control values for the step.
-   */
-  custom?: { [k: string]: any } | undefined;
+export type CustomStepUpsertDtoControlValues = CustomControlDto | {
+  [k: string]: any;
 };
 
 export type CustomStepUpsertDto = {
@@ -37,9 +40,9 @@ export type CustomStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Custom step
+   * Control values for the Custom step.
    */
-  controlValues?: CustomStepUpsertDtoControlValues | null | undefined;
+  controlValues?: CustomControlDto | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -47,23 +50,19 @@ export const CustomStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   CustomStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  custom: z.record(z.any()).optional(),
-});
+> = z.union([CustomControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type CustomStepUpsertDtoControlValues$Outbound = {
-  custom?: { [k: string]: any } | undefined;
-};
+export type CustomStepUpsertDtoControlValues$Outbound =
+  | CustomControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
 export const CustomStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   CustomStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   CustomStepUpsertDtoControlValues
-> = z.object({
-  custom: z.record(z.any()).optional(),
-});
+> = z.union([CustomControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -107,9 +106,8 @@ export const CustomStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => CustomStepUpsertDtoControlValues$inboundSchema),
-  ).optional(),
+  controlValues: z.union([CustomControlDto$inboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -121,7 +119,7 @@ export type CustomStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: CustomStepUpsertDtoControlValues$Outbound | null | undefined;
+  controlValues?: CustomControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -133,9 +131,8 @@ export const CustomStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => CustomStepUpsertDtoControlValues$outboundSchema),
-  ).optional(),
+  controlValues: z.union([CustomControlDto$outboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

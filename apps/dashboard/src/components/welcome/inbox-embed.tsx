@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+import { ChannelTypeEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
+import ReactConfetti from 'react-confetti';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
-import { ChannelTypeEnum } from '@novu/shared';
-import ReactConfetti from 'react-confetti';
 import { InboxConnectedGuide } from './inbox-connected-guide';
 import { InboxFrameworkGuide } from './inbox-framework-guide';
-import { useSearchParams } from 'react-router-dom';
 
 export function InboxEmbed(): JSX.Element | null {
   const [showConfetti, setShowConfetti] = useState(false);
@@ -16,7 +16,6 @@ export function InboxEmbed(): JSX.Element | null {
   const [searchParams] = useSearchParams();
   const environmentHint = searchParams.get('environmentId');
 
-  // If hint provided, use it, otherwise use the first dev environment
   const selectedEnvironment = environments?.find((env) =>
     environmentHint ? env._id === environmentHint : !env._parentId
   );

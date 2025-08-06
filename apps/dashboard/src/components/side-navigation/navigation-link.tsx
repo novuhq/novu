@@ -1,5 +1,5 @@
-import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cva } from 'class-variance-authority';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { cn } from '@/utils/ui';
 
 const linkVariants = cva(
@@ -27,7 +27,7 @@ interface NavLinkProps {
 
 export function NavigationLink({ to, isExternal, className, children }: NavLinkProps) {
   const { pathname } = useLocation();
-  const isSelected = pathname === to;
+  const isSelected = pathname === to || (to && pathname.startsWith(to));
   const variant = isSelected ? 'selected' : 'default';
   const classNames = cn(linkVariants({ variant, className }));
 

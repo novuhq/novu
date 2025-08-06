@@ -1,5 +1,5 @@
-import React from 'react';
 import type { NovuUI } from '@novu/js/ui';
+import React from 'react';
 import { createContextAndHook } from '../utils/createContextAndHook';
 
 type NovuUIContextValue = {

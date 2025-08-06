@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
 
 export class WorkflowCommonsFields {
   @ApiProperty({ description: 'Name of the workflow' })
@@ -29,4 +30,34 @@ export class WorkflowCommonsFields {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Enable or disable payload schema validation',
+    type: 'boolean',
+  })
+  @IsOptional()
+  @IsBoolean()
+  validatePayload?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'The payload JSON Schema for the workflow',
+    nullable: true,
+    type: 'object',
+    additionalProperties: true,
+  })
+  @IsOptional()
+  @IsValidJsonSchema({
+    message: 'payloadSchema must be a valid JSON schema',
+    nullable: true,
+  })
+  payloadSchema?: object | null;
+
+  @ApiPropertyOptional({
+    description: 'Enable or disable translations for this workflow',
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }

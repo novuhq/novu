@@ -9,6 +9,7 @@ export class ControlValuesEntity {
   level: ControlValuesLevelEnum;
   priority: number;
   controls: Record<string, unknown>;
-  _workflowId: string;
-  _stepId: string;
+  _workflowId?: string;
+  _stepId?: string;
+  _layoutId?: string;
 }

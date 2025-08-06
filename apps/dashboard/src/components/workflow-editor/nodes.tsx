@@ -1,30 +1,35 @@
-import { FeatureFlagsKeysEnum, PermissionsEnum, WorkflowOriginEnum } from '@novu/shared';
+import {
+  EnvironmentTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  ResourceOriginEnum,
+  StepCreateDto,
+} from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
-import { ComponentProps } from 'react';
-import { RiFilter3Fill, RiPlayCircleLine } from 'react-icons/ri';
+import { AnimatePresence } from 'motion/react';
+import { ComponentProps, useCallback, useRef, useState } from 'react';
+import { RiPlayCircleLine } from 'react-icons/ri';
 import { RQBJsonLogic } from 'react-querybuilder';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { StepTypeEnum } from '@/utils/enums';
+import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { getWorkflowIdFromSlug, STEP_DIVIDER } from '@/utils/step';
 import { cn } from '@/utils/ui';
 import { STEP_TYPE_TO_ICON } from '../icons/utils';
 import { AddStepMenu } from './add-step-menu';
 import { Node, NodeBody, NodeError, NodeHeader, NodeIcon, NodeName } from './base-node';
-import { useHasPermission } from '@/hooks/use-has-permission';
+import { ConditionBadge } from './condition-badge';
 import { WorkflowNodeActionBar } from './workflow-node-action-bar';
-import { useEnvironment } from '@/context/environment/hooks';
-import { AnimatePresence } from 'motion/react';
-import { ConfirmationModal } from '@/components/confirmation-modal';
-import { useState, useCallback, useRef } from 'react';
-import { StepCreateDto } from '@novu/shared';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export type NodeData = {
   addStepIndex?: number;
@@ -49,8 +54,6 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 export const TriggerNode = ({
   data,
 }: NodeProps<FlowNode<{ environment: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
-
   const content = (
     <Node
       className="relative rounded-tl-none [&>span]:rounded-tl-none"
@@ -77,7 +80,7 @@ export const TriggerNode = ({
 
   return (
     <Link
-      to={buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
+      to={buildRoute(ROUTES.TRIGGER_WORKFLOW, {
         environmentSlug: data.environment,
         workflowSlug: data.workflowSlug,
       })}
@@ -101,21 +104,22 @@ const StepNode = (props: StepNodeProps) => {
   const { workflow: currentWorkflow, update } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const conditionsCount = useConditionsCount(data.controlValues?.skip as RQBJsonLogic);
 
   const isSelected =
-    getWorkflowIdFromSlug({ slug: stepSlug ?? '', divider: STEP_DIVIDER }) ===
-      getWorkflowIdFromSlug({ slug: data.stepSlug ?? '', divider: STEP_DIVIDER }) &&
+    getIdFromSlug({ slug: stepSlug ?? '', divider: STEP_DIVIDER }) ===
+      getIdFromSlug({ slug: data.stepSlug ?? '', divider: STEP_DIVIDER }) &&
     !!stepSlug &&
     !!data.stepSlug;
 
   const hasConditions = conditionsCount > 0;
   const isReadOnly =
-    currentWorkflow?.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    currentWorkflow?.origin === ResourceOriginEnum.EXTERNAL ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) {
@@ -199,19 +203,11 @@ const StepNode = (props: StepNodeProps) => {
             const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
             if (isTemplateConfigurable) {
-              if (isV2TemplateEditorEnabled) {
-                navigate(
-                  buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-                    stepSlug: newStep.slug,
-                  })
-                );
-              } else {
-                navigate(
-                  buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                    stepSlug: newStep.slug,
-                  })
-                );
-              }
+              navigate(
+                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                  stepSlug: newStep.slug,
+                })
+              );
             } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(type)) {
               navigate(
                 buildRoute(ROUTES.EDIT_STEP, {
@@ -223,7 +219,7 @@ const StepNode = (props: StepNodeProps) => {
         },
       }
     );
-  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate, isV2TemplateEditorEnabled]);
+  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate]);
 
   const handleEditContent = useCallback(() => {
     if (!data.stepSlug || !currentEnvironment?.slug || !type) {
@@ -233,19 +229,11 @@ const StepNode = (props: StepNodeProps) => {
     const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
     if (isTemplateConfigurable) {
-      if (isV2TemplateEditorEnabled && currentWorkflow) {
-        navigate(
-          buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-            stepSlug: data.stepSlug,
-          })
-        );
-      } else {
-        navigate(
-          buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-            stepSlug: data.stepSlug,
-          })
-        );
-      }
+      navigate(
+        buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+          stepSlug: data.stepSlug,
+        })
+      );
     } else {
       navigate(
         buildRoute(ROUTES.EDIT_STEP, {
@@ -253,65 +241,33 @@ const StepNode = (props: StepNodeProps) => {
         })
       );
     }
-  }, [data.stepSlug, currentEnvironment?.slug, navigate, type, isV2TemplateEditorEnabled, currentWorkflow]);
-
-  if (hasConditions) {
-    return (
-      <>
-        <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-          <Node
-            aria-selected={isSelected}
-            className={cn('group rounded-tl-none [&>span]:rounded-tl-none', className)}
-            pill={
-              <>
-                <RiFilter3Fill className="text-foreground-400 size-3" />
-                <span className="text-foreground-400 text-xs">{conditionsCount}</span>
-              </>
-            }
-            onPillClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              navigate(buildRoute(ROUTES.EDIT_STEP_CONDITIONS, { stepSlug: data.stepSlug ?? '' }));
-            }}
-            {...rest}
-          >
-            {rest.children}
-          </Node>
-          <AnimatePresence>
-            {isHovered && !isReadOnly && !data.isTemplateStorePreview && type && (
-              <WorkflowNodeActionBar
-                stepType={type}
-                stepName={data.name || 'Untitled Step'}
-                onRemoveClick={handleRemoveStep}
-                onEditContentClick={handleEditContent}
-                onCopyClick={handleCopyStep}
-              />
-            )}
-          </AnimatePresence>
-        </div>
-      </>
-    );
-  }
+  }, [data.stepSlug, currentEnvironment?.slug, navigate, type, currentWorkflow]);
 
   return (
-    <>
-      <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-        <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
-          {rest.children}
-        </Node>
-        <AnimatePresence>
-          {isHovered && !isReadOnly && !data.isTemplateStorePreview && type && (
-            <WorkflowNodeActionBar
-              stepType={type}
-              stepName={data.name || 'Untitled Step'}
-              onRemoveClick={handleRemoveStep}
-              onEditContentClick={handleEditContent}
-              onCopyClick={handleCopyStep}
-            />
-          )}
-        </AnimatePresence>
-      </div>
-    </>
+    <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <Node aria-selected={isSelected} className={cn('group', className)} {...rest}>
+        {rest.children}
+      </Node>
+      {hasConditions && (
+        <ConditionBadge
+          conditionsCount={conditionsCount}
+          stepSlug={data.stepSlug ?? ''}
+          conditionsData={data.controlValues?.skip as RQBJsonLogic}
+        />
+      )}
+      <AnimatePresence>
+        {isHovered && !data.isTemplateStorePreview && type && (
+          <WorkflowNodeActionBar
+            stepType={type}
+            stepName={data.name || 'Untitled Step'}
+            onRemoveClick={handleRemoveStep}
+            onEditContentClick={handleEditContent}
+            onCopyClick={handleCopyStep}
+            isReadOnly={isReadOnly}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
@@ -553,14 +509,23 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   const navigate = useNavigate();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
+  const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
+    limit: 100,
+    refetchOnWindowFocus: false,
+  });
+  const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
+  const addDefaultLayout = isLayoutsPageActive && !!defaultLayout;
+  const defaultLayoutId = defaultLayout?.layoutId;
 
-  if (!workflow) {
+  if (!workflow || isFetchingLayouts) {
     return null;
   }
 
   const isReadOnly =
-    workflow.origin === WorkflowOriginEnum.EXTERNAL || !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+    workflow.origin === ResourceOriginEnum.EXTERNAL ||
+    !has({ permission: PermissionsEnum.WORKFLOW_WRITE }) ||
+    currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
 
   if (isReadOnly) {
     return null;
@@ -575,18 +540,12 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
           update(
             {
               ...workflow,
-              steps: [...workflow.steps, createStep(stepType)],
+              steps: [...workflow.steps, createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined)],
             },
             {
               onSuccess: (data) => {
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                  if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
-                    navigate(
-                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-                        stepSlug: data.steps[data.steps.length - 1].slug,
-                      })
-                    );
-                  } else {
+                  if (currentEnvironment?.slug) {
                     navigate(
                       buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                         stepSlug: data.steps[data.steps.length - 1].slug,

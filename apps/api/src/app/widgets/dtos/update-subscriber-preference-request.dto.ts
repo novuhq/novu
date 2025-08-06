@@ -1,6 +1,6 @@
-import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 import { ApiExtraModels, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
 
 @ApiExtraModels(ChannelPreference)

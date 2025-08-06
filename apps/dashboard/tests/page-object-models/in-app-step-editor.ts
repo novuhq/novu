@@ -1,5 +1,5 @@
-import { type Page } from '@playwright/test';
 import os from 'node:os';
+import { type Page } from '@playwright/test';
 
 const isMac = os.platform() === 'darwin';
 const modifier = isMac ? 'Meta' : 'Control';
@@ -38,6 +38,7 @@ export class InAppStepEditor {
 
     const actionDropdownTrigger = this.page.getByTestId('in-app-action-dropdown-trigger');
     await actionDropdownTrigger.click();
+
     if (action === 'primary') {
       const primaryAction = this.page.getByRole('menuitem').filter({ hasText: 'Primary action' }).first();
       await primaryAction.click();
@@ -84,6 +85,7 @@ export class InAppStepEditor {
     customControls: Array<{ name: string; value?: string; defaultValue?: string }>;
   }) {
     const elements = [];
+
     for (const control of customControls) {
       elements.push({
         label: this.page.locator('label', { hasText: new RegExp(`^${control.name}$`) }),

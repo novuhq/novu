@@ -1,15 +1,15 @@
-import { expect } from 'chai';
+import { BadRequestException } from '@nestjs/common';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ITemplateVariable, TemplateVariableTypeEnum } from '@novu/shared';
+import { expect } from 'chai';
 import { merge } from 'lodash';
-import { BadRequestException } from '@nestjs/common';
 import { VerifyPayloadCommand } from './verify-payload.command';
 import { VerifyPayload } from './verify-payload.usecase';
 
-describe('Verify Payload Usecase', function () {
+describe('Verify Payload Usecase', () => {
   const verifyPayload = new VerifyPayload();
 
-  it('should handle empty and undefined strings', function () {
+  it('should handle empty and undefined strings', () => {
     const template = createTemplate([
       { name: 'user.firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
       { name: 'user.hej', type: TemplateVariableTypeEnum.STRING, required: false, defaultValue: '' },
@@ -37,7 +37,7 @@ describe('Verify Payload Usecase', function () {
     expect(Object.keys(final.user)).to.not.include('test');
   });
 
-  it('should fill and merge as expected', function () {
+  it('should fill and merge as expected', () => {
     const template = createTemplate([
       { name: 'user.firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
       { name: 'user.lastName', type: TemplateVariableTypeEnum.STRING, required: true },
@@ -62,7 +62,7 @@ describe('Verify Payload Usecase', function () {
     expect(final.user.firstName).to.eq('John');
   });
 
-  it('should respect system variables', function () {
+  it('should respect system variables', () => {
     const template = createTemplate([
       { name: 'subscriber.firstName', type: TemplateVariableTypeEnum.STRING, defaultValue: 'John', required: false },
       { name: 'subscriber.lastName', type: TemplateVariableTypeEnum.STRING, required: true },
@@ -84,7 +84,7 @@ describe('Verify Payload Usecase', function () {
     expect(Object.keys(result).length).to.eq(0);
   });
 
-  it('should not allow false types', function () {
+  it('should not allow false types', () => {
     const template = createTemplate([
       { name: 'first', type: TemplateVariableTypeEnum.STRING, required: true },
       { name: 'second', type: TemplateVariableTypeEnum.ARRAY, required: true },
@@ -97,7 +97,7 @@ describe('Verify Payload Usecase', function () {
       third: '',
     };
 
-    expect(function () {
+    expect(() => {
       verifyPayload.execute(
         VerifyPayloadCommand.create({
           payload,

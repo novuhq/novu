@@ -1,10 +1,8 @@
 import { Injectable } from '@nestjs/common';
-
-import { EnvironmentRepository, IApiKey } from '@novu/dal';
-
 import { decryptApiKey } from '@novu/application-generic';
-import { GetApiKeysCommand } from './get-api-keys.command';
+import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { ApiKey } from '../../../shared/dtos/api-key';
+import { GetApiKeysCommand } from './get-api-keys.command';
 
 @Injectable()
 export class GetApiKeys {

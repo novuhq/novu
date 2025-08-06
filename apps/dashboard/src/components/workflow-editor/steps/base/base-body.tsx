@@ -1,7 +1,6 @@
 import { useFormContext } from 'react-hook-form';
-
-import { ControlInput } from '@/components/primitives/control-input';
 import { FormControl, FormField, FormItem, FormMessage } from '@/components/primitives/form/form';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { capitalize } from '@/utils/string';
@@ -11,8 +10,12 @@ const bodyKey = 'body';
 
 export const BaseBody = () => {
   const { control } = useFormContext();
-  const { step, digestStepBeforeCurrent } = useWorkflow();
+  const { step, digestStepBeforeCurrent, workflow } = useWorkflow();
   const { variables, isAllowedVariable } = useParseVariables(step?.variables, digestStepBeforeCurrent?.stepId);
+
+  const hintMessage = workflow?.isTranslationEnabled
+    ? 'Type {{ to access variables or {t. to access translation keys.'
+    : 'Type {{ to access variables.';
 
   return (
     <FormField
@@ -31,10 +34,11 @@ export const BaseBody = () => {
                 value={field.value}
                 multiline
                 onChange={field.onChange}
+                enableTranslations
               />
             </InputRoot>
           </FormControl>
-          <FormMessage>{`You can use variables by typing {{ select from the list or create a new one.`}</FormMessage>
+          <FormMessage>{hintMessage}</FormMessage>
         </FormItem>
       )}
     />

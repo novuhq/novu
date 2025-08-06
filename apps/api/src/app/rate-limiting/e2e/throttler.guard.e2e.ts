@@ -1,7 +1,7 @@
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiServiceLevelEnum } from '@novu/shared';
-import { expect } from 'chai';
 import { HttpResponseHeaderKeysEnum } from '@novu/application-generic';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 
 const mockSingleCost = 1;
 const mockBulkCost = 5;

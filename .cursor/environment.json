@@ -3,7 +3,7 @@
   "install": "git submodule update --init --recursive && pnpm install && pnpm build:v2",
   "start": "cd scripts && node setup-env-files.js && cd .. && pnpm start:api & pnpm start:dashboard & pnpm start:worker &",
   "build": {
-    "context": "..",
-    "dockerfile": ".cursor/Dockerfile"
+    "context": ".",
+    "dockerfile": "Dockerfile"
   }
 }

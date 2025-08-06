@@ -1,6 +1,5 @@
-import { expect, test, vi } from 'vitest';
-
 import { CheckIntegrationResponseEnum, IEmailOptions, ISendMessageSuccessResponse } from '@novu/stateless';
+import { expect, test, vi } from 'vitest';
 import { IEmailJsConfig } from './emailjs.config';
 import { EmailJsProvider } from './emailjs.provider';
 

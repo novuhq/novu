@@ -1,8 +1,8 @@
-import { cn } from '@/utils/ui';
 import { Slot } from '@radix-ui/react-slot';
 import { MoreHorizontal } from 'lucide-react';
 import * as React from 'react';
 import { Link, LinkProps } from 'react-router-dom';
+import { cn } from '@/utils/ui';
 
 const Breadcrumb = React.forwardRef<
   HTMLElement,

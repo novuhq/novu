@@ -27,11 +27,15 @@ export type PatchWorkflowDto = {
   /**
    * The payload JSON Schema for the workflow
    */
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   /**
    * Enable or disable payload schema validation
    */
   validatePayload?: boolean | undefined;
+  /**
+   * Enable or disable translations for this workflow
+   */
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -44,8 +48,9 @@ export const PatchWorkflowDto$inboundSchema: z.ZodType<
   name: z.string().optional(),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   validatePayload: z.boolean().optional(),
+  isTranslationEnabled: z.boolean().optional(),
 });
 
 /** @internal */
@@ -54,8 +59,9 @@ export type PatchWorkflowDto$Outbound = {
   name?: string | undefined;
   description?: string | undefined;
   tags?: Array<string> | undefined;
-  payloadSchema?: { [k: string]: any } | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
   validatePayload?: boolean | undefined;
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -68,8 +74,9 @@ export const PatchWorkflowDto$outboundSchema: z.ZodType<
   name: z.string().optional(),
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
-  payloadSchema: z.record(z.any()).optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
   validatePayload: z.boolean().optional(),
+  isTranslationEnabled: z.boolean().optional(),
 });
 
 /**

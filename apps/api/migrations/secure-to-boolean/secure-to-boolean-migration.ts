@@ -1,7 +1,7 @@
 import '../../src/config';
-import { IntegrationRepository } from '@novu/dal';
 import { NestFactory } from '@nestjs/core';
 import { PinoLogger } from '@novu/application-generic';
+import { IntegrationRepository } from '@novu/dal';
 import { AppModule } from '../../src/app.module';
 
 const integrationRepository = new IntegrationRepository();

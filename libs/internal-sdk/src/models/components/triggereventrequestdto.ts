@@ -8,6 +8,12 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  EmailChannelOverrides,
+  EmailChannelOverrides$inboundSchema,
+  EmailChannelOverrides$Outbound,
+  EmailChannelOverrides$outboundSchema,
+} from "./emailchanneloverrides.js";
+import {
   StepsOverrides,
   StepsOverrides$inboundSchema,
   StepsOverrides$Outbound,
@@ -33,13 +39,27 @@ import {
 } from "./topicpayloaddto.js";
 
 /**
+ * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+ */
+export type Channels = {
+  /**
+   * Email channel specific overrides
+   */
+  email?: EmailChannelOverrides | undefined;
+};
+
+/**
  * This could be used to override provider specific configurations
  */
 export type Overrides = {
   /**
-   * This could be used to override provider specific configurations
+   * This could be used to override provider specific configurations or layout at the step level
    */
   steps?: { [k: string]: StepsOverrides } | undefined;
+  /**
+   * Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.
+   */
+  channels?: Channels | undefined;
   /**
    * Overrides the provider configuration for the entire workflow and all steps
    */
@@ -76,7 +96,7 @@ export type Overrides = {
   layoutIdentifier?: string | undefined;
 };
 
-export type One = TopicPayloadDto | SubscriberPayloadDto | string;
+export type To1 = TopicPayloadDto | SubscriberPayloadDto | string;
 
 /**
  * The recipients list of people who will receive the notification.
@@ -129,7 +149,10 @@ export type TriggerEventRequestDto = {
     | Array<TopicPayloadDto | SubscriberPayloadDto | string>
     | string;
   /**
-   * A unique identifier for this transaction, we will generate a UUID if not provided.
+   * A unique identifier for deduplication. If the same **transactionId** is sent again,
+   *
+   * @remarks
+   *       the trigger is ignored. Useful to prevent duplicate notifications. The retention period depends on your billing tier.
    */
   transactionId?: string | undefined;
   /**
@@ -149,12 +172,63 @@ export type TriggerEventRequestDto = {
 };
 
 /** @internal */
+export const Channels$inboundSchema: z.ZodType<
+  Channels,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  email: EmailChannelOverrides$inboundSchema.optional(),
+});
+
+/** @internal */
+export type Channels$Outbound = {
+  email?: EmailChannelOverrides$Outbound | undefined;
+};
+
+/** @internal */
+export const Channels$outboundSchema: z.ZodType<
+  Channels$Outbound,
+  z.ZodTypeDef,
+  Channels
+> = z.object({
+  email: EmailChannelOverrides$outboundSchema.optional(),
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace Channels$ {
+  /** @deprecated use `Channels$inboundSchema` instead. */
+  export const inboundSchema = Channels$inboundSchema;
+  /** @deprecated use `Channels$outboundSchema` instead. */
+  export const outboundSchema = Channels$outboundSchema;
+  /** @deprecated use `Channels$Outbound` instead. */
+  export type Outbound = Channels$Outbound;
+}
+
+export function channelsToJSON(channels: Channels): string {
+  return JSON.stringify(Channels$outboundSchema.parse(channels));
+}
+
+export function channelsFromJSON(
+  jsonString: string,
+): SafeParseResult<Channels, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) => Channels$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Channels' from JSON`,
+  );
+}
+
+/** @internal */
 export const Overrides$inboundSchema: z.ZodType<
   Overrides,
   z.ZodTypeDef,
   unknown
 > = z.object({
   steps: z.record(StepsOverrides$inboundSchema).optional(),
+  channels: z.lazy(() => Channels$inboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),
@@ -166,6 +240,7 @@ export const Overrides$inboundSchema: z.ZodType<
 /** @internal */
 export type Overrides$Outbound = {
   steps?: { [k: string]: StepsOverrides$Outbound } | undefined;
+  channels?: Channels$Outbound | undefined;
   providers?: { [k: string]: { [k: string]: any } } | undefined;
   email?: { [k: string]: any } | undefined;
   push?: { [k: string]: any } | undefined;
@@ -181,6 +256,7 @@ export const Overrides$outboundSchema: z.ZodType<
   Overrides
 > = z.object({
   steps: z.record(StepsOverrides$outboundSchema).optional(),
+  channels: z.lazy(() => Channels$outboundSchema).optional(),
   providers: z.record(z.record(z.any())).optional(),
   email: z.record(z.any()).optional(),
   push: z.record(z.any()).optional(),
@@ -217,7 +293,7 @@ export function overridesFromJSON(
 }
 
 /** @internal */
-export const One$inboundSchema: z.ZodType<One, z.ZodTypeDef, unknown> = z.union(
+export const To1$inboundSchema: z.ZodType<To1, z.ZodTypeDef, unknown> = z.union(
   [
     TopicPayloadDto$inboundSchema,
     SubscriberPayloadDto$inboundSchema,
@@ -226,13 +302,13 @@ export const One$inboundSchema: z.ZodType<One, z.ZodTypeDef, unknown> = z.union(
 );
 
 /** @internal */
-export type One$Outbound =
+export type To1$Outbound =
   | TopicPayloadDto$Outbound
   | SubscriberPayloadDto$Outbound
   | string;
 
 /** @internal */
-export const One$outboundSchema: z.ZodType<One$Outbound, z.ZodTypeDef, One> = z
+export const To1$outboundSchema: z.ZodType<To1$Outbound, z.ZodTypeDef, To1> = z
   .union([
     TopicPayloadDto$outboundSchema,
     SubscriberPayloadDto$outboundSchema,
@@ -243,26 +319,26 @@ export const One$outboundSchema: z.ZodType<One$Outbound, z.ZodTypeDef, One> = z
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace One$ {
-  /** @deprecated use `One$inboundSchema` instead. */
-  export const inboundSchema = One$inboundSchema;
-  /** @deprecated use `One$outboundSchema` instead. */
-  export const outboundSchema = One$outboundSchema;
-  /** @deprecated use `One$Outbound` instead. */
-  export type Outbound = One$Outbound;
+export namespace To1$ {
+  /** @deprecated use `To1$inboundSchema` instead. */
+  export const inboundSchema = To1$inboundSchema;
+  /** @deprecated use `To1$outboundSchema` instead. */
+  export const outboundSchema = To1$outboundSchema;
+  /** @deprecated use `To1$Outbound` instead. */
+  export type Outbound = To1$Outbound;
 }
 
-export function oneToJSON(one: One): string {
-  return JSON.stringify(One$outboundSchema.parse(one));
+export function to1ToJSON(to1: To1): string {
+  return JSON.stringify(To1$outboundSchema.parse(to1));
 }
 
-export function oneFromJSON(
+export function to1FromJSON(
   jsonString: string,
-): SafeParseResult<One, SDKValidationError> {
+): SafeParseResult<To1, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => One$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'One' from JSON`,
+    (x) => To1$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'To1' from JSON`,
   );
 }
 

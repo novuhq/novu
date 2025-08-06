@@ -1,8 +1,8 @@
+import { GetEventResourceUsage } from '@novu/ee-billing';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { ApiServiceLevelEnum } from '@novu/shared';
-import { GetEventResourceUsage } from '@novu/ee-billing';
 
 process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
 // process.env.CLERK_ENABLED = 'true';

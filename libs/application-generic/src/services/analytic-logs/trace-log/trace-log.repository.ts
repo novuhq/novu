@@ -1,0 +1,291 @@
+import { Injectable } from '@nestjs/common';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { PinoLogger } from 'nestjs-pino';
+import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
+import { ClickHouseService, InsertOptions } from '../clickhouse.service';
+import { LogRepository } from '../log.repository';
+import { getInsertOptions } from '../shared';
+import { EventType, ORDER_BY, TABLE_NAME, Trace, traceLogSchema } from './trace-log.schema';
+
+const TRACE_INSERT_OPTIONS: InsertOptions = getInsertOptions(
+  process.env.TRACES_ASYNC_INSERT,
+  process.env.TRACES_WAIT_ASYNC_INSERT
+);
+
+@Injectable()
+export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Trace> {
+  public readonly table = TABLE_NAME;
+  public readonly identifierPrefix = 'trc_';
+
+  constructor(
+    protected readonly clickhouseService: ClickHouseService,
+    protected readonly logger: PinoLogger,
+    protected readonly featureFlagsService: FeatureFlagsService
+  ) {
+    super(clickhouseService, logger, traceLogSchema, ORDER_BY, featureFlagsService);
+    this.logger.setContext(this.constructor.name);
+  }
+
+  async create(traceData: Omit<Trace, 'id' | 'expires_at'>): Promise<void> {
+    try {
+      const isTraceLogsEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
+        defaultValue: false,
+        organization: { _id: traceData.organization_id },
+        user: { _id: traceData.user_id },
+        environment: { _id: traceData.environment_id },
+      });
+
+      if (!isTraceLogsEnabled) {
+        return;
+      }
+
+      await this.insert(
+        traceData,
+        {
+          organizationId: traceData.organization_id,
+          environmentId: traceData.environment_id,
+          userId: traceData.user_id,
+        },
+        TRACE_INSERT_OPTIONS
+      );
+
+      this.logger.debug(
+        {
+          entityId: traceData.entity_id,
+          entityType: traceData.entity_type,
+          eventType: traceData.event_type,
+        },
+        'Trace event logged'
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          error,
+          entityId: traceData.entity_id,
+          entityType: traceData.entity_type,
+          eventType: traceData.event_type,
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorStack: error instanceof Error ? error.stack : undefined,
+        },
+        'Failed to log trace event'
+      );
+      // Don't rethrow to avoid breaking the main flow
+    }
+  }
+
+  async createMany(traceDataArray: Omit<Trace, 'id' | 'expires_at'>[]): Promise<void> {
+    if (traceDataArray.length === 0) {
+      return;
+    }
+
+    try {
+      const firstTraceData = traceDataArray[0];
+      const isTraceLogsEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
+        defaultValue: false,
+        organization: { _id: firstTraceData.organization_id },
+        user: { _id: firstTraceData.user_id },
+        environment: { _id: firstTraceData.environment_id },
+      });
+
+      if (!isTraceLogsEnabled) {
+        return;
+      }
+
+      await this.insertMany(
+        traceDataArray,
+        {
+          organizationId: firstTraceData.organization_id,
+          environmentId: firstTraceData.environment_id,
+          userId: firstTraceData.user_id,
+        },
+        TRACE_INSERT_OPTIONS
+      );
+
+      this.logger.debug(
+        {
+          count: traceDataArray.length,
+          entityIds: traceDataArray.map((trace) => trace.entity_id),
+          entityTypes: [...new Set(traceDataArray.map((trace) => trace.entity_type))],
+          eventTypes: [...new Set(traceDataArray.map((trace) => trace.event_type))],
+        },
+        'Trace events logged in batch'
+      );
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          count: traceDataArray.length,
+          entityIds: traceDataArray.map((trace) => trace.entity_id),
+          entityTypes: [...new Set(traceDataArray.map((trace) => trace.entity_type))],
+          eventTypes: [...new Set(traceDataArray.map((trace) => trace.event_type))],
+          errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          errorStack: error instanceof Error ? error.stack : undefined,
+        },
+        'Failed to log trace events in batch'
+      );
+    }
+  }
+}
+
+export function mapEventTypeToTitle(eventType: EventType): string {
+  switch (eventType) {
+    // Step events
+    case 'step_created':
+      return 'Step created';
+    case 'step_queued':
+      return 'Step queued';
+    case 'step_delayed':
+      return 'Step delayed';
+    case 'step_digested':
+      return 'Step digested';
+    case 'step_filtered':
+      return 'Step filtered';
+    case 'step_filter_processing':
+      return 'Step filter processing';
+    case 'step_filter_failed':
+      return 'Step filter failed';
+    case 'step_completed':
+      return 'Step completed';
+
+    // Message events
+    case 'message_created':
+      return 'Message created';
+    case 'message_sent':
+      return 'Message sent';
+    case 'message_seen':
+      return 'Message seen';
+    case 'message_unseen':
+      return 'Message unseen';
+    case 'message_read':
+      return 'Message read';
+    case 'message_unread':
+      return 'Message unread';
+    case 'message_archived':
+      return 'Message archived';
+    case 'message_unarchived':
+      return 'Message unarchived';
+    case 'message_snoozed':
+      return 'Message snoozed';
+    case 'message_unsnoozed':
+      return 'Message unsnoozed';
+    case 'message_unsnooze_failed':
+      return 'Message unsnooze failed';
+    case 'message_content_failed':
+      return 'Message content failed';
+    case 'message_sending_started':
+      return 'Message sending started';
+
+    // Subscriber events
+    case 'subscriber_integration_missing':
+      return 'Subscriber integration missing';
+    case 'subscriber_channel_missing':
+      return 'Subscriber channel missing';
+    case 'subscriber_validation_failed':
+      return 'Subscriber validation failed';
+    case 'subscriber_missing_email_address':
+      return 'Subscriber missing email address';
+    case 'subscriber_missing_phone_number':
+      return 'Subscriber missing phone number';
+
+    // Provider events
+    case 'provider_error':
+      return 'Provider error';
+    case 'provider_limit_exceeded':
+      return 'Provider limit exceeded';
+
+    // Digest events
+    case 'digest_merged':
+      return 'Digest merged';
+    case 'digest_skipped':
+      return 'Digest skipped';
+    case 'digest_triggered':
+      return 'Digest triggered';
+    case 'digest_started':
+      return 'Digest started';
+
+    // Delay events
+    case 'delay_completed':
+      return 'Delay completed';
+    case 'delay_misconfigured':
+      return 'Delay misconfigured';
+    case 'delay_limit_exceeded':
+      return 'Delay limit exceeded';
+
+    // Bridge events
+    case 'bridge_response_received':
+      return 'Bridge response received';
+    case 'bridge_execution_failed':
+      return 'Bridge execution failed';
+    case 'bridge_execution_skipped':
+      return 'Bridge execution skipped';
+
+    // Webhook events
+    case 'webhook_filter_retrying':
+      return 'Webhook filter retrying';
+    case 'webhook_filter_failed':
+      return 'Webhook filter failed';
+
+    // Integration events
+    case 'integration_selected':
+      return 'Integration selected';
+
+    // Layout events
+    case 'layout_not_found':
+      return 'Layout not found';
+    case 'layout_selected':
+      return 'Layout selected';
+
+    // Tenant events
+    case 'tenant_selected':
+      return 'Tenant selected';
+    case 'tenant_not_found':
+      return 'Tenant not found';
+
+    // Variant events
+    case 'variant_selected':
+      return 'Variant selected';
+
+    // Notification events
+    case 'notification_error':
+      return 'Notification error';
+
+    // Chat events
+    case 'chat_webhook_missing':
+      return 'Chat webhook missing';
+    case 'chat_all_channels_failed':
+      return 'Chat all channels failed';
+    case 'chat_phone_missing':
+      return 'Chat phone missing';
+    case 'chat_some_channels_skipped':
+      return 'Chat some channels skipped';
+
+    // Push events
+    case 'push_tokens_missing':
+      return 'Push tokens missing';
+    case 'push_some_channels_skipped':
+      return 'Push some channels skipped';
+
+    // Reply events
+    case 'reply_callback_missing':
+      return 'Reply callback missing';
+    case 'reply_callback_misconfigured':
+      return 'Reply callback misconfigured';
+    case 'reply_mx_record_missing':
+      return 'Reply MX record missing';
+    case 'reply_mx_domain_missing':
+      return 'Reply MX domain missing';
+
+    // Execution events
+    case 'execution_detail':
+      return 'Execution detail';
+
+    default: {
+      // Exhaustive check - this will cause a compile error if we miss any TraceEvent cases
+      const _exhaustiveCheck: never = eventType;
+
+      return _exhaustiveCheck;
+    }
+  }
+}

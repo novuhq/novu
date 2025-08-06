@@ -1,8 +1,8 @@
 import type {
-  StepResponseDto,
   GeneratePreviewRequestDto,
   GeneratePreviewResponseDto,
   IEnvironment,
+  StepResponseDto,
 } from '@novu/shared';
 import { getV2, postV2 } from './api.client';
 

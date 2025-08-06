@@ -19,6 +19,7 @@ export const ChatOrPushProviderEnum = {
   Getstream: "getstream",
   RocketChat: "rocket-chat",
   WhatsappBusiness: "whatsapp-business",
+  ChatWebhook: "chat-webhook",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

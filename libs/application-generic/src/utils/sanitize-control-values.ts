@@ -1,19 +1,20 @@
 import { StepTypeEnum, TimeUnitEnum } from '@novu/shared';
 import { isEmpty } from 'lodash';
-import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
+import { PinoLogger } from '../logging';
 import {
-  EmailControlType,
-  SmsControlType,
-  InAppRedirectType,
-  PushControlType,
-  DigestTimedControlType,
+  ChatControlType,
+  DelayControlType,
   DigestControlSchemaType,
   DigestRegularControlType,
+  DigestTimedControlType,
+  EmailControlType,
+  InAppRedirectType,
+  LayoutControlType,
   LookBackWindowType,
-  DelayControlType,
-  ChatControlType,
+  PushControlType,
+  SmsControlType,
 } from '../schemas/control';
-import { PinoLogger } from '../logging';
+import { InAppActionType, InAppControlType } from '../schemas/control/in-app-control.schema';
 
 // Cast input T_Type to trigger Ajv validation errors - possible undefined
 function sanitizeEmptyInput<T_Type>(input: T_Type, defaultValue: T_Type = undefined as unknown as T_Type): T_Type {
@@ -83,6 +84,7 @@ function sanitizeEmail(controlValues: EmailControlType) {
     body: sanitizeEmptyInput(controlValues.body, EMPTY_TIP_TAP),
     skip: controlValues.skip,
     disableOutputSanitization: controlValues.disableOutputSanitization,
+    layoutId: controlValues.layoutId,
   };
 
   return filterNullishValues(emailControls);
@@ -178,6 +180,15 @@ function sanitizeDelay(controlValues: DelayControlType) {
   return filterNullishValues(mappedValues);
 }
 
+function sanitizeLayout(controlValues: LayoutControlType) {
+  return {
+    email: filterNullishValues({
+      body: controlValues.email?.body,
+      editorType: controlValues.email?.editorType,
+    }),
+  };
+}
+
 function parseAmount(amount?: unknown) {
   try {
     if (!isNumber(amount)) {
@@ -199,6 +210,8 @@ function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
 
   return obj;
 }
+
+export type SanitizationType = StepTypeEnum | 'layout';
 
 /**
  * Sanitizes control values received from client-side forms into a clean minimal object.
@@ -223,7 +236,7 @@ function filterNullishValues<T extends Record<string, unknown>>(obj: T): T {
 export function dashboardSanitizeControlValues(
   logger: PinoLogger,
   controlValues: Record<string, unknown>,
-  stepType: StepTypeEnum | unknown
+  type?: StepTypeEnum | 'layout'
 ): (Record<string, unknown> & { skip?: Record<string, unknown> }) | null {
   try {
     if (!controlValues) {
@@ -231,7 +244,7 @@ export function dashboardSanitizeControlValues(
     }
 
     let normalizedValues: Record<string, unknown>;
-    switch (stepType) {
+    switch (type) {
       case StepTypeEnum.IN_APP:
         normalizedValues = sanitizeInApp(controlValues as InAppControlType);
         break;
@@ -252,6 +265,9 @@ export function dashboardSanitizeControlValues(
         break;
       case StepTypeEnum.DELAY:
         normalizedValues = sanitizeDelay(controlValues as DelayControlType);
+        break;
+      case 'layout':
+        normalizedValues = sanitizeLayout(controlValues as LayoutControlType);
         break;
       default:
         normalizedValues = filterNullishValues(controlValues);

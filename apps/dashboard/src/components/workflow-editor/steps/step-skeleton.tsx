@@ -7,7 +7,7 @@ import { Button } from '@/components/primitives/button';
 import { Separator } from '@/components/primitives/separator';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/primitives/tabs';
-import { WorkflowOriginEnum } from '@/utils/enums';
+import { ResourceOriginEnum } from '@/utils/enums';
 
 const SingleLineSkeleton = () => {
   return (
@@ -57,7 +57,7 @@ export const StepSkeleton = ({
   workflowOrigin,
 }: {
   stepType?: StepTypeEnum;
-  workflowOrigin?: WorkflowOriginEnum;
+  workflowOrigin?: ResourceOriginEnum;
 }) => {
   const SkeletonContent = STEP_TYPE_TO_SKELETON_CONTENT[stepType ?? ''];
 
@@ -83,7 +83,7 @@ export const StepSkeleton = ({
       </header>
       <Separator />
       <div className="flex h-full w-full flex-col gap-3 px-3 py-3.5">
-        {workflowOrigin && workflowOrigin !== WorkflowOriginEnum.EXTERNAL ? (
+        {workflowOrigin && workflowOrigin !== ResourceOriginEnum.EXTERNAL ? (
           <SkeletonContent />
         ) : (
           <SingleLineSkeleton />

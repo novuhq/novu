@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { IEmailBlock, ITemplateVariable } from '@novu/shared';
+import { ITemplateVariable } from '@novu/shared';
 
 import { GetLayoutCommand } from './get-layout.command';
 import { LayoutDto } from './layout.dto';
@@ -10,14 +10,38 @@ export class GetLayoutUseCase {
   constructor(private layoutRepository: LayoutRepository) {}
 
   async execute(command: GetLayoutCommand): Promise<LayoutDto> {
-    const layout = await this.layoutRepository.findOne({
-      _id: command.layoutId,
-      _environmentId: command.environmentId,
-    });
+    let layout: LayoutEntity;
+    if (typeof command.layoutIdOrInternalId === 'undefined') {
+      layout = await this.layoutRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        isDefault: true,
+        type: command.type,
+        origin: command.origin,
+      });
+    } else if (LayoutRepository.isInternalId(command.layoutIdOrInternalId)) {
+      layout = await this.layoutRepository.findOne({
+        _id: command.layoutIdOrInternalId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        type: command.type,
+        origin: command.origin,
+      });
+    } else {
+      layout = await this.layoutRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        identifier: command.layoutIdOrInternalId,
+        type: command.type,
+        origin: command.origin,
+      });
+    }
 
     if (!layout) {
       throw new NotFoundException(
-        `Layout not found for id ${command.layoutId} in the environment ${command.environmentId}`,
+        command.layoutIdOrInternalId
+          ? `Layout not found for id ${command.layoutIdOrInternalId} in the environment ${command.environmentId}`
+          : `Default layout not found in the environment ${command.environmentId}`
       );
     }
 
@@ -32,12 +56,16 @@ export class GetLayoutUseCase {
       _environmentId: layout._environmentId,
       variables: this.mapVariablesFromEntity(layout.variables),
       isDeleted: layout.deleted,
+      controls: layout.controls
+        ? {
+            uiSchema: layout.controls.uiSchema,
+            dataSchema: layout.controls.schema,
+          }
+        : undefined,
     };
   }
 
-  private mapVariablesFromEntity(
-    variables?: ITemplateVariable[],
-  ): ITemplateVariable[] {
+  private mapVariablesFromEntity(variables?: ITemplateVariable[]): ITemplateVariable[] {
     if (!variables || variables.length === 0) {
       return [];
     }
@@ -50,18 +78,6 @@ export class GetLayoutUseCase {
         type,
         defaultValue,
         required,
-      };
-    });
-  }
-
-  private mapContentFromEntity(blocks: IEmailBlock[]): IEmailBlock[] {
-    return blocks.map((block) => {
-      const { content, type, url } = block;
-
-      return {
-        content,
-        type,
-        ...(url && { url }),
       };
     });
   }

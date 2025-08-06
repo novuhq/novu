@@ -1,5 +1,5 @@
-export * from './handlebarHelpers';
 export * from './getTemplateVariables';
+export * from './handlebarHelpers';
 
 export const novuReservedVariableNames = ['body'];
 

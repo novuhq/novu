@@ -17,6 +17,7 @@ export const UiSchemaGroupEnum = {
   Chat: "CHAT",
   Push: "PUSH",
   Skip: "SKIP",
+  Layout: "LAYOUT",
 } as const;
 /**
  * Group of the UI Schema

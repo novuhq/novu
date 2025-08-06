@@ -1,22 +1,29 @@
-/* eslint-disable global-require */
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
 import {
-  CommunityUserRepository,
+  AnalyticsService,
+  createNestLoggingModuleOptions,
+  FeatureFlagsService,
+  LoggerModule,
+  PinoLogger,
+} from '@novu/application-generic';
+import {
   CommunityOrganizationRepository,
-  UserRepository,
+  CommunityUserRepository,
   OrganizationRepository,
+  UserRepository,
 } from '@novu/dal';
-import sinon from 'sinon';
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { CLERK_ORGANIZATION_1, CLERK_USER_1, ClerkClientMock } from '@novu/testing';
+import { expect } from 'chai';
 import mongoose from 'mongoose';
-import { AnalyticsService, createNestLoggingModuleOptions, LoggerModule, PinoLogger } from '@novu/application-generic';
-import { GetOrganization } from '../../organization/usecases/get-organization/get-organization.usecase';
-import { SyncExternalOrganization } from '../../organization/usecases/create-organization/sync-external-organization/sync-external-organization.usecase';
-import { CreateEnvironment } from '../../environments-v1/usecases/create-environment/create-environment.usecase';
-import { CreateNovuIntegrations } from '../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { CreateNovuIntegrationsCommand } from '../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
+import sinon from 'sinon';
 import { CreateEnvironmentCommand } from '../../environments-v1/usecases/create-environment/create-environment.command';
+import { CreateEnvironment } from '../../environments-v1/usecases/create-environment/create-environment.usecase';
+import { CreateNovuIntegrationsCommand } from '../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
+import { CreateNovuIntegrations } from '../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { UpsertLayout } from '../../layouts-v2/usecases/upsert-layout';
+import { SyncExternalOrganization } from '../../organization/usecases/create-organization/sync-external-organization/sync-external-organization.usecase';
+import { GetOrganization } from '../../organization/usecases/get-organization/get-organization.usecase';
 
 describe('Link external and internal entities #novu-v2', () => {
   let eeAuth: any;
@@ -41,6 +48,26 @@ describe('Link external and internal entities #novu-v2', () => {
 
   const createNovuIntegrations = {
     execute: sinon.stub().resolves({ _id: new mongoose.Types.ObjectId() }),
+  };
+
+  const upsertLayout = {
+    execute: sinon.stub().resolves({
+      _id: new mongoose.Types.ObjectId(),
+      layoutId: 'layout-id',
+      slug: 'layout-slug',
+      name: 'layout-name',
+      isDefault: true,
+      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      variables: {},
+      controls: {},
+    }),
+  };
+
+  const featureFlagsService = {
+    getFlag: sinon.stub().resolves({ value: true }),
   };
 
   const analyticsService = {
@@ -73,7 +100,9 @@ describe('Link external and internal entities #novu-v2', () => {
         { provide: OrganizationRepository, useValue: eeOrganizationRepository },
         { provide: CreateEnvironment, useValue: createEnvironment },
         { provide: CreateNovuIntegrations, useValue: createNovuIntegrations },
+        { provide: UpsertLayout, useValue: upsertLayout },
         { provide: AnalyticsService, useValue: analyticsService },
+        { provide: FeatureFlagsService, useValue: featureFlagsService },
       ],
     }).compile();
 

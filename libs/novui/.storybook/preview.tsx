@@ -1,9 +1,9 @@
-import React from 'react';
-import { lightTheme, darkTheme } from './NovuTheme';
-import { Parameters, Decorator, Preview } from '@storybook/react';
-import { css } from '../styled-system/css';
 import { MantineThemeProvider } from '@mantine/core';
+import { Decorator, Parameters, Preview } from '@storybook/react';
+import React from 'react';
 import { NovuiProvider } from '../src/components';
+import { css } from '../styled-system/css';
+import { darkTheme, lightTheme } from './NovuTheme';
 
 // Bring in the Panda-generated stylesheets + CSS Layers
 import '../src/index.css';

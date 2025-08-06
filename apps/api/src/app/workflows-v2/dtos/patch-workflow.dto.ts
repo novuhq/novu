@@ -41,10 +41,12 @@ export class PatchWorkflowDto {
     description: 'The payload JSON Schema for the workflow',
     type: 'object',
     additionalProperties: true,
+    nullable: true,
   })
   @IsOptional()
   @IsValidJsonSchema({
     message: 'payloadSchema must be a valid JSON schema',
+    nullable: true,
   })
   payloadSchema?: object;
 
@@ -55,4 +57,12 @@ export class PatchWorkflowDto {
   @IsOptional()
   @IsBoolean()
   validatePayload?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Enable or disable translations for this workflow',
+    type: 'boolean',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }

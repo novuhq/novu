@@ -5,9 +5,14 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  DelayControlDto,
+  DelayControlDto$inboundSchema,
+  DelayControlDto$Outbound,
+  DelayControlDto$outboundSchema,
+} from "./delaycontroldto.js";
 import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
@@ -15,52 +20,10 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * Type of the delay. Currently only 'regular' is supported by the schema.
+ * Control values for the Delay step.
  */
-export const DelayStepUpsertDtoType = {
-  Regular: "regular",
-} as const;
-/**
- * Type of the delay. Currently only 'regular' is supported by the schema.
- */
-export type DelayStepUpsertDtoType = ClosedEnum<typeof DelayStepUpsertDtoType>;
-
-/**
- * Unit of time for the delay amount.
- */
-export const DelayStepUpsertDtoUnit = {
-  Seconds: "seconds",
-  Minutes: "minutes",
-  Hours: "hours",
-  Days: "days",
-  Weeks: "weeks",
-  Months: "months",
-} as const;
-/**
- * Unit of time for the delay amount.
- */
-export type DelayStepUpsertDtoUnit = ClosedEnum<typeof DelayStepUpsertDtoUnit>;
-
-/**
- * Control values for the Delay step
- */
-export type DelayStepUpsertDtoControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * Type of the delay. Currently only 'regular' is supported by the schema.
-   */
-  type?: DelayStepUpsertDtoType | undefined;
-  /**
-   * Amount of time to delay.
-   */
-  amount: number;
-  /**
-   * Unit of time for the delay amount.
-   */
-  unit: DelayStepUpsertDtoUnit;
+export type DelayStepUpsertDtoControlValues = DelayControlDto | {
+  [k: string]: any;
 };
 
 export type DelayStepUpsertDto = {
@@ -77,84 +40,29 @@ export type DelayStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Delay step
+   * Control values for the Delay step.
    */
-  controlValues?: DelayStepUpsertDtoControlValues | null | undefined;
+  controlValues?: DelayControlDto | { [k: string]: any } | undefined;
 };
-
-/** @internal */
-export const DelayStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoType
-> = z.nativeEnum(DelayStepUpsertDtoType);
-
-/** @internal */
-export const DelayStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoType
-> = DelayStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayStepUpsertDtoType$ {
-  /** @deprecated use `DelayStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = DelayStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = DelayStepUpsertDtoType$outboundSchema;
-}
-
-/** @internal */
-export const DelayStepUpsertDtoUnit$inboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoUnit
-> = z.nativeEnum(DelayStepUpsertDtoUnit);
-
-/** @internal */
-export const DelayStepUpsertDtoUnit$outboundSchema: z.ZodNativeEnum<
-  typeof DelayStepUpsertDtoUnit
-> = DelayStepUpsertDtoUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DelayStepUpsertDtoUnit$ {
-  /** @deprecated use `DelayStepUpsertDtoUnit$inboundSchema` instead. */
-  export const inboundSchema = DelayStepUpsertDtoUnit$inboundSchema;
-  /** @deprecated use `DelayStepUpsertDtoUnit$outboundSchema` instead. */
-  export const outboundSchema = DelayStepUpsertDtoUnit$outboundSchema;
-}
 
 /** @internal */
 export const DelayStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   DelayStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  type: DelayStepUpsertDtoType$inboundSchema.default("regular"),
-  amount: z.number(),
-  unit: DelayStepUpsertDtoUnit$inboundSchema,
-});
+> = z.union([DelayControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type DelayStepUpsertDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  type: string;
-  amount: number;
-  unit: string;
-};
+export type DelayStepUpsertDtoControlValues$Outbound =
+  | DelayControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
 export const DelayStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   DelayStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   DelayStepUpsertDtoControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  type: DelayStepUpsertDtoType$outboundSchema.default("regular"),
-  amount: z.number(),
-  unit: DelayStepUpsertDtoUnit$outboundSchema,
-});
+> = z.union([DelayControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -198,9 +106,8 @@ export const DelayStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => DelayStepUpsertDtoControlValues$inboundSchema),
-  ).optional(),
+  controlValues: z.union([DelayControlDto$inboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -212,7 +119,7 @@ export type DelayStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: DelayStepUpsertDtoControlValues$Outbound | null | undefined;
+  controlValues?: DelayControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -224,9 +131,8 @@ export const DelayStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => DelayStepUpsertDtoControlValues$outboundSchema),
-  ).optional(),
+  controlValues: z.union([DelayControlDto$outboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

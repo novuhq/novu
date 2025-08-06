@@ -1,6 +1,6 @@
-import { expect, test, vi, describe, Mocked, beforeEach } from 'vitest';
-import axios from 'axios';
 import { IEmailOptions } from '@novu/stateless';
+import axios from 'axios';
+import { beforeEach, describe, expect, Mocked, test, vi } from 'vitest';
 import { NetCoreProvider } from './netcore.provider';
 import { IEmailBody } from './netcore-types';
 

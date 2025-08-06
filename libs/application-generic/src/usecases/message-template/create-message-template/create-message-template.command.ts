@@ -1,4 +1,4 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { ClientSession } from '@novu/dal';
 
 import {
   IActor,
@@ -6,10 +6,11 @@ import {
   IMessageCTA,
   ITemplateVariable,
   MessageTemplateContentType,
+  ResourceTypeEnum,
   StepTypeEnum,
-  WorkflowTypeEnum,
 } from '@novu/shared';
-
+import { Exclude } from 'class-transformer';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema } from '../../../value-objects';
 
@@ -81,7 +82,14 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   stepId?: string;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  workflowType: WorkflowTypeEnum;
+  workflowType: ResourceTypeEnum;
+
+  /**
+   * Exclude session from the command to avoid serializing it in the response
+   */
+  @Exclude()
+  @IsOptional()
+  session?: ClientSession | null;
 }

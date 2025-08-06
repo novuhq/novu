@@ -1,21 +1,21 @@
-import { expect } from 'chai';
 import { EmailBlockTypeEnum, IEmailBlock } from '@novu/shared';
+import { expect } from 'chai';
 
 /* cspell:disable next-line */
 import { sanitizeHTMLV0 as sanitizeHTML, sanitizeMessageContentV0 } from './sanitizer-v0.service';
 
-describe('HTML Sanitizer', function () {
-  it('should sanitize bad html', function () {
+describe('HTML Sanitizer', () => {
+  it('should sanitize bad html', () => {
     const sanitizedHtml = sanitizeHTML('hello <b>bold</b> <script>alert(123)</script>');
     expect(sanitizedHtml).to.equal('hello <b>bold</b> ');
   });
 
-  it('should sanitized message text content', function () {
+  it('should sanitized message text content', () => {
     const result = sanitizeMessageContentV0('hello <b>bold</b> <script>alert(123)</script>');
     expect(result).to.equal('hello <b>bold</b> ');
   });
 
-  it('should sanitized message email block content', function () {
+  it('should sanitized message email block content', () => {
     const result = sanitizeMessageContentV0([
       {
         type: EmailBlockTypeEnum.TEXT,
@@ -27,7 +27,7 @@ describe('HTML Sanitizer', function () {
     expect(result[0].content).to.equal('hello <b>bold</b> ');
   });
 
-  it('should NOT sanitize style tags', function () {
+  it('should NOT sanitize style tags', () => {
     const result = sanitizeMessageContentV0([
       {
         type: EmailBlockTypeEnum.TEXT,
@@ -39,7 +39,7 @@ describe('HTML Sanitizer', function () {
     expect(result[0].content).to.equal('<style>p { color: red; }</style><p>Red Text</p>');
   });
 
-  it('should NOT sanitize style attributes', function () {
+  it('should NOT sanitize style attributes', () => {
     const result = sanitizeMessageContentV0([
       {
         type: EmailBlockTypeEnum.TEXT,
@@ -51,7 +51,7 @@ describe('HTML Sanitizer', function () {
     expect(result[0].content).to.equal('<p style="color: red;">Red Text</p>');
   });
 
-  it('should NOT format style attributes', function () {
+  it('should NOT format style attributes', () => {
     const result = sanitizeMessageContentV0([
       {
         type: EmailBlockTypeEnum.TEXT,
@@ -63,7 +63,7 @@ describe('HTML Sanitizer', function () {
     expect(result[0].content).to.equal('<p style="color:red;">Red Text</p>');
   });
 
-  it('should NOT sanitize img tags', function () {
+  it('should NOT sanitize img tags', () => {
     const result = sanitizeMessageContentV0([
       {
         type: EmailBlockTypeEnum.TEXT,

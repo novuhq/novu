@@ -1,15 +1,21 @@
 import './instrument';
 
-import helmet from 'helmet';
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import {
+  BullMqService,
+  FeatureFlagsService,
+  getErrorInterceptor,
+  // biome-ignore lint/style/noRestrictedImports: <explanation>
+  Logger,
+  PinoLogger,
+  RequestLogRepository,
+} from '@novu/application-generic';
 import bodyParser from 'body-parser';
-
-// eslint-disable-next-line no-restricted-imports
-import { BullMqService, getErrorInterceptor, Logger, PinoLogger } from '@novu/application-generic';
-import { AppModule } from './app.module';
+import helmet from 'helmet';
 import { ResponseInterceptor } from './app/shared/framework/response.interceptor';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+import { AppModule } from './app.module';
 import { CONTEXT_PATH, corsOptionsDelegate, validateEnv } from './config';
 import { AllExceptionsFilter } from './exception-filter';
 
@@ -44,7 +50,6 @@ export async function bootstrap(
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     rawBodyBuffer = (req, res, buffer, encoding): void => {
       if (buffer && buffer.length) {
-        // eslint-disable-next-line no-param-reassign
         req.rawBody = Buffer.from(buffer);
       }
     };
@@ -100,7 +105,7 @@ export async function bootstrap(
 
   const document = await setupSwagger(app, bootstrapOptions?.internalSdkGeneration);
 
-  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger)));
+  app.useGlobalFilters(new AllExceptionsFilter(app.get(Logger), app.get(RequestLogRepository)));
 
   /*
    * Handle unhandled promise rejections

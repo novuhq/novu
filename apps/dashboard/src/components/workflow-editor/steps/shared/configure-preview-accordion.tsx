@@ -1,16 +1,16 @@
+import { type WorkflowResponseDto } from '@novu/shared';
+import { loadLanguage } from '@uiw/codemirror-extensions-langs';
+import { JSONSchema7 } from 'json-schema';
+import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
+import { RiListView } from 'react-icons/ri';
 import { Code2 } from '@/components/icons/code-2';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Button } from '@/components/primitives/button';
 import { Editor } from '@/components/primitives/editor';
-import { loadLanguage } from '@uiw/codemirror-extensions-langs';
-import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
-import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
-import { type WorkflowResponseDto } from '@novu/shared';
-import { EditableJsonViewer } from './editable-json-viewer/editable-json-viewer';
-import { JSONSchema7 } from 'json-schema';
 import { useCreateVariable } from '@/components/variable/hooks/use-create-variable';
 import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { RiListView } from 'react-icons/ri';
+import { useIsPayloadSchemaEnabled } from '@/hooks/use-is-payload-schema-enabled';
+import { EditableJsonViewer } from './editable-json-viewer/editable-json-viewer';
 
 const extensions = [loadLanguage('json')?.extension ?? []];
 

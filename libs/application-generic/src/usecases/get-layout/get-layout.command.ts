@@ -1,10 +1,18 @@
-import { IsDefined, IsString } from 'class-validator';
-import { LayoutId } from '@novu/shared';
+import { LayoutId, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 
 export class GetLayoutCommand extends EnvironmentCommand {
   @IsString()
-  @IsDefined()
-  layoutId: LayoutId;
+  @IsOptional()
+  layoutIdOrInternalId?: LayoutId;
+
+  @IsEnum(ResourceTypeEnum)
+  @IsOptional()
+  type?: ResourceTypeEnum;
+
+  @IsEnum(ResourceOriginEnum)
+  @IsOptional()
+  origin?: ResourceOriginEnum;
 }

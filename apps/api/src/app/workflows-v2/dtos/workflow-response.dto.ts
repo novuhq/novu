@@ -1,26 +1,27 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, ValidateNested, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
 import {
   CreateWorkflowDto,
+  ResourceOriginEnum,
   Slug,
   StepTypeEnum,
   UpdateWorkflowDto,
-  WorkflowOriginEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
-import { WorkflowCommonsFields } from './workflow-commons.dto';
-import { StepResponseDto } from './step.response.dto';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { WorkflowPreferencesResponseDto } from './preferences.response.dto';
 import { RuntimeIssueDto } from './runtime-issue.dto';
-import { EmailStepResponseDto } from './step-responses/email-step.response.dto';
-import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
-import { PushStepResponseDto } from './step-responses/push-step.response.dto';
+import { StepResponseDto } from './step.response.dto';
 import { ChatStepResponseDto } from './step-responses/chat-step.response.dto';
+import { CustomStepResponseDto } from './step-responses/custom-step.response.dto';
 import { DelayStepResponseDto } from './step-responses/delay-step.response.dto';
 import { DigestStepResponseDto } from './step-responses/digest-step.response.dto';
-import { CustomStepResponseDto } from './step-responses/custom-step.response.dto';
+import { EmailStepResponseDto } from './step-responses/email-step.response.dto';
 import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto';
+import { PushStepResponseDto } from './step-responses/push-step.response.dto';
+import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
+import { UserResponseDto } from './user-response.dto';
+import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
   RuntimeIssueDto,
@@ -32,7 +33,8 @@ import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto'
   DelayStepResponseDto,
   DigestStepResponseDto,
   CustomStepResponseDto,
-  InAppStepResponseDto
+  InAppStepResponseDto,
+  UserResponseDto
 )
 export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Unique identifier of the workflow' })
@@ -54,6 +56,35 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ApiProperty({ description: 'Creation timestamp' })
   @IsString()
   createdAt: string;
+
+  @ApiPropertyOptional({
+    description: 'User who last updated the workflow',
+    type: () => UserResponseDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  updatedBy?: UserResponseDto;
+
+  @ApiPropertyOptional({
+    description: 'Timestamp of the last workflow publication',
+    type: 'string',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPublishedAt?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'User who last published the workflow',
+    type: () => UserResponseDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  lastPublishedBy?: UserResponseDto | null;
 
   @ApiProperty({
     description: 'Steps of the workflow',
@@ -105,11 +136,11 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
 
   @ApiProperty({
     description: 'Origin of the workflow',
-    enum: [...Object.values(WorkflowOriginEnum)],
-    enumName: 'WorkflowOriginEnum',
+    enum: [...Object.values(ResourceOriginEnum)],
+    enumName: 'ResourceOriginEnum',
   })
-  @IsEnum(WorkflowOriginEnum)
-  origin: WorkflowOriginEnum;
+  @IsEnum(ResourceOriginEnum)
+  origin: ResourceOriginEnum;
 
   @ApiProperty({
     description: 'Preferences for the workflow',
@@ -149,30 +180,13 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   lastTriggeredAt?: string;
 
   @ApiPropertyOptional({
-    description: 'The payload JSON Schema for the workflow',
-    type: 'object',
-    nullable: true,
-    additionalProperties: true,
-  })
-  @IsOptional()
-  payloadSchema?: object;
-
-  @ApiPropertyOptional({
     description: 'Generated payload example based on the payload schema',
     type: 'object',
     nullable: true,
     additionalProperties: true,
   })
   @IsOptional()
-  payloadExample?: object;
-
-  @ApiPropertyOptional({
-    description: 'Whether payload schema validation is enabled',
-    type: 'boolean',
-  })
-  @IsOptional()
-  @IsBoolean()
-  validatePayload?: boolean;
+  payloadExample?: object | null;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

@@ -1,17 +1,25 @@
 import { Test } from '@nestjs/testing';
+import {
+  IWebSocketDataDto,
+  SocketWorkerService,
+  WebSocketsQueueService,
+  WorkflowInMemoryProviderService,
+} from '@novu/application-generic';
+import { WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
-
-import { IWebSocketDataDto, WebSocketsQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
-import { WebSocketEventEnum } from '@novu/shared';
-
-import { WebSocketWorker } from './web-socket.worker';
-
 import { SocketModule } from '../socket.module';
 import { ExternalServicesRoute } from '../usecases/external-services-route';
+import { WebSocketWorker } from './web-socket.worker';
 
 let webSocketsQueueService: WebSocketsQueueService;
 let webSocketWorker: WebSocketWorker;
+
+// Mock SocketWorkerService
+const mockSocketWorkerService = {
+  isEnabled: async () => false,
+  sendMessage: async () => undefined,
+} as any;
 
 describe('WebSocket Worker', () => {
   before(async () => {
@@ -29,7 +37,7 @@ describe('WebSocket Worker', () => {
 
     webSocketWorker = new WebSocketWorker(externalServicesRoute, workflowInMemoryProviderService);
 
-    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService);
+    webSocketsQueueService = new WebSocketsQueueService(workflowInMemoryProviderService, mockSocketWorkerService);
     await webSocketsQueueService.queue.obliterate();
   });
 

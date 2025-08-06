@@ -110,7 +110,6 @@ export function LayoutEditor({
 
     const newIdentifier = slugify(layoutName);
     setValue('identifier', newIdentifier);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editMode, layoutName]);
 
   useEffect(() => {
@@ -143,7 +142,6 @@ export function LayoutEditor({
     });
 
     variablesArray.replace(arrayFields.filter((field) => !!field));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ast]);
 
   useEffect(() => {

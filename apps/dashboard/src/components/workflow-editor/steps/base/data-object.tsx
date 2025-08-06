@@ -1,21 +1,19 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { FieldError, FieldValues, useFormContext } from 'react-hook-form';
-
+import { RiAddLine, RiDeleteBin2Line, RiInputField } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { Card, CardContent } from '@/components/primitives/card';
-import { ControlInput } from '@/components/primitives/control-input';
 import { FormField, FormItem, FormMessagePure } from '@/components/primitives/form/form';
 import { useFormField } from '@/components/primitives/form/form-context';
 import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { Input, InputRoot } from '@/components/primitives/input';
+import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useSaveForm } from '@/components/workflow-editor/steps/save-form-context';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import React from 'react';
-import { RiAddLine, RiDeleteBin6Line, RiInputField } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 
 const dataObjectKey = 'data';
 
@@ -34,39 +32,68 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
     }));
   });
 
-  const updateFormField = (pairs: Array<{ key: string; value: string }>) => {
-    setCurrentPairs(pairs);
-    const uniquePairLength = new Set<string>(pairs.map((pair) => pair.key)).size;
-    const hasNoDuplicates = uniquePairLength === pairs.length;
+  // Update parent form when current pairs change (called on blur and explicit actions)
+  const updateParentForm = () => {
+    const uniquePairLength = new Set<string>(currentPairs.map((pair) => pair.key)).size;
+    const hasNoDuplicates = uniquePairLength === currentPairs.length;
 
     if (hasNoDuplicates) {
-      field.onChange(
-        pairs.reduce(
-          (acc, { key, value }) => {
+      const dataObject = currentPairs.reduce(
+        (acc, { key, value }) => {
+          if (key.trim()) {
+            // Only include pairs with non-empty keys
             acc[key] = value;
-            return acc;
-          },
-          {} as Record<string, string>
-        )
+          }
+
+          return acc;
+        },
+        {} as Record<string, string>
       );
+
+      field.onChange(dataObject);
     }
   };
 
   const handleAddPair = () => {
     const newPairs = [...currentPairs, { key: '', value: '' }];
-    updateFormField(newPairs);
+    setCurrentPairs(newPairs);
     saveForm();
   };
 
-  const handleUpdatePair = (index: number, field: 'key' | 'value', newValue: string) => {
-    const newPairs = currentPairs.map((pair, i) => (i === index ? { ...pair, [field]: newValue } : pair));
-    updateFormField(newPairs);
+  const handleUpdatePair = (index: number, fieldType: 'key' | 'value', newValue: string) => {
+    const newPairs = currentPairs.map((pair, i) => (i === index ? { ...pair, [fieldType]: newValue } : pair));
+    setCurrentPairs(newPairs);
   };
 
   const handleRemovePair = (index: number) => {
     const newPairs = currentPairs.filter((_, i) => i !== index);
-    updateFormField(newPairs);
+    setCurrentPairs(newPairs);
+    // Update immediately on remove since we're changing the structure
+    setTimeout(() => {
+      const updatedPairs = currentPairs.filter((_, i) => i !== index);
+      const uniquePairLength = new Set<string>(updatedPairs.map((pair) => pair.key)).size;
+      const hasNoDuplicates = uniquePairLength === updatedPairs.length;
+
+      if (hasNoDuplicates) {
+        const dataObject = updatedPairs.reduce(
+          (acc, { key, value }) => {
+            if (key.trim()) {
+              acc[key] = value;
+            }
+
+            return acc;
+          },
+          {} as Record<string, string>
+        );
+
+        field.onChange(dataObject);
+      }
+    }, 0);
     saveForm();
+  };
+
+  const handleBlur = () => {
+    updateParentForm();
   };
 
   return (
@@ -99,13 +126,16 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                 <div className="flex flex-col gap-1" key={index}>
                   <div className="grid grid-cols-[3fr,4fr,1.75rem] items-center gap-2">
                     <Input
+                      size="xs"
                       placeholder="Insert property key..."
                       type="text"
                       value={pair.key}
                       onChange={(e) => handleUpdatePair(index, 'key', e.target.value)}
+                      onBlur={handleBlur}
                     />
                     <InputRoot>
                       <ControlInput
+                        size="2xs"
                         multiline={false}
                         indentWithTab={false}
                         value={pair.value}
@@ -114,11 +144,17 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
                         onChange={(newValue) => {
                           handleUpdatePair(index, 'value', typeof newValue === 'string' ? newValue : '');
                         }}
+                        onBlur={handleBlur}
                         variables={variables}
                       />
                     </InputRoot>
-                    <Button variant="secondary" mode="outline" className="h-7" onClick={() => handleRemovePair(index)}>
-                      <RiDeleteBin6Line className="size-4" />
+                    <Button
+                      variant="secondary"
+                      mode="outline"
+                      className="w-7.5 h-8 px-0"
+                      onClick={() => handleRemovePair(index)}
+                    >
+                      <RiDeleteBin2Line className="size-4" />
                     </Button>
                   </div>
                   <FormMessage keyName={isDuplicate ? '' : pair.key}>
@@ -132,6 +168,7 @@ const InnerDataObject = ({ field }: { field: FieldValues }) => {
             <Button
               variant="secondary"
               mode="lighter"
+              size="2xs"
               className="self-start"
               onClick={() => {
                 handleAddPair();

@@ -1,9 +1,14 @@
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { HTMLAttributes, ReactNode } from 'react';
-import { UserProfile } from '@/components/user-profile';
 import { InboxButton } from '@/components/inbox-button';
+import { UserProfile } from '@/components/user-profile';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { cn } from '@/utils/ui';
+import { useEnvironment } from '../../context/environment/hooks';
+import { useHasPermission } from '../../hooks/use-has-permission';
 import { CustomerSupportButton } from './customer-support-button';
 import { EditBridgeUrlButton } from './edit-bridge-url-button';
-import { cn } from '@/utils/ui';
+import { PublishButton } from './publish-button';
 
 type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;
@@ -12,6 +17,12 @@ type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
 
 export const HeaderNavigation = (props: HeaderNavigationProps) => {
   const { startItems, hideBridgeUrl = false, className, ...rest } = props;
+  const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
+
+  const isNewChangeMechanismEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED, false);
+
   return (
     <div
       className={cn(
@@ -22,11 +33,10 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
     >
       {startItems}
       <div className="text-foreground-600 ml-auto flex items-center gap-2">
-        {!hideBridgeUrl ? (
-          <div className="pr-1">
-            <EditBridgeUrlButton />
-          </div>
-        ) : null}
+        {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && (
+          <PublishButton />
+        )}
+        {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         <CustomerSupportButton />
         <div className="flex pr-0.5">
           <InboxButton />

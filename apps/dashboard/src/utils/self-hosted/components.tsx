@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input } from '../../components/primitives/input';
 import { Button } from '../../components/primitives/button';
+import { Input } from '../../components/primitives/input';
 import { API_HOSTNAME } from '../../config';
 
 const JWT_STORAGE_KEY = 'self-hosted-jwt';
@@ -326,7 +326,6 @@ export function SignUp() {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function RedirectToSignIn({ children }: { children: any }) {
   const navigate = useNavigate();
 
@@ -339,12 +338,10 @@ export function RedirectToSignIn({ children }: { children: any }) {
   return <>{children}</>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function SignedIn({ children }: { children: any }) {
   return <>{children}</>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function SignedOut({ children }: { children: any }) {
   if ((window as any).Clerk.loggedIn) return null;
 

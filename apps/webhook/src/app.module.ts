@@ -2,12 +2,12 @@ import { Module } from '@nestjs/common';
 
 import { createNestLoggingModuleOptions, LoggerModule, TracingModule } from '@novu/application-generic';
 import { SentryModule } from '@sentry/nestjs/setup';
+import packageJson from '../package.json';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
+import { SharedModule } from './shared/shared.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import packageJson from '../package.json';
 
 const modules = [
   SharedModule,
@@ -22,7 +22,6 @@ const modules = [
   ),
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const providers: any[] = [AppService];
 
 if (process.env.SENTRY_DSN) {

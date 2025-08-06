@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class DuplicateWorkflowDto {
   @ApiProperty({
@@ -25,4 +25,13 @@ export class DuplicateWorkflowDto {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Enable or disable translations for this workflow',
+    required: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }

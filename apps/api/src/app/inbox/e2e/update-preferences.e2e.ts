@@ -2,7 +2,7 @@ import { EmailBlockTypeEnum, PreferenceLevelEnum, StepTypeEnum } from '@novu/sha
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', function () {
+describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -10,7 +10,7 @@ describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', func
     await session.initialize();
   });
 
-  it('should throw error when made unauthorized call', async function () {
+  it('should throw error when made unauthorized call', async () => {
     const response = await session.testAgent
       .patch(`/v1/inbox/preferences`)
       .send({
@@ -25,7 +25,7 @@ describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', func
     expect(response.status).to.equal(401);
   });
 
-  it('should update global preferences', async function () {
+  it('should update global preferences', async () => {
     const response = await session.testAgent
       .patch('/v1/inbox/preferences')
       .send({
@@ -46,7 +46,7 @@ describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', func
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.GLOBAL);
   });
 
-  it('should update the particular channel sent in the body and return only active channels', async function () {
+  it('should update the particular channel sent in the body and return only active channels', async () => {
     await session.createTemplate({
       noFeedId: true,
       steps: [
@@ -89,7 +89,7 @@ describe('Update global preferences - /inbox/preferences (PATCH) #novu-v2', func
   });
 });
 
-describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)', function () {
+describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)', () => {
   let session: UserSession;
 
   beforeEach(async () => {
@@ -97,7 +97,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     await session.initialize();
   });
 
-  it('should throw error when made unauthorized call', async function () {
+  it('should throw error when made unauthorized call', async () => {
     const workflow = await session.createTemplate({
       noFeedId: true,
     });
@@ -116,7 +116,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.status).to.equal(401);
   });
 
-  it('should throw error when non-mongo id is passed', async function () {
+  it('should throw error when non-mongo id is passed', async () => {
     const id = '1234';
     const response = await session.testAgent
       .patch(`/v1/inbox/preferences/${id}`)
@@ -133,7 +133,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.status).to.equal(422);
   });
 
-  it('should throw error when non-existing workflow id is passed', async function () {
+  it('should throw error when non-existing workflow id is passed', async () => {
     const id = '666c0dfa0b55d0f06f4aaa6c';
     const response = await session.testAgent
       .patch(`/v1/inbox/preferences/${id}`)
@@ -150,7 +150,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.status).to.equal(404);
   });
 
-  it('should throw error when tried to update a critical workflow', async function () {
+  it('should throw error when tried to update a critical workflow', async () => {
     const workflow = await session.createTemplate({
       noFeedId: true,
       critical: true,
@@ -171,7 +171,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.status).to.equal(400);
   });
 
-  it('should update workflow preferences', async function () {
+  it('should update workflow preferences', async () => {
     const workflow = await session.createTemplate({
       noFeedId: true,
     });
@@ -194,7 +194,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(response.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
   });
 
-  it('should update the particular channel sent in the body and return all channels', async function () {
+  it('should update the particular channel sent in the body and return all channels', async () => {
     const workflow = await session.createTemplate({
       noFeedId: true,
       steps: [
@@ -262,7 +262,7 @@ describe('Update workflow preferences - /inbox/preferences/:workflowId (PATCH)',
     expect(responseSecond.body.data.level).to.equal(PreferenceLevelEnum.TEMPLATE);
   });
 
-  it('should unset the suscribers workflow preference for the specified channels when the global preference is updated', async function () {
+  it('should unset the suscribers workflow preference for the specified channels when the global preference is updated', async () => {
     const workflow = await session.createTemplate({
       noFeedId: true,
       steps: [

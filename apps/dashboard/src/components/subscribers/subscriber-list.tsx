@@ -1,4 +1,8 @@
+import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import { HTMLAttributes, useEffect, useState } from 'react';
+import { RiUserSharedLine } from 'react-icons/ri';
 import { CursorPagination } from '@/components/cursor-pagination';
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { Table, TableBody, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
 import { useSubscribersNavigate } from '@/components/subscribers/hooks/use-subscribers-navigate';
 import {
@@ -12,10 +16,6 @@ import { SubscriberRow, SubscriberRowSkeleton } from '@/components/subscribers/s
 import { SubscribersFilters } from '@/components/subscribers/subscribers-filters';
 import { useFetchSubscribers } from '@/hooks/use-fetch-subscribers';
 import { cn } from '@/utils/ui';
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
-import { HTMLAttributes, useEffect, useState } from 'react';
-import { RiUserSharedLine } from 'react-icons/ri';
-import { PermissionButton } from '@/components/primitives/permission-button';
 import { ListNoResults } from '../list-no-results';
 
 type SubscriberListFiltersProps = HTMLAttributes<HTMLDivElement> &
@@ -28,7 +28,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
   const { navigateToCreateSubscriberPage } = useSubscribersNavigate();
 
   return (
-    <div className={cn('flex h-full flex-col p-2', className)} {...rest}>
+    <div className={cn('flex h-full flex-col', className)} {...rest}>
       <div className="flex items-center justify-between">
         <SubscribersFilters
           onFiltersChange={handleFiltersChange}
@@ -40,7 +40,7 @@ const SubscriberListWrapper = (props: SubscriberListFiltersProps) => {
         <PermissionButton
           permission={PermissionsEnum.SUBSCRIBER_WRITE}
           mode="gradient"
-          className="rounded-l-lg border-none px-1.5 py-2 text-white"
+          className="rounded-l-lg border-none text-white"
           variant="primary"
           size="xs"
           leadingIcon={RiUserSharedLine}

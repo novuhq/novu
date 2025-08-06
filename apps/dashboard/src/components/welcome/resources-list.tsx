@@ -1,10 +1,10 @@
 import { BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
-import { Card, CardContent } from '../primitives/card';
-import { ScrollBar, ScrollArea } from '../primitives/scroll-area';
 import { Link } from 'react-router-dom';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { Card, CardContent } from '../primitives/card';
+import { ScrollArea, ScrollBar } from '../primitives/scroll-area';
 
 export interface Resource {
   title: string;

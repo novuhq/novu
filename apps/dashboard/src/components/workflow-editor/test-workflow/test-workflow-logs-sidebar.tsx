@@ -1,20 +1,19 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { WorkflowResponseDto } from '@novu/shared';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { RiCheckboxCircleFill } from 'react-icons/ri';
-import { WorkflowResponseDto } from '@novu/shared';
-
+import { ActivityError } from '@/components/activity/activity-error';
+import { ActivityHeader } from '@/components/activity/activity-header';
+import { ActivityLogs } from '@/components/activity/activity-logs';
 import { ActivityPanel } from '@/components/activity/activity-panel';
-import { useFetchActivities } from '../../../hooks/use-fetch-activities';
+import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
+import { ActivityOverview } from '@/components/activity/components/activity-overview';
+import { usePullActivity } from '@/hooks/use-pull-activity';
+import { useFetchActivities } from '../../../hooks/use-fetch-activities.ts';
 import { WorkflowTriggerInboxIllustration } from '../../icons/workflow-trigger-inbox';
 import { Button } from '../../primitives/button';
 import { TestWorkflowFormType } from '../schema';
 import { TestWorkflowInstructions } from './test-workflow-instructions';
-import { ActivitySkeleton } from '@/components/activity/activity-skeleton';
-import { ActivityError } from '@/components/activity/activity-error';
-import { ActivityHeader } from '@/components/activity/activity-header';
-import { ActivityOverview } from '@/components/activity/components/activity-overview';
-import { ActivityLogs } from '@/components/activity/activity-logs';
-import { usePullActivity } from '@/hooks/use-pull-activity';
 
 type TestWorkflowLogsSidebarProps = {
   transactionId?: string;
@@ -81,13 +80,13 @@ export const TestWorkflowLogsSidebar = (props: TestWorkflowLogsSidebarProps) => 
               <ActivityError />
             ) : (
               <React.Fragment key={activityId}>
-                <ActivityHeader title={activity.template?.name} className="h-[49px] border-t-0" />
-                <ActivityOverview activity={activity} />
-                <ActivityLogs
+                <ActivityHeader
+                  className="h-[49px] border-t-0"
                   activity={activity}
-                  onActivitySelect={setParentActivityId}
                   onTransactionIdChange={handleTransactionIdChange}
                 />
+                <ActivityOverview activity={activity} />
+                <ActivityLogs activity={activity} onActivitySelect={setParentActivityId} />
               </React.Fragment>
             )}
             {!props.workflow?.lastTriggeredAt && (

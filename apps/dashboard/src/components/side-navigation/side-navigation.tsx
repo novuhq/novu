@@ -1,8 +1,3 @@
-import { SidebarContent } from '@/components/side-navigation/sidebar';
-import { useEnvironment } from '@/context/environment/hooks';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
@@ -18,8 +13,18 @@ import {
   RiSettings4Line,
   RiSignalTowerLine,
   RiStore3Line,
+  RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
+import { Badge } from '@/components/primitives/badge';
+import { SidebarContent } from '@/components/side-navigation/sidebar';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { Protect } from '@/utils/protect';
+import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -28,9 +33,6 @@ import { GettingStartedMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { IS_SELF_HOSTED } from '../../config';
-import { Protect } from '@/utils/protect';
 
 const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
   return (
@@ -110,6 +112,8 @@ export const SideNavigation = () => {
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
+  const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
+  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -119,7 +123,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
+    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col overflow-auto">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -136,6 +140,29 @@ export const SideNavigation = () => {
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
+              {isEmailLayoutsPageActive && (
+                <Protect permission={PermissionsEnum.WORKFLOW_READ}>
+                  <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                    <RiLayout5Line className="size-4" />
+                    <span>Email Layouts</span>
+                  </NavigationLink>
+                </Protect>
+              )}
+              {isTranslationEnabled && (
+                <NavigationLink
+                  to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                >
+                  <RiTranslate2 className="size-4" />
+                  <span>
+                    Translations{' '}
+                    <Badge variant="lighter" className="text-xs">
+                      BETA
+                    </Badge>
+                  </span>
+                </NavigationLink>
+              )}
+            </NavigationGroup>
+            <NavigationGroup label="Data">
               <Protect permission={PermissionsEnum.SUBSCRIBER_READ}>
                 <NavigationLink
                   to={buildRoute(ROUTES.SUBSCRIBERS, { environmentSlug: currentEnvironment?.slug ?? '' })}
@@ -153,25 +180,13 @@ export const SideNavigation = () => {
                 </Protect>
               )}
             </NavigationGroup>
-            {isEmailLayoutsPageActive && (
-              <Protect permission={PermissionsEnum.LAYOUT_READ}>
-                <NavigationGroup label="Resources">
-                  <Protect permission={PermissionsEnum.LAYOUT_READ}>
-                    <NavigationLink
-                      to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}
-                    >
-                      <RiLayout5Line className="size-4" />
-                      <span>Email Layouts</span>
-                    </NavigationLink>
-                  </Protect>
-                </NavigationGroup>
-              </Protect>
-            )}
             <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
               <NavigationGroup label="Monitor">
                 <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                   <NavigationLink
-                    to={buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    to={buildRoute(isHttpLogsPageEnabled ? ROUTES.ACTIVITY_WORKFLOW_RUNS : ROUTES.ACTIVITY_FEED, {
+                      environmentSlug: currentEnvironment?.slug ?? '',
+                    })}
                   >
                     <RiBarChartBoxLine className="size-4" />
                     <span>Activity Feed</span>

@@ -5,15 +5,14 @@
 import * as z from "zod";
 import { remap as remap$ } from "../../lib/primitives.js";
 import { safeParse } from "../../lib/schemas.js";
-import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
-  LookBackWindowDto,
-  LookBackWindowDto$inboundSchema,
-  LookBackWindowDto$Outbound,
-  LookBackWindowDto$outboundSchema,
-} from "./lookbackwindowdto.js";
+  DigestControlDto,
+  DigestControlDto$inboundSchema,
+  DigestControlDto$Outbound,
+  DigestControlDto$outboundSchema,
+} from "./digestcontroldto.js";
 import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
@@ -21,69 +20,10 @@ import {
 } from "./steptypeenum.js";
 
 /**
- * The type of digest strategy. Determines which fields are applicable.
+ * Control values for the Digest step.
  */
-export const DigestStepUpsertDtoType = {
-  Regular: "regular",
-  Timed: "timed",
-} as const;
-/**
- * The type of digest strategy. Determines which fields are applicable.
- */
-export type DigestStepUpsertDtoType = ClosedEnum<
-  typeof DigestStepUpsertDtoType
->;
-
-/**
- * The unit of time for the digest interval (for REGULAR type).
- */
-export const DigestStepUpsertDtoUnit = {
-  Seconds: "seconds",
-  Minutes: "minutes",
-  Hours: "hours",
-  Days: "days",
-  Weeks: "weeks",
-  Months: "months",
-} as const;
-/**
- * The unit of time for the digest interval (for REGULAR type).
- */
-export type DigestStepUpsertDtoUnit = ClosedEnum<
-  typeof DigestStepUpsertDtoUnit
->;
-
-/**
- * Control values for the Digest step
- */
-export type DigestStepUpsertDtoControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * The type of digest strategy. Determines which fields are applicable.
-   */
-  type?: DigestStepUpsertDtoType | undefined;
-  /**
-   * The amount of time for the digest interval (for REGULAR type). Min 1.
-   */
-  amount?: number | undefined;
-  /**
-   * The unit of time for the digest interval (for REGULAR type).
-   */
-  unit?: DigestStepUpsertDtoUnit | undefined;
-  /**
-   * Configuration for look-back window (for REGULAR type).
-   */
-  lookBackWindow?: LookBackWindowDto | undefined;
-  /**
-   * Cron expression for TIMED digest. Min length 1.
-   */
-  cron?: string | undefined;
-  /**
-   * Specify a custom key for digesting events instead of the default event key.
-   */
-  digestKey?: string | undefined;
+export type DigestStepUpsertDtoControlValues = DigestControlDto | {
+  [k: string]: any;
 };
 
 export type DigestStepUpsertDto = {
@@ -100,93 +40,29 @@ export type DigestStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Digest step
+   * Control values for the Digest step.
    */
-  controlValues?: DigestStepUpsertDtoControlValues | null | undefined;
+  controlValues?: DigestControlDto | { [k: string]: any } | undefined;
 };
-
-/** @internal */
-export const DigestStepUpsertDtoType$inboundSchema: z.ZodNativeEnum<
-  typeof DigestStepUpsertDtoType
-> = z.nativeEnum(DigestStepUpsertDtoType);
-
-/** @internal */
-export const DigestStepUpsertDtoType$outboundSchema: z.ZodNativeEnum<
-  typeof DigestStepUpsertDtoType
-> = DigestStepUpsertDtoType$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestStepUpsertDtoType$ {
-  /** @deprecated use `DigestStepUpsertDtoType$inboundSchema` instead. */
-  export const inboundSchema = DigestStepUpsertDtoType$inboundSchema;
-  /** @deprecated use `DigestStepUpsertDtoType$outboundSchema` instead. */
-  export const outboundSchema = DigestStepUpsertDtoType$outboundSchema;
-}
-
-/** @internal */
-export const DigestStepUpsertDtoUnit$inboundSchema: z.ZodNativeEnum<
-  typeof DigestStepUpsertDtoUnit
-> = z.nativeEnum(DigestStepUpsertDtoUnit);
-
-/** @internal */
-export const DigestStepUpsertDtoUnit$outboundSchema: z.ZodNativeEnum<
-  typeof DigestStepUpsertDtoUnit
-> = DigestStepUpsertDtoUnit$inboundSchema;
-
-/**
- * @internal
- * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
- */
-export namespace DigestStepUpsertDtoUnit$ {
-  /** @deprecated use `DigestStepUpsertDtoUnit$inboundSchema` instead. */
-  export const inboundSchema = DigestStepUpsertDtoUnit$inboundSchema;
-  /** @deprecated use `DigestStepUpsertDtoUnit$outboundSchema` instead. */
-  export const outboundSchema = DigestStepUpsertDtoUnit$outboundSchema;
-}
 
 /** @internal */
 export const DigestStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   DigestStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  type: DigestStepUpsertDtoType$inboundSchema.optional(),
-  amount: z.number().optional(),
-  unit: DigestStepUpsertDtoUnit$inboundSchema.optional(),
-  lookBackWindow: LookBackWindowDto$inboundSchema.optional(),
-  cron: z.string().optional(),
-  digestKey: z.string().optional(),
-});
+> = z.union([DigestControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type DigestStepUpsertDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  type?: string | undefined;
-  amount?: number | undefined;
-  unit?: string | undefined;
-  lookBackWindow?: LookBackWindowDto$Outbound | undefined;
-  cron?: string | undefined;
-  digestKey?: string | undefined;
-};
+export type DigestStepUpsertDtoControlValues$Outbound =
+  | DigestControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
 export const DigestStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   DigestStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   DigestStepUpsertDtoControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  type: DigestStepUpsertDtoType$outboundSchema.optional(),
-  amount: z.number().optional(),
-  unit: DigestStepUpsertDtoUnit$outboundSchema.optional(),
-  lookBackWindow: LookBackWindowDto$outboundSchema.optional(),
-  cron: z.string().optional(),
-  digestKey: z.string().optional(),
-});
+> = z.union([DigestControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -230,9 +106,8 @@ export const DigestStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => DigestStepUpsertDtoControlValues$inboundSchema),
-  ).optional(),
+  controlValues: z.union([DigestControlDto$inboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -244,7 +119,7 @@ export type DigestStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: DigestStepUpsertDtoControlValues$Outbound | null | undefined;
+  controlValues?: DigestControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -256,9 +131,8 @@ export const DigestStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => DigestStepUpsertDtoControlValues$outboundSchema),
-  ).optional(),
+  controlValues: z.union([DigestControlDto$outboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

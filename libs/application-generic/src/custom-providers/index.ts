@@ -1,5 +1,13 @@
+import { forwardRef } from '@nestjs/common';
 import { DalService } from '@novu/dal';
-import { AnalyticsService, CacheInMemoryProviderService, CacheService, FeatureFlagsService } from '../services';
+import { PinoLogger } from 'nestjs-pino';
+import {
+  AnalyticsService,
+  CacheInMemoryProviderService,
+  CacheService,
+  ClickHouseService,
+  FeatureFlagsService,
+} from '../services';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -46,6 +54,16 @@ export const analyticsService = {
   useFactory: async () => {
     const service = new AnalyticsService(process.env.SEGMENT_TOKEN);
     await service.initialize();
+
+    return service;
+  },
+};
+
+export const clickHouseService = {
+  provide: ClickHouseService,
+  useFactory: async () => {
+    const service = new ClickHouseService();
+    await service.init();
 
     return service;
   },

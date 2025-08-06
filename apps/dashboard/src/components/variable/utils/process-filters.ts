@@ -1,5 +1,5 @@
-import { FilterWithParam } from '../types';
 import { createLiquidEngine } from '@novu/framework/internal';
+import { FilterWithParam } from '../types';
 
 const engine = createLiquidEngine();
 

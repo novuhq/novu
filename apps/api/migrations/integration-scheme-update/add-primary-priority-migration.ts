@@ -1,10 +1,9 @@
 // July 29th, 2023
 
-/* eslint-disable no-console */
 import '../../src/config';
 
 import { NestFactory } from '@nestjs/core';
-import { IntegrationRepository, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import { EnvironmentRepository, IntegrationRepository, OrganizationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY, ChannelTypeEnum } from '@novu/shared';
 
 import { AppModule } from '../../src/app.module';

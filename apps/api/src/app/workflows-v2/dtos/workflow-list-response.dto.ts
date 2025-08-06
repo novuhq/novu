@@ -1,6 +1,8 @@
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
-import { StepTypeEnum, WorkflowOriginEnum, WorkflowStatusEnum } from '@novu/shared';
+import { ResourceOriginEnum, StepTypeEnum, WorkflowStatusEnum } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { IsArray, IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { UserResponseDto } from './user-response.dto';
 import { WorkflowResponseDto } from './workflow-response.dto';
 
 export class WorkflowListResponseDto {
@@ -27,6 +29,37 @@ export class WorkflowListResponseDto {
   @IsString()
   createdAt: string;
 
+  @ApiProperty({
+    description: 'User who last updated the workflow',
+    type: () => UserResponseDto,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  updatedBy?: UserResponseDto;
+
+  @ApiProperty({
+    description: 'Timestamp of the last workflow publication',
+    type: 'string',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPublishedAt?: string;
+
+  @ApiProperty({
+    description: 'User who last published the workflow',
+    type: () => UserResponseDto,
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @Type(() => UserResponseDto)
+  lastPublishedBy?: UserResponseDto;
+
   @ApiProperty({ description: 'Unique database identifier' })
   @IsString()
   _id: string;
@@ -48,8 +81,8 @@ export class WorkflowListResponseDto {
 
   @ApiProperty({
     description: 'Workflow origin',
-    enum: [...Object.values(WorkflowOriginEnum)],
-    enumName: 'WorkflowOriginEnum',
+    enum: [...Object.values(ResourceOriginEnum)],
+    enumName: 'ResourceOriginEnum',
   })
   origin: WorkflowResponseDto['origin'];
 
@@ -72,4 +105,13 @@ export class WorkflowListResponseDto {
   @IsArray()
   @IsEnum(StepTypeEnum, { each: true })
   stepTypeOverviews: StepTypeEnum[];
+
+  @ApiProperty({
+    description: 'Is translation enabled for the workflow',
+    type: Boolean,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTranslationEnabled?: boolean;
 }

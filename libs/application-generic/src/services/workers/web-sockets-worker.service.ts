@@ -1,7 +1,6 @@
 import { JobTopicNameEnum } from '@novu/shared';
-
-import { WorkerBaseService } from './index';
 import { BullMqService } from '../bull-mq';
+import { WorkerBaseService } from './worker-base.service';
 
 const LOG_CONTEXT = 'WebSocketsWorkerService';
 

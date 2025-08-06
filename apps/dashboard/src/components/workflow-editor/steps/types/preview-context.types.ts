@@ -1,4 +1,4 @@
-import { WorkflowResponseDto, ISubscriberResponseDto, SubscriberDto } from '@novu/shared';
+import { ISubscriberResponseDto, SubscriberDto, WorkflowResponseDto } from '@novu/shared';
 
 export type PayloadData = Record<string, unknown>;
 export type PreviewSubscriberData = Partial<SubscriberDto>;
@@ -10,6 +10,8 @@ export type PreviewContextPanelProps = {
   onChange: (value: string) => Error | null;
   subscriberData?: Record<string, unknown>;
   currentStepId?: string;
+  selectedLocale?: string;
+  onLocaleChange?: (locale: string) => void;
 };
 
 export type ParsedData = {
@@ -40,7 +42,10 @@ export type StepResultsSectionProps = AccordionSectionProps & {
   currentStepId?: string;
 };
 
-export type SubscriberSectionProps = AccordionSectionProps & {
+export type SubscriberSectionProps = Omit<AccordionSectionProps, 'errors' | 'localParsedData' | 'onUpdate'> & {
+  error: string | null;
+  subscriber: Partial<SubscriberDto>;
+  onUpdate: (section: 'subscriber', data: PreviewSubscriberData) => void;
   onSubscriberSelect: (subscriber: ISubscriberResponseDto) => void;
   onClearPersisted?: () => void;
 };

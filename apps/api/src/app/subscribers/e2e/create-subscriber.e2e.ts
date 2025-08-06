@@ -1,10 +1,10 @@
-import { UserSession } from '@novu/testing';
-import { SubscriberRepository } from '@novu/dal';
-import { expect } from 'chai';
 import { Novu } from '@novu/api';
+import { SubscriberRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Create Subscriber - /subscribers (POST) #novu-v2', function () {
+describe('Create Subscriber - /subscribers (POST) #novu-v2', () => {
   let session: UserSession;
   const subscriberRepository = new SubscriberRepository();
   let novuClient: Novu;
@@ -15,7 +15,7 @@ describe('Create Subscriber - /subscribers (POST) #novu-v2', function () {
     novuClient = initNovuClassSdk(session);
   });
 
-  it('should create a new subscriber', async function () {
+  it('should create a new subscriber', async () => {
     const response = await novuClient.subscribers.create({
       subscriberId: '123',
       firstName: 'John',

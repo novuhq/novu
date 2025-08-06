@@ -1,7 +1,4 @@
-import { DalException, JobEntity, JobRepository } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-
 import {
   BulkCreateExecutionDetails,
   BulkCreateExecutionDetailsCommand,
@@ -9,19 +6,21 @@ import {
   DetailEnum,
   Instrument,
   InstrumentUsecase,
+  StepRunRepository,
 } from '@novu/application-generic';
-import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
-import { AddJob } from '../add-job';
+import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException } from '../../../shared/utils';
-
-const LOG_CONTEXT = 'StoreSubscriberJobs';
+import { AddJob } from '../add-job';
+import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
 
 @Injectable()
 export class StoreSubscriberJobs {
   constructor(
     private addJob: AddJob,
     private jobRepository: JobRepository,
-    protected bulkCreateExecutionDetails: BulkCreateExecutionDetails
+    protected bulkCreateExecutionDetails: BulkCreateExecutionDetails,
+    private stepRunRepository: StepRunRepository
   ) {}
 
   @InstrumentUsecase()
@@ -37,6 +36,7 @@ export class StoreSubscriberJobs {
     }
 
     this.createJobsExecutionDetails(storedJobs);
+    await this.stepRunRepository.createMany(storedJobs, { status: JobStatusEnum.QUEUED });
     const firstJob = storedJobs[0];
 
     const addJobCommand = {

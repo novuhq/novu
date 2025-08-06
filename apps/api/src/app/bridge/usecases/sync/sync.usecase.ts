@@ -1,5 +1,5 @@
 import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-
+import { AnalyticsService, ExecuteBridgeRequest, JSONSchema, NotificationStep } from '@novu/application-generic';
 import {
   EnvironmentEntity,
   EnvironmentRepository,
@@ -7,34 +7,28 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import {
-  AnalyticsService,
-  CreateWorkflow,
-  CreateWorkflowCommand,
-  DeleteWorkflowCommand,
-  DeleteWorkflowUseCase,
-  ExecuteBridgeRequest,
-  JSONSchema,
-  NotificationStep,
-  UpdateWorkflow,
-  UpdateWorkflowCommand,
-} from '@novu/application-generic';
+import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
 import {
   buildWorkflowPreferences,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   StepTypeEnum,
   UserSessionData,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
   WorkflowPreferences,
-  WorkflowTypeEnum,
 } from '@novu/shared';
-import { DiscoverOutput, DiscoverStepOutput, DiscoverWorkflowOutput, GetActionEnum } from '@novu/framework/internal';
-
-import { SyncCommand } from './sync.command';
-import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
-import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
+import { CreateWorkflow } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { DeleteWorkflowCommand } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.command';
+import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { StepIssuesDto } from '../../../workflows-v2/dtos';
 import { computeWorkflowStatus } from '../../../workflows-v2/shared/compute-workflow-status';
-import { JSONSchemaDto, StepIssuesDto } from '../../../workflows-v2/dtos';
+import { BuildStepIssuesUsecase } from '../../../workflows-v2/usecases/build-step-issues/build-step-issues.usecase';
+import { CreateBridgeResponseDto } from '../../dtos/create-bridge-response.dto';
+import { SyncCommand } from './sync.command';
 
 @Injectable()
 export class Sync {
@@ -82,7 +76,7 @@ export class Sync {
         environmentId: command.environmentId,
         action: GetActionEnum.DISCOVER,
         retriesLimit: 1,
-        workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+        workflowOrigin: ResourceOriginEnum.EXTERNAL,
       })) as DiscoverOutput;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -152,10 +146,10 @@ export class Sync {
     return await this.notificationTemplateRepository.find({
       _environmentId: command.environmentId,
       type: {
-        $in: [WorkflowTypeEnum.ECHO, WorkflowTypeEnum.BRIDGE],
+        $in: [ResourceTypeEnum.ECHO, ResourceTypeEnum.BRIDGE],
       },
       origin: {
-        $in: [WorkflowOriginEnum.EXTERNAL, undefined, null],
+        $in: [ResourceOriginEnum.EXTERNAL, undefined, null],
       },
       _id: { $nin: persistedWorkflowIdsInBridge },
     });
@@ -172,7 +166,7 @@ export class Sync {
     );
 
     existingFrameworkWorkflows.forEach((workflow, index) => {
-      if (workflow?.origin && workflow.origin !== WorkflowOriginEnum.EXTERNAL) {
+      if (workflow?.origin && workflow.origin !== ResourceOriginEnum.EXTERNAL) {
         const { workflowId } = workflowsFromBridge[index];
         throw new BadRequestException(
           `Workflow ${workflowId} was already created in Dashboard. Please use another workflowId.`
@@ -222,8 +216,8 @@ export class Sync {
 
     return await this.createWorkflowUsecase.execute(
       CreateWorkflowCommand.create({
-        origin: WorkflowOriginEnum.EXTERNAL,
-        type: WorkflowTypeEnum.BRIDGE,
+        origin: ResourceOriginEnum.EXTERNAL,
+        type: ResourceTypeEnum.BRIDGE,
         notificationGroupId,
         draft: workflowActive,
         environmentId: command.environmentId,
@@ -269,7 +263,7 @@ export class Sync {
       },
       rawData: workflow,
       payloadSchema: workflow.payload?.schema as unknown as JSONSchemaDto,
-      type: WorkflowTypeEnum.BRIDGE,
+      type: ResourceTypeEnum.BRIDGE,
       description: this.getWorkflowDescription(workflow),
       data: this.castToAnyNotSupportedParam(workflow)?.data,
       tags: this.getWorkflowTags(workflow),
@@ -289,7 +283,7 @@ export class Sync {
         const foundStep = workflow?.steps?.find((workflowStep) => workflowStep.stepId === step.stepId);
 
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({
-          workflowOrigin: WorkflowOriginEnum.EXTERNAL,
+          workflowOrigin: ResourceOriginEnum.EXTERNAL,
           user: {
             _id: command.userId,
             environmentId: command.environmentId,
@@ -361,9 +355,7 @@ export class Sync {
     return workflow.tags || [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private castToAnyNotSupportedParam(param: any): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return param as any;
   }
 }

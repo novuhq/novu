@@ -22,11 +22,10 @@ type PreservedFormValuesByType = { [key: string]: FieldValues | undefined };
 export const DigestWindow = () => {
   const { control, getFieldState, setValue, setError, getValues, trigger } = useFormContext();
   const formValues = getValues();
-  const { amount } = formValues.controlValues;
+  const { cron } = formValues.controlValues;
   const { saveForm } = useSaveForm();
-  const [digestType, setDigestType] = useState(
-    typeof amount !== 'undefined' ? REGULAR_DIGEST_TYPE : SCHEDULED_DIGEST_TYPE
-  );
+  const [digestType, setDigestType] = useState(!cron ? REGULAR_DIGEST_TYPE : SCHEDULED_DIGEST_TYPE);
+
   const [preservedFormValuesByType, setPreservedFormValuesByType] = useState<PreservedFormValuesByType>({
     regular: undefined,
     scheduled: undefined,

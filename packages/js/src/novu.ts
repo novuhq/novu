@@ -5,17 +5,18 @@ import { Notifications } from './notifications';
 import { Preferences } from './preferences';
 import { Session } from './session';
 import type { NovuOptions, Subscriber } from './types';
-import { Socket } from './ws';
+import { buildSubscriber } from './ui/internal';
+import { createSocket } from './ws';
+import type { BaseSocketInterface } from './ws/base-socket';
 
 export class Novu implements Pick<NovuEventEmitter, 'on'> {
   #emitter: NovuEventEmitter;
   #session: Session;
   #inboxService: InboxService;
-  #currentSubscriberId: string;
 
   public readonly notifications: Notifications;
   public readonly preferences: Preferences;
-  public readonly socket: Socket;
+  public readonly socket: BaseSocketInterface;
 
   public on: <Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>) => () => void;
   /**
@@ -42,14 +43,11 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       {
         applicationIdentifier: options.applicationIdentifier || '',
         subscriberHash: options.subscriberHash,
-        subscriber: buildSubscriber(options),
+        subscriber: buildSubscriber({ subscriberId: options.subscriberId, subscriber: options.subscriber }),
       },
       this.#inboxService,
       this.#emitter
     );
-
-    const initialSubscriber = buildSubscriber(options);
-    this.#currentSubscriberId = initialSubscriber.subscriberId;
 
     this.#session.initialize();
     this.notifications = new Notifications({
@@ -62,7 +60,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
       inboxServiceInstance: this.#inboxService,
       eventEmitterInstance: this.#emitter,
     });
-    this.socket = new Socket({
+    this.socket = createSocket({
       socketUrl: options.socketUrl,
       eventEmitterInstance: this.#emitter,
       inboxServiceInstance: this.#inboxService,
@@ -86,31 +84,10 @@ export class Novu implements Pick<NovuEventEmitter, 'on'> {
   }
 
   public async changeSubscriber(options: { subscriber: Subscriber; subscriberHash?: string }): Promise<void> {
-    if (this.#currentSubscriberId === options.subscriber.subscriberId) {
-      return;
-    }
-
     await this.#session.initialize({
       applicationIdentifier: this.#session.applicationIdentifier || '',
       subscriberHash: options.subscriberHash,
       subscriber: options.subscriber,
     });
-
-    this.#currentSubscriberId = options.subscriber.subscriberId;
   }
-}
-
-function buildSubscriber(options: NovuOptions): Subscriber {
-  // subscriber object
-  if (options.subscriber) {
-    return typeof options.subscriber === 'string' ? { subscriberId: options.subscriber } : options.subscriber;
-  }
-
-  // subscriberId
-  if (options.subscriberId) {
-    return { subscriberId: options.subscriberId as string };
-  }
-
-  // missing - keyless subscriber, the api will generate a subscriberId
-  return { subscriberId: '' };
 }

@@ -1,12 +1,12 @@
-import { FilterQuery } from 'mongoose';
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
+import { ClientSession, FilterQuery, ProjectionType, QueryOptions } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-
-import { LayoutEntity, LayoutDBModel } from './layout.entity';
-import { Layout } from './layout.schema';
-import { EnvironmentId, OrderDirectionEnum, OrganizationId, LayoutId } from './types';
-import { BaseRepository } from '../base-repository';
 import { DalException } from '../../shared';
 import { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { BaseRepository } from '../base-repository';
+import { LayoutDBModel, LayoutEntity } from './layout.entity';
+import { Layout } from './layout.schema';
+import { EnvironmentId, LayoutId, OrderDirectionEnum, OrganizationId } from './types';
 
 type LayoutQuery = FilterQuery<LayoutDBModel> & EnforceEnvOrOrgIds;
 
@@ -16,6 +16,42 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
   constructor() {
     super(Layout, LayoutEntity);
     this.layout = Layout;
+  }
+
+  async findOne(
+    query: FilterQuery<LayoutDBModel> & EnforceEnvOrOrgIds,
+    select?: ProjectionType<LayoutEntity>,
+    options: {
+      readPreference?: 'secondaryPreferred' | 'primary';
+      query?: QueryOptions<LayoutDBModel>;
+      session?: ClientSession | null;
+    } = {}
+  ): Promise<LayoutEntity | null> {
+    const { session, ...queryOptions } = options;
+
+    const queryBuilder = this.MongooseModel.findOne(query, select, queryOptions.query)
+      .read(queryOptions.readPreference || 'primary')
+      .populate('updatedBy');
+
+    if (session) {
+      queryBuilder.session(session);
+    }
+
+    const data = await queryBuilder;
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
+  }
+
+  async findPublishable(environmentId: string, organizationId: string): Promise<LayoutEntity[]> {
+    const items = await this.MongooseModel.find({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+    }).populate('updatedBy', '_id firstName lastName externalId');
+
+    return this.mapEntities(items);
   }
 
   async createLayout(entity: Omit<LayoutEntity, '_id' | 'createdAt' | 'updatedAt'>): Promise<LayoutEntity> {
@@ -31,6 +67,9 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       _creatorId,
       _environmentId,
       _organizationId,
+      type,
+      origin,
+      controls,
     } = entity;
 
     return await this.create({
@@ -46,6 +85,9 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
       name,
       variables,
       channel,
+      type,
+      origin,
+      controls,
     });
   }
 
@@ -173,5 +215,67 @@ export class LayoutRepository extends BaseRepository<LayoutDBModel, LayoutEntity
     }
 
     return updatedEntity;
+  }
+
+  public async getV2List({
+    organizationId,
+    environmentId,
+    skip = 0,
+    limit = 10,
+    searchQuery,
+    orderBy = 'createdAt',
+    orderDirection = DirectionEnum.DESC,
+  }: {
+    organizationId: string;
+    environmentId: string;
+    skip: number;
+    limit: number;
+    searchQuery?: string;
+    orderBy: string;
+    orderDirection: DirectionEnum;
+  }) {
+    const dbQuery: LayoutQuery = {
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+    };
+
+    if (searchQuery) {
+      dbQuery.$or = [
+        { name: { $regex: this.regExpEscape(searchQuery), $options: 'i' } },
+        { identifier: { $regex: this.regExpEscape(searchQuery), $options: 'i' } },
+      ];
+    }
+
+    const [layouts, totalCount] = await Promise.all([
+      this.paginate(dbQuery, {
+        limit,
+        skip,
+        orderBy,
+        orderDirection,
+      }),
+      this.count(dbQuery),
+    ]);
+
+    return {
+      data: layouts,
+      totalCount,
+    };
+  }
+
+  private async paginate(
+    query: LayoutQuery,
+    pagination: { limit: number; skip: number; orderBy: string; orderDirection: DirectionEnum }
+  ) {
+    const items = await this.MongooseModel.find({
+      ...query,
+    })
+      .sort({ [pagination.orderBy]: pagination.orderDirection === DirectionEnum.ASC ? 1 : -1 })
+      .skip(pagination.skip)
+      .limit(pagination.limit)
+      .lean();
+
+    return this.mapEntities(items);
   }
 }

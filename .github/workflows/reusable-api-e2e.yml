@@ -53,14 +53,11 @@ jobs:
           NOVU_ENTERPRISE: ${{ inputs.ee }}
         run: |
           # Start the worker service in the background
-          cd apps/worker && npm run start:test &
+          cd apps/worker && LOG_LEVEL=debug npm run start:test &
 
       - name: Wait on worker
         shell: bash
         run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
-
-      - name: Build API
-        run: cd apps/api && pnpm build:metadata
 
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}

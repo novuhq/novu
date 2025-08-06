@@ -229,10 +229,56 @@ jobs:
       - name: Generate AI deployment summary
         id: ai-summary
         if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
+        run: |
+          echo "🤖 Starting AI deployment summary generation..."
+          echo "System prompt length: ${#SYSTEM_PROMPT}"
+          echo "User prompt length: ${#USER_PROMPT}"
+          echo "PR count: ${{ steps.fetch-prs.outputs.pr_count }}"
+          echo ""
+          echo "First 500 chars of user prompt:"
+          echo "${USER_PROMPT:0:500}..."
+          echo ""
+          echo "Calling AI inference action..."
+
+      - name: Call AI inference
+        id: ai-inference-call
+        if: ${{ steps.fetch-prs.outputs.pr_count > 0 }}
+        continue-on-error: true
         uses: actions/ai-inference@v1
         with:
           system-prompt: ${{ env.SYSTEM_PROMPT }}
           prompt: ${{ env.USER_PROMPT }}
+
+      - name: Log AI summary errors
+        if: ${{ steps.fetch-prs.outputs.pr_count > 0 && steps.ai-inference-call.outcome == 'failure' }}
+        run: |
+          echo "❌ AI deployment summary generation failed"
+          echo "Step outcome: ${{ steps.ai-inference-call.outcome }}"
+          echo "Step conclusion: ${{ steps.ai-inference-call.conclusion }}"
+          echo ""
+          echo "=== VERBOSE ERROR DETAILS ==="
+          echo "AI Inference outputs:"
+          echo "Response: '${{ steps.ai-inference-call.outputs.response }}'"
+          echo "Error: '${{ steps.ai-inference-call.outputs.error }}'"
+          echo "Status: '${{ steps.ai-inference-call.outputs.status }}'"
+          echo ""
+          echo "All step outputs:"
+          echo "${{ toJson(steps.ai-inference-call.outputs) }}"
+          echo ""
+          echo "Step context:"
+          echo "${{ toJson(steps.ai-inference-call) }}"
+          echo ""
+          echo "Environment variables used:"
+          echo "SYSTEM_PROMPT length: ${#SYSTEM_PROMPT}"
+          echo "USER_PROMPT length: ${#USER_PROMPT}"
+          echo ""
+          echo "GitHub context:"
+          echo "Repository: ${{ github.repository }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Actor: ${{ github.actor }}"
+          echo ""
+          echo "=== END ERROR DETAILS ==="
+          echo "Continuing with fallback summary generation..."
 
       - name: Handle no recent PRs
         id: no-prs-message
@@ -245,9 +291,19 @@ jobs:
         if: ${{ always() }}
         run: |
           # Write the summary to a temporary file to avoid shell interpretation issues
-          cat > /tmp/summary.txt << 'SUMMARY_EOF'
-          ${{ steps.ai-summary.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}
+          if [[ "${{ steps.ai-inference-call.outcome }}" == "failure" ]]; then
+            cat > /tmp/summary.txt << 'SUMMARY_EOF'
+          ⚠️ AI deployment summary generation failed. Please check the workflow logs for details.
+
+          Found ${{ steps.fetch-prs.outputs.pr_count || 0 }} PRs merged to production in the last ${{ steps.output-variables.outputs.days_back }} days.
+
+          Manual review of recent PRs is recommended. View them at: https://github.com/${{ github.repository }}/pulls?q=is%3Apr+is%3Amerged+base%3Aprod
           SUMMARY_EOF
+          else
+            cat > /tmp/summary.txt << 'SUMMARY_EOF'
+          ${{ steps.ai-inference-call.outputs.response || steps.no-prs-message.outputs.summary || 'Summary generation failed. Please check the workflow logs.' }}
+          SUMMARY_EOF
+          fi
 
           # Read and clean the content for Slack
           summary_text=$(cat /tmp/summary.txt)

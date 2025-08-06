@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateRepository } from '@novu/dal';
-
 import { UpsertControlValuesCommand, UpsertControlValuesUseCase } from '@novu/application-generic';
+import { NotificationTemplateRepository } from '@novu/dal';
+import { ControlValuesLevelEnum } from '@novu/shared';
 import { StoreControlValuesCommand } from './store-control-values.command';
 
 @Injectable()
@@ -31,8 +31,9 @@ export class StoreControlValuesUseCase {
       UpsertControlValuesCommand.create({
         organizationId: command.organizationId,
         environmentId: command.environmentId,
-        notificationStepEntity: step,
+        stepId: step._templateId,
         workflowId: workflowExist._id,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         newControlValues: command.controlValues,
       })
     );

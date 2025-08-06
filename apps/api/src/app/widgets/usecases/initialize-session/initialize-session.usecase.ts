@@ -1,21 +1,21 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
-  createHash,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
+  createHash,
   decryptApiKey,
   LogDecorator,
   SelectIntegration,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { AuthService } from '../../../auth/services/auth.service';
-import { InitializeSessionCommand } from './initialize-session.command';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
+import { InitializeSessionCommand } from './initialize-session.command';
 
 @Injectable()
 export class InitializeSession {

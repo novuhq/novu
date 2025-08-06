@@ -18,6 +18,11 @@ import {
   EmailControlsMetadataResponseDto$outboundSchema,
 } from "./emailcontrolsmetadataresponsedto.js";
 import {
+  ResourceOriginEnum,
+  ResourceOriginEnum$inboundSchema,
+  ResourceOriginEnum$outboundSchema,
+} from "./resourceoriginenum.js";
+import {
   StepIssuesDto,
   StepIssuesDto$inboundSchema,
   StepIssuesDto$Outbound,
@@ -28,11 +33,6 @@ import {
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
-import {
-  WorkflowOriginEnum,
-  WorkflowOriginEnum$inboundSchema,
-  WorkflowOriginEnum$outboundSchema,
-} from "./workfloworiginenum.js";
 
 /**
  * Type of editor to use for the body.
@@ -72,6 +72,10 @@ export type EmailStepResponseDtoControlValues = {
    * Disable sanitization of the output.
    */
   disableOutputSanitization?: boolean | undefined;
+  /**
+   * Layout ID to use for the email. Null means no layout, undefined means default layout.
+   */
+  layoutId?: string | null | undefined;
   additionalProperties?: { [k: string]: any };
 };
 
@@ -109,9 +113,9 @@ export type EmailStepResponseDto = {
    */
   type: StepTypeEnum;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   /**
    * Workflow identifier
    */
@@ -159,6 +163,7 @@ export const EmailStepResponseDtoControlValues$inboundSchema: z.ZodType<
     body: z.string().default(""),
     editorType: EmailStepResponseDtoEditorType$inboundSchema.default("block"),
     disableOutputSanitization: z.boolean().default(false),
+    layoutId: z.nullable(z.string()).optional(),
   }).catchall(z.any()),
   "additionalProperties",
   true,
@@ -171,6 +176,7 @@ export type EmailStepResponseDtoControlValues$Outbound = {
   body: string;
   editorType: string;
   disableOutputSanitization: boolean;
+  layoutId?: string | null | undefined;
   [additionalProperties: string]: unknown;
 };
 
@@ -185,6 +191,7 @@ export const EmailStepResponseDtoControlValues$outboundSchema: z.ZodType<
   body: z.string().default(""),
   editorType: EmailStepResponseDtoEditorType$outboundSchema.default("block"),
   disableOutputSanitization: z.boolean().default(false),
+  layoutId: z.nullable(z.string()).optional(),
   additionalProperties: z.record(z.any()),
 }).transform((v) => {
   return {
@@ -244,7 +251,7 @@ export const EmailStepResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   slug: z.string(),
   type: StepTypeEnum$inboundSchema,
-  origin: WorkflowOriginEnum$inboundSchema,
+  origin: ResourceOriginEnum$inboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),
   issues: StepIssuesDto$inboundSchema.optional(),
@@ -285,7 +292,7 @@ export const EmailStepResponseDto$outboundSchema: z.ZodType<
   name: z.string(),
   slug: z.string(),
   type: StepTypeEnum$outboundSchema,
-  origin: WorkflowOriginEnum$outboundSchema,
+  origin: ResourceOriginEnum$outboundSchema,
   workflowId: z.string(),
   workflowDatabaseId: z.string(),
   issues: StepIssuesDto$outboundSchema.optional(),

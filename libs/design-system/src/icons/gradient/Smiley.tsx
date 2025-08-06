@@ -1,5 +1,4 @@
 import React from 'react';
-/* eslint-disable */
 
 export function Smiley(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (

@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-
-import { GetEnvironmentCommand } from './get-environment.command';
 import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
+import { GetEnvironmentCommand } from './get-environment.command';
 
 @Injectable()
 export class GetEnvironment {

@@ -1,16 +1,6 @@
-import {
-  autocompleteFooter,
-  autocompleteHeader,
-  codeIcon,
-  digestIcon,
-  functionIcon,
-  keyIcon,
-} from '@/components/primitives/constants';
-import { useDataRef } from '@/hooks/use-data-ref';
+import { type TagStyle } from '@codemirror/language';
 import { tags as t } from '@lezer/highlight';
 import createTheme from '@uiw/codemirror-themes';
-import { type TagStyle } from '@codemirror/language';
-
 import {
   default as CodeMirror,
   EditorView,
@@ -20,6 +10,15 @@ import {
 import { cva } from 'class-variance-authority';
 import React, { useCallback, useMemo } from 'react';
 import { flushSync } from 'react-dom';
+import {
+  autocompleteFooter,
+  autocompleteHeader,
+  codeIcon,
+  digestIcon,
+  functionIcon,
+  keyIcon,
+} from '@/components/primitives/constants';
+import { useDataRef } from '@/hooks/use-data-ref';
 
 const variants = cva('h-full w-full flex-1 [&_.cm-focused]:outline-none', {
   variants: {
@@ -109,6 +108,8 @@ const baseTheme = (options: { multiline?: boolean }) =>
       border: '1px solid var(--neutral-100)',
       backgroundColor: 'hsl(var(--background))',
       boxShadow: '0px 1px 3px 0px rgba(16, 24, 40, 0.10), 0px 1px 2px 0px rgba(16, 24, 40, 0.06)',
+      maxWidth: '250px',
+      minWidth: '250px',
       '&:before': {
         content: "''",
         top: '0',
@@ -137,6 +138,7 @@ const baseTheme = (options: { multiline?: boolean }) =>
       maxHeight: '12rem',
       margin: '4px 0',
       padding: '4px',
+      width: '100%',
     },
     '.cm-tooltip-autocomplete.cm-tooltip > ul > li[role="option"]': {
       display: 'flex',
@@ -150,6 +152,11 @@ const baseTheme = (options: { multiline?: boolean }) =>
       minHeight: '24px',
       color: 'var(--foreground-950)',
       borderRadius: 'calc(var(--radius) - 2px)',
+      width: '100%',
+      maxWidth: '100%',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     },
     '.cm-tooltip-autocomplete.cm-tooltip > ul > li[aria-selected="true"]': {
       backgroundColor: 'hsl(var(--neutral-100))',
@@ -216,6 +223,44 @@ const baseTheme = (options: { multiline?: boolean }) =>
         display: 'block',
         backgroundRepeat: 'no-repeat',
         backgroundImage: `url('${functionIcon}')`,
+      },
+    },
+    // Style for translation completions
+    '.cm-tooltip-autocomplete .cm-completionIcon-translation': {
+      '&:before': {
+        content: 'Translations',
+      },
+      '&:after': {
+        content: "''",
+        height: '14px',
+        width: '14px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M10.4125 5.95L12.7225 11.725H11.5911L10.9606 10.15H8.81335L8.18387 11.725H7.05302L9.3625 5.95H10.4125ZM5.95 1.75V2.8H9.1V3.85H8.0668C7.66183 5.06909 7.01547 6.19413 6.1663 7.15803C6.54498 7.49592 6.95573 7.79607 7.3927 8.0542L6.99842 9.04015C6.43432 8.72021 5.90674 8.33979 5.425 7.90563C4.48713 8.75442 3.37647 9.3899 2.16947 9.76833L1.88807 8.7556C2.92224 8.42585 3.87521 7.88165 4.68475 7.15855C4.08556 6.48022 3.58648 5.71967 3.20267 4.9H4.37867C4.67128 5.44015 5.02215 5.94664 5.425 6.41043C6.08131 5.65395 6.59853 4.78728 6.95275 3.85053L1.75 3.85V2.8H4.9V1.75H5.95ZM9.8875 7.46463L9.23282 9.1H10.5411L9.8875 7.46463Z' fill='%237D52F4'/%3E%3C/svg%3E\")",
+        backgroundPosition: 'center',
+      },
+    },
+    // Style for the "Create:" prefix on new translation suggestions
+    '.cm-new-translation-option .cm-completionLabel': {
+      fontWeight: '500',
+      '&::before': {
+        content: "'create: '",
+        color: 'hsl(var(--foreground-400))',
+        marginRight: '0.33em',
+      },
+    },
+    // Style for the icon on new translation suggestions
+    '.cm-new-translation-option .cm-completionIcon': {
+      '&::after': {
+        content: "''",
+        height: '14px',
+        width: '14px',
+        display: 'block',
+        backgroundRepeat: 'no-repeat',
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14' fill='none'%3E%3Cpath d='M10.4125 5.95L12.7225 11.725H11.5911L10.9606 10.15H8.81335L8.18387 11.725H7.05302L9.3625 5.95H10.4125ZM5.95 1.75V2.8H9.1V3.85H8.0668C7.66183 5.06909 7.01547 6.19413 6.1663 7.15803C6.54498 7.49592 6.95573 7.79607 7.3927 8.0542L6.99842 9.04015C6.43432 8.72021 5.90674 8.33979 5.425 7.90563C4.48713 8.75442 3.37647 9.3899 2.16947 9.76833L1.88807 8.7556C2.92224 8.42585 3.87521 7.88165 4.68475 7.15855C4.08556 6.48022 3.58648 5.71967 3.20267 4.9H4.37867C4.67128 5.44015 5.02215 5.94664 5.425 6.41043C6.08131 5.65395 6.59853 4.78728 6.95275 3.85053L1.75 3.85V2.8H4.9V1.75H5.95ZM9.8875 7.46463L9.23282 9.1H10.5411L9.8875 7.46463Z' fill='%237D52F4'/%3E%3C/svg%3E\")",
+        backgroundPosition: 'center',
       },
     },
     // Adding tooltip content for new variable options

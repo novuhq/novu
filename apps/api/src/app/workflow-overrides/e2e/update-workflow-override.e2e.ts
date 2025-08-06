@@ -1,10 +1,9 @@
+import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
+import { ICreateWorkflowOverrideRequestDto, IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-import { UserSession } from '@novu/testing';
-import { ICreateWorkflowOverrideRequestDto, IUpdateWorkflowOverrideRequestDto } from '@novu/shared';
-import { NotificationTemplateRepository, TenantRepository } from '@novu/dal';
-
-describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (PUT) #novu-v0', function () {
+describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/tenants/:tenantIdentifier (PUT) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
   const notificationTemplateRepository = new NotificationTemplateRepository();
@@ -14,7 +13,7 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
     await session.initialize();
   });
 
-  it('should successfully update workflow override', async function () {
+  it('should successfully update workflow override', async () => {
     const { tenant, workflow, overrides } = await initializeOverrides();
 
     expect(overrides.preferenceSettings).to.deep.equal({
@@ -47,7 +46,7 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
     expect(updatedOverrides.active).to.equal(true);
   });
 
-  it('should fail update workflow override with invalid tenant identifier', async function () {
+  it('should fail update workflow override with invalid tenant identifier', async () => {
     const { tenant, workflow, overrides } = await initializeOverrides();
 
     expect(overrides.preferenceSettings).to.deep.equal({
@@ -74,7 +73,7 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
     expect(updatedOverrides.errors._tenantId.messages[0]).to.equal('_tenantId must be a mongodb id');
   });
 
-  it('should fail update workflow override with invalid workflow id', async function () {
+  it('should fail update workflow override with invalid workflow id', async () => {
     const { tenant, workflow, overrides } = await initializeOverrides();
 
     expect(overrides.preferenceSettings).to.deep.equal({
@@ -101,7 +100,7 @@ describe('Update Workflow Override - /workflow-overrides/workflows/:workflowId/t
     expect(updatedOverrides.errors._tenantId.messages[0]).to.equal(`_tenantId must be a mongodb id`);
   });
 
-  it('should fail update workflow override with now existing workflow override', async function () {
+  it('should fail update workflow override with now existing workflow override', async () => {
     const tenant = await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,

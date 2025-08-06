@@ -11,5 +11,5 @@ export function constDateTime(
     return (
       typeof v === "string" && new Date(v).getTime() === new Date(val).getTime()
     );
-  }, `Value must be equivelant to ${val}`);
+  }, `Value must be equivalent to ${val}`);
 }

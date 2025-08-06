@@ -21,7 +21,7 @@ export class MachineInfoService {
   }
 
   async onApplicationBootstrap() {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
       this.machineId = loadOrCreateMachineId();
       await this.sendMachineTelemetry('Initial Setup - [OS Telemetry]');
     }
@@ -29,7 +29,7 @@ export class MachineInfoService {
 
   @Cron(CronExpression.EVERY_HOUR)
   private async sendRegularTelemetry() {
-    if (process.env.IS_SELF_HOSTED === 'true') {
+    if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'false') {
       await this.sendMachineTelemetry('Regular Beacon - [OS Telemetry]');
     }
   }

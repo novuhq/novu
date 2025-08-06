@@ -1,12 +1,14 @@
-import * as Sentry from '@sentry/react';
-import { useCallback, useEffect, useState, useRef } from 'react';
-import { useQuery, keepPreviousData } from '@tanstack/react-query';
 import type { PreviewPayload } from '@novu/shared';
+import * as Sentry from '@sentry/react';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { previewStep } from '@/api/steps';
-import { usePreviewStep } from '@/hooks/use-preview-step';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useDataRef } from '@/hooks/use-data-ref';
+import { usePreviewStep } from '@/hooks/use-preview-step';
+import { parse, stringify } from '@/utils/json';
+import { QueryKeys } from '@/utils/query-keys';
 
 type UseEditorPreviewProps = {
   workflowSlug: string;
@@ -33,26 +35,12 @@ function useDebounced<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const JsonUtils = {
-  parse: (value: string): { data: PreviewPayload | null; error: Error | null } => {
-    try {
-      return { data: JSON.parse(value), error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  },
+const extractPayloadKeys = (data: PreviewPayload | null): string[] => {
+  if (!data?.payload || typeof data.payload !== 'object') {
+    return [];
+  }
 
-  stringify: (value: unknown, pretty = true): string => {
-    return JSON.stringify(value, null, pretty ? 2 : 0);
-  },
-
-  extractPayloadKeys: (data: PreviewPayload | null): string[] => {
-    if (!data?.payload || typeof data.payload !== 'object') {
-      return [];
-    }
-
-    return Object.keys(data.payload).sort();
-  },
+  return Object.keys(data.payload).sort();
 };
 
 function areKeysEqual(keys1: string[], keys2: string[]): boolean {
@@ -70,14 +58,14 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     onError: (error) => Sentry.captureException(error),
   });
 
-  const { data: parsedEditorPayload } = JsonUtils.parse(editorValue);
+  const { data: parsedEditorPayload } = parse(editorValue);
 
   const {
     data: previewData,
     isPending: isPreviewPending,
     isFetching,
   } = useQuery({
-    queryKey: ['preview-step', workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
+    queryKey: [QueryKeys.previewStep, workflowSlug, stepSlug, debouncedControlValues, editorValue, payloadSchema],
     queryFn: async ({ signal }) => {
       if (!parsedEditorPayload) {
         throw new Error('Invalid JSON in editor');
@@ -102,7 +90,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
   });
 
   const setEditorValueSafe = useCallback((value: string): Error | null => {
-    const { error } = JsonUtils.parse(value);
+    const { error } = parse(value);
     if (error) return error;
 
     setEditorValue(value);
@@ -110,7 +98,7 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
   }, []);
 
   const manualPreview = useCallback(async () => {
-    const { data: previewPayload, error } = JsonUtils.parse(editorValue);
+    const { data: previewPayload, error } = parse(editorValue);
 
     if (error || !previewPayload) {
       throw new Error('Invalid JSON in editor');
@@ -135,12 +123,12 @@ export const useEditorPreview = ({ workflowSlug, stepSlug, controlValues, payloa
     const serverPayloadExample = previewData?.previewPayloadExample;
     if (!serverPayloadExample) return;
 
-    const serverKeys = JsonUtils.extractPayloadKeys(serverPayloadExample);
+    const serverKeys = extractPayloadKeys(serverPayloadExample);
 
     const shouldUpdateEditor = !hasInitializedRef.current || !areKeysEqual(serverKeys, lastServerKeysRef.current);
 
     if (shouldUpdateEditor) {
-      setEditorValue(JsonUtils.stringify(serverPayloadExample));
+      setEditorValue(stringify(serverPayloadExample));
       hasInitializedRef.current = true;
       lastServerKeysRef.current = serverKeys;
     }

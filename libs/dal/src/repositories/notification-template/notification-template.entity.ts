@@ -10,19 +10,21 @@ import {
   IPreferenceChannels,
   ITriggerReservedVariable,
   IWorkflowStepMetadata,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  RuntimeIssue,
   StepIssues,
   TriggerTypeEnum,
   WorkflowIssueTypeEnum,
-  WorkflowOriginEnum,
   WorkflowStatusEnum,
-  WorkflowTypeEnum,
 } from '@novu/shared';
 import { Types } from 'mongoose';
 import type { ChangePropsValueType } from '../../types';
 import type { EnvironmentId } from '../environment';
+import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
-import { MessageTemplateEntity } from '../message-template';
+import { UserEntity } from '../user';
 
 export class NotificationTemplateEntity {
   _id: string;
@@ -67,7 +69,11 @@ export class NotificationTemplateEntity {
 
   updatedAt?: string;
 
+  _updatedBy?: string;
+
   readonly notificationGroup?: NotificationGroupEntity;
+
+  readonly updatedBy?: UserEntity;
 
   isBlueprint: boolean;
 
@@ -75,9 +81,9 @@ export class NotificationTemplateEntity {
 
   data?: CustomDataType;
 
-  type?: WorkflowTypeEnum;
+  type?: ResourceTypeEnum;
 
-  origin?: WorkflowOriginEnum;
+  origin?: ResourceOriginEnum;
 
   rawData?: any;
 
@@ -85,21 +91,24 @@ export class NotificationTemplateEntity {
 
   validatePayload?: boolean;
 
+  isTranslationEnabled?: boolean;
+
   issues: Record<string, RuntimeIssue[]>;
 
   status?: WorkflowStatusEnum;
 
   lastTriggeredAt?: string;
-}
-export class RuntimeIssue {
-  issueType: WorkflowIssueTypeEnum;
-  variableName?: string;
-  message: string;
+
+  lastPublishedAt?: string;
+
+  _lastPublishedBy?: string;
+
+  readonly lastPublishedBy?: UserEntity;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
   Omit<NotificationTemplateEntity, '_parentId'>,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId'
+  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId' | '_updatedBy' | '_lastPublishedBy'
 > & {
   _parentId?: Types.ObjectId;
 };

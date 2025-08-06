@@ -1,15 +1,16 @@
-import sinon from 'sinon';
-import { expect } from 'chai';
-import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
-import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { BadRequestException } from '@nestjs/common';
 import {
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
+  PinoLogger,
+  TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-
-import { BadRequestException } from '@nestjs/common';
+import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
+import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import type { MarkManyNotificationsAsCommand } from './mark-many-notifications-as.command';
 import { MarkManyNotificationsAs } from './mark-many-notifications-as.usecase';
@@ -37,18 +38,24 @@ describe('MarkManyNotificationsAs', () => {
   let webSocketsQueueServiceMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
   let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
+  let traceLogRepositoryMock: sinon.SinonStubbedInstance<TraceLogRepository>;
+  let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
     webSocketsQueueServiceMock = sinon.createStubInstance(WebSocketsQueueService);
     getSubscriberMock = sinon.createStubInstance(GetSubscriber);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
+    traceLogRepositoryMock = sinon.createStubInstance(TraceLogRepository);
+    loggerMock = sinon.createStubInstance(PinoLogger);
 
     markManyNotificationsAs = new MarkManyNotificationsAs(
       invalidateCacheMock as any,
       webSocketsQueueServiceMock as any,
       getSubscriberMock as any,
-      messageRepositoryMock as any
+      messageRepositoryMock as any,
+      traceLogRepositoryMock as any,
+      loggerMock as any
     );
   });
 

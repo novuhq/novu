@@ -1,6 +1,6 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { IsDate, IsEnum, IsObject, IsString } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class MemberUserDto {
   @ApiProperty()

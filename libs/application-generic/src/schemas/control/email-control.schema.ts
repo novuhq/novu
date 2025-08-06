@@ -1,7 +1,7 @@
+import { JSONSchemaEntity } from '@novu/dal';
 import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { JSONSchemaEntity } from '@novu/dal';
 import { defaultOptions, skipStepUiSchema, skipZodSchema } from './shared';
 
 export const emailControlZodSchema = z
@@ -11,10 +11,13 @@ export const emailControlZodSchema = z
     editorType: z.enum(['block', 'html']).optional().default('block'),
     subject: z.string().min(1),
     disableOutputSanitization: z.boolean().optional(),
+    layoutId: z.string().nullish(),
   })
   .strict();
 
-export type EmailControlType = z.infer<typeof emailControlZodSchema>;
+export type EmailControlType = Omit<z.infer<typeof emailControlZodSchema>, 'layoutId'> & {
+  layoutId?: string | null;
+};
 
 export const emailControlSchema = zodToJsonSchema(emailControlZodSchema, defaultOptions) as JSONSchemaEntity;
 
@@ -35,6 +38,9 @@ export const emailUiSchema: UiSchema = {
     disableOutputSanitization: {
       component: UiComponentEnum.DISABLE_SANITIZATION_SWITCH,
       placeholder: false,
+    },
+    layoutId: {
+      component: UiComponentEnum.LAYOUT_SELECT,
     },
   },
 };

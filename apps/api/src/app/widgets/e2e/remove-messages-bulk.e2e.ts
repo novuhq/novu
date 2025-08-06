@@ -1,13 +1,12 @@
-import axios from 'axios';
-import { expect } from 'chai';
-
-import { UserSession } from '@novu/testing';
+import { Novu } from '@novu/api';
 import { MessageRepository, NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
-import { Novu } from '@novu/api';
+import { UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v0', function () {
+describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v0', () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;
@@ -44,7 +43,7 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
     subscriberProfile = profile;
   });
 
-  it('should remove messages by bulk', async function () {
+  it('should remove messages by bulk', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -81,7 +80,7 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
     expect(messagesAfter[0]._id).to.equal(firstMessage._id);
   });
 
-  it('should throw an exception when message ids were not provided', async function () {
+  it('should throw an exception when message ids were not provided', async () => {
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
     await novuClient.trigger({ workflowId: template.triggers[0].identifier, to: subscriberId });
@@ -105,7 +104,7 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST) #novu-v
     }
   });
 
-  it('should throw an exception message amount exceeds the api limit', async function () {
+  it('should throw an exception message amount exceeds the api limit', async () => {
     const randomMongoId = session.organization._id;
 
     let messageIds = duplicateStr(randomMongoId, 100);

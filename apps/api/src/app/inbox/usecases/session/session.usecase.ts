@@ -1,25 +1,24 @@
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
+  Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { createHash } from 'crypto';
-import { differenceInHours } from 'date-fns';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
+  FeatureFlagsService,
+  generateTimestampHex,
   LogDecorator,
   PinoLogger,
   SelectIntegration,
   SelectIntegrationCommand,
   shortId,
-  UpsertControlValuesUseCase,
   UpsertControlValuesCommand,
-  FeatureFlagsService,
+  UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -27,38 +26,41 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
-  NotificationTemplateRepository,
   MessageTemplateRepository,
+  NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ControlValuesLevelEnum,
+  CustomDataType,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
-  CustomDataType,
-  WorkflowTypeEnum,
-  WorkflowOriginEnum,
-  StepTypeEnum,
   PreferencesTypeEnum,
-  FeatureFlagsKeysEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
+import { createHash } from 'crypto';
+import { differenceInHours } from 'date-fns';
 import { AuthService } from '../../../auth/services/auth.service';
-import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
+import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
+import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
+import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
+import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
-import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
-import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
@@ -358,7 +360,7 @@ export class Session {
     const encryptedApiKey = encryptApiKey(key);
     const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
-    const encodedDate = dateToTimestampHex(new Date());
+    const encodedDate = generateTimestampHex();
     const identifier = `${this.KEYLESS_ENVIRONMENT_PREFIX}${encodedDate}_${shortId(4)}`;
     const environment = await this.environmentRepository.create({
       _organizationId: organization._id,
@@ -557,8 +559,8 @@ export class Session {
       draft: false,
       critical: false,
       tags: [],
-      type: WorkflowTypeEnum.BRIDGE,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       steps: [
         {
           name: 'In-App Notification',
@@ -658,7 +660,8 @@ export class Session {
       UpsertControlValuesCommand.create({
         organizationId,
         environmentId,
-        notificationStepEntity: workflow.steps[0],
+        stepId: workflow.steps[0]._templateId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         workflowId: workflow._id,
         newControlValues: {
           body: '{{payload.body}}',
@@ -707,14 +710,6 @@ export class Session {
 
     return dto;
   }
-}
-
-function dateToTimestampHex(date) {
-  const timeInSeconds = Math.floor(date.getTime() / 1000);
-  const buffer = Buffer.alloc(4);
-  buffer.writeUInt32BE(timeInSeconds, 0);
-
-  return buffer.toString('hex');
 }
 
 function timestampHexToDate(timestampHex) {

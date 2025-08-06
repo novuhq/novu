@@ -1,12 +1,6 @@
-import {
-  IsBoolean,
-  IsDefined,
-  IsMongoId,
-  IsOptional,
-  IsString,
-} from 'class-validator';
 import { NotificationStepEntity } from '@novu/dal';
 import { DigestTypeEnum } from '@novu/shared';
+import { IsBoolean, IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
 
@@ -15,7 +9,7 @@ export class DigestFilterStepsCommand extends EnvironmentWithUserCommand {
   _subscriberId: string;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsDefined()
   steps: NotificationStepEntity[];

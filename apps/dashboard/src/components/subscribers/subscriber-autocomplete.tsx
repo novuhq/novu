@@ -1,9 +1,9 @@
-import { cn } from '@/utils/ui';
 import { ISubscriberResponseDto } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { IconType } from 'react-icons';
 import { RiAddFill, RiArrowDownLine, RiArrowUpLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
+import { cn } from '@/utils/ui';
 import { EnterLineIcon } from '../icons/enter-line';
 import { Avatar, AvatarFallback, AvatarImage } from '../primitives/avatar';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '../primitives/command';

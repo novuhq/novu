@@ -1,0 +1,109 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "socket-worker",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-06-20",
+  "migrations": [
+    {
+      "new_sqlite_classes": ["WebSocketRoom"],
+      "tag": "v1"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "env": {
+    "local": {
+      "name": "socket-worker-local",
+      "workers_dev": true,
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "WebSocketRoom",
+            "name": "WEBSOCKET_ROOM"
+          }
+        ]
+      },
+      "vars": {
+        "NODE_ENV": "staging",
+        "API_URL": "https://fa3f-46-117-110-24.ngrok-free.app",
+        "REGION": "global"
+      }
+    },
+    "staging": {
+      "name": "socket-worker-staging",
+      "routes": [
+        {
+          "pattern": "socket.novu-staging.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "WebSocketRoom",
+            "name": "WEBSOCKET_ROOM"
+          }
+        ]
+      },
+      "vars": {
+        "NODE_ENV": "staging",
+        "API_URL": "https://api.novu-staging.co",
+        "REGION": "global"
+      }
+    },
+    "production-us": {
+      "name": "socket-worker-production-us",
+      "routes": [
+        {
+          "pattern": "socket.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "WebSocketRoom",
+            "name": "WEBSOCKET_ROOM"
+          }
+        ]
+      },
+      "vars": {
+        "NODE_ENV": "production",
+        "API_URL": "https://api.novu.co",
+        "REGION": "global"
+      }
+    },
+    "production-eu": {
+      "name": "socket-worker-production-eu",
+      "routes": [
+        {
+          "pattern": "eu.socket.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "durable_objects": {
+        "bindings": [
+          {
+            "class_name": "WebSocketRoom",
+            "name": "WEBSOCKET_ROOM"
+          }
+        ]
+      },
+      "vars": {
+        "NODE_ENV": "production",
+        "API_URL": "https://eu.api.novu.co",
+        "REGION": "eu"
+      }
+    }
+  }
+  /**
+   * Smart Placement
+   * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
+   */
+  // "placement": { "mode": "smart" },
+}

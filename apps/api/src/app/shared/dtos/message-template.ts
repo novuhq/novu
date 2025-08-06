@@ -1,13 +1,13 @@
-import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
-  StepTypeEnum,
-  IEmailBlock,
-  ITemplateVariable,
-  IMessageCTA,
   ActorTypeEnum,
-  MessageTemplateContentType,
   IActor,
+  IEmailBlock,
+  IMessageCTA,
+  ITemplateVariable,
+  MessageTemplateContentType,
+  StepTypeEnum,
 } from '@novu/shared';
+import { IsDefined, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class MessageTemplate {
   @IsOptional()

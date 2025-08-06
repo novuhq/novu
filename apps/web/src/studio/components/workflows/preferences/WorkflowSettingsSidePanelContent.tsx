@@ -6,7 +6,7 @@ import { IconDynamicFeed, IconManageAccounts } from '@novu/novui/icons';
 import { Grid, Stack } from '@novu/novui/jsx';
 import { token } from '@novu/novui/tokens';
 import { Controller, useFormContext } from 'react-hook-form';
-import { isBridgeWorkflow, WorkflowPreferences, WorkflowTypeEnum } from '@novu/shared';
+import { isBridgeWorkflow, WorkflowPreferences, ResourceTypeEnum } from '@novu/shared';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useStudioState } from '../../../StudioStateProvider';
 import { WorkflowDetailFormContext } from './WorkflowDetailFormContextProvider';
@@ -20,7 +20,7 @@ export enum WorkflowSettingsPanelTab {
 
 type WorkflowSettingsSidePanelContentProps = {
   isLoading?: boolean;
-  workflowType?: WorkflowTypeEnum;
+  workflowType?: ResourceTypeEnum;
   workflowResourcePreferences: WorkflowPreferences | null;
 };
 

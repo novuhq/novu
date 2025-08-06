@@ -1,24 +1,24 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Param, Post, Query, UseInterceptors } from '@nestjs/common';
-import { ApiRateLimitCostEnum, UserSessionData } from '@novu/shared';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
-import { UserSession } from '../shared/framework/user.decorator';
-import { ApplyChange, ApplyChangeCommand } from './usecases';
-import { GetChanges } from './usecases/get-changes/get-changes.usecase';
-import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
-import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.usecase';
-import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
-import { CountChanges } from './usecases/count-changes/count-changes.usecase';
-import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ChangeResponseDto, ChangesResponseDto } from './dtos/change-response.dto';
-import { ChangesRequestDto } from './dtos/change-request.dto';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
-import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
-import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
-import { ThrottlerCost } from '../rate-limiting/guards';
-import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { ApiRateLimitCostEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
+import { ThrottlerCost } from '../rate-limiting/guards';
+import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
+import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
+import { ChangesRequestDto } from './dtos/change-request.dto';
+import { ChangeResponseDto, ChangesResponseDto } from './dtos/change-response.dto';
+import { ApplyChange, ApplyChangeCommand } from './usecases';
+import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
+import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.usecase';
+import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
+import { CountChanges } from './usecases/count-changes/count-changes.usecase';
+import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
+import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 
 @ApiCommonResponses()
 @Controller('/changes')

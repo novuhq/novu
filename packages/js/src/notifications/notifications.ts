@@ -1,7 +1,9 @@
 import { InboxService } from '../api';
-import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
+import { NotificationsCache } from '../cache';
+import { NovuEventEmitter } from '../event-emitter';
 import { ActionTypeEnum, NotificationFilter, Result } from '../types';
+import { NovuError } from '../utils/errors';
 import {
   archive,
   archiveAll,
@@ -10,6 +12,8 @@ import {
   read,
   readAll,
   revertAction,
+  seen,
+  seenAll,
   snooze,
   unarchive,
   unread,
@@ -18,26 +22,25 @@ import {
 import { Notification } from './notification';
 import type {
   ArchivedArgs,
+  BaseArgs,
   CompleteArgs,
-  FiltersCountResponse,
-  ListNotificationsArgs,
-  ListNotificationsResponse,
-  InstanceArgs,
-  ReadArgs,
-  UnarchivedArgs,
-  UnreadArgs,
-  RevertArgs,
-  FilterCountArgs,
   CountArgs,
+  CountResponse,
+  FilterCountArgs,
   FilterCountResponse,
   FiltersCountArgs,
-  CountResponse,
-  BaseArgs,
+  FiltersCountResponse,
+  InstanceArgs,
+  ListNotificationsArgs,
+  ListNotificationsResponse,
+  ReadArgs,
+  RevertArgs,
+  SeenArgs,
   SnoozeArgs,
+  UnarchivedArgs,
+  UnreadArgs,
   UnsnoozeArgs,
 } from './types';
-import { NovuError } from '../utils/errors';
-import { NotificationsCache } from '../cache';
 
 export class Notifications extends BaseModule {
   #useCache: boolean;
@@ -61,6 +64,10 @@ export class Notifications extends BaseModule {
       emitter: eventEmitterInstance,
     });
     this.#useCache = useCache;
+  }
+
+  get inboxService(): InboxService {
+    return this._inboxService;
   }
 
   async list({ limit = 10, ...restOptions }: ListNotificationsArgs = {}): Result<ListNotificationsResponse> {
@@ -146,6 +153,18 @@ export class Notifications extends BaseModule {
   async unread(args: UnreadArgs): Result<Notification> {
     return this.callWithSession(async () =>
       unread({
+        emitter: this._emitter,
+        apiService: this._inboxService,
+        args,
+      })
+    );
+  }
+
+  async seen(args: BaseArgs): Result<Notification>;
+  async seen(args: InstanceArgs): Result<Notification>;
+  async seen(args: SeenArgs): Result<Notification> {
+    return this.callWithSession(async () =>
+      seen({
         emitter: this._emitter,
         apiService: this._inboxService,
         args,
@@ -254,7 +273,10 @@ export class Notifications extends BaseModule {
   async readAll({
     tags,
     data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
+  }: {
+    tags?: NotificationFilter['tags'];
+    data?: Record<string, unknown>;
+  } = {}): Result<void> {
     return this.callWithSession(async () =>
       readAll({
         emitter: this._emitter,
@@ -266,10 +288,39 @@ export class Notifications extends BaseModule {
     );
   }
 
+  async seenAll(
+    args:
+      | { notificationIds: string[] }
+      | { tags?: NotificationFilter['tags']; data?: Record<string, unknown> }
+      | {} = {}
+  ): Result<void> {
+    return this.callWithSession(async () => {
+      if ('notificationIds' in args) {
+        return seenAll({
+          emitter: this._emitter,
+          inboxService: this._inboxService,
+          notificationsCache: this.cache,
+          notificationIds: args.notificationIds,
+        });
+      } else {
+        return seenAll({
+          emitter: this._emitter,
+          inboxService: this._inboxService,
+          notificationsCache: this.cache,
+          tags: 'tags' in args ? args.tags : undefined,
+          data: 'data' in args ? args.data : undefined,
+        });
+      }
+    });
+  }
+
   async archiveAll({
     tags,
     data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
+  }: {
+    tags?: NotificationFilter['tags'];
+    data?: Record<string, unknown>;
+  } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAll({
         emitter: this._emitter,
@@ -281,10 +332,7 @@ export class Notifications extends BaseModule {
     );
   }
 
-  async archiveAllRead({
-    tags,
-    data,
-  }: { tags?: NotificationFilter['tags']; data?: Record<string, unknown> } = {}): Result<void> {
+  async archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> } = {}): Result<void> {
     return this.callWithSession(async () =>
       archiveAllRead({
         emitter: this._emitter,

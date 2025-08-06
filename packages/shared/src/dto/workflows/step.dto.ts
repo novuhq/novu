@@ -1,6 +1,6 @@
+import { ResourceOriginEnum, Slug, StepTypeEnum } from '../../types';
+import { RuntimeIssue } from '../../utils/issues';
 import type { JSONSchemaDto } from './json-schema-dto';
-import { Slug, StepTypeEnum, WorkflowOriginEnum } from '../../types';
-import { StepContentIssueEnum, StepIntegrationIssueEnum, StepIssueEnum } from './step-content-issue.enum';
 
 export type StepResponseDto = {
   controls: Controls;
@@ -11,7 +11,7 @@ export type StepResponseDto = {
   name: string;
   slug: Slug;
   type: StepTypeEnum;
-  origin: WorkflowOriginEnum;
+  origin: ResourceOriginEnum;
   workflowId: string;
   workflowDatabaseId: string;
   issues?: StepIssuesDto;
@@ -32,28 +32,12 @@ export type StepDto = {
   type: StepTypeEnum;
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-interface Issue<T> {
-  issueType: T;
-  variableName?: string;
-  message: string;
-}
-
 export class StepIssuesDto {
-  controls?: Record<string, StepContentIssue[]>;
-  integration?: Record<string, StepIntegrationIssue[]>;
+  controls?: Record<string, RuntimeIssue[]>;
+  integration?: Record<string, RuntimeIssue[]>;
 }
 
 export type StepCreateAndUpdateKeys = keyof StepCreateDto | keyof StepUpdateDto;
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepContentIssue extends Issue<StepContentIssueEnum> {}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepIntegrationIssue extends Issue<StepIntegrationIssueEnum> {}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export interface StepIssue extends Issue<StepIssueEnum> {}
 
 export enum UiSchemaGroupEnum {
   IN_APP = 'IN_APP',
@@ -64,10 +48,12 @@ export enum UiSchemaGroupEnum {
   CHAT = 'CHAT',
   PUSH = 'PUSH',
   SKIP = 'SKIP',
+  LAYOUT = 'LAYOUT',
 }
 
 export enum UiComponentEnum {
   EMAIL_EDITOR_SELECT = 'EMAIL_EDITOR_SELECT',
+  LAYOUT_SELECT = 'LAYOUT_SELECT',
   /** @deprecated use EMAIL_BODY instead  */
   BLOCK_EDITOR = 'BLOCK_EDITOR',
   EMAIL_BODY = 'EMAIL_BODY',
@@ -93,11 +79,13 @@ export enum UiComponentEnum {
   PUSH_SUBJECT = 'PUSH_SUBJECT',
   QUERY_EDITOR = 'QUERY_EDITOR',
   DATA = 'DATA',
+  LAYOUT_EMAIL = 'LAYOUT_EMAIL',
 }
 
 export class UiSchemaProperty {
   placeholder?: unknown;
   component: UiComponentEnum;
+  properties?: Record<string, UiSchemaProperty>;
 }
 
 export class UiSchema {

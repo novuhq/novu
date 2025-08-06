@@ -1,13 +1,34 @@
+import { areTagsEqual, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
 import { useEffect, useState } from 'react';
-import { Notification, NotificationFilter, NovuError, areTagsEqual } from '@novu/js';
-import { useNovu } from './NovuProvider';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
+import { useNovu } from './NovuProvider';
 
 type Count = {
   count: number;
   filter: NotificationFilter;
 };
 
+/**
+ * Props for the useCounts hook.
+ *
+ * @example
+ * ```tsx
+ * // Count unread notifications
+ * const { counts } = useCounts({
+ *   filters: [{ read: false }]
+ * });
+ *
+ * // Count unseen notifications with specific tags
+ * const { counts } = useCounts({
+ *   filters: [{ seen: false, tags: ['important'] }]
+ * });
+ *
+ * // Count seen but unread notifications
+ * const { counts } = useCounts({
+ *   filters: [{ seen: true, read: false }]
+ * });
+ * ```
+ */
 export type UseCountsProps = {
   filters: NotificationFilter[];
   onSuccess?: (data: Count[]) => void;
@@ -34,7 +55,6 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     const existingCounts = counts ?? filters.map((filter) => ({ count: 0, filter }));
     let countFiltersToFetch: NotificationFilter[] = [];
     if (notification) {
-      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
         const filter = filters[i];
         if (areTagsEqual(filter.tags, notification.tags)) {
@@ -66,9 +86,8 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       const newCounts: Count[] = [];
       const countsReceived = data.counts;
 
-      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < existingCounts.length; i++) {
-        const countReceived = countsReceived.find((c) => areTagsEqual(c.filter.tags, existingCounts[i].filter.tags));
+        const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingCounts[i].filter));
         const count = countReceived || (oldCounts && oldCounts[i]);
         if (count) {
           newCounts.push(count);

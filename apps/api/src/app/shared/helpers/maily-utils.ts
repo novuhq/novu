@@ -1,4 +1,5 @@
 import { JSONContent as MailyJSONContent } from '@maily-to/render';
+import { TRANSLATION_KEY_SINGLE_REGEX } from '@novu/shared';
 
 import { MAILY_FIRST_CITIZEN_VARIABLE_KEY, MailyAttrsEnum, MailyContentTypeEnum } from './maily.types';
 
@@ -307,6 +308,84 @@ const processMailyNodes = ({
 };
 
 /**
+ * Replaces Maily nodes based on a condition function.
+ *
+ * @param content - The stringified Maily JSON content
+ * @param conditionFn - Function that determines which nodes to replace
+ * @param replacementFn - Function that returns the replacement node or nodes
+ * @returns The modified Maily JSON content
+ *
+ * @example
+ * Input:
+ * {
+ *   type: "doc",
+ *   content: [
+ *     { type: "variable", attrs: { id: "user.name" } },
+ *     { type: "paragraph", content: [{ type: "text", text: "Hello" }] }
+ *   ]
+ * }
+ *
+ * replaceMailyNodesByCondition(
+ *   content,
+ *   (node) => node.type === "variable" && node.attrs?.id === "user.name",
+ *   (node) => ({ type: "text", text: "John Doe" })
+ * )
+ *
+ * Output:
+ * {
+ *   type: "doc",
+ *   content: [
+ *     { type: "text", text: "John Doe" },
+ *     { type: "paragraph", content: [{ type: "text", text: "Hello" }] }
+ *   ]
+ * }
+ */
+export const replaceMailyNodesByCondition = (
+  content: string,
+  conditionFn: (node: MailyJSONContent) => boolean,
+  replacementFn: (node: MailyJSONContent) => MailyJSONContent | MailyJSONContent[] | null
+): MailyJSONContent => {
+  const mailyJSONContent: MailyJSONContent = JSON.parse(content);
+
+  const processNodes = (node: MailyJSONContent): MailyJSONContent | MailyJSONContent[] | null => {
+    // Check if this node should be replaced
+    if (conditionFn(node)) {
+      return replacementFn(node);
+    }
+
+    // Process children if they exist
+    if (node.content && Array.isArray(node.content)) {
+      const processedContent: MailyJSONContent[] = [];
+
+      for (const child of node.content) {
+        const processedChild = processNodes(child);
+
+        if (processedChild === null) {
+        } else if (Array.isArray(processedChild)) {
+          // Handle multiple replacement nodes
+          processedContent.push(...processedChild);
+        } else {
+          // Handle single replacement node
+          processedContent.push(processedChild);
+        }
+      }
+
+      return {
+        ...node,
+        content: processedContent,
+      };
+    }
+
+    return node;
+  };
+
+  const result = processNodes(mailyJSONContent);
+
+  // Ensure we always return a single node (should be the root doc)
+  return Array.isArray(result) ? result[0] : result || mailyJSONContent;
+};
+
+/**
  * Replaces Maily variables in the content with a replacement string.
  *
  * @example
@@ -379,7 +458,18 @@ export const wrapMailyInLiquid = (content: string) => {
 
   return processMailyNodes({
     node: mailyJSONContent,
-    shouldProcessAttr: () => true,
+    shouldProcessAttr: ({ attrValue, attrKey, attrs }) => {
+      // Don't process button variable by Liquid if it's a translation key
+      if (
+        attrKey === MailyAttrsEnum.TEXT &&
+        attrs.isTextVariable === true &&
+        TRANSLATION_KEY_SINGLE_REGEX.test(attrValue)
+      ) {
+        return false;
+      }
+
+      return true;
+    },
     processAttr: ({ attrValue, attrs }) => {
       const { fallback, aliasFor } = attrs;
 
@@ -390,4 +480,31 @@ export const wrapMailyInLiquid = (content: string) => {
       return false;
     },
   });
+};
+
+export const hasMailyVariable = (content: string, variable: string): boolean => {
+  const mailyJSONContent: MailyJSONContent = JSON.parse(content);
+  let result = false;
+
+  processMailyNodes({
+    node: mailyJSONContent,
+    shouldProcessAttr: ({ attrKey }) => attrKey === MailyAttrsEnum.ID,
+    processAttr: ({ attrValue }) => {
+      if (attrValue === variable) {
+        result = true;
+      }
+
+      return attrValue;
+    },
+    shouldProcessFlag: ({ flagKey }) => flagKey === MailyAttrsEnum.ID,
+    processFlag: ({ flagValue }) => {
+      if (flagValue === variable) {
+        result = true;
+      }
+
+      return flagValue;
+    },
+  });
+
+  return result;
 };

@@ -2,8 +2,7 @@ import { type VercelRequest, type VercelResponse } from '@vercel/node';
 import { type Request, type Response } from 'express';
 
 import { NovuRequestHandler, ServeHandlerOptions } from '../handler';
-import { Either } from '../types';
-import { type SupportedFrameworkName } from '../types';
+import { Either, type SupportedFrameworkName } from '../types';
 
 /*
  * Re-export all top level exports from the main package.
@@ -43,7 +42,6 @@ export const frameworkName: SupportedFrameworkName = 'express';
  * );
  * ```
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const serve = (options: ServeHandlerOptions): any => {
   const novuHandler = new NovuRequestHandler({
     frameworkName,

@@ -1,13 +1,13 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import {
   IActor,
   IEmailBlock,
   IMessageCTA,
   ITemplateVariable,
   MessageTemplateContentType,
+  ResourceTypeEnum,
   StepTypeEnum,
-  WorkflowTypeEnum,
 } from '@novu/shared';
+import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema } from '../../../value-objects';
 
@@ -81,7 +81,7 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   code?: string;
 
-  @IsEnum(WorkflowTypeEnum)
+  @IsEnum(ResourceTypeEnum)
   @IsDefined()
-  workflowType: WorkflowTypeEnum;
+  workflowType: ResourceTypeEnum;
 }

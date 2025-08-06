@@ -1,25 +1,21 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common';
-import { format } from 'prettier';
-
 import {
   AnalyticsService,
-  CreateWorkflow as CreateWorkflowV0Usecase,
-  CreateWorkflowCommand,
+  EmailControlType,
+  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
   NotificationStep,
+  PinoLogger,
+  SendWebhookMessage,
   shortId,
-  UpdateWorkflow as UpdateWorkflowV0Usecase,
-  UpdateWorkflowCommand,
   UpsertControlValuesCommand,
   UpsertControlValuesUseCase,
-  SendWebhookMessage,
-  EmailControlType,
-  PinoLogger,
 } from '@novu/application-generic';
 import {
+  ClientSession,
   ControlSchemas,
   ControlValuesRepository,
   NotificationGroupRepository,
@@ -29,25 +25,32 @@ import {
 import {
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  slugify,
+  FeatureFlagsKeysEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
   StepTypeEnum,
+  slugify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowCreationSourceEnum,
-  WorkflowOriginEnum,
-  WorkflowTypeEnum,
 } from '@novu/shared';
-
+import { format } from 'prettier';
+import { GetLayoutCommand, GetLayoutUseCase } from '../../../layouts-v2/usecases/get-layout';
+import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
+import { removeBrandingFromHtml } from '../../../shared/utils/html';
+import { CreateWorkflowCommand } from '../../../workflows-v1/usecases/create-workflow/create-workflow.command';
+import { CreateWorkflow as CreateWorkflowV0Usecase } from '../../../workflows-v1/usecases/create-workflow/create-workflow.usecase';
+import { UpdateWorkflowCommand } from '../../../workflows-v1/usecases/update-workflow/update-workflow.command';
+import { UpdateWorkflow as UpdateWorkflowV0Usecase } from '../../../workflows-v1/usecases/update-workflow/update-workflow.usecase';
+import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
+import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
 import { stepTypeToControlSchema } from '../../shared';
 import { computeWorkflowStatus } from '../../shared/compute-workflow-status';
 import { BuildStepIssuesUsecase } from '../build-step-issues/build-step-issues.usecase';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
-import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
-import { StepIssuesDto, WorkflowResponseDto } from '../../dtos';
-import { isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
-import { PreviewUsecase } from '../preview/preview.usecase';
 import { PreviewCommand } from '../preview';
-import { EmailRenderOutput } from '../../dtos/generate-preview-response.dto';
+import { PreviewUsecase } from '../preview/preview.usecase';
+import { UpsertStepDataCommand, UpsertWorkflowCommand } from './upsert-workflow.command';
 
 @Injectable()
 export class UpsertWorkflowUseCase {
@@ -61,7 +64,9 @@ export class UpsertWorkflowUseCase {
     private controlValuesRepository: ControlValuesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private previewUsecase: PreviewUsecase,
+    private getLayoutUseCase: GetLayoutUseCase,
     private analyticsService: AnalyticsService,
+    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger,
     @Optional()
     private sendWebhookMessage?: SendWebhookMessage
@@ -69,14 +74,13 @@ export class UpsertWorkflowUseCase {
 
   @InstrumentUsecase()
   async execute(command: UpsertWorkflowCommand): Promise<WorkflowResponseDto> {
-    // TODO: use transaction to ensure that the workflows, steps and controls are upserted atomically
-
     const existingWorkflow = command.workflowIdOrInternalId
       ? await this.getWorkflowByIdsUseCase.execute(
           GetWorkflowByIdsCommand.create({
             environmentId: command.user.environmentId,
             organizationId: command.user.organizationId,
             workflowIdOrInternalId: command.workflowIdOrInternalId,
+            session: command.session,
           })
         )
       : null;
@@ -87,13 +91,19 @@ export class UpsertWorkflowUseCase {
       this.mixpanelTrack(command, 'Workflow Update - [API]');
 
       upsertedWorkflow = await this.updateWorkflowV0Usecase.execute(
-        UpdateWorkflowCommand.create(await this.buildUpdateWorkflowCommand(command, existingWorkflow))
+        UpdateWorkflowCommand.create({
+          ...(await this.buildUpdateWorkflowCommand(command, existingWorkflow)),
+          session: command.session,
+        })
       );
     } else {
       this.mixpanelTrack(command, 'Workflow Created - [API]');
 
       upsertedWorkflow = await this.createWorkflowV0Usecase.execute(
-        CreateWorkflowCommand.create(await this.buildCreateWorkflowCommand(command))
+        CreateWorkflowCommand.create({
+          ...(await this.buildCreateWorkflowCommand(command)),
+          session: command.session,
+        })
       );
     }
 
@@ -134,10 +144,11 @@ export class UpsertWorkflowUseCase {
     return updatedWorkflow;
   }
 
+  @Instrument()
   private async buildCreateWorkflowCommand(command: UpsertWorkflowCommand): Promise<CreateWorkflowCommand> {
     const { user, workflowDto, preserveWorkflowId } = command;
     const isWorkflowActive = workflowDto?.active ?? true;
-    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId);
+    const notificationGroupId = await this.getNotificationGroup(command.user.environmentId, command.session);
 
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
@@ -148,11 +159,12 @@ export class UpsertWorkflowUseCase {
       notificationGroupId,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
+      updatedBy: user._id,
       userId: user._id,
       name: workflowDto.name,
       __source: workflowDto.__source || WorkflowCreationSourceEnum.DASHBOARD,
-      type: WorkflowTypeEnum.BRIDGE,
-      origin: WorkflowOriginEnum.NOVU_CLOUD,
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
       steps,
       active: isWorkflowActive,
       description: workflowDto.description || '',
@@ -163,9 +175,11 @@ export class UpsertWorkflowUseCase {
       status: computeWorkflowStatus(isWorkflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
+      isTranslationEnabled: workflowDto.isTranslationEnabled,
     };
   }
 
+  @Instrument()
   private async buildUpdateWorkflowCommand(
     command: UpsertWorkflowCommand,
     existingWorkflow: NotificationTemplateEntity
@@ -177,12 +191,13 @@ export class UpsertWorkflowUseCase {
     return {
       id: existingWorkflow._id,
       environmentId: existingWorkflow._environmentId,
+      updatedBy: user._id,
       organizationId: user.organizationId,
       userId: user._id,
       name: workflowDto.name,
       steps,
       rawData: workflowDto as unknown as Record<string, unknown>,
-      type: WorkflowTypeEnum.BRIDGE,
+      type: ResourceTypeEnum.BRIDGE,
       description: workflowDto.description,
       userPreferences: workflowDto.preferences?.user ?? null,
       defaultPreferences: workflowDto.preferences?.workflow ?? DEFAULT_WORKFLOW_PREFERENCES,
@@ -191,18 +206,25 @@ export class UpsertWorkflowUseCase {
       status: computeWorkflowStatus(workflowActive, steps),
       payloadSchema: workflowDto.payloadSchema,
       validatePayload: workflowDto.validatePayload,
+      isTranslationEnabled: workflowDto.isTranslationEnabled,
     };
   }
 
+  @Instrument()
   private async buildSteps(
     command: UpsertWorkflowCommand,
     existingWorkflow?: NotificationTemplateEntity
   ): Promise<NotificationStep[]> {
     const steps: NotificationStep[] = [];
 
+    // Build optimistic step information for sync scenarios
+    const optimisticSteps = command.workflowDto.steps.map((step) => ({
+      stepId: step.stepId || this.generateUniqueStepId(step, command.workflowDto.steps),
+      type: step.type,
+    }));
+
     for (const step of command.workflowDto.steps) {
       const existingStep: NotificationStepEntity | null | undefined =
-        // eslint-disable-next-line id-length
         '_id' in step ? existingWorkflow?.steps.find((s) => !!step._id && s._templateId === step._id) : null;
 
       const {
@@ -219,6 +241,7 @@ export class UpsertWorkflowUseCase {
         stepType: step.type,
         controlSchema: controlSchemas.schema,
         controlsDto: step.controlValues,
+        optimisticSteps, // Pass optimistic steps for variable schema building
       });
 
       const updateStepId = existingStep?.stepId;
@@ -252,6 +275,7 @@ export class UpsertWorkflowUseCase {
     return steps;
   }
 
+  @Instrument()
   private generateUniqueStepId(step: UpsertStepDataCommand, previousSteps: NotificationStep[]): string {
     const slug = slugify(step.name);
 
@@ -288,14 +312,18 @@ export class UpsertWorkflowUseCase {
     return finalStepId;
   }
 
-  private async getNotificationGroup(environmentId: string): Promise<string | undefined> {
+  private async getNotificationGroup(
+    environmentId: string,
+    session?: ClientSession | null
+  ): Promise<string | undefined> {
     return (
       await this.notificationGroupRepository.findOne(
         {
           name: 'General',
           _environmentId: environmentId,
         },
-        '_id'
+        '_id',
+        { session }
       )
     )?._id;
   }
@@ -313,6 +341,7 @@ export class UpsertWorkflowUseCase {
     );
   }
 
+  @Instrument()
   private getControlValuesUpdates(updatedSteps: NotificationStepEntity[], command: UpsertWorkflowCommand) {
     return updatedSteps
       .map((step) => {
@@ -328,6 +357,7 @@ export class UpsertWorkflowUseCase {
       .filter((update): update is NonNullable<typeof update> => update !== null);
   }
 
+  @Instrument()
   private async executeControlValuesUpdate(
     {
       shouldDelete,
@@ -338,18 +368,51 @@ export class UpsertWorkflowUseCase {
     command: UpsertWorkflowCommand
   ) {
     if (shouldDelete) {
-      return this.controlValuesRepository.delete({
-        _environmentId: command.user.environmentId,
-        _organizationId: command.user.organizationId,
-        _workflowId: workflowId,
-        _stepId: step._templateId,
-        level: ControlValuesLevelEnum.STEP_CONTROLS,
-      });
+      return this.controlValuesRepository.delete(
+        {
+          _environmentId: command.user.environmentId,
+          _organizationId: command.user.organizationId,
+          _workflowId: workflowId,
+          _stepId: step._templateId,
+          level: ControlValuesLevelEnum.STEP_CONTROLS,
+        },
+        { session: command.session }
+      );
     }
 
     const newControlValues = controlValues || {};
-    if (step.template?.type === StepTypeEnum.EMAIL) {
+
+    /*
+     * Only apply email-specific processing for NOVU_CLOUD workflows
+     * For EXTERNAL workflows, preserve all custom fields as-is
+     */
+    if (
+      step.template?.type === StepTypeEnum.EMAIL &&
+      (command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD ||
+        command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
+    ) {
       const emailControlValues = newControlValues as EmailControlType;
+
+      const isLayoutsPageActive = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
+        defaultValue: false,
+        environment: { _id: command.user.environmentId },
+        organization: { _id: command.user.organizationId },
+      });
+
+      if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
+        const layout = await this.getLayoutUseCase.execute(
+          GetLayoutCommand.create({
+            layoutIdOrInternalId: emailControlValues.layoutId,
+            environmentId: command.user.environmentId,
+            organizationId: command.user.organizationId,
+            userId: command.user._id,
+            skipAdditionalFields: true,
+          })
+        );
+        emailControlValues.layoutId = layout.layoutId;
+      }
+
       const isMaily = isStringifiedMailyJSONContent(emailControlValues.body);
       if (emailControlValues.editorType === 'html' && isMaily) {
         const { result } = await this.previewUsecase.execute(
@@ -360,9 +423,10 @@ export class UpsertWorkflowUseCase {
             generatePreviewRequestDto: {
               controlValues: emailControlValues,
             },
+            skipLayoutRendering: true,
           })
         );
-        let htmlBody = this.removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
+        let htmlBody = removeBrandingFromHtml((result.preview as EmailRenderOutput).body ?? '');
         try {
           htmlBody = await format(htmlBody, {
             parser: 'html',
@@ -385,13 +449,15 @@ export class UpsertWorkflowUseCase {
       UpsertControlValuesCommand.create({
         organizationId: command.user.organizationId,
         environmentId: command.user.environmentId,
-        notificationStepEntity: step,
+        stepId: step._templateId,
         workflowId,
+        level: ControlValuesLevelEnum.STEP_CONTROLS,
         newControlValues,
       })
     );
   }
 
+  @Instrument()
   private findControlValueInRequest(
     updatedStep: NotificationStepEntity,
     commandSteps: UpsertStepDataCommand[]
@@ -413,14 +479,6 @@ export class UpsertWorkflowUseCase {
     if (!commandStep) return null;
 
     return commandStep.controlValues;
-  }
-
-  private removeBrandingFromHtml(html: string): string {
-    try {
-      return html.replace(/<table[^>]*data-novu-branding[^>]*>[\s\S]*?<\/table>(\s*)/gi, '');
-    } catch (error) {
-      return html;
-    }
   }
 
   private mixpanelTrack(command: UpsertWorkflowCommand, eventName: string) {

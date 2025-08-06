@@ -1,50 +1,44 @@
-import { useQuery } from '@tanstack/react-query';
+import { DirectionEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { getLayouts } from '@/api/layouts';
+import { QueryKeys } from '@/utils/query-keys';
+import { useEnvironment } from '../context/environment/hooks';
+import { useFeatureFlag } from './use-feature-flag';
 
-import { LayoutsFilter } from '@/components/layouts/hooks/use-layouts-url-state';
+interface UseLayoutsParams {
+  limit?: number;
+  offset?: number;
+  query?: string;
+  orderBy?: string;
+  orderDirection?: DirectionEnum;
+  refetchOnWindowFocus?: boolean;
+}
 
-// Mock data for now - this would be replaced with actual API call
-const mockEmailLayouts = [
-  {
-    _id: '1',
-    name: 'Newsletter Layout',
-    identifier: 'newsletter-layout',
-    createdAt: '2024-01-15T10:30:00Z',
-    updatedAt: '2024-01-20T14:45:00Z',
-    isDefault: true,
-  },
-  {
-    _id: '2',
-    name: 'Transactional Layout',
-    identifier: 'transactional-layout',
-    createdAt: '2024-01-10T09:15:00Z',
-    updatedAt: '2024-01-18T11:20:00Z',
-    isDefault: false,
-  },
-];
+export const useFetchLayouts = ({
+  limit = 12,
+  offset = 0,
+  query = '',
+  orderBy = '',
+  orderDirection = DirectionEnum.DESC,
+  refetchOnWindowFocus = true,
+}: UseLayoutsParams = {}) => {
+  const { currentEnvironment } = useEnvironment();
+  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
 
-export const useFetchLayouts = (filterValues: LayoutsFilter) => {
-  return useQuery({
-    queryKey: ['email-layouts', filterValues],
-    queryFn: async () => {
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Filter mock data based on filters
-      let filteredLayouts = mockEmailLayouts;
-
-      if (filterValues.query) {
-        filteredLayouts = filteredLayouts.filter(
-          (layout) =>
-            layout.name.toLowerCase().includes(filterValues.query.toLowerCase()) ||
-            layout.identifier.toLowerCase().includes(filterValues.query.toLowerCase())
-        );
-      }
-
-      return {
-        data: filteredLayouts,
-        next: null,
-        previous: null,
-      };
-    },
+  const layoutsQuery = useQuery({
+    queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id, { limit, offset, query, orderBy, orderDirection }],
+    queryFn: () => getLayouts({ environment: currentEnvironment!, limit, offset, query, orderBy, orderDirection }),
+    placeholderData: keepPreviousData,
+    enabled: !!currentEnvironment?._id && isLayoutsPageActive,
+    refetchOnWindowFocus,
   });
+
+  const currentPage = Math.floor(offset / limit) + 1;
+  const totalPages = layoutsQuery.data ? Math.ceil(layoutsQuery.data.totalCount / limit) : 0;
+
+  return {
+    ...layoutsQuery,
+    currentPage,
+    totalPages,
+  };
 };

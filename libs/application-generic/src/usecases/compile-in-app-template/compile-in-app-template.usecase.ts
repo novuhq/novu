@@ -1,10 +1,8 @@
-import { Injectable } from '@nestjs/common';
-import { OrganizationEntity, CommunityOrganizationRepository } from '@novu/dal';
-import { IMessageButton } from '@novu/shared';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-
+import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
+import { IMessageButton } from '@novu/shared';
 import { CompileTemplate, CompileTemplateBase } from '../compile-template';
-import { BadRequestException } from '@nestjs/common';
 import { CompileInAppTemplateCommand } from './compile-in-app-template.command';
 
 @Injectable()

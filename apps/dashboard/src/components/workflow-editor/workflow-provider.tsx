@@ -1,7 +1,9 @@
 import { PatchWorkflowDto, StepResponseDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
+import { CheckCircleIcon } from 'lucide-react';
 import { createContext, ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
 import { useBlocker, useNavigate, useParams } from 'react-router-dom';
-
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -16,11 +18,8 @@ import { useInvocationQueue } from '@/hooks/use-invocation-queue';
 import { usePatchWorkflow } from '@/hooks/use-patch-workflow';
 import { useUpdateWorkflow } from '@/hooks/use-update-workflow';
 import { createContextHook } from '@/utils/context';
+import { getIdFromSlug, STEP_DIVIDER } from '@/utils/id-utils';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { getWorkflowIdFromSlug, STEP_DIVIDER } from '@/utils/step';
-import { CheckCircleIcon } from 'lucide-react';
-import { RiAlertFill, RiCloseFill } from 'react-icons/ri';
-import { toast } from 'sonner';
 import { showErrorToast, showSavingToast, showSuccessToast } from './toasts';
 import { WorkflowSchemaProvider } from './workflow-schema-provider';
 
@@ -56,8 +55,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
   const getStep = useCallback(() => {
     return workflow?.steps.find(
       (step) =>
-        getWorkflowIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
-        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+        getIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
+        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
     );
   }, [workflow, stepSlug]);
 
@@ -67,8 +66,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
     const index = workflow?.steps.findIndex(
       (current) =>
-        getWorkflowIdFromSlug({ slug: current.slug, divider: STEP_DIVIDER }) ===
-        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+        getIdFromSlug({ slug: current.slug, divider: STEP_DIVIDER }) ===
+        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
     );
     /**
      * < 1 means that the step is the first step in the workflow
@@ -85,8 +84,8 @@ export const WorkflowProvider = ({ children }: { children: ReactNode }) => {
 
     const index = workflow.steps.findIndex(
       (step) =>
-        getWorkflowIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
-        getWorkflowIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
+        getIdFromSlug({ slug: stepSlug, divider: STEP_DIVIDER }) ===
+        getIdFromSlug({ slug: step.slug, divider: STEP_DIVIDER })
     );
 
     if (index === -1) return undefined;

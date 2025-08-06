@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
-import { GetOrganizationSettingsCommand } from './get-organization-settings.command';
+import { CommunityOrganizationRepository } from '@novu/dal';
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { GetOrganizationSettingsDto } from '../../dtos/get-organization-settings.dto';
+import { GetOrganizationSettingsCommand } from './get-organization-settings.command';
 
 @Injectable()
 export class GetOrganizationSettings {
@@ -16,6 +17,8 @@ export class GetOrganizationSettings {
 
     return {
       removeNovuBranding: organization.removeNovuBranding || false,
+      defaultLocale: organization.defaultLocale || DEFAULT_LOCALE,
+      targetLocales: organization.targetLocales || [],
     };
   }
 }

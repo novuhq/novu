@@ -25,5 +25,11 @@ export class ProcessEnvFeatureFlagsService implements IFeatureFlagsService {
     if (typeof context.defaultValue === 'boolean') {
       return (processEnvValue === 'true') as T_Result;
     }
+
+    if (typeof context.defaultValue === 'string') {
+      return processEnvValue as T_Result;
+    }
+
+    return context.defaultValue as T_Result;
   }
 }

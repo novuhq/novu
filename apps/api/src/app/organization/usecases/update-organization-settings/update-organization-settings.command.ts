@@ -1,5 +1,5 @@
-import { IsBoolean, IsNotEmpty, IsOptional } from 'class-validator';
-import { AuthenticatedCommand } from '@novu/application-generic';
+import { AuthenticatedCommand, IsValidLocale } from '@novu/application-generic';
+import { IsArray, IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class UpdateOrganizationSettingsCommand extends AuthenticatedCommand {
   @IsNotEmpty()
@@ -8,4 +8,13 @@ export class UpdateOrganizationSettingsCommand extends AuthenticatedCommand {
   @IsOptional()
   @IsBoolean()
   removeNovuBranding?: boolean;
+
+  @IsOptional()
+  @IsValidLocale()
+  defaultLocale?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  targetLocales?: string[];
 }

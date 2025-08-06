@@ -1,10 +1,10 @@
+import { useUser } from '@clerk/clerk-react';
+import { motion } from 'motion/react';
+import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useUser } from '@clerk/clerk-react';
-import { motion } from 'motion/react';
-import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useOnboardingSteps } from '../../hooks/use-onboarding-steps';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { CompactButton } from '../primitives/button-compact';

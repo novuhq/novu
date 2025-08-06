@@ -1,7 +1,3 @@
-import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
-import { UserSession } from '@novu/testing';
-import { expect } from 'chai';
 import {
   buildIntegrationKey,
   CacheInMemoryProviderService,
@@ -9,6 +5,10 @@ import {
   createHash,
   InvalidateCacheService,
 } from '@novu/application-generic';
+import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { randomBytes } from 'crypto';
 
 const integrationRepository = new IntegrationRepository();

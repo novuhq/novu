@@ -1,5 +1,5 @@
-import { EnvironmentEntity, EnvironmentRepository, LayoutRepository, NotificationGroupRepository } from '@novu/dal';
 import { faker } from '@faker-js/faker';
+import { EnvironmentEntity, EnvironmentRepository, LayoutRepository, NotificationGroupRepository } from '@novu/dal';
 import { createHash } from 'crypto';
 
 export class EnvironmentService {
@@ -48,6 +48,7 @@ export class EnvironmentService {
     const environment = await this.createEnvironment(organizationId, userId, name, parentId);
 
     let parentGroup;
+
     if (parentId) {
       parentGroup = await notificationGroupRepository.findOne({
         _environmentId: parentId,

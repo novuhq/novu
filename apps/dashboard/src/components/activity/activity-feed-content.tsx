@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ActivityError } from '@/components/activity/activity-error';
 import { ActivityFilters } from '@/components/activity/activity-filters';
@@ -11,9 +11,13 @@ import { ActivityTable } from '@/components/activity/activity-table';
 import { ActivityOverview } from '@/components/activity/components/activity-overview';
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
+import { UpdatedAgo } from '@/components/updated-ago';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
+import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
+import { cn } from '../../utils/ui';
+import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 
 type ActivityFeedContentProps = {
   initialFilters?: Partial<ActivityFiltersData>;
@@ -32,6 +36,14 @@ export function ActivityFeedContent({
 }: ActivityFeedContentProps) {
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, error } = usePullActivity(activityItemId);
+
+  // Track last updated time for the activities list
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const { refetch } = useFetchActivities({ filters, page: 0, limit: 10 });
+
+  useEffect(() => {
+    setLastUpdated(new Date());
+  }, [filters]);
 
   // Merge initial filters with current filters
   const mergedFilterValues = useMemo(
@@ -110,18 +122,27 @@ export function ActivityFeedContent({
     [mergedFilterValues, handleFiltersChange, handleActivitySelect]
   );
 
+  const handleRefresh = async () => {
+    await refetch();
+    setLastUpdated(new Date());
+  };
+
   return (
-    <div className={className}>
-      <ActivityFilters
-        filters={mergedFilterValues}
-        onFiltersChange={handleFiltersChange}
-        onReset={handleClearFilters}
-        showReset={hasChanges}
-        hide={hideFilters}
-      />
+    <div className={cn('p-2.5', className)}>
+      <div className="flex items-center justify-between pb-2.5">
+        <ActivityFilters
+          filters={mergedFilterValues}
+          onFiltersChange={handleFiltersChange}
+          onReset={handleClearFilters}
+          showReset={hasChanges}
+          hide={hideFilters}
+          className="pb-0"
+        />
+        <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
+      </div>
       <div className={`relative flex ${contentHeight}`}>
-        <ResizablePanelGroup direction="horizontal">
-          <ResizablePanel defaultSize={70} minSize={50}>
+        <ResizablePanelGroup direction="horizontal" className="gap-2">
+          <ResizablePanel defaultSize={50} minSize={35}>
             <ActivityTable
               selectedActivityId={activityItemId}
               onActivitySelect={handleActivitySelect}
@@ -132,42 +153,44 @@ export function ActivityFeedContent({
             />
           </ResizablePanel>
 
-          <AnimatePresence mode="wait">
-            {activityItemId && (
-              <>
-                <ResizableHandle />
-                <ResizablePanel defaultSize={35} minSize={35} maxSize={50}>
-                  <motion.div
-                    key={activityItemId}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{
-                      duration: 0.2,
-                    }}
-                    className="bg-background h-full overflow-auto"
-                  >
-                    <ActivityPanel>
-                      {isPending ? (
-                        <ActivitySkeleton />
-                      ) : error || !activity ? (
-                        <ActivityError />
-                      ) : (
-                        <>
-                          <ActivityHeader title={activity.template?.name} />
-                          <ActivityOverview activity={activity} />
-                          <ActivityLogs
-                            activity={activity}
-                            onActivitySelect={handleActivitySelect}
-                            onTransactionIdChange={handleTransactionIdChange}
-                          />
-                        </>
-                      )}
-                    </ActivityPanel>
-                  </motion.div>
-                </ResizablePanel>
-              </>
-            )}
-          </AnimatePresence>
+          <ResizablePanel defaultSize={50} minSize={35} maxSize={50}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activityItemId}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  duration: 0.2,
+                }}
+                className="border-stroke-soft h-full overflow-auto rounded-lg border bg-white"
+              >
+                {activityItemId ? (
+                  <ActivityPanel>
+                    {isPending ? (
+                      <ActivitySkeleton />
+                    ) : error || !activity ? (
+                      <ActivityError />
+                    ) : (
+                      <>
+                        <ActivityHeader activity={activity} onTransactionIdChange={handleTransactionIdChange} />
+                        <ActivityOverview activity={activity} />
+                        <ActivityLogs activity={activity} onActivitySelect={handleActivitySelect} />
+                      </>
+                    )}
+                  </ActivityPanel>
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-6 text-center">
+                    <EmptyTopicsIllustration />
+                    <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
+                      Nothing to show,
+                      <br />
+                      Select an log on the left to view detailed info here
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </ResizablePanel>
         </ResizablePanelGroup>
       </div>
     </div>

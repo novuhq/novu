@@ -10,8 +10,8 @@ import { Reflector } from '@nestjs/core';
 import { OrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
-  productFeatureEnabledForServiceLevel,
   ProductFeatureKeyEnum,
+  productFeatureEnabledForServiceLevel,
   UserSessionData,
 } from '@novu/shared';
 import { Observable } from 'rxjs';

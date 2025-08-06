@@ -1,22 +1,21 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { StepTypeEnum, WorkflowOriginEnum } from '@novu/shared';
-import { WorkflowCommonsFields } from './workflow-commons.dto';
-import { PreferencesRequestDto } from './preferences.request.dto';
+import { IsArray, IsBoolean, IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import {
-  StepUpsertDto,
   BaseStepConfigDto,
-  InAppStepUpsertDto,
-  EmailStepUpsertDto,
-  SmsStepUpsertDto,
-  PushStepUpsertDto,
   ChatStepUpsertDto,
+  CustomStepUpsertDto,
   DelayStepUpsertDto,
   DigestStepUpsertDto,
-  CustomStepUpsertDto,
+  EmailStepUpsertDto,
+  InAppStepUpsertDto,
+  PushStepUpsertDto,
+  SmsStepUpsertDto,
+  StepUpsertDto,
 } from './create-step.dto';
-import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
+import { PreferencesRequestDto } from './preferences.request.dto';
+import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
   InAppStepUpsertDto,
@@ -104,28 +103,9 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
 
   @ApiProperty({
     description: 'Origin of the workflow',
-    enum: [...Object.values(WorkflowOriginEnum)],
-    enumName: 'WorkflowOriginEnum',
+    enum: [...Object.values(ResourceOriginEnum)],
+    enumName: 'ResourceOriginEnum',
   })
-  @IsEnum(WorkflowOriginEnum)
-  origin: WorkflowOriginEnum;
-
-  @ApiPropertyOptional({
-    description: 'The payload JSON Schema for the workflow',
-    type: 'object',
-    additionalProperties: true,
-  })
-  @IsOptional()
-  @IsValidJsonSchema({
-    message: 'payloadSchema must be a valid JSON schema',
-  })
-  payloadSchema?: object;
-
-  @ApiPropertyOptional({
-    description: 'Enable or disable payload schema validation',
-    type: 'boolean',
-  })
-  @IsOptional()
-  @IsBoolean()
-  validatePayload?: boolean;
+  @IsEnum(ResourceOriginEnum)
+  origin: ResourceOriginEnum;
 }

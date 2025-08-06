@@ -1,9 +1,8 @@
-import * as React from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Cross2Icon } from '@radix-ui/react-icons';
-
-import { cn } from '@/utils/ui';
 import { cva, VariantProps } from 'class-variance-authority';
+import * as React from 'react';
+import { cn } from '@/utils/ui';
 
 const Dialog = DialogPrimitive.Root;
 

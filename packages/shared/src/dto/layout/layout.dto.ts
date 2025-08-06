@@ -1,4 +1,6 @@
-import { ChannelTypeEnum, IEmailBlock, ITemplateVariable } from '../../types';
+import { ChannelTypeEnum, IEmailBlock, ITemplateVariable, ResourceOriginEnum, ResourceTypeEnum } from '../../types';
+import { RuntimeIssue } from '../../utils/issues';
+import { Controls, JSONSchemaDto } from '../workflows';
 
 export class LayoutDto {
   _id?: string;
@@ -17,4 +19,57 @@ export class LayoutDto {
   isDeleted: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export enum LayoutCreationSourceEnum {
+  DASHBOARD = 'dashboard',
+}
+
+export type CreateLayoutDto = {
+  layoutId: string;
+  name: string;
+  __source: LayoutCreationSourceEnum;
+};
+
+export type EmailControlsDto = {
+  body: string;
+  editorType: 'html' | 'block';
+};
+
+export type LayoutControlValuesDto = {
+  email?: EmailControlsDto;
+};
+
+export type UpdateLayoutDto = {
+  name: string;
+  controlValues: LayoutControlValuesDto;
+};
+
+export type DuplicateLayoutDto = {
+  name: string;
+};
+
+export type LayoutCreateAndUpdateKeys = keyof CreateLayoutDto | keyof UpdateLayoutDto;
+
+export type LayoutResponseDto = {
+  _id: string;
+  slug: string;
+  layoutId: string;
+  name: string;
+  isDefault: boolean;
+  updatedAt: string;
+  createdAt: string;
+  origin: ResourceOriginEnum;
+  type: ResourceTypeEnum;
+  controls: Controls;
+  variables?: JSONSchemaDto;
+};
+
+export type ListLayoutsResponse = {
+  layouts: LayoutResponseDto[];
+  totalCount: number;
+};
+
+export class LayoutIssuesDto {
+  controls?: Record<string, RuntimeIssue[]>;
 }

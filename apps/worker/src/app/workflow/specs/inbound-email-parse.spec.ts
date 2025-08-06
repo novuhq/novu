@@ -1,13 +1,11 @@
-import axios, { AxiosResponse } from 'axios';
 import { Test, TestingModule } from '@nestjs/testing';
+import { CompileTemplate } from '@novu/application-generic';
+import { JobRepository, MessageRepository } from '@novu/dal';
+import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
-
-import { JobRepository, MessageRepository } from '@novu/dal';
-import { CompileTemplate } from '@novu/application-generic';
-
-import { InboundEmailParse, IUserWebhookPayload } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
+import { InboundEmailParse, IUserWebhookPayload } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
 
 const axiosInstance = axios.create();
 

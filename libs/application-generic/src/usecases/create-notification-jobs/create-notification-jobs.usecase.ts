@@ -13,12 +13,12 @@ import {
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
-
-import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
 import { InstrumentUsecase } from '../../instrumentation';
-import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
-import { PlatformException } from '../../utils/exceptions';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from '../../services/analytic-logs';
 import { getNestedValue } from '../../utils';
+import { PlatformException } from '../../utils/exceptions';
+import { DigestFilterSteps, DigestFilterStepsCommand } from '../digest-filter-steps';
+import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -27,7 +27,8 @@ type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
 export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
-    private notificationRepository: NotificationRepository
+    private notificationRepository: NotificationRepository,
+    private workflowRunRepository: WorkflowRunRepository
   ) {}
 
   @InstrumentUsecase()
@@ -75,7 +76,7 @@ export class CreateNotificationJobs {
   }
 
   private async createNotification(command: CreateNotificationJobsCommand, channels: StepTypeEnum[]) {
-    return await this.notificationRepository.create({
+    const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _subscriberId: command.subscriber._id,
@@ -88,6 +89,26 @@ export class CreateNotificationJobs {
       controls: command.controls,
       tags: command.template.tags,
     });
+
+    await this.createWorkflowRun(notification, command);
+
+    return notification;
+  }
+
+  private async createWorkflowRun(notification: NotificationEntity, command: CreateNotificationJobsCommand) {
+    try {
+      await this.workflowRunRepository.create(notification, command.template, {
+        status: WorkflowRunStatusEnum.PENDING,
+        userId: command.userId,
+        externalSubscriberId: command.subscriber.subscriberId,
+      });
+    } catch (error) {
+      console.error(
+        { error: error instanceof Error ? error.message : 'Unknown error', notificationId: notification._id },
+        'Failed to create workflow run'
+      );
+      // Don't throw here as we don't want to fail the main notification creation
+    }
   }
 
   private buildJobFromStep(step, command: CreateNotificationJobsCommand, notification): NotificationJob {

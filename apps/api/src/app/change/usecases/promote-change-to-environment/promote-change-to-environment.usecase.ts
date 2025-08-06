@@ -1,18 +1,17 @@
 import { forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-
 import { applyDiff } from 'recursive-diff';
-import { PinoLogger } from '@novu/application-generic';
-import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
-import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 import { PromoteLayoutChange } from '../promote-layout-change';
-import { INotificationTemplateChangeService } from '../shared';
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
-import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
 import { PromoteTranslationChange } from '../promote-translation-change';
 import { PromoteTranslationGroupChange } from '../promote-translation-group-change';
+import { PromoteTypeChangeCommand } from '../promote-type-change.command';
+import { INotificationTemplateChangeService } from '../shared';
+import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 
 @Injectable()
 export class PromoteChangeToEnvironment {

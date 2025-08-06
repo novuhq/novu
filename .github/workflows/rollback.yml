@@ -210,35 +210,40 @@ jobs:
             task_definition_family=$(aws ecs describe-task-definition --task-definition ${TASK_NAME} --query 'taskDefinition.family' --output text)
             echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
 
-            echo "Retrieving task_definition_list..."
-            task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
-            task_definition_list_formatted=$(echo "$task_definition_list" | tr '\n' '|')  # Replace newline with '|'
-            echo "task_definition_list=$task_definition_list_formatted" >> $GITHUB_ENV
-
-            if [ -n "$task_definition_list" ]; then
-              echo "Retrieving previous_task_definition_arn..."
-              index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
-              if [ -n "$index" ]; then
-                if [ "$index" -ge 1 ]; then  # Greater than or equal to 1
-                  revisions_to_rollback=${{ github.event.inputs.revisions_to_rollback }}
-                  previous_index=$((index + revisions_to_rollback))
-                  previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
-                  if [ -z "$previous_task_definition_arn" ]; then
-                    echo "Error: Cannot rollback $revisions_to_rollback revisions. Not enough previous versions available."
-                    exit 1
-                  fi
-                  echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
-                else
-                  echo "Invalid index value: $index"
-                fi
-              else
-                echo "Previous task definition not found. It seems to me someone deleted the current task from the list and that is why I can't find the previous task."
-                exit 1
-              fi
-            else
+            echo "Finding previous task definition..."
+            revisions_to_rollback=${{ github.event.inputs.revisions_to_rollback }}
+            max_items=$((revisions_to_rollback + 10))  # Get a few extra to be safe
+            
+            # Get only the latest task definitions (limited number to avoid argument length issues)
+            task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --max-items ${max_items} --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
+            
+            if [ -z "$task_definition_list" ]; then
               echo "No task definitions found."
               exit 1
             fi
+
+            # Find the index of current task definition
+            index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
+            
+            if [ -z "$index" ]; then
+              echo "Current task definition not found in recent task definitions."
+              echo "Current: $current_task_definition_arn"
+              echo "Available recent task definitions:"
+              echo "$task_definition_list" | head -10
+              exit 1
+            fi
+
+            # Calculate the previous task definition index
+            previous_index=$((index + revisions_to_rollback))
+            previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+            
+            if [ -z "$previous_task_definition_arn" ]; then
+              echo "Error: Cannot rollback $revisions_to_rollback revisions. Not enough previous versions available."
+              echo "Current task is at position $index out of $(echo "$task_definition_list" | wc -l) recent task definitions."
+              exit 1
+            fi
+            
+            echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
           
         - name: Rollback a service to the previous task definition
           id: rollback-service

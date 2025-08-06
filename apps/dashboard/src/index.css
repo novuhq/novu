@@ -263,6 +263,7 @@
 
     --stroke-strong: var(--neutral-950);
     --stroke-sub: var(--neutral-300);
+    --stroke-weak: var(--neutral-100);
     --stroke-soft: var(--neutral-200);
     --stroke-white: var(--neutral-0);
 
@@ -335,7 +336,7 @@
 
     --radius: 0.5rem;
 
-    --font-code: 'JetBrains Mono';
+    --font-code: "JetBrains Mono";
     --font-code-fallback: monospace;
   }
 }
@@ -345,7 +346,7 @@
     @apply border-neutral-alpha-200 focus-visible:outline-primary;
   }
   html {
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: "Inter", system-ui, sans-serif;
   }
   body {
     @apply bg-background text-foreground-950 text-base;
@@ -366,4 +367,11 @@
 .nv-no-scrollbar {
   -ms-overflow-style: none; /* IE and Edge */
   scrollbar-width: none; /* Firefox */
+}
+
+@layer utilities {
+  .hide-inbox-footer
+    .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
+    display: none !important;
+  }
 }

@@ -1,16 +1,15 @@
-/* eslint-disable global-require */
 import { DynamicModule, Module, Provider } from '@nestjs/common';
-import { APP_INTERCEPTOR } from '@nestjs/core';
-import { cacheService, TracingModule } from '@novu/application-generic';
-import { Client, NovuModule } from '@novu/framework/nest';
-
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { Type } from '@nestjs/common/interfaces/type.interface';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { cacheService, TracingModule } from '@novu/application-generic';
+import { Client, NovuModule } from '@novu/framework/nest';
 import { usageLimitsWorkflow } from '@novu/notifications';
 import { isClerkEnabled } from '@novu/shared';
 import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
+import { ActivityModule } from './app/activity/activity.module';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
@@ -26,8 +25,10 @@ import { HealthModule } from './app/health/health.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { InboxModule } from './app/inbox/inbox.module';
 import { IntegrationModule } from './app/integrations/integrations.module';
+import { InternalModule } from './app/internal/internal.module';
 import { InvitesModule } from './app/invites/invites.module';
-import { LayoutsModule } from './app/layouts/layouts.module';
+import { LayoutsV1Module } from './app/layouts-v1/layouts-v1.module';
+import { LayoutsV2Module } from './app/layouts-v2/layouts.module';
 import { MessagesModule } from './app/messages/messages.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { NotificationModule } from './app/notifications/notification.module';
@@ -36,19 +37,21 @@ import { PartnerIntegrationsModule } from './app/partner-integrations/partner-in
 import { PreferencesModule } from './app/preferences';
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
 import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
+import { AnalyticsLogsGuard } from './app/shared/framework/analytics-logs.guard';
+import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.interceptor';
 import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
 import { SharedModule } from './app/shared/shared.module';
 import { StorageModule } from './app/storage/storage.module';
-import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
 import { SubscribersV1Module } from './app/subscribers/subscribersV1.module';
+import { SubscribersModule } from './app/subscribers-v2/subscribers.module';
 import { SupportModule } from './app/support/support.module';
-import { WebhooksModule } from './app/webhooks/webhooks.module';
 import { TenantModule } from './app/tenant/tenant.module';
 import { TestingModule } from './app/testing/testing.module';
 import { TopicsV1Module } from './app/topics-v1/topics-v1.module';
 import { TopicsV2Module } from './app/topics-v2/topics-v2.module';
 import { UserModule } from './app/user/user.module';
+import { WebhooksModule } from './app/webhooks/webhooks.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
@@ -59,7 +62,9 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
     if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
       modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+      modules.push(require('@novu/ee-translation')?.TranslationModule);
     }
+
     if (require('@novu/ee-billing')?.BillingModule) {
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
@@ -96,13 +101,16 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   NotificationGroupsModule,
   ContentTemplatesModule,
   OrganizationModule,
+  ActivityModule,
   UserModule,
   IntegrationModule,
+  InternalModule,
   ChangeModule,
   SubscribersV1Module,
   SubscribersModule,
   FeedsModule,
-  LayoutsModule,
+  LayoutsV1Module,
+  LayoutsV2Module,
   MessagesModule,
   PartnerIntegrationsModule,
   TopicsV1Module,
@@ -132,6 +140,10 @@ const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [
   {
+    provide: APP_GUARD,
+    useClass: AnalyticsLogsGuard,
+  },
+  {
     provide: APP_INTERCEPTOR,
     useClass: ApiRateLimitInterceptor,
   },
@@ -143,6 +155,10 @@ const providers: Provider[] = [
   {
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: AnalyticsLogsInterceptor,
   },
   cacheService,
 ];

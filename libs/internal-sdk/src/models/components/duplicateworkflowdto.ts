@@ -20,6 +20,10 @@ export type DuplicateWorkflowDto = {
    * Description of the workflow
    */
   description?: string | undefined;
+  /**
+   * Enable or disable translations for this workflow
+   */
+  isTranslationEnabled?: boolean | undefined;
 };
 
 /** @internal */
@@ -31,6 +35,7 @@ export const DuplicateWorkflowDto$inboundSchema: z.ZodType<
   name: z.string().optional(),
   tags: z.array(z.string()).optional(),
   description: z.string().optional(),
+  isTranslationEnabled: z.boolean().default(false),
 });
 
 /** @internal */
@@ -38,6 +43,7 @@ export type DuplicateWorkflowDto$Outbound = {
   name?: string | undefined;
   tags?: Array<string> | undefined;
   description?: string | undefined;
+  isTranslationEnabled: boolean;
 };
 
 /** @internal */
@@ -49,6 +55,7 @@ export const DuplicateWorkflowDto$outboundSchema: z.ZodType<
   name: z.string().optional(),
   tags: z.array(z.string()).optional(),
   description: z.string().optional(),
+  isTranslationEnabled: z.boolean().default(false),
 });
 
 /**

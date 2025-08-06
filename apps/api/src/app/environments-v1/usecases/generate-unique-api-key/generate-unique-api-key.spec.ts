@@ -1,5 +1,5 @@
-import { EnvironmentRepository } from '@novu/dal';
 import { InternalServerErrorException } from '@nestjs/common';
+import { EnvironmentRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 

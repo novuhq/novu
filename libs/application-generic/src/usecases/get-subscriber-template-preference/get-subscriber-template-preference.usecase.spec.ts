@@ -1,13 +1,10 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import {
-  overridePreferences,
-  filteredPreference,
-} from './get-subscriber-template-preference.usecase';
+import { filteredPreference, overridePreferences } from './get-subscriber-template-preference.usecase';
 
-describe('overridePreferences', function () {
-  beforeEach(function () {});
+describe('overridePreferences', () => {
+  beforeEach(() => {});
 
-  it('should be overridden by the subscribers preference', async function () {
+  it('should be overridden by the subscribers preference', async () => {
     const templateChannelPreference = {
       email: false,
       sms: true,
@@ -32,7 +29,7 @@ describe('overridePreferences', function () {
         in_app: true,
         chat: true,
         push: true,
-      },
+      }
     );
 
     const expectedPreferenceResult = {
@@ -44,24 +41,14 @@ describe('overridePreferences', function () {
     };
 
     expect(channels).toEqual(expectedPreferenceResult);
-    expect(
-      overrides.find((override) => override.channel === 'email').source,
-    ).toEqual('subscriber');
-    expect(
-      overrides.find((override) => override.channel === 'sms').source,
-    ).toEqual('subscriber');
-    expect(
-      overrides.find((override) => override.channel === 'in_app').source,
-    ).toEqual('template');
-    expect(
-      overrides.find((override) => override.channel === 'chat').source,
-    ).toEqual('template');
-    expect(
-      overrides.find((override) => override.channel === 'push').source,
-    ).toEqual('subscriber');
+    expect(overrides.find((override) => override.channel === 'email').source).toEqual('subscriber');
+    expect(overrides.find((override) => override.channel === 'sms').source).toEqual('subscriber');
+    expect(overrides.find((override) => override.channel === 'in_app').source).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'chat').source).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'push').source).toEqual('subscriber');
   });
 
-  it('should get preference from template when subscriber preference are empty', async function () {
+  it('should get preference from template when subscriber preference are empty', async () => {
     const templateChannelPreference = {
       email: false,
       sms: true,
@@ -82,7 +69,7 @@ describe('overridePreferences', function () {
         in_app: true,
         chat: true,
         push: true,
-      },
+      }
     );
 
     const expectedPreferenceResult = {
@@ -94,26 +81,16 @@ describe('overridePreferences', function () {
     };
 
     expect(channels).toEqual(expectedPreferenceResult);
-    expect(
-      overrides.find((override) => override.channel === 'email').source,
-    ).toEqual('template');
-    expect(
-      overrides.find((override) => override.channel === 'sms').source,
-    ).toEqual('template');
-    expect(
-      overrides.find((override) => override.channel === 'in_app').source,
-    ).toEqual('template');
-    expect(
-      overrides.find((override) => override.channel === 'chat').source,
-    ).toEqual('template');
-    expect(
-      overrides.find((override) => override.channel === 'push').source,
-    ).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'email').source).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'sms').source).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'in_app').source).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'chat').source).toEqual('template');
+    expect(overrides.find((override) => override.channel === 'push').source).toEqual('template');
   });
 });
 
-describe('filteredPreference', function () {
-  it('should filter active channels in the preference ', async function () {
+describe('filteredPreference', () => {
+  it('should filter active channels in the preference ', async () => {
     const preferences = {
       email: false,
       sms: true,
@@ -133,7 +110,7 @@ describe('filteredPreference', function () {
     expect(channelPreferences).toEqual(expectedPreferenceResult);
   });
 
-  it('should filter all if no active channels ', async function () {
+  it('should filter all if no active channels ', async () => {
     const preferences = {
       email: false,
       sms: true,
@@ -148,7 +125,7 @@ describe('filteredPreference', function () {
     expect(Object.keys(channelPreferences).length).toEqual(0);
   });
 
-  it('should not filter preference if all the channels are active', async function () {
+  it('should not filter preference if all the channels are active', async () => {
     const preferences = {
       email: false,
       sms: true,

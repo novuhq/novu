@@ -33,8 +33,9 @@ export class GetActivityFeedCommand extends EnvironmentWithUserCommand {
   subscriberIds?: string[];
 
   @IsOptional()
-  @IsString()
-  transactionId?: string;
+  @IsArray()
+  @IsString({ each: true })
+  transactionId?: string[];
 
   @IsOptional()
   @IsString()

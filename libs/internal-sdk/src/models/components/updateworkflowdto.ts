@@ -55,16 +55,16 @@ import {
   PushStepUpsertDto$outboundSchema,
 } from "./pushstepupsertdto.js";
 import {
+  ResourceOriginEnum,
+  ResourceOriginEnum$inboundSchema,
+  ResourceOriginEnum$outboundSchema,
+} from "./resourceoriginenum.js";
+import {
   SmsStepUpsertDto,
   SmsStepUpsertDto$inboundSchema,
   SmsStepUpsertDto$Outbound,
   SmsStepUpsertDto$outboundSchema,
 } from "./smsstepupsertdto.js";
-import {
-  WorkflowOriginEnum,
-  WorkflowOriginEnum$inboundSchema,
-  WorkflowOriginEnum$outboundSchema,
-} from "./workfloworiginenum.js";
 
 export type UpdateWorkflowDtoSteps =
   | (InAppStepUpsertDto & { type: "in_app" })
@@ -94,6 +94,18 @@ export type UpdateWorkflowDto = {
    */
   active?: boolean | undefined;
   /**
+   * Enable or disable payload schema validation
+   */
+  validatePayload?: boolean | undefined;
+  /**
+   * The payload JSON Schema for the workflow
+   */
+  payloadSchema?: { [k: string]: any } | null | undefined;
+  /**
+   * Enable or disable translations for this workflow
+   */
+  isTranslationEnabled?: boolean | undefined;
+  /**
    * Workflow ID (allowed only for code-first workflows)
    */
   workflowId?: string | undefined;
@@ -115,17 +127,9 @@ export type UpdateWorkflowDto = {
    */
   preferences: PreferencesRequestDto;
   /**
-   * Origin of the workflow
+   * Origin of the layout
    */
-  origin: WorkflowOriginEnum;
-  /**
-   * The payload JSON Schema for the workflow
-   */
-  payloadSchema?: { [k: string]: any } | undefined;
-  /**
-   * Enable or disable payload schema validation
-   */
-  validatePayload?: boolean | undefined;
+  origin: ResourceOriginEnum;
 };
 
 /** @internal */
@@ -256,6 +260,9 @@ export const UpdateWorkflowDto$inboundSchema: z.ZodType<
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
+  validatePayload: z.boolean().optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
+  isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string().optional(),
   steps: z.array(
     z.union([
@@ -302,9 +309,7 @@ export const UpdateWorkflowDto$inboundSchema: z.ZodType<
     ]),
   ),
   preferences: PreferencesRequestDto$inboundSchema,
-  origin: WorkflowOriginEnum$inboundSchema,
-  payloadSchema: z.record(z.any()).optional(),
-  validatePayload: z.boolean().optional(),
+  origin: ResourceOriginEnum$inboundSchema,
 });
 
 /** @internal */
@@ -313,6 +318,9 @@ export type UpdateWorkflowDto$Outbound = {
   description?: string | undefined;
   tags?: Array<string> | undefined;
   active: boolean;
+  validatePayload?: boolean | undefined;
+  payloadSchema?: { [k: string]: any } | null | undefined;
+  isTranslationEnabled: boolean;
   workflowId?: string | undefined;
   steps: Array<
     | (InAppStepUpsertDto$Outbound & { type: "in_app" })
@@ -326,8 +334,6 @@ export type UpdateWorkflowDto$Outbound = {
   >;
   preferences: PreferencesRequestDto$Outbound;
   origin: string;
-  payloadSchema?: { [k: string]: any } | undefined;
-  validatePayload?: boolean | undefined;
 };
 
 /** @internal */
@@ -340,6 +346,9 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
   description: z.string().optional(),
   tags: z.array(z.string()).optional(),
   active: z.boolean().default(false),
+  validatePayload: z.boolean().optional(),
+  payloadSchema: z.nullable(z.record(z.any())).optional(),
+  isTranslationEnabled: z.boolean().default(false),
   workflowId: z.string().optional(),
   steps: z.array(
     z.union([
@@ -386,9 +395,7 @@ export const UpdateWorkflowDto$outboundSchema: z.ZodType<
     ]),
   ),
   preferences: PreferencesRequestDto$outboundSchema,
-  origin: WorkflowOriginEnum$outboundSchema,
-  payloadSchema: z.record(z.any()).optional(),
-  validatePayload: z.boolean().optional(),
+  origin: ResourceOriginEnum$outboundSchema,
 });
 
 /**

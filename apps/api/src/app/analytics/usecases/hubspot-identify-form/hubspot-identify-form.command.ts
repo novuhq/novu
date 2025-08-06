@@ -1,5 +1,5 @@
 import { BaseCommand } from '@novu/application-generic';
-import { IsDefined, IsString, IsOptional } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 
 export class HubspotIdentifyFormCommand extends BaseCommand {
   @IsDefined()

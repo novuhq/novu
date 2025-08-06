@@ -1,9 +1,4 @@
-import {
-  AzureBlobStorageService,
-  GCSStorageService,
-  S3StorageService,
-  StorageService,
-} from './storage.service';
+import { AzureBlobStorageService, GCSStorageService, S3StorageService, StorageService } from './storage.service';
 
 export * from './storage-helper.service';
 

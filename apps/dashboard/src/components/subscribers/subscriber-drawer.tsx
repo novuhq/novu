@@ -1,9 +1,9 @@
+import { forwardRef, useState } from 'react';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/primitives/sheet';
 import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { SubscriberTabs } from '@/components/subscribers/subscriber-tabs';
 import { useCombinedRefs } from '@/hooks/use-combined-refs';
 import { useFormProtection } from '@/hooks/use-form-protection';
-import { forwardRef, useState } from 'react';
 
 type SubscriberDrawerProps = {
   open: boolean;

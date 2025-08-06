@@ -1,4 +1,3 @@
-import React from "react";
 import {
   Body,
   Button,
@@ -10,14 +9,15 @@ import {
   Html,
   Img,
   Preview,
-  render,
   Row,
+  render,
   Section,
   Tailwind,
   Text,
-} from "@react-email/components";
+} from '@react-email/components';
+import React from 'react';
 
-import { ControlSchema, PayloadSchema } from "../workflows";
+import { ControlSchema, PayloadSchema } from '../workflows';
 
 type NovuWelcomeEmailProps = ControlSchema & PayloadSchema;
 
@@ -37,14 +37,14 @@ export const NovuWelcomeEmail = ({
           theme: {
             extend: {
               colors: {
-                brand: "#2250f4",
-                offwhite: "#fafbfb",
-                blurwhite: "#f3f3f5",
+                brand: '#2250f4',
+                offwhite: '#fafbfb',
+                blurwhite: '#f3f3f5',
               },
               spacing: {
-                0: "0px",
-                20: "20px",
-                45: "45px",
+                0: '0px',
+                20: '20px',
+                45: '45px',
               },
             },
           },
@@ -65,7 +65,7 @@ export const NovuWelcomeEmail = ({
             {components?.map((component, componentIndex) => {
               return (
                 <Section key={componentIndex}>
-                  {component.type === "heading" ? (
+                  {component.type === 'heading' ? (
                     <Section>
                       <Heading as="h1" className={`text-${component.align}`}>
                         {component.text}
@@ -73,10 +73,10 @@ export const NovuWelcomeEmail = ({
                     </Section>
                   ) : null}
 
-                  {component.type === "button" ? (
+                  {component.type === 'button' ? (
                     <Section className={`text-${component.align}`}>
                       <Button
-                        href={"http://localhost:2022"}
+                        href={'http://localhost:2022'}
                         className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
                       >
                         {component.text}
@@ -84,52 +84,33 @@ export const NovuWelcomeEmail = ({
                     </Section>
                   ) : null}
 
-                  {component.type === "text" ? (
+                  {component.type === 'text' ? (
                     <Section>
-                      <Text className={`text-base text-${component.align}`}>
-                        {component.text}
-                      </Text>
+                      <Text className={`text-base text-${component.align}`}>{component.text}</Text>
                     </Section>
                   ) : null}
 
-                  {component.type === "users" ? (
-                    <Section className={"mb-5"}>
+                  {component.type === 'users' ? (
+                    <Section className={'mb-5'}>
                       <Row>
-                        <Text
-                          className={`text-[#666666] text-[12px] leading-[24px] text-${component.align}`}
-                        >
+                        <Text className={`text-[#666666] text-[12px] leading-[24px] text-${component.align}`}>
                           {component.text}
                         </Text>
                       </Row>
                       <Row align={component.align}>
                         <Column align="right">
-                          <Img
-                            className="rounded-full"
-                            src={userImage}
-                            width="64"
-                            height="64"
-                          />
+                          <Img className="rounded-full" src={userImage} width="64" height="64" />
                         </Column>
                         <Column align="center">
-                          <Img
-                            src={arrowImage}
-                            width="12"
-                            height="9"
-                            alt="invited you to"
-                          />
+                          <Img src={arrowImage} width="12" height="9" alt="invited you to" />
                         </Column>
                         <Column align="left">
-                          <Img
-                            className="rounded-full"
-                            src={teamImage}
-                            width="64"
-                            height="64"
-                          />
+                          <Img className="rounded-full" src={teamImage} width="64" height="64" />
                         </Column>
                       </Row>
                     </Section>
                   ) : null}
-                  {component.type === "code" ? (
+                  {component.type === 'code' ? (
                     <Section>
                       <CodeInline>{component.text}</CodeInline>;
                     </Section>

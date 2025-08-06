@@ -1,40 +1,50 @@
-import { cn } from '@/utils/ui';
-import { autocompletion, CompletionSource } from '@codemirror/autocomplete';
-import { EditorView } from '@uiw/react-codemirror';
-import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { autocompletion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-
+import { EditorView, Extension } from '@uiw/react-codemirror';
+import { JSONSchema7 } from 'json-schema';
+import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Editor, EditorProps } from '@/components/primitives/editor';
+import { createVariableExtension } from '@/components/primitives/variable-plugin';
+import { DEFAULT_VARIABLE_PILL_HEIGHT } from '@/components/primitives/variable-plugin/variable-pill-widget';
+import { variablePillTheme } from '@/components/primitives/variable-plugin/variable-theme';
 import { EditVariablePopover } from '@/components/variable/edit-variable-popover';
+import {
+  DIGEST_VARIABLES_ENUM,
+  DIGEST_VARIABLES_FILTER_MAP,
+  getDynamicDigestVariable,
+} from '@/components/variable/utils/digest-variables';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
-import { useVariables } from './control-input/hooks/use-variables';
-import { createVariableExtension } from './control-input/variable-plugin';
-import { variablePillTheme } from './control-input/variable-plugin/variable-theme';
-import { DIGEST_VARIABLES_ENUM, getDynamicDigestVariable } from '@/components/variable/utils/digest-variables';
-import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
-import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { DIGEST_VARIABLES_FILTER_MAP } from '@/components/variable/utils/digest-variables';
-import { useWorkflowSchema } from '@/components/workflow-editor/workflow-schema-provider';
-import { PayloadSchemaDrawer } from '@/components/workflow-editor/payload-schema-drawer';
-import { useCreateVariable } from '../variable/hooks/use-create-variable';
+import { cn } from '@/utils/ui';
+import { useVariables } from '../../hooks/use-variables';
 import { DEFAULT_SIDE_OFFSET } from './popover';
-import { DEFAULT_VARIABLE_PILL_HEIGHT } from './control-input/variable-plugin/variable-pill-widget';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
-type CompletionRange = {
+export type CompletionRange = {
   from: number;
   to: number;
 };
 
 type VariableEditorProps = {
+  viewRef: MutableRefObject<EditorView | null>;
+  lastCompletionRef: MutableRefObject<CompletionRange | null>;
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   autoFocus?: boolean;
   id?: string;
   indentWithTab?: boolean;
   completionSources?: CompletionSource[];
+  isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
+  digestStepName?: string;
+  getSchemaPropertyByKey?: (key: string) => JSONSchema7 | undefined;
+  onCreateNewVariable?: (variableName: string) => Promise<void>;
+  onManageSchemaClick?: (variableName: string) => void;
+  skipContainerClick?: boolean;
+  children?: React.ReactNode;
+  disabled?: boolean;
 } & Pick<
   EditorProps,
   | 'className'
@@ -51,7 +61,13 @@ type VariableEditorProps = {
   | 'tagStyles'
 >;
 
+/**
+ * The VariableEditor is a wrapper around the Editor component that adds variable pill support.
+ * Note: Please keep it pure and don't add any module specific logic to it, for example workflows related logic.
+ */
 export function VariableEditor({
+  viewRef,
+  lastCompletionRef,
   value,
   onChange = () => {},
   onBlur = () => {},
@@ -70,15 +86,25 @@ export function VariableEditor({
   extensions,
   tagStyles,
   completionSources,
+  isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
+  digestStepName,
+  skipContainerClick = false,
+  getSchemaPropertyByKey = () => undefined,
+  onCreateNewVariable = () => Promise.resolve(),
+  onManageSchemaClick = () => {},
+  children,
+  disabled = false,
 }: VariableEditorProps) {
   const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
-  const viewRef = useRef<EditorView | null>(null);
-  const lastCompletionRef = useRef<CompletionRange | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const track = useTelemetry();
+
   const { selectedVariable, setSelectedVariable, handleVariableSelect, handleVariableUpdate } = useVariables(
     viewRef,
     onChange
   );
+
   const isVariablePopoverOpen = !!selectedVariable;
   const variable: LiquidVariable | undefined = selectedVariable
     ? {
@@ -86,44 +112,12 @@ export function VariableEditor({
       }
     : undefined;
 
-  const { digestStepBeforeCurrent, workflow } = useWorkflow();
-  const track = useTelemetry();
-
-  const { getSchemaPropertyByKey, isPayloadSchemaEnabled, currentSchema } = useWorkflowSchema();
-
-  const {
-    handleCreateNewVariable,
-    isPayloadSchemaDrawerOpen,
-    highlightedVariableKey,
-    openSchemaDrawer,
-    closeSchemaDrawer,
-  } = useCreateVariable();
-
-  const [triggerPosition, setTriggerPosition] = useState<{ top: number; left: number } | null>(null);
-
-  // Create an enhanced isAllowedVariable that also checks the current schema
-  const enhancedIsAllowedVariable = useCallback(
-    (variable: LiquidVariable): boolean => {
-      // First check with the original isAllowedVariable
-      if (isAllowedVariable(variable)) {
-        return true;
-      }
-
-      // If not allowed by original function, check if it exists in the current schema
-      if (variable.name.startsWith('payload.') && currentSchema) {
-        const propertyKey = variable.name.replace('payload.', '');
-        return !!getSchemaPropertyByKey(propertyKey);
-      }
-
-      return false;
-    },
-    [isAllowedVariable, currentSchema, getSchemaPropertyByKey]
-  );
+  const [variableTriggerPosition, setVariableTriggerPosition] = useState<{ top: number; left: number } | null>(null);
 
   const onVariableSelect = useCallback(
     (completion: CompletionOption) => {
       if (completion.isNewVariable && completion.label.startsWith('payload.')) {
-        handleCreateNewVariable(completion.label.replace('payload.', ''));
+        onCreateNewVariable(completion.label.replace('payload.', ''));
       }
 
       if (completion.type === 'digest') {
@@ -137,30 +131,14 @@ export function VariableEditor({
         }
       }
     },
-    [track, handleCreateNewVariable]
-  );
-
-  const variableCompletionSource = useMemo(() => {
-    return createAutocompleteSource(variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled);
-  }, [variables, onVariableSelect, handleCreateNewVariable, isPayloadSchemaEnabled]);
-
-  const autocompletionExtension = useMemo(
-    () =>
-      autocompletion({
-        override: [variableCompletionSource, ...(completionSources ?? [])],
-        closeOnBlur: true,
-        defaultKeymap: true,
-        activateOnTyping: true,
-        optionClass: (completion) => (completion.type === 'new-variable' ? 'cm-new-variable-option' : ''),
-      }),
-    [variableCompletionSource, completionSources]
+    [track, onCreateNewVariable]
   );
 
   const isDigestEventsVariable = useCallback(
     (variableName: string) => {
       const { value } = getDynamicDigestVariable({
         type: DIGEST_VARIABLES_ENUM.SENTENCE_SUMMARY,
-        digestStepName: digestStepBeforeCurrent?.stepId,
+        digestStepName,
       });
 
       if (!value) return false;
@@ -168,33 +146,140 @@ export function VariableEditor({
       const valueWithoutFilters = value.split('|')[0].trim();
       return variableName === valueWithoutFilters;
     },
-    [digestStepBeforeCurrent?.stepId]
+    [digestStepName]
   );
+
+  // Create extensions only once and never recreate them unless external extensions change
+  const extensionsRef = useRef<Extension[]>();
+  const callbacksRef = useRef({
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    isTranslationEnabled,
+    multiline,
+    extensions,
+  });
+
+  // Update callbacks ref on every render
+  callbacksRef.current = {
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    isTranslationEnabled,
+    multiline,
+    extensions,
+  };
+
+  // Update callbacks without triggering re-renders
+  callbacksRef.current = {
+    onVariableSelect,
+    onCreateNewVariable,
+    handleVariableSelect,
+    isAllowedVariable,
+    isDigestEventsVariable,
+    variables,
+    completionSources,
+    isPayloadSchemaEnabled,
+    isTranslationEnabled,
+    multiline,
+    extensions,
+  };
+
+  const variableCompletionSource = useMemo(() => {
+    return (context: CompletionContext) => {
+      return createAutocompleteSource(
+        callbacksRef.current.variables,
+        (completion: CompletionOption) => callbacksRef.current.onVariableSelect(completion),
+        async (variableName: string) => callbacksRef.current.onCreateNewVariable(variableName),
+        callbacksRef.current.isPayloadSchemaEnabled,
+        callbacksRef.current.isTranslationEnabled
+      )(context);
+    };
+  }, []);
+
+  const autocompletionExtension = useMemo(() => {
+    const dynamicCompletionSource: CompletionSource = (context) => {
+      const sources = [];
+
+      // Put translation completion sources first to give them higher priority
+      if (callbacksRef.current.completionSources) {
+        sources.push(...callbacksRef.current.completionSources);
+      }
+
+      // Add variable completion source last
+      sources.push(variableCompletionSource);
+
+      for (const source of sources) {
+        const result = source(context);
+        if (result) return result;
+      }
+
+      return null;
+    };
+
+    return autocompletion({
+      override: [dynamicCompletionSource],
+      closeOnBlur: true,
+      defaultKeymap: true,
+      activateOnTyping: true,
+      optionClass: (completion) => {
+        if (completion.type === 'new-variable') return 'cm-new-variable-option';
+        if (completion.type === 'new-translation-key') return 'cm-new-translation-option';
+        return '';
+      },
+    });
+  }, []);
 
   const variablePluginExtension = useMemo(() => {
     return createVariableExtension({
       viewRef,
       lastCompletionRef,
-      onSelect: handleVariableSelect,
-      isAllowedVariable: enhancedIsAllowedVariable,
-      isDigestEventsVariable,
+      onSelect: (value: string, from: number, to: number) => callbacksRef.current.handleVariableSelect(value, from, to),
+      isAllowedVariable: (variable: LiquidVariable) => callbacksRef.current.isAllowedVariable(variable),
+      isDigestEventsVariable: (variableName: string) => callbacksRef.current.isDigestEventsVariable(variableName),
       isCustomHtmlEditorEnabled,
     });
-  }, [isCustomHtmlEditorEnabled, handleVariableSelect, enhancedIsAllowedVariable, isDigestEventsVariable]);
+  }, []);
 
   const editorExtensions = useMemo(() => {
-    const baseExtensions = [...(multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
-    return [...baseExtensions, autocompletionExtension, variablePluginExtension, ...(extensions ?? [])];
-  }, [autocompletionExtension, variablePluginExtension, multiline, extensions]);
+    // Clear cache when extensions change
+    extensionsRef.current = undefined;
 
-  const handleOpenChange = useCallback(
+    // For props that rarely change, we can check them dynamically
+    const baseExtensions = [...(callbacksRef.current.multiline ? [EditorView.lineWrapping] : []), variablePillTheme];
+    const allExtensions = [...baseExtensions, autocompletionExtension];
+
+    // Add external extensions (including translation plugin) BEFORE variable plugin
+    // This ensures translation patterns are processed first
+    if (callbacksRef.current.extensions) {
+      allExtensions.push(...callbacksRef.current.extensions);
+    }
+
+    // Add variable plugin last so it doesn't interfere with translation patterns
+    allExtensions.push(variablePluginExtension);
+
+    extensionsRef.current = allExtensions;
+    return extensionsRef.current;
+  }, [extensions]);
+
+  const handleVariablePopoverOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
         setTimeout(() => setSelectedVariable(null), 0);
         viewRef.current?.focus();
       }
     },
-    [setSelectedVariable]
+    [setSelectedVariable, viewRef]
   );
 
   /**
@@ -205,12 +290,17 @@ export function VariableEditor({
     (event: React.MouseEvent) => {
       event.preventDefault();
       // Don't focus if a variable popover is open or if clicking on interactive elements
-      if (isVariablePopoverOpen) return;
+      if (isVariablePopoverOpen || skipContainerClick) return;
 
       const target = event.target as HTMLElement;
 
-      // Don't focus if clicking on variable pills or other interactive elements
-      if (target.closest('.cm-variable-pill') || target.closest('[role="button"]') || target.closest('button')) {
+      // Don't focus if clicking on variable pills, translation pills, or other interactive elements
+      if (
+        target.closest('.cm-variable-pill') ||
+        target.closest('.cm-translation-pill') ||
+        target.closest('[role="button"]') ||
+        target.closest('button')
+      ) {
         return;
       }
 
@@ -219,11 +309,11 @@ export function VariableEditor({
         viewRef.current.focus();
       }
     },
-    [isVariablePopoverOpen]
+    [isVariablePopoverOpen, skipContainerClick, viewRef]
   );
 
   useEffect(() => {
-    // calculate popover trigger position when variable is selected
+    // calculate variable popover trigger position when variable is selected
     if (selectedVariable && viewRef.current && containerRef.current) {
       const coords = viewRef.current.coordsAtPos(selectedVariable.from);
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -231,15 +321,15 @@ export function VariableEditor({
       const topOffset = DEFAULT_VARIABLE_PILL_HEIGHT - DEFAULT_SIDE_OFFSET + 2;
 
       if (coords) {
-        setTriggerPosition({
+        setVariableTriggerPosition({
           top: coords.top - containerRect.top + topOffset,
           left: coords.left - containerRect.left,
         });
       }
     } else {
-      setTriggerPosition(null);
+      setVariableTriggerPosition(null);
     }
-  }, [selectedVariable]);
+  }, [selectedVariable, viewRef, containerRef]);
 
   return (
     <div ref={containerRef} className={className} onClick={handleContainerClick}>
@@ -259,15 +349,16 @@ export function VariableEditor({
         onChange={onChange}
         onBlur={onBlur}
         tagStyles={tagStyles}
+        editable={!disabled}
       />
       {isVariablePopoverOpen && (
         <EditVariablePopover
           isPayloadSchemaEnabled={isPayloadSchemaEnabled}
           variables={variables}
           open={isVariablePopoverOpen}
-          onOpenChange={handleOpenChange}
+          onOpenChange={handleVariablePopoverOpenChange}
           variable={variable}
-          isAllowedVariable={enhancedIsAllowedVariable}
+          isAllowedVariable={isAllowedVariable}
           onUpdate={(newValue) => {
             handleVariableUpdate(newValue);
             // Focus back to the editor after updating the variable
@@ -280,20 +371,18 @@ export function VariableEditor({
             setTimeout(() => viewRef.current?.focus(), 0);
           }}
           getSchemaPropertyByKey={getSchemaPropertyByKey}
-          onManageSchemaClick={(variableName) => {
-            openSchemaDrawer(variableName);
-          }}
+          onManageSchemaClick={onManageSchemaClick}
           onAddToSchemaClick={(variableName) => {
-            handleCreateNewVariable(variableName);
+            onCreateNewVariable(variableName);
           }}
         >
           <div
             className="pointer-events-none absolute z-10"
             style={
-              triggerPosition
+              variableTriggerPosition
                 ? {
-                    top: triggerPosition.top,
-                    left: triggerPosition.left,
+                    top: variableTriggerPosition.top,
+                    left: variableTriggerPosition.left,
                     width: '1px',
                     height: '1px',
                   }
@@ -302,16 +391,7 @@ export function VariableEditor({
           />
         </EditVariablePopover>
       )}
-      <PayloadSchemaDrawer
-        isOpen={isPayloadSchemaDrawerOpen}
-        onOpenChange={(isOpen) => {
-          if (!isOpen) {
-            closeSchemaDrawer();
-          }
-        }}
-        workflow={workflow}
-        highlightedPropertyKey={highlightedVariableKey}
-      />
+      {children}
     </div>
   );
 }

@@ -1,5 +1,4 @@
-/* eslint-disable global-require */
-import { CommunityOrganizationRepository, CommunityUserRepository, CommunityMemberRepository } from '@novu/dal';
+import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { isClerkEnabled } from '@novu/shared';
 import { ClerkClientMock } from './clerk-client.mock';
 

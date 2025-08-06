@@ -8,27 +8,22 @@ import { safeParse } from "../../lib/schemas.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 import {
+  PushControlDto,
+  PushControlDto$inboundSchema,
+  PushControlDto$Outbound,
+  PushControlDto$outboundSchema,
+} from "./pushcontroldto.js";
+import {
   StepTypeEnum,
   StepTypeEnum$inboundSchema,
   StepTypeEnum$outboundSchema,
 } from "./steptypeenum.js";
 
 /**
- * Control values for the Push step
+ * Control values for the Push step.
  */
-export type PushStepUpsertDtoControlValues = {
-  /**
-   * JSONLogic filter conditions for conditionally skipping the step execution. Supports complex logical operations with AND, OR, and comparison operators. See https://jsonlogic.com/ for full typing reference.
-   */
-  skip?: { [k: string]: any } | undefined;
-  /**
-   * Subject/title of the push notification.
-   */
-  subject?: string | undefined;
-  /**
-   * Body content of the push notification.
-   */
-  body?: string | undefined;
+export type PushStepUpsertDtoControlValues = PushControlDto | {
+  [k: string]: any;
 };
 
 export type PushStepUpsertDto = {
@@ -45,9 +40,9 @@ export type PushStepUpsertDto = {
    */
   type: StepTypeEnum;
   /**
-   * Control values for the Push step
+   * Control values for the Push step.
    */
-  controlValues?: PushStepUpsertDtoControlValues | null | undefined;
+  controlValues?: PushControlDto | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -55,29 +50,19 @@ export const PushStepUpsertDtoControlValues$inboundSchema: z.ZodType<
   PushStepUpsertDtoControlValues,
   z.ZodTypeDef,
   unknown
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  subject: z.string().optional(),
-  body: z.string().optional(),
-});
+> = z.union([PushControlDto$inboundSchema, z.record(z.any())]);
 
 /** @internal */
-export type PushStepUpsertDtoControlValues$Outbound = {
-  skip?: { [k: string]: any } | undefined;
-  subject?: string | undefined;
-  body?: string | undefined;
-};
+export type PushStepUpsertDtoControlValues$Outbound =
+  | PushControlDto$Outbound
+  | { [k: string]: any };
 
 /** @internal */
 export const PushStepUpsertDtoControlValues$outboundSchema: z.ZodType<
   PushStepUpsertDtoControlValues$Outbound,
   z.ZodTypeDef,
   PushStepUpsertDtoControlValues
-> = z.object({
-  skip: z.record(z.any()).optional(),
-  subject: z.string().optional(),
-  body: z.string().optional(),
-});
+> = z.union([PushControlDto$outboundSchema, z.record(z.any())]);
 
 /**
  * @internal
@@ -121,9 +106,8 @@ export const PushStepUpsertDto$inboundSchema: z.ZodType<
   _id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$inboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => PushStepUpsertDtoControlValues$inboundSchema),
-  ).optional(),
+  controlValues: z.union([PushControlDto$inboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     "_id": "id",
@@ -135,7 +119,7 @@ export type PushStepUpsertDto$Outbound = {
   _id?: string | undefined;
   name: string;
   type: string;
-  controlValues?: PushStepUpsertDtoControlValues$Outbound | null | undefined;
+  controlValues?: PushControlDto$Outbound | { [k: string]: any } | undefined;
 };
 
 /** @internal */
@@ -147,9 +131,8 @@ export const PushStepUpsertDto$outboundSchema: z.ZodType<
   id: z.string().optional(),
   name: z.string(),
   type: StepTypeEnum$outboundSchema,
-  controlValues: z.nullable(
-    z.lazy(() => PushStepUpsertDtoControlValues$outboundSchema),
-  ).optional(),
+  controlValues: z.union([PushControlDto$outboundSchema, z.record(z.any())])
+    .optional(),
 }).transform((v) => {
   return remap$(v, {
     id: "_id",

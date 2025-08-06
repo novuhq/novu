@@ -1,0 +1,13 @@
+{
+  "name": "@novu/shared",
+  "sourceRoot": "packages/shared/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/shared"
+      }
+    }
+  }
+}
