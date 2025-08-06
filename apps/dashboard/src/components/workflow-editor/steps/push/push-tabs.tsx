@@ -1,8 +1,8 @@
 import { ResourceOriginEnum } from '@novu/shared';
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { StepEditorProps } from '@/components/workflow-editor/steps/configure-step-template-form';
 import { PushEditor } from '@/components/workflow-editor/steps/push/push-editor';
+import { StepEditorProps } from '@/components/workflow-editor/steps/step-editor-types';
 import { CustomStepControls } from '../controls/custom-step-controls';
 import { TemplateTabs } from '../template-tabs';
 import { useEditorPreview } from '../use-editor-preview';

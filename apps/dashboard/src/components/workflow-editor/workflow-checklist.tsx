@@ -217,7 +217,7 @@ function useChecklistItems(steps: Step[]) {
 
           if (stepToConfig) {
             navigate(
-              buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+              buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                 environmentSlug: currentEnvironment?.slug ?? '',
                 workflowSlug: workflow?.slug ?? '',
                 stepSlug: stepToConfig.slug,

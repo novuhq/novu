@@ -204,7 +204,7 @@ const StepNode = (props: StepNodeProps) => {
 
             if (isTemplateConfigurable) {
               navigate(
-                buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                   stepSlug: newStep.slug,
                 })
               );
@@ -230,7 +230,7 @@ const StepNode = (props: StepNodeProps) => {
 
     if (isTemplateConfigurable) {
       navigate(
-        buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+        buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
           stepSlug: data.stepSlug,
         })
       );
@@ -547,7 +547,7 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                   if (currentEnvironment?.slug) {
                     navigate(
-                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                         stepSlug: data.steps[data.steps.length - 1].slug,
                       })
                     );

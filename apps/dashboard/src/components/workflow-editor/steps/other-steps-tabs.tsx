@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { StepEditorProps } from './configure-step-template-form';
 import { CustomStepControls } from './controls/custom-step-controls';
+import type { StepEditorProps } from './step-editor-types';
 import { TemplateTabs } from './template-tabs';
 
 export const OtherStepTabs = ({ workflow, step }: StepEditorProps) => {

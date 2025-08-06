@@ -91,7 +91,7 @@ export function AddNodeEdge({
                           if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
                             if (currentEnvironment?.slug) {
                               navigate(
-                                buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
+                                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                                   stepSlug: data.steps[indexToAdd].slug,
                                 })
                               );
