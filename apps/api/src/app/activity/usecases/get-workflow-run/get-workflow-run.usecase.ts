@@ -1,8 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   PinoLogger,
+  QueryBuilder,
   StepRun,
   StepRunRepository,
+  Trace,
   TraceLogRepository,
   WorkflowRun,
   WorkflowRunRepository,
@@ -35,12 +37,14 @@ export class GetWorkflowRun {
     });
 
     try {
+      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
+        environmentId: command.environmentId,
+      })
+        .whereEquals('workflow_run_id', command.workflowRunId)
+        .build();
+
       const workflowRunResult = await this.workflowRunRepository.findOne({
-        where: [
-          { workflow_run_id: { operator: '=', value: command.workflowRunId } },
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-        ],
+        where: workflowRunQuery,
         useFinal: true,
       });
 
@@ -71,13 +75,15 @@ export class GetWorkflowRun {
     workflowRun: WorkflowRun
   ): Promise<IStepRunWithDetails[]> {
     try {
+      const stepRunsQuery = new QueryBuilder<StepRun>({
+        environmentId: command.environmentId,
+      })
+        .whereEquals('transaction_id', workflowRun.transaction_id)
+        .whereEquals('workflow_run_id', workflowRun.workflow_run_id)
+        .build();
+
       const stepRunsResult = await this.stepRunRepository.find({
-        where: [
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { transaction_id: { operator: '=', value: workflowRun.transaction_id } },
-          { workflow_run_id: { operator: '=', value: workflowRun.workflow_run_id } },
-        ],
+        where: stepRunsQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
@@ -114,21 +120,21 @@ export class GetWorkflowRun {
     }
 
     try {
-      // Get traces for these entities
+      const traceQuery = new QueryBuilder<Trace>({
+        environmentId: command.environmentId,
+      })
+        .whereIn('entity_id', entityIds)
+        .whereEquals('entity_type', 'step_run')
+        .build();
+
       const traceResult = await this.traceLogRepository.find({
-        where: [
-          { entity_id: { operator: 'IN', value: entityIds } },
-          { entity_type: { operator: '=', value: 'step_run' } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { organization_id: { operator: '=', value: command.organizationId } },
-        ],
+        where: traceQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
       });
 
       const executionDetailsByEntityId = new Map<string, any[]>();
 
-      // Group traces by entity ID
       for (const trace of traceResult.data) {
         if (!executionDetailsByEntityId.has(trace.entity_id)) {
           executionDetailsByEntityId.set(trace.entity_id, []);
