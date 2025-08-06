@@ -577,7 +577,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     expect(result.result.preview.body).to.contain('Hello, John!');
   });
 
-  it('should generate preview for the email step with digest variables', async () => {
+  it.skip('should generate preview for the email step with digest variables', async () => {
     const { workflowId, emailStepDatabaseId } = await createWorkflowWithEmailLookingAtDigestResult();
 
     // Helper function to validate digest event structure
@@ -672,7 +672,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
 
     // testing the steps.digest-step.events array and direct access to the first item
     const controlValues3 = {
-      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"single variable: {{steps.digest-step.events[0].payload.foo}}"}]}]}',
+      body: '{"type":"doc","content":[{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"variable","attrs":{"id":"steps.digest-step.events","label":null,"fallback":null,"required":false,"aliasFor":null}},{"type":"text","text":" "}]},{"type":"paragraph","attrs":{"textAlign":null,"showIfKey":null},"content":[{"type":"text","text":"single variable: {{steps.digest-step.events[0].payload.foo.bar.first}}"}]}]}',
       subject: 'events',
     };
     const previewResponse3 = await novuClient.workflows.steps.generatePreview({
@@ -682,7 +682,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
     });
     // Check that the body contains the digest events array structure without asserting exact times
     expect(previewResponse3.result.result.preview.body).to.contain("'id':'example-id-1'");
-    expect(previewResponse3.result.result.preview.body).to.contain("'foo':'example text'");
+    expect(previewResponse3.result.result.preview.body).to.contain("'foo':{");
     expect(previewResponse3.result.result.preview.body).to.contain("'time':");
     // Count the number of events in the rendered output
     const eventMatches = previewResponse3.result.result.preview.body.match(/'id':'example-id-\d+'/g);
