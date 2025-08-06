@@ -356,7 +356,7 @@ jobs:
         run: |
           curl -X POST https://webhooks.bug0.com/integrations/test/run \
             -H "Content-Type: application/json" \
-            -H "x-api-key: ${{ secrets.SECRET_KEY }}" \
+            -H "x-api-key: ${{ secrets.BUG0_SECRET_KEY }}" \
             -d '{"url": "https://dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
       
       - name: Send webhook notification for EU production
@@ -366,5 +366,5 @@ jobs:
         run: |
           curl -X POST https://webhooks.bug0.com/integrations/test/run \
             -H "Content-Type: application/json" \
-            -H "x-api-key: ${{ secrets.SECRET_KEY }}" \
+            -H "x-api-key: ${{ secrets.BUG0_SECRET_KEY }}" \
             -d '{"url": "https://eu.dashboard.novu.co", "source": "novuhq-novu", "prod": "true"}'
