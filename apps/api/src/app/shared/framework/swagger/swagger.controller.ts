@@ -4,7 +4,7 @@ import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-s
 import { API_KEY_SWAGGER_SECURITY_NAME, BEARER_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import packageJson from '../../../../../package.json';
 import metadata from '../../../../metadata';
-import { webhookEvents } from '../../../webhooks/webhooks.const';
+import { webhookEvents } from '../../../outbound-webhooks/webhooks.const';
 import { WorkflowResponseDto } from '../../../workflows-v2/dtos/workflow-response.dto';
 import { injectDocumentComponents } from './injection';
 import {

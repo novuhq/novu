@@ -2,7 +2,7 @@ import { Inject, Injectable, Optional } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../../instrumentation';
-import { shortId } from '../../../utils/generate-id';
+import { generateObjectId } from '../../../utils';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
 import { SvixClient } from '../../services';
 import { SendWebhookMessageCommand } from './send-webhook-message.command';
@@ -25,7 +25,7 @@ export class SendWebhookMessage {
       return;
     }
 
-    const eventId = `evt_${shortId()}`;
+    const eventId = `evt_${generateObjectId()}`;
     const environment = await this.environmentRepository.findOne(
       {
         _id: command.environmentId,

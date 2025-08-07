@@ -1,4 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { MessageWebhookResponseDto } from '@novu/application-generic';
+import { MessageEntity } from '@novu/dal';
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
 import { WorkflowResponseDto } from '../workflows-v2/dtos/workflow-response.dto';
 
@@ -20,7 +22,32 @@ export class WebhookDeletedWorkflowDto {
   object: WorkflowResponseDto;
 }
 
+export class WebhookMessageSentDto {
+  @ApiProperty({ description: 'Current message state' })
+  object: MessageWebhookResponseDto;
+}
+
+export class WebhookMessageFailedDto {
+  @ApiProperty({ description: 'Current message state' })
+  object: MessageWebhookResponseDto;
+
+  @ApiProperty({ description: 'Error message' })
+  error: {
+    message: string;
+  };
+}
+
 export const webhookEvents = [
+  {
+    event: WebhookEventEnum.MESSAGE_SENT,
+    payloadDto: WebhookMessageSentDto,
+    objectType: WebhookObjectTypeEnum.MESSAGE,
+  },
+  {
+    event: WebhookEventEnum.MESSAGE_FAILED,
+    payloadDto: WebhookMessageFailedDto,
+    objectType: WebhookObjectTypeEnum.MESSAGE,
+  },
   {
     event: WebhookEventEnum.WORKFLOW_UPDATED,
     payloadDto: WebhookUpdatedWorkflowDto,

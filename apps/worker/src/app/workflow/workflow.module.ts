@@ -19,6 +19,8 @@ import {
   ProcessTenant,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
+  SvixProviderService,
   TierRestrictionsValidateUsecase,
   TriggerBroadcast,
   TriggerEvent,
@@ -85,6 +87,22 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, CommunityUserRepository];
+
+const enterpriseProvidersImports = (): Provider[] => {
+  const providers: Provider[] = [];
+  try {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      Logger.log('Importing enterprise providers', 'EnterpriseImport');
+
+      providers.push(SvixProviderService);
+      providers.push(SendWebhookMessage);
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  return providers;
+};
 
 const USE_CASES = [
   AddDelayJob,
@@ -160,7 +178,15 @@ const memoryQueueService = {
 @Module({
   imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
-  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
+  providers: [
+    memoryQueueService,
+    ...ACTIVE_WORKERS,
+    ...PROVIDERS,
+    ...USE_CASES,
+    ...REPOSITORIES,
+    activeWorkersToken,
+    ...enterpriseProvidersImports(),
+  ],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule implements OnApplicationShutdown {
