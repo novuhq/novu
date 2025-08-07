@@ -11,7 +11,6 @@ import { PinoLogger, RequestLog, RequestLogRepository } from '@novu/application-
 import { UserSessionData } from '@novu/shared';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { retryWithBackoff } from '../../../utils/payload-sanitizer';
 import { TriggerEventResponseDto } from '../../events/dtos/trigger-event-response.dto';
 import { buildLog } from '../utils/mappers';
 

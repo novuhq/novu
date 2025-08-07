@@ -1,4 +1,3 @@
-import { GetRequestContext } from '../../shared/services/get-request-context';
 import { CancelDelayed } from './cancel-delayed';
 import { ParseEventRequest } from './parse-event-request';
 import { ProcessBulkTrigger } from './process-bulk-trigger';
@@ -13,5 +12,4 @@ export const USE_CASES = [
   ParseEventRequest,
   ProcessBulkTrigger,
   SendTestEmail,
-  GetRequestContext,
 ];

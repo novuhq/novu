@@ -3,7 +3,7 @@ import { generateObjectId } from '@novu/application-generic';
 import { NextFunction, Request, Response } from 'express';
 
 export interface RequestWithReqId extends Request {
-  _nvRequestId?: string;
+  _nvRequestId: string;
 }
 
 @Injectable()

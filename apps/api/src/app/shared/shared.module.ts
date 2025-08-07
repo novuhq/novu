@@ -51,7 +51,6 @@ import {
 } from '@novu/dal';
 import { isClerkEnabled, JobTopicNameEnum } from '@novu/shared';
 import packageJson from '../../../package.json';
-import { GetRequestContext } from './services/get-request-context';
 
 function getDynamicAuthProviders() {
   if (isClerkEnabled()) {
@@ -139,7 +138,6 @@ const PROVIDERS = [
   CreateExecutionDetails,
   ExecuteBridgeRequest,
   GetDecryptedSecretKey,
-  GetRequestContext,
   ...ANALYTICS_PROVIDERS,
 ];
 

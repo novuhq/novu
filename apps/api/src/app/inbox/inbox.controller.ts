@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  Req,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -28,6 +29,7 @@ import { ParseEventRequest } from '../events/usecases/parse-event-request/parse-
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SubscriberSession, UserSession } from '../shared/framework/user.decorator';
+import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
 import { ActionTypeRequestDto } from './dtos/action-type-request.dto';
 import { BulkUpdatePreferencesRequestDto } from './dtos/bulk-update-preferences-request.dto';
 import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
@@ -461,7 +463,8 @@ export class InboxController {
   @Post('/events')
   async keylessEvents(
     @UserSession() user: UserSessionData,
-    @Body() body: TriggerEventRequestDto
+    @Body() body: TriggerEventRequestDto,
+    @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto> {
     const result = await this.parseEventRequest.execute(
       ParseEventRequestMulticastCommand.create({
@@ -479,6 +482,7 @@ export class InboxController {
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: body.bridgeUrl,
         controls: body.controls,
+        requestId: req._nvRequestId,
       })
     );
 

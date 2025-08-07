@@ -44,7 +44,6 @@ import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import { merge } from 'lodash';
 import { generateTransactionId } from '../../../shared/helpers/generate-transaction-id';
-import { GetRequestContext } from '../../../shared/services/get-request-context';
 import { PayloadValidationException } from '../../exceptions/payload-validation-exception';
 import { RecipientSchema, RecipientsSchema } from '../../utils/trigger-recipient-validation';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
@@ -69,8 +68,7 @@ export class ParseEventRequest {
     private logger: PinoLogger,
     private featureFlagService: FeatureFlagsService,
     private traceLogRepository: TraceLogRepository,
-    protected moduleRef: ModuleRef,
-    private getRequestContext: GetRequestContext
+    protected moduleRef: ModuleRef
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -78,7 +76,7 @@ export class ParseEventRequest {
   @InstrumentUsecase()
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || generateTransactionId();
-    const requestId = this.getRequestContext.getRequestId();
+    const requestId = command.requestId;
 
     await this.createRequestTrace(
       requestId,

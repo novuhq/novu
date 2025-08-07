@@ -1,5 +1,5 @@
 import { TriggerOverrides, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
-import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -28,4 +28,8 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   bridgeUrl?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  requestId: string;
 }
