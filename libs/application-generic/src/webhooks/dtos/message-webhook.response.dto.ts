@@ -30,4 +30,6 @@ export type MessageWebhookResponseDto = Pick<
   | 'errorText'
 > & {
   providerResponseId?: string;
+  deviceToken?: string;
+  webhookUrl?: string;
 };

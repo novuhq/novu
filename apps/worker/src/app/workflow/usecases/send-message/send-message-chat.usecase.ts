@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   ChatFactory,
@@ -9,8 +9,10 @@ import {
   DetailEnum,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  messageWebhookMapper,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 
 import {
@@ -29,6 +31,8 @@ import {
   ExecutionDetailsStatusEnum,
   ITenantDefine,
   ProvidersIdEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
@@ -50,7 +54,9 @@ export class SendMessageChat extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected createExecutionDetails: CreateExecutionDetails,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -495,6 +501,21 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
 
+      if (this.sendWebhookMessage) {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SENT,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, {
+              providerResponseId: result.id,
+              webhookUrl: chatWebhookUrl,
+            }),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        });
+      }
+
       return {
         status: 'success',
       };
@@ -523,6 +544,21 @@ export class SendMessageChat extends SendMessageBase {
               : JSON.stringify(e),
         })
       );
+
+      if (this.sendWebhookMessage) {
+        await this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SENT,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message),
+            error: {
+              message: e.message || e.name || 'Error while sending chat with provider',
+            },
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        });
+      }
 
       return {
         status: 'failed',

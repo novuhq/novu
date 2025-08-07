@@ -5,6 +5,8 @@ export const messageWebhookMapper = (
   message: MessageEntity,
   context?: {
     providerResponseId?: string;
+    deviceToken?: string;
+    webhookUrl?: string;
   }
 ): MessageWebhookResponseDto => {
   return {
@@ -34,6 +36,8 @@ export const messageWebhookMapper = (
     status: message.status,
     errorId: message.errorId,
     errorText: message.errorText,
+    deviceToken: context?.deviceToken,
+    webhookUrl: context?.webhookUrl,
     providerResponseId: context?.providerResponseId,
   };
 };
