@@ -5,7 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import {
   BullMqService,
   getErrorInterceptor,
-  // eslint-disable-next-line no-restricted-imports
+  // biome-ignore lint/style/noRestrictedImports: <explanation> x
   Logger,
   PinoLogger,
   RequestLogRepository,
