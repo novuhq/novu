@@ -2,7 +2,7 @@ import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getS
 import {
   CreateWorkflowDto,
   ResourceOriginEnum,
-  SeverityLevel,
+  SeverityLevelEnum,
   Slug,
   StepTypeEnum,
   UpdateWorkflowDto,
@@ -192,11 +192,11 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ApiHideProperty()
   /* @ApiProperty({
     description: 'Severity of the workflow',
-    enum: [...Object.values(SeverityLevel)],
-    enumName: 'SeverityLevel',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
   }) */
-  @IsEnum(SeverityLevel)
-  severity: SeverityLevel;
+  @IsEnum(SeverityLevelEnum)
+  severity: SeverityLevelEnum;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

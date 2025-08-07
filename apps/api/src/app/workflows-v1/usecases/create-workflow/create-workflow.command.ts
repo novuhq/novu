@@ -15,7 +15,7 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
   RuntimeIssue,
-  SeverityLevel,
+  SeverityLevelEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Exclude, Type } from 'class-transformer';
@@ -159,6 +159,6 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   session?: ClientSession | null;
 
   @IsOptional()
-  @IsEnum(SeverityLevel)
-  severity?: SeverityLevel;
+  @IsEnum(SeverityLevelEnum)
+  severity?: SeverityLevelEnum;
 }

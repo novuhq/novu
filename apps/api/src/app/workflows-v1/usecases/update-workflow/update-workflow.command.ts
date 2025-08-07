@@ -14,7 +14,7 @@ import {
   MAX_TAG_LENGTH,
   ResourceTypeEnum,
   RuntimeIssue,
-  SeverityLevel,
+  SeverityLevelEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Exclude, Type } from 'class-transformer';
@@ -144,6 +144,6 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   session?: ClientSession | null;
 
   @IsOptional()
-  @IsEnum(SeverityLevel)
-  severity?: SeverityLevel;
+  @IsEnum(SeverityLevelEnum)
+  severity?: SeverityLevelEnum;
 }

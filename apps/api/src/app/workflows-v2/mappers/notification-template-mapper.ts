@@ -2,7 +2,7 @@ import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
   ResourceOriginEnum,
   ResourceTypeEnum,
-  SeverityLevel,
+  SeverityLevelEnum,
   ShortIsPrefixEnum,
   StepTypeEnum,
   WorkflowStatusEnum,
@@ -59,7 +59,7 @@ export function toResponseWorkflowDto(
     payloadExample,
     validatePayload: workflow.validatePayload || false,
     isTranslationEnabled: workflow.isTranslationEnabled || false,
-    severity: workflow.severity || SeverityLevel.NONE,
+    severity: workflow.severity || SeverityLevelEnum.NONE,
   };
 }
 

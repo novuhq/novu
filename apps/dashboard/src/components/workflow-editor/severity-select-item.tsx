@@ -1,42 +1,42 @@
-import { SeverityLevel } from '@novu/shared';
+import { SeverityLevelEnum } from '@novu/shared';
 import React from 'react';
 import { capitalize } from '@/utils/string';
 import { Badge, BadgeRootProps } from '../primitives/badge';
 import { SelectItem } from '../primitives/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
-const TOOLTIP_CONTENT_LOOKUP: Record<SeverityLevel, string> = {
-  [SeverityLevel.HIGH]:
+const TOOLTIP_CONTENT_LOOKUP: Record<SeverityLevelEnum, string> = {
+  [SeverityLevelEnum.HIGH]:
     'Applies a red hue to the notification and the <Bell />.  Respects preferences. Use Critical Workflow to force delivery.',
-  [SeverityLevel.MEDIUM]:
+  [SeverityLevelEnum.MEDIUM]:
     'Applies an orange hue to the notification and <Bell />. Respects preferences. Use Critical Workflow to force delivery.',
-  [SeverityLevel.LOW]: 'No hue by default, but styling can be customized via API. Respects user preferences.',
-  [SeverityLevel.NONE]: '',
+  [SeverityLevelEnum.LOW]: 'No hue by default, but styling can be customized via API. Respects user preferences.',
+  [SeverityLevelEnum.NONE]: '',
 };
 
-const TOOLTIP_IMAGE_LOOKUP: Record<SeverityLevel, React.ReactNode> = {
-  [SeverityLevel.HIGH]: <img src="/images/severity/high.webp" alt="high severity" />,
-  [SeverityLevel.MEDIUM]: <img src="/images/severity/medium.webp" alt="medium severity" />,
-  [SeverityLevel.LOW]: <img src="/images/severity/low.webp" alt="low severity" />,
-  [SeverityLevel.NONE]: <React.Fragment />,
+const TOOLTIP_IMAGE_LOOKUP: Record<SeverityLevelEnum, React.ReactNode> = {
+  [SeverityLevelEnum.HIGH]: <img src="/images/severity/high.webp" alt="high severity" />,
+  [SeverityLevelEnum.MEDIUM]: <img src="/images/severity/medium.webp" alt="medium severity" />,
+  [SeverityLevelEnum.LOW]: <img src="/images/severity/low.webp" alt="low severity" />,
+  [SeverityLevelEnum.NONE]: <React.Fragment />,
 };
 
-const TOOLTIP_BADGE_CONTENT_LOOKUP: Record<SeverityLevel, string> = {
-  [SeverityLevel.HIGH]: 'HIGH SEVERITY',
-  [SeverityLevel.MEDIUM]: 'MEDIUM SEVERITY',
-  [SeverityLevel.LOW]: 'LOW SEVERITY',
-  [SeverityLevel.NONE]: '',
+const TOOLTIP_BADGE_CONTENT_LOOKUP: Record<SeverityLevelEnum, string> = {
+  [SeverityLevelEnum.HIGH]: 'HIGH SEVERITY',
+  [SeverityLevelEnum.MEDIUM]: 'MEDIUM SEVERITY',
+  [SeverityLevelEnum.LOW]: 'LOW SEVERITY',
+  [SeverityLevelEnum.NONE]: '',
 };
 
-const TOOLTIP_BADGE_COLOR_LOOKUP: Record<SeverityLevel, BadgeRootProps['color']> = {
-  [SeverityLevel.HIGH]: 'red',
-  [SeverityLevel.MEDIUM]: 'orange',
-  [SeverityLevel.LOW]: 'yellow',
-  [SeverityLevel.NONE]: 'gray',
+const TOOLTIP_BADGE_COLOR_LOOKUP: Record<SeverityLevelEnum, BadgeRootProps['color']> = {
+  [SeverityLevelEnum.HIGH]: 'red',
+  [SeverityLevelEnum.MEDIUM]: 'orange',
+  [SeverityLevelEnum.LOW]: 'yellow',
+  [SeverityLevelEnum.NONE]: 'gray',
 };
 
-export const SeveritySelectItem = ({ severity }: { severity: SeverityLevel }) => {
-  if (severity === SeverityLevel.NONE) {
+export const SeveritySelectItem = ({ severity }: { severity: SeverityLevelEnum }) => {
+  if (severity === SeverityLevelEnum.NONE) {
     return (
       <SelectItem key={severity} value={severity}>
         {capitalize(severity)}

@@ -3,7 +3,7 @@ import {
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
   PermissionsEnum,
-  SeverityLevel,
+  SeverityLevelEnum,
   WorkflowPreferences,
   WorkflowResponseDto,
 } from '@novu/shared';
@@ -88,7 +88,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const defaultValues = useMemo(() => {
     return {
       user: workflow.preferences.user ?? workflow.preferences.default,
-      severity: workflow?.severity ?? SeverityLevel.NONE,
+      severity: workflow?.severity ?? SeverityLevelEnum.NONE,
     };
   }, [workflow.preferences.default, workflow.preferences.user, workflow.severity]);
 
@@ -323,15 +323,15 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                       <FormControl>
                         <Select
                           onValueChange={(value) => {
-                            field.onChange(value as SeverityLevel);
+                            field.onChange(value as SeverityLevelEnum);
                             update({
                               ...workflow,
-                              severity: value as SeverityLevel,
+                              severity: value as SeverityLevelEnum,
                             });
                           }}
-                          defaultValue={SeverityLevel.NONE}
+                          defaultValue={SeverityLevelEnum.NONE}
                           disabled={isReadOnly}
-                          value={field.value || SeverityLevel.NONE}
+                          value={field.value || SeverityLevelEnum.NONE}
                         >
                           <SelectTrigger size="2xs">
                             <SelectValue />
@@ -342,10 +342,10 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                               e.stopPropagation();
                             }}
                           >
-                            <SeveritySelectItem severity={SeverityLevel.HIGH} />
-                            <SeveritySelectItem severity={SeverityLevel.MEDIUM} />
-                            <SeveritySelectItem severity={SeverityLevel.LOW} />
-                            <SeveritySelectItem severity={SeverityLevel.NONE} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.HIGH} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.MEDIUM} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.LOW} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.NONE} />
                           </SelectContent>
                         </Select>
                       </FormControl>

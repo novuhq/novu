@@ -5,7 +5,7 @@ import {
   MAX_NAME_LENGTH,
   MAX_TAG_ELEMENTS,
   MAX_TAG_LENGTH,
-  SeverityLevel,
+  SeverityLevelEnum,
   VALID_ID_REGEX,
 } from '@novu/shared';
 import * as z from 'zod';
@@ -116,5 +116,5 @@ const WorkflowPreferencesSchema = z.object({
 
 export const UserPreferencesFormSchema = z.object({
   user: WorkflowPreferencesSchema.nullable(),
-  severity: z.nativeEnum(SeverityLevel).default(SeverityLevel.NONE),
+  severity: z.nativeEnum(SeverityLevelEnum).default(SeverityLevelEnum.NONE),
 });
