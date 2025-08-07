@@ -180,22 +180,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const query = new QueryBuilder<WorkflowRun>({
-        environmentId: context.environmentId,
-      })
-        .whereEquals('workflow_run_id', workflowRunId)
-        .build();
-
-      const existingRuns = await this.find({
-        where: query,
-        limit: 1,
-        useFinal: true,
-      });
-
-      if (existingRuns.data.length === 0) {
-        this.logger.warn(`Workflow run ${workflowRunId} not found for status update`);
-      }
-
       const notification = await this.notificationRepository.findOne(
         {
           _id: workflowRunId,

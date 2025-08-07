@@ -27,13 +27,15 @@ addHook(
             useDefineForClassFields: false,
           },
           keepClassNames: true,
+          preserveAllComments: true,
         },
         module: {
           type: 'commonjs',
           strictMode: false,
           noInterop: false,
         },
-        sourceMaps: 'inline',
+        sourceMaps: true,
+        inlineSourcesContent: true,
         minify: false,
       });
 

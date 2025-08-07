@@ -60,35 +60,50 @@ const FormLabel = React.forwardRef<
     required?: boolean;
     hint?: string;
     tooltip?: React.ReactNode;
+    tooltipContentClassName?: string;
+    tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
   }
->(({ className, optional, required, tooltip, hint, children, ...props }, ref) => {
-  const { formItemId } = useFormField();
+>(
+  (
+    { className, optional, required, tooltip, hint, children, tooltipContentClassName, tooltipSide = 'top', ...props },
+    ref
+  ) => {
+    const { formItemId } = useFormField();
 
-  return (
-    <Label ref={ref} className={cn('text-foreground-950 flex items-center', className)} htmlFor={formItemId} {...props}>
-      {children}
+    return (
+      <Label
+        ref={ref}
+        className={cn('text-foreground-950 flex items-center', className)}
+        htmlFor={formItemId}
+        {...props}
+      >
+        {children}
 
-      {required && <LabelAsterisk />}
-      {hint && <LabelSub>{hint}</LabelSub>}
+        {required && <LabelAsterisk />}
+        {hint && <LabelSub>{hint}</LabelSub>}
 
-      {optional && <LabelSub>(optional)</LabelSub>}
-      {tooltip && (
-        <Tooltip>
-          <TooltipTrigger
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-          >
-            <RiQuestionLine className="text-foreground-400 inline size-3" />
-          </TooltipTrigger>
-          <TooltipContent className="max-w-56 whitespace-pre-wrap">{tooltip}</TooltipContent>
-        </Tooltip>
-      )}
-    </Label>
-  );
-});
+        {optional && <LabelSub>(optional)</LabelSub>}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger
+              type="button"
+              className="inline-flex items-center justify-center"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+            >
+              <RiQuestionLine className="text-foreground-400 inline size-4" />
+            </TooltipTrigger>
+            <TooltipContent className={cn('max-w-56 whitespace-pre-wrap', tooltipContentClassName)} side={tooltipSide}>
+              {tooltip}
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </Label>
+    );
+  }
+);
 FormLabel.displayName = 'FormLabel';
 
 const FormControl = React.forwardRef<React.ElementRef<typeof Slot>, React.ComponentPropsWithoutRef<typeof Slot>>(

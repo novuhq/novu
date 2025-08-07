@@ -1,14 +1,15 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   CreateWorkflowDto,
   ResourceOriginEnum,
+  SeverityLevelEnum,
   Slug,
   StepTypeEnum,
   UpdateWorkflowDto,
   WorkflowStatusEnum,
 } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { WorkflowPreferencesResponseDto } from './preferences.response.dto';
 import { RuntimeIssueDto } from './runtime-issue.dto';
 import { StepResponseDto } from './step.response.dto';
@@ -187,6 +188,15 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   })
   @IsOptional()
   payloadExample?: object | null;
+
+  @ApiHideProperty()
+  /* @ApiProperty({
+    description: 'Severity of the workflow',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  }) */
+  @IsEnum(SeverityLevelEnum)
+  severity: SeverityLevelEnum;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

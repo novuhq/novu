@@ -1,5 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ChannelTypeEnum, WorkflowPreferences, WorkflowResponseDto } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  PermissionsEnum,
+  SeverityLevelEnum,
+  WorkflowPreferences,
+  WorkflowResponseDto,
+} from '@novu/shared';
 import { motion } from 'motion/react';
 import { useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -20,12 +27,17 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { SidebarContent, SidebarHeader } from '@/components/side-navigation/sidebar';
 import { UserPreferencesFormSchema } from '@/components/workflow-editor/schema';
 import { UpdateWorkflowFn } from '@/components/workflow-editor/workflow-provider';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
 import { ResourceOriginEnum, StepTypeEnum } from '@/utils/enums';
 import { capitalize } from '@/utils/string';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
+import { Badge } from '../primitives/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../primitives/select';
+import { SeveritySelectItem } from './severity-select-item';
 
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
@@ -51,6 +63,9 @@ const checkHasEveryChannelSameValue = (
 export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
   const { workflow, update } = props;
   const track = useTelemetry();
+  const has = useHasPermission();
+  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const isNotificationSeverityEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED);
 
   const isDefaultPreferences = useMemo(() => workflow.preferences.user === null, [workflow.preferences.user]);
   const isDashboardWorkflow = useMemo(() => workflow.origin === ResourceOriginEnum.NOVU_CLOUD, [workflow.origin]);
@@ -70,10 +85,15 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     };
   }, [isDefaultPreferences, workflow.preferences.default, workflow.preferences.user, workflow.steps]);
 
-  const form = useForm<z.infer<typeof UserPreferencesFormSchema>>({
-    defaultValues: {
+  const defaultValues = useMemo(() => {
+    return {
       user: workflow.preferences.user ?? workflow.preferences.default,
-    },
+      severity: workflow?.severity ?? SeverityLevelEnum.NONE,
+    };
+  }, [workflow.preferences.default, workflow.preferences.user, workflow.severity]);
+
+  const form = useForm<z.infer<typeof UserPreferencesFormSchema>>({
+    defaultValues,
     resolver: zodResolver(UserPreferencesFormSchema),
     shouldFocusError: false,
   });
@@ -98,6 +118,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
     const value = userPreferences === null ? workflow.preferences.default : userPreferences;
     form.reset({
       user: value,
+      severity: defaultValues.severity,
     });
   };
 
@@ -239,9 +260,9 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                 control={form.control}
                 name="user.all.readOnly"
                 render={({ field }) => (
-                  <FormItem className="my-2 flex w-full items-center justify-between">
+                  <FormItem className="flex w-full items-center justify-between">
                     <FormLabel tooltip="Critical workflows ensure essential notifications can't be unsubscribed.">
-                      Mark as critical
+                      Critical workflow
                     </FormLabel>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={handleCriticalToggle} disabled={!override} />
@@ -249,6 +270,89 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                   </FormItem>
                 )}
               />
+              {isNotificationSeverityEnabled && (
+                <FormField
+                  control={form.control}
+                  name="severity"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col w-full">
+                      <FormLabel
+                        tooltipSide="left"
+                        tooltip={
+                          <div>
+                            <Badge variant="lighter" color="yellow" size="sm" className="py-[2px] text-[8px]">
+                              📝 NOTE
+                            </Badge>
+                            <div className="mt-2 flex flex-col gap-2">
+                              <div>
+                                <span className="text-text-soft text-2xs">What it is:</span>
+                                <ul className="text-text-sub text-2xs list-disc pl-4">
+                                  <li>
+                                    Severity is a way to classify the importance of a notification — from high-priority
+                                    to low-priority messages.
+                                  </li>
+                                </ul>
+                              </div>
+                              <div>
+                                <span className="text-text-soft text-2xs">Why it matters:</span>
+                                <ul className="text-text-sub text-2xs list-disc pl-4">
+                                  <li>
+                                    {
+                                      'Helps your subscribers spot what’s urgent. Affects color coding, ordering, and behavior in <Inbox />.'
+                                    }
+                                  </li>
+                                </ul>
+                              </div>
+                              <span className="text-text-sub text-2xs">
+                                This value is stored in the Workflow Properties and exposed via the Data Object.{' '}
+                                <Link
+                                  to="https://docs.novu.co/platform/concepts/workflows"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Learn more ↗
+                                </Link>
+                              </span>
+                            </div>
+                          </div>
+                        }
+                        tooltipContentClassName="bg-background max-w-64 rounded-lg shadow-md"
+                      >
+                        Notification severity
+                      </FormLabel>
+                      <FormControl>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value as SeverityLevelEnum);
+                            update({
+                              ...workflow,
+                              severity: value as SeverityLevelEnum,
+                            });
+                          }}
+                          defaultValue={SeverityLevelEnum.NONE}
+                          disabled={isReadOnly}
+                          value={field.value || SeverityLevelEnum.NONE}
+                        >
+                          <SelectTrigger size="2xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent
+                            onBlur={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                          >
+                            <SeveritySelectItem severity={SeverityLevelEnum.HIGH} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.MEDIUM} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.LOW} />
+                            <SeveritySelectItem severity={SeverityLevelEnum.NONE} />
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
             </SidebarContent>
             <div className="flex items-center justify-between gap-1.5 bg-neutral-50 px-3 py-0.5">
               <span className="text-2xs uppercase text-neutral-400">All channels</span>

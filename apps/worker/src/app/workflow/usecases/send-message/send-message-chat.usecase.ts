@@ -517,7 +517,10 @@ export class SendMessageChat extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(e),
+          raw:
+            e.response?.data && typeof e.response.data === 'object'
+              ? JSON.stringify(e.response.data)
+              : JSON.stringify(e),
         })
       );
 

@@ -397,8 +397,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
         error.message?.includes('transaction') ||
         error.codeName === 'IllegalOperation'
       ) {
-        console.warn('MongoDB is not running in replica set mode, execute without transaction');
-
         // MongoDB is not running in replica set mode, execute without transaction
         return await fn(null);
       }

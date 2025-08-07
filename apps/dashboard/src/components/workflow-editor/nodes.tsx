@@ -54,8 +54,6 @@ const handleClassName = `${topHandleClasses} ${bottomHandleClasses}`;
 export const TriggerNode = ({
   data,
 }: NodeProps<FlowNode<{ environment: string; workflowSlug: string; isTemplateStorePreview?: boolean }>>) => {
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
-
   const content = (
     <Node
       className="relative rounded-tl-none [&>span]:rounded-tl-none"
@@ -82,7 +80,7 @@ export const TriggerNode = ({
 
   return (
     <Link
-      to={buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
+      to={buildRoute(ROUTES.TRIGGER_WORKFLOW, {
         environmentSlug: data.environment,
         workflowSlug: data.workflowSlug,
       })}
@@ -106,7 +104,6 @@ const StepNode = (props: StepNodeProps) => {
   const { workflow: currentWorkflow, update } = useWorkflow();
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const [isHovered, setIsHovered] = useState(false);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -206,19 +203,11 @@ const StepNode = (props: StepNodeProps) => {
             const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
             if (isTemplateConfigurable) {
-              if (isV2TemplateEditorEnabled) {
-                navigate(
-                  buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-                    stepSlug: newStep.slug,
-                  })
-                );
-              } else {
-                navigate(
-                  buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-                    stepSlug: newStep.slug,
-                  })
-                );
-              }
+              navigate(
+                buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+                  stepSlug: newStep.slug,
+                })
+              );
             } else if (INLINE_CONFIGURABLE_STEP_TYPES.includes(type)) {
               navigate(
                 buildRoute(ROUTES.EDIT_STEP, {
@@ -230,7 +219,7 @@ const StepNode = (props: StepNodeProps) => {
         },
       }
     );
-  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate, isV2TemplateEditorEnabled]);
+  }, [data.stepSlug, currentWorkflow, type, currentEnvironment?.slug, update, navigate]);
 
   const handleEditContent = useCallback(() => {
     if (!data.stepSlug || !currentEnvironment?.slug || !type) {
@@ -240,19 +229,11 @@ const StepNode = (props: StepNodeProps) => {
     const isTemplateConfigurable = TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(type);
 
     if (isTemplateConfigurable) {
-      if (isV2TemplateEditorEnabled && currentWorkflow) {
-        navigate(
-          buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-            stepSlug: data.stepSlug,
-          })
-        );
-      } else {
-        navigate(
-          buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
-            stepSlug: data.stepSlug,
-          })
-        );
-      }
+      navigate(
+        buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
+          stepSlug: data.stepSlug,
+        })
+      );
     } else {
       navigate(
         buildRoute(ROUTES.EDIT_STEP, {
@@ -260,7 +241,7 @@ const StepNode = (props: StepNodeProps) => {
         })
       );
     }
-  }, [data.stepSlug, currentEnvironment?.slug, navigate, type, isV2TemplateEditorEnabled, currentWorkflow]);
+  }, [data.stepSlug, currentEnvironment?.slug, navigate, type, currentWorkflow]);
 
   return (
     <div className="relative pt-1" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
@@ -528,7 +509,6 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   const navigate = useNavigate();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
   const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
     limit: 100,
@@ -565,13 +545,7 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
             {
               onSuccess: (data) => {
                 if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                  if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
-                    navigate(
-                      buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-                        stepSlug: data.steps[data.steps.length - 1].slug,
-                      })
-                    );
-                  } else {
+                  if (currentEnvironment?.slug) {
                     navigate(
                       buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                         stepSlug: data.steps[data.steps.length - 1].slug,

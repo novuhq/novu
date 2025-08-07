@@ -1,4 +1,4 @@
-import { ResourceTypeEnum } from '@novu/shared';
+import { ResourceTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -248,6 +248,11 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       default: false,
     },
     issues: Schema.Types.Mixed,
+    severity: {
+      type: Schema.Types.String,
+      enum: SeverityLevelEnum,
+      default: SeverityLevelEnum.NONE,
+    },
   },
   { ...schemaOptions, minimize: false }
 );

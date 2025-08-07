@@ -10,6 +10,7 @@ export * from './preferences';
 export * from './productFeatureEnabledForServiceLevel';
 export * from './providers';
 export * from './rate-limiting';
+export * from './severity';
 export * from './template-store';
 export * from './translation';
 export * from './upsert-validation-constants';
