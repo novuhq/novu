@@ -162,6 +162,7 @@ export class SendMessageSms extends SendMessageBase {
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     await this.createExecutionDetails.execute(

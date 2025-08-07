@@ -8,12 +8,14 @@ import {
 } from '@novu/dal';
 import {
   DigestTypeEnum,
+  FeatureFlagsKeysEnum,
   IDigestBaseMetadata,
   IWorkflowStepMetadata,
   STEP_TYPE_TO_CHANNEL_TYPE,
   StepTypeEnum,
 } from '@novu/shared';
 import { InstrumentUsecase } from '../../instrumentation';
+import { FeatureFlagsService } from '../../services';
 import { WorkflowRunRepository, WorkflowRunStatusEnum } from '../../services/analytic-logs';
 import { getNestedValue } from '../../utils';
 import { PlatformException } from '../../utils/exceptions';
@@ -28,7 +30,8 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    private workflowRunRepository: WorkflowRunRepository
+    private workflowRunRepository: WorkflowRunRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -76,6 +79,12 @@ export class CreateNotificationJobs {
   }
 
   private async createNotification(command: CreateNotificationJobsCommand, channels: StepTypeEnum[]) {
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
     const notification = await this.notificationRepository.create({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -88,6 +97,7 @@ export class CreateNotificationJobs {
       channels,
       controls: command.controls,
       tags: command.template.tags,
+      severity: isNotificationSeverityEnabled ? command.template.severity : undefined,
     });
 
     await this.createWorkflowRun(notification, command);

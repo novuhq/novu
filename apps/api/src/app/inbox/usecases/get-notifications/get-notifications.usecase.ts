@@ -65,6 +65,7 @@ export class GetNotifications {
         snoozed: command.snoozed,
         seen: command.seen,
         data: parsedData,
+        severity: command.severity,
       },
       {
         limit: command.limit,
@@ -88,6 +89,7 @@ export class GetNotifications {
       snoozed: command.snoozed,
       seen: command.seen,
       data: parsedData,
+      severity: command.severity,
     };
 
     return {

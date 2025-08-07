@@ -6,13 +6,15 @@ import {
   InvalidateCacheService,
 } from '@novu/application-generic';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, InAppProviderIdEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
+import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const integrationRepository = new IntegrationRepository();
 const mockSubscriberId = '12345';
+const isNotificationSeverityEnabled = process.env.IS_NOTIFICATION_SEVERITY_ENABLED;
 
 describe('Session - /inbox/session (POST) #novu-v2', async () => {
   let session: UserSession;
@@ -39,6 +41,13 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
       },
       invalidateCache
     );
+    // @ts-ignore
+    process.env.IS_NOTIFICATION_SEVERITY_ENABLED = 'true';
+  });
+
+  afterEach(() => {
+    // @ts-ignore
+    process.env.IS_NOTIFICATION_SEVERITY_ENABLED = isNotificationSeverityEnabled;
   });
 
   const initializeSession = async ({
@@ -353,6 +362,278 @@ describe('Session - /inbox/session (POST) #novu-v2', async () => {
 
     expect(status).to.equal(422);
     expect(body.message).to.contain('Validation Error');
+  });
+
+  it('should return severity-based unread counts in session', async () => {
+    await setIntegrationConfig(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      },
+      invalidateCache
+    );
+
+    const novuClient = initNovuClassSdk(session);
+
+    // Create templates with different severities
+    const highSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.HIGH,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'High severity notification',
+        },
+      ],
+    });
+
+    const mediumSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.MEDIUM,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Medium severity notification',
+        },
+      ],
+    });
+
+    const lowSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.LOW,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Low severity notification',
+        },
+      ],
+    });
+
+    // Trigger notifications with different severities
+    await novuClient.trigger({
+      workflowId: highSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: mockSubscriberId },
+    });
+
+    await novuClient.trigger({
+      workflowId: mediumSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: mockSubscriberId },
+    });
+
+    await novuClient.trigger({
+      workflowId: lowSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: mockSubscriberId },
+    });
+
+    // Wait for jobs to complete
+    await session.waitForJobCompletion(highSeverityTemplate._id);
+    await session.waitForJobCompletion(mediumSeverityTemplate._id);
+    await session.waitForJobCompletion(lowSeverityTemplate._id);
+
+    // Initialize session and check severity counts
+    const { body, status } = await initializeSession({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: mockSubscriberId,
+    });
+
+    expect(status).to.equal(201);
+    expect(body.data.token).to.be.ok;
+    expect(body.data.totalUnreadCount).to.equal(3);
+    expect(body.data.unreadCount).to.exist;
+    expect(body.data.unreadCount.total).to.equal(3);
+    expect(body.data.unreadCount.severity).to.exist;
+    expect(body.data.unreadCount.severity.high).to.equal(1);
+    expect(body.data.unreadCount.severity.medium).to.equal(1);
+    expect(body.data.unreadCount.severity.low).to.equal(1);
+    expect(body.data.unreadCount.severity.none).to.equal(0);
+  });
+
+  it('should return correct severity counts when no notifications exist', async () => {
+    await setIntegrationConfig(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      },
+      invalidateCache
+    );
+
+    const { body, status } = await session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: session.subscriberId,
+    });
+
+    expect(status).to.equal(201);
+    expect(body.data.unreadCount).to.exist;
+    expect(body.data.unreadCount.total).to.equal(0);
+    expect(body.data.unreadCount.severity).to.exist;
+    expect(body.data.unreadCount.severity.high).to.equal(0);
+    expect(body.data.unreadCount.severity.medium).to.equal(0);
+    expect(body.data.unreadCount.severity.low).to.equal(0);
+    expect(body.data.unreadCount.severity.none).to.equal(0);
+  });
+
+  it('should return correct severity counts with mixed read/unread notifications', async () => {
+    await setIntegrationConfig(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      },
+      invalidateCache
+    );
+
+    const novuClient = initNovuClassSdk(session);
+
+    const highSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.HIGH,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'High severity notification',
+        },
+      ],
+    });
+
+    const mediumSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.MEDIUM,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Medium severity notification',
+        },
+      ],
+    });
+
+    // Trigger multiple notifications of each severity
+    await novuClient.trigger({
+      workflowId: highSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+    await novuClient.trigger({
+      workflowId: highSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+    await novuClient.trigger({
+      workflowId: mediumSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+
+    await session.waitForJobCompletion(highSeverityTemplate._id);
+    await session.waitForJobCompletion(mediumSeverityTemplate._id);
+
+    // Mark one high severity notification as read
+    const { body: notifications } = await session.testAgent
+      .get('/v1/inbox/notifications')
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    const highSeverityNotification = notifications.data.find((n: any) => n.severity === SeverityLevelEnum.HIGH);
+    await session.testAgent
+      .patch(`/v1/inbox/notifications/${highSeverityNotification.id}/read`)
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+
+    const { body, status } = await session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: session.subscriberId,
+    });
+
+    expect(status).to.equal(201);
+    expect(body.data.unreadCount).to.exist;
+    expect(body.data.unreadCount.total).to.equal(2); // 1 unread high + 1 unread medium
+    expect(body.data.unreadCount.severity).to.exist;
+    expect(body.data.unreadCount.severity.high).to.equal(1); // 1 unread
+    expect(body.data.unreadCount.severity.medium).to.equal(1);
+    expect(body.data.unreadCount.severity.low).to.equal(0);
+    expect(body.data.unreadCount.severity.none).to.equal(0);
+  });
+
+  it('should maintain backward compatibility with totalUnreadCount', async () => {
+    await setIntegrationConfig(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      },
+      invalidateCache
+    );
+
+    const novuClient = initNovuClassSdk(session);
+
+    const highSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.HIGH,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'High severity notification',
+        },
+      ],
+    });
+
+    await novuClient.trigger({
+      workflowId: highSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+
+    await session.waitForJobCompletion(highSeverityTemplate._id);
+
+    const { body } = await session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: session.subscriberId,
+    });
+
+    // Both fields should exist and match for backward compatibility
+    expect(body.data.totalUnreadCount).to.be.a('number');
+    expect(body.data.unreadCount.total).to.be.a('number');
+    expect(body.data.totalUnreadCount).to.equal(body.data.unreadCount.total);
+  });
+
+  it('should handle notifications with no severity (none)', async () => {
+    await setIntegrationConfig(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.environment._organizationId,
+        hmac: false,
+      },
+      invalidateCache
+    );
+
+    const novuClient = initNovuClassSdk(session);
+
+    // Create template without severity (defaults to none)
+    const noSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Notification without explicit severity',
+        },
+      ],
+    });
+
+    await novuClient.trigger({
+      workflowId: noSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+
+    await session.waitForJobCompletion(noSeverityTemplate._id);
+
+    const { body, status } = await session.testAgent.post('/v1/inbox/session').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: session.subscriberId,
+    });
+
+    expect(status).to.equal(201);
+    expect(body.data.unreadCount).to.exist;
+    expect(body.data.unreadCount.total).to.equal(1);
+    expect(body.data.unreadCount.severity).to.exist;
+    expect(body.data.unreadCount.severity.high).to.equal(0);
+    expect(body.data.unreadCount.severity.medium).to.equal(0);
+    expect(body.data.unreadCount.severity.low).to.equal(0);
+    expect(body.data.unreadCount.severity.none).to.equal(1);
   });
 });
 

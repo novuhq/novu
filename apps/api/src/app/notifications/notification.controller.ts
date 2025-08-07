@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions } from '@novu/application-generic';
-import { ChannelTypeEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ChannelTypeEnum, PermissionsEnum, SeverityLevelEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -73,6 +73,11 @@ export class NotificationsController {
       transactionIdQuery = Array.isArray(query.transactionId) ? query.transactionId : [query.transactionId];
     }
 
+    let severityQuery: SeverityLevelEnum[] | null = null;
+    if (query.severity) {
+      severityQuery = Array.isArray(query.severity) ? query.severity : [query.severity];
+    }
+
     return this.getActivityFeedUsecase.execute(
       GetActivityFeedCommand.create({
         page: query.page,
@@ -87,6 +92,7 @@ export class NotificationsController {
         subscriberIds: subscribersQuery,
         transactionId: transactionIdQuery,
         topicKey: query.topicKey,
+        severity: severityQuery,
         after: query.after,
         before: query.before,
       })

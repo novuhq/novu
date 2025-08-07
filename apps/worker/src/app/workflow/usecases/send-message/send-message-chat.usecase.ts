@@ -296,6 +296,7 @@ export class SendMessageChat extends SendMessageBase {
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
