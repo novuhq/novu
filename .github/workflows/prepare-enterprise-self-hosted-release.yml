@@ -1,4 +1,17 @@
 name: Prepare Enterprise Self-hosted Release
+run-name: >
+  Building enterprise v${{ github.event.inputs.version }}:
+  ${{
+    github.event.inputs.build_api == 'true' && 'api, ' || ''
+  }}${{
+    github.event.inputs.build_worker == 'true' && 'worker, ' || ''
+  }}${{
+    github.event.inputs.build_dashboard == 'true' && 'dashboard, ' || ''
+  }}${{
+    github.event.inputs.build_ws == 'true' && 'ws ' || ''
+  }}${{
+    github.event.inputs.prerelease == 'true' && '(pre-release)' || ''
+  }}
 
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
@@ -10,17 +23,26 @@ on:
         description: 'Version to release (e.g., 1.0.0)'
         required: true
         type: string
-      services:
-        description: 'Services to build'
+      build_api:
+        description: 'Build API service'
         required: true
-        type: choice
-        options:
-          - 'all'
-          - 'api'
-          - 'worker'
-          - 'dashboard'
-          - 'ws'
-        default: 'all'
+        type: boolean
+        default: true
+      build_worker:
+        description: 'Build Worker service'
+        required: true
+        type: boolean
+        default: true
+      build_dashboard:
+        description: 'Build Dashboard service'
+        required: true
+        type: boolean
+        default: true
+      build_ws:
+        description: 'Build WebSocket service'
+        required: true
+        type: boolean
+        default: true
       prerelease:
         description: 'Is this a pre-release? (if yes, will not be tagged as latest)'
         required: false
@@ -39,14 +61,38 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Set up build matrix
+      - name: Validate Selected Services
+        run: |
+          if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
+             [ "${{ github.event.inputs.build_ws }}" != "true" ]; then
+            echo "Error: At least one service must be selected for building."
+            exit 1
+          fi
+
+      - name: Generate Build Matrix
         id: set-matrix
         run: |
-          if [ "${{ github.event.inputs.services }}" = "all" ]; then
-            echo 'matrix=["novu/api-ee", "novu/worker-ee", "novu/dashboard-ee", "novu/ws-ee"]' >> $GITHUB_OUTPUT
-          else
-            echo 'matrix=["novu/${{ github.event.inputs.services }}-ee"]' >> $GITHUB_OUTPUT
+          services=()
+
+          if [ "${{ github.event.inputs.build_api }}" == "true" ]; then
+            services+=("\"novu/api-ee\"")
           fi
+          if [ "${{ github.event.inputs.build_worker }}" == "true" ]; then
+            services+=("\"novu/worker-ee\"")
+          fi
+          if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
+            services+=("\"novu/dashboard-ee\"")
+          fi
+          if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
+            services+=("\"novu/ws-ee\"")
+          fi
+
+          matrix="[$(IFS=','; echo "${services[*]}")]"
+
+          echo "matrix=$matrix" >> $GITHUB_OUTPUT
+          echo "Building services: $matrix"
 
   build_docker:
     needs: setup_matrix
@@ -137,7 +183,7 @@ jobs:
           # Always tag and push with the specific version
           docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
           docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}
-          
+
           # Only tag as latest if not marked as pre-release
           if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
             echo "Pre-release flag is set, skipping latest tag"
@@ -151,12 +197,12 @@ jobs:
         run: |
           echo "Successfully built and pushed:"
           echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ env.LATEST_VERSION }}"
-          
+
           if [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
             echo "  (latest tag skipped - pre-release flag set)"
           else
             echo "  - ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest"
           fi
-          
+
           echo "Platform: linux/amd64 (x86)"
           echo "Type: Enterprise Self-hosted"
