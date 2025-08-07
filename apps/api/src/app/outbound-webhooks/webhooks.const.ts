@@ -22,6 +22,11 @@ export class WebhookDeletedWorkflowDto {
   object: WorkflowResponseDto;
 }
 
+export class WebhookMessageDeliveredDto {
+  @ApiProperty({ description: 'Current message state' })
+  object: MessageWebhookResponseDto;
+}
+
 export class WebhookMessageSentDto {
   @ApiProperty({ description: 'Current message state' })
   object: MessageWebhookResponseDto;
@@ -38,6 +43,7 @@ export class WebhookMessageFailedDto {
 }
 
 export const webhookEvents = [
+  // message
   {
     event: WebhookEventEnum.MESSAGE_SENT,
     payloadDto: WebhookMessageSentDto,
@@ -48,6 +54,12 @@ export const webhookEvents = [
     payloadDto: WebhookMessageFailedDto,
     objectType: WebhookObjectTypeEnum.MESSAGE,
   },
+  {
+    event: WebhookEventEnum.MESSAGE_DELIVERED,
+    payloadDto: WebhookMessageDeliveredDto,
+    objectType: WebhookObjectTypeEnum.MESSAGE,
+  },
+  // workflow
   {
     event: WebhookEventEnum.WORKFLOW_UPDATED,
     payloadDto: WebhookUpdatedWorkflowDto,

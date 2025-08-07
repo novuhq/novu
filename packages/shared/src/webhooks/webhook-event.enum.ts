@@ -7,6 +7,7 @@ export enum WebhookEventEnum {
   // Message
   MESSAGE_SENT = 'message.sent',
   MESSAGE_FAILED = 'message.failed',
+  MESSAGE_DELIVERED = 'message.delivered',
 }
 
 export enum WebhookObjectTypeEnum {

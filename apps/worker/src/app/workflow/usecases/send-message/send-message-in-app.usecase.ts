@@ -320,6 +320,18 @@ export class SendMessageInApp extends SendMessageBase {
         organizationId: command.organizationId,
         environmentId: command.environmentId,
       });
+
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_DELIVERED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {
+            providerResponseId: message._id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
     }
 
     return {
