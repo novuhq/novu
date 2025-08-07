@@ -323,12 +323,12 @@ export class JsonSchemaMock {
           }
 
           // Add examples for string properties to override lorem ipsum
-          if (prop.type === 'string' && !prop.examples && !prop.example) {
+          if (prop.type === 'string' && !prop.examples && !prop.example && !prop.default) {
             prop.examples = [JsonSchemaMock.getExampleValueForStringProperty(key, prop)];
           }
 
           // Add examples for number properties to override large random numbers
-          if ((prop.type === 'number' || prop.type === 'integer') && !prop.examples && !prop.example) {
+          if ((prop.type === 'number' || prop.type === 'integer') && !prop.examples && !prop.example && !prop.default) {
             // Use schema constraints if available
             if (prop.minimum !== undefined && prop.maximum !== undefined) {
               const midpoint = Math.floor((prop.minimum + prop.maximum) / 2);
@@ -360,7 +360,7 @@ export class JsonSchemaMock {
           }
 
           // Add examples for boolean properties
-          if (prop.type === 'boolean' && !prop.examples && !prop.example) {
+          if (prop.type === 'boolean' && !prop.examples && !prop.example && !prop.default) {
             const lowerKey = key.toLowerCase();
             // Smart defaults for boolean properties
             if (JsonSchemaMock.matchesPattern(lowerKey, ['active', 'enabled', 'verified', 'confirmed', 'approved'])) {
