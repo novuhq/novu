@@ -402,7 +402,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     markAs: MessagesStatusEnum;
     channel?: ChannelTypeEnum;
     feedIdentifiers?: string[];
-  }) {
+  }): Promise<MessageEntity[]> {
     let feedQuery;
 
     if (feedIdentifiers) {
@@ -433,9 +433,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
-    return await this.update(updateQuery, {
+    await this.update(updateQuery, {
       $set: updatePayload,
     });
+
+    return this.find(updateQuery);
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {
@@ -483,7 +485,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     messageIds: string[];
     markAs: MessagesStatusEnum;
-  }) {
+  }): Promise<MessageEntity[]> {
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
     await this.update(
@@ -500,6 +502,16 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         $set: updatePayload,
       }
     );
+
+    return this.find({
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: {
+        $in: messageIds.map((id) => {
+          return new Types.ObjectId(id);
+        }),
+      },
+    });
   }
 
   /**
@@ -566,7 +578,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       },
     };
 
-    await this.updateMessagesStatus({
+    return await this.updateMessagesStatus({
       query,
       seen,
       read,
@@ -652,7 +664,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
-  }) {
+  }): Promise<MessageEntity[]> {
     const isUpdatingSeen = seen !== undefined;
     const isUpdatingRead = read !== undefined;
     const isUpdatingArchived = archived !== undefined;

@@ -363,15 +363,16 @@ export class WidgetsController {
     @Body() body: { feedId?: string | string[] }
   ): Promise<number> {
     const feedIds = this.toArray(body.feedId);
-    const command = MarkAllMessagesAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      markAs: MessagesStatusEnum.SEEN,
-      feedIdentifiers: feedIds,
-    });
 
-    return await this.markAllMessagesAsUsecase.execute(command);
+    return await this.markAllMessagesAsUsecase.execute(
+      MarkAllMessagesAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        markAs: MessagesStatusEnum.SEEN,
+        feedIdentifiers: feedIds,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
