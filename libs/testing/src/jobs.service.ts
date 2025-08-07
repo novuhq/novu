@@ -62,7 +62,7 @@ export class JobsService {
         0
       );
 
-      // console.log('AwaitRunningJobs:>', metrics);
+      console.log('AwaitRunningJobs:>', { metrics, redisJobsCount, mongoJobsCount });
     } while (redisJobsCount > 0 || mongoJobsCount > 0);
   }
 
