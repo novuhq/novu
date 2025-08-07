@@ -97,6 +97,10 @@ export class UpdateWorkflow {
       updatePayload.active = command.active;
     }
 
+    if (command.severity !== undefined) {
+      updatePayload.severity = command.severity;
+    }
+
     if (command.description !== undefined) {
       updatePayload.description = command.description;
     }

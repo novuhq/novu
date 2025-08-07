@@ -13,7 +13,7 @@ const LabelRoot = React.forwardRef<
       ref={forwardedRef}
       className={cn(
         'text-label-xs text-text-strong group cursor-pointer',
-        'flex items-center gap-px',
+        'flex items-center gap-[2px]',
         // disabled
         'aria-disabled:text-text-disabled',
         className
