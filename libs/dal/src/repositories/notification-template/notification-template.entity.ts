@@ -13,7 +13,7 @@ import {
   ResourceOriginEnum,
   ResourceTypeEnum,
   RuntimeIssue,
-  SeverityLevel,
+  SeverityLevelEnum,
   StepIssues,
   TriggerTypeEnum,
   WorkflowStatusEnum,
@@ -105,7 +105,7 @@ export class NotificationTemplateEntity {
 
   readonly lastPublishedBy?: UserEntity;
 
-  severity?: SeverityLevel;
+  severity?: SeverityLevelEnum;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<

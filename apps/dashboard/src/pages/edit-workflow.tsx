@@ -8,7 +8,7 @@ import { ROUTES } from '@/utils/routes';
 
 // Define routes that should render without WorkflowTabs (full-page routes)
 const FULL_PAGE_ROUTES = [
-  ROUTES.EDIT_STEP_TEMPLATE_V2,
+  ROUTES.EDIT_STEP_TEMPLATE,
   // Add more full-page routes here as needed
 ];
 
