@@ -1,4 +1,4 @@
-import { ActorTypeEnum, SeverityLevel } from '@novu/shared';
+import { ActorTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -84,8 +84,8 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
     code: Schema.Types.String,
     severity: {
       type: Schema.Types.String,
-      enum: SeverityLevel,
-      default: SeverityLevel.NONE,
+      enum: SeverityLevelEnum,
+      default: SeverityLevelEnum.NONE,
     },
   },
   schemaOptions

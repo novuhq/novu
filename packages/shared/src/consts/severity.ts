@@ -1,4 +1,4 @@
-export enum SeverityLevel {
+export enum SeverityLevelEnum {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
