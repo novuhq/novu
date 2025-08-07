@@ -6,6 +6,7 @@ import {
   NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
+import { ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
 import { DependencyAnalyzerService, EnvironmentValidationService } from '../../services';
 import { IDiffResult, IEnvironmentDiffResult } from '../../types/sync.types';
@@ -52,6 +53,8 @@ export class DiffEnvironmentUseCase {
 
       const workflows = await this.workflowRepository.findWithTemplates({
         _environmentId: { $in: [sourceEnvironmentId, command.targetEnvironmentId] },
+        origin: ResourceOriginEnum.NOVU_CLOUD,
+        type: ResourceTypeEnum.BRIDGE,
         _organizationId: command.user.organizationId,
       });
 
