@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService } from '@novu/application-generic';
 import { JsonSchemaFormatEnum, JsonSchemaTypeEnum, NotificationTemplateEntity } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+
 import _ from 'lodash';
 import { JSONSchemaDto } from '../../../../shared/dtos/json-schema.dto';
 import { buildVariablesSchema } from '../../../../shared/utils/create-schema';
@@ -9,8 +8,6 @@ import { PreviewPayloadDto } from '../../../dtos';
 
 @Injectable()
 export class SchemaBuilderService {
-  constructor(private readonly featureFlagService: FeatureFlagsService) {}
-
   async buildVariablesSchema(
     variablesObject: Record<string, unknown>,
     variables: JSONSchemaDto
@@ -27,21 +24,11 @@ export class SchemaBuilderService {
 
   async buildPreviewPayloadSchema(
     previewPayloadExample: PreviewPayloadDto,
-    workflowPayloadSchema?: JSONSchemaDto,
-    workflow?: NotificationTemplateEntity
+    workflowPayloadSchema?: JSONSchemaDto
   ): Promise<JSONSchemaDto | null> {
     if (!workflowPayloadSchema) {
       return null;
     }
-
-    const isV2TemplateEditorEnabled = workflow
-      ? await this.featureFlagService.getFlag({
-          key: FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED,
-          defaultValue: false,
-          organization: { _id: workflow._organizationId },
-          environment: { _id: workflow._environmentId },
-        })
-      : false;
 
     const schema: JSONSchemaDto = {
       type: JsonSchemaTypeEnum.OBJECT,
@@ -56,47 +43,43 @@ export class SchemaBuilderService {
       };
     }
 
-    if (previewPayloadExample.subscriber || isV2TemplateEditorEnabled) {
-      schema.properties!.subscriber = {
+    schema.properties!.subscriber = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      properties: {
+        subscriberId: { type: JsonSchemaTypeEnum.STRING },
+        firstName: { type: JsonSchemaTypeEnum.STRING },
+        lastName: { type: JsonSchemaTypeEnum.STRING },
+        email: { type: JsonSchemaTypeEnum.STRING, format: JsonSchemaFormatEnum.EMAIL },
+        phone: { type: JsonSchemaTypeEnum.STRING },
+        avatar: { type: JsonSchemaTypeEnum.STRING },
+        locale: { type: JsonSchemaTypeEnum.STRING },
+        timezone: { type: JsonSchemaTypeEnum.STRING },
+        data: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
+      },
+      additionalProperties: true,
+    };
+
+    schema.properties!.steps = {
+      type: JsonSchemaTypeEnum.OBJECT,
+      description: 'Steps data from previous workflow executions',
+      additionalProperties: {
         type: JsonSchemaTypeEnum.OBJECT,
         properties: {
-          subscriberId: { type: JsonSchemaTypeEnum.STRING },
-          firstName: { type: JsonSchemaTypeEnum.STRING },
-          lastName: { type: JsonSchemaTypeEnum.STRING },
-          email: { type: JsonSchemaTypeEnum.STRING, format: JsonSchemaFormatEnum.EMAIL },
-          phone: { type: JsonSchemaTypeEnum.STRING },
-          avatar: { type: JsonSchemaTypeEnum.STRING },
-          locale: { type: JsonSchemaTypeEnum.STRING },
-          timezone: { type: JsonSchemaTypeEnum.STRING },
-          data: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
-        },
-        additionalProperties: true,
-      };
-    }
-
-    if (previewPayloadExample.steps || isV2TemplateEditorEnabled) {
-      schema.properties!.steps = {
-        type: JsonSchemaTypeEnum.OBJECT,
-        description: 'Steps data from previous workflow executions',
-        additionalProperties: {
-          type: JsonSchemaTypeEnum.OBJECT,
-          properties: {
-            eventCount: { type: JsonSchemaTypeEnum.NUMBER },
-            events: {
-              type: JsonSchemaTypeEnum.ARRAY,
-              items: {
-                type: JsonSchemaTypeEnum.OBJECT,
-                properties: {
-                  payload: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
-                },
-                additionalProperties: true,
+          eventCount: { type: JsonSchemaTypeEnum.NUMBER },
+          events: {
+            type: JsonSchemaTypeEnum.ARRAY,
+            items: {
+              type: JsonSchemaTypeEnum.OBJECT,
+              properties: {
+                payload: { type: JsonSchemaTypeEnum.OBJECT, additionalProperties: true },
               },
+              additionalProperties: true,
             },
           },
-          additionalProperties: true,
         },
-      };
-    }
+        additionalProperties: true,
+      },
+    };
 
     return schema;
   }

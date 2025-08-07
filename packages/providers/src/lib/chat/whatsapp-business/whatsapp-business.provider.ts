@@ -12,7 +12,7 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
   private readonly axiosClient: AxiosInstance;
-  private readonly baseUrl = 'https://graph.facebook.com/v18.0/';
+  private readonly baseUrl = 'https://graph.facebook.com/v22.0/';
 
   constructor(
     private config: {
@@ -56,21 +56,49 @@ export class WhatsappBusinessChatProvider extends BaseProvider implements IChatP
       type,
     };
 
-    if (type === WhatsAppMessageTypeEnum.TEMPLATE) {
-      const templateData = options.customData?.template;
+    // Handle TEXT messages separately (since it's not in `customData`)
+    if (type === WhatsAppMessageTypeEnum.TEXT) {
+      const textData = options.customData?.text;
 
-      return { ...basePayload, template: templateData };
+      return {
+        ...basePayload,
+        text: {
+          body: textData?.body ?? options.content,
+          preview_url: textData?.preview_url ?? false,
+        },
+      };
     }
+
+    // For all other types, get data from customData
+    const payloadData = options.customData?.[type];
 
     return {
       ...basePayload,
-      text: { body: options.content, preview_url: false },
+      [type]: payloadData,
     };
   }
 
   private defineMessageType(options: IChatOptions): WhatsAppMessageTypeEnum {
-    return options.customData && Object.keys(options.customData).some((key) => key === 'template')
-      ? WhatsAppMessageTypeEnum.TEMPLATE
-      : WhatsAppMessageTypeEnum.TEXT;
+    const typeKeys: Record<string, WhatsAppMessageTypeEnum> = {
+      template: WhatsAppMessageTypeEnum.TEMPLATE,
+      interactive: WhatsAppMessageTypeEnum.INTERACTIVE,
+      image: WhatsAppMessageTypeEnum.IMAGE,
+      document: WhatsAppMessageTypeEnum.DOCUMENT,
+      video: WhatsAppMessageTypeEnum.VIDEO,
+      audio: WhatsAppMessageTypeEnum.AUDIO,
+      location: WhatsAppMessageTypeEnum.LOCATION,
+      contacts: WhatsAppMessageTypeEnum.CONTACTS,
+      sticker: WhatsAppMessageTypeEnum.STICKER,
+    };
+
+    if (options.customData) {
+      for (const key of Object.keys(typeKeys)) {
+        if (key in options.customData) {
+          return typeKeys[key];
+        }
+      }
+    }
+
+    return WhatsAppMessageTypeEnum.TEXT;
   }
 }

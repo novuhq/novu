@@ -28,7 +28,6 @@ export function AddNodeEdge({
   const navigate = useNavigate();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
   const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
     limit: 100,
@@ -90,13 +89,7 @@ export function AddNodeEdge({
                       {
                         onSuccess: (data) => {
                           if (TEMPLATE_CONFIGURABLE_STEP_TYPES.includes(stepType)) {
-                            if (isV2TemplateEditorEnabled && currentEnvironment?.slug) {
-                              navigate(
-                                buildRoute(ROUTES.EDIT_STEP_TEMPLATE_V2, {
-                                  stepSlug: data.steps[indexToAdd].slug,
-                                })
-                              );
-                            } else {
+                            if (currentEnvironment?.slug) {
                               navigate(
                                 buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                                   stepSlug: data.steps[indexToAdd].slug,
