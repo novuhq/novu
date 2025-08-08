@@ -178,7 +178,6 @@ before(async () => {
   await testServer.create(bootstrapped.app);
 
   await waitForHealthCheck();
-  await new Promise((resolve) => setTimeout(resolve, 3000));
 });
 
 after(async () => {
