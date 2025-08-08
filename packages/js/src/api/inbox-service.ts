@@ -5,7 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
-  SeverityLevel,
+  SeverityLevelEnum,
   Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
@@ -65,7 +65,7 @@ export class InboxService {
     after?: string;
     offset?: number;
     data?: Record<string, unknown>;
-    severity?: SeverityLevel | SeverityLevel[];
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -114,7 +114,7 @@ export class InboxService {
       snoozed?: boolean;
       seen?: boolean;
       data?: Record<string, unknown>;
-      severity?: SeverityLevel | SeverityLevel[];
+      severity?: SeverityLevelEnum | SeverityLevelEnum[];
     }>;
   }): Promise<{
     data: Array<{
@@ -225,7 +225,10 @@ export class InboxService {
     });
   }
 
-  fetchPreferences(tags?: string[], severity?: SeverityLevel | SeverityLevel[]): Promise<PreferencesResponse[]> {
+  fetchPreferences(
+    tags?: string[],
+    severity?: SeverityLevelEnum | SeverityLevelEnum[]
+  ): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
       for (const tag of tags) {
