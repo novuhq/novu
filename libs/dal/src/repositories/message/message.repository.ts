@@ -380,11 +380,11 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
   ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
     const severityLevels = Object.values(SeverityLevelEnum);
 
-    const promisses = severityLevels.map((severity) =>
+    const promises = severityLevels.map((severity) =>
       this.getCount(environmentId, subscriberId, channel, { ...query, severity: [severity] }, options)
     );
 
-    const results = await Promise.all(promisses);
+    const results = await Promise.all(promises);
 
     return results.map((result, index) => ({ severity: severityLevels[index], count: result }));
   }
