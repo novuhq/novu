@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { CreateExecutionDetails, CreateExecutionDetailsCommand, PinoLogger } from '@novu/application-generic';
 import { JobEntity, JobRepository, MessageEntity, MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
+import { ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboxNotification } from '../../utils/types';
@@ -67,6 +67,7 @@ describe('UnsnoozeNotification', () => {
     snoozedUntil: null,
     createdAt: new Date().toISOString(),
     channelType: ChannelTypeEnum.IN_APP,
+    severity: SeverityLevelEnum.NONE,
   };
 
   beforeEach(() => {

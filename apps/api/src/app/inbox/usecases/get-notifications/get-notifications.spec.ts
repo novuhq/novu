@@ -130,6 +130,7 @@ describe('GetNotifications', () => {
       data: command.data,
       archived: command.archived,
       snoozed: command.snoozed,
+      severity: command.severity,
       seen: command.seen,
     });
     expect(result.hasMore).to.be.false;
