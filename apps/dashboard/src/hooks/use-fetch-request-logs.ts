@@ -1,5 +1,5 @@
-import { UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { GetRequestLogsParams, GetRequestLogsResponse, getRequestLogs } from '@/api/logs';
+import { type UseQueryOptions, useQuery } from '@tanstack/react-query';
+import { type GetRequestLogsParams, type GetRequestLogsResponse, getRequestLogs } from '@/api/logs';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 
@@ -25,6 +25,7 @@ export function useFetchRequestLogs(
     queryKey: [QueryKeys.fetchRequestLogs, currentEnvironment?._id, apiParams],
     queryFn: () => getRequestLogs({ environment: currentEnvironment!, ...apiParams }),
     enabled: !!currentEnvironment && enabled,
+    refetchOnWindowFocus: false,
     ...options,
   });
 }

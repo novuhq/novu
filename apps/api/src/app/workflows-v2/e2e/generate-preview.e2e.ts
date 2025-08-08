@@ -457,7 +457,7 @@ describe('Workflow Step Preview - POST /:workflowId/step/:stepId/preview #novu-v
             random: 'random',
           },
           primaryUrlLabel: 'New Click Here',
-          organizationName: 'John Doe',
+          organizationName: 'Pokemon Organization',
         },
         steps: {},
       },

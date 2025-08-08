@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-
+import type { EventType, Trace } from '@novu/application-generic';
 import {
   AnalyticsService,
   CreateNotificationJobs,
@@ -8,7 +8,10 @@ import {
   CreateOrUpdateSubscriberUseCase,
   Instrument,
   InstrumentUsecase,
+  LogRepository,
+  mapEventTypeToTitle,
   PinoLogger,
+  TraceLogRepository,
 } from '@novu/application-generic';
 import { IntegrationRepository, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import {
@@ -34,7 +37,8 @@ export class SubscriberJobBound {
     private integrationRepository: IntegrationRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private logger: PinoLogger,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private traceLogRepository: TraceLogRepository
   ) {}
 
   @InstrumentUsecase()
@@ -73,7 +77,7 @@ export class SubscriberJobBound {
 
     const templateProviderIds = await this.getProviderIdsForTemplate(environmentId, template);
 
-    await this.validateSubscriberIdProperty(subscriber);
+    await this.validateSubscriberIdProperty(command, subscriber);
 
     /**
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
@@ -122,6 +126,13 @@ export class SubscriberJobBound {
           command.organizationId
         } in transaction ${command.transactionId} was not processed. No jobs are created.`,
         LOG_CONTEXT
+      );
+
+      await this.createSubscriberTrace(
+        command,
+        'subscriber_validation_failed',
+        'warning',
+        `Subscriber ${subscriber.subscriberId} was not processed, workflow run execution halted.`
       );
 
       return;
@@ -224,10 +235,19 @@ export class SubscriberJobBound {
   }
 
   @Instrument()
-  private async validateSubscriberIdProperty(subscriber: ISubscribersDefine): Promise<boolean> {
+  private async validateSubscriberIdProperty(
+    command: SubscriberJobBoundCommand,
+    subscriber: ISubscribersDefine
+  ): Promise<boolean> {
     const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
     if (!subscriberIdExists) {
+      await this.createSubscriberTrace(
+        command,
+        'subscriber_validation_failed',
+        'warning',
+        `Subscriber ${subscriber.subscriberId} is missing a valid subscriberId, workflow run execution halted.`
+      );
       throw new BadRequestException(
         'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
       );
@@ -268,5 +288,48 @@ export class SubscriberJobBound {
     }
 
     return providers;
+  }
+
+  private async createSubscriberTrace(
+    command: SubscriberJobBoundCommand,
+    eventType: EventType,
+    status: 'success' | 'error' | 'warning' = 'success',
+    message?: string,
+    rawData?: any
+  ): Promise<void> {
+    if (!command.requestId) {
+      return;
+    }
+
+    try {
+      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+        created_at: LogRepository.formatDateTime64(new Date()),
+        organization_id: command.organizationId,
+        environment_id: command.environmentId,
+        user_id: command.userId,
+        subscriber_id: null,
+        external_subscriber_id: command.subscriber?.subscriberId || null,
+        event_type: eventType,
+        title: mapEventTypeToTitle(eventType),
+        message: message || null,
+        raw_data: rawData ? JSON.stringify(rawData) : null,
+        status,
+        entity_type: 'request',
+        entity_id: command.requestId,
+      };
+
+      await this.traceLogRepository.create(traceData);
+    } catch (error) {
+      this.logger.error(
+        {
+          error,
+          eventType,
+          transactionId: command.transactionId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        },
+        'Failed to create subscriber trace'
+      );
+    }
   }
 }

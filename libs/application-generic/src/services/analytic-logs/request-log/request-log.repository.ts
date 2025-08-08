@@ -26,7 +26,7 @@ export class RequestLogRepository extends LogRepository<typeof requestLogSchema,
   }
 
   public async create(
-    data: Omit<RequestLog, 'id' | 'expires_at'>,
+    data: Omit<RequestLog, 'expires_at'>,
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -37,7 +37,7 @@ export class RequestLogRepository extends LogRepository<typeof requestLogSchema,
   }
 
   public async createMany(
-    data: Omit<RequestLog, 'id' | 'expires_at'>[],
+    data: Omit<RequestLog, 'expires_at'>[],
     context: {
       organizationId?: string;
       environmentId?: string;

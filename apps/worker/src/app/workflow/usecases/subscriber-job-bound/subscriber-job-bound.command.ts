@@ -16,6 +16,11 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   transactionId: string;
 
+  // TODO: remove optional flag after all the workers are migrated to use requestId NV-6475
+  @IsString()
+  @IsOptional()
+  requestId?: string;
+
   @IsDefined()
   payload: any;
 

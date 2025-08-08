@@ -30,7 +30,7 @@ export class ReadinessService {
 
     for (let i = 1; i < retries + 1; i += 1) {
       const result = await this.checkServicesHealth();
-
+      Logger.log(`Checking if queues are enabled ${i}/${retries} ${JSON.stringify(result)}`, LOG_CONTEXT);
       if (result) {
         return true;
       }

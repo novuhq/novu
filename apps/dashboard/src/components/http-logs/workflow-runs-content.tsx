@@ -1,17 +1,17 @@
-import { ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { RiArrowDownSLine, RiArrowRightUpLine, RiLoader4Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { type ActivityFilters } from '@/api/activity';
+import type { ActivityFilters } from '@/api/activity';
 import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
-import { Table, TableBody, TableCell, TableRow } from '@/components/primitives/table';
+import { Table, TableBody } from '@/components/primitives/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { RequestLog } from '../../types/logs';
+import type { RequestLog } from '../../types/logs';
+import { ApiTracesContent } from './api-traces-content';
 import { useWorkflowRunsUrlState } from './hooks/use-workflow-runs-url-state';
 import { WorkflowRunActivityDrawer } from './workflow-run-activity-drawer';
 import { WorkflowRunsFilters } from './workflow-runs-filters';
@@ -83,6 +83,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
+
     // Simulate loading delay for better UX
     await new Promise((resolve) => setTimeout(resolve, 500));
     setDisplayedItemsCount((prev) => Math.min(prev + ITEMS_PER_PAGE, activities.length));
@@ -126,14 +127,21 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
 
   return (
     <>
-      <Tabs defaultValue="workflow-runs" className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
+      <Tabs defaultValue="workflow-runs">
         <TabsList variant="regular" className="bg-bg-weak">
           <TabsTrigger variant="regular" size="md" value="workflow-runs" className="h-[36px]">
             Workflow runs
           </TabsTrigger>
+          <TabsTrigger variant="regular" size="md" value="api-traces" className="h-[36px]">
+            API Traces
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="workflow-runs" className="flex h-0 min-h-0 flex-1 flex-col overflow-hidden">
+        <TabsContent value="api-traces">
+          <ApiTracesContent log={log} />
+        </TabsContent>
+
+        <TabsContent value="workflow-runs">
           <div className="flex-none bg-white px-3 py-3 pb-2">
             <div className="flex w-full flex-row items-start justify-between">
               <div className="flex w-full flex-col items-start gap-0.5 text-left font-['Inter'] font-medium">
@@ -156,7 +164,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
               </LinkButton>
             </div>
           </div>
-
           <div className="flex-none border-b border-[#f2f5f8] bg-white">
             <WorkflowRunsFilters
               filterValues={filterValues}
@@ -165,7 +172,6 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
               isFetching={isLoading}
             />
           </div>
-
           <div className="flex-1 overflow-y-auto">
             <div className="min-h-full">
               {isLoading ? (

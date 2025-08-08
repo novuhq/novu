@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-
 import {
   EnvironmentRepository,
   JobEntity,
@@ -18,6 +17,8 @@ import {
 import { addBreadcrumb } from '@sentry/node';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { PinoLogger } from '../../logging';
+import type { EventType, Trace } from '../../services/analytic-logs';
+import { LogRepository, mapEventTypeToTitle, TraceLogRepository } from '../../services/analytic-logs';
 import { AnalyticsService } from '../../services/analytics.service';
 import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from '../create-or-update-subscriber';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
@@ -25,8 +26,6 @@ import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerMulticast, TriggerMulticastCommand } from '../trigger-multicast';
 import { TriggerEventCommand } from './trigger-event.command';
-
-const LOG_CONTEXT = 'TriggerEventUseCase';
 
 function getActiveWorker() {
   return process.env.ACTIVE_WORKER;
@@ -43,11 +42,16 @@ export class TriggerEvent {
     private logger: PinoLogger,
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast,
-    private analyticsService: AnalyticsService
-  ) {}
+    private analyticsService: AnalyticsService,
+    private traceLogRepository: TraceLogRepository
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
+    await this.createWorkflowTrace(command, 'workflow_execution_started', 'success', 'Workflow execution started');
+
     try {
       const mappedCommand = {
         ...command,
@@ -94,6 +98,13 @@ export class TriggerEvent {
       }
 
       if (!storedWorkflow && !command.bridgeWorkflow) {
+        await this.createWorkflowTrace(
+          command,
+          'workflow_template_not_found',
+          'error',
+          'Notification template could not be found',
+          { identifier: mappedCommand.identifier }
+        );
         throw new BadRequestException('Notification template could not be found');
       }
 
@@ -108,13 +119,19 @@ export class TriggerEvent {
         );
 
         if (!tenantProcessed) {
+          await this.createWorkflowTrace(
+            command,
+            'workflow_tenant_processing_failed',
+            'warning',
+            'Tenant processing failed',
+            { tenantIdentifier: mappedCommand.tenant.identifier }
+          );
           Logger.warn(
             `Tenant with identifier ${JSON.stringify(
               mappedCommand.tenant.identifier
             )} of organization ${mappedCommand.organizationId} in transaction ${
               mappedCommand.transactionId
-            } could not be processed.`,
-            LOG_CONTEXT
+            } could not be processed.`
           );
         }
       }
@@ -123,9 +140,21 @@ export class TriggerEvent {
       let actorProcessed: SubscriberEntity | undefined;
       if (mappedCommand.actor) {
         this.logger.info(mappedCommand, 'Processing actor');
-        actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
-          this.buildCommand(environmentId, organizationId, mappedCommand.actor)
-        );
+
+        try {
+          actorProcessed = await this.createOrUpdateSubscriberUsecase.execute(
+            this.buildCommand(environmentId, organizationId, mappedCommand.actor)
+          );
+        } catch (error: any) {
+          await this.createWorkflowTrace(
+            command,
+            'workflow_actor_processing_failed',
+            'error',
+            'Actor processing failed',
+            { error: error.message, stack: error.stack }
+          );
+          throw error;
+        }
       }
 
       switch (mappedCommand.addressingType) {
@@ -165,6 +194,15 @@ export class TriggerEvent {
         }
       }
     } catch (e) {
+      const error = e as Error;
+      await this.createWorkflowTrace(
+        command,
+        'workflow_execution_failed',
+        'error',
+        `Workflow execution failed: ${error.message}`,
+        { error: error.message, stack: error.stack }
+      );
+
       Logger.error(
         {
           transactionId: command.transactionId,
@@ -173,11 +211,53 @@ export class TriggerEvent {
           userId: command.userId,
           error: e,
         },
-        'Unexpected error has occurred when triggering event',
-        LOG_CONTEXT
+        'Unexpected error has occurred when triggering event'
       );
 
       throw e;
+    }
+  }
+
+  private async createWorkflowTrace(
+    command: TriggerEventCommand,
+    eventType: EventType,
+    status: 'success' | 'error' | 'warning' = 'success',
+    message?: string,
+    rawData?: any
+  ): Promise<void> {
+    if (!command.requestId) {
+      return;
+    }
+
+    try {
+      const traceData: Omit<Trace, 'id' | 'expires_at'> = {
+        created_at: LogRepository.formatDateTime64(new Date()),
+        organization_id: command.organizationId,
+        environment_id: command.environmentId,
+        user_id: command.userId,
+        subscriber_id: null,
+        external_subscriber_id: null,
+        event_type: eventType,
+        title: mapEventTypeToTitle(eventType),
+        message: message || null,
+        raw_data: rawData ? JSON.stringify(rawData) : null,
+        status,
+        entity_type: 'request',
+        entity_id: command.requestId,
+      };
+
+      await this.traceLogRepository.create(traceData);
+    } catch (error) {
+      this.logger.error(
+        {
+          error,
+          eventType,
+          transactionId: command.transactionId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        },
+        'Failed to create workflow trace'
+      );
     }
   }
 

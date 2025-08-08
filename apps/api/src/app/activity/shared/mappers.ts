@@ -1,4 +1,5 @@
-import { RequestLog, StepRun, StepRunNonFinalStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { RequestLog, StepRun, StepRunNonFinalStatus, Trace, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { TraceResponseDto } from '../dtos/get-request-traces.response.dto';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
 
@@ -52,6 +53,7 @@ export function mapWorkflowRunStatusToDto(
       case 'failed' as WorkflowRunStatusEnum: // legacy
         return WorkflowRunStatusDtoEnum.ERROR;
       case WorkflowRunStatusEnum.PENDING:
+        return WorkflowRunStatusDtoEnum.PENDING;
       default:
         return WorkflowRunStatusDtoEnum.PENDING;
     }
@@ -102,4 +104,23 @@ export function mapWorkflowRunStatusToDto(
   );
 
   return WorkflowRunStatusDtoEnum.ERROR;
+}
+
+export function mapTraceToResponseDto(trace: Trace): TraceResponseDto {
+  return {
+    id: trace.id,
+    createdAt: new Date(`${trace.created_at} UTC`).toISOString(),
+    eventType: trace.event_type,
+    title: trace.title,
+    message: trace.message,
+    rawData: trace.raw_data,
+    status: trace.status,
+    entityType: trace.entity_type,
+    entityId: trace.entity_id,
+    organizationId: trace.organization_id,
+    environmentId: trace.environment_id,
+    userId: trace.user_id,
+    externalSubscriberId: trace.external_subscriber_id,
+    subscriberId: trace.subscriber_id,
+  };
 }
