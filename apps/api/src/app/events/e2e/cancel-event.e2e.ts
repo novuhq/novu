@@ -121,6 +121,7 @@ describe('Cancel event - /v1/events/trigger/:transactionId (DELETE) #novu-v2', (
         _templateId: template._id,
         type: StepTypeEnum.DELAY,
         transactionId,
+        status: JobStatusEnum.CANCELED,
       },
       findMultiple: true,
     });

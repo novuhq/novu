@@ -2,7 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect } from 'react';
 import { createSearchParams, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ActivityFilters } from '@/api/activity';
+import type { ActivityFilters } from '@/api/activity';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/primitives/table';
@@ -48,7 +48,7 @@ export function ActivityTable({
       cursor: isWorkflowRunMigrationEnabled ? cursor : undefined,
     },
     {
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
     }
   );
 

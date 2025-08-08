@@ -87,12 +87,14 @@ export function ActivityFeed() {
               </TabsTrigger>
             )}
           </TabsList>
-
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
           <TabsContent value="requests" className="h-[calc(100vh-140px)]">
             <RequestsTable />
+          </TabsContent>
+          <TabsContent value="workflow-runs">
+            <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>
         </Tabs>
       </DashboardLayout>

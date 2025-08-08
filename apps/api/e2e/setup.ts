@@ -1,6 +1,7 @@
-import { ClickHouseClient, ClickHouseService, createClickHouseClient, PinoLogger } from '@novu/application-generic';
+import { ClickHouseClient, ClickHouseService, createClickHouseClient } from '@novu/application-generic';
 import { DalService } from '@novu/dal';
 import { testServer } from '@novu/testing';
+import axios from 'axios';
 import chai from 'chai';
 import { Connection } from 'mongoose';
 import sinon from 'sinon';
@@ -131,6 +132,40 @@ async function closeClickHouseConnection(): Promise<void> {
   }
 }
 
+async function waitForHealthCheck(): Promise<void> {
+  const port = process.env.PORT;
+  const healthCheckUrl = `http://localhost:${port}/v1/health-check`;
+  const maxRetries = 60;
+  const retryDelay = 1000;
+
+  console.log(`Waiting for health check at ${healthCheckUrl}...`);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await axios.get(healthCheckUrl, {
+        timeout: 5000,
+        validateStatus: (status) => status === 200,
+      });
+
+      if (response.status === 200) {
+        console.log(`Health check passed on attempt ${attempt}`);
+
+        return;
+      }
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries;
+
+      if (isLastAttempt) {
+        console.error(`Health check failed after ${maxRetries} attempts. Last error:`, error.message);
+        throw new Error(`Health check failed after ${maxRetries} attempts`);
+      }
+
+      console.log(`Health check attempt ${attempt}/${maxRetries} failed, retrying in ${retryDelay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, retryDelay));
+    }
+  }
+}
+
 before(async () => {
   /**
    * disable truncating for better error messages - https://www.chaijs.com/guide/styles/#configtruncatethreshold
@@ -139,7 +174,10 @@ before(async () => {
 
   await dropDatabase();
   await cleanupClickHouseDatabase();
-  await testServer.create((await bootstrap()).app);
+  const bootstrapped = await bootstrap();
+  await testServer.create(bootstrapped.app);
+
+  await waitForHealthCheck();
 });
 
 after(async () => {

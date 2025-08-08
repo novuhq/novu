@@ -22,6 +22,7 @@ export class TriggerEventToAll {
         tenant: command.tenant,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: command.bridgeUrl,
+        requestId: command.requestId,
       })
     );
 
