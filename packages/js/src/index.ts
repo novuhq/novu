@@ -14,6 +14,7 @@ export {
   Preference,
   PreferenceLevel,
   PreferencesResponse,
+  SeverityLevel,
   StandardNovuOptions,
   Subscriber,
   WebSocketEvent,

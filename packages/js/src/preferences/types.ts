@@ -1,4 +1,4 @@
-import { ChannelPreference, Preference, PreferenceLevel, Workflow } from '../types';
+import { ChannelPreference, Preference, PreferenceLevel, SeverityLevel } from '../types';
 
 export type FetchPreferencesArgs = {
   level?: PreferenceLevel;
@@ -7,6 +7,7 @@ export type FetchPreferencesArgs = {
 
 export type ListPreferencesArgs = {
   tags?: string[];
+  severity?: SeverityLevel | SeverityLevel[];
 };
 
 export type BasePreferenceArgs = {
