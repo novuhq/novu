@@ -15,6 +15,7 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   IPreferenceChannels,
   PreferenceLevelEnum,
+  SeverityLevelEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
@@ -138,6 +139,7 @@ export class UpdatePreferences {
           critical: workflow.critical,
           tags: workflow.tags,
           data: workflow.data,
+          severity: workflow.severity ?? SeverityLevelEnum.NONE,
         },
       };
     }

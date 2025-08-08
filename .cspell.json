@@ -838,6 +838,7 @@
     "apps/api/src/app/translations/e2e/v2/**/*",
     "apps/api/src/app/workflows-v2/maily-test-data.ts",
     "apps/api/src/app/workflows-v2/usecases/validate-content/validate-placeholders/validate-placeholder.usecase.ts",
+    "apps/api/src/app/workflows-v2/util/json-schema-mock.ts",
     "libs/internal-sdk/**/*",
     "apps/web/env.sh",
     "apps/web/playwright.config.ts",
