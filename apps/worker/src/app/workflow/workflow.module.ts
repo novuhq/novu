@@ -126,6 +126,7 @@ const USE_CASES = [
   TriggerEvent,
   UpdateJobStatus,
   ProcessUnsnoozeJob,
+  PinoLogger,
   WebhookFilterBackoffStrategy,
   GetTopicSubscribersUseCase,
   SubscriberJobBound,
