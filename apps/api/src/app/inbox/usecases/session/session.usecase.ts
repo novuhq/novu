@@ -26,6 +26,7 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
+  MessageRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
   PreferencesRepository,
@@ -64,6 +65,7 @@ import { SessionCommand } from './session.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
+const MAX_NOTIFICATIONS_COUNT = 99;
 
 @Injectable()
 export class Session {
@@ -84,6 +86,7 @@ export class Session {
     private communityUserRepository: CommunityUserRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
+    private messageRepository: MessageRepository,
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
@@ -164,6 +167,39 @@ export class Session {
     );
     const [{ count: totalUnreadCount }] = data;
 
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      defaultValue: false,
+      organization: { _id: environment._organizationId },
+    });
+
+    // get severity-based unread counts
+    const severityCounts = isNotificationSeverityEnabled
+      ? await this.messageRepository.getCountBySeverity(
+          environment._id,
+          subscriberEntity._id,
+          ChannelTypeEnum.IN_APP,
+          { read: false, snoozed: false },
+          { limit: MAX_NOTIFICATIONS_COUNT }
+        )
+      : [];
+
+    const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
+      total: totalUnreadCount,
+      severity: {
+        high: 0,
+        medium: 0,
+        low: 0,
+        none: 0,
+      },
+    };
+
+    for (const { severity, count } of severityCounts) {
+      if (severity in unreadCount.severity) {
+        unreadCount.severity[severity] = count;
+      }
+    }
+
     const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
 
     const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
@@ -203,6 +239,7 @@ export class Session {
       applicationIdentifier: environment.identifier,
       token,
       totalUnreadCount,
+      unreadCount,
       removeNovuBranding,
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',

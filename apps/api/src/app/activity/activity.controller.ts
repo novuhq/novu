@@ -4,6 +4,7 @@ import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { GetChartsRequestDto } from './dtos/get-charts.request.dto';
 import { GetChartsResponseDto } from './dtos/get-charts.response.dto';
+import { GetRequestResponseDto } from './dtos/get-request-traces.response.dto';
 import { GetRequestsDto } from './dtos/get-requests.dto';
 import { GetRequestsResponseDto } from './dtos/get-requests.response.dto';
 import { GetWorkflowRunResponseDto } from './dtos/workflow-run-response.dto';
@@ -11,6 +12,8 @@ import { GetWorkflowRunsRequestDto } from './dtos/workflow-runs-request.dto';
 import { GetWorkflowRunsResponseDto } from './dtos/workflow-runs-response.dto';
 import { GetChartsCommand } from './usecases/get-charts/get-charts.command';
 import { GetCharts } from './usecases/get-charts/get-charts.usecase';
+import { GetRequestCommand } from './usecases/get-request/get-request.command';
+import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequestsCommand } from './usecases/get-requests/get-requests.command';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-run.command';
@@ -26,7 +29,8 @@ export class ActivityController {
     private getRequestsUsecase: GetRequests,
     private getWorkflowRunsUsecase: GetWorkflowRuns,
     private getWorkflowRunUsecase: GetWorkflowRun,
-    private getChartsUsecase: GetCharts
+    private getChartsUsecase: GetCharts,
+    private getRequestUsecase: GetRequest
   ) {}
 
   @Get('requests')
@@ -39,6 +43,19 @@ export class ActivityController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         createdGte: query.createdGte,
+      })
+    );
+  }
+
+  @Get('requests/:requestId')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
+  @ExternalApiAccessible()
+  async getRequestTraces(@UserSession() user, @Param('requestId') requestId: string): Promise<GetRequestResponseDto> {
+    return this.getRequestUsecase.execute(
+      GetRequestCommand.create({
+        requestId,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
       })
     );
   }

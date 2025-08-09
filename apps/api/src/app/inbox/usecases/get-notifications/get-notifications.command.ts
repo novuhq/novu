@@ -1,4 +1,16 @@
-import { IsArray, IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
+import { SeverityLevelEnum } from '@novu/shared';
+import {
+  IsArray,
+  IsBoolean,
+  IsDefined,
+  IsEnum,
+  IsInt,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { CursorPaginationParams } from '../../../shared/types';
@@ -42,4 +54,9 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   @IsOptional()
   @IsString()
   readonly data?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(SeverityLevelEnum, { each: true })
+  readonly severity?: SeverityLevelEnum[];
 }

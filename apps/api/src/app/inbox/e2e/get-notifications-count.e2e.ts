@@ -4,6 +4,7 @@ import {
   ActorTypeEnum,
   ChannelCTATypeEnum,
   ChannelTypeEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
   SystemAvatarIconEnum,
   TemplateVariableTypeEnum,
@@ -55,7 +56,14 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
   });
 
   const getNotificationsCount = async (
-    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; snoozed?: boolean; seen?: boolean }>
+    filters: Array<{
+      tags?: string[];
+      read?: boolean;
+      archived?: boolean;
+      snoozed?: boolean;
+      seen?: boolean;
+      severity?: SeverityLevelEnum[];
+    }>
   ) => {
     return await session.testAgent
       .get(`/v1/inbox/notifications/count?filters=${JSON.stringify(filters)}`)
@@ -374,6 +382,239 @@ describe('Get Notifications Count - /inbox/notifications/count (GET) #novu-v2', 
     expect(body.data[0].filter).to.deep.equal({
       tags,
       seen: true,
+    });
+  });
+
+  describe('Severity filtering', () => {
+    it('should return notifications count for high severity', async () => {
+      const highSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.HIGH,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'High severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      const mediumSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.MEDIUM,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Medium severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      // Trigger notifications with different severities
+      await triggerEvent(highSeverityTemplate, 3);
+      await triggerEvent(mediumSeverityTemplate, 2);
+      await triggerEvent(template, 1); // Default template (no severity - none)
+
+      const { body, status } = await getNotificationsCount([{ severity: [SeverityLevelEnum.HIGH] }]);
+
+      expect(status).to.equal(200);
+      expect(body.data).to.be.ok;
+      expect(body.data.length).to.eq(1);
+      expect(body.data[0].count).to.eq(3);
+      expect(body.data[0].filter).to.deep.equal({
+        severity: [SeverityLevelEnum.HIGH],
+      });
+    });
+
+    it('should return notifications count for multiple severities', async () => {
+      const highSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.HIGH,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'High severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      const lowSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.LOW,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Low severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      // Trigger notifications with different severities
+      await triggerEvent(highSeverityTemplate, 2);
+      await triggerEvent(lowSeverityTemplate, 3);
+      await triggerEvent(template, 1); // Default template (no severity - none)
+
+      const { body, status } = await getNotificationsCount([
+        { severity: [SeverityLevelEnum.HIGH, SeverityLevelEnum.LOW] },
+      ]);
+
+      expect(status).to.equal(200);
+      expect(body.data).to.be.ok;
+      expect(body.data.length).to.eq(1);
+      expect(body.data[0].count).to.eq(5); // 2 high + 3 low
+      expect(body.data[0].filter).to.deep.equal({
+        severity: [SeverityLevelEnum.HIGH, SeverityLevelEnum.LOW],
+      });
+    });
+
+    it('should return notifications count for none severity', async () => {
+      const highSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.HIGH,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'High severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      // Trigger notifications with different severities
+      await triggerEvent(highSeverityTemplate, 2);
+      await triggerEvent(template, 3); // Default template (no severity - none)
+
+      const { body, status } = await getNotificationsCount([{ severity: [SeverityLevelEnum.NONE] }]);
+
+      expect(status).to.equal(200);
+      expect(body.data).to.be.ok;
+      expect(body.data.length).to.eq(1);
+      expect(body.data[0].count).to.eq(3);
+      expect(body.data[0].filter).to.deep.equal({
+        severity: [SeverityLevelEnum.NONE],
+      });
+    });
+
+    it('should return notifications count combining severity with other filters', async () => {
+      const tags = ['urgent'];
+      const highSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.HIGH,
+        tags,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'High severity urgent notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      const highSeverityTemplateNoTags = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.HIGH,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'High severity notification without tags',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      // Trigger notifications
+      await triggerEvent(highSeverityTemplate, 2); // High severity with urgent tags
+      await triggerEvent(highSeverityTemplateNoTags, 3); // High severity without tags
+
+      // Test combining severity and tags filters
+      const { body, status } = await getNotificationsCount([{ severity: [SeverityLevelEnum.HIGH], tags, read: false }]);
+
+      expect(status).to.equal(200);
+      expect(body.data).to.be.ok;
+      expect(body.data.length).to.eq(1);
+      expect(body.data[0].count).to.eq(2); // Only the high severity with urgent tags
+      expect(body.data[0].filter).to.deep.equal({
+        severity: [SeverityLevelEnum.HIGH],
+        tags,
+        read: false,
+      });
+    });
+
+    it('should return multiple filters with different severities', async () => {
+      const highSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.HIGH,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'High severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      const mediumSeverityTemplate = await session.createTemplate({
+        noFeedId: true,
+        severity: SeverityLevelEnum.MEDIUM,
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Medium severity notification',
+            actor: {
+              type: ActorTypeEnum.SYSTEM_ICON,
+              data: SystemAvatarIconEnum.WARNING,
+            },
+          },
+        ],
+      });
+
+      // Trigger notifications
+      await triggerEvent(highSeverityTemplate, 2);
+      await triggerEvent(mediumSeverityTemplate, 3);
+
+      const { body, status } = await getNotificationsCount([
+        { severity: [SeverityLevelEnum.HIGH] },
+        { severity: [SeverityLevelEnum.MEDIUM] },
+      ]);
+
+      expect(status).to.equal(200);
+      expect(body.data).to.be.ok;
+      expect(body.data.length).to.eq(2);
+      expect(body.data[0].count).to.eq(2);
+      expect(body.data[0].filter).to.deep.equal({
+        severity: [SeverityLevelEnum.HIGH],
+      });
+      expect(body.data[1].count).to.eq(3);
+      expect(body.data[1].filter).to.deep.equal({
+        severity: [SeverityLevelEnum.MEDIUM],
+      });
     });
   });
 });

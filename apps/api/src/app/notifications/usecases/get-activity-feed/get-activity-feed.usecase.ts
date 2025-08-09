@@ -161,6 +161,7 @@ export class GetActivityFeed {
         topicKey: command.topicKey,
         after: command.after,
         before: command.before,
+        severity: command.severity,
       },
       command.page * command.limit,
       command.limit

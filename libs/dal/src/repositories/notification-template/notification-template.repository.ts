@@ -1,4 +1,4 @@
-import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, WorkflowStatusEnum } from '@novu/shared';
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
 import { DalException } from '../../shared';
@@ -319,11 +319,13 @@ export class NotificationTemplateRepository extends BaseRepository<
     environmentId,
     tags,
     critical,
+    severity,
   }: {
     organizationId: string;
     environmentId: string;
     tags?: string[];
     critical?: boolean;
+    severity?: SeverityLevelEnum[];
   }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -331,12 +333,30 @@ export class NotificationTemplateRepository extends BaseRepository<
       active: true,
     };
 
+    const severityCondition: Array<FilterQuery<NotificationTemplateDBModel>> = [];
+    if (severity && severity?.length > 0) {
+      if (severity.includes(SeverityLevelEnum.NONE)) {
+        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: severity } });
+      } else {
+        requestQuery.severity = { $in: severity };
+      }
+    }
+
     if (tags && tags?.length > 0) {
       requestQuery.tags = { $in: tags };
     }
 
     if (critical !== undefined) {
       requestQuery.critical = { $eq: critical };
+    }
+
+    // combine all $or conditions properly
+    const orConditions: Array<FilterQuery<NotificationTemplateDBModel>> = [];
+    if (severityCondition.length > 0) {
+      orConditions.push({ $or: severityCondition });
+    }
+    if (orConditions.length > 0) {
+      requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
     }
 
     const items = await this.MongooseModel.find(requestQuery)

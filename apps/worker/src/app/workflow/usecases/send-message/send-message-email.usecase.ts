@@ -204,6 +204,7 @@ export class SendMessageEmail extends SendMessageBase {
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     let replyToAddress: string | undefined;

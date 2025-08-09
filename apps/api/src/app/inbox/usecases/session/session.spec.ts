@@ -12,6 +12,7 @@ import {
   CommunityUserRepository,
   EnvironmentRepository,
   IntegrationRepository,
+  MessageRepository,
   MessageTemplateRepository,
   NotificationTemplateRepository,
   PreferencesRepository,
@@ -68,6 +69,7 @@ describe('Session', () => {
   let getOrganizationSettingsUsecase: sinon.SinonStubbedInstance<GetOrganizationSettings>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
   let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
+  let messageRepository: sinon.SinonStubbedInstance<MessageRepository>;
 
   beforeEach(() => {
     environmentRepository = sinon.createStubInstance(EnvironmentRepository);
@@ -89,6 +91,7 @@ describe('Session', () => {
     getOrganizationSettingsUsecase = sinon.createStubInstance(GetOrganizationSettings);
     logger = sinon.createStubInstance(PinoLogger);
     featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    messageRepository = sinon.createStubInstance(MessageRepository);
 
     session = new Session(
       environmentRepository as any,
@@ -105,6 +108,7 @@ describe('Session', () => {
       communityUserRepository as any,
       notificationTemplateRepository as any,
       messageTemplateRepository as any,
+      messageRepository as any,
       preferencesRepository as any,
       upsertControlValuesUseCase as any,
       getOrganizationSettingsUsecase as any,

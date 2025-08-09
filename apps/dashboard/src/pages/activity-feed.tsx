@@ -87,7 +87,6 @@ export function ActivityFeed() {
               </TabsTrigger>
             )}
           </TabsList>
-
           <TabsContent value="workflow-runs">
             <ActivityFeedContent contentHeight="h-[calc(100vh-170px)]" />
           </TabsContent>

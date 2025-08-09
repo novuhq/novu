@@ -14,7 +14,7 @@ import {
   MessageRepository,
   OrganizationEntity,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum, JobStatusEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboxNotification } from '../../utils/types';
@@ -83,6 +83,7 @@ describe('SnoozeNotification', () => {
     snoozedUntil: new Date().toISOString(),
     createdAt: new Date().toISOString(),
     channelType: ChannelTypeEnum.IN_APP,
+    severity: SeverityLevelEnum.NONE,
   };
 
   beforeEach(() => {

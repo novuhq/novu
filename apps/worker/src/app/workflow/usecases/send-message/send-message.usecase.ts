@@ -159,6 +159,7 @@ export class SendMessage {
       ...command,
       compileContext: payload,
       bridgeData: bridgeResponse,
+      severity: command.severity,
     });
 
     switch (stepType) {
