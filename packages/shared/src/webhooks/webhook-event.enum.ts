@@ -11,6 +11,10 @@ export enum WebhookEventEnum {
   MESSAGE_SEEN = 'message.seen',
   MESSAGE_READ = 'message.read',
   MESSAGE_UNREAD = 'message.unread',
+  MESSAGE_ARCHIVED = 'message.archived',
+  MESSAGE_UNARCHIVED = 'message.unarchived',
+  MESSAGE_SNOOZED = 'message.snoozed',
+  MESSAGE_UNSNOOZED = 'message.unsnoozed',
 }
 
 export enum WebhookObjectTypeEnum {

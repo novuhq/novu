@@ -80,7 +80,7 @@ export class MarkMessageAs {
       );
       allTraceData.push(...seenTraces);
 
-      if (command.mark.seen !== false) {
+      if (command.mark.seen === true) {
         await this.sendWebhookForMessages(
           updatedMessages,
           WebhookEventEnum.MESSAGE_SEEN,
@@ -90,7 +90,7 @@ export class MarkMessageAs {
       }
     }
 
-    if (command.mark.read != null) {
+    if (command.mark.read !== undefined || command.mark.read !== null) {
       await this.updateServices(command, subscriber, updatedMessages, MarkEnum.READ);
 
       const readTraces = this.prepareTrace(

@@ -402,7 +402,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     markAs: MessagesStatusEnum;
     channel?: ChannelTypeEnum;
     feedIdentifiers?: string[];
-  }): Promise<MessageEntity[]> {
+  }) {
     let feedQuery;
 
     if (feedIdentifiers) {
@@ -485,7 +485,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     messageIds: string[];
     markAs: MessagesStatusEnum;
-  }): Promise<MessageEntity[]> {
+  }) {
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
     await this.update(
@@ -502,16 +502,6 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         $set: updatePayload,
       }
     );
-
-    return this.find({
-      _environmentId: environmentId,
-      _subscriberId: subscriberId,
-      _id: {
-        $in: messageIds.map((id) => {
-          return new Types.ObjectId(id);
-        }),
-      },
-    });
   }
 
   /**
@@ -567,7 +557,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
-  }) {
+  }): Promise<MessageEntity[]> {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
@@ -607,7 +597,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
     };
-  }) {
+  }): Promise<MessageEntity[]> {
     const isFromSeen = from.seen !== undefined;
     const isFromRead = from.read !== undefined;
     const isFromArchived = from.archived !== undefined;
@@ -632,7 +622,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.seen = from.seen;
     }
 
-    await this.updateMessagesStatus({
+    return await this.updateMessagesStatus({
       query,
       ...to,
     });
