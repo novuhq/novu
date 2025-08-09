@@ -26,7 +26,6 @@ import {
   PreviousStepTypeEnum,
   TimeOperatorEnum,
 } from '@novu/shared';
-import { EmailEventStatusEnum } from '@novu/stateless';
 import axios from 'axios';
 import { differenceInDays, differenceInHours, differenceInMinutes, parseISO } from 'date-fns';
 import { decryptApiKey } from '../../encryption';
@@ -161,30 +160,6 @@ export class ConditionsFilter extends Filter {
     const field = filter.stepType;
     const expected = 'true';
     const operator = FieldOperatorEnum.EQUAL;
-
-    if (message?.channel === ChannelTypeEnum.EMAIL) {
-      const count = await this.executionDetailsRepository.count({
-        _jobId: command.job._parentId,
-        _messageId: message._id,
-        _environmentId: command.environmentId,
-        webhookStatus: EmailEventStatusEnum.OPENED,
-      });
-
-      const passed = [PreviousStepTypeEnum.UNREAD, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
-        ? count === 0
-        : count > 0;
-
-      filterProcessingDetails.addCondition({
-        filter: label,
-        field,
-        expected,
-        actual: `${passed}`,
-        operator,
-        passed,
-      });
-
-      return passed;
-    }
 
     const value = [PreviousStepTypeEnum.SEEN, PreviousStepTypeEnum.UNSEEN].includes(filter.stepType)
       ? message.seen
