@@ -86,7 +86,8 @@ export class MarkManyNotificationsAs {
         webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
       }
 
-      if (command.snoozedUntil !== undefined) { // do not change to !== null, as null is a indication of unsnooze
+      if (command.snoozedUntil !== undefined) {
+        // do not change to !== null, as null is a indication of unsnooze
         const eventType = command.snoozedUntil ? WebhookEventEnum.MESSAGE_SNOOZED : WebhookEventEnum.MESSAGE_UNSNOOZED;
         webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
       }
@@ -110,7 +111,7 @@ export class MarkManyNotificationsAs {
     eventType: WebhookEventEnum,
     command: MarkManyNotificationsAsCommand
   ): Promise<{ eventId: string } | undefined>[] {
-    return (updatedMessages.map((message) =>
+    return updatedMessages.map((message) =>
       // biome-ignore lint/style/noNonNullAssertion: <explanation> if statement
       this.sendWebhookMessage!.execute({
         eventType: eventType,

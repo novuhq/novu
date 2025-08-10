@@ -13,8 +13,8 @@ import {
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageEntity, MessageRepository, WebhookObjectTypeEnum } from '@novu/dal';
-import { WebhookEventEnum, WebSocketEventEnum } from '@novu/shared';
+import { MessageEntity, MessageRepository } from '@novu/dal';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';

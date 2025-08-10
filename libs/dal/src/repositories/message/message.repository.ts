@@ -485,7 +485,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     messageIds: string[];
     markAs: MessagesStatusEnum;
-  }) {
+  }): Promise<MessageEntity[]> {
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
     await this.update(
@@ -502,6 +502,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         $set: updatePayload,
       }
     );
+
+    return this.find({
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: { $in: messageIds.map((id) => new Types.ObjectId(id)) },
+    });
   }
 
   /**
