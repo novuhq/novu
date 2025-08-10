@@ -506,11 +506,32 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
-    await this.update(updateQuery, {
-      $set: updatePayload,
-    });
+    // First find the documents that will be updated (before modification)
+    const documentsToUpdate = await this.find(updateQuery);
 
-    return this.find(updateQuery);
+    if (documentsToUpdate.length === 0) {
+      return [];
+    }
+
+    // Extract IDs for targeted update
+    const documentIds = documentsToUpdate.map((doc) => doc._id);
+
+    // Update using IDs to ensure we update exactly what we found
+    await this.update(
+      {
+        _id: { $in: documentIds },
+        _environmentId: environmentId,
+      },
+      {
+        $set: updatePayload,
+      }
+    );
+
+    // Return the documents with the update payload applied
+    return documentsToUpdate.map((doc) => ({
+      ...doc,
+      ...updatePayload,
+    }));
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {
