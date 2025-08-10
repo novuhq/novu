@@ -136,11 +136,11 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
         month: 'short',
         day: 'numeric',
       }),
-      email: dataPoint.email || Math.floor(Math.random() * 100),
-      push: dataPoint.push || Math.floor(Math.random() * 100),
-      sms: dataPoint.sms || Math.floor(Math.random() * 100),
-      inApp: dataPoint.inApp || Math.floor(Math.random() * 100),
-      chat: dataPoint.chat || Math.floor(Math.random() * 100),
+      email: dataPoint.email,
+      push: dataPoint.push,
+      sms: dataPoint.sms,
+      inApp: dataPoint.inApp,
+      chat: dataPoint.chat,
       timestamp: dataPoint.timestamp,
     }));
   }, [data]);
