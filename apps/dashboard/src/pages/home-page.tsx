@@ -1,6 +1,11 @@
+import { useOrganization } from '@clerk/clerk-react';
+import { type OrganizationResource } from '@clerk/types';
+import { ApiServiceLevelEnum, FeatureNameEnum, type GetSubscriptionDto, getFeatureForTierAsNumber } from '@novu/shared';
+import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { ReactElement, useEffect, useMemo } from 'react';
+import { ReactElement, useEffect, useMemo, useState } from 'react';
 import { RiBookletFill, RiBookmark2Fill, RiGroup2Fill, RiListCheck3 } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import {
   type ActiveSubscribersDataPoint,
   type AvgMessagesPerSubscriberDataPoint,
@@ -21,13 +26,83 @@ import { TrendLineUp } from '../components/icons/trend-line-up';
 import { InteractionTrendChart } from '../components/interaction-trend-chart';
 import { PageMeta } from '../components/page-meta';
 import { AnalyticsCard } from '../components/primitives/analytics-card';
+import { Badge } from '../components/primitives/badge';
+import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
 import { Separator } from '../components/primitives/separator';
+import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../components/primitives/tooltip';
 import { ProgressSection } from '../components/welcome/progress-section';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { WorkflowsByVolume } from '../components/workflows-by-volume';
+import { IS_SELF_HOSTED } from '../config';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
+import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
+import { ROUTES } from '../utils/routes';
 import { TelemetryEvent } from '../utils/telemetry';
+
+// Home page specific date range options (excluding 24h)
+const HOME_PAGE_DATE_RANGE_OPTIONS = [
+  { value: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
+  { value: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },
+  { value: '90d', label: 'Last 90 days', ms: 90 * 24 * 60 * 60 * 1000 },
+];
+
+function buildHomePageDateFilters({
+  organization,
+  apiServiceLevel,
+}: {
+  organization: OrganizationResource;
+  apiServiceLevel?: ApiServiceLevelEnum;
+}) {
+  const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
+    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+    IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : apiServiceLevel || ApiServiceLevelEnum.FREE,
+    true
+  );
+
+  return HOME_PAGE_DATE_RANGE_OPTIONS.map((option) => {
+    const isLegacyFreeTier =
+      apiServiceLevel === ApiServiceLevelEnum.FREE && organization && organization.createdAt < new Date('2025-02-28');
+
+    // legacy free can go up to 30 days
+    const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
+    const maxRetentionMs = isLegacyFreeTier ? legacyFreeMaxRetentionMs : maxActivityFeedRetentionMs;
+
+    return {
+      disabled: option.ms > maxRetentionMs,
+      label: option.label,
+      value: option.value,
+    };
+  });
+}
+
+function getHomePageDefaultDateRange({
+  subscription,
+  organization,
+}: Partial<{
+  subscription: GetSubscriptionDto | null;
+  organization: OrganizationResource | null;
+}>) {
+  if (!organization || !subscription) {
+    return '30d';
+  }
+
+  // Check if 30d is available for this user's tier
+  const availableFilters = buildHomePageDateFilters({
+    organization,
+    apiServiceLevel: subscription.apiServiceLevel,
+  });
+
+  const thirtyDayOption = availableFilters.find((option) => option.value === '30d' && !option.disabled);
+
+  // If 30d is available, use it; otherwise fall back to the first available option
+  if (thirtyDayOption) {
+    return '30d';
+  }
+
+  const firstAvailable = availableFilters.find((option) => !option.disabled);
+  return firstAvailable?.value ?? '7d';
+}
 
 const welcomeMessages = [
   'Good to have you back 👋',
@@ -49,6 +124,26 @@ const welcomeMessages = [
 
 const subtitle = "Everything's wired up so your subscribers get the right update, right on time.";
 
+const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Link
+          to={ROUTES.SETTINGS_BILLING + '?utm_source=home-page-date-filter'}
+          className="block flex items-center justify-center transition-all duration-200 hover:scale-105"
+        >
+          <Badge color="purple" size="sm" variant="lighter">
+            Upgrade
+          </Badge>
+        </Link>
+      </TooltipTrigger>
+      <TooltipPortal>
+        <TooltipContent>Upgrade your plan to unlock extended retention periods</TooltipContent>
+      </TooltipPortal>
+    </Tooltip>
+  );
+};
+
 function formatNumber(num: number): string {
   if (num >= 1000000) {
     return `${(num / 1000000).toFixed(1)}M`;
@@ -67,7 +162,10 @@ function calculatePercentageChange(current: number, previous: number): number {
 }
 
 function WelcomeHeader() {
-  const randomGreeting = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
+  const randomGreeting = useMemo(
+    () => welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)],
+    [] // Empty dependency array ensures this only runs once
+  );
 
   return (
     <div className="flex flex-col gap-0.5 items-start justify-center">
@@ -88,17 +186,29 @@ type TopLevelStatsProps = {
   percentageChange: number;
   trendDirection: 'up' | 'down' | 'neutral';
   isLoading?: boolean;
+  dateFilter?: React.ReactNode;
+  periodLabel?: string;
 };
 
-function TopLevelStats({ value, percentageChange, trendDirection, isLoading = false }: TopLevelStatsProps) {
+function TopLevelStats({
+  value,
+  percentageChange,
+  trendDirection,
+  isLoading = false,
+  dateFilter,
+  periodLabel = 'selected period',
+}: TopLevelStatsProps) {
   if (isLoading) {
     return (
       <div className="flex flex-col gap-2">
-        <div className="flex items-end gap-1">
-          <div className="h-[52px] w-32 bg-gray-200 animate-pulse rounded"></div>
-          <div className="pb-2">
-            <div className="h-4 w-12 bg-gray-200 animate-pulse rounded-full"></div>
+        <div className="flex items-end justify-between">
+          <div className="flex items-end gap-1">
+            <div className="h-[52px] w-32 bg-gray-200 animate-pulse rounded"></div>
+            <div className="pb-2">
+              <div className="h-4 w-12 bg-gray-200 animate-pulse rounded-full"></div>
+            </div>
           </div>
+          {dateFilter && <div className="pb-2">{dateFilter}</div>}
         </div>
         <div className="h-4 w-80 bg-gray-200 animate-pulse rounded"></div>
       </div>
@@ -136,18 +246,21 @@ function TopLevelStats({ value, percentageChange, trendDirection, isLoading = fa
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-end gap-1">
-        <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">{value}</h2>
-        <div className="pb-2">
-          <div
-            className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
-          >
-            {trendStyles.icon}
-            <span className="text-subheading-2xs uppercase">{formatPercentage(percentageChange)}%</span>
+      <div className="flex items-end justify-between">
+        <div className="flex items-end gap-1">
+          <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">{value}</h2>
+          <div className="pb-2">
+            <div
+              className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
+            >
+              {trendStyles.icon}
+              <span className="text-subheading-2xs uppercase">{formatPercentage(percentageChange)}%</span>
+            </div>
           </div>
         </div>
+        {dateFilter && <div className="pb-2">{dateFilter}</div>}
       </div>
-      <p className="text-sm text-[#99a0ae]">Workflow runs during the selected period.</p>
+      <p className="text-sm text-[#99a0ae]">Workflow runs during the {periodLabel}.</p>
     </div>
   );
 }
@@ -204,13 +317,61 @@ const learnResources: Resource[] = [
 
 export function HomePage(): ReactElement {
   const telemetry = useTelemetry();
+  const { organization } = useOrganization();
+  const { subscription } = useFetchSubscription();
+
+  const defaultHomePageDateRange = useMemo(
+    () =>
+      getHomePageDefaultDateRange({
+        organization,
+        subscription,
+      }),
+    [organization, subscription]
+  );
+
+  const [selectedDateRange, setSelectedDateRange] = useState<string>(defaultHomePageDateRange);
+
+  useEffect(() => {
+    setSelectedDateRange(defaultHomePageDateRange);
+  }, [defaultHomePageDateRange]);
+
+  const homePageDateFilterOptions = useMemo(() => {
+    const missingSubscription = !subscription && !IS_SELF_HOSTED;
+
+    if (!organization || missingSubscription) {
+      return [];
+    }
+
+    return buildHomePageDateFilters({
+      organization,
+      apiServiceLevel: subscription?.apiServiceLevel,
+    }).map((option) => ({
+      ...option,
+      icon: option.disabled ? UpgradeCtaIcon : undefined,
+    }));
+  }, [organization, subscription]);
 
   const chartsDateRange = useMemo(() => {
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    return {
-      createdAtGte: thirtyDaysAgo.toISOString(),
+    const getDateFromRange = (range: string) => {
+      const rangeMs =
+        {
+          '7d': 7 * 24 * 60 * 60 * 1000,
+          '30d': 30 * 24 * 60 * 60 * 1000,
+          '90d': 90 * 24 * 60 * 60 * 1000,
+        }[range] || 30 * 24 * 60 * 60 * 1000;
+
+      return new Date(Date.now() - rangeMs);
     };
-  }, []);
+
+    return {
+      createdAtGte: getDateFromRange(selectedDateRange).toISOString(),
+    };
+  }, [selectedDateRange]);
+
+  const selectedPeriodLabel = useMemo(() => {
+    const option = homePageDateFilterOptions.find((opt) => opt.value === selectedDateRange);
+    return option?.label?.toLowerCase() || 'selected period';
+  }, [selectedDateRange, homePageDateFilterOptions]);
 
   const {
     charts,
@@ -406,6 +567,21 @@ export function HomePage(): ReactElement {
               percentageChange={workflowRunsMetricData.percentageChange}
               trendDirection={workflowRunsMetricData.trendDirection}
               isLoading={isChartsLoading}
+              periodLabel={selectedPeriodLabel}
+              dateFilter={
+                <FacetedFormFilter
+                  size="small"
+                  type="single"
+                  hideClear
+                  hideSearch
+                  hideTitle
+                  title="Time period"
+                  options={homePageDateFilterOptions}
+                  selected={[selectedDateRange]}
+                  onSelect={(values) => setSelectedDateRange(values[0])}
+                  icon={CalendarIcon}
+                />
+              }
             />
           </motion.div>
 
