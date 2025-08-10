@@ -40,9 +40,6 @@ export class WebhookMessageFailedDto {
 export class WebhookPreferenceDto {
   @ApiProperty({ description: 'Current preference state' })
   object: InboxPreference;
-
-  @ApiProperty({ description: 'Previous state of the preference' })
-  previousObject: InboxPreference;
 }
 
 export const webhookEvents = [

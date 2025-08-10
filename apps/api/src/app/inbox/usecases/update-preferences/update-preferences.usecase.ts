@@ -68,12 +68,7 @@ export class UpdatePreferences {
       workflowId = workflow._id;
     }
 
-    let currentPreference: InboxPreference | null = null;
     let newPreference: InboxPreference | null = null;
-
-    if (this.sendWebhookMessage) {
-      currentPreference = await this.findPreference(command, subscriber);
-    }
 
     await this.updateSubscriberPreference(command, subscriber, workflowId);
 
@@ -85,7 +80,6 @@ export class UpdatePreferences {
         objectType: WebhookObjectTypeEnum.PREFERENCE,
         payload: {
           object: newPreference,
-          previousObject: currentPreference || undefined,
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
