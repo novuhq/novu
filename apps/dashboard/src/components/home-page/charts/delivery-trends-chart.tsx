@@ -1,11 +1,14 @@
-import { useMemo } from 'react';
+import { StepTypeEnum } from '@novu/shared';
+import { useCallback, useMemo } from 'react';
 import { Bar, BarChart, XAxis } from 'recharts';
-import { type ChartDataPoint } from '@/api/activity';
-import { StepTypeEnum } from '@/utils/enums';
-import { STEP_TYPE_TO_ICON } from './icons/utils';
-import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
-import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
-import { Skeleton } from './primitives/skeleton';
+import { type ChartDataPoint } from '../../../api/activity';
+import { STEP_TYPE_TO_ICON } from '../../icons/utils';
+import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
+import { Skeleton } from '../../primitives/skeleton';
+import { generateDummyDeliveryData } from './chart-dummy-data';
+import { type DeliveryChartData } from './chart-types';
+import { ChartWrapper } from './chart-wrapper';
 
 const chartConfig = {
   email: {
@@ -145,53 +148,76 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
     }));
   }, [data]);
 
-  if (isLoading) {
-    return <DeliveryTrendsChartSkeleton />;
-  }
+  const hasDataChecker = useCallback((data: DeliveryChartData[]) => {
+    return data.some(
+      (dataPoint) =>
+        (dataPoint.email || 0) > 0 ||
+        (dataPoint.push || 0) > 0 ||
+        (dataPoint.sms || 0) > 0 ||
+        (dataPoint.inApp || 0) > 0 ||
+        (dataPoint.chat || 0) > 0
+    );
+  }, []);
 
-  const firstDate = chartData?.[0]?.date || '';
-  const lastDate = chartData?.[chartData.length - 1]?.date || '';
+  const renderChart = useCallback((data: DeliveryChartData[], includeTooltip = true) => {
+    const firstDate = data[0]?.date || '';
+    const lastDate = data[data.length - 1]?.date || '';
+
+    return (
+      <ChartContainer config={chartConfig} className="h-[160px] w-full">
+        <BarChart accessibilityLayer data={data} barCategoryGap={5}>
+          <XAxis
+            dataKey="date"
+            tickLine={false}
+            tickMargin={10}
+            axisLine={false}
+            tick={{ fontSize: 10, fill: '#99a0ae' }}
+            ticks={[firstDate, lastDate]}
+          />
+          {includeTooltip && <ChartTooltip cursor={false} content={<DeliveryTooltip />} />}
+          <Bar
+            dataKey="email"
+            stackId="a"
+            barSize={20}
+            fill="#8b5cf6"
+            radius={[3, 3, 6, 6]}
+            stroke="#ffffff"
+            strokeWidth={2}
+          />
+          <Bar dataKey="push" stackId="a" barSize={20} fill="#06b6d4" radius={3} stroke="#ffffff" strokeWidth={2} />
+          <Bar dataKey="sms" stackId="a" barSize={20} fill="#facc15" radius={3} stroke="#ffffff" strokeWidth={2} />
+          <Bar
+            dataKey="inApp"
+            stackId="a"
+            barSize={20}
+            fill="#f97316"
+            radius={[6, 6, 3, 3]}
+            stroke="#ffffff"
+            strokeWidth={2}
+          />
+        </BarChart>
+      </ChartContainer>
+    );
+  }, []);
+
+  const renderEmptyState = useCallback(
+    (dummyData: DeliveryChartData[]) => {
+      return renderChart(dummyData, false);
+    },
+    [renderChart]
+  );
 
   return (
-    <Card className="shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">Delivery trend</CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
-        <ChartContainer config={chartConfig} className="h-[160px] w-full">
-          <BarChart accessibilityLayer data={chartData} barCategoryGap={5}>
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tick={{ fontSize: 10, fill: '#99a0ae' }}
-              ticks={[firstDate, lastDate]}
-            />
-            <ChartTooltip cursor={false} content={<DeliveryTooltip />} />
-            <Bar
-              dataKey="email"
-              stackId="a"
-              barSize={20}
-              fill="#8b5cf6"
-              radius={[3, 3, 6, 6]}
-              stroke="#ffffff"
-              strokeWidth={2}
-            />
-            <Bar dataKey="push" stackId="a" barSize={20} fill="#06b6d4" radius={3} stroke="#ffffff" strokeWidth={2} />
-            <Bar dataKey="sms" stackId="a" barSize={20} fill="#facc15" radius={3} stroke="#ffffff" strokeWidth={2} />
-            <Bar
-              dataKey="inApp"
-              stackId="a"
-              barSize={20}
-              fill="#f97316"
-              radius={[6, 6, 3, 3]}
-              stroke="#ffffff"
-              strokeWidth={2}
-            />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
+    <ChartWrapper
+      title="Delivery trend"
+      data={chartData}
+      isLoading={isLoading}
+      hasDataChecker={hasDataChecker}
+      loadingSkeleton={<DeliveryTrendsChartSkeleton />}
+      dummyDataGenerator={generateDummyDeliveryData}
+      emptyStateRenderer={renderEmptyState}
+    >
+      {renderChart}
+    </ChartWrapper>
   );
 }

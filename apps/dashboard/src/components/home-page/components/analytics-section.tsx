@@ -1,0 +1,64 @@
+import { RiGroup2Fill } from 'react-icons/ri';
+import { InboxBellFilled } from '../../icons/inbox-bell-filled';
+import { StackedDots } from '../../icons/stacked-dots';
+import { TargetArrow } from '../../icons/target-arrow';
+import { AnalyticsCard } from '../../primitives/analytics-card';
+import type { MetricData } from '../hooks/use-metric-data';
+
+type AnalyticsSectionProps = {
+  messagesDeliveredData: MetricData;
+  activeSubscribersData: MetricData;
+  avgMessagesPerSubscriberData: MetricData;
+  isLoading: boolean;
+};
+
+export function AnalyticsSection({
+  messagesDeliveredData,
+  activeSubscribersData,
+  avgMessagesPerSubscriberData,
+  isLoading,
+}: AnalyticsSectionProps) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
+      <AnalyticsCard
+        icon={InboxBellFilled}
+        value={messagesDeliveredData.value}
+        title="Messages delivered"
+        description={messagesDeliveredData.description}
+        percentageChange={messagesDeliveredData.percentageChange}
+        trendDirection={messagesDeliveredData.trendDirection}
+        isLoading={isLoading}
+      />
+
+      <AnalyticsCard
+        icon={RiGroup2Fill}
+        value={activeSubscribersData.value}
+        title="Active subscribers"
+        description={activeSubscribersData.description}
+        percentageChange={activeSubscribersData.percentageChange}
+        trendDirection={activeSubscribersData.trendDirection}
+        isLoading={isLoading}
+      />
+
+      <AnalyticsCard
+        icon={TargetArrow}
+        value="78%"
+        title="Interaction rate"
+        description="+10% compared to prior 30 days"
+        percentageChange={3}
+        trendDirection="up"
+        isLoading={isLoading}
+      />
+
+      <AnalyticsCard
+        icon={StackedDots}
+        value={avgMessagesPerSubscriberData.value}
+        title="Avg. Messages per subscriber"
+        description={avgMessagesPerSubscriberData.description}
+        percentageChange={avgMessagesPerSubscriberData.percentageChange}
+        trendDirection={avgMessagesPerSubscriberData.trendDirection}
+        isLoading={isLoading}
+      />
+    </div>
+  );
+}

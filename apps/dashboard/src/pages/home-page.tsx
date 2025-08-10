@@ -1,567 +1,75 @@
 import { useOrganization } from '@clerk/clerk-react';
-import { type OrganizationResource } from '@clerk/types';
-import { ApiServiceLevelEnum, FeatureNameEnum, type GetSubscriptionDto, getFeatureForTierAsNumber } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
-import { ReactElement, useEffect, useMemo, useState } from 'react';
-import { RiBookletFill, RiBookmark2Fill, RiGroup2Fill, RiListCheck3 } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
-import {
-  type ActiveSubscribersDataPoint,
-  type AvgMessagesPerSubscriberDataPoint,
-  type ChartDataPoint,
-  type InteractionTrendDataPoint,
-  type MessagesDeliveredDataPoint,
-  ReportTypeEnum,
-  type WorkflowRunsMetricDataPoint,
-  type WorkflowVolumeDataPoint,
-} from '../api/activity';
+import { ReactElement, useEffect } from 'react';
+import { ReportTypeEnum } from '../api/activity';
 import { DashboardLayout } from '../components/dashboard-layout';
-import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
-import { InboxBellFilled } from '../components/icons/inbox-bell-filled';
-import { StackedDots } from '../components/icons/stacked-dots';
-import { TargetArrow } from '../components/icons/target-arrow';
-import { TrendLineDown } from '../components/icons/trend-line-down';
-import { TrendLineUp } from '../components/icons/trend-line-up';
-import { InteractionTrendChart } from '../components/interaction-trend-chart';
+import {
+  ANIMATION_VARIANTS,
+  AnalyticsSection,
+  CHART_CONFIG,
+  ChartsSection,
+  ResourcesSection,
+  TopLevelStats,
+  UpgradeCtaIcon,
+  useHomepageDateFilter,
+  useMetricData,
+  WelcomeHeader,
+} from '../components/home-page';
 import { PageMeta } from '../components/page-meta';
-import { AnalyticsCard } from '../components/primitives/analytics-card';
-import { Badge } from '../components/primitives/badge';
 import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
 import { Separator } from '../components/primitives/separator';
-import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '../components/primitives/tooltip';
-import { ProgressSection } from '../components/welcome/progress-section';
-import { Resource, ResourcesList } from '../components/welcome/resources-list';
-import { WorkflowsByVolume } from '../components/workflows-by-volume';
-import { IS_SELF_HOSTED } from '../config';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
-import { ROUTES } from '../utils/routes';
 import { TelemetryEvent } from '../utils/telemetry';
-
-// Home page specific date range options (excluding 24h)
-const HOME_PAGE_DATE_RANGE_OPTIONS = [
-  { value: '7d', label: 'Last 7 days', ms: 7 * 24 * 60 * 60 * 1000 },
-  { value: '30d', label: 'Last 30 days', ms: 30 * 24 * 60 * 60 * 1000 },
-  { value: '90d', label: 'Last 90 days', ms: 90 * 24 * 60 * 60 * 1000 },
-];
-
-function buildHomePageDateFilters({
-  organization,
-  apiServiceLevel,
-}: {
-  organization: OrganizationResource;
-  apiServiceLevel?: ApiServiceLevelEnum;
-}) {
-  const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
-    FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
-    IS_SELF_HOSTED ? ApiServiceLevelEnum.UNLIMITED : apiServiceLevel || ApiServiceLevelEnum.FREE,
-    true
-  );
-
-  return HOME_PAGE_DATE_RANGE_OPTIONS.map((option) => {
-    const isLegacyFreeTier =
-      apiServiceLevel === ApiServiceLevelEnum.FREE && organization && organization.createdAt < new Date('2025-02-28');
-
-    // legacy free can go up to 30 days
-    const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
-    const maxRetentionMs = isLegacyFreeTier ? legacyFreeMaxRetentionMs : maxActivityFeedRetentionMs;
-
-    return {
-      disabled: option.ms > maxRetentionMs,
-      label: option.label,
-      value: option.value,
-    };
-  });
-}
-
-function getHomePageDefaultDateRange({
-  subscription,
-  organization,
-}: Partial<{
-  subscription: GetSubscriptionDto | null;
-  organization: OrganizationResource | null;
-}>) {
-  if (!organization || !subscription) {
-    return '30d';
-  }
-
-  // Check if 30d is available for this user's tier
-  const availableFilters = buildHomePageDateFilters({
-    organization,
-    apiServiceLevel: subscription.apiServiceLevel,
-  });
-
-  const thirtyDayOption = availableFilters.find((option) => option.value === '30d' && !option.disabled);
-
-  // If 30d is available, use it; otherwise fall back to the first available option
-  if (thirtyDayOption) {
-    return '30d';
-  }
-
-  const firstAvailable = availableFilters.find((option) => !option.disabled);
-  return firstAvailable?.value ?? '7d';
-}
-
-const welcomeMessages = [
-  'Good to have you back 👋',
-  'Welcome back, superstar! ⭐',
-  'Hey there! 🚀',
-  'Great to see you again! 🎉',
-  'Hello, notification ninja! 🥷',
-  'Welcome back, creator! ✨',
-  "Look who's back! 🌟",
-  'Ready to make some magic happen? 🪄',
-  'The notification master returns! 🎯',
-  'Welcome aboard, captain! ⚓',
-  'Back in action, legend! 💪',
-  'Your dashboard awaits, chief! 👑',
-  'Let the notifications flow! 🌊',
-  'Welcome to your command center! 🎛️',
-  'Ready to rock and roll? 🎸',
-];
-
-const subtitle = "Everything's wired up so your subscribers get the right update, right on time.";
-
-const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={ROUTES.SETTINGS_BILLING + '?utm_source=home-page-date-filter'}
-          className="block flex items-center justify-center transition-all duration-200 hover:scale-105"
-        >
-          <Badge color="purple" size="sm" variant="lighter">
-            Upgrade
-          </Badge>
-        </Link>
-      </TooltipTrigger>
-      <TooltipPortal>
-        <TooltipContent>Upgrade your plan to unlock extended retention periods</TooltipContent>
-      </TooltipPortal>
-    </Tooltip>
-  );
-};
-
-function formatNumber(num: number): string {
-  if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
-  }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`;
-  }
-
-  return num.toLocaleString();
-}
-
-function calculatePercentageChange(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-
-  return ((current - previous) / previous) * 100;
-}
-
-function WelcomeHeader() {
-  const randomGreeting = useMemo(
-    () => welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)],
-    [] // Empty dependency array ensures this only runs once
-  );
-
-  return (
-    <div className="flex flex-col gap-0.5 items-start justify-center">
-      <div className="text-label-xl text-text-strong">
-        <p>{randomGreeting}</p>
-      </div>
-      <div className="flex flex-col items-start justify-start w-full">
-        <div className="text-label-md text-text-soft">
-          <p>{subtitle}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-type TopLevelStatsProps = {
-  value: string;
-  percentageChange: number;
-  trendDirection: 'up' | 'down' | 'neutral';
-  isLoading?: boolean;
-  dateFilter?: React.ReactNode;
-  periodLabel?: string;
-};
-
-function TopLevelStats({
-  value,
-  percentageChange,
-  trendDirection,
-  isLoading = false,
-  dateFilter,
-  periodLabel = 'selected period',
-}: TopLevelStatsProps) {
-  if (isLoading) {
-    return (
-      <div className="flex flex-col gap-2">
-        <div className="flex items-end justify-between">
-          <div className="flex items-end gap-1">
-            <div className="h-[52px] w-32 bg-gray-200 animate-pulse rounded"></div>
-            <div className="pb-2">
-              <div className="h-4 w-12 bg-gray-200 animate-pulse rounded-full"></div>
-            </div>
-          </div>
-          {dateFilter && <div className="pb-2">{dateFilter}</div>}
-        </div>
-        <div className="h-4 w-80 bg-gray-200 animate-pulse rounded"></div>
-      </div>
-    );
-  }
-
-  const formatPercentage = (percentage: number) => {
-    return percentage < 1 ? '<1' : Math.round(percentage).toString();
-  };
-
-  const getTrendStyles = () => {
-    switch (trendDirection) {
-      case 'up':
-        return {
-          bgColor: 'bg-green-100',
-          textColor: 'text-green-600',
-          icon: <TrendLineUp />,
-        };
-      case 'down':
-        return {
-          bgColor: 'bg-red-100',
-          textColor: 'text-red-600',
-          icon: <TrendLineDown />,
-        };
-      default:
-        return {
-          bgColor: 'bg-gray-100',
-          textColor: 'text-gray-600',
-          icon: <TrendLineUp />,
-        };
-    }
-  };
-
-  const trendStyles = getTrendStyles();
-
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-end justify-between">
-        <div className="flex items-end gap-1">
-          <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">{value}</h2>
-          <div className="pb-2">
-            <div
-              className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
-            >
-              {trendStyles.icon}
-              <span className="text-subheading-2xs uppercase">{formatPercentage(percentageChange)}%</span>
-            </div>
-          </div>
-        </div>
-        {dateFilter && <div className="pb-2">{dateFilter}</div>}
-      </div>
-      <p className="text-sm text-[#99a0ae]">Workflow runs during the {periodLabel}.</p>
-    </div>
-  );
-}
-
-const helpfulResources: Resource[] = [
-  {
-    title: 'Documentation',
-    image: 'blog.svg',
-    url: 'https://docs.novu.co/',
-  },
-  {
-    title: 'Join our community on Discord',
-    image: 'discord.svg',
-    url: 'https://discord.gg/novu',
-  },
-  {
-    title: 'See our code on GitHub',
-    image: 'git.svg',
-    url: 'https://github.com/novuhq/novu',
-  },
-  {
-    title: 'Security & Compliance',
-    image: 'security.svg',
-    url: 'https://trust.novu.co/',
-  },
-];
-
-const learnResources: Resource[] = [
-  {
-    title: 'Manage Subscribers',
-    duration: '4m read',
-    image: 'subscribers.svg',
-    url: 'https://docs.novu.co/platform/concepts/subscribers?utm_source=novu.co&utm_medium=welcome-page',
-  },
-  {
-    title: 'Topics',
-    duration: '5m read',
-    image: 'topics.svg',
-    url: 'https://docs.novu.co/platform/concepts/topics?utm_source=novu.co&utm_medium=welcome-page',
-  },
-  {
-    title: 'Code First Workflows',
-    duration: '4m read',
-    image: 'code-first.svg',
-    url: 'https://docs.novu.co/framework/introduction?utm_source=novu.co&utm_medium=welcome-page',
-  },
-  {
-    title: 'Digest Engine',
-    duration: '3m read',
-    image: 'digest engine-1.svg',
-    url: 'https://docs.novu.co/platform/workflow/digest?utm_source=novu.co&utm_medium=welcome-page',
-  },
-];
 
 export function HomePage(): ReactElement {
   const telemetry = useTelemetry();
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
 
-  const defaultHomePageDateRange = useMemo(
-    () =>
-      getHomePageDefaultDateRange({
-        organization,
-        subscription,
-      }),
-    [organization, subscription]
-  );
-
-  const [selectedDateRange, setSelectedDateRange] = useState<string>(defaultHomePageDateRange);
-
-  useEffect(() => {
-    setSelectedDateRange(defaultHomePageDateRange);
-  }, [defaultHomePageDateRange]);
-
-  const homePageDateFilterOptions = useMemo(() => {
-    const missingSubscription = !subscription && !IS_SELF_HOSTED;
-
-    if (!organization || missingSubscription) {
-      return [];
-    }
-
-    return buildHomePageDateFilters({
+  const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange, selectedPeriodLabel } =
+    useHomepageDateFilter({
       organization,
-      apiServiceLevel: subscription?.apiServiceLevel,
-    }).map((option) => ({
-      ...option,
-      icon: option.disabled ? UpgradeCtaIcon : undefined,
-    }));
-  }, [organization, subscription]);
-
-  const chartsDateRange = useMemo(() => {
-    const getDateFromRange = (range: string) => {
-      const rangeMs =
-        {
-          '7d': 7 * 24 * 60 * 60 * 1000,
-          '30d': 30 * 24 * 60 * 60 * 1000,
-          '90d': 90 * 24 * 60 * 60 * 1000,
-        }[range] || 30 * 24 * 60 * 60 * 1000;
-
-      return new Date(Date.now() - rangeMs);
-    };
-
-    return {
-      createdAtGte: getDateFromRange(selectedDateRange).toISOString(),
-    };
-  }, [selectedDateRange]);
-
-  const selectedPeriodLabel = useMemo(() => {
-    const option = homePageDateFilterOptions.find((opt) => opt.value === selectedDateRange);
-    return option?.label?.toLowerCase() || 'selected period';
-  }, [selectedDateRange, homePageDateFilterOptions]);
+      subscription,
+      upgradeCtaIcon: UpgradeCtaIcon,
+    });
 
   const {
     charts,
     isLoading: isChartsLoading,
     error: chartsError,
   } = useFetchCharts({
-    reportType: [
-      ReportTypeEnum.DELIVERY_TREND,
-      ReportTypeEnum.INTERACTION_TREND,
-      ReportTypeEnum.WORKFLOW_BY_VOLUME,
-      ReportTypeEnum.MESSAGES_DELIVERED,
-      ReportTypeEnum.ACTIVE_SUBSCRIBERS,
-      ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER,
-      ReportTypeEnum.WORKFLOW_RUNS_METRIC,
-    ],
+    reportType: CHART_CONFIG.reportTypes.map((type) => ReportTypeEnum[type]),
     createdAtGte: chartsDateRange.createdAtGte,
     enabled: true,
-    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
-    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
+    refetchInterval: CHART_CONFIG.refetchInterval,
+    staleTime: CHART_CONFIG.staleTime,
   });
 
-  const messagesDeliveredData = useMemo(() => {
-    const messagesData = charts?.[ReportTypeEnum.MESSAGES_DELIVERED] as MessagesDeliveredDataPoint;
-    if (!messagesData) {
-      return {
-        value: '0',
-        description: 'No data available',
-        percentageChange: 0,
-        trendDirection: 'neutral' as const,
-      };
-    }
-
-    const change = messagesData.currentPeriod - messagesData.previousPeriod;
-    const absChange = Math.abs(change);
-    const formattedChange = formatNumber(absChange);
-    const percentageChange = calculatePercentageChange(messagesData.currentPeriod, messagesData.previousPeriod);
-
-    let trendDirection: 'up' | 'down' | 'neutral';
-    if (percentageChange > 0) {
-      trendDirection = 'up';
-    } else if (percentageChange < 0) {
-      trendDirection = 'down';
-    } else {
-      trendDirection = 'neutral';
-    }
-
-    return {
-      value: formatNumber(messagesData.currentPeriod),
-      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
-      percentageChange: Math.abs(percentageChange),
-      trendDirection,
-    };
-  }, [charts]);
-
-  const activeSubscribersData = useMemo(() => {
-    const subscribersData = charts?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS] as ActiveSubscribersDataPoint;
-    if (!subscribersData) {
-      return {
-        value: '0',
-        description: 'No data available',
-        percentageChange: 0,
-        trendDirection: 'neutral' as const,
-      };
-    }
-
-    const change = subscribersData.currentPeriod - subscribersData.previousPeriod;
-    const absChange = Math.abs(change);
-    const formattedChange = formatNumber(absChange);
-    const percentageChange = calculatePercentageChange(subscribersData.currentPeriod, subscribersData.previousPeriod);
-
-    let trendDirection: 'up' | 'down' | 'neutral';
-    if (percentageChange > 0) {
-      trendDirection = 'up';
-    } else if (percentageChange < 0) {
-      trendDirection = 'down';
-    } else {
-      trendDirection = 'neutral';
-    }
-
-    return {
-      value: formatNumber(subscribersData.currentPeriod),
-      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
-      percentageChange: Math.abs(percentageChange),
-      trendDirection,
-    };
-  }, [charts]);
-
-  const avgMessagesPerSubscriberData = useMemo(() => {
-    const avgMessagesData = charts?.[ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER] as AvgMessagesPerSubscriberDataPoint;
-    if (!avgMessagesData) {
-      return {
-        value: '0',
-        description: 'No data available',
-        percentageChange: 0,
-        trendDirection: 'neutral' as const,
-      };
-    }
-
-    const change = avgMessagesData.currentPeriod - avgMessagesData.previousPeriod;
-    const absChange = Math.abs(change);
-    const formattedChange = absChange.toFixed(1);
-    const percentageChange = calculatePercentageChange(avgMessagesData.currentPeriod, avgMessagesData.previousPeriod);
-
-    let trendDirection: 'up' | 'down' | 'neutral';
-    if (percentageChange > 0) {
-      trendDirection = 'up';
-    } else if (percentageChange < 0) {
-      trendDirection = 'down';
-    } else {
-      trendDirection = 'neutral';
-    }
-
-    return {
-      value: avgMessagesData.currentPeriod.toFixed(1),
-      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
-      percentageChange: Math.abs(percentageChange),
-      trendDirection,
-    };
-  }, [charts]);
-
-  const workflowRunsMetricData = useMemo(() => {
-    const workflowRunsData = charts?.[ReportTypeEnum.WORKFLOW_RUNS_METRIC] as WorkflowRunsMetricDataPoint;
-    if (!workflowRunsData) {
-      return {
-        value: '0',
-        description: 'No data available',
-        percentageChange: 0,
-        trendDirection: 'neutral' as const,
-      };
-    }
-
-    const change = workflowRunsData.currentPeriod - workflowRunsData.previousPeriod;
-    const absChange = Math.abs(change);
-    const formattedChange = formatNumber(absChange);
-    const percentageChange = calculatePercentageChange(workflowRunsData.currentPeriod, workflowRunsData.previousPeriod);
-
-    let trendDirection: 'up' | 'down' | 'neutral';
-    if (percentageChange > 0) {
-      trendDirection = 'up';
-    } else if (percentageChange < 0) {
-      trendDirection = 'down';
-    } else {
-      trendDirection = 'neutral';
-    }
-
-    return {
-      value: formatNumber(workflowRunsData.currentPeriod),
-      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
-      percentageChange: Math.abs(percentageChange),
-      trendDirection,
-    };
-  }, [charts]);
+  const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, workflowRunsMetricData } =
+    useMetricData(charts);
 
   useEffect(() => {
     telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
   }, [telemetry]);
 
-  const pageVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.1,
-      },
-    },
-  };
-
-  const sectionVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.5,
-        ease: [0.16, 1, 0.3, 1],
-      },
-    },
-  };
-
   return (
     <>
       <PageMeta title="Home page" />
       <DashboardLayout>
-        <motion.div className="flex flex-col gap-8 p-9 pt-4" variants={pageVariants} initial="hidden" animate="show">
-          <motion.div variants={sectionVariants}>
+        <motion.div
+          className="flex flex-col gap-8 p-9 pt-4"
+          variants={ANIMATION_VARIANTS.page}
+          initial="hidden"
+          animate="show"
+        >
+          <motion.div variants={ANIMATION_VARIANTS.section}>
             <WelcomeHeader />
           </motion.div>
 
-          <motion.div variants={sectionVariants}>
+          <motion.div variants={ANIMATION_VARIANTS.section}>
             <TopLevelStats
               value={workflowRunsMetricData.value}
               percentageChange={workflowRunsMetricData.percentageChange}
@@ -576,7 +84,7 @@ export function HomePage(): ReactElement {
                   hideSearch
                   hideTitle
                   title="Time period"
-                  options={homePageDateFilterOptions}
+                  options={dateFilterOptions}
                   selected={[selectedDateRange]}
                   onSelect={(values) => setSelectedDateRange(values[0])}
                   icon={CalendarIcon}
@@ -586,94 +94,25 @@ export function HomePage(): ReactElement {
           </motion.div>
 
           <div className="flex flex-col gap-2">
-            <motion.div variants={sectionVariants}>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
-                <AnalyticsCard
-                  icon={InboxBellFilled}
-                  value={messagesDeliveredData.value}
-                  title="Messages delivered"
-                  description={messagesDeliveredData.description}
-                  percentageChange={messagesDeliveredData.percentageChange}
-                  trendDirection={messagesDeliveredData.trendDirection}
-                  isLoading={isChartsLoading}
-                />
-
-                <AnalyticsCard
-                  icon={RiGroup2Fill}
-                  value={activeSubscribersData.value}
-                  title="Active subscribers"
-                  description={activeSubscribersData.description}
-                  percentageChange={activeSubscribersData.percentageChange}
-                  trendDirection={activeSubscribersData.trendDirection}
-                  isLoading={isChartsLoading}
-                />
-
-                <AnalyticsCard
-                  icon={TargetArrow}
-                  value="78%"
-                  title="Interaction rate"
-                  description="+10% compared to prior 30 days"
-                  percentageChange={3}
-                  trendDirection="up"
-                  isLoading={isChartsLoading}
-                />
-
-                <AnalyticsCard
-                  icon={StackedDots}
-                  value={avgMessagesPerSubscriberData.value}
-                  title="Avg. Messages per subscriber"
-                  description={avgMessagesPerSubscriberData.description}
-                  percentageChange={avgMessagesPerSubscriberData.percentageChange}
-                  trendDirection={avgMessagesPerSubscriberData.trendDirection}
-                  isLoading={isChartsLoading}
-                />
-              </div>
+            <motion.div variants={ANIMATION_VARIANTS.section}>
+              <AnalyticsSection
+                messagesDeliveredData={messagesDeliveredData}
+                activeSubscribersData={activeSubscribersData}
+                avgMessagesPerSubscriberData={avgMessagesPerSubscriberData}
+                isLoading={isChartsLoading}
+              />
             </motion.div>
 
-            <motion.div variants={sectionVariants}>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-                <DeliveryTrendsChart
-                  data={charts?.[ReportTypeEnum.DELIVERY_TREND] as ChartDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
-                />
-                <WorkflowsByVolume
-                  data={charts?.[ReportTypeEnum.WORKFLOW_BY_VOLUME] as WorkflowVolumeDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
-                />
-                <InteractionTrendChart
-                  data={charts?.[ReportTypeEnum.INTERACTION_TREND] as InteractionTrendDataPoint[]}
-                  isLoading={isChartsLoading}
-                  error={chartsError}
-                />
-              </div>
+            <motion.div variants={ANIMATION_VARIANTS.section}>
+              <ChartsSection charts={charts} isLoading={isChartsLoading} error={chartsError} />
             </motion.div>
           </div>
+
           <Separator />
 
-          <div className="flex flex-row gap-6 w-full">
-            <div className="flex flex-col gap-6">
-              <motion.div variants={sectionVariants}>
-                <ResourcesList
-                  title="Helpful resources"
-                  icon={<RiBookmark2Fill className="h-4 w-4" />}
-                  resources={helpfulResources}
-                />
-              </motion.div>
-
-              <motion.div variants={sectionVariants}>
-                <ResourcesList title="Learn" icon={<RiBookletFill className="h-4 w-4" />} resources={learnResources} />
-              </motion.div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-1 text-label-xs text-text-sub">
-                <RiListCheck3 className="size-3.5 text-icon-soft" /> Things to do
-              </div>
-              <ProgressSection isNewHomePageEnabled={true} />
-            </div>
-          </div>
+          <motion.div variants={ANIMATION_VARIANTS.section}>
+            <ResourcesSection />
+          </motion.div>
         </motion.div>
       </DashboardLayout>
     </>

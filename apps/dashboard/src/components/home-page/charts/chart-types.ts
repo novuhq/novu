@@ -1,0 +1,28 @@
+// Chart data types for better type safety
+
+export type DeliveryChartData = {
+  date: string;
+  email: number;
+  push: number;
+  sms: number;
+  inApp: number;
+  chat: number;
+  timestamp: string;
+};
+
+export type WorkflowChartData = {
+  workflowName: string;
+  count: number;
+  displayName: string;
+  fill: string;
+};
+
+export type InteractionChartData = {
+  date: string;
+  messageSent: number;
+  messageSeen: number;
+  messageRead: number;
+  messageSnoozed: number;
+  messageArchived: number;
+  timestamp: string;
+};

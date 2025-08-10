@@ -1,10 +1,13 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { RiRouteFill } from 'react-icons/ri';
 import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
-import { type WorkflowVolumeDataPoint } from '@/api/activity';
-import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
-import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
-import { Skeleton } from './primitives/skeleton';
+import { type WorkflowVolumeDataPoint } from '../../../../api/activity';
+import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
+import { Skeleton } from '../../primitives/skeleton';
+import { generateDummyWorkflowData } from './chart-dummy-data';
+import { type WorkflowChartData } from './chart-types';
+import { ChartWrapper } from './chart-wrapper';
 
 // Color palette for workflow charts
 const colorPalette = ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'];
@@ -77,6 +80,20 @@ function WorkflowsByVolumeSkeleton() {
   );
 }
 
+function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value: string } }) {
+  const maxLength = 20;
+  const text = payload.value.length > maxLength ? `${payload.value.slice(0, maxLength)}...` : payload.value;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <RiRouteFill x={-16} y={-6} width={12} height={12} fill="#525866" />
+      <text x={-2} y={0} dy={4} textAnchor="start" fill="#525866" fontSize={12}>
+        {text}
+      </text>
+    </g>
+  );
+}
+
 type WorkflowsByVolumeProps = {
   data?: WorkflowVolumeDataPoint[];
   isLoading?: boolean;
@@ -96,33 +113,31 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
     }));
   }, [data]);
 
-  const chartHeight = useMemo(() => {
-    const itemCount = chartData?.length || 0;
+  const hasDataChecker = useCallback((data: WorkflowChartData[]) => {
+    return data.some((dataPoint) => (dataPoint.count || 0) > 0);
+  }, []);
+
+  const calculateChartHeight = useCallback((data: WorkflowChartData[]) => {
+    const itemCount = data.length;
     const barHeight = 16;
     const gap = 10;
     return Math.max(itemCount * (barHeight + gap) + 20, 80);
-  }, [chartData]);
+  }, []);
 
-  if (isLoading) {
-    return <WorkflowsByVolumeSkeleton />;
-  }
+  const renderChart = useCallback(
+    (data: WorkflowChartData[], includeTooltip = true) => {
+      const chartHeight = calculateChartHeight(data);
 
-  return (
-    <Card className="shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">Top workflows by volume</CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
+      return (
         <ChartContainer config={chartConfig} className="w-full" style={{ height: `${chartHeight}px` }}>
           <BarChart
             accessibilityLayer
-            data={chartData}
+            data={data}
             layout="vertical"
             height={chartHeight}
             margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
           >
             <XAxis type="number" dataKey="count" hide />
-
             <YAxis
               dataKey="displayName"
               type="category"
@@ -133,29 +148,37 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
               tick={CustomTick}
               interval={0}
             />
-            <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />
+            {includeTooltip && <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />}
             <Bar dataKey="count" radius={6} barSize={16}>
-              {chartData?.map((entry, index) => (
+              {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
             </Bar>
           </BarChart>
         </ChartContainer>
-      </CardContent>
-    </Card>
+      );
+    },
+    [calculateChartHeight]
   );
-}
 
-function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value: string } }) {
-  const maxLength = 20;
-  const text = payload.value.length > maxLength ? `${payload.value.slice(0, maxLength)}...` : payload.value;
+  const renderEmptyState = useCallback(
+    (dummyData: WorkflowChartData[]) => {
+      return renderChart(dummyData, false);
+    },
+    [renderChart]
+  );
 
   return (
-    <g transform={`translate(${x},${y})`}>
-      <RiRouteFill x={-16} y={-6} width={12} height={12} fill="#525866" />
-      <text x={-2} y={0} dy={4} textAnchor="start" fill="#525866" fontSize={12}>
-        {text}
-      </text>
-    </g>
+    <ChartWrapper
+      title="Top workflows by volume"
+      data={chartData}
+      isLoading={isLoading}
+      hasDataChecker={hasDataChecker}
+      loadingSkeleton={<WorkflowsByVolumeSkeleton />}
+      dummyDataGenerator={generateDummyWorkflowData}
+      emptyStateRenderer={renderEmptyState}
+    >
+      {renderChart}
+    </ChartWrapper>
   );
 }
