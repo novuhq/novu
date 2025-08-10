@@ -3,6 +3,7 @@ export enum WebhookEventEnum {
   WORKFLOW_CREATED = 'workflow.created',
   WORKFLOW_UPDATED = 'workflow.updated',
   WORKFLOW_DELETED = 'workflow.deleted',
+  WORKFLOW_PUBLISHED = 'workflow.published',
 
   // Message
   MESSAGE_SENT = 'message.sent',
