@@ -71,12 +71,14 @@ export function TopLevelStats({
         <div className="flex items-end gap-1">
           <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">{value}</h2>
           <div className="pb-2">
-            <div
-              className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
-            >
-              {trendStyles.icon}
-              <span className="text-subheading-2xs uppercase">{formatPercentage(percentageChange)}%</span>
-            </div>
+            {!!percentageChange && (
+              <div
+                className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
+              >
+                {trendStyles.icon}
+                <span className="text-subheading-2xs uppercase">{formatPercentage(percentageChange)}%</span>
+              </div>
+            )}
           </div>
         </div>
         {dateFilter && <div className="pb-2">{dateFilter}</div>}
