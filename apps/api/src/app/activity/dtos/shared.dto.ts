@@ -68,4 +68,5 @@ export enum ReportTypeEnum {
   DELIVERY_TREND = 'delivery-trend',
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
   MESSAGES_DELIVERED = 'messages-delivered',
+  ACTIVE_SUBSCRIBERS = 'active-subscribers',
 }

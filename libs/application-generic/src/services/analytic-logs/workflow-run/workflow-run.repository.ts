@@ -508,4 +508,91 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       throw error;
     }
   }
+
+  async getActiveSubscribersData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    // Query for current period
+    const currentPeriodQuery = `
+      SELECT count(DISTINCT external_subscriber_id) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND external_subscriber_id IS NOT NULL
+        AND external_subscriber_id != ''
+    `;
+
+    // Query for previous period
+    const previousPeriodQuery = `
+      SELECT count(DISTINCT external_subscriber_id) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+        AND external_subscriber_id IS NOT NULL
+        AND external_subscriber_id != ''
+    `;
+
+    const baseParams = {
+      environmentId,
+      organizationId,
+    };
+
+    try {
+      const [currentResult, previousResult] = await Promise.all([
+        this.clickhouseService.query<{ count: string }>({
+          query: currentPeriodQuery,
+          params: {
+            ...baseParams,
+            startDate: LogRepository.formatDateTime64(startDate),
+            endDate: LogRepository.formatDateTime64(endDate),
+          },
+        }),
+        this.clickhouseService.query<{ count: string }>({
+          query: previousPeriodQuery,
+          params: {
+            ...baseParams,
+            previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+            previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+          },
+        }),
+      ]);
+
+      const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+      const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+      return {
+        currentPeriod,
+        previousPeriod,
+      };
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          previousStartDate: previousStartDate.toISOString(),
+          previousEndDate: previousEndDate.toISOString(),
+        },
+        'Failed to fetch active subscribers data'
+      );
+
+      return {
+        currentPeriod: 0,
+        previousPeriod: 0,
+      };
+    }
+  }
 }

@@ -2,6 +2,7 @@ import { motion } from 'motion/react';
 import { ReactElement, useEffect, useMemo } from 'react';
 import { RiBookletFill, RiBookmark2Fill, RiGroup2Fill, RiListCheck3 } from 'react-icons/ri';
 import {
+  type ActiveSubscribersDataPoint,
   type ChartDataPoint,
   type MessagesDeliveredDataPoint,
   ReportTypeEnum,
@@ -160,7 +161,12 @@ export function HomePage(): ReactElement {
     isLoading: isChartsLoading,
     error: chartsError,
   } = useFetchCharts({
-    reportType: [ReportTypeEnum.DELIVERY_TREND, ReportTypeEnum.WORKFLOW_BY_VOLUME, ReportTypeEnum.MESSAGES_DELIVERED],
+    reportType: [
+      ReportTypeEnum.DELIVERY_TREND,
+      ReportTypeEnum.WORKFLOW_BY_VOLUME,
+      ReportTypeEnum.MESSAGES_DELIVERED,
+      ReportTypeEnum.ACTIVE_SUBSCRIBERS,
+    ],
     createdAtGte: chartsDateRange.createdAtGte,
     enabled: true,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
@@ -194,6 +200,39 @@ export function HomePage(): ReactElement {
 
     return {
       value: formatNumber(messagesData.currentPeriod),
+      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
+      percentageChange: Math.abs(percentageChange),
+      trendDirection,
+    };
+  }, [charts]);
+
+  const activeSubscribersData = useMemo(() => {
+    const subscribersData = charts?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS] as ActiveSubscribersDataPoint;
+    if (!subscribersData) {
+      return {
+        value: '0',
+        description: 'No data available',
+        percentageChange: 0,
+        trendDirection: 'neutral' as const,
+      };
+    }
+
+    const change = subscribersData.currentPeriod - subscribersData.previousPeriod;
+    const absChange = Math.abs(change);
+    const formattedChange = formatNumber(absChange);
+    const percentageChange = calculatePercentageChange(subscribersData.currentPeriod, subscribersData.previousPeriod);
+
+    let trendDirection: 'up' | 'down' | 'neutral';
+    if (percentageChange > 0) {
+      trendDirection = 'up';
+    } else if (percentageChange < 0) {
+      trendDirection = 'down';
+    } else {
+      trendDirection = 'neutral';
+    }
+
+    return {
+      value: formatNumber(subscribersData.currentPeriod),
       description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
       percentageChange: Math.abs(percentageChange),
       trendDirection,
@@ -255,11 +294,12 @@ export function HomePage(): ReactElement {
 
                 <AnalyticsCard
                   icon={RiGroup2Fill}
-                  value="1,718,030"
+                  value={activeSubscribersData.value}
                   title="Active subscribers"
-                  description="+400 compared to prior 30 days"
-                  percentageChange={3}
-                  trendDirection="up"
+                  description={activeSubscribersData.description}
+                  percentageChange={activeSubscribersData.percentageChange}
+                  trendDirection={activeSubscribersData.trendDirection}
+                  isLoading={isChartsLoading}
                 />
 
                 <AnalyticsCard

@@ -420,6 +420,7 @@ export enum ReportTypeEnum {
   DELIVERY_TREND = 'delivery-trend',
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
   MESSAGES_DELIVERED = 'messages-delivered',
+  ACTIVE_SUBSCRIBERS = 'active-subscribers',
 }
 
 export type ChartDataPoint = {
@@ -441,6 +442,11 @@ export type MessagesDeliveredDataPoint = {
   previousPeriod: number;
 };
 
+export type ActiveSubscribersDataPoint = {
+  currentPeriod: number;
+  previousPeriod: number;
+};
+
 export type GetChartsRequest = {
   createdAtGte?: string;
   createdAtLte?: string;
@@ -448,7 +454,10 @@ export type GetChartsRequest = {
 };
 
 export type GetChartsResponse = {
-  data: Record<ReportTypeEnum, ChartDataPoint[] | WorkflowVolumeDataPoint[] | MessagesDeliveredDataPoint>;
+  data: Record<
+    ReportTypeEnum,
+    ChartDataPoint[] | WorkflowVolumeDataPoint[] | MessagesDeliveredDataPoint | ActiveSubscribersDataPoint
+  >;
 };
 
 export async function getCharts({
