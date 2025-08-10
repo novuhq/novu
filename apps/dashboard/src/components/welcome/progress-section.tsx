@@ -43,9 +43,11 @@ export function ProgressSection({ isNewHomePageEnabled }: { isNewHomePageEnabled
           ))}
         </motion.div>
 
-        <motion.div variants={logo} className="absolute bottom-0 right-0">
-          <NovuLogo />
-        </motion.div>
+        {!isNewHomePageEnabled && (
+          <motion.div variants={logo} className="absolute bottom-0 right-0">
+            <NovuLogo />
+          </motion.div>
+        )}
       </Card>
     </motion.div>
   );
