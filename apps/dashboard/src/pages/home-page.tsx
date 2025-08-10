@@ -7,6 +7,7 @@ import {
   type ChartDataPoint,
   type MessagesDeliveredDataPoint,
   ReportTypeEnum,
+  type WorkflowRunsMetricDataPoint,
   type WorkflowVolumeDataPoint,
 } from '../api/activity';
 import { DashboardLayout } from '../components/dashboard-layout';
@@ -14,6 +15,7 @@ import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
 import { InboxBellFilled } from '../components/icons/inbox-bell-filled';
 import { StackedDots } from '../components/icons/stacked-dots';
 import { TargetArrow } from '../components/icons/target-arrow';
+import { TrendLineDown } from '../components/icons/trend-line-down';
 import { TrendLineUp } from '../components/icons/trend-line-up';
 import { InteractionTrendChart } from '../components/interaction-trend-chart';
 import { PageMeta } from '../components/page-meta';
@@ -80,19 +82,71 @@ function WelcomeHeader() {
   );
 }
 
-function TopLevelStats() {
+type TopLevelStatsProps = {
+  value: string;
+  percentageChange: number;
+  trendDirection: 'up' | 'down' | 'neutral';
+  isLoading?: boolean;
+};
+
+function TopLevelStats({ value, percentageChange, trendDirection, isLoading = false }: TopLevelStatsProps) {
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-end gap-1">
+          <div className="h-[52px] w-32 bg-gray-200 animate-pulse rounded"></div>
+          <div className="pb-2">
+            <div className="h-4 w-12 bg-gray-200 animate-pulse rounded-full"></div>
+          </div>
+        </div>
+        <div className="h-4 w-80 bg-gray-200 animate-pulse rounded"></div>
+      </div>
+    );
+  }
+
+  const formatPercentage = (percentage: number) => {
+    return percentage < 1 ? '<1' : Math.round(percentage).toString();
+  };
+
+  const getTrendStyles = () => {
+    switch (trendDirection) {
+      case 'up':
+        return {
+          bgColor: 'bg-green-100',
+          textColor: 'text-green-600',
+          icon: <TrendLineUp />,
+        };
+      case 'down':
+        return {
+          bgColor: 'bg-red-100',
+          textColor: 'text-red-600',
+          icon: <TrendLineDown />,
+        };
+      default:
+        return {
+          bgColor: 'bg-gray-100',
+          textColor: 'text-gray-600',
+          icon: <TrendLineUp />,
+        };
+    }
+  };
+
+  const trendStyles = getTrendStyles();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-end gap-1">
-        <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">31,718</h2>
+        <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">{value}</h2>
         <div className="pb-2">
-          <div className="flex items-center gap-0.5 bg-green-100 px-1 h-4 rounded-full text-green-600 text-subheading-2xs uppercase">
-            <TrendLineUp />
-            <span className="text-subheading-2xs uppercase">5%</span>
+          <div
+            className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
+          >
+            {trendStyles.icon}
+            <span className="text-subheading-2xs uppercase">{formatPercentage(percentageChange)}%</span>
           </div>
         </div>
       </div>
-      <p className="text-sm text-[#99a0ae]">Workflow runs during 30, Sept 2025 - 01, Oct 2025.</p>
+      <p className="text-sm text-[#99a0ae]">Workflow runs during the selected period.</p>
     </div>
   );
 }
@@ -168,6 +222,7 @@ export function HomePage(): ReactElement {
       ReportTypeEnum.MESSAGES_DELIVERED,
       ReportTypeEnum.ACTIVE_SUBSCRIBERS,
       ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER,
+      ReportTypeEnum.WORKFLOW_RUNS_METRIC,
     ],
     createdAtGte: chartsDateRange.createdAtGte,
     enabled: true,
@@ -274,6 +329,39 @@ export function HomePage(): ReactElement {
     };
   }, [charts]);
 
+  const workflowRunsMetricData = useMemo(() => {
+    const workflowRunsData = charts?.[ReportTypeEnum.WORKFLOW_RUNS_METRIC] as WorkflowRunsMetricDataPoint;
+    if (!workflowRunsData) {
+      return {
+        value: '0',
+        description: 'No data available',
+        percentageChange: 0,
+        trendDirection: 'neutral' as const,
+      };
+    }
+
+    const change = workflowRunsData.currentPeriod - workflowRunsData.previousPeriod;
+    const absChange = Math.abs(change);
+    const formattedChange = formatNumber(absChange);
+    const percentageChange = calculatePercentageChange(workflowRunsData.currentPeriod, workflowRunsData.previousPeriod);
+
+    let trendDirection: 'up' | 'down' | 'neutral';
+    if (percentageChange > 0) {
+      trendDirection = 'up';
+    } else if (percentageChange < 0) {
+      trendDirection = 'down';
+    } else {
+      trendDirection = 'neutral';
+    }
+
+    return {
+      value: formatNumber(workflowRunsData.currentPeriod),
+      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
+      percentageChange: Math.abs(percentageChange),
+      trendDirection,
+    };
+  }, [charts]);
+
   useEffect(() => {
     telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
   }, [telemetry]);
@@ -311,7 +399,12 @@ export function HomePage(): ReactElement {
           </motion.div>
 
           <motion.div variants={sectionVariants}>
-            <TopLevelStats />
+            <TopLevelStats
+              value={workflowRunsMetricData.value}
+              percentageChange={workflowRunsMetricData.percentageChange}
+              trendDirection={workflowRunsMetricData.trendDirection}
+              isLoading={isChartsLoading}
+            />
           </motion.div>
 
           <div className="flex flex-col gap-2">
@@ -344,6 +437,7 @@ export function HomePage(): ReactElement {
                   description="+10% compared to prior 30 days"
                   percentageChange={3}
                   trendDirection="up"
+                  isLoading={isChartsLoading}
                 />
 
                 <AnalyticsCard

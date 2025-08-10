@@ -68,6 +68,16 @@ export class AvgMessagesPerSubscriberDataPointDto {
   previousPeriod: number;
 }
 
+export class WorkflowRunsMetricDataPointDto {
+  @ApiProperty({ description: 'Current period count' })
+  @IsNumber()
+  currentPeriod: number;
+
+  @ApiProperty({ description: 'Previous period count' })
+  @IsNumber()
+  previousPeriod: number;
+}
+
 export class GetChartsResponseDto {
   @ApiProperty({ description: 'Chart sections' })
   @ValidateNested()
@@ -78,5 +88,6 @@ export class GetChartsResponseDto {
     | MessagesDeliveredDataPointDto
     | ActiveSubscribersDataPointDto
     | AvgMessagesPerSubscriberDataPointDto
+    | WorkflowRunsMetricDataPointDto
   >;
 }

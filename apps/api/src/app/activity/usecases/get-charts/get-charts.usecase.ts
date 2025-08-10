@@ -7,6 +7,7 @@ import {
   ChartDataPointDto,
   GetChartsResponseDto,
   MessagesDeliveredDataPointDto,
+  WorkflowRunsMetricDataPointDto,
   WorkflowVolumeDataPointDto,
 } from '../../dtos/get-charts.response.dto';
 import { ReportTypeEnum } from '../../dtos/shared.dto';
@@ -18,6 +19,7 @@ import {
 import { BuildDeliveryTrendChart, BuildDeliveryTrendChartCommand } from '../build-delivery-trend-chart';
 import { BuildMessagesDeliveredChart, BuildMessagesDeliveredChartCommand } from '../build-messages-delivered-chart';
 import { BuildWorkflowByVolumeChart, BuildWorkflowByVolumeChartCommand } from '../build-workflow-by-volume-chart';
+import { BuildWorkflowRunsMetricChart, BuildWorkflowRunsMetricChartCommand } from '../build-workflow-runs-metric-chart';
 import { GetChartsCommand } from './get-charts.command';
 
 @Injectable()
@@ -28,6 +30,7 @@ export class GetCharts {
     private buildMessagesDeliveredChart: BuildMessagesDeliveredChart,
     private buildActiveSubscribersChart: BuildActiveSubscribersChart,
     private buildAvgMessagesPerSubscriberChart: BuildAvgMessagesPerSubscriberChart,
+    private buildWorkflowRunsMetricChart: BuildWorkflowRunsMetricChart,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetCharts.name);
@@ -45,6 +48,7 @@ export class GetCharts {
       | MessagesDeliveredDataPointDto
       | ActiveSubscribersDataPointDto
       | AvgMessagesPerSubscriberDataPointDto
+      | WorkflowRunsMetricDataPointDto
     > = {} as Record<
       ReportTypeEnum,
       | ChartDataPointDto[]
@@ -52,6 +56,7 @@ export class GetCharts {
       | MessagesDeliveredDataPointDto
       | ActiveSubscribersDataPointDto
       | AvgMessagesPerSubscriberDataPointDto
+      | WorkflowRunsMetricDataPointDto
     >;
 
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
@@ -101,6 +106,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER)) {
       data[ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER] = await this.buildAvgMessagesPerSubscriberChart.execute(
         Object.assign(new BuildAvgMessagesPerSubscriberChartCommand(), {
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_METRIC)) {
+      data[ReportTypeEnum.WORKFLOW_RUNS_METRIC] = await this.buildWorkflowRunsMetricChart.execute(
+        Object.assign(new BuildWorkflowRunsMetricChartCommand(), {
           environmentId,
           organizationId,
           startDate,
