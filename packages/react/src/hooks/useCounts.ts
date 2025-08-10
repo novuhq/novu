@@ -1,5 +1,5 @@
 import { areTagsEqual, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu } from './NovuProvider';
 
@@ -46,23 +46,28 @@ export type UseCountsResult = {
 export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const { filters, onSuccess, onError } = props;
   const { notifications } = useNovu();
+  const filtersRef = useRef<NotificationFilter[]>(filters);
   const [error, setError] = useState<NovuError>();
   const [counts, setCounts] = useState<Count[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
 
-  const sync = async (notification?: Notification) => {
-    const existingCounts = counts ?? filters.map((filter) => ({ count: 0, filter }));
+  // Keep ref up to date
+  filtersRef.current = filters;
+
+  const sync = async (notification?: Notification, overrideFilters?: NotificationFilter[]) => {
+    const currentFilters = overrideFilters || filtersRef.current;
+    const existingCounts = currentFilters.map((filter) => ({ count: 0, filter }));
     let countFiltersToFetch: NotificationFilter[] = [];
     if (notification) {
       for (let i = 0; i < existingCounts.length; i++) {
-        const filter = filters[i];
+        const filter = currentFilters[i];
         if (areTagsEqual(filter.tags, notification.tags)) {
           countFiltersToFetch.push(filter);
         }
       }
     } else {
-      countFiltersToFetch = filters;
+      countFiltersToFetch = currentFilters;
     }
 
     if (countFiltersToFetch.length === 0) {
@@ -87,8 +92,9 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       const countsReceived = data.counts;
 
       for (let i = 0; i < existingCounts.length; i++) {
-        const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingCounts[i].filter));
-        const count = countReceived || (oldCounts && oldCounts[i]);
+        const existingFilter = existingCounts[i].filter;
+        const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingFilter));
+        const count = countReceived || oldCounts?.[i];
         if (count) {
           newCounts.push(count);
         }
@@ -116,7 +122,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     setError(undefined);
     setIsLoading(true);
     setIsFetching(false);
-    sync();
+    sync(undefined, filters);
   }, [JSON.stringify(filters)]);
 
   const refetch = async () => {
