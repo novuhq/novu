@@ -3,6 +3,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { subDays } from 'date-fns';
 import {
   ActiveSubscribersDataPointDto,
+  AvgMessagesPerSubscriberDataPointDto,
   ChartDataPointDto,
   GetChartsResponseDto,
   MessagesDeliveredDataPointDto,
@@ -10,6 +11,10 @@ import {
 } from '../../dtos/get-charts.response.dto';
 import { ReportTypeEnum } from '../../dtos/shared.dto';
 import { BuildActiveSubscribersChart, BuildActiveSubscribersChartCommand } from '../build-active-subscribers-chart';
+import {
+  BuildAvgMessagesPerSubscriberChart,
+  BuildAvgMessagesPerSubscriberChartCommand,
+} from '../build-avg-messages-per-subscriber-chart';
 import { BuildDeliveryTrendChart, BuildDeliveryTrendChartCommand } from '../build-delivery-trend-chart';
 import { BuildMessagesDeliveredChart, BuildMessagesDeliveredChartCommand } from '../build-messages-delivered-chart';
 import { BuildWorkflowByVolumeChart, BuildWorkflowByVolumeChartCommand } from '../build-workflow-by-volume-chart';
@@ -22,6 +27,7 @@ export class GetCharts {
     private buildWorkflowByVolumeChart: BuildWorkflowByVolumeChart,
     private buildMessagesDeliveredChart: BuildMessagesDeliveredChart,
     private buildActiveSubscribersChart: BuildActiveSubscribersChart,
+    private buildAvgMessagesPerSubscriberChart: BuildAvgMessagesPerSubscriberChart,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetCharts.name);
@@ -34,10 +40,18 @@ export class GetCharts {
     const startDate = createdAtGte ? new Date(createdAtGte) : subDays(new Date(), 30);
     const data: Record<
       ReportTypeEnum,
-      ChartDataPointDto[] | WorkflowVolumeDataPointDto[] | MessagesDeliveredDataPointDto | ActiveSubscribersDataPointDto
+      | ChartDataPointDto[]
+      | WorkflowVolumeDataPointDto[]
+      | MessagesDeliveredDataPointDto
+      | ActiveSubscribersDataPointDto
+      | AvgMessagesPerSubscriberDataPointDto
     > = {} as Record<
       ReportTypeEnum,
-      ChartDataPointDto[] | WorkflowVolumeDataPointDto[] | MessagesDeliveredDataPointDto | ActiveSubscribersDataPointDto
+      | ChartDataPointDto[]
+      | WorkflowVolumeDataPointDto[]
+      | MessagesDeliveredDataPointDto
+      | ActiveSubscribersDataPointDto
+      | AvgMessagesPerSubscriberDataPointDto
     >;
 
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
@@ -76,6 +90,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.ACTIVE_SUBSCRIBERS)) {
       data[ReportTypeEnum.ACTIVE_SUBSCRIBERS] = await this.buildActiveSubscribersChart.execute(
         Object.assign(new BuildActiveSubscribersChartCommand(), {
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER)) {
+      data[ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER] = await this.buildAvgMessagesPerSubscriberChart.execute(
+        Object.assign(new BuildAvgMessagesPerSubscriberChartCommand(), {
           environmentId,
           organizationId,
           startDate,

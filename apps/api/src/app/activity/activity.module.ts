@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
 import { BuildActiveSubscribersChart } from './usecases/build-active-subscribers-chart/build-active-subscribers-chart.usecase';
+import { BuildAvgMessagesPerSubscriberChart } from './usecases/build-avg-messages-per-subscriber-chart/build-avg-messages-per-subscriber-chart.usecase';
 import { BuildDeliveryTrendChart } from './usecases/build-delivery-trend-chart/build-delivery-trend-chart.usecase';
 import { BuildMessagesDeliveredChart } from './usecases/build-messages-delivered-chart/build-messages-delivered-chart.usecase';
 import { BuildWorkflowByVolumeChart } from './usecases/build-workflow-by-volume-chart/build-workflow-by-volume-chart.usecase';
@@ -20,6 +21,7 @@ const USE_CASES = [
   BuildWorkflowByVolumeChart,
   BuildMessagesDeliveredChart,
   BuildActiveSubscribersChart,
+  BuildAvgMessagesPerSubscriberChart,
   GetRequest,
 ];
 

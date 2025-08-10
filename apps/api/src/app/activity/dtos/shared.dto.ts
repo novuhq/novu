@@ -69,4 +69,5 @@ export enum ReportTypeEnum {
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
   MESSAGES_DELIVERED = 'messages-delivered',
   ACTIVE_SUBSCRIBERS = 'active-subscribers',
+  AVG_MESSAGES_PER_SUBSCRIBER = 'avg-messages-per-subscriber',
 }

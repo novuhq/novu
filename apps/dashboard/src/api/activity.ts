@@ -421,6 +421,7 @@ export enum ReportTypeEnum {
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
   MESSAGES_DELIVERED = 'messages-delivered',
   ACTIVE_SUBSCRIBERS = 'active-subscribers',
+  AVG_MESSAGES_PER_SUBSCRIBER = 'avg-messages-per-subscriber',
 }
 
 export type ChartDataPoint = {
@@ -447,6 +448,11 @@ export type ActiveSubscribersDataPoint = {
   previousPeriod: number;
 };
 
+export type AvgMessagesPerSubscriberDataPoint = {
+  currentPeriod: number;
+  previousPeriod: number;
+};
+
 export type GetChartsRequest = {
   createdAtGte?: string;
   createdAtLte?: string;
@@ -456,7 +462,11 @@ export type GetChartsRequest = {
 export type GetChartsResponse = {
   data: Record<
     ReportTypeEnum,
-    ChartDataPoint[] | WorkflowVolumeDataPoint[] | MessagesDeliveredDataPoint | ActiveSubscribersDataPoint
+    | ChartDataPoint[]
+    | WorkflowVolumeDataPoint[]
+    | MessagesDeliveredDataPoint
+    | ActiveSubscribersDataPoint
+    | AvgMessagesPerSubscriberDataPoint
   >;
 };
 

@@ -58,11 +58,25 @@ export class ActiveSubscribersDataPointDto {
   previousPeriod: number;
 }
 
+export class AvgMessagesPerSubscriberDataPointDto {
+  @ApiProperty({ description: 'Current period average' })
+  @IsNumber()
+  currentPeriod: number;
+
+  @ApiProperty({ description: 'Previous period average' })
+  @IsNumber()
+  previousPeriod: number;
+}
+
 export class GetChartsResponseDto {
   @ApiProperty({ description: 'Chart sections' })
   @ValidateNested()
   data: Record<
     ReportTypeEnum,
-    ChartDataPointDto[] | WorkflowVolumeDataPointDto[] | MessagesDeliveredDataPointDto | ActiveSubscribersDataPointDto
+    | ChartDataPointDto[]
+    | WorkflowVolumeDataPointDto[]
+    | MessagesDeliveredDataPointDto
+    | ActiveSubscribersDataPointDto
+    | AvgMessagesPerSubscriberDataPointDto
   >;
 }

@@ -305,6 +305,107 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     }
   }
 
+  async getAvgMessagesPerSubscriberData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    // Query for current period average
+    const currentPeriodQuery = `
+      SELECT 
+        count(*) as total_step_runs,
+        count(DISTINCT external_subscriber_id) as unique_subscribers
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+        AND external_subscriber_id IS NOT NULL
+        AND external_subscriber_id != ''
+    `;
+
+    // Query for previous period average
+    const previousPeriodQuery = `
+      SELECT 
+        count(*) as total_step_runs,
+        count(DISTINCT external_subscriber_id) as unique_subscribers
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+        AND external_subscriber_id IS NOT NULL
+        AND external_subscriber_id != ''
+    `;
+
+    const baseParams = {
+      environmentId,
+      organizationId,
+    };
+
+    try {
+      const [currentResult, previousResult] = await Promise.all([
+        this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
+          query: currentPeriodQuery,
+          params: {
+            ...baseParams,
+            startDate: LogRepository.formatDateTime64(startDate),
+            endDate: LogRepository.formatDateTime64(endDate),
+          },
+        }),
+        this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
+          query: previousPeriodQuery,
+          params: {
+            ...baseParams,
+            previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+            previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+          },
+        }),
+      ]);
+
+      const currentTotalStepRuns = parseInt(currentResult.data[0]?.total_step_runs || '0', 10);
+      const currentUniqueSubscribers = parseInt(currentResult.data[0]?.unique_subscribers || '0', 10);
+      const previousTotalStepRuns = parseInt(previousResult.data[0]?.total_step_runs || '0', 10);
+      const previousUniqueSubscribers = parseInt(previousResult.data[0]?.unique_subscribers || '0', 10);
+
+      // Calculate averages (handle division by zero)
+      const currentPeriod = currentUniqueSubscribers > 0 ? currentTotalStepRuns / currentUniqueSubscribers : 0;
+      const previousPeriod = previousUniqueSubscribers > 0 ? previousTotalStepRuns / previousUniqueSubscribers : 0;
+
+      return {
+        currentPeriod: Math.round(currentPeriod * 100) / 100, // Round to 2 decimal places
+        previousPeriod: Math.round(previousPeriod * 100) / 100, // Round to 2 decimal places
+      };
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          previousStartDate: previousStartDate.toISOString(),
+          previousEndDate: previousEndDate.toISOString(),
+        },
+        'Failed to fetch average messages per subscriber data'
+      );
+
+      return {
+        currentPeriod: 0,
+        previousPeriod: 0,
+      };
+    }
+  }
+
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
     const createdAt = new Date(now);

@@ -3,6 +3,7 @@ import { ReactElement, useEffect, useMemo } from 'react';
 import { RiBookletFill, RiBookmark2Fill, RiGroup2Fill, RiListCheck3 } from 'react-icons/ri';
 import {
   type ActiveSubscribersDataPoint,
+  type AvgMessagesPerSubscriberDataPoint,
   type ChartDataPoint,
   type MessagesDeliveredDataPoint,
   ReportTypeEnum,
@@ -166,6 +167,7 @@ export function HomePage(): ReactElement {
       ReportTypeEnum.WORKFLOW_BY_VOLUME,
       ReportTypeEnum.MESSAGES_DELIVERED,
       ReportTypeEnum.ACTIVE_SUBSCRIBERS,
+      ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER,
     ],
     createdAtGte: chartsDateRange.createdAtGte,
     enabled: true,
@@ -233,6 +235,39 @@ export function HomePage(): ReactElement {
 
     return {
       value: formatNumber(subscribersData.currentPeriod),
+      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
+      percentageChange: Math.abs(percentageChange),
+      trendDirection,
+    };
+  }, [charts]);
+
+  const avgMessagesPerSubscriberData = useMemo(() => {
+    const avgMessagesData = charts?.[ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER] as AvgMessagesPerSubscriberDataPoint;
+    if (!avgMessagesData) {
+      return {
+        value: '0',
+        description: 'No data available',
+        percentageChange: 0,
+        trendDirection: 'neutral' as const,
+      };
+    }
+
+    const change = avgMessagesData.currentPeriod - avgMessagesData.previousPeriod;
+    const absChange = Math.abs(change);
+    const formattedChange = absChange.toFixed(1);
+    const percentageChange = calculatePercentageChange(avgMessagesData.currentPeriod, avgMessagesData.previousPeriod);
+
+    let trendDirection: 'up' | 'down' | 'neutral';
+    if (percentageChange > 0) {
+      trendDirection = 'up';
+    } else if (percentageChange < 0) {
+      trendDirection = 'down';
+    } else {
+      trendDirection = 'neutral';
+    }
+
+    return {
+      value: avgMessagesData.currentPeriod.toFixed(1),
       description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
       percentageChange: Math.abs(percentageChange),
       trendDirection,
@@ -313,11 +348,12 @@ export function HomePage(): ReactElement {
 
                 <AnalyticsCard
                   icon={StackedDots}
-                  value="18"
+                  value={avgMessagesPerSubscriberData.value}
                   title="Avg. Messages per subscriber"
-                  description="+5 compared to prior 30 days"
-                  percentageChange={3}
-                  trendDirection="up"
+                  description={avgMessagesPerSubscriberData.description}
+                  percentageChange={avgMessagesPerSubscriberData.percentageChange}
+                  trendDirection={avgMessagesPerSubscriberData.trendDirection}
+                  isLoading={isChartsLoading}
                 />
               </div>
             </motion.div>
