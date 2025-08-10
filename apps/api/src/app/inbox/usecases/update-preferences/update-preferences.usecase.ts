@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   AnalyticsService,
   GetSubscriberTemplatePreference,
@@ -7,6 +7,8 @@ import {
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  messageWebhookMapper,
+  SendWebhookMessage,
   UpsertPreferences,
   UpsertSubscriberGlobalPreferencesCommand,
   UpsertSubscriberWorkflowPreferencesCommand,
@@ -15,6 +17,8 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   IPreferenceChannels,
   PreferenceLevelEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
@@ -34,7 +38,9 @@ export class UpdatePreferences {
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private upsertPreferences: UpsertPreferences,
-    private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase
+    private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -62,9 +68,31 @@ export class UpdatePreferences {
       workflowId = workflow._id;
     }
 
+    let currentPreference: InboxPreference | null = null;
+    let newPreference: InboxPreference | null = null;
+
+    if (this.sendWebhookMessage) {
+      currentPreference = await this.findPreference(command, subscriber);
+    }
+
     await this.updateSubscriberPreference(command, subscriber, workflowId);
 
-    return await this.findPreference(command, subscriber);
+    newPreference = await this.findPreference(command, subscriber);
+
+    if (this.sendWebhookMessage) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.PREFERENCE_UPDATED,
+        objectType: WebhookObjectTypeEnum.PREFERENCE,
+        payload: {
+          object: newPreference,
+          previousObject: currentPreference || undefined,
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+    }
+
+    return newPreference;
   }
 
   @Instrument()

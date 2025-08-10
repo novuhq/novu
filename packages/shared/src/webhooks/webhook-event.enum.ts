@@ -15,9 +15,13 @@ export enum WebhookEventEnum {
   MESSAGE_UNARCHIVED = 'message.unarchived',
   MESSAGE_SNOOZED = 'message.snoozed',
   MESSAGE_UNSNOOZED = 'message.unsnoozed',
+
+  // Preference
+  PREFERENCE_UPDATED = 'preference.updated',
 }
 
 export enum WebhookObjectTypeEnum {
   WORKFLOW = 'workflow',
   MESSAGE = 'message',
+  PREFERENCE = 'preference',
 }

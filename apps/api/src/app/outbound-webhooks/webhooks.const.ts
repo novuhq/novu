@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { MessageWebhookResponseDto } from '@novu/application-generic';
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
+import { InboxPreference } from '../inbox/utils/types';
 import { WorkflowResponseDto } from '../workflows-v2/dtos/workflow-response.dto';
 
 export class WebhookUpdatedWorkflowDto {
@@ -36,7 +37,16 @@ export class WebhookMessageFailedDto {
   };
 }
 
+export class WebhookPreferenceDto {
+  @ApiProperty({ description: 'Current preference state' })
+  object: InboxPreference;
+
+  @ApiProperty({ description: 'Previous state of the preference' })
+  previousObject: InboxPreference;
+}
+
 export const webhookEvents = [
+  // Message
   {
     event: WebhookEventEnum.MESSAGE_SENT,
     payloadDto: WebhookMessageDto,
@@ -57,6 +67,8 @@ export const webhookEvents = [
     payloadDto: WebhookMessageDto,
     objectType: WebhookObjectTypeEnum.MESSAGE,
   },
+
+  // Workflow
   {
     event: WebhookEventEnum.WORKFLOW_UPDATED,
     payloadDto: WebhookUpdatedWorkflowDto,
@@ -71,5 +83,12 @@ export const webhookEvents = [
     event: WebhookEventEnum.WORKFLOW_DELETED,
     payloadDto: WebhookDeletedWorkflowDto,
     objectType: WebhookObjectTypeEnum.WORKFLOW,
+  },
+
+  // Preference
+  {
+    event: WebhookEventEnum.PREFERENCE_UPDATED,
+    payloadDto: WebhookPreferenceDto,
+    objectType: WebhookObjectTypeEnum.PREFERENCE,
   },
 ] as const;
