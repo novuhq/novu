@@ -1,13 +1,7 @@
 import { motion } from 'motion/react';
-import { ReactElement, useEffect } from 'react';
-import {
-  RiBookletFill,
-  RiBookmark2Fill,
-  RiCopperCoinLine,
-  RiGroup2Fill,
-  RiListCheck3,
-  RiTodoLine,
-} from 'react-icons/ri';
+import { ReactElement, useEffect, useMemo } from 'react';
+import { RiBookletFill, RiBookmark2Fill, RiGroup2Fill, RiListCheck3 } from 'react-icons/ri';
+import { type ChartDataPoint, ReportTypeEnum, type WorkflowVolumeDataPoint } from '../api/activity';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
 import { InboxBellFilled } from '../components/icons/inbox-bell-filled';
@@ -21,6 +15,7 @@ import { Separator } from '../components/primitives/separator';
 import { ProgressSection } from '../components/welcome/progress-section';
 import { Resource, ResourcesList } from '../components/welcome/resources-list';
 import { WorkflowsByVolume } from '../components/workflows-by-volume';
+import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 
@@ -131,6 +126,25 @@ const learnResources: Resource[] = [
 export function HomePage(): ReactElement {
   const telemetry = useTelemetry();
 
+  const chartsDateRange = useMemo(() => {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    return {
+      createdAtGte: thirtyDaysAgo.toISOString(),
+    };
+  }, []);
+
+  const {
+    charts,
+    isLoading: isChartsLoading,
+    error: chartsError,
+  } = useFetchCharts({
+    reportType: [ReportTypeEnum.DELIVERY_TREND, ReportTypeEnum.WORKFLOW_BY_VOLUME],
+    createdAtGte: chartsDateRange.createdAtGte,
+    enabled: true,
+    refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
+    staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
+  });
+
   useEffect(() => {
     telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
   }, [telemetry]);
@@ -214,8 +228,16 @@ export function HomePage(): ReactElement {
 
             <motion.div variants={sectionVariants}>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-                <DeliveryTrendsChart />
-                <WorkflowsByVolume />
+                <DeliveryTrendsChart
+                  data={charts?.[ReportTypeEnum.DELIVERY_TREND] as ChartDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
+                <WorkflowsByVolume
+                  data={charts?.[ReportTypeEnum.WORKFLOW_BY_VOLUME] as WorkflowVolumeDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
                 <InteractionTrendChart />
               </div>
             </motion.div>

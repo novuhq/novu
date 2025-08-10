@@ -1,21 +1,147 @@
+import { useMemo } from 'react';
 import { RiRouteFill } from 'react-icons/ri';
-import { Bar, BarChart, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
+import { type WorkflowVolumeDataPoint } from '@/api/activity';
 import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
+import { Skeleton } from './primitives/skeleton';
 
-const chartData = [
-  { workflow: 'Password reset workflow', volume: 17762, fill: '#8b5cf6' },
-  { workflow: 'Email newsletter', volume: 7762, fill: '#06b6d4' },
-  { workflow: 'OTP confirmation', volume: 4762, fill: '#facc15' },
-  { workflow: 'Doctor Appointment workflow', volume: 2762, fill: '#f97316' },
-  { workflow: 'Onboarding workflow', volume: 762, fill: '#8b5cf6' },
+// Color palette for workflow charts
+const colorPalette = ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'];
+
+// Fallback chart data for when API is loading or fails
+const fallbackChartData = [
+  { workflowName: 'Welcome Email', count: 1250, displayName: 'Welcome Email', fill: colorPalette[0] },
+  { workflowName: 'Order Confirmation', count: 890, displayName: 'Order Confirmation', fill: colorPalette[1] },
+  { workflowName: 'Newsletter', count: 567, displayName: 'Newsletter', fill: colorPalette[2] },
+  { workflowName: 'Password Reset', count: 234, displayName: 'Password Reset', fill: colorPalette[3] },
+  { workflowName: 'Account Update', count: 123, displayName: 'Account Update', fill: colorPalette[4] },
 ];
 
 const chartConfig = {
-  volume: {
-    label: 'Volume',
+  count: {
+    label: 'Workflow runs',
+    color: '#8b5cf6',
   },
 } satisfies ChartConfig;
+
+type WorkflowVolumeTooltipProps = {
+  active?: boolean;
+  payload?: Array<{
+    dataKey?: string;
+    name?: string;
+    value?: number;
+    color?: string;
+    payload?: {
+      workflowName?: string;
+      count?: number;
+      displayName?: string;
+      fill?: string;
+    };
+  }>;
+  label?: string;
+};
+
+function WorkflowVolumeTooltip(props: WorkflowVolumeTooltipProps) {
+  const data = props.payload?.[0]?.payload;
+
+  if (!data) return null;
+
+  const rows = [
+    {
+      key: 'count',
+      label: 'Workflow runs',
+      value: data.count || 0,
+      color: data.fill || '#8b5cf6',
+    },
+  ];
+
+  return (
+    <NovuTooltip active={props.active} label={data.displayName || data.workflowName} rows={rows} showTotal={false} />
+  );
+}
+
+function WorkflowsByVolumeSkeleton() {
+  return (
+    <Card className="shadow-box-xs border-none">
+      <CardHeader className="bg-transparent p-3 pb-0">
+        <CardTitle className="text-label-sm text-text-sub">
+          <Skeleton className="h-4 w-32" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="h-[160px] w-full flex flex-col gap-2">
+          {Array.from({ length: 5 }).map((_, i) => {
+            const width = Math.random() * 60 + 20; // Random width between 20-80%
+            return (
+              <div key={i} className="flex items-center gap-2">
+                <Skeleton className="h-4 w-20 flex-shrink-0" />
+                <Skeleton className="h-4 flex-grow" style={{ width: `${width}%` }} />
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type WorkflowsByVolumeProps = {
+  data?: WorkflowVolumeDataPoint[];
+  isLoading?: boolean;
+  error?: Error | null;
+};
+
+export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
+  const chartData = useMemo(() => {
+    if (!data || data.length === 0) {
+      return fallbackChartData;
+    }
+
+    return data.map((dataPoint, index) => ({
+      workflowName: dataPoint.workflowName,
+      count: dataPoint.count,
+      displayName:
+        dataPoint.workflowName.length > 20 ? `${dataPoint.workflowName.substring(0, 20)}...` : dataPoint.workflowName,
+      fill: colorPalette[index % colorPalette.length],
+    }));
+  }, [data]);
+
+  if (isLoading) {
+    return <WorkflowsByVolumeSkeleton />;
+  }
+
+  return (
+    <Card className="shadow-box-xs border-none">
+      <CardHeader className="bg-transparent p-3 pb-0">
+        <CardTitle className="text-label-sm text-text-sub">Top workflows by volume</CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <ChartContainer config={chartConfig} className="h-[160px] w-full">
+          <BarChart accessibilityLayer data={chartData} layout="vertical" barGap={1}>
+            <XAxis type="number" dataKey="count" hide />
+
+            <YAxis
+              dataKey="displayName"
+              type="category"
+              tickLine={false}
+              tickMargin={168}
+              axisLine={false}
+              width={190}
+              tick={CustomTick}
+            />
+            <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />
+            <Bar dataKey="count" radius={6} barSize={16}>
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  );
+}
 
 function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value: string } }) {
   const maxLength = 20;
@@ -28,45 +154,5 @@ function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value:
         {text}
       </text>
     </g>
-  );
-}
-
-function WorkflowTooltip(props: { payload?: any[]; label?: string; [key: string]: any }) {
-  const rows = props.payload?.map((item) => ({
-    key: 'volume',
-    label: item.payload?.workflow || 'Workflow',
-    value: item.value || 0,
-    color: item.payload?.fill || item.color || '#000',
-    icon: RiRouteFill,
-  }));
-
-  return <NovuTooltip {...props} rows={rows} showTotal={false} title="" />;
-}
-
-export function WorkflowsByVolume() {
-  return (
-    <Card className="w-full shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">Top workflows by volume</CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
-        <ChartContainer config={chartConfig} className="h-[160px] w-full">
-          <BarChart accessibilityLayer data={chartData} layout="vertical" barGap={1}>
-            <XAxis type="number" dataKey="volume" hide />
-            <YAxis
-              dataKey="workflow"
-              type="category"
-              tickLine={false}
-              tickMargin={168}
-              axisLine={false}
-              width={190}
-              tick={CustomTick}
-            />
-            <ChartTooltip cursor={false} content={<WorkflowTooltip />} />
-            <Bar dataKey="volume" radius={6} barSize={16} />
-          </BarChart>
-        </ChartContainer>
-      </CardContent>
-    </Card>
   );
 }

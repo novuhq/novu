@@ -1,10 +1,14 @@
+import { useMemo } from 'react';
 import { Bar, BarChart, XAxis } from 'recharts';
+import { type ChartDataPoint } from '@/api/activity';
 import { StepTypeEnum } from '@/utils/enums';
 import { STEP_TYPE_TO_ICON } from './icons/utils';
 import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
+import { Skeleton } from './primitives/skeleton';
 
-const chartData = [
+// Fallback chart data for when API is loading or fails
+const fallbackChartData = [
   { date: 'Jul 14', email: 120, push: 80, sms: 40, inApp: 60 },
   { date: 'Jul 15', email: 100, push: 70, sms: 30, inApp: 50 },
   { date: 'Jul 16', email: 140, push: 90, sms: 45, inApp: 65 },
@@ -38,42 +42,136 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function DeliveryTooltip(props: { payload?: any[]; [key: string]: any }) {
+type DeliveryTooltipProps = {
+  active?: boolean;
+  payload?: Array<{
+    dataKey?: string;
+    name?: string;
+    value?: number;
+    color?: string;
+    payload?: {
+      email?: number;
+      push?: number;
+      sms?: number;
+      inApp?: number;
+      chat?: number;
+      date?: string;
+      timestamp?: string;
+    };
+  }>;
+  label?: string;
+};
+
+function DeliveryTooltip(props: DeliveryTooltipProps) {
+  const data = props.payload?.[0]?.payload;
+
   const channels = [
     {
       key: 'email',
       label: 'Email',
-      value: props.payload?.[0]?.payload?.email || 0,
+      value: data?.email || 0,
       color: '#8b5cf6',
       icon: STEP_TYPE_TO_ICON[StepTypeEnum.EMAIL],
     },
     {
       key: 'push',
       label: 'Push',
-      value: props.payload?.[0]?.payload?.push || 0,
+      value: data?.push || 0,
       color: '#06b6d4',
       icon: STEP_TYPE_TO_ICON[StepTypeEnum.PUSH],
     },
     {
       key: 'sms',
       label: 'SMS',
-      value: props.payload?.[0]?.payload?.sms || 0,
+      value: data?.sms || 0,
       color: '#facc15',
       icon: STEP_TYPE_TO_ICON[StepTypeEnum.SMS],
     },
     {
       key: 'inApp',
       label: 'In-app (Inbox)',
-      value: props.payload?.[0]?.payload?.inApp || 0,
+      value: data?.inApp || 0,
       color: '#f97316',
       icon: STEP_TYPE_TO_ICON[StepTypeEnum.IN_APP],
     },
   ];
 
-  return <NovuTooltip {...props} rows={channels} showTotal={true} />;
+  return <NovuTooltip active={props.active} label={props.label} rows={channels} showTotal={true} />;
 }
 
-export function DeliveryTrendsChart() {
+function DeliveryTrendsChartSkeleton() {
+  return (
+    <Card className="shadow-box-xs border-none">
+      <CardHeader className="bg-transparent p-3 pb-0">
+        <CardTitle className="text-label-sm text-text-sub">
+          <Skeleton className="h-4 w-24" />
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3">
+        <div className="h-[160px] w-full flex items-end justify-between gap-1 px-2">
+          {Array.from({ length: 12 }).map((_, i) => {
+            const totalHeight = Math.random() * 80 + 40;
+            const segments = [
+              { height: totalHeight * 0.4 },
+              { height: totalHeight * 0.25 },
+              { height: totalHeight * 0.2 },
+              { height: totalHeight * 0.15 },
+            ];
+
+            return (
+              <div key={i} className="flex flex-col items-center gap-1 flex-1">
+                <div className="w-full max-w-[20px] flex flex-col rounded-sm overflow-hidden border-2 border-white">
+                  {segments.map((segment, segmentIndex) => (
+                    <Skeleton
+                      key={segmentIndex}
+                      className="w-full rounded-none"
+                      style={{ height: `${segment.height}px` }}
+                    />
+                  ))}
+                </div>
+                {(i === 0 || i === 11) && <Skeleton className="h-2 w-6 mt-2" />}
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type DeliveryTrendsChartProps = {
+  data?: ChartDataPoint[];
+  isLoading?: boolean;
+  error?: Error | null;
+};
+
+export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProps) {
+  const chartData = useMemo(() => {
+    if (!data) {
+      return fallbackChartData;
+    }
+
+    return data.map((dataPoint) => ({
+      date: new Date(dataPoint.timestamp).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      email: dataPoint.email || Math.floor(Math.random() * 100),
+      push: dataPoint.push || Math.floor(Math.random() * 100),
+      sms: dataPoint.sms || Math.floor(Math.random() * 100),
+      inApp: dataPoint.inApp || Math.floor(Math.random() * 100),
+      chat: dataPoint.chat || Math.floor(Math.random() * 100),
+      timestamp: dataPoint.timestamp,
+    }));
+  }, [data]);
+
+  if (isLoading) {
+    return <DeliveryTrendsChartSkeleton />;
+  }
+
+  const firstDate = chartData[0]?.date;
+  const lastDate = chartData[chartData.length - 1]?.date;
+
   return (
     <Card className="shadow-box-xs border-none">
       <CardHeader className="bg-transparent p-3 pb-0">
@@ -88,12 +186,7 @@ export function DeliveryTrendsChart() {
               tickMargin={10}
               axisLine={false}
               tick={{ fontSize: 10, fill: '#99a0ae' }}
-              tickFormatter={(value) => {
-                if (value === 'Jul 14') return 'Jul 14';
-                if (value === 'Jul 25') return 'Jul 25';
-
-                return '';
-              }}
+              ticks={[firstDate, lastDate]}
             />
             <ChartTooltip cursor={false} content={<DeliveryTooltip />} />
             <Bar

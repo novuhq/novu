@@ -327,19 +327,20 @@ type NovuTooltipProps = {
 
 const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
   ({ active, payload, label, rows, showTotal = true, title, dateFormatter }, ref) => {
-    if (!active || !payload || !payload.length) {
+    if (!active || (!payload && !rows) || (!payload && !rows?.length)) {
       return null;
     }
 
     // Generate rows from payload if not provided
     const tooltipRows: NovuTooltipRow[] =
       rows ||
-      payload.map((item) => ({
+      payload?.map((item) => ({
         key: item.dataKey,
         label: item.name || item.dataKey,
         value: item.value,
         color: item.color || item.stroke || item.fill || '#000',
-      }));
+      })) ||
+      [];
 
     const total = tooltipRows.reduce((sum, row) => sum + row.value, 0);
     const shouldShowTotal = showTotal && tooltipRows.length > 1;

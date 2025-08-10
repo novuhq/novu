@@ -453,4 +453,59 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
     return template.name.toLowerCase().replace(/\s+/g, '_');
   }
+
+  async getWorkflowVolumeData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ workflow_name: string; count: string }>> {
+    const query = `
+      SELECT 
+        workflow_name,
+        count(*) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND status = 'success'
+      GROUP BY workflow_name
+      ORDER BY count DESC
+      LIMIT 5
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    try {
+      const result = await this.clickhouseService.query<{
+        workflow_name: string;
+        count: string;
+      }>({
+        query,
+        params,
+      });
+
+      return result.data;
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        },
+        'Failed to get workflow volume data'
+      );
+
+      throw error;
+    }
+  }
 }

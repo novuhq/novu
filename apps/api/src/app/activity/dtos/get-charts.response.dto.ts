@@ -28,8 +28,18 @@ export class ChartDataPointDto {
   push: number;
 }
 
+export class WorkflowVolumeDataPointDto {
+  @ApiProperty({ description: 'Workflow name' })
+  @IsString()
+  workflowName: string;
+
+  @ApiProperty({ description: 'Number of workflow runs' })
+  @IsNumber()
+  count: number;
+}
+
 export class GetChartsResponseDto {
-  @ApiProperty({ description: 'Chart sections', type: ChartDataPointDto })
+  @ApiProperty({ description: 'Chart sections' })
   @ValidateNested()
-  data: Record<ReportTypeEnum, ChartDataPointDto[]>;
+  data: Record<ReportTypeEnum, ChartDataPointDto[] | WorkflowVolumeDataPointDto[]>;
 }

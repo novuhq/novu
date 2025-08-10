@@ -414,3 +414,66 @@ export async function getWorkflowRun(workflowRunId: string, environment: IEnviro
 
   return mapWorkflowRunToActivity(data.data);
 }
+
+// Charts API types and functions
+export enum ReportTypeEnum {
+  DELIVERY_TREND = 'delivery-trend',
+  WORKFLOW_BY_VOLUME = 'workflow-by-volume',
+}
+
+export type ChartDataPoint = {
+  timestamp: string;
+  inApp: number;
+  email: number;
+  sms: number;
+  chat: number;
+  push: number;
+};
+
+export type WorkflowVolumeDataPoint = {
+  workflowName: string;
+  count: number;
+};
+
+export type GetChartsRequest = {
+  createdAtGte?: string;
+  createdAtLte?: string;
+  reportType: ReportTypeEnum[];
+};
+
+export type GetChartsResponse = {
+  data: Record<ReportTypeEnum, ChartDataPoint[] | WorkflowVolumeDataPoint[]>;
+};
+
+export async function getCharts({
+  environment,
+  createdAtGte,
+  createdAtLte,
+  reportType,
+  signal,
+}: {
+  environment: IEnvironment;
+  createdAtGte?: string;
+  createdAtLte?: string;
+  reportType: ReportTypeEnum[];
+  signal?: AbortSignal;
+}): Promise<GetChartsResponse> {
+  const searchParams = new URLSearchParams();
+
+  if (createdAtGte) {
+    searchParams.append('createdAtGte', createdAtGte);
+  }
+
+  if (createdAtLte) {
+    searchParams.append('createdAtLte', createdAtLte);
+  }
+
+  for (const type of reportType) {
+    searchParams.append('reportType[]', type);
+  }
+
+  return get<GetChartsResponse>(`/activity/charts?${searchParams.toString()}`, {
+    environment,
+    signal,
+  });
+}
