@@ -528,10 +528,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
 
     // Return the documents with the update payload applied
-    return documentsToUpdate.map((doc) => ({
-      ...doc,
-      ...updatePayload,
-    }));
+    return documentsToUpdate.map(
+      (doc) =>
+        ({
+          ...doc,
+          ...(updatePayload.seen !== undefined && { seen: updatePayload.seen }),
+          ...(updatePayload.read !== undefined && { read: updatePayload.read }),
+          ...(updatePayload.lastSeenDate !== undefined && {
+            lastSeenDate: updatePayload.lastSeenDate.toISOString(),
+          }),
+          ...(updatePayload.lastReadDate !== undefined && {
+            lastReadDate: updatePayload.lastReadDate.toISOString(),
+          }),
+        }) satisfies MessageEntity
+    );
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {
