@@ -5,6 +5,7 @@ import {
   type ActiveSubscribersDataPoint,
   type AvgMessagesPerSubscriberDataPoint,
   type ChartDataPoint,
+  type InteractionTrendDataPoint,
   type MessagesDeliveredDataPoint,
   ReportTypeEnum,
   type WorkflowRunsMetricDataPoint,
@@ -218,6 +219,7 @@ export function HomePage(): ReactElement {
   } = useFetchCharts({
     reportType: [
       ReportTypeEnum.DELIVERY_TREND,
+      ReportTypeEnum.INTERACTION_TREND,
       ReportTypeEnum.WORKFLOW_BY_VOLUME,
       ReportTypeEnum.MESSAGES_DELIVERED,
       ReportTypeEnum.ACTIVE_SUBSCRIBERS,
@@ -464,7 +466,11 @@ export function HomePage(): ReactElement {
                   isLoading={isChartsLoading}
                   error={chartsError}
                 />
-                <InteractionTrendChart />
+                <InteractionTrendChart
+                  data={charts?.[ReportTypeEnum.INTERACTION_TREND] as InteractionTrendDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
               </div>
             </motion.div>
           </div>

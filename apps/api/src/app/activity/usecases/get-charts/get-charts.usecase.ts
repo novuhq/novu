@@ -6,6 +6,7 @@ import {
   AvgMessagesPerSubscriberDataPointDto,
   ChartDataPointDto,
   GetChartsResponseDto,
+  InteractionTrendDataPointDto,
   MessagesDeliveredDataPointDto,
   WorkflowRunsMetricDataPointDto,
   WorkflowVolumeDataPointDto,
@@ -17,6 +18,7 @@ import {
   BuildAvgMessagesPerSubscriberChartCommand,
 } from '../build-avg-messages-per-subscriber-chart';
 import { BuildDeliveryTrendChart, BuildDeliveryTrendChartCommand } from '../build-delivery-trend-chart';
+import { BuildInteractionTrendChart, BuildInteractionTrendChartCommand } from '../build-interaction-trend-chart';
 import { BuildMessagesDeliveredChart, BuildMessagesDeliveredChartCommand } from '../build-messages-delivered-chart';
 import { BuildWorkflowByVolumeChart, BuildWorkflowByVolumeChartCommand } from '../build-workflow-by-volume-chart';
 import { BuildWorkflowRunsMetricChart, BuildWorkflowRunsMetricChartCommand } from '../build-workflow-runs-metric-chart';
@@ -26,6 +28,7 @@ import { GetChartsCommand } from './get-charts.command';
 export class GetCharts {
   constructor(
     private buildDeliveryTrendChart: BuildDeliveryTrendChart,
+    private buildInteractionTrendChart: BuildInteractionTrendChart,
     private buildWorkflowByVolumeChart: BuildWorkflowByVolumeChart,
     private buildMessagesDeliveredChart: BuildMessagesDeliveredChart,
     private buildActiveSubscribersChart: BuildActiveSubscribersChart,
@@ -44,6 +47,7 @@ export class GetCharts {
     const data: Record<
       ReportTypeEnum,
       | ChartDataPointDto[]
+      | InteractionTrendDataPointDto[]
       | WorkflowVolumeDataPointDto[]
       | MessagesDeliveredDataPointDto
       | ActiveSubscribersDataPointDto
@@ -52,6 +56,7 @@ export class GetCharts {
     > = {} as Record<
       ReportTypeEnum,
       | ChartDataPointDto[]
+      | InteractionTrendDataPointDto[]
       | WorkflowVolumeDataPointDto[]
       | MessagesDeliveredDataPointDto
       | ActiveSubscribersDataPointDto
@@ -62,6 +67,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
       data[ReportTypeEnum.DELIVERY_TREND] = await this.buildDeliveryTrendChart.execute(
         BuildDeliveryTrendChartCommand.create({
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.INTERACTION_TREND)) {
+      data[ReportTypeEnum.INTERACTION_TREND] = await this.buildInteractionTrendChart.execute(
+        BuildInteractionTrendChartCommand.create({
           environmentId,
           organizationId,
           startDate,

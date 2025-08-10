@@ -28,6 +28,28 @@ export class ChartDataPointDto {
   push: number;
 }
 
+export class InteractionTrendDataPointDto {
+  @ApiProperty({ description: 'Chart data point timestamp' })
+  @IsString()
+  timestamp: string;
+
+  @ApiProperty({ description: 'Messages sent count' })
+  @IsNumber()
+  messageSent: number;
+
+  @ApiProperty({ description: 'Messages seen count' })
+  @IsNumber()
+  messageSeen: number;
+
+  @ApiProperty({ description: 'Messages read count' })
+  @IsNumber()
+  messageRead: number;
+
+  @ApiProperty({ description: 'Messages snoozed count' })
+  @IsNumber()
+  messageSnoozed: number;
+}
+
 export class WorkflowVolumeDataPointDto {
   @ApiProperty({ description: 'Workflow name' })
   @IsString()
@@ -84,6 +106,7 @@ export class GetChartsResponseDto {
   data: Record<
     ReportTypeEnum,
     | ChartDataPointDto[]
+    | InteractionTrendDataPointDto[]
     | WorkflowVolumeDataPointDto[]
     | MessagesDeliveredDataPointDto
     | ActiveSubscribersDataPointDto

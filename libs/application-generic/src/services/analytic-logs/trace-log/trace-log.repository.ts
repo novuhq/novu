@@ -127,6 +127,63 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       );
     }
   }
+
+  async getInteractionTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        event_type,
+        count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type IN ('message_sent', 'message_seen', 'message_read', 'message_snoozed')
+        AND status = 'success'
+      GROUP BY date, event_type
+      ORDER BY date, event_type
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    try {
+      const result = await this.clickhouseService.query<{
+        date: string;
+        event_type: string;
+        count: string;
+      }>({
+        query,
+        params,
+      });
+
+      return result.data;
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+        'Failed to fetch interaction trend data'
+      );
+
+      return [];
+    }
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {

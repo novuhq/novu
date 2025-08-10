@@ -418,6 +418,7 @@ export async function getWorkflowRun(workflowRunId: string, environment: IEnviro
 // Charts API types and functions
 export enum ReportTypeEnum {
   DELIVERY_TREND = 'delivery-trend',
+  INTERACTION_TREND = 'interaction-trend',
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
   MESSAGES_DELIVERED = 'messages-delivered',
   ACTIVE_SUBSCRIBERS = 'active-subscribers',
@@ -432,6 +433,14 @@ export type ChartDataPoint = {
   sms: number;
   chat: number;
   push: number;
+};
+
+export type InteractionTrendDataPoint = {
+  timestamp: string;
+  messageSent: number;
+  messageSeen: number;
+  messageRead: number;
+  messageSnoozed: number;
 };
 
 export type WorkflowVolumeDataPoint = {
@@ -469,6 +478,7 @@ export type GetChartsResponse = {
   data: Record<
     ReportTypeEnum,
     | ChartDataPoint[]
+    | InteractionTrendDataPoint[]
     | WorkflowVolumeDataPoint[]
     | MessagesDeliveredDataPoint
     | ActiveSubscribersDataPoint
