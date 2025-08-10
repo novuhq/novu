@@ -39,12 +39,7 @@ export const LayoutSelect = () => {
           <FormItem className="w-full">
             <FormControl>
               <Tooltip>
-                <TooltipTrigger
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                >
+                <TooltipTrigger disabled={layoutsSortedByDefault?.length === 0}>
                   <Select
                     value={field.value ?? 'no_layout'}
                     onValueChange={(value) => {

@@ -7,7 +7,6 @@ import {
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
-  messageWebhookMapper,
   SendWebhookMessage,
   UpsertPreferences,
   UpsertSubscriberGlobalPreferencesCommand,
@@ -17,6 +16,7 @@ import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   IPreferenceChannels,
   PreferenceLevelEnum,
+  SeverityLevelEnum,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
   WorkflowPreferences,
@@ -160,6 +160,7 @@ export class UpdatePreferences {
           critical: workflow.critical,
           tags: workflow.tags,
           data: workflow.data,
+          severity: workflow.severity ?? SeverityLevelEnum.NONE,
         },
       };
     }

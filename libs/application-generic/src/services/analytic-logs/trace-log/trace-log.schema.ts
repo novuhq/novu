@@ -27,7 +27,7 @@ const schemaDefinition = {
   message: { type: CHNullable(CHString()) },
   raw_data: { type: CHNullable(CHString()) },
 
-  status: { type: CHLowCardinality(CHString()) }, // success, error, timeout
+  status: { type: CHLowCardinality(CHString()) },
 
   // Correlation, Hierarchy context
   entity_type: { type: CHLowCardinality(CHString()) }, // request, workflow_run, step_run
@@ -64,13 +64,6 @@ export type EventType =
   | 'message_unarchived'
   | 'message_snoozed'
   | 'message_unsnoozed'
-  | 'step_created'
-  | 'step_queued'
-  | 'step_delayed'
-  | 'step_digested'
-  | 'step_filtered'
-  | 'step_filter_processing'
-  | 'step_filter_failed'
   | 'message_created'
   | 'message_sent'
   | 'message_snoozed'
@@ -78,9 +71,17 @@ export type EventType =
   | 'message_unsnooze_failed'
   | 'message_content_failed'
   | 'message_sending_started'
+  | 'step_created'
+  | 'step_queued'
+  | 'step_delayed'
+  | 'step_digested'
+  | 'step_filtered'
+  | 'step_filter_processing'
+  | 'step_filter_failed'
   | 'subscriber_integration_missing'
   | 'subscriber_channel_missing'
   | 'subscriber_validation_failed'
+  | 'topic_not_found'
   | 'provider_error'
   | 'provider_limit_exceeded'
   | 'digest_merged'
@@ -100,11 +101,10 @@ export type EventType =
   | 'layout_selected'
   | 'tenant_selected'
   | 'tenant_not_found'
-  | 'variant_selected'
-  | 'notification_error'
   | 'chat_webhook_missing'
   | 'chat_all_channels_failed'
   | 'chat_phone_missing'
+  | 'push_tokens_missing'
   | 'chat_some_channels_skipped'
   | 'push_tokens_missing'
   | 'push_some_channels_skipped'
@@ -114,16 +114,41 @@ export type EventType =
   | 'reply_callback_misconfigured'
   | 'reply_mx_record_missing'
   | 'reply_mx_domain_missing'
+  | 'variant_selected'
+  | 'notification_error'
   | 'execution_detail'
-  | 'step_completed';
+  | 'step_completed'
+  | 'request_received'
+  | 'request_queued'
+  | 'request_failed'
+  | 'request_organization_not_found'
+  | 'request_environment_not_found'
+  | 'request_workflow_not_found'
+  | 'request_invalid_recipients'
+  | 'request_payload_validation_failed'
+  | 'request_subscriber_processing_completed'
+  | 'workflow_execution_started'
+  | 'workflow_environment_not_found'
+  | 'workflow_template_not_found'
+  | 'workflow_template_found'
+  | 'workflow_tenant_processing_started'
+  | 'workflow_tenant_processing_failed'
+  | 'workflow_tenant_processing_completed'
+  | 'workflow_actor_processing_started'
+  | 'workflow_actor_processing_failed'
+  | 'workflow_actor_processing_completed'
+  | 'workflow_execution_failed';
 
 export type EntityType = 'request' | 'step_run';
 
+export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
+
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 
-export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type'> & {
+export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | 'status'> & {
   event_type: EventType;
   entity_type: EntityType;
+  status: TraceStatus;
 };
 
 export type Trace = Prettify<TraceLogComplex>;

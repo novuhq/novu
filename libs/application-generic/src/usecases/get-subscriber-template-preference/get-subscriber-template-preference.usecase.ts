@@ -16,6 +16,7 @@ import {
   ITemplateConfiguration,
   PreferenceOverrideSourceEnum,
   PreferencesTypeEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
@@ -302,5 +303,6 @@ export function mapTemplateConfiguration(template: NotificationTemplateEntity): 
     ...(template.data ? { data: template.data } : {}),
     updatedAt: template.updatedAt,
     createdAt: template.createdAt,
+    severity: template.severity ?? SeverityLevelEnum.NONE,
   };
 }

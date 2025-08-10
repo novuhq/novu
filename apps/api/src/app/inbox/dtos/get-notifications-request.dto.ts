@@ -1,6 +1,7 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SeverityLevelEnum } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { CursorPaginationRequestDto } from '../../shared/dtos/cursor-pagination-request';
 import { NotificationFilter } from '../utils/types';
@@ -45,4 +46,15 @@ export class GetNotificationsRequestDto
     description: 'Filter by data attributes (JSON string)',
   })
   data?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(SeverityLevelEnum, { each: true })
+  @ApiHideProperty()
+  /* @ApiPropertyOptional({
+    description: 'Filter by severity levels',
+    type: [String],
+    enum: SeverityLevelEnum,
+  }) */
+  severity?: SeverityLevelEnum[];
 }

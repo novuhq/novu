@@ -571,6 +571,7 @@ export class SendMessagePush extends SendMessageBase {
       providerId: integration.providerId,
       _jobId: command.jobId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     await this.createExecutionDetails.execute(

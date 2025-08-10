@@ -4,7 +4,6 @@ import {
   IMessageCTA,
   MessageTemplateContentType,
   OrganizationId,
-  SeverityLevelEnum,
   StepTypeEnum,
   UiSchemaGroupEnum,
   UiSchemaProperty,
@@ -63,8 +62,6 @@ export class MessageTemplateEntity {
   };
 
   code?: string;
-
-  severity?: SeverityLevelEnum;
 }
 export class ControlSchemas {
   schema: JSONSchemaEntity;

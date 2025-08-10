@@ -1953,7 +1953,7 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
   it('should execute a Novu-managed workflow', async () => {
     // Log current Redis jobs count before starting the test
     const jobsService = new JobsService();
-    const currentMetrics = await (jobsService as any).getQueueMetrics();
+    let currentMetrics = await (jobsService as any).getQueueMetrics();
     console.log(
       `[Test] Starting 'should execute a Novu-managed workflow' - Current Redis jobs count: ${currentMetrics.totalCount}`
     );
@@ -1992,6 +1992,10 @@ describe('Novu-Hosted Bridge Trigger #novu-v2', () => {
     const responseData = response.body.data as WorkflowResponseDto;
 
     await triggerEvent(session, responseData.workflowId, subscriber._id, {});
+    currentMetrics = await (jobsService as any).getQueueMetrics();
+    console.log(
+      `[Test] Queue breakdown - Workflow: ${currentMetrics.activeWorkflowJobsCount + currentMetrics.waitingWorkflowJobsCount}, Subscriber: ${currentMetrics.activeSubscriberJobsCount + currentMetrics.waitingSubscriberJobsCount}, Standard: ${currentMetrics.activeStandardJobsCount + currentMetrics.waitingStandardJobsCount}`
+    );
     await session.waitForJobCompletion();
 
     const sentMessages = await messageRepository.find({

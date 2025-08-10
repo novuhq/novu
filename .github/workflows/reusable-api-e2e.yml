@@ -51,6 +51,8 @@ jobs:
         shell: bash
         env:
           NOVU_ENTERPRISE: ${{ inputs.ee }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          NEW_RELIC_ENABLED: false
         run: |
           # Start the worker service in the background
           cd apps/worker && LOG_LEVEL=debug npm run start:test &

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { subMonths, subWeeks } from 'date-fns';
 import { FilterQuery, QueryWithHelpers, Types } from 'mongoose';
 
@@ -33,6 +33,7 @@ export class NotificationRepository extends BaseRepository<
       subscriberIds?: string[];
       transactionId?: string[];
       topicKey?: string;
+      severity?: SeverityLevelEnum[] | null;
       after?: string;
       before?: string;
     } = {},
@@ -51,6 +52,15 @@ export class NotificationRepository extends BaseRepository<
 
     if (query.topicKey) {
       requestQuery['topics.topicKey'] = query.topicKey;
+    }
+
+    const severityCondition: Array<FilterQuery<NotificationDBModel>> = [];
+    if (query.severity && query.severity?.length > 0) {
+      if (query.severity.includes(SeverityLevelEnum.NONE)) {
+        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: query.severity } });
+      } else {
+        requestQuery.severity = { $in: query.severity };
+      }
     }
 
     if (query.after || query.before) {
@@ -81,6 +91,14 @@ export class NotificationRepository extends BaseRepository<
       requestQuery.channels = {
         $in: query.channels,
       };
+    }
+    // combine all $or conditions properly
+    const orConditions: Array<FilterQuery<NotificationDBModel>> = [];
+    if (severityCondition.length > 0) {
+      orConditions.push({ $or: severityCondition });
+    }
+    if (orConditions.length > 0) {
+      requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
     }
 
     const response = await this.populateFeed(this.MongooseModel.find(requestQuery), environmentId)

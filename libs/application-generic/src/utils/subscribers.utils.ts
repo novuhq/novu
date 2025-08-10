@@ -16,6 +16,7 @@ export function mapSubscribersToJobs(
         organizationId: command.organizationId,
         userId: command.userId,
         transactionId: command.transactionId,
+        requestId: command.requestId,
         identifier: command.identifier,
         payload: command.payload,
         overrides: command.overrides,

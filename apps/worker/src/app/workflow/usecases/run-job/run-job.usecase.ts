@@ -131,6 +131,7 @@ export class RunJob {
           events: job.digest?.events,
           job,
           tags: notification.tags || [],
+          severity: notification.severity,
           statelessPreferences: job.preferences,
         })
       );

@@ -5,7 +5,7 @@ import {
   UpsertPreferences,
 } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
-import { PreferenceLevelEnum } from '@novu/shared';
+import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import {
@@ -42,6 +42,7 @@ const mockedWorkflow: any = {
   triggers: [{ identifier: 'test-trigger' }],
   tags: [],
   data: undefined,
+  severity: SeverityLevelEnum.NONE,
 };
 
 describe('UpdatePreferences', () => {
@@ -184,6 +185,7 @@ describe('UpdatePreferences', () => {
         critical: mockedWorkflow.critical,
         tags: mockedWorkflow.tags,
         data: mockedWorkflow.data,
+        severity: mockedWorkflow.severity,
       },
     });
   });
@@ -232,6 +234,7 @@ describe('UpdatePreferences', () => {
         critical: mockedWorkflow.critical,
         tags: mockedWorkflow.tags,
         data: mockedWorkflow.data,
+        severity: mockedWorkflow.severity,
       },
     });
   });

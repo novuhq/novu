@@ -211,7 +211,7 @@ export class SendMessageInApp extends SendMessageBase {
     const inAppMessage = inAppMessageFromBridgeOutputs(bridgeOutputs);
 
     const channelData: Partial<
-      Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data'>
+      Pick<MessageEntity, 'content' | 'subject' | 'avatar' | 'payload' | 'cta' | 'tags' | 'data' | 'severity'>
     > = {
       content: (this.storeContent() ? inAppMessage.content || content : null) as string,
       cta: bridgeOutputs ? inAppMessage.cta : step.template.cta,
@@ -220,6 +220,7 @@ export class SendMessageInApp extends SendMessageBase {
       payload: messagePayload,
       data: inAppMessage.data,
       tags: command.tags,
+      severity: command.severity,
     };
 
     if (!oldMessage) {

@@ -1,4 +1,4 @@
-import { ISubscribersDefine, StatelessControls, StepTypeEnum } from '@novu/shared';
+import { ISubscribersDefine, SeverityLevelEnum, StatelessControls, StepTypeEnum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
@@ -41,6 +41,7 @@ export class NotificationEntity {
   updatedAt?: string;
   tags?: string[];
   controls?: StatelessControls;
+  severity?: SeverityLevelEnum;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

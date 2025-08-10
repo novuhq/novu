@@ -29,6 +29,7 @@ export class ProcessBulkTrigger {
             addressingType: AddressingTypeEnum.MULTICAST,
             requestCategory: TriggerRequestCategoryEnum.BULK,
             bridgeUrl: event.bridgeUrl,
+            requestId: command.requestId,
           })
         )) as unknown as TriggerEventResponseDto;
       } catch (e) {
