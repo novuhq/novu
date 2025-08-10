@@ -1,7 +1,12 @@
 import { motion } from 'motion/react';
 import { ReactElement, useEffect, useMemo } from 'react';
 import { RiBookletFill, RiBookmark2Fill, RiGroup2Fill, RiListCheck3 } from 'react-icons/ri';
-import { type ChartDataPoint, ReportTypeEnum, type WorkflowVolumeDataPoint } from '../api/activity';
+import {
+  type ChartDataPoint,
+  type MessagesDeliveredDataPoint,
+  ReportTypeEnum,
+  type WorkflowVolumeDataPoint,
+} from '../api/activity';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { DeliveryTrendsChart } from '../components/delivery-trends-chart';
 import { InboxBellFilled } from '../components/icons/inbox-bell-filled';
@@ -38,6 +43,23 @@ const welcomeMessages = [
 ];
 
 const subtitle = "Everything's wired up so your subscribers get the right update, right on time.";
+
+function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(1)}K`;
+  }
+
+  return num.toLocaleString();
+}
+
+function calculatePercentageChange(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+
+  return ((current - previous) / previous) * 100;
+}
 
 function WelcomeHeader() {
   const randomGreeting = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
@@ -138,12 +160,45 @@ export function HomePage(): ReactElement {
     isLoading: isChartsLoading,
     error: chartsError,
   } = useFetchCharts({
-    reportType: [ReportTypeEnum.DELIVERY_TREND, ReportTypeEnum.WORKFLOW_BY_VOLUME],
+    reportType: [ReportTypeEnum.DELIVERY_TREND, ReportTypeEnum.WORKFLOW_BY_VOLUME, ReportTypeEnum.MESSAGES_DELIVERED],
     createdAtGte: chartsDateRange.createdAtGte,
     enabled: true,
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     staleTime: 2 * 60 * 1000, // Consider data stale after 2 minutes
   });
+
+  const messagesDeliveredData = useMemo(() => {
+    const messagesData = charts?.[ReportTypeEnum.MESSAGES_DELIVERED] as MessagesDeliveredDataPoint;
+    if (!messagesData) {
+      return {
+        value: '0',
+        description: 'No data available',
+        percentageChange: 0,
+        trendDirection: 'neutral' as const,
+      };
+    }
+
+    const change = messagesData.currentPeriod - messagesData.previousPeriod;
+    const absChange = Math.abs(change);
+    const formattedChange = formatNumber(absChange);
+    const percentageChange = calculatePercentageChange(messagesData.currentPeriod, messagesData.previousPeriod);
+
+    let trendDirection: 'up' | 'down' | 'neutral';
+    if (percentageChange > 0) {
+      trendDirection = 'up';
+    } else if (percentageChange < 0) {
+      trendDirection = 'down';
+    } else {
+      trendDirection = 'neutral';
+    }
+
+    return {
+      value: formatNumber(messagesData.currentPeriod),
+      description: `${change >= 0 ? '+' : '-'}${formattedChange} compared to prior period`,
+      percentageChange: Math.abs(percentageChange),
+      trendDirection,
+    };
+  }, [charts]);
 
   useEffect(() => {
     telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
@@ -190,11 +245,12 @@ export function HomePage(): ReactElement {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
                 <AnalyticsCard
                   icon={InboxBellFilled}
-                  value="34,613,001"
+                  value={messagesDeliveredData.value}
                   title="Messages delivered"
-                  description="+40 compared to prior 30 days"
-                  percentageChange={3}
-                  trendDirection="up"
+                  description={messagesDeliveredData.description}
+                  percentageChange={messagesDeliveredData.percentageChange}
+                  trendDirection={messagesDeliveredData.trendDirection}
+                  isLoading={isChartsLoading}
                 />
 
                 <AnalyticsCard

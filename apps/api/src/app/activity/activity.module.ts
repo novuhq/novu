@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
 import { BuildDeliveryTrendChart } from './usecases/build-delivery-trend-chart/build-delivery-trend-chart.usecase';
+import { BuildMessagesDeliveredChart } from './usecases/build-messages-delivered-chart/build-messages-delivered-chart.usecase';
 import { BuildWorkflowByVolumeChart } from './usecases/build-workflow-by-volume-chart/build-workflow-by-volume-chart.usecase';
 import { GetCharts } from './usecases/get-charts/get-charts.usecase';
 import { GetRequest } from './usecases/get-request/get-request.usecase';
@@ -16,6 +17,7 @@ const USE_CASES = [
   GetCharts,
   BuildDeliveryTrendChart,
   BuildWorkflowByVolumeChart,
+  BuildMessagesDeliveredChart,
   GetRequest,
 ];
 

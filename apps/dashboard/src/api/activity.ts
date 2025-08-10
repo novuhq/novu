@@ -419,6 +419,7 @@ export async function getWorkflowRun(workflowRunId: string, environment: IEnviro
 export enum ReportTypeEnum {
   DELIVERY_TREND = 'delivery-trend',
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
+  MESSAGES_DELIVERED = 'messages-delivered',
 }
 
 export type ChartDataPoint = {
@@ -435,6 +436,11 @@ export type WorkflowVolumeDataPoint = {
   count: number;
 };
 
+export type MessagesDeliveredDataPoint = {
+  currentPeriod: number;
+  previousPeriod: number;
+};
+
 export type GetChartsRequest = {
   createdAtGte?: string;
   createdAtLte?: string;
@@ -442,7 +448,7 @@ export type GetChartsRequest = {
 };
 
 export type GetChartsResponse = {
-  data: Record<ReportTypeEnum, ChartDataPoint[] | WorkflowVolumeDataPoint[]>;
+  data: Record<ReportTypeEnum, ChartDataPoint[] | WorkflowVolumeDataPoint[] | MessagesDeliveredDataPoint>;
 };
 
 export async function getCharts({

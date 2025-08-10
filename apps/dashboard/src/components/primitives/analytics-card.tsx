@@ -1,8 +1,8 @@
 import { ComponentType } from 'react';
-import { RiArrowDownSLine, RiArrowUpSLine, RiPulseLine } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 import { TrendLineDown } from '../icons/trend-line-down';
 import { TrendLineUp } from '../icons/trend-line-up';
+import { Skeleton } from './skeleton';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
 
@@ -21,6 +21,8 @@ type AnalyticsCardProps = {
   className?: string;
   /** Icon component to display next to the title */
   icon?: ComponentType<{ className?: string }>;
+  /** Whether the card is in a loading state */
+  isLoading?: boolean;
 };
 
 function getTrendColor(direction: TrendDirection) {
@@ -65,6 +67,7 @@ function formatValue(value: string | number): string {
  *   percentageChange={3}
  *   trendDirection="up"
  *   icon={RiUserLine}
+ *   isLoading={false}
  * />
  * ```
  */
@@ -76,9 +79,30 @@ export function AnalyticsCard({
   trendDirection = 'neutral',
   className,
   icon: IconComponent,
+  isLoading = false,
 }: AnalyticsCardProps) {
   const trendColors = getTrendColor(trendDirection);
   const formattedValue = formatValue(value);
+
+  if (isLoading) {
+    return (
+      <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <Skeleton className="size-4 rounded" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+            <Skeleton className="h-3 w-8 rounded-full" />
+          </div>
+
+          <Skeleton className="h-6 w-16" />
+
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>

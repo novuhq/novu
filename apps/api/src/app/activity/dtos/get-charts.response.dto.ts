@@ -38,8 +38,18 @@ export class WorkflowVolumeDataPointDto {
   count: number;
 }
 
+export class MessagesDeliveredDataPointDto {
+  @ApiProperty({ description: 'Current period count' })
+  @IsNumber()
+  currentPeriod: number;
+
+  @ApiProperty({ description: 'Previous period count' })
+  @IsNumber()
+  previousPeriod: number;
+}
+
 export class GetChartsResponseDto {
   @ApiProperty({ description: 'Chart sections' })
   @ValidateNested()
-  data: Record<ReportTypeEnum, ChartDataPointDto[] | WorkflowVolumeDataPointDto[]>;
+  data: Record<ReportTypeEnum, ChartDataPointDto[] | WorkflowVolumeDataPointDto[] | MessagesDeliveredDataPointDto>;
 }

@@ -9,15 +9,6 @@ import { Skeleton } from './primitives/skeleton';
 // Color palette for workflow charts
 const colorPalette = ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'];
 
-// Fallback chart data for when API is loading or fails
-const fallbackChartData = [
-  { workflowName: 'Welcome Email', count: 1250, displayName: 'Welcome Email', fill: colorPalette[0] },
-  { workflowName: 'Order Confirmation', count: 890, displayName: 'Order Confirmation', fill: colorPalette[1] },
-  { workflowName: 'Newsletter', count: 567, displayName: 'Newsletter', fill: colorPalette[2] },
-  { workflowName: 'Password Reset', count: 234, displayName: 'Password Reset', fill: colorPalette[3] },
-  { workflowName: 'Account Update', count: 123, displayName: 'Account Update', fill: colorPalette[4] },
-];
-
 const chartConfig = {
   count: {
     label: 'Workflow runs',
@@ -94,11 +85,7 @@ type WorkflowsByVolumeProps = {
 
 export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
   const chartData = useMemo(() => {
-    if (!data || data.length === 0) {
-      return fallbackChartData;
-    }
-
-    return data.map((dataPoint, index) => ({
+    return data?.map((dataPoint, index) => ({
       workflowName: dataPoint.workflowName,
       count: dataPoint.count,
       displayName:
@@ -132,7 +119,7 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
             />
             <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />
             <Bar dataKey="count" radius={6} barSize={16}>
-              {chartData.map((entry, index) => (
+              {chartData?.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.fill} />
               ))}
             </Bar>

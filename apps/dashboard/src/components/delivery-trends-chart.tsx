@@ -7,22 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle } from './primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from './primitives/chart';
 import { Skeleton } from './primitives/skeleton';
 
-// Fallback chart data for when API is loading or fails
-const fallbackChartData = [
-  { date: 'Jul 14', email: 120, push: 80, sms: 40, inApp: 60 },
-  { date: 'Jul 15', email: 100, push: 70, sms: 30, inApp: 50 },
-  { date: 'Jul 16', email: 140, push: 90, sms: 45, inApp: 65 },
-  { date: 'Jul 17', email: 110, push: 85, sms: 35, inApp: 55 },
-  { date: 'Jul 18', email: 130, push: 95, sms: 50, inApp: 70 },
-  { date: 'Jul 19', email: 90, push: 60, sms: 25, inApp: 45 },
-  { date: 'Jul 20', email: 125, push: 85, sms: 40, inApp: 60 },
-  { date: 'Jul 21', email: 105, push: 75, sms: 35, inApp: 55 },
-  { date: 'Jul 22', email: 115, push: 80, sms: 45, inApp: 65 },
-  { date: 'Jul 23', email: 135, push: 100, sms: 50, inApp: 75 },
-  { date: 'Jul 24', email: 120, push: 90, sms: 40, inApp: 60 },
-  { date: 'Jul 25', email: 110, push: 85, sms: 35, inApp: 55 },
-];
-
 const chartConfig = {
   email: {
     label: 'Email',
@@ -147,11 +131,7 @@ type DeliveryTrendsChartProps = {
 
 export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProps) {
   const chartData = useMemo(() => {
-    if (!data) {
-      return fallbackChartData;
-    }
-
-    return data.map((dataPoint) => ({
+    return data?.map((dataPoint) => ({
       date: new Date(dataPoint.timestamp).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
@@ -169,8 +149,8 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
     return <DeliveryTrendsChartSkeleton />;
   }
 
-  const firstDate = chartData[0]?.date;
-  const lastDate = chartData[chartData.length - 1]?.date;
+  const firstDate = chartData?.[0]?.date || '';
+  const lastDate = chartData?.[chartData.length - 1]?.date || '';
 
   return (
     <Card className="shadow-box-xs border-none">
