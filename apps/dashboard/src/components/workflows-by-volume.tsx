@@ -89,7 +89,9 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
       workflowName: dataPoint.workflowName,
       count: dataPoint.count,
       displayName:
-        dataPoint.workflowName.length > 20 ? `${dataPoint.workflowName.substring(0, 20)}...` : dataPoint.workflowName,
+        dataPoint.workflowName.length > 20
+          ? `${dataPoint.workflowName.substring(0, 20)}...`.replace(/\b\w/g, (char) => char.toUpperCase())
+          : dataPoint.workflowName.replace(/\b\w/g, (char) => char.toUpperCase()),
       fill: colorPalette[index % colorPalette.length],
     }));
   }, [data]);
