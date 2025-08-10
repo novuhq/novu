@@ -1,5 +1,3 @@
-// Chart data types for better type safety
-
 export type DeliveryChartData = {
   date: string;
   email: number;

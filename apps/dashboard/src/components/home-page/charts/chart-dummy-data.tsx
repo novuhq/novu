@@ -1,4 +1,3 @@
-// Dummy data generators for empty state charts
 import { type DeliveryChartData, type InteractionChartData, type WorkflowChartData } from './chart-types';
 
 export function generateDummyDeliveryData(): DeliveryChartData[] {

@@ -68,6 +68,13 @@ function DeliveryTooltip(props: DeliveryTooltipProps) {
       icon: STEP_TYPE_TO_ICON[StepTypeEnum.PUSH],
     },
     {
+      key: 'chat',
+      label: 'Chat',
+      value: data?.chat || 0,
+      color: '#10b981',
+      icon: STEP_TYPE_TO_ICON[StepTypeEnum.CHAT],
+    },
+    {
       key: 'sms',
       label: 'SMS',
       value: data?.sms || 0,
