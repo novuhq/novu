@@ -48,6 +48,10 @@ export class InteractionTrendDataPointDto {
   @ApiProperty({ description: 'Messages snoozed count' })
   @IsNumber()
   messageSnoozed: number;
+
+  @ApiProperty({ description: 'Messages archived count' })
+  @IsNumber()
+  messageArchived: number;
 }
 
 export class WorkflowVolumeDataPointDto {

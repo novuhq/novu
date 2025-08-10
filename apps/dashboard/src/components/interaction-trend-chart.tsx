@@ -22,6 +22,10 @@ const chartConfig = {
     label: 'Snoozed',
     color: '#a78bfa',
   },
+  messageArchived: {
+    label: 'Archived',
+    color: '#f97316',
+  },
 } satisfies ChartConfig;
 
 function InteractionTrendChartSkeleton() {
@@ -67,6 +71,7 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
       messageSeen: dataPoint.messageSeen,
       messageRead: dataPoint.messageRead,
       messageSnoozed: dataPoint.messageSnoozed,
+      messageArchived: dataPoint.messageArchived,
       timestamp: dataPoint.timestamp,
     }));
   }, [data]);
@@ -115,10 +120,25 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
             />
 
             <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />
-            <Line dataKey="messageSent" stroke="#a5b4fc" strokeWidth={2} dot={false} type="monotone" />
-            <Line dataKey="messageSeen" stroke="#60a5fa" strokeWidth={2} dot={false} type="monotone" />
-            <Line dataKey="messageRead" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
-            <Line dataKey="messageSnoozed" stroke="#a78bfa" strokeWidth={2} dot={false} type="monotone" />
+            <Line dataKey="messageSent" name="Sent" stroke="#a5b4fc" strokeWidth={2} dot={false} type="monotone" />
+            <Line dataKey="messageSeen" name="Seen" stroke="#60a5fa" strokeWidth={2} dot={false} type="monotone" />
+            <Line dataKey="messageRead" name="Read" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
+            <Line
+              dataKey="messageSnoozed"
+              name="Snoozed"
+              stroke="#a78bfa"
+              strokeWidth={2}
+              dot={false}
+              type="monotone"
+            />
+            <Line
+              dataKey="messageArchived"
+              name="Archived"
+              stroke="#f97316"
+              strokeWidth={2}
+              dot={false}
+              type="monotone"
+            />
           </LineChart>
         </ChartContainer>
       </CardContent>

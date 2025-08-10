@@ -136,19 +136,20 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
   ): Promise<Array<{ date: string; event_type: string; count: string }>> {
     const query = `
       SELECT 
-        toDate(created_at) as date,
-        event_type,
+        toDate(traces.created_at) as date,
+        traces.event_type,
         count(*) as count
       FROM traces
+      JOIN step_runs ON traces.entity_id = step_runs.step_run_id
       WHERE 
-        environment_id = {environmentId:String} 
-        AND organization_id = {organizationId:String}
-        AND created_at >= {startDate:DateTime64(3)}
-        AND created_at <= {endDate:DateTime64(3)}
-        AND event_type IN ('message_sent', 'message_seen', 'message_read', 'message_snoozed')
-        AND status = 'success'
-      GROUP BY date, event_type
-      ORDER BY date, event_type
+        traces.environment_id = {environmentId:String} 
+        AND traces.organization_id = {organizationId:String}
+        AND traces.created_at >= {startDate:DateTime64(3)}
+        AND traces.created_at <= {endDate:DateTime64(3)}
+        AND traces.event_type IN ('message_sent', 'message_seen', 'message_read', 'message_snoozed')
+        AND traces.status = 'success'
+      GROUP BY date, traces.event_type
+      ORDER BY date, traces.event_type
     `;
 
     const params = {

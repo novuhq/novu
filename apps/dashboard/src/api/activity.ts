@@ -441,6 +441,7 @@ export type InteractionTrendDataPoint = {
   messageSeen: number;
   messageRead: number;
   messageSnoozed: number;
+  messageArchived: number;
 };
 
 export type WorkflowVolumeDataPoint = {

@@ -34,6 +34,7 @@ export class BuildInteractionTrendChart {
           ['message_seen', 0],
           ['message_read', 0],
           ['message_snoozed', 0],
+          ['message_archived', 0],
         ])
       );
       currentDate.setDate(currentDate.getDate() + 1);
@@ -59,6 +60,7 @@ export class BuildInteractionTrendChart {
         messageSeen: eventCounts.get('message_seen') || 0,
         messageRead: eventCounts.get('message_read') || 0,
         messageSnoozed: eventCounts.get('message_snoozed') || 0,
+        messageArchived: eventCounts.get('message_archived') || 0,
       });
     }
 
