@@ -94,6 +94,13 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
     }));
   }, [data]);
 
+  const chartHeight = useMemo(() => {
+    const itemCount = chartData?.length || 0;
+    const barHeight = 16;
+    const gap = 10;
+    return Math.max(itemCount * (barHeight + gap) + 20, 80);
+  }, [chartData]);
+
   if (isLoading) {
     return <WorkflowsByVolumeSkeleton />;
   }
@@ -104,8 +111,14 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
         <CardTitle className="text-label-sm text-text-sub">Top workflows by volume</CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <ChartContainer config={chartConfig} className="h-[160px] w-full">
-          <BarChart accessibilityLayer data={chartData} layout="vertical" barGap={1}>
+        <ChartContainer config={chartConfig} className="w-full" style={{ height: `${chartHeight}px` }}>
+          <BarChart
+            accessibilityLayer
+            data={chartData}
+            layout="vertical"
+            height={chartHeight}
+            margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
+          >
             <XAxis type="number" dataKey="count" hide />
 
             <YAxis
@@ -116,6 +129,7 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
               axisLine={false}
               width={190}
               tick={CustomTick}
+              interval={0}
             />
             <ChartTooltip cursor={false} content={<WorkflowVolumeTooltip />} />
             <Bar dataKey="count" radius={6} barSize={16}>
