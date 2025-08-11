@@ -39,6 +39,7 @@ type PayloadSchemaDrawerProps = {
   isLoadingWorkflow?: boolean;
   onSave?: (schema: JSONSchema7) => void;
   highlightedPropertyKey?: string | null;
+  readOnly?: boolean;
 };
 
 type PayloadSchemaFormData = {
@@ -52,6 +53,7 @@ export function PayloadSchemaDrawer({
   isLoadingWorkflow,
   onSave,
   highlightedPropertyKey,
+  readOnly = false,
 }: PayloadSchemaDrawerProps) {
   const [drawerSchema, setDrawerSchema] = useState<JSONSchema7 | undefined>(workflow?.payloadSchema);
   const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
@@ -252,7 +254,7 @@ export function PayloadSchemaDrawer({
                             payloadSchemaForm.setValue('validatePayload', value, { shouldDirty: true });
                             setValidatePayload(value);
                           }}
-                          disabled={isLoadingWorkflow}
+                          disabled={isLoadingWorkflow || readOnly}
                         />
                       </div>
                     </>
@@ -261,16 +263,18 @@ export function PayloadSchemaDrawer({
                   {isLoadingWorkflow ? (
                     <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
                   ) : hasPayloadSchema ? (
-                    <SchemaEditor
-                      key={workflow?.slug}
-                      control={control}
-                      fields={fields}
-                      formState={formState}
-                      addProperty={addProperty}
-                      removeProperty={removeProperty}
-                      methods={formMethods}
-                      highlightedPropertyKey={highlightedPropertyKey}
-                    />
+                    <div className={readOnly ? 'pointer-events-none' : undefined}>
+                      <SchemaEditor
+                        key={workflow?.slug}
+                        control={control}
+                        fields={fields}
+                        formState={formState}
+                        addProperty={addProperty}
+                        removeProperty={removeProperty}
+                        methods={formMethods}
+                        highlightedPropertyKey={highlightedPropertyKey}
+                      />
+                    </div>
                   ) : isImportMode ? (
                     <PayloadImportEditor
                       isLoadingActivity={isLoadingActivity}
@@ -282,13 +286,17 @@ export function PayloadSchemaDrawer({
                       isManualImport={isManualImport}
                     />
                   ) : (
-                    <PayloadSchemaEmptyState
-                      onAddProperty={addProperty}
-                      isPayloadSchemaEnabled={true}
-                      hasNoSchema={!workflow?.payloadSchema}
-                      onImportSchema={handleImportSchema}
-                      onImportFromJson={handleImportFromJson}
-                    />
+                    readOnly ? (
+                      <div className="text-text-soft text-xs p-2">No payload schema defined.</div>
+                    ) : (
+                      <PayloadSchemaEmptyState
+                        onAddProperty={addProperty}
+                        isPayloadSchemaEnabled={true}
+                        hasNoSchema={!workflow?.payloadSchema}
+                        onImportSchema={handleImportSchema}
+                        onImportFromJson={handleImportFromJson}
+                      />
+                    )
                   )}
                 </div>
 
@@ -320,7 +328,9 @@ export function PayloadSchemaDrawer({
                     onClick={handleSaveWithValidation}
                     isLoading={isSaving}
                     data-test-id="save-payload-schema-btn"
-                    disabled={!isSchemaValid || !formState.isValid || isSaving || isLoadingWorkflow || isImportMode}
+                    disabled={
+                      readOnly || !isSchemaValid || !formState.isValid || isSaving || isLoadingWorkflow || isImportMode
+                    }
                   >
                     Save Changes
                   </Button>
