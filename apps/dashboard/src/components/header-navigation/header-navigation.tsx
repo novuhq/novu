@@ -1,13 +1,14 @@
-import { HTMLAttributes, ReactNode } from 'react';
-import { UserProfile } from '@/components/user-profile';
 import { InboxButton } from '@/components/inbox-button';
+import { UserProfile } from '@/components/user-profile';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { cn } from '@/utils/ui';
+import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { HTMLAttributes, ReactNode } from 'react';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
+import { useEnvironment } from '../../context/environment/hooks';
 import { CustomerSupportButton } from './customer-support-button';
 import { EditBridgeUrlButton } from './edit-bridge-url-button';
 import { PublishButton } from './publish-button';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { EnvironmentTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
-import { cn } from '@/utils/ui';
-import { useEnvironment } from '../../context/environment/hooks';
 
 type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;
@@ -31,7 +32,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
       <div className="text-foreground-600 ml-auto flex items-center gap-2">
         {isNewChangeMechanismEnabled && currentEnvironment?.type === EnvironmentTypeEnum.DEV && <PublishButton />}
         {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
-        <CustomerSupportButton />
+        {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
         <div className="flex pr-0.5">
           <InboxButton />
         </div>
