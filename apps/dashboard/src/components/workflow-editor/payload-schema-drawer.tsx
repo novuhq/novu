@@ -286,11 +286,12 @@ export function PayloadSchemaDrawer({
                     />
                   ) : (
                     <PayloadSchemaEmptyState
-                      onAddProperty={readOnly ? () => {} : addProperty}
+                      onAddProperty={addProperty}
                       isPayloadSchemaEnabled={true}
                       hasNoSchema={!workflow?.payloadSchema}
-                      onImportSchema={readOnly ? () => {} : handleImportSchema}
-                      onImportFromJson={readOnly ? () => {} : handleImportFromJson}
+                      onImportSchema={handleImportSchema}
+                      onImportFromJson={handleImportFromJson}
+                      disabled={readOnly}
                     />
                   )}
                 </div>

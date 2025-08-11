@@ -8,6 +8,7 @@ type PayloadSchemaEmptyStateProps = {
   hasNoSchema: boolean;
   onImportSchema: () => void;
   onImportFromJson: () => void;
+  disabled?: boolean;
 };
 
 export function PayloadSchemaEmptyState({
@@ -16,6 +17,7 @@ export function PayloadSchemaEmptyState({
   hasNoSchema,
   onImportSchema,
   onImportFromJson,
+  disabled = false,
 }: PayloadSchemaEmptyStateProps) {
   const isNewSchemaScenario = isPayloadSchemaEnabled && hasNoSchema;
 
@@ -41,19 +43,19 @@ export function PayloadSchemaEmptyState({
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-row items-center justify-center">
-          <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty}>
+          <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty} disabled={disabled}>
             Add property
           </Button>
         </div>
 
         {isNewSchemaScenario && (
-          <LinkButton className="text-label-xs" underline onClick={onImportSchema}>
+          <LinkButton className="text-label-xs" underline onClick={onImportSchema} disabled={disabled}>
             Import schema from recent payload
           </LinkButton>
         )}
 
         {!isNewSchemaScenario && (
-          <LinkButton className="text-label-xs" underline onClick={onImportFromJson}>
+          <LinkButton className="text-label-xs" underline onClick={onImportFromJson} disabled={disabled}>
             Import from JSON object
           </LinkButton>
         )}
