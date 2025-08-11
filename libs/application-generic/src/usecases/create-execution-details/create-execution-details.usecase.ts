@@ -2,9 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService, LogRepository } from '../../services';
-import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
+import {
+  EntityType,
+  EventType,
+  StepType,
+  TraceLogRepository,
+  TraceStatus,
+} from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
-import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
+import { mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
 
 // Using satisfies ensures all DetailEnum values are mapped at compile time
@@ -153,6 +159,7 @@ export class CreateExecutionDetails {
       status: this.mapExecutionStatusToTraceStatus(command.status),
       entity_type: 'step_run' as EntityType,
       entity_id: command.jobId,
+      stp_step_type: command.channel as StepType,
     };
 
     await this.traceLogRepository.createStepRun([traceData]);

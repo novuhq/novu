@@ -236,7 +236,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
   }
 
   protected async insert(
-    data: Omit<InferClickhouseSchemaType<TSchema>, 'id' | 'expires_at'> & { id?: string },
+    data: Omit<TEnhancedType, 'id' | 'expires_at'> & { id?: string },
     context: {
       organizationId?: string;
       environmentId?: string;
@@ -253,7 +253,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
   }
 
   protected async insertMany(
-    data: Omit<InferClickhouseSchemaType<TSchema>, 'id' | 'expires_at'>[],
+    data: Omit<TEnhancedType, 'id' | 'expires_at'>[],
     context: {
       organizationId?: string;
       environmentId?: string;

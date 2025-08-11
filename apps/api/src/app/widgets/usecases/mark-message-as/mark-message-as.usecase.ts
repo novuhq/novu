@@ -10,6 +10,7 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
+  StepType,
   Trace,
   TraceLogRepository,
   WebSocketsQueueService,
@@ -122,6 +123,7 @@ export class MarkMessageAs {
           entity_type: 'step_run',
           entity_id: message._jobId,
           external_subscriber_id: message._subscriberId,
+          stp_step_type: message.channel as StepType,
         });
       }
     }

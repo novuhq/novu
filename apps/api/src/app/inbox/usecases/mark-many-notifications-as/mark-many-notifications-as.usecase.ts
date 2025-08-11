@@ -7,6 +7,7 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   PinoLogger,
+  StepType,
   Trace,
   TraceLogRepository,
   WebSocketsQueueService,
@@ -178,5 +179,6 @@ function createTraceLog({
     status: 'success',
     entity_type: 'step_run',
     entity_id: message._jobId,
+    stp_step_type: message.channel as StepType,
   };
 }
