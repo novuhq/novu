@@ -246,7 +246,7 @@ export class TriggerEvent {
         entity_id: command.requestId,
       };
 
-      await this.traceLogRepository.create(traceData);
+      await this.traceLogRepository.createRequest([traceData]);
     } catch (error) {
       this.logger.error(
         {

@@ -155,7 +155,7 @@ export class CreateExecutionDetails {
       entity_id: command.jobId,
     };
 
-    await this.traceLogRepository.create(traceData);
+    await this.traceLogRepository.createStepRun([traceData]);
   }
 
   private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): TraceStatus {

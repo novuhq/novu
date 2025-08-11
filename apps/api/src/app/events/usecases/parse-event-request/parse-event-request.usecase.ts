@@ -317,7 +317,7 @@ export class ParseEventRequest {
         entity_id: requestId,
       };
 
-      await this.traceLogRepository.create(traceData);
+      await this.traceLogRepository.createRequest([traceData]);
     } catch (error) {
       this.logger.error(
         {

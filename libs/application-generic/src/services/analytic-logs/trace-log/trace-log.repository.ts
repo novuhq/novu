@@ -26,55 +26,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     this.logger.setContext(this.constructor.name);
   }
 
-  async create(traceData: Omit<Trace, 'id' | 'expires_at'>): Promise<void> {
-    try {
-      const isTraceLogsEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
-        defaultValue: false,
-        organization: { _id: traceData.organization_id },
-        user: { _id: traceData.user_id },
-        environment: { _id: traceData.environment_id },
-      });
-
-      if (!isTraceLogsEnabled) {
-        return;
-      }
-
-      await this.insert(
-        traceData,
-        {
-          organizationId: traceData.organization_id,
-          environmentId: traceData.environment_id,
-          userId: traceData.user_id,
-        },
-        TRACE_INSERT_OPTIONS
-      );
-
-      this.logger.debug(
-        {
-          entityId: traceData.entity_id,
-          entityType: traceData.entity_type,
-          eventType: traceData.event_type,
-        },
-        'Trace event logged'
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          error,
-          entityId: traceData.entity_id,
-          entityType: traceData.entity_type,
-          eventType: traceData.event_type,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          errorStack: error instanceof Error ? error.stack : undefined,
-        },
-        'Failed to log trace event'
-      );
-      // Don't rethrow to avoid breaking the main flow
-    }
-  }
-
-  async createMany(traceDataArray: Omit<Trace, 'id' | 'expires_at'>[]): Promise<void> {
+  private async createMany(traceDataArray: Omit<Trace, 'id' | 'expires_at'>[]): Promise<void> {
     if (traceDataArray.length === 0) {
       return;
     }
@@ -110,7 +62,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
           entityTypes: [...new Set(traceDataArray.map((trace) => trace.entity_type))],
           eventTypes: [...new Set(traceDataArray.map((trace) => trace.event_type))],
         },
-        'Trace events logged in batch'
+        'Trace events logged'
       );
     } catch (error) {
       this.logger.error(
@@ -123,9 +75,27 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
           errorMessage: error instanceof Error ? error.message : 'Unknown error',
           errorStack: error instanceof Error ? error.stack : undefined,
         },
-        'Failed to log trace events in batch'
+        'Failed to log trace events'
       );
     }
+  }
+
+  async createStepRun(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+    return this.createMany(
+      traceData.map((trace) => ({
+        ...trace,
+        entity_type: 'step_run',
+      }))
+    );
+  }
+
+  async createRequest(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+    return this.createMany(
+      traceData.map((trace) => ({
+        ...trace,
+        entity_type: 'request',
+      }))
+    );
   }
 }
 
