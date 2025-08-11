@@ -81,15 +81,6 @@ export class SendWebhookMessage {
         payload: webhookPayload,
       });
 
-      await this.svix.message.create(appId, {
-        eventType: command.eventType,
-        eventId,
-        payload: {
-          ...webhookPayload,
-          organizationId: command.organizationId,
-        },
-      });
-
       this.logger.debug(
         `Successfully sent webhook ${command.eventType}. Svix Message ID: ${message.id}, Event ID: ${eventId}`
       );
@@ -100,8 +91,6 @@ export class SendWebhookMessage {
         `Failed to send webhook ${command.eventType} for application ${appId}. Error: ${error.message}, Event ID: ${eventId}`,
         error.stack
       );
-
-      throw error;
     }
   }
 }
