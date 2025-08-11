@@ -6,7 +6,8 @@ import { WorkflowResponseDto } from '../workflows-v2/dtos/workflow-response.dto'
 
 interface WebhookEventConfig {
   event: WebhookEventEnum;
-  payloadDto: unknown;
+  // biome-ignore lint/complexity/noBannedTypes: <explanation> This is the expected type for the payloadDto for SwaggerDocumentOptions.extraModels
+  payloadDto: Function;
   objectType: WebhookObjectTypeEnum;
 }
 
