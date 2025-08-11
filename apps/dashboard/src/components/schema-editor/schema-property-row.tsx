@@ -30,6 +30,7 @@ export interface SchemaPropertyRowProps {
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
   className?: string;
   depth?: number;
+  readOnly?: boolean;
 }
 
 export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPropertyRow(props) {
@@ -44,6 +45,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
     onCheckVariableUsage,
     className,
     depth = 0,
+    readOnly = false,
   } = props;
 
   const { setValue, getValues } = useFormContext();
@@ -77,12 +79,13 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
       )}
     >
       <div className={cn('flex items-center gap-2', getMarginClassPx(indentationLevel))}>
-        <PropertyNameInput fieldPath={paths.keyName} control={control} autoFocus={isKeyNameEmpty} />
+        <PropertyNameInput fieldPath={paths.keyName} control={control} autoFocus={isKeyNameEmpty} isDisabled={readOnly} />
         <PropertyTypeSelector
           definitionPath={paths.definition}
           control={control}
           setValue={setValue}
           getValues={getValues}
+          isDisabled={readOnly}
         />
 
         <div className="flex items-center gap-1.5">
@@ -98,7 +101,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
                         id={`${pathPrefix}-isRequired-checkbox`}
                         checked={!!field.value}
                         onCheckedChange={field.onChange}
-                        disabled={isKeyNameEmpty}
+                        disabled={isKeyNameEmpty || readOnly}
                       />
                     </div>
                   </TooltipTrigger>
@@ -114,7 +117,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           propertyKeyForDisplay={currentKeyName || ''}
           isRequiredPath={paths.isRequired}
           onDeleteProperty={onDeleteProperty}
-          isDisabled={isKeyNameEmpty}
+          isDisabled={isKeyNameEmpty || readOnly}
           variableUsageInfo={variableUsageInfo}
         />
       </div>
@@ -132,6 +135,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
           depth={depth}
+          readOnly={readOnly}
         />
       )}
 
@@ -146,6 +150,7 @@ export const SchemaPropertyRow = memo<SchemaPropertyRowProps>(function SchemaPro
           currentFullPath={currentFullPath}
           onCheckVariableUsage={onCheckVariableUsage}
           depth={depth}
+          readOnly={readOnly}
         />
       )}
     </div>

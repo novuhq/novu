@@ -263,18 +263,17 @@ export function PayloadSchemaDrawer({
                   {isLoadingWorkflow ? (
                     <div className="flex h-full items-center justify-center">Loading workflow schema...</div>
                   ) : hasPayloadSchema ? (
-                    <div className={readOnly ? 'pointer-events-none' : undefined}>
-                      <SchemaEditor
-                        key={workflow?.slug}
-                        control={control}
-                        fields={fields}
-                        formState={formState}
-                        addProperty={addProperty}
-                        removeProperty={removeProperty}
-                        methods={formMethods}
-                        highlightedPropertyKey={highlightedPropertyKey}
-                      />
-                    </div>
+                    <SchemaEditor
+                      key={workflow?.slug}
+                      control={control}
+                      fields={fields}
+                      formState={formState}
+                      addProperty={addProperty}
+                      removeProperty={removeProperty}
+                      methods={formMethods}
+                      highlightedPropertyKey={highlightedPropertyKey}
+                      readOnly={readOnly}
+                    />
                   ) : isImportMode ? (
                     <PayloadImportEditor
                       isLoadingActivity={isLoadingActivity}
@@ -286,17 +285,13 @@ export function PayloadSchemaDrawer({
                       isManualImport={isManualImport}
                     />
                   ) : (
-                    readOnly ? (
-                      <div className="text-text-soft text-xs p-2">No payload schema defined.</div>
-                    ) : (
-                      <PayloadSchemaEmptyState
-                        onAddProperty={addProperty}
-                        isPayloadSchemaEnabled={true}
-                        hasNoSchema={!workflow?.payloadSchema}
-                        onImportSchema={handleImportSchema}
-                        onImportFromJson={handleImportFromJson}
-                      />
-                    )
+                    <PayloadSchemaEmptyState
+                      onAddProperty={readOnly ? () => {} : addProperty}
+                      isPayloadSchemaEnabled={true}
+                      hasNoSchema={!workflow?.payloadSchema}
+                      onImportSchema={readOnly ? () => {} : handleImportSchema}
+                      onImportFromJson={readOnly ? () => {} : handleImportFromJson}
+                    />
                   )}
                 </div>
 

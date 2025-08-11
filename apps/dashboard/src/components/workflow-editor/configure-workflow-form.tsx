@@ -453,8 +453,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
           </FormRoot>
         </Form>
-                {true && (
-           <>
+                <>
              <Separator />
              <SidebarContent size="lg">
               <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
@@ -499,7 +498,6 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
             <Separator />
           </>
-        )}
       </motion.div>
     </>
   );
