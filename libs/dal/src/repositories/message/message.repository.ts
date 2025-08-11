@@ -506,8 +506,8 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
-    // First find the documents that will be updated (before modification)
-    const documentsToUpdate = await this.find(updateQuery);
+    // Find documents that will be updated (only fetch IDs for performance)
+    const documentsToUpdate = await this.find(updateQuery, '_id');
 
     if (documentsToUpdate.length === 0) {
       return [];
@@ -516,32 +516,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     // Extract IDs for targeted update
     const documentIds = documentsToUpdate.map((doc) => doc._id);
 
-    // Update using IDs to ensure we update exactly what we found
+    // Perform the update using document IDs
     await this.update(
       {
         _id: { $in: documentIds },
         _environmentId: environmentId,
       },
-      {
-        $set: updatePayload,
-      }
+      { $set: updatePayload }
     );
 
-    // Return the documents with the update payload applied
-    return documentsToUpdate.map(
-      (doc) =>
-        ({
-          ...doc,
-          ...(updatePayload.seen !== undefined && { seen: updatePayload.seen }),
-          ...(updatePayload.read !== undefined && { read: updatePayload.read }),
-          ...(updatePayload.lastSeenDate !== undefined && {
-            lastSeenDate: updatePayload.lastSeenDate.toISOString(),
-          }),
-          ...(updatePayload.lastReadDate !== undefined && {
-            lastReadDate: updatePayload.lastReadDate.toISOString(),
-          }),
-        }) satisfies MessageEntity
-    );
+    // Fetch and return the updated documents
+    return this.find({
+      _id: { $in: documentIds },
+      _environmentId: environmentId,
+    });
   }
 
   async updateFeedByMessageTemplateId(environmentId: string, messageId: string, feedId?: string | null) {
@@ -814,17 +802,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
+    // Find documents that will be updated (only fetch IDs for performance)
+    const documentsToUpdate = await this.find(query, '_id');
+
+    if (documentsToUpdate.length === 0) {
+      return [];
+    }
+
+    // Extract IDs for targeted update
+    const documentIds = documentsToUpdate.map((doc) => doc._id);
+    const idQuery = { _id: { $in: documentIds }, _environmentId: query._environmentId };
+
     // Handle firstSeenDate logic separately for operations that mark as seen
     const shouldMarkAsSeen = isUpdatingArchived || isUpdatingRead || (isUpdatingSeen && seen) || isUpdatingSnoozed;
 
     if (shouldMarkAsSeen) {
       // First, update all matching documents with the main update
-      await this.update(query, { $set: updatePayload });
+      await this.update(idQuery, { $set: updatePayload });
 
       // Then, set firstSeenDate only for documents that don't already have it
       await this.update(
         {
-          ...query,
+          ...idQuery,
           firstSeenDate: { $exists: false },
         },
         {
@@ -833,10 +832,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       );
     } else {
       // For non-seen operations, just do the regular update
-      await this.update(query, { $set: updatePayload });
+      await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(query);
+    return this.find(idQuery);
   }
 
   async updateActionStatus({
