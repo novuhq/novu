@@ -7,10 +7,9 @@ import {
   RiDatabase2Line,
   RiDiscussLine,
   RiGroup2Line,
-  RiHome2Line,
-  RiHome6Line,
   RiKey2Line,
   RiLayout5Line,
+  RiLineChartLine,
   RiRouteFill,
   RiSettings4Line,
   RiSignalTowerLine,
@@ -197,6 +196,16 @@ export const SideNavigation = () => {
                     <span>Activity Feed</span>
                   </NavigationLink>
                 </Protect>
+                {isNewHomePageEnabled && (
+                  <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <NavigationLink
+                      to={buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    >
+                      <RiLineChartLine className="size-4" />
+                      <span>Analytics</span>
+                    </NavigationLink>
+                  </Protect>
+                )}
               </NavigationGroup>
             </Protect>
             <Protect

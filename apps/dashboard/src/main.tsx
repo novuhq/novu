@@ -12,6 +12,7 @@ import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step
 
 import {
   ActivityFeed,
+  AnalyticsPage,
   ApiKeysPage,
   CreateLayoutPage,
   CreateWorkflowPage,
@@ -317,6 +318,14 @@ const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ANALYTICS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <AnalyticsPage />
                   </ProtectedRoute>
                 ),
               },
