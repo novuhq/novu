@@ -73,4 +73,5 @@ export enum ReportTypeEnum {
   AVG_MESSAGES_PER_SUBSCRIBER = 'avg-messages-per-subscriber',
   WORKFLOW_RUNS_METRIC = 'workflow-runs-metric',
   TOTAL_INTERACTIONS = 'total-interactions',
+  WORKFLOW_RUNS_TREND = 'workflow-runs-trend',
 }

@@ -114,6 +114,24 @@ export class TotalInteractionsDataPointDto {
   previousPeriod: number;
 }
 
+export class WorkflowRunsTrendDataPointDto {
+  @ApiProperty({ description: 'Chart data point timestamp' })
+  @IsString()
+  timestamp: string;
+
+  @ApiProperty({ description: 'Pending workflow runs count' })
+  @IsNumber()
+  pending: number;
+
+  @ApiProperty({ description: 'Successful workflow runs count' })
+  @IsNumber()
+  success: number;
+
+  @ApiProperty({ description: 'Failed workflow runs count' })
+  @IsNumber()
+  error: number;
+}
+
 export class GetChartsResponseDto {
   @ApiProperty({ description: 'Chart sections' })
   @ValidateNested()
@@ -127,5 +145,6 @@ export class GetChartsResponseDto {
     | AvgMessagesPerSubscriberDataPointDto
     | WorkflowRunsMetricDataPointDto
     | TotalInteractionsDataPointDto
+    | WorkflowRunsTrendDataPointDto[]
   >;
 }

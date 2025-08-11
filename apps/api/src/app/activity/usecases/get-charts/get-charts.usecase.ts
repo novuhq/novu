@@ -11,6 +11,7 @@ import {
   MessagesDeliveredDataPointDto,
   TotalInteractionsDataPointDto,
   WorkflowRunsMetricDataPointDto,
+  WorkflowRunsTrendDataPointDto,
   WorkflowVolumeDataPointDto,
 } from '../../dtos/get-charts.response.dto';
 import { ReportTypeEnum } from '../../dtos/shared.dto';
@@ -25,6 +26,7 @@ import { BuildMessagesDeliveredChart, BuildMessagesDeliveredChartCommand } from 
 import { BuildTotalInteractionsChart, BuildTotalInteractionsChartCommand } from '../build-total-interactions-chart';
 import { BuildWorkflowByVolumeChart, BuildWorkflowByVolumeChartCommand } from '../build-workflow-by-volume-chart';
 import { BuildWorkflowRunsMetricChart, BuildWorkflowRunsMetricChartCommand } from '../build-workflow-runs-metric-chart';
+import { BuildWorkflowRunsTrendChart, BuildWorkflowRunsTrendChartCommand } from '../build-workflow-runs-trend-chart';
 import { GetChartsCommand } from './get-charts.command';
 
 @Injectable()
@@ -38,6 +40,7 @@ export class GetCharts {
     private buildAvgMessagesPerSubscriberChart: BuildAvgMessagesPerSubscriberChart,
     private buildWorkflowRunsMetricChart: BuildWorkflowRunsMetricChart,
     private buildTotalInteractionsChart: BuildTotalInteractionsChart,
+    private buildWorkflowRunsTrendChart: BuildWorkflowRunsTrendChart,
     private organizationRepository: CommunityOrganizationRepository,
     private logger: PinoLogger
   ) {
@@ -62,6 +65,7 @@ export class GetCharts {
       | AvgMessagesPerSubscriberDataPointDto
       | WorkflowRunsMetricDataPointDto
       | TotalInteractionsDataPointDto
+      | WorkflowRunsTrendDataPointDto[]
     > = {} as Record<
       ReportTypeEnum,
       | ChartDataPointDto[]
@@ -72,6 +76,7 @@ export class GetCharts {
       | AvgMessagesPerSubscriberDataPointDto
       | WorkflowRunsMetricDataPointDto
       | TotalInteractionsDataPointDto
+      | WorkflowRunsTrendDataPointDto[]
     >;
 
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
@@ -154,6 +159,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.TOTAL_INTERACTIONS)) {
       data[ReportTypeEnum.TOTAL_INTERACTIONS] = await this.buildTotalInteractionsChart.execute(
         Object.assign(new BuildTotalInteractionsChartCommand(), {
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_TREND)) {
+      data[ReportTypeEnum.WORKFLOW_RUNS_TREND] = await this.buildWorkflowRunsTrendChart.execute(
+        BuildWorkflowRunsTrendChartCommand.create({
           environmentId,
           organizationId,
           startDate,

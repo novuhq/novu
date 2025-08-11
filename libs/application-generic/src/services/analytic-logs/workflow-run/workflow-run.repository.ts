@@ -678,4 +678,59 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       };
     }
   }
+
+  async getWorkflowRunsTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; status: string; count: string }>> {
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        status,
+        count(*) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+      GROUP BY date, status
+      ORDER BY date, status
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    try {
+      const result = await this.clickhouseService.query<{
+        date: string;
+        status: string;
+        count: string;
+      }>({
+        query,
+        params,
+      });
+
+      return result.data;
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+        'Failed to fetch workflow runs trend data'
+      );
+
+      return [];
+    }
+  }
 }
