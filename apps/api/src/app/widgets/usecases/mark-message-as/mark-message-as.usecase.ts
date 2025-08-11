@@ -31,8 +31,7 @@ export class MarkMessageAs {
     private subscriberRepository: SubscriberRepository,
     private traceLogRepository: TraceLogRepository,
     private logger: PinoLogger,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -181,13 +180,8 @@ export class MarkMessageAs {
     organizationId: string,
     environmentId: string
   ): Promise<void> {
-    if (!this.sendWebhookMessage) {
-      return;
-    }
-
     const webhookPromises = messages.map((message) =>
-      // biome-ignore lint/style/noNonNullAssertion: <explanation> checked above
-      this.sendWebhookMessage!.execute({
+      this.sendWebhookMessage.execute({
         eventType: eventType,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {

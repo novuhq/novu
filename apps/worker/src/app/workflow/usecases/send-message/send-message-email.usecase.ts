@@ -67,8 +67,7 @@ export class SendMessageEmail extends SendMessageBase {
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
     private getLayoutUseCaseV1: GetLayoutUseCaseV1,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -478,19 +477,17 @@ export class SendMessageEmail extends SendMessageBase {
         ),
       });
 
-      if (this.sendWebhookMessage) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, {
-              providerResponseId: result.id,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        });
-      }
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {
+            providerResponseId: result.id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
@@ -546,20 +543,18 @@ export class SendMessageEmail extends SendMessageBase {
         error = error.response;
       }
 
-      if (this.sendWebhookMessage) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_FAILED,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message),
-            error: {
-              message: error.message || error.name || 'Error while sending email with provider',
-            },
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message),
+          error: {
+            message: error.message || error.name || 'Error while sending email with provider',
           },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        });
-      }
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

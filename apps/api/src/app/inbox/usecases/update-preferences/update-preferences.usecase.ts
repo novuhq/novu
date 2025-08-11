@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   GetSubscriberTemplatePreference,
@@ -39,8 +39,7 @@ export class UpdatePreferences {
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private upsertPreferences: UpsertPreferences,
     private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -74,17 +73,15 @@ export class UpdatePreferences {
 
     newPreference = await this.findPreference(command, subscriber);
 
-    if (this.sendWebhookMessage) {
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.PREFERENCE_UPDATED,
-        objectType: WebhookObjectTypeEnum.PREFERENCE,
-        payload: {
-          object: newPreference,
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
-    }
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.PREFERENCE_UPDATED,
+      objectType: WebhookObjectTypeEnum.PREFERENCE,
+      payload: {
+        object: newPreference,
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
 
     return newPreference;
   }

@@ -20,7 +20,6 @@ import {
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
-  SvixProviderService,
   TierRestrictionsValidateUsecase,
   TriggerBroadcast,
   TriggerEvent,
@@ -59,6 +58,7 @@ import {
 } from './usecases';
 import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
 import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
 import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
@@ -88,20 +88,40 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
 const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, CommunityUserRepository];
 
-const enterpriseProvidersImports = (): Provider[] => {
-  const providers: Provider[] = [];
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      Logger.log('Importing enterprise providers', 'EnterpriseImport');
+const webhookProvider: Provider = {
+  provide: SendWebhookMessage,
+  useClass: (() => {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
 
-      providers.push(SvixProviderService);
-      providers.push(SendWebhookMessage);
+    if (isEnterprise) {
+      Logger.log('Using enterprise SendWebhookMessage provider', 'EnterpriseProvider');
+      return SendWebhookMessage;
+    } else {
+      Logger.log('Using noop SendWebhookMessage provider', 'EnterpriseProvider');
+      return NoopSendWebhookMessage;
     }
-  } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
-  }
+  })(),
+};
 
-  return providers;
+const svixProvider: Provider = {
+  provide: 'SVIX_CLIENT',
+  useFactory: () => {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+    if (isEnterprise) {
+      Logger.log('Using enterprise SvixProviderService provider', 'EnterpriseProvider');
+      const apiKey = process.env.SVIX_API_KEY;
+      if (!apiKey) {
+        return null;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Svix } = require('svix');
+      return new Svix(apiKey);
+    } else {
+      Logger.log('Using noop SvixProviderService provider', 'EnterpriseProvider');
+      return null;
+    }
+  },
 };
 
 const USE_CASES = [
@@ -185,7 +205,8 @@ const memoryQueueService = {
     ...USE_CASES,
     ...REPOSITORIES,
     activeWorkersToken,
-    ...enterpriseProvidersImports(),
+    webhookProvider,
+    svixProvider,
   ],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })

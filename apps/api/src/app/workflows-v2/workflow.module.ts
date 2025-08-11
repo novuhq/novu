@@ -54,12 +54,8 @@ const MODULES = [
   BridgeModule,
   IntegrationModule,
   LayoutsV2Module,
+  OutboundWebhooksModule.forRoot(),
 ];
-
-if (process.env.NOVU_ENTERPRISE === 'true') {
-  // todo: check if needed because we import on the application level
-  MODULES.push(OutboundWebhooksModule);
-}
 
 @Module({
   imports: MODULES,

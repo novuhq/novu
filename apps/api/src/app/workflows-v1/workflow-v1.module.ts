@@ -10,11 +10,15 @@ import { NotificationTemplateController } from './notification-template.controll
 import { USE_CASES } from './usecases';
 import { WorkflowControllerV1 } from './workflow-v1.controller';
 
-const MODULES = [SharedModule, MessageTemplateModule, ChangeModule, AuthModule, IntegrationModule, PreferencesModule];
-
-if (process.env.NOVU_ENTERPRISE === 'true') {
-  MODULES.push(OutboundWebhooksModule);
-}
+const MODULES = [
+  SharedModule,
+  MessageTemplateModule,
+  ChangeModule,
+  AuthModule,
+  IntegrationModule,
+  PreferencesModule,
+  OutboundWebhooksModule.forRoot(),
+];
 
 @Module({
   imports: MODULES,

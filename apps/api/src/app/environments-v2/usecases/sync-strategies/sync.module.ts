@@ -3,6 +3,7 @@ import { DeletePreferencesUseCase, GetWorkflowByIdsUseCase } from '@novu/applica
 import { LayoutsV2Module } from '../../../layouts-v2/layouts.module';
 import { DeleteLayoutUseCase } from '../../../layouts-v2/usecases/delete-layout';
 import { LayoutSyncToEnvironmentUseCase } from '../../../layouts-v2/usecases/sync-to-environment';
+import { OutboundWebhooksModule } from '../../../outbound-webhooks/outbound-webhooks.module';
 import { SharedModule } from '../../../shared/shared.module';
 import { DeleteWorkflowUseCase } from '../../../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { SyncToEnvironmentUseCase } from '../../../workflows-v2/usecases/sync-to-environment/sync-to-environment.usecase';
@@ -31,7 +32,7 @@ import { WorkflowSyncOperation } from './operations/workflow-sync.operation';
 import { WorkflowSyncStrategy } from './workflow-sync.strategy';
 
 @Module({
-  imports: [SharedModule, WorkflowModule, LayoutsV2Module],
+  imports: [SharedModule, WorkflowModule, LayoutsV2Module, OutboundWebhooksModule.forRoot()],
   providers: [
     // Repository services
     WorkflowRepositoryService,

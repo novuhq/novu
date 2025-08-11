@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CompileTemplate,
@@ -12,7 +12,6 @@ import {
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
-  SendWebhookMessageCommand,
   SmsFactory,
 } from '@novu/application-generic';
 
@@ -44,8 +43,7 @@ export class SendMessageSms extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -348,19 +346,17 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
 
-      if (this.sendWebhookMessage) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, {
-              providerResponseId: result.id,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        });
-      }
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {
+            providerResponseId: result.id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       return {
         status: 'success',
@@ -375,20 +371,18 @@ export class SendMessageSms extends SendMessageBase {
         e
       );
 
-      if (this.sendWebhookMessage) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_FAILED,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, {}),
-            error: {
-              message: e.message || e.name || 'Error while sending sms with provider',
-            },
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {}),
+          error: {
+            message: e.message || e.name || 'Error while sending sms with provider',
           },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        });
-      }
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

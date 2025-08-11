@@ -31,8 +31,7 @@ export class MarkNotificationsAsSeen {
     private webSocketsQueueService: WebSocketsQueueService,
     private traceLogRepository: TraceLogRepository,
     private logger: PinoLogger,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -65,22 +64,19 @@ export class MarkNotificationsAsSeen {
         seen: true,
       });
 
-      if (this.sendWebhookMessage) {
-        const webhookPromises = updatedMessages.map((message) =>
-          // biome-ignore lint/style/noNonNullAssertion: <explanation> if statement
-          this.sendWebhookMessage!.execute({
-            eventType: WebhookEventEnum.MESSAGE_SEEN,
-            objectType: WebhookObjectTypeEnum.MESSAGE,
-            payload: {
-              object: messageWebhookMapper(message),
-            },
-            organizationId: command.organizationId,
-            environmentId: command.environmentId,
-          })
-        );
+      const webhookPromises = updatedMessages.map((message) =>
+        this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SEEN,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
 
-        await Promise.all(webhookPromises);
-      }
+      await Promise.all(webhookPromises);
 
       await this.logTraces({
         command,

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -24,8 +24,7 @@ export class UpdateAllNotifications {
     private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   async execute(command: UpdateAllNotificationsCommand): Promise<void> {
@@ -39,7 +38,7 @@ export class UpdateAllNotifications {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    let parsedData;
+    let parsedData: unknown;
     if (command.from.data) {
       try {
         parsedData = JSON.parse(command.from.data);
@@ -103,21 +102,19 @@ export class UpdateAllNotifications {
   }
 
   private async sendWebhookEvents(command: UpdateAllNotificationsCommand, updatedMessages: MessageEntity[]) {
-    if (this.sendWebhookMessage) {
-      const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+    const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
 
-      if (command.to.read !== undefined) {
-        const eventType = command.to.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
-        webhookPromises.push(...this.createWebhookPromises(eventType, updatedMessages, command));
-      }
-
-      if (command.to.archived !== undefined) {
-        const eventType = command.to.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
-        webhookPromises.push(...this.createWebhookPromises(eventType, updatedMessages, command));
-      }
-
-      await Promise.all(webhookPromises);
+    if (command.to.read !== undefined) {
+      const eventType = command.to.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
+      webhookPromises.push(...this.createWebhookPromises(eventType, updatedMessages, command));
     }
+
+    if (command.to.archived !== undefined) {
+      const eventType = command.to.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
+      webhookPromises.push(...this.createWebhookPromises(eventType, updatedMessages, command));
+    }
+
+    await Promise.all(webhookPromises);
   }
 
   private createWebhookPromises(
@@ -126,8 +123,7 @@ export class UpdateAllNotifications {
     command: UpdateAllNotificationsCommand
   ): Promise<{ eventId: string } | undefined>[] {
     return messages.map((message) =>
-      // biome-ignore lint/style/noNonNullAssertion: sendWebhookMessage is checked in parent method
-      this.sendWebhookMessage!.execute({
+      this.sendWebhookMessage.execute({
         eventType,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {

@@ -51,11 +51,7 @@ const PROVIDERS = [
   TierRestrictionsValidateUsecase,
 ];
 
-const MODULES = [SharedModule];
-
-if (process.env.NOVU_ENTERPRISE === 'true') {
-  MODULES.push(OutboundWebhooksModule);
-}
+const MODULES = [SharedModule, OutboundWebhooksModule.forRoot()];
 
 @Module({
   imports: MODULES,

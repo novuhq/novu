@@ -24,8 +24,7 @@ export class MarkMessageAsByMark {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   async execute(command: MarkMessageAsByMarkCommand): Promise<MessageResponseDto[]> {
@@ -59,7 +58,7 @@ export class MarkMessageAsByMark {
 
     await this.updateServices(command, subscriber, updatedMessages, command.markAs);
 
-    if (this.sendWebhookMessage && command.markAs !== MessagesStatusEnum.UNSEEN) {
+    if (command.markAs !== MessagesStatusEnum.UNSEEN) {
       let eventType = WebhookEventEnum.MESSAGE_SEEN;
       if (command.markAs === MessagesStatusEnum.READ) {
         eventType = WebhookEventEnum.MESSAGE_READ;
@@ -68,8 +67,7 @@ export class MarkMessageAsByMark {
       }
 
       const webhookPromises = updatedMessages.map((message) =>
-        // biome-ignore lint/style/noNonNullAssertion: <explanation> if statement
-        this.sendWebhookMessage!.execute({
+        this.sendWebhookMessage.execute({
           eventType: eventType,
           objectType: WebhookObjectTypeEnum.MESSAGE,
           payload: {

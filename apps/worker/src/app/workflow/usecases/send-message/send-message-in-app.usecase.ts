@@ -51,8 +51,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
     protected compileInAppTemplate: CompileInAppTemplate,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -309,31 +308,29 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
-    if (this.sendWebhookMessage) {
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_SENT,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, {
-            providerResponseId: message._id,
-          }),
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_SENT,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, {
+          providerResponseId: message._id,
+        }),
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
 
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.MESSAGE_DELIVERED,
-        objectType: WebhookObjectTypeEnum.MESSAGE,
-        payload: {
-          object: messageWebhookMapper(message, {
-            providerResponseId: message._id,
-          }),
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
-    }
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_DELIVERED,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, {
+          providerResponseId: message._id,
+        }),
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
 
     return {
       status: 'success',

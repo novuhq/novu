@@ -55,8 +55,7 @@ export class SendMessageChat extends SendMessageBase {
     protected selectVariant: SelectVariant,
     protected createExecutionDetails: CreateExecutionDetails,
     protected moduleRef: ModuleRef,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -502,20 +501,18 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
 
-      if (this.sendWebhookMessage) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message, {
-              providerResponseId: result.id,
-              webhookUrl: chatWebhookUrl,
-            }),
-          },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        });
-      }
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {
+            providerResponseId: result.id,
+            webhookUrl: chatWebhookUrl,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       return {
         status: 'success',
@@ -546,20 +543,18 @@ export class SendMessageChat extends SendMessageBase {
         })
       );
 
-      if (this.sendWebhookMessage) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.MESSAGE_SENT,
-          objectType: WebhookObjectTypeEnum.MESSAGE,
-          payload: {
-            object: messageWebhookMapper(message),
-            error: {
-              message: e.message || e.name || 'Error while sending chat with provider',
-            },
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message),
+          error: {
+            message: e.message || e.name || 'Error while sending chat with provider',
           },
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-        });
-      }
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       return {
         status: 'failed',

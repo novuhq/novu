@@ -28,8 +28,7 @@ export class MarkManyNotificationsAs {
     private messageRepository: MessageRepository,
     private traceLogRepository: TraceLogRepository,
     private logger: PinoLogger,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -74,26 +73,24 @@ export class MarkManyNotificationsAs {
       }),
     });
 
-    if (this.sendWebhookMessage) {
-      const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
-      if (command.read !== undefined) {
-        const eventType = command.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
-        webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
-      }
-
-      if (command.archived !== undefined) {
-        const eventType = command.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
-        webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
-      }
-
-      if (command.snoozedUntil !== undefined) {
-        // do not change to !== null, as null is a indication of unsnooze
-        const eventType = command.snoozedUntil ? WebhookEventEnum.MESSAGE_SNOOZED : WebhookEventEnum.MESSAGE_UNSNOOZED;
-        webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
-      }
-
-      await Promise.all(webhookPromises);
+    const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+    if (command.read !== undefined) {
+      const eventType = command.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
+      webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
     }
+
+    if (command.archived !== undefined) {
+      const eventType = command.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
+      webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
+    }
+
+    if (command.snoozedUntil !== undefined) {
+      // do not change to !== null, as null is a indication of unsnooze
+      const eventType = command.snoozedUntil ? WebhookEventEnum.MESSAGE_SNOOZED : WebhookEventEnum.MESSAGE_UNSNOOZED;
+      webhookPromises.push(...this.sendWebhookEvents(updatedMessages, eventType, command));
+    }
+
+    await Promise.all(webhookPromises);
 
     this.webSocketsQueueService.add({
       name: 'sendMessage',
@@ -112,8 +109,7 @@ export class MarkManyNotificationsAs {
     command: MarkManyNotificationsAsCommand
   ): Promise<{ eventId: string } | undefined>[] {
     return updatedMessages.map((message) =>
-      // biome-ignore lint/style/noNonNullAssertion: <explanation> if statement
-      this.sendWebhookMessage!.execute({
+      this.sendWebhookMessage.execute({
         eventType: eventType,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
