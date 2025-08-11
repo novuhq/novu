@@ -71,22 +71,14 @@ export class GetActivityFeed {
       throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    // Compute earliest allowed date safely
-    const earliestAllowedDate = new Date(Date.now() - this.getMaxRetentionPeriodByOrganization(organization));
+    const maxRetentionMs = this.getMaxRetentionPeriodByOrganization(organization);
 
-    // Parse incoming dates
+    const earliestAllowedDate = new Date(Date.now() - maxRetentionMs);
+
+    // If no after date is provided, default to the earliest allowed date
     const effectiveAfterDate = after ? new Date(after) : earliestAllowedDate;
     const effectiveBeforeDate = before ? new Date(before) : new Date();
 
-    // Guard invalid inputs to avoid RangeError when serializing
-    if (Number.isNaN(effectiveAfterDate.getTime())) {
-      throw new HttpException('Invalid "after" date', HttpStatus.BAD_REQUEST);
-    }
-    if (Number.isNaN(effectiveBeforeDate.getTime())) {
-      throw new HttpException('Invalid "before" date', HttpStatus.BAD_REQUEST);
-    }
-
-    // Enforce retention limits
     this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
 
     return {
