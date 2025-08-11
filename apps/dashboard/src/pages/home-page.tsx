@@ -1,60 +1,36 @@
-import { useOrganization } from '@clerk/clerk-react';
-import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { ReactElement, useEffect } from 'react';
 import { ReportTypeEnum } from '../api/activity';
 import { DashboardLayout } from '../components/dashboard-layout';
 import {
   ANIMATION_VARIANTS,
-  AnalyticsSection,
   CHART_CONFIG,
-  ChartsSection,
   ResourcesSection,
   TopLevelStats,
-  UpgradeCtaIcon,
-  useHomepageDateFilter,
   useMetricData,
   WelcomeHeader,
 } from '../components/home-page';
 import { PageMeta } from '../components/page-meta';
-import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
 import { Separator } from '../components/primitives/separator';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
-import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
 import { TelemetryEvent } from '../utils/telemetry';
 
 export function HomePage(): ReactElement {
   const telemetry = useTelemetry();
-  const { organization } = useOrganization();
-  const { subscription } = useFetchSubscription();
 
-  const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange, selectedPeriodLabel } =
-    useHomepageDateFilter({
-      organization,
-      subscription,
-      upgradeCtaIcon: UpgradeCtaIcon,
-    });
+  // Hardcoded 30-day period for home page
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-  const {
-    charts,
-    isLoading: isChartsLoading,
-    error: chartsError,
-  } = useFetchCharts({
+  const { charts, isLoading: isChartsLoading } = useFetchCharts({
     reportType: CHART_CONFIG.reportTypes.map((type) => ReportTypeEnum[type]),
-    createdAtGte: chartsDateRange.createdAtGte,
+    createdAtGte: thirtyDaysAgo,
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
   });
 
-  const {
-    messagesDeliveredData,
-    activeSubscribersData,
-    avgMessagesPerSubscriberData,
-    workflowRunsMetricData,
-    totalInteractionsData,
-  } = useMetricData(charts);
+  const { workflowRunsMetricData } = useMetricData(charts);
 
   useEffect(() => {
     telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
@@ -80,39 +56,9 @@ export function HomePage(): ReactElement {
               percentageChange={workflowRunsMetricData.percentageChange}
               trendDirection={workflowRunsMetricData.trendDirection}
               isLoading={isChartsLoading}
-              periodLabel={selectedPeriodLabel}
-              dateFilter={
-                <FacetedFormFilter
-                  size="small"
-                  type="single"
-                  hideClear
-                  hideSearch
-                  hideTitle
-                  title="Time period"
-                  options={dateFilterOptions}
-                  selected={[selectedDateRange]}
-                  onSelect={(values) => setSelectedDateRange(values[0])}
-                  icon={CalendarIcon}
-                />
-              }
+              periodLabel="Last 30 days"
             />
           </motion.div>
-
-          <div className="flex flex-col gap-2">
-            <motion.div variants={ANIMATION_VARIANTS.section}>
-              <AnalyticsSection
-                messagesDeliveredData={messagesDeliveredData}
-                activeSubscribersData={activeSubscribersData}
-                avgMessagesPerSubscriberData={avgMessagesPerSubscriberData}
-                totalInteractionsData={totalInteractionsData}
-                isLoading={isChartsLoading}
-              />
-            </motion.div>
-
-            <motion.div variants={ANIMATION_VARIANTS.section}>
-              <ChartsSection charts={charts} isLoading={isChartsLoading} error={chartsError} />
-            </motion.div>
-          </div>
 
           <Separator />
 

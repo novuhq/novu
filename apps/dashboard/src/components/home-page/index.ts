@@ -1,12 +1,4 @@
 // Components
-
-export { ChartWrapper } from './charts/chart-wrapper';
-// Charts
-export { DeliveryTrendsChart } from './charts/delivery-trends-chart';
-export { InteractionTrendChart } from './charts/interaction-trend-chart';
-export { WorkflowsByVolume } from './charts/workflows-by-volume';
-export { AnalyticsSection } from './components/analytics-section';
-export { ChartsSection } from './components/charts-section';
 export { ResourcesSection } from './components/resources-section';
 export { TopLevelStats } from './components/top-level-stats';
 export { UpgradeCtaIcon } from './components/upgrade-cta-icon';
