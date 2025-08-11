@@ -1,10 +1,9 @@
 import '@maily-to/core/style.css';
+import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import './index.css';
-import { Navigate } from 'react-router-dom';
-import { PermissionsEnum } from '@novu/shared';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
@@ -13,53 +12,53 @@ import { ConfigureStepTemplate } from '@/components/workflow-editor/steps/config
 import {
   ActivityFeed,
   ApiKeysPage,
-  CreateWorkflowPage,
   CreateLayoutPage,
-  LayoutsPage,
-  TranslationsPage,
+  CreateWorkflowPage,
   ErrorPage,
   IntegrationsListPage,
+  LayoutsPage,
   OrganizationListPage,
   SettingsPage,
   SignInPage,
   SignUpPage,
   TemplateModal,
+  TranslationsPage,
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
+import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { SubscribersPage } from '@/pages/subscribers';
+import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
+import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
+import { EditLayoutPage } from './pages/edit-layout';
 import { EditSubscriberPage } from './pages/edit-subscriber-page';
 import { EditTopicPage } from './pages/edit-topic';
+import { EditTranslationPage } from './pages/edit-translation';
 import { EditWorkflowPage } from './pages/edit-workflow';
 import { EnvironmentsPage } from './pages/environments';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
-import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
+import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, RootRoute } from './routes';
 import { OnboardingParentRoute } from './routes/onboarding';
+import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
-import { IS_SELF_HOSTED } from './config';
-import { ProtectedRoute } from './routes/protected-route';
-import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
-import { TranslationSettingsPage } from '@/pages/translation-settings-page';
-import { EditLayoutPage } from './pages/edit-layout';
-import { EditTranslationPage } from './pages/edit-translation';
-import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
 
 initializeSentry();
 overrideZodErrorMap();
@@ -495,19 +494,19 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.SETTINGS,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ACCOUNT,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_ORGANIZATION,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_TEAM,
-            element: IS_SELF_HOSTED ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
+            element: IS_SELF_HOSTED && !IS_ENTERPRISE ? <Navigate to={ROUTES.ROOT} /> : <SettingsPage />,
           },
           {
             path: ROUTES.SETTINGS_BILLING,

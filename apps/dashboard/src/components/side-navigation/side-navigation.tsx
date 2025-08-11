@@ -24,7 +24,7 @@ import {
   RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
-import { IS_SELF_HOSTED } from '../../config';
+import { IS_ENTERPRISE, IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
@@ -240,7 +240,7 @@ export const SideNavigation = () => {
                 </Protect>
               </NavigationGroup>
             </Protect>
-            {!IS_SELF_HOSTED ? (
+            {!IS_SELF_HOSTED || IS_ENTERPRISE ? (
               <NavigationGroup label="Application">
                 <NavigationLink to={ROUTES.SETTINGS}>
                   <RiSettings4Line className="size-4" />
