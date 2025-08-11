@@ -1,12 +1,12 @@
+import { Button } from '@/components/primitives/button';
+import { openInNewTab } from '@/utils/url';
+import { IS_ENTERPRISE, IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
 import { CircleCheck } from '../icons/circle-check';
 import { Plug } from '../icons/plug';
 import { ShieldZap } from '../icons/shield-zap';
 import { Sparkling } from '../icons/sparkling';
 import { AuthFeatureRow } from './auth-feature-row';
 import { TrustedCompanies } from './trusted-companies';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '../../config';
-import { Button } from '@/components/primitives/button';
-import { openInNewTab } from '@/utils/url';
 
 export function AuthSideBanner() {
   return (
@@ -77,7 +77,7 @@ export function AuthSideBanner() {
           />
         </div>
       )}
-      {IS_SELF_HOSTED && (
+      {IS_SELF_HOSTED && !IS_ENTERPRISE && (
         <div className="border-stroke-soft rounded-8 hidden flex-col items-start justify-start gap-3 self-stretch border from-blue-50/80 to-transparent p-6 shadow-md md:flex">
           <h3 className="text-lg font-semibold text-neutral-900">Looking for a Managed Solution?</h3>
           <p className="text-sm text-neutral-600">
