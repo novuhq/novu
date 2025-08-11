@@ -4,11 +4,12 @@ import {
   buildMessageCountKey,
   InvalidateCacheService,
   PinoLogger,
+  SendWebhookMessage,
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
-import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -40,6 +41,7 @@ describe('MarkManyNotificationsAs', () => {
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let traceLogRepositoryMock: sinon.SinonStubbedInstance<TraceLogRepository>;
   let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
+  let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
@@ -48,6 +50,7 @@ describe('MarkManyNotificationsAs', () => {
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     traceLogRepositoryMock = sinon.createStubInstance(TraceLogRepository);
     loggerMock = sinon.createStubInstance(PinoLogger);
+    sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
 
     markManyNotificationsAs = new MarkManyNotificationsAs(
       invalidateCacheMock as any,
@@ -55,7 +58,8 @@ describe('MarkManyNotificationsAs', () => {
       getSubscriberMock as any,
       messageRepositoryMock as any,
       traceLogRepositoryMock as any,
-      loggerMock as any
+      loggerMock as any,
+      sendWebhookMessageMock as any
     );
   });
 
