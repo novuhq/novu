@@ -71,12 +71,8 @@ export class GetActivityFeed {
       throw new HttpException('Organization not found', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
-
     // Compute earliest allowed date safely
-    const earliestAllowedDate = isSelfHosted
-      ? new Date(0) // effectively unlimited but safe epoch date
-      : new Date(Date.now() - this.getMaxRetentionPeriodByOrganization(organization));
+    const earliestAllowedDate = new Date(Date.now() - this.getMaxRetentionPeriodByOrganization(organization));
 
     // Parse incoming dates
     const effectiveAfterDate = after ? new Date(after) : earliestAllowedDate;
@@ -90,10 +86,8 @@ export class GetActivityFeed {
       throw new HttpException('Invalid "before" date', HttpStatus.BAD_REQUEST);
     }
 
-    // Enforce retention limits only for cloud
-    if (!isSelfHosted) {
-      this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
-    }
+    // Enforce retention limits
+    this.validateDateRange(earliestAllowedDate, effectiveAfterDate, effectiveBeforeDate);
 
     return {
       after: effectiveAfterDate.toISOString(),
