@@ -48,8 +48,13 @@ export function HomePage(): ReactElement {
     staleTime: CHART_CONFIG.staleTime,
   });
 
-  const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, workflowRunsMetricData } =
-    useMetricData(charts);
+  const {
+    messagesDeliveredData,
+    activeSubscribersData,
+    avgMessagesPerSubscriberData,
+    workflowRunsMetricData,
+    totalInteractionsData,
+  } = useMetricData(charts);
 
   useEffect(() => {
     telemetry(TelemetryEvent.WELCOME_PAGE_VIEWED);
@@ -99,6 +104,7 @@ export function HomePage(): ReactElement {
                 messagesDeliveredData={messagesDeliveredData}
                 activeSubscribersData={activeSubscribersData}
                 avgMessagesPerSubscriberData={avgMessagesPerSubscriberData}
+                totalInteractionsData={totalInteractionsData}
                 isLoading={isChartsLoading}
               />
             </motion.div>

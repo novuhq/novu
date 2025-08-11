@@ -103,6 +103,7 @@ export const CHART_CONFIG = {
     'ACTIVE_SUBSCRIBERS',
     'AVG_MESSAGES_PER_SUBSCRIBER',
     'WORKFLOW_RUNS_METRIC',
+    'TOTAL_INTERACTIONS',
   ] as const,
   refetchInterval: 5 * 60 * 1000, // 5 minutes
   staleTime: 2 * 60 * 1000, // 2 minutes

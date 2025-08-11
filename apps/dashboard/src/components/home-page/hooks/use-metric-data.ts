@@ -3,6 +3,7 @@ import type {
   ActiveSubscribersDataPoint,
   AvgMessagesPerSubscriberDataPoint,
   MessagesDeliveredDataPoint,
+  TotalInteractionsDataPoint,
   WorkflowRunsMetricDataPoint,
 } from '../../../api/activity';
 import { ReportTypeEnum } from '../../../api/activity';
@@ -99,10 +100,16 @@ export function useMetricData(charts: Record<string, unknown> | undefined) {
     return processMetricData(data);
   }, [charts]);
 
+  const totalInteractionsData = useMemo(() => {
+    const data = charts?.[ReportTypeEnum.TOTAL_INTERACTIONS] as TotalInteractionsDataPoint;
+    return processMetricData(data);
+  }, [charts]);
+
   return {
     messagesDeliveredData,
     activeSubscribersData,
     avgMessagesPerSubscriberData,
     workflowRunsMetricData,
+    totalInteractionsData,
   };
 }

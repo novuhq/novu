@@ -424,6 +424,7 @@ export enum ReportTypeEnum {
   ACTIVE_SUBSCRIBERS = 'active-subscribers',
   AVG_MESSAGES_PER_SUBSCRIBER = 'avg-messages-per-subscriber',
   WORKFLOW_RUNS_METRIC = 'workflow-runs-metric',
+  TOTAL_INTERACTIONS = 'total-interactions',
 }
 
 export type ChartDataPoint = {
@@ -469,6 +470,11 @@ export type WorkflowRunsMetricDataPoint = {
   previousPeriod: number;
 };
 
+export type TotalInteractionsDataPoint = {
+  currentPeriod: number;
+  previousPeriod: number;
+};
+
 export type GetChartsRequest = {
   createdAtGte?: string;
   createdAtLte?: string;
@@ -485,6 +491,7 @@ export type GetChartsResponse = {
     | ActiveSubscribersDataPoint
     | AvgMessagesPerSubscriberDataPoint
     | WorkflowRunsMetricDataPoint
+    | TotalInteractionsDataPoint
   >;
 };
 

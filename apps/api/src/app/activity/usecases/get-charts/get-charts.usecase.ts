@@ -9,6 +9,7 @@ import {
   GetChartsResponseDto,
   InteractionTrendDataPointDto,
   MessagesDeliveredDataPointDto,
+  TotalInteractionsDataPointDto,
   WorkflowRunsMetricDataPointDto,
   WorkflowVolumeDataPointDto,
 } from '../../dtos/get-charts.response.dto';
@@ -21,6 +22,7 @@ import {
 import { BuildDeliveryTrendChart, BuildDeliveryTrendChartCommand } from '../build-delivery-trend-chart';
 import { BuildInteractionTrendChart, BuildInteractionTrendChartCommand } from '../build-interaction-trend-chart';
 import { BuildMessagesDeliveredChart, BuildMessagesDeliveredChartCommand } from '../build-messages-delivered-chart';
+import { BuildTotalInteractionsChart, BuildTotalInteractionsChartCommand } from '../build-total-interactions-chart';
 import { BuildWorkflowByVolumeChart, BuildWorkflowByVolumeChartCommand } from '../build-workflow-by-volume-chart';
 import { BuildWorkflowRunsMetricChart, BuildWorkflowRunsMetricChartCommand } from '../build-workflow-runs-metric-chart';
 import { GetChartsCommand } from './get-charts.command';
@@ -35,6 +37,7 @@ export class GetCharts {
     private buildActiveSubscribersChart: BuildActiveSubscribersChart,
     private buildAvgMessagesPerSubscriberChart: BuildAvgMessagesPerSubscriberChart,
     private buildWorkflowRunsMetricChart: BuildWorkflowRunsMetricChart,
+    private buildTotalInteractionsChart: BuildTotalInteractionsChart,
     private organizationRepository: CommunityOrganizationRepository,
     private logger: PinoLogger
   ) {
@@ -58,6 +61,7 @@ export class GetCharts {
       | ActiveSubscribersDataPointDto
       | AvgMessagesPerSubscriberDataPointDto
       | WorkflowRunsMetricDataPointDto
+      | TotalInteractionsDataPointDto
     > = {} as Record<
       ReportTypeEnum,
       | ChartDataPointDto[]
@@ -67,6 +71,7 @@ export class GetCharts {
       | ActiveSubscribersDataPointDto
       | AvgMessagesPerSubscriberDataPointDto
       | WorkflowRunsMetricDataPointDto
+      | TotalInteractionsDataPointDto
     >;
 
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
@@ -138,6 +143,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_METRIC)) {
       data[ReportTypeEnum.WORKFLOW_RUNS_METRIC] = await this.buildWorkflowRunsMetricChart.execute(
         Object.assign(new BuildWorkflowRunsMetricChartCommand(), {
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.TOTAL_INTERACTIONS)) {
+      data[ReportTypeEnum.TOTAL_INTERACTIONS] = await this.buildTotalInteractionsChart.execute(
+        Object.assign(new BuildTotalInteractionsChartCommand(), {
           environmentId,
           organizationId,
           startDate,

@@ -9,6 +9,7 @@ type AnalyticsSectionProps = {
   messagesDeliveredData: MetricData;
   activeSubscribersData: MetricData;
   avgMessagesPerSubscriberData: MetricData;
+  totalInteractionsData: MetricData;
   isLoading: boolean;
 };
 
@@ -16,6 +17,7 @@ export function AnalyticsSection({
   messagesDeliveredData,
   activeSubscribersData,
   avgMessagesPerSubscriberData,
+  totalInteractionsData,
   isLoading,
 }: AnalyticsSectionProps) {
   return (
@@ -42,11 +44,11 @@ export function AnalyticsSection({
 
       <AnalyticsCard
         icon={TargetArrow}
-        value="78%"
-        title="Interaction rate"
-        description="+10% compared to prior 30 days"
-        percentageChange={3}
-        trendDirection="up"
+        value={totalInteractionsData.value}
+        title="Interactions"
+        description={totalInteractionsData.description}
+        percentageChange={totalInteractionsData.percentageChange}
+        trendDirection={totalInteractionsData.trendDirection}
         isLoading={isLoading}
       />
 
