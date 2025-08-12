@@ -1,7 +1,6 @@
 import { ReactNode, useMemo } from 'react';
-import { RiInformation2Line } from 'react-icons/ri';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip';
+import { HelpTooltipIndicator } from '../../primitives/help-tooltip-indicator';
 import { ChartEmptyState } from './chart-empty-state';
 
 type ChartDataPoint = Record<string, unknown>;
@@ -49,16 +48,7 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
       <CardHeader className="bg-transparent p-3 pb-0">
         <CardTitle className="text-label-sm text-text-sub flex items-center gap-0.5">
           {title}
-          {infoTooltip && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-block size-4 text-text-soft hover:text-text-strong cursor-pointer">
-                  <RiInformation2Line className="size-full" />
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs whitespace-pre-line">{infoTooltip}</TooltipContent>
-            </Tooltip>
-          )}
+          {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">

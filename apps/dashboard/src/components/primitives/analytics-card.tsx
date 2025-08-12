@@ -1,12 +1,11 @@
 import { ComponentType } from 'react';
-import { RiInformation2Line } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 import { useDelayedLoading } from '../../hooks/use-delayed-loading';
 import { TrendLineDown } from '../icons/trend-line-down';
 import { TrendLineUp } from '../icons/trend-line-up';
 import { AnimatedNumber } from './animated-number';
+import { HelpTooltipIndicator } from './help-tooltip-indicator';
 import { Skeleton } from './skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
 
@@ -118,16 +117,7 @@ export function AnalyticsCard({
           <div className="flex items-center gap-1">
             {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
             <span className="text-label-sm text-text-sub">{title}</span>
-            {infoTooltip && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-block size-4 text-text-soft hover:text-text-strong cursor-pointer">
-                    <RiInformation2Line className="size-full" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent className="max-w-xs whitespace-pre-line">{infoTooltip}</TooltipContent>
-              </Tooltip>
-            )}
+            {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
           </div>
 
           {percentageChange !== undefined && (
