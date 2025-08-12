@@ -82,14 +82,21 @@ function ProvidersByVolumeSkeleton() {
 
 function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value: string } }) {
   const maxLength = 20;
-  const text = payload.value.length > maxLength ? `${payload.value.slice(0, maxLength)}...` : payload.value;
+  const formatProviderName = (name: string) => {
+    return name
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (char: string) => char.toUpperCase());
+  };
+  
+  const formattedText = formatProviderName(payload.value);
+  const text = formattedText.length > maxLength ? `${formattedText.slice(0, maxLength)}...` : formattedText;
 
   return (
     <g transform={`translate(${x},${y})`}>
       <foreignObject x={-16} y={-8} width={16} height={16}>
         <ProviderIcon providerId={payload.value} providerDisplayName={text} className="h-4 w-4" />
       </foreignObject>
-      <text x={2} y={0} dy={4} textAnchor="start" fill="#525866" fontSize={12}>
+      <text x={6} y={0} dy={4} textAnchor="start" fill="#525866" fontSize={12}>
         {text}
       </text>
     </g>
