@@ -1,4 +1,5 @@
 import { ReactNode, useMemo } from 'react';
+import { useDelayedLoading } from '../../../hooks/use-delayed-loading';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { ChartEmptyState } from './chart-empty-state';
 

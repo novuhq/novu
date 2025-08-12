@@ -1,5 +1,6 @@
 import { ComponentType } from 'react';
 import { cn } from '@/utils/ui';
+import { useDelayedLoading } from '../../hooks/use-delayed-loading';
 import { TrendLineDown } from '../icons/trend-line-down';
 import { TrendLineUp } from '../icons/trend-line-up';
 import { AnimatedNumber } from './animated-number';
@@ -87,10 +88,9 @@ export function AnalyticsCard({
   icon: IconComponent,
   isLoading = false,
 }: AnalyticsCardProps) {
-  const trendColors = getTrendColor(trendDirection);
-  const formattedValue = formatValue(value);
+  const showSkeleton = useDelayedLoading(isLoading);
 
-  if (isLoading) {
+  if (showSkeleton) {
     return (
       <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
         <div className="flex flex-col gap-1.5">
@@ -109,6 +109,8 @@ export function AnalyticsCard({
       </div>
     );
   }
+
+  const trendColors = getTrendColor(trendDirection);
 
   return (
     <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
