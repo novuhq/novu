@@ -9,5 +9,5 @@ export * from './constants/home-page';
 
 // Hooks
 export { useHomepageDateFilter } from './hooks/use-home-page-date-filter';
-export type { MetricData } from './hooks/use-metric-data';
-export { useMetricData } from './hooks/use-metric-data';
+export type { MetricData } from '../../hooks/use-metric-data';
+export { useMetricData } from '../../hooks/use-metric-data';

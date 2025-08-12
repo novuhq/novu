@@ -5,8 +5,9 @@ import type {
   MessagesDeliveredDataPoint,
   TotalInteractionsDataPoint,
   WorkflowRunsMetricDataPoint,
-} from '../../../api/activity';
-import { ReportTypeEnum } from '../../../api/activity';
+} from '../api/activity';
+import { ReportTypeEnum } from '../api/activity';
+import { getCompactFormat } from '../utils/number-formatting';
 
 export type MetricData = {
   value: string;
@@ -21,11 +22,10 @@ type PeriodData = {
 };
 
 function formatNumber(num: number): string {
-  if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
-  }
-  if (num >= 1000) {
-    return `${(num / 1000).toFixed(1)}K`;
+  const { value, suffix } = getCompactFormat(num);
+
+  if (suffix) {
+    return `${value.toFixed(1)}${suffix}`;
   }
 
   return num.toLocaleString();
