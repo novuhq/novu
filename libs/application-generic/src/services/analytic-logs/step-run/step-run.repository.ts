@@ -406,6 +406,64 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     }
   }
 
+  async getProviderVolumeData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ provider_id: string; count: string }>> {
+    const query = `
+      SELECT 
+        provider_id,
+        count(*) as count
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+        AND provider_id IS NOT NULL
+        AND provider_id != ''
+      GROUP BY provider_id
+      ORDER BY count DESC
+      LIMIT 5
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    try {
+      const result = await this.clickhouseService.query<{
+        provider_id: string;
+        count: string;
+      }>({
+        query,
+        params,
+      });
+
+      return result.data;
+    } catch (error) {
+      this.logger.error(
+        {
+          err: error,
+          environmentId,
+          organizationId,
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+        },
+        'Failed to fetch provider volume data'
+      );
+
+      return [];
+    }
+  }
+
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
     const createdAt = new Date(now);

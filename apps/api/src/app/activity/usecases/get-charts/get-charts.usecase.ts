@@ -4,11 +4,13 @@ import { CommunityOrganizationRepository, OrganizationEntity } from '@novu/dal';
 import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsNumber } from '@novu/shared';
 import {
   ActiveSubscribersDataPointDto,
+  ActiveSubscribersTrendDataPointDto,
   AvgMessagesPerSubscriberDataPointDto,
   ChartDataPointDto,
   GetChartsResponseDto,
   InteractionTrendDataPointDto,
   MessagesDeliveredDataPointDto,
+  ProviderVolumeDataPointDto,
   TotalInteractionsDataPointDto,
   WorkflowRunsMetricDataPointDto,
   WorkflowRunsTrendDataPointDto,
@@ -16,6 +18,8 @@ import {
 } from '../../dtos/get-charts.response.dto';
 import { ReportTypeEnum } from '../../dtos/shared.dto';
 import { BuildActiveSubscribersChart, BuildActiveSubscribersChartCommand } from '../build-active-subscribers-chart';
+import { BuildActiveSubscribersTrendChartCommand } from '../build-active-subscribers-trend-chart/build-active-subscribers-trend-chart.command';
+import { BuildActiveSubscribersTrendChart } from '../build-active-subscribers-trend-chart/build-active-subscribers-trend-chart.usecase';
 import {
   BuildAvgMessagesPerSubscriberChart,
   BuildAvgMessagesPerSubscriberChartCommand,
@@ -23,6 +27,7 @@ import {
 import { BuildDeliveryTrendChart, BuildDeliveryTrendChartCommand } from '../build-delivery-trend-chart';
 import { BuildInteractionTrendChart, BuildInteractionTrendChartCommand } from '../build-interaction-trend-chart';
 import { BuildMessagesDeliveredChart, BuildMessagesDeliveredChartCommand } from '../build-messages-delivered-chart';
+import { BuildProviderByVolumeChart, BuildProviderByVolumeChartCommand } from '../build-provider-by-volume-chart';
 import { BuildTotalInteractionsChart, BuildTotalInteractionsChartCommand } from '../build-total-interactions-chart';
 import { BuildWorkflowByVolumeChart, BuildWorkflowByVolumeChartCommand } from '../build-workflow-by-volume-chart';
 import { BuildWorkflowRunsMetricChart, BuildWorkflowRunsMetricChartCommand } from '../build-workflow-runs-metric-chart';
@@ -35,8 +40,10 @@ export class GetCharts {
     private buildDeliveryTrendChart: BuildDeliveryTrendChart,
     private buildInteractionTrendChart: BuildInteractionTrendChart,
     private buildWorkflowByVolumeChart: BuildWorkflowByVolumeChart,
+    private buildProviderByVolumeChart: BuildProviderByVolumeChart,
     private buildMessagesDeliveredChart: BuildMessagesDeliveredChart,
     private buildActiveSubscribersChart: BuildActiveSubscribersChart,
+    private buildActiveSubscribersTrendChart: BuildActiveSubscribersTrendChart,
     private buildAvgMessagesPerSubscriberChart: BuildAvgMessagesPerSubscriberChart,
     private buildWorkflowRunsMetricChart: BuildWorkflowRunsMetricChart,
     private buildTotalInteractionsChart: BuildTotalInteractionsChart,
@@ -60,23 +67,27 @@ export class GetCharts {
       | ChartDataPointDto[]
       | InteractionTrendDataPointDto[]
       | WorkflowVolumeDataPointDto[]
+      | ProviderVolumeDataPointDto[]
       | MessagesDeliveredDataPointDto
       | ActiveSubscribersDataPointDto
       | AvgMessagesPerSubscriberDataPointDto
       | WorkflowRunsMetricDataPointDto
       | TotalInteractionsDataPointDto
       | WorkflowRunsTrendDataPointDto[]
+      | ActiveSubscribersTrendDataPointDto[]
     > = {} as Record<
       ReportTypeEnum,
       | ChartDataPointDto[]
       | InteractionTrendDataPointDto[]
       | WorkflowVolumeDataPointDto[]
+      | ProviderVolumeDataPointDto[]
       | MessagesDeliveredDataPointDto
       | ActiveSubscribersDataPointDto
       | AvgMessagesPerSubscriberDataPointDto
       | WorkflowRunsMetricDataPointDto
       | TotalInteractionsDataPointDto
       | WorkflowRunsTrendDataPointDto[]
+      | ActiveSubscribersTrendDataPointDto[]
     >;
 
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
@@ -104,6 +115,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.WORKFLOW_BY_VOLUME)) {
       data[ReportTypeEnum.WORKFLOW_BY_VOLUME] = await this.buildWorkflowByVolumeChart.execute(
         BuildWorkflowByVolumeChartCommand.create({
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.PROVIDER_BY_VOLUME)) {
+      data[ReportTypeEnum.PROVIDER_BY_VOLUME] = await this.buildProviderByVolumeChart.execute(
+        BuildProviderByVolumeChartCommand.create({
           environmentId,
           organizationId,
           startDate,
@@ -170,6 +192,17 @@ export class GetCharts {
     if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_TREND)) {
       data[ReportTypeEnum.WORKFLOW_RUNS_TREND] = await this.buildWorkflowRunsTrendChart.execute(
         BuildWorkflowRunsTrendChartCommand.create({
+          environmentId,
+          organizationId,
+          startDate,
+          endDate,
+        })
+      );
+    }
+
+    if (reportType.includes(ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND)) {
+      data[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] = await this.buildActiveSubscribersTrendChart.execute(
+        BuildActiveSubscribersTrendChartCommand.create({
           environmentId,
           organizationId,
           startDate,

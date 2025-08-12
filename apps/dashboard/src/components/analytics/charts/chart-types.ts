@@ -15,6 +15,13 @@ export type WorkflowChartData = {
   fill: string;
 };
 
+export type ProviderChartData = {
+  providerId: string;
+  count: number;
+  displayName: string;
+  fill: string;
+};
+
 export type InteractionChartData = {
   date: string;
   messageSent: number;
@@ -30,5 +37,11 @@ export type WorkflowRunsChartData = {
   pending: number;
   success: number;
   error: number;
+  timestamp: string;
+};
+
+export type ActiveSubscribersChartData = {
+  date: string;
+  count: number;
   timestamp: string;
 };

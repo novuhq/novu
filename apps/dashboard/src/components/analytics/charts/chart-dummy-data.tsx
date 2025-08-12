@@ -1,6 +1,8 @@
 import {
+  type ActiveSubscribersChartData,
   type DeliveryChartData,
   type InteractionChartData,
+  type ProviderChartData,
   type WorkflowChartData,
   type WorkflowRunsChartData,
 } from './chart-types';
@@ -37,6 +39,17 @@ export function generateDummyWorkflowData(): WorkflowChartData[] {
     workflowName: workflow,
     count: Math.floor(Math.random() * 1000) + 200,
     displayName: workflow,
+    fill: ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'][index],
+  }));
+}
+
+export function generateDummyProviderData(): ProviderChartData[] {
+  const providers = ['sendgrid', 'twilio', 'mailgun', 'fcm', 'slack'];
+
+  return providers.map((provider, index) => ({
+    providerId: provider,
+    count: Math.floor(Math.random() * 800) + 150,
+    displayName: provider.charAt(0).toUpperCase() + provider.slice(1),
     fill: ['#8b5cf6', '#06b6d4', '#facc15', '#f97316', '#ef4444'][index],
   }));
 }
@@ -92,6 +105,29 @@ export function generateDummyWorkflowRunsData(): WorkflowRunsChartData[] {
       success,
       pending,
       error,
+      timestamp: date.toISOString(),
+    });
+  }
+
+  return dummyData;
+}
+
+export function generateDummyActiveSubscribersData(): ActiveSubscribersChartData[] {
+  const today = new Date();
+  const dummyData = [];
+
+  for (let i = 14; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+
+    const count = Math.floor(Math.random() * 500) + 100;
+
+    dummyData.push({
+      date: date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      count,
       timestamp: date.toISOString(),
     });
   }

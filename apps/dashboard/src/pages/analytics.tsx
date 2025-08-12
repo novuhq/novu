@@ -2,7 +2,12 @@ import { useOrganization } from '@clerk/clerk-react';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
-import { ReportTypeEnum, type WorkflowRunsTrendDataPoint } from '../api/activity';
+import {
+  type ActiveSubscribersTrendDataPoint,
+  type ProviderVolumeDataPoint,
+  ReportTypeEnum,
+  type WorkflowRunsTrendDataPoint,
+} from '../api/activity';
 import {
   ANIMATION_VARIANTS,
   AnalyticsSection,
@@ -11,6 +16,8 @@ import {
   useAnalyticsDateFilter,
   useMetricData,
 } from '../components/analytics';
+import { ActiveSubscribersTrendChart } from '../components/analytics/charts/active-subscribers-trend-chart';
+import { ProvidersByVolume } from '../components/analytics/charts/providers-by-volume';
 import { WorkflowRunsTrendChart } from '../components/analytics/charts/workflow-runs-trend-chart';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
@@ -93,6 +100,19 @@ export function AnalyticsPage() {
             <motion.div variants={ANIMATION_VARIANTS.section}>
               <WorkflowRunsTrendChart
                 data={charts?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[]}
+                isLoading={isChartsLoading}
+                error={chartsError}
+              />
+            </motion.div>
+
+            <motion.div variants={ANIMATION_VARIANTS.section} className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+              <ActiveSubscribersTrendChart
+                data={charts?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
+                isLoading={isChartsLoading}
+                error={chartsError}
+              />
+              <ProvidersByVolume
+                data={charts?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
                 isLoading={isChartsLoading}
                 error={chartsError}
               />

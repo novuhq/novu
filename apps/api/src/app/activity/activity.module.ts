@@ -2,10 +2,12 @@ import { Module } from '@nestjs/common';
 import { SharedModule } from '../shared/shared.module';
 import { ActivityController } from './activity.controller';
 import { BuildActiveSubscribersChart } from './usecases/build-active-subscribers-chart/build-active-subscribers-chart.usecase';
+import { BuildActiveSubscribersTrendChart } from './usecases/build-active-subscribers-trend-chart/build-active-subscribers-trend-chart.usecase';
 import { BuildAvgMessagesPerSubscriberChart } from './usecases/build-avg-messages-per-subscriber-chart/build-avg-messages-per-subscriber-chart.usecase';
 import { BuildDeliveryTrendChart } from './usecases/build-delivery-trend-chart/build-delivery-trend-chart.usecase';
 import { BuildInteractionTrendChart } from './usecases/build-interaction-trend-chart/build-interaction-trend-chart.usecase';
 import { BuildMessagesDeliveredChart } from './usecases/build-messages-delivered-chart/build-messages-delivered-chart.usecase';
+import { BuildProviderByVolumeChart } from './usecases/build-provider-by-volume-chart/build-provider-by-volume-chart.usecase';
 import { BuildTotalInteractionsChart } from './usecases/build-total-interactions-chart/build-total-interactions-chart.usecase';
 import { BuildWorkflowByVolumeChart } from './usecases/build-workflow-by-volume-chart/build-workflow-by-volume-chart.usecase';
 import { BuildWorkflowRunsMetricChart } from './usecases/build-workflow-runs-metric-chart/build-workflow-runs-metric-chart.usecase';
@@ -24,8 +26,10 @@ const USE_CASES = [
   BuildDeliveryTrendChart,
   BuildInteractionTrendChart,
   BuildWorkflowByVolumeChart,
+  BuildProviderByVolumeChart,
   BuildMessagesDeliveredChart,
   BuildActiveSubscribersChart,
+  BuildActiveSubscribersTrendChart,
   BuildAvgMessagesPerSubscriberChart,
   BuildWorkflowRunsMetricChart,
   BuildTotalInteractionsChart,

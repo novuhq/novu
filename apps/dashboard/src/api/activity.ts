@@ -420,12 +420,14 @@ export enum ReportTypeEnum {
   DELIVERY_TREND = 'delivery-trend',
   INTERACTION_TREND = 'interaction-trend',
   WORKFLOW_BY_VOLUME = 'workflow-by-volume',
+  PROVIDER_BY_VOLUME = 'provider-by-volume',
   MESSAGES_DELIVERED = 'messages-delivered',
   ACTIVE_SUBSCRIBERS = 'active-subscribers',
   AVG_MESSAGES_PER_SUBSCRIBER = 'avg-messages-per-subscriber',
   WORKFLOW_RUNS_METRIC = 'workflow-runs-metric',
   TOTAL_INTERACTIONS = 'total-interactions',
   WORKFLOW_RUNS_TREND = 'workflow-runs-trend',
+  ACTIVE_SUBSCRIBERS_TREND = 'active-subscribers-trend',
 }
 
 export type ChartDataPoint = {
@@ -448,6 +450,11 @@ export type InteractionTrendDataPoint = {
 
 export type WorkflowVolumeDataPoint = {
   workflowName: string;
+  count: number;
+};
+
+export type ProviderVolumeDataPoint = {
+  providerId: string;
   count: number;
 };
 
@@ -483,6 +490,11 @@ export type WorkflowRunsTrendDataPoint = {
   error: number;
 };
 
+export type ActiveSubscribersTrendDataPoint = {
+  timestamp: string;
+  count: number;
+};
+
 export type GetChartsRequest = {
   createdAtGte?: string;
   createdAtLte?: string;
@@ -495,12 +507,14 @@ export type GetChartsResponse = {
     | ChartDataPoint[]
     | InteractionTrendDataPoint[]
     | WorkflowVolumeDataPoint[]
+    | ProviderVolumeDataPoint[]
     | MessagesDeliveredDataPoint
     | ActiveSubscribersDataPoint
     | AvgMessagesPerSubscriberDataPoint
     | WorkflowRunsMetricDataPoint
     | TotalInteractionsDataPoint
     | WorkflowRunsTrendDataPoint[]
+    | ActiveSubscribersTrendDataPoint[]
   >;
 };
 

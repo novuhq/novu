@@ -64,6 +64,16 @@ export class WorkflowVolumeDataPointDto {
   count: number;
 }
 
+export class ProviderVolumeDataPointDto {
+  @ApiProperty({ description: 'Provider identifier' })
+  @IsString()
+  providerId: string;
+
+  @ApiProperty({ description: 'Number of step runs' })
+  @IsNumber()
+  count: number;
+}
+
 export class MessagesDeliveredDataPointDto {
   @ApiProperty({ description: 'Current period count' })
   @IsNumber()
@@ -132,6 +142,16 @@ export class WorkflowRunsTrendDataPointDto {
   error: number;
 }
 
+export class ActiveSubscribersTrendDataPointDto {
+  @ApiProperty({ description: 'Chart data point timestamp' })
+  @IsString()
+  timestamp: string;
+
+  @ApiProperty({ description: 'Active subscribers count' })
+  @IsNumber()
+  count: number;
+}
+
 export class GetChartsResponseDto {
   @ApiProperty({ description: 'Chart sections' })
   @ValidateNested()
@@ -140,11 +160,13 @@ export class GetChartsResponseDto {
     | ChartDataPointDto[]
     | InteractionTrendDataPointDto[]
     | WorkflowVolumeDataPointDto[]
+    | ProviderVolumeDataPointDto[]
     | MessagesDeliveredDataPointDto
     | ActiveSubscribersDataPointDto
     | AvgMessagesPerSubscriberDataPointDto
     | WorkflowRunsMetricDataPointDto
     | TotalInteractionsDataPointDto
     | WorkflowRunsTrendDataPointDto[]
+    | ActiveSubscribersTrendDataPointDto[]
   >;
 }
