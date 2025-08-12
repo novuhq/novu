@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { ReactElement, useEffect } from 'react';
+import { ReactElement, useEffect, useMemo } from 'react';
 import { ReportTypeEnum } from '../api/activity';
 import { DashboardLayout } from '../components/dashboard-layout';
 import {
@@ -19,11 +19,12 @@ import { TelemetryEvent } from '../utils/telemetry';
 export function HomePage(): ReactElement {
   const telemetry = useTelemetry();
 
-  // Hardcoded 30-day period for home page
-  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const thirtyDaysAgo = useMemo(() => {
+    return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  }, []);
 
   const { charts, isLoading: isChartsLoading } = useFetchCharts({
-    reportType: CHART_CONFIG.reportTypes.map((type) => ReportTypeEnum[type]),
+    reportType: [ReportTypeEnum.WORKFLOW_RUNS_METRIC],
     createdAtGte: thirtyDaysAgo,
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,

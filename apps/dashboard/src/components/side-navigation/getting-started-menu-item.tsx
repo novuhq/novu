@@ -42,7 +42,7 @@ export function HomeMenuItem() {
     });
   };
 
-  if (user?.unsafeMetadata?.hideGettingStarted && !isNewHomePageEnabled) {
+  if (user?.unsafeMetadata?.hideGettingStarted || isNewHomePageEnabled) {
     return null;
   }
 
