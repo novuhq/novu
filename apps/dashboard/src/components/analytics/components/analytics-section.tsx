@@ -48,7 +48,7 @@ export function AnalyticsSection({
       <AnalyticsCard
         icon={TargetArrow}
         value={totalInteractionsData.value}
-        title="Interactions"
+        title="<Inbox /> Interactions"
         description={totalInteractionsData.description}
         percentageChange={totalInteractionsData.percentageChange}
         trendDirection={totalInteractionsData.trendDirection}
