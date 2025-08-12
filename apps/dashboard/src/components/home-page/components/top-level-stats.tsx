@@ -13,8 +13,9 @@ type TopLevelStatsProps = {
   periodLabel?: string;
 };
 
-function formatPercentage(percentage: number) {
-  return percentage < 1 ? '<1' : Math.round(percentage).toString();
+function formatPercentage(percentage: number): string {
+  const abs = Math.abs(percentage);
+  return abs < 1 ? '<1' : Math.round(percentage).toString();
 }
 
 function getTrendStyles(trendDirection: 'up' | 'down' | 'neutral') {

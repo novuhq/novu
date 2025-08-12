@@ -18,7 +18,7 @@ export class BuildTotalInteractionsChart {
 
     // Calculate previous period dates
     const periodDuration = endDate.getTime() - startDate.getTime();
-    const previousEndDate = new Date(startDate.getTime() - 1); // Day before start date
+    const previousEndDate = new Date(startDate.getTime() - 1);
     const previousStartDate = new Date(previousEndDate.getTime() - periodDuration);
 
     const result = await this.traceLogRepository.getTotalInteractionsData(
