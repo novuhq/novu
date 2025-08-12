@@ -42,7 +42,7 @@ export function HomePage(): ReactElement {
       <PageMeta title="Home page" />
       <DashboardLayout>
         <motion.div
-          className="flex flex-col gap-8 p-9 pt-4"
+          className="flex flex-col gap-2 p-9 pt-4"
           variants={ANIMATION_VARIANTS.page}
           initial="hidden"
           animate="show"
@@ -61,7 +61,7 @@ export function HomePage(): ReactElement {
               />
             </motion.div>
           )}
-          <Separator />
+          <Separator className="my-6" />
           <motion.div variants={ANIMATION_VARIANTS.section}>
             <ResourcesSection />
           </motion.div>

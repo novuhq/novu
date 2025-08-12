@@ -2,6 +2,7 @@ import { ComponentType } from 'react';
 import { cn } from '@/utils/ui';
 import { TrendLineDown } from '../icons/trend-line-down';
 import { TrendLineUp } from '../icons/trend-line-up';
+import { AnimatedNumber } from './animated-number';
 import { Skeleton } from './skeleton';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
@@ -128,7 +129,9 @@ export function AnalyticsCard({
           )}
         </div>
 
-        <div className="text-title-h5 text-text-strong font-semibold">{formattedValue}</div>
+        <div className="text-title-h5 text-text-strong font-semibold">
+          <AnimatedNumber value={value} isLoading={isLoading} />
+        </div>
 
         {description && <div className="text-paragraph-xs text-text-soft">{description}</div>}
       </div>

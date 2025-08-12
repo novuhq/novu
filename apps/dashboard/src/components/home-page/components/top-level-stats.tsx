@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { TrendLineDown } from '../../icons/trend-line-down';
 import { TrendLineUp } from '../../icons/trend-line-up';
+import { AnimatedNumber } from '../../primitives/animated-number';
 
 type TopLevelStatsProps = {
   value: string;
@@ -66,11 +67,13 @@ export function TopLevelStats({
   const trendStyles = getTrendStyles(trendDirection);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-0">
       <div className="flex items-end justify-between">
-        <div className="flex items-end gap-1">
-          <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">{value}</h2>
-          <div className="pb-2">
+        <div className="flex items-end gap-0">
+          <h2 className="text-text-strong font-medium text-[44px] leading-[52px]">
+            <AnimatedNumber value={value} isLoading={isLoading} />
+          </h2>
+          <div className="pb-3.5 ml-1">
             {!!percentageChange && (
               <div
                 className={`flex items-center gap-0.5 ${trendStyles.bgColor} px-1 h-4 rounded-full ${trendStyles.textColor} text-subheading-2xs uppercase`}
