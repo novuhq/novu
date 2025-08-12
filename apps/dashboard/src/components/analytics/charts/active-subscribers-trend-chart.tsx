@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card'
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
+import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyActiveSubscribersData } from './chart-dummy-data';
 import { type ActiveSubscribersChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -60,9 +61,12 @@ export function ActiveSubscribersTrendChart({ data, isLoading, error }: ActiveSu
     }));
   }, [data]);
 
-  const hasDataChecker = useCallback((data: ActiveSubscribersChartData[]) => {
-    return data.some((dataPoint) => (dataPoint.count || 0) > 0);
-  }, []);
+  const hasDataChecker = useCallback(
+    createDateBasedHasDataChecker<ActiveSubscribersChartData>((dataPoint: ActiveSubscribersChartData) => {
+      return (dataPoint.count || 0) > 0;
+    }),
+    []
+  );
 
   const renderChart = useCallback((data: ActiveSubscribersChartData[], includeTooltip = true) => {
     return (
@@ -112,6 +116,8 @@ export function ActiveSubscribersTrendChart({ data, isLoading, error }: ActiveSu
       dummyDataGenerator={generateDummyActiveSubscribersData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.ACTIVE_SUBSCRIBERS_TREND}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_DATE_RANGE}
     >
       {renderChart}
     </ChartWrapper>

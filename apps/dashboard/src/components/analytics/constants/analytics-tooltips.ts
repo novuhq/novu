@@ -27,4 +27,10 @@ export const ANALYTICS_TOOLTIPS = {
 
   PROVIDERS_BY_VOLUME:
     'Shows message distribution across different delivery providers (SendGrid, Twilio, Firebase, etc.) by volume.',
+
+  INSUFFICIENT_DATE_RANGE:
+    'At least 5 days of data is required to display this chart. Continue using Novu to generate more data points.',
+
+  INSUFFICIENT_ENTRIES:
+    'At least 2 entries with data are required to display this chart. Continue using Novu to generate more data points.',
 } as const;

@@ -17,6 +17,8 @@ type ChartWrapperProps<T extends ChartDataPoint = ChartDataPoint> = {
   emptyStateRenderer: (dummyData: T[]) => ReactNode;
   errorMessage?: string;
   infoTooltip?: React.ReactNode;
+  emptyStateTitle?: string;
+  emptyStateTooltip?: React.ReactNode;
 };
 
 export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
@@ -31,6 +33,8 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
   emptyStateRenderer,
   errorMessage = 'Failed to load chart data',
   infoTooltip,
+  emptyStateTitle,
+  emptyStateTooltip,
 }: ChartWrapperProps<T>) {
   const hasData = useMemo(() => {
     if (!data || data.length === 0) return false;
@@ -57,7 +61,9 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
             <div className="text-sm text-text-soft">{errorMessage}</div>
           </div>
         ) : !hasData ? (
-          <ChartEmptyState>{emptyStateRenderer(dummyData)}</ChartEmptyState>
+          <ChartEmptyState title={emptyStateTitle} tooltip={emptyStateTooltip}>
+            {emptyStateRenderer(dummyData)}
+          </ChartEmptyState>
         ) : (
           data && children(data)
         )}

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card'
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
+import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyDeliveryData } from './chart-dummy-data';
 import { type DeliveryChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -156,16 +157,18 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
     }));
   }, [data]);
 
-  const hasDataChecker = useCallback((data: DeliveryChartData[]) => {
-    return data.some(
-      (dataPoint) =>
+  const hasDataChecker = useCallback(
+    createDateBasedHasDataChecker<DeliveryChartData>((dataPoint: DeliveryChartData) => {
+      return (
         (dataPoint.email || 0) > 0 ||
         (dataPoint.push || 0) > 0 ||
         (dataPoint.sms || 0) > 0 ||
         (dataPoint.inApp || 0) > 0 ||
         (dataPoint.chat || 0) > 0
-    );
-  }, []);
+      );
+    }),
+    []
+  );
 
   const renderChart = useCallback((data: DeliveryChartData[], includeTooltip = true) => {
     const firstDate = data[1]?.date || '';
@@ -225,6 +228,8 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
       dummyDataGenerator={generateDummyDeliveryData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.DELIVERY_TREND}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_DATE_RANGE}
     >
       {renderChart}
     </ChartWrapper>

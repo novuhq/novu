@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card'
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
+import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyWorkflowRunsData } from './chart-dummy-data';
 import { type WorkflowRunsChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -70,11 +71,12 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
     }));
   }, [data]);
 
-  const hasDataChecker = useCallback((data: WorkflowRunsChartData[]) => {
-    return data.some(
-      (dataPoint) => (dataPoint.success || 0) > 0 || (dataPoint.pending || 0) > 0 || (dataPoint.error || 0) > 0
-    );
-  }, []);
+  const hasDataChecker = useCallback(
+    createDateBasedHasDataChecker<WorkflowRunsChartData>((dataPoint: WorkflowRunsChartData) => {
+      return (dataPoint.success || 0) > 0 || (dataPoint.pending || 0) > 0 || (dataPoint.error || 0) > 0;
+    }),
+    []
+  );
 
   const renderChart = useCallback((data: WorkflowRunsChartData[], includeTooltip = true) => {
     return (
@@ -119,6 +121,8 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
       dummyDataGenerator={generateDummyWorkflowRunsData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.WORKFLOW_RUNS_TREND}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_DATE_RANGE}
     >
       {renderChart}
     </ChartWrapper>

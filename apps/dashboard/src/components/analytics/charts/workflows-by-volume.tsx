@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card'
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
+import { createVolumeBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyWorkflowData } from './chart-dummy-data';
 import { type WorkflowChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -114,9 +115,12 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
     }));
   }, [data]);
 
-  const hasDataChecker = useCallback((data: WorkflowChartData[]) => {
-    return data.some((dataPoint) => (dataPoint.count || 0) > 0);
-  }, []);
+  const hasDataChecker = useCallback(
+    createVolumeBasedHasDataChecker<WorkflowChartData>((dataPoint: WorkflowChartData) => {
+      return (dataPoint.count || 0) > 0;
+    }),
+    []
+  );
 
   const calculateChartHeight = useCallback((data: WorkflowChartData[]) => {
     const itemCount = data.length;
@@ -179,6 +183,8 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
       dummyDataGenerator={generateDummyWorkflowData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.TOP_WORKFLOWS_BY_VOLUME}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_ENTRIES}
     >
       {renderChart}
     </ChartWrapper>

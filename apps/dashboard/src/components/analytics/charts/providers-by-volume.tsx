@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card'
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
+import { createVolumeBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyProviderData } from './chart-dummy-data';
 import { type ProviderChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -125,9 +126,12 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
     });
   }, [data, formatProviderName]);
 
-  const hasDataChecker = useCallback((data: ProviderChartData[]) => {
-    return data.some((dataPoint) => (dataPoint.count || 0) > 0);
-  }, []);
+  const hasDataChecker = useCallback(
+    createVolumeBasedHasDataChecker<ProviderChartData>((dataPoint: ProviderChartData) => {
+      return (dataPoint.count || 0) > 0;
+    }),
+    []
+  );
 
   const calculateChartHeight = useCallback((data: ProviderChartData[]) => {
     const itemCount = data.length;
@@ -190,6 +194,8 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
       dummyDataGenerator={generateDummyProviderData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.PROVIDERS_BY_VOLUME}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_ENTRIES}
     >
       {renderChart}
     </ChartWrapper>

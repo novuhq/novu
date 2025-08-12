@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card'
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
+import { createDateBasedHasDataChecker } from '../utils/chart-validation';
 import { generateDummyInteractionData } from './chart-dummy-data';
 import { type InteractionChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -80,16 +81,18 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
     }));
   }, [data]);
 
-  const hasDataChecker = useCallback((data: InteractionChartData[]) => {
-    return data.some(
-      (dataPoint) =>
+  const hasDataChecker = useCallback(
+    createDateBasedHasDataChecker<InteractionChartData>((dataPoint: InteractionChartData) => {
+      return (
         (dataPoint.messageSent || 0) > 0 ||
         (dataPoint.messageSeen || 0) > 0 ||
         (dataPoint.messageRead || 0) > 0 ||
         (dataPoint.messageSnoozed || 0) > 0 ||
         (dataPoint.messageArchived || 0) > 0
-    );
-  }, []);
+      );
+    }),
+    []
+  );
 
   const renderChart = useCallback((data: InteractionChartData[], includeTooltip = true) => {
     const firstDate = data[1]?.date || '';
@@ -142,6 +145,8 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
       dummyDataGenerator={generateDummyInteractionData}
       emptyStateRenderer={renderEmptyState}
       infoTooltip={ANALYTICS_TOOLTIPS.INTERACTION_TREND}
+      emptyStateTitle="Not enough data to show"
+      emptyStateTooltip={ANALYTICS_TOOLTIPS.INSUFFICIENT_DATE_RANGE}
     >
       {renderChart}
     </ChartWrapper>
