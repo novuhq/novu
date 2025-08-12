@@ -220,12 +220,13 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
         onConfirm={onDeleteWorkflow}
         isLoading={isDeleteWorkflowPending}
       />
-      <PayloadSchemaDrawer
-        workflow={workflow}
-        isOpen={isPayloadSchemaDrawerOpen}
-        onOpenChange={setIsPayloadSchemaDrawerOpen}
-        onSave={handleSavePayloadSchema}
-      />
+              <PayloadSchemaDrawer
+          workflow={workflow}
+          isOpen={isPayloadSchemaDrawerOpen}
+          onOpenChange={setIsPayloadSchemaDrawerOpen}
+          onSave={handleSavePayloadSchema}
+          readOnly={isReadOnly}
+        />
       <PageMeta title={workflow.name} />
       <motion.div
         className={cn('relative flex h-full w-full flex-col')}
@@ -452,10 +453,9 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
           </FormRoot>
         </Form>
-        {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
-          <>
-            <Separator />
-            <SidebarContent size="lg">
+                <>
+             <Separator />
+             <SidebarContent size="lg">
               <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
                 <Button
                   variant="secondary"
@@ -498,7 +498,6 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
             <Separator />
           </>
-        )}
       </motion.div>
     </>
   );
