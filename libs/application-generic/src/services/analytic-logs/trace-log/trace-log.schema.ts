@@ -37,7 +37,7 @@ const schemaDefinition = {
   expires_at: { type: CHDateTime64(3, 'UTC') },
 
   // Step run type
-  stp_step_type: { type: CHNullable(CHString()) },
+  step_run_type: { type: CHNullable(CHString()) },
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [
@@ -150,11 +150,11 @@ export type StepType = 'in_app' | 'email' | 'sms' | 'chat' | 'push' | 'digest' |
 
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 
-export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | 'status' | 'stp_step_type'> & {
+export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | 'status' | 'step_run_type'> & {
   event_type: EventType;
   entity_type: EntityType;
   status: TraceStatus;
-  stp_step_type?: StepType;
+  step_run_type?: StepType;
 };
 
 export type Trace = Prettify<TraceLogComplex>;

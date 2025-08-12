@@ -159,7 +159,7 @@ export class CreateExecutionDetails {
       status: this.mapExecutionStatusToTraceStatus(command.status),
       entity_type: 'step_run' as EntityType,
       entity_id: command.jobId,
-      stp_step_type: command.channel as StepType,
+      step_run_type: command.channel as StepType,
     };
 
     await this.traceLogRepository.createStepRun([traceData]);
