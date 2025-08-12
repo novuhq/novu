@@ -8,7 +8,7 @@ import {
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -26,6 +26,24 @@ describe('UpdateAllNotifications', () => {
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let webSocketsQueueServiceMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
   let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
+
+  const mockMessage: any = [
+    {
+      _id: '_id',
+      content: '',
+      read: false,
+      archived: false,
+      createdAt: new Date(),
+      lastReadAt: new Date(),
+      channel: ChannelTypeEnum.IN_APP,
+      subscriber: mockSubscriber,
+      actorSubscriber: mockSubscriber,
+      cta: {
+        type: ChannelCTATypeEnum.REDIRECT,
+        data: {},
+      },
+    },
+  ];
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
@@ -78,7 +96,7 @@ describe('UpdateAllNotifications', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.updateMessagesFromToStatus.resolves();
+    messageRepositoryMock.updateMessagesFromToStatus.resolves(mockMessage);
     invalidateCacheMock.invalidateQuery.resolves();
     analyticsServiceMock.track.resolves();
     webSocketsQueueServiceMock.add.resolves();
@@ -106,7 +124,7 @@ describe('UpdateAllNotifications', () => {
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
-    messageRepositoryMock.updateMessagesFromToStatus.resolves();
+    messageRepositoryMock.updateMessagesFromToStatus.resolves(mockMessage);
     invalidateCacheMock.invalidateQuery.resolves();
     analyticsServiceMock.track.resolves();
     webSocketsQueueServiceMock.add.resolves();

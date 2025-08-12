@@ -126,6 +126,7 @@ describe('MarkManyNotificationsAs', () => {
 
     getSubscriberMock.execute.resolves(mockSubscriber);
     messageRepositoryMock.findOne.resolves(mockMessage);
+    messageRepositoryMock.updateMessagesStatusByIds.resolves(mockMessage);
 
     await markManyNotificationsAs.execute(command);
 
@@ -159,6 +160,7 @@ describe('MarkManyNotificationsAs', () => {
 
     getSubscriberMock.execute.resolves(mockSubscriber);
     messageRepositoryMock.findOne.resolves(mockMessage);
+    messageRepositoryMock.updateMessagesStatusByIds.resolves(mockMessage);
 
     await markManyNotificationsAs.execute(command);
 
