@@ -73,7 +73,7 @@ export function ActiveSubscribersTrendChart({ data, isLoading, error }: ActiveSu
             tickLine={false}
             tick={{ fontSize: 10, fill: '#99a0ae', textAnchor: 'middle' }}
             tickFormatter={(value, index) => {
-              if (index % 2 === 0) return value;
+              if (index % 4 === 0) return value;
 
               return '';
             }}

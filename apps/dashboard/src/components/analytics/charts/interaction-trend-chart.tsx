@@ -91,7 +91,7 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
   }, []);
 
   const renderChart = useCallback((data: InteractionChartData[], includeTooltip = true) => {
-    const firstDate = data[0]?.date || '';
+    const firstDate = data[1]?.date || '';
     const lastDate = data[data.length - 1]?.date || '';
 
     return (
@@ -102,12 +102,7 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
             axisLine={{ stroke: '#e5e7eb', strokeDasharray: '3 3', strokeWidth: 1 }}
             tickLine={false}
             tick={{ fontSize: 10, fill: '#99a0ae', textAnchor: 'middle' }}
-            tickFormatter={(value) => {
-              if (value === firstDate) return firstDate;
-              if (value === lastDate) return lastDate;
-
-              return '';
-            }}
+            ticks={[firstDate, lastDate]}
             domain={['dataMin', 'dataMax']}
           />
           {includeTooltip && <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />}

@@ -167,7 +167,7 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
   }, []);
 
   const renderChart = useCallback((data: DeliveryChartData[], includeTooltip = true) => {
-    const firstDate = data[0]?.date || '';
+    const firstDate = data[1]?.date || '';
     const lastDate = data[data.length - 1]?.date || '';
 
     return (
