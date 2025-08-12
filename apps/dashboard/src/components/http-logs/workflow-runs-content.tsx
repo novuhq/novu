@@ -5,6 +5,7 @@ import type { ActivityFilters } from '@/api/activity';
 import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Table, TableBody } from '@/components/primitives/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -155,7 +156,7 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
                 <div className="flex flex-col justify-center text-[14px] tracking-[-0.084px] text-[#525866]">
                   <p className="leading-[20px]">
                     {isCountLoading ? (
-                      <span className="text-[#99a0ae]">Loading count...</span>
+                      <Skeleton className="h-5 w-32" />
                     ) : (
                       <>
                         <span className="text-[#525866]">{workflowRunsCount ?? 0}</span>
