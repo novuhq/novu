@@ -11,6 +11,7 @@ import {
 import {
   ANIMATION_VARIANTS,
   AnalyticsSection,
+  AnalyticsUpgradeCtaIcon,
   CHART_CONFIG,
   ChartsSection,
   useAnalyticsDateFilter,
@@ -35,6 +36,7 @@ export function AnalyticsPage() {
   const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange } = useAnalyticsDateFilter({
     organization,
     subscription,
+    upgradeCtaIcon: AnalyticsUpgradeCtaIcon,
   });
 
   // Define report types for each section

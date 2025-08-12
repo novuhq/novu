@@ -6,6 +6,7 @@ export { DeliveryTrendsChart } from './charts/delivery-trends-chart';
 export { InteractionTrendChart } from './charts/interaction-trend-chart';
 export { WorkflowsByVolume } from './charts/workflows-by-volume';
 export { AnalyticsSection } from './components/analytics-section';
+export { AnalyticsUpgradeCtaIcon } from './components/analytics-upgrade-cta-icon';
 export { ChartsSection } from './components/charts-section';
 
 // Constants
