@@ -57,7 +57,6 @@ export class GetCharts {
   async execute(command: GetChartsCommand): Promise<GetChartsResponseDto> {
     const { createdAtGte, createdAtLte, reportType, environmentId, organizationId } = command;
 
-    // Validate date range against tier retention limits
     const validatedDates = await this.validateRetentionLimitForTier(organizationId, createdAtGte, createdAtLte);
 
     const endDate = new Date(validatedDates.before);
