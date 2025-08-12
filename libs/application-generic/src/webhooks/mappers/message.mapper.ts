@@ -3,6 +3,7 @@ import { MessageWebhookResponseDto } from '../dtos';
 
 export const messageWebhookMapper = (
   message: MessageEntity,
+  subscriberId: string,
   context?: {
     providerResponseId?: string;
     deviceToken?: string;
@@ -15,8 +16,7 @@ export const messageWebhookMapper = (
     _environmentId: message._environmentId,
     _organizationId: message._organizationId,
     _notificationId: message._notificationId,
-    _subscriberId: message._subscriberId,
-    subscriber: message.subscriber,
+    subscriberId,
     actorSubscriber: message.actorSubscriber,
     templateIdentifier: message.templateIdentifier,
     createdAt: message.createdAt,

@@ -481,7 +481,7 @@ export class SendMessageEmail extends SendMessageBase {
         eventType: WebhookEventEnum.MESSAGE_SENT,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message, {
+          object: messageWebhookMapper(message, command.subscriberId, {
             providerResponseId: result.id,
           }),
         },
@@ -547,7 +547,7 @@ export class SendMessageEmail extends SendMessageBase {
         eventType: WebhookEventEnum.MESSAGE_FAILED,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message),
+          object: messageWebhookMapper(message, command.subscriberId),
           error: {
             message: error.message || error.name || 'Error while sending email with provider',
           },
