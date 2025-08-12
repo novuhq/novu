@@ -27,8 +27,6 @@ export function HomePage(): ReactElement {
     reportType: [ReportTypeEnum.WORKFLOW_RUNS_METRIC],
     createdAtGte: thirtyDaysAgo,
     enabled: true,
-    refetchInterval: CHART_CONFIG.refetchInterval,
-    staleTime: CHART_CONFIG.staleTime,
   });
 
   const { workflowRunsMetricData } = useMetricData(charts);
