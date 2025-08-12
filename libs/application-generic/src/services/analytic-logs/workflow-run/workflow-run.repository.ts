@@ -470,7 +470,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
-        AND status = 'success'
       GROUP BY workflow_name
       ORDER BY count DESC
       LIMIT 5
@@ -483,30 +482,15 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    try {
-      const result = await this.clickhouseService.query<{
-        workflow_name: string;
-        count: string;
-      }>({
-        query,
-        params,
-      });
+    const result = await this.clickhouseService.query<{
+      workflow_name: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
 
-      return result.data;
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        },
-        'Failed to get workflow volume data'
-      );
-
-      throw error;
-    }
+    return result.data;
   }
 
   async getActiveSubscribersData(

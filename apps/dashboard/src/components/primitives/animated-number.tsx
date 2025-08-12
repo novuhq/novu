@@ -18,14 +18,26 @@ export function AnimatedNumber({
   showSuffix = true,
 }: AnimatedNumberProps) {
   const [displayValue, setDisplayValue] = useState(0);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
   const rawNumber = parseFormattedNumber(value);
   const { value: compactValue, suffix } = getCompactFormat(rawNumber);
 
   useEffect(() => {
-    if (isLoading) {
+    // Only reset to 0 on the very first load, not on subsequent loading states
+    if (isLoading && !hasInitialLoad) {
       setDisplayValue(0);
       return;
+    }
+
+    // Don't update the value while loading after initial load
+    if (isLoading && hasInitialLoad) {
+      return;
+    }
+
+    // Mark that we've had our initial load
+    if (!hasInitialLoad) {
+      setHasInitialLoad(true);
     }
 
     // Small delay to ensure the component is mounted before starting animation
@@ -34,7 +46,7 @@ export function AnimatedNumber({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [compactValue, rawNumber, isLoading, showSuffix]);
+  }, [compactValue, rawNumber, isLoading, showSuffix, hasInitialLoad]);
 
   return (
     <div className={`flex items-baseline ${className}`}>
