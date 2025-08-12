@@ -414,3 +414,63 @@ export async function getWorkflowRun(workflowRunId: string, environment: IEnviro
 
   return mapWorkflowRunToActivity(data.data);
 }
+
+export async function getWorkflowRunsCount({
+  environment,
+  filters,
+  signal,
+}: {
+  environment: IEnvironment;
+  filters?: ActivityFilters;
+  signal?: AbortSignal;
+}): Promise<number> {
+  const searchParams = new URLSearchParams();
+
+  if (filters?.channels?.length) {
+    for (const channel of filters.channels) {
+      searchParams.append('channels', channel);
+    }
+  }
+
+  if (filters?.topicKey) {
+    searchParams.append('topicKey', filters.topicKey);
+  }
+
+  if (filters?.workflows?.length) {
+    for (const workflow of filters.workflows) {
+      searchParams.append('workflowIds', workflow);
+    }
+  }
+
+  if (filters?.subscriberId) {
+    searchParams.append('subscriberIds', filters.subscriberId);
+  }
+
+  if (filters?.transactionId) {
+    // Parse comma-delimited string into array for backend
+    const transactionIds = filters.transactionId
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    if (transactionIds.length > 1) {
+      for (const id of transactionIds) {
+        searchParams.append('transactionId', id);
+      }
+    } else {
+      searchParams.append('transactionIds', filters.transactionId);
+    }
+  }
+
+  if (filters?.dateRange) {
+    const after = new Date(Date.now() - getDateRangeInMs(filters?.dateRange));
+    searchParams.append('createdGte', after.toISOString());
+  }
+
+  const response = await get<{ data: { count: number } }>(`/activity/workflow-runs/count?${searchParams.toString()}`, {
+    environment,
+    signal,
+  });
+
+  return response.data.count;
+}

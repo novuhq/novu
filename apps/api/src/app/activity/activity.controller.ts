@@ -16,6 +16,8 @@ import { GetWorkflowRunCommand } from './usecases/get-workflow-run/get-workflow-
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRunsCommand } from './usecases/get-workflow-runs/get-workflow-runs.command';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
+import { GetWorkflowRunsCountCommand } from './usecases/get-workflow-runs-count/get-workflow-runs-count.command';
+import { GetWorkflowRunsCount } from './usecases/get-workflow-runs-count/get-workflow-runs-count.usecase';
 
 @Controller('/activity')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -25,7 +27,8 @@ export class ActivityController {
     private getRequestsUsecase: GetRequests,
     private getWorkflowRunsUsecase: GetWorkflowRuns,
     private getWorkflowRunUsecase: GetWorkflowRun,
-    private getRequestUsecase: GetRequest
+    private getRequestUsecase: GetRequest,
+    private getWorkflowRunsCountUsecase: GetWorkflowRunsCount
   ) {}
 
   @Get('requests')
@@ -74,6 +77,24 @@ export class ActivityController {
         userId: user._id,
       })
     );
+  }
+
+  @Get('workflow-runs/count')
+  @RequirePermissions(PermissionsEnum.NOTIFICATION_READ)
+  async getWorkflowRunsCount(
+    @UserSession() user,
+    @Query()
+    query: GetWorkflowRunsRequestDto
+  ): Promise<{ count: number }> {
+    const result = await this.getWorkflowRunsCountUsecase.execute(
+      GetWorkflowRunsCountCommand.create({
+        ...query,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        userId: user._id,
+      })
+    );
+    return { count: result };
   }
 
   @Get('workflow-runs/:workflowRunId')

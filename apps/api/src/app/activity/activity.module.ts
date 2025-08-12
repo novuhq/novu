@@ -5,8 +5,9 @@ import { GetRequest } from './usecases/get-request/get-request.usecase';
 import { GetRequests } from './usecases/get-requests/get-requests.usecase';
 import { GetWorkflowRun } from './usecases/get-workflow-run/get-workflow-run.usecase';
 import { GetWorkflowRuns } from './usecases/get-workflow-runs/get-workflow-runs.usecase';
+import { GetWorkflowRunsCount } from './usecases/get-workflow-runs-count/get-workflow-runs-count.usecase';
 
-const USE_CASES = [GetRequests, GetWorkflowRuns, GetWorkflowRun, GetRequest];
+const USE_CASES = [GetRequests, GetWorkflowRuns, GetWorkflowRun, GetRequest, GetWorkflowRunsCount];
 
 @Module({
   imports: [SharedModule],
