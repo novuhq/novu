@@ -59,6 +59,8 @@ const BottomSection = ({
   subscription,
   daysLeft,
 }: BottomNavigationProps) => {
+  const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
+
   const track = useTelemetry();
 
   const showPlainLiveChat = () => {
@@ -100,7 +102,7 @@ const BottomSection = ({
           <RiUserAddLine className="size-4" />
           <span>Invite teammates</span>
         </NavigationLink>
-        <HomeMenuItem />
+        {!isNewHomePageEnabled && <HomeMenuItem />}
       </NavigationGroup>
     </div>
   );
