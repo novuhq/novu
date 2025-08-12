@@ -1,7 +1,7 @@
-import { EnvironmentLevelCommand } from '@novu/application-generic';
+import { EnvironmentCommand } from '@novu/application-generic';
 import { IsDate, IsDefined } from 'class-validator';
 
-export class BuildWorkflowByVolumeChartCommand extends EnvironmentLevelCommand {
+export class BuildWorkflowByVolumeChartCommand extends EnvironmentCommand {
   @IsDate()
   @IsDefined()
   startDate: Date;

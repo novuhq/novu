@@ -113,6 +113,10 @@ const router = createBrowserRouter([
           /* Direct routes matching environment-specific paths (e.g., /topics -> /env/:envId/topics) 
              will be automatically redirected by the CatchAllRoute component */
           {
+            index: true,
+            element: <CatchAllRoute />,
+          },
+          {
             path: ROUTES.ENV,
             children: [
               {
