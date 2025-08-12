@@ -1,10 +1,12 @@
 import { ComponentType } from 'react';
+import { RiInformation2Line } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 import { useDelayedLoading } from '../../hooks/use-delayed-loading';
 import { TrendLineDown } from '../icons/trend-line-down';
 import { TrendLineUp } from '../icons/trend-line-up';
 import { AnimatedNumber } from './animated-number';
 import { Skeleton } from './skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
 
@@ -25,6 +27,8 @@ type AnalyticsCardProps = {
   icon?: ComponentType<{ className?: string }>;
   /** Whether the card is in a loading state */
   isLoading?: boolean;
+  /** Tooltip content to show when hovering over the info icon */
+  infoTooltip?: React.ReactNode;
 };
 
 function getTrendColor(direction: TrendDirection) {
@@ -45,13 +49,6 @@ function getTrendColor(direction: TrendDirection) {
         icon: TrendLineUp,
       };
   }
-}
-
-function formatValue(value: string | number): string {
-  if (typeof value === 'number') {
-    return value.toLocaleString();
-  }
-  return value;
 }
 
 function formatPercentage(percentage: number): string {
@@ -78,6 +75,7 @@ function formatPercentage(percentage: number): string {
  * />
  * ```
  */
+
 export function AnalyticsCard({
   value,
   title,
@@ -87,6 +85,7 @@ export function AnalyticsCard({
   className,
   icon: IconComponent,
   isLoading = false,
+  infoTooltip,
 }: AnalyticsCardProps) {
   const showSkeleton = useDelayedLoading(isLoading);
 
@@ -119,6 +118,16 @@ export function AnalyticsCard({
           <div className="flex items-center gap-1">
             {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
             <span className="text-label-sm text-text-sub">{title}</span>
+            {infoTooltip && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block size-4 text-text-soft hover:text-text-strong cursor-pointer">
+                    <RiInformation2Line className="size-full" />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs whitespace-pre-line">{infoTooltip}</TooltipContent>
+              </Tooltip>
+            )}
           </div>
 
           {percentageChange !== undefined && (

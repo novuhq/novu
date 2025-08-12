@@ -5,6 +5,7 @@ import { ProviderIcon } from '../../integrations/components/provider-icon';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
+import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { generateDummyProviderData } from './chart-dummy-data';
 import { type ProviderChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -188,6 +189,7 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
       loadingSkeleton={<ProvidersByVolumeSkeleton />}
       dummyDataGenerator={generateDummyProviderData}
       emptyStateRenderer={renderEmptyState}
+      infoTooltip={ANALYTICS_TOOLTIPS.PROVIDERS_BY_VOLUME}
     >
       {renderChart}
     </ChartWrapper>

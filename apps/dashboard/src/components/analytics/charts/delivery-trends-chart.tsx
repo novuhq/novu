@@ -6,6 +6,7 @@ import { STEP_TYPE_TO_ICON } from '../../icons/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
+import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { generateDummyDeliveryData } from './chart-dummy-data';
 import { type DeliveryChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -223,6 +224,7 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
       loadingSkeleton={<DeliveryTrendsChartSkeleton />}
       dummyDataGenerator={generateDummyDeliveryData}
       emptyStateRenderer={renderEmptyState}
+      infoTooltip={ANALYTICS_TOOLTIPS.DELIVERY_TREND}
     >
       {renderChart}
     </ChartWrapper>

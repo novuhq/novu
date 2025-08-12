@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { Line, LineChart, XAxis } from 'recharts';
-import { type InteractionTrendDataPoint } from '../../../../api/activity';
+import { type InteractionTrendDataPoint } from '../../../api/activity';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
+import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { generateDummyInteractionData } from './chart-dummy-data';
 import { type InteractionChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -140,6 +141,7 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
       loadingSkeleton={<InteractionTrendChartSkeleton />}
       dummyDataGenerator={generateDummyInteractionData}
       emptyStateRenderer={renderEmptyState}
+      infoTooltip={ANALYTICS_TOOLTIPS.INTERACTION_TREND}
     >
       {renderChart}
     </ChartWrapper>

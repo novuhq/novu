@@ -1,10 +1,11 @@
 import { useCallback, useMemo } from 'react';
 import { RiRouteFill } from 'react-icons/ri';
 import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
-import { type WorkflowVolumeDataPoint } from '../../../../api/activity';
+import { type WorkflowVolumeDataPoint } from '../../../api/activity';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
+import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { generateDummyWorkflowData } from './chart-dummy-data';
 import { type WorkflowChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -107,8 +108,8 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
       count: dataPoint.count,
       displayName:
         dataPoint.workflowName.length > 20
-          ? `${dataPoint.workflowName.substring(0, 20)}...`.replace(/\b\w/g, (char) => char.toUpperCase())
-          : dataPoint.workflowName.replace(/\b\w/g, (char) => char.toUpperCase()),
+          ? `${dataPoint.workflowName.substring(0, 20)}...`.replace(/\b\w/g, (char: string) => char.toUpperCase())
+          : dataPoint.workflowName.replace(/\b\w/g, (char: string) => char.toUpperCase()),
       fill: colorPalette[index % colorPalette.length],
     }));
   }, [data]);
@@ -177,6 +178,7 @@ export function WorkflowsByVolume({ data, isLoading }: WorkflowsByVolumeProps) {
       loadingSkeleton={<WorkflowsByVolumeSkeleton />}
       dummyDataGenerator={generateDummyWorkflowData}
       emptyStateRenderer={renderEmptyState}
+      infoTooltip={ANALYTICS_TOOLTIPS.TOP_WORKFLOWS_BY_VOLUME}
     >
       {renderChart}
     </ChartWrapper>

@@ -3,6 +3,7 @@ import { InboxBellFilled } from '../../icons/inbox-bell-filled';
 import { StackedDots } from '../../icons/stacked-dots';
 import { TargetArrow } from '../../icons/target-arrow';
 import { AnalyticsCard } from '../../primitives/analytics-card';
+import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import type { MetricData } from '../hooks/use-metric-data';
 
 type AnalyticsSectionProps = {
@@ -30,6 +31,7 @@ export function AnalyticsSection({
         percentageChange={messagesDeliveredData.percentageChange}
         trendDirection={messagesDeliveredData.trendDirection}
         isLoading={isLoading}
+        infoTooltip={ANALYTICS_TOOLTIPS.MESSAGES_DELIVERED}
       />
 
       <AnalyticsCard
@@ -40,6 +42,7 @@ export function AnalyticsSection({
         percentageChange={activeSubscribersData.percentageChange}
         trendDirection={activeSubscribersData.trendDirection}
         isLoading={isLoading}
+        infoTooltip={ANALYTICS_TOOLTIPS.ACTIVE_SUBSCRIBERS}
       />
 
       <AnalyticsCard
@@ -50,6 +53,7 @@ export function AnalyticsSection({
         percentageChange={totalInteractionsData.percentageChange}
         trendDirection={totalInteractionsData.trendDirection}
         isLoading={isLoading}
+        infoTooltip={ANALYTICS_TOOLTIPS.INTERACTIONS}
       />
 
       <AnalyticsCard
@@ -60,6 +64,7 @@ export function AnalyticsSection({
         percentageChange={avgMessagesPerSubscriberData.percentageChange}
         trendDirection={avgMessagesPerSubscriberData.trendDirection}
         isLoading={isLoading}
+        infoTooltip={ANALYTICS_TOOLTIPS.AVG_MESSAGES_PER_SUBSCRIBER}
       />
     </div>
   );

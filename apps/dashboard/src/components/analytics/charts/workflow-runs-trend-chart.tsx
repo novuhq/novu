@@ -4,6 +4,7 @@ import { type WorkflowRunsTrendDataPoint } from '../../../api/activity';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
+import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
 import { generateDummyWorkflowRunsData } from './chart-dummy-data';
 import { type WorkflowRunsChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
@@ -117,6 +118,7 @@ export function WorkflowRunsTrendChart({ data, isLoading, error }: WorkflowRunsT
       loadingSkeleton={<WorkflowRunsTrendChartSkeleton />}
       dummyDataGenerator={generateDummyWorkflowRunsData}
       emptyStateRenderer={renderEmptyState}
+      infoTooltip={ANALYTICS_TOOLTIPS.WORKFLOW_RUNS_TREND}
     >
       {renderChart}
     </ChartWrapper>

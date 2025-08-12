@@ -1,6 +1,7 @@
 import { ReactNode, useMemo } from 'react';
-import { useDelayedLoading } from '../../../hooks/use-delayed-loading';
+import { RiInformation2Line } from 'react-icons/ri';
 import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip';
 import { ChartEmptyState } from './chart-empty-state';
 
 type ChartDataPoint = Record<string, unknown>;
@@ -16,6 +17,7 @@ type ChartWrapperProps<T extends ChartDataPoint = ChartDataPoint> = {
   children: (data: T[]) => ReactNode;
   emptyStateRenderer: (dummyData: T[]) => ReactNode;
   errorMessage?: string;
+  infoTooltip?: React.ReactNode;
 };
 
 export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
@@ -29,6 +31,7 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
   children,
   emptyStateRenderer,
   errorMessage = 'Failed to load chart data',
+  infoTooltip,
 }: ChartWrapperProps<T>) {
   const hasData = useMemo(() => {
     if (!data || data.length === 0) return false;
@@ -41,40 +44,34 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
     return loadingSkeleton;
   }
 
-  if (error) {
-    return (
-      <Card className="shadow-box-xs border-none">
-        <CardHeader className="bg-transparent p-3 pb-0">
-          <CardTitle className="text-label-sm text-text-sub">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-3">
-          <div className="h-[160px] w-full flex items-center justify-center">
-            <div className="text-sm text-text-soft">{errorMessage}</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!hasData) {
-    return (
-      <Card className="shadow-box-xs border-none">
-        <CardHeader className="bg-transparent p-3 pb-0">
-          <CardTitle className="text-label-sm text-text-sub">{title}</CardTitle>
-        </CardHeader>
-        <CardContent className="p-3">
-          <ChartEmptyState>{emptyStateRenderer(dummyData)}</ChartEmptyState>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="shadow-box-xs border-none">
       <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">{title}</CardTitle>
+        <CardTitle className="text-label-sm text-text-sub flex items-center gap-0.5">
+          {title}
+          {infoTooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-block size-4 text-text-soft hover:text-text-strong cursor-pointer">
+                  <RiInformation2Line className="size-full" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs whitespace-pre-line">{infoTooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </CardTitle>
       </CardHeader>
-      <CardContent className="p-3">{data && children(data)}</CardContent>
+      <CardContent className="p-3">
+        {error ? (
+          <div className="h-[160px] w-full flex items-center justify-center">
+            <div className="text-sm text-text-soft">{errorMessage}</div>
+          </div>
+        ) : !hasData ? (
+          <ChartEmptyState>{emptyStateRenderer(dummyData)}</ChartEmptyState>
+        ) : (
+          data && children(data)
+        )}
+      </CardContent>
     </Card>
   );
 }
