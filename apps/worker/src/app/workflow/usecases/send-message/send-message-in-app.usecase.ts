@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   buildFeedKey,
@@ -11,12 +11,14 @@ import {
   GetNovuProviderCredentials,
   InstrumentUsecase,
   InvalidateCacheService,
+  messageWebhookMapper,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 
-import { MessageEntity, MessageRepository, NotificationStepEntity, SubscriberRepository } from '@novu/dal';
+import { MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { InAppOutput } from '@novu/framework/internal';
 import {
   ActorTypeEnum,
@@ -24,6 +26,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   inAppMessageFromBridgeOutputs,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WebSocketEventEnum,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
@@ -46,7 +50,8 @@ export class SendMessageInApp extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    protected compileInAppTemplate: CompileInAppTemplate
+    protected compileInAppTemplate: CompileInAppTemplate,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -302,6 +307,30 @@ export class SendMessageInApp extends SendMessageBase {
         isRetry: false,
       })
     );
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_SENT,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, {
+          providerResponseId: message._id,
+        }),
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.MESSAGE_DELIVERED,
+      objectType: WebhookObjectTypeEnum.MESSAGE,
+      payload: {
+        object: messageWebhookMapper(message, {
+          providerResponseId: message._id,
+        }),
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
 
     return {
       status: 'success',

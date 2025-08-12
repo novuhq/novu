@@ -734,15 +734,16 @@ export class SubscribersV1Controller {
     @Body() body: MarkAllMessageAsRequestDto
   ): Promise<number> {
     const feedIdentifiers = this.toArray(body.feedIdentifier);
-    const command = MarkAllMessagesAsCommand.create({
-      organizationId: user.organizationId,
-      subscriberId,
-      environmentId: user.environmentId,
-      markAs: body.markAs,
-      feedIdentifiers,
-    });
 
-    return await this.markAllMessagesAsUsecase.execute(command);
+    return await this.markAllMessagesAsUsecase.execute(
+      MarkAllMessagesAsCommand.create({
+        organizationId: user.organizationId,
+        subscriberId,
+        environmentId: user.environmentId,
+        markAs: body.markAs,
+        feedIdentifiers,
+      })
+    );
   }
 
   @ExternalApiAccessible()

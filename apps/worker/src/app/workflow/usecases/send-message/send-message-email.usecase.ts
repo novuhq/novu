@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CompileEmailTemplate,
@@ -12,8 +12,10 @@ import {
   GetNovuProviderCredentials,
   InstrumentUsecase,
   MailFactory,
+  messageWebhookMapper,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 import {
   EnvironmentEntity,
@@ -35,6 +37,8 @@ import {
   FeatureFlagsKeysEnum,
   IAttachmentOptions,
   IEmailOptions,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
 } from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import inlineCss from 'inline-css';
@@ -62,7 +66,8 @@ export class SendMessageEmail extends SendMessageBase {
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
     private featureFlagService: FeatureFlagsService,
-    private getLayoutUseCaseV1: GetLayoutUseCaseV1
+    private getLayoutUseCaseV1: GetLayoutUseCaseV1,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -472,6 +477,18 @@ export class SendMessageEmail extends SendMessageBase {
         ),
       });
 
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {
+            providerResponseId: result.id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
       await this.createExecutionDetails.execute(
@@ -525,6 +542,19 @@ export class SendMessageEmail extends SendMessageBase {
       if (error?.isAxiosError && error.response) {
         error = error.response;
       }
+
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message),
+          error: {
+            message: error.message || error.name || 'Error while sending email with provider',
+          },
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

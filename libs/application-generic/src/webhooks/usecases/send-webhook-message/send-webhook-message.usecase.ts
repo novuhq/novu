@@ -1,8 +1,10 @@
 import { Inject, Injectable, Optional } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { InstrumentUsecase } from '../../../instrumentation';
-import { shortId } from '../../../utils/generate-id';
+import { FeatureFlagsService } from '../../../services/feature-flags';
+import { generateObjectId } from '../../../utils';
 import { WrapperDto } from '../../dtos/webhook-payload.dto';
 import { SvixClient } from '../../services';
 import { SendWebhookMessageCommand } from './send-webhook-message.command';
@@ -12,20 +14,34 @@ export class SendWebhookMessage {
   constructor(
     @Optional() @Inject('SVIX_CLIENT') private readonly svix: SvixClient | undefined,
     private logger: PinoLogger,
-    private environmentRepository: EnvironmentRepository
+    private environmentRepository: EnvironmentRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   @InstrumentUsecase()
   async execute(command: SendWebhookMessageCommand): Promise<{ eventId: string } | undefined> {
+    const isOutboundWebhooksEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_OUTBOUND_WEBHOOKS_ENABLED,
+      defaultValue: true,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
+
+    if (!isOutboundWebhooksEnabled) {
+      this.logger.debug('Outbound webhooks are disabled via feature flag.');
+
+      return;
+    }
+
     if (!this.svix) {
       this.logger.debug('Svix client not available – webhooks are disabled for this instance.');
 
       return;
     }
 
-    const eventId = `evt_${shortId()}`;
+    const eventId = `evt_${generateObjectId()}`;
     const environment = await this.environmentRepository.findOne(
       {
         _id: command.environmentId,
@@ -75,8 +91,6 @@ export class SendWebhookMessage {
         `Failed to send webhook ${command.eventType} for application ${appId}. Error: ${error.message}, Event ID: ${eventId}`,
         error.stack
       );
-
-      throw error;
     }
   }
 }

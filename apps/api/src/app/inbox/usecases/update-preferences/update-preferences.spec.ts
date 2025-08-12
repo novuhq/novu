@@ -2,6 +2,7 @@ import {
   AnalyticsService,
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
+  SendWebhookMessage,
   UpsertPreferences,
 } from '@novu/application-generic';
 import { SubscriberRepository } from '@novu/dal';
@@ -53,6 +54,7 @@ describe('UpdatePreferences', () => {
   let getSubscriberTemplatePreferenceUsecase: sinon.SinonStubbedInstance<GetSubscriberTemplatePreference>;
   let upsertPreferencesMock: sinon.SinonStubbedInstance<UpsertPreferences>;
   let getWorkflowByIdsUsecase: sinon.SinonStubbedInstance<GetWorkflowByIdsUseCase>;
+  let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
 
   beforeEach(() => {
     subscriberRepositoryMock = sinon.createStubInstance(SubscriberRepository);
@@ -61,6 +63,7 @@ describe('UpdatePreferences', () => {
     getSubscriberTemplatePreferenceUsecase = sinon.createStubInstance(GetSubscriberTemplatePreference);
     upsertPreferencesMock = sinon.createStubInstance(UpsertPreferences);
     getWorkflowByIdsUsecase = sinon.createStubInstance(GetWorkflowByIdsUseCase);
+    sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
 
     updatePreferences = new UpdatePreferences(
       subscriberRepositoryMock as any,
@@ -68,7 +71,8 @@ describe('UpdatePreferences', () => {
       getSubscriberGlobalPreferenceMock as any,
       getSubscriberTemplatePreferenceUsecase as any,
       upsertPreferencesMock as any,
-      getWorkflowByIdsUsecase as any
+      getWorkflowByIdsUsecase as any,
+      sendWebhookMessageMock as any
     );
   });
 

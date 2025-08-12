@@ -4,10 +4,12 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
+  messageWebhookMapper,
+  SendWebhookMessage,
   WebSocketsQueueService,
 } from '@novu/application-generic';
-import { MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { MessageEntity, MessageRepository } from '@novu/dal';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -21,7 +23,8 @@ export class UpdateAllNotifications {
     private getSubscriber: GetSubscriber,
     private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository,
-    private webSocketsQueueService: WebSocketsQueueService
+    private webSocketsQueueService: WebSocketsQueueService,
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   async execute(command: UpdateAllNotificationsCommand): Promise<void> {
@@ -35,7 +38,7 @@ export class UpdateAllNotifications {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
-    let parsedData;
+    let parsedData: unknown;
     if (command.from.data) {
       try {
         parsedData = JSON.parse(command.from.data);
@@ -57,12 +60,14 @@ export class UpdateAllNotifications {
       fromField.data = parsedData;
     }
 
-    await this.messageRepository.updateMessagesFromToStatus({
+    const updatedMessages = await this.messageRepository.updateMessagesFromToStatus({
       environmentId: command.environmentId,
       subscriberId: subscriber._id,
       from: fromField,
       to: command.to,
     });
+
+    await this.sendWebhookEvents(command, updatedMessages);
 
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
@@ -94,5 +99,39 @@ export class UpdateAllNotifications {
       },
       groupId: subscriber._organizationId,
     });
+  }
+
+  private async sendWebhookEvents(command: UpdateAllNotificationsCommand, updatedMessages: MessageEntity[]) {
+    const webhookPromises: Promise<{ eventId: string } | undefined>[] = [];
+
+    if (command.to.read !== undefined) {
+      const eventType = command.to.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD;
+      webhookPromises.push(...this.createWebhookPromises(eventType, updatedMessages, command));
+    }
+
+    if (command.to.archived !== undefined) {
+      const eventType = command.to.archived ? WebhookEventEnum.MESSAGE_ARCHIVED : WebhookEventEnum.MESSAGE_UNARCHIVED;
+      webhookPromises.push(...this.createWebhookPromises(eventType, updatedMessages, command));
+    }
+
+    await Promise.all(webhookPromises);
+  }
+
+  private createWebhookPromises(
+    eventType: WebhookEventEnum,
+    messages: MessageEntity[],
+    command: UpdateAllNotificationsCommand
+  ): Promise<{ eventId: string } | undefined>[] {
+    return messages.map((message) =>
+      this.sendWebhookMessage.execute({
+        eventType,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      })
+    );
   }
 }

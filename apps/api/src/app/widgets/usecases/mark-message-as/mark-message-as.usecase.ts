@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Optional } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -9,13 +9,15 @@ import {
   InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  messageWebhookMapper,
   PinoLogger,
+  SendWebhookMessage,
   Trace,
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
-import { INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY, WebSocketEventEnum } from '@novu/shared';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
 
@@ -28,7 +30,8 @@ export class MarkMessageAs {
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
     private traceLogRepository: TraceLogRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -57,7 +60,7 @@ export class MarkMessageAs {
 
     await this.messageRepository.changeStatus(command.environmentId, subscriber._id, command.messageIds, command.mark);
 
-    const messages = await this.messageRepository.find({
+    const updatedMessages = await this.messageRepository.find({
       _environmentId: command.environmentId,
       _id: {
         $in: command.messageIds,
@@ -67,25 +70,41 @@ export class MarkMessageAs {
     const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
 
     if (command.mark.seen != null) {
-      await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
+      await this.updateServices(command, subscriber, updatedMessages, MarkEnum.SEEN);
 
       const seenTraces = this.prepareTrace(
-        messages,
+        updatedMessages,
         command.mark.seen ? 'message_seen' : 'message_unseen',
         command.subscriberId
       );
       allTraceData.push(...seenTraces);
+
+      if (command.mark.seen === true) {
+        await this.sendWebhookForMessages(
+          updatedMessages,
+          WebhookEventEnum.MESSAGE_SEEN,
+          command.organizationId,
+          command.environmentId
+        );
+      }
     }
 
-    if (command.mark.read != null) {
-      await this.updateServices(command, subscriber, messages, MarkEnum.READ);
+    if (command.mark.read !== undefined || command.mark.read !== null) {
+      await this.updateServices(command, subscriber, updatedMessages, MarkEnum.READ);
 
       const readTraces = this.prepareTrace(
-        messages,
+        updatedMessages,
         command.mark.read ? 'message_read' : 'message_unread',
         command.subscriberId
       );
       allTraceData.push(...readTraces);
+
+      await this.sendWebhookForMessages(
+        updatedMessages,
+        command.mark.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD,
+        command.organizationId,
+        command.environmentId
+      );
     }
 
     if (allTraceData.length > 0) {
@@ -96,7 +115,7 @@ export class MarkMessageAs {
       }
     }
 
-    return messages;
+    return updatedMessages;
   }
 
   private prepareTrace(
@@ -155,16 +174,25 @@ export class MarkMessageAs {
     });
   }
 
-  private async sendAnalyticsEventForInviteTeamNudge(messages: MessageEntity[]) {
-    const inviteTeamMemberNudgeMessage = messages.find(
-      (message) => message?.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY] === true
+  private async sendWebhookForMessages(
+    messages: MessageEntity[],
+    eventType: WebhookEventEnum,
+    organizationId: string,
+    environmentId: string
+  ): Promise<void> {
+    const webhookPromises = messages.map((message) =>
+      this.sendWebhookMessage.execute({
+        eventType: eventType,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message),
+        },
+        organizationId: organizationId,
+        environmentId: environmentId,
+      })
     );
 
-    if (inviteTeamMemberNudgeMessage) {
-      this.analyticsService.track('Invite Nudge Seen', inviteTeamMemberNudgeMessage._subscriberId, {
-        _organization: inviteTeamMemberNudgeMessage._organizationId,
-      });
-    }
+    await Promise.all(webhookPromises);
   }
 
   @CachedResponse({

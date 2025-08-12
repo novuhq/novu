@@ -71,6 +71,7 @@ describe('SnoozeNotification', () => {
 
   const mockNotification: InboxNotification = {
     id: validNotificationId,
+    transactionId: 'transaction-id',
     body: 'Test notification',
     to: {
       subscriberId: validSubscriberId,

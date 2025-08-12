@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -6,13 +6,15 @@ import {
   InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  messageWebhookMapper,
   PinoLogger,
+  SendWebhookMessage,
   Trace,
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -28,7 +30,8 @@ export class MarkNotificationsAsSeen {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private traceLogRepository: TraceLogRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -51,14 +54,29 @@ export class MarkNotificationsAsSeen {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
+    let updatedMessages: MessageEntity[] = [];
     // If notificationIds are provided, use them; otherwise use filters
     if (notificationIds && notificationIds.length > 0) {
-      await this.messageRepository.updateMessagesStatusByIds({
+      updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
         ids: notificationIds,
         seen: true,
       });
+
+      const webhookPromises = updatedMessages.map((message) =>
+        this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SEEN,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
+      await Promise.all(webhookPromises);
 
       await this.logTraces({
         command,
