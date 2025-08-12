@@ -24,6 +24,7 @@ describe('UpdateAllNotifications', () => {
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let webSocketsQueueServiceMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
+  let sendWebhookMessageMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
@@ -31,13 +32,15 @@ describe('UpdateAllNotifications', () => {
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     webSocketsQueueServiceMock = sinon.createStubInstance(WebSocketsQueueService);
+    sendWebhookMessageMock = sinon.createStubInstance(WebSocketsQueueService);
 
     updateAllNotifications = new UpdateAllNotifications(
       invalidateCacheMock as any,
       getSubscriberMock as any,
       analyticsServiceMock as any,
       messageRepositoryMock as any,
-      webSocketsQueueServiceMock as any
+      webSocketsQueueServiceMock as any,
+      sendWebhookMessageMock as any
     );
   });
 
