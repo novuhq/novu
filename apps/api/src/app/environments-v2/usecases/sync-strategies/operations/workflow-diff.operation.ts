@@ -315,7 +315,10 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
       const workflowDto = await this.getWorkflowUseCase.execute(
         GetWorkflowCommand.create({
           workflowIdOrInternalId: workflowIdentifier,
-          user: userContext,
+          user: {
+            ...userContext,
+            environmentId: workflow._environmentId,
+          },
         }),
         workflowDataContainer
       );
