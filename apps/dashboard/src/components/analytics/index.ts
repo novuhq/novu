@@ -14,6 +14,6 @@ export * from './constants/analytics-page.consts';
 export * from './constants/analytics-tooltips';
 
 // Hooks
-export { useHomepageDateFilter as useAnalyticsDateFilter } from './hooks/use-home-page-date-filter';
+export { useHomepageDateFilter as useAnalyticsDateFilter } from './hooks/use-analytics-page-date-filter';
 export type { MetricData } from './hooks/use-metric-data';
 export { useMetricData } from './hooks/use-metric-data';
