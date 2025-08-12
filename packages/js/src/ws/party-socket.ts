@@ -179,7 +179,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       const data = JSON.parse(event.data);
       if (data.event === WebSocketEvent.UNREAD) {
         this.#emitter.emit(UNREAD_COUNT_CHANGED, {
-          result: data.data.unreadCount,
+          result: data.data.counts,
         });
       }
     } catch (error) {

@@ -94,11 +94,12 @@ export class InboxService {
     if (data !== undefined) {
       searchParams.append('data', JSON.stringify(data));
     }
-    if (severity) {
-      const severityArray = Array.isArray(severity) ? severity : [severity];
-      for (const severity of severityArray) {
-        searchParams.append('severity[]', severity ?? '');
+    if (severity && Array.isArray(severity)) {
+      for (const el of severity) {
+        searchParams.append('severity[]', el);
       }
+    } else if (severity) {
+      searchParams.append('severity', severity);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
@@ -122,15 +123,10 @@ export class InboxService {
       filter: NotificationFilter;
     }>;
   }> {
-    const filtersWithSeverity = filters.map((filter) => ({
-      ...filter,
-      severity: filter.severity ? (Array.isArray(filter.severity) ? filter.severity : [filter.severity]) : undefined,
-    }));
-
     return this.#httpClient.get(
       `${INBOX_NOTIFICATIONS_ROUTE}/count`,
       new URLSearchParams({
-        filters: JSON.stringify(filtersWithSeverity),
+        filters: JSON.stringify(filters),
       }),
       false
     );
@@ -235,11 +231,12 @@ export class InboxService {
         queryParams.append('tags[]', tag);
       }
     }
-    if (severity) {
-      const severityArray = Array.isArray(severity) ? severity : [severity];
-      for (const severity of severityArray) {
-        queryParams.append('severity[]', severity ?? '');
+    if (severity && Array.isArray(severity)) {
+      for (const el of severity) {
+        queryParams.append('severity[]', el);
       }
+    } else if (severity) {
+      queryParams.append('severity', severity);
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

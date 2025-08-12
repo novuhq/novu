@@ -65,14 +65,16 @@ export enum SeverityLevelEnum {
   NONE = 'none',
 }
 
+export type UnreadCount = {
+  total: number;
+  severity: Record<SeverityLevelEnum, number>;
+};
+
 export type Session = {
   token: string;
   /** @deprecated Use unreadCount.total instead */
   totalUnreadCount: number;
-  unreadCount: {
-    total: number;
-    severity: Record<SeverityLevelEnum, number>;
-  };
+  unreadCount: UnreadCount;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
   maxSnoozeDurationHours: number;

@@ -3,6 +3,7 @@ import { ChannelPreference, Preference, PreferenceLevel, SeverityLevelEnum } fro
 export type FetchPreferencesArgs = {
   level?: PreferenceLevel;
   tags?: string[];
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type ListPreferencesArgs = {

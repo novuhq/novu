@@ -26,12 +26,13 @@ import { useNovu } from './NovuProvider';
  * ```
  */
 export type UseNotificationsProps = {
-  tags?: string[];
-  data?: Record<string, unknown>;
-  read?: boolean;
-  archived?: boolean;
-  snoozed?: boolean;
-  seen?: boolean;
+  tags?: NotificationFilter['tags'];
+  data?: NotificationFilter['data'];
+  read?: NotificationFilter['read'];
+  archived?: NotificationFilter['archived'];
+  snoozed?: NotificationFilter['snoozed'];
+  seen?: NotificationFilter['seen'];
+  severity?: NotificationFilter['severity'];
   limit?: number;
   onSuccess?: (data: Notification[]) => void;
   onError?: (error: NovuError) => void;
@@ -71,6 +72,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     archived = false,
     snoozed = false,
     seen,
+    severity,
     limit,
     onSuccess,
     onError,
@@ -102,7 +104,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   }, []);
 
   useEffect(() => {
-    const newFilter = { tags, data: dataFilter, read, archived, snoozed, seen };
+    const newFilter = { tags, data: dataFilter, read, archived, snoozed, seen, severity };
     if (filterRef.current && isSameFilter(filterRef.current, newFilter)) {
       return;
     }
@@ -110,7 +112,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     filterRef.current = newFilter;
 
     fetchNotifications({ refetch: true });
-  }, [tags, dataFilter, read, archived, snoozed, seen]);
+  }, [tags, dataFilter, read, archived, snoozed, seen, severity]);
 
   const fetchNotifications = async (options?: { refetch: boolean }) => {
     if (options?.refetch) {
@@ -126,6 +128,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
       archived,
       snoozed,
       seen,
+      severity,
       limit,
       after: options?.refetch ? undefined : after,
     });
@@ -142,7 +145,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   };
 
   const refetch = () => {
-    notifications.clearCache({ filter: { tags, read, archived, snoozed, seen, data: dataFilter } });
+    notifications.clearCache({ filter: { tags, read, archived, snoozed, seen, severity, data: dataFilter } });
 
     return fetchNotifications({ refetch: true });
   };

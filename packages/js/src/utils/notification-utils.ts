@@ -1,4 +1,4 @@
-import { NotificationFilter, NotificationStatus } from '../types';
+import { NotificationFilter, NotificationStatus, SeverityLevelEnum } from '../types';
 import { arrayValuesEqual } from './arrays';
 
 export const SEEN_OR_UNSEEN = [NotificationStatus.SEEN, NotificationStatus.UNSEEN];
@@ -6,6 +6,16 @@ export const READ_OR_UNREAD = [NotificationStatus.READ, NotificationStatus.UNREA
 
 export const areTagsEqual = (tags1?: string[], tags2?: string[]) => {
   return arrayValuesEqual(tags1, tags2) || (!tags1 && tags2?.length === 0) || (tags1?.length === 0 && !tags2);
+};
+
+export const areSeveritiesEqual = (
+  el1?: SeverityLevelEnum | SeverityLevelEnum[],
+  el2?: SeverityLevelEnum | SeverityLevelEnum[]
+) => {
+  const severity1 = Array.isArray(el1) ? el1 : el1 ? [el1] : [];
+  const severity2 = Array.isArray(el2) ? el2 : el2 ? [el2] : [];
+
+  return arrayValuesEqual(severity1, severity2);
 };
 
 export const areDataEqual = (data1?: Record<string, unknown>, data2?: Record<string, unknown>) => {
@@ -26,9 +36,6 @@ export const areDataEqual = (data1?: Record<string, unknown>, data2?: Record<str
 };
 
 export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationFilter) => {
-  const severity1 = Array.isArray(filter1.severity) ? filter1.severity : [filter1.severity];
-  const severity2 = Array.isArray(filter2.severity) ? filter2.severity : [filter2.severity];
-
   return (
     areDataEqual(filter1.data, filter2.data) &&
     areTagsEqual(filter1.tags, filter2.tags) &&
@@ -36,6 +43,6 @@ export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationF
     filter1.archived === filter2.archived &&
     filter1.snoozed === filter2.snoozed &&
     filter1.seen === filter2.seen &&
-    arrayValuesEqual(severity1, severity2)
+    areSeveritiesEqual(filter1.severity, filter2.severity)
   );
 };

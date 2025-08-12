@@ -1,6 +1,6 @@
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import type { NotificationFilter, NovuOptions, Preference } from '../types';
+import type { NotificationFilter, NovuOptions, Preference, UnreadCount } from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -10,7 +10,7 @@ export type NotificationActionClickHandler = (notification: Notification) => voi
 export type NotificationRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
 export type SubjectRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
 export type BodyRenderer = (el: HTMLDivElement, notification: Notification) => () => void;
-export type BellRenderer = (el: HTMLDivElement, unreadCount: number) => () => void;
+export type BellRenderer = (el: HTMLDivElement, unreadCount: UnreadCount) => () => void;
 export type RouterPush = (path: string) => void;
 
 export type Tab = {
@@ -19,7 +19,7 @@ export type Tab = {
    * @deprecated Use `filter` instead
    */
   value?: Array<string>;
-  filter?: Pick<NotificationFilter, 'tags' | 'data'>;
+  filter?: Pick<NotificationFilter, 'tags' | 'data' | 'severity'>;
 };
 
 export type CSSProperties = {
@@ -43,6 +43,9 @@ export type Variables = {
   fontSize?: string;
   borderRadius?: string;
   colorStripes?: string;
+  colorSeverityHigh?: string;
+  colorSeverityMedium?: string;
+  colorSeverityLow?: string;
 };
 
 export type AppearanceKey = (typeof appearanceKeys)[number];
@@ -113,7 +116,7 @@ export enum NotificationStatus {
   SNOOZED = 'snoozed',
 }
 
-export type PreferencesFilter = Pick<NotificationFilter, 'tags'>;
+export type PreferencesFilter = Pick<NotificationFilter, 'tags' | 'severity'>;
 
 type PreferenceFilterFunction = (args: { preferences: Preference[] }) => Preference[];
 

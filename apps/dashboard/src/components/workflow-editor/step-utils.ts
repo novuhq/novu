@@ -1,6 +1,7 @@
 import type { RuntimeIssue, StepCreateDto, StepUpdateDto, UpdateWorkflowDto, WorkflowResponseDto } from '@novu/shared';
-import { StepTypeEnum } from '@novu/shared';
+import { SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { flatten } from 'flat';
+import { ERROR_AVATAR, INFO_AVATAR, WARNING_AVATAR } from '@/utils/avatars';
 import {
   DEFAULT_CONTROL_DELAY_AMOUNT,
   DEFAULT_CONTROL_DELAY_TYPE,
@@ -115,7 +116,11 @@ export const updateStepInWorkflow = (
   };
 };
 
-export const createStep = (type: StepTypeEnum, defaultLayoutId: string | undefined): StepCreateDto => {
+export const createStep = (
+  type: StepTypeEnum,
+  defaultLayoutId: string | undefined,
+  severity?: SeverityLevelEnum
+): StepCreateDto => {
   const controlValue: Record<string, unknown> = {};
 
   if (type === StepTypeEnum.DIGEST) {
@@ -133,6 +138,16 @@ export const createStep = (type: StepTypeEnum, defaultLayoutId: string | undefin
 
   if (type === StepTypeEnum.EMAIL && defaultLayoutId) {
     controlValue.layoutId = defaultLayoutId;
+  }
+
+  if (type === StepTypeEnum.IN_APP) {
+    let path = INFO_AVATAR;
+    if (severity === SeverityLevelEnum.HIGH) {
+      path = ERROR_AVATAR;
+    } else if (severity === SeverityLevelEnum.MEDIUM) {
+      path = WARNING_AVATAR;
+    }
+    controlValue.avatar = `${window.location.origin}${path}`;
   }
 
   return {

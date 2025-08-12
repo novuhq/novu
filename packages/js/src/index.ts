@@ -14,9 +14,10 @@ export {
   Preference,
   PreferenceLevel,
   PreferencesResponse,
-  SeverityLevelEnum as SeverityLevel,
+  SeverityLevelEnum,
   StandardNovuOptions,
   Subscriber,
+  UnreadCount,
   WebSocketEvent,
 } from './types';
-export { areTagsEqual, isSameFilter } from './utils/notification-utils';
+export { areSeveritiesEqual, areTagsEqual, isSameFilter } from './utils/notification-utils';

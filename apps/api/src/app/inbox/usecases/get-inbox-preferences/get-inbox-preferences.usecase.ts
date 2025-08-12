@@ -37,13 +37,19 @@ export class GetInboxPreferences {
       ...globalPreference.preference,
     };
 
+    const severity = command.severity
+      ? Array.isArray(command.severity)
+        ? command.severity
+        : [command.severity]
+      : undefined;
+
     const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
       GetSubscriberPreferenceCommand.create({
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         tags: command.tags,
-        severity: command.severity,
+        severity,
         includeInactiveChannels: false,
       })
     );

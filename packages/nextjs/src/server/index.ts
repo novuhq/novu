@@ -7,6 +7,7 @@ export {
   Notifications,
   NovuProvider,
   Preferences,
+  SeverityLevelEnum,
   useCounts,
   useNotifications,
   useNovu,

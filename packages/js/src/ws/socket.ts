@@ -159,9 +159,9 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
   };
 
-  #unreadCountChanged = ({ unreadCount }: { unreadCount: number }) => {
+  #unreadCountChanged = ({ counts }: { counts: { total: number; severity: Record<string, number> } }) => {
     this.#emitter.emit(UNREAD_COUNT_CHANGED, {
-      result: unreadCount,
+      result: counts,
     });
   };
 

@@ -540,7 +540,10 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
           update(
             {
               ...workflow,
-              steps: [...workflow.steps, createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined)],
+              steps: [
+                ...workflow.steps,
+                createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined, workflow.severity),
+              ],
             },
             {
               onSuccess: (data) => {

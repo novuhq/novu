@@ -73,7 +73,11 @@ export function AddNodeEdge({
                   if (workflow && !isFetchingLayouts) {
                     const indexToAdd = data.addStepIndex;
 
-                    const newStep = createStep(stepType, addDefaultLayout ? defaultLayoutId : undefined);
+                    const newStep = createStep(
+                      stepType,
+                      addDefaultLayout ? defaultLayoutId : undefined,
+                      workflow.severity
+                    );
 
                     const updatedSteps = [
                       ...workflow.steps.slice(0, indexToAdd),
