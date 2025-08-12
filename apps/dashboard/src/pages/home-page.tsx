@@ -50,17 +50,15 @@ export function HomePage(): ReactElement {
           <motion.div variants={ANIMATION_VARIANTS.section}>
             <WelcomeHeader />
           </motion.div>
-          {(isChartsLoading || (workflowRunsMetricData?.value && Number(workflowRunsMetricData.value) !== 0)) && (
-            <motion.div variants={ANIMATION_VARIANTS.section}>
-              <TopLevelStats
-                value={workflowRunsMetricData.value}
-                percentageChange={workflowRunsMetricData.percentageChange}
-                trendDirection={workflowRunsMetricData.trendDirection}
-                isLoading={isChartsLoading}
-                periodLabel="Last 30 days"
-              />
-            </motion.div>
-          )}
+          <motion.div variants={ANIMATION_VARIANTS.section}>
+            <TopLevelStats
+              value={workflowRunsMetricData.value}
+              percentageChange={workflowRunsMetricData.percentageChange}
+              trendDirection={workflowRunsMetricData.trendDirection}
+              isLoading={isChartsLoading}
+              periodLabel="Last 30 days"
+            />
+          </motion.div>
           <Separator className="my-6" />
           <motion.div variants={ANIMATION_VARIANTS.section}>
             <ResourcesSection />
