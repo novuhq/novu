@@ -6,14 +6,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import {
-  ActorTypeEnum,
-  ButtonTypeEnum,
-  ChannelCTATypeEnum,
-  StepTypeEnum,
-  SystemAvatarIconEnum,
-  TemplateVariableTypeEnum,
-} from '@novu/shared';
+import { ActorTypeEnum, ChannelCTATypeEnum, StepTypeEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 

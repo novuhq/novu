@@ -68,8 +68,7 @@ export class UpsertWorkflowUseCase {
     private analyticsService: AnalyticsService,
     private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -116,29 +115,27 @@ export class UpsertWorkflowUseCase {
       })
     );
 
-    if (this.sendWebhookMessage) {
-      if (existingWorkflow) {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.WORKFLOW_UPDATED,
-          objectType: WebhookObjectTypeEnum.WORKFLOW,
-          payload: {
-            object: updatedWorkflow as unknown as Record<string, unknown>,
-            previousObject: existingWorkflow as unknown as Record<string, unknown>,
-          },
-          organizationId: command.user.organizationId,
-          environmentId: command.user.environmentId,
-        });
-      } else {
-        await this.sendWebhookMessage.execute({
-          eventType: WebhookEventEnum.WORKFLOW_CREATED,
-          objectType: WebhookObjectTypeEnum.WORKFLOW,
-          payload: {
-            object: updatedWorkflow as unknown as Record<string, unknown>,
-          },
-          organizationId: command.user.organizationId,
-          environmentId: command.user.environmentId,
-        });
-      }
+    if (existingWorkflow) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: updatedWorkflow as unknown as Record<string, unknown>,
+          previousObject: existingWorkflow as unknown as Record<string, unknown>,
+        },
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+      });
+    } else {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_CREATED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: updatedWorkflow as unknown as Record<string, unknown>,
+        },
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+      });
     }
 
     return updatedWorkflow;

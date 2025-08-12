@@ -1,4 +1,4 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { Instrument, InstrumentUsecase, PinoLogger, SendWebhookMessage } from '@novu/application-generic';
 import { LocalizationResourceEnum, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
@@ -20,8 +20,7 @@ export class PatchWorkflowUsecase {
     private buildStepIssuesUsecase: BuildStepIssuesUsecase,
     private moduleRef: ModuleRef,
     private logger: PinoLogger,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -47,18 +46,16 @@ export class PatchWorkflowUsecase {
       user: command.user,
     });
 
-    if (this.sendWebhookMessage) {
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.WORKFLOW_UPDATED,
-        objectType: WebhookObjectTypeEnum.WORKFLOW,
-        payload: {
-          object: updatedWorkflow as unknown as Record<string, unknown>,
-          previousObject: persistedWorkflow as unknown as Record<string, unknown>,
-        },
-        organizationId: command.user.organizationId,
-        environmentId: command.user.environmentId,
-      });
-    }
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.WORKFLOW_UPDATED,
+      objectType: WebhookObjectTypeEnum.WORKFLOW,
+      payload: {
+        object: updatedWorkflow as unknown as Record<string, unknown>,
+        previousObject: persistedWorkflow as unknown as Record<string, unknown>,
+      },
+      organizationId: command.user.organizationId,
+      environmentId: command.user.environmentId,
+    });
 
     return updatedWorkflow;
   }

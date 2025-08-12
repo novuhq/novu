@@ -52,10 +52,6 @@ export class PublishEnvironmentUseCase {
 
       this.logger.info(`Starting environment publish from ${sourceEnvironmentId} to ${command.targetEnvironmentId}`);
 
-      /*
-       * For now, we only support workflow sync
-       * In the future, we can add more strategies here
-       */
       const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
 
       const results = await this.executeSync(strategies, syncContext);
