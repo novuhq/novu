@@ -244,6 +244,7 @@ export class TriggerEvent {
         status,
         entity_type: 'request',
         entity_id: command.requestId,
+        workflow_run_identifier: command.identifier,
       };
 
       await this.traceLogRepository.createRequest([traceData]);

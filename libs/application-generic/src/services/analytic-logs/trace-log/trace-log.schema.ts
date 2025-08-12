@@ -38,6 +38,9 @@ const schemaDefinition = {
 
   // Step run type
   step_run_type: { type: CHNullable(CHString()) },
+
+  // Workflow run identifier
+  workflow_run_identifier: { type: CHNullable(CHString()) },
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [

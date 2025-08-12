@@ -169,6 +169,7 @@ export class TriggerMulticast extends TriggerBase {
         status,
         entity_type: 'request',
         entity_id: command.requestId,
+        workflow_run_identifier: command.template.triggers[0].identifier,
       };
 
       await this.traceLogRepository.createRequest([traceData]);

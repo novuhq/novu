@@ -124,6 +124,7 @@ export class MarkMessageAs {
           entity_id: message._jobId,
           external_subscriber_id: message._subscriberId,
           step_run_type: message.channel as StepType,
+          workflow_run_identifier: message.templateIdentifier,
         });
       }
     }
