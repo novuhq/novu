@@ -8,6 +8,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
   #inboxService: InboxService;
 
   readonly id: InboxNotification['id'];
+  readonly transactionId: InboxNotification['transactionId'];
   readonly subject?: InboxNotification['subject'];
   readonly body: InboxNotification['body'];
   readonly to: InboxNotification['to'];
@@ -35,6 +36,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on'>, InboxNotifica
     this.#inboxService = inboxService;
 
     this.id = notification.id;
+    this.transactionId = notification.transactionId;
     this.subject = notification.subject;
     this.body = notification.body;
     this.to = notification.to;

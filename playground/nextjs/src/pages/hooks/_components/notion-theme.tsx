@@ -86,6 +86,8 @@ export const NotionTheme = () => {
   const { counts } = useCounts({ filters: [{ read: false, tags: ['chat'] }] });
   const { notifications, isLoading, isFetching, hasMore, fetchMore, error } = useNotifications(filter);
 
+  console.log(notifications);
+
   return (
     <div className="flex min-h-[600px] w-full max-w-[1200px] rounded-lg bg-white">
       <div className="flex w-[240px] shrink-0 flex-col border-gray-200 bg-[#f7f7f5] p-4 shadow-lg">

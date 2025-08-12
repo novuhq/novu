@@ -29,6 +29,7 @@ const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_coun
 
 const mapToNotification = ({
   _id,
+  transactionId,
   content,
   read,
   seen,
@@ -67,6 +68,7 @@ const mapToNotification = ({
 
   return {
     id: _id,
+    transactionId,
     subject,
     body: content as string,
     to,
