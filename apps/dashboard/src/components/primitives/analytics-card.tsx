@@ -52,6 +52,11 @@ function formatValue(value: string | number): string {
   return value;
 }
 
+function formatPercentage(percentage: number): string {
+  const rounded = Math.round(percentage * 10) / 10; // Round to 1 decimal place
+  return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(1); // Remove .0 if whole number
+}
+
 /**
  * A reusable analytics card component that displays metrics with trend indicators.
  * Based on the updated Figma design system with compact layout.
@@ -117,7 +122,7 @@ export function AnalyticsCard({
             <div className="flex items-center gap-1 px-1">
               <trendColors.icon className={cn('size-2', trendColors.text)} />
               <span className={cn('text-subheading-2xs uppercase', trendColors.text)}>
-                {Math.abs(percentageChange)}%
+                {formatPercentage(Math.abs(percentageChange))}%
               </span>
             </div>
           )}
