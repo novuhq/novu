@@ -4,11 +4,12 @@ import {
   buildMessageCountKey,
   InvalidateCacheService,
   PinoLogger,
+  SendWebhookMessage,
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
-import { ButtonTypeEnum, ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { ChannelCTATypeEnum, WebSocketEventEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -16,21 +17,23 @@ import type { MarkManyNotificationsAsCommand } from './mark-many-notifications-a
 import { MarkManyNotificationsAs } from './mark-many-notifications-as.usecase';
 
 const mockSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber' };
-const mockMessage: any = {
-  _id: '_id',
-  content: '',
-  read: false,
-  archived: false,
-  createdAt: new Date(),
-  lastReadAt: new Date(),
-  channel: ChannelTypeEnum.IN_APP,
-  subscriber: mockSubscriber,
-  actorSubscriber: mockSubscriber,
-  cta: {
-    type: ChannelCTATypeEnum.REDIRECT,
-    data: {},
+const mockMessage: any = [
+  {
+    _id: '_id',
+    content: '',
+    read: false,
+    archived: false,
+    createdAt: new Date(),
+    lastReadAt: new Date(),
+    channel: ChannelTypeEnum.IN_APP,
+    subscriber: mockSubscriber,
+    actorSubscriber: mockSubscriber,
+    cta: {
+      type: ChannelCTATypeEnum.REDIRECT,
+      data: {},
+    },
   },
-};
+];
 
 describe('MarkManyNotificationsAs', () => {
   let markManyNotificationsAs: MarkManyNotificationsAs;
@@ -40,6 +43,7 @@ describe('MarkManyNotificationsAs', () => {
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
   let traceLogRepositoryMock: sinon.SinonStubbedInstance<TraceLogRepository>;
   let loggerMock: sinon.SinonStubbedInstance<PinoLogger>;
+  let sendWebhookMessageMock: sinon.SinonStubbedInstance<SendWebhookMessage>;
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
@@ -48,6 +52,7 @@ describe('MarkManyNotificationsAs', () => {
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
     traceLogRepositoryMock = sinon.createStubInstance(TraceLogRepository);
     loggerMock = sinon.createStubInstance(PinoLogger);
+    sendWebhookMessageMock = sinon.createStubInstance(SendWebhookMessage);
 
     markManyNotificationsAs = new MarkManyNotificationsAs(
       invalidateCacheMock as any,
@@ -55,7 +60,8 @@ describe('MarkManyNotificationsAs', () => {
       getSubscriberMock as any,
       messageRepositoryMock as any,
       traceLogRepositoryMock as any,
-      loggerMock as any
+      loggerMock as any,
+      sendWebhookMessageMock as any
     );
   });
 
@@ -120,6 +126,7 @@ describe('MarkManyNotificationsAs', () => {
 
     getSubscriberMock.execute.resolves(mockSubscriber);
     messageRepositoryMock.findOne.resolves(mockMessage);
+    messageRepositoryMock.updateMessagesStatusByIds.resolves(mockMessage);
 
     await markManyNotificationsAs.execute(command);
 
@@ -153,6 +160,7 @@ describe('MarkManyNotificationsAs', () => {
 
     getSubscriberMock.execute.resolves(mockSubscriber);
     messageRepositoryMock.findOne.resolves(mockMessage);
+    messageRepositoryMock.updateMessagesStatusByIds.resolves(mockMessage);
 
     await markManyNotificationsAs.execute(command);
 

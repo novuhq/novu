@@ -7,6 +7,7 @@ import {
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
+  SendWebhookMessage,
   UpsertPreferences,
   UpsertSubscriberGlobalPreferencesCommand,
   UpsertSubscriberWorkflowPreferencesCommand,
@@ -16,6 +17,8 @@ import {
   IPreferenceChannels,
   PreferenceLevelEnum,
   SeverityLevelEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
@@ -35,7 +38,8 @@ export class UpdatePreferences {
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private upsertPreferences: UpsertPreferences,
-    private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase
+    private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -63,9 +67,23 @@ export class UpdatePreferences {
       workflowId = workflow._id;
     }
 
+    let newPreference: InboxPreference | null = null;
+
     await this.updateSubscriberPreference(command, subscriber, workflowId);
 
-    return await this.findPreference(command, subscriber);
+    newPreference = await this.findPreference(command, subscriber);
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.PREFERENCE_UPDATED,
+      objectType: WebhookObjectTypeEnum.PREFERENCE,
+      payload: {
+        object: newPreference,
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
+
+    return newPreference;
   }
 
   @Instrument()

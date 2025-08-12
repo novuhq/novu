@@ -9,7 +9,7 @@ interface GetWebhookPortalTokenResponse {
 }
 
 export const getWebhookPortalToken = async (environment: IEnvironment): Promise<GetWebhookPortalTokenResponse> => {
-  const { data } = await getV2<{ data: GetWebhookPortalTokenResponse }>('/webhooks/portal/token', {
+  const { data } = await getV2<{ data: GetWebhookPortalTokenResponse }>('/outbound-webhooks/portal/token', {
     environment,
   });
 
@@ -17,7 +17,7 @@ export const getWebhookPortalToken = async (environment: IEnvironment): Promise<
 };
 
 export const createWebhookPortalToken = async (environment: IEnvironment): Promise<GetWebhookPortalTokenResponse> => {
-  const { data } = await postV2<{ data: GetWebhookPortalTokenResponse }>('/webhooks/portal/token', {
+  const { data } = await postV2<{ data: GetWebhookPortalTokenResponse }>('/outbound-webhooks/portal/token', {
     environment,
     body: {},
   });

@@ -83,15 +83,15 @@ export class EnvironmentsController {
     @Param('targetEnvironmentId') targetEnvironmentId: string,
     @Body() body: PublishEnvironmentRequestDto
   ): Promise<PublishEnvironmentResponseDto> {
-    const command = PublishEnvironmentCommand.create({
-      user,
-      sourceEnvironmentId: body.sourceEnvironmentId,
-      targetEnvironmentId,
-      dryRun: body.dryRun,
-      resources: body.resources,
-    });
-
-    return await this.publishEnvironmentUseCase.execute(command);
+    return await this.publishEnvironmentUseCase.execute(
+      PublishEnvironmentCommand.create({
+        user,
+        sourceEnvironmentId: body.sourceEnvironmentId,
+        targetEnvironmentId,
+        dryRun: body.dryRun,
+        resources: body.resources,
+      })
+    );
   }
 
   @Post('/:targetEnvironmentId/diff')

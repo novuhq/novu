@@ -27,6 +27,7 @@ describe('NotificationsCache', () => {
     notification1 = new Notification(
       {
         id: '1',
+        transactionId: 'tx-1',
         body: 'test1',
         isRead: false,
         isArchived: false,
@@ -49,6 +50,7 @@ describe('NotificationsCache', () => {
     notification2 = new Notification(
       {
         id: '2',
+        transactionId: 'tx-2',
         body: 'test2',
         isRead: false,
         isSeen: false,

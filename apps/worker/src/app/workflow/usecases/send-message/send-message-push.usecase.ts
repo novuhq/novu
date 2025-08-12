@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   CompileTemplate,
@@ -9,9 +9,11 @@ import {
   GetNovuProviderCredentials,
   InstrumentUsecase,
   IPushHandler,
+  messageWebhookMapper,
   PushFactory,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
 } from '@novu/application-generic';
 import { IntegrationEntity, JobEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { PushOutput } from '@novu/framework/internal';
@@ -23,6 +25,8 @@ import {
   ProvidersIdEnum,
   PushProviderIdEnum,
   TriggerOverrides,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
 } from '@novu/shared';
 import { IPushOptions } from '@novu/stateless';
 import { addBreadcrumb } from '@sentry/node';
@@ -52,7 +56,8 @@ export class SendMessagePush extends SendMessageBase {
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -473,6 +478,19 @@ export class SendMessagePush extends SendMessageBase {
         })
       );
 
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, {
+            providerResponseId: result.id,
+            deviceToken,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
       return { success: true, error: undefined };
     } catch (e) {
       await this.sendErrorStatus(
@@ -485,6 +503,19 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       const raw = JSON.stringify(e) !== JSON.stringify({}) ? JSON.stringify(e) : JSON.stringify(e.message);
+
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message),
+          error: {
+            message: e.message || e.name || 'Error while sending push with provider',
+          },
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       try {
         await this.createExecutionDetailsError(DetailEnum.PROVIDER_ERROR, command.job, {
