@@ -51,7 +51,6 @@ export class BuildDeliveryTrendChart {
       }
     }
 
-    // Convert to chart data points grouped by timestamp
     const chartData: ChartDataPointDto[] = [];
 
     for (const [date, channelCounts] of chartDataMap) {

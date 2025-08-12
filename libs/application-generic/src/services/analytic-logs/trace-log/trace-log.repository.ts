@@ -157,31 +157,16 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    try {
-      const result = await this.clickhouseService.query<{
-        date: string;
-        event_type: string;
-        count: string;
-      }>({
-        query,
-        params,
-      });
+    const result = await this.clickhouseService.query<{
+      date: string;
+      event_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
 
-      return result.data;
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-        'Failed to fetch interaction trend data'
-      );
-
-      return [];
-    }
+    return result.data;
   }
 
   async getTotalInteractionsData(
@@ -228,44 +213,24 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       previousEndDate: LogRepository.formatDateTime64(previousEndDate),
     };
 
-    try {
-      const [currentResult, previousResult] = await Promise.all([
-        this.clickhouseService.query<{ count: string }>({
-          query: currentQuery,
-          params: currentParams,
-        }),
-        this.clickhouseService.query<{ count: string }>({
-          query: previousQuery,
-          params: previousParams,
-        }),
-      ]);
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentQuery,
+        params: currentParams,
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousQuery,
+        params: previousParams,
+      }),
+    ]);
 
-      const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
-      const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
 
-      return {
-        currentPeriod,
-        previousPeriod,
-      };
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          previousStartDate: previousStartDate.toISOString(),
-          previousEndDate: previousEndDate.toISOString(),
-        },
-        'Failed to fetch total interactions data'
-      );
-
-      return {
-        currentPeriod: 0,
-        previousPeriod: 0,
-      };
-    }
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
   }
 }
 

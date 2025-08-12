@@ -191,31 +191,16 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    try {
-      const result = await this.clickhouseService.query<{
-        date: string;
-        step_type: string;
-        count: string;
-      }>({
-        query,
-        params,
-      });
+    const result = await this.clickhouseService.query<{
+      date: string;
+      step_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
 
-      return result.data;
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-        'Failed to fetch step runs aggregated data'
-      );
-
-      return [];
-    }
+    return result.data;
   }
 
   async getMessagesDeliveredData(
@@ -257,52 +242,32 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       organizationId,
     };
 
-    try {
-      const [currentResult, previousResult] = await Promise.all([
-        this.clickhouseService.query<{ count: string }>({
-          query: currentPeriodQuery,
-          params: {
-            ...baseParams,
-            startDate: LogRepository.formatDateTime64(startDate),
-            endDate: LogRepository.formatDateTime64(endDate),
-          },
-        }),
-        this.clickhouseService.query<{ count: string }>({
-          query: previousPeriodQuery,
-          params: {
-            ...baseParams,
-            previousStartDate: LogRepository.formatDateTime64(previousStartDate),
-            previousEndDate: LogRepository.formatDateTime64(previousEndDate),
-          },
-        }),
-      ]);
-
-      const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
-      const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
-
-      return {
-        currentPeriod,
-        previousPeriod,
-      };
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          previousStartDate: previousStartDate.toISOString(),
-          previousEndDate: previousEndDate.toISOString(),
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
         },
-        'Failed to fetch messages delivered data'
-      );
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
 
-      return {
-        currentPeriod: 0,
-        previousPeriod: 0,
-      };
-    }
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
   }
 
   async getAvgMessagesPerSubscriberData(
@@ -326,8 +291,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         AND created_at <= {endDate:DateTime64(3)}
         AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
         AND status = 'completed'
-        AND external_subscriber_id IS NOT NULL
-        AND external_subscriber_id != ''
     `;
 
     // Query for previous period average
@@ -343,8 +306,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         AND created_at <= {previousEndDate:DateTime64(3)}
         AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
         AND status = 'completed'
-        AND external_subscriber_id IS NOT NULL
-        AND external_subscriber_id != ''
     `;
 
     const baseParams = {
@@ -352,58 +313,38 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       organizationId,
     };
 
-    try {
-      const [currentResult, previousResult] = await Promise.all([
-        this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
-          query: currentPeriodQuery,
-          params: {
-            ...baseParams,
-            startDate: LogRepository.formatDateTime64(startDate),
-            endDate: LogRepository.formatDateTime64(endDate),
-          },
-        }),
-        this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
-          query: previousPeriodQuery,
-          params: {
-            ...baseParams,
-            previousStartDate: LogRepository.formatDateTime64(previousStartDate),
-            previousEndDate: LogRepository.formatDateTime64(previousEndDate),
-          },
-        }),
-      ]);
-
-      const currentTotalStepRuns = parseInt(currentResult.data[0]?.total_step_runs || '0', 10);
-      const currentUniqueSubscribers = parseInt(currentResult.data[0]?.unique_subscribers || '0', 10);
-      const previousTotalStepRuns = parseInt(previousResult.data[0]?.total_step_runs || '0', 10);
-      const previousUniqueSubscribers = parseInt(previousResult.data[0]?.unique_subscribers || '0', 10);
-
-      // Calculate averages (handle division by zero)
-      const currentPeriod = currentUniqueSubscribers > 0 ? currentTotalStepRuns / currentUniqueSubscribers : 0;
-      const previousPeriod = previousUniqueSubscribers > 0 ? previousTotalStepRuns / previousUniqueSubscribers : 0;
-
-      return {
-        currentPeriod: Math.round(currentPeriod * 100) / 100, // Round to 2 decimal places
-        previousPeriod: Math.round(previousPeriod * 100) / 100, // Round to 2 decimal places
-      };
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          previousStartDate: previousStartDate.toISOString(),
-          previousEndDate: previousEndDate.toISOString(),
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
         },
-        'Failed to fetch average messages per subscriber data'
-      );
+      }),
+      this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
 
-      return {
-        currentPeriod: 0,
-        previousPeriod: 0,
-      };
-    }
+    const currentTotalStepRuns = parseInt(currentResult.data[0]?.total_step_runs || '0', 10);
+    const currentUniqueSubscribers = parseInt(currentResult.data[0]?.unique_subscribers || '0', 10);
+    const previousTotalStepRuns = parseInt(previousResult.data[0]?.total_step_runs || '0', 10);
+    const previousUniqueSubscribers = parseInt(previousResult.data[0]?.unique_subscribers || '0', 10);
+
+    // Calculate averages (handle division by zero)
+    const currentPeriod = currentUniqueSubscribers > 0 ? currentTotalStepRuns / currentUniqueSubscribers : 0;
+    const previousPeriod = previousUniqueSubscribers > 0 ? previousTotalStepRuns / previousUniqueSubscribers : 0;
+
+    return {
+      currentPeriod: Math.round(currentPeriod * 100) / 100, // Round to 2 decimal places
+      previousPeriod: Math.round(previousPeriod * 100) / 100, // Round to 2 decimal places
+    };
   }
 
   async getProviderVolumeData(
@@ -424,8 +365,6 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
         AND created_at <= {endDate:DateTime64(3)}
         AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
         AND status = 'completed'
-        AND provider_id IS NOT NULL
-        AND provider_id != ''
       GROUP BY provider_id
       ORDER BY count DESC
       LIMIT 5
@@ -438,30 +377,15 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    try {
-      const result = await this.clickhouseService.query<{
-        provider_id: string;
-        count: string;
-      }>({
-        query,
-        params,
-      });
+    const result = await this.clickhouseService.query<{
+      provider_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
 
-      return result.data;
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-        'Failed to fetch provider volume data'
-      );
-
-      return [];
-    }
+    return result.data;
   }
 
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {

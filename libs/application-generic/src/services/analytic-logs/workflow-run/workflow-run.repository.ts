@@ -10,7 +10,7 @@ import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
-import { LogRepository, QueryBuilder, SchemaKeys, Where } from '../log.repository';
+import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
@@ -526,8 +526,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
-        AND external_subscriber_id IS NOT NULL
-        AND external_subscriber_id != ''
     `;
 
     // Query for previous period
@@ -539,8 +537,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {previousStartDate:DateTime64(3)}
         AND created_at <= {previousEndDate:DateTime64(3)}
-        AND external_subscriber_id IS NOT NULL
-        AND external_subscriber_id != ''
     `;
 
     const baseParams = {
@@ -548,52 +544,32 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       organizationId,
     };
 
-    try {
-      const [currentResult, previousResult] = await Promise.all([
-        this.clickhouseService.query<{ count: string }>({
-          query: currentPeriodQuery,
-          params: {
-            ...baseParams,
-            startDate: LogRepository.formatDateTime64(startDate),
-            endDate: LogRepository.formatDateTime64(endDate),
-          },
-        }),
-        this.clickhouseService.query<{ count: string }>({
-          query: previousPeriodQuery,
-          params: {
-            ...baseParams,
-            previousStartDate: LogRepository.formatDateTime64(previousStartDate),
-            previousEndDate: LogRepository.formatDateTime64(previousEndDate),
-          },
-        }),
-      ]);
-
-      const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
-      const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
-
-      return {
-        currentPeriod,
-        previousPeriod,
-      };
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          previousStartDate: previousStartDate.toISOString(),
-          previousEndDate: previousEndDate.toISOString(),
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
         },
-        'Failed to fetch active subscribers data'
-      );
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
 
-      return {
-        currentPeriod: 0,
-        previousPeriod: 0,
-      };
-    }
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
   }
 
   async getWorkflowRunsMetricData(
@@ -631,52 +607,32 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       organizationId,
     };
 
-    try {
-      const [currentResult, previousResult] = await Promise.all([
-        this.clickhouseService.query<{ count: string }>({
-          query: currentPeriodQuery,
-          params: {
-            ...baseParams,
-            startDate: LogRepository.formatDateTime64(startDate),
-            endDate: LogRepository.formatDateTime64(endDate),
-          },
-        }),
-        this.clickhouseService.query<{ count: string }>({
-          query: previousPeriodQuery,
-          params: {
-            ...baseParams,
-            previousStartDate: LogRepository.formatDateTime64(previousStartDate),
-            previousEndDate: LogRepository.formatDateTime64(previousEndDate),
-          },
-        }),
-      ]);
-
-      const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
-      const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
-
-      return {
-        currentPeriod,
-        previousPeriod,
-      };
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-          previousStartDate: previousStartDate.toISOString(),
-          previousEndDate: previousEndDate.toISOString(),
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
         },
-        'Failed to fetch workflow runs metric data'
-      );
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
 
-      return {
-        currentPeriod: 0,
-        previousPeriod: 0,
-      };
-    }
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
   }
 
   async getWorkflowRunsTrendData(
@@ -707,31 +663,16 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    try {
-      const result = await this.clickhouseService.query<{
-        date: string;
-        status: string;
-        count: string;
-      }>({
-        query,
-        params,
-      });
+    const result = await this.clickhouseService.query<{
+      date: string;
+      status: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
 
-      return result.data;
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-        'Failed to fetch workflow runs trend data'
-      );
-
-      return [];
-    }
+    return result.data;
   }
 
   async getActiveSubscribersTrendData(
@@ -750,8 +691,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         AND organization_id = {organizationId:String}
         AND created_at >= {startDate:DateTime64(3)}
         AND created_at <= {endDate:DateTime64(3)}
-        AND external_subscriber_id IS NOT NULL
-        AND external_subscriber_id != ''
       GROUP BY date
       ORDER BY date
     `;
@@ -763,29 +702,14 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       endDate: LogRepository.formatDateTime64(endDate),
     };
 
-    try {
-      const result = await this.clickhouseService.query<{
-        date: string;
-        count: string;
-      }>({
-        query,
-        params,
-      });
+    const result = await this.clickhouseService.query<{
+      date: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
 
-      return result.data;
-    } catch (error) {
-      this.logger.error(
-        {
-          err: error,
-          environmentId,
-          organizationId,
-          startDate: startDate.toISOString(),
-          endDate: endDate.toISOString(),
-        },
-        'Failed to fetch active subscribers trend data'
-      );
-
-      return [];
-    }
+    return result.data;
   }
 }
