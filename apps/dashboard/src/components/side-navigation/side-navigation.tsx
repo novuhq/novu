@@ -92,12 +92,6 @@ const BottomSection = ({
 
       {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
       <NavigationGroup>
-        <button onClick={showPlainLiveChat} className="w-full">
-          <NavigationLink>
-            <RiChat1Line className="size-4" />
-            <span>Share Feedback</span>
-          </NavigationLink>
-        </button>
         <NavigationLink to={ROUTES.SETTINGS_TEAM}>
           <RiUserAddLine className="size-4" />
           <span>Invite teammates</span>
