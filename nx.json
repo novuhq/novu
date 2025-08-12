@@ -2,7 +2,9 @@
   "parallel": 4,
   "targetDefaults": {
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "cache": true
     },
     "test": {
@@ -11,14 +13,19 @@
     "lint": {
       "cache": true
     },
-
     "lint-biome": {
-      "inputs": ["default", "{workspaceRoot}/biome.json"],
+      "inputs": [
+        "default",
+        "{workspaceRoot}/biome.json"
+      ],
       "cache": true
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "production": [
       "default",
       "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",

@@ -62,7 +62,7 @@ describe('sendMessage method', () => {
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fakePost).toBeCalled();
+    expect(fakePost).toHaveBeenCalled();
   });
 
   test('should call smsmode API endpoint with right URL', async () => {

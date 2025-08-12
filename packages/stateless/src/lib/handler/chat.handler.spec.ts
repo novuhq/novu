@@ -64,7 +64,7 @@ test('send chat should template method correctly', async () => {
   });
 
   expect(spyTemplateFunction).toHaveBeenCalled();
-  expect(spyTemplateFunction).toBeCalledWith({
+  expect(spyTemplateFunction).toHaveBeenCalledWith({
     $channel_id: '+1333322214',
     $user_id: '1234',
     $webhookUrl: 'https://test.com',
