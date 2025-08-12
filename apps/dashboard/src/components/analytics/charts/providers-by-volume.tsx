@@ -110,17 +110,23 @@ type ProvidersByVolumeProps = {
 };
 
 export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
+  const formatProviderName = useCallback((name: string) => {
+    return name
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, (char: string) => char.toUpperCase());
+  }, []);
+
   const chartData = useMemo(() => {
-    return data?.map((dataPoint, index) => ({
-      providerId: dataPoint.providerId,
-      count: dataPoint.count,
-      displayName:
-        dataPoint.providerId.length > 20
-          ? `${dataPoint.providerId.substring(0, 20)}...`.replace(/\b\w/g, (char: string) => char.toUpperCase())
-          : dataPoint.providerId.replace(/\b\w/g, (char: string) => char.toUpperCase()),
-      fill: colorPalette[index % colorPalette.length],
-    }));
-  }, [data]);
+    return data?.map((dataPoint, index) => {
+      const formattedName = formatProviderName(dataPoint.providerId);
+      return {
+        providerId: dataPoint.providerId,
+        count: dataPoint.count,
+        displayName: formattedName.length > 20 ? `${formattedName.substring(0, 20)}...` : formattedName,
+        fill: colorPalette[index % colorPalette.length],
+      };
+    });
+  }, [data, formatProviderName]);
 
   const hasDataChecker = useCallback((data: ProviderChartData[]) => {
     return data.some((dataPoint) => (dataPoint.count || 0) > 0);
