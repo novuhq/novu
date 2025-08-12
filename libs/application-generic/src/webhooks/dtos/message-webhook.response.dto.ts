@@ -7,8 +7,6 @@ export type MessageWebhookResponseDto = Pick<
   | '_environmentId'
   | '_organizationId'
   | '_notificationId'
-  | '_subscriberId'
-  | 'subscriber'
   | 'actorSubscriber'
   | 'templateIdentifier'
   | 'createdAt'
@@ -32,4 +30,5 @@ export type MessageWebhookResponseDto = Pick<
   providerResponseId?: string;
   deviceToken?: string;
   webhookUrl?: string;
+  subscriberId?: string;
 };

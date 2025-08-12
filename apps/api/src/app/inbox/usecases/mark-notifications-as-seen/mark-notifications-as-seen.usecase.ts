@@ -69,7 +69,7 @@ export class MarkNotificationsAsSeen {
           eventType: WebhookEventEnum.MESSAGE_SEEN,
           objectType: WebhookObjectTypeEnum.MESSAGE,
           payload: {
-            object: messageWebhookMapper(message),
+            object: messageWebhookMapper(message, subscriber.subscriberId),
           },
           organizationId: command.organizationId,
           environmentId: command.environmentId,

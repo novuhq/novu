@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import {
   ChatFactory,
@@ -505,7 +505,7 @@ export class SendMessageChat extends SendMessageBase {
         eventType: WebhookEventEnum.MESSAGE_SENT,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message, {
+          object: messageWebhookMapper(message, command.subscriberId, {
             providerResponseId: result.id,
             webhookUrl: chatWebhookUrl,
           }),
@@ -547,7 +547,7 @@ export class SendMessageChat extends SendMessageBase {
         eventType: WebhookEventEnum.MESSAGE_SENT,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message),
+          object: messageWebhookMapper(message, command.subscriberId),
           error: {
             message: e.message || e.name || 'Error while sending chat with provider',
           },

@@ -312,7 +312,7 @@ export class SendMessageInApp extends SendMessageBase {
       eventType: WebhookEventEnum.MESSAGE_SENT,
       objectType: WebhookObjectTypeEnum.MESSAGE,
       payload: {
-        object: messageWebhookMapper(message, {
+        object: messageWebhookMapper(message, command.subscriberId, {
           providerResponseId: message._id,
         }),
       },
@@ -324,7 +324,7 @@ export class SendMessageInApp extends SendMessageBase {
       eventType: WebhookEventEnum.MESSAGE_DELIVERED,
       objectType: WebhookObjectTypeEnum.MESSAGE,
       payload: {
-        object: messageWebhookMapper(message, {
+        object: messageWebhookMapper(message, command.subscriberId, {
           providerResponseId: message._id,
         }),
       },

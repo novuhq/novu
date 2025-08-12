@@ -84,7 +84,8 @@ export class MarkMessageAs {
           updatedMessages,
           WebhookEventEnum.MESSAGE_SEEN,
           command.organizationId,
-          command.environmentId
+          command.environmentId,
+          command.subscriberId
         );
       }
     }
@@ -103,7 +104,8 @@ export class MarkMessageAs {
         updatedMessages,
         command.mark.read ? WebhookEventEnum.MESSAGE_READ : WebhookEventEnum.MESSAGE_UNREAD,
         command.organizationId,
-        command.environmentId
+        command.environmentId,
+        command.subscriberId
       );
     }
 
@@ -178,14 +180,15 @@ export class MarkMessageAs {
     messages: MessageEntity[],
     eventType: WebhookEventEnum,
     organizationId: string,
-    environmentId: string
+    environmentId: string,
+    subscriberId: string
   ): Promise<void> {
     const webhookPromises = messages.map((message) =>
       this.sendWebhookMessage.execute({
         eventType: eventType,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message),
+          object: messageWebhookMapper(message, subscriberId),
         },
         organizationId: organizationId,
         environmentId: environmentId,

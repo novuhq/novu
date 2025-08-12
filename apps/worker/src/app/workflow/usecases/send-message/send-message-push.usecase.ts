@@ -482,7 +482,7 @@ export class SendMessagePush extends SendMessageBase {
         eventType: WebhookEventEnum.MESSAGE_SENT,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message, {
+          object: messageWebhookMapper(message, command.subscriberId, {
             providerResponseId: result.id,
             deviceToken,
           }),
@@ -508,7 +508,7 @@ export class SendMessagePush extends SendMessageBase {
         eventType: WebhookEventEnum.MESSAGE_SENT,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message),
+          object: messageWebhookMapper(message, command.subscriberId),
           error: {
             message: e.message || e.name || 'Error while sending push with provider',
           },

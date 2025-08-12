@@ -113,7 +113,7 @@ export class MarkManyNotificationsAs {
         eventType: eventType,
         objectType: WebhookObjectTypeEnum.MESSAGE,
         payload: {
-          object: messageWebhookMapper(message),
+          object: messageWebhookMapper(message, command.subscriberId),
         },
         organizationId: command.organizationId,
         environmentId: command.environmentId,
