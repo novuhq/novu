@@ -24,6 +24,7 @@ const mapSingleItem = ({
   severity,
   data,
   template,
+  transactionId,
 }: MessageEntity): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
@@ -39,6 +40,7 @@ const mapSingleItem = ({
 
   return {
     id: _id,
+    transactionId,
     subject,
     body: content as string,
     to,
