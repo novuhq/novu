@@ -61,19 +61,6 @@ const BottomSection = ({
 }: BottomNavigationProps) => {
   const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
 
-  const track = useTelemetry();
-
-  const showPlainLiveChat = () => {
-    track(TelemetryEvent.SHARE_FEEDBACK_LINK_CLICKED);
-
-    try {
-      window?.Plain?.open();
-    } catch (error) {
-      Sentry.captureException(error);
-      console.error('Error opening plain chat:', error);
-    }
-  };
-
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">

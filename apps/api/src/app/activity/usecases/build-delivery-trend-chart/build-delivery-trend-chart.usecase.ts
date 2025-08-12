@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, StepRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, StepRunRepository } from '@novu/application-generic';
 import { ChartDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildDeliveryTrendChartCommand } from './build-delivery-trend-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildDeliveryTrendChart {
     this.logger.setContext(BuildDeliveryTrendChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildDeliveryTrendChartCommand): Promise<ChartDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate } = command;
 

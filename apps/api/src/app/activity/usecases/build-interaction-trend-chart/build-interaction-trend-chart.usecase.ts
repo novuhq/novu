@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, TraceLogRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, TraceLogRepository } from '@novu/application-generic';
 import { InteractionTrendDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildInteractionTrendChartCommand } from './build-interaction-trend-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildInteractionTrendChart {
     this.logger.setContext(BuildInteractionTrendChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildInteractionTrendChartCommand): Promise<InteractionTrendDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate } = command;
 

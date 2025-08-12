@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, StepRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, StepRunRepository } from '@novu/application-generic';
 import { MessagesDeliveredDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildMessagesDeliveredChartCommand } from './build-messages-delivered-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildMessagesDeliveredChart {
     this.logger.setContext(BuildMessagesDeliveredChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildMessagesDeliveredChartCommand): Promise<MessagesDeliveredDataPointDto> {
     const { environmentId, organizationId, startDate, endDate } = command;
 

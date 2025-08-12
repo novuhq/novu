@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
 import { WorkflowVolumeDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildWorkflowByVolumeChartCommand } from './build-workflow-by-volume-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildWorkflowByVolumeChart {
     this.logger.setContext(BuildWorkflowByVolumeChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildWorkflowByVolumeChartCommand): Promise<WorkflowVolumeDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate } = command;
 

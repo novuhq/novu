@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
 import { WorkflowRunsMetricDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildWorkflowRunsMetricChartCommand } from './build-workflow-runs-metric-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildWorkflowRunsMetricChart {
     this.logger.setContext(BuildWorkflowRunsMetricChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildWorkflowRunsMetricChartCommand): Promise<WorkflowRunsMetricDataPointDto> {
     const { environmentId, organizationId, startDate, endDate } = command;
 

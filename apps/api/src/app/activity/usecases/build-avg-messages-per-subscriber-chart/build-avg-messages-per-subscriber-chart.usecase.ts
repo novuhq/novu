@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, StepRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, StepRunRepository } from '@novu/application-generic';
 import { AvgMessagesPerSubscriberDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildAvgMessagesPerSubscriberChartCommand } from './build-avg-messages-per-subscriber-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildAvgMessagesPerSubscriberChart {
     this.logger.setContext(BuildAvgMessagesPerSubscriberChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildAvgMessagesPerSubscriberChartCommand): Promise<AvgMessagesPerSubscriberDataPointDto> {
     const { environmentId, organizationId, startDate, endDate } = command;
 

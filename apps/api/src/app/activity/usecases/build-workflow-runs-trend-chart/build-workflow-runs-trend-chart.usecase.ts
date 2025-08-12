@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
+import { InstrumentUsecase, PinoLogger, WorkflowRunRepository } from '@novu/application-generic';
 import { WorkflowRunsTrendDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildWorkflowRunsTrendChartCommand } from './build-workflow-runs-trend-chart.command';
 
@@ -12,6 +12,7 @@ export class BuildWorkflowRunsTrendChart {
     this.logger.setContext(BuildWorkflowRunsTrendChart.name);
   }
 
+  @InstrumentUsecase()
   async execute(command: BuildWorkflowRunsTrendChartCommand): Promise<WorkflowRunsTrendDataPointDto[]> {
     const { environmentId, organizationId, startDate, endDate } = command;
 
