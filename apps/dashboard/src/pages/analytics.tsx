@@ -2,7 +2,7 @@ import { useOrganization } from '@clerk/clerk-react';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
-import { ReportTypeEnum } from '../api/activity';
+import { ReportTypeEnum, type WorkflowRunsTrendDataPoint } from '../api/activity';
 import {
   ANIMATION_VARIANTS,
   AnalyticsSection,
@@ -11,6 +11,7 @@ import {
   useAnalyticsDateFilter,
   useMetricData,
 } from '../components/analytics';
+import { WorkflowRunsTrendChart } from '../components/analytics/charts/workflow-runs-trend-chart';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
 import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
@@ -87,6 +88,14 @@ export function AnalyticsPage() {
 
             <motion.div variants={ANIMATION_VARIANTS.section}>
               <ChartsSection charts={charts} isLoading={isChartsLoading} error={chartsError} />
+            </motion.div>
+
+            <motion.div variants={ANIMATION_VARIANTS.section}>
+              <WorkflowRunsTrendChart
+                data={charts?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[]}
+                isLoading={isChartsLoading}
+                error={chartsError}
+              />
             </motion.div>
           </div>
         </motion.div>

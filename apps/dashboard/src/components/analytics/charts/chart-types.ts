@@ -24,3 +24,11 @@ export type InteractionChartData = {
   messageArchived: number;
   timestamp: string;
 };
+
+export type WorkflowRunsChartData = {
+  date: string;
+  pending: number;
+  success: number;
+  error: number;
+  timestamp: string;
+};

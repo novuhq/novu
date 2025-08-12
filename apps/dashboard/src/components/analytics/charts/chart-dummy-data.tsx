@@ -1,4 +1,9 @@
-import { type DeliveryChartData, type InteractionChartData, type WorkflowChartData } from './chart-types';
+import {
+  type DeliveryChartData,
+  type InteractionChartData,
+  type WorkflowChartData,
+  type WorkflowRunsChartData,
+} from './chart-types';
 
 export function generateDummyDeliveryData(): DeliveryChartData[] {
   const today = new Date();
@@ -60,6 +65,33 @@ export function generateDummyInteractionData(): InteractionChartData[] {
       messageRead: read,
       messageSnoozed: snoozed,
       messageArchived: archived,
+      timestamp: date.toISOString(),
+    });
+  }
+
+  return dummyData;
+}
+
+export function generateDummyWorkflowRunsData(): WorkflowRunsChartData[] {
+  const today = new Date();
+  const dummyData = [];
+
+  for (let i = 14; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+
+    const success = Math.floor(Math.random() * 300) + 100;
+    const pending = Math.floor(Math.random() * 50) + 10;
+    const error = Math.floor(Math.random() * 30) + 5;
+
+    dummyData.push({
+      date: date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      }),
+      success,
+      pending,
+      error,
       timestamp: date.toISOString(),
     });
   }
