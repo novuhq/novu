@@ -83,11 +83,9 @@ function ProvidersByVolumeSkeleton() {
 function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value: string } }) {
   const maxLength = 20;
   const formatProviderName = (name: string) => {
-    return name
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (char: string) => char.toUpperCase());
+    return name.replace(/-/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase());
   };
-  
+
   const formattedText = formatProviderName(payload.value);
   const text = formattedText.length > maxLength ? `${formattedText.slice(0, maxLength)}...` : formattedText;
 
@@ -111,9 +109,7 @@ type ProvidersByVolumeProps = {
 
 export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
   const formatProviderName = useCallback((name: string) => {
-    return name
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, (char: string) => char.toUpperCase());
+    return name.replace(/-/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase());
   }, []);
 
   const chartData = useMemo(() => {

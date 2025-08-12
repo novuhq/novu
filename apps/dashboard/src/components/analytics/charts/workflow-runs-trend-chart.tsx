@@ -32,17 +32,39 @@ function WorkflowRunsTrendChartSkeleton() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
-          {Array.from({ length: 15 }).map((_, i) => {
-            const height = Math.random() * 100 + 20;
-
-            return (
-              <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                <Skeleton className="w-full rounded-full" style={{ height: `${height}px` }} />
-                {(i === 0 || i === 14) && <Skeleton className="h-2 w-6 mt-2" />}
-              </div>
-            );
-          })}
+        <div className="h-[160px] w-full relative">
+          {/* Simulate line chart curves */}
+          <svg className="w-full h-full">
+            {/* Success line */}
+            <path
+              d="M20,120 Q60,80 100,90 T180,70 T260,85 T340,65"
+              stroke="#34d399"
+              strokeWidth="2"
+              fill="none"
+              opacity="0.6"
+            />
+            {/* Pending line */}
+            <path
+              d="M20,100 Q60,110 100,95 T180,105 T260,90 T340,100"
+              stroke="#facc15"
+              strokeWidth="2"
+              fill="none"
+              opacity="0.6"
+            />
+            {/* Error line */}
+            <path
+              d="M20,130 Q60,125 100,135 T180,120 T260,125 T340,115"
+              stroke="#ef4444"
+              strokeWidth="2"
+              fill="none"
+              opacity="0.6"
+            />
+          </svg>
+          {/* X-axis labels */}
+          <div className="absolute bottom-0 left-0 right-0 flex justify-between px-5">
+            <Skeleton className="h-2 w-8" />
+            <Skeleton className="h-2 w-8" />
+          </div>
         </div>
       </CardContent>
     </Card>
