@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { useDelayedLoading } from '../../../hooks/use-delayed-loading';
 import { TrendLineDown } from '../../icons/trend-line-down';
 import { TrendLineUp } from '../../icons/trend-line-up';
 import { AnimatedNumber } from '../../primitives/animated-number';
@@ -47,7 +48,9 @@ export function TopLevelStats({
   dateFilter,
   periodLabel = 'selected period',
 }: TopLevelStatsProps) {
-  if (isLoading) {
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  if (showSkeleton) {
     return (
       <div className="flex flex-col gap-2">
         <div className="flex items-end justify-between">
