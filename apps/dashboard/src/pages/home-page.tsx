@@ -50,7 +50,7 @@ export function HomePage(): ReactElement {
           <motion.div variants={ANIMATION_VARIANTS.section}>
             <WelcomeHeader />
           </motion.div>
-
+          `{' '}
           <motion.div variants={ANIMATION_VARIANTS.section}>
             <TopLevelStats
               value={workflowRunsMetricData.value}
@@ -60,9 +60,8 @@ export function HomePage(): ReactElement {
               periodLabel="Last 30 days"
             />
           </motion.div>
-
+          `
           <Separator />
-
           <motion.div variants={ANIMATION_VARIANTS.section}>
             <ResourcesSection />
           </motion.div>

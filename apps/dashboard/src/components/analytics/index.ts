@@ -9,7 +9,7 @@ export { AnalyticsSection } from './components/analytics-section';
 export { ChartsSection } from './components/charts-section';
 
 // Constants
-export * from './constants/home-page';
+export * from './constants/analytics-page.consts';
 
 // Hooks
 export { useHomepageDateFilter as useAnalyticsDateFilter } from './hooks/use-home-page-date-filter';
