@@ -17,21 +17,23 @@ import type { MarkManyNotificationsAsCommand } from './mark-many-notifications-a
 import { MarkManyNotificationsAs } from './mark-many-notifications-as.usecase';
 
 const mockSubscriber: any = { _id: '123', subscriberId: 'test-mockSubscriber' };
-const mockMessage: any = {
-  _id: '_id',
-  content: '',
-  read: false,
-  archived: false,
-  createdAt: new Date(),
-  lastReadAt: new Date(),
-  channel: ChannelTypeEnum.IN_APP,
-  subscriber: mockSubscriber,
-  actorSubscriber: mockSubscriber,
-  cta: {
-    type: ChannelCTATypeEnum.REDIRECT,
-    data: {},
+const mockMessage: any = [
+  {
+    _id: '_id',
+    content: '',
+    read: false,
+    archived: false,
+    createdAt: new Date(),
+    lastReadAt: new Date(),
+    channel: ChannelTypeEnum.IN_APP,
+    subscriber: mockSubscriber,
+    actorSubscriber: mockSubscriber,
+    cta: {
+      type: ChannelCTATypeEnum.REDIRECT,
+      data: {},
+    },
   },
-};
+];
 
 describe('MarkManyNotificationsAs', () => {
   let markManyNotificationsAs: MarkManyNotificationsAs;
