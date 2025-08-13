@@ -1,3 +1,19 @@
+## v3.8.1 (2025-08-13)
+
+### 🚀 Features
+
+- **js,react:** useNotifications hook realtime updates fixes NV-5502 ([#8892](https://github.com/novuhq/novu/pull/8892))
+
+### 🩹 Fixes
+
+- **root:** nx release publish issue for syntax error fixes NV-6506 ([#8922](https://github.com/novuhq/novu/pull/8922))
+- **react:** stale filters in closures fixes NV-6479 ([#8893](https://github.com/novuhq/novu/pull/8893))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Himanshu Garg @merrcury
+
 ## v3.7.0 (2025-07-22)
 
 ### 🚀 Features

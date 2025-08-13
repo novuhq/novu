@@ -1,9 +1,8 @@
 import { ClassSerializerInterceptor, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
-import { RequirePermissions, UserSession } from '@novu/application-generic';
+import { ProductFeature, RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { CreateWebhookPortalResponseDto } from './dtos/create-webhook-portal-response.dto';
 import { GetWebhookPortalTokenResponseDto } from './dtos/get-webhook-portal-token-response.dto';
 import { CreateWebhookPortalCommand } from './usecases/create-webhook-portal-token/create-webhook-portal.command';

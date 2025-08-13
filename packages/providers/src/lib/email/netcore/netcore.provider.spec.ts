@@ -69,7 +69,7 @@ describe('test netcore email send api', () => {
 
     expect(mockedAxios.request).toHaveBeenCalled();
     expect(spy).toHaveBeenCalled();
-    expect(spy).toBeCalledWith(mockEmailOptions);
+    expect(spy).toHaveBeenCalledWith(mockEmailOptions);
     expect(res.id).toEqual(response.data.data.message_id);
   });
 
@@ -97,7 +97,7 @@ describe('test netcore email send api', () => {
     });
 
     expect(mockedAxios.request).toHaveBeenCalled();
-    expect(mockedAxios.request).toBeCalledWith({
+    expect(mockedAxios.request).toHaveBeenCalledWith({
       data: '{"from":{"email":"test@test1.com","name":"Novu\'s Team"},"subject":"test subject _passthrough","content":[{"type":"html","value":"<div> Mail Content </div>"}],"personalizations":[{"to":[{"email":"test@to.com"}],"cc":[{"email":"test@cc.com"}],"bcc":[{"email":"test@bcc.com"}],"attachments":[{"name":"test.txt","content":"ZEdWemRBPT0="}]}]}',
       headers: {
         Accept: 'application/json',

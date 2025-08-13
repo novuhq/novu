@@ -1,7 +1,7 @@
 import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
-import { ChannelType } from '../types';
+import { ChannelType, SeverityLevelEnum } from '../types';
 import { NotificationsCache } from './notifications-cache';
 
 describe('NotificationsCache', () => {
@@ -42,7 +42,9 @@ describe('NotificationsCache', () => {
           identifier: 'test-workflow-1',
           name: 'Test Workflow 1',
           tags: ['tag1'],
+          severity: SeverityLevelEnum.NONE,
         },
+        severity: SeverityLevelEnum.NONE,
       },
       mockEmitter,
       mockInboxService
@@ -65,7 +67,9 @@ describe('NotificationsCache', () => {
           identifier: 'test-workflow-2',
           name: 'Test Workflow 2',
           tags: ['tag1'],
+          severity: SeverityLevelEnum.NONE,
         },
+        severity: SeverityLevelEnum.NONE,
       },
       mockEmitter,
       mockInboxService

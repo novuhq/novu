@@ -26,13 +26,17 @@ export const areDataEqual = (data1?: Record<string, unknown>, data2?: Record<str
 };
 
 export const isSameFilter = (filter1: NotificationFilter, filter2: NotificationFilter) => {
+  const severity1 = Array.isArray(filter1.severity) ? filter1.severity : [filter1.severity];
+  const severity2 = Array.isArray(filter2.severity) ? filter2.severity : [filter2.severity];
+
   return (
     areDataEqual(filter1.data, filter2.data) &&
     areTagsEqual(filter1.tags, filter2.tags) &&
     filter1.read === filter2.read &&
     filter1.archived === filter2.archived &&
     filter1.snoozed === filter2.snoozed &&
-    filter1.seen === filter2.seen
+    filter1.seen === filter2.seen &&
+    arrayValuesEqual(severity1, severity2)
   );
 };
 

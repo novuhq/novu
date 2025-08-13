@@ -10,7 +10,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
-import { FeatureFlagsService, RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import {
+  FeatureFlagsService,
+  ProductFeature,
+  RequirePermissions,
+  SkipPermissionsCheck,
+} from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -24,7 +29,6 @@ import {
 import { ErrorDto } from '../../error-dto';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ApiKey } from '../shared/dtos/api-key';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';

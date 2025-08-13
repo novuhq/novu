@@ -43,7 +43,14 @@ export function PayloadSchemaEmptyState({
 
       <div className="flex flex-col gap-2">
         <div className="flex flex-row items-center justify-center">
-          <Button variant="secondary" mode="outline" size="2xs" leadingIcon={RiAddLine} onClick={onAddProperty} disabled={disabled}>
+          <Button
+            variant="secondary"
+            mode="outline"
+            size="2xs"
+            leadingIcon={RiAddLine}
+            onClick={onAddProperty}
+            disabled={disabled}
+          >
             Add property
           </Button>
         </div>

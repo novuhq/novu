@@ -36,6 +36,34 @@ jobs:
         run: |
           git pull origin next
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm run build:packages
+
+      - name: Publish packages to NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          export NX_RELEASE_TAG=latest
+          pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+
       - name: Create and push tags
         run: |
           echo "Creating tags for packages: ${{ github.event.inputs.packages }}"

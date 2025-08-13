@@ -5,8 +5,19 @@ import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
-const excludeEmpty = ({ tags, data, read, archived, snoozed, seen, limit, offset, after }: ListNotificationsArgs) =>
-  Object.entries({ tags, data, read, archived, snoozed, seen, limit, offset, after })
+const excludeEmpty = ({
+  tags,
+  data,
+  read,
+  archived,
+  snoozed,
+  seen,
+  severity,
+  limit,
+  offset,
+  after,
+}: ListNotificationsArgs) =>
+  Object.entries({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after })
     .filter(([_, value]) => value !== null && value !== undefined && !(Array.isArray(value) && value.length === 0))
     .reduce((acc, [key, value]) => {
       // @ts-expect-error
@@ -22,11 +33,12 @@ const getCacheKey = ({
   archived,
   snoozed,
   seen,
+  severity,
   limit,
   offset,
   after,
 }: ListNotificationsArgs): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, limit, offset, after }));
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity, limit, offset, after }));
 };
 
 const getFilterKey = ({
@@ -36,8 +48,9 @@ const getFilterKey = ({
   archived,
   snoozed,
   seen,
-}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen'>): string => {
-  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen }));
+  severity,
+}: Pick<ListNotificationsArgs, 'tags' | 'data' | 'read' | 'archived' | 'snoozed' | 'seen' | 'severity'>): string => {
+  return JSON.stringify(excludeEmpty({ tags, data, read, archived, snoozed, seen, severity }));
 };
 
 const getFilter = (key: string): NotificationFilter => {
@@ -211,6 +224,7 @@ export class NotificationsCache {
         snoozed: args.snoozed,
         archived: args.archived,
         seen: args.seen,
+        severity: args.severity,
       });
     }
   }

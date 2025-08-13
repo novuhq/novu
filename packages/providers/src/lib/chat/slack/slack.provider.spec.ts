@@ -15,7 +15,7 @@ test('should trigger Slack correctly', async () => {
     content: 'chat message',
   });
 
-  expect(mockPost).toBeCalledWith('webhookUrl', {
+  expect(mockPost).toHaveBeenCalledWith('webhookUrl', {
     text: 'chat message',
     blocks: undefined,
   });
@@ -43,7 +43,7 @@ test('should trigger Slack correctly with _passthrough', async () => {
     }
   );
 
-  expect(mockPost).toBeCalledWith('webhookUrl', {
+  expect(mockPost).toHaveBeenCalledWith('webhookUrl', {
     text: 'chat message _passthrough',
     blocks: undefined,
   });

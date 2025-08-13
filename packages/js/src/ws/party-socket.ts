@@ -48,6 +48,7 @@ const mapToNotification = ({
   tags,
   data,
   workflow,
+  severity,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id,
@@ -117,6 +118,7 @@ const mapToNotification = ({
       : undefined,
     data,
     workflow,
+    severity,
   };
 };
 
