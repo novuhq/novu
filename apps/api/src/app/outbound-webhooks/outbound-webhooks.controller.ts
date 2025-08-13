@@ -1,9 +1,8 @@
-import { ClassSerializerInterceptor, Controller, Get, Post, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { RequirePermissions, UserSession } from '@novu/application-generic';
+import { ClassSerializerInterceptor, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
+import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
+import { ProductFeature, RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum, ProductFeatureKeyEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { CreateWebhookPortalResponseDto } from './dtos/create-webhook-portal-response.dto';
 import { GetWebhookPortalTokenResponseDto } from './dtos/get-webhook-portal-token-response.dto';
 import { CreateWebhookPortalCommand } from './usecases/create-webhook-portal-token/create-webhook-portal.command';
@@ -11,11 +10,11 @@ import { CreateWebhookPortalUsecase } from './usecases/create-webhook-portal-tok
 import { GetWebhookPortalTokenCommand } from './usecases/get-webhook-portal-token/get-webhook-portal-token.command';
 import { GetWebhookPortalTokenUsecase } from './usecases/get-webhook-portal-token/get-webhook-portal-token.usecase';
 
-@Controller({ path: `/webhooks`, version: '2' })
+@Controller({ path: `/outbound-webhooks`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
 @ApiExcludeController()
-export class WebhooksController {
+export class OutboundWebhooksController {
   constructor(
     private getWebhookPortalTokenUsecase: GetWebhookPortalTokenUsecase,
     private createWebhookPortalTokenUsecase: CreateWebhookPortalUsecase

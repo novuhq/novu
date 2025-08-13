@@ -9,7 +9,7 @@ import {
   TenantRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { TraceLogRepository } from '../../services';
+import { FeatureFlagsService, TraceLogRepository } from '../../services';
 import { CompileTemplate } from '../compile-template';
 import { ConditionsFilter } from '../conditions-filter';
 import { CreateExecutionDetails } from '../create-execution-details';
@@ -95,7 +95,7 @@ describe('select integration', () => {
     executionDetailsRepository,
     new JobRepository(),
     new EnvironmentRepository(),
-    new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any),
+    new CreateExecutionDetails(new ExecutionDetailsRepository(), TraceLogRepository as any, new FeatureFlagsService()),
     new CompileTemplate()
   );
   beforeEach(async () => {

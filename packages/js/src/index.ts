@@ -19,4 +19,9 @@ export {
   Subscriber,
   WebSocketEvent,
 } from './types';
-export { areTagsEqual, isSameFilter } from './utils/notification-utils';
+export {
+  areTagsEqual,
+  checkNotificationDataFilter,
+  checkNotificationMatchesFilter,
+  isSameFilter,
+} from './utils/notification-utils';

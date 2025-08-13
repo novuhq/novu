@@ -374,4 +374,19 @@
     .nt-relative.nt-flex.nt-shrink-0.nt-flex-col.nt-justify-center.nt-items-center.nt-gap-1.nt-mt-auto.nt-py-3.nt-text-foreground-alpha-400 {
     display: none !important;
   }
+
+  /*
+   * Hide role column in Clerk organization members table when RBAC is disabled
+   * Unfortunately Clerk doesn't provide a better appearance selector.
+   */
+  .hide-role-column .cl-tableHeaderCell[data-localization-key*="role"],
+  .hide-role-column .cl-tableBodyCell:nth-child(3) {
+    display: none !important;
+  }
+
+  /* Show role column in Clerk organization members table when RBAC is enabled */
+  .show-role-column .cl-tableHeaderCell[data-localization-key*="role"],
+  .show-role-column .cl-tableBodyCell:nth-child(3) {
+    display: table-cell !important;
+  }
 }

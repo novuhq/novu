@@ -14,9 +14,9 @@ import {
   UpsertPreferences,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, PreferencesRepository } from '@novu/dal';
+import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { SharedModule } from '../shared/shared.module';
 import { CreateVariablesObject } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { WebhooksModule } from '../webhooks/webhooks.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
@@ -51,11 +51,7 @@ const PROVIDERS = [
   TierRestrictionsValidateUsecase,
 ];
 
-const MODULES = [SharedModule];
-
-if (process.env.NOVU_ENTERPRISE === 'true') {
-  MODULES.push(WebhooksModule);
-}
+const MODULES = [SharedModule, OutboundWebhooksModule.forRoot()];
 
 @Module({
   imports: MODULES,

@@ -1,5 +1,6 @@
 import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
 import { Notification, NotificationFilter } from '../../types';
+import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
@@ -122,69 +123,13 @@ export const CountProvider = (props: ParentProps) => {
 
       const currentTabs = tabs();
 
-      // Helper function to check if notification data matches tab's data filter criteria
-      function checkNotificationDataAgainstTabData(
-        notificationData: Notification['data'],
-        tabFilterData: NotificationFilter['data']
-      ): boolean {
-        if (!tabFilterData || Object.keys(tabFilterData).length === 0) {
-          // No data filter defined on the tab, so it's a match on the data aspect.
-          return true;
-        }
-        if (!notificationData) {
-          // Tab has a data filter, but the notification has no data.
-          return false;
-        }
-
-        return Object.entries(tabFilterData).every(([key, filterValue]) => {
-          const notifValue = notificationData[key];
-
-          if (notifValue === undefined && filterValue !== undefined) {
-            // Key is specified in tab's data filter, but this key is not present in the notification's data.
-            return false;
-          }
-
-          if (Array.isArray(filterValue)) {
-            if (Array.isArray(notifValue)) {
-              /*
-               * Both filter value and notification value are arrays.
-               * Check for set equality (same elements, regardless of order).
-               */
-              if (filterValue.length !== notifValue.length) return false;
-              /*
-               * Ensure elements are of primitive types for direct sort and comparison.
-               * If elements can be objects, a more sophisticated comparison is needed.
-               */
-              const sortedFilterValue = [...(filterValue as (string | number | boolean)[])].sort();
-              const sortedNotifValue = [...(notifValue as (string | number | boolean)[])].sort();
-
-              return sortedFilterValue.every((val, index) => val === sortedNotifValue[index]);
-            } else {
-              /*
-               * Filter value is an array, notification value is scalar.
-               * Check if the scalar notification value is present in the filter array.
-               */
-              return (filterValue as unknown[]).includes(notifValue);
-            }
-          } else {
-            // Filter value is scalar. Notification value must be equal.
-            return notifValue === filterValue;
-          }
-        });
-      }
-
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
           const tabTags = getTagsFromTab(tab);
           const tabDataFilterCriteria = tab.filter?.data;
 
-          const matchesTagFilter =
-            tabTags.length === 0 || (notification.tags && tabTags.some((tag) => notification.tags!.includes(tag)));
-
-          const matchesDataFilterCriteria = checkNotificationDataAgainstTabData(
-            notification.data,
-            tabDataFilterCriteria
-          );
+          const matchesTagFilter = checkNotificationTagFilter(notification.tags, tabTags);
+          const matchesDataFilterCriteria = checkNotificationDataFilter(notification.data, tabDataFilterCriteria);
 
           if (matchesTagFilter && matchesDataFilterCriteria) {
             updateNewNotificationCountsOrCache(notification, tabTags, tabDataFilterCriteria);

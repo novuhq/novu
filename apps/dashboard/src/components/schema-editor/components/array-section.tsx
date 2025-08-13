@@ -24,6 +24,7 @@ interface ArrayItemPropertyProps {
   arrayItemPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
   depth: number;
+  readOnly?: boolean;
 }
 
 const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemProperty({
@@ -35,6 +36,7 @@ const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemPropert
   arrayItemPath,
   onCheckVariableUsage,
   depth,
+  readOnly = false,
 }) {
   const itemNestedItem = useWatch({
     control,
@@ -58,6 +60,7 @@ const ArrayItemProperty = memo<ArrayItemPropertyProps>(function ArrayItemPropert
       variableUsageInfo={itemVariableUsageInfo}
       onCheckVariableUsage={onCheckVariableUsage}
       depth={depth + 1}
+      readOnly={readOnly}
     />
   );
 });
@@ -72,6 +75,7 @@ interface ArraySectionProps {
   currentFullPath: string;
   onCheckVariableUsage?: (keyName: string, parentPath: string) => VariableUsageInfo;
   depth: number;
+  readOnly?: boolean;
 }
 
 export const ArraySection = memo<ArraySectionProps>(function ArraySection({
@@ -84,6 +88,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
   currentFullPath,
   onCheckVariableUsage,
   depth,
+  readOnly = false,
 }) {
   const itemSchemaObject = useWatch({ control, name: itemSchemaObjectPath }) as JSONSchema7 | undefined;
   const itemIsObject = itemSchemaObject?.type === 'object';
@@ -124,6 +129,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
           control={control}
           setValue={setValue}
           getValues={getValues}
+          isDisabled={readOnly}
         />
       </div>
 
@@ -139,6 +145,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
               arrayItemPath={arrayItemPath}
               onCheckVariableUsage={onCheckVariableUsage}
               depth={depth}
+              readOnly={readOnly}
             />
           ))}
           {isAtMaxDepth && (
@@ -154,7 +161,7 @@ export const ArraySection = memo<ArraySectionProps>(function ArraySection({
               onClick={handleAddArrayItemObjectProperty}
               leadingIcon={RiAddLine}
               className="mt-1"
-              disabled={isAtMaxDepth}
+              disabled={isAtMaxDepth || readOnly}
             >
               Add Item Property
             </Button>

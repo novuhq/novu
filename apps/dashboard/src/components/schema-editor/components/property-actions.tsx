@@ -55,9 +55,10 @@ export function PropertyActions({
         mode="ghost"
         size="2xs"
         leadingIcon={RiDeleteBin2Line}
-        onClick={onDeleteProperty}
+        onClick={isDisabled ? undefined : onDeleteProperty}
         aria-label="Delete property"
         className={cn('border-1 !ml-0 h-7 w-7 border-neutral-200')}
+        disabled={isDisabled}
       />
     </>
   );

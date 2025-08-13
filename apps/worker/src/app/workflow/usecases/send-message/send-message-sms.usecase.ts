@@ -8,14 +8,22 @@ import {
   DetailEnum,
   GetNovuProviderCredentials,
   InstrumentUsecase,
+  messageWebhookMapper,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
   SmsFactory,
 } from '@novu/application-generic';
 
 import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { SmsOutput } from '@novu/framework/internal';
-import { ChannelTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsSourceEnum,
+  ExecutionDetailsStatusEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+} from '@novu/shared';
 import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
@@ -34,7 +42,8 @@ export class SendMessageSms extends SendMessageBase {
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected moduleRef: ModuleRef
+    protected moduleRef: ModuleRef,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     super(
       messageRepository,
@@ -337,6 +346,18 @@ export class SendMessageSms extends SendMessageBase {
         }
       );
 
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_SENT,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId, {
+            providerResponseId: result.id,
+          }),
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
+
       return {
         status: 'success',
       };
@@ -349,6 +370,19 @@ export class SendMessageSms extends SendMessageBase {
         command,
         e
       );
+
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.MESSAGE_FAILED,
+        objectType: WebhookObjectTypeEnum.MESSAGE,
+        payload: {
+          object: messageWebhookMapper(message, command.subscriberId),
+          error: {
+            message: e.message || e.name || 'Error while sending sms with provider',
+          },
+        },
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+      });
 
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({

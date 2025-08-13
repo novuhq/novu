@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -12,10 +13,11 @@ import { ActivityOverview } from '@/components/activity/components/activity-over
 import { defaultActivityFilters } from '@/components/activity/constants';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
 import { UpdatedAgo } from '@/components/updated-ago';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useActivityUrlState } from '@/hooks/use-activity-url-state';
-import { useFetchActivities } from '@/hooks/use-fetch-activities';
 import { usePullActivity } from '@/hooks/use-pull-activity';
 import { ActivityFiltersData } from '@/types/activity';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '../../utils/ui';
 import { EmptyTopicsIllustration } from '../topics/empty-topics-illustration';
 
@@ -37,9 +39,11 @@ export function ActivityFeedContent({
   const { activityItemId, filters, filterValues, handleActivitySelect, handleFiltersChange } = useActivityUrlState();
   const { activity, isPending, error } = usePullActivity(activityItemId);
 
+  const queryClient = useQueryClient();
+  const { currentEnvironment } = useEnvironment();
+
   // Track last updated time for the activities list
   const [lastUpdated, setLastUpdated] = useState(new Date());
-  const { refetch } = useFetchActivities({ filters, page: 0, limit: 10 });
 
   useEffect(() => {
     setLastUpdated(new Date());
@@ -123,7 +127,7 @@ export function ActivityFeedContent({
   );
 
   const handleRefresh = async () => {
-    await refetch();
+    await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchActivities, currentEnvironment?._id] });
     setLastUpdated(new Date());
   };
 
