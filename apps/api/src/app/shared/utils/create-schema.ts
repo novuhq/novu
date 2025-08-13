@@ -1,4 +1,5 @@
 import { JsonSchemaFormatEnum, JsonSchemaTypeEnum } from '@novu/dal';
+import { SeverityLevelEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 
 function determineSchemaType(value: unknown): JSONSchemaDto {
@@ -87,5 +88,25 @@ export const buildSubscriberSchema = (subscriber: unknown) => {
     },
     required: ['firstName', 'lastName', 'email', 'subscriberId'],
     additionalProperties: false,
+  };
+};
+
+export const buildWorkflowSchema = () => {
+  return {
+    type: JsonSchemaTypeEnum.OBJECT,
+    description: 'Schema representing the workflow entity',
+    properties: {
+      workflowId: { type: JsonSchemaTypeEnum.STRING, description: 'Workflow identifier' },
+      name: { type: JsonSchemaTypeEnum.STRING, description: 'Name of the workflow' },
+      description: { type: JsonSchemaTypeEnum.STRING, description: 'Description of the workflow' },
+      tags: { type: JsonSchemaTypeEnum.ARRAY, items: { type: JsonSchemaTypeEnum.STRING } },
+      severity: {
+        type: JsonSchemaTypeEnum.STRING,
+        enum: [...Object.values(SeverityLevelEnum)],
+        enumName: 'SeverityLevelEnum',
+        description: 'Severity of the workflow',
+      },
+    },
+    required: ['workflowId', 'name'],
   };
 };

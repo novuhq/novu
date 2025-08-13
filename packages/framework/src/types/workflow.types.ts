@@ -5,6 +5,16 @@ import type { Subscriber } from './subscriber.types';
 import type { DeepPartial, Prettify } from './util.types';
 
 /**
+ * The severity level of a workflow.
+ */
+export enum SeverityLevelEnum {
+  NONE = 'none',
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+}
+
+/**
  * The parameters for the workflow function.
  */
 export type ExecuteInput<T_Payload extends Record<string, unknown>, T_Controls extends Record<string, unknown>> = {
@@ -166,4 +176,12 @@ export type WorkflowOptions<T_PayloadSchema extends Schema, T_ControlSchema exte
    * @example `This workflow sends a weekly digest of comments to users.`
    */
   description?: string;
+  /**
+   * The severity of the workflow.
+   *
+   * This is used to determine the severity of the workflow.
+   *
+   * @example `high`
+   */
+  severity?: SeverityLevelEnum;
 };
