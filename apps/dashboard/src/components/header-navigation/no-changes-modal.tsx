@@ -28,7 +28,7 @@ export function NoChangesModal({ isOpen, onClose }: NoChangesModalProps) {
               fill="#E1E4EA"
             />
             <path d="M37 22H47" stroke="#F2F5F8" strokeLinecap="round" strokeLinejoin="bevel" />
-            <rect x="82.5" y="10.5" width="23" height="23" rx="5.5" fill="#7D52F4" fill-opacity="0.1" />
+            <rect x="82.5" y="10.5" width="23" height="23" rx="5.5" fill="#7D52F4" fillOpacity="0.1" />
             <rect x="82.5" y="10.5" width="23" height="23" rx="5.5" stroke="#7D52F4" />
             <path
               d="M93.4 22.0001L89.1574 26.2427L88.309 25.3943L91.7032 22.0001L88.309 18.6059L89.1574 17.7581L93.4 22.0001ZM93.4 26.2001H99.4V27.4001H93.4V26.2001Z"
