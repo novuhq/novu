@@ -98,15 +98,13 @@ jobs:
       - name: Build packages
         run: pnpm run build:packages
 
-      - name: Publish packages
+      - name: Publish packages (nightly only)
+        if: ${{ github.event.inputs.nightly }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            pnpm nx release publish --projects=${{ github.event.inputs.packages }} --tag nightly
-          else
-            pnpm nx release publish --projects=${{ github.event.inputs.packages }}
-          fi
+          export NX_RELEASE_TAG=nightly
+          pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
 
       - name: Create Pull Request
         id: create-pr

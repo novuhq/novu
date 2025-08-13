@@ -104,7 +104,7 @@ describe('FiretextSmsProvider', () => {
       to: '+44123456789',
     });
 
-    await expect(result).rejects.toThrowError('1: Authentication error');
+    await expect(result).rejects.toThrow('1: Authentication error');
   });
 
   test('should handle unknown return codes', async () => {
@@ -124,6 +124,6 @@ describe('FiretextSmsProvider', () => {
       to: '+44123456789',
     });
 
-    await expect(result).rejects.toThrowError('Unknown status code: Unknown status message');
+    await expect(result).rejects.toThrow('Unknown status code: Unknown status message');
   });
 });

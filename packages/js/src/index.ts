@@ -20,4 +20,10 @@ export {
   UnreadCount,
   WebSocketEvent,
 } from './types';
-export { areSeveritiesEqual, areTagsEqual, isSameFilter } from './utils/notification-utils';
+export {
+  areSeveritiesEqual,
+  areTagsEqual,
+  checkNotificationDataFilter,
+  checkNotificationMatchesFilter,
+  isSameFilter,
+} from './utils/notification-utils';

@@ -241,12 +241,13 @@ export const CreateSubscriberForm = () => {
                 <InputRoot hasError={!!fieldState.error} className="h-36 p-1 py-2">
                   <Editor
                     lang="json"
-                    className="overflow-auto"
+                    className="h-full overflow-y-auto overflow-x-hidden [&_.cm-content]:max-w-[calc(100%-2rem)]"
                     extensions={extensions}
                     basicSetup={basicSetup}
                     placeholder="{}"
                     height="100%"
                     multiline
+                    foldGutter
                     {...field}
                     value={field.value}
                     onChange={(val) => {

@@ -225,6 +225,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
         isOpen={isPayloadSchemaDrawerOpen}
         onOpenChange={setIsPayloadSchemaDrawerOpen}
         onSave={handleSavePayloadSchema}
+        readOnly={isReadOnly}
       />
       <PageMeta title={workflow.name} />
       <motion.div
@@ -452,53 +453,51 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
             </SidebarContent>
           </FormRoot>
         </Form>
-        {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
-          <>
-            <Separator />
-            <SidebarContent size="lg">
-              <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
-                <Button
-                  variant="secondary"
-                  mode="outline"
-                  leadingIcon={RiSettingsLine}
-                  className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
-                  type="button"
-                  trailingIcon={RiArrowRightSLine}
-                >
-                  Configure channel preferences
-                  <span className="ml-auto" />
-                </Button>
-              </Link>
-              {workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
-                <Button
-                  variant="secondary"
-                  mode="outline"
-                  leadingIcon={RiListView}
-                  className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
-                  type="button"
-                  onClick={() => setIsPayloadSchemaDrawerOpen(true)}
-                  trailingIcon={RiArrowRightSLine}
-                >
-                  Manage payload schema
-                  <span className="ml-auto" />
-                </Button>
-              )}
-              <TranslationToggleSection
-                control={form.control}
-                fieldName="isTranslationEnabled"
-                onChange={(checked) => {
-                  form.setValue('isTranslationEnabled', checked, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                  });
-                  saveForm();
-                }}
-                isReadOnly={isReadOnly}
-              />
-            </SidebarContent>
-            <Separator />
-          </>
-        )}
+        <>
+          <Separator />
+          <SidebarContent size="lg">
+            <Link to={ROUTES.EDIT_WORKFLOW_PREFERENCES}>
+              <Button
+                variant="secondary"
+                mode="outline"
+                leadingIcon={RiSettingsLine}
+                className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+                type="button"
+                trailingIcon={RiArrowRightSLine}
+              >
+                Configure channel preferences
+                <span className="ml-auto" />
+              </Button>
+            </Link>
+            {workflow?.origin === ResourceOriginEnum.NOVU_CLOUD && (
+              <Button
+                variant="secondary"
+                mode="outline"
+                leadingIcon={RiListView}
+                className="flex w-full justify-start gap-1.5 p-1.5 text-xs font-medium"
+                type="button"
+                onClick={() => setIsPayloadSchemaDrawerOpen(true)}
+                trailingIcon={RiArrowRightSLine}
+              >
+                Manage payload schema
+                <span className="ml-auto" />
+              </Button>
+            )}
+            <TranslationToggleSection
+              control={form.control}
+              fieldName="isTranslationEnabled"
+              onChange={(checked) => {
+                form.setValue('isTranslationEnabled', checked, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+                saveForm();
+              }}
+              isReadOnly={isReadOnly}
+            />
+          </SidebarContent>
+          <Separator />
+        </>
       </motion.div>
     </>
   );

@@ -65,7 +65,7 @@ test('send sms should template method correctly', async () => {
   });
 
   expect(spyTemplateFunction).toHaveBeenCalled();
-  expect(spyTemplateFunction).toBeCalledWith({
+  expect(spyTemplateFunction).toHaveBeenCalledWith({
     $email: 'test@email.com',
     $phone: '+1333322214',
     $user_id: '1234',

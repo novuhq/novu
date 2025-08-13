@@ -506,8 +506,29 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
 
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
-    return await this.update(updateQuery, {
-      $set: updatePayload,
+    // Find documents that will be updated (only fetch IDs for performance)
+    const documentsToUpdate = await this.find(updateQuery, '_id');
+
+    if (documentsToUpdate.length === 0) {
+      return [];
+    }
+
+    // Extract IDs for targeted update
+    const documentIds = documentsToUpdate.map((doc) => doc._id);
+
+    // Perform the update using document IDs
+    await this.update(
+      {
+        _id: { $in: documentIds },
+        _environmentId: environmentId,
+      },
+      { $set: updatePayload }
+    );
+
+    // Fetch and return the updated documents
+    return this.find({
+      _id: { $in: documentIds },
+      _environmentId: environmentId,
     });
   }
 
@@ -556,7 +577,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     subscriberId: string;
     messageIds: string[];
     markAs: MessagesStatusEnum;
-  }) {
+  }): Promise<MessageEntity[]> {
     const updatePayload = this.getReadSeenUpdatePayload(markAs);
 
     await this.update(
@@ -573,6 +594,12 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
         $set: updatePayload,
       }
     );
+
+    return this.find({
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      _id: { $in: messageIds.map((id) => new Types.ObjectId(id)) },
+    });
   }
 
   /**
@@ -628,7 +655,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
-  }) {
+  }): Promise<MessageEntity[]> {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
       _subscriberId: subscriberId,
@@ -639,7 +666,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       },
     };
 
-    await this.updateMessagesStatus({
+    return await this.updateMessagesStatus({
       query,
       seen,
       read,
@@ -668,7 +695,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
     };
-  }) {
+  }): Promise<MessageEntity[]> {
     const isFromSeen = from.seen !== undefined;
     const isFromRead = from.read !== undefined;
     const isFromArchived = from.archived !== undefined;
@@ -693,7 +720,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       query.seen = from.seen;
     }
 
-    await this.updateMessagesStatus({
+    return await this.updateMessagesStatus({
       query,
       ...to,
     });
@@ -725,7 +752,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     read?: boolean;
     archived?: boolean;
     snoozedUntil?: Date | null;
-  }) {
+  }): Promise<MessageEntity[]> {
     const isUpdatingSeen = seen !== undefined;
     const isUpdatingRead = read !== undefined;
     const isUpdatingArchived = archived !== undefined;
@@ -775,17 +802,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       };
     }
 
+    // Find documents that will be updated (only fetch IDs for performance)
+    const documentsToUpdate = await this.find(query, '_id');
+
+    if (documentsToUpdate.length === 0) {
+      return [];
+    }
+
+    // Extract IDs for targeted update
+    const documentIds = documentsToUpdate.map((doc) => doc._id);
+    const idQuery = { _id: { $in: documentIds }, _environmentId: query._environmentId };
+
     // Handle firstSeenDate logic separately for operations that mark as seen
     const shouldMarkAsSeen = isUpdatingArchived || isUpdatingRead || (isUpdatingSeen && seen) || isUpdatingSnoozed;
 
     if (shouldMarkAsSeen) {
       // First, update all matching documents with the main update
-      await this.update(query, { $set: updatePayload });
+      await this.update(idQuery, { $set: updatePayload });
 
       // Then, set firstSeenDate only for documents that don't already have it
       await this.update(
         {
-          ...query,
+          ...idQuery,
           firstSeenDate: { $exists: false },
         },
         {
@@ -794,10 +832,10 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       );
     } else {
       // For non-seen operations, just do the regular update
-      await this.update(query, { $set: updatePayload });
+      await this.update(idQuery, { $set: updatePayload });
     }
 
-    return this.find(query);
+    return this.find(idQuery);
   }
 
   async updateActionStatus({

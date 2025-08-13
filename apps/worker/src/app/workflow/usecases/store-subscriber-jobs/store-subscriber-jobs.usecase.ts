@@ -35,7 +35,6 @@ export class StoreSubscriberJobs {
       throw e;
     }
 
-    this.createJobsExecutionDetails(storedJobs);
     await this.stepRunRepository.createMany(storedJobs, { status: JobStatusEnum.QUEUED });
     const firstJob = storedJobs[0];
 
@@ -50,26 +49,5 @@ export class StoreSubscriberJobs {
     };
 
     await this.addJob.execute(addJobCommand);
-  }
-
-  @Instrument()
-  private createJobsExecutionDetails(storedJobs: JobEntity[]) {
-    this.bulkCreateExecutionDetails.execute(
-      BulkCreateExecutionDetailsCommand.create({
-        organizationId: storedJobs[0]._organizationId,
-        environmentId: storedJobs[0]._environmentId,
-        subscriberId: storedJobs[0]._subscriberId,
-        details: storedJobs.map((job) => {
-          return {
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-            detail: DetailEnum.STEP_CREATED,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.PENDING,
-            isTest: false,
-            isRetry: false,
-          };
-        }),
-      })
-    );
   }
 }
