@@ -1,6 +1,6 @@
 import { IEnvironment } from '@novu/shared';
 import { cva } from 'class-variance-authority';
-import { RiGitBranchLine } from 'react-icons/ri';
+import { RiTerminalFill } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 
 const logoVariants = cva('', {
@@ -73,7 +73,7 @@ export function EnvironmentBranchIcon({
         mode === 'ghost' ? 'bg-transparent' : ''
       )}
     >
-      <RiGitBranchLine className={icon} />
+      <RiTerminalFill className={icon} />
     </div>
   );
 }
