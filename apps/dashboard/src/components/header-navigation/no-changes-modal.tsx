@@ -14,7 +14,7 @@ export function NoChangesModal({ isOpen, onClose }: NoChangesModalProps) {
       <DialogContent className="max-w-md gap-4 p-3">
         <div className="flex items-start justify-start">
           <svg width="116" height="44" viewBox="0 0 116 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="0.5" y="0.5" width="115" height="43" rx="7.5" stroke="#E1E4EA" stroke-dasharray="5 3" />
+            <rect x="0.5" y="0.5" width="115" height="43" rx="7.5" stroke="#E1E4EA" strokeDasharray="5 3" />
             <rect x="2.5" y="2.5" width="111" height="39" rx="5.5" fill="white" />
             <rect x="2.5" y="2.5" width="111" height="39" rx="5.5" stroke="#F2F5F8" />
             <rect x="10.5" y="10.5" width="23" height="23" rx="5.5" fill="#FF8447" fill-opacity="0.1" />
