@@ -59,8 +59,6 @@ const BottomSection = ({
   subscription,
   daysLeft,
 }: BottomNavigationProps) => {
-  const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
-
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
@@ -83,7 +81,7 @@ const BottomSection = ({
           <RiUserAddLine className="size-4" />
           <span>Invite teammates</span>
         </NavigationLink>
-        {!isNewHomePageEnabled && <HomeMenuItem />}
+        <HomeMenuItem />
       </NavigationGroup>
     </div>
   );
@@ -98,7 +96,7 @@ export const SideNavigation = () => {
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
-  const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
+  const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -119,7 +117,6 @@ export const SideNavigation = () => {
         <nav className="flex h-full flex-1 flex-col">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
-              {isNewHomePageEnabled && <HomeMenuItem />}
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                 <NavigationLink to={buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
                   <RiRouteFill className="size-4" />
@@ -179,7 +176,7 @@ export const SideNavigation = () => {
                     <span>Activity Feed</span>
                   </NavigationLink>
                 </Protect>
-                {isNewHomePageEnabled && (
+                {isAnalyticsPageEnabled && (
                   <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
                     <NavigationLink
                       to={buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })}

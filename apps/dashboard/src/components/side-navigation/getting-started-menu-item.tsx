@@ -1,12 +1,10 @@
 import { useUser } from '@clerk/clerk-react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
-import { RiCloseFill, RiHome6Line, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
+import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { useOnboardingSteps } from '../../hooks/use-onboarding-steps';
 import { Badge, BadgeIcon } from '../primitives/badge';
 import { CompactButton } from '../primitives/button-compact';
@@ -14,8 +12,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 import { NavigationLink } from './navigation-link';
 
 export function HomeMenuItem() {
-  const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
-
   const { totalSteps, completedSteps, steps } = useOnboardingSteps();
 
   const { currentEnvironment } = useEnvironment();
@@ -42,22 +38,22 @@ export function HomeMenuItem() {
     });
   };
 
-  if (isNewHomePageEnabled && user?.unsafeMetadata?.hideGettingStarted) {
+  if (user?.unsafeMetadata?.hideGettingStarted) {
     return null;
   }
 
   return (
     <motion.div className="contents" whileHover="hover" initial="initial">
       <NavigationLink
-        to={buildRoute(isNewHomePageEnabled ? ROUTES.HOME : ROUTES.WELCOME, {
+        to={buildRoute(ROUTES.WELCOME, {
           environmentSlug: currentEnvironment?.slug ?? '',
         })}
       >
-        {isNewHomePageEnabled ? <RiHome6Line className="size-4" /> : <RiQuestionLine className="size-4" />}
-        <span>{isNewHomePageEnabled ? 'Home' : 'Getting started'}</span>
+        <RiQuestionLine className="size-4" />
+        <span>Getting started</span>
 
-        {(!isNewHomePageEnabled || (isNewHomePageEnabled && !allStepsCompleted)) && (
-          <Badge className={isNewHomePageEnabled ? 'ml-auto' : ''} color="red" size="md" variant="lighter">
+        {!allStepsCompleted && (
+          <Badge className="ml-auto" color="red" size="md" variant="lighter">
             <motion.div
               variants={{
                 initial: { scale: 1, rotate: 0, opacity: 1 },
@@ -81,7 +77,7 @@ export function HomeMenuItem() {
           </Badge>
         )}
 
-        {allStepsCompleted && !isNewHomePageEnabled && (
+        {allStepsCompleted && (
           <motion.div
             className="ml-auto h-4 w-4"
             variants={{

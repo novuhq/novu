@@ -9,7 +9,6 @@ export const CatchAllRoute = () => {
   const { currentEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const location = useLocation();
   const path = location.pathname.substring(1); // Remove leading slash
-  const isNewHomePageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_HOME_PAGE_ENABLED, false);
 
   if (areEnvironmentsInitialLoading) {
     return (
@@ -48,7 +47,7 @@ export const CatchAllRoute = () => {
     <Navigate
       to={
         currentEnvironment?.slug
-          ? buildRoute(isNewHomePageEnabled ? ROUTES.HOME : ROUTES.WORKFLOWS, {
+          ? buildRoute(ROUTES.WORKFLOWS, {
               environmentSlug: currentEnvironment.slug,
             })
           : ROUTES.ENV
