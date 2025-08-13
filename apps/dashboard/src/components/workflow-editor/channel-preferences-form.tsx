@@ -42,6 +42,7 @@ import { SeveritySelectItem } from './severity-select-item';
 type ConfigureWorkflowFormProps = {
   workflow: WorkflowResponseDto;
   update: UpdateWorkflowFn;
+  isReadOnly?: boolean;
 };
 
 const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
@@ -61,10 +62,11 @@ const checkHasEveryChannelSameValue = (
 };
 
 export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
-  const { workflow, update } = props;
+  const { workflow, update, isReadOnly: readOnlyProp } = props;
   const track = useTelemetry();
   const has = useHasPermission();
-  const isReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const permissionReadOnly = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const isReadOnly = readOnlyProp ?? permissionReadOnly;
   const isNotificationSeverityEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED);
 
   const isDefaultPreferences = useMemo(() => workflow.preferences.user === null, [workflow.preferences.user]);
@@ -100,7 +102,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
 
   const overrideForm = useForm({
     defaultValues: {
-      override: isDashboardWorkflow ? true : !isDefaultPreferences,
+      override: isReadOnly ? false : isDashboardWorkflow ? true : !isDefaultPreferences,
     },
   });
 
@@ -243,6 +245,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                               new_status: checked,
                             });
                           }}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
                     </FormItem>
@@ -265,7 +268,11 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                       Critical workflow
                     </FormLabel>
                     <FormControl>
-                      <Switch checked={field.value} onCheckedChange={handleCriticalToggle} disabled={!override} />
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={handleCriticalToggle}
+                        disabled={!override || isReadOnly}
+                      />
                     </FormControl>
                   </FormItem>
                 )}
@@ -364,7 +371,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={handleAllToggle}
-                      disabled={!override || formDataToRender?.channelsInUse.length === 0}
+                      disabled={!override || isReadOnly || formDataToRender?.channelsInUse.length === 0}
                     />
                   </FormControl>
                 )}
@@ -397,7 +404,7 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                             <Switch
                               checked={field.value}
                               onCheckedChange={(checked) => handleChannelToggle(channel as ChannelTypeEnum, checked)}
-                              disabled={!override}
+                              disabled={!override || isReadOnly}
                             />
                           </FormControl>
                         </FormItem>

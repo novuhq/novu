@@ -21,7 +21,7 @@
     "prebuild": "rimraf dist",
     "build": "tsc",
     "start": "ts-node src/cli/index.ts",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build > /dev/null 2>&1"
   },
   "keywords": [
     "novu",

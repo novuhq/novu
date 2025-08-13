@@ -16,10 +16,10 @@ import { ChangeModule } from '../change/change.module';
 import { IntegrationModule } from '../integrations/integrations.module';
 import { LayoutsV2Module } from '../layouts-v2/layouts.module';
 import { MessageTemplateModule } from '../message-template/message-template.module';
+import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { ControlValueSanitizerService } from '../shared/services/control-value-sanitizer.service';
 import { SharedModule } from '../shared/shared.module';
 import { CreateVariablesObject } from '../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { WebhooksModule } from '../webhooks/webhooks.module';
 import { CreateWorkflow } from '../workflows-v1/usecases/create-workflow/create-workflow.usecase';
 import { DeleteWorkflowUseCase } from '../workflows-v1/usecases/delete-workflow/delete-workflow.usecase';
 import { GetWorkflowWithPreferencesUseCase } from '../workflows-v1/usecases/get-workflow-with-preferences/get-workflow-with-preferences.usecase';
@@ -54,11 +54,8 @@ const MODULES = [
   BridgeModule,
   IntegrationModule,
   LayoutsV2Module,
+  OutboundWebhooksModule.forRoot(),
 ];
-
-if (process.env.NOVU_ENTERPRISE === 'true') {
-  MODULES.push(WebhooksModule);
-}
 
 @Module({
   imports: MODULES,

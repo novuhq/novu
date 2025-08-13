@@ -7,7 +7,8 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { OrganizationRepository } from '@novu/dal';
+import { ProductFeature } from '@novu/application-generic';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   ProductFeatureKeyEnum,
@@ -15,13 +16,12 @@ import {
   UserSessionData,
 } from '@novu/shared';
 import { Observable } from 'rxjs';
-import { ProductFeature } from '../decorators/product-feature.decorator';
 
 @Injectable()
 export class ProductFeatureInterceptor implements NestInterceptor {
   constructor(
     private reflector: Reflector,
-    private organizationRepository: OrganizationRepository
+    private organizationRepository: CommunityOrganizationRepository
   ) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
@@ -47,7 +47,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
     const organization = await this.organizationRepository.findById(organizationId);
 
     const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
-      organization?.apiServiceLevel as ApiServiceLevelEnum
+      organization?.apiServiceLevel || ApiServiceLevelEnum.FREE
     );
 
     if (!enabled) {

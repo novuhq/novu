@@ -121,6 +121,7 @@ export type Workflow = {
 
 export type InboxNotification = {
   id: string;
+  transactionId: string;
   subject?: string;
   body: string;
   to: Subscriber;

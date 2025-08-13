@@ -17,7 +17,6 @@ import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
@@ -112,7 +111,6 @@ export class OrganizationController {
 
     return await this.getMyOrganizationUsecase.execute(command);
   }
-  @SdkGroupName('Organizations.Members')
   @Delete('/members/:memberId')
   @ExternalApiAccessible()
   @ApiResponse(MemberResponseDto)
@@ -129,7 +127,6 @@ export class OrganizationController {
       })
     );
   }
-  @SdkGroupName('Organizations.Members.Roles')
   @Put('/members/:memberId/roles')
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
@@ -156,7 +153,7 @@ export class OrganizationController {
       })
     );
   }
-  @SdkGroupName('Organizations.Members')
+
   @Get('/members')
   @ExternalApiAccessible()
   @ApiResponse(MemberResponseDto, 200, true)
@@ -172,7 +169,7 @@ export class OrganizationController {
       })
     );
   }
-  @SdkGroupName('Organizations.Branding')
+
   @Put('/branding')
   @ExternalApiAccessible()
   @ApiResponse(OrganizationBrandingResponseDto)
@@ -199,7 +196,6 @@ export class OrganizationController {
   @ApiOperation({
     summary: 'Rename organization name',
   })
-  @SdkMethodName('rename')
   async rename(@UserSession() user: UserSessionData, @Body() body: RenameOrganizationDto) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({

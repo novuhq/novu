@@ -41,7 +41,7 @@ describe('sendMessage method', () => {
 
     await provider.sendMessage(mockNovuMessage);
 
-    expect(fetchMock).toBeCalled();
+    expect(fetchMock).toHaveBeenCalled();
   });
 
   test('should call brevo API transactional sms endpoint with right URL', async () => {

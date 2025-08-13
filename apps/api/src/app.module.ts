@@ -33,6 +33,7 @@ import { MessagesModule } from './app/messages/messages.module';
 import { NotificationGroupsModule } from './app/notification-groups/notification-groups.module';
 import { NotificationModule } from './app/notifications/notification.module';
 import { OrganizationModule } from './app/organization/organization.module';
+import { OutboundWebhooksModule } from './app/outbound-webhooks/outbound-webhooks.module';
 import { PartnerIntegrationsModule } from './app/partner-integrations/partner-integrations.module';
 import { PreferencesModule } from './app/preferences';
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
@@ -51,7 +52,6 @@ import { TestingModule } from './app/testing/testing.module';
 import { TopicsV1Module } from './app/topics-v1/topics-v1.module';
 import { TopicsV2Module } from './app/topics-v2/topics-v2.module';
 import { UserModule } from './app/user/user.module';
-import { WebhooksModule } from './app/webhooks/webhooks.module';
 import { WidgetsModule } from './app/widgets/widgets.module';
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
 import { WorkflowModuleV1 } from './app/workflows-v1/workflow-v1.module';
@@ -69,7 +69,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
     }
     modules.push(SupportModule);
-    modules.push(WebhooksModule);
+    modules.push(OutboundWebhooksModule.forRoot());
   }
 
   return modules;

@@ -388,12 +388,13 @@ export function SubscriberOverviewForm(props: SubscriberOverviewFormProps) {
                         <Editor
                           readOnly={readOnly}
                           lang="json"
-                          className="overflow-auto"
+                          className="h-full overflow-y-auto overflow-x-hidden [&_.cm-content]:max-w-[calc(100%-2rem)]"
                           extensions={extensions}
                           basicSetup={basicSetup}
                           placeholder="{}"
                           height="100%"
                           multiline
+                          foldGutter
                           {...field}
                           value={field.value}
                           onChange={(val) => {

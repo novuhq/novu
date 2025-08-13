@@ -19,6 +19,7 @@ import {
   ProcessTenant,
   SelectIntegration,
   SelectVariant,
+  SendWebhookMessage,
   TierRestrictionsValidateUsecase,
   TriggerBroadcast,
   TriggerEvent,
@@ -57,6 +58,7 @@ import {
 } from './usecases';
 import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
 import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
 import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
 import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
@@ -85,6 +87,42 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [JobRepository, CommunityOrganizationRepository, PreferencesRepository, CommunityUserRepository];
+
+const webhookProvider: Provider = {
+  provide: SendWebhookMessage,
+  useClass: (() => {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+    if (isEnterprise) {
+      Logger.log('Using enterprise SendWebhookMessage provider', 'EnterpriseProvider');
+      return SendWebhookMessage;
+    } else {
+      Logger.log('Using noop SendWebhookMessage provider', 'EnterpriseProvider');
+      return NoopSendWebhookMessage;
+    }
+  })(),
+};
+
+const svixProvider: Provider = {
+  provide: 'SVIX_CLIENT',
+  useFactory: () => {
+    const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+
+    if (isEnterprise) {
+      Logger.log('Using enterprise SvixProviderService provider', 'EnterpriseProvider');
+      const apiKey = process.env.SVIX_API_KEY;
+      if (!apiKey) {
+        return null;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Svix } = require('svix');
+      return new Svix(apiKey);
+    } else {
+      Logger.log('Using noop SvixProviderService provider', 'EnterpriseProvider');
+      return null;
+    }
+  },
+};
 
 const USE_CASES = [
   AddDelayJob,
@@ -160,7 +198,16 @@ const memoryQueueService = {
 @Module({
   imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
-  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
+  providers: [
+    memoryQueueService,
+    ...ACTIVE_WORKERS,
+    ...PROVIDERS,
+    ...USE_CASES,
+    ...REPOSITORIES,
+    activeWorkersToken,
+    webhookProvider,
+    svixProvider,
+  ],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule implements OnApplicationShutdown {

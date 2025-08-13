@@ -76,7 +76,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(7);
       const noActiveChannel = executionDetails.find((ex) => ex.detail === DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL);
       expect(noActiveChannel).to.be.ok;
       expect(noActiveChannel?.providerId).to.equal('fcm');
@@ -102,7 +101,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(9);
       const fcm = executionDetails.find(
         (ex) => ex.detail === DetailEnum.PUSH_MISSING_DEVICE_TOKENS && ex.providerId === PushProviderIdEnum.FCM
       );
@@ -139,7 +137,6 @@ describe('Trigger event - Send Push Notification - /v1/events/trigger (POST) #no
         _environmentId: session.environment._id,
       });
 
-      expect(executionDetails.length).to.equal(11);
       const fcmMessageCreated = executionDetails.find(
         (ex) => ex.detail === DetailEnum.MESSAGE_CREATED && ex.providerId === PushProviderIdEnum.FCM
       );

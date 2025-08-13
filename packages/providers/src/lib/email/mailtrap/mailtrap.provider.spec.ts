@@ -26,8 +26,8 @@ test('should trigger mailtrap library correctly', async () => {
 
   await provider.sendMessage(mockNovuMessage);
 
-  expect(spy).toBeCalled();
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
     from: { email: mockNovuMessage.from },
     to: [{ email: mockNovuMessage.to[0] }],
     html: mockNovuMessage.html,

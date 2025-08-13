@@ -40,7 +40,7 @@ export const ConfigureStepTemplateIssueCta = (props: ConfigureStepTemplateIssueC
   const { step, issue, type } = props;
   const isError = type === 'error';
 
-  const linkTo = isError ? './edit' : '/integrations';
+  const linkTo = isError ? './editor' : '/integrations';
 
   const truncatedTextContent = isError
     ? `Invalid variable: ${issue.variableName}`
