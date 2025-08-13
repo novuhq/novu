@@ -32,8 +32,8 @@ test('should trigger sms-central library correctly', async () => {
     MESSAGE_TEXT: mockNovuMessage.content,
   };
 
-  expect(fakePost).toBeCalled();
-  expect(fakePost).toBeCalledWith(mockConfig.baseUrl, data);
+  expect(fakePost).toHaveBeenCalled();
+  expect(fakePost).toHaveBeenCalledWith(mockConfig.baseUrl, data);
 });
 
 test('should trigger sms-central library correctly', async () => {
@@ -60,6 +60,6 @@ test('should trigger sms-central library correctly', async () => {
     MESSAGE_TEXT: mockNovuMessage.content,
   };
 
-  expect(fakePost).toBeCalled();
-  expect(fakePost).toBeCalledWith(mockConfig.baseUrl, data);
+  expect(fakePost).toHaveBeenCalled();
+  expect(fakePost).toHaveBeenCalledWith(mockConfig.baseUrl, data);
 });

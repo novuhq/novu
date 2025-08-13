@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Optional } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { Instrument, InstrumentUsecase, SendWebhookMessage } from '@novu/application-generic';
 import {
   ClientSession,
   LocalizationResourceEnum,
@@ -8,7 +8,14 @@ import {
   PreferencesEntity,
   PreferencesRepository,
 } from '@novu/dal';
-import { PreferencesTypeEnum, ResourceOriginEnum, StepTypeEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import {
+  PreferencesTypeEnum,
+  ResourceOriginEnum,
+  StepTypeEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
+  WorkflowCreationSourceEnum,
+} from '@novu/shared';
 import {
   LayoutSyncToEnvironmentCommand,
   LayoutSyncToEnvironmentUseCase,
@@ -44,7 +51,9 @@ export class SyncToEnvironmentUseCase {
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private layoutSyncToEnvironmentUseCase: LayoutSyncToEnvironmentUseCase,
     private moduleRef: ModuleRef,
-    private notificationTemplateRepository: NotificationTemplateRepository
+    private notificationTemplateRepository: NotificationTemplateRepository,
+    @Optional()
+    private sendWebhookMessage?: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -105,12 +114,25 @@ export class SyncToEnvironmentUseCase {
       command.session
     );
 
+    if (this.sendWebhookMessage) {
+      await this.sendWebhookMessage.execute({
+        eventType: WebhookEventEnum.WORKFLOW_PUBLISHED,
+        objectType: WebhookObjectTypeEnum.WORKFLOW,
+        payload: {
+          object: upsertedWorkflow as unknown as Record<string, unknown>,
+          previousObject: sourceWorkflow as unknown as Record<string, unknown>,
+        },
+        organizationId: command.user.organizationId,
+        environmentId: command.user.environmentId,
+      });
+    }
+
     return upsertedWorkflow;
   }
 
   private async publishTranslationGroup(workflowIdentifier: string, command: SyncToEnvironmentCommand): Promise<void> {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
     if (!isEnterprise || isSelfHosted) {
       return;

@@ -42,8 +42,8 @@ test('should send message', async () => {
 
   await provider.sendMessage(mockNovuMessage);
 
-  expect(mockRequest).toBeCalled();
-  expect(mockRequest).toBeCalledWith({
+  expect(mockRequest).toHaveBeenCalled();
+  expect(mockRequest).toHaveBeenCalledWith({
     data: '{"sender":{"email":"test@test.com","name":"test"},"to":[{"email":"test@test.com"}],"subject":"Test subject","htmlContent":"<div> Mail Content </div>","attachment":[{"name":"test.txt","content":"ZEdWemRBPT0="}]}',
     headers: {
       Accept: 'application/json',
@@ -71,8 +71,8 @@ test('should send message with _passthrough', async () => {
     },
   });
 
-  expect(mockRequest).toBeCalled();
-  expect(mockRequest).toBeCalledWith({
+  expect(mockRequest).toHaveBeenCalled();
+  expect(mockRequest).toHaveBeenCalledWith({
     data: '{"sender":{"email":"test@test.com","name":"test"},"to":[{"email":"test@test.com"}],"subject":"Test subject _passthrough","htmlContent":"<div> Mail Content </div>","attachment":[{"name":"test.txt","content":"ZEdWemRBPT0="}]}',
     headers: {
       Accept: 'application/json',

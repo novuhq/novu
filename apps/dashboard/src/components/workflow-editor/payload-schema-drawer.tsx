@@ -39,6 +39,7 @@ type PayloadSchemaDrawerProps = {
   isLoadingWorkflow?: boolean;
   onSave?: (schema: JSONSchema7) => void;
   highlightedPropertyKey?: string | null;
+  readOnly?: boolean;
 };
 
 type PayloadSchemaFormData = {
@@ -52,6 +53,7 @@ export function PayloadSchemaDrawer({
   isLoadingWorkflow,
   onSave,
   highlightedPropertyKey,
+  readOnly = false,
 }: PayloadSchemaDrawerProps) {
   const [drawerSchema, setDrawerSchema] = useState<JSONSchema7 | undefined>(workflow?.payloadSchema);
   const [originalSchema, setOriginalSchema] = useState<JSONSchema7 | undefined>();
@@ -252,7 +254,7 @@ export function PayloadSchemaDrawer({
                             payloadSchemaForm.setValue('validatePayload', value, { shouldDirty: true });
                             setValidatePayload(value);
                           }}
-                          disabled={isLoadingWorkflow}
+                          disabled={isLoadingWorkflow || readOnly}
                         />
                       </div>
                     </>
@@ -270,6 +272,7 @@ export function PayloadSchemaDrawer({
                       removeProperty={removeProperty}
                       methods={formMethods}
                       highlightedPropertyKey={highlightedPropertyKey}
+                      readOnly={readOnly}
                     />
                   ) : isImportMode ? (
                     <PayloadImportEditor
@@ -288,6 +291,7 @@ export function PayloadSchemaDrawer({
                       hasNoSchema={!workflow?.payloadSchema}
                       onImportSchema={handleImportSchema}
                       onImportFromJson={handleImportFromJson}
+                      disabled={readOnly}
                     />
                   )}
                 </div>
@@ -320,7 +324,9 @@ export function PayloadSchemaDrawer({
                     onClick={handleSaveWithValidation}
                     isLoading={isSaving}
                     data-test-id="save-payload-schema-btn"
-                    disabled={!isSchemaValid || !formState.isValid || isSaving || isLoadingWorkflow || isImportMode}
+                    disabled={
+                      readOnly || !isSchemaValid || !formState.isValid || isSaving || isLoadingWorkflow || isImportMode
+                    }
                   >
                     Save Changes
                   </Button>

@@ -48,10 +48,10 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     await session.waitForJobCompletion(template._id);
 
     const notificationsFeedResponse = await getSubscriberNotifications(subscriberId);
-    expect(notificationsFeedResponse.totalCount).to.equal(5);
+    expect(notificationsFeedResponse.totalCount, 'notificationsFeedResponse.totalCount').to.equal(5);
 
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(subscriberId, MessagesStatusEnum.READ);
-    expect(messagesMarkedAsReadResponse).to.equal(5);
+    expect(messagesMarkedAsReadResponse, 'messagesMarkedAsReadResponse').to.equal(5);
 
     const subscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
     const feed = await messageRepository.find({
@@ -62,10 +62,10 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
       read: true,
     });
 
-    expect(feed.length).to.equal(5);
+    expect(feed.length, 'feed.length').to.equal(5);
     for (const message of feed) {
-      expect(message.seen).to.equal(true);
-      expect(message.read).to.equal(true);
+      expect(message.seen, 'message.seen').to.equal(true);
+      expect(message.read, 'message.read').to.equal(true);
     }
   });
 

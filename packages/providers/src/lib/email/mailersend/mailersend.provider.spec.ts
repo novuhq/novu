@@ -30,7 +30,7 @@ test('should trigger mailerSend with expected parameters', async () => {
   await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     to: mockNovuMessage.to,
     subject: mockNovuMessage.subject,
     html: mockNovuMessage.html,
@@ -60,7 +60,7 @@ test('should trigger mailerSend correctly', async () => {
   await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toBeCalledWith('/email', {
+  expect(spy).toHaveBeenCalledWith('/email', {
     method: 'POST',
     body: {
       from: { email: mockNovuMessage.from, name: mockConfig.senderName },

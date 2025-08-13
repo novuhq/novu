@@ -9,6 +9,7 @@ import {
   RiGroup2Line,
   RiKey2Line,
   RiLayout5Line,
+  RiLineChartLine,
   RiRouteFill,
   RiSettings4Line,
   RiSignalTowerLine,
@@ -29,7 +30,7 @@ import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { FreeTrialCard } from './free-trial-card';
-import { GettingStartedMenuItem } from './getting-started-menu-item';
+import { HomeMenuItem } from './getting-started-menu-item';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
@@ -58,24 +59,11 @@ const BottomSection = ({
   subscription,
   daysLeft,
 }: BottomNavigationProps) => {
-  const track = useTelemetry();
-
-  const showPlainLiveChat = () => {
-    track(TelemetryEvent.SHARE_FEEDBACK_LINK_CLICKED);
-
-    try {
-      window?.Plain?.open();
-    } catch (error) {
-      Sentry.captureException(error);
-      console.error('Error opening plain chat:', error);
-    }
-  };
-
   if (IS_SELF_HOSTED) {
     return (
       <div className="relative mt-auto gap-8 pt-4">
         <ChangelogStack />
-        <GettingStartedMenuItem />
+        <HomeMenuItem />
       </div>
     );
   }
@@ -89,17 +77,11 @@ const BottomSection = ({
 
       {!isTrialActive && isFreeTier && !isLoadingSubscription && <UsageCard subscription={subscription} />}
       <NavigationGroup>
-        <button onClick={showPlainLiveChat} className="w-full">
-          <NavigationLink>
-            <RiChat1Line className="size-4" />
-            <span>Share Feedback</span>
-          </NavigationLink>
-        </button>
         <NavigationLink to={ROUTES.SETTINGS_TEAM}>
           <RiUserAddLine className="size-4" />
           <span>Invite teammates</span>
         </NavigationLink>
-        <GettingStartedMenuItem />
+        <HomeMenuItem />
       </NavigationGroup>
     </div>
   );
@@ -114,6 +96,7 @@ export const SideNavigation = () => {
   const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
+  const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -140,6 +123,7 @@ export const SideNavigation = () => {
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
+
               {isEmailLayoutsPageActive && (
                 <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                   <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
@@ -192,6 +176,16 @@ export const SideNavigation = () => {
                     <span>Activity Feed</span>
                   </NavigationLink>
                 </Protect>
+                {isAnalyticsPageEnabled && (
+                  <Protect permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <NavigationLink
+                      to={buildRoute(ROUTES.ANALYTICS, { environmentSlug: currentEnvironment?.slug ?? '' })}
+                    >
+                      <RiLineChartLine className="size-4" />
+                      <span>Analytics</span>
+                    </NavigationLink>
+                  </Protect>
+                )}
               </NavigationGroup>
             </Protect>
             <Protect

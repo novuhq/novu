@@ -256,7 +256,7 @@ test('send should call template method correctly', async () => {
   });
 
   expect(spyTemplateFunction).toHaveBeenCalled();
-  expect(spyTemplateFunction).toBeCalledWith({
+  expect(spyTemplateFunction).toHaveBeenCalledWith({
     $branding: {},
     $email: 'test@email.com',
     $user_id: '1234',

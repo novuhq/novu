@@ -29,4 +29,5 @@ export const QueryKeys = Object.freeze({
   fetchTranslationKeys: 'fetchTranslationKeys',
   diffEnvironments: 'diff-environments',
   previewStep: 'preview-step',
+  fetchCharts: 'fetchCharts',
 });

@@ -5,6 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  SeverityLevelEnum,
   Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
@@ -53,6 +54,7 @@ export class InboxService {
     snoozed,
     seen,
     data,
+    severity,
   }: {
     tags?: string[];
     read?: boolean;
@@ -63,6 +65,7 @@ export class InboxService {
     after?: string;
     offset?: number;
     data?: Record<string, unknown>;
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -72,7 +75,9 @@ export class InboxService {
       searchParams.append('offset', `${offset}`);
     }
     if (tags) {
-      tags.forEach((tag) => searchParams.append('tags[]', tag));
+      for (const tag of tags) {
+        searchParams.append('tags[]', tag);
+      }
     }
     if (read !== undefined) {
       searchParams.append('read', `${read}`);
@@ -89,6 +94,12 @@ export class InboxService {
     if (data !== undefined) {
       searchParams.append('data', JSON.stringify(data));
     }
+    if (severity) {
+      const severityArray = Array.isArray(severity) ? severity : [severity];
+      for (const severity of severityArray) {
+        searchParams.append('severity[]', severity ?? '');
+      }
+    }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
   }
@@ -103,6 +114,7 @@ export class InboxService {
       snoozed?: boolean;
       seen?: boolean;
       data?: Record<string, unknown>;
+      severity?: SeverityLevelEnum | SeverityLevelEnum[];
     }>;
   }): Promise<{
     data: Array<{
@@ -110,10 +122,15 @@ export class InboxService {
       filter: NotificationFilter;
     }>;
   }> {
+    const filtersWithSeverity = filters.map((filter) => ({
+      ...filter,
+      severity: filter.severity ? (Array.isArray(filter.severity) ? filter.severity : [filter.severity]) : undefined,
+    }));
+
     return this.#httpClient.get(
       `${INBOX_NOTIFICATIONS_ROUTE}/count`,
       new URLSearchParams({
-        filters: JSON.stringify(filters),
+        filters: JSON.stringify(filtersWithSeverity),
       }),
       false
     );
@@ -208,10 +225,21 @@ export class InboxService {
     });
   }
 
-  fetchPreferences(tags?: string[]): Promise<PreferencesResponse[]> {
+  fetchPreferences(
+    tags?: string[],
+    severity?: SeverityLevelEnum | SeverityLevelEnum[]
+  ): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
-      tags.forEach((tag) => queryParams.append('tags[]', tag));
+      for (const tag of tags) {
+        queryParams.append('tags[]', tag);
+      }
+    }
+    if (severity) {
+      const severityArray = Array.isArray(severity) ? severity : [severity];
+      for (const severity of severityArray) {
+        queryParams.append('severity[]', severity ?? '');
+      }
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

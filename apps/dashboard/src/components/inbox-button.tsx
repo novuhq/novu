@@ -7,7 +7,7 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useWorkflowEditorPage } from '@/hooks/use-workflow-editor-page';
 import { HeaderButton } from './header-navigation/header-button';
-import { InboxBellFilled } from './icons/inbox-bell-filled';
+import { InboxBellFilledDev } from './icons/inbox-bell-filled-dev';
 
 declare global {
   interface Window {
@@ -59,7 +59,7 @@ const InboxInner = () => {
               className={isWorkflowEditorPage ? 'bg-test-pattern' : ''}
             >
               <div className="relative flex items-center justify-center">
-                <InboxBellFilled
+                <InboxBellFilledDev
                   className={`text-foreground-600 size-4 cursor-pointer stroke-[0.5px]`}
                   bellClassName={`origin-top ${jingle ? 'animate-swing' : ''}`}
                   ringerClassName={`origin-top ${jingle ? 'animate-jingle' : ''}`}
