@@ -31,6 +31,7 @@ const mapDetailToEventType = {
   [DetailEnum.MESSAGE_CONTENT_NOT_GENERATED]: 'message_content_failed',
   [DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR]: 'message_content_failed',
   [DetailEnum.START_SENDING]: 'message_sending_started',
+  [DetailEnum.MESSAGE_SEVERITY_OVERRIDDEN]: 'message_severity_overridden',
 
   // Subscriber events
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION]: 'subscriber_integration_missing',

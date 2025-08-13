@@ -176,6 +176,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Message content failed';
     case 'message_sending_started':
       return 'Message sending started';
+    case 'message_severity_overridden':
+      return 'Severity for the message was overridden';
 
     // Subscriber events
     case 'subscriber_integration_missing':

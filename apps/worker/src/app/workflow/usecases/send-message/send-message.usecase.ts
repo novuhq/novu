@@ -8,6 +8,7 @@ import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  FeatureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
@@ -31,6 +32,7 @@ import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  FeatureFlagsKeysEnum,
   IDigestRegularMetadata,
   IPreferenceChannels,
   PreferencesTypeEnum,
@@ -69,7 +71,8 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     private normalizeVariablesUsecase: NormalizeVariables,
-    private executeBridgeJob: ExecuteBridgeJob
+    private executeBridgeJob: ExecuteBridgeJob,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -155,11 +158,43 @@ export class SendMessage {
       );
     }
 
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    let severity = command.severity;
+    const { overrides } = command;
+    if (
+      isNotificationSeverityEnabled &&
+      stepType !== StepTypeEnum.TRIGGER &&
+      overrides?.severity &&
+      overrides.severity !== severity
+    ) {
+      severity = overrides.severity;
+
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.MESSAGE_SEVERITY_OVERRIDDEN,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.PENDING,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            from: `${command.severity}`,
+            to: `${severity}`,
+          }),
+        })
+      );
+    }
+
     const sendMessageChannelCommand = SendMessageChannelCommand.create({
       ...command,
       compileContext: payload,
       bridgeData: bridgeResponse,
-      severity: command.severity,
+      severity,
     });
 
     switch (stepType) {

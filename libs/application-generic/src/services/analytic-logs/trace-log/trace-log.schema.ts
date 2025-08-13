@@ -71,6 +71,7 @@ export type EventType =
   | 'message_unsnooze_failed'
   | 'message_content_failed'
   | 'message_sending_started'
+  | 'message_severity_overridden'
   | 'step_created'
   | 'step_queued'
   | 'step_delayed'
