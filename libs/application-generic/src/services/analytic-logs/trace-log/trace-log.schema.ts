@@ -37,10 +37,10 @@ const schemaDefinition = {
   expires_at: { type: CHDateTime64(3, 'UTC') },
 
   // Step run type
-  step_run_type: { type: CHNullable(CHString()) },
+  step_run_type: { type: CHString('') }, // default value is empty string
 
   // Workflow run identifier
-  workflow_run_identifier: { type: CHNullable(CHString()) },
+  workflow_run_identifier: { type: CHString('') }, // default value is empty string
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [
@@ -157,7 +157,7 @@ export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | '
   event_type: EventType;
   entity_type: EntityType;
   status: TraceStatus;
-  step_run_type?: StepType;
+  step_run_type: StepType | '';
 };
 
 export type Trace = Prettify<TraceLogComplex>;
