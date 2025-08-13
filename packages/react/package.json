@@ -96,7 +96,6 @@
     "check-exports": "attw --pack .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "publish": "pnpm publish",
     "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {

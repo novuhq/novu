@@ -78,7 +78,6 @@
     "check": "biome check .",
     "check:fix": "biome check --write .",
     "test": "jest",
-    "publish": "pnpm publish",
     "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {
