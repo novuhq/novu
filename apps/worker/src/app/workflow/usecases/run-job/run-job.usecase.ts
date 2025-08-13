@@ -6,13 +6,12 @@ import {
   PinoLogger,
   StepRunRepository,
   StorageHelperService,
-  WorkflowRunRepository,
-  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { setUser } from '@sentry/node';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
+import { WorkflowStatusUpdateService } from '../../services/workflow-status-update.service';
 import { AddJob } from '../add-job';
 import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
@@ -35,7 +34,7 @@ export class RunJob {
     private notificationRepository: NotificationRepository,
     private processUnsnoozeJob: ProcessUnsnoozeJob,
     private stepRunRepository: StepRunRepository,
-    private workflowRunRepository: WorkflowRunRepository,
+    private workflowStatusUpdateService: WorkflowStatusUpdateService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -201,6 +200,13 @@ export class RunJob {
       if (shouldQueueNextJob) {
         await this.tryQueueNextJobs(job);
       } else {
+        // Update workflow run status based on step runs when halting on step failure
+        await this.workflowStatusUpdateService.updateWorkflowRunStatus({
+          notificationId: job._notificationId,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          subscriberId: job._subscriberId,
+        });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
@@ -237,8 +243,13 @@ export class RunJob {
         });
 
         if (!nextJob) {
-          await this.updateWorkflowRunStatus(currentJob, WorkflowRunStatusEnum.SUCCESS);
-
+          // Update workflow run status when there is no next job (workflow complete)
+          await this.workflowStatusUpdateService.updateWorkflowRunStatus({
+            notificationId: currentJob._notificationId,
+            environmentId: currentJob._environmentId,
+            organizationId: currentJob._organizationId,
+            subscriberId: currentJob._subscriberId,
+          });
           return;
         }
 
@@ -253,6 +264,14 @@ export class RunJob {
         shouldContinueQueueNextJob = false;
       } catch (error: any) {
         if (!nextJob) {
+          // Fallback: update workflow run status if nextJob is unexpectedly missing
+          // (should not occur due to prior nextJob check in loop)
+          await this.workflowStatusUpdateService.updateWorkflowRunStatus({
+            notificationId: currentJob._notificationId,
+            environmentId: currentJob._environmentId,
+            organizationId: currentJob._organizationId,
+            subscriberId: currentJob._subscriberId,
+          });
           return;
         }
 
@@ -267,7 +286,13 @@ export class RunJob {
         );
 
         if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error)) {
-          await this.updateWorkflowRunStatus(nextJob, WorkflowRunStatusEnum.ERROR);
+          // Update workflow run status based on step runs when halting on step failure
+          await this.workflowStatusUpdateService.updateWorkflowRunStatus({
+            notificationId: nextJob._notificationId,
+            environmentId: nextJob._environmentId,
+            organizationId: nextJob._organizationId,
+            subscriberId: nextJob._subscriberId,
+          });
           await this.jobRepository.cancelPendingJobs({
             transactionId: nextJob.transactionId,
             _environmentId: nextJob._environmentId,
@@ -315,10 +340,6 @@ export class RunJob {
     return activeDigestFollower;
   }
 
-  private isCanceledMainDigest(type: StepTypeEnum | undefined, status: JobStatusEnum) {
-    return type === StepTypeEnum.DIGEST && status === JobStatusEnum.CANCELED;
-  }
-
   @Instrument()
   private async delayedEventIsCanceled(
     job: JobEntity
@@ -361,34 +382,6 @@ export class RunJob {
     }
 
     return await this.jobRepository.findOne(jobQuery);
-  }
-
-  private async updateWorkflowRunStatus(job: JobEntity, status: WorkflowRunStatusEnum): Promise<void> {
-    try {
-      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, status, {
-        organizationId: job._organizationId,
-        environmentId: job._environmentId,
-      });
-
-      this.logger.debug(
-        {
-          jobId: job._id,
-          notificationId: job._notificationId,
-          organizationId: job._organizationId,
-          environmentId: job._environmentId,
-        },
-        `Updated workflow run status to ${status}`
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          jobId: job._id,
-          notificationId: job._notificationId,
-        },
-        `Failed to update workflow run status to ${status}`
-      );
-    }
   }
 
   public shouldBackoff(error: Error): boolean {

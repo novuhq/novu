@@ -38,6 +38,7 @@ import {
 import { parseExpression as parseCronExpression } from 'cron-parser';
 import { differenceInMilliseconds } from 'date-fns';
 import _ from 'lodash';
+import { WorkflowStatusUpdateService } from '../../services/workflow-status-update.service';
 import { ExecuteBridgeJob, ExecuteBridgeJobCommand } from '../execute-bridge-job';
 import { AddDelayJob } from './add-delay-job.usecase';
 import { AddJobCommand } from './add-job.command';
@@ -69,7 +70,8 @@ export class AddJob {
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private executeBridgeJob: ExecuteBridgeJob,
     private stepRunRepository: StepRunRepository,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private workflowStatusUpdateService: WorkflowStatusUpdateService
   ) {}
 
   @InstrumentUsecase()
@@ -147,6 +149,15 @@ export class AddJob {
       digestResult = await this.handleDigest(command, filterVariables, job, digestAmount, filtered);
 
       if (isShouldHaltJobExecution(digestResult.digestCreationResult)) {
+        if (digestResult.digestCreationResult === DigestCreationResultEnum.MERGED) {
+          await this.workflowStatusUpdateService.updateWorkflowRunStatus({
+            notificationId: job._notificationId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            subscriberId: job._subscriberId,
+          });
+        }
+
         return;
       }
 

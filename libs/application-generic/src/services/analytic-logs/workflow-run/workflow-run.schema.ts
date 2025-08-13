@@ -68,6 +68,9 @@ export enum WorkflowRunStatusEnum {
   PENDING = 'pending',
   SUCCESS = 'success',
   ERROR = 'error',
+  CANCELED = 'canceled',
+  MERGED = 'merged',
+  SKIPPED = 'skipped',
 }
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;

@@ -62,6 +62,7 @@ export class HandleLastFailedJob {
           environmentId: job?._environmentId,
           organizationId: job?._organizationId,
           userId: job?._userId,
+          subscriberId: job?._subscriberId,
         })
       );
     } else {

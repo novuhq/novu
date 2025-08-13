@@ -317,7 +317,7 @@ export class GetWorkflowRuns {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
+      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns, this.logger),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
