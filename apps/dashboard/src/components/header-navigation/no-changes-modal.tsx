@@ -27,7 +27,7 @@ export function NoChangesModal({ isOpen, onClose }: NoChangesModalProps) {
               d="M58 16.5L62.75 19.25V24.75L58 27.5L53.25 24.75V19.25L58 16.5ZM54.7469 19.5389L58.0001 21.4222L61.2531 19.5389L58 17.6555L54.7469 19.5389ZM54.25 20.4066V24.1735L57.5001 26.055V22.2882L54.25 20.4066ZM58.5001 26.055L61.75 24.1735V20.4067L58.5001 22.2882V26.055Z"
               fill="#E1E4EA"
             />
-            <path d="M37 22H47" stroke="#F2F5F8" stroke-linecap="round" stroke-linejoin="bevel" />
+            <path d="M37 22H47" stroke="#F2F5F8" strokeLinecap="round" strokeLinejoin="bevel" />
             <rect x="82.5" y="10.5" width="23" height="23" rx="5.5" fill="#7D52F4" fill-opacity="0.1" />
             <rect x="82.5" y="10.5" width="23" height="23" rx="5.5" stroke="#7D52F4" />
             <path
