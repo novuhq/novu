@@ -103,9 +103,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ "${{ github.event.inputs.nightly }}" = "true" ]; then
-            pnpm nx release publish --projects=${{ github.event.inputs.packages }} --tag nightly
+            export NX_RELEASE_TAG=nightly
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
           else
-            pnpm nx release publish --projects=${{ github.event.inputs.packages }}
+            export NX_RELEASE_TAG=latest
+            pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
           fi
 
       - name: Create Pull Request
