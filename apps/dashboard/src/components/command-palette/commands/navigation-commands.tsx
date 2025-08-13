@@ -23,8 +23,8 @@ export function useNavigationCommands(context: CommandExecutionContext): Command
   const hasPermission = useHasPermission();
   const hasWorkflowPermission = hasPermission({ permission: PermissionsEnum.WORKFLOW_READ });
   const hasSubscriberPermission = hasPermission({ permission: PermissionsEnum.SUBSCRIBER_READ });
-  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_EMAIL_LAYOUTS_PAGE_ENABLED);
-  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
+  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
+  const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED);
 
   const createNavigationCommand = useCallback(
     (id: string, label: string, route: string, icon: React.ReactNode, permission?: () => boolean) => ({

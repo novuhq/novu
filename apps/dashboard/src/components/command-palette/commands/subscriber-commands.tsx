@@ -7,7 +7,8 @@ import { Command, CommandExecutionContext } from '../command-types';
 
 export function useSubscriberCommands(context: CommandExecutionContext): Command[] {
   const navigate = useNavigate();
-  const hasSubscriberWrite = useHasPermission(PermissionsEnum.SUBSCRIBER_WRITE);
+  const hasPermission = useHasPermission();
+  const hasSubscriberWrite = hasPermission({ permission: PermissionsEnum.SUBSCRIBER_WRITE });
 
   const commands: Command[] = [];
 

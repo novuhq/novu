@@ -10,7 +10,8 @@ export function CommandTriggerButton() {
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant="outline"
+          variant="secondary"
+          mode="outline"
           size="xs"
           onClick={openCommandPalette}
           className="gap-2 text-foreground-400 border-neutral-200 hover:border-neutral-300"
