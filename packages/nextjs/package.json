@@ -1,6 +1,6 @@
 {
   "name": "@novu/nextjs",
-  "version": "3.7.0",
+  "version": "3.8.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/novuhq/novu",
@@ -66,7 +66,6 @@
     "build": "tsup && pnpm run build:declarations && pnpm run check-exports",
     "build:declarations": "tsc -p tsconfig.declarations.json",
     "check-exports": "attw --pack . --ignore-rules unexpected-module-syntax",
-    "publish": "pnpm publish",
     "publish:rc": "pnpm publish --tag rc"
   },
   "browserslist": {

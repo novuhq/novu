@@ -116,9 +116,9 @@ export class GetActivityFeed {
    * @see https://github.com/novuhq/cloud-infra/blob/main/scripts/expiredNotification.js#L93
    */
   private getMaxRetentionPeriodByOrganization(organization: OrganizationEntity) {
-    // 1. Self-hosted gets unlimited retention both community and enterprise
+    // 1. Self-hosted: effectively unlimited, use a large but safe finite window (100 years)
     if (process.env.IS_SELF_HOSTED === 'true') {
-      return Number.MAX_SAFE_INTEGER;
+      return 100 * 365 * 24 * 60 * 60 * 1000; // ~100 years in ms, safe for Date math
     }
 
     const { apiServiceLevel, createdAt } = organization;

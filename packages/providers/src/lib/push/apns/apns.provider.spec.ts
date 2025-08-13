@@ -44,7 +44,7 @@ test('should trigger apns library correctly', async () => {
     subscriber: {},
   });
 
-  expect(mockSend).toBeCalledWith(
+  expect(mockSend).toHaveBeenCalledWith(
     {
       encoding: 'utf8',
       payload: { data: 'data' },
@@ -115,7 +115,7 @@ test('should trigger apns library correctly with _passthrough', async () => {
     }
   );
 
-  expect(mockSend).toBeCalledWith(
+  expect(mockSend).toHaveBeenCalledWith(
     {
       encoding: 'utf8',
       payload: { data: 'data' },

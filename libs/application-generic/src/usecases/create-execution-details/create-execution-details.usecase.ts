@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { LogRepository } from '../../services';
+import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsService, LogRepository } from '../../services';
 import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
 import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
@@ -104,22 +104,26 @@ const mapDetailToEventType = {
 export class CreateExecutionDetails {
   constructor(
     private executionDetailsRepository: ExecutionDetailsRepository,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
-  async execute(command: CreateExecutionDetailsCommand): Promise<CreateExecutionDetailsResponseDto> {
+  async execute(command: CreateExecutionDetailsCommand): Promise<void> {
+    const isClickhouseOnlyEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+    });
     let entity = mapExecutionDetailsCommandToEntity(command);
 
     entity = this.cleanFromNulls(entity);
 
-    const { _id, createdAt } = await this.executionDetailsRepository.create(entity, { writeConcern: 1 });
+    if (!isClickhouseOnlyEnabled) {
+      await this.executionDetailsRepository.create(entity, { writeConcern: 1 });
+    }
 
-    await this.createTraceLogEntry(command, createdAt);
-
-    return {
-      id: _id,
-      createdAt,
-    };
+    await this.createTraceLogEntry(command, new Date().toISOString());
   }
 
   private cleanFromNulls(
