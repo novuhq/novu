@@ -42,6 +42,7 @@
     "@sentry/profiling-node": "^8.33.1",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.14.6",
+    "svix": "^1.64.1",
     "axios": "^1.9.0",
     "body-parser": "^2.2.0",
     "class-transformer": "0.5.1",

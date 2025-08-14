@@ -19,10 +19,14 @@ const _Bell = React.memo((props: BellProps) => {
       return novuUI.mountComponent({
         name: 'Bell',
         element,
-        props: renderBell ? { renderBell: (el, unreadCount) => mountElement(el, renderBell(unreadCount)) } : undefined,
+        props: renderBell
+          ? {
+              renderBell: (el, unreadCount) => mountElement(el, renderBell(unreadCount)),
+            }
+          : undefined,
       });
     },
-    [renderBell]
+    [renderBell, mountElement, novuUI]
   );
 
   return <Mounter mount={mount} />;

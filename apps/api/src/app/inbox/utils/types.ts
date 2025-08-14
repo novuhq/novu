@@ -23,6 +23,7 @@ type Action = {
 
 export type InboxNotification = {
   id: string;
+  transactionId: string;
   subject?: string;
   body: string;
   to: Subscriber;
@@ -54,7 +55,7 @@ export type NotificationFilter = {
   snoozed?: boolean;
   seen?: boolean;
   data?: string;
-  severity?: string[];
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type Workflow = {

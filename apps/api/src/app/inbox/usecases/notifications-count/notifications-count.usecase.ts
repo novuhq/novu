@@ -42,11 +42,26 @@ export class NotificationsCount {
       throw new BadRequestException('Filtering for unread and archived notifications is not supported.');
     }
 
-    const getCountPromises = command.filters.map((filter) =>
-      this.messageRepository.getCount(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, filter, {
-        limit: MAX_NOTIFICATIONS_COUNT,
-      })
-    );
+    const getCountPromises = command.filters.map((filter) => {
+      const severity = filter.severity
+        ? Array.isArray(filter.severity)
+          ? filter.severity
+          : [filter.severity]
+        : undefined;
+
+      return this.messageRepository.getCount(
+        command.environmentId,
+        subscriber._id,
+        ChannelTypeEnum.IN_APP,
+        {
+          ...filter,
+          severity,
+        },
+        {
+          limit: MAX_NOTIFICATIONS_COUNT,
+        }
+      );
+    });
 
     const counts = await Promise.all(getCountPromises);
     const result = counts.map((count, index) => ({ count, filter: command.filters[index] }));

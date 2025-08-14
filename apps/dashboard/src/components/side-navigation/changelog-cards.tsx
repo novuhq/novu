@@ -87,8 +87,8 @@ export function ChangelogStack() {
   }
 
   return (
-    <div className="mb-2 w-full">
-      <div className="m-full relative h-[175px]">
+    <div className="mb-2 w-full mt-2">
+      <div className="w-full relative h-[175px]">
         {changelogs.map((changelog, index) => (
           <ChangelogCard
             key={changelog.id}

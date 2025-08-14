@@ -20,6 +20,7 @@ interface SchemaEditorProps {
   removeProperty: (index: number) => void;
   methods: UseFormReturn<SchemaEditorFormValues>;
   highlightedPropertyKey?: string | null;
+  readOnly?: boolean;
 }
 
 export function SchemaEditor({
@@ -30,6 +31,7 @@ export function SchemaEditor({
   removeProperty,
   methods,
   highlightedPropertyKey,
+  readOnly = false,
 }: SchemaEditorProps) {
   const { workflow } = useWorkflow();
 
@@ -81,6 +83,7 @@ export function SchemaEditor({
               variableUsageInfo={variableUsageInfo}
               onCheckVariableUsage={checkVariableUsage}
               depth={0}
+              readOnly={readOnly}
             />
           );
         })}
@@ -91,7 +94,7 @@ export function SchemaEditor({
             size="2xs"
             onClick={() => addProperty()}
             leadingIcon={RiAddLine}
-            disabled={!formState.isValid && fields.length > 0}
+            disabled={readOnly || (!formState.isValid && fields.length > 0)}
           >
             Add property
           </Button>

@@ -29,6 +29,7 @@ const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_coun
 
 const mapToNotification = ({
   _id,
+  transactionId,
   content,
   read,
   seen,
@@ -47,6 +48,7 @@ const mapToNotification = ({
   tags,
   data,
   workflow,
+  severity,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id,
@@ -67,6 +69,7 @@ const mapToNotification = ({
 
   return {
     id: _id,
+    transactionId,
     subject,
     body: content as string,
     to,
@@ -115,6 +118,7 @@ const mapToNotification = ({
       : undefined,
     data,
     workflow,
+    severity,
   };
 };
 
@@ -157,9 +161,9 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
   };
 
-  #unreadCountChanged = ({ unreadCount }: { unreadCount: number }) => {
+  #unreadCountChanged = ({ counts }: { counts: { total: number; severity: Record<string, number> } }) => {
     this.#emitter.emit(UNREAD_COUNT_CHANGED, {
-      result: unreadCount,
+      result: counts,
     });
   };
 

@@ -69,8 +69,8 @@ test('should trigger mailjet library correctly and return proper response', asyn
     textPart: 'test',
   });
 
-  expect(requestFn).toBeCalledTimes(1);
-  expect(requestFn).toBeCalledWith({
+  expect(requestFn).toHaveBeenCalledTimes(1);
+  expect(requestFn).toHaveBeenCalledWith({
     Messages: [
       {
         From: { Email: mockConfig.from, Name: mockConfig.senderName },
@@ -97,7 +97,7 @@ test('should trigger mailjet library correctly and return proper response with _
     },
   });
 
-  expect(requestFn).toBeCalledWith({
+  expect(requestFn).toHaveBeenCalledWith({
     Messages: [
       {
         From: { Email: mockConfig.from, Name: mockConfig.senderName },

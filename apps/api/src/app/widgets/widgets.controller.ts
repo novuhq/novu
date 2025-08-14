@@ -156,16 +156,16 @@ export class WidgetsController {
       seen = false;
     }
 
-    const command = GetFeedCountCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      feedId: feedsQuery,
-      seen,
-      limit,
-    });
-
-    return await this.getFeedCountUsecase.execute(command);
+    return await this.getFeedCountUsecase.execute(
+      GetFeedCountCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        feedId: feedsQuery,
+        seen,
+        limit,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -182,16 +182,16 @@ export class WidgetsController {
       read = false;
     }
 
-    const command = GetFeedCountCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      feedId: feedsQuery,
-      read,
-      limit,
-    });
-
-    return await this.getFeedCountUsecase.execute(command);
+    return await this.getFeedCountUsecase.execute(
+      GetFeedCountCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        feedId: feedsQuery,
+        read,
+        limit,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -235,15 +235,15 @@ export class WidgetsController {
     const messageIds = this.toArray(body.messageId);
     if (!messageIds) throw new BadRequestException('messageId is required');
 
-    const command = MarkMessageAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      messageIds,
-      mark: body.mark,
-    });
-
-    return await this.markMessageAsUsecase.execute(command);
+    return await this.markMessageAsUsecase.execute(
+      MarkMessageAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        messageIds,
+        mark: body.mark,
+      })
+    );
   }
 
   @ApiOperation({
@@ -342,15 +342,16 @@ export class WidgetsController {
     @Body() body: { feedId?: string | string[] }
   ) {
     const feedIds = this.toArray(body.feedId);
-    const command = MarkAllMessagesAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      markAs: MessagesStatusEnum.READ,
-      feedIdentifiers: feedIds,
-    });
 
-    return await this.markAllMessagesAsUsecase.execute(command);
+    return await this.markAllMessagesAsUsecase.execute(
+      MarkAllMessagesAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        markAs: MessagesStatusEnum.READ,
+        feedIdentifiers: feedIds,
+      })
+    );
   }
 
   @ApiOperation({
@@ -363,15 +364,16 @@ export class WidgetsController {
     @Body() body: { feedId?: string | string[] }
   ): Promise<number> {
     const feedIds = this.toArray(body.feedId);
-    const command = MarkAllMessagesAsCommand.create({
-      organizationId: subscriberSession._organizationId,
-      subscriberId: subscriberSession.subscriberId,
-      environmentId: subscriberSession._environmentId,
-      markAs: MessagesStatusEnum.SEEN,
-      feedIdentifiers: feedIds,
-    });
 
-    return await this.markAllMessagesAsUsecase.execute(command);
+    return await this.markAllMessagesAsUsecase.execute(
+      MarkAllMessagesAsCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        markAs: MessagesStatusEnum.SEEN,
+        feedIdentifiers: feedIds,
+      })
+    );
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))

@@ -193,8 +193,8 @@ test('TriggerEngine should call validate if validator is provided', async () => 
     $email: 'test@gmail.com',
   });
 
-  expect(validate).toBeCalled();
-  expect(validate).toBeCalledWith({
+  expect(validate).toHaveBeenCalled();
+  expect(validate).toHaveBeenCalledWith({
     $email: 'test@gmail.com',
     $user_id: '12345',
   });

@@ -26,12 +26,13 @@ import { useNovu } from './NovuProvider';
  * ```
  */
 export type UseNotificationsProps = {
-  tags?: string[];
-  data?: Record<string, unknown>;
-  read?: boolean;
-  archived?: boolean;
-  snoozed?: boolean;
-  seen?: boolean;
+  tags?: NotificationFilter['tags'];
+  data?: NotificationFilter['data'];
+  read?: NotificationFilter['read'];
+  archived?: NotificationFilter['archived'];
+  snoozed?: NotificationFilter['snoozed'];
+  seen?: NotificationFilter['seen'];
+  severity?: NotificationFilter['severity'];
   limit?: number;
   onSuccess?: (data: Notification[]) => void;
   onError?: (error: NovuError) => void;
@@ -71,6 +72,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
     archived = false,
     snoozed = false,
     seen,
+    severity,
     limit,
     onSuccess,
     onError,
@@ -78,7 +80,10 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   const filterRef = useRef<NotificationFilter | undefined>(undefined);
   const { notifications } = useNovu();
 
-  const getCurrentFilter = useCallback(() => filterRef.current || { tags, data: dataFilter }, [tags, dataFilter]);
+  const getCurrentFilter = useCallback(
+    () => filterRef.current || { tags, data: dataFilter, severity },
+    [tags, dataFilter, severity]
+  );
   const [data, setData] = useState<Array<Notification>>();
   const [error, setError] = useState<NovuError>();
   const [isLoading, setIsLoading] = useState(true);
@@ -142,7 +147,7 @@ export const useNotifications = (props?: UseNotificationsProps): UseNotification
   );
 
   useEffect(() => {
-    const newFilter = { tags, data: dataFilter, read, archived, snoozed, seen };
+    const newFilter = { tags, data: dataFilter, read, archived, snoozed, seen, severity };
     if (filterRef.current && isSameFilter(filterRef.current, newFilter)) {
       return;
     }

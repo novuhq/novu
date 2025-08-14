@@ -11,6 +11,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
+import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 import { NotificationFilter } from '../utils/types';
 
 export class NotificationsFilter implements NotificationFilter {
@@ -36,9 +37,8 @@ export class NotificationsFilter implements NotificationFilter {
   seen?: boolean;
 
   @IsOptional()
-  @IsArray()
-  @IsEnum(SeverityLevelEnum, { each: true })
-  severity?: SeverityLevelEnum[];
+  @IsEnumOrArray(SeverityLevelEnum)
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 }
 
 export class GetNotificationsCountRequestDto {
