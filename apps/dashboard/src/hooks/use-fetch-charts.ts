@@ -7,6 +7,12 @@ type UseFetchChartsParams = {
   createdAtGte?: string;
   createdAtLte?: string;
   reportType?: ReportTypeEnum[];
+  workflowIds?: string[];
+  subscriberIds?: string[];
+  transactionIds?: string[];
+  statuses?: string[];
+  channels?: string[];
+  topicKey?: string;
   enabled?: boolean;
   refetchInterval?: number | false;
   refetchOnWindowFocus?: boolean;
@@ -17,6 +23,12 @@ export function useFetchCharts({
   createdAtGte,
   createdAtLte,
   reportType = [ReportTypeEnum.DELIVERY_TREND],
+  workflowIds,
+  subscriberIds,
+  transactionIds,
+  statuses,
+  channels,
+  topicKey,
   enabled = true,
   refetchInterval = false,
   refetchOnWindowFocus = false,
@@ -25,7 +37,21 @@ export function useFetchCharts({
   const { currentEnvironment } = useEnvironment();
 
   const chartsQuery = useQuery<GetChartsResponse>({
-    queryKey: [QueryKeys.fetchCharts, currentEnvironment?._id, { createdAtGte, createdAtLte, reportType }],
+    queryKey: [
+      QueryKeys.fetchCharts,
+      currentEnvironment?._id,
+      {
+        createdAtGte,
+        createdAtLte,
+        reportType,
+        workflowIds,
+        subscriberIds,
+        transactionIds,
+        statuses,
+        channels,
+        topicKey,
+      },
+    ],
     queryFn: ({ signal }) => {
       if (!currentEnvironment) {
         throw new Error('Environment is required');
@@ -36,6 +62,12 @@ export function useFetchCharts({
         createdAtGte,
         createdAtLte,
         reportType,
+        workflowIds,
+        subscriberIds,
+        transactionIds,
+        statuses,
+        channels,
+        topicKey,
         signal,
       });
     },

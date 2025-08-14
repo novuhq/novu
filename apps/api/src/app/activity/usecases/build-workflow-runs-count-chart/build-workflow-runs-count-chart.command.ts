@@ -1,7 +1,15 @@
-import { EnvironmentWithUserCommand, WorkflowRunStatusEnum } from '@novu/application-generic';
-import { IsArray, IsIn, IsISO8601, IsOptional, IsString } from 'class-validator';
+import { EnvironmentCommand, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { IsArray, IsDate, IsDefined, IsIn, IsOptional, IsString } from 'class-validator';
 
-export class GetWorkflowRunsCountCommand extends EnvironmentWithUserCommand {
+export class BuildWorkflowRunsCountChartCommand extends EnvironmentCommand {
+  @IsDate()
+  @IsDefined()
+  startDate: Date;
+
+  @IsDate()
+  @IsDefined()
+  endDate: Date;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -33,12 +41,4 @@ export class GetWorkflowRunsCountCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   topicKey?: string;
-
-  @IsOptional()
-  @IsISO8601()
-  createdGte?: string;
-
-  @IsOptional()
-  @IsISO8601()
-  createdLte?: string;
 }
