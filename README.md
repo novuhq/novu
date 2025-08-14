@@ -44,6 +44,8 @@
   ·
   <a href="https://discord.novu.co">Join our Discord</a>
   ·
+  <a href="https://go.novu.co/changelog">Changelog</a>
+  ·
   <a href="https://go.novu.co/roadmap">Roadmap</a>
   ·
   <a href="https://twitter.com/novuhq">X</a>

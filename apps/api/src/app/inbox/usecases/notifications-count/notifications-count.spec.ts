@@ -82,9 +82,18 @@ describe('NotificationsCount', () => {
       expect(subscriberRepository.findBySubscriberId.calledOnce).to.be.true;
       expect(messageRepository.getCount.calledOnce).to.be.true;
       expect(
-        messageRepository.getCount.calledWith(command.environmentId, subscriber._id, ChannelTypeEnum.IN_APP, filter, {
-          limit: 99,
-        })
+        messageRepository.getCount.calledWith(
+          command.environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          {
+            ...filter,
+            severity: undefined,
+          },
+          {
+            limit: 99,
+          }
+        )
       ).to.be.true;
     });
 
@@ -108,7 +117,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { read: true },
+          { read: true, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;
@@ -125,7 +134,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { read: false },
+          { read: false, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;
@@ -138,7 +147,13 @@ describe('NotificationsCount', () => {
       });
 
       expect(
-        messageRepository.getCount.calledWith(environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {}, { limit: 99 })
+        messageRepository.getCount.calledWith(
+          environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          { severity: undefined },
+          { limit: 99 }
+        )
       ).to.be.true;
 
       await notificationsCount.execute({
@@ -153,7 +168,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { archived: true },
+          { archived: true, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;
@@ -170,7 +185,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { archived: false },
+          { archived: false, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;
@@ -187,7 +202,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { snoozed: true },
+          { snoozed: true, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;
@@ -204,7 +219,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { snoozed: false },
+          { snoozed: false, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;
@@ -217,7 +232,13 @@ describe('NotificationsCount', () => {
       });
 
       expect(
-        messageRepository.getCount.calledWith(environmentId, subscriber._id, ChannelTypeEnum.IN_APP, {}, { limit: 99 })
+        messageRepository.getCount.calledWith(
+          environmentId,
+          subscriber._id,
+          ChannelTypeEnum.IN_APP,
+          { severity: undefined },
+          { limit: 99 }
+        )
       ).to.be.true;
 
       await notificationsCount.execute({
@@ -232,7 +253,7 @@ describe('NotificationsCount', () => {
           environmentId,
           subscriber._id,
           ChannelTypeEnum.IN_APP,
-          { read: true, archived: true },
+          { read: true, archived: true, severity: undefined },
           { limit: 99 }
         )
       ).to.be.true;

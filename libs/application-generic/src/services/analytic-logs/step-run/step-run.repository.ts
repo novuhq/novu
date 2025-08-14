@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
-import { format } from 'date-fns';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
@@ -161,14 +160,242 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
     }
   }
 
+  async getDeliveryTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; step_type: string; count: string }>> {
+    // Use ClickHouse aggregation query to get counts by date and step_type
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        step_type,
+        count(*) as count
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+      GROUP BY date, step_type
+      ORDER BY date, step_type
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      step_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getMessagesDeliveredData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    // Query for current period
+    const currentPeriodQuery = `
+      SELECT count(*) as count
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+    `;
+
+    // Query for previous period
+    const previousPeriodQuery = `
+      SELECT count(*) as count
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+    `;
+
+    const baseParams = {
+      environmentId,
+      organizationId,
+    };
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
+        },
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
+  }
+
+  async getAvgMessagesPerSubscriberData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    // Query for current period average
+    const currentPeriodQuery = `
+      SELECT 
+        count(*) as total_step_runs,
+        count(DISTINCT external_subscriber_id) as unique_subscribers
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+    `;
+
+    // Query for previous period average
+    const previousPeriodQuery = `
+      SELECT 
+        count(*) as total_step_runs,
+        count(DISTINCT external_subscriber_id) as unique_subscribers
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+    `;
+
+    const baseParams = {
+      environmentId,
+      organizationId,
+    };
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
+        },
+      }),
+      this.clickhouseService.query<{ total_step_runs: string; unique_subscribers: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
+
+    const currentTotalStepRuns = parseInt(currentResult.data[0]?.total_step_runs || '0', 10);
+    const currentUniqueSubscribers = parseInt(currentResult.data[0]?.unique_subscribers || '0', 10);
+    const previousTotalStepRuns = parseInt(previousResult.data[0]?.total_step_runs || '0', 10);
+    const previousUniqueSubscribers = parseInt(previousResult.data[0]?.unique_subscribers || '0', 10);
+
+    // Calculate averages (handle division by zero)
+    const currentPeriod = currentUniqueSubscribers > 0 ? currentTotalStepRuns / currentUniqueSubscribers : 0;
+    const previousPeriod = previousUniqueSubscribers > 0 ? previousTotalStepRuns / previousUniqueSubscribers : 0;
+
+    return {
+      currentPeriod: Math.round(currentPeriod * 100) / 100, // Round to 2 decimal places
+      previousPeriod: Math.round(previousPeriod * 100) / 100, // Round to 2 decimal places
+    };
+  }
+
+  async getProviderVolumeData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ provider_id: string; count: string }>> {
+    const query = `
+      SELECT 
+        provider_id,
+        count(*) as count
+      FROM step_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND step_type IN ('in_app', 'email', 'sms', 'chat', 'push')
+        AND status = 'completed'
+      GROUP BY provider_id
+      ORDER BY count DESC
+      LIMIT 5
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      provider_id: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
   private mapJobToStepRun(job: JobEntity, options?: StepOptions): StepRunInsertData {
     const now = new Date();
-    const createdAt = new Date(job.createdAt || now);
+    const createdAt = new Date(now);
     const stepType = this.mapStepTypeEnumToStepType(job.type || job.step.template?.type);
 
     return {
-      created_at: this.formatDateTime64(createdAt),
-      updated_at: this.formatDateTime64(now),
+      created_at: LogRepository.formatDateTime64(createdAt),
+      updated_at: LogRepository.formatDateTime64(now),
 
       // Core step run identification
       step_run_id: job._id,
@@ -198,9 +425,5 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       // Correlation
       transaction_id: job.transactionId,
     };
-  }
-
-  private formatDateTime64(date: Date): Date {
-    return format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS") as unknown as Date;
   }
 }
