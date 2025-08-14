@@ -105,24 +105,22 @@ export class SyncExternalOrganization {
       })
     );
 
-    if (isLayoutsPageActive) {
-      await this.upsertLayoutUsecase.execute(
-        UpsertLayoutCommand.create({
-          environmentId: prodEnv._id,
-          organizationId: prodEnv._organizationId,
-          userId: user._id,
-          layoutDto: {
-            name: 'Default layout',
-            controlValues: {
-              email: {
-                body: JSON.stringify(createDefaultLayout(organization.name)),
-                editorType: 'block',
-              },
+    await this.upsertLayoutUsecase.execute(
+      UpsertLayoutCommand.create({
+        environmentId: prodEnv._id,
+        organizationId: prodEnv._organizationId,
+        userId: user._id,
+        layoutDto: {
+          name: 'Default layout',
+          controlValues: {
+            email: {
+              body: JSON.stringify(createDefaultLayout(organization.name)),
+              editorType: 'block',
             },
           },
-        })
-      );
-    }
+        },
+      })
+    );
 
     this.analyticsService.upsertGroup(organization._id, organization, user);
 
