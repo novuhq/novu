@@ -138,6 +138,7 @@ export const CountProvider = (props: ParentProps) => {
       }
 
       const currentTabs = tabs();
+      const processedFilters = new Set<string>();
 
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
@@ -155,6 +156,14 @@ export const CountProvider = (props: ParentProps) => {
             (!Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria === notification.severity);
 
           if (matchesTagFilter && matchesDataFilterCriteria && matchesSeverityFilterCriteria) {
+            const filterKey = createKey({
+              tags: tabTags,
+              data: tabDataFilterCriteria,
+              severity: tabSeverityFilterCriteria,
+            });
+
+            if (!processedFilters.has(filterKey)) {
+              processedFilters.add(filterKey);
             updateNewNotificationCountsOrCache(
               tab.label,
               notification,
@@ -162,6 +171,7 @@ export const CountProvider = (props: ParentProps) => {
               tabDataFilterCriteria,
               tabSeverityFilterCriteria
             );
+            }
           }
         }
       } else {
