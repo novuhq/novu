@@ -56,7 +56,6 @@ export function AnalyticsPage() {
     ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND,
   ];
 
-  // Fetch metrics data (top section)
   const { charts: metricsCharts, isLoading: isMetricsLoading } = useFetchCharts({
     reportType: metricsReportTypes,
     createdAtGte: chartsDateRange.createdAtGte,
@@ -65,7 +64,6 @@ export function AnalyticsPage() {
     staleTime: CHART_CONFIG.staleTime,
   });
 
-  // Fetch charts data (bottom section)
   const {
     charts: chartsData,
     isLoading: isChartsLoading,

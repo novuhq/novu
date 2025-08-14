@@ -24,7 +24,6 @@ export type ProviderChartData = {
 
 export type InteractionChartData = {
   date: string;
-  messageSent: number;
   messageSeen: number;
   messageRead: number;
   messageSnoozed: number;

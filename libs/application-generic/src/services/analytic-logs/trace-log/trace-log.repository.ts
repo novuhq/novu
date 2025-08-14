@@ -115,7 +115,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
         AND traces.organization_id = {organizationId:String}
         AND traces.created_at >= {startDate:DateTime64(3)}
         AND traces.created_at <= {endDate:DateTime64(3)}
-        AND traces.event_type IN ('message_sent', 'message_seen', 'message_read', 'message_snoozed')
+        AND traces.event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
       GROUP BY date, traces.event_type
       ORDER BY date, traces.event_type
     `;
