@@ -1,5 +1,4 @@
 import { autocompletion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { EditorView, Extension } from '@uiw/react-codemirror';
 import { JSONSchema7 } from 'json-schema';
 import { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +12,6 @@ import {
   DIGEST_VARIABLES_FILTER_MAP,
   getDynamicDigestVariable,
 } from '@/components/variable/utils/digest-variables';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { CompletionOption, createAutocompleteSource } from '@/utils/liquid-autocomplete';
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
@@ -96,7 +94,6 @@ export function VariableEditor({
   children,
   disabled = false,
 }: VariableEditorProps) {
-  const isCustomHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
   const containerRef = useRef<HTMLDivElement>(null);
   const track = useTelemetry();
 
@@ -247,7 +244,6 @@ export function VariableEditor({
       onSelect: (value: string, from: number, to: number) => callbacksRef.current.handleVariableSelect(value, from, to),
       isAllowedVariable: (variable: LiquidVariable) => callbacksRef.current.isAllowedVariable(variable),
       isDigestEventsVariable: (variableName: string) => callbacksRef.current.isDigestEventsVariable(variableName),
-      isCustomHtmlEditorEnabled,
     });
   }, []);
 

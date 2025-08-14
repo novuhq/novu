@@ -1,5 +1,4 @@
 import { Variable } from '@maily-to/core/extensions';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Editor, NodeViewProps } from '@tiptap/core';
 import { EditorView } from '@uiw/react-codemirror';
 import React, { useCallback, useMemo, useRef } from 'react';
@@ -19,7 +18,6 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { useCreateTranslationKey } from '@/hooks/use-create-translation-key';
 import { useEditorTranslationOverlay } from '@/hooks/use-editor-translation-overlay';
 import { useEnhancedVariableValidation } from '@/hooks/use-enhanced-variable-validation';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchTranslationKeys } from '@/hooks/use-fetch-translation-keys';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -129,7 +127,6 @@ function createVariableNodeView(variables: LiquidVariable[], isAllowedVariable: 
 }
 
 export const EmailBody = () => {
-  const isLayoutsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
   const viewRef = useRef<EditorView | null>(null);
   const lastCompletionRef = useRef<CompletionRange | null>(null);
   const { control, setValue } = useFormContext();
@@ -147,29 +144,22 @@ export const EmailBody = () => {
   );
 
   const blocks = useMemo(() => {
-    if (isLayoutsPageEnabled) {
-      return createEditorBlocks({
-        track,
-        digestStepBeforeCurrent,
-        blockConfig: {
-          ...DEFAULT_BLOCK_CONFIG,
-          highlights: {
-            ...DEFAULT_BLOCK_CONFIG.highlights,
-            blocks: [
-              { type: 'cards', enabled: true, order: 0 },
-              { type: 'htmlCodeBlock', enabled: true, order: 1 },
-              { type: 'digest', enabled: true, order: 2 },
-            ],
-          },
-        },
-      });
-    }
-
     return createEditorBlocks({
       track,
       digestStepBeforeCurrent,
+      blockConfig: {
+        ...DEFAULT_BLOCK_CONFIG,
+        highlights: {
+          ...DEFAULT_BLOCK_CONFIG.highlights,
+          blocks: [
+            { type: 'cards', enabled: true, order: 0 },
+            { type: 'htmlCodeBlock', enabled: true, order: 1 },
+            { type: 'digest', enabled: true, order: 2 },
+          ],
+        },
+      },
     });
-  }, [digestStepBeforeCurrent, isLayoutsPageEnabled, track]);
+  }, [digestStepBeforeCurrent, track]);
 
   const {
     handleCreateNewVariable,

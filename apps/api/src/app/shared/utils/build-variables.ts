@@ -3,18 +3,15 @@ import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import { JSONSchemaDto } from '../dtos/json-schema.dto';
 import { isStringifiedMailyJSONContent, wrapMailyInLiquid } from '../helpers/maily-utils';
 import { extractFieldsFromRules, isValidRule } from '../services/query-parser/query-parser.service';
-import { extractLiquidTemplateVariables } from './template-parser/liquid-parser';
 import { extractLiquidTemplateVariables as newExtractLiquidTemplateVariables } from './template-parser/new-liquid-parser';
 import type { VariableDetails } from './template-parser/types';
 
 export function buildVariables({
-  useNewLiquidParser,
   variableSchema,
   controlValue,
   logger,
   suggestPayloadNamespace = true,
 }: {
-  useNewLiquidParser: boolean;
   variableSchema: JSONSchemaDto | undefined;
   controlValue: unknown | Record<string, unknown>;
   logger?: PinoLogger;
@@ -46,22 +43,10 @@ export function buildVariables({
     };
   }
 
-  if (useNewLiquidParser) {
-    const { validVariables, invalidVariables } = newExtractLiquidTemplateVariables({
-      template: typeof variableControlValue === 'string' ? variableControlValue : JSON.stringify(variableControlValue),
-      variableSchema,
-      suggestPayloadNamespace,
-    });
-
-    return {
-      validVariables,
-      invalidVariables,
-    };
-  }
-
-  const { validVariables, invalidVariables } = extractLiquidTemplateVariables({
+  const { validVariables, invalidVariables } = newExtractLiquidTemplateVariables({
     template: typeof variableControlValue === 'string' ? variableControlValue : JSON.stringify(variableControlValue),
     variableSchema,
+    suggestPayloadNamespace,
   });
 
   return {

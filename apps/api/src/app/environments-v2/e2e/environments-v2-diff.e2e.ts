@@ -13,20 +13,9 @@ describe('Environment Diff - /v2/environments/:targetEnvironmentId/diff (POST) #
   const environmentRepository = new EnvironmentRepository();
 
   beforeEach(async () => {
-    // @ts-ignore
-    process.env.IS_LAYOUTS_PAGE_ACTIVE = 'true';
-    // @ts-ignore
-    process.env.IS_HTML_EDITOR_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);
-  });
-
-  afterEach(async () => {
-    // @ts-ignore
-    process.env.IS_LAYOUTS_PAGE_ACTIVE = 'false';
-    // @ts-ignore
-    process.env.IS_HTML_EDITOR_ENABLED = 'false';
   });
 
   async function getProductionEnvironment() {

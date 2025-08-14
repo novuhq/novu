@@ -135,17 +135,14 @@ export const processControlValuesByLiquid = ({
   currentPath,
   issues,
   variableSchema,
-  useNewLiquidParser,
 }: {
   currentValue: unknown;
   currentPath: string[];
   issues: ControlIssues;
   variableSchema: JSONSchemaDto | undefined;
-  useNewLiquidParser: boolean;
 }) => {
   if (!currentValue || typeof currentValue !== 'object') {
     const liquidTemplateIssues = buildVariables({
-      useNewLiquidParser,
       variableSchema,
       controlValue: currentValue,
       suggestPayloadNamespace: false,
@@ -193,7 +190,6 @@ export const processControlValuesByLiquid = ({
       currentPath: [...currentPath, key],
       issues,
       variableSchema,
-      useNewLiquidParser,
     });
   }
 };
