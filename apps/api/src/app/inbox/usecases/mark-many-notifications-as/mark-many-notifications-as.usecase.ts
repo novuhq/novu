@@ -6,6 +6,7 @@ import {
   InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
   StepType,
