@@ -47,7 +47,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 - [MongoDB](https://www.mongodb.com/try/download/community)
 - Redis. To install Redis on your Operating System, please follow the below guides
   - [To install Redis on Windows](https://redis.io/docs/getting-started/installation/install-redis-on-windows/)
-  - [To install Redis on Linux](https://redis.io/docs/getting-started/installation/install-redis-on-linux/)
+  - [To install Redis on Linux](https://redis.io/docs/latest/operate/oss_and_stack/install/archive/install-redis/install-redis-on-linux/)
   - [To install Redis on macOS](https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/)
 - **(Optional)** pnpm - Needed if you want to install new packages
 - **(Optional)** localstack (required only in S3 related modules)
