@@ -10,12 +10,13 @@ import {
   RiSmartphoneLine,
   RiTimeLine,
 } from 'react-icons/ri';
+import { InboxBell } from '../../../icons';
 
 export const STEP_TYPE_ICONS: Record<StepTypeEnum, IconType> = {
   [StepTypeEnum.EMAIL]: RiMailLine,
   [StepTypeEnum.SMS]: RiSmartphoneLine,
   [StepTypeEnum.PUSH]: RiNotificationLine,
-  [StepTypeEnum.IN_APP]: RiNotificationLine,
+  [StepTypeEnum.IN_APP]: InboxBell,
   [StepTypeEnum.CHAT]: RiChat1Line,
   [StepTypeEnum.DIGEST]: RiTimeLine,
   [StepTypeEnum.DELAY]: RiTimeLine,

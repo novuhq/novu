@@ -127,6 +127,111 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
       );
     }
   }
+
+  async getInteractionTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const query = `
+      SELECT 
+        toDate(traces.created_at) as date,
+        traces.event_type,
+        count(*) as count
+      FROM traces
+      WHERE 
+        traces.environment_id = {environmentId:String} 
+        AND traces.organization_id = {organizationId:String}
+        AND traces.created_at >= {startDate:DateTime64(3)}
+        AND traces.created_at <= {endDate:DateTime64(3)}
+        AND traces.event_type IN ('message_sent', 'message_seen', 'message_read', 'message_snoozed')
+      GROUP BY date, traces.event_type
+      ORDER BY date, traces.event_type
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      event_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getTotalInteractionsData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const currentQuery = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+    `;
+
+    const previousQuery = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+    `;
+
+    const currentParams = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const previousParams = {
+      environmentId,
+      organizationId,
+      previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+      previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+    };
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentQuery,
+        params: currentParams,
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousQuery,
+        params: previousParams,
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
+  }
 }
 
 export function mapEventTypeToTitle(eventType: EventType): string {

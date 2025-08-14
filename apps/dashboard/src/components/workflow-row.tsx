@@ -10,10 +10,10 @@ import { FilesIcon } from 'lucide-react';
 import { ComponentProps, useState } from 'react';
 import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
+import { LuBookUp2 } from 'react-icons/lu';
 import {
   RiDeleteBin2Line,
   RiFlashlightLine,
-  RiGitPullRequestFill,
   RiMore2Fill,
   RiPauseCircleLine,
   RiPlayCircleLine,
@@ -21,6 +21,7 @@ import {
   RiRouteFill,
   RiTranslate2,
 } from 'react-icons/ri';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
@@ -536,7 +537,7 @@ const SyncWorkflowMenuItem = ({
       <Tooltip>
         <TooltipTrigger>
           <DropdownMenuItem disabled>
-            <RiGitPullRequestFill />
+            <LuBookUp2 />
             Sync workflow
           </DropdownMenuItem>
         </TooltipTrigger>
@@ -550,7 +551,7 @@ const SyncWorkflowMenuItem = ({
   if (otherEnvironments.length === 1) {
     return (
       <DropdownMenuItem onClick={() => onSync(otherEnvironments[0]._id)}>
-        <RiGitPullRequestFill />
+        <LuBookUp2 />
         {`Sync to ${otherEnvironments[0].name}`}
       </DropdownMenuItem>
     );
@@ -559,7 +560,7 @@ const SyncWorkflowMenuItem = ({
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="gap-2">
-        <RiGitPullRequestFill />
+        <LuBookUp2 />
         Sync workflow
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>

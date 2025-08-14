@@ -107,6 +107,7 @@
     "hygen": "^6.2.0",
     "inquirer": "8.2.6",
     "jest": "30.0.5",
+    "jest-util": "30.0.5",
     "jira-prepare-commit-msg": "1.7.2",
     "lint-staged": "^10.5.4",
     "listr": "^0.14.3",
@@ -126,10 +127,9 @@
     "ts-jest": "29.4.1",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "^4.2.0",
-    "wait-port": "^0.3.0",
-    "yargs": "^17.7.2",
     "typescript": "5.6.2",
-    "jest-util": "30.0.5"
+    "wait-port": "^0.3.0",
+    "yargs": "^17.7.2"
   },
   "workspaces": {
     "packages": [
@@ -217,7 +217,8 @@
       "nx",
       "protobufjs",
       "react-icons",
-      "sharp"
+      "sharp",
+      "unrs-resolver"
     ]
   }
 }

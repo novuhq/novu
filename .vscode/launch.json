@@ -34,11 +34,11 @@
       "type": "node"
     },
     {
-      "name": "WEB",
+      "name": "DASHBOARD",
       "request": "launch",
-      "runtimeArgs": ["run-script", "start:dev"],
+      "runtimeArgs": ["run-script", "start"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
+      "cwd": "${workspaceFolder}/apps/dashboard",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     },
@@ -106,11 +106,11 @@
       "type": "node"
     },
     {
-      "name": "STORYBOOK",
+      "name": "APPLICATION GENERIC",
       "request": "launch",
-      "runtimeArgs": ["run-script", "storybook"],
+      "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/web",
+      "cwd": "${workspaceFolder}/apps/application-generic",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }
@@ -118,7 +118,7 @@
   "compounds": [
     {
       "name": "-- RUN ENV - Local",
-      "configurations": ["API", "DAL", "SHARED", "TESTING LIB", "WEB", "worker", "WS"]
+      "configurations": ["API", "DAL", "SHARED", "DASHBOARD", "worker", "APPLICATION GENERIC"]
     },
     {
       "name": "-- RUN ENV - Test",
@@ -128,7 +128,7 @@
         "SHARED",
         "TESTING LIB",
         "WS - TEST ENV",
-        "WEB",
+        "DASHBOARD",
         "WIDGET - test",
         "worker"
       ]
