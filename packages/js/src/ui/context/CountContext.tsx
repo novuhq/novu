@@ -1,5 +1,6 @@
 import { Accessor, createContext, createMemo, createSignal, onMount, ParentProps, useContext } from 'solid-js';
-import { Notification, NotificationFilter } from '../../types';
+import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
+import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { useWebSocketEvent } from '../helpers/useWebSocketEvent';
@@ -9,7 +10,7 @@ import { useNovu } from './NovuContext';
 const MIN_AMOUNT_OF_NOTIFICATIONS = 1;
 
 type CountContextValue = {
-  totalUnreadCount: Accessor<number>;
+  unreadCount: Accessor<{ total: number; severity: Record<string, number> }>;
   unreadCounts: Accessor<Map<string, number>>;
   newNotificationCounts: Accessor<Map<string, number>>;
   resetNewNotificationCounts: (key: string) => void;
@@ -19,8 +20,16 @@ const CountContext = createContext<CountContextValue>(undefined);
 
 export const CountProvider = (props: ParentProps) => {
   const novu = useNovu();
-  const { isOpened, tabs, filter, limit } = useInboxContext();
-  const [totalUnreadCount, setTotalUnreadCount] = createSignal(0);
+  const { isOpened, tabs, filter, limit, activeTab } = useInboxContext();
+  const [unreadCount, setUnreadCount] = createSignal<{ total: number; severity: Record<string, number> }>({
+    total: 0,
+    severity: {
+      [SeverityLevelEnum.HIGH]: 0,
+      [SeverityLevelEnum.MEDIUM]: 0,
+      [SeverityLevelEnum.LOW]: 0,
+      [SeverityLevelEnum.NONE]: 0,
+    },
+  });
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
 
@@ -34,6 +43,7 @@ export const CountProvider = (props: ParentProps) => {
       archived: false,
       snoozed: false,
       data: tab.filter?.data,
+      severity: tab.filter?.severity,
     }));
     const { data } = await novu.notifications.count({ filters });
     if (!data) {
@@ -43,7 +53,11 @@ export const CountProvider = (props: ParentProps) => {
     const newMap = new Map();
     const { counts } = data;
     for (let i = 0; i < counts.length; i += 1) {
-      const tagsKey = createKey(counts[i].filter.tags, counts[i].filter.data);
+      const tagsKey = createKey({
+        tags: counts[i].filter.tags,
+        data: counts[i].filter.data,
+        severity: counts[i].filter.severity,
+      });
       newMap.set(tagsKey, data?.counts[i].count);
     }
 
@@ -57,7 +71,7 @@ export const CountProvider = (props: ParentProps) => {
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
-      setTotalUnreadCount(data.result);
+      setUnreadCount(data.result);
       updateTabCounts();
     },
   });
@@ -69,22 +83,24 @@ export const CountProvider = (props: ParentProps) => {
         return;
       }
 
-      setTotalUnreadCount(data.totalUnreadCount);
+      setUnreadCount(data.unreadCount);
     },
   });
 
   const updateNewNotificationCountsOrCache = (
+    tabLabel: string,
     notification: Notification,
-    tags: string[],
-    data?: NotificationFilter['data']
+    tags: NotificationFilter['tags'],
+    data?: NotificationFilter['data'],
+    severity?: NotificationFilter['severity']
   ) => {
     const notificationsCache = novu.notifications.cache;
     const limitValue = limit();
     // Use the global filter() as a base and override with specific tab's tags and data for cache operations
-    const tabSpecificFilterForCache = { ...filter(), tags, data, after: undefined, limit: limitValue };
+    const tabSpecificFilterForCache = { ...filter(), tags, data, severity, after: undefined, limit: limitValue };
 
     const hasEmptyCache = !notificationsCache.has(tabSpecificFilterForCache);
-    if (!isOpened() && hasEmptyCache) {
+    if (hasEmptyCache && (!isOpened() || activeTab() !== tabLabel)) {
       return;
     }
 
@@ -105,7 +121,8 @@ export const CountProvider = (props: ParentProps) => {
     }
 
     setNewNotificationCounts((oldMap) => {
-      const key = createKey(tags, data); // Use specific tab's tags and data for the key
+      const key = createKey({ tags, data, severity }); // Use specific tab's tags and data for the key
+
       const newMap = new Map(oldMap);
       newMap.set(key, (oldMap.get(key) || 0) + 1);
 
@@ -122,77 +139,34 @@ export const CountProvider = (props: ParentProps) => {
 
       const currentTabs = tabs();
 
-      // Helper function to check if notification data matches tab's data filter criteria
-      function checkNotificationDataAgainstTabData(
-        notificationData: Notification['data'],
-        tabFilterData: NotificationFilter['data']
-      ): boolean {
-        if (!tabFilterData || Object.keys(tabFilterData).length === 0) {
-          // No data filter defined on the tab, so it's a match on the data aspect.
-          return true;
-        }
-        if (!notificationData) {
-          // Tab has a data filter, but the notification has no data.
-          return false;
-        }
-
-        return Object.entries(tabFilterData).every(([key, filterValue]) => {
-          const notifValue = notificationData[key];
-
-          if (notifValue === undefined && filterValue !== undefined) {
-            // Key is specified in tab's data filter, but this key is not present in the notification's data.
-            return false;
-          }
-
-          if (Array.isArray(filterValue)) {
-            if (Array.isArray(notifValue)) {
-              /*
-               * Both filter value and notification value are arrays.
-               * Check for set equality (same elements, regardless of order).
-               */
-              if (filterValue.length !== notifValue.length) return false;
-              /*
-               * Ensure elements are of primitive types for direct sort and comparison.
-               * If elements can be objects, a more sophisticated comparison is needed.
-               */
-              const sortedFilterValue = [...(filterValue as (string | number | boolean)[])].sort();
-              const sortedNotifValue = [...(notifValue as (string | number | boolean)[])].sort();
-
-              return sortedFilterValue.every((val, index) => val === sortedNotifValue[index]);
-            } else {
-              /*
-               * Filter value is an array, notification value is scalar.
-               * Check if the scalar notification value is present in the filter array.
-               */
-              return (filterValue as unknown[]).includes(notifValue);
-            }
-          } else {
-            // Filter value is scalar. Notification value must be equal.
-            return notifValue === filterValue;
-          }
-        });
-      }
-
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
           const tabTags = getTagsFromTab(tab);
           const tabDataFilterCriteria = tab.filter?.data;
+          const tabSeverityFilterCriteria = tab.filter?.severity;
 
-          const matchesTagFilter =
-            tabTags.length === 0 || (notification.tags && tabTags.some((tag) => notification.tags!.includes(tag)));
+          const matchesTagFilter = checkNotificationTagFilter(notification.tags, tabTags);
+          const matchesDataFilterCriteria = checkNotificationDataFilter(notification.data, tabDataFilterCriteria);
 
-          const matchesDataFilterCriteria = checkNotificationDataAgainstTabData(
-            notification.data,
-            tabDataFilterCriteria
-          );
+          const matchesSeverityFilterCriteria =
+            !tabSeverityFilterCriteria ||
+            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.length === 0) ||
+            (Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria.includes(notification.severity)) ||
+            (!Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria === notification.severity);
 
-          if (matchesTagFilter && matchesDataFilterCriteria) {
-            updateNewNotificationCountsOrCache(notification, tabTags, tabDataFilterCriteria);
+          if (matchesTagFilter && matchesDataFilterCriteria && matchesSeverityFilterCriteria) {
+            updateNewNotificationCountsOrCache(
+              tab.label,
+              notification,
+              tabTags,
+              tabDataFilterCriteria,
+              tabSeverityFilterCriteria
+            );
           }
         }
       } else {
         // No tabs are defined. Apply to default (no tags, no data) filter.
-        updateNewNotificationCountsOrCache(notification, [], undefined);
+        updateNewNotificationCountsOrCache('', notification, [], undefined, undefined);
       }
     },
   });
@@ -212,29 +186,27 @@ export const CountProvider = (props: ParentProps) => {
   };
 
   return (
-    <CountContext.Provider
-      value={{ totalUnreadCount, unreadCounts, newNotificationCounts, resetNewNotificationCounts }}
-    >
+    <CountContext.Provider value={{ unreadCount, unreadCounts, newNotificationCounts, resetNewNotificationCounts }}>
       {props.children}
     </CountContext.Provider>
   );
 };
 
-const createKey = (tags?: NotificationFilter['tags'], data?: NotificationFilter['data']) => {
-  return JSON.stringify({ tags: tags ?? [], data: data ?? {} });
+const createKey = (filter: Pick<NotificationFilter, 'tags' | 'data' | 'severity'>) => {
+  return JSON.stringify({ tags: filter.tags ?? [], data: filter.data ?? {}, severity: filter.severity });
 };
 
-export const useTotalUnreadCount = () => {
+export const useUnreadCount = () => {
   const context = useContext(CountContext);
   if (!context) {
-    throw new Error('useTotalUnreadCount must be used within a CountProvider');
+    throw new Error('useUnreadCount must be used within a CountProvider');
   }
 
-  return { totalUnreadCount: context.totalUnreadCount };
+  return { unreadCount: context.unreadCount };
 };
 
 type UseNewMessagesCountProps = {
-  filter: Pick<NotificationFilter, 'tags' | 'data'>;
+  filter: Pick<NotificationFilter, 'tags' | 'data' | 'severity'>;
 };
 
 export const useNewMessagesCount = (props: UseNewMessagesCountProps) => {
@@ -243,29 +215,29 @@ export const useNewMessagesCount = (props: UseNewMessagesCountProps) => {
     throw new Error('useNewMessagesCount must be used within a CountProvider');
   }
 
-  const key = createMemo(() => createKey(props.filter.tags, props.filter.data));
+  const key = createMemo(() => createKey(props.filter));
   const count = createMemo(() => context.newNotificationCounts().get(key()) || 0);
   const reset = () => context.resetNewNotificationCounts(key());
 
   return { count, reset };
 };
 
-type UseUnreadCountProps = {
-  filter: Pick<NotificationFilter, 'tags' | 'data'>;
+type UseFilteredUnreadCountProps = {
+  filter: Pick<NotificationFilter, 'tags' | 'data' | 'severity'>;
 };
-export const useUnreadCount = (props: UseUnreadCountProps) => {
+export const useFilteredUnreadCount = (props: UseFilteredUnreadCountProps) => {
   const context = useContext(CountContext);
   if (!context) {
-    throw new Error('useUnreadCount must be used within a CountProvider');
+    throw new Error('useFilteredUnreadCount must be used within a CountProvider');
   }
 
-  const count = createMemo(() => context.unreadCounts().get(createKey(props.filter.tags, props.filter.data)) || 0);
+  const count = createMemo(() => context.unreadCounts().get(createKey(props.filter)) || 0);
 
   return count;
 };
 
 type UseUnreadCountsProps = {
-  filters: Pick<NotificationFilter, 'tags' | 'data'>[];
+  filters: Pick<NotificationFilter, 'tags' | 'data' | 'severity'>[];
 };
 export const useUnreadCounts = (props: UseUnreadCountsProps) => {
   const context = useContext(CountContext);
@@ -275,7 +247,7 @@ export const useUnreadCounts = (props: UseUnreadCountsProps) => {
 
   const counts = createMemo(() =>
     props.filters.map((filter) => {
-      return context.unreadCounts().get(createKey(filter.tags, filter.data)) || 0;
+      return context.unreadCounts().get(createKey(filter)) || 0;
     })
   );
 

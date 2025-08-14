@@ -55,17 +55,7 @@ export class CreateVariablesObject {
     const hasStepsWithEvents = Object.keys(stepsObject).length > 0;
     const hasPayloadSchema = !!command.payloadSchema;
 
-    let isPayloadSchemaEnabled = false;
-
-    // Only check feature flag if we have both steps and payload schema
-    if (hasStepsWithEvents && hasPayloadSchema) {
-      isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        environment: { _id: command.environmentId },
-      });
-    }
+    const isPayloadSchemaEnabled = hasStepsWithEvents && hasPayloadSchema;
 
     Object.keys(stepsObject).forEach((stepId) => {
       const step = stepsObject[stepId] as Record<string, unknown>;

@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
+import { PermissionsEnum } from '@novu/shared';
 import { useCallback, useState } from 'react';
 import { RiArrowDownSLine, RiCodeSSlashLine, RiFileCopyLine, RiPlayCircleLine } from 'react-icons/ri';
 import { Link, useMatch, useNavigate } from 'react-router-dom';
@@ -30,7 +30,6 @@ export const WorkflowTabs = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
   const activityMatch = useMatch(ROUTES.EDIT_WORKFLOW_ACTIVITY);
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const [isIntegrateDrawerOpen, setIsIntegrateDrawerOpen] = useState(false);
 
   const { triggerWorkflow, isPending } = useTriggerWorkflow();
@@ -277,114 +276,92 @@ export const WorkflowTabs = () => {
               Workflow
             </Link>
           </TabsTrigger>
-          {isV2TemplateEditorEnabled && (
-            <TabsTrigger value="activity" asChild variant="regular" size="lg">
-              <Link
-                to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
-                  environmentSlug: currentEnvironment?.slug ?? '',
-                  workflowSlug: workflow?.slug ?? '',
-                })}
-              >
-                Activity
-              </Link>
-            </TabsTrigger>
-          )}
-          {!isV2TemplateEditorEnabled && (
+          <TabsTrigger value="activity" asChild variant="regular" size="lg">
+            <Link
+              to={buildRoute(ROUTES.EDIT_WORKFLOW_ACTIVITY, {
+                environmentSlug: currentEnvironment?.slug ?? '',
+                workflowSlug: workflow?.slug ?? '',
+              })}
+            >
+              Activity
+            </Link>
+          </TabsTrigger>
+          <div className="my-auto ml-auto flex items-center gap-2">
             <Protect permission={PermissionsEnum.EVENT_WRITE}>
-              <TabsTrigger value="trigger" asChild variant="regular" size="lg">
-                <Link
-                  to={buildRoute(ROUTES.TEST_WORKFLOW, {
-                    environmentSlug: currentEnvironment?.slug ?? '',
-                    workflowSlug: workflow?.slug ?? '',
-                  })}
-                >
-                  Trigger
-                </Link>
-              </TabsTrigger>
+              <Button
+                variant="secondary"
+                size="2xs"
+                mode="ghost"
+                leadingIcon={RiCodeSSlashLine}
+                onClick={handleIntegrateWorkflowClick}
+              >
+                Integrate workflow
+              </Button>
+              <ButtonGroupRoot size="xs">
+                <ButtonGroupItem asChild>
+                  <Button
+                    variant="secondary"
+                    size="xs"
+                    mode="gradient"
+                    className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
+                    onClick={() => {
+                      navigate(
+                        buildRoute(ROUTES.TRIGGER_WORKFLOW, {
+                          environmentSlug: currentEnvironment?.slug ?? '',
+                          workflowSlug: workflow?.slug ?? '',
+                        })
+                      );
+                    }}
+                  >
+                    Test Workflow
+                  </Button>
+                </ButtonGroupItem>
+                <ButtonGroupItem asChild>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="xs"
+                        mode="gradient"
+                        className="rounded-l-none rounded-r-lg border-none text-white"
+                        leadingIcon={RiArrowDownSLine}
+                      />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleFireAndForget} className="cursor-pointer" disabled={isPending}>
+                        <RiPlayCircleLine />
+                        Quick Trigger
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
+                        <RiFileCopyLine />
+                        Copy cURL
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleCopyPostmanCollection} className="cursor-pointer">
+                        <RiFileCopyLine />
+                        Copy postman collection
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ButtonGroupItem>
+              </ButtonGroupRoot>
             </Protect>
-          )}
-          {isV2TemplateEditorEnabled && (
-            <div className="my-auto ml-auto flex items-center gap-2">
-              <Protect permission={PermissionsEnum.EVENT_WRITE}>
-                <Button
-                  variant="secondary"
-                  size="2xs"
-                  mode="ghost"
-                  leadingIcon={RiCodeSSlashLine}
-                  onClick={handleIntegrateWorkflowClick}
-                >
-                  Integrate workflow
-                </Button>
-                <ButtonGroupRoot size="xs">
-                  <ButtonGroupItem asChild>
-                    <Button
-                      variant="secondary"
-                      size="xs"
-                      mode="gradient"
-                      className="rounded-l-lg rounded-r-none border-none p-2 text-white text-xs"
-                      onClick={() => {
-                        navigate(
-                          buildRoute(ROUTES.TRIGGER_WORKFLOW, {
-                            environmentSlug: currentEnvironment?.slug ?? '',
-                            workflowSlug: workflow?.slug ?? '',
-                          })
-                        );
-                      }}
-                    >
-                      Test Workflow
-                    </Button>
-                  </ButtonGroupItem>
-                  <ButtonGroupItem asChild>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="secondary"
-                          size="xs"
-                          mode="gradient"
-                          className="rounded-l-none rounded-r-lg border-none text-white"
-                          leadingIcon={RiArrowDownSLine}
-                        />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleFireAndForget} className="cursor-pointer" disabled={isPending}>
-                          <RiPlayCircleLine />
-                          Quick Trigger
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleCopyCurl} className="cursor-pointer">
-                          <RiFileCopyLine />
-                          Copy cURL
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleCopyPostmanCollection} className="cursor-pointer">
-                          <RiFileCopyLine />
-                          Copy postman collection
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </ButtonGroupItem>
-                </ButtonGroupRoot>
-              </Protect>
-            </div>
-          )}
+          </div>
         </TabsList>
         <TabsContent value="workflow" className="mt-0 h-full w-full">
           <WorkflowCanvas steps={workflow?.steps || []} />
         </TabsContent>
-        {isV2TemplateEditorEnabled && (
-          <TabsContent value="activity" className="mt-0 h-full w-full">
-            <WorkflowActivity />
-          </TabsContent>
-        )}
+        <TabsContent value="activity" className="mt-0 h-full w-full">
+          <WorkflowActivity />
+        </TabsContent>
       </Tabs>
 
-      {isV2TemplateEditorEnabled && (
-        <TestWorkflowInstructions
-          isOpen={isIntegrateDrawerOpen}
-          onClose={() => setIsIntegrateDrawerOpen(false)}
-          workflow={workflow}
-          to={{}}
-          payload="{}"
-        />
-      )}
+      <TestWorkflowInstructions
+        isOpen={isIntegrateDrawerOpen}
+        onClose={() => setIsIntegrateDrawerOpen(false)}
+        workflow={workflow}
+        to={{}}
+        payload="{}"
+      />
     </div>
   );
 };

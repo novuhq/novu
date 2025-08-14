@@ -47,6 +47,7 @@ export class GetSubscriberPreference {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       tags: command.tags,
+      severity: command.severity,
     });
 
     const workflowIds = workflowList.map((wf) => wf._id);

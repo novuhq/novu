@@ -679,8 +679,16 @@ export class Client {
     try {
       const templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
       const parsedTemplate = this.templateEngine.parse(templateString);
+      const discoveredWorkflow = this.getWorkflow(event.workflowId);
 
       const renderVariables = {
+        workflow: {
+          workflowId: discoveredWorkflow.workflowId,
+          name: discoveredWorkflow.name,
+          description: discoveredWorkflow.description,
+          tags: discoveredWorkflow.tags,
+          severity: discoveredWorkflow.severity,
+        },
         payload: event.payload,
         subscriber: event.subscriber,
         steps: buildSteps(event.state),

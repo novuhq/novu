@@ -51,6 +51,9 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
    * @optional
    */
   controls?: StatelessControls;
+
+  @IsString()
+  requestId: string;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {

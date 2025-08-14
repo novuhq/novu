@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
-import { ExecutionDetailsStatusEnum } from '@novu/shared';
-import { LogRepository } from '../../services';
-import { EntityType, EventType, TraceLogRepository } from '../../services/analytic-logs/trace-log';
+import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsService, LogRepository } from '../../services';
+import {
+  EntityType,
+  EventType,
+  StepType,
+  TraceLogRepository,
+  TraceStatus,
+} from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
-import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
+import { mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
 
 // Using satisfies ensures all DetailEnum values are mapped at compile time
@@ -31,6 +37,7 @@ const mapDetailToEventType = {
   [DetailEnum.MESSAGE_CONTENT_NOT_GENERATED]: 'message_content_failed',
   [DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR]: 'message_content_failed',
   [DetailEnum.START_SENDING]: 'message_sending_started',
+  [DetailEnum.MESSAGE_SEVERITY_OVERRIDDEN]: 'message_severity_overridden',
 
   // Subscriber events
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION]: 'subscriber_integration_missing',
@@ -104,22 +111,26 @@ const mapDetailToEventType = {
 export class CreateExecutionDetails {
   constructor(
     private executionDetailsRepository: ExecutionDetailsRepository,
-    private traceLogRepository: TraceLogRepository
+    private traceLogRepository: TraceLogRepository,
+    private featureFlagsService: FeatureFlagsService
   ) {}
 
-  async execute(command: CreateExecutionDetailsCommand): Promise<CreateExecutionDetailsResponseDto> {
+  async execute(command: CreateExecutionDetailsCommand): Promise<void> {
+    const isClickhouseOnlyEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_EXECUTION_DETAILS_CLICKHOUSE_ONLY_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+    });
     let entity = mapExecutionDetailsCommandToEntity(command);
 
     entity = this.cleanFromNulls(entity);
 
-    const { _id, createdAt } = await this.executionDetailsRepository.create(entity, { writeConcern: 1 });
+    if (!isClickhouseOnlyEnabled) {
+      await this.executionDetailsRepository.create(entity, { writeConcern: 1 });
+    }
 
-    await this.createTraceLogEntry(command, createdAt);
-
-    return {
-      id: _id,
-      createdAt,
-    };
+    await this.createTraceLogEntry(command, new Date().toISOString());
   }
 
   private cleanFromNulls(
@@ -149,12 +160,14 @@ export class CreateExecutionDetails {
       status: this.mapExecutionStatusToTraceStatus(command.status),
       entity_type: 'step_run' as EntityType,
       entity_id: command.jobId,
+      step_run_type: command.channel as StepType,
+      workflow_run_identifier: command.workflowRunIdentifier,
     };
 
-    await this.traceLogRepository.create(traceData);
+    await this.traceLogRepository.createStepRun([traceData]);
   }
 
-  private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): string {
+  private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): TraceStatus {
     switch (status) {
       case ExecutionDetailsStatusEnum.SUCCESS:
         return 'success';
@@ -164,8 +177,6 @@ export class CreateExecutionDetails {
         return 'pending';
       case ExecutionDetailsStatusEnum.WARNING:
         return 'warning';
-      default:
-        return 'unknown';
     }
   }
 }

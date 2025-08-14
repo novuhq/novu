@@ -5,6 +5,7 @@ import { StepIdEnum, useOnboardingSteps } from '../../hooks/use-onboarding-steps
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { buildRoute, ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
+import { cn } from '../../utils/ui';
 import { Card, CardContent } from '../primitives/card';
 import { NovuLogo, PointingArrow } from './icons';
 import { leftSection, logo, mainCard, stepItem, stepsList, textItem } from './progress-section.animations';
@@ -19,25 +20,44 @@ interface StepItemProps {
   environmentSlug?: string;
 }
 
-export function ProgressSection() {
+export function ProgressSection({ isNewHomePageEnabled }: { isNewHomePageEnabled?: boolean }) {
   const { environmentSlug } = useParams<{ environmentSlug?: string }>();
   const { steps } = useOnboardingSteps();
 
   return (
-    <motion.div variants={mainCard} initial="hidden" animate="show">
-      <Card className="relative flex items-stretch gap-2 rounded-xl border-neutral-100 shadow-none">
-        <WelcomeHeader />
+    <motion.div variants={mainCard} initial="hidden" animate="show" className="w-full">
+      <Card
+        className={cn(
+          'relative flex items-stretch gap-2 rounded-xl border-neutral-100 shadow-none w-full',
+          isNewHomePageEnabled ? 'flex-col bg-transparent' : ''
+        )}
+      >
+        {isNewHomePageEnabled ? <HomePageHeader /> : <WelcomeHeader />}
 
-        <motion.div className="flex flex-1 flex-col gap-3 p-6" variants={stepsList}>
+        <motion.div
+          className={cn('flex flex-1 flex-col gap-3', isNewHomePageEnabled ? 'p-3 pt-0' : 'p-6')}
+          variants={stepsList}
+        >
           {steps.map((step, index) => (
             <StepItem key={index} step={step} environmentSlug={environmentSlug} />
           ))}
         </motion.div>
 
-        <motion.div variants={logo} className="absolute bottom-0 right-0">
-          <NovuLogo />
-        </motion.div>
+        {!isNewHomePageEnabled && (
+          <motion.div variants={logo} className="absolute bottom-0 right-0">
+            <NovuLogo />
+          </motion.div>
+        )}
       </Card>
+    </motion.div>
+  );
+}
+
+function HomePageHeader() {
+  return (
+    <motion.div variants={leftSection} className="p-3">
+      <h2 className="text-label-xs text-text-strong">You're doing great work! 💪</h2>
+      <p className="text-label-xs text-text-soft">Set up Novu to send notifications your users will love.</p>
     </motion.div>
   );
 }

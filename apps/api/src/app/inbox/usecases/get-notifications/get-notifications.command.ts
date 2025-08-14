@@ -1,7 +1,9 @@
+import { SeverityLevelEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { CursorPaginationParams } from '../../../shared/types';
+import { IsEnumOrArray } from '../../../shared/validators/is-enum-or-array';
 
 export class GetNotificationsCommand extends EnvironmentWithSubscriber implements CursorPaginationParams {
   @IsInt()
@@ -42,4 +44,8 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   @IsOptional()
   @IsString()
   readonly data?: string;
+
+  @IsOptional()
+  @IsEnumOrArray(SeverityLevelEnum)
+  readonly severity?: SeverityLevelEnum | SeverityLevelEnum[];
 }

@@ -4,6 +4,7 @@ import {
   ActorTypeEnum,
   ChannelCTATypeEnum,
   ChannelTypeEnum,
+  SeverityLevelEnum,
   StepTypeEnum,
   SystemAvatarIconEnum,
   TemplateVariableTypeEnum,
@@ -62,6 +63,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     read,
     archived,
     snoozed,
+    severity,
   }: {
     limit?: number;
     after?: string;
@@ -70,6 +72,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
+    severity?: SeverityLevelEnum[];
   } = {}) => {
     let query = `limit=${limit}`;
     if (after) {
@@ -89,6 +92,9 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     }
     if (typeof snoozed !== 'undefined') {
       query += `&snoozed=${snoozed}`;
+    }
+    if (severity) {
+      query += severity.map((el) => `&severity[]=${el}`).join('');
     }
 
     return await session.testAgent
@@ -362,5 +368,138 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     );
     expect(body.hasMore).to.be.false;
     expect(body.data.every((message) => message.isSnoozed)).to.be.true;
+  });
+
+  it('should filter notifications by severity', async () => {
+    // Create templates with different severities
+    const highSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.HIGH,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'High severity notification',
+        },
+      ],
+    });
+
+    const mediumSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.MEDIUM,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Medium severity notification',
+        },
+      ],
+    });
+
+    const lowSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.LOW,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Low severity notification',
+        },
+      ],
+    });
+
+    // Trigger notifications with different severities
+    await novuClient.trigger({
+      workflowId: highSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+
+    await novuClient.trigger({
+      workflowId: mediumSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+
+    await novuClient.trigger({
+      workflowId: lowSeverityTemplate.triggers[0].identifier,
+      to: { subscriberId: session.subscriberId },
+    });
+
+    // Wait for jobs to complete
+    await session.waitForJobCompletion(highSeverityTemplate._id);
+    await session.waitForJobCompletion(mediumSeverityTemplate._id);
+    await session.waitForJobCompletion(lowSeverityTemplate._id);
+
+    // Test filtering by high severity only
+    const { body: highSeverityBody, status: highSeverityStatus } = await getNotifications({
+      severity: [SeverityLevelEnum.HIGH],
+    });
+
+    expect(highSeverityStatus).to.equal(200);
+    expect(highSeverityBody.data).to.be.ok;
+    expect(highSeverityBody.data.length).to.equal(1);
+    expect(highSeverityBody.data[0].severity).to.equal(SeverityLevelEnum.HIGH);
+    expect(highSeverityBody.filter.severity).to.deep.equal([SeverityLevelEnum.HIGH]);
+
+    // Test filtering by multiple severities
+    const { body: multipleSeverityBody, status: multipleSeverityStatus } = await getNotifications({
+      severity: [SeverityLevelEnum.HIGH, SeverityLevelEnum.MEDIUM],
+    });
+
+    expect(multipleSeverityStatus).to.equal(200);
+    expect(multipleSeverityBody.data).to.be.ok;
+    expect(multipleSeverityBody.data.length).to.equal(2);
+    expect(
+      multipleSeverityBody.data.every((notification) =>
+        [SeverityLevelEnum.HIGH, SeverityLevelEnum.MEDIUM].includes(notification.severity)
+      )
+    ).to.be.true;
+    expect(multipleSeverityBody.filter.severity).to.deep.equal([SeverityLevelEnum.HIGH, SeverityLevelEnum.MEDIUM]);
+
+    // Test getting all notifications without filter
+    const { body: allNotificationsBody, status: allNotificationsStatus } = await getNotifications({});
+
+    expect(allNotificationsStatus).to.equal(200);
+    expect(allNotificationsBody.data).to.be.ok;
+    expect(allNotificationsBody.data.length).to.be.greaterThanOrEqual(3);
+  });
+
+  it('should include severity field in notification response', async () => {
+    const highSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      severity: SeverityLevelEnum.HIGH,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'High severity notification',
+        },
+      ],
+    });
+
+    await triggerEvent(highSeverityTemplate);
+
+    const { body } = await getNotifications();
+
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.equal(1);
+    expect(body.data[0]).to.have.property('severity');
+    expect(body.data[0].severity).to.equal(SeverityLevelEnum.HIGH);
+  });
+
+  it('should default to none severity for templates without explicit severity', async () => {
+    const noSeverityTemplate = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Notification without explicit severity',
+        },
+      ],
+    });
+
+    await triggerEvent(noSeverityTemplate);
+
+    const { body } = await getNotifications();
+
+    expect(body.data).to.be.ok;
+    expect(body.data.length).to.equal(1);
+    expect(body.data[0]).to.have.property('severity');
+    expect(body.data[0].severity).to.equal(SeverityLevelEnum.NONE);
   });
 });

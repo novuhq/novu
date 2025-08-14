@@ -14,8 +14,16 @@ export {
   Preference,
   PreferenceLevel,
   PreferencesResponse,
+  SeverityLevelEnum,
   StandardNovuOptions,
   Subscriber,
+  UnreadCount,
   WebSocketEvent,
 } from './types';
-export { areTagsEqual, isSameFilter } from './utils/notification-utils';
+export {
+  areSeveritiesEqual,
+  areTagsEqual,
+  checkNotificationDataFilter,
+  checkNotificationMatchesFilter,
+  isSameFilter,
+} from './utils/notification-utils';

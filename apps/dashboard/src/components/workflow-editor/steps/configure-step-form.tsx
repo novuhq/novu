@@ -92,7 +92,6 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
   const { step, workflow, update, environment } = props;
   const navigate = useNavigate();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
   const supportedStepTypes = [
     StepTypeEnum.IN_APP,
     StepTypeEnum.SMS,
@@ -308,11 +307,7 @@ export const ConfigureStepForm = (props: ConfigureStepFormProps) => {
           {(isTemplateConfigurableStep || isInlineConfigurableStepWithCustomControls) && (
             <>
               <SidebarContent>
-                <Link
-                  to={isV2TemplateEditorEnabled ? './editor' : './edit'}
-                  relative="path"
-                  state={{ stepType: step.type }}
-                >
+                <Link to="./editor" relative="path" state={{ stepType: step.type }}>
                   <Button
                     variant="secondary"
                     mode="outline"

@@ -9,9 +9,10 @@ import { Navigate } from 'react-router-dom';
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
 import { EditStepConditions } from '@/components/workflow-editor/steps/conditions/edit-step-conditions';
 import { ConfigureStep } from '@/components/workflow-editor/steps/configure-step';
-import { ConfigureStepTemplate } from '@/components/workflow-editor/steps/configure-step-template';
+
 import {
   ActivityFeed,
+  AnalyticsPage,
   ApiKeysPage,
   CreateLayoutPage,
   CreateWorkflowPage,
@@ -110,6 +111,10 @@ const router = createBrowserRouter([
         children: [
           /* Direct routes matching environment-specific paths (e.g., /topics -> /env/:envId/topics) 
              will be automatically redirected by the CatchAllRoute component */
+          {
+            index: true,
+            element: <CatchAllRoute />,
+          },
           {
             path: ROUTES.ENV,
             children: [
@@ -316,6 +321,14 @@ const router = createBrowserRouter([
                 ),
               },
               {
+                path: ROUTES.ANALYTICS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <AnalyticsPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
                 path: ROUTES.EDIT_WORKFLOW,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.WORKFLOW_READ}>
@@ -331,13 +344,10 @@ const router = createBrowserRouter([
                     element: <ConfigureStep />,
                     path: ROUTES.EDIT_STEP,
                   },
-                  {
-                    element: <ConfigureStepTemplate />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE,
-                  },
+
                   {
                     element: <EditStepTemplateV2Page />,
-                    path: ROUTES.EDIT_STEP_TEMPLATE_V2,
+                    path: ROUTES.EDIT_STEP_TEMPLATE,
                   },
                   {
                     element: <EditStepConditions />,

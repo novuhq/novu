@@ -8,7 +8,7 @@ import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { RequestLog } from '../../types/logs';
+import type { RequestLog } from '../../types/logs';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { RequestLogsEmptyState } from './logs-empty-state';
 import { RequestsFilters } from './logs-filters';
@@ -41,7 +41,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     isLoading,
     refetch,
   } = useFetchRequestLogs({
-    page: currentPage - 1, // API is 0-based
+    page: currentPage - 1,
     limit: limit,
     status: filters.status,
     transactionId: filters.transactionId || undefined,
@@ -116,7 +116,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {logsData.map((log: RequestLog, index: number) => {
+                    {logsData.map((log: RequestLog) => {
                       const logId = log.id;
                       return (
                         <LogsTableRow

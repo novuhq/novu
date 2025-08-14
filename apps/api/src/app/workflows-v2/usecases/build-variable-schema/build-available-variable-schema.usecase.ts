@@ -1,17 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Instrument, InstrumentUsecase } from '@novu/application-generic';
+import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
 import {
   ControlValuesRepository,
   JsonSchemaTypeEnum,
   NotificationStepEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { ControlValuesLevelEnum, StepTypeEnum } from '@novu/shared';
-import { WorkflowDataContainer } from '../../../shared/containers/workflow-data.container';
+import { ControlValuesLevelEnum, FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { JSONSchemaDto } from '../../../shared/dtos/json-schema.dto';
 import { CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object/create-variables-object.command';
 import { CreateVariablesObject } from '../../../shared/usecases/create-variables-object/create-variables-object.usecase';
-import { buildSubscriberSchema, buildVariablesSchema } from '../../../shared/utils/create-schema';
+import { buildSubscriberSchema, buildVariablesSchema, buildWorkflowSchema } from '../../../shared/utils/create-schema';
 import { computeResultSchema } from '../../shared';
 import { parsePayloadSchema } from '../../shared/parse-payload-schema';
 import { emptyJsonSchema } from '../../util/jsonToSchema';
@@ -21,7 +20,8 @@ import { BuildVariableSchemaCommand, IOptimisticStepInfo } from './build-availab
 export class BuildVariableSchemaUsecase {
   constructor(
     private readonly createVariablesObject: CreateVariablesObject,
-    private readonly controlValuesRepository: ControlValuesRepository
+    private readonly controlValuesRepository: ControlValuesRepository,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
   @InstrumentUsecase()
@@ -63,9 +63,18 @@ export class BuildVariableSchemaUsecase {
 
     const previousSteps = effectiveSteps?.slice(0, this.findStepIndex(effectiveSteps, stepInternalId));
 
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      organization: { _id: command.organizationId },
+      environment: { _id: command.environmentId },
+      user: { _id: command.userId },
+      defaultValue: false,
+    });
+
     return {
       type: JsonSchemaTypeEnum.OBJECT,
       properties: {
+        ...(isNotificationSeverityEnabled ? { workflow: buildWorkflowSchema() } : {}),
         subscriber: buildSubscriberSchema(subscriber),
         steps: buildPreviousStepsSchema({
           previousSteps,

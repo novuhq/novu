@@ -3,9 +3,12 @@ import {
   AnalyticsService,
   FeatureFlagsService,
   PinoLogger,
+  QueryBuilder,
   StepRun,
   StepRunRepository,
+  Trace,
   TraceLogRepository,
+  WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
@@ -131,14 +134,15 @@ export class GetActivity {
       return new Map();
     }
 
-    // Get traces for these entities
+    const traceQuery = new QueryBuilder<Trace>({
+      environmentId: command.environmentId,
+    })
+      .whereIn('entity_id', entityIds)
+      .whereEquals('entity_type', 'step_run')
+      .build();
+
     const traceResult = await this.traceLogRepository.find({
-      where: [
-        { entity_id: { operator: 'IN', value: entityIds } },
-        { entity_type: { operator: '=', value: 'step_run' } },
-        { environment_id: { operator: '=', value: command.environmentId } },
-        { organization_id: { operator: '=', value: command.organizationId } },
-      ],
+      where: traceQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
     });
@@ -180,12 +184,14 @@ export class GetActivity {
     feedItem: NotificationFeedItemEntity,
     command: GetActivityCommand
   ): Promise<JobFeedItem[]> {
+    const stepRunsQuery = new QueryBuilder<StepRun>({
+      environmentId: command.environmentId,
+    })
+      .whereEquals('transaction_id', feedItem.transactionId)
+      .build();
+
     const stepRunsResult = await this.stepRunRepository.find({
-      where: [
-        { organization_id: { operator: '=', value: command.organizationId } },
-        { environment_id: { operator: '=', value: command.environmentId } },
-        { transaction_id: { operator: '=', value: feedItem.transactionId } },
-      ],
+      where: stepRunsQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
       useFinal: true,
@@ -235,12 +241,14 @@ export class GetActivity {
 
   private async getFeedItemFromWorkflowRuns(command: GetActivityCommand): Promise<NotificationFeedItemEntity | null> {
     try {
+      const workflowRunQuery = new QueryBuilder<WorkflowRun>({
+        environmentId: command.environmentId,
+      })
+        .whereEquals('workflow_run_id', command.notificationId)
+        .build();
+
       const workflowRunsResult = await this.workflowRunRepository.find({
-        where: [
-          { organization_id: { operator: '=', value: command.organizationId } },
-          { environment_id: { operator: '=', value: command.environmentId } },
-          { workflow_run_id: { operator: '=', value: command.notificationId } },
-        ],
+        where: workflowRunQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
         limit: 1,

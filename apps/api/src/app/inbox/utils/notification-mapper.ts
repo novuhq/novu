@@ -1,5 +1,5 @@
 import type { MessageEntity } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { ButtonTypeEnum, MessageActionStatusEnum, SeverityLevelEnum } from '@novu/shared';
 
 import type { InboxNotification, Subscriber } from './types';
 
@@ -21,8 +21,10 @@ const mapSingleItem = ({
   avatar,
   cta,
   tags,
+  severity,
   data,
   template,
+  transactionId,
 }: MessageEntity): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id ?? '',
@@ -38,6 +40,7 @@ const mapSingleItem = ({
 
   return {
     id: _id,
+    transactionId,
     subject,
     body: content as string,
     to,
@@ -78,6 +81,7 @@ const mapSingleItem = ({
     },
     channelType: channel,
     tags,
+    severity: severity ?? SeverityLevelEnum.NONE,
     redirect: cta.data?.url
       ? {
           url: cta.data.url,
@@ -92,6 +96,7 @@ const mapSingleItem = ({
           identifier: template.triggers?.[0]?.identifier,
           name: template.name,
           tags: template.tags,
+          severity: template.severity ?? SeverityLevelEnum.NONE,
         }
       : undefined,
   };

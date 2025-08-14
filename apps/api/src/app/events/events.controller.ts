@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, InternalServerErrorException, Param, Post, Scope } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Post, Req, Scope } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RequirePermissions, ResourceCategory } from '@novu/application-generic';
 import {
@@ -25,6 +25,7 @@ import {
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { RequestWithReqId } from '../shared/middleware/request-id.middleware';
 import {
   BulkTriggerEventDto,
   TestSendEmailRequestDto,
@@ -39,7 +40,7 @@ import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email'
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
 function RequestAnalytics(strategy: AnalyticsStrategyEnum = AnalyticsStrategyEnum.BASIC) {
-  return (target: any, propertyKey: string, descriptor: PropertyDescriptor) => {
+  return (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) => {
     // Set analytics strategy as a property on the method
     const originalMethod = descriptor.value;
     originalMethod._analyticsStrategy = strategy;
@@ -87,6 +88,7 @@ export class EventsController {
   @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async trigger(
     @UserSession() user: UserSessionData,
+    @Req() req: RequestWithReqId,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
     const result = await this.parseEventRequest.execute(
@@ -105,6 +107,7 @@ export class EventsController {
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
         bridgeUrl: body.bridgeUrl,
         controls: body.controls,
+        requestId: req._nvRequestId,
       })
     );
 
@@ -133,7 +136,8 @@ export class EventsController {
   @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async triggerBulk(
     @UserSession() user: UserSessionData,
-    @Body() body: BulkTriggerEventDto
+    @Body() body: BulkTriggerEventDto,
+    @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto[]> {
     return this.processBulkTriggerUsecase.execute(
       ProcessBulkTriggerCommand.create({
@@ -141,6 +145,7 @@ export class EventsController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         events: body.events,
+        requestId: req._nvRequestId,
       })
     );
   }
@@ -169,7 +174,8 @@ export class EventsController {
   @RequirePermissions(PermissionsEnum.EVENT_WRITE)
   async broadcastEventToAll(
     @UserSession() user: UserSessionData,
-    @Body() body: TriggerEventToAllRequestDto
+    @Body() body: TriggerEventToAllRequestDto,
+    @Req() req: RequestWithReqId
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
 
@@ -184,6 +190,7 @@ export class EventsController {
         transactionId,
         overrides: body.overrides || {},
         actor: body.actor,
+        requestId: req._nvRequestId,
       })
     );
   }

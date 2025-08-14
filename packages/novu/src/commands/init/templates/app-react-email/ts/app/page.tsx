@@ -395,7 +395,7 @@ export default function Home() {
               </li>
               <li>
                 <a
-                  href="https://roadmap.novu.co/changelog/?utm_campaign=nextjs-starter&utm_source=nextjs-starter&utm_medium=nextjs"
+                  href="https://go.novu.co/changelog/?utm_campaign=nextjs-starter&utm_source=nextjs-starter&utm_medium=nextjs"
                   target="_blank"
                   rel="noopener"
                 >

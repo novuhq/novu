@@ -1,5 +1,5 @@
 import { useUser } from '@clerk/clerk-react';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, WorkflowResponseDto } from '@novu/shared';
+import { ChannelTypeEnum, WorkflowResponseDto } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -180,7 +180,6 @@ function useChecklistItems(steps: Step[]) {
   const { workflow } = useWorkflow();
   const { integrations } = useFetchIntegrations();
   const telemetry = useTelemetry();
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
 
   const foundInAppIntegration = integrations?.find(
     (integration) =>
@@ -217,9 +216,8 @@ function useChecklistItems(steps: Step[]) {
           const stepToConfig = steps.find((step) => step.type !== StepTypeEnum.TRIGGER);
 
           if (stepToConfig) {
-            const route = isV2TemplateEditorEnabled ? ROUTES.EDIT_STEP_TEMPLATE_V2 : ROUTES.EDIT_STEP_TEMPLATE;
             navigate(
-              buildRoute(route, {
+              buildRoute(ROUTES.EDIT_STEP_TEMPLATE, {
                 environmentSlug: currentEnvironment?.slug ?? '',
                 workflowSlug: workflow?.slug ?? '',
                 stepSlug: stepToConfig.slug,
@@ -250,7 +248,7 @@ function useChecklistItems(steps: Step[]) {
         onClick: () => {
           telemetry(TelemetryEvent.WORKFLOW_CHECKLIST_STEP_CLICKED, { stepTitle: 'Trigger workflow' });
           navigate(
-            buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
+            buildRoute(ROUTES.TRIGGER_WORKFLOW, {
               environmentSlug: currentEnvironment?.slug ?? '',
               workflowSlug: workflow?.slug ?? '',
             })
@@ -262,7 +260,7 @@ function useChecklistItems(steps: Step[]) {
         },
       },
     ],
-    [currentEnvironment, workflow, foundInAppIntegration, navigate, steps, telemetry, isV2TemplateEditorEnabled]
+    [currentEnvironment, workflow, foundInAppIntegration, navigate, steps, telemetry]
   );
 }
 

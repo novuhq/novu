@@ -22,6 +22,7 @@ export const mapExecutionDetailsCommandToEntity = (
     notificationId: _notificationId,
     notificationTemplateId: _notificationTemplateId,
     messageId: _messageId,
+    workflowRunIdentifier: _workflowRunIdentifier,
     ...nonUnderscoredFields
   } = command;
 

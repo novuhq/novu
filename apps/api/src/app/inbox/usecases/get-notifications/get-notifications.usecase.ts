@@ -54,6 +54,11 @@ export class GetNotifications {
       }
     }
 
+    const severity = command.severity
+      ? Array.isArray(command.severity)
+        ? command.severity
+        : [command.severity]
+      : undefined;
     const { data: feed, hasMore } = await this.messageRepository.paginate(
       {
         environmentId: command.environmentId,
@@ -65,6 +70,7 @@ export class GetNotifications {
         snoozed: command.snoozed,
         seen: command.seen,
         data: parsedData,
+        severity,
       },
       {
         limit: command.limit,
@@ -88,6 +94,7 @@ export class GetNotifications {
       snoozed: command.snoozed,
       seen: command.seen,
       data: parsedData,
+      severity: command.severity,
     };
 
     return {

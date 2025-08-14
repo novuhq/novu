@@ -1,4 +1,11 @@
-import type { ChannelTypeEnum, CustomDataType, IPreferenceChannels, PreferenceLevelEnum, Redirect } from '@novu/shared';
+import type {
+  ChannelTypeEnum,
+  CustomDataType,
+  IPreferenceChannels,
+  PreferenceLevelEnum,
+  Redirect,
+  SeverityLevelEnum,
+} from '@novu/shared';
 
 export type Subscriber = {
   id: string;
@@ -16,6 +23,7 @@ type Action = {
 
 export type InboxNotification = {
   id: string;
+  transactionId: string;
   subject?: string;
   body: string;
   to: Subscriber;
@@ -37,6 +45,7 @@ export type InboxNotification = {
   data?: Record<string, unknown>;
   redirect?: Redirect;
   workflow?: Workflow;
+  severity: SeverityLevelEnum;
 };
 
 export type NotificationFilter = {
@@ -46,6 +55,7 @@ export type NotificationFilter = {
   snoozed?: boolean;
   seen?: boolean;
   data?: string;
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type Workflow = {
@@ -55,6 +65,7 @@ export type Workflow = {
   critical: boolean;
   tags?: string[];
   data?: CustomDataType;
+  severity: SeverityLevelEnum;
 };
 
 export type InboxPreference = {

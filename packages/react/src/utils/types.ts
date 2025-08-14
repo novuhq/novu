@@ -1,9 +1,7 @@
-import type { Subscriber } from '@novu/js';
+import type { Subscriber, UnreadCount } from '@novu/js';
 import type {
   IconKey,
-  InboxPage,
   InboxProps,
-  Appearance as JsAppearance,
   Theme as JsTheme,
   Localization,
   Notification,
@@ -19,7 +17,7 @@ import type { ReactNode } from 'react';
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
 export type SubjectRenderer = (notification: Notification) => React.ReactNode;
 export type BodyRenderer = (notification: Notification) => React.ReactNode;
-export type BellRenderer = (unreadCount: number) => React.ReactNode;
+export type BellRenderer = (unreadCount: UnreadCount) => React.ReactNode;
 
 export type ReactIconRendererProps = { class?: string };
 export type ReactIconRenderer = (props: ReactIconRendererProps) => ReactNode;

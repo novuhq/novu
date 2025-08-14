@@ -10,10 +10,10 @@ import { FilesIcon } from 'lucide-react';
 import { ComponentProps, useState } from 'react';
 import { CgBolt } from 'react-icons/cg';
 import { FaCode } from 'react-icons/fa6';
+import { LuBookUp2 } from 'react-icons/lu';
 import {
   RiDeleteBin2Line,
   RiFlashlightLine,
-  RiGitPullRequestFill,
   RiMore2Fill,
   RiPauseCircleLine,
   RiPlayCircleLine,
@@ -21,6 +21,7 @@ import {
   RiRouteFill,
   RiTranslate2,
 } from 'react-icons/ri';
+
 import { Link, useNavigate } from 'react-router-dom';
 import { type ExternalToast } from 'sonner';
 import { PAUSE_MODAL_TITLE, PauseModalDescription } from '@/components/pause-workflow-dialog';
@@ -97,7 +98,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
   const has = useHasPermission();
   const navigate = useNavigate();
   const { safeSync, isSyncable, tooltipContent, PromoteConfirmModal } = useSyncWorkflow(workflow);
-  const isV2TemplateEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_TEMPLATE_EDITOR_ENABLED);
+
   const isNewChangeManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_NEW_CHANGE_MECHANISM_ENABLED);
   const isV0Workflow = workflow.origin === ResourceOriginEnum.NOVU_CLOUD_V1;
   const isDuplicable =
@@ -112,7 +113,7 @@ export const WorkflowRow = ({ workflow }: WorkflowRowProps) => {
       });
   const triggerWorkflowLink = isV0Workflow
     ? buildRoute(`${LEGACY_DASHBOARD_URL}/workflows/edit/:workflowId/test-workflow`, { workflowId: workflow._id })
-    : buildRoute(isV2TemplateEditorEnabled ? ROUTES.TRIGGER_WORKFLOW : ROUTES.TEST_WORKFLOW, {
+    : buildRoute(ROUTES.TRIGGER_WORKFLOW, {
         environmentSlug: currentEnvironment?.slug ?? '',
         workflowSlug: workflow.slug,
       });
@@ -536,7 +537,7 @@ const SyncWorkflowMenuItem = ({
       <Tooltip>
         <TooltipTrigger>
           <DropdownMenuItem disabled>
-            <RiGitPullRequestFill />
+            <LuBookUp2 />
             Sync workflow
           </DropdownMenuItem>
         </TooltipTrigger>
@@ -550,7 +551,7 @@ const SyncWorkflowMenuItem = ({
   if (otherEnvironments.length === 1) {
     return (
       <DropdownMenuItem onClick={() => onSync(otherEnvironments[0]._id)}>
-        <RiGitPullRequestFill />
+        <LuBookUp2 />
         {`Sync to ${otherEnvironments[0].name}`}
       </DropdownMenuItem>
     );
@@ -559,7 +560,7 @@ const SyncWorkflowMenuItem = ({
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger className="gap-2">
-        <RiGitPullRequestFill />
+        <LuBookUp2 />
         Sync workflow
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>

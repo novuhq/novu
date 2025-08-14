@@ -15,8 +15,10 @@ export type {
   PreferenceLevel,
   PreferencesResponse,
   SocketEventNames,
+  UnreadCount,
   WebSocketEvent,
 } from '@novu/js';
+export { SeverityLevelEnum } from '@novu/js';
 
 export type {
   Appearance,

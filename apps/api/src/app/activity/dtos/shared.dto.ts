@@ -63,3 +63,17 @@ export class GetWorkflowRunResponseBaseDto {
   @IsString()
   updatedAt: string;
 }
+
+export enum ReportTypeEnum {
+  DELIVERY_TREND = 'delivery-trend',
+  INTERACTION_TREND = 'interaction-trend',
+  WORKFLOW_BY_VOLUME = 'workflow-by-volume',
+  PROVIDER_BY_VOLUME = 'provider-by-volume',
+  MESSAGES_DELIVERED = 'messages-delivered',
+  ACTIVE_SUBSCRIBERS = 'active-subscribers',
+  AVG_MESSAGES_PER_SUBSCRIBER = 'avg-messages-per-subscriber',
+  WORKFLOW_RUNS_METRIC = 'workflow-runs-metric',
+  TOTAL_INTERACTIONS = 'total-interactions',
+  WORKFLOW_RUNS_TREND = 'workflow-runs-trend',
+  ACTIVE_SUBSCRIBERS_TREND = 'active-subscribers-trend',
+}

@@ -6,13 +6,16 @@ import {
   InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  messageWebhookMapper,
   PinoLogger,
+  SendWebhookMessage,
+  StepType,
   Trace,
   TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
-import { WebSocketEventEnum } from '@novu/shared';
+import { WebhookEventEnum, WebhookObjectTypeEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
 import { AnalyticsEventsEnum } from '../../utils';
@@ -28,7 +31,8 @@ export class MarkNotificationsAsSeen {
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     private traceLogRepository: TraceLogRepository,
-    private logger: PinoLogger
+    private logger: PinoLogger,
+    private sendWebhookMessage: SendWebhookMessage
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -51,14 +55,29 @@ export class MarkNotificationsAsSeen {
       throw new BadRequestException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
+    let updatedMessages: MessageEntity[] = [];
     // If notificationIds are provided, use them; otherwise use filters
     if (notificationIds && notificationIds.length > 0) {
-      await this.messageRepository.updateMessagesStatusByIds({
+      updatedMessages = await this.messageRepository.updateMessagesStatusByIds({
         environmentId: command.environmentId,
         subscriberId: subscriber._id,
         ids: notificationIds,
         seen: true,
       });
+
+      const webhookPromises = updatedMessages.map((message) =>
+        this.sendWebhookMessage.execute({
+          eventType: WebhookEventEnum.MESSAGE_SEEN,
+          objectType: WebhookObjectTypeEnum.MESSAGE,
+          payload: {
+            object: messageWebhookMapper(message, subscriber.subscriberId),
+          },
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+        })
+      );
+
+      await Promise.all(webhookPromises);
 
       await this.logTraces({
         command,
@@ -209,7 +228,7 @@ export class MarkNotificationsAsSeen {
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createMany(allTraceData);
+        await this.traceLogRepository.createStepRun(allTraceData);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create seen traces for ${allTraceData.length} messages`);
       }
@@ -241,6 +260,8 @@ export class MarkNotificationsAsSeen {
       status: 'success',
       entity_type: 'step_run',
       entity_id: message._jobId,
+      step_run_type: message.channel as StepType,
+      workflow_run_identifier: message.templateIdentifier,
     };
   }
 }

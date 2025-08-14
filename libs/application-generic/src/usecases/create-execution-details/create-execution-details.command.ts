@@ -1,11 +1,16 @@
 import { ExecutionDetailsEntity, ExecutionDetailsRepository, JobEntity } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EmailEventStatusEnum, SmsEventStatusEnum } from '@novu/stateless';
-import { IsDate, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsDate, IsDefined, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../commands';
 import { DetailEnum } from './types';
 
 export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
+  // used for trace log
+  @IsString()
+  @IsDefined()
+  workflowRunIdentifier: string;
+
   @IsOptional()
   jobId?: string;
 
@@ -75,6 +80,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
     | 'providerId'
     | 'transactionId'
     | 'channel'
+    | 'workflowRunIdentifier'
   > {
     return {
       environmentId: job._environmentId,
@@ -88,6 +94,7 @@ export class CreateExecutionDetailsCommand extends EnvironmentWithSubscriber {
       providerId: job.providerId,
       transactionId: job.transactionId,
       channel: job.type,
+      workflowRunIdentifier: job.identifier,
     };
   }
 

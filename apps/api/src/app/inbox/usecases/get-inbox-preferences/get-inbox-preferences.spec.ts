@@ -6,6 +6,7 @@ import {
   PreferenceLevelEnum,
   PreferenceOverrideSourceEnum,
   PreferencesTypeEnum,
+  SeverityLevelEnum,
   TriggerTypeEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
@@ -18,6 +19,7 @@ import {
   GetSubscriberPreference,
   GetSubscriberPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-preference';
+import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 import { GetInboxPreferences } from './get-inbox-preferences.usecase';
 
 const mockedWorkflow = {
@@ -27,6 +29,7 @@ const mockedWorkflow = {
   critical: false,
   tags: [],
   createdAt: '2023-01-01T00:00:00.000Z',
+  severity: SeverityLevelEnum.NONE,
 } satisfies ITemplateConfiguration;
 const mockedWorkflowPreference = {
   type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -130,6 +133,7 @@ describe('GetInboxPreferences', () => {
       subscriberId: command.subscriberId,
       organizationId: command.organizationId,
       tags: undefined,
+      severity: undefined,
       includeInactiveChannels: false,
     });
 
@@ -147,6 +151,7 @@ describe('GetInboxPreferences', () => {
           name: mockedWorkflow.name,
           critical: mockedWorkflow.critical,
           tags: mockedWorkflow.tags,
+          severity: mockedWorkflow.severity,
         },
       },
     ]);
@@ -162,6 +167,7 @@ describe('GetInboxPreferences', () => {
           critical: false,
           tags: ['newsletter'],
           createdAt: '2023-01-01T00:00:00.000Z',
+          severity: SeverityLevelEnum.HIGH,
         },
         preference: mockedWorkflowPreference.preference,
         type: PreferencesTypeEnum.USER_WORKFLOW,
@@ -174,16 +180,18 @@ describe('GetInboxPreferences', () => {
           critical: false,
           tags: ['security'],
           createdAt: '2023-01-02T00:00:00.000Z',
+          severity: SeverityLevelEnum.HIGH,
         },
         preference: mockedWorkflowPreference.preference,
         type: PreferencesTypeEnum.USER_WORKFLOW,
       },
     ] satisfies ISubscriberPreferenceResponse[];
-    const command = {
+    const command: GetInboxPreferencesCommand = {
       environmentId: 'env-1',
       organizationId: 'org-1',
       subscriberId: 'test-mockSubscriber',
       tags: ['newsletter', 'security'],
+      severity: [SeverityLevelEnum.HIGH],
     };
 
     getSubscriberGlobalPreferenceMock.execute.resolves({
@@ -207,6 +215,7 @@ describe('GetInboxPreferences', () => {
       subscriberId: command.subscriberId,
       organizationId: command.organizationId,
       tags: command.tags,
+      severity: command.severity,
       includeInactiveChannels: false,
     });
 
@@ -220,6 +229,7 @@ describe('GetInboxPreferences', () => {
           name: workflowsWithTags[0].template.name,
           critical: workflowsWithTags[0].template.critical,
           tags: workflowsWithTags[0].template.tags,
+          severity: workflowsWithTags[0].template.severity,
         },
         ...mockedWorkflowPreference.preference,
       },
@@ -231,6 +241,7 @@ describe('GetInboxPreferences', () => {
           name: workflowsWithTags[1].template.name,
           critical: workflowsWithTags[1].template.critical,
           tags: workflowsWithTags[1].template.tags,
+          severity: workflowsWithTags[1].template.severity,
         },
         ...mockedWorkflowPreference.preference,
       },

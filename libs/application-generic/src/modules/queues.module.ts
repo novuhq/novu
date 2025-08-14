@@ -72,6 +72,7 @@ export class QueuesModule implements OnApplicationShutdown {
           );
           break;
         case JobTopicNameEnum.STANDARD:
+          healthIndicators.push(StandardQueueServiceHealthIndicator);
           tokenList.push(StandardQueueService);
           DYNAMIC_PROVIDERS.push(StandardQueueService, StandardQueueServiceHealthIndicator);
           break;

@@ -31,6 +31,8 @@ export type BaseTriggerCommand = {
   organizationId: string;
   userId: string;
   transactionId: string;
+  // TODO: remove optional flag after all the workers are migrated to use requestId NV-6475
+  requestId?: string;
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;

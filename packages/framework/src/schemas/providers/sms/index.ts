@@ -32,6 +32,7 @@ export const smsProviderSchemas = {
   simpletexting: genericProviderSchemas,
   sms77: genericProviderSchemas,
   'sms-central': genericProviderSchemas,
+  smsmode: genericProviderSchemas,
   sns: genericProviderSchemas,
   telnyx: genericProviderSchemas,
   termii: genericProviderSchemas,

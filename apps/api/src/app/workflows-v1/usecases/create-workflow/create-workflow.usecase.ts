@@ -33,7 +33,6 @@ import {
 import {
   ChangeEntityTypeEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  FeatureFlagsKeysEnum,
   INotificationTemplateStep,
   INotificationTrigger,
   IStepVariant,
@@ -83,14 +82,7 @@ export class CreateWorkflow {
 
       const templateSteps = await this.storeTemplateSteps(command, parentChangeId, session);
       const trigger = await this.createNotificationTrigger(command, triggerIdentifier);
-      const isPayloadSchemaEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_PAYLOAD_SCHEMA_ENABLED,
-        defaultValue: false,
-        organization: { _id: command.organizationId },
-        environment: { _id: command.environmentId },
-      });
-
-      if (isPayloadSchemaEnabled && !command.payloadSchema) {
+      if (!command.payloadSchema) {
         command.payloadSchema = {
           type: JsonSchemaTypeEnum.OBJECT,
           additionalProperties: true,
@@ -160,7 +152,7 @@ export class CreateWorkflow {
     session?: ClientSession | null
   ) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
     if (!isEnterprise || isSelfHosted) {
       return;
@@ -362,6 +354,7 @@ export class CreateWorkflow {
       origin: command.origin,
       status: command.status,
       issues: command.issues,
+      severity: command.severity,
       ...(command.updatedBy ? { _updatedBy: command.updatedBy } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema ? { payloadSchema: command.payloadSchema } : {}),

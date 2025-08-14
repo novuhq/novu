@@ -35,21 +35,6 @@ export function IntegrationsListPage() {
             <TabsTrigger value="providers" variant="regular" size="xl">
               Providers
             </TabsTrigger>
-            <Tooltip>
-              <TooltipTrigger>
-                <TabsTrigger value="data-warehouse" variant="regular" disabled size="xl">
-                  Data{' '}
-                  <Badge color="gray" size="sm" variant="lighter">
-                    SOON
-                  </Badge>
-                </TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs">
-                  Data warehouse connectors for syncing user data and triggering notifications.
-                </p>
-              </TooltipContent>
-            </Tooltip>
           </TabsList>
           <PermissionButton
             permission={PermissionsEnum.INTEGRATION_WRITE}
@@ -64,9 +49,6 @@ export function IntegrationsListPage() {
         </div>
         <TabsContent value="providers" className="!mt-0 p-2.5">
           <IntegrationsList onItemClick={onItemClick} />
-        </TabsContent>
-        <TabsContent value="data-warehouse">
-          <div className="text-muted-foreground flex h-64 items-center justify-center">Coming soon</div>
         </TabsContent>
       </Tabs>
       <Outlet />

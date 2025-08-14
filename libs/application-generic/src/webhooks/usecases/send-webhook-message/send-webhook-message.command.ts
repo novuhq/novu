@@ -1,5 +1,5 @@
 import { WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
-import { IsDefined, IsEnum, IsString } from 'class-validator';
+import { IsDefined, IsEnum } from 'class-validator';
 import { EnvironmentCommand } from '../../../commands/project.command';
 
 export class SendWebhookMessageCommand extends EnvironmentCommand {
@@ -10,6 +10,7 @@ export class SendWebhookMessageCommand extends EnvironmentCommand {
   @IsEnum(WebhookObjectTypeEnum)
   objectType: WebhookObjectTypeEnum;
 
+  // todo: investigate if we can create generic type that depends on the objectType, (e.g. map objectType to WebhookMessageSentDto, WebhookMessageFailedDto, etc.)
   @IsDefined()
   payload: {
     object: Record<string, unknown>;

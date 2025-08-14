@@ -1223,3 +1223,14 @@ export const afroSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const smsmodeProviderConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    description: 'API key provided by smsmode',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

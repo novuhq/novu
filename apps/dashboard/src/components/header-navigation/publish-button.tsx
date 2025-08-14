@@ -2,7 +2,8 @@ import type { IEnvironment } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useState } from 'react';
-import { RiArrowDownSLine, RiGitPullRequestFill } from 'react-icons/ri';
+import { LuBookUp2 } from 'react-icons/lu';
+import { RiArrowDownSLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { IEnvironmentDiffResponse, IEnvironmentPublishResponse, ResourceToPublish } from '@/api/environments';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
@@ -115,7 +116,7 @@ export const PublishButton = () => {
           className="h-[26px]"
           mode="outline"
           size="2xs"
-          leadingIcon={RiGitPullRequestFill}
+          leadingIcon={LuBookUp2}
           onClick={() => handleEnvironmentSelect(targetEnvironment, changesCount > 0)}
         >
           <div className="flex items-center">
@@ -159,7 +160,7 @@ export const PublishButton = () => {
             className="h-[26px]"
             mode="outline"
             size="2xs"
-            leadingIcon={RiGitPullRequestFill}
+            leadingIcon={LuBookUp2}
             trailingIcon={RiArrowDownSLine}
             disabled={otherEnvironments.length === 0}
           >

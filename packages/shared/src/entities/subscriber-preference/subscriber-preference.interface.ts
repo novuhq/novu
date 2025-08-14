@@ -1,3 +1,4 @@
+import { SeverityLevelEnum } from '../../consts';
 import { ChannelTypeEnum, PreferenceOverrideSourceEnum, PreferencesTypeEnum } from '../../types';
 import { INotificationTrigger } from '../notification-trigger';
 
@@ -34,6 +35,7 @@ export interface ITemplateConfiguration {
   triggers: INotificationTrigger[];
   updatedAt?: string;
   createdAt?: string;
+  severity?: SeverityLevelEnum;
 }
 
 export enum PreferenceLevelEnum {

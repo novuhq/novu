@@ -124,7 +124,12 @@ export class ConstructFrameworkWorkflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
       async ({ step, payload, subscriber }) => {
-        const fullPayloadForRender: FullPayloadForRender = { payload, subscriber, steps: {} };
+        const fullPayloadForRender: FullPayloadForRender = {
+          workflow: dbWorkflow as unknown as Record<string, unknown>,
+          payload,
+          subscriber,
+          steps: {},
+        };
         for (const staticStep of dbWorkflow.steps) {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep({
             step,
@@ -139,6 +144,10 @@ export class ConstructFrameworkWorkflow {
       },
       {
         payloadSchema: PERMISSIVE_EMPTY_SCHEMA,
+        name: dbWorkflow.name,
+        description: dbWorkflow.description,
+        tags: dbWorkflow.tags,
+        severity: dbWorkflow.severity,
 
         /*
          * TODO: Workflow options are not needed currently, given that this endpoint
@@ -350,7 +359,13 @@ export class ConstructFrameworkWorkflow {
       return false;
     }
 
-    const { result, error } = evaluateRules(skipRules, variables);
+    const { result, error } = evaluateRules(skipRules, {
+      ...variables,
+      subscriber: {
+        ...variables.subscriber,
+        isOnline: variables.subscriber.isOnline ?? false,
+      },
+    });
 
     if (error) {
       this.logger.error({ err: error }, 'Failed to evaluate skip rule', LOG_CONTEXT);

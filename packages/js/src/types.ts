@@ -58,9 +58,23 @@ export enum SocketType {
   PARTY_SOCKET = 'partysocket',
 }
 
+export enum SeverityLevelEnum {
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
+  NONE = 'none',
+}
+
+export type UnreadCount = {
+  total: number;
+  severity: Record<SeverityLevelEnum, number>;
+};
+
 export type Session = {
   token: string;
+  /** @deprecated Use unreadCount.total instead */
   totalUnreadCount: number;
+  unreadCount: UnreadCount;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
   maxSnoozeDurationHours: number;
@@ -102,10 +116,12 @@ export type Workflow = {
   name: string;
   critical: boolean;
   tags?: string[];
+  severity: SeverityLevelEnum;
 };
 
 export type InboxNotification = {
   id: string;
+  transactionId: string;
   subject?: string;
   body: string;
   to: Subscriber;
@@ -127,6 +143,7 @@ export type InboxNotification = {
   data?: NotificationData;
   redirect?: Redirect;
   workflow?: Workflow;
+  severity: SeverityLevelEnum;
 };
 
 export type NotificationFilter = {
@@ -136,6 +153,7 @@ export type NotificationFilter = {
   snoozed?: boolean;
   seen?: boolean;
   data?: Record<string, unknown>;
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type ChannelPreference = {

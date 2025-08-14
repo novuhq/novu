@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IActor, IMessageCTA } from '@novu/shared';
+import { ChannelTypeEnum, IActor, IMessageCTA, SeverityLevelEnum } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
@@ -106,6 +106,8 @@ export class MessageEntity {
   tags?: string[];
 
   avatar?: string;
+
+  severity?: SeverityLevelEnum;
 }
 
 export type MessageDBModel = ChangePropsValueType<
