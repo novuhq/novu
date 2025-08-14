@@ -12,15 +12,16 @@ import { FilesIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { LuBookUp2 } from 'react-icons/lu';
 import {
   RiArrowRightSLine,
   RiCodeSSlashLine,
   RiDeleteBin2Line,
-  RiGitPullRequestFill,
   RiListView,
   RiMore2Fill,
   RiSettingsLine,
 } from 'react-icons/ri';
+
 import { Link, useNavigate } from 'react-router-dom';
 import type { ExternalToast } from 'sonner';
 import { z } from 'zod';
@@ -262,13 +263,13 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                     (isSyncable ? (
                       otherEnvironments.length === 1 ? (
                         <DropdownMenuItem onClick={() => safeSync(otherEnvironments[0]._id)}>
-                          <RiGitPullRequestFill />
+                          <LuBookUp2 />
                           {`Sync to ${otherEnvironments[0].name}`}
                         </DropdownMenuItem>
                       ) : (
                         <DropdownMenuSub>
                           <DropdownMenuSubTrigger className="gap-2">
-                            <RiGitPullRequestFill />
+                            <LuBookUp2 />
                             Sync workflow
                           </DropdownMenuSubTrigger>
                           <DropdownMenuPortal>
@@ -286,7 +287,7 @@ export const ConfigureWorkflowForm = (props: ConfigureWorkflowFormProps) => {
                       <Tooltip>
                         <TooltipTrigger>
                           <DropdownMenuItem disabled>
-                            <RiGitPullRequestFill />
+                            <LuBookUp2 />
                             Sync workflow
                           </DropdownMenuItem>
                         </TooltipTrigger>
