@@ -111,7 +111,10 @@ export const CountProvider = (props: ParentProps) => {
     };
     const hasLessThenMinAmount = (cachedData?.notifications.length || 0) < MIN_AMOUNT_OF_NOTIFICATIONS;
 
-    if (hasLessThenMinAmount) {
+    // Auto-load notifications when:
+    // 1. Cache is nearly empty
+    // 2. OR inbox is closed (will be auto-loaded when opened)
+    if (hasLessThenMinAmount || !isOpened()) {
       notificationsCache.update(tabSpecificFilterForCache, {
         ...cachedData,
         notifications: [notification, ...cachedData.notifications],
@@ -120,6 +123,7 @@ export const CountProvider = (props: ParentProps) => {
       return;
     }
 
+    // Only show banner when inbox is already open and new notification is received
     setNewNotificationCounts((oldMap) => {
       const key = createKey({ tags, data, severity }); // Use specific tab's tags and data for the key
 
