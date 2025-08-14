@@ -40,7 +40,7 @@ export const usePlainChat = () => {
               text: 'Roadmap',
               url: 'https://roadmap.novu.co/roadmap?utm_campaign=in_app_live_chat',
             },
-            { icon: 'link', text: 'Changelog', url: 'https://roadmap.novu.co/changelog?utm_campaign=in_app_live_chat' },
+            { icon: 'link', text: 'Changelog', url: 'https://go.novu.co/changelog?utm_campaign=in_app_live_chat' },
             {
               icon: 'email',
               text: 'Contact Sales',
