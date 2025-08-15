@@ -142,7 +142,7 @@ export function CommandPalette() {
         <CommandMenu.Input
           value={search}
           onValueChange={setSearch}
-          placeholder="Type a command or search..."
+          placeholder="Type a command, search or ask Novu AI..."
           autoFocus
           className="text-label-md text-text-sub placeholder:text-text-soft"
         />

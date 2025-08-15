@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
-import { Command, CommandExecutionContext, CommandGroup } from '../command-types';
+import { Command, CommandCategory, CommandExecutionContext, CommandGroup } from '../command-types';
 import { useActionCommands } from '../commands/action-commands';
 import { useEnvironmentCommands } from '../commands/environment-commands';
 import { useHelpCommands } from '../commands/help-commands';
@@ -50,7 +50,15 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
 
     // Group commands by category with predefined order
     const groups: CommandGroup[] = [];
-    const categoryOrder = ['workflow', 'action', 'navigation', 'subscriber', 'settings', 'search', 'help'];
+    const categoryOrder: CommandCategory[] = [
+      'workflow',
+      'action',
+      'navigation',
+      'subscriber',
+      'settings',
+      'search',
+      'help',
+    ];
     const availableCategories = Array.from(new Set(visibleCommands.map((cmd) => cmd.category)));
 
     // Sort categories by predefined order, with any unlisted categories at the end
