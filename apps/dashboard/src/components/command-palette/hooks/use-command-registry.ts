@@ -44,6 +44,10 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     // Filter visible commands
     const visibleCommands = allCommands.filter((command) => (command.isVisible ? command.isVisible() : true));
 
+    // Determine if user is searching
+    const isSearching = searchQuery.trim().length > 0;
+    const maxItemsPerCategory = isSearching ? Infinity : 5;
+
     // Group commands by category
     const groups: CommandGroup[] = [];
     const categories = Array.from(new Set(visibleCommands.map((cmd) => cmd.category)));
@@ -51,21 +55,26 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     for (const category of categories) {
       const commands = visibleCommands.filter((cmd) => cmd.category === category);
       if (commands.length > 0) {
+        const sortedCommands = commands.sort((a, b) => {
+          // Sort by priority first, then alphabetically
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          const aPriority = priorityOrder[a.priority || 'medium'];
+          const bPriority = priorityOrder[b.priority || 'medium'];
+
+          if (aPriority !== bPriority) {
+            return aPriority - bPriority;
+          }
+
+          return a.label.localeCompare(b.label);
+        });
+
+        // Limit commands per category when not searching
+        const limitedCommands = sortedCommands.slice(0, maxItemsPerCategory);
+
         groups.push({
           category,
           label: getCategoryLabel(category),
-          commands: commands.sort((a, b) => {
-            // Sort by priority first, then alphabetically
-            const priorityOrder = { high: 0, medium: 1, low: 2 };
-            const aPriority = priorityOrder[a.priority || 'medium'];
-            const bPriority = priorityOrder[b.priority || 'medium'];
-
-            if (aPriority !== bPriority) {
-              return aPriority - bPriority;
-            }
-
-            return a.label.localeCompare(b.label);
-          }),
+          commands: limitedCommands,
         });
       }
     }
@@ -79,6 +88,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     environmentCommands,
     settingsCommands,
     helpCommands,
+    searchQuery,
   ]);
 
   return commandGroups;
