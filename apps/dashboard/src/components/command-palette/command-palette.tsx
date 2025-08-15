@@ -51,7 +51,7 @@ const getCategoryActionLabel = (category: CommandCategory | undefined, value: st
   const actionLabels: Record<CommandCategory, string> = {
     workflow: 'Go to workflow',
     navigation: 'Navigate to',
-    subscriber: 'View subscriber',
+    subscriber: 'Open command',
     action: 'Execute action',
     search: 'Search for',
     settings: 'Open settings',

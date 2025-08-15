@@ -50,15 +50,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
 
     // Group commands by category with predefined order
     const groups: CommandGroup[] = [];
-    const categoryOrder: CommandCategory[] = [
-      'workflow',
-      'action',
-      'navigation',
-      'subscriber',
-      'settings',
-      'search',
-      'help',
-    ];
+    const categoryOrder: CommandCategory[] = ['workflow', 'action', 'navigation', 'data', 'settings', 'search', 'help'];
     const availableCategories = Array.from(new Set(visibleCommands.map((cmd) => cmd.category)));
 
     // Sort categories by predefined order, with any unlisted categories at the end
@@ -112,7 +104,7 @@ function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
     navigation: 'Navigation',
     workflow: 'Workflows',
-    subscriber: 'Subscribers',
+    data: 'Data',
     action: 'Actions',
     search: 'Search',
     settings: 'Settings',

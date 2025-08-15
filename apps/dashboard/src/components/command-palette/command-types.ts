@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 
-export type CommandCategory = 'navigation' | 'workflow' | 'subscriber' | 'action' | 'search' | 'settings' | 'help';
+export type CommandCategory = 'navigation' | 'workflow' | 'data' | 'action' | 'search' | 'settings' | 'help';
 
 export type CommandPriority = 'high' | 'medium' | 'low';
 
