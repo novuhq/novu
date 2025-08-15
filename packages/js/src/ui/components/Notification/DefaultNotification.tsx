@@ -279,9 +279,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
         </div>
       </div>
 
-      <Show when={!props.notification.isRead}>
-        <span class={style('notificationDot', 'nt-size-1.5 nt-bg-primary nt-rounded-full nt-shrink-0')} />
-      </Show>
+      <div class="nt-w-1.5 nt-flex nt-justify-center nt-shrink-0">
+        <Show when={!props.notification.isRead}>
+          <span class={style('notificationDot', 'nt-size-1.5 nt-bg-primary nt-rounded-full')} />
+        </Show>
+      </div>
     </a>
   );
 };
