@@ -13,6 +13,11 @@ export interface Command {
   icon?: ReactNode;
   shortcut?: string;
   priority?: CommandPriority;
+  metadata?: {
+    slug?: string;
+    workflowId?: string;
+    [key: string]: unknown;
+  };
   execute: () => void | Promise<void>;
   isVisible?: () => boolean;
   isEnabled?: () => boolean;

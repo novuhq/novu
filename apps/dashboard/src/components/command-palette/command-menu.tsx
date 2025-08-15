@@ -69,7 +69,7 @@ const CommandList = React.forwardRef<
   return (
     <Command.List
       ref={forwardedRef}
-      className={cn('flex max-h-[400px] min-h-0 flex-1 flex-col overflow-auto', 'py-2', className)}
+      className={cn('max-h-[400px] min-h-0 flex-1 overflow-auto', 'py-1', className)}
       {...rest}
     />
   );
@@ -84,11 +84,10 @@ const CommandGroup = React.forwardRef<
     <Command.Group
       ref={forwardedRef}
       className={cn(
-        'relative px-2 py-3',
-        '[&>[cmdk-group-heading]]:text-xs [&>[cmdk-group-heading]]:text-foreground-600',
-        '[&>[cmdk-group-heading]]:mb-2 [&>[cmdk-group-heading]]:px-3 [&>[cmdk-group-heading]]:pt-1',
-        '[&>[cmdk-group-heading]]:font-medium [&>[cmdk-group-heading]]:uppercase',
-        '[&>[cmdk-group-heading]]:tracking-wide',
+        'px-2 py-0',
+        '[&>[cmdk-group-heading]]:text-[10px] [&>[cmdk-group-heading]]:text-text-soft',
+        '[&>[cmdk-group-heading]]:px-1.5 [&>[cmdk-group-heading]]:py-2',
+        '[&>[cmdk-group-heading]]:uppercase',
         className
       )}
       {...rest}
@@ -100,9 +99,9 @@ CommandGroup.displayName = 'CommandGroup';
 const CommandItem = React.forwardRef<
   React.ComponentRef<typeof Command.Item>,
   React.ComponentPropsWithoutRef<typeof Command.Item> & { size?: 'small' | 'medium' }
->(({ className, size = 'small', ...rest }, forwardedRef) => {
+>(({ className, size = 'small', children, ...rest }, forwardedRef) => {
   const sizeClasses = {
-    small: 'px-3 py-2.5',
+    small: 'px-3 py-2',
     medium: 'px-3 py-3',
   };
 
@@ -110,16 +109,19 @@ const CommandItem = React.forwardRef<
     <Command.Item
       ref={forwardedRef}
       className={cn(
-        'flex items-center gap-3 rounded-lg bg-background',
-        'cursor-pointer text-sm text-foreground-950',
-        'transition duration-200 ease-out',
-        'data-[selected=true]:bg-neutral-100',
+        'flex items-center justify-between gap-3 rounded-8',
+        'cursor-pointer text-paragraph-sm',
+        'transition-colors duration-200',
+        'hover:bg-[#F4F5F6]',
+        'data-[selected=true]:bg-[#F4F5F6]',
         'data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed',
         sizeClasses[size],
         className
       )}
       {...rest}
-    />
+    >
+      {children}
+    </Command.Item>
   );
 });
 CommandItem.displayName = 'CommandItem';
@@ -150,7 +152,7 @@ const CommandFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     return (
       <div
         ref={forwardedRef}
-        className={cn('flex h-12 items-center justify-between gap-3 px-5 border-t border-neutral-200', className)}
+        className={cn('flex h-12 items-center justify-between gap-3 px-5 border-t border-neutral-100', className)}
         {...rest}
       />
     );
@@ -164,8 +166,8 @@ const CommandFooterKeyBox = React.forwardRef<HTMLDivElement, React.HTMLAttribute
       <div
         ref={forwardedRef}
         className={cn(
-          'flex size-5 shrink-0 items-center justify-center rounded bg-neutral-100 text-foreground-600',
-          'ring-1 ring-inset ring-neutral-200 text-xs font-mono',
+          'flex size-5 items-center justify-center rounded-6 bg-bg-weak text-text-soft',
+          'ring-1 ring-inset ring-stroke-soft text-label-2xs font-mono',
           className
         )}
         {...rest}

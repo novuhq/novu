@@ -34,23 +34,6 @@ export function useWorkflowCommands(context: CommandExecutionContext): Command[]
       },
       isVisible: () => hasWorkflowWrite({ permission: PermissionsEnum.WORKFLOW_WRITE }) && !!context.environmentSlug,
     });
-
-    // Browse templates
-    commands.push({
-      id: 'workflow-templates',
-      label: 'Browse Workflow Templates',
-      description: 'Explore workflow templates to get started quickly',
-      category: 'workflow',
-      icon: <RiRouteFill />,
-      priority: 'medium',
-      keywords: ['template', 'browse', 'workflow', 'store'],
-      execute: () => {
-        if (context.environmentSlug) {
-          navigate(buildRoute(ROUTES.TEMPLATE_STORE, { environmentSlug: context.environmentSlug }));
-        }
-      },
-      isVisible: () => hasWorkflowWrite({ permission: PermissionsEnum.WORKFLOW_WRITE }) && !!context.environmentSlug,
-    });
   }
 
   // Add individual workflow commands (will only show when searching)
@@ -64,6 +47,10 @@ export function useWorkflowCommands(context: CommandExecutionContext): Command[]
         icon: <RiRouteFill />,
         priority: 'low', // Lower priority so main workflow commands appear first
         keywords: ['edit', 'workflow', workflow.name, workflow.workflowId, 'open'],
+        metadata: {
+          slug: workflow.slug,
+          workflowId: workflow.workflowId,
+        },
         execute: () => {
           if (context.environmentSlug && workflow.slug) {
             navigate(

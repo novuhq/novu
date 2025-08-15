@@ -1,11 +1,46 @@
 import { useCallback, useEffect, useState } from 'react';
-import { RiArrowDownLine, RiArrowUpLine, RiCloseLine, RiCornerDownLeftLine, RiSearch2Line } from 'react-icons/ri';
+import {
+  RiArrowDownLine,
+  RiArrowUpLine,
+  RiCloseLine,
+  RiCornerDownLeftLine,
+  RiFileLine,
+  RiFlashlightLine,
+  RiQuestionLine,
+  RiRouteFill,
+  RiSearch2Line,
+  RiSearchLine,
+  RiSettings4Line,
+  RiUserLine,
+} from 'react-icons/ri';
 import { cn } from '@/utils/ui';
-import { IconCmd, Kbd } from '../primitives/kbd';
 import * as CommandMenu from './command-menu';
-import { Command as CommandType } from './command-types';
+import { CommandCategory, Command as CommandType } from './command-types';
 import { useCommandPalette } from './hooks/use-command-palette';
 import { useCommandRegistry } from './hooks/use-command-registry';
+
+const CategoryIconWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div
+      className={'flex size-6 items-center justify-center rounded-8 bg-bg-weak text-text-sub border border-neutral-200'}
+    >
+      <div className="size-3.5 flex items-center justify-center">{children}</div>
+    </div>
+  );
+};
+
+const getDefaultIcon = (category: CommandCategory): React.ReactNode => {
+  const defaultIcons: Record<CommandCategory, React.ReactNode> = {
+    workflow: <RiRouteFill />,
+    navigation: <RiFileLine />,
+    subscriber: <RiUserLine />,
+    action: <RiFlashlightLine />,
+    search: <RiSearch2Line />,
+    settings: <RiSettings4Line />,
+    help: <RiQuestionLine />,
+  };
+  return defaultIcons[category];
+};
 
 export function CommandPalette() {
   const { isOpen, closeCommandPalette } = useCommandPalette();
@@ -38,36 +73,28 @@ export function CommandPalette() {
   return (
     <CommandMenu.Dialog open={isOpen} onOpenChange={closeCommandPalette}>
       {/* Input wrapper */}
-      <div className="group/cmd-input bg-background flex h-12 w-full items-center gap-2 px-2">
-        <RiSearch2Line
-          className={cn(
-            'text-foreground-400 size-5 shrink-0',
-            'transition duration-200 ease-out',
-            'group-focus-within/cmd-input:text-primary-500'
-          )}
-        />
+      <div className="group/cmd-input flex items-center gap-2 p-3 bg-bg-weak">
+        <RiSearchLine className={cn('size-5 text-text-soft')} />
         <CommandMenu.Input
           value={search}
           onValueChange={setSearch}
           placeholder="Type a command or search..."
           autoFocus
+          className="text-label-md text-text-sub placeholder:text-text-soft"
         />
-        <Kbd>
-          <IconCmd className="size-2.5" /> +K
-        </Kbd>
         <button
           onClick={closeCommandPalette}
-          className="flex size-6 shrink-0 items-center justify-center rounded text-foreground-400 hover:text-foreground-600 transition-colors"
+          className="size-4 items-center justify-center rounded-6 text-text-soft hover:text-icon-sub transition-colors"
         >
           <RiCloseLine className="size-4" />
         </button>
       </div>
 
-      <CommandMenu.List>
+      <CommandMenu.List className="py-0 min-h-[400px]">
         <CommandMenu.Empty>No commands found.</CommandMenu.Empty>
 
         {commandGroups.map((group) => (
-          <CommandMenu.Group key={group.category} heading={group.label}>
+          <CommandMenu.Group key={group.category} heading={group.label} className="px-2.5">
             {group.commands.map((command) => {
               const isEnabled = command.isEnabled ? command.isEnabled() : true;
 
@@ -77,20 +104,20 @@ export function CommandPalette() {
                   value={`${command.label} ${command.keywords?.join(' ') || ''}`}
                   onSelect={() => isEnabled && executeCommand(command)}
                   disabled={!isEnabled}
+                  className="px-1.5 rounded-8"
                 >
-                  <CommandMenu.ItemIcon>
-                    <div className="flex size-5 shrink-0 items-center justify-center text-foreground-600">
-                      {command.icon}
-                    </div>
-                  </CommandMenu.ItemIcon>
-                  <span className="flex-1">{command.label}</span>
-                  <span className="ml-auto text-xs text-foreground-400">
-                    {command.category === 'action' || command.category === 'search'
-                      ? 'Command'
-                      : command.category === 'workflow'
-                        ? 'Workflow'
-                        : 'Page'}
-                  </span>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <CategoryIconWrapper>{command.icon || getDefaultIcon(command.category)}</CategoryIconWrapper>
+                    <span className="text-text-sub text-label-sm flex-1 truncate">{command.label}</span>
+                  </div>
+                  {command.metadata?.workflowId && (
+                    <span
+                      className="text-paragraph-sm text-text-soft ml-auto max-w-32 truncate"
+                      title={command.metadata.workflowId}
+                    >
+                      {command.metadata.workflowId}
+                    </span>
+                  )}
                 </CommandMenu.Item>
               );
             })}
@@ -108,13 +135,13 @@ export function CommandPalette() {
             <CommandMenu.FooterKeyBox>
               <RiArrowDownLine className="size-4" />
             </CommandMenu.FooterKeyBox>
-            <span className="text-xs text-foreground-600">Navigate</span>
+            <span className="text-paragraph-xs text-text-soft">Navigate</span>
           </div>
           <div className="flex items-center gap-2">
             <CommandMenu.FooterKeyBox>
               <RiCornerDownLeftLine className="size-4" />
             </CommandMenu.FooterKeyBox>
-            <span className="text-xs text-foreground-600">Select</span>
+            <span className="text-paragraph-xs text-text-soft">Select</span>
           </div>
         </div>
       </CommandMenu.Footer>
