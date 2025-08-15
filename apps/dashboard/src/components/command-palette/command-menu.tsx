@@ -34,6 +34,11 @@ const CommandDialog = ({
             'grid min-h-0 auto-cols-auto grid-flow-row',
             '[&>[cmdk-label]+*]:!border-t-0'
           )}
+          filter={(value, search, keywords) => {
+            const extendValue = value + ' ' + (keywords?.join(' ') || '');
+            if (extendValue.includes(search)) return 1;
+            return 0;
+          }}
         >
           {children}
         </Command>
