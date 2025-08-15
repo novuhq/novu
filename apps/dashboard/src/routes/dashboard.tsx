@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { IntercomProvider } from 'react-use-intercom';
 import { AiDrawerProvider } from '@/components/ai-drawer';
 import { CommandPalette } from '@/components/command-palette';
+import { CommandPaletteProvider } from '@/components/command-palette/command-palette-provider';
 import { Toaster } from '@/components/primitives/sonner';
 import { INTERCOM_APP_ID } from '@/config';
 import { OptInProvider } from '@/context/opt-in-provider';
@@ -14,9 +15,11 @@ export const DashboardRoute = () => {
       <IntercomProvider appId={INTERCOM_APP_ID}>
         <OptInProvider>
           <AiDrawerProvider>
-            <Outlet />
-            <CommandPalette />
-            <Toaster />
+            <CommandPaletteProvider>
+              <Outlet />
+              <CommandPalette />
+              <Toaster />
+            </CommandPaletteProvider>
           </AiDrawerProvider>
         </OptInProvider>
       </IntercomProvider>

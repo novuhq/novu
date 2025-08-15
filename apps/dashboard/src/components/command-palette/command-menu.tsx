@@ -3,7 +3,8 @@
 import { type DialogProps } from '@radix-ui/react-dialog';
 import { Command } from 'cmdk';
 import * as React from 'react';
-import { Dialog, DialogContent } from '@/components/primitives/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/primitives/dialog';
+import { VisuallyHidden } from '@/components/primitives/visually-hidden';
 import { cn } from '@/utils/ui';
 
 const CommandDialog = ({
@@ -28,6 +29,9 @@ const CommandDialog = ({
           className
         )}
       >
+        <VisuallyHidden>
+          <DialogTitle>Command Palette</DialogTitle>
+        </VisuallyHidden>
         <Command
           className={cn(
             'divide-y divide-neutral-200',
