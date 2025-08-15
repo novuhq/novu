@@ -77,6 +77,7 @@ export type {
   Preference,
   PreferenceLevel,
 } from '@novu/js';
+export { SeverityLevelEnum } from '@novu/js';
 
 export type {
   Appearance,

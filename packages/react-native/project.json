@@ -1,0 +1,13 @@
+{
+  "name": "@novu/react-native",
+  "sourceRoot": "packages/react-native/src",
+  "projectType": "library",
+  "targets": {
+    "nx-release-publish": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "cd packages/react-native && pnpm publish --access public --no-git-checks --tag ${NX_RELEASE_TAG:-latest}"
+      }
+    }
+  }
+}

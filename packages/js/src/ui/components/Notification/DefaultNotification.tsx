@@ -1,11 +1,12 @@
 import { createEffect, createMemo, createSignal, For, JSX, Show } from 'solid-js';
 
 import type { Notification } from '../../../notifications';
-import { ActionTypeEnum } from '../../../types';
+import { ActionTypeEnum, SeverityLevelEnum } from '../../../types';
 import { useInboxContext, useLocalization } from '../../context';
 import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../helpers';
 import { Clock as DefaultClock } from '../../icons/Clock';
 import {
+  AppearanceKey,
   type BodyRenderer,
   type NotificationActionClickHandler,
   type NotificationClickHandler,
@@ -25,6 +26,20 @@ type DefaultNotificationProps = {
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
+};
+
+const SEVERITY_TO_BAR_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
+  [SeverityLevelEnum.NONE]: 'notificationBar',
+  [SeverityLevelEnum.HIGH]: 'severityHigh__notificationBar',
+  [SeverityLevelEnum.MEDIUM]: 'severityMedium__notificationBar',
+  [SeverityLevelEnum.LOW]: 'severityLow__notificationBar',
+};
+
+const SEVERITY_TO_NOTIFICATION_KEYS: Record<SeverityLevelEnum, AppearanceKey> = {
+  [SeverityLevelEnum.NONE]: 'notification',
+  [SeverityLevelEnum.HIGH]: 'severityHigh__notification',
+  [SeverityLevelEnum.MEDIUM]: 'severityMedium__notification',
+  [SeverityLevelEnum.LOW]: 'severityLow__notification',
 };
 
 export const DefaultNotification = (props: DefaultNotificationProps) => {
@@ -106,17 +121,36 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
   return (
     <a
       class={style(
-        'notification',
+        SEVERITY_TO_NOTIFICATION_KEYS[props.notification.severity],
         cn(
-          'nt-w-full nt-text-sm hover:nt-bg-primary-alpha-25 nt-group nt-relative nt-flex nt-items-start nt-p-4 nt-gap-2',
+          'nt-transition nt-w-full nt-text-sm hover:nt-bg-primary-alpha-25 nt-group nt-relative nt-flex nt-items-start nt-p-4 nt-gap-2',
           '[&:not(:first-child)]:nt-border-t nt-border-neutral-alpha-100',
           {
             'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
+            'nt-bg-severity-high-alpha-50 hover:nt-bg-severity-high-alpha-25':
+              props.notification.severity === SeverityLevelEnum.HIGH,
+            'nt-bg-severity-medium-alpha-50 hover:nt-bg-severity-medium-alpha-25':
+              props.notification.severity === SeverityLevelEnum.MEDIUM,
+            'nt-bg-severity-low-alpha-50 hover:nt-bg-severity-low-alpha-25':
+              props.notification.severity === SeverityLevelEnum.LOW,
           }
         )
       )}
       onClick={handleNotificationClick}
     >
+      <div
+        class={style(
+          SEVERITY_TO_BAR_KEYS[props.notification.severity],
+          cn('nt-transition nt-absolute nt-left-0 nt-top-0 nt-bottom-0 nt-w-[3px]', {
+            'nt-bg-severity-high group-hover:nt-bg-severity-high-alpha-500':
+              props.notification.severity === SeverityLevelEnum.HIGH,
+            'nt-bg-severity-medium group-hover:nt-bg-severity-medium-alpha-500':
+              props.notification.severity === SeverityLevelEnum.MEDIUM,
+            'nt-bg-severity-low group-hover:nt-bg-severity-low-alpha-500':
+              props.notification.severity === SeverityLevelEnum.LOW,
+          })
+        )}
+      />
       <Show
         when={props.notification.avatar}
         fallback={

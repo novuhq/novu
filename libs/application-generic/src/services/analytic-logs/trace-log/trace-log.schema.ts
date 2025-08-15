@@ -35,6 +35,12 @@ const schemaDefinition = {
 
   // Data retention
   expires_at: { type: CHDateTime64(3, 'UTC') },
+
+  // Step run metadata
+  step_run_type: { type: CHString('') }, // default value is empty string
+
+  // Workflow run metadata
+  workflow_run_identifier: { type: CHString('') }, // default value is empty string
 };
 
 export const ORDER_BY: (keyof typeof schemaDefinition)[] = [
@@ -71,6 +77,7 @@ export type EventType =
   | 'message_unsnooze_failed'
   | 'message_content_failed'
   | 'message_sending_started'
+  | 'message_severity_overridden'
   | 'step_created'
   | 'step_queued'
   | 'step_delayed'
@@ -143,12 +150,15 @@ export type EntityType = 'request' | 'step_run';
 
 export type TraceStatus = 'success' | 'error' | 'warning' | 'pending';
 
+export type StepType = 'in_app' | 'email' | 'sms' | 'chat' | 'push' | 'digest' | 'delay';
+
 type NativeTrace = InferClickhouseSchemaType<typeof traceLogSchema>;
 
-export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | 'status'> & {
+export type TraceLogComplex = Omit<NativeTrace, 'event_type' | 'entity_type' | 'status' | 'step_run_type'> & {
   event_type: EventType;
   entity_type: EntityType;
   status: TraceStatus;
+  step_run_type?: StepType;
 };
 
 export type Trace = Prettify<TraceLogComplex>;

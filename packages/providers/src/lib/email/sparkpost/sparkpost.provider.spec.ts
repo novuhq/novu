@@ -29,8 +29,8 @@ test('should trigger sparkpost library correctly', async () => {
 
   await provider.sendMessage(mockNovuMessage);
 
-  expect(spy).toBeCalled();
-  expect(spy).toBeCalledWith(
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith(
     '/transmissions',
     {
       content: {
@@ -72,8 +72,8 @@ test('should trigger sparkpost library correctly with _passthrough', async () =>
     },
   });
 
-  expect(spy).toBeCalled();
-  expect(spy).toBeCalledWith(
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith(
     '/transmissions',
     {
       content: {

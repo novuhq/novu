@@ -1,5 +1,5 @@
 import { ComponentProps, createMemo, JSX, Show } from 'solid-js';
-import { useInboxContext, useUnreadCount } from '../../context';
+import { useFilteredUnreadCount, useInboxContext } from '../../context';
 import { ClassName, cn, getTagsFromTab, useStyle } from '../../helpers';
 import { NotificationStatus, Tab } from '../../types';
 import { Dropdown, dropdownItemVariants, Tabs } from '../primitives';
@@ -26,7 +26,9 @@ export const InboxTabUnreadNotificationsCount = (props: { count: number }) => {
 export const InboxTab = (props: Tab & { class?: ClassName }) => {
   const { status } = useInboxContext();
   const style = useStyle();
-  const unreadCount = useUnreadCount({ filter: { tags: getTagsFromTab(props), data: props.filter?.data } });
+  const unreadCount = useFilteredUnreadCount({
+    filter: { tags: getTagsFromTab(props), data: props.filter?.data, severity: props.filter?.severity },
+  });
 
   return (
     <Tabs.Trigger
@@ -48,7 +50,9 @@ type InboxDropdownTabProps = Pick<ComponentProps<(typeof Dropdown)['Item']>, 'on
 export const InboxDropdownTab = (props: InboxDropdownTabProps) => {
   const { status } = useInboxContext();
   const style = useStyle();
-  const unreadCount = useUnreadCount({ filter: { tags: getTagsFromTab(props), data: props.filter?.data } });
+  const unreadCount = useFilteredUnreadCount({
+    filter: { tags: getTagsFromTab(props), data: props.filter?.data, severity: props.filter?.severity },
+  });
 
   return (
     <Dropdown.Item

@@ -2,9 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { ExecutionDetailsEntity, ExecutionDetailsRepository } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { FeatureFlagsService, LogRepository } from '../../services';
-import { EntityType, EventType, TraceLogRepository, TraceStatus } from '../../services/analytic-logs/trace-log';
+import {
+  EntityType,
+  EventType,
+  StepType,
+  TraceLogRepository,
+  TraceStatus,
+} from '../../services/analytic-logs/trace-log';
 import { CreateExecutionDetailsCommand } from './create-execution-details.command';
-import { CreateExecutionDetailsResponseDto, mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
+import { mapExecutionDetailsCommandToEntity } from './dtos/execution-details.dto';
 import { DetailEnum } from './types';
 
 // Using satisfies ensures all DetailEnum values are mapped at compile time
@@ -31,6 +37,7 @@ const mapDetailToEventType = {
   [DetailEnum.MESSAGE_CONTENT_NOT_GENERATED]: 'message_content_failed',
   [DetailEnum.MESSAGE_CONTENT_SYNTAX_ERROR]: 'message_content_failed',
   [DetailEnum.START_SENDING]: 'message_sending_started',
+  [DetailEnum.MESSAGE_SEVERITY_OVERRIDDEN]: 'message_severity_overridden',
 
   // Subscriber events
   [DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION]: 'subscriber_integration_missing',
@@ -153,9 +160,11 @@ export class CreateExecutionDetails {
       status: this.mapExecutionStatusToTraceStatus(command.status),
       entity_type: 'step_run' as EntityType,
       entity_id: command.jobId,
+      step_run_type: command.channel as StepType,
+      workflow_run_identifier: command.workflowRunIdentifier,
     };
 
-    await this.traceLogRepository.create(traceData);
+    await this.traceLogRepository.createStepRun([traceData]);
   }
 
   private mapExecutionStatusToTraceStatus(status: ExecutionDetailsStatusEnum): TraceStatus {

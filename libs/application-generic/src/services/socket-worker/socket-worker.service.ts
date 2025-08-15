@@ -149,15 +149,48 @@ export class SocketWorkerService {
 
   private async sendUnreadCountChange(userId: string, environmentId: string, organizationId?: string): Promise<void> {
     try {
-      const unreadCount = await this.messageRepository.getCount(
-        environmentId,
-        userId,
-        ChannelTypeEnum.IN_APP,
-        { read: false },
-        { limit: 101 },
-        undefined,
-        'primary'
-      );
+      const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+        defaultValue: false,
+        organization: { _id: organizationId },
+      });
+
+      const [unreadCount, severityCounts] = await Promise.all([
+        this.messageRepository.getCount(
+          environmentId,
+          userId,
+          ChannelTypeEnum.IN_APP,
+          { read: false },
+          { limit: 101 },
+          undefined,
+          'primary'
+        ),
+        isNotificationSeverityEnabled
+          ? await this.messageRepository.getCountBySeverity(
+              environmentId,
+              userId,
+              ChannelTypeEnum.IN_APP,
+              { read: false, snoozed: false },
+              { limit: 99 }
+            )
+          : [],
+      ]);
+
+      const counts = {
+        total: unreadCount,
+        severity: {
+          high: 0,
+          medium: 0,
+          low: 0,
+          none: 0,
+        },
+      };
+
+      for (const { severity, count } of severityCounts) {
+        if (severity in counts.severity) {
+          counts.severity[severity] = count;
+        }
+      }
 
       const paginationIndication: UnreadCountPaginationIndication =
         unreadCount > 100 ? { unreadCount: 100, hasMore: true } : { unreadCount, hasMore: false };
@@ -167,6 +200,7 @@ export class SocketWorkerService {
         WebSocketEventEnum.UNREAD,
         {
           unreadCount: paginationIndication.unreadCount,
+          counts,
           hasMore: paginationIndication.hasMore,
         },
         organizationId,

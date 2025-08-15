@@ -46,6 +46,25 @@ const baseTheme = (options: { multiline?: boolean }) =>
             overflow: 'hidden',
           },
         }),
+    '.cm-line span.cm-matchingBracket': {
+      backgroundColor: 'hsl(var(--highlighted) / 0.1)',
+    },
+    // important to show the cursor at the beginning of the line
+    '.cm-line': {
+      marginLeft: '1px',
+      lineHeight: '20px',
+    },
+    'div.cm-content': {
+      padding: 0,
+    },
+    'div.cm-gutters': {
+      backgroundColor: 'transparent',
+      borderRight: 'none',
+      color: 'hsl(var(--foreground-400))',
+    },
+    '.cm-placeholder': {
+      fontWeight: 'normal',
+    },
     '.cm-tooltip-autocomplete .cm-completionIcon-variable, .cm-tooltip-autocomplete .cm-completionIcon-local, .cm-tooltip-autocomplete .cm-completionIcon-property':
       {
         '&:before': {
@@ -165,34 +184,6 @@ const baseTheme = (options: { multiline?: boolean }) =>
       padding: '0',
       width: '16px',
       height: '16px',
-    },
-    '.cm-line span.cm-matchingBracket': {
-      backgroundColor: 'hsl(var(--highlighted) / 0.1)',
-    },
-    // important to show the cursor at the beginning of the line
-    '.cm-line': {
-      marginLeft: '1px',
-      lineHeight: '20px',
-    },
-    'div.cm-content': {
-      padding: 0,
-      ...(options.multiline
-        ? {
-            whiteSpace: 'pre-wrap',
-            width: '100%',
-          }
-        : {
-            whiteSpace: 'preserve nowrap',
-            width: '1px', // Any width value would do to make the editor work exactly like an input when more text than its width is added
-          }),
-    },
-    'div.cm-gutters': {
-      backgroundColor: 'transparent',
-      borderRight: 'none',
-      color: 'hsl(var(--foreground-400))',
-    },
-    '.cm-placeholder': {
-      fontWeight: 'normal',
     },
     '.cm-tooltip .cm-completionInfo': {
       marginInline: '0.375rem',
@@ -325,6 +316,7 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         foldGutter,
         highlightActiveLine: false,
         highlightActiveLineGutter: false,
+        highlightSelectionMatches: false,
         defaultKeymap: multiline,
         ...((typeof basicSetupProp === 'object' ? basicSetupProp : {}) ?? {}),
       }),

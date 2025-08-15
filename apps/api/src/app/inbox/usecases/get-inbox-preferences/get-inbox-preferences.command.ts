@@ -1,6 +1,7 @@
 import { SeverityLevelEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
+import { IsEnumOrArray } from '../../../shared/validators/is-enum-or-array';
 
 export class GetInboxPreferencesCommand extends EnvironmentWithSubscriber {
   @IsOptional()
@@ -9,7 +10,6 @@ export class GetInboxPreferencesCommand extends EnvironmentWithSubscriber {
   readonly tags?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsEnum(SeverityLevelEnum, { each: true })
-  readonly severity?: SeverityLevelEnum[];
+  @IsEnumOrArray(SeverityLevelEnum)
+  readonly severity?: SeverityLevelEnum | SeverityLevelEnum[];
 }

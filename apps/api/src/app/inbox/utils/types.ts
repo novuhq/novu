@@ -55,7 +55,7 @@ export type NotificationFilter = {
   snoozed?: boolean;
   seen?: boolean;
   data?: string;
-  severity?: string[];
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type Workflow = {

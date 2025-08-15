@@ -48,6 +48,7 @@ const mapToNotification = ({
   tags,
   data,
   workflow,
+  severity,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id,
@@ -117,6 +118,7 @@ const mapToNotification = ({
       : undefined,
     data,
     workflow,
+    severity,
   };
 };
 
@@ -159,9 +161,9 @@ export class Socket extends BaseModule implements BaseSocketInterface {
     });
   };
 
-  #unreadCountChanged = ({ unreadCount }: { unreadCount: number }) => {
+  #unreadCountChanged = ({ counts }: { counts: { total: number; severity: Record<string, number> } }) => {
     this.#emitter.emit(UNREAD_COUNT_CHANGED, {
-      result: unreadCount,
+      result: counts,
     });
   };
 

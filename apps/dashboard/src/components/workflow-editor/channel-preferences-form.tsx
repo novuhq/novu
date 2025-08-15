@@ -304,7 +304,9 @@ export const ChannelPreferencesForm = (props: ConfigureWorkflowFormProps) => {
                                 <span className="text-text-soft text-2xs">Why it matters:</span>
                                 <ul className="text-text-sub text-2xs list-disc pl-4">
                                   <li>
-                                    {'Helps your subscribers spot what’s urgent. Affects color coding, ordering, and behavior in <Inbox />.'}
+                                    {
+                                      'Helps your subscribers spot what’s urgent. Affects color coding, ordering, and behavior in <Inbox />.'
+                                    }
                                   </li>
                                 </ul>
                               </div>

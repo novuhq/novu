@@ -26,55 +26,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
     this.logger.setContext(this.constructor.name);
   }
 
-  async create(traceData: Omit<Trace, 'id' | 'expires_at'>): Promise<void> {
-    try {
-      const isTraceLogsEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_TRACE_LOGS_ENABLED,
-        defaultValue: false,
-        organization: { _id: traceData.organization_id },
-        user: { _id: traceData.user_id },
-        environment: { _id: traceData.environment_id },
-      });
-
-      if (!isTraceLogsEnabled) {
-        return;
-      }
-
-      await this.insert(
-        traceData,
-        {
-          organizationId: traceData.organization_id,
-          environmentId: traceData.environment_id,
-          userId: traceData.user_id,
-        },
-        TRACE_INSERT_OPTIONS
-      );
-
-      this.logger.debug(
-        {
-          entityId: traceData.entity_id,
-          entityType: traceData.entity_type,
-          eventType: traceData.event_type,
-        },
-        'Trace event logged'
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          error,
-          entityId: traceData.entity_id,
-          entityType: traceData.entity_type,
-          eventType: traceData.event_type,
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-          errorStack: error instanceof Error ? error.stack : undefined,
-        },
-        'Failed to log trace event'
-      );
-      // Don't rethrow to avoid breaking the main flow
-    }
-  }
-
-  async createMany(traceDataArray: Omit<Trace, 'id' | 'expires_at'>[]): Promise<void> {
+  private async createMany(traceDataArray: Omit<Trace, 'id' | 'expires_at'>[]): Promise<void> {
     if (traceDataArray.length === 0) {
       return;
     }
@@ -110,7 +62,7 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
           entityTypes: [...new Set(traceDataArray.map((trace) => trace.entity_type))],
           eventTypes: [...new Set(traceDataArray.map((trace) => trace.event_type))],
         },
-        'Trace events logged in batch'
+        'Trace events logged'
       );
     } catch (error) {
       this.logger.error(
@@ -123,9 +75,132 @@ export class TraceLogRepository extends LogRepository<typeof traceLogSchema, Tra
           errorMessage: error instanceof Error ? error.message : 'Unknown error',
           errorStack: error instanceof Error ? error.stack : undefined,
         },
-        'Failed to log trace events in batch'
+        'Failed to log trace events'
       );
     }
+  }
+
+  async createStepRun(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+    return this.createMany(
+      traceData.map((trace) => ({
+        ...trace,
+        entity_type: 'step_run',
+      }))
+    );
+  }
+
+  async createRequest(traceData: Omit<Trace, 'id' | 'expires_at' | 'entity_type'>[]): Promise<void> {
+    return this.createMany(
+      traceData.map((trace) => ({
+        ...trace,
+        entity_type: 'request',
+      }))
+    );
+  }
+
+  async getInteractionTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; event_type: string; count: string }>> {
+    const query = `
+      SELECT 
+        toDate(traces.created_at) as date,
+        traces.event_type,
+        count(*) as count
+      FROM traces
+      WHERE 
+        traces.environment_id = {environmentId:String} 
+        AND traces.organization_id = {organizationId:String}
+        AND traces.created_at >= {startDate:DateTime64(3)}
+        AND traces.created_at <= {endDate:DateTime64(3)}
+        AND traces.event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+      GROUP BY date, traces.event_type
+      ORDER BY date, traces.event_type
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      event_type: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getTotalInteractionsData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    const currentQuery = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+    `;
+
+    const previousQuery = `
+      SELECT count(*) as count
+      FROM traces
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+        AND event_type IN ('message_seen', 'message_read', 'message_snoozed', 'message_archived')
+    `;
+
+    const currentParams = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const previousParams = {
+      environmentId,
+      organizationId,
+      previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+      previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+    };
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentQuery,
+        params: currentParams,
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousQuery,
+        params: previousParams,
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
   }
 }
 
@@ -176,6 +251,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Message content failed';
     case 'message_sending_started':
       return 'Message sending started';
+    case 'message_severity_overridden':
+      return 'Severity for the message was overridden';
 
     // Subscriber events
     case 'subscriber_integration_missing':

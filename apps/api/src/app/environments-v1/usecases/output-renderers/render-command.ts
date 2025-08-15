@@ -6,6 +6,7 @@ export class RenderCommand extends BaseCommand {
   fullPayloadForRender: FullPayloadForRender;
 }
 export class FullPayloadForRender {
+  workflow?: Record<string, unknown>;
   subscriber: Record<string, unknown>;
   payload: Record<string, unknown>;
   steps: Record<string, unknown>; // step.stepId.unknown

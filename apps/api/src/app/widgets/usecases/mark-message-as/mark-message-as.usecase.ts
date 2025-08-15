@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   buildFeedKey,
@@ -12,6 +12,7 @@ import {
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
+  StepType,
   Trace,
   TraceLogRepository,
   WebSocketsQueueService,
@@ -111,7 +112,7 @@ export class MarkMessageAs {
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createMany(allTraceData);
+        await this.traceLogRepository.createStepRun(allTraceData);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
       }
@@ -143,6 +144,8 @@ export class MarkMessageAs {
           entity_type: 'step_run',
           entity_id: message._jobId,
           external_subscriber_id: message._subscriberId,
+          step_run_type: message.channel as StepType,
+          workflow_run_identifier: message.templateIdentifier,
         });
       }
     }

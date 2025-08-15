@@ -23,4 +23,5 @@ export const envValidators = {
   TZ: str({ default: 'UTC' }),
   WORKER_DEFAULT_CONCURRENCY: num({ default: undefined }),
   WORKER_DEFAULT_LOCK_DURATION: num({ default: undefined }),
+  LAUNCH_DARKLY_SDK_KEY: str({ default: undefined }),
 } satisfies Record<string, ValidatorSpec<unknown>>;
