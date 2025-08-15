@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Command, CommandExecutionContext, CommandGroup } from '../command-types';
+import { useActionCommands } from '../commands/action-commands';
 import { useEnvironmentCommands } from '../commands/environment-commands';
 import { useHelpCommands } from '../commands/help-commands';
 import { useNavigationCommands } from '../commands/navigation-commands';
@@ -21,6 +22,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
   };
 
   // Get commands from different categories
+  const actionCommands = useActionCommands(context);
   const navigationCommands = useNavigationCommands(context);
   const workflowCommands = useWorkflowCommands(context);
   const subscriberCommands = useSubscriberCommands(context);
@@ -30,6 +32,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
 
   const commandGroups = useMemo(() => {
     const allCommands: Command[] = [
+      ...actionCommands,
       ...workflowCommands,
       ...navigationCommands,
       ...subscriberCommands,
@@ -68,7 +71,15 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     }
 
     return groups;
-  }, [navigationCommands, workflowCommands, subscriberCommands, environmentCommands, settingsCommands, helpCommands]);
+  }, [
+    actionCommands,
+    navigationCommands,
+    workflowCommands,
+    subscriberCommands,
+    environmentCommands,
+    settingsCommands,
+    helpCommands,
+  ]);
 
   return commandGroups;
 }
