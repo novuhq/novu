@@ -152,6 +152,7 @@
     "Dispatchable",
     "dkimpy",
     "Inkeep",
+    "cxkit",
     "dnscount",
     "dnscounttype",
     "dnsfunc",
