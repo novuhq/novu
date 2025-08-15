@@ -25,7 +25,6 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     workflowContext: workflowEditorContext,
   };
 
-  // Get commands from different categories
   const actionCommands = useActionCommands(context);
   const navigationCommands = useNavigationCommands(context);
   const workflowCommands = useWorkflowCommands(context);
@@ -47,14 +46,11 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
       ...helpCommands,
     ];
 
-    // Filter visible commands
     const visibleCommands = allCommands.filter((command) => (command.isVisible ? command.isVisible() : true));
 
-    // Determine if user is searching
     const isSearching = searchQuery.trim().length > 0;
     const maxItemsPerCategory = isSearching ? Infinity : 5;
 
-    // Group commands by category with predefined order
     const groups: CommandGroup[] = [];
     const categoryOrder: CommandCategory[] = [
       'current-workflow',

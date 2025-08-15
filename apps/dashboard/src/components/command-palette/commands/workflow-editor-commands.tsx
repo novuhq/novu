@@ -9,21 +9,16 @@ export function useWorkflowEditorCommands(context: CommandExecutionContext): Com
   const commands: Command[] = [];
 
   const { workflowContext } = context;
-  const { workflow, step, isInWorkflowEditor } = workflowContext || {};
+  const { workflow, isInWorkflowEditor } = workflowContext || {};
 
   // Early return if not in workflow editor context
-  if (!isInWorkflowEditor || !context.environmentSlug) {
+  if (!isInWorkflowEditor || !context.environmentSlug || !workflow) {
     return commands;
   }
 
-  if (!workflow) {
-    return commands;
-  }
-
-  // Trigger workflow command
   commands.push({
     id: 'trigger-current-workflow',
-    label: `Trigger ${workflow.name}`,
+    label: `Trigger current workflow`,
     description: `Test and trigger the ${workflow.name} workflow`,
     category: 'current-workflow',
     icon: <RiPlayFill />,
@@ -71,7 +66,6 @@ export function useWorkflowEditorCommands(context: CommandExecutionContext): Com
       }
 
       const stepName = workflowStep.name || `${workflowStep.type} step`;
-      const isCurrentStep = step?.stepId === workflowStep.stepId;
 
       commands.push({
         id: `edit-step-${workflowStep.stepId}`,
@@ -79,7 +73,7 @@ export function useWorkflowEditorCommands(context: CommandExecutionContext): Com
         description: `Edit the ${stepName} configuration`,
         category: 'current-workflow',
         icon: <RiEditLine />,
-        priority: isCurrentStep ? 'high' : 'medium',
+        priority: 'medium',
         keywords: ['edit', 'step', stepName, workflowStep.type],
         metadata: {
           stepId: workflowStep.stepId,
@@ -98,6 +92,7 @@ export function useWorkflowEditorCommands(context: CommandExecutionContext): Com
       });
     }
   }
+  
 
   return commands;
 }
