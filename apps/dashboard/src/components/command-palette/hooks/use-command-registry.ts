@@ -48,11 +48,17 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     const isSearching = searchQuery.trim().length > 0;
     const maxItemsPerCategory = isSearching ? Infinity : 5;
 
-    // Group commands by category
+    // Group commands by category with predefined order
     const groups: CommandGroup[] = [];
-    const categories = Array.from(new Set(visibleCommands.map((cmd) => cmd.category)));
+    const categoryOrder = ['workflow', 'action', 'navigation', 'subscriber', 'settings', 'search', 'help'];
+    const availableCategories = Array.from(new Set(visibleCommands.map((cmd) => cmd.category)));
 
-    for (const category of categories) {
+    // Sort categories by predefined order, with any unlisted categories at the end
+    const sortedCategories = categoryOrder
+      .filter((cat) => availableCategories.includes(cat))
+      .concat(availableCategories.filter((cat) => !categoryOrder.includes(cat)));
+
+    for (const category of sortedCategories) {
       const commands = visibleCommands.filter((cmd) => cmd.category === category);
       if (commands.length > 0) {
         const sortedCommands = commands.sort((a, b) => {

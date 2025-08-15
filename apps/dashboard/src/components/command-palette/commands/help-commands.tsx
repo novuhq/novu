@@ -1,4 +1,4 @@
-import { RiBookOpenLine, RiChat1Line, RiQuestionLine } from 'react-icons/ri';
+import { RiBookOpenLine, RiChat1Line, RiQuestionLine, RiSparklingLine } from 'react-icons/ri';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Command, CommandExecutionContext } from '../command-types';
@@ -51,5 +51,20 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
     },
   ];
 
+  if (import.meta.env.VITE_INKEEP_API_KEY) {
+    commands.push({
+      id: 'help-ai-search',
+      label: 'Ask Novu AI',
+      description: 'Get instant answers powered by AI',
+      category: 'help',
+      icon: <RiSparklingLine />,
+      priority: 'high',
+      keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'inkeep'],
+      execute: () => {
+        // Dispatch event to open Inkeep modal
+        window.dispatchEvent(new CustomEvent('open-inkeep-search', { detail: { query: '' } }));
+      },
+    });
+  }
   return commands;
 }
