@@ -112,7 +112,6 @@ const CommandItem = React.forwardRef<
         'flex items-center justify-between gap-3 rounded-8',
         'cursor-pointer text-paragraph-sm',
         'transition-colors duration-200',
-        'hover:bg-[#F4F5F6]',
         'data-[selected=true]:bg-[#F4F5F6]',
         'data-[disabled=true]:opacity-50 data-[disabled=true]:cursor-not-allowed',
         sizeClasses[size],

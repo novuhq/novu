@@ -1,7 +1,7 @@
+import { useCommandState } from 'cmdk';
 import { useCallback, useEffect, useState } from 'react';
 import {
   RiArrowDownLine,
-  RiArrowRightUpLine,
   RiArrowUpLine,
   RiCloseLine,
   RiCornerDownLeftLine,
@@ -45,10 +45,58 @@ const getDefaultIcon = (category: CommandCategory): React.ReactNode => {
   return defaultIcons[category];
 };
 
+const getCategoryActionLabel = (category: CommandCategory): string => {
+  const actionLabels: Record<CommandCategory, string> = {
+    workflow: 'Go to workflow',
+    navigation: 'Navigate to',
+    subscriber: 'View subscriber',
+    action: 'Execute action',
+    search: 'Search for',
+    settings: 'Open settings',
+    help: 'Get help',
+  };
+  return actionLabels[category];
+};
+
+// Footer component that has access to command state
+function CommandFooter({ commands }: { commands: CommandType[] }) {
+  const selectedValue = useCommandState((state) => state.value);
+
+  // Find the selected command based on the current value
+  const selectedCommand = commands.find((cmd) => `${cmd.label} ${cmd.keywords?.join(' ') || ''}` === selectedValue);
+
+  return (
+    <CommandMenu.Footer className="border-t border-stroke-soft bg-bg-weak">
+      <div className="flex items-center justify-between w-full py-2 pt-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-0.5">
+            <CommandMenu.FooterKeyBox className="border-stroke-soft bg-bg-white">
+              <RiArrowUpLine className="size-3 text-icon-sub" />
+            </CommandMenu.FooterKeyBox>
+            <CommandMenu.FooterKeyBox className="border-stroke-soft bg-bg-white">
+              <RiArrowDownLine className="size-3 text-icon-sub" />
+            </CommandMenu.FooterKeyBox>
+          </div>
+          <span className="text-paragraph-xs text-text-soft">Navigate</span>
+        </div>
+        <Button variant="primary" size="2xs" mode="gradient">
+          <span>{selectedCommand ? getCategoryActionLabel(selectedCommand.category) : 'Go to workflow'}</span>
+          <Kbd className="border border-white/30 bg-transparent ring-transparent px-0 size-4 justify-center items-center">
+            <RiCornerDownLeftLine className="size-2.5 text-white" />
+          </Kbd>
+        </Button>
+      </div>
+    </CommandMenu.Footer>
+  );
+}
+
 export function CommandPalette() {
   const { isOpen, closeCommandPalette } = useCommandPalette();
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
+
+  // Create a flat list of all commands for easy lookup
+  const allCommands = commandGroups.flatMap((group) => group.commands);
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -129,27 +177,7 @@ export function CommandPalette() {
       </CommandMenu.List>
 
       {/* Footer */}
-      <CommandMenu.Footer className="border-t border-stroke-soft bg-bg-weak">
-        <div className="flex items-center justify-between w-full py-2 pt-1.5">
-          <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-0.5">
-              <CommandMenu.FooterKeyBox className="border-stroke-soft bg-bg-white">
-                <RiArrowUpLine className="size-3 text-icon-sub" />
-              </CommandMenu.FooterKeyBox>
-              <CommandMenu.FooterKeyBox className="border-stroke-soft bg-bg-white">
-                <RiArrowDownLine className="size-3 text-icon-sub" />
-              </CommandMenu.FooterKeyBox>
-            </div>
-            <span className="text-paragraph-xs text-text-soft">Navigate</span>
-          </div>
-          <Button variant="primary" size="2xs" mode="gradient">
-            <span>Go to workflow</span>
-            <Kbd className="border border-white/30 bg-transparent ring-transparent px-0 size-4 justify-center items-center">
-              <RiCornerDownLeftLine className="size-2.5 text-white" />
-            </Kbd>
-          </Button>
-        </div>
-      </CommandMenu.Footer>
+      <CommandFooter commands={allCommands} />
     </CommandMenu.Dialog>
   );
 }
