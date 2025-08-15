@@ -1,16 +1,18 @@
 import { RiDatabase2Line, RiGlobalLine } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
 
 export function useEnvironmentCommands(_context: CommandExecutionContext): Command[] {
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+  const navigate = useNavigate();
 
   const commands: Command[] = [];
 
   // Only show environment switching if there are multiple environments
   if (environments && environments.length > 1) {
     for (const environment of environments) {
-      // Skip the current environment
       if (environment.slug === currentEnvironment?.slug) {
         continue;
       }
@@ -25,6 +27,9 @@ export function useEnvironmentCommands(_context: CommandExecutionContext): Comma
         keywords: ['environment', 'switch', environment.name.toLowerCase(), 'env'],
         execute: () => {
           switchEnvironment(environment.slug);
+          if (environment.slug) {
+            navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: environment.slug }));
+          }
         },
         isVisible: () => environment.slug !== currentEnvironment?.slug,
       });
