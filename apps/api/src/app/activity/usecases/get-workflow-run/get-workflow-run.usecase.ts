@@ -14,8 +14,64 @@ import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto'
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
-interface IStepRunWithDetails extends StepRun {
-  executionDetails?: any[];
+const workflowRunSelectColumns = [
+  'workflow_run_id',
+  'workflow_id',
+  'workflow_name',
+  'organization_id',
+  'environment_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'status',
+  'trigger_identifier',
+  'transaction_id',
+  'channels',
+  'subscriber_to',
+  'payload',
+  'control_values',
+  'topics',
+  'is_digest',
+  'digested_workflow_run_id',
+  'created_at',
+  'updated_at',
+] as const;
+type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
+
+const stepRunSelectColumns = [
+  'step_run_id',
+  'step_id',
+  'workflow_run_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'message_id',
+  'step_type',
+  'step_name',
+  'provider_id',
+  'status',
+  'error_code',
+  'error_message',
+  'transaction_id',
+  'created_at',
+  'updated_at',
+] as const;
+type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
+
+const traceSelectColumns = [
+  'trace_id',
+  'entity_id',
+  'entity_type',
+  'event_type',
+  'organization_id',
+  'environment_id',
+  'user_id',
+  'parent_trace_id',
+  'data',
+  'created_at',
+] as const;
+type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
+
+interface IStepRunWithDetails extends StepRunFetchResult {
+  executionDetails?: TraceFetchResult[];
 }
 
 @Injectable()
@@ -46,6 +102,7 @@ export class GetWorkflowRun {
       const workflowRunResult = await this.workflowRunRepository.findOne({
         where: workflowRunQuery,
         useFinal: true,
+        select: workflowRunSelectColumns,
       });
 
       if (!workflowRunResult.data) {
@@ -72,7 +129,7 @@ export class GetWorkflowRun {
 
   private async getStepRunsForWorkflowRun(
     command: GetWorkflowRunCommand,
-    workflowRun: WorkflowRun
+    workflowRun: WorkflowRunFetchResult
   ): Promise<IStepRunWithDetails[]> {
     try {
       const stepRunsQuery = new QueryBuilder<StepRun>({
@@ -87,6 +144,7 @@ export class GetWorkflowRun {
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
+        select: stepRunSelectColumns,
       });
 
       if (!stepRunsResult.data || stepRunsResult.data.length === 0) {
@@ -114,7 +172,7 @@ export class GetWorkflowRun {
   private async getExecutionDetailsByEntityId(
     entityIds: string[],
     command: GetWorkflowRunCommand
-  ): Promise<Map<string, any[]>> {
+  ): Promise<Map<string, TraceFetchResult[]>> {
     if (entityIds.length === 0) {
       return new Map();
     }
@@ -131,25 +189,17 @@ export class GetWorkflowRun {
         where: traceQuery,
         orderBy: 'created_at',
         orderDirection: 'ASC',
+        select: traceSelectColumns,
       });
 
-      const executionDetailsByEntityId = new Map<string, any[]>();
+      const executionDetailsByEntityId = new Map<string, TraceFetchResult[]>();
 
       for (const trace of traceResult.data) {
         if (!executionDetailsByEntityId.has(trace.entity_id)) {
           executionDetailsByEntityId.set(trace.entity_id, []);
         }
 
-        executionDetailsByEntityId.get(trace.entity_id)!.push({
-          _id: trace.id,
-          detail: trace.title,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: this.mapTraceStatusToExecutionStatus(trace.status),
-          isTest: false,
-          isRetry: false,
-          createdAt: this.parseClickHouseTimestamp(trace.created_at).toISOString(),
-          raw: trace.raw_data,
-        });
+        executionDetailsByEntityId.get(trace.entity_id)!.push(trace);
       }
 
       return executionDetailsByEntityId;
@@ -201,7 +251,10 @@ export class GetWorkflowRun {
     return new Date(isoFormat);
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): GetWorkflowRunResponseDto {
+  private mapWorkflowRunToDto(
+    workflowRun: WorkflowRunFetchResult,
+    stepRuns: IStepRunWithDetails[]
+  ): GetWorkflowRunResponseDto {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -210,7 +263,10 @@ export class GetWorkflowRun {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
+      status: mapWorkflowRunStatusToDto(
+        workflowRun.status,
+        stepRuns.map((stepRun) => stepRun.step_type)
+      ),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

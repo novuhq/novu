@@ -3,10 +3,11 @@ import { JobEntity, JobStatusEnum, MessageEntity } from '@novu/dal';
 import { FeatureFlagsKeysEnum, StepTypeEnum } from '@novu/shared';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
+import { StepType } from '..';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository, SchemaKeys } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { ORDER_BY, StepRun, StepType, stepRunSchema, TABLE_NAME } from './step-run.schema';
+import { ORDER_BY, StepRun, stepRunSchema, TABLE_NAME } from './step-run.schema';
 
 type StepRunInsertData = Omit<StepRun, 'id' | 'expires_at'>;
 

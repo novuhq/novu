@@ -34,6 +34,23 @@ const workflowRunSelectColumns = [
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
+const stepRunSelectColumns = [
+  'id',
+  'step_run_id',
+  'step_id',
+  'workflow_run_id',
+  'subscriber_id',
+  'external_subscriber_id',
+  'step_type',
+  'step_name',
+  'provider_id',
+  'status',
+  'transaction_id',
+  'created_at',
+  'updated_at',
+] as const;
+type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
+
 @Injectable()
 export class GetWorkflowRuns {
   constructor(
@@ -265,7 +282,7 @@ export class GetWorkflowRuns {
   private async getStepRunsForWorkflowRuns(
     command: GetWorkflowRunsCommand,
     workflowRuns: WorkflowRunFetchResult[]
-  ): Promise<Map<string, StepRun[]>> {
+  ): Promise<Map<string, StepRunFetchResult[]>> {
     if (workflowRuns.length === 0) {
       return new Map();
     }
@@ -283,10 +300,11 @@ export class GetWorkflowRuns {
         orderBy: 'created_at',
         orderDirection: 'ASC',
         useFinal: true,
+        select: stepRunSelectColumns,
       });
 
       // Group step runs by composite key: subscriber_id:transaction_id
-      const stepRunsByCompositeKey = new Map<string, StepRun[]>();
+      const stepRunsByCompositeKey = new Map<string, StepRunFetchResult[]>();
 
       for (const stepRun of stepRunsResult.data) {
         const compositeKey = `${stepRun.subscriber_id}:${stepRun.transaction_id}`;
@@ -308,7 +326,7 @@ export class GetWorkflowRuns {
     }
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): GetWorkflowRunsDto {
+  private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRunFetchResult[]): GetWorkflowRunsDto {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -317,7 +335,10 @@ export class GetWorkflowRuns {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns),
+      status: mapWorkflowRunStatusToDto(
+        workflowRun.status,
+        stepRuns.map((stepRun) => stepRun.step_type)
+      ),
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

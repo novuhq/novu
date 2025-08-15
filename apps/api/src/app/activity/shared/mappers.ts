@@ -1,4 +1,4 @@
-import { RequestLog, StepRun, StepRunNonFinalStatus, Trace, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { RequestLog, StepRunNonFinalStatus, StepType, Trace, WorkflowRunStatusEnum } from '@novu/application-generic';
 import { TraceResponseDto } from '../dtos/get-request-traces.response.dto';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
@@ -38,10 +38,10 @@ export function mapRequestLogToResponseDto(log: RequestLog): RequestLogResponseD
  */
 export function mapWorkflowRunStatusToDto(
   workflowRunStatus: WorkflowRunStatusEnum,
-  stepRuns: StepRun[]
+  stepRunsType: StepType[]
 ): WorkflowRunStatusDtoEnum {
   // Filter for channel steps (exclude non-channel steps like trigger, delay, digest, custom)
-  const channelSteps = stepRuns.filter((step) => ['in_app', 'email', 'sms', 'chat', 'push'].includes(step.step_type));
+  const channelSteps = stepRunsType.filter((stepType) => ['in_app', 'email', 'sms', 'chat', 'push'].includes(stepType));
 
   // If no channel steps, determine based on workflow status
   if (channelSteps.length === 0) {

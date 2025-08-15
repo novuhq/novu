@@ -4,6 +4,37 @@ import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request-
 import { mapRequestLogToResponseDto, mapTraceToResponseDto } from '../../shared/mappers';
 import { GetRequestCommand } from './get-request.command';
 
+// Define minimal required columns for request logs
+const requestLogSelectColumns = [
+  'id',
+  'environment_id',
+  'organization_id',
+  'user_id',
+  'request_method',
+  'request_url',
+  'request_headers',
+  'request_body',
+  'response_status',
+  'response_headers',
+  'response_body',
+  'created_at',
+] as const;
+type RequestLogFetchResult = Pick<RequestLog, (typeof requestLogSelectColumns)[number]>;
+
+const traceSelectColumns = [
+  'trace_id',
+  'entity_id',
+  'entity_type',
+  'event_type',
+  'organization_id',
+  'environment_id',
+  'user_id',
+  'parent_trace_id',
+  'data',
+  'created_at',
+] as const;
+type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
+
 @Injectable()
 export class GetRequest {
   constructor(
@@ -20,6 +51,7 @@ export class GetRequest {
 
     const request = await this.requestLogRepository.findOne({
       where: requestQueryBuilder.build(),
+      select: requestLogSelectColumns,
     });
 
     if (!request?.data) {
@@ -37,6 +69,7 @@ export class GetRequest {
       where: traceQueryBuilder.build(),
       orderBy: 'created_at',
       orderDirection: 'ASC',
+      select: traceSelectColumns,
     });
 
     const mappedRequest = mapRequestLogToResponseDto(request.data);
