@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   RiArrowDownLine,
+  RiArrowRightUpLine,
   RiArrowUpLine,
   RiCloseLine,
   RiCornerDownLeftLine,
@@ -14,6 +15,8 @@ import {
   RiUserLine,
 } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
+import { Button } from '../primitives/button';
+import { Kbd } from '../primitives/kbd';
 import * as CommandMenu from './command-menu';
 import { CommandCategory, Command as CommandType } from './command-types';
 import { useCommandPalette } from './hooks/use-command-palette';
@@ -126,23 +129,25 @@ export function CommandPalette() {
       </CommandMenu.List>
 
       {/* Footer */}
-      <CommandMenu.Footer>
-        <div className="flex gap-3">
-          <div className="flex items-center gap-2">
-            <CommandMenu.FooterKeyBox>
-              <RiArrowUpLine className="size-4" />
-            </CommandMenu.FooterKeyBox>
-            <CommandMenu.FooterKeyBox>
-              <RiArrowDownLine className="size-4" />
-            </CommandMenu.FooterKeyBox>
+      <CommandMenu.Footer className="border-t border-stroke-soft bg-bg-weak">
+        <div className="flex items-center justify-between w-full py-2 pt-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              <CommandMenu.FooterKeyBox className="border-stroke-soft bg-bg-white">
+                <RiArrowUpLine className="size-3 text-icon-sub" />
+              </CommandMenu.FooterKeyBox>
+              <CommandMenu.FooterKeyBox className="border-stroke-soft bg-bg-white">
+                <RiArrowDownLine className="size-3 text-icon-sub" />
+              </CommandMenu.FooterKeyBox>
+            </div>
             <span className="text-paragraph-xs text-text-soft">Navigate</span>
           </div>
-          <div className="flex items-center gap-2">
-            <CommandMenu.FooterKeyBox>
-              <RiCornerDownLeftLine className="size-4" />
-            </CommandMenu.FooterKeyBox>
-            <span className="text-paragraph-xs text-text-soft">Select</span>
-          </div>
+          <Button variant="primary" size="2xs" mode="gradient">
+            <span>Go to workflow</span>
+            <Kbd className="border border-white/30 bg-transparent ring-transparent px-0 size-4 justify-center items-center">
+              <RiCornerDownLeftLine className="size-2.5 text-white" />
+            </Kbd>
+          </Button>
         </div>
       </CommandMenu.Footer>
     </CommandMenu.Dialog>

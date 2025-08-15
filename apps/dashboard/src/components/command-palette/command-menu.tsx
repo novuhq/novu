@@ -152,7 +152,7 @@ const CommandFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTML
     return (
       <div
         ref={forwardedRef}
-        className={cn('flex h-12 items-center justify-between gap-3 px-5 border-t border-neutral-100', className)}
+        className={cn('flex h-12 items-center justify-between gap-3 px-3 border-t border-neutral-100', className)}
         {...rest}
       />
     );
