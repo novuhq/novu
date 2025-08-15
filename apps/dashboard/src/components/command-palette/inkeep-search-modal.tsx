@@ -1,12 +1,14 @@
 import {
-  InkeepEmbeddedSearch,
+  type AIChatFunctions,
+  InkeepEmbeddedChat,
+  InkeepEmbeddedChatProps,
   InkeepEmbeddedSearchAndChat,
   InkeepEmbeddedSearchAndChatProps,
-  type InkeepEmbeddedSearchProps,
+  type SearchFunctions,
 } from '@inkeep/cxkit-react';
 import { useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/primitives/dialog';
-import { cn } from '@/utils/ui';
+import { Dialog, DialogContent } from '@/components/primitives/dialog';
+import { ScrollArea } from '@/components/primitives/scroll-area';
 
 type InkeepSearchModalProps = {
   isOpen: boolean;
@@ -18,7 +20,8 @@ type InkeepSearchModalProps = {
 };
 
 export function InkeepSearchModal({ isOpen, onClose, apiKey, initialQuery }: InkeepSearchModalProps) {
-  const searchFunctionsRef = useRef<any>(null);
+  const searchFunctionsRef = useRef<SearchFunctions>(null);
+  const chatFunctionsRef = useRef<AIChatFunctions>(null);
 
   // Handle escape key to close modal
   useEffect(() => {
@@ -37,56 +40,63 @@ export function InkeepSearchModal({ isOpen, onClose, apiKey, initialQuery }: Ink
     };
   }, [isOpen, onClose]);
 
-  // Focus the search input and set initial query when modal opens
+  // Focus the input and set initial query when modal opens
   useEffect(() => {
     if (isOpen) {
       // Small delay to ensure the component is mounted
       setTimeout(() => {
-        searchFunctionsRef.current?.focusInput();
-        if (initialQuery) {
-          searchFunctionsRef.current?.updateQuery(initialQuery);
+        // Focus the chat input since we're defaulting to chat view
+        chatFunctionsRef.current?.focusInput();
+
+        // Set the initial query in the chat input if provided
+        if (initialQuery?.trim()) {
+          chatFunctionsRef.current?.updateInputMessage(initialQuery);
         }
       }, 100);
     }
   }, [isOpen, initialQuery]);
 
-  const inkeepConfig: InkeepEmbeddedSearchAndChatProps = {
-    defaultView: 'chat',
+  const inkeepConfig: InkeepEmbeddedChatProps = {
     baseSettings: {
       apiKey,
       organizationDisplayName: 'Novu',
       primaryBrandColor: '#DD2476',
+      theme: {
+        styles: [
+          {
+            key: 'custom-theme',
+            type: 'style',
+            value: `
+              .ikp-ai-chat-wrapper {
+                margin: 0;
+                width: 100%;
+                box-shadow: none;
+                height: 100%;
+                overflow: hidden;
+              }
+
+              .ikp-ai-chat-content {
+                overflow: auto !important;
+              }
+
+              .ikp-ai-chat-content-scroll-area {
+                overflow: auto !important;
+              }
+            `,
+          },
+        ],
+      },
     },
     aiChatSettings: {
       aiAssistantName: 'Novu AI',
-    },
-    searchSettings: {
-      placeholder: 'Ask AI anything about Novu...',
-      searchFunctionsRef,
+      chatFunctionsRef,
     },
     shouldAutoFocusInput: true,
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent
-        className={cn('max-w-4xl w-[90vw] h-[80vh] p-0 gap-0', 'bg-background border-neutral-200', 'overflow-hidden')}
-      >
-        <DialogHeader className="px-6 py-4 border-b border-neutral-200 flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="size-8 rounded-8 bg-gradient-to-br from-[#DD2476] to-[#FF512F] flex items-center justify-center">
-              <span className="text-white text-sm font-semibold">AI</span>
-            </div>
-            <DialogTitle className="text-lg font-medium">Ask Novu AI</DialogTitle>
-          </div>
-        </DialogHeader>
-
-        <div className="flex-1 overflow-auto">
-          <div className="h-full">
-            <InkeepEmbeddedSearchAndChat {...inkeepConfig} />
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <div className="h-[550px] overflow-auto">
+      <InkeepEmbeddedChat {...inkeepConfig} />
+    </div>
   );
 }

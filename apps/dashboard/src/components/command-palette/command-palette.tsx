@@ -160,102 +160,86 @@ export function CommandPalette() {
   );
 
   return (
-    <>
-      <CommandMenu.Dialog open={isOpen} onOpenChange={closeCommandPalette}>
-        {/* Input wrapper */}
-        <div className="group/cmd-input flex items-center gap-2 p-3 bg-bg-weak">
-          <RiSearchLine className={cn('size-5 text-text-soft')} />
-          <CommandMenu.Input
-            value={search}
-            onValueChange={setSearch}
-            placeholder="Type a command or search..."
-            autoFocus
-            className="text-label-md text-text-sub placeholder:text-text-soft"
-          />
-          <button
-            onClick={closeCommandPalette}
-            className="size-4 items-center justify-center rounded-6 text-text-soft hover:text-icon-sub transition-colors"
-          >
-            <RiCloseLine className="size-4" />
-          </button>
-        </div>
-
-        <CommandMenu.List className="py-0 min-h-[400px]">
-          <CommandMenu.Empty>
-            {!hasResults && search.trim() ? (
-              hasInkeep ? (
-                <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                  <div className="size-12 rounded-full bg-gradient-to-br from-[#DD2476] to-[#FF512F] flex items-center justify-center mb-4">
-                    <RiSparklingLine className="size-6 text-white" />
-                  </div>
-                  <p className="text-sm text-foreground-600 mb-1">No commands found for "{search}"</p>
-                  <p className="text-xs text-foreground-400 mb-4">Try asking our AI assistant instead</p>
-                  <Button variant="primary" size="xs" onClick={openInkeepWithQuery} className="gap-1.5">
-                    <RiSparklingLine className="size-3.5" />
-                    Ask Novu AI
-                  </Button>
-                </div>
-              ) : (
-                <div className="py-12 px-6 text-center">
-                  <p className="text-sm text-foreground-400">No commands found for "{search}"</p>
-                </div>
-              )
-            ) : (
-              !hasResults && (
-                <div className="py-12 px-6 text-center">
-                  <p className="text-sm text-foreground-400">No commands found</p>
-                </div>
-              )
-            )}
-          </CommandMenu.Empty>
-
-          {commandGroups.map((group) => (
-            <CommandMenu.Group key={group.category} heading={group.label} className="px-2.5">
-              {group.commands.map((command) => {
-                const isEnabled = command.isEnabled ? command.isEnabled() : true;
-
-                return (
-                  <CommandMenu.Item
-                    key={command.id}
-                    value={`${command.label} ${command.keywords?.join(' ') || ''}`}
-                    onSelect={() => isEnabled && executeCommand(command)}
-                    disabled={!isEnabled}
-                    className="px-1.5 rounded-8"
-                  >
-                    <div className="flex items-center gap-1.5 flex-1">
-                      <CategoryIconWrapper>{command.icon || getDefaultIcon(command.category)}</CategoryIconWrapper>
-                      <span className="text-text-sub text-label-sm flex-1 truncate">{command.label}</span>
-                    </div>
-                    {command.metadata?.workflowId && (
-                      <span
-                        className="text-paragraph-sm text-text-soft ml-auto max-w-32 truncate"
-                        title={command.metadata.workflowId}
-                      >
-                        {command.metadata.workflowId}
-                      </span>
-                    )}
-                  </CommandMenu.Item>
-                );
-              })}
-            </CommandMenu.Group>
-          ))}
-        </CommandMenu.List>
-
-        {/* Footer */}
-        <CommandFooter commands={allCommands} />
-      </CommandMenu.Dialog>
-
-      {import.meta.env.VITE_INKEEP_API_KEY && (
-        <InkeepSearchModal
-          isOpen={isInkeepOpen}
-          onClose={() => {
-            setIsInkeepOpen(false);
-            setInkeepQuery('');
-          }}
-          apiKey={import.meta.env.VITE_INKEEP_API_KEY}
-          initialQuery={inkeepQuery}
+    <CommandMenu.Dialog open={isOpen} onOpenChange={closeCommandPalette}>
+      {/* Input wrapper */}
+      <div className="group/cmd-input flex items-center gap-2 p-3 bg-bg-weak">
+        <RiSearchLine className={cn('size-5 text-text-soft')} />
+        <CommandMenu.Input
+          value={search}
+          onValueChange={setSearch}
+          placeholder="Type a command or search..."
+          autoFocus
+          className="text-label-md text-text-sub placeholder:text-text-soft"
         />
-      )}
-    </>
+        <button
+          onClick={closeCommandPalette}
+          className="size-4 items-center justify-center rounded-6 text-text-soft hover:text-icon-sub transition-colors"
+        >
+          <RiCloseLine className="size-4" />
+        </button>
+      </div>
+
+      <CommandMenu.List className="py-0 min-h-[400px]">
+        <CommandMenu.Empty>
+          {!hasResults && search.trim() ? (
+            hasInkeep ? (
+              <InkeepSearchModal
+                isOpen={isInkeepOpen}
+                onClose={() => {
+                  setIsInkeepOpen(false);
+                  setInkeepQuery('');
+                }}
+                apiKey={import.meta.env.VITE_INKEEP_API_KEY}
+                initialQuery={inkeepQuery}
+              />
+            ) : (
+              <div className="py-12 px-6 text-center">
+                <p className="text-sm text-foreground-400">No commands found for "{search}"</p>
+              </div>
+            )
+          ) : (
+            !hasResults && (
+              <div className="py-12 px-6 text-center">
+                <p className="text-sm text-foreground-400">No commands found</p>
+              </div>
+            )
+          )}
+        </CommandMenu.Empty>
+
+        {commandGroups.map((group) => (
+          <CommandMenu.Group key={group.category} heading={group.label} className="px-2.5">
+            {group.commands.map((command) => {
+              const isEnabled = command.isEnabled ? command.isEnabled() : true;
+
+              return (
+                <CommandMenu.Item
+                  key={command.id}
+                  value={`${command.label} ${command.keywords?.join(' ') || ''}`}
+                  onSelect={() => isEnabled && executeCommand(command)}
+                  disabled={!isEnabled}
+                  className="px-1.5 rounded-8"
+                >
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <CategoryIconWrapper>{command.icon || getDefaultIcon(command.category)}</CategoryIconWrapper>
+                    <span className="text-text-sub text-label-sm flex-1 truncate">{command.label}</span>
+                  </div>
+                  {command.metadata?.workflowId && (
+                    <span
+                      className="text-paragraph-sm text-text-soft ml-auto max-w-32 truncate"
+                      title={command.metadata.workflowId}
+                    >
+                      {command.metadata.workflowId}
+                    </span>
+                  )}
+                </CommandMenu.Item>
+              );
+            })}
+          </CommandMenu.Group>
+        ))}
+      </CommandMenu.List>
+
+      {/* Footer */}
+      <CommandFooter commands={allCommands} />
+    </CommandMenu.Dialog>
   );
 }
