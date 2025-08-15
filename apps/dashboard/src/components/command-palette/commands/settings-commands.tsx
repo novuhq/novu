@@ -1,4 +1,4 @@
-import { RiDatabase2Line, RiSettings4Line, RiUserAddLine } from 'react-icons/ri';
+import { RiDatabase2Line, RiMoneyDollarCircleLine, RiSettings4Line, RiUserAddLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
@@ -36,6 +36,16 @@ export function useSettingsCommands(_context: CommandExecutionContext): Command[
       priority: 'medium',
       keywords: ['team', 'members', 'invite', 'settings'],
       execute: () => navigate(ROUTES.SETTINGS_TEAM),
+    },
+    {
+      id: 'settings-billing',
+      label: 'Billing Settings',
+      description: 'Manage billing and subscription settings',
+      category: 'settings',
+      icon: <RiMoneyDollarCircleLine />,
+      priority: 'medium',
+      keywords: ['billing', 'subscription', 'payment', 'invoice', 'settings'],
+      execute: () => navigate(ROUTES.SETTINGS_BILLING),
     },
   ];
 
