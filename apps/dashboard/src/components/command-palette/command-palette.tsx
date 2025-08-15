@@ -15,6 +15,7 @@ import {
   RiSparklingLine,
   RiUserLine,
 } from 'react-icons/ri';
+import { useAiDrawer } from '@/components/ai-drawer';
 import { cn } from '@/utils/ui';
 import { Button } from '../primitives/button';
 import { Kbd } from '../primitives/kbd';
@@ -22,7 +23,6 @@ import * as CommandMenu from './command-menu';
 import { CommandCategory, Command as CommandType } from './command-types';
 import { useCommandPalette } from './hooks/use-command-palette';
 import { useCommandRegistry } from './hooks/use-command-registry';
-import { InkeepSearchModal } from './inkeep-search-modal';
 
 const CategoryIconWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -47,7 +47,7 @@ const getDefaultIcon = (category: CommandCategory): React.ReactNode => {
   return defaultIcons[category];
 };
 
-const getCategoryActionLabel = (category: CommandCategory): string => {
+const getCategoryActionLabel = (category: CommandCategory | undefined, value: string): string => {
   const actionLabels: Record<CommandCategory, string> = {
     workflow: 'Go to workflow',
     navigation: 'Navigate to',
@@ -57,14 +57,19 @@ const getCategoryActionLabel = (category: CommandCategory): string => {
     settings: 'Open settings',
     help: 'Get help',
   };
+
+  if (value.includes('Ask AI')) {
+    return 'Ask AI';
+  } else if (!category) {
+    return 'Open Command';
+  }
+
   return actionLabels[category];
 };
 
 // Footer component that has access to command state
 function CommandFooter({ commands }: { commands: CommandType[] }) {
   const selectedValue = useCommandState((state) => state.value);
-
-  // Find the selected command based on the current value
   const selectedCommand = commands.find((cmd) => `${cmd.label} ${cmd.keywords?.join(' ') || ''}` === selectedValue);
 
   return (
@@ -82,7 +87,7 @@ function CommandFooter({ commands }: { commands: CommandType[] }) {
           <span className="text-paragraph-xs text-text-soft">Navigate</span>
         </div>
         <Button variant="primary" size="2xs" mode="gradient">
-          <span>{selectedCommand ? getCategoryActionLabel(selectedCommand.category) : 'Go to workflow'}</span>
+          <span>{getCategoryActionLabel(selectedCommand?.category, selectedValue)}</span>
           <Kbd className="border border-white/30 bg-transparent ring-transparent px-0 size-4 justify-center items-center">
             <RiCornerDownLeftLine className="size-2.5 text-white" />
           </Kbd>
@@ -94,25 +99,13 @@ function CommandFooter({ commands }: { commands: CommandType[] }) {
 
 export function CommandPalette() {
   const { isOpen, closeCommandPalette } = useCommandPalette();
+  const { openAiDrawer } = useAiDrawer();
   const [search, setSearch] = useState('');
-  const [isInkeepOpen, setIsInkeepOpen] = useState(false);
-  const [inkeepQuery, setInkeepQuery] = useState('');
   const commandGroups = useCommandRegistry(search);
 
   // Create a flat list of all commands for easy lookup
   const allCommands = commandGroups.flatMap((group) => group.commands);
   const hasInkeep = !!import.meta.env.VITE_INKEEP_API_KEY;
-
-  // Check if there are any visible results after cmdk's filtering
-  // When searching, cmdk filters items internally, so we need to check if any would match
-  const hasResults = search.trim()
-    ? allCommands.some((cmd) => {
-        const searchLower = search.toLowerCase();
-        const labelMatch = cmd.label.toLowerCase().includes(searchLower);
-        const keywordMatch = cmd.keywords?.some((k) => k.toLowerCase().includes(searchLower));
-        return labelMatch || keywordMatch;
-      })
-    : commandGroups.some((group) => group.commands.length > 0);
 
   // Reset search when dialog closes
   useEffect(() => {
@@ -121,27 +114,10 @@ export function CommandPalette() {
     }
   }, [isOpen]);
 
-  // Listen for Inkeep modal open event
-  useEffect(() => {
-    const handleOpenInkeep = (event?: CustomEvent) => {
-      const query = event?.detail?.query || '';
-      setInkeepQuery(query);
-      setIsInkeepOpen(true);
-      closeCommandPalette(); // Close command palette when opening Inkeep
-    };
-
-    window.addEventListener('open-inkeep-search', handleOpenInkeep as EventListener);
-
-    return () => {
-      window.removeEventListener('open-inkeep-search', handleOpenInkeep as EventListener);
-    };
-  }, [closeCommandPalette]);
-
-  const openInkeepWithQuery = useCallback(() => {
-    setInkeepQuery(search);
-    setIsInkeepOpen(true);
+  const openAiDrawerWithQuery = useCallback(() => {
+    openAiDrawer(search);
     closeCommandPalette();
-  }, [search, closeCommandPalette]);
+  }, [search, openAiDrawer, closeCommandPalette]);
 
   const executeCommand = useCallback(
     async (command: CommandType) => {
@@ -161,7 +137,6 @@ export function CommandPalette() {
 
   return (
     <CommandMenu.Dialog open={isOpen} onOpenChange={closeCommandPalette}>
-      {/* Input wrapper */}
       <div className="group/cmd-input flex items-center gap-2 p-3 bg-bg-weak">
         <RiSearchLine className={cn('size-5 text-text-soft')} />
         <CommandMenu.Input
@@ -180,32 +155,6 @@ export function CommandPalette() {
       </div>
 
       <CommandMenu.List className="py-0 min-h-[400px]">
-        <CommandMenu.Empty>
-          {!hasResults && search.trim() ? (
-            hasInkeep ? (
-              <InkeepSearchModal
-                isOpen={isInkeepOpen}
-                onClose={() => {
-                  setIsInkeepOpen(false);
-                  setInkeepQuery('');
-                }}
-                apiKey={import.meta.env.VITE_INKEEP_API_KEY}
-                initialQuery={inkeepQuery}
-              />
-            ) : (
-              <div className="py-12 px-6 text-center">
-                <p className="text-sm text-foreground-400">No commands found for "{search}"</p>
-              </div>
-            )
-          ) : (
-            !hasResults && (
-              <div className="py-12 px-6 text-center">
-                <p className="text-sm text-foreground-400">No commands found</p>
-              </div>
-            )
-          )}
-        </CommandMenu.Empty>
-
         {commandGroups.map((group) => (
           <CommandMenu.Group key={group.category} heading={group.label} className="px-2.5">
             {group.commands.map((command) => {
@@ -236,9 +185,25 @@ export function CommandPalette() {
             })}
           </CommandMenu.Group>
         ))}
+
+        {hasInkeep && search.trim() && (
+          <CommandMenu.Group heading="AI Assistant" className="px-2.5">
+            <CommandMenu.Item
+              value={`Ask AI ${search} ai assistant help question`}
+              onSelect={openAiDrawerWithQuery}
+              className="px-1.5 rounded-8"
+            >
+              <div className="flex items-center gap-1.5 flex-1">
+                <CategoryIconWrapper>
+                  <RiSparklingLine />
+                </CategoryIconWrapper>
+                <span className="text-text-sub text-label-sm flex-1 truncate">Ask AI "{search}"</span>
+              </div>
+            </CommandMenu.Item>
+          </CommandMenu.Group>
+        )}
       </CommandMenu.List>
 
-      {/* Footer */}
       <CommandFooter commands={allCommands} />
     </CommandMenu.Dialog>
   );

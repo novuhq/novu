@@ -1,10 +1,12 @@
 import { RiBookOpenLine, RiChat1Line, RiQuestionLine, RiSparklingLine } from 'react-icons/ri';
+import { useAiDrawer } from '@/components/ai-drawer';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Command, CommandExecutionContext } from '../command-types';
 
 export function useHelpCommands(_context: CommandExecutionContext): Command[] {
   const track = useTelemetry();
+  const { openAiDrawer } = useAiDrawer();
 
   const commands: Command[] = [
     {
@@ -61,8 +63,7 @@ export function useHelpCommands(_context: CommandExecutionContext): Command[] {
       priority: 'high',
       keywords: ['ai', 'ask', 'search', 'help', 'question', 'assistant', 'inkeep'],
       execute: () => {
-        // Dispatch event to open Inkeep modal
-        window.dispatchEvent(new CustomEvent('open-inkeep-search', { detail: { query: '' } }));
+        openAiDrawer();
       },
     });
   }
