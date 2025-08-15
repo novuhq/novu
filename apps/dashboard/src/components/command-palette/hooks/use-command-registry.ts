@@ -9,22 +9,27 @@ import { useNavigationCommands } from '../commands/navigation-commands';
 import { useSettingsCommands } from '../commands/settings-commands';
 import { useSubscriberCommands } from '../commands/subscriber-commands';
 import { useWorkflowCommands } from '../commands/workflow-commands';
+import { useWorkflowEditorCommands } from '../commands/workflow-editor-commands';
+import { useWorkflowEditorContext } from './use-workflow-editor-context';
 
 export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
   const location = useLocation();
   const { currentEnvironment } = useEnvironment();
+  const workflowEditorContext = useWorkflowEditorContext();
 
   const context: CommandExecutionContext = {
     currentPath: location.pathname,
     environmentSlug: currentEnvironment?.slug,
     organizationId: currentEnvironment?._organizationId,
     searchQuery,
+    workflowContext: workflowEditorContext,
   };
 
   // Get commands from different categories
   const actionCommands = useActionCommands(context);
   const navigationCommands = useNavigationCommands(context);
   const workflowCommands = useWorkflowCommands(context);
+  const workflowEditorCommands = useWorkflowEditorCommands(context);
   const subscriberCommands = useSubscriberCommands(context);
   const environmentCommands = useEnvironmentCommands(context);
   const settingsCommands = useSettingsCommands(context);
@@ -34,6 +39,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     const allCommands: Command[] = [
       ...actionCommands,
       ...workflowCommands,
+      ...workflowEditorCommands,
       ...navigationCommands,
       ...subscriberCommands,
       ...environmentCommands,
@@ -50,7 +56,16 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
 
     // Group commands by category with predefined order
     const groups: CommandGroup[] = [];
-    const categoryOrder: CommandCategory[] = ['workflow', 'action', 'navigation', 'data', 'settings', 'search', 'help'];
+    const categoryOrder: CommandCategory[] = [
+      'current-workflow',
+      'workflow',
+      'action',
+      'navigation',
+      'data',
+      'settings',
+      'search',
+      'help',
+    ];
     const availableCategories = Array.from(new Set(visibleCommands.map((cmd) => cmd.category)));
 
     // Sort categories by predefined order, with any unlisted categories at the end
@@ -90,6 +105,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     actionCommands,
     navigationCommands,
     workflowCommands,
+    workflowEditorCommands,
     subscriberCommands,
     environmentCommands,
     settingsCommands,
@@ -102,6 +118,7 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
 
 function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
+    'current-workflow': 'Current Workflow Actions',
     navigation: 'Navigation',
     workflow: 'Workflows',
     data: 'Data',

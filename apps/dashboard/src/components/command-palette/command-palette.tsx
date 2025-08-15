@@ -7,6 +7,7 @@ import {
   RiCornerDownLeftLine,
   RiFileLine,
   RiFlashlightLine,
+  RiPlayFill,
   RiQuestionLine,
   RiRouteFill,
   RiSearch2Line,
@@ -36,9 +37,10 @@ const CategoryIconWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const getDefaultIcon = (category: CommandCategory): React.ReactNode => {
   const defaultIcons: Record<CommandCategory, React.ReactNode> = {
+    'current-workflow': <RiPlayFill />,
     workflow: <RiRouteFill />,
     navigation: <RiFileLine />,
-    subscriber: <RiUserLine />,
+    data: <RiUserLine />,
     action: <RiFlashlightLine />,
     search: <RiSearch2Line />,
     settings: <RiSettings4Line />,
@@ -49,9 +51,10 @@ const getDefaultIcon = (category: CommandCategory): React.ReactNode => {
 
 const getCategoryActionLabel = (category: CommandCategory | undefined, value: string): string => {
   const actionLabels: Record<CommandCategory, string> = {
+    'current-workflow': 'Execute action',
     workflow: 'Go to workflow',
     navigation: 'Navigate to',
-    subscriber: 'Open command',
+    data: 'Open command',
     action: 'Execute action',
     search: 'Search for',
     settings: 'Open settings',

@@ -1,6 +1,15 @@
+import type { StepResponseDto, WorkflowResponseDto } from '@novu/shared';
 import { ReactNode } from 'react';
 
-export type CommandCategory = 'navigation' | 'workflow' | 'data' | 'action' | 'search' | 'settings' | 'help';
+export type CommandCategory =
+  | 'navigation'
+  | 'workflow'
+  | 'current-workflow'
+  | 'data'
+  | 'action'
+  | 'search'
+  | 'settings'
+  | 'help';
 
 export type CommandPriority = 'high' | 'medium' | 'low';
 
@@ -40,4 +49,10 @@ export type CommandExecutionContext = {
   environmentSlug?: string;
   organizationId?: string;
   searchQuery?: string;
+  workflowContext?: {
+    workflow?: WorkflowResponseDto;
+    step?: StepResponseDto;
+    isInWorkflowEditor?: boolean;
+    isPending?: boolean;
+  };
 };
