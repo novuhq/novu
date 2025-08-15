@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.1.2/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.0/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -9,24 +9,24 @@
     "ignoreUnknown": false,
     "includes": [
       "**",
-      "!**/node_modules/**",
-      "!**/dist/**",
-      "!**/build/**",
-      "!**/.nx/**",
-      "!**/coverage/**",
-      "!**/.git/**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/.nx",
+      "!**/coverage",
+      "!**/.git",
       "!**/*.log",
       "!**/*.d.ts",
       "!**/*.generated.ts",
       "!**/pnpm-lock.yaml",
       "!**/swagger-spec.json",
-      "!apps/web/**",
-      "!playground/**",
-      "!libs/internal-sdk/**",
-      "!libs/design-system/**",
-      "!.github/**",
-      "!scripts/**",
-      "!packages/framework/scripts/**"
+      "!apps/web",
+      "!playground",
+      "!libs/internal-sdk",
+      "!libs/design-system",
+      "!.github",
+      "!scripts",
+      "!packages/framework/scripts"
     ]
   },
   "formatter": {
