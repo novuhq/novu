@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useEscapeKeyManager } from '@/context/escape-key-manager/hooks';
 import { EscapeKeyManagerPriority } from '@/context/escape-key-manager/priority';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 type CommandPaletteContextType = {
   isOpen: boolean;
@@ -13,18 +15,26 @@ const CommandPaletteContext = createContext<CommandPaletteContextType | null>(nu
 
 export function CommandPaletteProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const track = useTelemetry();
 
   const openCommandPalette = useCallback(() => {
     setIsOpen(true);
-  }, []);
+    track(TelemetryEvent.COMMAND_PALETTE_OPENED);
+  }, [track]);
 
   const closeCommandPalette = useCallback(() => {
     setIsOpen(false);
   }, []);
 
   const toggleCommandPalette = useCallback(() => {
-    setIsOpen((prev) => !prev);
-  }, []);
+    setIsOpen((prev) => {
+      const newState = !prev;
+      if (newState) {
+        track(TelemetryEvent.COMMAND_PALETTE_OPENED);
+      }
+      return newState;
+    });
+  }, [track]);
 
   // Register escape key handler with high priority
   useEscapeKeyManager('command-palette', closeCommandPalette, EscapeKeyManagerPriority.POPOVER, isOpen);

@@ -17,6 +17,8 @@ import {
   RiUserLine,
 } from 'react-icons/ri';
 import { useAiDrawer } from '@/components/ai-drawer';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { Button } from '../primitives/button';
 import { Kbd } from '../primitives/kbd';
@@ -103,6 +105,7 @@ function CommandFooter({ commands }: { commands: CommandType[] }) {
 export function CommandPalette() {
   const { isOpen, closeCommandPalette } = useCommandPalette();
   const { openAiDrawer } = useAiDrawer();
+  const track = useTelemetry();
   const [search, setSearch] = useState('');
   const commandGroups = useCommandRegistry(search);
 
@@ -118,12 +121,24 @@ export function CommandPalette() {
   }, [isOpen]);
 
   const openAiDrawerWithQuery = useCallback(() => {
+    track(TelemetryEvent.COMMAND_PALETTE_COMMAND_SELECTED, {
+      commandId: 'help-ai-search',
+      commandLabel: `Ask AI "${search}"`,
+      commandCategory: 'help',
+    });
+
     openAiDrawer(search);
     closeCommandPalette();
-  }, [search, openAiDrawer, closeCommandPalette]);
+  }, [search, openAiDrawer, closeCommandPalette, track]);
 
   const executeCommand = useCallback(
     async (command: CommandType) => {
+      track(TelemetryEvent.COMMAND_PALETTE_COMMAND_SELECTED, {
+        commandId: command.id,
+        commandLabel: command.label,
+        commandCategory: command.category,
+      });
+
       closeCommandPalette();
 
       // Small delay to allow dialog to close smoothly
@@ -135,7 +150,7 @@ export function CommandPalette() {
         }
       }, 100);
     },
-    [closeCommandPalette]
+    [closeCommandPalette, track]
   );
 
   return (
