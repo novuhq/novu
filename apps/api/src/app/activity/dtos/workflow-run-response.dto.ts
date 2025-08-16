@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { StepRunStatus } from '@novu/application-generic';
 import { Type } from 'class-transformer';
 import { IsDate, IsIn, IsObject, IsOptional, IsString } from 'class-validator';
+import { DigestMetadataDto } from '../../notifications/dtos/activities-response.dto';
 import { GetWorkflowRunResponseBaseDto } from './shared.dto';
 
 export class StepRunDto {
@@ -49,6 +50,12 @@ export class StepRunDto {
 
   @ApiProperty({ description: 'Execution details', type: [Object] })
   executionDetails: any[];
+
+  @ApiPropertyOptional({
+    description: 'Optional digest for the job, including metadata and events',
+    type: DigestMetadataDto,
+  })
+  digest?: DigestMetadataDto;
 }
 
 export class GetWorkflowRunResponseDto extends GetWorkflowRunResponseBaseDto {
