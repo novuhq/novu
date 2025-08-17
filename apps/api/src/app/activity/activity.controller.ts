@@ -1,6 +1,6 @@
 import { ClassSerializerInterceptor, Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, RequirePermissions, UserSession } from '@novu/application-generic';
+import { ApiOperation } from '@nestjs/swagger';
+import { RequirePermissions, UserSession } from '@novu/application-generic';
 import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
