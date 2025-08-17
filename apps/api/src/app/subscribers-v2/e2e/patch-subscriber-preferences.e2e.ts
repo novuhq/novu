@@ -136,6 +136,141 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       expect(e).to.be.an.instanceOf(Error);
     }
   });
+
+  it('should bulk update multiple workflow preferences', async () => {
+    // Create additional workflows for bulk testing
+    const workflow2 = await session.createTemplate({
+      noFeedId: true,
+    });
+    const workflow3 = await session.createTemplate({
+      noFeedId: true,
+    });
+
+    const bulkUpdateData = {
+      preferences: [
+        {
+          workflowId: workflow._id,
+          channels: {
+            email: false,
+            inApp: true,
+            sms: false,
+          },
+        },
+        {
+          workflowId: workflow2._id,
+          channels: {
+            email: true,
+            inApp: false,
+            push: true,
+          },
+        },
+        {
+          workflowId: workflow3.triggers[0].identifier, // Test with trigger identifier
+          channels: {
+            email: false,
+            inApp: true,
+            chat: true,
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
+      .send(bulkUpdateData);
+
+    expect(response.status).to.equal(200);
+    expect(response.body.data).to.be.an('array');
+    expect(response.body.data).to.have.lengthOf(3);
+
+    // Verify each preference was updated correctly
+    const preferences = response.body.data;
+
+    // Find preference for workflow 1
+    const pref1 = preferences.find((p: any) => p.workflow.id === workflow._id);
+    expect(pref1).to.exist;
+    expect(pref1.channels).to.deep.include({
+      email: false,
+      in_app: true,
+      sms: false,
+    });
+
+    // Find preference for workflow 2
+    const pref2 = preferences.find((p: any) => p.workflow.id === workflow2._id);
+    expect(pref2).to.exist;
+    expect(pref2.channels).to.deep.include({
+      email: true,
+      in_app: false,
+      push: true,
+    });
+
+    // Find preference for workflow 3
+    const pref3 = preferences.find((p: any) => p.workflow.id === workflow3._id);
+    expect(pref3).to.exist;
+    expect(pref3.channels).to.deep.include({
+      email: false,
+      in_app: true,
+      chat: true,
+    });
+  });
+
+  it('should return 400 when bulk updating with more than 50 preferences', async () => {
+    const preferences = Array.from({ length: 51 }, (_, i) => ({
+      workflowId: workflow._id,
+      channels: {
+        email: i % 2 === 0,
+      },
+    }));
+
+    const bulkUpdateData = { preferences };
+
+    const response = await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
+      .send(bulkUpdateData);
+
+    expect(response.status).to.equal(400);
+    expect(response.body.message).to.include('preferences must contain no more than 50 elements');
+  });
+
+  it('should return 404 when bulk updating preferences for non-existent subscriber', async () => {
+    const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
+    const bulkUpdateData = {
+      preferences: [
+        {
+          workflowId: workflow._id,
+          channels: {
+            email: false,
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent
+      .patch(`/v2/subscribers/${invalidSubscriberId}/preferences/bulk`)
+      .send(bulkUpdateData);
+
+    expect(response.status).to.equal(404);
+  });
+
+  it('should return 404 when bulk updating with non-existent workflow ids', async () => {
+    const bulkUpdateData = {
+      preferences: [
+        {
+          workflowId: 'non-existent-workflow-id',
+          channels: {
+            email: false,
+          },
+        },
+      ],
+    };
+
+    const response = await session.testAgent
+      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
+      .send(bulkUpdateData);
+
+    expect(response.status).to.equal(404);
+    expect(response.body.message).to.include('Workflows with ids: non-existent-workflow-id not found');
+  });
 });
 
 async function createSubscriberAndValidate(id: string = '') {
