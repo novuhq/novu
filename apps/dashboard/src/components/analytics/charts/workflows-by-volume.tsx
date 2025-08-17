@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { RiRouteFill } from 'react-icons/ri';
 import { Bar, BarChart, Cell, XAxis, YAxis } from 'recharts';
 import { type WorkflowVolumeDataPoint } from '../../../api/activity';
-import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
@@ -59,26 +59,17 @@ function WorkflowVolumeTooltip(props: WorkflowVolumeTooltipProps) {
 
 function WorkflowsByVolumeSkeleton() {
   return (
-    <Card className="shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">
-          <Skeleton className="h-4 w-32" />
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
-        <div className="h-[160px] w-full flex flex-col gap-2">
-          {Array.from({ length: 5 }).map((_, i) => {
-            const width = Math.random() * 60 + 20; // Random width between 20-80%
-            return (
-              <div key={i} className="flex items-center gap-2">
-                <Skeleton className="h-4 w-20 flex-shrink-0" />
-                <Skeleton className="h-4 flex-grow" style={{ width: `${width}%` }} />
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="h-[160px] w-full flex flex-col gap-2">
+      {Array.from({ length: 5 }).map((_, i) => {
+        const width = Math.random() * 60 + 20; // Random width between 20-80%
+        return (
+          <div key={i} className="flex items-center gap-2">
+            <Skeleton className="h-4 w-20 flex-shrink-0 rounded-sm" />
+            <Skeleton className="h-4 flex-grow rounded-sm" style={{ width: `${width}%` }} />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

@@ -22,7 +22,7 @@ process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_TRIGGER = `${mockMaximumUnlimitedTr
 process.env.API_RATE_LIMIT_MAXIMUM_UNLIMITED_GLOBAL = `${mockMaximumUnlimitedGlobal}`;
 
 // Disable Launch Darkly to allow test to define FF state
-// @ts-ignore
+// @ts-expect-error
 process.env.LAUNCH_DARKLY_SDK_KEY = '';
 
 describe('API Rate Limiting #novu-v2', () => {
@@ -35,7 +35,7 @@ describe('API Rate Limiting #novu-v2', () => {
 
   describe('Guard logic', () => {
     beforeEach(async () => {
-      // @ts-ignore
+      // @ts-expect-error
       process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
 
       session = new UserSession();
@@ -48,7 +48,7 @@ describe('API Rate Limiting #novu-v2', () => {
 
     describe('Feature Flag', () => {
       it('should set rate limit headers when the Feature Flag is enabled', async () => {
-        // @ts-ignore
+        // @ts-expect-error
         process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
         const response = await request(`${pathPrefix}/no-category-no-cost`);
 
@@ -56,7 +56,7 @@ describe('API Rate Limiting #novu-v2', () => {
       });
 
       it('should NOT set rate limit headers when the Feature Flag is disabled', async () => {
-        // @ts-ignore
+        // @ts-expect-error
         process.env.IS_API_RATE_LIMITING_ENABLED = 'false';
         const response = await request(`${pathPrefix}/no-category-no-cost`);
 
@@ -275,7 +275,7 @@ describe('API Rate Limiting #novu-v2', () => {
               const expectedRemaining = Math.max(0, expectedBurstLimit - expectedCost);
 
               before(async () => {
-                // @ts-ignore
+                // @ts-expect-error
                 process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
 
                 session = new UserSession();
@@ -337,6 +337,8 @@ describe('API Rate Limiting #novu-v2', () => {
           };
         }
       )
-      .forEach((testCase) => testCase());
+      .forEach((testCase) => {
+        testCase();
+      });
   });
 });

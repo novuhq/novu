@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Line, LineChart, XAxis } from 'recharts';
 import { type WorkflowRunsTrendDataPoint } from '../../../api/activity';
-import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
@@ -27,27 +27,32 @@ const chartConfig = {
 
 function WorkflowRunsTrendChartSkeleton() {
   return (
-    <Card className="shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">
-          <Skeleton className="h-4 w-48" />
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
-        <div className="h-[160px] w-full flex items-end justify-between gap-1 px-2">
-          {Array.from({ length: 30 }).map((_, i) => {
-            const height = Math.random() * 100 + 20;
+    <div className="h-[160px] w-full relative px-4">
+      <div className="absolute inset-0 flex items-end justify-between px-2">
+        {Array.from({ length: 35 }).map((_, i) => {
+          const baseHeight = 40;
+          const successHeight = baseHeight + Math.sin(i * 0.3) * 30 + Math.random() * 20;
 
-            return (
-              <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                <Skeleton className="w-full rounded-full" style={{ height: `${height}px` }} />
-                {(i === 0 || i === 29) && <Skeleton className="h-2 w-6 mt-2" />}
+          return (
+            <div key={i} className="flex flex-col items-center flex-1 relative">
+              <div className="relative w-full flex justify-center">
+                <Skeleton
+                  className="rounded-sm"
+                  style={{
+                    height: `${Math.max(successHeight, 20)}px`,
+                    width: '15px',
+                  }}
+                />
               </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="absolute bottom-6 left-4 right-4 h-px">
+        <Skeleton className="h-full w-full" />
+      </div>
+    </div>
   );
 }
 
