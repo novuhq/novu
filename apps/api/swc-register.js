@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noCommonJs: <explanation> */
 const { transformFileSync } = require('@swc/core');
 const { addHook } = require('pirates');
 

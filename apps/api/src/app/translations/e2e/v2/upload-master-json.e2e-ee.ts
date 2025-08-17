@@ -153,7 +153,7 @@ describe('Upload master JSON file - /v2/translations/master-json/upload (POST) #
     }
 
     // Test valid filename patterns
-    const validFilenames = ['en_US.json', 'fr_FR.json', 'zh_Hans_CN.json'];
+    const validFilenames = ['en_US.json', 'fr_FR.json', 'zh_CN.json'];
 
     for (const filename of validFilenames) {
       const { body } = await session.testAgent

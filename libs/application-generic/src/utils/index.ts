@@ -9,7 +9,6 @@ export * from './filter';
 export * from './filter-processing-details';
 export * from './generate-id';
 export * from './hmac';
-export * from './locale-validator';
 export * from './novu-integrations';
 export * from './object';
 export * from './sanitize-control-values';

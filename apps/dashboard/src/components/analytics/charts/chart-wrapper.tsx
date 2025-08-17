@@ -43,20 +43,18 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
 
   const dummyData = useMemo(() => dummyDataGenerator(), [dummyDataGenerator]);
 
-  if (isLoading) {
-    return loadingSkeleton;
-  }
-
   return (
-    <Card className="shadow-box-xs border-none">
+    <Card className="shadow-box-xs border-none h-full">
       <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub flex items-center gap-0.5">
+        <CardTitle className="text-label-sm text-text-sub font-medium flex items-center gap-0.5 tracking-[normal]">
           {title}
           {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3">
-        {error ? (
+        {isLoading ? (
+          loadingSkeleton
+        ) : error ? (
           <div className="h-[160px] w-full flex items-center justify-center">
             <div className="text-sm text-text-soft">{errorMessage}</div>
           </div>

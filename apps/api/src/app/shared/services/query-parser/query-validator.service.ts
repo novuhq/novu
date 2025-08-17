@@ -117,7 +117,9 @@ export class QueryValidatorService {
           continue;
         }
 
-        value.forEach((item, index) => this.validateNode({ node: item, issues, path: [...path, index] }));
+        value.forEach((item, index) => {
+          this.validateNode({ node: item, issues, path: [...path, index] });
+        });
         continue;
       }
 

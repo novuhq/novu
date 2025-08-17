@@ -122,7 +122,9 @@ describe('GetPrices #novu-v2', () => {
         });
       };
     })
-    .forEach((test) => test());
+    .forEach((test) => {
+      test();
+    });
 
   it(`should throw an error if no prices are found`, async () => {
     listPricesStub.onFirstCall().resolves({ data: [] });
