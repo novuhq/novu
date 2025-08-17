@@ -17,10 +17,11 @@
         "owner": "typescript",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "Successfully compiled",
+          "beginsPattern": "Running...",
           "endsPattern": "Started application in NODE_ENV"
         }
-      }
+      },
+      "dependsOn": ["SHARED", "APPLICATION GENERIC", "DAL"]
     },
     {
       "type": "npm",
@@ -33,8 +34,8 @@
         "owner": "typescript",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "Successfully compiled",
-          "endsPattern": "Started application in NODE_ENV"
+          "beginsPattern": "Running...",
+          "endsPattern": "Listening for NODE_ENV="
         }
       }
     },
@@ -73,10 +74,11 @@
         "owner": "typescript",
         "background": {
           "activeOnStart": true,
-          "beginsPattern": "Compiling...",
-          "endsPattern": "webpack compiled successfully"
+          "beginsPattern": "vite",
+          "endsPattern": "➜  Local:   http://localhost:4201"
         }
-      }
+      },
+      "dependsOn": ["SHARED", "API", "WORKER"]
     },
     {
       "type": "npm",

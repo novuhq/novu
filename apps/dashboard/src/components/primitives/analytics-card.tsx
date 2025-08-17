@@ -90,19 +90,20 @@ export function AnalyticsCard({
 
   if (showSkeleton) {
     return (
-      <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full', className)}>
+      <div className={cn('bg-bg-white rounded-12 p-3 shadow-box-xs w-full min-h-[108px]', className)}>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              <Skeleton className="size-4 rounded" />
-              <Skeleton className="h-4 w-20" />
+              {IconComponent && <IconComponent className="size-4 text-icon-sub" />}
+              <span className="text-label-sm text-text-sub">{title}</span>
+              {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
             </div>
             <Skeleton className="h-3 w-8 rounded-full" />
           </div>
 
-          <Skeleton className="h-6 w-16" />
+          <Skeleton className="h-8 w-16 mt-1" />
 
-          <Skeleton className="h-3 w-32" />
+          <Skeleton className="h-3 w-32 mt-2" />
         </div>
       </div>
     );

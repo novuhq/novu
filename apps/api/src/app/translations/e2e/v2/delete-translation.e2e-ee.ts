@@ -178,7 +178,7 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
 
   it('should work with complex locale codes', async () => {
     const translationContent = {
-      'test.key': 'Chinese Traditional content',
+      'test.key': 'Chinese Simplified content',
     };
 
     // Create translation with complex locale
@@ -187,19 +187,19 @@ describe('Delete translation - /v2/translations/:resourceType/:resourceId/:local
       .send({
         resourceId: workflowId,
         resourceType: LocalizationResourceEnum.WORKFLOW,
-        locale: 'zh_Hans_CN',
+        locale: 'zh_CN',
         content: translationContent,
       })
       .expect(200);
 
     // Delete the translation
     await session.testAgent
-      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_Hans_CN`)
+      .delete(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_CN`)
       .expect(204);
 
     // Verify translation no longer exists
     await session.testAgent
-      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_Hans_CN`)
+      .get(`/v2/translations/${LocalizationResourceEnum.WORKFLOW}/${workflowId}/zh_CN`)
       .expect(404);
   });
 });

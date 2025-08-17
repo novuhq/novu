@@ -31,7 +31,6 @@ export class BuildInteractionTrendChart {
       chartDataMap.set(
         dateKey,
         new Map([
-          ['message_sent', 0],
           ['message_seen', 0],
           ['message_read', 0],
           ['message_snoozed', 0],
@@ -57,7 +56,6 @@ export class BuildInteractionTrendChart {
     for (const [date, eventCounts] of chartDataMap) {
       chartData.push({
         timestamp: date,
-        messageSent: eventCounts.get('message_sent') || 0,
         messageSeen: eventCounts.get('message_seen') || 0,
         messageRead: eventCounts.get('message_read') || 0,
         messageSnoozed: eventCounts.get('message_snoozed') || 0,

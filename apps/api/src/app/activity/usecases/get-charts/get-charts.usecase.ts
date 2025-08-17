@@ -89,126 +89,182 @@ export class GetCharts {
       | ActiveSubscribersTrendDataPointDto[]
     >;
 
+    const chartPromises: Array<{
+      type: ReportTypeEnum;
+      promise: Promise<
+        | ChartDataPointDto[]
+        | InteractionTrendDataPointDto[]
+        | WorkflowVolumeDataPointDto[]
+        | ProviderVolumeDataPointDto[]
+        | MessagesDeliveredDataPointDto
+        | ActiveSubscribersDataPointDto
+        | AvgMessagesPerSubscriberDataPointDto
+        | WorkflowRunsMetricDataPointDto
+        | TotalInteractionsDataPointDto
+        | WorkflowRunsTrendDataPointDto[]
+        | ActiveSubscribersTrendDataPointDto[]
+      >;
+    }> = [];
+
     if (reportType.includes(ReportTypeEnum.DELIVERY_TREND)) {
-      data[ReportTypeEnum.DELIVERY_TREND] = await this.buildDeliveryTrendChart.execute(
-        BuildDeliveryTrendChartCommand.create({
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.DELIVERY_TREND,
+        promise: this.buildDeliveryTrendChart.execute(
+          BuildDeliveryTrendChartCommand.create({
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.INTERACTION_TREND)) {
-      data[ReportTypeEnum.INTERACTION_TREND] = await this.buildInteractionTrendChart.execute(
-        BuildInteractionTrendChartCommand.create({
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.INTERACTION_TREND,
+        promise: this.buildInteractionTrendChart.execute(
+          BuildInteractionTrendChartCommand.create({
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.WORKFLOW_BY_VOLUME)) {
-      data[ReportTypeEnum.WORKFLOW_BY_VOLUME] = await this.buildWorkflowByVolumeChart.execute(
-        BuildWorkflowByVolumeChartCommand.create({
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.WORKFLOW_BY_VOLUME,
+        promise: this.buildWorkflowByVolumeChart.execute(
+          BuildWorkflowByVolumeChartCommand.create({
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.PROVIDER_BY_VOLUME)) {
-      data[ReportTypeEnum.PROVIDER_BY_VOLUME] = await this.buildProviderByVolumeChart.execute(
-        BuildProviderByVolumeChartCommand.create({
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.PROVIDER_BY_VOLUME,
+        promise: this.buildProviderByVolumeChart.execute(
+          BuildProviderByVolumeChartCommand.create({
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.MESSAGES_DELIVERED)) {
-      data[ReportTypeEnum.MESSAGES_DELIVERED] = await this.buildMessagesDeliveredChart.execute(
-        Object.assign(new BuildMessagesDeliveredChartCommand(), {
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.MESSAGES_DELIVERED,
+        promise: this.buildMessagesDeliveredChart.execute(
+          Object.assign(new BuildMessagesDeliveredChartCommand(), {
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.ACTIVE_SUBSCRIBERS)) {
-      data[ReportTypeEnum.ACTIVE_SUBSCRIBERS] = await this.buildActiveSubscribersChart.execute(
-        Object.assign(new BuildActiveSubscribersChartCommand(), {
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.ACTIVE_SUBSCRIBERS,
+        promise: this.buildActiveSubscribersChart.execute(
+          Object.assign(new BuildActiveSubscribersChartCommand(), {
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER)) {
-      data[ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER] = await this.buildAvgMessagesPerSubscriberChart.execute(
-        Object.assign(new BuildAvgMessagesPerSubscriberChartCommand(), {
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.AVG_MESSAGES_PER_SUBSCRIBER,
+        promise: this.buildAvgMessagesPerSubscriberChart.execute(
+          Object.assign(new BuildAvgMessagesPerSubscriberChartCommand(), {
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_METRIC)) {
-      data[ReportTypeEnum.WORKFLOW_RUNS_METRIC] = await this.buildWorkflowRunsMetricChart.execute(
-        Object.assign(new BuildWorkflowRunsMetricChartCommand(), {
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.WORKFLOW_RUNS_METRIC,
+        promise: this.buildWorkflowRunsMetricChart.execute(
+          Object.assign(new BuildWorkflowRunsMetricChartCommand(), {
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.TOTAL_INTERACTIONS)) {
-      data[ReportTypeEnum.TOTAL_INTERACTIONS] = await this.buildTotalInteractionsChart.execute(
-        Object.assign(new BuildTotalInteractionsChartCommand(), {
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.TOTAL_INTERACTIONS,
+        promise: this.buildTotalInteractionsChart.execute(
+          Object.assign(new BuildTotalInteractionsChartCommand(), {
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.WORKFLOW_RUNS_TREND)) {
-      data[ReportTypeEnum.WORKFLOW_RUNS_TREND] = await this.buildWorkflowRunsTrendChart.execute(
-        BuildWorkflowRunsTrendChartCommand.create({
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.WORKFLOW_RUNS_TREND,
+        promise: this.buildWorkflowRunsTrendChart.execute(
+          BuildWorkflowRunsTrendChartCommand.create({
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
 
     if (reportType.includes(ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND)) {
-      data[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] = await this.buildActiveSubscribersTrendChart.execute(
-        BuildActiveSubscribersTrendChartCommand.create({
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-        })
-      );
+      chartPromises.push({
+        type: ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND,
+        promise: this.buildActiveSubscribersTrendChart.execute(
+          BuildActiveSubscribersTrendChartCommand.create({
+            environmentId,
+            organizationId,
+            startDate,
+            endDate,
+          })
+        ),
+      });
     }
+
+    const results = await Promise.all(chartPromises.map(({ promise }) => promise));
+
+    chartPromises.forEach(({ type }, index) => {
+      data[type] = results[index];
+    });
 
     return {
       data,

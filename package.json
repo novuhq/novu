@@ -75,7 +75,7 @@
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",
     "@auto-it/released": "^10.36.5",
-    "@biomejs/biome": "^2.1.2",
+    "@biomejs/biome": "^2.2.0",
     "@gitopslovers/nx-biome": "^1.5.0",
     "@nx/jest": "21.3.11",
     "@nx/js": "21.3.11",

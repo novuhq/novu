@@ -31,7 +31,7 @@ export async function encryptApiKeysMigration() {
 
     if (
       environment.apiKeys.every((key) => {
-        isEncrypted(key.key);
+        return isEncrypted(key.key);
       })
     ) {
       logger.info(`environment ${environment._id} - api keys are already encrypted, skipping..`);

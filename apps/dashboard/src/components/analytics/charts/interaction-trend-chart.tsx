@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Line, LineChart, XAxis } from 'recharts';
 import { type InteractionTrendDataPoint } from '../../../api/activity';
-import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
@@ -11,10 +11,6 @@ import { type InteractionChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 
 const chartConfig = {
-  messageSent: {
-    label: 'Sent',
-    color: '#a5b4fc',
-  },
   messageSeen: {
     label: 'Seen',
     color: '#60a5fa',
@@ -35,27 +31,17 @@ const chartConfig = {
 
 function InteractionTrendChartSkeleton() {
   return (
-    <Card className="shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">
-          <Skeleton className="h-4 w-32" />
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
-        <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
-          {Array.from({ length: 15 }).map((_, i) => {
-            const height = Math.random() * 100 + 20;
+    <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
+      {Array.from({ length: 20 }).map((_, i) => {
+        const height = Math.random() * 100 + 20;
 
-            return (
-              <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                <Skeleton className="w-full rounded-full" style={{ height: `${height}px` }} />
-                {(i === 0 || i === 14) && <Skeleton className="h-2 w-6 mt-2" />}
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+        return (
+          <div key={i} className="flex flex-col items-center gap-1 flex-1">
+            <Skeleton className="w-full rounded-sm" style={{ height: `${height}px` }} />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -72,7 +58,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
         month: 'short',
         day: 'numeric',
       }),
-      messageSent: dataPoint.messageSent,
       messageSeen: dataPoint.messageSeen,
       messageRead: dataPoint.messageRead,
       messageSnoozed: dataPoint.messageSnoozed,
@@ -84,7 +69,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
   const hasDataChecker = useCallback(
     createDateBasedHasDataChecker<InteractionChartData>((dataPoint: InteractionChartData) => {
       return (
-        (dataPoint.messageSent || 0) > 0 ||
         (dataPoint.messageSeen || 0) > 0 ||
         (dataPoint.messageRead || 0) > 0 ||
         (dataPoint.messageSnoozed || 0) > 0 ||
@@ -110,7 +94,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
             domain={['dataMin', 'dataMax']}
           />
           {includeTooltip && <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />}
-          <Line dataKey="messageSent" name="Sent" stroke="#a5b4fc" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="messageSeen" name="Seen" stroke="#60a5fa" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="messageRead" name="Read" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="messageSnoozed" name="Snoozed" stroke="#a78bfa" strokeWidth={2} dot={false} type="monotone" />

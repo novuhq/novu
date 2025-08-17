@@ -441,7 +441,6 @@ export type ChartDataPoint = {
 
 export type InteractionTrendDataPoint = {
   timestamp: string;
-  messageSent: number;
   messageSeen: number;
   messageRead: number;
   messageSnoozed: number;

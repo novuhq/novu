@@ -1,7 +1,14 @@
 import { type OrganizationResource } from '@clerk/types';
-import { ApiServiceLevelEnum, FeatureNameEnum, type GetSubscriptionDto, getFeatureForTierAsNumber } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  FeatureFlagsKeysEnum,
+  FeatureNameEnum,
+  type GetSubscriptionDto,
+  getFeatureForTierAsNumber,
+} from '@novu/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { IS_SELF_HOSTED } from '../../../config';
+import { useNumericFeatureFlag } from '../../../hooks/use-feature-flag';
 
 export type DateRangeOption = {
   value: string;
@@ -14,6 +21,7 @@ export type DateFilterOption = {
   label: string;
   value: string;
   icon?: React.ComponentType<{ className?: string }>;
+  disabledDueToAnalyticsLimit?: boolean;
 };
 
 const HOME_PAGE_DATE_RANGE_OPTIONS: DateRangeOption[] = [
@@ -26,9 +34,11 @@ const HOME_PAGE_DATE_RANGE_OPTIONS: DateRangeOption[] = [
 function buildDateFilterOptions({
   organization,
   apiServiceLevel,
+  maxDateAnalyticsMs,
 }: {
   organization: OrganizationResource;
   apiServiceLevel?: ApiServiceLevelEnum;
+  maxDateAnalyticsMs?: number;
 }): Omit<DateFilterOption, 'icon'>[] {
   const maxActivityFeedRetentionMs = getFeatureForTierAsNumber(
     FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
@@ -43,10 +53,17 @@ function buildDateFilterOptions({
     const legacyFreeMaxRetentionMs = 30 * 24 * 60 * 60 * 1000;
     const maxRetentionMs = isLegacyFreeTier ? legacyFreeMaxRetentionMs : maxActivityFeedRetentionMs;
 
+    // Check if the option exceeds the analytics date limit
+    const exceedsAnalyticsLimit = Boolean(
+      maxDateAnalyticsMs && maxDateAnalyticsMs > 0 && option.ms > maxDateAnalyticsMs
+    );
+    const exceedsRetentionLimit = option.ms > maxRetentionMs;
+
     return {
-      disabled: option.ms > maxRetentionMs,
-      label: option.label,
+      disabled: exceedsRetentionLimit || exceedsAnalyticsLimit,
+      label: exceedsAnalyticsLimit && !exceedsRetentionLimit ? `${option.label} (Coming soon)` : option.label,
       value: option.value,
+      disabledDueToAnalyticsLimit: exceedsAnalyticsLimit && !exceedsRetentionLimit,
     };
   });
 }
@@ -54,9 +71,11 @@ function buildDateFilterOptions({
 function getDefaultDateRange({
   subscription,
   organization,
+  maxDateAnalyticsMs,
 }: {
   subscription: GetSubscriptionDto | null | undefined;
   organization: OrganizationResource | null | undefined;
+  maxDateAnalyticsMs?: number;
 }): string {
   if (!organization || !subscription) {
     return '30d';
@@ -65,16 +84,29 @@ function getDefaultDateRange({
   const availableFilters = buildDateFilterOptions({
     organization,
     apiServiceLevel: subscription.apiServiceLevel,
+    maxDateAnalyticsMs,
   });
 
-  const thirtyDayOption = availableFilters.find((option) => option.value === '30d' && !option.disabled);
+  // Find the maximum available date range up to 30 days, excluding "Coming soon" options
+  // Priority order: 30d -> 7d -> 24h (largest available that's not "Coming soon")
+  const preferredOrder = ['30d', '7d', '24h'];
 
-  if (thirtyDayOption) {
-    return '30d';
+  for (const preferredValue of preferredOrder) {
+    const option = availableFilters.find((opt) => opt.value === preferredValue);
+    if (option && !option.disabled && !option.disabledDueToAnalyticsLimit) {
+      return preferredValue;
+    }
   }
 
-  const firstAvailable = availableFilters.find((option) => !option.disabled);
-  return firstAvailable?.value ?? '7d';
+  // Fallback: find any available option that's not "Coming soon"
+  const fallbackOption = availableFilters.find((option) => !option.disabled && !option.disabledDueToAnalyticsLimit);
+  if (fallbackOption) {
+    return fallbackOption.value;
+  }
+
+  // Last resort: find any available option (including subscription-limited ones)
+  const lastResortOption = availableFilters.find((option) => !option.disabled);
+  return lastResortOption?.value ?? '7d';
 }
 
 function getChartsDateRange(selectedDateRange: string) {
@@ -93,9 +125,16 @@ type UseHomepageDateFilterParams = {
 };
 
 export function useHomepageDateFilter({ organization, subscription, upgradeCtaIcon }: UseHomepageDateFilterParams) {
+  // Get the max date analytics feature flag value (in days, convert to milliseconds)
+  // This feature flag controls the maximum date range available for analytics
+  // If set to 7, only options <= 7 days will be enabled, others will show "Coming soon"
+  // Controlled via LaunchDarkly feature flag: MAX_DATE_ANALYTICS_ENABLED_NUMBER
+  const maxDateAnalyticsDays = useNumericFeatureFlag(FeatureFlagsKeysEnum.MAX_DATE_ANALYTICS_ENABLED_NUMBER, 0);
+  const maxDateAnalyticsMs = maxDateAnalyticsDays > 0 ? maxDateAnalyticsDays * 24 * 60 * 60 * 1000 : 0;
+
   const defaultDateRange = useMemo(
-    () => getDefaultDateRange({ organization, subscription }),
-    [organization, subscription]
+    () => getDefaultDateRange({ organization, subscription, maxDateAnalyticsMs }),
+    [organization, subscription, maxDateAnalyticsMs]
   );
 
   const [selectedDateRange, setSelectedDateRange] = useState<string>(defaultDateRange);
@@ -114,11 +153,12 @@ export function useHomepageDateFilter({ organization, subscription, upgradeCtaIc
     return buildDateFilterOptions({
       organization: organization,
       apiServiceLevel: subscription?.apiServiceLevel,
+      maxDateAnalyticsMs,
     }).map((option) => ({
       ...option,
-      icon: option.disabled ? upgradeCtaIcon : undefined,
+      icon: option.disabled && !option.disabledDueToAnalyticsLimit ? upgradeCtaIcon : undefined,
     }));
-  }, [organization, subscription, upgradeCtaIcon]);
+  }, [organization, subscription, upgradeCtaIcon, maxDateAnalyticsMs]);
 
   const chartsDateRange = useMemo(() => getChartsDateRange(selectedDateRange), [selectedDateRange]);
 
