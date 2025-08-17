@@ -44,7 +44,7 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
   const dummyData = useMemo(() => dummyDataGenerator(), [dummyDataGenerator]);
 
   return (
-    <Card className="shadow-box-xs border-none">
+    <Card className="shadow-box-xs border-none h-full">
       <CardHeader className="bg-transparent p-3 pb-0">
         <CardTitle className="text-label-sm text-text-sub flex items-center gap-0.5">
           {title}

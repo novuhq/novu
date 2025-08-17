@@ -136,17 +136,21 @@ export function AnalyticsPage() {
               />
             </motion.div>
 
-            <motion.div variants={ANIMATION_VARIANTS.section} className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              <ActiveSubscribersTrendChart
-                data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
-                isLoading={isChartsLoading}
-                error={chartsError}
-              />
-              <ProvidersByVolume
-                data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
-                isLoading={isChartsLoading}
-                error={chartsError}
-              />
+            <motion.div variants={ANIMATION_VARIANTS.section} className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+              <div className="lg:col-span-8">
+                <ActiveSubscribersTrendChart
+                  data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <ProvidersByVolume
+                  data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
+              </div>
             </motion.div>
           </div>
         </motion.div>
