@@ -10,6 +10,7 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type TopicsControllerUpsertTopicRequest = {
+  failIfExists: boolean;
   /**
    * A header for idempotency purposes
    */
@@ -28,6 +29,7 @@ export const TopicsControllerUpsertTopicRequest$inboundSchema: z.ZodType<
   z.ZodTypeDef,
   unknown
 > = z.object({
+  failIfExists: z.boolean(),
   "idempotency-key": z.string().optional(),
   CreateUpdateTopicRequestDto:
     components.CreateUpdateTopicRequestDto$inboundSchema,
@@ -40,6 +42,7 @@ export const TopicsControllerUpsertTopicRequest$inboundSchema: z.ZodType<
 
 /** @internal */
 export type TopicsControllerUpsertTopicRequest$Outbound = {
+  failIfExists: boolean;
   "idempotency-key"?: string | undefined;
   CreateUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto$Outbound;
 };
@@ -50,6 +53,7 @@ export const TopicsControllerUpsertTopicRequest$outboundSchema: z.ZodType<
   z.ZodTypeDef,
   TopicsControllerUpsertTopicRequest
 > = z.object({
+  failIfExists: z.boolean(),
   idempotencyKey: z.string().optional(),
   createUpdateTopicRequestDto:
     components.CreateUpdateTopicRequestDto$outboundSchema,

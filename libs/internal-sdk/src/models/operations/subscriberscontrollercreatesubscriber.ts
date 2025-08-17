@@ -10,6 +10,7 @@ import * as components from "../components/index.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
 export type SubscribersControllerCreateSubscriberRequest = {
+  failIfExists: boolean;
   /**
    * A header for idempotency purposes
    */
@@ -29,6 +30,7 @@ export const SubscribersControllerCreateSubscriberRequest$inboundSchema:
     z.ZodTypeDef,
     unknown
   > = z.object({
+    failIfExists: z.boolean(),
     "idempotency-key": z.string().optional(),
     CreateSubscriberRequestDto:
       components.CreateSubscriberRequestDto$inboundSchema,
@@ -41,6 +43,7 @@ export const SubscribersControllerCreateSubscriberRequest$inboundSchema:
 
 /** @internal */
 export type SubscribersControllerCreateSubscriberRequest$Outbound = {
+  failIfExists: boolean;
   "idempotency-key"?: string | undefined;
   CreateSubscriberRequestDto: components.CreateSubscriberRequestDto$Outbound;
 };
@@ -52,6 +55,7 @@ export const SubscribersControllerCreateSubscriberRequest$outboundSchema:
     z.ZodTypeDef,
     SubscribersControllerCreateSubscriberRequest
   > = z.object({
+    failIfExists: z.boolean(),
     idempotencyKey: z.string().optional(),
     createSubscriberRequestDto:
       components.CreateSubscriberRequestDto$outboundSchema,

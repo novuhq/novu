@@ -50,6 +50,33 @@ export type WorkflowListResponseDtoUpdatedBy = {
   externalId?: string | null | undefined;
 };
 
+/**
+ * User last name
+ */
+export type WorkflowListResponseDtoLastPublishedByLastName = {};
+
+/**
+ * User who last published the workflow
+ */
+export type WorkflowListResponseDtoLastPublishedBy = {
+  /**
+   * User ID
+   */
+  id: string;
+  /**
+   * User first name
+   */
+  firstName?: string | null | undefined;
+  /**
+   * User last name
+   */
+  lastName?: WorkflowListResponseDtoLastPublishedByLastName | null | undefined;
+  /**
+   * User external ID
+   */
+  externalId?: string | null | undefined;
+};
+
 export type WorkflowListResponseDto = {
   /**
    * Name of the workflow
@@ -71,6 +98,14 @@ export type WorkflowListResponseDto = {
    * User who last updated the workflow
    */
   updatedBy?: WorkflowListResponseDtoUpdatedBy | null | undefined;
+  /**
+   * Timestamp of the last workflow publication
+   */
+  lastPublishedAt?: string | null | undefined;
+  /**
+   * User who last published the workflow
+   */
+  lastPublishedBy?: WorkflowListResponseDtoLastPublishedBy | null | undefined;
   /**
    * Unique database identifier
    */
@@ -233,6 +268,152 @@ export function workflowListResponseDtoUpdatedByFromJSON(
 }
 
 /** @internal */
+export const WorkflowListResponseDtoLastPublishedByLastName$inboundSchema:
+  z.ZodType<
+    WorkflowListResponseDtoLastPublishedByLastName,
+    z.ZodTypeDef,
+    unknown
+  > = z.object({});
+
+/** @internal */
+export type WorkflowListResponseDtoLastPublishedByLastName$Outbound = {};
+
+/** @internal */
+export const WorkflowListResponseDtoLastPublishedByLastName$outboundSchema:
+  z.ZodType<
+    WorkflowListResponseDtoLastPublishedByLastName$Outbound,
+    z.ZodTypeDef,
+    WorkflowListResponseDtoLastPublishedByLastName
+  > = z.object({});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace WorkflowListResponseDtoLastPublishedByLastName$ {
+  /** @deprecated use `WorkflowListResponseDtoLastPublishedByLastName$inboundSchema` instead. */
+  export const inboundSchema =
+    WorkflowListResponseDtoLastPublishedByLastName$inboundSchema;
+  /** @deprecated use `WorkflowListResponseDtoLastPublishedByLastName$outboundSchema` instead. */
+  export const outboundSchema =
+    WorkflowListResponseDtoLastPublishedByLastName$outboundSchema;
+  /** @deprecated use `WorkflowListResponseDtoLastPublishedByLastName$Outbound` instead. */
+  export type Outbound =
+    WorkflowListResponseDtoLastPublishedByLastName$Outbound;
+}
+
+export function workflowListResponseDtoLastPublishedByLastNameToJSON(
+  workflowListResponseDtoLastPublishedByLastName:
+    WorkflowListResponseDtoLastPublishedByLastName,
+): string {
+  return JSON.stringify(
+    WorkflowListResponseDtoLastPublishedByLastName$outboundSchema.parse(
+      workflowListResponseDtoLastPublishedByLastName,
+    ),
+  );
+}
+
+export function workflowListResponseDtoLastPublishedByLastNameFromJSON(
+  jsonString: string,
+): SafeParseResult<
+  WorkflowListResponseDtoLastPublishedByLastName,
+  SDKValidationError
+> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      WorkflowListResponseDtoLastPublishedByLastName$inboundSchema.parse(
+        JSON.parse(x),
+      ),
+    `Failed to parse 'WorkflowListResponseDtoLastPublishedByLastName' from JSON`,
+  );
+}
+
+/** @internal */
+export const WorkflowListResponseDtoLastPublishedBy$inboundSchema: z.ZodType<
+  WorkflowListResponseDtoLastPublishedBy,
+  z.ZodTypeDef,
+  unknown
+> = z.object({
+  _id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(
+    z.lazy(() => WorkflowListResponseDtoLastPublishedByLastName$inboundSchema),
+  ).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    "_id": "id",
+  });
+});
+
+/** @internal */
+export type WorkflowListResponseDtoLastPublishedBy$Outbound = {
+  _id: string;
+  firstName?: string | null | undefined;
+  lastName?:
+    | WorkflowListResponseDtoLastPublishedByLastName$Outbound
+    | null
+    | undefined;
+  externalId?: string | null | undefined;
+};
+
+/** @internal */
+export const WorkflowListResponseDtoLastPublishedBy$outboundSchema: z.ZodType<
+  WorkflowListResponseDtoLastPublishedBy$Outbound,
+  z.ZodTypeDef,
+  WorkflowListResponseDtoLastPublishedBy
+> = z.object({
+  id: z.string(),
+  firstName: z.nullable(z.string()).optional(),
+  lastName: z.nullable(
+    z.lazy(() => WorkflowListResponseDtoLastPublishedByLastName$outboundSchema),
+  ).optional(),
+  externalId: z.nullable(z.string()).optional(),
+}).transform((v) => {
+  return remap$(v, {
+    id: "_id",
+  });
+});
+
+/**
+ * @internal
+ * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
+ */
+export namespace WorkflowListResponseDtoLastPublishedBy$ {
+  /** @deprecated use `WorkflowListResponseDtoLastPublishedBy$inboundSchema` instead. */
+  export const inboundSchema =
+    WorkflowListResponseDtoLastPublishedBy$inboundSchema;
+  /** @deprecated use `WorkflowListResponseDtoLastPublishedBy$outboundSchema` instead. */
+  export const outboundSchema =
+    WorkflowListResponseDtoLastPublishedBy$outboundSchema;
+  /** @deprecated use `WorkflowListResponseDtoLastPublishedBy$Outbound` instead. */
+  export type Outbound = WorkflowListResponseDtoLastPublishedBy$Outbound;
+}
+
+export function workflowListResponseDtoLastPublishedByToJSON(
+  workflowListResponseDtoLastPublishedBy:
+    WorkflowListResponseDtoLastPublishedBy,
+): string {
+  return JSON.stringify(
+    WorkflowListResponseDtoLastPublishedBy$outboundSchema.parse(
+      workflowListResponseDtoLastPublishedBy,
+    ),
+  );
+}
+
+export function workflowListResponseDtoLastPublishedByFromJSON(
+  jsonString: string,
+): SafeParseResult<WorkflowListResponseDtoLastPublishedBy, SDKValidationError> {
+  return safeParse(
+    jsonString,
+    (x) =>
+      WorkflowListResponseDtoLastPublishedBy$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'WorkflowListResponseDtoLastPublishedBy' from JSON`,
+  );
+}
+
+/** @internal */
 export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   WorkflowListResponseDto,
   z.ZodTypeDef,
@@ -244,6 +425,10 @@ export const WorkflowListResponseDto$inboundSchema: z.ZodType<
   createdAt: z.string(),
   updatedBy: z.nullable(
     z.lazy(() => WorkflowListResponseDtoUpdatedBy$inboundSchema),
+  ).optional(),
+  lastPublishedAt: z.nullable(z.string()).optional(),
+  lastPublishedBy: z.nullable(
+    z.lazy(() => WorkflowListResponseDtoLastPublishedBy$inboundSchema),
   ).optional(),
   _id: z.string(),
   workflowId: z.string(),
@@ -266,6 +451,11 @@ export type WorkflowListResponseDto$Outbound = {
   updatedAt: string;
   createdAt: string;
   updatedBy?: WorkflowListResponseDtoUpdatedBy$Outbound | null | undefined;
+  lastPublishedAt?: string | null | undefined;
+  lastPublishedBy?:
+    | WorkflowListResponseDtoLastPublishedBy$Outbound
+    | null
+    | undefined;
   _id: string;
   workflowId: string;
   slug: string;
@@ -288,6 +478,10 @@ export const WorkflowListResponseDto$outboundSchema: z.ZodType<
   createdAt: z.string(),
   updatedBy: z.nullable(
     z.lazy(() => WorkflowListResponseDtoUpdatedBy$outboundSchema),
+  ).optional(),
+  lastPublishedAt: z.nullable(z.string()).optional(),
+  lastPublishedBy: z.nullable(
+    z.lazy(() => WorkflowListResponseDtoLastPublishedBy$outboundSchema),
   ).optional(),
   id: z.string(),
   workflowId: z.string(),

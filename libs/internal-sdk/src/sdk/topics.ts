@@ -48,16 +48,18 @@ export class Topics extends ClientSDK {
    * Create a topic
    *
    * @remarks
-   * Creates a new topic if it does not exist, or updates an existing topic if it already exists
+   * Creates a new topic if it does not exist, or updates an existing topic if it already exists. Use ?failIfExists=true to prevent updates.
    */
   async create(
     createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
+    failIfExists: boolean,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.TopicsControllerUpsertTopicResponse> {
     return unwrapAsync(topicsCreate(
       this,
       createUpdateTopicRequestDto,
+      failIfExists,
       idempotencyKey,
       options,
     ));
