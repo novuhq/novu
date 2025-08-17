@@ -28,6 +28,7 @@ process.env.LAUNCH_DARKLY_SDK_KEY = '';
 describe('API Rate Limiting #novu-v2', () => {
   let session: UserSession;
   const pathPrefix = '/v1/rate-limiting';
+
   let request: (
     path: string,
     authHeader?: string
