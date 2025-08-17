@@ -84,8 +84,12 @@ function processLiquidRawOutput({
   for (const rawOutput of rawOutputs) {
     try {
       const result = parseByLiquid({ rawOutput, variableSchema });
-      result.validVariables.forEach((variable) => addVariable(variable, true));
-      result.invalidVariables.forEach((variable) => addVariable(variable, false));
+      result.validVariables.forEach((variable) => {
+        addVariable(variable, true);
+      });
+      result.invalidVariables.forEach((variable) => {
+        addVariable(variable, false);
+      });
     } catch (error: unknown) {
       if (isLiquidErrors(error)) {
         error.errors.forEach((e: RenderError) => {
