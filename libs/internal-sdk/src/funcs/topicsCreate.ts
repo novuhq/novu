@@ -35,7 +35,7 @@ import { Result } from "../types/fp.js";
 export function topicsCreate(
   client: NovuCore,
   createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
-  failIfExists: boolean,
+  failIfExists?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -66,7 +66,7 @@ export function topicsCreate(
 async function $do(
   client: NovuCore,
   createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
-  failIfExists: boolean,
+  failIfExists?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<

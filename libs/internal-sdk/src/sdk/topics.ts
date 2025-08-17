@@ -52,7 +52,7 @@ export class Topics extends ClientSDK {
    */
   async create(
     createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto,
-    failIfExists: boolean,
+    failIfExists?: boolean | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.TopicsControllerUpsertTopicResponse> {

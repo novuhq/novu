@@ -36,7 +36,7 @@ import { Result } from "../types/fp.js";
 export function subscribersCreate(
   client: NovuCore,
   createSubscriberRequestDto: components.CreateSubscriberRequestDto,
-  failIfExists: boolean,
+  failIfExists?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
@@ -67,7 +67,7 @@ export function subscribersCreate(
 async function $do(
   client: NovuCore,
   createSubscriberRequestDto: components.CreateSubscriberRequestDto,
-  failIfExists: boolean,
+  failIfExists?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<

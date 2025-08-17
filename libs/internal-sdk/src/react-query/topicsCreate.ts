@@ -19,7 +19,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type TopicsCreateMutationVariables = {
   createUpdateTopicRequestDto: components.CreateUpdateTopicRequestDto;
-  failIfExists: boolean;
+  failIfExists?: boolean | undefined;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };

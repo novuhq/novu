@@ -10,7 +10,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
@@ -139,6 +139,12 @@ export class SubscribersController {
     summary: 'Create a subscriber',
     description: `Create a subscriber with the subscriber attributes. 
       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated`,
+  })
+  @ApiQuery({
+    name: 'failIfExists',
+    required: false,
+    type: Boolean,
+    description: 'If true, the request will fail if a subscriber with the same subscriberId already exists',
   })
   @ApiResponse(SubscriberResponseDto, 201)
   @ApiResponse(SubscriberResponseDto, 409, false, false, {

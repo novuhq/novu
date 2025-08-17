@@ -77,7 +77,7 @@ export class Subscribers extends ClientSDK {
    */
   async create(
     createSubscriberRequestDto: components.CreateSubscriberRequestDto,
-    failIfExists: boolean,
+    failIfExists?: boolean | undefined,
     idempotencyKey?: string | undefined,
     options?: RequestOptions,
   ): Promise<operations.SubscribersControllerCreateSubscriberResponse> {
