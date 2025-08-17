@@ -30,7 +30,7 @@ test('should trigger pushpad library correctly', async () => {
   });
 
   expect(result.id).toBe('12345');
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     project: { authToken: 'api-key-123', projectId: '841' },
     body: 'Test push',
     title: 'Test',
@@ -74,7 +74,7 @@ test('should trigger pushpad library correctly with _passthrough', async () => {
   );
 
   expect(result.id).toBe('12345');
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     project: { authToken: 'api-key-123', projectId: '841' },
     body: 'Test push',
     title: 'Test passthrough',

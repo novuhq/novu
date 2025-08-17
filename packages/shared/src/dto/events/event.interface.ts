@@ -1,3 +1,4 @@
+import { SeverityLevelEnum } from '../../consts';
 import { ISubscribersDefine, ITenantDefine, ITopic, ProvidersIdEnum } from '../../types';
 
 export type TriggerRecipientSubscriber = string | ISubscribersDefine;
@@ -33,4 +34,5 @@ export type TriggerOverrides = {
   inApp?: Record<string, unknown>;
   chat?: Record<string, unknown>;
   layoutIdentifier?: string;
+  severity?: SeverityLevelEnum;
 };

@@ -1,3 +1,4 @@
+import { FeatureFlagsService } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
 import { WebSocketEventEnum } from '@novu/shared';
 import { Types } from 'mongoose';
@@ -37,6 +38,7 @@ const createWsGatewayStub = (result) => {
 describe('ExternalServicesRoute', () => {
   let externalServicesRoute: ExternalServicesRoute;
   let wsGatewayStub;
+  let featureFlagsServiceMock;
   let findOneStub: sinon.Stub;
   let getCountStub: sinon.Stub;
   const messageRepository = new MessageRepository();
@@ -44,6 +46,7 @@ describe('ExternalServicesRoute', () => {
   beforeEach(() => {
     findOneStub = sinon.stub(MessageRepository.prototype, 'findOne');
     getCountStub = sinon.stub(MessageRepository.prototype, 'getCount');
+    featureFlagsServiceMock = sinon.createStubInstance(FeatureFlagsService);
   });
 
   afterEach(() => {
@@ -54,7 +57,7 @@ describe('ExternalServicesRoute', () => {
   describe('User is not online', () => {
     beforeEach(() => {
       wsGatewayStub = createWsGatewayStub([]);
-      externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
+      externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository, featureFlagsServiceMock);
     });
 
     it('should not send any message to the web socket if user is not online', async () => {
@@ -71,7 +74,7 @@ describe('ExternalServicesRoute', () => {
   describe('User is online', () => {
     beforeEach(() => {
       wsGatewayStub = createWsGatewayStub([{ id: 'socket-id' }]);
-      externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
+      externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository, featureFlagsServiceMock);
       findOneStub.resolves(Promise.resolve({ _id: messageId }));
     });
 

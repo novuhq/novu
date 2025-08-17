@@ -1,6 +1,7 @@
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   ProvidersIdEnum,
+  SeverityLevelEnum,
   TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
@@ -177,6 +178,15 @@ export class TriggerOverrides {
     deprecated: true,
   })
   layoutIdentifier?: string;
+
+  @ApiHideProperty()
+  /* @ApiPropertyOptional({
+    description: 'Override the severity of the workflow',
+    example: 'high',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  }) */
+  severity?: SeverityLevelEnum;
 }
 
 @ApiExtraModels(

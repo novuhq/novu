@@ -1,5 +1,6 @@
 import { SeverityLevelEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsOptional, IsString } from 'class-validator';
+import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 
 export class GetPreferencesRequestDto {
   @IsOptional()
@@ -8,7 +9,6 @@ export class GetPreferencesRequestDto {
   tags?: string[];
 
   @IsOptional()
-  @IsArray()
-  @IsEnum(SeverityLevelEnum, { each: true })
-  severity?: SeverityLevelEnum[];
+  @IsEnumOrArray(SeverityLevelEnum)
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 }

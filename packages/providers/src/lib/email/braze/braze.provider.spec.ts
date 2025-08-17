@@ -23,9 +23,9 @@ test('should trigger sendMessage method correctly', async () => {
 
   await provider.sendMessage(mockEmailOptions);
 
-  expect(spy).toBeCalled();
+  expect(spy).toHaveBeenCalled();
 
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     from: mockEmailOptions.from,
     to: mockEmailOptions.to,
     html: mockEmailOptions.html,

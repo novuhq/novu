@@ -39,6 +39,7 @@ describe('Create Execution Details', () => {
       status: ExecutionDetailsStatusEnum.SUCCESS,
       isTest: false,
       isRetry: false,
+      workflowRunIdentifier: 'test-workflow-run-identifier',
     });
 
     const result = await useCase.execute(command);

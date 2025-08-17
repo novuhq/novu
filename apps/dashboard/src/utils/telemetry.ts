@@ -54,6 +54,7 @@ export enum TelemetryEvent {
   WORKFLOW_CHECKLIST_STEP_CLICKED = 'Workflow checklist step clicked - [Workflow Editor]',
   WORKFLOW_INSTRUCTIONS_OPENED = 'Workflow instructions opened - [Workflow Editor]',
   SUBSCRIBERS_PAGE_VISIT = 'Subscribers page visit',
+  ANALYTICS_PAGE_VISIT = 'Analytics page visit',
   SUBSCRIBER_CREATED = 'Subscriber created',
   SUBSCRIBER_EDITED = 'Subscriber edited',
   SUBSCRIBER_DELETED = 'Subscriber deleted',
@@ -74,4 +75,6 @@ export enum TelemetryEvent {
   LAYOUT_DUPLICATED = 'Layout duplicated',
   REQUEST_LOGS_PAGE_VISIT = 'Request logs page visit',
   REQUEST_LOG_ENTRY_CLICKED = 'Request log entry clicked',
+  COMMAND_PALETTE_OPENED = 'Command palette opened',
+  COMMAND_PALETTE_COMMAND_SELECTED = 'Command palette command selected',
 }

@@ -348,7 +348,7 @@ describe('workflow function', () => {
           payload: {},
           to: 'test@test.com',
         })
-      ).rejects.toThrowError(
+      ).rejects.toThrow(
         `Workflow with id: \`test-workflow\` has invalid \`payload\`. Please provide the correct payload`
       );
     });

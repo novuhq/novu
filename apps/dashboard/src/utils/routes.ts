@@ -21,6 +21,7 @@ export const ROUTES = {
   TEST_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug/test',
   TRIGGER_WORKFLOW: '/env/:environmentSlug/workflows/:workflowSlug/trigger',
   WELCOME: '/env/:environmentSlug/welcome',
+  HOME: '/env/:environmentSlug/home',
   EDIT_WORKFLOW_PREFERENCES: 'preferences',
   EDIT_STEP: 'steps/:stepSlug',
 
@@ -35,6 +36,7 @@ export const ROUTES = {
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',
   ACTIVITY_REQUESTS: '/env/:environmentSlug/activity/requests',
+  ANALYTICS: '/env/:environmentSlug/analytics',
   LOGS: '/env/:environmentSlug/requests',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
   WORKFLOWS_CREATE: '/env/:environmentSlug/workflows/create',

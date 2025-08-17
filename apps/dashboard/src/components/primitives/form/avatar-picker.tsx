@@ -11,23 +11,9 @@ import TextSeparator from '@/components/primitives/text-separator';
 import { ControlInput } from '@/components/workflow-editor/control-input';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
+import { DEFAULT_AVATARS } from '@/utils/avatars';
 import { InputRoot } from '../input';
 import { useFormField } from './form-context';
-
-const DEFAULT_AVATARS = Object.freeze([
-  `/images/avatar.svg`,
-  `/images/building.svg`,
-  `/images/info.svg`,
-  `/images/speaker.svg`,
-  `/images/confetti.svg`,
-  `/images/novu.svg`,
-  `/images/info-2.svg`,
-  `/images/bell.svg`,
-  `/images/error.svg`,
-  `/images/warning.svg`,
-  `/images/question.svg`,
-  `/images/error-warning.svg`,
-]);
 
 type AvatarPickerProps = {
   name: string;

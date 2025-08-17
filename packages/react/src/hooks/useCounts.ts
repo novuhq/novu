@@ -62,7 +62,13 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
     if (notification) {
       for (let i = 0; i < existingCounts.length; i++) {
         const filter = currentFilters[i];
-        if (areTagsEqual(filter.tags, notification.tags)) {
+        const isSeverityMatches =
+          !filter.severity ||
+          (Array.isArray(filter.severity) && filter.severity.length === 0) ||
+          (Array.isArray(filter.severity) && filter.severity.includes(notification.severity)) ||
+          (!Array.isArray(filter.severity) && filter.severity === notification.severity);
+
+        if (areTagsEqual(filter.tags, notification.tags) && isSeverityMatches) {
           countFiltersToFetch.push(filter);
         }
       }

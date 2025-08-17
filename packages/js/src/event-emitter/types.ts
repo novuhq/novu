@@ -83,7 +83,7 @@ type SocketEvents = {
 } & {
   [key in NotificationUnseenEvent]: { result: number };
 } & {
-  [key in NotificationUnreadEvent]: { result: number };
+  [key in NotificationUnreadEvent]: { result: { total: number; severity: Record<string, number> } };
 };
 
 /**

@@ -29,8 +29,8 @@ test('should trigger resend library correctly', async () => {
 
   await provider.sendMessage(mockNovuMessage);
 
-  expect(spy).toBeCalled();
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
     from: mockNovuMessage.from,
     to: mockNovuMessage.to,
     html: mockNovuMessage.html,

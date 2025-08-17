@@ -33,8 +33,8 @@ test('should trigger outlook365 library correctly', async () => {
   const response = await provider.sendMessage(mockNovuMessage);
 
   expect(response).not.toBeNull();
-  expect(sendMailMock).toBeCalled();
-  expect(sendMailMock).toBeCalledWith({
+  expect(sendMailMock).toHaveBeenCalled();
+  expect(sendMailMock).toHaveBeenCalledWith({
     attachments: undefined,
     from: {
       address: 'test@test.com',
@@ -59,8 +59,8 @@ test('should trigger outlook365 library correctly with _passthrough', async () =
   });
 
   expect(response).not.toBeNull();
-  expect(sendMailMock).toBeCalled();
-  expect(sendMailMock).toBeCalledWith({
+  expect(sendMailMock).toHaveBeenCalled();
+  expect(sendMailMock).toHaveBeenCalledWith({
     attachments: undefined,
     from: {
       address: 'test@test.com',

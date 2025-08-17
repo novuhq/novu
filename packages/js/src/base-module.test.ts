@@ -42,6 +42,15 @@ describe('callWithSession(fn)', () => {
       data: {
         token: 'cafebabe',
         totalUnreadCount: 10,
+        unreadCount: {
+          severity: {
+            high: 1,
+            medium: 2,
+            low: 3,
+            none: 4,
+          },
+          total: 10,
+        },
         removeNovuBranding: true,
         isDevelopmentMode: true,
         maxSnoozeDurationHours: 24,

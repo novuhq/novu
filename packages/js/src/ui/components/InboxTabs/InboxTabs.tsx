@@ -148,7 +148,7 @@ export const InboxTabs = (props: InboxTabsProps) => {
             onNotificationClick={props.onNotificationClick}
             onPrimaryActionClick={props.onPrimaryActionClick}
             onSecondaryActionClick={props.onSecondaryActionClick}
-            filter={{ ...filter(), tags: getTagsFromTab(tab), data: tab.filter?.data }}
+            filter={{ ...filter(), tags: getTagsFromTab(tab), data: tab.filter?.data, severity: tab.filter?.severity }}
           />
         </Tabs.Content>
       ))}

@@ -10,11 +10,11 @@ import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
-import { LogRepository, QueryBuilder, SchemaKeys, Where } from '../log.repository';
+import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
-type WorkflowRunInsertData = Omit<InferClickhouseSchemaType<typeof workflowRunSchema>, 'id' | 'expires_at'>;
+type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
 
 interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
@@ -425,7 +425,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       external_subscriber_id: options.externalSubscriberId || null,
 
       // Execution metadata
-      status: options.status || 'pending',
+      status: options.status || ('pending' as WorkflowRunStatusEnum),
       trigger_identifier: this.getTriggerIdentifier(workflow),
 
       // Correlation and grouping
@@ -452,5 +452,248 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     }
 
     return template.name.toLowerCase().replace(/\s+/g, '_');
+  }
+
+  async getWorkflowVolumeData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ workflow_name: string; count: string }>> {
+    const query = `
+      SELECT 
+        workflow_name,
+        count(*) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+      GROUP BY workflow_name
+      ORDER BY count DESC
+      LIMIT 5
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      workflow_name: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getActiveSubscribersData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    // Query for current period
+    const currentPeriodQuery = `
+      SELECT count(DISTINCT external_subscriber_id) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+    `;
+
+    // Query for previous period
+    const previousPeriodQuery = `
+      SELECT count(DISTINCT external_subscriber_id) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+    `;
+
+    const baseParams = {
+      environmentId,
+      organizationId,
+    };
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
+        },
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
+  }
+
+  async getWorkflowRunsMetricData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date,
+    previousStartDate: Date,
+    previousEndDate: Date
+  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
+    // Query for current period
+    const currentPeriodQuery = `
+      SELECT count(*) as count
+      FROM workflow_runs FINAL
+      WHERE
+        environment_id = {environmentId:String}
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+    `;
+
+    // Query for previous period
+    const previousPeriodQuery = `
+      SELECT count(*) as count
+      FROM workflow_runs FINAL
+      WHERE
+        environment_id = {environmentId:String}
+        AND organization_id = {organizationId:String}
+        AND created_at >= {previousStartDate:DateTime64(3)}
+        AND created_at <= {previousEndDate:DateTime64(3)}
+    `;
+
+    const baseParams = {
+      environmentId,
+      organizationId,
+    };
+
+    const [currentResult, previousResult] = await Promise.all([
+      this.clickhouseService.query<{ count: string }>({
+        query: currentPeriodQuery,
+        params: {
+          ...baseParams,
+          startDate: LogRepository.formatDateTime64(startDate),
+          endDate: LogRepository.formatDateTime64(endDate),
+        },
+      }),
+      this.clickhouseService.query<{ count: string }>({
+        query: previousPeriodQuery,
+        params: {
+          ...baseParams,
+          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
+          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
+        },
+      }),
+    ]);
+
+    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
+    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
+
+    return {
+      currentPeriod,
+      previousPeriod,
+    };
+  }
+
+  async getWorkflowRunsTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; status: string; count: string }>> {
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        status,
+        count(*) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+      GROUP BY date, status
+      ORDER BY date, status
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      status: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
+  }
+
+  async getActiveSubscribersTrendData(
+    environmentId: string,
+    organizationId: string,
+    startDate: Date,
+    endDate: Date
+  ): Promise<Array<{ date: string; count: string }>> {
+    const query = `
+      SELECT 
+        toDate(created_at) as date,
+        count(DISTINCT external_subscriber_id) as count
+      FROM workflow_runs FINAL
+      WHERE 
+        environment_id = {environmentId:String} 
+        AND organization_id = {organizationId:String}
+        AND created_at >= {startDate:DateTime64(3)}
+        AND created_at <= {endDate:DateTime64(3)}
+      GROUP BY date
+      ORDER BY date
+    `;
+
+    const params = {
+      environmentId,
+      organizationId,
+      startDate: LogRepository.formatDateTime64(startDate),
+      endDate: LogRepository.formatDateTime64(endDate),
+    };
+
+    const result = await this.clickhouseService.query<{
+      date: string;
+      count: string;
+    }>({
+      query,
+      params,
+    });
+
+    return result.data;
   }
 }

@@ -5,7 +5,7 @@ import type { WithPassthrough } from './provider.types';
 import type { JsonSchema, Schema } from './schema.types';
 import type { StepOptions } from './step.types';
 import type { Awaitable, Prettify } from './util.types';
-import type { Execute } from './workflow.types';
+import type { Execute, SeverityLevelEnum } from './workflow.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 
@@ -63,6 +63,7 @@ export type DiscoverWorkflowOutput = {
   tags: string[];
   name?: string;
   description?: string;
+  severity: SeverityLevelEnum;
 };
 
 /**

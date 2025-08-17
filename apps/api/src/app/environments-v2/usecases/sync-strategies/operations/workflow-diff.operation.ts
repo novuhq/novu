@@ -312,16 +312,17 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
 
       this.logger.debug(`Generating workflow DTO for step extraction: ${workflowIdentifier}`);
 
-      // Generate the workflow DTO using the GetWorkflowUseCase with the pre-loaded data container
       const workflowDto = await this.getWorkflowUseCase.execute(
-        {
+        GetWorkflowCommand.create({
           workflowIdOrInternalId: workflowIdentifier,
-          user: userContext,
-        },
+          user: {
+            ...userContext,
+            environmentId: workflow._environmentId,
+          },
+        }),
         workflowDataContainer
       );
 
-      // Normalize the workflow to get steps
       const normalizedWorkflow = this.workflowNormalizer.normalizeWorkflow(workflowDto);
 
       // Create step diffs for each step as "added"
@@ -343,7 +344,7 @@ export class WorkflowDiffOperation extends BaseDiffOperation<NotificationTemplat
         },
       }));
     } catch (error) {
-      this.logger.error(`Failed to extract steps from new workflow: ${error.message}`);
+      this.logger.error({ error }, `Failed to extract steps from new workflow: ${error.message}`);
 
       return [];
     }
