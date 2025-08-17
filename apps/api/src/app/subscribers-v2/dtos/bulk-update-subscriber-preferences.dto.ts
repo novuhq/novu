@@ -20,13 +20,13 @@ export class BulkUpdateSubscriberPreferenceItemDto {
 
 export class BulkUpdateSubscriberPreferencesDto {
   @ApiProperty({
-    description: 'Array of workflow preferences to update (maximum 50 items)',
+    description: 'Array of workflow preferences to update (maximum 100 items)',
     type: [BulkUpdateSubscriberPreferenceItemDto],
-    maxItems: 50,
+    maxItems: 100,
   })
   @IsDefined()
   @IsArray()
-  @ArrayMaxSize(50)
+  @ArrayMaxSize(100)
   @Type(() => BulkUpdateSubscriberPreferenceItemDto)
   @ValidateNested({ each: true })
   readonly preferences: BulkUpdateSubscriberPreferenceItemDto[];

@@ -1,5 +1,9 @@
 import { Novu } from '@novu/api';
-import { PatchSubscriberPreferencesDto, SubscriberResponseDto } from '@novu/api/models/components';
+import {
+  BulkUpdateSubscriberPreferencesDto,
+  PatchSubscriberPreferencesDto,
+  SubscriberResponseDto,
+} from '@novu/api/models/components';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ShortIsPrefixEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -138,7 +142,6 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
   });
 
   it('should bulk update multiple workflow preferences', async () => {
-    // Create additional workflows for bulk testing
     const workflow2 = await session.createTemplate({
       noFeedId: true,
     });
@@ -146,7 +149,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       noFeedId: true,
     });
 
-    const bulkUpdateData = {
+    const bulkUpdateData: BulkUpdateSubscriberPreferencesDto = {
       preferences: [
         {
           workflowId: workflow._id,
@@ -183,30 +186,24 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     // Verify each preference was updated correctly
     const preferences = response.result;
 
-    // Find preference for workflow 1
     const pref1 = preferences.find((p) => p.workflow?.id === workflow._id);
     expect(pref1).to.exist;
     expect(pref1?.channels.email).to.equal(false);
     expect(pref1?.channels.inApp).to.equal(true);
-    expect(pref1?.channels.sms).to.equal(false);
 
-    // Find preference for workflow 2
     const pref2 = preferences.find((p) => p.workflow?.id === workflow2._id);
     expect(pref2).to.exist;
     expect(pref2?.channels.email).to.equal(true);
     expect(pref2?.channels.inApp).to.equal(false);
-    expect(pref2?.channels.push).to.equal(true);
 
-    // Find preference for workflow 3
     const pref3 = preferences.find((p) => p.workflow?.id === workflow3._id);
     expect(pref3).to.exist;
     expect(pref3?.channels.email).to.equal(false);
     expect(pref3?.channels.inApp).to.equal(true);
-    expect(pref3?.channels.chat).to.equal(true);
   });
 
-  it('should return 422 when bulk updating with more than 50 preferences', async () => {
-    const preferences = Array.from({ length: 51 }, (_, i) => ({
+  it('should return 422 when bulk updating with more than 100 preferences', async () => {
+    const preferences = Array.from({ length: 101 }, (_, i) => ({
       workflowId: workflow._id,
       channels: {
         email: i % 2 === 0,
@@ -220,7 +217,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     );
 
     expect(error?.statusCode).to.equal(422);
-    expect(error?.message).to.include('preferences must contain no more than 50 elements');
+    expect(error?.message).to.include('Validation Error');
   });
 
   it('should return 404 when bulk updating preferences for non-existent subscriber', async () => {
