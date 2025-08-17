@@ -11,10 +11,6 @@ import { type InteractionChartData } from './chart-types';
 import { ChartWrapper } from './chart-wrapper';
 
 const chartConfig = {
-  messageSent: {
-    label: 'Sent',
-    color: '#a5b4fc',
-  },
   messageSeen: {
     label: 'Seen',
     color: '#60a5fa',
@@ -72,7 +68,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
         month: 'short',
         day: 'numeric',
       }),
-      messageSent: dataPoint.messageSent,
       messageSeen: dataPoint.messageSeen,
       messageRead: dataPoint.messageRead,
       messageSnoozed: dataPoint.messageSnoozed,
@@ -84,7 +79,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
   const hasDataChecker = useCallback(
     createDateBasedHasDataChecker<InteractionChartData>((dataPoint: InteractionChartData) => {
       return (
-        (dataPoint.messageSent || 0) > 0 ||
         (dataPoint.messageSeen || 0) > 0 ||
         (dataPoint.messageRead || 0) > 0 ||
         (dataPoint.messageSnoozed || 0) > 0 ||
@@ -110,7 +104,6 @@ export function InteractionTrendChart({ data, isLoading, error }: InteractionTre
             domain={['dataMin', 'dataMax']}
           />
           {includeTooltip && <ChartTooltip cursor={false} content={<NovuTooltip showTotal={false} />} />}
-          <Line dataKey="messageSent" name="Sent" stroke="#a5b4fc" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="messageSeen" name="Seen" stroke="#60a5fa" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="messageRead" name="Read" stroke="#34d399" strokeWidth={2} dot={false} type="monotone" />
           <Line dataKey="messageSnoozed" name="Snoozed" stroke="#a78bfa" strokeWidth={2} dot={false} type="monotone" />

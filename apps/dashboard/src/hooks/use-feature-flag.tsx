@@ -31,3 +31,21 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = false):
 
   return flags[key] ?? defaultValue;
 };
+
+export const useNumericFeatureFlag = (key: FeatureFlagsKeysEnum, defaultValue = 0): number => {
+  const flags = useFlags();
+
+  if (!isLaunchDarklyEnabled()) {
+    const envValue =
+      // Check if the feature flag is exported as an environment variable
+      import.meta.env[`VITE_${key}`] ??
+      // Then check process.env if process exists
+      (typeof process !== 'undefined' ? process?.env?.[key] : undefined);
+
+    const numericValue = envValue ? parseInt(envValue, 10) : defaultValue;
+    return Number.isNaN(numericValue) ? defaultValue : numericValue;
+  }
+
+  const flagValue = flags[key];
+  return typeof flagValue === 'number' ? flagValue : defaultValue;
+};

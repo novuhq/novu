@@ -110,7 +110,7 @@
       "request": "launch",
       "runtimeArgs": ["run-script", "start:dev"],
       "runtimeExecutable": "npm",
-      "cwd": "${workspaceFolder}/apps/application-generic",
+      "cwd": "${workspaceFolder}/libs/application-generic",
       "skipFiles": ["<node_internals>/**"],
       "type": "node"
     }

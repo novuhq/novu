@@ -62,8 +62,7 @@ export function generateDummyInteractionData(): InteractionChartData[] {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
 
-    const sent = Math.floor(Math.random() * 200) + 100;
-    const seen = Math.floor(sent * 0.7) + Math.floor(Math.random() * 20);
+    const seen = Math.floor(Math.random() * 200) + 100;
     const read = Math.floor(seen * 0.6) + Math.floor(Math.random() * 15);
     const snoozed = Math.floor(read * 0.1) + Math.floor(Math.random() * 5);
     const archived = Math.floor(read * 0.05) + Math.floor(Math.random() * 3);
@@ -73,7 +72,6 @@ export function generateDummyInteractionData(): InteractionChartData[] {
         month: 'short',
         day: 'numeric',
       }),
-      messageSent: sent,
       messageSeen: seen,
       messageRead: read,
       messageSnoozed: snoozed,

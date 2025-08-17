@@ -14,7 +14,7 @@ import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
 import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
-type WorkflowRunInsertData = Omit<InferClickhouseSchemaType<typeof workflowRunSchema>, 'id' | 'expires_at'>;
+type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
 
 interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
@@ -425,7 +425,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       external_subscriber_id: options.externalSubscriberId || null,
 
       // Execution metadata
-      status: options.status || 'pending',
+      status: options.status || ('pending' as WorkflowRunStatusEnum),
       trigger_identifier: this.getTriggerIdentifier(workflow),
 
       // Correlation and grouping

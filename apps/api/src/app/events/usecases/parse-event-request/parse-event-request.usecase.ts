@@ -315,9 +315,10 @@ export class ParseEventRequest {
         status,
         entity_type: 'request',
         entity_id: requestId,
+        workflow_run_identifier: command.identifier,
       };
 
-      await this.traceLogRepository.create(traceData);
+      await this.traceLogRepository.createRequest([traceData]);
     } catch (error) {
       this.logger.error(
         {

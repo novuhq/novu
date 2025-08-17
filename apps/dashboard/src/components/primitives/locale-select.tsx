@@ -1,6 +1,6 @@
+import { getAllLocales, getCommonLocales, getLocaleByIso } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowDownSLine, RiCheckLine } from 'react-icons/ri';
-import { locales } from '@/utils/locales';
 import { cn } from '@/utils/ui';
 import { FlagCircle, StackedFlagCircles } from '../flag-circle';
 import TruncatedText from '../truncated-text';
@@ -29,43 +29,20 @@ type MultiSelectProps = BaseLocaleSelectProps & {
 
 type LocaleSelectProps = SingleSelectProps | MultiSelectProps;
 
-// Get most common locales for better performance
-const COMMON_LOCALES = [
-  'en_US',
-  'en_GB',
-  'es_ES',
-  'fr_FR',
-  'de_DE',
-  'it_IT',
-  'pt_PT',
-  'ru_RU',
-  'zh_CN',
-  'zh_TW',
-  'ja_JP',
-  'ko_KR',
-  'ar_SA',
-  'hi_IN',
-  'nl_NL',
-  'sv_SE',
-  'da_DK',
-  'no_NO',
-  'fi_FI',
-  'pl_PL',
-  'tr_TR',
-  'cs_CZ',
-  'hu_HU',
-  'ro_RO',
-];
+// Get most common locales for better performance from centralized registry
+const COMMON_LOCALES = getCommonLocales();
 
 // Shared hook for locale filtering logic
 function useLocaleFiltering(availableLocales?: string[], searchValue: string = '') {
+  const allLocales = getAllLocales();
+
   const baseLocales = useMemo(() => {
     if (availableLocales && availableLocales.length > 0) {
-      return locales.filter((locale) => availableLocales.includes(locale.langIso));
+      return allLocales.filter((locale) => availableLocales.includes(locale.langIso));
     }
 
-    return locales;
-  }, [availableLocales]);
+    return allLocales;
+  }, [availableLocales, allLocales]);
 
   const filteredLocales = useMemo(() => {
     if (!searchValue.trim()) {
@@ -103,7 +80,7 @@ function useLocaleFiltering(availableLocales?: string[], searchValue: string = '
 
 // Single select trigger content
 function SingleSelectTrigger({ value, placeholder }: { value?: string; placeholder: string }) {
-  const currentLocale = locales.find((locale) => locale.langIso === value);
+  const currentLocale = getLocaleByIso(value || '');
 
   return (
     <div className="flex max-w-full flex-1 items-center gap-2 overflow-hidden">
@@ -123,7 +100,8 @@ function SingleSelectTrigger({ value, placeholder }: { value?: string; placehold
 
 // Multi select trigger content
 function MultiSelectTrigger({ value, placeholder }: { value?: string[]; placeholder: string }) {
-  const selectedLocales = value ? locales.filter((locale) => value.includes(locale.langIso)) : [];
+  const allLocales = getAllLocales();
+  const selectedLocales = value ? allLocales.filter((locale) => value.includes(locale.langIso)) : [];
 
   if (selectedLocales.length === 0) {
     return <span className="text-xs font-normal text-neutral-400">{placeholder}</span>;

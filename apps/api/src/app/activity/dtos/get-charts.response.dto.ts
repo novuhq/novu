@@ -33,10 +33,6 @@ export class InteractionTrendDataPointDto {
   @IsString()
   timestamp: string;
 
-  @ApiProperty({ description: 'Messages sent count' })
-  @IsNumber()
-  messageSent: number;
-
   @ApiProperty({ description: 'Messages seen count' })
   @IsNumber()
   messageSeen: number;

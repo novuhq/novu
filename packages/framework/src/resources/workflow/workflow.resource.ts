@@ -1,16 +1,17 @@
 import { ActionStepEnum, ChannelStepEnum } from '../../constants';
 import { WorkflowPayloadInvalidError } from '../../errors';
 import { channelStepSchemas, delayActionSchemas, digestActionSchemas, emptySchema } from '../../schemas';
-import type {
-  CancelEventTriggerResponse,
-  DiscoverWorkflowOutput,
-  EventTriggerResponse,
-  Execute,
-  FromSchema,
-  FromSchemaUnvalidated,
-  Schema,
-  Workflow,
-  WorkflowOptions,
+import {
+  type CancelEventTriggerResponse,
+  type DiscoverWorkflowOutput,
+  type EventTriggerResponse,
+  type Execute,
+  type FromSchema,
+  type FromSchemaUnvalidated,
+  type Schema,
+  SeverityLevelEnum,
+  type Workflow,
+  type WorkflowOptions,
 } from '../../types';
 import { getBridgeUrl, initApiClient, resolveApiUrl, resolveSecretKey } from '../../utils';
 import { transformSchema, validateData } from '../../validators';
@@ -79,6 +80,7 @@ export function workflow<
   const discover = async (): Promise<DiscoverWorkflowOutput> => {
     const newWorkflow: DiscoverWorkflowOutput = {
       workflowId,
+      severity: options.severity ?? SeverityLevelEnum.NONE,
       steps: [],
       code: execute.toString(),
       payload: {

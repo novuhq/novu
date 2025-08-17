@@ -22,6 +22,7 @@ import { ProvidersByVolume } from '../components/analytics/charts/providers-by-v
 import { WorkflowRunsTrendChart } from '../components/analytics/charts/workflow-runs-trend-chart';
 import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
+import { Badge } from '../components/primitives/badge';
 import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
@@ -56,7 +57,6 @@ export function AnalyticsPage() {
     ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND,
   ];
 
-  // Fetch metrics data (top section)
   const { charts: metricsCharts, isLoading: isMetricsLoading } = useFetchCharts({
     reportType: metricsReportTypes,
     createdAtGte: chartsDateRange.createdAtGte,
@@ -65,7 +65,6 @@ export function AnalyticsPage() {
     staleTime: CHART_CONFIG.staleTime,
   });
 
-  // Fetch charts data (bottom section)
   const {
     charts: chartsData,
     isLoading: isChartsLoading,
@@ -92,6 +91,9 @@ export function AnalyticsPage() {
         headerStartItems={
           <h1 className="text-foreground-950 flex items-center gap-1">
             <span>Analytics</span>
+            <Badge variant="lighter" className="text-xs">
+              BETA
+            </Badge>
           </h1>
         }
       >

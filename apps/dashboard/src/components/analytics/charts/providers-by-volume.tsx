@@ -88,7 +88,7 @@ function CustomTick({ x, y, payload }: { x: number; y: number; payload: { value:
     return name.replace(/-/g, ' ').replace(/\b\w/g, (char: string) => char.toUpperCase());
   };
 
-  const formattedText = formatProviderName(payload.value);
+  const formattedText = payload.value === 'novu' ? 'Novu Inbox' : formatProviderName(payload.value);
   const text = formattedText.length > maxLength ? `${formattedText.slice(0, maxLength)}...` : formattedText;
 
   return (
@@ -116,7 +116,7 @@ export function ProvidersByVolume({ data, isLoading }: ProvidersByVolumeProps) {
 
   const chartData = useMemo(() => {
     return data?.map((dataPoint, index) => {
-      const formattedName = formatProviderName(dataPoint.providerId);
+      const formattedName = dataPoint.providerId === 'novu' ? 'Novu Inbox' : formatProviderName(dataPoint.providerId);
       return {
         providerId: dataPoint.providerId,
         count: dataPoint.count,

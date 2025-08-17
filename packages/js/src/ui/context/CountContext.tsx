@@ -111,7 +111,10 @@ export const CountProvider = (props: ParentProps) => {
     };
     const hasLessThenMinAmount = (cachedData?.notifications.length || 0) < MIN_AMOUNT_OF_NOTIFICATIONS;
 
-    if (hasLessThenMinAmount) {
+    // Auto-load notifications when:
+    // 1. Cache is nearly empty
+    // 2. OR inbox is closed (will be auto-loaded when opened)
+    if (hasLessThenMinAmount || !isOpened()) {
       notificationsCache.update(tabSpecificFilterForCache, {
         ...cachedData,
         notifications: [notification, ...cachedData.notifications],
@@ -120,6 +123,7 @@ export const CountProvider = (props: ParentProps) => {
       return;
     }
 
+    // Only show banner when inbox is already open and new notification is received
     setNewNotificationCounts((oldMap) => {
       const key = createKey({ tags, data, severity }); // Use specific tab's tags and data for the key
 
@@ -138,6 +142,7 @@ export const CountProvider = (props: ParentProps) => {
       }
 
       const currentTabs = tabs();
+      const processedFilters = new Set<string>();
 
       if (currentTabs.length > 0) {
         for (const tab of currentTabs) {
@@ -155,6 +160,14 @@ export const CountProvider = (props: ParentProps) => {
             (!Array.isArray(tabSeverityFilterCriteria) && tabSeverityFilterCriteria === notification.severity);
 
           if (matchesTagFilter && matchesDataFilterCriteria && matchesSeverityFilterCriteria) {
+            const filterKey = createKey({
+              tags: tabTags,
+              data: tabDataFilterCriteria,
+              severity: tabSeverityFilterCriteria,
+            });
+
+            if (!processedFilters.has(filterKey)) {
+              processedFilters.add(filterKey);
             updateNewNotificationCountsOrCache(
               tab.label,
               notification,
@@ -162,6 +175,7 @@ export const CountProvider = (props: ParentProps) => {
               tabDataFilterCriteria,
               tabSeverityFilterCriteria
             );
+            }
           }
         }
       } else {
