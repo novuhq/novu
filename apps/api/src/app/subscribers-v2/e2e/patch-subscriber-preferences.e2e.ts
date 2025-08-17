@@ -189,32 +189,26 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
     // Find preference for workflow 1
     const pref1 = preferences.find((p: any) => p.workflow.id === workflow._id);
     expect(pref1).to.exist;
-    expect(pref1.channels).to.deep.include({
-      email: false,
-      in_app: true,
-      sms: false,
-    });
+    expect(pref1.channels.email).to.equal(false);
+    expect(pref1.channels.in_app).to.equal(true);
+    expect(pref1.channels.sms).to.equal(false);
 
     // Find preference for workflow 2
     const pref2 = preferences.find((p: any) => p.workflow.id === workflow2._id);
     expect(pref2).to.exist;
-    expect(pref2.channels).to.deep.include({
-      email: true,
-      in_app: false,
-      push: true,
-    });
+    expect(pref2.channels.email).to.equal(true);
+    expect(pref2.channels.in_app).to.equal(false);
+    expect(pref2.channels.push).to.equal(true);
 
     // Find preference for workflow 3
     const pref3 = preferences.find((p: any) => p.workflow.id === workflow3._id);
     expect(pref3).to.exist;
-    expect(pref3.channels).to.deep.include({
-      email: false,
-      in_app: true,
-      chat: true,
-    });
+    expect(pref3.channels.email).to.equal(false);
+    expect(pref3.channels.in_app).to.equal(true);
+    expect(pref3.channels.chat).to.equal(true);
   });
 
-  it('should return 400 when bulk updating with more than 50 preferences', async () => {
+  it('should return 422 when bulk updating with more than 50 preferences', async () => {
     const preferences = Array.from({ length: 51 }, (_, i) => ({
       workflowId: workflow._id,
       channels: {
@@ -228,7 +222,7 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
       .send(bulkUpdateData);
 
-    expect(response.status).to.equal(400);
+    expect(response.status).to.equal(422);
     expect(response.body.message).to.include('preferences must contain no more than 50 elements');
   });
 
