@@ -1,5 +1,5 @@
-import { ChangeEvent, FocusEvent, useEffect, useState } from 'react';
 import { NodeViewContent, NodeViewProps, NodeViewWrapper } from '@tiptap/react';
+import { ChangeEvent, FocusEvent, useEffect, useState } from 'react';
 import {
   AUTOCOMPLETE_CLOSE_TAG,
   AUTOCOMPLETE_OPEN_TAG,

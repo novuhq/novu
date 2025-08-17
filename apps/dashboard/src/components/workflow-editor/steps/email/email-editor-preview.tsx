@@ -1,7 +1,12 @@
-import { ChannelTypeEnum, GeneratePreviewResponseDto, type WorkflowResponseDto } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  GeneratePreviewResponseDto,
+  ResourceOriginEnum,
+  type WorkflowResponseDto,
+} from '@novu/shared';
+import { TabsContent } from '@radix-ui/react-tabs';
 import { AnimatePresence, motion } from 'motion/react';
 import { useState } from 'react';
-import { cn } from '@/utils/ui';
 import { RiMacLine, RiSmartphoneFill } from 'react-icons/ri';
 
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -15,7 +20,7 @@ import {
   EmailPreviewSubjectMobile,
 } from '@/components/workflow-editor/steps/email/email-preview';
 import { EmailTabsSection } from '@/components/workflow-editor/steps/email/email-tabs-section';
-import { TabsContent } from '@radix-ui/react-tabs';
+import { cn } from '@/utils/ui';
 import { ConfigurePreviewAccordion } from '../shared/configure-preview-accordion';
 
 type EmailEditorPreviewProps = {
@@ -94,7 +99,10 @@ export const EmailEditorPreview = ({
                     <div className="w-full bg-neutral-100">
                       <EmailPreviewContentMobile className="mx-auto">
                         <EmailPreviewSubjectMobile subject={previewData.result.preview.subject} />
-                        <EmailPreviewBodyMobile body={previewData.result.preview.body} />
+                        <EmailPreviewBodyMobile
+                          body={previewData.result.preview.body}
+                          resourceOrigin={workflow?.origin ?? ResourceOriginEnum.NOVU_CLOUD}
+                        />
                       </EmailPreviewContentMobile>
                     </div>
                   </TabsContent>
@@ -103,7 +111,11 @@ export const EmailEditorPreview = ({
                       <EmailPreviewSubject subject={previewData.result.preview.subject} />
                     </div>
                     <div className="bg-neutral-50 px-16 py-8">
-                      <EmailPreviewBody body={previewData.result.preview.body} className="bg-background rounded-lg" />
+                      <EmailPreviewBody
+                        body={previewData.result.preview.body}
+                        className="bg-background rounded-lg"
+                        resourceOrigin={workflow?.origin ?? ResourceOriginEnum.NOVU_CLOUD}
+                      />
                     </div>
                   </TabsContent>
                 </>

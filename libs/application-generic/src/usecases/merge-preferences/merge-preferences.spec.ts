@@ -1,12 +1,8 @@
-import {
-  DEFAULT_WORKFLOW_PREFERENCES,
-  PreferencesTypeEnum,
-  WorkflowPreferences,
-} from '@novu/shared';
+import { DEFAULT_WORKFLOW_PREFERENCES, PreferencesTypeEnum, WorkflowPreferences } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
+import { PreferenceSet } from '../get-preferences/get-preferences.usecase';
 import { MergePreferencesCommand } from './merge-preferences.command';
 import { MergePreferences } from './merge-preferences.usecase';
-import { PreferenceSet } from '../get-preferences/get-preferences.usecase';
 
 /**
  * This test spec is used to test the merge preferences usecase.
@@ -54,19 +50,13 @@ const testCases: TestCase[] = [
   },
   {
     comment: 'Subscriber workflow overrides workflow resource',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-    ],
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_WORKFLOW],
     expectedType: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
     readOnly: false,
   },
   {
     comment: 'Subscriber global overrides workflow resource',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    ],
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_GLOBAL],
     expectedType: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     readOnly: false,
   },
@@ -82,10 +72,7 @@ const testCases: TestCase[] = [
   },
   {
     comment: 'User workflow has priority over workflow resource',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.USER_WORKFLOW,
-    ],
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW],
     expectedType: PreferencesTypeEnum.USER_WORKFLOW,
     readOnly: false,
   },
@@ -128,50 +115,33 @@ const testCases: TestCase[] = [
     readOnly: true,
   },
   {
-    comment:
-      'Workflow resource readOnly flag has priority over subscriber workflow',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-    ],
+    comment: 'Workflow resource readOnly flag has priority over subscriber workflow',
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_WORKFLOW],
     expectedType: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     readOnly: true,
   },
   {
-    comment:
-      'Workflow resource readOnly flag has priority over subscriber global',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    ],
+    comment: 'Workflow resource readOnly flag has priority over subscriber global',
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_GLOBAL],
     expectedType: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     readOnly: true,
   },
   {
     comment: 'User workflow readOnly flag has priority over workflow resource',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.USER_WORKFLOW,
-    ],
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.USER_WORKFLOW],
     expectedType: PreferencesTypeEnum.USER_WORKFLOW,
     readOnly: true,
   },
   // Subscriber overrides behavior with readOnly false
   {
     comment: 'Subscriber workflow overrides workflow resource',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-    ],
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_WORKFLOW],
     expectedType: PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
     readOnly: false,
   },
   {
     comment: 'Subscriber global overrides workflow resource',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    ],
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_GLOBAL],
     expectedType: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
     readOnly: false,
   },
@@ -208,28 +178,19 @@ const testCases: TestCase[] = [
   },
   // Subscriber overrides with readOnly true behavior
   {
-    comment:
-      'Subscriber workflow cannot override workflow resource when readOnly is true',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_WORKFLOW,
-    ],
+    comment: 'Subscriber workflow cannot override workflow resource when readOnly is true',
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_WORKFLOW],
     expectedType: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     readOnly: true,
   },
   {
-    comment:
-      'Subscriber global cannot override workflow resource when readOnly is true',
-    types: [
-      PreferencesTypeEnum.WORKFLOW_RESOURCE,
-      PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-    ],
+    comment: 'Subscriber global cannot override workflow resource when readOnly is true',
+    types: [PreferencesTypeEnum.WORKFLOW_RESOURCE, PreferencesTypeEnum.SUBSCRIBER_GLOBAL],
     expectedType: PreferencesTypeEnum.WORKFLOW_RESOURCE,
     readOnly: true,
   },
   {
-    comment:
-      'Subscriber workflow cannot override user workflow when readOnly is true',
+    comment: 'Subscriber workflow cannot override user workflow when readOnly is true',
     types: [
       PreferencesTypeEnum.WORKFLOW_RESOURCE,
       PreferencesTypeEnum.USER_WORKFLOW,
@@ -239,8 +200,7 @@ const testCases: TestCase[] = [
     readOnly: true,
   },
   {
-    comment:
-      'Subscriber global cannot override user workflow when readOnly is true',
+    comment: 'Subscriber global cannot override user workflow when readOnly is true',
     types: [
       PreferencesTypeEnum.WORKFLOW_RESOURCE,
       PreferencesTypeEnum.USER_WORKFLOW,
@@ -250,8 +210,7 @@ const testCases: TestCase[] = [
     readOnly: true,
   },
   {
-    comment:
-      'Subscriber global+workflow cannot override user workflow when readOnly is true',
+    comment: 'Subscriber global+workflow cannot override user workflow when readOnly is true',
     types: [
       PreferencesTypeEnum.WORKFLOW_RESOURCE,
       PreferencesTypeEnum.USER_WORKFLOW,
@@ -279,12 +238,8 @@ describe('MergePreferences', () => {
               // readOnly
               all: { ...DEFAULT_WORKFLOW_PREFERENCES.all, readOnly },
               // subscriber overrides
-              ...(PreferencesTypeEnum.SUBSCRIBER_GLOBAL === type
-                ? MOCK_SUBSCRIBER_GLOBAL_PREFERENCE
-                : {}),
-              ...(PreferencesTypeEnum.SUBSCRIBER_WORKFLOW === type
-                ? MOCK_SUBSCRIBER_WORKFLOW_PREFERENCE
-                : {}),
+              ...(PreferencesTypeEnum.SUBSCRIBER_GLOBAL === type ? MOCK_SUBSCRIBER_GLOBAL_PREFERENCE : {}),
+              ...(PreferencesTypeEnum.SUBSCRIBER_WORKFLOW === type ? MOCK_SUBSCRIBER_WORKFLOW_PREFERENCE : {}),
             },
           };
 
@@ -312,10 +267,8 @@ describe('MergePreferences', () => {
 
         const result = MergePreferences.execute(command);
 
-        const hasSubscriberGlobalPreference =
-          !!preferenceSet.subscriberGlobalPreference;
-        const hasSubscriberWorkflowPreference =
-          !!preferenceSet.subscriberWorkflowPreference;
+        const hasSubscriberGlobalPreference = !!preferenceSet.subscriberGlobalPreference;
+        const hasSubscriberWorkflowPreference = !!preferenceSet.subscriberWorkflowPreference;
 
         let expectedPreferences: WorkflowPreferences;
 
@@ -357,36 +310,24 @@ describe('MergePreferences', () => {
 
   it('should have test cases for all combinations of PreferencesTypeEnum', () => {
     // Function to generate all subsets of an array, ensuring requiredTypes are included
-    function generateSubsets(
-      arr: PreferencesTypeEnum[],
-      required: PreferencesTypeEnum[],
-    ) {
+    function generateSubsets(arr: PreferencesTypeEnum[], required: PreferencesTypeEnum[]) {
       return arr
-        .reduce(
-          (subsets, value) =>
-            subsets.concat(subsets.map((set) => [value, ...set])),
-          [[]] as PreferencesTypeEnum[][],
-        )
+        .reduce((subsets, value) => subsets.concat(subsets.map((set) => [value, ...set])), [
+          [],
+        ] as PreferencesTypeEnum[][])
         .map((subset) => [...new Set([...required, ...subset])]);
     }
 
     const allTypes = Object.values(PreferencesTypeEnum);
     const requiredTypes = [PreferencesTypeEnum.WORKFLOW_RESOURCE];
 
-    const allCombinations = generateSubsets(allTypes, requiredTypes).filter(
-      (subset) => subset.length > 0,
-    );
+    const allCombinations = generateSubsets(allTypes, requiredTypes).filter((subset) => subset.length > 0);
 
-    const coveredCombinations = testCases.map((testCase) =>
-      testCase.types.sort().join(','),
-    );
+    const coveredCombinations = testCases.map((testCase) => testCase.types.sort().join(','));
 
     allCombinations.forEach((combination) => {
       const combinationKey = combination.sort().join(',');
-      expect(
-        coveredCombinations,
-        `Combination ${combinationKey} is not covered`,
-      ).toContain(combinationKey);
+      expect(coveredCombinations, `Combination ${combinationKey} is not covered`).toContain(combinationKey);
     });
   });
 });

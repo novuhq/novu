@@ -1,12 +1,11 @@
+import { CaretSortIcon } from '@radix-ui/react-icons';
 import { useMemo, useState } from 'react';
 import { RiCheckLine } from 'react-icons/ri';
-import { CaretSortIcon } from '@radix-ui/react-icons';
-
-import { cn } from '@/utils/ui';
-import TruncatedText from '@/components/truncated-text';
-import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { Command, CommandGroup, CommandItem, CommandList } from '@/components/primitives/command';
+import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
 import { selectTriggerVariants } from '@/components/primitives/select';
+import TruncatedText from '@/components/truncated-text';
+import { cn } from '@/utils/ui';
 
 export const MultiSelect = <T extends string | number>({
   values,

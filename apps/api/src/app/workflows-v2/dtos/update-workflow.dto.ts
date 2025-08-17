@@ -1,22 +1,20 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsArray, IsBoolean, IsEnum, IsOptional, ValidateNested } from 'class-validator';
+import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ResourceOriginEnum, SeverityLevelEnum, StepTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { StepTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { WorkflowCommonsFields } from './workflow-commons.dto';
-import { PreferencesRequestDto } from './preferences.request.dto';
+import { IsArray, IsEnum, IsOptional, ValidateNested } from 'class-validator';
 import {
-  StepUpsertDto,
   BaseStepConfigDto,
-  InAppStepUpsertDto,
-  EmailStepUpsertDto,
-  SmsStepUpsertDto,
-  PushStepUpsertDto,
   ChatStepUpsertDto,
+  CustomStepUpsertDto,
   DelayStepUpsertDto,
   DigestStepUpsertDto,
-  CustomStepUpsertDto,
+  EmailStepUpsertDto,
+  InAppStepUpsertDto,
+  PushStepUpsertDto,
+  SmsStepUpsertDto,
 } from './create-step.dto';
-import { IsValidJsonSchema } from '../../shared/validators/json-schema.validator';
+import { PreferencesRequestDto } from './preferences.request.dto';
+import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
   InAppStepUpsertDto,
@@ -109,4 +107,15 @@ export class UpdateWorkflowDto extends WorkflowCommonsFields {
   })
   @IsEnum(ResourceOriginEnum)
   origin: ResourceOriginEnum;
+
+  @ApiHideProperty()
+  /* @ApiPropertyOptional({
+    description: 'Severity of the workflow',
+    required: false,
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  }) */
+  @IsOptional()
+  @IsEnum(SeverityLevelEnum)
+  severity?: SeverityLevelEnum;
 }

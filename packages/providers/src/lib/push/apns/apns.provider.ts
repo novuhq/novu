@@ -47,7 +47,6 @@ export class APNSPushProvider extends BaseProvider implements IPushProvider {
     options: IPushOptions,
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
-    // eslint-disable-next-line no-param-reassign
     delete (options.overrides as any)?.notificationIdentifiers;
     const notification = new apn.Notification(
       this.transform(bridgeProviderData, {

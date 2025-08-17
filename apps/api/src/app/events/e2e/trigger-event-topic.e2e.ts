@@ -1,3 +1,11 @@
+import { Novu } from '@novu/api';
+import {
+  SubscriberPayloadDto,
+  TopicPayloadDto,
+  TopicResponseDto,
+  TriggerEventRequestDto,
+  TriggerRecipientsTypeEnum,
+} from '@novu/api/models/components';
 import { MessageRepository, NotificationRepository, NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -11,15 +19,6 @@ import {
 } from '@novu/shared';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
-
-import { Novu } from '@novu/api';
-import {
-  SubscriberPayloadDto,
-  TopicPayloadDto,
-  TopicResponseDto,
-  TriggerEventRequestDto,
-  TriggerRecipientsTypeEnum,
-} from '@novu/api/models/components';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Topic Trigger Event #novu-v2', () => {

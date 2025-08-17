@@ -1,5 +1,7 @@
 {
   "name": "@novu/api-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "tags": ["type:app"],
   "sourceRoot": "apps/api/src",
   "projectType": "application",
   "targets": {
@@ -8,6 +10,12 @@
       "dependsOn": ["^build"],
       "inputs": ["default"],
       "outputs": ["{projectRoot}/src/metadata.ts"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint apps/api"
+      }
     }
   }
 }

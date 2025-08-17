@@ -1,14 +1,18 @@
-import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
-
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import {
+  AnalyticsService,
+  ContentService,
+  layoutControlSchema,
+  layoutUiSchema,
+  ResourceValidatorService,
+} from '@novu/application-generic';
 import { ControlSchemas, LayoutEntity, LayoutRepository } from '@novu/dal';
-import { isReservedVariableName, ResourceTypeEnum, ResourceOriginEnum } from '@novu/shared';
-import { AnalyticsService, ContentService, layoutControlSchema, layoutUiSchema } from '@novu/application-generic';
-
-import { CreateLayoutCommand } from './create-layout.command';
-import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
-import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
+import { isReservedVariableName, ResourceOriginEnum, ResourceTypeEnum } from '@novu/shared';
 import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
+import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
+import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
+import { CreateLayoutCommand } from './create-layout.command';
 
 @Injectable()
 export class CreateLayoutUseCase {
@@ -16,12 +20,15 @@ export class CreateLayoutUseCase {
     private createLayoutChange: CreateLayoutChangeUseCase,
     private setDefaultLayout: SetDefaultLayoutUseCase,
     private layoutRepository: LayoutRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private resourceValidatorService: ResourceValidatorService
   ) {}
 
   async execute(command: CreateLayoutCommand): Promise<LayoutDto & { _id: string }> {
     const isV2Layout =
       command.origin === ResourceOriginEnum.NOVU_CLOUD || command.origin === ResourceOriginEnum.EXTERNAL;
+    await this.resourceValidatorService.validateLayoutsLimit(command.environmentId, isV2Layout);
+
     const variables = this.getExtractedVariables(command.variables as ITemplateVariable[], command.content ?? '');
     const hasBody = command.content?.includes('{{{body}}}');
     if (!hasBody && !isV2Layout) {
@@ -105,6 +112,7 @@ export class CreateLayoutUseCase {
       origin: domainEntity.origin,
       deleted: false,
       controls: domainEntity.controls,
+      _updatedBy: domainEntity.userId,
     };
   }
 

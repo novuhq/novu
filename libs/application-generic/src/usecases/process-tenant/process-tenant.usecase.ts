@@ -1,36 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { TenantRepository, TenantEntity } from '@novu/dal';
+import { TenantEntity, TenantRepository } from '@novu/dal';
 import { ITenantDefine } from '@novu/shared';
 import { isEqual } from 'lodash';
 
 import { InstrumentUsecase } from '../../instrumentation';
-import { ProcessTenantCommand } from './process-tenant.command';
-import { UpdateTenant, UpdateTenantCommand } from '../update-tenant';
 import { CreateTenant, CreateTenantCommand } from '../create-tenant';
+import { UpdateTenant, UpdateTenantCommand } from '../update-tenant';
+import { ProcessTenantCommand } from './process-tenant.command';
 
 @Injectable()
 export class ProcessTenant {
   constructor(
     private updateTenantUsecase: UpdateTenant,
     private createTenantUsecase: CreateTenant,
-    private tenantRepository: TenantRepository,
+    private tenantRepository: TenantRepository
   ) {}
 
   @InstrumentUsecase()
-  public async execute(
-    command: ProcessTenantCommand,
-  ): Promise<TenantEntity | undefined> {
+  public async execute(command: ProcessTenantCommand): Promise<TenantEntity | undefined> {
     const { environmentId, organizationId, userId, tenant } = command;
 
     let tenantEntity;
 
     try {
-      tenantEntity = await this.getTenant(
-        environmentId,
-        organizationId,
-        userId,
-        tenant,
-      );
+      tenantEntity = await this.getTenant(environmentId, organizationId, userId, tenant);
     } catch (e) {
       tenantEntity = null;
     }
@@ -46,7 +39,7 @@ export class ProcessTenant {
     environmentId: string,
     organizationId: string,
     userId: string,
-    tenantPayload: ITenantDefine,
+    tenantPayload: ITenantDefine
   ): Promise<TenantEntity> {
     const tenant = await this.getTenantByIdentifier({
       _environmentId: environmentId,
@@ -67,23 +60,18 @@ export class ProcessTenant {
           name: tenantPayload?.name,
           data: tenantPayload?.data,
           tenant,
-        }),
+        })
       );
     }
 
-    return await this.createTenant(
-      environmentId,
-      organizationId,
-      userId,
-      tenantPayload,
-    );
+    return await this.createTenant(environmentId, organizationId, userId, tenantPayload);
   }
 
   private async createTenant(
     environmentId: string,
     organizationId: string,
     userId: string,
-    tenantPayload: ITenantDefine,
+    tenantPayload: ITenantDefine
   ): Promise<TenantEntity> {
     return await this.createTenantUsecase.execute(
       CreateTenantCommand.create({
@@ -93,27 +81,18 @@ export class ProcessTenant {
         identifier: tenantPayload.identifier,
         name: tenantPayload?.name,
         data: tenantPayload?.data,
-      }),
+      })
     );
   }
 
-  private async getTenantByIdentifier({
-    identifier,
-    _environmentId,
-  }: {
-    identifier: string;
-    _environmentId: string;
-  }) {
+  private async getTenantByIdentifier({ identifier, _environmentId }: { identifier: string; _environmentId: string }) {
     return await this.tenantRepository.findOne({
       _environmentId,
       identifier,
     });
   }
 
-  private tenantNeedUpdate(
-    tenant: TenantEntity,
-    tenantPayload: Partial<TenantEntity>,
-  ): boolean {
+  private tenantNeedUpdate(tenant: TenantEntity, tenantPayload: Partial<TenantEntity>): boolean {
     return (
       !!(tenantPayload?.name && tenant?.name !== tenantPayload?.name) ||
       !!(tenantPayload?.data && !isEqual(tenant?.data, tenantPayload?.data))

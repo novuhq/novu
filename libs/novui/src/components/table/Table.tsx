@@ -1,12 +1,12 @@
 import { Table as ExternalTable } from '@mantine/core';
 import {
+  createColumnHelper as _createColumnHelper,
   CellContext,
+  ColumnDefTemplate,
   flexRender,
   getCoreRowModel,
   Row,
   useReactTable,
-  createColumnHelper as _createColumnHelper,
-  ColumnDefTemplate,
 } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 import { CoreProps } from '../../types';

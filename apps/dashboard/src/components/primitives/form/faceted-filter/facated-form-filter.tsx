@@ -24,8 +24,12 @@ export function FacetedFormFilter({
   onOpenChange,
   icon: Icon,
   hideTitle = false,
+  hidePlusIcon = false,
   hideSearch = false,
   hideClear = false,
+  className,
+  trailingNode,
+  disabled,
 }: FacetedFilterProps) {
   const [searchQuery, setSearchQuery] = React.useState('');
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -154,18 +158,21 @@ export function FacetedFormFilter({
             'rounded-lg border-neutral-200 ring-0 ring-offset-0 transition-colors duration-200 ease-out',
             sizes.trigger,
             isEmpty && 'border-[1px] border-dashed px-1.5 hover:border-neutral-300',
-            !isEmpty && 'border-[1px] bg-white'
+            !isEmpty && 'border-[1px] bg-white',
+            className
           )}
+          disabled={disabled}
         >
           <div className="flex items-center gap-1">
             {Icon && <Icon className="h-4 w-4 text-neutral-600" />}
-            {isEmpty && <PlusCircle className="h-4 w-4 text-neutral-300" />}
+            {isEmpty && !hidePlusIcon && <PlusCircle className="h-4 w-4 text-neutral-300" />}
             {(isEmpty || !hideTitle) && (
               <span className={cn('text-xs font-normal', isEmpty ? 'text-neutral-400' : 'text-neutral-600')}>
                 {title}
               </span>
             )}
             {!isEmpty && renderTriggerContent()}
+            {trailingNode}
           </div>
         </Button>
       </PopoverTrigger>

@@ -1,6 +1,5 @@
+import { EncryptedSecret, EnvironmentTypeEnum, IApiRateLimitMaximum } from '@novu/shared';
 import { Types } from 'mongoose';
-
-import { EncryptedSecret, IApiRateLimitMaximum, EnvironmentTypeEnum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { OrganizationId } from '../organization';

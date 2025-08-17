@@ -4,6 +4,7 @@
 
 import { environmentsCreate } from "../funcs/environmentsCreate.js";
 import { environmentsDelete } from "../funcs/environmentsDelete.js";
+import { environmentsGetTags } from "../funcs/environmentsGetTags.js";
 import { environmentsList } from "../funcs/environmentsList.js";
 import { environmentsUpdate } from "../funcs/environmentsUpdate.js";
 import { ClientSDK, RequestOptions } from "../lib/sdks.js";
@@ -12,6 +13,25 @@ import * as operations from "../models/operations/index.js";
 import { unwrapAsync } from "../types/fp.js";
 
 export class Environments extends ClientSDK {
+  /**
+   * Get environment tags
+   *
+   * @remarks
+   * Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.
+   */
+  async getTags(
+    environmentId: string,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.EnvironmentsControllerGetEnvironmentTagsResponse> {
+    return unwrapAsync(environmentsGetTags(
+      this,
+      environmentId,
+      idempotencyKey,
+      options,
+    ));
+  }
+
   /**
    * Create an environment
    *

@@ -1,26 +1,24 @@
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
+  Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { createHash } from 'crypto';
-import { differenceInHours } from 'date-fns';
 import {
   AnalyticsService,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
+  FeatureFlagsService,
+  generateTimestampHex,
   LogDecorator,
   PinoLogger,
   SelectIntegration,
   SelectIntegrationCommand,
   shortId,
-  UpsertControlValuesUseCase,
   UpsertControlValuesCommand,
-  FeatureFlagsService,
-  generateTimestampHex,
+  UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -28,42 +26,46 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
-  NotificationTemplateRepository,
+  MessageRepository,
   MessageTemplateRepository,
+  NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
   ChannelTypeEnum,
+  ControlValuesLevelEnum,
+  CustomDataType,
+  FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
   InAppProviderIdEnum,
-  CustomDataType,
-  ResourceTypeEnum,
-  ResourceOriginEnum,
-  StepTypeEnum,
   PreferencesTypeEnum,
-  FeatureFlagsKeysEnum,
-  ControlValuesLevelEnum,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  StepTypeEnum,
 } from '@novu/shared';
+import { createHash } from 'crypto';
+import { differenceInHours } from 'date-fns';
 import { AuthService } from '../../../auth/services/auth.service';
-import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
+import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
+import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
+import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
+import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
+import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
+import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
+import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { SessionCommand } from './session.command';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
-import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
-import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
-import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
-import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
-import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
-import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
+const MAX_NOTIFICATIONS_COUNT = 99;
 
 @Injectable()
 export class Session {
@@ -84,6 +86,7 @@ export class Session {
     private communityUserRepository: CommunityUserRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private messageTemplateRepository: MessageTemplateRepository,
+    private messageRepository: MessageRepository,
     private preferencesRepository: PreferencesRepository,
     private upsertControlValuesUseCase: UpsertControlValuesUseCase,
     private getOrganizationSettingsUsecase: GetOrganizationSettings,
@@ -164,6 +167,39 @@ export class Session {
     );
     const [{ count: totalUnreadCount }] = data;
 
+    const isNotificationSeverityEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_NOTIFICATION_SEVERITY_ENABLED,
+      defaultValue: false,
+      organization: { _id: environment._organizationId },
+    });
+
+    // get severity-based unread counts
+    const severityCounts = isNotificationSeverityEnabled
+      ? await this.messageRepository.getCountBySeverity(
+          environment._id,
+          subscriberEntity._id,
+          ChannelTypeEnum.IN_APP,
+          { read: false, snoozed: false },
+          { limit: MAX_NOTIFICATIONS_COUNT }
+        )
+      : [];
+
+    const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
+      total: totalUnreadCount,
+      severity: {
+        high: 0,
+        medium: 0,
+        low: 0,
+        none: 0,
+      },
+    };
+
+    for (const { severity, count } of severityCounts) {
+      if (severity in unreadCount.severity) {
+        unreadCount.severity[severity] = count;
+      }
+    }
+
     const token = await this.authService.getSubscriberWidgetToken(subscriberEntity);
 
     const { removeNovuBranding } = await this.getOrganizationSettingsUsecase.execute(
@@ -203,6 +239,7 @@ export class Session {
       applicationIdentifier: environment.identifier,
       token,
       totalUnreadCount,
+      unreadCount,
       removeNovuBranding,
       maxSnoozeDurationHours,
       isDevelopmentMode: environment.name.toLowerCase() !== 'production',

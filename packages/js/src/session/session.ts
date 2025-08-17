@@ -1,6 +1,7 @@
-import { NovuEventEmitter } from '../event-emitter';
-import { InitializeSessionArgs } from './types';
 import type { InboxService } from '../api';
+import { NovuEventEmitter } from '../event-emitter';
+import { isBrowser } from '../utils/is-browser';
+import { InitializeSessionArgs } from './types';
 
 export class Session {
   #emitter: NovuEventEmitter;
@@ -55,11 +56,19 @@ export class Session {
   }
 
   public async initialize(options?: InitializeSessionArgs): Promise<void> {
+    if (this.#options.subscriber?.subscriberId === options?.subscriber?.subscriberId) {
+      return;
+    }
+
     try {
       if (options) {
         this.#options = options;
       }
       const { subscriber, subscriberHash, applicationIdentifier } = this.#options;
+      let currentTimezone;
+      if (isBrowser()) {
+        currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      }
 
       let finalApplicationIdentifier = applicationIdentifier;
       if (!finalApplicationIdentifier) {
@@ -75,7 +84,11 @@ export class Session {
       const response = await this.#inboxService.initializeSession({
         applicationIdentifier: finalApplicationIdentifier,
         subscriberHash,
-        subscriber,
+        subscriber: {
+          ...subscriber,
+          subscriberId: subscriber?.subscriberId ?? '',
+          timezone: subscriber?.timezone ?? currentTimezone,
+        },
       });
 
       if (response?.applicationIdentifier?.startsWith('pk_keyless_')) {

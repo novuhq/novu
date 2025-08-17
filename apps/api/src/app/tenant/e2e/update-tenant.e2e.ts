@@ -1,10 +1,9 @@
-import { expect } from 'chai';
-import axios, { AxiosResponse } from 'axios';
-
-import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import axios, { AxiosResponse } from 'axios';
+import { expect } from 'chai';
 
-describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', function () {
+describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -13,7 +12,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', function () {
     await session.initialize();
   });
 
-  it('should update tenant', async function () {
+  it('should update tenant', async () => {
     await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -42,7 +41,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', function () {
     expect(updatedTenant?.data).to.deep.equal({ test1: 'new value', test2: 'new value2' });
   });
 
-  it('should not update identifier with null/undefined', async function () {
+  it('should not update identifier with null/undefined', async () => {
     await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -78,7 +77,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', function () {
     expect(tenantNotUpdatedWithUndefined?.identifier).to.equal('identifier_123');
   });
 
-  it('should not be able to update to already existing identifier (in the same environment)', async function () {
+  it('should not be able to update to already existing identifier (in the same environment)', async () => {
     await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -107,7 +106,7 @@ describe('Update Tenant - /tenants/:tenantId (PUT) #novu-v0', function () {
     }
   });
 
-  it('should throw exception id tenant was not found under environment', async function () {
+  it('should throw exception id tenant was not found under environment', async () => {
     await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,

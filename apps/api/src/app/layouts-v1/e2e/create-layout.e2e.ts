@@ -55,7 +55,7 @@ describe('Layout creation - /layouts (POST) #novu-v0', async () => {
     expect(initialDefaultLayoutId).to.exist;
     expect(initialDefaultLayoutId).to.be.string;
   });
-  it('should throw error for a create with layout identifier that already exists in the environment', async function () {
+  it('should throw error for a create with layout identifier that already exists in the environment', async () => {
     const firstLayoutUrl = `${BASE_PATH}/${initialDefaultLayoutId}`;
     const firstLayoutResponse = await session.testAgent.get(firstLayoutUrl);
     const existingLayoutIdentifier = firstLayoutResponse.body.data.identifier;

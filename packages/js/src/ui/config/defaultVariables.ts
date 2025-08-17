@@ -15,4 +15,7 @@ export const defaultVariables: Required<Variables> = {
   fontSize: '1rem',
   borderRadius: '0.375rem',
   colorStripes: '#FF9A68',
+  colorSeverityHigh: '#FB3748',
+  colorSeverityMedium: '#FF8447',
+  colorSeverityLow: 'transparent',
 };

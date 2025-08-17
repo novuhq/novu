@@ -192,6 +192,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     if (!template?.triggers[0].identifier.includes('untitled')) {
       return;
     }
+
     const newIdentifier = slugify(name);
 
     if (newIdentifier === identifier) {
@@ -199,13 +200,13 @@ const TemplateEditorFormProvider = ({ children }) => {
     }
 
     methods.setValue('identifier', newIdentifier);
+
     if (trigger) {
       setTrigger({
         ...trigger,
         identifier: newIdentifier,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   const { template, isLoading, isCreating, isUpdating, isDeleting, updateNotificationTemplate } =
@@ -227,6 +228,7 @@ const TemplateEditorFormProvider = ({ children }) => {
   const onSubmit = useCallback(
     async (form: IForm, showMessage = true) => {
       const payloadToCreate = mapFormToCreateNotificationTemplate(form);
+
       try {
         const response = await updateNotificationTemplate({
           id: templateId,
@@ -235,6 +237,7 @@ const TemplateEditorFormProvider = ({ children }) => {
             identifier: form.identifier,
           },
         });
+
         setTrigger(response.triggers[0]);
         reset(mapNotificationTemplateToForm(response));
 
@@ -279,9 +282,11 @@ const TemplateEditorFormProvider = ({ children }) => {
       const workflowSteps = methods.getValues('steps');
       const stepToVariant = workflowSteps.find((step) => step.uuid === stepUuid);
       const index = workflowSteps.findIndex((item) => item.uuid === stepUuid);
+
       if (!stepToVariant) {
         return;
       }
+
       // remove the variant with the variantUuid
       const newVariants = stepToVariant?.variants?.filter((variant) => variant.uuid !== variantUuid);
 

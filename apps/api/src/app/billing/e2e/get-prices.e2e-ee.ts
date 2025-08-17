@@ -1,7 +1,6 @@
-/* eslint-disable global-require */
-import sinon from 'sinon';
-import { expect } from 'chai';
 import { ApiServiceLevelEnum, StripeBillingIntervalEnum } from '@novu/shared';
+import { expect } from 'chai';
+import sinon from 'sinon';
 
 describe('GetPrices #novu-v2', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -123,7 +122,9 @@ describe('GetPrices #novu-v2', () => {
         });
       };
     })
-    .forEach((test) => test());
+    .forEach((test) => {
+      test();
+    });
 
   it(`should throw an error if no prices are found`, async () => {
     listPricesStub.onFirstCall().resolves({ data: [] });

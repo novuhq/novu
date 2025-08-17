@@ -1,9 +1,9 @@
-import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { LocalizationResourceEnum } from '@/types/translations';
+import { useMemo } from 'react';
+import { getTranslation } from '@/api/translations';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { getTranslation } from '@/api/translations';
+import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
 
 type FetchTranslationKeysParams = {

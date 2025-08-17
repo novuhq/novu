@@ -51,16 +51,15 @@ jobs:
         shell: bash
         env:
           NOVU_ENTERPRISE: ${{ inputs.ee }}
+          NEW_RELIC_LICENSE_KEY: ${{ secrets.NEW_RELIC_LICENSE_KEY }}
+          NEW_RELIC_ENABLED: true
         run: |
           # Start the worker service in the background
-          cd apps/worker && npm run start:test &
+          cd apps/worker && LOG_LEVEL=debug npm run start:test &
 
       - name: Wait on worker
         shell: bash
         run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check
-
-      - name: Build API
-        run: cd apps/api && pnpm build:metadata
 
       - name: Run Novu V1 E2E tests
         if: ${{ !inputs.ee }}

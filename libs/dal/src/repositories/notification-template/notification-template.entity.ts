@@ -10,19 +10,20 @@ import {
   IPreferenceChannels,
   ITriggerReservedVariable,
   IWorkflowStepMetadata,
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  RuntimeIssue,
+  SeverityLevelEnum,
   StepIssues,
   TriggerTypeEnum,
-  WorkflowIssueTypeEnum,
-  ResourceOriginEnum,
   WorkflowStatusEnum,
-  ResourceTypeEnum,
 } from '@novu/shared';
 import { Types } from 'mongoose';
 import type { ChangePropsValueType } from '../../types';
 import type { EnvironmentId } from '../environment';
+import { MessageTemplateEntity } from '../message-template';
 import { NotificationGroupEntity } from '../notification-group';
 import type { OrganizationId } from '../organization';
-import { MessageTemplateEntity } from '../message-template';
 import { UserEntity } from '../user';
 
 export class NotificationTemplateEntity {
@@ -97,16 +98,19 @@ export class NotificationTemplateEntity {
   status?: WorkflowStatusEnum;
 
   lastTriggeredAt?: string;
-}
-export class RuntimeIssue {
-  issueType: WorkflowIssueTypeEnum;
-  variableName?: string;
-  message: string;
+
+  lastPublishedAt?: string;
+
+  _lastPublishedBy?: string;
+
+  readonly lastPublishedBy?: UserEntity;
+
+  severity?: SeverityLevelEnum;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
   Omit<NotificationTemplateEntity, '_parentId'>,
-  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId' | '_updatedBy'
+  '_environmentId' | '_organizationId' | '_creatorId' | '_notificationGroupId' | '_updatedBy' | '_lastPublishedBy'
 > & {
   _parentId?: Types.ObjectId;
 };

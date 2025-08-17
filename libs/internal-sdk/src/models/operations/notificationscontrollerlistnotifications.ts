@@ -41,7 +41,7 @@ export type NotificationsControllerListNotificationsRequest = {
    */
   limit?: number | undefined;
   /**
-   * Transaction ID for filtering
+   * The transaction ID to filter by
    */
   transactionId?: string | undefined;
   /**

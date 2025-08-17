@@ -10,7 +10,7 @@ export class CompileStepTemplateCommand extends EnvironmentWithUserCommand {
   title?: string;
 
   @IsDefined()
-  payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  payload: any;
 
   @IsString()
   @IsOptional()

@@ -1,5 +1,5 @@
-import { expect, test, vi } from 'vitest';
 import { SNSClient } from '@aws-sdk/client-sns';
+import { expect, test, vi } from 'vitest';
 
 import { SNSSmsProvider } from './sns.provider';
 

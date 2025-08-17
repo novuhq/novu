@@ -1,10 +1,9 @@
-import { expect } from 'chai';
-import axios, { AxiosResponse } from 'axios';
-
-import { UserSession } from '@novu/testing';
 import { TenantRepository } from '@novu/dal';
+import { UserSession } from '@novu/testing';
+import axios, { AxiosResponse } from 'axios';
+import { expect } from 'chai';
 
-describe('Get Tenant - /tenants/:identifier (GET) #novu-v0', function () {
+describe('Get Tenant - /tenants/:identifier (GET) #novu-v0', () => {
   let session: UserSession;
   const tenantRepository = new TenantRepository();
 
@@ -13,7 +12,7 @@ describe('Get Tenant - /tenants/:identifier (GET) #novu-v0', function () {
     await session.initialize();
   });
 
-  it('should get a newly created tenant', async function () {
+  it('should get a newly created tenant', async () => {
     await tenantRepository.create({
       _organizationId: session.organization._id,
       _environmentId: session.environment._id,
@@ -29,7 +28,7 @@ describe('Get Tenant - /tenants/:identifier (GET) #novu-v0', function () {
     expect(getTenantResult.data.data).to.deep.equal({ test1: 'test value1', test2: 'test value2' });
   });
 
-  it('should throw exception if tenant does not existing', async function () {
+  it('should throw exception if tenant does not existing', async () => {
     const incorrectId = 'identifier_123';
     try {
       await getTenant({ session, identifier: incorrectId });

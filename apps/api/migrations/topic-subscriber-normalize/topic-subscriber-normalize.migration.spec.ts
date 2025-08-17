@@ -1,10 +1,9 @@
-import axios from 'axios';
-import { beforeEach } from 'mocha';
-import { expect } from 'chai';
-
-import { ExternalSubscriberId, TopicId, TopicKey, TopicName } from '@novu/shared';
 import { SubscriberEntity, SubscriberRepository, TopicSubscribersRepository } from '@novu/dal';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { ExternalSubscriberId, TopicId, TopicKey, TopicName } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
+import { beforeEach } from 'mocha';
 
 import { topicSubscriberNormalize } from './topic-subscriber-normalize.migration';
 

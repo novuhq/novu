@@ -5,6 +5,7 @@ import type {
   NotificationFilter,
   PreferencesResponse,
   Session,
+  SeverityLevelEnum,
   Subscriber,
 } from '../types';
 import { HttpClient, HttpClientOptions } from './http-client';
@@ -51,16 +52,20 @@ export class InboxService {
     read,
     tags,
     snoozed,
+    seen,
     data,
+    severity,
   }: {
     tags?: string[];
     read?: boolean;
     archived?: boolean;
     snoozed?: boolean;
+    seen?: boolean;
     limit?: number;
     after?: string;
     offset?: number;
     data?: Record<string, unknown>;
+    severity?: SeverityLevelEnum | SeverityLevelEnum[];
   }): Promise<{ data: InboxNotification[]; hasMore: boolean; filter: NotificationFilter }> {
     const searchParams = new URLSearchParams(`limit=${limit}`);
     if (after) {
@@ -70,7 +75,9 @@ export class InboxService {
       searchParams.append('offset', `${offset}`);
     }
     if (tags) {
-      tags.forEach((tag) => searchParams.append('tags[]', tag));
+      for (const tag of tags) {
+        searchParams.append('tags[]', tag);
+      }
     }
     if (read !== undefined) {
       searchParams.append('read', `${read}`);
@@ -81,8 +88,18 @@ export class InboxService {
     if (snoozed !== undefined) {
       searchParams.append('snoozed', `${snoozed}`);
     }
+    if (seen !== undefined) {
+      searchParams.append('seen', `${seen}`);
+    }
     if (data !== undefined) {
       searchParams.append('data', JSON.stringify(data));
+    }
+    if (severity && Array.isArray(severity)) {
+      for (const el of severity) {
+        searchParams.append('severity[]', el);
+      }
+    } else if (severity) {
+      searchParams.append('severity', severity);
     }
 
     return this.#httpClient.get(INBOX_NOTIFICATIONS_ROUTE, searchParams, false);
@@ -91,7 +108,15 @@ export class InboxService {
   count({
     filters,
   }: {
-    filters: Array<{ tags?: string[]; read?: boolean; archived?: boolean; data?: Record<string, unknown> }>;
+    filters: Array<{
+      tags?: string[];
+      read?: boolean;
+      archived?: boolean;
+      snoozed?: boolean;
+      seen?: boolean;
+      data?: Record<string, unknown>;
+      severity?: SeverityLevelEnum | SeverityLevelEnum[];
+    }>;
   }): Promise<{
     data: Array<{
       count: number;
@@ -146,10 +171,30 @@ export class InboxService {
   }
 
   archiveAllRead({ tags, data }: { tags?: string[]; data?: Record<string, unknown> }): Promise<void> {
-    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/read-archive`, {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/archive/read`, {
       tags,
       data: data ? JSON.stringify(data) : undefined,
     });
+  }
+
+  markAsSeen({
+    notificationIds,
+    tags,
+    data,
+  }: {
+    notificationIds?: string[];
+    tags?: string[];
+    data?: Record<string, unknown>;
+  }): Promise<void> {
+    return this.#httpClient.post(`${INBOX_NOTIFICATIONS_ROUTE}/seen`, {
+      notificationIds,
+      tags,
+      data: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  seen(notificationId: string): Promise<void> {
+    return this.markAsSeen({ notificationIds: [notificationId] });
   }
 
   completeAction({
@@ -176,10 +221,22 @@ export class InboxService {
     });
   }
 
-  fetchPreferences(tags?: string[]): Promise<PreferencesResponse[]> {
+  fetchPreferences(
+    tags?: string[],
+    severity?: SeverityLevelEnum | SeverityLevelEnum[]
+  ): Promise<PreferencesResponse[]> {
     const queryParams = new URLSearchParams();
     if (tags) {
-      tags.forEach((tag) => queryParams.append('tags[]', tag));
+      for (const tag of tags) {
+        queryParams.append('tags[]', tag);
+      }
+    }
+    if (severity && Array.isArray(severity)) {
+      for (const el of severity) {
+        queryParams.append('severity[]', el);
+      }
+    } else if (severity) {
+      queryParams.append('severity', severity);
     }
 
     const query = queryParams.size ? `?${queryParams.toString()}` : '';

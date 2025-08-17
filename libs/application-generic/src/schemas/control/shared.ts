@@ -1,6 +1,6 @@
-import { Targets, Options } from 'zod-to-json-schema';
-import { UiSchemaGroupEnum, UiSchema, UiComponentEnum } from '@novu/shared';
+import { UiComponentEnum, UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { z } from 'zod';
+import { Options, Targets } from 'zod-to-json-schema';
 
 export const defaultOptions: Partial<Options<Targets>> = {
   $refStrategy: 'none',

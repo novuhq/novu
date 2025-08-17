@@ -1,6 +1,6 @@
+import { UserSessionData } from '@novu/shared';
 import Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
-import { UserSessionData } from '@novu/shared';
 
 type OriginPort = number;
 type ConfigKey = 'token' | 'anonymousId' | `tunnelUrl-${OriginPort}`;

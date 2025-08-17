@@ -1,36 +1,38 @@
 import { Injectable } from '@nestjs/common';
 import {
+  EnvironmentEntity,
   NotificationTemplateEntity,
+  OrganizationEntity,
   SubscriberEntity,
   TopicEntity,
-  EnvironmentEntity,
-  OrganizationEntity,
   UserEntity,
 } from '@novu/dal';
 import {
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITenantDefine,
+  ResourceEnum,
+  StatelessControls,
   SubscriberSourceEnum,
   TriggerOverrides,
   TriggerRequestCategoryEnum,
-  StatelessControls,
-  ResourceEnum,
-  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import _ from 'lodash';
 
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
-import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
-import { buildUsageKey } from '../../services/cache/key-builders';
-import { CacheService, FeatureFlagsService } from '../../services';
-import { mapSubscribersToJobs } from '../../utils';
 import { PinoLogger } from '../../logging';
+import { CacheService, FeatureFlagsService } from '../../services';
+import { buildUsageKey } from '../../services/cache/key-builders';
+import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { mapSubscribersToJobs } from '../../utils';
 
 export type BaseTriggerCommand = {
   environmentId: string;
   organizationId: string;
   userId: string;
   transactionId: string;
+  // TODO: remove optional flag after all the workers are migrated to use requestId NV-6475
+  requestId?: string;
   identifier: string;
   payload: any;
   overrides: TriggerOverrides;

@@ -48,6 +48,12 @@ module.exports = {
         ring: defaultColor('nv-color-ring'),
         stripes: defaultColor('nv-color-stripes'),
         border: defaultColor('nv-color-neutral-alpha-100'),
+        'severity-high': defaultColor('nv-color-severity-high'),
+        'severity-high-alpha': generateColorShades('nv-color-severity-high-alpha'),
+        'severity-medium': defaultColor('nv-color-severity-medium'),
+        'severity-medium-alpha': generateColorShades('nv-color-severity-medium-alpha'),
+        'severity-low': defaultColor('nv-color-severity-low'),
+        'severity-low-alpha': generateColorShades('nv-color-severity-low-alpha'),
       },
       borderRadius: {
         none: 'var(--nv-radius-none)',

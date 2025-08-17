@@ -1,3 +1,10 @@
+import { type Controls } from '@novu/shared';
+import { RJSFSchema } from '@rjsf/utils';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { InlineToast } from '@/components/primitives/inline-toast';
@@ -8,13 +15,6 @@ import { useSaveForm } from '@/components/workflow-editor/steps/save-form-contex
 import { ResourceOriginEnum } from '@/utils/enums';
 import { buildDefaultValuesOfDataSchema } from '@/utils/schema';
 import { cn } from '@/utils/ui';
-import { type Controls } from '@novu/shared';
-import { RJSFSchema } from '@rjsf/utils';
-import { motion } from 'motion/react';
-import { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { RiBookMarkedLine, RiInputField, RiQuestionLine } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 import { useWorkflow } from '../../workflow-provider';
 import { JsonForm } from './json-form';
 

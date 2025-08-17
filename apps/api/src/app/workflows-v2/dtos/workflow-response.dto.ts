@@ -1,27 +1,28 @@
-import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, ValidateNested, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   CreateWorkflowDto,
+  ResourceOriginEnum,
+  SeverityLevelEnum,
   Slug,
   StepTypeEnum,
   UpdateWorkflowDto,
-  ResourceOriginEnum,
   WorkflowStatusEnum,
 } from '@novu/shared';
-import { WorkflowCommonsFields } from './workflow-commons.dto';
-import { StepResponseDto } from './step.response.dto';
+import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { WorkflowPreferencesResponseDto } from './preferences.response.dto';
 import { RuntimeIssueDto } from './runtime-issue.dto';
-import { EmailStepResponseDto } from './step-responses/email-step.response.dto';
-import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
-import { PushStepResponseDto } from './step-responses/push-step.response.dto';
+import { StepResponseDto } from './step.response.dto';
 import { ChatStepResponseDto } from './step-responses/chat-step.response.dto';
+import { CustomStepResponseDto } from './step-responses/custom-step.response.dto';
 import { DelayStepResponseDto } from './step-responses/delay-step.response.dto';
 import { DigestStepResponseDto } from './step-responses/digest-step.response.dto';
-import { CustomStepResponseDto } from './step-responses/custom-step.response.dto';
+import { EmailStepResponseDto } from './step-responses/email-step.response.dto';
 import { InAppStepResponseDto } from './step-responses/in-app-step.response.dto';
+import { PushStepResponseDto } from './step-responses/push-step.response.dto';
+import { SmsStepResponseDto } from './step-responses/sms-step.response.dto';
 import { UserResponseDto } from './user-response.dto';
+import { WorkflowCommonsFields } from './workflow-commons.dto';
 
 @ApiExtraModels(
   RuntimeIssueDto,
@@ -66,6 +67,25 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
   @ValidateNested()
   @Type(() => UserResponseDto)
   updatedBy?: UserResponseDto;
+
+  @ApiPropertyOptional({
+    description: 'Timestamp of the last workflow publication',
+    type: 'string',
+    nullable: true,
+  })
+  @IsOptional()
+  @IsString()
+  lastPublishedAt?: string | null;
+
+  @ApiPropertyOptional({
+    description: 'User who last published the workflow',
+    type: () => UserResponseDto,
+    nullable: true,
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserResponseDto)
+  lastPublishedBy?: UserResponseDto | null;
 
   @ApiProperty({
     description: 'Steps of the workflow',
@@ -167,7 +187,16 @@ export class WorkflowResponseDto extends WorkflowCommonsFields {
     additionalProperties: true,
   })
   @IsOptional()
-  payloadExample?: object;
+  payloadExample?: object | null;
+
+  @ApiHideProperty()
+  /* @ApiProperty({
+    description: 'Severity of the workflow',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  }) */
+  @IsEnum(SeverityLevelEnum)
+  severity: SeverityLevelEnum;
 }
 
 export type WorkflowCreateAndUpdateKeys = keyof CreateWorkflowDto | keyof UpdateWorkflowDto;

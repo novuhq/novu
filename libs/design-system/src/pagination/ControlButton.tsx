@@ -11,7 +11,6 @@ type StylingProps = Pick<IControlButtonProps, 'isCurrentPage'>;
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): string => {
-  // eslint-disable-next-line no-nested-ternary
   return theme.colorScheme === 'dark'
     ? isCurrentPage
       ? colors.white
@@ -28,7 +27,6 @@ const getFontWeight = ({ theme, isCurrentPage }: { theme: any } & StylingProps):
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getBackgroundColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): CSSProperties['fontWeight'] => {
-  // eslint-disable-next-line no-nested-ternary
   return isCurrentPage ? (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight) : 'none';
 };
 

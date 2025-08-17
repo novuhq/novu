@@ -1,5 +1,5 @@
 import clsx, { ClassValue } from 'clsx';
-import { extendTailwindMerge, type ClassNameValue } from 'tailwind-merge';
+import { type ClassNameValue, extendTailwindMerge } from 'tailwind-merge';
 import type { CSSProperties, Elements, Tab, Variables } from '../types';
 
 const twMerge = extendTailwindMerge({
@@ -163,7 +163,6 @@ export function generateBorderRadiusRules(props: { id: string; baseRadius: strin
   const rules: string[] = [];
 
   Object.entries(radiusRatios).forEach(([key, ratio]) => {
-    // eslint-disable-next-line no-nested-ternary
     const value = key === 'none' ? '0px' : key === 'full' ? '9999px' : `calc(${baseRadius} * ${ratio})`;
 
     const cssVariableRule = `.${id} { --nv-radius-${key}: ${value}; }`;
@@ -186,6 +185,16 @@ export const parseVariables = (variables: Required<Variables>, id: string) => {
     generateDefaultColor({ color: variables.colorShadow, key: 'color-shadow', id }),
     generateDefaultColor({ color: variables.colorRing, key: 'color-ring', id }),
     generateDefaultColor({ color: variables.colorStripes, key: 'color-stripes', id }),
+    generateDefaultColor({ color: variables.colorSeverityHigh, key: 'color-severity-high', id }),
+    generateDefaultColor({ color: variables.colorSeverityMedium, key: 'color-severity-medium', id }),
+    generateDefaultColor({ color: variables.colorSeverityLow, key: 'color-severity-low', id }),
+    ...generateAlphaShadeRulesFromColor({ color: variables.colorSeverityHigh, key: 'color-severity-high-alpha', id }),
+    ...generateAlphaShadeRulesFromColor({
+      color: variables.colorSeverityMedium,
+      key: 'color-severity-medium-alpha',
+      id,
+    }),
+    ...generateAlphaShadeRulesFromColor({ color: variables.colorSeverityLow, key: 'color-severity-low-alpha', id }),
     ...generateAlphaShadeRulesFromColor({ color: variables.colorBackground, key: 'color-background-alpha', id }),
     ...generateAlphaShadeRulesFromColor({ color: variables.colorForeground, key: 'color-foreground-alpha', id }),
     ...generateSolidShadeRulesFromColor({ color: variables.colorPrimary, key: 'color-primary', id }),

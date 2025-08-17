@@ -43,7 +43,6 @@ export const LocalStudioSidebarOrganizationDisplay: FC<LocalStudioSidebarOrganiz
           </Stack>
         </Flex>
       }
-      // eslint-disable-next-line max-len
       description="A stateless version of the Novu Dashboard. It's connected to your local application and used for development and debugging purposes."
     />
   );

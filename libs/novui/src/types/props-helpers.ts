@@ -20,10 +20,12 @@ export type PolymorphicComponentPropWithRef<C extends React.ElementType, Props =
   ref?: PolymorphicRef<C>;
 };
 
-export function forwardRefWithAs<
-  Component extends React.ElementType,
-  Props = {}
->(render: (props: React.PropsWithoutRef<PolymorphicComponentPropWithRef<Component, Props>>, ref: React.ForwardedRef<any>) => React.ReactElement | null) {
+export function forwardRefWithAs<Component extends React.ElementType, Props = {}>(
+  render: (
+    props: React.PropsWithoutRef<PolymorphicComponentPropWithRef<Component, Props>>,
+    ref: React.ForwardedRef<any>
+  ) => React.ReactElement | null
+) {
   return React.forwardRef(render) as unknown as <As extends React.ElementType = Component>(
     props: PolymorphicComponentPropWithRef<As, Props>
   ) => React.ReactElement | null;

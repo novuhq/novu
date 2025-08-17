@@ -1,8 +1,8 @@
+import { Command } from 'cmdk';
+import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/primitives/command';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
-import { Command } from 'cmdk';
-import { forwardRef, useEffect, useMemo, useState } from 'react';
 import { Tag } from './tag';
 
 type TagInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onChange'> & {
@@ -97,9 +97,9 @@ const TagInput = forwardRef<HTMLInputElement, TagInputProps>((props, ref) => {
                 }}
                 dismissTestId={`tags-badge-remove-${tag}`}
               >
-                <span 
-                  className="truncate max-w-full block" 
-                  style={{ wordBreak: 'break-all' }} 
+                <span
+                  className="block max-w-full truncate"
+                  style={{ wordBreak: 'break-all' }}
                   data-testid="tags-badge-value"
                   title={tag}
                 >

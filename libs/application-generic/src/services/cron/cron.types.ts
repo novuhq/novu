@@ -25,9 +25,7 @@ export type CronJobData<TData> = {
   data: TData;
 };
 
-export type CronJobProcessor<TData> = (
-  job: CronJobData<TData>,
-) => Promise<void>;
+export type CronJobProcessor<TData> = (job: CronJobData<TData>) => Promise<void>;
 
 export type CronMetrics = Record<
   JobCronNameEnum,

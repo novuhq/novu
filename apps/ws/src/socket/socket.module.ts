@@ -1,13 +1,21 @@
 import { Module, OnApplicationShutdown, Provider } from '@nestjs/common';
-import { WorkflowInMemoryProviderService } from '@novu/application-generic';
-
-import { WSGateway } from './ws.gateway';
+import { FeatureFlagsService, WorkflowInMemoryProviderService } from '@novu/application-generic';
 import { SharedModule } from '../shared/shared.module';
-import { ExternalServicesRoute } from './usecases/external-services-route';
-
 import { WebSocketWorker } from './services';
+import { ExternalServicesRoute } from './usecases/external-services-route';
+import { WSGateway } from './ws.gateway';
 
-const USE_CASES: Provider[] = [ExternalServicesRoute];
+export const featureFlagsService = {
+  provide: FeatureFlagsService,
+  useFactory: async (): Promise<FeatureFlagsService> => {
+    const instance = new FeatureFlagsService();
+    await instance.initialize();
+
+    return instance;
+  },
+};
+
+const USE_CASES: Provider[] = [ExternalServicesRoute, featureFlagsService];
 
 const PROVIDERS: Provider[] = [WSGateway, WebSocketWorker];
 

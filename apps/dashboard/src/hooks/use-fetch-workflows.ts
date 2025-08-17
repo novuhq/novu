@@ -1,7 +1,7 @@
-import { getWorkflows } from '@/api/workflows';
-import { QueryKeys } from '@/utils/query-keys';
 import { DirectionEnum } from '@novu/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { getWorkflows } from '@/api/workflows';
+import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '../context/environment/hooks';
 
 interface UseWorkflowsParams {

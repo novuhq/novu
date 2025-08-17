@@ -6,15 +6,14 @@ import {
   LAYOUT_PREVIEW_WORKFLOW_ID,
   ResourceOriginEnum,
 } from '@novu/shared';
-
-import { GenerateLayoutPreviewResponseDto } from '../../dtos/generate-layout-preview-response.dto';
-import { PreviewLayoutCommand } from './preview-layout.command';
-import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
-import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
-import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
-import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
+import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
+import { CreateVariablesObject, CreateVariablesObjectCommand } from '../../../shared/usecases/create-variables-object';
 import { PayloadMergerService } from '../../../workflows-v2/usecases/preview/services/payload-merger.service';
+import { PreviewPayloadProcessorService } from '../../../workflows-v2/usecases/preview/services/preview-payload-processor.service';
+import { GenerateLayoutPreviewResponseDto } from '../../dtos/generate-layout-preview-response.dto';
+import { GetLayoutCommand, GetLayoutUseCase } from '../get-layout';
+import { PreviewLayoutCommand } from './preview-layout.command';
 import { enhanceBodyForPreview } from './preview-utils';
 
 @Injectable()

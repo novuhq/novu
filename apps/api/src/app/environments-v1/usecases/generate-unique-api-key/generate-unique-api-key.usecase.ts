@@ -1,7 +1,6 @@
-import { createHash, randomBytes } from 'crypto';
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-
 import { EnvironmentRepository } from '@novu/dal';
+import { createHash, randomBytes } from 'crypto';
 
 const API_KEY_GENERATION_MAX_RETRIES = 3;
 

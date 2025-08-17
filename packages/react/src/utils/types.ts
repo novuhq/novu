@@ -1,25 +1,23 @@
+import type { Subscriber, UnreadCount } from '@novu/js';
 import type {
-  Notification,
-  NotificationClickHandler,
-  NotificationActionClickHandler,
-  Tab,
-  Appearance as JsAppearance,
-  Theme as JsTheme,
   IconKey,
-  Localization,
-  RouterPush,
-  PreferencesFilter,
-  PreferenceGroups,
   InboxProps,
-  InboxPage,
+  Theme as JsTheme,
+  Localization,
+  Notification,
+  NotificationActionClickHandler,
+  NotificationClickHandler,
+  PreferenceGroups,
+  PreferencesFilter,
+  RouterPush,
+  Tab,
 } from '@novu/js/ui';
-import type { Subscriber } from '@novu/js';
 import type { ReactNode } from 'react';
 
 export type NotificationsRenderer = (notification: Notification) => React.ReactNode;
 export type SubjectRenderer = (notification: Notification) => React.ReactNode;
 export type BodyRenderer = (notification: Notification) => React.ReactNode;
-export type BellRenderer = (unreadCount: number) => React.ReactNode;
+export type BellRenderer = (unreadCount: UnreadCount) => React.ReactNode;
 
 export type ReactIconRendererProps = { class?: string };
 export type ReactIconRenderer = (props: ReactIconRendererProps) => ReactNode;

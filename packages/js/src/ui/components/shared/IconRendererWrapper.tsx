@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { type JSX, Show } from 'solid-js';
 import { useAppearance } from '../../context';
 import type { IconKey } from '../../types';
 import { ExternalElementRenderer } from '../ExternalElementRenderer';

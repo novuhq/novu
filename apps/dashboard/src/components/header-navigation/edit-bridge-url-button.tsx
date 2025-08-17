@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PermissionsEnum } from '@novu/shared';
 import { useLayoutEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { RiLinkM, RiPencilFill } from 'react-icons/ri';
 import * as z from 'zod';
-
 import {
   Form,
   FormControl,
@@ -15,15 +15,15 @@ import {
 } from '@/components/primitives/form/form';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchBridgeHealthCheck } from '@/hooks/use-fetch-bridge-health-check';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { useUpdateBridgeUrl } from '@/hooks/use-update-bridge-url';
 import { useValidateBridgeUrl } from '@/hooks/use-validate-bridge-url';
 import { ConnectionStatus } from '@/utils/types';
 import { cn } from '@/utils/ui';
 import { Input } from '../primitives/input';
-import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
-import { PermissionsEnum } from '@novu/shared';
-import { useHasPermission } from '@/hooks/use-has-permission';
 import { PermissionButton } from '../primitives/permission-button';
+import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '../primitives/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip';
 
 const formSchema = z.object({ bridgeUrl: z.string().url() });
 
@@ -60,6 +60,20 @@ export const EditBridgeUrlButton = () => {
     }
   };
 
+  const getTooltipText = () => {
+    if (status === ConnectionStatus.DISCONNECTED) {
+      return 'Bridge endpoint disconnected';
+    }
+
+    if (status === ConnectionStatus.LOADING) {
+      return 'Checking bridge endpoint...';
+    }
+
+    return 'Bridge endpoint connected';
+  };
+
+  if (!envBridgeUrl) return null;
+
   return (
     <Popover
       open={isPopoverOpen}
@@ -71,24 +85,41 @@ export const EditBridgeUrlButton = () => {
         }
       }}
     >
-      <PopoverTrigger asChild>
-        <button className="text-foreground-600 flex h-6 items-center gap-2 rounded-md border border-neutral-200 text-xs leading-4 hover:bg-neutral-50 focus:bg-neutral-50">
-          <div className="flex items-center gap-2 px-1.5 py-1">
-            <span
-              className={cn(
-                'relative size-1.5 animate-[pulse-shadow_1s_ease-in-out_infinite] rounded-full',
-                status === ConnectionStatus.DISCONNECTED || status === ConnectionStatus.LOADING
-                  ? 'bg-destructive'
-                  : 'bg-success [--pulse-color:var(--success)]'
-              )}
-            />
-            <span>Local Studio</span>
-          </div>
-          <span className="border-l border-neutral-200 p-1.5">
-            <RiPencilFill className="size-[12px]" />
-          </span>
-        </button>
-      </PopoverTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <PopoverTrigger asChild>
+            <button className="text-foreground-600 flex h-5 w-5 items-center justify-center rounded-md text-xs leading-4 hover:bg-neutral-50 focus:bg-neutral-50">
+              <div
+                className={cn(
+                  'relative flex size-4 items-center justify-center rounded-lg',
+                  status === ConnectionStatus.DISCONNECTED ? 'bg-[rgba(220,38,38,0.1)]' : 'bg-[rgba(31,193,107,0.1)]'
+                )}
+              >
+                <div
+                  className={cn(
+                    'flex size-full items-center justify-center rounded-lg p-1',
+                    status === ConnectionStatus.DISCONNECTED
+                      ? 'bg-[rgba(220,38,38,0.16)]'
+                      : 'bg-[rgba(31,193,107,0.16)]'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'size-1.5 rounded-[3px]',
+                      status === ConnectionStatus.DISCONNECTED
+                        ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(220,38,38,0.6)] [--pulse-color:rgba(220,38,38,1)]'
+                        : status === ConnectionStatus.LOADING
+                          ? 'animate-[pulse-shadow_1s_ease-in-out_infinite] bg-[rgba(31,193,107,0.6)] [--pulse-color:rgba(31,193,107,1)]'
+                          : 'bg-[rgba(31,193,107,0.6)]'
+                    )}
+                  />
+                </div>
+              </div>
+            </button>
+          </PopoverTrigger>
+        </TooltipTrigger>
+        <TooltipContent>{getTooltipText()}</TooltipContent>
+      </Tooltip>
       <PopoverPortal>
         <PopoverContent className="w-[362px] p-0" side="bottom" align="end">
           <Form {...form}>

@@ -1,27 +1,26 @@
 import { WebSocket } from 'partysocket';
 import { InboxService } from '../api';
 import { BaseModule } from '../base-module';
-import type { BaseSocketInterface } from './base-socket';
-
 import {
   NotificationReceivedEvent,
-  NotificationUnseenEvent,
   NotificationUnreadEvent,
+  NotificationUnseenEvent,
   NovuEventEmitter,
   SocketEventNames,
 } from '../event-emitter';
 import { Notification } from '../notifications';
 import {
   ActionTypeEnum,
-  NotificationActionStatus,
   InboxNotification,
+  NotificationActionStatus,
+  Result,
   Session,
   Subscriber,
   TODO,
   WebSocketEvent,
-  Result,
 } from '../types';
 import { NovuError } from '../utils/errors';
+import type { BaseSocketInterface } from './base-socket';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
@@ -30,13 +29,16 @@ const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_coun
 
 const mapToNotification = ({
   _id,
+  transactionId,
   content,
   read,
+  seen,
   archived,
   snoozedUntil,
   deliveredAt,
   createdAt,
   lastReadDate,
+  firstSeenDate,
   archivedAt,
   channel,
   subscriber,
@@ -46,6 +48,7 @@ const mapToNotification = ({
   tags,
   data,
   workflow,
+  severity,
 }: TODO): InboxNotification => {
   const to: Subscriber = {
     id: subscriber?._id,
@@ -66,10 +69,12 @@ const mapToNotification = ({
 
   return {
     id: _id,
+    transactionId,
     subject,
     body: content as string,
     to,
     isRead: read,
+    isSeen: seen,
     isArchived: archived,
     isSnoozed: !!snoozedUntil,
     ...(deliveredAt && {
@@ -80,6 +85,7 @@ const mapToNotification = ({
     }),
     createdAt,
     readAt: lastReadDate,
+    firstSeenAt: firstSeenDate,
     archivedAt,
     avatar,
     primaryAction: primaryCta && {
@@ -112,6 +118,7 @@ const mapToNotification = ({
       : undefined,
     data,
     workflow,
+    severity,
   };
 };
 
@@ -174,7 +181,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
       const data = JSON.parse(event.data);
       if (data.event === WebSocketEvent.UNREAD) {
         this.#emitter.emit(UNREAD_COUNT_CHANGED, {
-          result: data.data.unreadCount,
+          result: data.data.counts,
         });
       }
     } catch (error) {

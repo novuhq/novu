@@ -1,11 +1,11 @@
 import { InboxService } from '../api';
-import { NovuEventEmitter } from '../event-emitter';
 import { BaseModule } from '../base-module';
+import { PreferencesCache } from '../cache/preferences-cache';
+import { NovuEventEmitter } from '../event-emitter';
+import { Result } from '../types';
+import { bulkUpdatePreference, updatePreference } from './helpers';
 import { Preference } from './preference';
 import type { BasePreferenceArgs, InstancePreferenceArgs, ListPreferencesArgs, UpdatePreferenceArgs } from './types';
-import { Result } from '../types';
-import { PreferencesCache } from '../cache/preferences-cache';
-import { bulkUpdatePreference, updatePreference } from './helpers';
 
 export class Preferences extends BaseModule {
   #useCache: boolean;
@@ -38,7 +38,7 @@ export class Preferences extends BaseModule {
         this._emitter.emit('preferences.list.pending', { args, data });
 
         if (!data) {
-          const response = await this._inboxService.fetchPreferences(args.tags);
+          const response = await this._inboxService.fetchPreferences(args.tags, args.severity);
           data = response.map(
             (el) =>
               new Preference(el, {

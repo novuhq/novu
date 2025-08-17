@@ -1,5 +1,5 @@
-import { useCallback } from 'react';
 import { JSONSchema7 } from 'json-schema';
+import { useCallback } from 'react';
 
 import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 

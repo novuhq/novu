@@ -8,7 +8,6 @@
 .DS_Store
 /mcp-server
 /bin
-/.eslintcache
 /models
 /models/errors
 /types

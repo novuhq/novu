@@ -1,13 +1,13 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
+import { type Control, type FieldArrayWithId, FormProvider, type UseFormReturn } from 'react-hook-form';
 import { RiAddLine } from 'react-icons/ri';
-import { FormProvider, type Control, type FieldArrayWithId, type UseFormReturn } from 'react-hook-form';
 
 import { Button } from '@/components/primitives/button';
 import { FormRoot } from '@/components/primitives/form/form';
-import { SchemaPropertyRow } from './schema-property-row';
-import type { SchemaEditorFormValues, PropertyListItem } from './utils/validation-schema';
-import { checkVariableUsageInWorkflow, type VariableUsageInfo } from './utils/check-variable-usage';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
+import { SchemaPropertyRow } from './schema-property-row';
+import { checkVariableUsageInWorkflow, type VariableUsageInfo } from './utils/check-variable-usage';
+import type { PropertyListItem, SchemaEditorFormValues } from './utils/validation-schema';
 
 interface SchemaEditorProps {
   control: Control<SchemaEditorFormValues>;
@@ -20,6 +20,7 @@ interface SchemaEditorProps {
   removeProperty: (index: number) => void;
   methods: UseFormReturn<SchemaEditorFormValues>;
   highlightedPropertyKey?: string | null;
+  readOnly?: boolean;
 }
 
 export function SchemaEditor({
@@ -30,6 +31,7 @@ export function SchemaEditor({
   removeProperty,
   methods,
   highlightedPropertyKey,
+  readOnly = false,
 }: SchemaEditorProps) {
   const { workflow } = useWorkflow();
 
@@ -81,6 +83,7 @@ export function SchemaEditor({
               variableUsageInfo={variableUsageInfo}
               onCheckVariableUsage={checkVariableUsage}
               depth={0}
+              readOnly={readOnly}
             />
           );
         })}
@@ -91,7 +94,7 @@ export function SchemaEditor({
             size="2xs"
             onClick={() => addProperty()}
             leadingIcon={RiAddLine}
-            disabled={!formState.isValid && fields.length > 0}
+            disabled={readOnly || (!formState.isValid && fields.length > 0)}
           >
             Add property
           </Button>

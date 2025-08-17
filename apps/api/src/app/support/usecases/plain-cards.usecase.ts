@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationRepository, UserRepository } from '@novu/dal';
-import { differenceInDays } from 'date-fns';
 import { uiComponent } from '@team-plain/typescript-sdk';
+import { differenceInDays } from 'date-fns';
 import { PlainCardsCommand } from './plain-cards.command';
 
 @Injectable()

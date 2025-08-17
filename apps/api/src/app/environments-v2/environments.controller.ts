@@ -1,40 +1,40 @@
 import {
+  Body,
   ClassSerializerInterceptor,
   Controller,
   Get,
+  HttpCode,
   Param,
   Post,
-  Body,
   UseInterceptors,
-  HttpCode,
 } from '@nestjs/common';
-import { UserSessionData, PermissionsEnum } from '@novu/shared';
-import { ApiTags, ApiOperation, ApiExcludeEndpoint } from '@nestjs/swagger';
-import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
-import { SkipPermissionsCheck, RequirePermissions } from '@novu/application-generic';
-import { UserSession } from '../shared/framework/user.decorator';
-import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
-import { PublishEnvironmentUseCase } from './usecases/publish-environment/publish-environment.usecase';
-import { DiffEnvironmentUseCase } from './usecases/diff-environment/diff-environment.usecase';
-import { PublishEnvironmentCommand } from './usecases/publish-environment/publish-environment.command';
-import { DiffEnvironmentCommand } from './usecases/diff-environment/diff-environment.command';
+import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
-import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import { UserSession } from '../shared/framework/user.decorator';
 import {
-  PublishEnvironmentRequestDto,
-  PublishEnvironmentResponseDto,
   DiffEnvironmentRequestDto,
   DiffEnvironmentResponseDto,
+  PublishEnvironmentRequestDto,
+  PublishEnvironmentResponseDto,
 } from './dtos';
+import { GetEnvironmentTagsDto } from './dtos/get-environment-tags.dto';
+import { DiffEnvironmentCommand } from './usecases/diff-environment/diff-environment.command';
+import { DiffEnvironmentUseCase } from './usecases/diff-environment/diff-environment.usecase';
+import { GetEnvironmentTags, GetEnvironmentTagsCommand } from './usecases/get-environment-tags';
+import { PublishEnvironmentCommand } from './usecases/publish-environment/publish-environment.command';
+import { PublishEnvironmentUseCase } from './usecases/publish-environment/publish-environment.usecase';
 
 @ApiCommonResponses()
 @Controller({ path: `/environments`, version: '2' })
 @UseInterceptors(ClassSerializerInterceptor)
 @RequireAuthentication()
 @ApiTags('Environments')
-@ApiExcludeController()
+@SdkGroupName('Environments')
 export class EnvironmentsController {
   constructor(
     private getEnvironmentTagsUsecase: GetEnvironmentTags,
@@ -43,16 +43,28 @@ export class EnvironmentsController {
   ) {}
 
   @Get('/:environmentId/tags')
-  @ApiResponse(GetEnvironmentTagsDto)
+  @ApiOperation({
+    summary: 'Get environment tags',
+    description:
+      'Retrieve all unique tags used in workflows within the specified environment. These tags can be used for filtering workflows.',
+  })
+  @ApiParam({
+    name: 'environmentId',
+    description: 'Environment internal ID (MongoDB ObjectId) or identifier',
+    type: String,
+    example: '6615943e7ace93b0540ae377',
+  })
+  @ApiResponse(GetEnvironmentTagsDto, 200, true)
+  @SdkMethodName('getTags')
   @ExternalApiAccessible()
   @SkipPermissionsCheck()
   async getEnvironmentTags(
     @UserSession() user: UserSessionData,
-    @Param('environmentId') environmentId: string
+    @Param('environmentId') environmentIdOrIdentifier: string
   ): Promise<GetEnvironmentTagsDto[]> {
     return await this.getEnvironmentTagsUsecase.execute(
       GetEnvironmentTagsCommand.create({
-        environmentId,
+        environmentIdOrIdentifier,
         userId: user._id,
         organizationId: user.organizationId,
       })
@@ -71,14 +83,15 @@ export class EnvironmentsController {
     @Param('targetEnvironmentId') targetEnvironmentId: string,
     @Body() body: PublishEnvironmentRequestDto
   ): Promise<PublishEnvironmentResponseDto> {
-    const command = PublishEnvironmentCommand.create({
-      user,
-      sourceEnvironmentId: body.sourceEnvironmentId,
-      targetEnvironmentId,
-      dryRun: body.dryRun,
-    });
-
-    return await this.publishEnvironmentUseCase.execute(command);
+    return await this.publishEnvironmentUseCase.execute(
+      PublishEnvironmentCommand.create({
+        user,
+        sourceEnvironmentId: body.sourceEnvironmentId,
+        targetEnvironmentId,
+        dryRun: body.dryRun,
+        resources: body.resources,
+      })
+    );
   }
 
   @Post('/:targetEnvironmentId/diff')

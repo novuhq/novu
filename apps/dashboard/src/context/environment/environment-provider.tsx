@@ -1,11 +1,10 @@
+import { type IEnvironment } from '@novu/shared';
 import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { type IEnvironment } from '@novu/shared';
-
-import { buildRoute, ROUTES } from '@/utils/routes';
 import { useAuth } from '@/context/auth/hooks';
-import { useFetchEnvironments } from '@/context/environment/hooks';
 import { EnvironmentContext } from '@/context/environment/environment-context';
+import { useFetchEnvironments } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 const PRODUCTION_ENVIRONMENT = 'Production';
 const DEVELOPMENT_ENVIRONMENT = 'Development';
@@ -57,6 +56,7 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
 
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({
     organizationId: currentOrganization?._id,
+    showError: false,
   });
 
   useLayoutEffect(() => {

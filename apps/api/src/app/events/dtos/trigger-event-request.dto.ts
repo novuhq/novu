@@ -1,16 +1,17 @@
-import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiHideProperty, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   ProvidersIdEnum,
+  SeverityLevelEnum,
+  TriggerRecipientSubscriber,
   TriggerRecipientsPayload,
   TriggerRecipientsTypeEnum,
-  TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { IsDefined, IsObject, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
 import { UpdateTenantRequestDto } from '../../tenant/dtos';
-import { SdkApiProperty } from '../../shared/framework/swagger/sdk.decorators';
 
 export class WorkflowToStepControlValuesDto {
   /**
@@ -47,7 +48,7 @@ export class TopicPayloadDto {
 }
 
 export class StepsOverrides {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Passing the provider id and the provider specific configurations',
     example: {
       sendgrid: {
@@ -60,12 +61,42 @@ export class StepsOverrides {
       additionalProperties: true,
     },
   })
-  providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+  providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+
+  @ApiPropertyOptional({
+    description: 'Override the or remove the layout for this specific step',
+    example: 'welcome-email-layout',
+    nullable: true,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+}
+
+export class EmailChannelOverrides {
+  @ApiPropertyOptional({
+    description: 'Override or remove the layout for all email steps in the workflow',
+    example: 'promotional-layout-2024',
+    nullable: true,
+    type: 'string',
+  })
+  @IsOptional()
+  @IsString()
+  layoutId?: string | null;
+}
+
+export class ChannelOverrides {
+  @ApiPropertyOptional({
+    description: 'Email channel specific overrides',
+    type: () => EmailChannelOverrides,
+  })
+  email?: EmailChannelOverrides;
 }
 
 export class TriggerOverrides {
   @ApiPropertyOptional({
-    description: 'This could be used to override provider specific configurations',
+    description: 'This could be used to override provider specific configurations or layout at the step level',
     example: {
       'email-step': {
         providers: {
@@ -73,6 +104,7 @@ export class TriggerOverrides {
             templateId: '1234567890',
           },
         },
+        layoutId: 'step-specific-layout',
       },
     },
     type: 'object',
@@ -81,6 +113,18 @@ export class TriggerOverrides {
     },
   })
   steps?: Record<string, StepsOverrides>;
+
+  @ApiPropertyOptional({
+    description:
+      'Channel-specific overrides that apply to all steps of a particular channel type. Step-level overrides take precedence over channel-level overrides.',
+    example: {
+      email: {
+        layoutId: 'promotional-layout-2024',
+      },
+    },
+    type: () => ChannelOverrides,
+  })
+  channels?: ChannelOverrides;
 
   @ApiPropertyOptional({
     description: 'Overrides the provider configuration for the entire workflow and all steps',
@@ -134,9 +178,25 @@ export class TriggerOverrides {
     deprecated: true,
   })
   layoutIdentifier?: string;
+
+  @ApiHideProperty()
+  /* @ApiPropertyOptional({
+    description: 'Override the severity of the workflow',
+    example: 'high',
+    enum: [...Object.values(SeverityLevelEnum)],
+    enumName: 'SeverityLevelEnum',
+  }) */
+  severity?: SeverityLevelEnum;
 }
 
-@ApiExtraModels(SubscriberPayloadDto, TenantPayloadDto, TopicPayloadDto, StepsOverrides)
+@ApiExtraModels(
+  SubscriberPayloadDto,
+  TenantPayloadDto,
+  TopicPayloadDto,
+  StepsOverrides,
+  EmailChannelOverrides,
+  ChannelOverrides
+)
 export class TriggerEventRequestDto {
   @SdkApiProperty(
     {
@@ -227,7 +287,8 @@ export class TriggerEventRequestDto {
   to: TriggerRecipientsPayload;
 
   @ApiPropertyOptional({
-    description: 'A unique identifier for this transaction, we will generate a UUID if not provided.',
+    description: `A unique identifier for deduplication. If the same **transactionId** is sent again, 
+      the trigger is ignored. Useful to prevent duplicate notifications. The retention period depends on your billing tier.`,
   })
   @IsString()
   @IsOptional()

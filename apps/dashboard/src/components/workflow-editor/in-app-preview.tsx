@@ -6,9 +6,9 @@ import { InboxBell } from '@/components/icons/inbox-bell';
 import { InboxEllipsis } from '@/components/icons/inbox-ellipsis';
 import { InboxSettings } from '@/components/icons/inbox-settings';
 import { Button, ButtonProps } from '@/components/primitives/button';
+import { inboxButtonVariants } from '@/utils/inbox';
 import { cn } from '@/utils/ui';
 import { Skeleton } from '../primitives/skeleton';
-import { inboxButtonVariants } from '@/utils/inbox';
 
 type InAppPreviewBellProps = HTMLAttributes<HTMLDivElement>;
 

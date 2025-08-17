@@ -1,25 +1,21 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { PinoLogger, InstrumentUsecase } from '@novu/application-generic';
-import { EnvironmentRepository, ClientSession, BaseRepository } from '@novu/dal';
-import { PublishEnvironmentCommand } from './publish-environment.command';
-import {
-  ResourceTypeEnum,
-  ISyncStrategy,
-  IPublishResult,
-  ISyncContext,
-  ISyncOptions,
-  ISyncResult,
-} from '../../types/sync.types';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { BaseRepository } from '@novu/dal';
 import { EnvironmentValidationService } from '../../services';
+import { IPublishResult, ISyncContext, ISyncOptions, ISyncResult, ISyncStrategy } from '../../types/sync.types';
+import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
+import { PublishEnvironmentCommand } from './publish-environment.command';
+
+const PUBLISH_BATCH_SIZE = 100;
 
 @Injectable()
 export class PublishEnvironmentUseCase {
   constructor(
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
-    private environmentRepository: EnvironmentRepository,
-    private workflowSyncStrategy: WorkflowSyncStrategy
+    private workflowSyncStrategy: WorkflowSyncStrategy,
+    private layoutSyncStrategy: LayoutSyncStrategy
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -27,12 +23,10 @@ export class PublishEnvironmentUseCase {
   @InstrumentUsecase()
   async execute(command: PublishEnvironmentCommand): Promise<IPublishResult> {
     try {
-      // First validate the target environment ID format
       if (!BaseRepository.isInternalId(command.targetEnvironmentId)) {
         throw new BadRequestException('Invalid environment ID format');
       }
 
-      // If sourceEnvironmentId is not provided, default to development environment
       const sourceEnvironmentId =
         command.sourceEnvironmentId ||
         (await this.environmentValidationService.getDevelopmentEnvironmentId(command.user.organizationId));
@@ -45,7 +39,8 @@ export class PublishEnvironmentUseCase {
 
       const options: ISyncOptions = {
         dryRun: command.dryRun || false,
-        batchSize: 100,
+        batchSize: PUBLISH_BATCH_SIZE,
+        resources: command.resources,
       };
 
       const syncContext: ISyncContext = {
@@ -57,11 +52,7 @@ export class PublishEnvironmentUseCase {
 
       this.logger.info(`Starting environment publish from ${sourceEnvironmentId} to ${command.targetEnvironmentId}`);
 
-      /*
-       * For now, we only support workflow sync
-       * In the future, we can add more strategies here
-       */
-      const strategies = [this.workflowSyncStrategy];
+      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
 
       const results = await this.executeSync(strategies, syncContext);
 
@@ -94,49 +85,14 @@ export class PublishEnvironmentUseCase {
       }
     } else {
       // For actual sync, use transactions for atomicity
-      await this.executeWithTransaction(async (session) => {
-        // Add session to context for transactional operations
-        const transactionalContext = { ...context, session };
+      for (const strategy of strategies) {
+        const result = await strategy.execute(context);
 
-        for (const strategy of strategies) {
-          const result = await strategy.execute(transactionalContext);
-
-          results.push(result);
-        }
-      }, 'environment publish');
+        results.push(result);
+      }
     }
 
     return results;
-  }
-
-  private async executeWithTransaction<T>(
-    operation: (session: ClientSession | null) => Promise<T>,
-    operationName: string = 'sync operation'
-  ): Promise<T> {
-    this.logger.info(`Starting transactional ${operationName}`);
-
-    try {
-      return await this.environmentRepository.withTransaction(async (session) => {
-        if (session) {
-          this.logger.debug(`Executing ${operationName} within transaction`);
-        } else {
-          this.logger.debug(`Executing ${operationName} without transaction (non-replica set mode)`);
-        }
-
-        const result = await operation(session);
-
-        if (session) {
-          this.logger.debug(`Successfully completed ${operationName} within transaction`);
-        } else {
-          this.logger.debug(`Successfully completed ${operationName} without transaction`);
-        }
-
-        return result;
-      });
-    } catch (error) {
-      this.logger.error(`Transaction failed for ${operationName}: ${error.message}`);
-      throw error;
-    }
   }
 
   private calculateSummary(results: ISyncResult[]) {

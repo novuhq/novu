@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { InboxService } from '../api';
 import { NovuEventEmitter } from '../event-emitter';
 import { ListNotificationsArgs, ListNotificationsResponse, Notification } from '../notifications';
+import { ChannelType, SeverityLevelEnum } from '../types';
 import { NotificationsCache } from './notifications-cache';
-import { ChannelType } from '../types';
-import { InboxService } from '../api';
 
 describe('NotificationsCache', () => {
   let notificationsCache: NotificationsCache;
@@ -28,9 +27,11 @@ describe('NotificationsCache', () => {
     notification1 = new Notification(
       {
         id: '1',
+        transactionId: 'tx-1',
         body: 'test1',
         isRead: false,
         isArchived: false,
+        isSeen: false,
         isSnoozed: false,
         to: { id: '1', subscriberId: '1' },
         createdAt: new Date().toISOString(),
@@ -41,7 +42,9 @@ describe('NotificationsCache', () => {
           identifier: 'test-workflow-1',
           name: 'Test Workflow 1',
           tags: ['tag1'],
+          severity: SeverityLevelEnum.NONE,
         },
+        severity: SeverityLevelEnum.NONE,
       },
       mockEmitter,
       mockInboxService
@@ -49,8 +52,10 @@ describe('NotificationsCache', () => {
     notification2 = new Notification(
       {
         id: '2',
+        transactionId: 'tx-2',
         body: 'test2',
         isRead: false,
+        isSeen: false,
         isArchived: false,
         isSnoozed: false,
         to: { id: '2', subscriberId: '2' },
@@ -62,7 +67,9 @@ describe('NotificationsCache', () => {
           identifier: 'test-workflow-2',
           name: 'Test Workflow 2',
           tags: ['tag1'],
+          severity: SeverityLevelEnum.NONE,
         },
+        severity: SeverityLevelEnum.NONE,
       },
       mockEmitter,
       mockInboxService

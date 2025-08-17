@@ -1,18 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
-
-import { PreferencesTypeEnum, WorkflowCreationSourceEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreferencesEntity, PreferencesRepository } from '@novu/dal';
+import { PreferencesTypeEnum, ResourceOriginEnum, WorkflowCreationSourceEnum } from '@novu/shared';
+import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
+import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 import { GetWorkflowCommand, GetWorkflowUseCase } from '../get-workflow';
 import {
+  UpsertStepDataCommand,
   UpsertWorkflowCommand,
   UpsertWorkflowDataCommand,
   UpsertWorkflowUseCase,
-  UpsertStepDataCommand,
 } from '../upsert-workflow';
 import { DuplicateWorkflowCommand } from './duplicate-workflow.command';
-import { DuplicateWorkflowDto, StepResponseDto, WorkflowPreferencesDto, WorkflowResponseDto } from '../../dtos';
-import { WorkflowNotDuplicableException } from '../../exceptions/workflow-not-duplicable-exception';
 
 export const DUPLICABLE_WORKFLOW_ORIGINS = [ResourceOriginEnum.NOVU_CLOUD];
 

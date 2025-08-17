@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import {
   analyticsService,
   CacheInMemoryProviderService,
-  cacheService,
   CreateOrUpdateSubscriberUseCase,
+  cacheService,
   featureFlagsService,
   GetPreferences,
   GetSubscriberTemplatePreference,
@@ -26,13 +26,15 @@ import {
   TopicSubscribersRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
+
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
+import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { GetSubscriberGlobalPreference } from '../subscribers/usecases/get-subscriber-global-preference';
 import { GetSubscriberPreference } from '../subscribers/usecases/get-subscriber-preference';
 import { TopicsV2Module } from '../topics-v2/topics-v2.module';
 import { SubscribersController } from './subscribers.controller';
-import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { GetSubscriber } from './usecases/get-subscriber/get-subscriber.usecase';
+import { GetSubscriberPreferences } from './usecases/get-subscriber-preferences/get-subscriber-preferences.usecase';
 import { ListSubscribersUseCase } from './usecases/list-subscribers/list-subscribers.usecase';
 import { PatchSubscriber } from './usecases/patch-subscriber/patch-subscriber.usecase';
 import { RemoveSubscriber } from './usecases/remove-subscriber/remove-subscriber.usecase';
@@ -76,7 +78,7 @@ const DAL_MODELS = [
 ];
 
 @Module({
-  imports: [TopicsV2Module],
+  imports: [TopicsV2Module, OutboundWebhooksModule.forRoot()],
   controllers: [SubscribersController],
   providers: [
     ...USE_CASES,

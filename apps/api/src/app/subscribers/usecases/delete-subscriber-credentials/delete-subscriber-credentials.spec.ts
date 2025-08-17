@@ -1,19 +1,19 @@
-import { SubscriberRepository } from '@novu/dal';
-import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
-import { expect } from 'chai';
-import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
-import { SharedModule } from '../../../shared/shared.module';
-import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
-import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
-import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
-import { CreateIntegration } from '../../../integrations/usecases/create-integration/create-integration.usecase';
-import { CreateIntegrationCommand } from '../../../integrations/usecases/create-integration/create-integration.command';
+import { SubscriberRepository } from '@novu/dal';
+import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { SubscribersService, UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { CheckIntegration } from '../../../integrations/usecases/check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from '../../../integrations/usecases/check-integration/check-integration-email.usecase';
+import { CreateIntegrationCommand } from '../../../integrations/usecases/create-integration/create-integration.command';
+import { CreateIntegration } from '../../../integrations/usecases/create-integration/create-integration.usecase';
+import { SharedModule } from '../../../shared/shared.module';
+import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
+import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
+import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
 
-describe('Delete subscriber provider credentials', function () {
+describe('Delete subscriber provider credentials', () => {
   let createIntegrationUseCase: CreateIntegration;
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
   let deleteSubscriberCredentialsUsecase: DeleteSubscriberCredentials;
@@ -40,7 +40,7 @@ describe('Delete subscriber provider credentials', function () {
     createIntegrationUseCase = moduleRef.get<CreateIntegration>(CreateIntegration);
   });
 
-  it('should delete subscriber discord provider credentials', async function () {
+  it('should delete subscriber discord provider credentials', async () => {
     const subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     const subscriber = await subscriberService.createSubscriber();
     const fcmTokens = ['token1', 'token2'];

@@ -1,8 +1,6 @@
 import { IsDefined, IsString } from 'class-validator';
-
-import { TopicKey, TopicName } from '../../types';
-
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
+import { TopicKey, TopicName } from '../../types';
 
 export class RenameTopicCommand extends EnvironmentCommand {
   @IsString()

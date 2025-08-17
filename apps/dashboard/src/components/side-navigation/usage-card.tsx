@@ -1,10 +1,10 @@
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { GetSubscriptionDto } from '@novu/shared';
 import { format } from 'date-fns';
 import { RiCalendarEventLine, RiErrorWarningLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { Button } from '../primitives/button';
 import { Progress } from '../primitives/progress';
 

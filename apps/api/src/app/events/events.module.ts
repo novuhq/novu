@@ -4,9 +4,6 @@ import { TerminusModule } from '@nestjs/terminus';
 import { GetNovuProviderCredentials, StorageHelperService } from '@novu/application-generic';
 
 import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
-import { EventsController } from './events.controller';
-import { USE_CASES } from './usecases';
-
 import { AuthModule } from '../auth/auth.module';
 import { BridgeModule } from '../bridge';
 import { ContentTemplatesModule } from '../content-templates/content-templates.module';
@@ -17,6 +14,8 @@ import { SharedModule } from '../shared/shared.module';
 import { SubscribersV1Module } from '../subscribers/subscribersV1.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { WidgetsModule } from '../widgets/widgets.module';
+import { EventsController } from './events.controller';
+import { USE_CASES } from './usecases';
 
 const PROVIDERS = [GetNovuProviderCredentials, StorageHelperService, CommunityOrganizationRepository];
 

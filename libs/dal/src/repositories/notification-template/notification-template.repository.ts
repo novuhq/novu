@@ -1,7 +1,6 @@
+import { DirectionEnum, ResourceOriginEnum, ResourceTypeEnum, SeverityLevelEnum } from '@novu/shared';
 import { ClientSession, FilterQuery } from 'mongoose';
 import { SoftDeleteModel } from 'mongoose-delete';
-
-import { DirectionEnum, ResourceOriginEnum, WorkflowStatusEnum } from '@novu/shared';
 import { DalException } from '../../shared';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
 import { BaseRepository } from '../base-repository';
@@ -28,13 +27,23 @@ export class NotificationTemplateRepository extends BaseRepository<
     const items = await this.MongooseModel.find({
       _environmentId: environmentId,
       _organizationId: organizationId,
-      origin: { $in: [ResourceOriginEnum.NOVU_CLOUD] },
-      status: { $ne: WorkflowStatusEnum.ERROR },
-    }).populate('updatedBy');
+      type: ResourceTypeEnum.BRIDGE,
+      origin: ResourceOriginEnum.NOVU_CLOUD,
+    })
+      .select({
+        _id: 1,
+        name: 1,
+        'triggers.identifier': 1,
+        updatedAt: 1,
+        _updatedBy: 1,
+        _environmentId: 1,
+        isTranslationEnabled: 1,
+      })
+      .populate('updatedBy', '_id firstName lastName externalId')
+      .populate('lastPublishedBy', '_id firstName lastName externalId');
 
     return this.mapEntities(items);
   }
-
   async findByTriggerIdentifier(environmentId: string, identifier: string, session?: ClientSession | null) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -89,11 +98,37 @@ export class NotificationTemplateRepository extends BaseRepository<
       'triggers.identifier': triggerIdentifier,
     };
 
-    const item = await this.MongooseModel.findOneAndUpdate(requestQuery, {
-      $set: {
-        lastTriggeredAt,
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastTriggeredAt,
+        },
       },
-    }).populate('steps.template');
+      {
+        timestamps: false,
+      }
+    ).populate('steps.template');
+
+    return this.mapEntity(item);
+  }
+
+  async updatePublishFields(workflowId: string, environmentId: string, userId: string, session?: ClientSession | null) {
+    const requestQuery: NotificationTemplateQuery = {
+      _id: workflowId,
+      _environmentId: environmentId,
+    };
+
+    const item = await this.MongooseModel.findOneAndUpdate(
+      requestQuery,
+      {
+        $set: {
+          lastPublishedAt: new Date(),
+          _lastPublishedBy: userId,
+        },
+      },
+      { session, new: true }
+    );
 
     return this.mapEntity(item);
   }
@@ -271,7 +306,8 @@ export class NotificationTemplateRepository extends BaseRepository<
       .populate({ path: 'notificationGroup' })
       .populate('steps.template', { type: 1 })
       .select('-steps.variants')
-      .populate('updatedBy');
+      .populate('updatedBy')
+      .populate('lastPublishedBy', '_id firstName lastName');
 
     const items = await mongoQuery.lean();
 
@@ -283,11 +319,13 @@ export class NotificationTemplateRepository extends BaseRepository<
     environmentId,
     tags,
     critical,
+    severity,
   }: {
     organizationId: string;
     environmentId: string;
     tags?: string[];
     critical?: boolean;
+    severity?: SeverityLevelEnum[];
   }) {
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
@@ -295,12 +333,30 @@ export class NotificationTemplateRepository extends BaseRepository<
       active: true,
     };
 
+    const severityCondition: Array<FilterQuery<NotificationTemplateDBModel>> = [];
+    if (severity && severity?.length > 0) {
+      if (severity.includes(SeverityLevelEnum.NONE)) {
+        severityCondition.push({ severity: { $exists: false } }, { severity: { $in: severity } });
+      } else {
+        requestQuery.severity = { $in: severity };
+      }
+    }
+
     if (tags && tags?.length > 0) {
       requestQuery.tags = { $in: tags };
     }
 
     if (critical !== undefined) {
       requestQuery.critical = { $eq: critical };
+    }
+
+    // combine all $or conditions properly
+    const orConditions: Array<FilterQuery<NotificationTemplateDBModel>> = [];
+    if (severityCondition.length > 0) {
+      orConditions.push({ $or: severityCondition });
+    }
+    if (orConditions.length > 0) {
+      requestQuery.$and = [...(requestQuery.$and ?? []), ...orConditions];
     }
 
     const items = await this.MongooseModel.find(requestQuery)
@@ -356,6 +412,16 @@ export class NotificationTemplateRepository extends BaseRepository<
     } else {
       return 0;
     }
+  }
+
+  async findWithTemplates(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity[]> {
+    const items = await this.MongooseModel.find(query)
+      .populate('steps.template')
+      .populate('steps.variants.template')
+      .populate('updatedBy')
+      .lean();
+
+    return this.mapEntities(items);
   }
 }
 

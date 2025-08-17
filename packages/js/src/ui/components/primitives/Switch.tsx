@@ -45,14 +45,7 @@ export const Switch = (props: SwitchProps) => {
         })
       )}
     >
-      <input
-        type="checkbox"
-        // eslint-disable-next-line local-rules/no-class-without-style
-        class="nt-sr-only"
-        checked={isChecked()}
-        disabled={disabled()}
-        onChange={handleChange}
-      />
+      <input type="checkbox" class="nt-sr-only" checked={isChecked()} disabled={disabled()} onChange={handleChange} />
       <div
         class={style(
           'channelSwitchThumb',

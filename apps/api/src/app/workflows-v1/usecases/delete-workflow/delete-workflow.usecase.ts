@@ -1,5 +1,14 @@
-import { Injectable, Optional } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import {
+  DeletePreferencesCommand,
+  DeletePreferencesUseCase,
+  GetWorkflowByIdsUseCase,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  SendWebhookMessage,
+} from '@novu/application-generic';
 import {
   ControlValuesRepository,
   LocalizationResourceEnum,
@@ -8,18 +17,8 @@ import {
   NotificationTemplateRepository,
 } from '@novu/dal';
 import { PreferencesTypeEnum, WebhookEventEnum, WebhookObjectTypeEnum } from '@novu/shared';
-
-import {
-  GetWorkflowByIdsUseCase,
-  DeletePreferencesUseCase,
-  DeletePreferencesCommand,
-  Instrument,
-  InstrumentUsecase,
-  SendWebhookMessage,
-  PinoLogger,
-} from '@novu/application-generic';
-import { DeleteWorkflowCommand } from './delete-workflow.command';
 import { GetWorkflowWithPreferencesCommand } from '../get-workflow-with-preferences/get-workflow-with-preferences.command';
+import { DeleteWorkflowCommand } from './delete-workflow.command';
 
 @Injectable()
 export class DeleteWorkflowUseCase {
@@ -31,8 +30,7 @@ export class DeleteWorkflowUseCase {
     private deletePreferencesUsecase: DeletePreferencesUseCase,
     private moduleRef: ModuleRef,
     private logger: PinoLogger,
-    @Optional()
-    private sendWebhookMessage?: SendWebhookMessage
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -46,17 +44,15 @@ export class DeleteWorkflowUseCase {
 
     await this.deleteRelatedEntities(command, workflowEntity);
 
-    if (this.sendWebhookMessage) {
-      await this.sendWebhookMessage.execute({
-        eventType: WebhookEventEnum.WORKFLOW_DELETED,
-        objectType: WebhookObjectTypeEnum.WORKFLOW,
-        payload: {
-          object: workflowEntity as unknown as Record<string, unknown>,
-        },
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-      });
-    }
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.WORKFLOW_DELETED,
+      objectType: WebhookObjectTypeEnum.WORKFLOW,
+      payload: {
+        object: workflowEntity as unknown as Record<string, unknown>,
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
   }
 
   @Instrument()
@@ -109,14 +105,13 @@ export class DeleteWorkflowUseCase {
 
   private async deleteTranslationGroup(command: DeleteWorkflowCommand) {
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-    const isSelfHosted = process.env.NOVU_SELF_HOSTED === 'true';
+    const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
 
     if (!isEnterprise || isSelfHosted) {
       return;
     }
 
     try {
-      // eslint-disable-next-line global-require
       const deleteTranslationGroup = this.moduleRef.get(require('@novu/ee-translation')?.DeleteTranslationGroup, {
         strict: false,
       });

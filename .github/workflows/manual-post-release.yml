@@ -1,0 +1,128 @@
+name: Manual Post-Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Packages to create tags and releases for (comma-separated)'
+        required: true
+        type: string
+        default: '@novu/js,@novu/react,@novu/nextjs,@novu/react-native'
+      version:
+        description: 'Version to tag and release (e.g., v3.0.0)'
+        required: true
+        type: string
+        default: 'v3.0.0'
+      create_github_release:
+        description: 'Create GitHub releases for the packages'
+        required: true
+        type: boolean
+        default: false
+        
+jobs:
+  manual_post_release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          ref: next
+
+      - name: Pull latest changes
+        run: |
+          git pull origin next
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.0
+          run_install: false
+
+      - name: Setup Node Version
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'pnpm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm run build:packages
+
+      - name: Publish packages to NPM
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          export NX_RELEASE_TAG=latest
+          pnpm nx run-many -t nx-release-publish --projects=${{ github.event.inputs.packages }}
+
+      - name: Create and push tags
+        run: |
+          echo "Creating tags for packages: ${{ github.event.inputs.packages }}"
+          IFS=',' read -ra PACKAGES <<< "${{ github.event.inputs.packages }}"
+          for package in "${PACKAGES[@]}"; do
+            package=$(echo $package | xargs)  # trim whitespace
+            tag_name="${package}@${{ github.event.inputs.version }}"
+            echo "Creating tag: $tag_name"
+            git tag "$tag_name"
+            echo "Pushing tag: $tag_name"
+            git push origin "$tag_name"
+          done
+
+      - name: Create GitHub Releases
+        if: ${{ github.event.inputs.create_github_release }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Creating GitHub releases for packages: ${{ github.event.inputs.packages }}"
+          
+          # Get the git diff for changelog files to capture what was actually added
+          echo "Capturing changelog changes from git diff..."
+          git diff HEAD~1 HEAD --name-only | grep -i changelog || echo "No changelog files changed"
+          
+          IFS=',' read -ra PACKAGES <<< "${{ github.event.inputs.packages }}"
+          for package in "${PACKAGES[@]}"; do
+            package=$(echo $package | xargs)  # trim whitespace
+            tag_name="${package}@${{ github.event.inputs.version }}"
+            
+            echo "Creating GitHub release for $package with tag: $tag_name"
+            
+            # Extract changelog content from git diff for this package
+            package_name=$(echo $package | sed 's/@novu\///')
+            release_body="Release of ${package} version ${{ github.event.inputs.version }}"
+            
+            # Try to find changelog diff for this specific package
+            possible_paths=(
+              "packages/${package_name}/CHANGELOG.md"
+              "${package_name}/CHANGELOG.md"
+              "CHANGELOG.md"
+            )
+            
+            for changelog_path in "${possible_paths[@]}"; do
+              if git diff HEAD~1 HEAD --name-only | grep -q "$changelog_path"; then
+                echo "Found changelog changes in: $changelog_path"
+                # Get the diff content (only additions, clean up the format)
+                changelog_diff=$(git diff HEAD~1 HEAD "$changelog_path" | grep "^+" | grep -v "^+++" | sed 's/^+//' | head -50)
+                if [ -n "$changelog_diff" ]; then
+                  release_body="$changelog_diff"
+                  break
+                fi
+              fi
+            done
+            
+            # Create the GitHub release
+            gh release create "$tag_name" \
+              --title "$tag_name" \
+              --notes "$release_body" \
+              --target next
+            
+            echo "✅ Created GitHub release for $tag_name"
+          done 

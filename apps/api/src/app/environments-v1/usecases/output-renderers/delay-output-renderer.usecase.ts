@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DelayRenderOutput } from '@novu/shared';
 import { InstrumentUsecase } from '@novu/application-generic';
+import { DelayRenderOutput } from '@novu/shared';
 import { RenderCommand } from './render-command';
 
 @Injectable()

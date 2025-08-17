@@ -1,12 +1,12 @@
+import { ResourceOriginEnum } from '@novu/shared';
+import { RiInformationLine, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
 import { AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { RiInformationLine, RiRefreshLine, RiSettings3Line } from 'react-icons/ri';
-import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
-import { PayloadSectionProps } from '../types/preview-context.types';
-import { ACCORDION_STYLES } from '../constants/preview-context.constants';
 import { Button } from '../../../primitives/button';
 import { Hint, HintIcon } from '../../../primitives/hint';
-import { ResourceOriginEnum } from '@novu/shared';
+import { ACCORDION_STYLES } from '../constants/preview-context.constants';
+import { EditableJsonViewer } from '../shared/editable-json-viewer/editable-json-viewer';
+import { PayloadSectionProps } from '../types/preview-context.types';
 
 export function PreviewPayloadSection({
   errors,

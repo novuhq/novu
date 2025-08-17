@@ -1,13 +1,12 @@
-import { expect } from 'chai';
-import sinon from 'sinon';
-import { UnprocessableEntityException, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { NotificationTemplateRepository, SubscriberRepository } from '@novu/dal';
 import { PreferenceLevelEnum, TriggerTypeEnum } from '@novu/shared';
-
-import { BulkUpdatePreferences } from './bulk-update-preferences.usecase';
+import { expect } from 'chai';
+import sinon from 'sinon';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { BulkUpdatePreferencesCommand } from './bulk-update-preferences.command';
+import { BulkUpdatePreferences } from './bulk-update-preferences.usecase';
 
 const mockedSubscriber: any = {
   _id: '6447aff3d89122e250412c29',

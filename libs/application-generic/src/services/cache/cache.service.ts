@@ -1,8 +1,7 @@
 import { Logger } from '@nestjs/common';
-
-import { QUERY_PREFIX } from './key-builders';
-import { CacheInMemoryProviderService, InMemoryProviderClient, Pipeline } from '../in-memory-provider';
 import { addJitter } from '../../resilience';
+import { CacheInMemoryProviderService, InMemoryProviderClient, Pipeline } from '../in-memory-provider';
+import { QUERY_PREFIX } from './key-builders';
 
 const LOG_CONTEXT = 'CacheService';
 
@@ -144,7 +143,7 @@ export class CacheService implements ICacheService {
 
       const pipeline = this.client.pipeline();
       // invalidate queries
-      queries.forEach(function (query) {
+      queries.forEach((query) => {
         const fullKey = `${key}:${QUERY_PREFIX}=${query}`;
         pipeline.del(fullKey);
       });
@@ -171,10 +170,10 @@ export class CacheService implements ICacheService {
       return new Promise((resolve, reject) => {
         const stream = this.cacheInMemoryProviderService.inMemoryScan(pattern);
 
-        stream.on('data', function (keys) {
+        stream.on('data', (keys) => {
           if (keys.length) {
             const pipeline = client.pipeline();
-            keys.forEach(function (key) {
+            keys.forEach((key) => {
               pipeline.del(key);
             });
             pipeline.exec().then(resolve).catch(reject);

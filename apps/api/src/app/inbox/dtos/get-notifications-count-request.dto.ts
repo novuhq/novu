@@ -1,6 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
-import { IsArray, IsDefined, ValidateNested, IsBoolean, IsOptional, IsString, ArrayMaxSize } from 'class-validator';
+import { SeverityLevelEnum } from '@novu/shared';
 import { plainToClass, Transform, Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsDefined,
+  IsEnum,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { IsEnumOrArray } from '../../shared/validators/is-enum-or-array';
 import { NotificationFilter } from '../utils/types';
 
 export class NotificationsFilter implements NotificationFilter {
@@ -20,6 +31,14 @@ export class NotificationsFilter implements NotificationFilter {
   @IsOptional()
   @IsBoolean()
   snoozed?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  seen?: boolean;
+
+  @IsOptional()
+  @IsEnumOrArray(SeverityLevelEnum)
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 }
 
 export class GetNotificationsCountRequestDto {

@@ -1,9 +1,9 @@
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { useUser } from '@clerk/clerk-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { RiCloseLine } from 'react-icons/ri';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 type Changelog = {
   id: string;
@@ -87,8 +87,8 @@ export function ChangelogStack() {
   }
 
   return (
-    <div className="mb-2 w-full">
-      <div className="m-full relative h-[175px]">
+    <div className="mb-2 w-full mt-2">
+      <div className="w-full relative h-[175px]">
         {changelogs.map((changelog, index) => (
           <ChangelogCard
             key={changelog.id}

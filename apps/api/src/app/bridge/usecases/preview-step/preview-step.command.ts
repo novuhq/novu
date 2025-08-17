@@ -10,6 +10,7 @@ export class PreviewStepCommand extends EnvironmentWithUserCommand {
   subscriber?: SubscriberResponseDtoOptional;
   workflowOrigin: ResourceOriginEnum;
   state?: FrameworkPreviousStepsOutputState[];
+  skipLayoutRendering?: boolean;
 }
 export type FrameworkPreviousStepsOutputState = {
   stepId: string;

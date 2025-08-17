@@ -1,12 +1,14 @@
 import { NotificationStepEntity, NotificationTemplateEntity } from '@novu/dal';
 import {
+  ResourceOriginEnum,
+  ResourceTypeEnum,
+  SeverityLevelEnum,
   ShortIsPrefixEnum,
   StepTypeEnum,
-  ResourceOriginEnum,
   WorkflowStatusEnum,
-  ResourceTypeEnum,
 } from '@novu/shared';
 import { buildSlug } from '../../shared/helpers/build-slug';
+import { WorkflowWithPreferencesResponseDto } from '../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 import {
   RuntimeIssueDto,
   StepResponseDto,
@@ -15,7 +17,6 @@ import {
   WorkflowPreferencesResponseDto,
   WorkflowResponseDto,
 } from '../dtos';
-import { WorkflowWithPreferencesResponseDto } from '../../workflows-v1/dtos/get-workflow-with-preferences.dto';
 
 export function toResponseWorkflowDto(
   workflow: WorkflowWithPreferencesResponseDto,
@@ -26,7 +27,7 @@ export function toResponseWorkflowDto(
     user: workflow.userPreferences,
     default: workflow.defaultPreferences,
   };
-  const workflowName = workflow.name || 'Missing Name | UPDATE IMMEDIATELY';
+  const workflowName = workflow.name || '';
 
   return {
     _id: workflow._id,
@@ -39,8 +40,10 @@ export function toResponseWorkflowDto(
     steps,
     description: workflow.description,
     origin: computeOrigin(workflow),
-    updatedAt: workflow.updatedAt || 'Missing Updated At',
-    createdAt: workflow.createdAt || 'Missing Create At',
+    lastPublishedAt: workflow.lastPublishedAt,
+    lastPublishedBy: workflow.lastPublishedBy,
+    updatedAt: workflow.updatedAt || '',
+    createdAt: workflow.createdAt || '',
     updatedBy: workflow.updatedBy
       ? {
           _id: workflow.updatedBy._id,
@@ -54,8 +57,9 @@ export function toResponseWorkflowDto(
     lastTriggeredAt: workflow.lastTriggeredAt,
     payloadSchema: workflow.payloadSchema,
     payloadExample,
-    validatePayload: workflow.validatePayload,
-    isTranslationEnabled: workflow.isTranslationEnabled,
+    validatePayload: workflow.validatePayload || false,
+    isTranslationEnabled: workflow.isTranslationEnabled || false,
+    severity: workflow.severity || SeverityLevelEnum.NONE,
   };
 }
 
@@ -69,9 +73,11 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
     name: workflowName,
     origin: computeOrigin(template),
     tags: template.tags,
-    updatedAt: template.updatedAt || 'Missing Updated At',
+    updatedAt: template.updatedAt || '',
+    lastPublishedAt: template.lastPublishedAt || '',
+    lastPublishedBy: template.lastPublishedBy,
     stepTypeOverviews: template.steps.map(buildStepTypeOverview).filter((stepTypeEnum) => !!stepTypeEnum),
-    createdAt: template.createdAt || 'Missing Create At',
+    createdAt: template.createdAt || '',
     updatedBy: template.updatedBy
       ? {
           _id: template.updatedBy._id,
@@ -82,6 +88,7 @@ function toMinifiedWorkflowDto(template: NotificationTemplateEntity): WorkflowLi
       : undefined,
     status: template.status || WorkflowStatusEnum.ACTIVE,
     lastTriggeredAt: template.lastTriggeredAt,
+    isTranslationEnabled: template.isTranslationEnabled || false,
   };
 }
 

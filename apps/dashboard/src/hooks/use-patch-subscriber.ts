@@ -1,9 +1,9 @@
+import { SubscriberResponseDto } from '@novu/api/models/components';
+import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 import { patchSubscriber } from '@/api/subscribers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { OmitEnvironmentFromParameters } from '@/utils/types';
-import { SubscriberResponseDto } from '@novu/api/models/components';
-import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 
 type PatchSubscriberParameters = OmitEnvironmentFromParameters<typeof patchSubscriber>;
 

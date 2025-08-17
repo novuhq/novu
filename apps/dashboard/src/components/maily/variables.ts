@@ -1,15 +1,15 @@
-import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
 import { Variable } from '@maily-to/core/extensions';
-
-import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
+import { TRANSLATION_NAMESPACE_SEPARATOR } from '@novu/shared';
 import type { Editor, Range, Editor as TiptapEditor } from '@tiptap/core';
+import { VariableFrom } from '@/components/maily/types';
+import { DIGEST_VARIABLES } from '@/components/variable/utils/digest-variables';
+import { IsAllowedVariable, LiquidVariable } from '@/utils/parseStepVariables';
 import {
+  isInsideRepeatBlock,
   REPEAT_BLOCK_ITERABLE_ALIAS,
   resolveRepeatBlockAlias,
-  isInsideRepeatBlock,
   updateRepeatBlockChildAliases,
 } from './repeat-block-aliases';
-import { VariableFrom } from '@/components/maily/types';
 
 export type CalculateVariablesProps = {
   query: string;
@@ -21,6 +21,7 @@ export type CalculateVariablesProps = {
   isAllowedVariable: IsAllowedVariable;
   addDigestVariables?: boolean;
   isPayloadSchemaEnabled?: boolean;
+  isTranslationEnabled?: boolean;
 };
 
 const insertNodeToEditor = ({
@@ -192,6 +193,7 @@ export const calculateVariables = ({
   isAllowedVariable,
   addDigestVariables = false,
   isPayloadSchemaEnabled = false,
+  isTranslationEnabled = false,
 }: CalculateVariablesProps): Array<LiquidVariable> | undefined => {
   const queryWithoutSuffix = query.replace(/}+$/, '');
 
@@ -231,6 +233,17 @@ export const calculateVariables = ({
         boost: 100, // Boost to show at top
       });
     }
+  }
+
+  // Add translation namespace variable when translations are enabled
+  // This provides discoverability for the translation system by showing "t" in the variables list
+  // When selected, it inserts "{{t." which triggers the translation extension to show translation keys
+  if (isTranslationEnabled && from === VariableFrom.Content) {
+    variables.unshift({
+      name: TRANSLATION_NAMESPACE_SEPARATOR,
+      displayLabel: 't.',
+      boost: 100,
+    });
   }
 
   // Add currently typed variable if allowed

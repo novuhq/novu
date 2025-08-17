@@ -1,9 +1,9 @@
+import { ApiServiceLevelEnum, FeatureNameEnum, getFeatureForTierAsBoolean, PermissionsEnum } from '@novu/shared';
 import { Switch } from '@/components/primitives/switch';
 import { UpgradeCTATooltip } from '@/components/upgrade-cta-tooltip';
-import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
-import { ApiServiceLevelEnum, PermissionsEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { PermissionSwitch } from '../primitives/permission-switch';
 import { IS_SELF_HOSTED } from '@/config';
+import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { PermissionSwitch } from '../primitives/permission-switch';
 
 type TranslationSwitchProps = {
   id: string;

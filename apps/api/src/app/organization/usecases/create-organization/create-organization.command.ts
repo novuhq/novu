@@ -1,6 +1,5 @@
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-
 import { ApiServiceLevelEnum, JobTitleEnum } from '@novu/shared';
+import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { AuthenticatedCommand } from '../../../shared/commands/authenticated.command';
 

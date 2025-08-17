@@ -1,13 +1,13 @@
-import { LinkButton } from '@/components/primitives/button-link';
 import { RiBookMarkedLine, RiSparkling2Line } from 'react-icons/ri';
 import { Link, useNavigate } from 'react-router-dom';
-import { EmptyTranslationsIllustration } from './empty-translations-illustration';
-import { Button } from '../primitives/button';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { ROUTES } from '@/utils/routes';
-import { useTelemetry } from '@/hooks/use-telemetry';
+import { LinkButton } from '@/components/primitives/button-link';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { openInNewTab } from '@/utils/url';
+import { Button } from '../primitives/button';
+import { EmptyTranslationsIllustration } from './empty-translations-illustration';
 
 export const TranslationListUpgradeCta = () => {
   const track = useTelemetry();
@@ -22,7 +22,7 @@ export const TranslationListUpgradeCta = () => {
           One language is good. Speaking your users’ language? Better.
         </span>
         <p className="text-text-soft text-paragraph-sm max-w-[60ch]">
-          Upgrade now and start speaking your users’ language(s).
+          Unlock multi-language support and deliver personalized experiences in your users' preferred language.
         </p>
       </div>
 
@@ -47,7 +47,7 @@ export const TranslationListUpgradeCta = () => {
         >
           {IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade now'}
         </Button>
-        <Link to={'https://docs.novu.co/platform/translations'} target="_blank">
+        <Link to={'https://docs.novu.co/platform/workflow/translations'} target="_blank">
           <LinkButton size="sm" leadingIcon={RiBookMarkedLine}>
             How does this help?
           </LinkButton>

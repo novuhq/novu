@@ -1,6 +1,5 @@
+import { JobEntity, NotificationStepEntity, TenantEntity } from '@novu/dal';
 import { IsDefined } from 'class-validator';
-
-import { NotificationStepEntity, TenantEntity, JobEntity } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 import { IFilterVariables } from '../../utils/filter-processing-details';

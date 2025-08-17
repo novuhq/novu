@@ -1,10 +1,10 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
-import tailwindcss from 'tailwindcss';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+import tailwindcss from 'tailwindcss';
+import { defineConfig, loadEnv } from 'vite';
 import { ViteEjsPlugin } from 'vite-plugin-ejs';
+import { viteStaticCopy } from 'vite-plugin-static-copy';
 
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
@@ -47,9 +47,9 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, './src'),
         ...(isSelfHosted ? { '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx') } : {}),
         // Explicitly map prettier imports to browser-compatible versions
-        'prettier/standalone': path.resolve(__dirname, '../../node_modules/prettier/standalone.js'),
-        'prettier/plugins/html': path.resolve(__dirname, '../../node_modules/prettier/plugins/html.js'),
-        prettier: path.resolve(__dirname, '../../node_modules/prettier/standalone.js'),
+        'prettier/standalone': path.resolve(__dirname, './node_modules/prettier/standalone.js'),
+        'prettier/plugins/html': path.resolve(__dirname, './node_modules/prettier/plugins/html.js'),
+        prettier: path.resolve(__dirname, './node_modules/prettier/standalone.js'),
       },
     },
     server: {

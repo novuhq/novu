@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { SubscriberResponseDtoOptional } from '../../subscribers/dtos';
 
 export class PreviewPayloadDto {

@@ -1,15 +1,14 @@
-import { Test } from '@nestjs/testing';
 import { HttpService } from '@nestjs/axios';
-import { expect } from 'chai';
-import { stub, restore, assert } from 'sinon';
+import { BadRequestException } from '@nestjs/common';
+import { Test } from '@nestjs/testing';
 import { OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import { of } from 'rxjs';
-
-import { BadRequestException } from '@nestjs/common';
+import { assert, restore, stub } from 'sinon';
 import { GetVercelIntegrationProjects } from './get-vercel-integration-projects.usecase';
 
-describe('GetVercelIntegrationProjects', function () {
+describe('GetVercelIntegrationProjects', () => {
   let getVercelIntegrationProjects: GetVercelIntegrationProjects;
   let session: UserSession;
   let httpServiceMock;
@@ -69,7 +68,7 @@ describe('GetVercelIntegrationProjects', function () {
     restore();
   });
 
-  it('should get vercel projects successfully', async function () {
+  it('should get vercel projects successfully', async () => {
     const command = {
       userId: session.user._id,
       organizationId: session.organization._id,
@@ -101,7 +100,7 @@ describe('GetVercelIntegrationProjects', function () {
     });
   });
 
-  it('should throw BadRequestException when no configuration found', async function () {
+  it('should throw BadRequestException when no configuration found', async () => {
     organizationRepositoryMock.findByPartnerConfigurationId.resolves([]);
 
     try {
@@ -119,7 +118,7 @@ describe('GetVercelIntegrationProjects', function () {
     }
   });
 
-  it('should throw BadRequestException when HTTP request fails', async function () {
+  it('should throw BadRequestException when HTTP request fails', async () => {
     httpServiceMock.get.throws(new Error('HTTP Error'));
 
     try {

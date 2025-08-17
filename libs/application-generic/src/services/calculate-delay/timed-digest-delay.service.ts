@@ -1,21 +1,9 @@
 // cSpell:ignore RRULE, BYSETPOS, BYMONTHDAY, bysetpos, byweekday, bymonthday, byhour, byminute, bysecond, dtstart
-import {
-  differenceInMilliseconds,
-  addMinutes,
-  addHours,
-  addDays,
-  addWeeks,
-  addMonths,
-} from 'date-fns';
-import { RRule, Frequency, Weekday } from 'rrule';
-import {
-  DaysEnum,
-  DigestUnitEnum,
-  ITimedConfig,
-  MonthlyTypeEnum,
-  OrdinalEnum,
-  OrdinalValueEnum,
-} from '@novu/shared';
+
+import { DaysEnum, DigestUnitEnum, ITimedConfig, MonthlyTypeEnum, OrdinalEnum, OrdinalValueEnum } from '@novu/shared';
+import { addDays, addHours, addMinutes, addMonths, addWeeks, differenceInMilliseconds } from 'date-fns';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
+import { Frequency, RRule, Weekday } from 'rrule';
 
 const UNIT_TO_RRULE_FREQUENCY = {
   [DigestUnitEnum.MINUTES]: Frequency.MINUTELY,
@@ -68,6 +56,7 @@ interface ICalculateArgs {
   unit: DigestUnitEnum;
   amount: number;
   timeConfig?: ITimedConfig;
+  timezone?: string;
 }
 
 export class TimedDigestDelayService {
@@ -79,20 +68,14 @@ export class TimedDigestDelayService {
     dateStart = new Date(),
     unit = DigestUnitEnum.MINUTES,
     amount,
-    timeConfig: {
-      atTime,
-      weekDays,
-      monthDays,
-      monthlyType = MonthlyTypeEnum.EACH,
-      ordinal,
-      ordinalValue,
-    } = {},
+    timeConfig: { atTime, weekDays, monthDays, monthlyType = MonthlyTypeEnum.EACH, ordinal, ordinalValue } = {},
+    timezone,
   }: ICalculateArgs): number {
-    const [hours, minutes, seconds] = atTime
-      ? atTime.split(':').map((part) => parseInt(part, 10))
-      : [];
+    const [hours, minutes, seconds] = atTime ? atTime.split(':').map((part) => parseInt(part, 10)) : [];
+    const dateStartTz = timezone ? toZonedTime(dateStart, timezone) : dateStart;
+    const currentTimeTz = timezone ? toZonedTime(new Date(), timezone) : new Date();
 
-    const { bysetpos, byweekday, bymonthday } = this.calculateByFields({
+    const { bysetpos, byweekday, bymonthday } = TimedDigestDelayService.calculateByFields({
       weekDays,
       monthDays,
       monthlyType,
@@ -101,8 +84,8 @@ export class TimedDigestDelayService {
     });
 
     const rule = new RRule({
-      dtstart: dateStart,
-      until: this.getUntilDate(dateStart, unit, amount),
+      dtstart: dateStartTz,
+      until: TimedDigestDelayService.getUntilDate(dateStartTz, unit, amount, timezone),
       freq: UNIT_TO_RRULE_FREQUENCY[unit],
       interval: amount,
       bysetpos,
@@ -113,22 +96,19 @@ export class TimedDigestDelayService {
       bysecond: seconds,
     });
 
-    const next = rule.after(dateStart);
+    const next = rule.after(dateStartTz);
 
     if (next === null) {
       throw new Error('Delay for next digest could not be calculated');
     }
 
-    return differenceInMilliseconds(next, new Date());
+    const nextUtc = timezone ? fromZonedTime(next, timezone) : next;
+    const currentUtc = timezone ? fromZonedTime(currentTimeTz, timezone) : currentTimeTz;
+
+    return differenceInMilliseconds(nextUtc, currentUtc);
   }
 
-  private static calculateByFields({
-    weekDays,
-    monthDays,
-    monthlyType,
-    ordinal,
-    ordinalValue,
-  }: ITimedConfig) {
+  private static calculateByFields({ weekDays, monthDays, monthlyType, ordinal, ordinalValue }: ITimedConfig) {
     let byweekday: Weekday[] | undefined;
     let bymonthday: number | number[] | undefined;
 
@@ -164,24 +144,30 @@ export class TimedDigestDelayService {
     }
   }
 
-  private static getUntilDate(
-    dateStart: Date,
-    unit: DigestUnitEnum,
-    amount: number,
-  ): Date {
+  private static getUntilDate(dateStart: Date, unit: DigestUnitEnum, amount: number, timezone?: string): Date {
+    let untilDate: Date;
+
     switch (unit) {
       case DigestUnitEnum.MINUTES:
-        return addMinutes(dateStart, amount);
+        untilDate = addMinutes(dateStart, amount);
+        break;
       case DigestUnitEnum.HOURS:
-        return addHours(dateStart, amount);
+        untilDate = addHours(dateStart, amount);
+        break;
       case DigestUnitEnum.DAYS:
-        return addDays(dateStart, amount);
+        untilDate = addDays(dateStart, amount);
+        break;
       case DigestUnitEnum.WEEKS:
-        return addWeeks(dateStart, amount);
+        untilDate = addWeeks(dateStart, amount);
+        break;
       case DigestUnitEnum.MONTHS:
-        return addMonths(dateStart, amount);
+        untilDate = addMonths(dateStart, amount);
+        break;
       default:
-        return addMonths(dateStart, amount);
+        untilDate = addMonths(dateStart, amount);
+        break;
     }
+
+    return timezone ? fromZonedTime(untilDate, timezone) : untilDate;
   }
 }

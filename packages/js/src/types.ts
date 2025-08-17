@@ -1,7 +1,6 @@
 import { NovuError } from './utils/errors';
 
-export { type FiltersCountResponse, type ListNotificationsResponse } from './notifications';
-export type { Notification } from './notifications';
+export type { FiltersCountResponse, ListNotificationsResponse, Notification } from './notifications';
 export type { Preference } from './preferences/preference';
 export type { NovuError } from './utils/errors';
 
@@ -59,9 +58,23 @@ export enum SocketType {
   PARTY_SOCKET = 'partysocket',
 }
 
+export enum SeverityLevelEnum {
+  HIGH = 'high',
+  MEDIUM = 'medium',
+  LOW = 'low',
+  NONE = 'none',
+}
+
+export type UnreadCount = {
+  total: number;
+  severity: Record<SeverityLevelEnum, number>;
+};
+
 export type Session = {
   token: string;
+  /** @deprecated Use unreadCount.total instead */
   totalUnreadCount: number;
+  unreadCount: UnreadCount;
   removeNovuBranding: boolean;
   isDevelopmentMode: boolean;
   maxSnoozeDurationHours: number;
@@ -103,20 +116,24 @@ export type Workflow = {
   name: string;
   critical: boolean;
   tags?: string[];
+  severity: SeverityLevelEnum;
 };
 
 export type InboxNotification = {
   id: string;
+  transactionId: string;
   subject?: string;
   body: string;
   to: Subscriber;
   isRead: boolean;
+  isSeen: boolean;
   isArchived: boolean;
   isSnoozed: boolean;
   snoozedUntil?: string | null;
   deliveredAt?: string[];
   createdAt: string;
   readAt?: string | null;
+  firstSeenAt?: string | null;
   archivedAt?: string | null;
   avatar?: string;
   primaryAction?: Action;
@@ -126,6 +143,7 @@ export type InboxNotification = {
   data?: NotificationData;
   redirect?: Redirect;
   workflow?: Workflow;
+  severity: SeverityLevelEnum;
 };
 
 export type NotificationFilter = {
@@ -133,7 +151,9 @@ export type NotificationFilter = {
   read?: boolean;
   archived?: boolean;
   snoozed?: boolean;
+  seen?: boolean;
   data?: Record<string, unknown>;
+  severity?: SeverityLevelEnum | SeverityLevelEnum[];
 };
 
 export type ChannelPreference = {
@@ -171,7 +191,6 @@ export type IPreferenceOverride = {
   source: PreferenceOverrideSourceEnum;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TODO = any;
 
 export type Result<D = undefined, E = NovuError> = Promise<{

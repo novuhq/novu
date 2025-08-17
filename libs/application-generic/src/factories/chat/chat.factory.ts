@@ -1,16 +1,16 @@
 import { IntegrationEntity } from '@novu/dal';
-import { IChatFactory, IChatHandler } from './interfaces';
 import { ChatWebhookHandler } from './handlers/chat-webhook.handler';
-import { SlackHandler } from './handlers/slack.handler';
 import { DiscordHandler } from './handlers/discord.handler';
-import { MSTeamsHandler } from './handlers/msteams.handler';
-import { MattermostHandler } from './handlers/mattermost.handler';
-import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
-import { RyverHandler } from './handlers/ryver.handler';
-import { ZulipHandler } from './handlers/zulip.handler';
 import { GetstreamChatHandler } from './handlers/getstream.handler';
+import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
+import { MattermostHandler } from './handlers/mattermost.handler';
+import { MSTeamsHandler } from './handlers/msteams.handler';
 import { RocketChatHandler } from './handlers/rocket-chat.handler';
+import { RyverHandler } from './handlers/ryver.handler';
+import { SlackHandler } from './handlers/slack.handler';
 import { WhatsAppBusinessHandler } from './handlers/whatsapp-business.handler';
+import { ZulipHandler } from './handlers/zulip.handler';
+import { IChatFactory, IChatHandler } from './interfaces';
 
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
@@ -29,9 +29,7 @@ export class ChatFactory implements IChatFactory {
 
   getHandler(integration: IntegrationEntity) {
     const handler =
-      this.handlers.find((handlerItem) =>
-        handlerItem.canHandle(integration.providerId, integration.channel),
-      ) ?? null;
+      this.handlers.find((handlerItem) => handlerItem.canHandle(integration.providerId, integration.channel)) ?? null;
 
     if (!handler) return null;
 

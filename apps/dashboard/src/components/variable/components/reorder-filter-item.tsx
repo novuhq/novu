@@ -1,16 +1,15 @@
-import { ComponentProps, useMemo, useRef } from 'react';
 import { Code2, GripVertical } from 'lucide-react';
 import { Reorder, useDragControls, useMotionValue } from 'motion/react';
+import { ComponentProps, useMemo, useRef } from 'react';
 import { RiCloseLine, RiQuestionLine } from 'react-icons/ri';
-
+import { VariableSelect } from '@/components/conditions-editor/variable-select';
 import { buttonVariants } from '@/components/primitives/button';
-import { FilterWithParam } from '../types';
 import { Input } from '@/components/primitives/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { getFilters } from '../constants';
-import { cn } from '@/utils/ui';
-import { VariableSelect } from '@/components/conditions-editor/variable-select';
 import { LiquidVariable } from '@/utils/parseStepVariables';
+import { cn } from '@/utils/ui';
+import { getFilters } from '../constants';
+import { FilterWithParam } from '../types';
 import { validateEnhancedDigestFilters } from '../utils';
 
 const preventClick = (e: React.MouseEvent) => {

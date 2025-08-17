@@ -13,7 +13,7 @@ const LabelRoot = React.forwardRef<
       ref={forwardedRef}
       className={cn(
         'text-label-xs text-text-strong group cursor-pointer',
-        'flex items-center gap-px',
+        'flex items-center gap-[2px]',
         // disabled
         'aria-disabled:text-text-disabled',
         className
@@ -57,4 +57,4 @@ function LabelSub({ children, className, ...rest }: React.HTMLAttributes<HTMLSpa
   );
 }
 
-export { LabelRoot as Label, LabelAsterisk as LabelAsterisk, LabelSub as LabelSub, LabelRoot as Root };
+export { LabelRoot as Label, LabelAsterisk, LabelSub, LabelRoot as Root };

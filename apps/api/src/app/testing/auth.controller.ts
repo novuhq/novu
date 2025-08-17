@@ -2,8 +2,8 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { RequirePermissions, SkipPermissionsCheck } from '@novu/application-generic';
 import { PermissionsEnum } from '@novu/shared';
-import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
+import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/test-auth')
 @RequireAuthentication()

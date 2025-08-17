@@ -1,10 +1,10 @@
+import { SubscriberEntity } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { sub } from 'date-fns';
-import { SubscriberEntity } from '@novu/dal';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
-describe('Update Subscriber online flag - /subscribers/:subscriberId/online-status (PATCH) #novu-v2', function () {
+describe('Update Subscriber online flag - /subscribers/:subscriberId/online-status (PATCH) #novu-v2', () => {
   let session: UserSession;
   let onlineSubscriber: SubscriberEntity;
   let offlineSubscriber: SubscriberEntity;
@@ -24,7 +24,7 @@ describe('Update Subscriber online flag - /subscribers/:subscriberId/online-stat
     });
   });
 
-  it('should set the online status to false', async function () {
+  it('should set the online status to false', async () => {
     const body = {
       isOnline: false,
     };
@@ -38,7 +38,7 @@ describe('Update Subscriber online flag - /subscribers/:subscriberId/online-stat
     expect(data.lastOnlineAt).to.be.a('string');
   });
 
-  it('should set the online status to true', async function () {
+  it('should set the online status to true', async () => {
     const body = {
       isOnline: true,
     };

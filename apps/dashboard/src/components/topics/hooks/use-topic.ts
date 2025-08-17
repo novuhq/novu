@@ -1,6 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
 import { getTopic } from '@/api/topics';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useQuery } from '@tanstack/react-query';
 
 export function useTopic(topicKey: string) {
   const { currentEnvironment } = useEnvironment();

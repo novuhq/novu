@@ -1,5 +1,5 @@
-import { IWorkflowOverridesResponseDto } from '@novu/shared';
 import { ApiProperty } from '@nestjs/swagger';
+import { IWorkflowOverridesResponseDto } from '@novu/shared';
 import { OverrideResponseDto } from './shared';
 
 export class GetWorkflowOverridesResponseDto implements IWorkflowOverridesResponseDto {

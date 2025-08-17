@@ -1,6 +1,6 @@
-import { expect, test, vi } from 'vitest';
-import MailerSend, { Attachment, Recipient } from 'mailersend';
 import { CheckIntegrationResponseEnum } from '@novu/stateless';
+import MailerSend, { Attachment, Recipient } from 'mailersend';
+import { expect, test, vi } from 'vitest';
 import { MailersendEmailProvider } from './mailersend.provider';
 
 const mockConfig = {
@@ -24,14 +24,13 @@ const mockNovuMessage = {
 test('should trigger mailerSend with expected parameters', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
   const spy = vi.spyOn(provider, 'sendMessage').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   });
 
   await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toBeCalledWith({
+  expect(spy).toHaveBeenCalledWith({
     to: mockNovuMessage.to,
     subject: mockNovuMessage.subject,
     html: mockNovuMessage.html,
@@ -51,7 +50,6 @@ test('should trigger mailerSend with expected parameters', async () => {
 test('should trigger mailerSend correctly', async () => {
   const provider = new MailersendEmailProvider(mockConfig);
   const spy = vi.spyOn(MailerSend.prototype, 'request').mockImplementation(async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return {} as any;
   });
 
@@ -62,7 +60,7 @@ test('should trigger mailerSend correctly', async () => {
   await provider.sendMessage(mockNovuMessage);
 
   expect(spy).toHaveBeenCalled();
-  expect(spy).toBeCalledWith('/email', {
+  expect(spy).toHaveBeenCalledWith('/email', {
     method: 'POST',
     body: {
       from: { email: mockNovuMessage.from, name: mockConfig.senderName },

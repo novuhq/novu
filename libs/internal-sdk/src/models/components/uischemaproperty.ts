@@ -12,7 +12,7 @@ import {
   UiComponentEnum$outboundSchema,
 } from "./uicomponentenum.js";
 
-export type Five = string | number | boolean | { [k: string]: any };
+export type Placeholder5 = string | number | boolean | { [k: string]: any };
 
 /**
  * Placeholder for the UI Schema Property
@@ -47,40 +47,48 @@ export type UiSchemaProperty = {
 };
 
 /** @internal */
-export const Five$inboundSchema: z.ZodType<Five, z.ZodTypeDef, unknown> = z
-  .union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Placeholder5$inboundSchema: z.ZodType<
+  Placeholder5,
+  z.ZodTypeDef,
+  unknown
+> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /** @internal */
-export type Five$Outbound = string | number | boolean | { [k: string]: any };
+export type Placeholder5$Outbound = string | number | boolean | {
+  [k: string]: any;
+};
 
 /** @internal */
-export const Five$outboundSchema: z.ZodType<Five$Outbound, z.ZodTypeDef, Five> =
-  z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
+export const Placeholder5$outboundSchema: z.ZodType<
+  Placeholder5$Outbound,
+  z.ZodTypeDef,
+  Placeholder5
+> = z.union([z.string(), z.number(), z.boolean(), z.record(z.any())]);
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Five$ {
-  /** @deprecated use `Five$inboundSchema` instead. */
-  export const inboundSchema = Five$inboundSchema;
-  /** @deprecated use `Five$outboundSchema` instead. */
-  export const outboundSchema = Five$outboundSchema;
-  /** @deprecated use `Five$Outbound` instead. */
-  export type Outbound = Five$Outbound;
+export namespace Placeholder5$ {
+  /** @deprecated use `Placeholder5$inboundSchema` instead. */
+  export const inboundSchema = Placeholder5$inboundSchema;
+  /** @deprecated use `Placeholder5$outboundSchema` instead. */
+  export const outboundSchema = Placeholder5$outboundSchema;
+  /** @deprecated use `Placeholder5$Outbound` instead. */
+  export type Outbound = Placeholder5$Outbound;
 }
 
-export function fiveToJSON(five: Five): string {
-  return JSON.stringify(Five$outboundSchema.parse(five));
+export function placeholder5ToJSON(placeholder5: Placeholder5): string {
+  return JSON.stringify(Placeholder5$outboundSchema.parse(placeholder5));
 }
 
-export function fiveFromJSON(
+export function placeholder5FromJSON(
   jsonString: string,
-): SafeParseResult<Five, SDKValidationError> {
+): SafeParseResult<Placeholder5, SDKValidationError> {
   return safeParse(
     jsonString,
-    (x) => Five$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'Five' from JSON`,
+    (x) => Placeholder5$inboundSchema.parse(JSON.parse(x)),
+    `Failed to parse 'Placeholder5' from JSON`,
   );
 }
 

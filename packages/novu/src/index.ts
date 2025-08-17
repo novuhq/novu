@@ -2,11 +2,11 @@
 
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
-import { devCommand, DevCommandOptions } from './commands';
-import { sync } from './commands/sync';
-import { AnalyticService, ConfigService } from './services';
+import { DevCommandOptions, devCommand } from './commands';
 import { IInitCommandOptions, init } from './commands/init';
+import { sync } from './commands/sync';
 import { NOVU_API_URL, NOVU_SECRET_KEY } from './constants';
+import { AnalyticService, ConfigService } from './services';
 
 const analytics = new AnalyticService();
 export const config = new ConfigService();

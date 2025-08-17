@@ -1,16 +1,16 @@
+import { Novu } from '@novu/api';
+import { PatchSubscriberPreferencesDto, SubscriberResponseDto } from '@novu/api/models/components';
+import { NotificationTemplateEntity } from '@novu/dal';
+import { ShortIsPrefixEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { randomBytes } from 'crypto';
-import { UserSession } from '@novu/testing';
-import { NotificationTemplateEntity } from '@novu/dal';
-import { SubscriberResponseDto, PatchSubscriberPreferencesDto } from '@novu/api/models/components';
-import { Novu } from '@novu/api';
-import { ShortIsPrefixEnum } from '@novu/shared';
+import { buildSlug } from '../../shared/helpers/build-slug';
 import {
   expectSdkExceptionGeneric,
   expectSdkValidationExceptionGeneric,
   initNovuClassSdk,
 } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
-import { buildSlug } from '../../shared/helpers/build-slug';
 
 let session: UserSession;
 

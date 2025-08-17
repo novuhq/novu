@@ -1,14 +1,14 @@
+import { PatchPreferenceChannelsDto, SubscriberWorkflowPreferenceDto } from '@novu/api/models/components';
+import { ChannelTypeEnum } from '@novu/shared';
+import { motion } from 'motion/react';
+import { useState } from 'react';
+import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_ICON } from '@/components/icons/utils';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/primitives/card';
 import { Step } from '@/components/primitives/step';
 import { PreferencesItem } from '@/components/subscribers/preferences/preferences-item';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
-import { PatchPreferenceChannelsDto, SubscriberWorkflowPreferenceDto } from '@novu/api/models/components';
-import { ChannelTypeEnum } from '@novu/shared';
-import { motion } from 'motion/react';
-import { useState } from 'react';
-import { RiContractUpDownLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { STEP_TYPE_TO_COLOR } from '../../../utils/color';
 
 type WorkflowPreferencesProps = {

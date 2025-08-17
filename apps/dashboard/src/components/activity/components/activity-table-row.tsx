@@ -1,7 +1,7 @@
+import type { ISubscriber } from '@novu/shared';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { formatDateSimple } from '@/utils/format-date';
 import { cn } from '@/utils/ui';
-import { ISubscriber } from '@novu/shared';
 import { ActivityStatusBadge } from './status-badge';
 import { StepIndicators } from './step-indicators';
 
@@ -11,6 +11,11 @@ type ActivityTableRowProps = {
   onClick?: (activityId: string) => void;
   className?: string;
 };
+
+function truncateText(text: string, maxLength: number = 26): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength) + '...';
+}
 
 function getSubscriberDisplay(
   subscriber?: Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>,
@@ -26,6 +31,10 @@ function getSubscriberDisplay(
     return `${subscriber.firstName || ''} ${subscriber.lastName || ''}`.trim();
   }
 
+  if (subscriber.subscriberId) {
+    return subscriber.subscriberId;
+  }
+
   return '';
 }
 
@@ -33,6 +42,12 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
   const handleClick = () => {
     onClick?.(activity._id);
   };
+
+  const subscriberDisplay = getSubscriberDisplay(
+    activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
+  );
+  const truncatedTransactionId = truncateText(activity.transactionId);
+  const truncatedSubscriberDisplay = subscriberDisplay ? truncateText(subscriberDisplay) : '';
 
   return (
     <TableRow
@@ -48,11 +63,12 @@ export function ActivityTableRow({ activity, isSelected, onClick, className }: A
             {activity.template?.name || 'Deleted workflow'}
           </span>
           <span className="text-foreground-400 text-[10px] leading-[14px]">
-            <div className="bg-bg-weak font-code inline-block rounded-sm px-1.5">
-              {activity.transactionId} •{' '}
-              {getSubscriberDisplay(
-                activity.subscriber as Pick<ISubscriber, '_id' | 'subscriberId' | 'firstName' | 'lastName'>
-              )}
+            <div
+              className="bg-bg-weak font-code inline-block rounded-sm px-1.5"
+              title={`${activity.transactionId}${subscriberDisplay ? ` • ${subscriberDisplay}` : ''}`}
+            >
+              {truncatedTransactionId}
+              {truncatedSubscriberDisplay ? ` • ${truncatedSubscriberDisplay}` : ''}
             </div>
           </span>
         </div>

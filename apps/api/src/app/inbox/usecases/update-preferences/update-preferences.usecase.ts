@@ -1,30 +1,34 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   AnalyticsService,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
-  UpsertPreferences,
-  UpsertSubscriberWorkflowPreferencesCommand,
-  UpsertSubscriberGlobalPreferencesCommand,
-  InstrumentUsecase,
-  Instrument,
-  GetWorkflowByIdsUseCase,
   GetWorkflowByIdsCommand,
+  GetWorkflowByIdsUseCase,
+  Instrument,
+  InstrumentUsecase,
+  SendWebhookMessage,
+  UpsertPreferences,
+  UpsertSubscriberGlobalPreferencesCommand,
+  UpsertSubscriberWorkflowPreferencesCommand,
 } from '@novu/application-generic';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 import {
   IPreferenceChannels,
   PreferenceLevelEnum,
+  SeverityLevelEnum,
+  WebhookEventEnum,
+  WebhookObjectTypeEnum,
   WorkflowPreferences,
   WorkflowPreferencesPartial,
 } from '@novu/shared';
-import { AnalyticsEventsEnum } from '../../utils';
-import { InboxPreference } from '../../utils/types';
-import { UpdatePreferencesCommand } from './update-preferences.command';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import { AnalyticsEventsEnum } from '../../utils';
+import { InboxPreference } from '../../utils/types';
+import { UpdatePreferencesCommand } from './update-preferences.command';
 
 @Injectable()
 export class UpdatePreferences {
@@ -34,7 +38,8 @@ export class UpdatePreferences {
     private getSubscriberGlobalPreference: GetSubscriberGlobalPreference,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private upsertPreferences: UpsertPreferences,
-    private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase
+    private getWorkflowByIdsUsecase: GetWorkflowByIdsUseCase,
+    private sendWebhookMessage: SendWebhookMessage
   ) {}
 
   @InstrumentUsecase()
@@ -62,9 +67,23 @@ export class UpdatePreferences {
       workflowId = workflow._id;
     }
 
+    let newPreference: InboxPreference | null = null;
+
     await this.updateSubscriberPreference(command, subscriber, workflowId);
 
-    return await this.findPreference(command, subscriber);
+    newPreference = await this.findPreference(command, subscriber);
+
+    await this.sendWebhookMessage.execute({
+      eventType: WebhookEventEnum.PREFERENCE_UPDATED,
+      objectType: WebhookObjectTypeEnum.PREFERENCE,
+      payload: {
+        object: newPreference,
+      },
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+    });
+
+    return newPreference;
   }
 
   @Instrument()
@@ -138,6 +157,7 @@ export class UpdatePreferences {
           critical: workflow.critical,
           tags: workflow.tags,
           data: workflow.data,
+          severity: workflow.severity ?? SeverityLevelEnum.NONE,
         },
       };
     }

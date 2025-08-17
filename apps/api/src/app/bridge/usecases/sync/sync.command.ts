@@ -1,8 +1,7 @@
-import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-
 import { EnvironmentWithUserCommand, IStepControl } from '@novu/application-generic';
 import type { CustomDataType, IPreferenceChannels, JSONSchemaDto, StepType } from '@novu/shared';
+import { Type } from 'class-transformer';
+import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 interface IStepOutput {
   schema: JSONSchemaDto;

@@ -1,7 +1,6 @@
-/* eslint-disable global-require */
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { ApiServiceLevelEnum } from '@novu/shared';
 import sinon from 'sinon';
 import { Stripe } from 'stripe';
 

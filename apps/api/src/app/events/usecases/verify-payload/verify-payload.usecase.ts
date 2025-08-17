@@ -1,6 +1,6 @@
-import { DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 import { BadRequestException } from '@nestjs/common';
-import { VerifyPayloadService, InstrumentUsecase } from '@novu/application-generic';
+import { InstrumentUsecase, VerifyPayloadService } from '@novu/application-generic';
+import { DelayTypeEnum, StepTypeEnum } from '@novu/shared';
 
 import { VerifyPayloadCommand } from './verify-payload.command';
 

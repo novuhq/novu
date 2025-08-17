@@ -1,8 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-
-import { ChannelTypeEnum } from '@novu/stateless';
-import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentialsEntity } from '@novu/dal';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { createHash } from '@novu/application-generic';
+import { EnvironmentRepository, ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum } from '@novu/stateless';
 
 import { ChatOauthCommand } from './chat-oauth.command';
 

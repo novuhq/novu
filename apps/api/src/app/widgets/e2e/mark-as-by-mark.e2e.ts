@@ -1,6 +1,3 @@
-import axios from 'axios';
-import { expect } from 'chai';
-
 import { Novu } from '@novu/api';
 import {
   MessageEntity,
@@ -11,6 +8,8 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
+import axios from 'axios';
+import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () => {
@@ -60,7 +59,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () =>
     await pruneMessages(messageRepository);
   });
 
-  it('should change the seen status', async function () {
+  it('should change the seen status', async () => {
     await markAs(subscriberToken, message._id, MessagesStatusEnum.SEEN);
 
     const updatedMessage = await getMessage(session, messageRepository, subscriber);
@@ -71,7 +70,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () =>
     expect(updatedMessage.lastReadDate).to.be.not.ok;
   });
 
-  it('should change the read status', async function () {
+  it('should change the read status', async () => {
     await markAs(subscriberToken, message._id, MessagesStatusEnum.READ);
 
     const updatedMessage = await getMessage(session, messageRepository, subscriber);
@@ -82,7 +81,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () =>
     expect(updatedMessage.lastReadDate).to.be.ok;
   });
 
-  it('should change the seen status to unseen', async function () {
+  it('should change the seen status to unseen', async () => {
     // simulate user seen
     await markAs(subscriberToken, message._id, MessagesStatusEnum.SEEN);
 
@@ -101,7 +100,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () =>
     expect(updatedMessage.lastReadDate).to.be.not.ok;
   });
 
-  it('should change the read status to unread', async function () {
+  it('should change the read status to unread', async () => {
     // simulate user read
     await markAs(subscriberToken, message._id, MessagesStatusEnum.READ);
 
@@ -119,7 +118,7 @@ describe('Mark as Seen - /widgets/messages/mark-as (POST) #novu-v0', async () =>
     expect(updateMessage.lastReadDate).to.be.ok;
   });
 
-  it('should throw exception if messages were not provided', async function () {
+  it('should throw exception if messages were not provided', async () => {
     const failureMessage = 'should not reach here, should throw error';
 
     try {

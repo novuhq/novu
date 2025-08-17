@@ -1,3 +1,4 @@
+import { SeverityLevelEnum } from '../../consts';
 import { ISubscribersDefine, ITenantDefine, ITopic, ProvidersIdEnum } from '../../types';
 
 export type TriggerRecipientSubscriber = string | ISubscribersDefine;
@@ -15,13 +16,23 @@ export type TriggerOverrides = {
   steps?: Record<
     string,
     {
-      providers: Record<ProvidersIdEnum, Record<string, unknown>>;
+      providers?: Record<ProvidersIdEnum, Record<string, unknown>>;
+      layoutId?: string | null;
     }
   >;
-  email?: Record<string, unknown>;
+  channels?: {
+    email?: {
+      layoutId?: string | null;
+    };
+  };
+  email?: Record<string, unknown> & {
+    toRecipient?: string;
+    integrationIdentifier?: string;
+  };
   sms?: Record<string, unknown>;
   push?: Record<string, unknown>;
   inApp?: Record<string, unknown>;
   chat?: Record<string, unknown>;
   layoutIdentifier?: string;
+  severity?: SeverityLevelEnum;
 };

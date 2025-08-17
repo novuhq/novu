@@ -1,18 +1,18 @@
-import { useForm } from 'react-hook-form';
-import { useEffect, useMemo } from 'react';
+import { useOrganization } from '@clerk/clerk-react';
 import { CalendarIcon } from 'lucide-react';
-import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
+import { useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { Badge } from '@/components/primitives/badge';
+import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import type { LogsFilters } from '@/hooks/use-logs-url-state';
 import { buildLogsDateFilters } from '@/utils/logs-filters.utils';
 import { ROUTES } from '@/utils/routes';
-import { useOrganization } from '@clerk/clerk-react';
-import { Link } from 'react-router-dom';
-import type { LogsFilters } from '@/hooks/use-logs-url-state';
 import { IS_SELF_HOSTED } from '../../config';
 
-interface LogsFiltersProps {
+interface RequestsFiltersProps {
   filters: LogsFilters;
   onFiltersChange: (filters: LogsFilters) => void;
   onClearFilters: () => void;
@@ -32,6 +32,12 @@ const STATUS_OPTIONS = [
   { label: '500 Internal Server Error', value: '500' },
   { label: '502 Bad Gateway', value: '502' },
   { label: '503 Service Unavailable', value: '503' },
+];
+
+const URL_PATTERN_OPTIONS = [
+  { label: '/v1/events/trigger', value: '/v1/events/trigger' },
+  { label: '/v1/events/trigger/bulk', value: '/v1/events/trigger/bulk' },
+  { label: '/v1/events/trigger/broadcast', value: '/v1/events/trigger/broadcast' },
 ];
 
 const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
@@ -54,7 +60,7 @@ const UpgradeCtaIcon: React.ComponentType<{ className?: string }> = () => {
   );
 };
 
-export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiveFilters }: LogsFiltersProps) {
+export function RequestsFilters({ filters, onFiltersChange, onClearFilters, hasActiveFilters }: RequestsFiltersProps) {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
 
@@ -87,7 +93,8 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     onFiltersChange({
       status: values,
       transactionId: form.getValues('transactionId'),
-      created: form.getValues('created'),
+      url_pattern: form.getValues('url_pattern'),
+      createdGte: form.getValues('createdGte'),
     });
   };
 
@@ -96,17 +103,30 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: value,
-      created: form.getValues('created'),
+      url_pattern: form.getValues('url_pattern'),
+      createdGte: form.getValues('createdGte'),
     });
   };
 
   const handleCreatedChange = (values: string[]) => {
-    const selectedCreated = values[0]; // Single selection
-    form.setValue('created', selectedCreated);
+    const selectedCreatedGte = values[0]; // Single selection
+    form.setValue('createdGte', selectedCreatedGte);
     onFiltersChange({
       status: form.getValues('status'),
       transactionId: form.getValues('transactionId'),
-      created: selectedCreated,
+      url_pattern: form.getValues('url_pattern'),
+      createdGte: selectedCreatedGte,
+    });
+  };
+
+  const handleUrlPatternChange = (values: string[]) => {
+    const selectedUrlPattern = values[0]; // Single selection
+    form.setValue('url_pattern', selectedUrlPattern || '');
+    onFiltersChange({
+      status: form.getValues('status'),
+      transactionId: form.getValues('transactionId'),
+      url_pattern: selectedUrlPattern || '',
+      createdGte: form.getValues('createdGte'),
     });
   };
 
@@ -120,7 +140,7 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
         hideTitle
         title="Time period"
         options={maxLogsRetentionOptions}
-        selected={filters.created ? [filters.created] : []}
+        selected={filters.createdGte ? [filters.createdGte] : []}
         onSelect={handleCreatedChange}
         icon={CalendarIcon}
       />
@@ -140,6 +160,15 @@ export function LogsFilters({ filters, onFiltersChange, onClearFilters, hasActiv
         options={STATUS_OPTIONS}
         selected={filters.status}
         onSelect={handleStatusChange}
+      />
+      <FacetedFormFilter
+        size="small"
+        type="single"
+        title="API Endpoint"
+        placeholder="Filter by API endpoint"
+        options={URL_PATTERN_OPTIONS}
+        selected={filters.url_pattern ? [filters.url_pattern] : []}
+        onSelect={handleUrlPatternChange}
       />
       {hasActiveFilters && (
         <button onClick={onClearFilters} className="text-foreground-600 hover:text-foreground-950 text-sm font-medium">

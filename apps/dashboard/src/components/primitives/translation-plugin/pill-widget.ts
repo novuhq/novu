@@ -3,8 +3,9 @@ import { CSSProperties, createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { RiErrorWarningLine } from 'react-icons/ri';
 import { TranslateVariableIcon } from '@/components/icons/translate-variable';
-import { TRANSLATION_PILL_HEIGHT } from './constants';
 import { formatDisplayKey } from './utils';
+
+export const TRANSLATION_PILL_HEIGHT = 18;
 
 export class TranslationPillWidget extends WidgetType {
   private clickHandler: (e: MouseEvent) => void;

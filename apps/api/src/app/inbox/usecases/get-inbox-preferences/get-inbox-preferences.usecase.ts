@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService, InstrumentUsecase } from '@novu/application-generic';
-import { PreferenceLevelEnum } from '@novu/shared';
-import { AnalyticsEventsEnum } from '../../utils';
-import { InboxPreference } from '../../utils/types';
-import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
-import {
-  GetSubscriberPreference,
-  GetSubscriberPreferenceCommand,
-} from '../../../subscribers/usecases/get-subscriber-preference';
+import { PreferenceLevelEnum, SeverityLevelEnum } from '@novu/shared';
 import {
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
 } from '../../../subscribers/usecases/get-subscriber-global-preference';
+import {
+  GetSubscriberPreference,
+  GetSubscriberPreferenceCommand,
+} from '../../../subscribers/usecases/get-subscriber-preference';
+import { AnalyticsEventsEnum } from '../../utils';
+import { InboxPreference } from '../../utils/types';
+import { GetInboxPreferencesCommand } from './get-inbox-preferences.command';
 
 @Injectable()
 export class GetInboxPreferences {
@@ -37,12 +37,19 @@ export class GetInboxPreferences {
       ...globalPreference.preference,
     };
 
+    const severity = command.severity
+      ? Array.isArray(command.severity)
+        ? command.severity
+        : [command.severity]
+      : undefined;
+
     const subscriberWorkflowPreferences = await this.getSubscriberPreference.execute(
       GetSubscriberPreferenceCommand.create({
         environmentId: command.environmentId,
         subscriberId: command.subscriberId,
         organizationId: command.organizationId,
         tags: command.tags,
+        severity,
         includeInactiveChannels: false,
       })
     );
@@ -56,6 +63,7 @@ export class GetInboxPreferences {
           name: subscriberWorkflowPreference.template.name,
           critical: subscriberWorkflowPreference.template.critical,
           tags: subscriberWorkflowPreference.template.tags,
+          severity: subscriberWorkflowPreference.template.severity ?? SeverityLevelEnum.NONE,
         },
       } satisfies InboxPreference;
     });

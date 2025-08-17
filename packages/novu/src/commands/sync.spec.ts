@@ -1,7 +1,7 @@
-import { expect, it, describe, afterEach, vi, MockedFunction } from 'vitest';
 import axios from 'axios';
+import { afterEach, describe, expect, it, MockedFunction, vi } from 'vitest';
 
-import { sync, buildSignature } from './sync';
+import { buildSignature, sync } from './sync';
 
 vi.mock('axios', () => {
   return {

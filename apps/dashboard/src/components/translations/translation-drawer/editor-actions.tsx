@@ -1,41 +1,120 @@
-import { RiFileUploadLine, RiDownloadLine, RiDeleteBinLine } from 'react-icons/ri';
-import { useState } from 'react';
+import { PermissionsEnum } from '@novu/shared';
+import { AnimatePresence, motion } from 'motion/react';
+import { useEffect, useState } from 'react';
+import { RiCheckLine, RiCloseLine, RiDownloadLine, RiFileUploadLine } from 'react-icons/ri';
+import { FlagCircle } from '@/components/flag-circle';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
+import { PermissionButton } from '@/components/primitives/permission-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { FlagCircle } from '@/components/flag-circle';
+import { TranslationWithPlaceholder } from '@/hooks/use-fetch-translation';
 import { TranslationImportTrigger } from '../translation-import-trigger';
-import { ConfirmationModal } from '@/components/confirmation-modal';
 import { getLocaleDisplayName } from '../utils';
 import { useTranslationFileOperations } from './hooks';
-import { TranslationResource } from '@/types/translations';
+
+function UploadButton({
+  isUploading,
+  uploadSuccess,
+  uploadError,
+  disabled,
+  onClick,
+  children,
+}: {
+  isUploading?: boolean;
+  uploadSuccess?: boolean;
+  uploadError?: boolean;
+  disabled?: boolean;
+  onClick?: () => void;
+  children: React.ReactNode;
+}) {
+  const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    if (uploadSuccess || uploadError) {
+      setShowResult(true);
+      const timer = setTimeout(() => setShowResult(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [uploadSuccess, uploadError]);
+
+  return (
+    <PermissionButton
+      permission={PermissionsEnum.WORKFLOW_WRITE}
+      variant="secondary"
+      mode="outline"
+      size="xs"
+      leadingIcon={showResult ? undefined : RiFileUploadLine}
+      disabled={disabled || isUploading}
+      onClick={onClick}
+      className="relative min-w-[120px]" // Fixed width to prevent resizing
+    >
+      <div className="relative">
+        {/* Default content - normal layout */}
+        <motion.div
+          initial={false}
+          animate={{
+            opacity: showResult ? 0 : 1,
+          }}
+          transition={{
+            duration: 0.15,
+            ease: 'easeOut',
+          }}
+        >
+          {children}
+        </motion.div>
+
+        {/* Success/Error overlay */}
+        <AnimatePresence>
+          {showResult && (
+            <motion.div
+              initial={{ opacity: 0, y: 2 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -2 }}
+              transition={{
+                duration: 0.25,
+                ease: [0.16, 1, 0.3, 1], // Custom smooth easing
+              }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              {uploadSuccess ? (
+                <div className="flex items-center gap-1">
+                  <RiCheckLine className="size-4 text-green-600" />
+                  <span className="text-xs text-green-600">Success!</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1">
+                  <RiCloseLine className="size-4 text-red-600" />
+                  <span className="text-xs text-red-600">Failed</span>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </PermissionButton>
+  );
+}
 
 type EditorActionsProps = {
-  selectedLocale: string;
-  contentToCopy: string;
-  content: Record<string, unknown>;
-  resource: TranslationResource;
-  onDelete: (locale: string) => void | Promise<void>;
-  isDeleting?: boolean;
+  selectedTranslation: TranslationWithPlaceholder;
+  modifiedContent?: Record<string, unknown> | null;
+  isReadOnly?: boolean;
 };
 
-export function EditorActions({
-  selectedLocale,
-  contentToCopy,
-  content,
-  resource,
-  onDelete,
-  isDeleting = false,
-}: EditorActionsProps) {
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+export function EditorActions({ selectedTranslation, modifiedContent, isReadOnly = false }: EditorActionsProps) {
   const { handleDownload } = useTranslationFileOperations();
+
+  const selectedLocale = selectedTranslation.locale;
   const displayName = getLocaleDisplayName(selectedLocale);
 
-  const handleDeleteClick = () => setIsDeleteModalOpen(true);
+  // Use modified content if available, otherwise use translation content
+  const content = modifiedContent || selectedTranslation.content || {};
+  const contentToCopy = JSON.stringify(content, null, 2);
 
-  const handleDeleteConfirm = async () => {
-    await onDelete(selectedLocale);
-    setIsDeleteModalOpen(false);
+  // Create resource object from translation data
+  const resource = {
+    resourceId: selectedTranslation.resourceId,
+    resourceType: selectedTranslation.resourceType,
   };
 
   return (
@@ -49,10 +128,9 @@ export function EditorActions({
               <span className="text-sm text-neutral-400">({displayName})</span>
             </div>
           </div>
+
           <TranslationImportTrigger resource={resource}>
-            <Button variant="secondary" mode="outline" size="xs" leadingIcon={RiFileUploadLine}>
-              Import locale(s)
-            </Button>
+            <UploadButton disabled={isReadOnly}>Import translation(s)</UploadButton>
           </TranslationImportTrigger>
         </div>
 
@@ -78,38 +156,9 @@ export function EditorActions({
               </TooltipTrigger>
               <TooltipContent>Export translation JSON</TooltipContent>
             </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="secondary"
-                  mode="outline"
-                  size="xs"
-                  className="px-2 py-1.5 text-neutral-700 hover:text-red-500"
-                  onClick={handleDeleteClick}
-                >
-                  <RiDeleteBinLine className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Delete {selectedLocale} translation</TooltipContent>
-            </Tooltip>
           </div>
         </div>
       </div>
-
-      <ConfirmationModal
-        open={isDeleteModalOpen}
-        onOpenChange={setIsDeleteModalOpen}
-        onConfirm={handleDeleteConfirm}
-        title="Delete translation"
-        description={
-          <span>
-            Are you sure you want to delete the <span className="font-bold">{selectedLocale}</span> translation? This
-            action cannot be undone.
-          </span>
-        }
-        confirmButtonText="Delete translation"
-        isLoading={isDeleting}
-      />
     </>
   );
 }

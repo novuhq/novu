@@ -6,10 +6,10 @@ import { usePreferences } from '../../../api';
 import { setDynamicLocalization } from '../../../config';
 import { useInboxContext, useNovu } from '../../../context';
 import { useStyle } from '../../../helpers';
-import { PreferencesRow } from './PreferencesRow';
 import { DefaultPreferences } from './DefaultPreferences';
 import { GroupedPreferences } from './GroupedPreferences';
 import { PreferencesListSkeleton } from './PreferencesListSkeleton';
+import { PreferencesRow } from './PreferencesRow';
 
 /* This is also going to be exported as a separate component. Keep it pure. */
 export const Preferences = () => {
@@ -17,7 +17,10 @@ export const Preferences = () => {
   const style = useStyle();
   const { preferencesFilter, preferenceGroups } = useInboxContext();
 
-  const { preferences, loading } = usePreferences({ tags: preferencesFilter()?.tags });
+  const { preferences, loading } = usePreferences({
+    tags: preferencesFilter()?.tags,
+    severity: preferencesFilter()?.severity,
+  });
 
   const allPreferences = createMemo(() => {
     const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
@@ -81,7 +84,10 @@ export const Preferences = () => {
 
               return (
                 filter.workflowIds?.includes(workflowId ?? '') ||
-                filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag))
+                filter.tags?.some((tag) => preference.workflow?.tags?.includes(tag)) ||
+                (Array.isArray(filter.severity) &&
+                  filter.severity.some((severity) => preference.workflow?.severity === severity)) ||
+                (!Array.isArray(filter.severity) && filter.severity === preference.workflow?.severity)
               );
             }),
           };

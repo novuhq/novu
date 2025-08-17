@@ -1,4 +1,4 @@
-import { EnvironmentEnum, ResourceOriginEnum, PermissionsEnum } from '@novu/shared';
+import { EnvironmentEnum, EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
 import {
   Background,
   BackgroundVariant,
@@ -11,17 +11,18 @@ import {
   ViewportHelperFunctionOptions,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { useUser } from '@clerk/clerk-react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { generateUUID } from '@/utils/uuid';
-
+import { useLocation, useNavigate } from 'react-router-dom';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { getFirstErrorMessage } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Step } from '@/utils/types';
-import { useUser } from '@clerk/clerk-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { generateUUID } from '@/utils/uuid';
 import { NODE_HEIGHT, NODE_WIDTH } from './base-node';
 import { AddNodeEdge, AddNodeEdgeType } from './edges';
 import {
@@ -38,8 +39,6 @@ import {
   TriggerNode,
 } from './nodes';
 import { WorkflowChecklist } from './workflow-checklist';
-import { InlineToast } from '@/components/primitives/inline-toast';
-import { useHasPermission } from '@/hooks/use-has-permission';
 
 const nodeTypes = {
   trigger: TriggerNode,
@@ -290,7 +289,25 @@ export const WorkflowCanvas = ({
   isTemplateStorePreview?: boolean;
 }) => {
   const has = useHasPermission();
-  const showReadOnlyOverlay = !has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
+  const { workflow: currentWorkflow } = useWorkflow();
+  const navigate = useNavigate();
+  const hasPermission = has({ permission: PermissionsEnum.WORKFLOW_WRITE });
+  const showReadOnlyOverlay = !hasPermission || currentEnvironment?.type !== EnvironmentTypeEnum.DEV;
+
+  const handleSwitchToDevelopment = () => {
+    const developmentEnvironment = oppositeEnvironment?.name === 'Development' ? oppositeEnvironment : null;
+
+    if (developmentEnvironment?.slug && currentWorkflow?.workflowId) {
+      switchEnvironment(developmentEnvironment.slug);
+      navigate(
+        buildRoute(ROUTES.EDIT_WORKFLOW, {
+          environmentSlug: developmentEnvironment.slug,
+          workflowSlug: currentWorkflow.workflowId,
+        })
+      );
+    }
+  };
 
   return (
     <ReactFlowProvider>
@@ -312,8 +329,18 @@ export const WorkflowCanvas = ({
               <InlineToast
                 className="bg-warning/10 border shadow-md"
                 variant={'warning'}
-                description="Content visible but locked for editing. Contact an admin for edit access."
-                title="View-only mode: "
+                description={
+                  hasPermission && currentEnvironment?.type !== EnvironmentTypeEnum.DEV
+                    ? 'Edit the workflow in your development environment.'
+                    : 'Content visible but locked for editing. Contact an admin for edit access.'
+                }
+                title="View-only:"
+                ctaLabel={
+                  hasPermission && currentEnvironment?.type !== EnvironmentTypeEnum.DEV
+                    ? 'Switch environment'
+                    : undefined
+                }
+                onCtaClick={handleSwitchToDevelopment}
               />
             </div>
           </>

@@ -19,7 +19,7 @@ export const selectTriggerVariants = cva(
     variants: {
       size: {
         default: 'h-9 px-3 py-2',
-        '2xs': 'h-7 px-2 py-2',
+        '2xs': 'h-7 px-2 py-2 text-label-xs',
       },
     },
     defaultVariants: {

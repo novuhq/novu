@@ -1,11 +1,11 @@
+import { DEFAULT_LOCALE } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { getTranslation, saveTranslation } from '@/api/translations';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-settings';
-import { saveTranslation, getTranslation } from '@/api/translations';
 import { LocalizationResourceEnum } from '@/types/translations';
 import { QueryKeys } from '@/utils/query-keys';
-import { DEFAULT_LOCALE } from '@novu/shared';
-import { showSuccessToast, showErrorToast } from '@/components/primitives/sonner-helpers';
 
 type CreateTranslationKeyParams = {
   workflowId: string;
@@ -92,9 +92,15 @@ export const useCreateTranslationKey = () => {
         ],
       });
 
-      // Invalidate the translations list
+      // Invalidate the translation group
       queryClient.invalidateQueries({
-        queryKey: [QueryKeys.fetchTranslations, currentEnvironment?._id],
+        queryKey: [QueryKeys.fetchTranslationGroup],
+        exact: false,
+      });
+
+      // Invalidate diff environment queries when translation keys are created
+      queryClient.invalidateQueries({
+        queryKey: [QueryKeys.diffEnvironments],
       });
 
       showSuccessToast(`Translation key "${variables.translationKey}" created successfully`);

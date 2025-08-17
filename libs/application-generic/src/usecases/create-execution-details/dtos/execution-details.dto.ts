@@ -12,7 +12,7 @@ export class CreateExecutionDetailsResponseDto {
 }
 
 export const mapExecutionDetailsCommandToEntity = (
-  command: CreateExecutionDetailsCommand,
+  command: CreateExecutionDetailsCommand
 ): Omit<ExecutionDetailsEntity, '_id' | 'createdAt'> => {
   const {
     jobId: _jobId,
@@ -22,6 +22,7 @@ export const mapExecutionDetailsCommandToEntity = (
     notificationId: _notificationId,
     notificationTemplateId: _notificationTemplateId,
     messageId: _messageId,
+    workflowRunIdentifier: _workflowRunIdentifier,
     ...nonUnderscoredFields
   } = command;
 

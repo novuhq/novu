@@ -35,6 +35,7 @@ import {
   TriggerTypeEnum,
   UserSessionData,
 } from '@novu/shared';
+import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UpdatePreferencesCommand } from '../inbox/usecases/update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../inbox/usecases/update-preferences/update-preferences.usecase';
@@ -48,7 +49,6 @@ import {
   ApiNoContentResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { SdkGroupName, SdkMethodName, SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
@@ -70,10 +70,10 @@ import { UpdateMessageActionsCommand } from '../widgets/usecases/mark-action-as-
 import { UpdateMessageActions } from '../widgets/usecases/mark-action-as-done/update-message-actions.usecase';
 import { MarkAllMessagesAsCommand } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.usecase';
-import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
-import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
 import { MarkMessageAsCommand } from '../widgets/usecases/mark-message-as/mark-message-as.command';
 import { MarkMessageAs } from '../widgets/usecases/mark-message-as/mark-message-as.usecase';
+import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
+import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
 import {
   BulkSubscriberCreateDto,
   CreateSubscriberRequestDto,
@@ -94,11 +94,11 @@ import { GetSubscriberPreferencesByLevelParams } from './params';
 import { UnseenCountQueryDto } from './query-objects/unseen-count.query';
 import { BulkCreateSubscribersCommand } from './usecases/bulk-create-subscribers';
 import { BulkCreateSubscribers } from './usecases/bulk-create-subscribers/bulk-create-subscribers.usecase';
+import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
+import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.result';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
-import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
-import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import {
   DeleteSubscriberCredentials,
   DeleteSubscriberCredentialsCommand,
@@ -294,9 +294,9 @@ export class SubscribersV1Controller {
   @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
-    summary: 'Update provider credentials',
-    description: `Update credentials for a provider such as slack and push tokens. 
-      **providerId** is required field. This API replaces the existing deviceTokens with the provided ones.`,
+    summary: 'Upsert provider credentials',
+    description: `Upsert credentials for a provider such as slack and push tokens. 
+      **providerId** is required field. This API creates **deviceTokens** or appends to the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')
   async updateSubscriberChannel(
@@ -323,9 +323,9 @@ export class SubscribersV1Controller {
   @RequireAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
-    summary: 'Upsert provider credentials',
+    summary: 'Update provider credentials',
     description: `Update credentials for a provider such as **slack** and **FCM**. 
-      **providerId** is required field. This API appends the **deviceTokens** to the existing ones.`,
+      **providerId** is required field. This API creates the **deviceTokens** or replaces the existing ones.`,
   })
   @SdkGroupName('Subscribers.Credentials')
   @SdkMethodName('append')
@@ -636,7 +636,6 @@ export class SubscribersV1Controller {
     }
 
     if (query.seen === undefined) {
-      // eslint-disable-next-line no-param-reassign
       query.seen = false;
     }
 
@@ -735,15 +734,16 @@ export class SubscribersV1Controller {
     @Body() body: MarkAllMessageAsRequestDto
   ): Promise<number> {
     const feedIdentifiers = this.toArray(body.feedIdentifier);
-    const command = MarkAllMessagesAsCommand.create({
-      organizationId: user.organizationId,
-      subscriberId,
-      environmentId: user.environmentId,
-      markAs: body.markAs,
-      feedIdentifiers,
-    });
 
-    return await this.markAllMessagesAsUsecase.execute(command);
+    return await this.markAllMessagesAsUsecase.execute(
+      MarkAllMessagesAsCommand.create({
+        organizationId: user.organizationId,
+        subscriberId,
+        environmentId: user.environmentId,
+        markAs: body.markAs,
+        feedIdentifiers,
+      })
+    );
   }
 
   @ExternalApiAccessible()

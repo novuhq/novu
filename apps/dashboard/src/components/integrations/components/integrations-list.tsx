@@ -1,10 +1,10 @@
 import { ChannelTypeEnum, providers as novuProviders } from '@novu/shared';
+import { useMemo } from 'react';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '../../../hooks/use-fetch-integrations';
 import { TableIntegration } from '../types';
 import { IntegrationChannelGroup } from './integration-channel-group';
-import { Skeleton } from '@/components/primitives/skeleton';
-import { useMemo } from 'react';
 
 type IntegrationsListProps = {
   onItemClick: (item: TableIntegration) => void;

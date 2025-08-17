@@ -1,11 +1,14 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { TranslationGroup } from '@/api/translations';
 import { useFetchTranslation } from '@/hooks/use-fetch-translation';
 import { useSaveTranslation } from '@/hooks/use-save-translation';
-import { useDeleteTranslation } from '@/hooks/use-delete-translation';
 import { useTranslationEditor } from './hooks';
 
-export function useTranslationDrawerLogic(translationGroup: TranslationGroup, defaultLocale?: string) {
+export function useTranslationDrawerLogic(
+  translationGroup: TranslationGroup,
+  initialLocale?: string,
+  onLocaleChange?: (locale: string) => void
+) {
   const [selectedLocale, setSelectedLocale] = useState<string | null>(null);
 
   const resource = useMemo(
@@ -17,13 +20,13 @@ export function useTranslationDrawerLogic(translationGroup: TranslationGroup, de
   );
 
   useEffect(() => {
-    // Prioritize default locale if it exists in the locales list
+    // Prioritize initialLocale, then fall back to first locale
     const preferredLocale =
-      defaultLocale && translationGroup.locales.includes(defaultLocale)
-        ? defaultLocale
+      initialLocale && translationGroup.locales.includes(initialLocale)
+        ? initialLocale
         : translationGroup.locales[0] || null;
     setSelectedLocale(preferredLocale);
-  }, [translationGroup.locales, translationGroup.updatedAt, defaultLocale]);
+  }, [translationGroup.locales, translationGroup.updatedAt, initialLocale]);
 
   const {
     data: selectedTranslation,
@@ -37,11 +40,14 @@ export function useTranslationDrawerLogic(translationGroup: TranslationGroup, de
 
   const editor = useTranslationEditor(selectedTranslation);
   const saveTranslationMutation = useSaveTranslation();
-  const deleteTranslationMutation = useDeleteTranslation();
 
-  const handleLocaleSelect = useCallback((locale: string) => {
-    setSelectedLocale(locale);
-  }, []);
+  const handleLocaleSelect = useCallback(
+    (locale: string) => {
+      setSelectedLocale(locale);
+      onLocaleChange?.(locale);
+    },
+    [onLocaleChange]
+  );
 
   const handleSave = useCallback(async () => {
     if (!editor.modifiedContent || !selectedLocale) return;
@@ -55,37 +61,16 @@ export function useTranslationDrawerLogic(translationGroup: TranslationGroup, de
     editor.resetContent();
   }, [editor, selectedLocale, saveTranslationMutation, resource]);
 
-  const handleDelete = useCallback(
-    async (locale: string) => {
-      await deleteTranslationMutation.mutateAsync({
-        ...resource,
-        locale,
-      });
-
-      // React Query will automatically refetch and useEffect will handle the update
-
-      const remainingLocales = translationGroup.locales.filter((l) => l !== locale);
-      // Prioritize default locale if it exists in remaining locales
-      const nextLocale =
-        defaultLocale && remainingLocales.includes(defaultLocale) ? defaultLocale : remainingLocales[0] || null;
-      setSelectedLocale(nextLocale);
-    },
-    [deleteTranslationMutation, resource, translationGroup.locales, defaultLocale]
-  );
-
   return {
     selectedLocale,
     selectedTranslation,
     isLoadingTranslation,
     translationError,
-    resource,
 
     editor,
     saveTranslationMutation,
-    deleteTranslationMutation,
 
     handleLocaleSelect,
     handleSave,
-    handleDelete,
   };
 }

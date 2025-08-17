@@ -1,5 +1,5 @@
-import { IsDefined, IsNumber, IsString } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
+import { IsDefined, IsNumber, IsString } from 'class-validator';
 
 export class EvaluateTokenBucketRateLimitCommand extends BaseCommand {
   @IsDefined()

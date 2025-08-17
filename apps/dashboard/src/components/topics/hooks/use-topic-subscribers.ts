@@ -1,8 +1,8 @@
-import { addSubscribersToTopic, getTopicSubscriptions, removeSubscribersFromTopic } from '@/api/topics';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { NovuApiError } from '@/api/api.client';
+import { addSubscribersToTopic, getTopicSubscriptions, removeSubscribersFromTopic } from '@/api/topics';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 export function useTopicSubscriptions(
   topicKey: string,
