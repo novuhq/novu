@@ -9,12 +9,12 @@ import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
 
-export const Statuses = {
+export const QueryParamStatuses = {
   Pending: "pending",
   Success: "success",
   Error: "error",
 } as const;
-export type Statuses = ClosedEnum<typeof Statuses>;
+export type QueryParamStatuses = ClosedEnum<typeof QueryParamStatuses>;
 
 export type ActivityControllerGetWorkflowRunsRequest = {
   limit?: number | undefined;
@@ -22,7 +22,7 @@ export type ActivityControllerGetWorkflowRunsRequest = {
   workflowIds?: Array<string> | undefined;
   subscriberIds?: Array<string> | undefined;
   transactionIds?: Array<string> | undefined;
-  statuses?: Array<Statuses> | undefined;
+  statuses?: Array<QueryParamStatuses> | undefined;
   channels?: Array<string> | undefined;
   topicKey?: string | undefined;
   createdGte?: string | undefined;
@@ -34,22 +34,24 @@ export type ActivityControllerGetWorkflowRunsRequest = {
 };
 
 /** @internal */
-export const Statuses$inboundSchema: z.ZodNativeEnum<typeof Statuses> = z
-  .nativeEnum(Statuses);
+export const QueryParamStatuses$inboundSchema: z.ZodNativeEnum<
+  typeof QueryParamStatuses
+> = z.nativeEnum(QueryParamStatuses);
 
 /** @internal */
-export const Statuses$outboundSchema: z.ZodNativeEnum<typeof Statuses> =
-  Statuses$inboundSchema;
+export const QueryParamStatuses$outboundSchema: z.ZodNativeEnum<
+  typeof QueryParamStatuses
+> = QueryParamStatuses$inboundSchema;
 
 /**
  * @internal
  * @deprecated This namespace will be removed in future versions. Use schemas and types that are exported directly from this module.
  */
-export namespace Statuses$ {
-  /** @deprecated use `Statuses$inboundSchema` instead. */
-  export const inboundSchema = Statuses$inboundSchema;
-  /** @deprecated use `Statuses$outboundSchema` instead. */
-  export const outboundSchema = Statuses$outboundSchema;
+export namespace QueryParamStatuses$ {
+  /** @deprecated use `QueryParamStatuses$inboundSchema` instead. */
+  export const inboundSchema = QueryParamStatuses$inboundSchema;
+  /** @deprecated use `QueryParamStatuses$outboundSchema` instead. */
+  export const outboundSchema = QueryParamStatuses$outboundSchema;
 }
 
 /** @internal */
@@ -63,7 +65,7 @@ export const ActivityControllerGetWorkflowRunsRequest$inboundSchema: z.ZodType<
   workflowIds: z.array(z.string()).optional(),
   subscriberIds: z.array(z.string()).optional(),
   transactionIds: z.array(z.string()).optional(),
-  statuses: z.array(Statuses$inboundSchema).optional(),
+  statuses: z.array(QueryParamStatuses$inboundSchema).optional(),
   channels: z.array(z.string()).optional(),
   topicKey: z.string().optional(),
   createdGte: z.string().optional(),
@@ -101,7 +103,7 @@ export const ActivityControllerGetWorkflowRunsRequest$outboundSchema: z.ZodType<
   workflowIds: z.array(z.string()).optional(),
   subscriberIds: z.array(z.string()).optional(),
   transactionIds: z.array(z.string()).optional(),
-  statuses: z.array(Statuses$outboundSchema).optional(),
+  statuses: z.array(QueryParamStatuses$outboundSchema).optional(),
   channels: z.array(z.string()).optional(),
   topicKey: z.string().optional(),
   createdGte: z.string().optional(),

@@ -93,7 +93,7 @@ export function setActivityWorkflowRunsListData(
       workflowIds?: Array<string> | undefined;
       subscriberIds?: Array<string> | undefined;
       transactionIds?: Array<string> | undefined;
-      statuses?: Array<operations.Statuses> | undefined;
+      statuses?: Array<operations.QueryParamStatuses> | undefined;
       channels?: Array<string> | undefined;
       topicKey?: string | undefined;
       createdGte?: string | undefined;
@@ -117,7 +117,7 @@ export function invalidateActivityWorkflowRunsList(
       workflowIds?: Array<string> | undefined;
       subscriberIds?: Array<string> | undefined;
       transactionIds?: Array<string> | undefined;
-      statuses?: Array<operations.Statuses> | undefined;
+      statuses?: Array<operations.QueryParamStatuses> | undefined;
       channels?: Array<string> | undefined;
       topicKey?: string | undefined;
       createdGte?: string | undefined;
@@ -192,7 +192,7 @@ export function queryKeyActivityWorkflowRunsList(
     workflowIds?: Array<string> | undefined;
     subscriberIds?: Array<string> | undefined;
     transactionIds?: Array<string> | undefined;
-    statuses?: Array<operations.Statuses> | undefined;
+    statuses?: Array<operations.QueryParamStatuses> | undefined;
     channels?: Array<string> | undefined;
     topicKey?: string | undefined;
     createdGte?: string | undefined;

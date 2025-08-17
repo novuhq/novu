@@ -90,6 +90,12 @@ export function setActivityChartsRetrieveData(
       createdAtGte?: string | undefined;
       createdAtLte?: string | undefined;
       reportType: Array<operations.ReportType>;
+      workflowIds?: Array<string> | undefined;
+      subscriberIds?: Array<string> | undefined;
+      transactionIds?: Array<string> | undefined;
+      statuses?: Array<operations.Statuses> | undefined;
+      channels?: Array<string> | undefined;
+      topicKey?: string | undefined;
       idempotencyKey?: string | undefined;
     },
   ],
@@ -107,6 +113,12 @@ export function invalidateActivityChartsRetrieve(
       createdAtGte?: string | undefined;
       createdAtLte?: string | undefined;
       reportType: Array<operations.ReportType>;
+      workflowIds?: Array<string> | undefined;
+      subscriberIds?: Array<string> | undefined;
+      transactionIds?: Array<string> | undefined;
+      statuses?: Array<operations.Statuses> | undefined;
+      channels?: Array<string> | undefined;
+      topicKey?: string | undefined;
       idempotencyKey?: string | undefined;
     }]
   >,
@@ -143,6 +155,12 @@ export function buildActivityChartsRetrieveQuery(
       createdAtGte: request.createdAtGte,
       createdAtLte: request.createdAtLte,
       reportType: request.reportType,
+      workflowIds: request.workflowIds,
+      subscriberIds: request.subscriberIds,
+      transactionIds: request.transactionIds,
+      statuses: request.statuses,
+      channels: request.channels,
+      topicKey: request.topicKey,
       idempotencyKey: request.idempotencyKey,
     }),
     queryFn: async function activityChartsRetrieveQueryFn(
@@ -168,6 +186,12 @@ export function queryKeyActivityChartsRetrieve(
     createdAtGte?: string | undefined;
     createdAtLte?: string | undefined;
     reportType: Array<operations.ReportType>;
+    workflowIds?: Array<string> | undefined;
+    subscriberIds?: Array<string> | undefined;
+    transactionIds?: Array<string> | undefined;
+    statuses?: Array<operations.Statuses> | undefined;
+    channels?: Array<string> | undefined;
+    topicKey?: string | undefined;
     idempotencyKey?: string | undefined;
   },
 ): QueryKey {

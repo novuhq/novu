@@ -90,9 +90,15 @@ async function $do(
   const path = pathToFunc("/v1/activity/charts")();
 
   const query = encodeFormQuery({
+    "channels": payload.channels,
     "createdAtGte": payload.createdAtGte,
     "createdAtLte": payload.createdAtLte,
     "reportType": payload.reportType,
+    "statuses": payload.statuses,
+    "subscriberIds": payload.subscriberIds,
+    "topicKey": payload.topicKey,
+    "transactionIds": payload.transactionIds,
+    "workflowIds": payload.workflowIds,
   });
 
   const headers = new Headers(compactMap({

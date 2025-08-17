@@ -7,6 +7,12 @@ import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
+import {
+  DigestMetadataDto,
+  DigestMetadataDto$inboundSchema,
+  DigestMetadataDto$Outbound,
+  DigestMetadataDto$outboundSchema,
+} from "./digestmetadatadto.js";
 
 /**
  * Step status
@@ -62,6 +68,10 @@ export type StepRunDto = {
    * Execution details
    */
   executionDetails: Array<ExecutionDetails>;
+  /**
+   * Optional digest for the job, including metadata and events
+   */
+  digest?: DigestMetadataDto | undefined;
 };
 
 /** @internal */
@@ -147,6 +157,7 @@ export const StepRunDto$inboundSchema: z.ZodType<
   createdAt: z.string().datetime({ offset: true }).transform(v => new Date(v)),
   updatedAt: z.string().datetime({ offset: true }).transform(v => new Date(v)),
   executionDetails: z.array(z.lazy(() => ExecutionDetails$inboundSchema)),
+  digest: DigestMetadataDto$inboundSchema.optional(),
 });
 
 /** @internal */
@@ -159,6 +170,7 @@ export type StepRunDto$Outbound = {
   createdAt: string;
   updatedAt: string;
   executionDetails: Array<ExecutionDetails$Outbound>;
+  digest?: DigestMetadataDto$Outbound | undefined;
 };
 
 /** @internal */
@@ -175,6 +187,7 @@ export const StepRunDto$outboundSchema: z.ZodType<
   createdAt: z.date().transform(v => v.toISOString()),
   updatedAt: z.date().transform(v => v.toISOString()),
   executionDetails: z.array(z.lazy(() => ExecutionDetails$outboundSchema)),
+  digest: DigestMetadataDto$outboundSchema.optional(),
 });
 
 /**
