@@ -46,7 +46,7 @@ export function ChartWrapper<T extends ChartDataPoint = ChartDataPoint>({
   return (
     <Card className="shadow-box-xs border-none h-full">
       <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub flex items-center gap-0.5">
+        <CardTitle className="text-label-sm text-text-sub font-medium flex items-center gap-0.5 tracking-[normal]">
           {title}
           {infoTooltip && <HelpTooltipIndicator text={infoTooltip} />}
         </CardTitle>

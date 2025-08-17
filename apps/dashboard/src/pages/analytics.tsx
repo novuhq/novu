@@ -1,4 +1,5 @@
 import { useOrganization } from '@clerk/clerk-react';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
@@ -24,6 +25,8 @@ import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
 import { Badge } from '../components/primitives/badge';
 import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
+import { InlineToast } from '../components/primitives/inline-toast';
+import { useEnvironment } from '../context/environment/hooks';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
@@ -33,6 +36,7 @@ export function AnalyticsPage() {
   const telemetry = useTelemetry();
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
+  const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
 
   const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange } = useAnalyticsDateFilter({
     organization,
@@ -153,6 +157,18 @@ export function AnalyticsPage() {
               </div>
             </motion.div>
           </div>
+          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+            <InlineToast
+              title="You're viewing analytics for the Development environment"
+              variant="tip"
+              ctaLabel="Switch to production"
+              onCtaClick={() => {
+                if (oppositeEnvironment?.slug) {
+                  switchEnvironment(oppositeEnvironment.slug);
+                }
+              }}
+            />
+          )}
         </motion.div>
       </DashboardLayout>
     </>
