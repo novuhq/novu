@@ -20,13 +20,12 @@ const chartConfig = {
 function ActiveSubscribersTrendChartSkeleton() {
   return (
     <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
-      {Array.from({ length: 15 }).map((_, i) => {
+      {Array.from({ length: 30 }).map((_, i) => {
         const height = Math.random() * 100 + 20;
 
         return (
           <div key={i} className="flex flex-col items-center gap-1 flex-1">
-            <Skeleton className="w-full rounded-full" style={{ height: `${height}px` }} />
-            {(i === 0 || i === 14) && <Skeleton className="h-2 w-6 mt-2" />}
+            <Skeleton className="w-full rounded-sm" style={{ height: `${height}px` }} />
           </div>
         );
       })}

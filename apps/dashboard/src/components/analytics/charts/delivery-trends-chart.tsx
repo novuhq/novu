@@ -111,14 +111,9 @@ function DeliveryTrendsChartSkeleton() {
           <div key={i} className="flex flex-col items-center gap-1 flex-1">
             <div className="w-full max-w-[20px] flex flex-col rounded-sm overflow-hidden border-2 border-white">
               {segments.map((segment, segmentIndex) => (
-                <Skeleton
-                  key={segmentIndex}
-                  className="w-full rounded-none"
-                  style={{ height: `${segment.height}px` }}
-                />
+                <Skeleton key={segmentIndex} className="w-full rounded-sm" style={{ height: `${segment.height}px` }} />
               ))}
             </div>
-            {(i === 0 || i === 11) && <Skeleton className="h-2 w-6 mt-2" />}
           </div>
         );
       })}
