@@ -76,4 +76,5 @@ export enum ReportTypeEnum {
   TOTAL_INTERACTIONS = 'total-interactions',
   WORKFLOW_RUNS_TREND = 'workflow-runs-trend',
   ACTIVE_SUBSCRIBERS_TREND = 'active-subscribers-trend',
+  WORKFLOW_RUNS_COUNT = 'workflow-runs-count',
 }

@@ -32,8 +32,8 @@ export class ActivityController {
     private getRequestsUsecase: GetRequests,
     private getWorkflowRunsUsecase: GetWorkflowRuns,
     private getWorkflowRunUsecase: GetWorkflowRun,
-    private getChartsUsecase: GetCharts,
-    private getRequestUsecase: GetRequest
+    private getRequestUsecase: GetRequest,
+    private getChartsUsecase: GetCharts
   ) {}
 
   @Get('requests')
