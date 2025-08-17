@@ -1,8 +1,21 @@
 import type { StepResponseDto } from '@novu/shared';
 import { RiEditLine, RiPlayFill, RiSettings4Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
+import { StepTypeEnum } from '@/utils/enums';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
+
+const DELIVERY_CHANNEL_STEPS = [
+  StepTypeEnum.EMAIL,
+  StepTypeEnum.SMS,
+  StepTypeEnum.PUSH,
+  StepTypeEnum.IN_APP,
+  StepTypeEnum.CHAT,
+];
+
+function isDeliveryChannelStep(stepType: string): boolean {
+  return DELIVERY_CHANNEL_STEPS.includes(stepType as StepTypeEnum);
+}
 
 export function useWorkflowEditorCommands(context: CommandExecutionContext): Command[] {
   const navigate = useNavigate();
@@ -81,18 +94,20 @@ export function useWorkflowEditorCommands(context: CommandExecutionContext): Com
         },
         execute: () => {
           if (context.environmentSlug) {
-            navigate(
+            const basePath =
               buildRoute(ROUTES.EDIT_WORKFLOW, {
                 environmentSlug: context.environmentSlug,
                 workflowSlug: workflow.slug,
-              }) + `/steps/${workflowStep.slug}/editor`
-            );
+              }) + `/steps/${workflowStep.slug}`;
+
+            const finalPath = isDeliveryChannelStep(workflowStep.type) ? `${basePath}/editor` : basePath;
+
+            navigate(finalPath);
           }
         },
       });
     }
   }
-  
 
   return commands;
 }
