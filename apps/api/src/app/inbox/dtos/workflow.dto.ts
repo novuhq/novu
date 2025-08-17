@@ -62,7 +62,6 @@ export class WorkflowDto {
     enum: SeverityLevelEnum,
     enumName: 'SeverityLevelEnum',
     description: 'Severity level of the workflow',
-    example: SeverityLevelEnum.LOW,
   })
   @IsDefined()
   @IsEnum(SeverityLevelEnum)

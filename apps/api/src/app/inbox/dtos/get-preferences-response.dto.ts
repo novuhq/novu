@@ -10,7 +10,6 @@ export class GetPreferencesResponseDto {
     enum: PreferenceLevelEnum,
     enumName: 'PreferenceLevelEnum',
     description: 'The level of the preference (global or template)',
-    example: PreferenceLevelEnum.TEMPLATE,
   })
   @IsDefined()
   @IsEnum(PreferenceLevelEnum, {
