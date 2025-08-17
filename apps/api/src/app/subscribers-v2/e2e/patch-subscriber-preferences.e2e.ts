@@ -175,37 +175,34 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       ],
     };
 
-    const response = await session.testAgent
-      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
-      .send(bulkUpdateData);
+    const response = await novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId);
 
-    expect(response.status).to.equal(200);
-    expect(response.body.data).to.be.an('array');
-    expect(response.body.data).to.have.lengthOf(3);
+    expect(response.result).to.be.an('array');
+    expect(response.result).to.have.lengthOf(3);
 
     // Verify each preference was updated correctly
-    const preferences = response.body.data;
+    const preferences = response.result;
 
     // Find preference for workflow 1
-    const pref1 = preferences.find((p: any) => p.workflow.id === workflow._id);
+    const pref1 = preferences.find((p) => p.workflow?.id === workflow._id);
     expect(pref1).to.exist;
-    expect(pref1.channels.email).to.equal(false);
-    expect(pref1.channels.in_app).to.equal(true);
-    expect(pref1.channels.sms).to.equal(false);
+    expect(pref1?.channels.email).to.equal(false);
+    expect(pref1?.channels.inApp).to.equal(true);
+    expect(pref1?.channels.sms).to.equal(false);
 
     // Find preference for workflow 2
-    const pref2 = preferences.find((p: any) => p.workflow.id === workflow2._id);
+    const pref2 = preferences.find((p) => p.workflow?.id === workflow2._id);
     expect(pref2).to.exist;
-    expect(pref2.channels.email).to.equal(true);
-    expect(pref2.channels.in_app).to.equal(false);
-    expect(pref2.channels.push).to.equal(true);
+    expect(pref2?.channels.email).to.equal(true);
+    expect(pref2?.channels.inApp).to.equal(false);
+    expect(pref2?.channels.push).to.equal(true);
 
     // Find preference for workflow 3
-    const pref3 = preferences.find((p: any) => p.workflow.id === workflow3._id);
+    const pref3 = preferences.find((p) => p.workflow?.id === workflow3._id);
     expect(pref3).to.exist;
-    expect(pref3.channels.email).to.equal(false);
-    expect(pref3.channels.in_app).to.equal(true);
-    expect(pref3.channels.chat).to.equal(true);
+    expect(pref3?.channels.email).to.equal(false);
+    expect(pref3?.channels.inApp).to.equal(true);
+    expect(pref3?.channels.chat).to.equal(true);
   });
 
   it('should return 422 when bulk updating with more than 50 preferences', async () => {
@@ -218,12 +215,12 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
 
     const bulkUpdateData = { preferences };
 
-    const response = await session.testAgent
-      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
-      .send(bulkUpdateData);
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId)
+    );
 
-    expect(response.status).to.equal(422);
-    expect(response.body.message).to.include('preferences must contain no more than 50 elements');
+    expect(error?.statusCode).to.equal(422);
+    expect(error?.message).to.include('preferences must contain no more than 50 elements');
   });
 
   it('should return 404 when bulk updating preferences for non-existent subscriber', async () => {
@@ -239,11 +236,11 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       ],
     };
 
-    const response = await session.testAgent
-      .patch(`/v2/subscribers/${invalidSubscriberId}/preferences/bulk`)
-      .send(bulkUpdateData);
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, invalidSubscriberId)
+    );
 
-    expect(response.status).to.equal(404);
+    expect(error?.statusCode).to.equal(404);
   });
 
   it('should return 404 when bulk updating with non-existent workflow ids', async () => {
@@ -258,12 +255,12 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       ],
     };
 
-    const response = await session.testAgent
-      .patch(`/v2/subscribers/${subscriber.subscriberId}/preferences/bulk`)
-      .send(bulkUpdateData);
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId)
+    );
 
-    expect(response.status).to.equal(404);
-    expect(response.body.message).to.include('Workflows with ids: non-existent-workflow-id not found');
+    expect(error?.statusCode).to.equal(404);
+    expect(error?.message).to.include('Workflows with ids: non-existent-workflow-id not found');
   });
 });
 
