@@ -19,6 +19,7 @@ import { MutationHookOptions } from "./_types.js";
 
 export type SubscribersCreateMutationVariables = {
   createSubscriberRequestDto: components.CreateSubscriberRequestDto;
+  failIfExists?: boolean | undefined;
   idempotencyKey?: string | undefined;
   options?: RequestOptions;
 };
@@ -68,6 +69,7 @@ export function buildSubscribersCreateMutation(
     mutationKey: mutationKeySubscribersCreate(),
     mutationFn: function subscribersCreateMutationFn({
       createSubscriberRequestDto,
+      failIfExists,
       idempotencyKey,
       options,
     }): Promise<SubscribersCreateMutationData> {
@@ -86,6 +88,7 @@ export function buildSubscribersCreateMutation(
       return unwrapAsync(subscribersCreate(
         client$,
         createSubscriberRequestDto,
+        failIfExists,
         idempotencyKey,
         mergedOptions,
       ));

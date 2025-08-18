@@ -3,7 +3,7 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { encodeFormQuery, encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -36,11 +36,13 @@ import { Result } from "../types/fp.js";
 export function subscribersCreate(
   client: NovuCore,
   createSubscriberRequestDto: components.CreateSubscriberRequestDto,
+  failIfExists?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
     operations.SubscribersControllerCreateSubscriberResponse,
+    | errors.SubscriberResponseDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -56,6 +58,7 @@ export function subscribersCreate(
   return new APIPromise($do(
     client,
     createSubscriberRequestDto,
+    failIfExists,
     idempotencyKey,
     options,
   ));
@@ -64,12 +67,14 @@ export function subscribersCreate(
 async function $do(
   client: NovuCore,
   createSubscriberRequestDto: components.CreateSubscriberRequestDto,
+  failIfExists?: boolean | undefined,
   idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
       operations.SubscribersControllerCreateSubscriberResponse,
+      | errors.SubscriberResponseDto
       | errors.ErrorDto
       | errors.ValidationErrorDto
       | NovuError
@@ -86,6 +91,7 @@ async function $do(
 > {
   const input: operations.SubscribersControllerCreateSubscriberRequest = {
     createSubscriberRequestDto: createSubscriberRequestDto,
+    failIfExists: failIfExists,
     idempotencyKey: idempotencyKey,
   };
 
@@ -105,6 +111,10 @@ async function $do(
   });
 
   const path = pathToFunc("/v2/subscribers")();
+
+  const query = encodeFormQuery({
+    "failIfExists": payload.failIfExists,
+  });
 
   const headers = new Headers(compactMap({
     "Content-Type": "application/json",
@@ -150,6 +160,7 @@ async function $do(
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
+    query: query,
     body: body,
     userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
@@ -192,6 +203,7 @@ async function $do(
 
   const [result] = await M.match<
     operations.SubscribersControllerCreateSubscriberResponse,
+    | errors.SubscriberResponseDto
     | errors.ErrorDto
     | errors.ValidationErrorDto
     | NovuError
@@ -208,9 +220,10 @@ async function $do(
       operations.SubscribersControllerCreateSubscriberResponse$inboundSchema,
       { hdrs: true, key: "Result" },
     ),
+    M.jsonErr(409, errors.SubscriberResponseDto$inboundSchema, { hdrs: true }),
     M.jsonErr(414, errors.ErrorDto$inboundSchema),
     M.jsonErr(
-      [400, 401, 403, 404, 405, 409, 413, 415],
+      [400, 401, 403, 404, 405, 413, 415],
       errors.ErrorDto$inboundSchema,
       { hdrs: true },
     ),

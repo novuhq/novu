@@ -3,6 +3,7 @@ import { EnvironmentTypeEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   type ActiveSubscribersTrendDataPoint,
   type ProviderVolumeDataPoint,
@@ -37,6 +38,9 @@ export function AnalyticsPage() {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
   const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
+  const [searchParams] = useSearchParams();
+
+  const isDevMockMode = searchParams.get('dev_mock_date') === 'true';
 
   const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange } = useAnalyticsDateFilter({
     organization,
@@ -67,6 +71,7 @@ export function AnalyticsPage() {
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
+    useMockData: isDevMockMode,
   });
 
   const {
@@ -79,6 +84,7 @@ export function AnalyticsPage() {
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
+    useMockData: isDevMockMode,
   });
 
   const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, totalInteractionsData } =
@@ -98,6 +104,11 @@ export function AnalyticsPage() {
             <Badge variant="lighter" className="text-xs">
               BETA
             </Badge>
+            {isDevMockMode && (
+              <Badge variant="filled" color="orange" className="text-xs">
+                DEV MOCK DATA
+              </Badge>
+            )}
           </h1>
         }
       >

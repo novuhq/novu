@@ -1,5 +1,9 @@
 import { Novu } from '@novu/api';
-import { PatchSubscriberPreferencesDto, SubscriberResponseDto } from '@novu/api/models/components';
+import {
+  BulkUpdateSubscriberPreferencesDto,
+  PatchSubscriberPreferencesDto,
+  SubscriberResponseDto,
+} from '@novu/api/models/components';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { ShortIsPrefixEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
@@ -135,6 +139,125 @@ describe('Patch Subscriber Preferences - /subscribers/:subscriberId/preferences 
       // TODO: fix in SDK util
       expect(e).to.be.an.instanceOf(Error);
     }
+  });
+
+  it('should bulk update multiple workflow preferences', async () => {
+    const workflow2 = await session.createTemplate({
+      noFeedId: true,
+    });
+    const workflow3 = await session.createTemplate({
+      noFeedId: true,
+    });
+
+    const bulkUpdateData: BulkUpdateSubscriberPreferencesDto = {
+      preferences: [
+        {
+          workflowId: workflow._id,
+          channels: {
+            email: false,
+            inApp: true,
+            sms: false,
+          },
+        },
+        {
+          workflowId: workflow2._id,
+          channels: {
+            email: true,
+            inApp: false,
+            push: true,
+          },
+        },
+        {
+          workflowId: workflow3.triggers[0].identifier, // Test with trigger identifier
+          channels: {
+            email: false,
+            inApp: true,
+            chat: true,
+          },
+        },
+      ],
+    };
+
+    const response = await novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId);
+
+    expect(response.result).to.be.an('array');
+    expect(response.result).to.have.lengthOf(3);
+
+    // Verify each preference was updated correctly
+    const preferences = response.result;
+
+    const pref1 = preferences.find((p) => p.workflow?.id === workflow._id);
+    expect(pref1).to.exist;
+    expect(pref1?.channels.email).to.equal(false);
+    expect(pref1?.channels.inApp).to.equal(true);
+
+    const pref2 = preferences.find((p) => p.workflow?.id === workflow2._id);
+    expect(pref2).to.exist;
+    expect(pref2?.channels.email).to.equal(true);
+    expect(pref2?.channels.inApp).to.equal(false);
+
+    const pref3 = preferences.find((p) => p.workflow?.id === workflow3._id);
+    expect(pref3).to.exist;
+    expect(pref3?.channels.email).to.equal(false);
+    expect(pref3?.channels.inApp).to.equal(true);
+  });
+
+  it('should return 422 when bulk updating with more than 100 preferences', async () => {
+    const preferences = Array.from({ length: 101 }, (_, i) => ({
+      workflowId: workflow._id,
+      channels: {
+        email: i % 2 === 0,
+      },
+    }));
+
+    const bulkUpdateData = { preferences };
+
+    const { error } = await expectSdkValidationExceptionGeneric(() =>
+      novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(422);
+    expect(error?.message).to.include('Validation Error');
+  });
+
+  it('should return 404 when bulk updating preferences for non-existent subscriber', async () => {
+    const invalidSubscriberId = `non-existent-${randomBytes(2).toString('hex')}`;
+    const bulkUpdateData = {
+      preferences: [
+        {
+          workflowId: workflow._id,
+          channels: {
+            email: false,
+          },
+        },
+      ],
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, invalidSubscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(404);
+  });
+
+  it('should return 404 when bulk updating with non-existent workflow ids', async () => {
+    const bulkUpdateData = {
+      preferences: [
+        {
+          workflowId: 'non-existent-workflow-id',
+          channels: {
+            email: false,
+          },
+        },
+      ],
+    };
+
+    const { error } = await expectSdkExceptionGeneric(() =>
+      novuClient.subscribers.preferences.bulkUpdate(bulkUpdateData, subscriber.subscriberId)
+    );
+
+    expect(error?.statusCode).to.equal(404);
+    expect(error?.message).to.include('Workflows with ids: non-existent-workflow-id not found');
   });
 });
 

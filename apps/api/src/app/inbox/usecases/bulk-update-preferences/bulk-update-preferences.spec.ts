@@ -161,7 +161,7 @@ describe('BulkUpdatePreferences', () => {
       expect.fail('Should throw an exception');
     } catch (error) {
       expect(error).to.be.instanceOf(UnprocessableEntityException);
-      expect(error.message).to.equal('Exceeded maximum limit of 100 preferences for bulk update');
+      expect(error.message).to.equal('preferences must contain no more than 100 elements');
     }
   });
 

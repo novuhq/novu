@@ -3,13 +3,14 @@
  */
 
 import { NovuCore } from "../core.js";
-import { encodeFormQuery, encodeSimple } from "../lib/encodings.js";
+import { encodeJSON, encodeSimple } from "../lib/encodings.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
 import { RequestOptions } from "../lib/sdks.js";
 import { extractSecurity, resolveGlobalSecurity } from "../lib/security.js";
 import { pathToFunc } from "../lib/url.js";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
@@ -17,6 +18,7 @@ import {
   RequestTimeoutError,
   UnexpectedClientError,
 } from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
 import { NovuError } from "../models/errors/novuerror.js";
 import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
 import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
@@ -24,13 +26,25 @@ import * as operations from "../models/operations/index.js";
 import { APICall, APIPromise } from "../types/async.js";
 import { Result } from "../types/fp.js";
 
-export function retrieve(
+/**
+ * Bulk update subscriber preferences
+ *
+ * @remarks
+ * Bulk update subscriber preferences by its unique key identifier **subscriberId**.
+ *     This API allows updating multiple workflow preferences in a single request.
+ */
+export function subscribersPreferencesBulkUpdate(
   client: NovuCore,
-  request: operations.LogsControllerGetLogsRequest,
+  bulkUpdateSubscriberPreferencesDto:
+    components.BulkUpdateSubscriberPreferencesDto,
+  subscriberId: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): APIPromise<
   Result<
-    operations.LogsControllerGetLogsResponseBody,
+    operations.SubscribersControllerBulkUpdateSubscriberPreferencesResponse,
+    | errors.ErrorDto
+    | errors.ValidationErrorDto
     | NovuError
     | ResponseValidationError
     | ConnectionError
@@ -43,19 +57,26 @@ export function retrieve(
 > {
   return new APIPromise($do(
     client,
-    request,
+    bulkUpdateSubscriberPreferencesDto,
+    subscriberId,
+    idempotencyKey,
     options,
   ));
 }
 
 async function $do(
   client: NovuCore,
-  request: operations.LogsControllerGetLogsRequest,
+  bulkUpdateSubscriberPreferencesDto:
+    components.BulkUpdateSubscriberPreferencesDto,
+  subscriberId: string,
+  idempotencyKey?: string | undefined,
   options?: RequestOptions,
 ): Promise<
   [
     Result<
-      operations.LogsControllerGetLogsResponseBody,
+      operations.SubscribersControllerBulkUpdateSubscriberPreferencesResponse,
+      | errors.ErrorDto
+      | errors.ValidationErrorDto
       | NovuError
       | ResponseValidationError
       | ConnectionError
@@ -68,31 +89,42 @@ async function $do(
     APICall,
   ]
 > {
+  const input:
+    operations.SubscribersControllerBulkUpdateSubscriberPreferencesRequest = {
+      bulkUpdateSubscriberPreferencesDto: bulkUpdateSubscriberPreferencesDto,
+      subscriberId: subscriberId,
+      idempotencyKey: idempotencyKey,
+    };
+
   const parsed = safeParse(
-    request,
+    input,
     (value) =>
-      operations.LogsControllerGetLogsRequest$outboundSchema.parse(value),
+      operations
+        .SubscribersControllerBulkUpdateSubscriberPreferencesRequest$outboundSchema
+        .parse(value),
     "Input validation failed",
   );
   if (!parsed.ok) {
     return [parsed, { status: "invalid" }];
   }
   const payload = parsed.value;
-  const body = null;
-
-  const path = pathToFunc("/v1/logs/requests")();
-
-  const query = encodeFormQuery({
-    "createdGte": payload.createdGte,
-    "limit": payload.limit,
-    "page": payload.page,
-    "statusCodes": payload.statusCodes,
-    "transactionId": payload.transactionId,
-    "url": payload.url,
-    "url_pattern": payload.url_pattern,
+  const body = encodeJSON("body", payload.BulkUpdateSubscriberPreferencesDto, {
+    explode: true,
   });
 
+  const pathParams = {
+    subscriberId: encodeSimple("subscriberId", payload.subscriberId, {
+      explode: false,
+      charEncoding: "percent",
+    }),
+  };
+
+  const path = pathToFunc("/v2/subscribers/{subscriberId}/preferences/bulk")(
+    pathParams,
+  );
+
   const headers = new Headers(compactMap({
+    "Content-Type": "application/json",
     Accept: "application/json",
     "idempotency-key": encodeSimple(
       "idempotency-key",
@@ -107,7 +139,7 @@ async function $do(
   const context = {
     options: client._options,
     baseURL: options?.serverURL ?? client._baseURL ?? "",
-    operationID: "LogsController_getLogs",
+    operationID: "SubscribersController_bulkUpdateSubscriberPreferences",
     oAuth2Scopes: [],
 
     resolvedSecurity: requestSecurity,
@@ -131,11 +163,10 @@ async function $do(
 
   const requestRes = client._createRequest(context, {
     security: requestSecurity,
-    method: "GET",
+    method: "PATCH",
     baseURL: options?.serverURL,
     path: path,
     headers: headers,
-    query: query,
     body: body,
     userAgent: client._options.userAgent,
     timeoutMs: options?.timeoutMs || client._options.timeoutMs || -1,
@@ -147,7 +178,23 @@ async function $do(
 
   const doResult = await client._do(req, {
     context,
-    errorCodes: ["4XX", "5XX"],
+    errorCodes: [
+      "400",
+      "401",
+      "403",
+      "404",
+      "405",
+      "409",
+      "413",
+      "414",
+      "415",
+      "422",
+      "429",
+      "4XX",
+      "500",
+      "503",
+      "5XX",
+    ],
     retryConfig: context.retryConfig,
     retryCodes: context.retryCodes,
   });
@@ -156,8 +203,14 @@ async function $do(
   }
   const response = doResult.value;
 
+  const responseFields = {
+    HttpMeta: { Response: response, Request: req },
+  };
+
   const [result] = await M.match<
-    operations.LogsControllerGetLogsResponseBody,
+    operations.SubscribersControllerBulkUpdateSubscriberPreferencesResponse,
+    | errors.ErrorDto
+    | errors.ValidationErrorDto
     | NovuError
     | ResponseValidationError
     | ConnectionError
@@ -167,10 +220,25 @@ async function $do(
     | UnexpectedClientError
     | SDKValidationError
   >(
-    M.json(200, operations.LogsControllerGetLogsResponseBody$inboundSchema),
+    M.json(
+      200,
+      operations
+        .SubscribersControllerBulkUpdateSubscriberPreferencesResponse$inboundSchema,
+      { hdrs: true, key: "Result" },
+    ),
+    M.jsonErr(414, errors.ErrorDto$inboundSchema),
+    M.jsonErr(
+      [400, 401, 403, 404, 405, 409, 413, 415],
+      errors.ErrorDto$inboundSchema,
+      { hdrs: true },
+    ),
+    M.jsonErr(422, errors.ValidationErrorDto$inboundSchema, { hdrs: true }),
+    M.fail(429),
+    M.jsonErr(500, errors.ErrorDto$inboundSchema, { hdrs: true }),
+    M.fail(503),
     M.fail("4XX"),
     M.fail("5XX"),
-  )(response, req);
+  )(response, req, { extraFields: responseFields });
   if (!result.ok) {
     return [result, { status: "complete", request: req, response }];
   }
