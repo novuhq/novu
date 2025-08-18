@@ -1,5 +1,6 @@
 import { EnvironmentTypeEnum, FeatureFlagsKeysEnum, PermissionsEnum, ResourceOriginEnum } from '@novu/shared';
-import { BaseEdge, Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
+import { Edge, EdgeLabelRenderer, EdgeProps, getBezierPath } from '@xyflow/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { RiInsertRowTop } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { createStep } from '@/components/workflow-editor/step-utils';
@@ -8,11 +9,12 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { fadeIn } from '@/utils/animation';
 import { INLINE_CONFIGURABLE_STEP_TYPES, TEMPLATE_CONFIGURABLE_STEP_TYPES } from '@/utils/constants';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { AddStepMenu } from './add-step-menu';
 import { NODE_WIDTH } from './base-node';
-import { useDragContext } from './workflow-canvas';
+import { useDragContext } from './drag-context';
 
 export type AddNodeEdgeType = Edge<{ isLast: boolean; addStepIndex: number }>;
 
@@ -61,7 +63,26 @@ export function AddNodeEdge({
 
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} key={id} />
+      <AnimatePresence>
+        <motion.path
+          {...fadeIn}
+          markerEnd={markerEnd}
+          style={style}
+          d={edgePath}
+          fill="none"
+          className="react-flow__edge-path"
+          key={`${id}-path`}
+        />
+        <motion.path
+          {...fadeIn}
+          d={edgePath}
+          fill="none"
+          strokeOpacity={0}
+          strokeWidth={20}
+          className="react-flow__edge-interaction"
+          key={`${id}-interaction`}
+        />
+      </AnimatePresence>
       {!data.isLast && (
         <EdgeLabelRenderer>
           <div
@@ -147,3 +168,28 @@ export function AddNodeEdge({
     </>
   );
 }
+
+export const DefaultEdge = ({ id, sourceX, sourceY, targetX, targetY, style }: EdgeProps) => {
+  const edgePath = `M ${sourceX} ${sourceY} L ${targetX} ${targetY}`;
+  return (
+    <AnimatePresence>
+      <motion.path
+        {...fadeIn}
+        style={style}
+        d={edgePath}
+        fill="none"
+        className="react-flow__edge-path"
+        key={`${id}-path`}
+      />
+      <motion.path
+        {...fadeIn}
+        d={edgePath}
+        fill="none"
+        strokeOpacity={0}
+        strokeWidth={20}
+        className="react-flow__edge-interaction"
+        key={`${id}-interaction`}
+      />
+    </AnimatePresence>
+  );
+};
