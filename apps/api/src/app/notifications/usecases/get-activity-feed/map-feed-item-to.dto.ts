@@ -191,7 +191,7 @@ function isDigestTimedMetadata(item: IWorkflowStepMetadata): item is IDigestTime
   return item.type === DigestTypeEnum.TIMED;
 }
 
-function mapDigest(
+export function mapDigest(
   digestItem?: IWorkflowStepMetadata & {
     events?: any[];
   }

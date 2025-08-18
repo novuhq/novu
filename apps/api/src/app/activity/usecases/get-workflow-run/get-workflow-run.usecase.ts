@@ -9,13 +9,16 @@ import {
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
+import { JobRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
+import { mapDigest } from '../../../notifications/usecases/get-activity-feed/map-feed-item-to.dto';
 import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 interface IStepRunWithDetails extends StepRun {
   executionDetails?: any[];
+  digest?: any;
 }
 
 @Injectable()
@@ -24,6 +27,7 @@ export class GetWorkflowRun {
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
     private traceLogRepository: TraceLogRepository,
+    private jobRepository: JobRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -95,10 +99,12 @@ export class GetWorkflowRun {
 
       const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
       const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
+      const digestDataByStepId = await this.getJobDigestDataByTransactionId(workflowRun.transaction_id, command);
 
       return stepRunsResult.data.map((stepRun) => ({
         ...stepRun,
         executionDetails: executionDetailsByStepRunId.get(stepRun.step_run_id) || [],
+        digest: digestDataByStepId.get(stepRun.step_run_id),
       }));
     } catch (error) {
       this.logger.warn('Failed to get step runs for workflow run', {
@@ -157,6 +163,35 @@ export class GetWorkflowRun {
       this.logger.warn('Failed to get execution details from traces', {
         error: error.message,
         entityIds,
+      });
+
+      return new Map();
+    }
+  }
+
+  private async getJobDigestDataByTransactionId(
+    transactionId: string,
+    command: GetWorkflowRunCommand
+  ): Promise<Map<string, any>> {
+    try {
+      const jobs = await this.jobRepository.find({
+        transactionId,
+        _environmentId: command.environmentId,
+      });
+
+      const digestDataByStepId = new Map<string, any>();
+
+      for (const job of jobs) {
+        if (job.digest && job.step?.stepId) {
+          digestDataByStepId.set(job._id, job.digest);
+        }
+      }
+
+      return digestDataByStepId;
+    } catch (error) {
+      this.logger.warn('Failed to get job digest data', {
+        error: error.message,
+        transactionId,
       });
 
       return new Map();
@@ -225,6 +260,7 @@ export class GetWorkflowRun {
         createdAt: new Date(stepRun.created_at),
         updatedAt: new Date(stepRun.updated_at),
         executionDetails: stepRun.executionDetails || [],
+        digest: mapDigest(stepRun.digest),
       })),
     };
   }
