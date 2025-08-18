@@ -24,7 +24,7 @@ import {
 } from '@novu/shared';
 import { PlatformException } from '../../../../shared/utils';
 import { SendMessageCommand } from '../send-message.command';
-import { SendMessageResult, SendMessageType } from '../send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageType } from '../send-message-type.usecase';
 import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -91,7 +91,7 @@ export class Digest extends SendMessageType {
     );
 
     return {
-      status: 'success',
+      status: SendMessageStatus.SUCCESS,
     };
   }
 

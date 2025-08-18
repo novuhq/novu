@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
+  DeliveryLifecycleEnum,
   DetailEnum,
   InstrumentUsecase,
   PinoLogger,
@@ -73,10 +74,10 @@ export class HandleLastFailedJob {
 
   private async updateWorkflowRunStatusToFailed(job: JobEntity): Promise<void> {
     try {
-      await this.workflowRunRepository.updateWorkflowRunStatus(job._notificationId, WorkflowRunStatusEnum.ERROR, {
+      await this.workflowRunRepository.updateWorkflowRunState(job._notificationId, WorkflowRunStatusEnum.ERROR, {
         organizationId: job._organizationId,
         environmentId: job._environmentId,
-      });
+      }, DeliveryLifecycleEnum.ERRORED);
 
       this.logger.debug(
         {

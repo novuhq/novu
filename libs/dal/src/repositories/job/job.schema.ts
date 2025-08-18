@@ -11,6 +11,9 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.String,
       default: JobStatusEnum.PENDING,
     },
+    statusReason: {
+      type: Schema.Types.String,
+    },
     payload: {
       type: Schema.Types.Mixed,
     },

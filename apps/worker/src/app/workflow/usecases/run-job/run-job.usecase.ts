@@ -18,6 +18,7 @@ import { SendMessage, SendMessageCommand } from '../send-message';
 import { SetJobAsFailedCommand } from '../update-job-status/set-job-as.command';
 import { SetJobAsFailed } from '../update-job-status/set-job-as-failed.usecase';
 import { RunJobCommand } from './run-job.command';
+import { SendMessageStatus } from '../send-message/send-message-type.usecase';
 
 const nr = require('newrelic');
 
@@ -150,7 +151,7 @@ export class RunJob {
           {
             $set: {
               status: JobStatusEnum.FAILED,
-              error: sendMessageResult.reason,
+              error: sendMessageResult.errorMessage,
             },
           }
         );
@@ -158,7 +159,7 @@ export class RunJob {
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.FAILED,
           errorCode: 'send_message_failed',
-          errorMessage: sendMessageResult.reason,
+          errorMessage: sendMessageResult.errorMessage,
         });
 
         if (shouldHaltOnStepFailure(job)) {
@@ -170,8 +171,8 @@ export class RunJob {
             _templateId: job._templateId,
           });
         }
-      } else if (sendMessageResult.status === 'skipped') {
-        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.CANCELED);
+      } else if (sendMessageResult.status === SendMessageStatus.SKIPPED) {
+        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.CANCELED, sendMessageResult.statusReason);
         await this.stepRunRepository.create(job, {
           status: JobStatusEnum.CANCELED,
         });

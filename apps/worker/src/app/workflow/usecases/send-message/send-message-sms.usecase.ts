@@ -28,7 +28,7 @@ import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -112,8 +112,8 @@ export class SendMessageSms extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -139,8 +139,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -223,8 +223,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'skipped',
-        reason: DetailEnum.SUBSCRIBER_MISSING_PHONE_NUMBER,
+        status: SendMessageStatus.SKIPPED,
+        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_PHONE,
       };
     }
     if (!integration) {
@@ -249,8 +249,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
     if (!integration?.credentials?.from) {
@@ -275,14 +275,14 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
     return {
-      status: 'failed',
-      reason: DetailEnum.PROVIDER_ERROR,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -332,8 +332,8 @@ export class SendMessageSms extends SendMessageBase {
 
       if (!result?.id) {
         return {
-          status: 'failed',
-          reason: DetailEnum.PROVIDER_ERROR,
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.PROVIDER_ERROR,
         };
       }
 
@@ -359,7 +359,7 @@ export class SendMessageSms extends SendMessageBase {
       });
 
       return {
-        status: 'success',
+        status: SendMessageStatus.SUCCESS,
       };
     } catch (e) {
       await this.sendErrorStatus(
@@ -398,8 +398,8 @@ export class SendMessageSms extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.PROVIDER_ERROR,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.PROVIDER_ERROR,
       };
     }
   }

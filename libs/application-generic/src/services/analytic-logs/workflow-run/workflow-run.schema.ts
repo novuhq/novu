@@ -28,7 +28,8 @@ const schemaDefinition = {
   external_subscriber_id: { type: CHNullable(CHString()) },
 
   // Execution metadata
-  status: { type: CHLowCardinality(CHString()) }, // pending, running, completed, failed, cancelled
+  status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
+  delivery_lifecycle: { type: CHLowCardinality(CHString()) }, // pending, sent, errored, skipped, cancelled, merged, delivered, interacted
   trigger_identifier: { type: CHString() }, // The event identifier that triggered the workflow
 
   // Correlation and grouping
@@ -71,6 +72,15 @@ export enum WorkflowRunStatusEnum {
   CANCELED = 'canceled',
   MERGED = 'merged',
   SKIPPED = 'skipped',
+}
+
+export enum DeliveryLifecycleEnum {
+  PENDING = 'pending',
+  SENT = 'sent',
+  ERRORED = 'errored',
+  SKIPPED = 'skipped',
+  CANCELED = 'canceled',
+  MERGED = 'merged',
 }
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;

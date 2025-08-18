@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  DeliveryLifecycleEnum,
   isActionStepType,
   isMainDigest,
   StepRunRepository,
@@ -61,13 +62,14 @@ export class CancelDelayed {
     // Update workflow run status to canceled after canceling jobs
     if (jobs.length > 0) {
       const firstJob = jobs[0];
-      await this.workflowRunRepository.updateWorkflowRunStatus(
+      await this.workflowRunRepository.updateWorkflowRunState(
         firstJob._notificationId,
         WorkflowRunStatusEnum.CANCELED,
         {
           organizationId: firstJob._organizationId,
           environmentId: firstJob._environmentId,
-        }
+        },
+        DeliveryLifecycleEnum.CANCELED
       );
     }
 

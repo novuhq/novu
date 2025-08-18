@@ -33,7 +33,7 @@ export class WorkflowStatusUpdateService {
 
       const newStatus = this.mapWorkflowRunStatusToDto(jobs);
 
-      await this.workflowRunRepository.updateWorkflowRunStatus(notificationId, newStatus, {
+      await this.workflowRunRepository.updateWorkflowRunState(notificationId, newStatus, {
         organizationId,
         environmentId,
       });
@@ -87,7 +87,7 @@ export class WorkflowStatusUpdateService {
    * Logic based on channel steps (jobs) as defined in the specification:
    * - Success: At least one channel step sent
    * - Error: All channel steps failed
-   * - Skipped: Intentionally not sent due to user preferences or logic
+   * - Skipped: Intentionally not sent due to subscriber preferences or user conditions etc.
    * - Cancelled: Explicitly aborted before sending
    * - Merged: Workflow was merged with another and suppressed sending
    */
@@ -109,7 +109,6 @@ export class WorkflowStatusUpdateService {
       return WorkflowRunStatusEnum.SUCCESS;
     }
 
-    // Check for specific statuses first
     if (channelSteps.some((job) => job.status === JobStatusEnum.CANCELED)) {
       return WorkflowRunStatusEnum.CANCELED;
     }

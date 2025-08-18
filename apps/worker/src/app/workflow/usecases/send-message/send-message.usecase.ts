@@ -50,7 +50,7 @@ import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -114,7 +114,11 @@ export class SendMessage {
         })
       );
 
-      return { status: 'skipped', reason: DetailEnum.SKIPPED_BRIDGE_EXECUTION };
+      return {
+        status: SendMessageStatus.SKIPPED,
+        statusReason: SendMessageStatusReason.USER_STEP_CONDITION,
+        extraData: DetailEnum.SKIPPED_BRIDGE_EXECUTION,
+      };
     }
 
     const { stepCondition, channelPreference } = await this.evaluateFilters(isBridgeSkipped, command, variables);
@@ -130,8 +134,10 @@ export class SendMessage {
 
     if (!stepCondition?.passed || !channelPreference.result) {
       return {
-        status: 'skipped',
-        reason: !channelPreference.result ? channelPreference.reason : DetailEnum.FILTER_STEPS,
+        status: SendMessageStatus.SKIPPED,
+        statusReason: !channelPreference.result
+          ? SendMessageStatusReason.SUBSCRIBER_PREFERENCE
+          : SendMessageStatusReason.USER_STEP_CONDITION,
       };
     }
 
@@ -199,7 +205,7 @@ export class SendMessage {
 
     switch (stepType) {
       case StepTypeEnum.TRIGGER: {
-        return { status: 'success' };
+        return { status: SendMessageStatus.SUCCESS };
       }
       case StepTypeEnum.SMS: {
         return await this.sendMessageSms.execute(sendMessageChannelCommand);

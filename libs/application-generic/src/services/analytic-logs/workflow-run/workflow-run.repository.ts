@@ -12,7 +12,7 @@ import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
+import { DeliveryLifecycleEnum, ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
 type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
 
@@ -20,6 +20,7 @@ interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
+  deliveryLifecycle?: DeliveryLifecycleEnum;
 }
 
 // Type for selected columns from the workflow run schema
@@ -159,13 +160,14 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
    * We'll need to insert a new record with updated status.
    * ReplacingMergeTree will handle deduplication based on workflow_run_id.
    */
-  async updateWorkflowRunStatus(
+  async updateWorkflowRunState(
     workflowRunId: string,
     status: WorkflowRunStatusEnum,
     context: {
       organizationId: string;
       environmentId: string;
-    }
+    },
+    deliveryLifecycle?: DeliveryLifecycleEnum
   ): Promise<void> {
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
@@ -239,6 +241,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
         status,
+        deliveryLifecycle,
         userId: null,
         externalSubscriberId: notification.to?.subscriberId || null,
       });
@@ -443,6 +446,9 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       // Digest information
       is_digest: notification._digestedNotificationId ? 'true' : 'false',
       digested_workflow_run_id: notification._digestedNotificationId || null,
+
+      // Delivery lifecycle
+      ...(options.deliveryLifecycle && { delivery_lifecycle: options.deliveryLifecycle }),
     };
   }
 

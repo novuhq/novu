@@ -46,7 +46,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     return stored;
   }
 
-  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum): Promise<IUpdateResult> {
+  public async updateStatus(environmentId: string, jobId: string, status: JobStatusEnum, statusReason?: string): Promise<IUpdateResult> {
     return this.MongooseModel.updateOne(
       {
         _environmentId: environmentId,
@@ -55,6 +55,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
       {
         $set: {
           status,
+          statusReason,
         },
       }
     );

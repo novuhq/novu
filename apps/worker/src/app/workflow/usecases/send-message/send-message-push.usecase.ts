@@ -34,7 +34,7 @@ import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
@@ -116,8 +116,8 @@ export class SendMessagePush extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -143,15 +143,15 @@ export class SendMessagePush extends SendMessageBase {
       await this.createExecutionDetailsError(DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL, command.job);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
     const messagePayload = { ...command.payload };
     delete messagePayload.attachments;
 
-    let status: SendMessageResult['status'] = 'failed';
+    let status: SendMessageResult['status'] = SendMessageStatus.FAILED;
     for (const channel of allPushChannels) {
       const { deviceTokens } = channel.credentials || {};
 
@@ -170,8 +170,8 @@ export class SendMessagePush extends SendMessageBase {
           })
         );
 
-        if (status !== 'success') {
-          status = 'skipped';
+        if (status !== SendMessageStatus.SUCCESS) {
+          status = SendMessageStatus.SKIPPED;
         }
       }
 
@@ -225,7 +225,7 @@ export class SendMessagePush extends SendMessageBase {
         );
 
         if (result.success) {
-          status = 'success';
+          status = SendMessageStatus.SUCCESS;
         } else {
           Logger.error(
             { jobId: command.jobId },
@@ -252,7 +252,7 @@ export class SendMessagePush extends SendMessageBase {
         );
 
         if (result.success) {
-          status = 'success';
+          status = SendMessageStatus.SUCCESS;
         } else {
           Logger.error(
             { jobId: command.jobId },
@@ -276,8 +276,8 @@ export class SendMessagePush extends SendMessageBase {
       );
 
       return {
-        status,
-        reason: DetailEnum.PUSH_SOME_CHANNELS_SKIPPED,
+        status: SendMessageStatus.SKIPPED,
+        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_PUSH_TOKEN,
       };
     } else if (status === 'failed') {
       await this.createExecutionDetails.execute(
@@ -293,7 +293,7 @@ export class SendMessagePush extends SendMessageBase {
 
       return {
         status,
-        reason: DetailEnum.NOTIFICATION_ERROR,
+        errorMessage: DetailEnum.NOTIFICATION_ERROR,
       };
     }
 

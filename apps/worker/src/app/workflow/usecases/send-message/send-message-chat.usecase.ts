@@ -38,7 +38,7 @@ import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
 
@@ -106,8 +106,8 @@ export class SendMessageChat extends SendMessageBase {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return {
-        status: 'failed',
-        reason: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
       };
     }
 
@@ -138,19 +138,19 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_CHANNEL,
       };
     }
 
-    let status: SendMessageResult['status'] = 'failed';
+    let status: SendMessageStatus = SendMessageStatus.FAILED;
     for (const channel of chatChannels) {
       try {
         const result = await this.sendChannelMessage(command, channel, step, content);
-        if (result.status === 'success') {
-          status = 'success';
-        } else if (result.status === 'skipped' && status !== 'success') {
-          status = 'skipped';
+        if (result.status === SendMessageStatus.SUCCESS) {
+          status = SendMessageStatus.SUCCESS;
+        } else if (result.status === SendMessageStatus.SKIPPED && status !== SendMessageStatus.SUCCESS) {
+          status = SendMessageStatus.SKIPPED;
         }
       } catch (e) {
         /*
@@ -161,7 +161,7 @@ export class SendMessageChat extends SendMessageBase {
       }
     }
 
-    if (status === 'failed') {
+    if (status === SendMessageStatus.FAILED) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -175,9 +175,9 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status,
-        reason: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
+        errorMessage: DetailEnum.CHAT_ALL_CHANNELS_FAILED,
       };
-    } else if (status === 'skipped') {
+    } else if (status === SendMessageStatus.SKIPPED) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -190,8 +190,8 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status,
-        reason: DetailEnum.CHAT_SOME_CHANNELS_SKIPPED,
+        status: SendMessageStatus.SKIPPED,
+        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_CREDENTIALS,
       };
     }
 
@@ -205,7 +205,7 @@ export class SendMessageChat extends SendMessageBase {
     subscriberChannel: IChannelSettings,
     chatChannel: NotificationStepEntity,
     content: string
-  ) {
+  ): Promise<SendMessageResult> {
     const getIntegrationParams: {
       id?: string;
       providerId?: ProvidersIdEnum;
@@ -254,8 +254,8 @@ export class SendMessageChat extends SendMessageBase {
         );
 
         return {
-          status: 'failed',
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          status: SendMessageStatus.FAILED,
+          errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
         };
       }
     } else if (!integration) {
@@ -274,8 +274,8 @@ export class SendMessageChat extends SendMessageBase {
        * TODO: Need to handle a proper execution log error for this case
        */
       return {
-        status: 'failed',
-        detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
@@ -384,8 +384,8 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'skipped',
-        reason: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
+        status: SendMessageStatus.SKIPPED,
+        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_PHONE,
       };
     } else if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
@@ -413,8 +413,8 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'skipped',
-        reason: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
+        status: SendMessageStatus.SKIPPED,
+        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_WEBHOOK_URL,
       };
     }
     if (!integration) {
@@ -442,14 +442,14 @@ export class SendMessageChat extends SendMessageBase {
       );
 
       return {
-        status: 'failed',
-        reason: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
       };
     }
 
     return {
-      status: 'failed',
-      reason: DetailEnum.PROVIDER_ERROR,
+      status: SendMessageStatus.FAILED,
+      errorMessage: DetailEnum.PROVIDER_ERROR,
     };
   }
 
@@ -515,7 +515,7 @@ export class SendMessageChat extends SendMessageBase {
       });
 
       return {
-        status: 'success',
+        status: SendMessageStatus.SUCCESS,
       };
     } catch (e) {
       await this.sendErrorStatus(
@@ -557,8 +557,8 @@ export class SendMessageChat extends SendMessageBase {
       });
 
       return {
-        status: 'failed',
-        reason: DetailEnum.PROVIDER_ERROR,
+        status: SendMessageStatus.FAILED,
+        errorMessage: DetailEnum.PROVIDER_ERROR,
       };
     }
   }
