@@ -5,6 +5,11 @@
 export { NovuProvider, useNovuContext } from "./_context.js";
 export * from "./_types.js";
 
+export * from "./activityChartsRetrieve.js";
+export * from "./activityRequestsList.js";
+export * from "./activityRequestsRetrieve.js";
+export * from "./activityWorkflowRunsList.js";
+export * from "./activityWorkflowRunsRetrieve.js";
 export * from "./cancel.js";
 export * from "./environmentsCreate.js";
 export * from "./environmentsDelete.js";
@@ -30,7 +35,6 @@ export * from "./messagesDeleteByTransactionId.js";
 export * from "./messagesRetrieve.js";
 export * from "./notificationsList.js";
 export * from "./notificationsRetrieve.js";
-export * from "./retrieve.js";
 export * from "./subscribersCreate.js";
 export * from "./subscribersCreateBulk.js";
 export * from "./subscribersCredentialsAppend.js";
@@ -43,6 +47,7 @@ export * from "./subscribersMessagesUpdateAsSeen.js";
 export * from "./subscribersNotificationsFeed.js";
 export * from "./subscribersNotificationsUnseenCount.js";
 export * from "./subscribersPatch.js";
+export * from "./subscribersPreferencesBulkUpdate.js";
 export * from "./subscribersPreferencesList.js";
 export * from "./subscribersPreferencesUpdate.js";
 export * from "./subscribersPropertiesUpdateOnlineFlag.js";

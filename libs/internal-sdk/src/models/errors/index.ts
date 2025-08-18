@@ -8,4 +8,6 @@ export * from "./payloadvalidationexceptiondto.js";
 export * from "./responsevalidationerror.js";
 export * from "./sdkerror.js";
 export * from "./sdkvalidationerror.js";
+export * from "./subscriberresponsedto.js";
+export * from "./topicresponsedto.js";
 export * from "./validationerrordto.js";

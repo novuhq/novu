@@ -71,8 +71,12 @@ function processLiquidRawOutput({
 
   try {
     const result = parseByLiquid({ template, variableSchema, suggestPayloadNamespace });
-    result.validVariables.forEach((variable) => addVariable(variable, true));
-    result.invalidVariables.forEach((variable) => addVariable(variable, false));
+    result.validVariables.forEach((variable) => {
+      addVariable(variable, true);
+    });
+    result.invalidVariables.forEach((variable) => {
+      addVariable(variable, false);
+    });
   } catch (error: unknown) {
     if (isLiquidErrors(error)) {
       error.errors.forEach((e: RenderError) => {

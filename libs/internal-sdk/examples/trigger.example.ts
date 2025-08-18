@@ -8,7 +8,7 @@ dotenv.config();
  * Example usage of the @novu/api SDK
  *
  * To run this example from the examples directory:
- * npm run build && npx tsx trigger.ts
+ * npm run build && npx tsx trigger.example.ts
  */
 
 import { Novu } from "@novu/api";
