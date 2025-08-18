@@ -15,7 +15,7 @@ export type RequestLog = {
   userId: string;
   organizationId: string;
   environmentId: string;
-  schemaType: string;
+  authType: string;
   durationMs: number;
 };
 
