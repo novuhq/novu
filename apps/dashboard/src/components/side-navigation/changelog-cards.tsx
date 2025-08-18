@@ -85,8 +85,8 @@ export function ChangelogStack() {
     // Example: "image-fd1082e513db9f6ebdfaa3a8f90a9a43b2d44462-2096x1080-gif"
     const ref = asset._ref;
     
-    // Extract the asset ID and format
-    const match = ref.match(/^image-([a-f0-9]+)-(\d+x\d+)-(\w+)$/);
+    // Extract the asset ID and format - assetId can be any characters up to the next dash
+    const match = ref.match(/^image-([^-]+)-(\d+x\d+)-(\w+)$/);
     if (!match) {
       console.warn('Invalid Sanity asset reference format:', ref);
       return undefined;
@@ -94,20 +94,21 @@ export function ChangelogStack() {
     
     const [, assetId, dimensions, format] = match;
     
-    // Use Sanity's CDN URL format
-    return `https://cdn.sanity.io/images/w2rl2099/production/${assetId}-${dimensions}.${format}?w=400&h=300&fit=crop&auto=format`;
+    // Use Sanity's CDN URL format with the constant
+    return `${CONSTANTS.SANITY_CDN_URL}/${assetId}-${dimensions}.${format}?w=400&h=300&fit=crop&auto=format`;
   };
 
   // Transform Sanity data to our internal format
   const transformSanityData = (sanityPosts: SanityChangelogPost[]): Changelog[] => {
+    const now = new Date();
     return sanityPosts.map((post, index) => ({
       id: post._id,
       date: post.publishedAt || post._createdAt,
       title: post.title,
       version: index + 1, // Since Sanity doesn't have version numbers, we'll use index
       imageUrl: getImageUrl(post.cover?.asset),
-      published: true, // Assuming all returned posts are published
-      slug: post.slug.current,
+      published: !!post.publishedAt && new Date(post.publishedAt) <= now,
+      slug: post.slug?.current || '',
     }));
   };
 
@@ -155,7 +156,7 @@ export function ChangelogStack() {
 
   const handleChangelogClick = async (changelog: Changelog) => {
     track(TelemetryEvent.CHANGELOG_ITEM_CLICKED, { title: changelog.title });
-    window.open(`https://novu.co/changelog/${changelog.slug}`, '_blank');
+    window.open(`https://novu.co/changelog/${changelog.slug}`, '_blank', 'noopener,noreferrer');
 
     await updateDismissedChangelogs(changelog.id);
   };
