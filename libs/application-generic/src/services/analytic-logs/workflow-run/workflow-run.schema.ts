@@ -30,8 +30,8 @@ const schemaDefinition = {
 
   // Execution metadata
   status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
-  delivery_lifecycle_status: { type: CHLowCardinality(CHString()) }, // pending, sent, errored, skipped, cancelled, merged, delivered, interacted
-  delivery_lifecycle_detail: { type: CHString() }, // The detail of the delivery lifecycle
+  delivery_lifecycle_status: { type: CHLowCardinality(CHString("")) },
+  delivery_lifecycle_detail: { type: CHString("") },
   trigger_identifier: { type: CHString() }, // The event identifier that triggered the workflow
 
   // Correlation and grouping
@@ -69,6 +69,10 @@ export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhou
 
 export enum WorkflowRunStatusEnum {
   PENDING = 'pending',
+  /**
+   * @deprecated please use COMPLETED instead
+   */
+  SUCCESS = 'success',
   COMPLETED = 'completed',
   ERROR = 'error',
 }

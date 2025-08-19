@@ -124,12 +124,16 @@ export class ClickHouseService implements OnModuleDestroy {
       settings.wait_for_async_insert = clickhouseSettings.waitForAsyncInsert ? 1 : 0;
     }
 
-    await this._client.insert({
+    const result = await this._client.insert({
       table,
       values,
       format: 'JSONEachRow',
       clickhouse_settings: settings,
     });
+ 
+    if (result.summary.written_rows === '0') {
+      console.error('Failed to insert data into ClickHouse', JSON.stringify(result));
+    }
   }
 
   public async exec({ query, params }: { query: string; params?: Record<string, unknown> }): Promise<void> {

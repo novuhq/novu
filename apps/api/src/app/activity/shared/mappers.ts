@@ -39,10 +39,9 @@ export function mapWorkflowRunStatusToDto(
 ): WorkflowRunStatusDtoEnum {
     switch (workflowRunStatus) {
       case WorkflowRunStatusEnum.COMPLETED:
-      case 'completed' as WorkflowRunStatusEnum: // legacy
-        return WorkflowRunStatusDtoEnum.SUCCESS;
+      case WorkflowRunStatusEnum.SUCCESS:
+        return WorkflowRunStatusDtoEnum.COMPLETED;
       case WorkflowRunStatusEnum.ERROR:
-      case 'failed' as WorkflowRunStatusEnum: // legacy
         return WorkflowRunStatusDtoEnum.ERROR;
       case WorkflowRunStatusEnum.PENDING:
         return WorkflowRunStatusDtoEnum.PENDING;
