@@ -7,6 +7,7 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
+import { DeliveryLifecycleStatus } from '@novu/shared';
 
 export const TABLE_NAME = 'workflow_runs';
 
@@ -68,24 +69,17 @@ export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhou
 
 export enum WorkflowRunStatusEnum {
   PENDING = 'pending',
-  SUCCESS = 'success',
+  COMPLETED = 'completed',
   ERROR = 'error',
 }
 
-export enum DeliveryLifecycleEnum {
-  PENDING = 'pending',
-  SENT = 'sent',
-  ERRORED = 'errored',
-  SKIPPED = 'skipped',
-  CANCELED = 'canceled',
-  MERGED = 'merged',
-}
+ 
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 
 export type WorkflowRun = Prettify<
   Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status'> & {
     status: WorkflowRunStatusEnum;
-    delivery_lifecycle_status: DeliveryLifecycleEnum;
+    delivery_lifecycle_status: DeliveryLifecycleStatus;
   }
 >;

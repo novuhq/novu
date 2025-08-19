@@ -5,14 +5,14 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { DeliveryLifecycleDetail, FeatureFlagsKeysEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, DeliveryLifecycleStatus, FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from '../clickhouse.service';
 import { LogRepository, SchemaKeys, Where } from '../log.repository';
 import { getInsertOptions } from '../shared';
-import { DeliveryLifecycleEnum, ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
+import {  ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
 type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
 
@@ -20,7 +20,7 @@ interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
-  deliveryLifecycleStatus?: DeliveryLifecycleEnum;
+  deliveryLifecycleStatus?: DeliveryLifecycleStatus;
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
@@ -168,7 +168,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       organizationId: string;
       environmentId: string;
     },
-    deliveryLifecycleStatus?: DeliveryLifecycleEnum,
+    deliveryLifecycleStatus?: DeliveryLifecycleStatus,
     deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<void> {
     try {

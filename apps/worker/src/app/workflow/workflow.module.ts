@@ -25,6 +25,7 @@ import {
   TriggerEvent,
   TriggerMulticast,
   WorkflowInMemoryProviderService,
+  WorkflowRunService,
 } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
@@ -35,7 +36,6 @@ import {
 import { JobTopicNameEnum } from '@novu/shared';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
 import { SharedModule } from '../shared/shared.module';
-import { WorkflowRunService } from './services';
 import {
   Digest,
   ExecuteBridgeJob,

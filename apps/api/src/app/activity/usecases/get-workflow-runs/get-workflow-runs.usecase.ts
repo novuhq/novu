@@ -8,10 +8,12 @@ import {
   Where,
   WorkflowRun,
   WorkflowRunRepository,
+  WorkflowRunService,
 } from '@novu/application-generic';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
+import { WorkflowRunDeliveryLifecycleStatusDtoEnum } from '../../dtos/shared.dto';
 
 type CursorData = {
   created_at: string;
@@ -39,6 +41,7 @@ export class GetWorkflowRuns {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
+    private workflowRunService: WorkflowRunService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -146,11 +149,12 @@ export class GetWorkflowRuns {
       // Fetch step runs for all workflow runs efficiently
       const stepRunsByCompositeKey = await this.getStepRunsForWorkflowRuns(command, workflowRuns);
 
-      const data = workflowRuns.map((workflowRun) => {
+      const data = await Promise.all(workflowRuns.map((workflowRun) => {
         const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
 
-        return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
-      });
+          return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
+        })
+      );
 
       return {
         data,
@@ -308,7 +312,7 @@ export class GetWorkflowRuns {
     }
   }
 
-  private mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): GetWorkflowRunsDto {
+  private async mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): Promise<GetWorkflowRunsDto> {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -317,7 +321,13 @@ export class GetWorkflowRuns {
       environmentId: workflowRun.environment_id,
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
-      status: mapWorkflowRunStatusToDto(workflowRun.status, stepRuns, this.logger),
+      status: mapWorkflowRunStatusToDto(workflowRun.status),
+      deliveryLifecycleStatus: (await this.workflowRunService.getDeliveryLifecycle({
+        notificationId: workflowRun.workflow_run_id,
+        environmentId: workflowRun.environment_id,
+        organizationId: workflowRun.organization_id,
+        subscriberId: workflowRun.subscriber_id,
+      })).deliveryLifecycleStatus as unknown as WorkflowRunDeliveryLifecycleStatusDtoEnum,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

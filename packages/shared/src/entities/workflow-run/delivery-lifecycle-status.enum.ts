@@ -5,4 +5,6 @@ export enum DeliveryLifecycleStatus {
   SKIPPED = 'skipped',
   CANCELED = 'canceled',
   MERGED = 'merged',
+  DELIVERED = 'delivered',
+  INTERACTED = 'interacted',
 }

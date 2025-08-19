@@ -2,12 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
-  DeliveryLifecycleEnum,
   DetailEnum,
   InstrumentUsecase,
   PinoLogger,
-  WorkflowRunRepository,
-  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
@@ -21,7 +18,7 @@ export class HandleLastFailedJob {
     private createExecutionDetails: CreateExecutionDetails,
     private queueNextJob: QueueNextJob,
     private jobRepository: JobRepository,
-    private workflowRunRepository: WorkflowRunRepository,
+    // private workflowRunService: WorkflowRunService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -68,16 +65,19 @@ export class HandleLastFailedJob {
       );
     } else {
       // Update workflow run status to failed when job fails and we should halt
-      await this.updateWorkflowRunStatusToFailed(job);
+      // await this.updateWorkflowRunStatusToFailed(job, error);
     }
   }
 
-  private async updateWorkflowRunStatusToFailed(job: JobEntity): Promise<void> {
+  private async updateWorkflowRunStatusToFailed(job: JobEntity, error: Error): Promise<void> {
     try {
-      await this.workflowRunRepository.updateWorkflowRunState(job._notificationId, WorkflowRunStatusEnum.ERROR, {
-        organizationId: job._organizationId,
-        environmentId: job._environmentId,
-      }, DeliveryLifecycleEnum.ERRORED);
+      // await this.workflowRunService.updateDeliveryLifecycle({
+      //   notificationId: job._notificationId,
+      //   environmentId: job._environmentId,
+      //   organizationId: job._organizationId,
+      //   subscriberId: job._subscriberId,
+      //   error: error,
+      // });
 
       this.logger.debug(
         {

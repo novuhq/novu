@@ -29,3 +29,4 @@ export * from './storage';
 export { SupportService } from './support.service';
 export { VerifyPayloadService } from './verify-payload.service';
 export * from './workers';
+export * from './workflow-run.service';

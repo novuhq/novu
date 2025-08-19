@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
-  DeliveryLifecycleEnum,
   isActionStepType,
   isMainDigest,
   StepRunRepository,
-  WorkflowRunRepository,
-  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
@@ -17,7 +14,6 @@ export class CancelDelayed {
   constructor(
     private jobRepository: JobRepository,
     private stepRunRepository: StepRunRepository,
-    private workflowRunRepository: WorkflowRunRepository
   ) {}
 
   public async execute(command: CancelDelayedCommand): Promise<boolean> {
@@ -58,20 +54,6 @@ export class CancelDelayed {
     await this.stepRunRepository.createMany(jobs, {
       status: JobStatusEnum.CANCELED,
     });
-
-    // Update workflow run status to canceled after canceling jobs
-    if (jobs.length > 0) {
-      const firstJob = jobs[0];
-      await this.workflowRunRepository.updateWorkflowRunState(
-        firstJob._notificationId,
-        WorkflowRunStatusEnum.CANCELED,
-        {
-          organizationId: firstJob._organizationId,
-          environmentId: firstJob._environmentId,
-        },
-        DeliveryLifecycleEnum.CANCELED
-      );
-    }
 
     const mainDigestJob = jobs.find((job) => isMainDigest(job.type, job.status));
 

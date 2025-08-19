@@ -6,12 +6,12 @@ import {
   PinoLogger,
   StepRunRepository,
   StorageHelperService,
+  WorkflowRunService,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import { setUser } from '@sentry/node';
 import { EXCEPTION_MESSAGE_ON_WEBHOOK_FILTER, PlatformException, shouldHaltOnStepFailure } from '../../../shared/utils';
-import { WorkflowRunService } from '../../services/workflow-run.service';
 import { AddJob } from '../add-job';
 import { ProcessUnsnoozeJob, ProcessUnsnoozeJobCommand } from '../process-unsnooze-job';
 import { SendMessage, SendMessageCommand } from '../send-message';
@@ -35,7 +35,7 @@ export class RunJob {
     private notificationRepository: NotificationRepository,
     private processUnsnoozeJob: ProcessUnsnoozeJob,
     private stepRunRepository: StepRunRepository,
-    private workflowStatusUpdateService: WorkflowRunService,
+    private workflowRunService: WorkflowRunService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -85,6 +85,7 @@ export class RunJob {
     });
 
     let shouldQueueNextJob = true;
+    let error: any;
 
     try {
       await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
@@ -177,14 +178,15 @@ export class RunJob {
           status: JobStatusEnum.CANCELED,
         });
       }
-    } catch (error: any) {
+    } catch (caughtError: any) {
+      error = caughtError;
       await this.stepRunRepository.create(job, {
         status: JobStatusEnum.FAILED,
         errorCode: 'execution_error',
-        errorMessage: error.message,
+        errorMessage: caughtError.message,
       });
 
-      if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(error)) {
+      if (shouldHaltOnStepFailure(job) && !this.shouldBackoff(caughtError)) {
         await this.jobRepository.cancelPendingJobs({
           transactionId: job.transactionId,
           _environmentId: job._environmentId,
@@ -193,20 +195,21 @@ export class RunJob {
         });
       }
 
-      if (shouldHaltOnStepFailure(job) || this.shouldBackoff(error)) {
+      if (shouldHaltOnStepFailure(job) || this.shouldBackoff(caughtError)) {
         shouldQueueNextJob = false;
       }
-      throw error;
+      throw caughtError;
     } finally {
       if (shouldQueueNextJob) {
         await this.tryQueueNextJobs(job);
       } else {
         // Update workflow run status based on step runs when halting on step failure
-        await this.workflowStatusUpdateService.updateDeliveryLifecycle({
+        await this.workflowRunService.updateDeliveryLifecycle({
           notificationId: job._notificationId,
           environmentId: job._environmentId,
           organizationId: job._organizationId,
           subscriberId: job._subscriberId,
+          error: error,
         });
         // Remove the attachments if the job should not be queued
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
@@ -245,7 +248,7 @@ export class RunJob {
 
         if (!nextJob) {
           // Update workflow run status when there is no next job (workflow complete)
-          await this.workflowStatusUpdateService.updateDeliveryLifecycle({
+          await this.workflowRunService.updateDeliveryLifecycle({
             notificationId: currentJob._notificationId,
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
@@ -267,7 +270,7 @@ export class RunJob {
         if (!nextJob) {
           // Fallback: update workflow run status if nextJob is unexpectedly missing
           // (should not occur due to prior nextJob check in loop)
-          await this.workflowStatusUpdateService.updateDeliveryLifecycle({
+          await this.workflowRunService.updateDeliveryLifecycle({
             notificationId: currentJob._notificationId,
             environmentId: currentJob._environmentId,
             organizationId: currentJob._organizationId,
@@ -288,11 +291,12 @@ export class RunJob {
 
         if (shouldHaltOnStepFailure(nextJob) && !this.shouldBackoff(error)) {
           // Update workflow run status based on step runs when halting on step failure
-          await this.workflowStatusUpdateService.updateDeliveryLifecycle({
+          await this.workflowRunService.updateDeliveryLifecycle({
             notificationId: nextJob._notificationId,
             environmentId: nextJob._environmentId,
             organizationId: nextJob._organizationId,
             subscriberId: nextJob._subscriberId,
+            error: error,
           });
           await this.jobRepository.cancelPendingJobs({
             transactionId: nextJob.transactionId,

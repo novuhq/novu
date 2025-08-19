@@ -5,9 +5,17 @@ export enum WorkflowRunStatusDtoEnum {
   SUCCESS = 'success',
   ERROR = 'error',
   PENDING = 'pending',
+}
+
+export enum WorkflowRunDeliveryLifecycleStatusDtoEnum {
+  PENDING = 'pending',
+  SENT = 'sent',
+  ERRORED = 'errored',
   SKIPPED = 'skipped',
   CANCELED = 'canceled',
   MERGED = 'merged',
+  DELIVERED = 'delivered',
+  INTERACTED = 'interacted',
 }
 
 export class GetWorkflowRunResponseBaseDto {
@@ -46,6 +54,13 @@ export class GetWorkflowRunResponseBaseDto {
   })
   @IsIn(Object.values(WorkflowRunStatusDtoEnum))
   status: WorkflowRunStatusDtoEnum;
+
+  @ApiProperty({
+    description: 'Workflow run delivery lifecycle status',
+    enum: WorkflowRunDeliveryLifecycleStatusDtoEnum,
+  })
+  @IsIn(Object.values(WorkflowRunDeliveryLifecycleStatusDtoEnum))
+  deliveryLifecycleStatus: WorkflowRunDeliveryLifecycleStatusDtoEnum;
 
   @ApiProperty({ description: 'Trigger identifier' })
   @IsString()
