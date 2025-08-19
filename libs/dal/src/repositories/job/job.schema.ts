@@ -16,9 +16,6 @@ const jobSchema = new Schema<JobDBModel>(
         status: {
           type: Schema.Types.String,
         },
-        actor: {
-          type: Schema.Types.String,
-        },
         detail: {
           type: Schema.Types.String,
         },
