@@ -321,7 +321,7 @@ export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof 
               content: [
                 {
                   type: 'column',
-                  attrs: { width: '50%', verticalAlign: 'middle', showIfKey: null },
+                  attrs: { width: 50, verticalAlign: 'middle', showIfKey: null },
                   content: [
                     {
                       type: 'paragraph',
@@ -351,7 +351,7 @@ export const createFooterLogoWithSimpleText: (props: { track: ReturnType<typeof 
                 },
                 {
                   type: 'column',
-                  attrs: { width: '50%', showIfKey: null },
+                  attrs: { width: 50, showIfKey: null },
                   content: [
                     {
                       type: 'paragraph',

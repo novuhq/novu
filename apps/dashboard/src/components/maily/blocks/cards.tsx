@@ -295,7 +295,7 @@ const createInformationCardWithLogo: (props: { track: ReturnType<typeof useTelem
                 {
                   type: 'column',
                   attrs: {
-                    width: '5',
+                    width: 5,
                     verticalAlign: 'top',
                   },
                   content: [
