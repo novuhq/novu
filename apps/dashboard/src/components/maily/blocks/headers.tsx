@@ -179,6 +179,8 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
               type: 'image',
               attrs: {
                 src: 'https://prod-novu-app-bucket.s3.us-east-1.amazonaws.com/assets/email-editor/header-hero-image.webp',
+                width: '100%',
+                height: 'auto',
                 alt: null,
                 title: null,
                 alignment: 'center',
@@ -186,6 +188,7 @@ export const createHeaderLogoWithCoverImage: (props: { track: ReturnType<typeof 
                 isExternalLinkVariable: false,
                 isSrcVariable: false,
                 showIfKey: null,
+                lockAspectRatio: false,
               },
             },
             {

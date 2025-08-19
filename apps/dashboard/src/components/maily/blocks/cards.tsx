@@ -156,6 +156,7 @@ const createCardWithImageAndCta: (props: { track: ReturnType<typeof useTelemetry
                 isExternalLinkVariable: false,
                 isSrcVariable: false,
                 showIfKey: null,
+                lockAspectRatio: false,
               },
             },
             { type: 'spacer', attrs: { height: 8, showIfKey: null } },
