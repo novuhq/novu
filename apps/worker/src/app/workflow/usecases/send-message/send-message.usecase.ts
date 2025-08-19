@@ -29,6 +29,8 @@ import {
 } from '@novu/dal';
 import { ExecuteOutput } from '@novu/framework/internal';
 import {
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -50,7 +52,7 @@ import { SendMessageEmail } from './send-message-email.usecase';
 import { SendMessageInApp } from './send-message-in-app.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { SendMessageSms } from './send-message-sms.usecase';
-import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -116,7 +118,10 @@ export class SendMessage {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_STEP_CONDITION,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
+        },
         extraData: DetailEnum.SKIPPED_BRIDGE_EXECUTION,
       };
     }
@@ -135,9 +140,12 @@ export class SendMessage {
     if (!stepCondition?.passed || !channelPreference.result) {
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: !channelPreference.result
-          ? SendMessageStatusReason.SUBSCRIBER_PREFERENCE
-          : SendMessageStatusReason.USER_STEP_CONDITION,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: !channelPreference.result
+            ? DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE
+            : DeliveryLifecycleDetail.USER_STEP_CONDITION,
+        },
       };
     }
 

@@ -31,6 +31,8 @@ import {
 import { EmailOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   EmailProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -46,7 +48,7 @@ import inlineCss from 'inline-css';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageEmail';
 
@@ -424,7 +426,10 @@ export class SendMessageEmail extends SendMessageBase {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_EMAIL,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_EMAIL,
+        },
       };
     }
 

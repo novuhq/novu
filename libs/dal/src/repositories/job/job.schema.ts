@@ -11,8 +11,18 @@ const jobSchema = new Schema<JobDBModel>(
       type: Schema.Types.String,
       default: JobStatusEnum.PENDING,
     },
-    statusReason: {
-      type: Schema.Types.String,
+    deliveryLifecycleState: {
+      type: {
+        status: {
+          type: Schema.Types.String,
+        },
+        actor: {
+          type: Schema.Types.String,
+        },
+        detail: {
+          type: Schema.Types.String,
+        },
+      },
     },
     payload: {
       type: Schema.Types.Mixed,

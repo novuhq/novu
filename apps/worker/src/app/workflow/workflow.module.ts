@@ -35,7 +35,7 @@ import {
 import { JobTopicNameEnum } from '@novu/shared';
 import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
 import { SharedModule } from '../shared/shared.module';
-import { WorkflowStatusUpdateService } from './services';
+import { WorkflowRunService } from './services';
 import {
   Digest,
   ExecuteBridgeJob,
@@ -174,7 +174,7 @@ const USE_CASES = [
   InboundEmailParse,
   ExecuteBridgeJob,
   GetPreferences,
-  WorkflowStatusUpdateService,
+  WorkflowRunService,
 ];
 
 const PROVIDERS: Provider[] = [];

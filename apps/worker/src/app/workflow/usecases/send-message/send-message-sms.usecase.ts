@@ -15,10 +15,12 @@ import {
   SmsFactory,
 } from '@novu/application-generic';
 
-import { IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
+import {  IntegrationEntity, MessageEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import { SmsOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   WebhookEventEnum,
@@ -28,7 +30,7 @@ import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 @Injectable()
 export class SendMessageSms extends SendMessageBase {
@@ -224,7 +226,10 @@ export class SendMessageSms extends SendMessageBase {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_PHONE,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PHONE,
+        },
       };
     }
     if (!integration) {

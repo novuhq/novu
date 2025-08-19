@@ -19,6 +19,8 @@ import { IntegrationEntity, JobEntity, MessageEntity, MessageRepository, Subscri
 import { PushOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IChannelSettings,
@@ -34,7 +36,7 @@ import { merge } from 'lodash';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessagePush';
 
@@ -277,7 +279,10 @@ export class SendMessagePush extends SendMessageBase {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_PUSH_TOKEN,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PUSH_TOKEN,
+        },
       };
     } else if (status === 'failed') {
       await this.createExecutionDetails.execute(

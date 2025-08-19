@@ -29,7 +29,8 @@ const schemaDefinition = {
 
   // Execution metadata
   status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
-  delivery_lifecycle: { type: CHLowCardinality(CHString()) }, // pending, sent, errored, skipped, cancelled, merged, delivered, interacted
+  delivery_lifecycle_status: { type: CHLowCardinality(CHString()) }, // pending, sent, errored, skipped, cancelled, merged, delivered, interacted
+  delivery_lifecycle_detail: { type: CHString() }, // The detail of the delivery lifecycle
   trigger_identifier: { type: CHString() }, // The event identifier that triggered the workflow
 
   // Correlation and grouping
@@ -69,9 +70,6 @@ export enum WorkflowRunStatusEnum {
   PENDING = 'pending',
   SUCCESS = 'success',
   ERROR = 'error',
-  CANCELED = 'canceled',
-  MERGED = 'merged',
-  SKIPPED = 'skipped',
 }
 
 export enum DeliveryLifecycleEnum {
@@ -86,7 +84,8 @@ export enum DeliveryLifecycleEnum {
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 
 export type WorkflowRun = Prettify<
-  Omit<NativeWorkflowRun, 'status'> & {
+  Omit<NativeWorkflowRun, 'status' | 'delivery_lifecycle_status'> & {
     status: WorkflowRunStatusEnum;
+    delivery_lifecycle_status: DeliveryLifecycleEnum;
   }
 >;

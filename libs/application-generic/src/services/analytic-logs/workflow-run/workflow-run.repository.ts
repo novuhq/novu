@@ -5,7 +5,7 @@ import {
   NotificationTemplateEntity,
   NotificationTemplateRepository,
 } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { DeliveryLifecycleDetail, FeatureFlagsKeysEnum } from '@novu/shared';
 import { InferClickhouseSchemaType } from 'clickhouse-schema';
 import { PinoLogger } from 'nestjs-pino';
 import { FeatureFlagsService } from '../../feature-flags/feature-flags.service';
@@ -20,7 +20,8 @@ interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
   userId?: string;
   externalSubscriberId?: string;
-  deliveryLifecycle?: DeliveryLifecycleEnum;
+  deliveryLifecycleStatus?: DeliveryLifecycleEnum;
+  deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
 // Type for selected columns from the workflow run schema
@@ -167,7 +168,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       organizationId: string;
       environmentId: string;
     },
-    deliveryLifecycle?: DeliveryLifecycleEnum
+    deliveryLifecycleStatus?: DeliveryLifecycleEnum,
+    deliveryLifecycleDetail?: DeliveryLifecycleDetail
   ): Promise<void> {
     try {
       const isEnabled = await this.featureFlagsService.getFlag({
@@ -241,7 +243,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
 
       const workflowRunData = this.mapNotificationToWorkflowRun(notification, workflow, {
         status,
-        deliveryLifecycle,
+        deliveryLifecycleStatus,
+        deliveryLifecycleDetail,
         userId: null,
         externalSubscriberId: notification.to?.subscriberId || null,
       });
@@ -448,7 +451,8 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
       digested_workflow_run_id: notification._digestedNotificationId || null,
 
       // Delivery lifecycle
-      ...(options.deliveryLifecycle && { delivery_lifecycle: options.deliveryLifecycle }),
+      ...(options.deliveryLifecycleStatus && { delivery_lifecycle_status: options.deliveryLifecycleStatus }),
+      ...(options.deliveryLifecycleDetail && { delivery_lifecycle_detail: options.deliveryLifecycleDetail }),
     };
   }
 

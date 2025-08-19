@@ -1,7 +1,7 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
-import { WorkflowStatusUpdateService } from '../../services/workflow-status-update.service';
+import { WorkflowRunService } from '../../services/workflow-run.service';
 import { AddJob } from '../add-job';
 import { QueueNextJobCommand } from './queue-next-job.command';
 
@@ -10,7 +10,7 @@ export class QueueNextJob {
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => AddJob)) private addJobUsecase: AddJob,
-    private workflowStatusUpdateService: WorkflowStatusUpdateService
+    private workflowStatusUpdateService: WorkflowRunService
   ) {}
 
   @InstrumentUsecase()
@@ -21,7 +21,7 @@ export class QueueNextJob {
     });
 
     if (!job) {
-      await this.workflowStatusUpdateService.updateWorkflowRunStatus({
+      await this.workflowStatusUpdateService.updateDeliveryLifecycle({
         notificationId: command.parentId,
         environmentId: command.environmentId,
         organizationId: command.organizationId,

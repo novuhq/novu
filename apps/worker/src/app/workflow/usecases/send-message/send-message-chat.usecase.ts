@@ -27,6 +27,8 @@ import { ChatOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
+  DeliveryLifecycleDetail,
+  DeliveryLifecycleStatus,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   ITenantDefine,
@@ -38,7 +40,7 @@ import { addBreadcrumb } from '@sentry/node';
 import { PlatformException } from '../../../shared/utils';
 import { SendMessageBase } from './send-message.base';
 import { SendMessageChannelCommand } from './send-message-channel.command';
-import { SendMessageResult, SendMessageStatus, SendMessageStatusReason } from './send-message-type.usecase';
+import { SendMessageResult, SendMessageStatus } from './send-message-type.usecase';
 
 const LOG_CONTEXT = 'SendMessageChat';
 
@@ -191,7 +193,10 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_CREDENTIALS,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_CREDENTIALS,
+        },
       };
     }
 
@@ -385,7 +390,10 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_PHONE,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_PHONE,
+        },
       };
     } else if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
@@ -414,7 +422,10 @@ export class SendMessageChat extends SendMessageBase {
 
       return {
         status: SendMessageStatus.SKIPPED,
-        statusReason: SendMessageStatusReason.USER_CONFIGURATION_MISSING_WEBHOOK_URL,
+        deliveryLifecycleState: {
+          status: DeliveryLifecycleStatus.SKIPPED,
+          detail: DeliveryLifecycleDetail.USER_MISSING_WEBHOOK_URL,
+        },
       };
     }
     if (!integration) {
