@@ -15,6 +15,22 @@ import { getInsertOptions } from '../shared';
 import {  ORDER_BY, TABLE_NAME, WorkflowRun, WorkflowRunStatusEnum, workflowRunSchema } from './workflow-run.schema';
 
 type WorkflowRunInsertData = Omit<WorkflowRun, 'id' | 'expires_at'>;
+type QueryNotificationEntity = Pick<
+  NotificationEntity,
+  | '_id'
+  | '_templateId'
+  | '_organizationId'
+  | '_environmentId'
+  | '_subscriberId'
+  | 'transactionId'
+  | 'channels'
+  | 'to'
+  | 'payload'
+  | 'controls'
+  | 'topics'
+  | '_digestedNotificationId'
+  | 'createdAt'
+>;
 
 interface IWorkflowRunOptions {
   status?: WorkflowRunStatusEnum;
@@ -184,7 +200,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
         return;
       }
 
-      const notification = await this.notificationRepository.findOne(
+      const notification : QueryNotificationEntity | null = await this.notificationRepository.findOne(
         {
           _id: workflowRunId,
           _organizationId: context.organizationId,
@@ -203,6 +219,7 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
           controls: 1,
           topics: 1,
           _digestedNotificationId: 1,
+          createdAt: 1,
         }
       );
 
@@ -407,15 +424,14 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
   }
 
   private mapNotificationToWorkflowRun(
-    notification: NotificationEntity,
+    notification: QueryNotificationEntity,
     workflow: NotificationTemplateEntity,
     options: IWorkflowRunOptions
   ): WorkflowRunInsertData {
     const now = new Date();
-    const createdAt = new Date(now);
 
     return {
-      created_at: LogRepository.formatDateTime64(createdAt),
+      created_at: LogRepository.formatDateTime64(new Date(notification.createdAt)),
       updated_at: LogRepository.formatDateTime64(now),
 
       // Core workflow run identification

@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 
 export enum WorkflowRunStatusDtoEnum {
-  COMPLETED = 'completed',
+  SUCCESS = 'success',
   ERROR = 'error',
   PENDING = 'pending',
 }

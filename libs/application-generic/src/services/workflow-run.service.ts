@@ -31,6 +31,7 @@ export class WorkflowRunService {
     error,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
+      // todo skip on case of interacted, we do not care about the detail
       const { deliveryLifecycleStatus, deliveryLifecycleDetail } = await this.getDeliveryLifecycle({
         notificationId,
         environmentId,

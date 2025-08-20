@@ -7,6 +7,7 @@ import {
   LogRepository,
   mapEventTypeToTitle,
   MessageInteractionService,
+  MessageInteractionTrace,
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
@@ -137,7 +138,7 @@ export class MarkManyNotificationsAs {
       return;
     }
 
-    const allTraceData: Omit<Trace, 'id' | 'expires_at'>[] = [];
+    const allTraceData: MessageInteractionTrace[] = [];
 
     for (const message of messages) {
       if (!message._jobId) continue;
@@ -181,6 +182,7 @@ export class MarkManyNotificationsAs {
 
     if (allTraceData.length > 0) {
       try {
+        console.error('@@@@@@@ ALL TRACE DATA', allTraceData);
         await this.messageInteractionService.trace(allTraceData);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
@@ -201,7 +203,7 @@ function createTraceLog({
   eventType: EventType;
   subscriberId: string;
   _subscriberId: string;
-}): Omit<Trace, 'id' | 'expires_at'> {
+}): MessageInteractionTrace {
   return {
     created_at: LogRepository.formatDateTime64(new Date()),
     organization_id: message._organizationId,
@@ -218,5 +220,6 @@ function createTraceLog({
     entity_id: message._jobId,
     step_run_type: message.channel as StepType,
     workflow_run_identifier: message.templateIdentifier,
+    _notificationId: message._notificationId,
   };
 }

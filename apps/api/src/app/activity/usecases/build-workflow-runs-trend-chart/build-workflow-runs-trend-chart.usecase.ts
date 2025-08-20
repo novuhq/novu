@@ -32,7 +32,9 @@ export class BuildWorkflowRunsTrendChart {
         dateKey,
         new Map([
           ['pending', 0],
+          ['processing', 0],
           ['success', 0],
+          ['completed', 0],
           ['error', 0],
         ])
       );
@@ -46,7 +48,7 @@ export class BuildWorkflowRunsTrendChart {
       const statusMap = chartDataMap.get(date);
       if (statusMap?.has(status)) {
         const currentCount = statusMap.get(status) || 0;
-        statusMap.set(status, currentCount + parseInt(workflowRun.count, 10));
+        statusMap.set(status, currentCount + parseInt(workflowRun.count, 10));      
       }
     }
 
@@ -55,8 +57,9 @@ export class BuildWorkflowRunsTrendChart {
     for (const [date, statusCounts] of chartDataMap) {
       chartData.push({
         timestamp: date,
-        pending: statusCounts.get('pending') || 0,
-        success: statusCounts.get('success') || 0,
+        // todo: remove this once we deprecated status removed by retention policy
+        pending: (statusCounts.get('pending') || 0) + (statusCounts.get('processing') || 0),
+        success: (statusCounts.get('success') || 0) + (statusCounts.get('completed') || 0),
         error: statusCounts.get('error') || 0,
       });
     }

@@ -14,6 +14,8 @@ export const TABLE_NAME = 'workflow_runs';
 const schemaDefinition = {
   id: { type: CHString() },
   created_at: { type: CHDateTime64(3, 'UTC') },
+
+  // todo: redundant, remove this field
   updated_at: { type: CHDateTime64(3, 'UTC') },
 
   // Core workflow run identification
@@ -68,7 +70,11 @@ const clickhouseSchemaOptions = {
 export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
 export enum WorkflowRunStatusEnum {
+    /**
+   * @deprecated please use processing instead
+   */
   PENDING = 'pending',
+  PROCESSING = 'processing',
   /**
    * @deprecated please use COMPLETED instead
    */
