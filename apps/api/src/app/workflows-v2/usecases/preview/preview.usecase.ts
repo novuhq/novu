@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
-  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
   InstrumentUsecase,
 } from '@novu/application-generic';
-import { ChannelTypeEnum, FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
+import { ChannelTypeEnum, ResourceOriginEnum } from '@novu/shared';
 import { PreviewStep, PreviewStepCommand } from '../../../bridge/usecases/preview-step';
 // Import new services
 import { ControlValueSanitizerService } from '../../../shared/services/control-value-sanitizer.service';
@@ -31,8 +30,7 @@ export class PreviewUsecase {
     private readonly payloadMerger: PayloadMergerService,
     private readonly schemaBuilder: SchemaBuilderService,
     private readonly payloadProcessor: PreviewPayloadProcessorService,
-    private readonly errorHandler: PreviewErrorHandler,
-    private readonly featureFlagService: FeatureFlagsService
+    private readonly errorHandler: PreviewErrorHandler
   ) {}
 
   @InstrumentUsecase()
@@ -46,16 +44,7 @@ export class PreviewUsecase {
         context.workflow.origin || ResourceOriginEnum.NOVU_CLOUD
       );
 
-      const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-        organization: { _id: command.user.organizationId },
-        environment: { _id: command.user.environmentId },
-        user: { _id: command.user._id },
-        defaultValue: false,
-      });
-
       const { previewTemplateData } = this.controlValueSanitizer.processControlValues(
-        isHtmlEditorEnabled,
         sanitizedControls,
         context.variableSchema,
         context.variablesObject

@@ -183,16 +183,7 @@ export function WebhooksPage() {
   };
 
   return (
-    <DashboardLayout
-      headerStartItems={
-        <h1 className="text-foreground-950">
-          Webhooks{' '}
-          <Badge color="gray" size="sm">
-            BETA
-          </Badge>
-        </h1>
-      }
-    >
+    <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Webhooks</h1>}>
       <Tabs
         value={activeTabDefinition.value}
         onValueChange={(value) => {

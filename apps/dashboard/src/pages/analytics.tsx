@@ -1,7 +1,9 @@
 import { useOrganization } from '@clerk/clerk-react';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { CalendarIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   type ActiveSubscribersTrendDataPoint,
   type ProviderVolumeDataPoint,
@@ -24,6 +26,8 @@ import { DashboardLayout } from '../components/dashboard-layout';
 import { PageMeta } from '../components/page-meta';
 import { Badge } from '../components/primitives/badge';
 import { FacetedFormFilter } from '../components/primitives/form/faceted-filter/facated-form-filter';
+import { InlineToast } from '../components/primitives/inline-toast';
+import { useEnvironment } from '../context/environment/hooks';
 import { useFetchCharts } from '../hooks/use-fetch-charts';
 import { useFetchSubscription } from '../hooks/use-fetch-subscription';
 import { useTelemetry } from '../hooks/use-telemetry';
@@ -33,6 +37,10 @@ export function AnalyticsPage() {
   const telemetry = useTelemetry();
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
+  const { currentEnvironment, switchEnvironment, oppositeEnvironment } = useEnvironment();
+  const [searchParams] = useSearchParams();
+
+  const isDevMockMode = searchParams.get('dev_mock_date') === 'true';
 
   const { selectedDateRange, setSelectedDateRange, dateFilterOptions, chartsDateRange } = useAnalyticsDateFilter({
     organization,
@@ -63,6 +71,7 @@ export function AnalyticsPage() {
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
+    useMockData: isDevMockMode,
   });
 
   const {
@@ -75,6 +84,7 @@ export function AnalyticsPage() {
     enabled: true,
     refetchInterval: CHART_CONFIG.refetchInterval,
     staleTime: CHART_CONFIG.staleTime,
+    useMockData: isDevMockMode,
   });
 
   const { messagesDeliveredData, activeSubscribersData, avgMessagesPerSubscriberData, totalInteractionsData } =
@@ -94,6 +104,11 @@ export function AnalyticsPage() {
             <Badge variant="lighter" className="text-xs">
               BETA
             </Badge>
+            {isDevMockMode && (
+              <Badge variant="filled" color="orange" className="text-xs">
+                DEV MOCK DATA
+              </Badge>
+            )}
           </h1>
         }
       >
@@ -136,19 +151,35 @@ export function AnalyticsPage() {
               />
             </motion.div>
 
-            <motion.div variants={ANIMATION_VARIANTS.section} className="grid grid-cols-1 lg:grid-cols-2 gap-2">
-              <ActiveSubscribersTrendChart
-                data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
-                isLoading={isChartsLoading}
-                error={chartsError}
-              />
-              <ProvidersByVolume
-                data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
-                isLoading={isChartsLoading}
-                error={chartsError}
-              />
+            <motion.div variants={ANIMATION_VARIANTS.section} className="grid grid-cols-1 lg:grid-cols-12 gap-2">
+              <div className="lg:col-span-8">
+                <ActiveSubscribersTrendChart
+                  data={chartsData?.[ReportTypeEnum.ACTIVE_SUBSCRIBERS_TREND] as ActiveSubscribersTrendDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
+              </div>
+              <div className="lg:col-span-4 h-full">
+                <ProvidersByVolume
+                  data={chartsData?.[ReportTypeEnum.PROVIDER_BY_VOLUME] as ProviderVolumeDataPoint[]}
+                  isLoading={isChartsLoading}
+                  error={chartsError}
+                />
+              </div>
             </motion.div>
           </div>
+          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && (
+            <InlineToast
+              title="You're viewing analytics for the Development environment"
+              variant="tip"
+              ctaLabel="Switch to production"
+              onCtaClick={() => {
+                if (oppositeEnvironment?.slug) {
+                  switchEnvironment(oppositeEnvironment.slug);
+                }
+              }}
+            />
+          )}
         </motion.div>
       </DashboardLayout>
     </>

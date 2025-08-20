@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FeatureFlagsService, Instrument, InstrumentUsecase } from '@novu/application-generic';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { Instrument, InstrumentUsecase } from '@novu/application-generic';
 import _ from 'lodash';
 import { JsonSchemaMock } from '../../../workflows-v2/util/json-schema-mock';
 import { collectKeys, keysToObject } from '../../../workflows-v2/util/utils';
@@ -21,20 +20,10 @@ export const DEFAULT_ARRAY_ELEMENTS = 3;
  */
 @Injectable()
 export class CreateVariablesObject {
-  constructor(private readonly featureFlagService: FeatureFlagsService) {}
-
   @InstrumentUsecase()
   async execute(command: CreateVariablesObjectCommand): Promise<Record<string, unknown>> {
-    const isHtmlEditorEnabled = await this.featureFlagService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      defaultValue: false,
-    });
-
     const variables = this.extractAllVariables({
       controlValues: command.controlValues,
-      isHtmlEditorEnabled,
       variableSchema: command.variableSchema,
     });
     const arrayVariables = this.extractArrayVariables(command.controlValues);
@@ -168,16 +157,13 @@ export class CreateVariablesObject {
   @Instrument()
   private extractAllVariables({
     controlValues,
-    isHtmlEditorEnabled,
     variableSchema,
   }: {
     controlValues: unknown[];
-    isHtmlEditorEnabled: boolean;
     variableSchema?: JSONSchemaDto;
   }): string[] {
     const variables = controlValues.flatMap((value) => {
       const templateVariables = buildVariables({
-        useNewLiquidParser: isHtmlEditorEnabled,
         variableSchema,
         controlValue: value,
       });

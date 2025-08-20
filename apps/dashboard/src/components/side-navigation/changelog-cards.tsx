@@ -5,18 +5,41 @@ import { RiCloseLine } from 'react-icons/ri';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 
+type SanityAsset = {
+  _ref: string;
+  _type: 'reference';
+};
+
+type SanityChangelogPost = {
+  _id: string;
+  _createdAt: string;
+  _updatedAt: string;
+  _type: 'changelogPost';
+  title: string;
+  slug: {
+    _type: 'slug';
+    current: string;
+  };
+  publishedAt: string;
+  cover?: {
+    _type: 'image';
+    asset: SanityAsset;
+  };
+};
+
 type Changelog = {
   id: string;
   date: string;
   title: string;
-  notes?: string;
   version: number;
   imageUrl?: string;
   published: boolean;
+  slug: string;
 };
 
 const CONSTANTS = {
-  CHANGELOG_API_URL: 'https://productlane.com/api/v1/changelogs/f13f1996-c9b0-4fea-8ee7-2c3faf6a832d',
+  SANITY_API_URL: 'https://w2rl2099.api.sanity.io/v2025-02-19/data/query/production',
+  SANITY_CDN_URL: 'https://cdn.sanity.io/images/w2rl2099/production',
   NUMBER_OF_CARDS: 3,
   CARD_OFFSET: 10,
   SCALE_FACTOR: 0.06,
@@ -54,11 +77,74 @@ export function ChangelogStack() {
     });
   };
 
-  const fetchChangelogs = async (): Promise<Changelog[]> => {
-    const response = await fetch(CONSTANTS.CHANGELOG_API_URL);
-    const rawData: Changelog[] = await response.json();
+  // Helper function to convert Sanity asset reference to image URL
+  const getImageUrl = (asset?: SanityAsset): string | undefined => {
+    if (!asset?._ref) return undefined;
+    
+    // Sanity asset reference format: image-{assetId}-{width}x{height}-{format}
+    // Example: "image-fd1082e513db9f6ebdfaa3a8f90a9a43b2d44462-2096x1080-gif"
+    const ref = asset._ref;
+    
+    // Extract the asset ID and format - assetId can be any characters up to the next dash
+    const match = ref.match(/^image-([^-]+)-(\d+x\d+)-(\w+)$/);
+    if (!match) {
+      console.warn('Invalid Sanity asset reference format:', ref);
+      return undefined;
+    }
+    
+    const [, assetId, dimensions, format] = match;
+    
+    // Use Sanity's CDN URL format with the constant
+    return `${CONSTANTS.SANITY_CDN_URL}/${assetId}-${dimensions}.${format}?w=400&h=300&fit=crop&auto=format`;
+  };
 
-    return filterChangelogs(rawData, getDismissedChangelogs());
+  // Transform Sanity data to our internal format
+  const transformSanityData = (sanityPosts: SanityChangelogPost[]): Changelog[] => {
+    const now = new Date();
+    return sanityPosts.map((post, index) => ({
+      id: post._id,
+      date: post.publishedAt || post._createdAt,
+      title: post.title,
+      version: index + 1, // Since Sanity doesn't have version numbers, we'll use index
+      imageUrl: getImageUrl(post.cover?.asset),
+      published: !!post.publishedAt && new Date(post.publishedAt) <= now,
+      slug: post.slug?.current || '',
+    }));
+  };
+
+  const fetchChangelogs = async (): Promise<Changelog[]> => {
+    // Build Sanity query to get published changelog posts with covers, sorted by publishedAt
+    const query = encodeURIComponent(`
+      *[_type == "changelogPost" && defined(cover.asset)] | order(publishedAt desc, _createdAt desc) [0...10] {
+        _id,
+        _createdAt,
+        _updatedAt,
+        _type,
+        title,
+        slug,
+        publishedAt,
+        cover {
+          _type,
+          asset {
+            _ref,
+            _type
+          }
+        }
+      }
+    `);
+
+    const url = `${CONSTANTS.SANITY_API_URL}?query=${query}&perspective=published`;
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch changelogs from Sanity');
+    }
+    
+    const data = await response.json();
+    const sanityPosts: SanityChangelogPost[] = data.result || [];
+    
+    const transformedData = transformSanityData(sanityPosts);
+    return filterChangelogs(transformedData, getDismissedChangelogs());
   };
 
   const { data: changelogs = [] } = useQuery({
@@ -70,7 +156,7 @@ export function ChangelogStack() {
 
   const handleChangelogClick = async (changelog: Changelog) => {
     track(TelemetryEvent.CHANGELOG_ITEM_CLICKED, { title: changelog.title });
-    window.open('https://roadmap.novu.co/changelog/' + changelog.id, '_blank');
+    window.open(`https://novu.co/changelog/${changelog.slug}`, '_blank', 'noopener,noreferrer');
 
     await updateDismissedChangelogs(changelog.id);
   };
@@ -165,6 +251,10 @@ function ChangelogCard({
                 src={changelog.imageUrl}
                 alt={changelog.title}
                 className="h-full w-full rounded-[6px] object-cover"
+                onError={(e) => {
+                  // Hide image if it fails to load
+                  e.currentTarget.style.display = 'none';
+                }}
               />
             </div>
           )}

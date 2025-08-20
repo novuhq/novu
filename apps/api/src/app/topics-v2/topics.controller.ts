@@ -14,7 +14,7 @@ import {
   Res,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
 import { Response } from 'express';
@@ -114,6 +114,12 @@ export class TopicsController {
   @ApiResponse(TopicResponseDto, 200)
   @ApiResponse(TopicResponseDto, 409, false, false, {
     description: 'Topic already exists (when query param failIfExists=true)',
+  })
+  @ApiQuery({
+    name: 'failIfExists',
+    required: false,
+    type: Boolean,
+    description: 'If true, the request will fail if a topic with the same key already exists',
   })
   @SdkMethodName('create')
   @RequirePermissions(PermissionsEnum.TOPIC_WRITE)

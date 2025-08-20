@@ -5,33 +5,30 @@
   "main": "./index.js",
   "sideEffects": false,
   "scripts": {
-    "check": "biome check .",
-    "check:fix": "biome check --write .",
+    "lint": "eslint --cache --max-warnings=0 src",
     "build": "tsc",
     "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5",
     "react": "^18 || ^19",
-    "react-dom": "^18 || ^19",
-    "zod": "^3"
+    "react-dom": "^18 || ^19"
   },
   "peerDependenciesMeta": {
-    "@tanstack/react-query": {
-      "optional": true
-    },
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
+    "@tanstack/react-query": {"optional":true},
+    "react": {"optional":true},
+    "react-dom": {"optional":true}
   },
   "devDependencies": {
+    "@eslint/js": "^9.19.0",
     "@tanstack/react-query": "^5.61.4",
     "@types/react": "^18.3.12",
-    "typescript": "^5.4.5",
-    "zod": "^3.25.17"
+    "eslint": "^9.19.0",
+    "globals": "^15.14.0",
+    "typescript": "~5.8.3",
+    "typescript-eslint": "^8.26.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "zod": "^3.20.0"
+  }
 }

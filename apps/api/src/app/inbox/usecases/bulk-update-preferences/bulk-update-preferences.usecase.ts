@@ -35,7 +35,7 @@ export class BulkUpdatePreferences {
     }
 
     if (command.preferences.length > MAX_BULK_LIMIT) {
-      throw new UnprocessableEntityException(`Exceeded maximum limit of ${MAX_BULK_LIMIT} preferences for bulk update`);
+      throw new UnprocessableEntityException(`preferences must contain no more than ${MAX_BULK_LIMIT} elements`);
     }
 
     const allWorkflowIds = command.preferences.map((preference) => preference.workflowId);

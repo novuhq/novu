@@ -10,6 +10,7 @@ import { BuildMessagesDeliveredChart } from './usecases/build-messages-delivered
 import { BuildProviderByVolumeChart } from './usecases/build-provider-by-volume-chart/build-provider-by-volume-chart.usecase';
 import { BuildTotalInteractionsChart } from './usecases/build-total-interactions-chart/build-total-interactions-chart.usecase';
 import { BuildWorkflowByVolumeChart } from './usecases/build-workflow-by-volume-chart/build-workflow-by-volume-chart.usecase';
+import { BuildWorkflowRunsCountChart } from './usecases/build-workflow-runs-count-chart/build-workflow-runs-count-chart.usecase';
 import { BuildWorkflowRunsMetricChart } from './usecases/build-workflow-runs-metric-chart/build-workflow-runs-metric-chart.usecase';
 import { BuildWorkflowRunsTrendChart } from './usecases/build-workflow-runs-trend-chart/build-workflow-runs-trend-chart.usecase';
 import { GetCharts } from './usecases/get-charts/get-charts.usecase';
@@ -31,6 +32,7 @@ const USE_CASES = [
   BuildActiveSubscribersChart,
   BuildActiveSubscribersTrendChart,
   BuildAvgMessagesPerSubscriberChart,
+  BuildWorkflowRunsCountChart,
   BuildWorkflowRunsMetricChart,
   BuildTotalInteractionsChart,
   BuildWorkflowRunsTrendChart,

@@ -1,18 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import {
-  dashboardSanitizeControlValues,
-  FeatureFlagsService,
-  Instrument,
-  InstrumentUsecase,
-  PinoLogger,
-} from '@novu/application-generic';
-import {
-  ContentIssueEnum,
-  FeatureFlagsKeysEnum,
-  LAYOUT_CONTENT_VARIABLE,
-  LayoutIssuesDto,
-  ResourceOriginEnum,
-} from '@novu/shared';
+import { dashboardSanitizeControlValues, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { ContentIssueEnum, LAYOUT_CONTENT_VARIABLE, LayoutIssuesDto, ResourceOriginEnum } from '@novu/shared';
 import merge from 'lodash/merge';
 import { hasMailyVariable, isStringifiedMailyJSONContent } from '../../../shared/helpers/maily-utils';
 import {
@@ -27,13 +15,12 @@ import { BuildLayoutIssuesCommand } from './build-layout-issues.command';
 export class BuildLayoutIssuesUsecase {
   constructor(
     private layoutVariablesSchemaUseCase: LayoutVariablesSchemaUseCase,
-    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {}
 
   @InstrumentUsecase()
   async execute(command: BuildLayoutIssuesCommand): Promise<LayoutIssuesDto> {
-    const { resourceOrigin, environmentId, organizationId, userId, controlSchema, controlValues } = command;
+    const { resourceOrigin, environmentId, organizationId, controlSchema, controlValues } = command;
 
     const layoutVariablesSchema = await this.layoutVariablesSchemaUseCase.execute(
       LayoutVariablesSchemaCommand.create({
@@ -60,14 +47,6 @@ export class BuildLayoutIssuesUsecase {
       };
     }
 
-    const isHtmlEditorEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-      organization: { _id: command.organizationId },
-      environment: { _id: command.environmentId },
-      user: { _id: command.userId },
-      defaultValue: false,
-    });
-
     const sanitizedControlValues = this.sanitizeControlValues(controlValues ?? {}, resourceOrigin);
 
     const schemaIssues = processControlValuesBySchema({
@@ -81,7 +60,6 @@ export class BuildLayoutIssuesUsecase {
       currentValue: controlValues ?? {},
       currentPath: [],
       issues: liquidIssues,
-      useNewLiquidParser: isHtmlEditorEnabled,
     });
 
     return merge(contentIssues, schemaIssues, liquidIssues);

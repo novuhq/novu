@@ -1,10 +1,4 @@
-import {
-  EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
-  PermissionsEnum,
-  ResourceOriginEnum,
-  StepCreateDto,
-} from '@novu/shared';
+import { EnvironmentTypeEnum, PermissionsEnum, ResourceOriginEnum, StepCreateDto } from '@novu/shared';
 import { Node as FlowNode, Handle, NodeProps, Position } from '@xyflow/react';
 import { AnimatePresence } from 'motion/react';
 import { ComponentProps, useCallback, useRef, useState } from 'react';
@@ -16,7 +10,6 @@ import { createStep } from '@/components/workflow-editor/step-utils';
 import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchLayouts } from '@/hooks/use-fetch-layouts';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { STEP_TYPE_TO_COLOR } from '@/utils/color';
@@ -509,13 +502,12 @@ export const AddNode = (_props: NodeProps<NodeType>) => {
   const navigate = useNavigate();
   const has = useHasPermission();
   const { currentEnvironment } = useEnvironment();
-  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
   const { data: layoutsResponse, isFetching: isFetchingLayouts } = useFetchLayouts({
     limit: 100,
     refetchOnWindowFocus: false,
   });
   const defaultLayout = layoutsResponse?.layouts.find((layout) => layout.isDefault);
-  const addDefaultLayout = isLayoutsPageActive && !!defaultLayout;
+  const addDefaultLayout = !!defaultLayout;
   const defaultLayoutId = defaultLayout?.layoutId;
 
   if (!workflow || isFetchingLayouts) {

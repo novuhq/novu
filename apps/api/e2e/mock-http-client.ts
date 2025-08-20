@@ -14,6 +14,7 @@ export class MockHTTPClient extends HTTPClient {
    * @param mockConfigs An array of mock configuration objects.
    */
   private initializeMockResponses(mockConfigs: MockConfig[]) {
+    // biome-ignore lint/complexity/noForEach: refactored later
     mockConfigs.forEach(({ baseUrl, path, method, responseCode, responseJson, times }) => {
       const url = new URL(path, baseUrl).toString();
       const response = new Response(JSON.stringify(responseJson), {

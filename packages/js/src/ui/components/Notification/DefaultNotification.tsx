@@ -127,11 +127,11 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           '[&:not(:first-child)]:nt-border-t nt-border-neutral-alpha-100',
           {
             'nt-cursor-pointer': !props.notification.isRead || !!props.notification.redirect?.url,
-            'nt-bg-severity-high-alpha-50 hover:nt-bg-severity-high-alpha-25':
+            'nt-bg-severity-high-alpha-100 hover:nt-bg-severity-high-alpha-50':
               props.notification.severity === SeverityLevelEnum.HIGH,
-            'nt-bg-severity-medium-alpha-50 hover:nt-bg-severity-medium-alpha-25':
+            'nt-bg-severity-medium-alpha-100 hover:nt-bg-severity-medium-alpha-50':
               props.notification.severity === SeverityLevelEnum.MEDIUM,
-            'nt-bg-severity-low-alpha-50 hover:nt-bg-severity-low-alpha-25':
+            'nt-bg-severity-low-alpha-100 hover:nt-bg-severity-low-alpha-50':
               props.notification.severity === SeverityLevelEnum.LOW,
           }
         )
