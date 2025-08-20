@@ -9,12 +9,12 @@ import {
   InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  MessageInteractionService,
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
   StepType,
   Trace,
-  TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
@@ -30,7 +30,7 @@ export class MarkMessageAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private traceLogRepository: TraceLogRepository,
+    private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
   ) {
@@ -112,9 +112,9 @@ export class MarkMessageAs {
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createStepRun(allTraceData);
+        await this.messageInteractionService.trace(allTraceData);
       } catch (error) {
-        this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);
+        this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} traces`);
       }
     }
 

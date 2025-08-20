@@ -6,12 +6,12 @@ import {
   InvalidateCacheService,
   LogRepository,
   mapEventTypeToTitle,
+  MessageInteractionService,
   messageWebhookMapper,
   PinoLogger,
   SendWebhookMessage,
   StepType,
   Trace,
-  TraceLogRepository,
   WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
@@ -30,7 +30,7 @@ export class MarkNotificationsAsSeen {
     private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
-    private traceLogRepository: TraceLogRepository,
+    private messageInteractionService: MessageInteractionService,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
   ) {
@@ -228,7 +228,7 @@ export class MarkNotificationsAsSeen {
 
     if (allTraceData.length > 0) {
       try {
-        await this.traceLogRepository.createStepRun(allTraceData);
+        await this.messageInteractionService.trace(allTraceData);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create seen traces for ${allTraceData.length} messages`);
       }

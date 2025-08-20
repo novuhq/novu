@@ -20,11 +20,13 @@ import {
   StepRunRepository,
   TierRestrictionsValidateCommand,
   TierRestrictionsValidateUsecase,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, SubscriberRepository } from '@novu/dal';
 import { DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
+  DeliveryLifecycleStatus,
   DigestCreationResultEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -48,6 +50,16 @@ import { validateDigest } from './validation';
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
 }
+
+/*
+  * @description: This is the result of the add job usecase
+  * 
+  * Returns undefined when the end result is not determined yet
+  */
+type AddJobResult = {
+  workflowStatus: WorkflowRunStatusEnum | null;
+  deliveryLifecycleStatus: DeliveryLifecycleStatus| null;
+};
 
 const LOG_CONTEXT = 'AddJob';
 
@@ -75,7 +87,7 @@ export class AddJob {
 
   @InstrumentUsecase()
   @LogDecorator()
-  public async execute(command: AddJobCommand): Promise<void> {
+  public async execute(command: AddJobCommand): Promise<AddJobResult> {
     Logger.verbose('Getting Job', LOG_CONTEXT);
     const { job } = command;
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
@@ -83,16 +95,16 @@ export class AddJob {
     if (!job) {
       Logger.warn(`Job was null in both the input and search`, LOG_CONTEXT);
 
-      return;
+      return {
+        workflowStatus: null,
+        deliveryLifecycleStatus: null,
+      };
     }
 
     Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
 
-    if (isJobDeferredType(job.type)) {
-      await this.executeDeferredJob(command);
-    } else {
-      await this.executeNoneDeferredJob(command);
-    }
+    const result = isJobDeferredType(job.type) ? await this.executeDeferredJob(command) : await this.executeNoneDeferredJob(command);
+ 
 
     await this.createExecutionDetails.execute(
       CreateExecutionDetailsCommand.create({
@@ -104,9 +116,11 @@ export class AddJob {
         isRetry: false,
       })
     );
+    
+    return result;
   }
 
-  private async executeDeferredJob(command: AddJobCommand): Promise<void> {
+  private async executeDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
     let digestAmount: number | undefined;
@@ -149,15 +163,18 @@ export class AddJob {
 
       if (isShouldHaltJobExecution(digestResult.digestCreationResult)) {
         if (digestResult.digestCreationResult === DigestCreationResultEnum.MERGED) {
-          // await this.workflowRunService.updateDeliveryLifecycle({
-          //   notificationId: job._notificationId,
-          //   environmentId: command.environmentId,
-          //   organizationId: command.organizationId,
-          //   subscriberId: job._subscriberId,
-          // });
+          return {
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED,
+          };
         }
 
-        return;
+        if (digestResult.digestCreationResult === DigestCreationResultEnum.SKIPPED) {
+          return {
+            workflowStatus: WorkflowRunStatusEnum.COMPLETED,
+            deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
+          };
+        }
       }
 
       digestAmount = digestResult.digestAmount;
@@ -169,7 +186,10 @@ export class AddJob {
       if (delayAmount === undefined) {
         Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
 
-        return;
+        return {
+          workflowStatus: null,
+          deliveryLifecycleStatus: null,
+        };
       }
     }
 
@@ -190,6 +210,11 @@ export class AddJob {
     });
 
     await this.queueJob(job, delay);
+
+    return {
+      workflowStatus: null,
+      deliveryLifecycleStatus: null,
+    };
   }
 
   private async validateDeferDuration(
@@ -229,7 +254,7 @@ export class AddJob {
     return true;
   }
 
-  private async executeNoneDeferredJob(command: AddJobCommand): Promise<void> {
+  private async executeNoneDeferredJob(command: AddJobCommand): Promise<AddJobResult> {
     const { job } = command;
 
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
@@ -240,6 +265,11 @@ export class AddJob {
     });
 
     await this.queueJob(job, 0);
+
+    return {
+      workflowStatus: null,
+      deliveryLifecycleStatus: null,
+    };
   }
 
   private async handleDelay(command: AddJobCommand, filterVariables: IFilterVariables) {

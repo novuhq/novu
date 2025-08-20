@@ -7,6 +7,7 @@ import {
   StepRunRepository,
   StorageHelperService,
   WorkflowRunService,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { JobEntity, JobRepository, JobStatusEnum, NotificationRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
@@ -257,7 +258,7 @@ export class RunJob {
           return;
         }
 
-        await this.addJobUsecase.execute({
+        const addJobResult = await this.addJobUsecase.execute({
           userId: nextJob._userId,
           environmentId: nextJob._environmentId,
           organizationId: nextJob._organizationId,
@@ -266,6 +267,16 @@ export class RunJob {
         });
 
         shouldContinueQueueNextJob = false;
+
+        if(addJobResult.workflowStatus === WorkflowRunStatusEnum.COMPLETED) {
+          await this.workflowRunService.updateDeliveryLifecycle({
+            notificationId: nextJob._notificationId,
+            environmentId: nextJob._environmentId,
+            organizationId: nextJob._organizationId,
+            subscriberId: nextJob._subscriberId,
+          });
+        }
+
       } catch (error: any) {
         if (!nextJob) {
           // Fallback: update workflow run status if nextJob is unexpectedly missing

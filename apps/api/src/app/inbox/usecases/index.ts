@@ -1,6 +1,7 @@
 import {
   GetSubscriberTemplatePreference,
   GetWorkflowByIdsUseCase,
+  MessageInteractionService,
   StorageHelperService,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
@@ -46,4 +47,5 @@ export const USE_CASES = [
   ParseEventRequest,
   VerifyPayload,
   StorageHelperService,
+  MessageInteractionService,
 ];

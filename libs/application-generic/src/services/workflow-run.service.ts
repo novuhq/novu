@@ -146,6 +146,7 @@ export class WorkflowRunService {
    * 2. DELIVERED - If any in-app message exists and no interaction found
    * 3. SENT - If any step has COMPLETED status, workflow delivery is considered SENT
    * 4. SKIPPED - If any step has SKIPPED status OR statusReason starting with "skipped"
+   *    - Detail Priority: SUBSCRIBER_PREFERENCE > USER_STEP_CONDITION > other details
    * 5. CANCELED - If any step has CANCELED status (only if no SKIPPED found)
    * 6. ERRORED - If any step has FAILED status
    * 7. MERGED - If all steps are MERGED
@@ -184,14 +185,43 @@ export class WorkflowRunService {
     }
 
     // Priority 4: SKIPPED - Any job with SKIPPED status OR delivery lifecycle status is "skipped"
-    const skippedJob = channelSteps.find(
+    const skippedJobs = channelSteps.filter(
       (job) => job.status === JobStatusEnum.SKIPPED ||
         (job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped')
     );
-    if (skippedJob) {
+    if (skippedJobs.length > 0) {
+      // Priority order for delivery lifecycle details (highest → lowest):
+      // 1. SUBSCRIBER_PREFERENCE - User preference settings
+      // 2. USER_STEP_CONDITION - Step condition evaluation
+      // 3. All other details (missing credentials, phone, email, etc.)
+      const priorityOrder = [
+        DeliveryLifecycleDetail.SUBSCRIBER_PREFERENCE,
+        DeliveryLifecycleDetail.USER_STEP_CONDITION,
+        DeliveryLifecycleDetail.USER_MISSING_EMAIL,
+        DeliveryLifecycleDetail.USER_MISSING_PHONE,
+        DeliveryLifecycleDetail.USER_MISSING_PUSH_TOKEN,
+        DeliveryLifecycleDetail.USER_MISSING_WEBHOOK_URL,
+        DeliveryLifecycleDetail.USER_MISSING_CREDENTIALS,
+      ];
+
+      // Find the highest priority detail among skipped jobs
+      let selectedDetail: DeliveryLifecycleDetail | undefined;
+      for (const detail of priorityOrder) {
+        const jobWithDetail = skippedJobs.find(job => job.deliveryLifecycleState?.detail === detail);
+        if (jobWithDetail) {
+          selectedDetail = detail;
+          break;
+        }
+      }
+
+      // Fallback to first skipped job's detail if no prioritized detail found
+      if (!selectedDetail) {
+        selectedDetail = skippedJobs[0].deliveryLifecycleState?.detail;
+      }
+
       return {
         deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
-        deliveryLifecycleDetail: skippedJob.deliveryLifecycleState?.detail
+        deliveryLifecycleDetail: selectedDetail
       };
     }
 

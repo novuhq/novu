@@ -115,18 +115,9 @@ export class SendMessage {
           raw: JSON.stringify({ skip: isBridgeSkipped }),
         })
       );
-
-      return {
-        status: SendMessageStatus.SKIPPED,
-        deliveryLifecycleState: {
-          status: DeliveryLifecycleStatus.SKIPPED,
-          detail: DeliveryLifecycleDetail.USER_STEP_CONDITION,
-        },
-        extraData: DetailEnum.SKIPPED_BRIDGE_EXECUTION,
-      };
     }
 
-    const { stepCondition, channelPreference } = await this.evaluateFilters(isBridgeSkipped, command, variables);
+    const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -137,7 +128,12 @@ export class SendMessage {
       );
     }
 
-    if (!stepCondition?.passed || !channelPreference.result) {
+    const conditionsShouldRun = stepCondition?.passed;
+    const preferenceShouldRun = channelPreference.result;
+    const isBridgeSkippedShouldRun = !isBridgeSkipped;
+    
+    if (!conditionsShouldRun || !preferenceShouldRun || !isBridgeSkippedShouldRun) {
+
       return {
         status: SendMessageStatus.SKIPPED,
         deliveryLifecycleState: {
@@ -246,19 +242,13 @@ export class SendMessage {
   }
 
   private async evaluateFilters(
-    bridgeSkip: boolean | undefined,
     command: SendMessageCommand,
     variables: IFilterVariables
   ): Promise<{
     stepCondition: IConditionsFilterResponse;
     channelPreference: { result: boolean; reason?: DetailEnum };
   }> {
-    if (bridgeSkip === true) {
-      return {
-        stepCondition: { passed: true, conditions: [], variables: {} },
-        channelPreference: { result: true },
-      };
-    }
+ 
 
     const [stepCondition, channelPreference] = await Promise.all([
       this.evaluateStepCondition(command, variables),
