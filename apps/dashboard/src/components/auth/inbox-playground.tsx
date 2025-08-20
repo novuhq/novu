@@ -25,8 +25,6 @@ const PLAYGROUND_CONFIG = {
   totalSteps: 4,
 } as const;
 
-
-
 function showCustomToast(message: string, variant: 'success' | 'error') {
   showToast({
     children: () => (
@@ -84,8 +82,6 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
       showCustomToast('Failed to send notification. Please try again later.', 'error');
     }
   };
-
-
 
   const handleImplementClick = () => {
     telemetry(TelemetryEvent.INBOX_NEXT_STEP_CLICKED, {});
