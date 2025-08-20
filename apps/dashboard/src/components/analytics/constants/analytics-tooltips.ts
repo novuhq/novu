@@ -1,6 +1,6 @@
 export const ANALYTICS_TOOLTIPS = {
   MESSAGES_DELIVERED:
-    'Shows the total number of messages generated across all channels (Email, SMS, Push, In-App) during the selected time period.',
+    'Shows the total number of messages generated across all channels (Email, SMS, Push, Chat, In-App) during the selected time period.',
 
   ACTIVE_SUBSCRIBERS:
     'Displays the count of unique subscribers who have received at least one message during the selected time period.',
@@ -12,7 +12,7 @@ export const ANALYTICS_TOOLTIPS = {
     'Calculates the average number of messages sent per subscriber during the selected time period.',
 
   DELIVERY_TREND:
-    'Visualizes daily delivery volume breakdown by channel:\n\n• Email\n• SMS\n• Push\n• In-App\n\nShows trends over the selected time period.',
+    'Visualizes daily delivery volume breakdown by channel:\n\n• Email\n• SMS\n• Push\n• Chat\n• In-App\n\nShows trends over the selected time period.',
 
   INTERACTION_TREND:
     'Shows daily interaction patterns over time:\n\n• Message sent\n• Message seen\n• Message read\n• Message snoozed\n\nVisualizes user engagement trends with your notifications.',
