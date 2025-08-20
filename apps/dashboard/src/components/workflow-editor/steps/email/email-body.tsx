@@ -222,7 +222,8 @@ export const EmailBody = () => {
       .join(',');
 
     // Include translation state to force re-mount when translation extension becomes ready
-    const translationState = `translation-${shouldEnableTranslations ? 'enabled' : 'disabled'}-${isTranslationKeysLoading ? 'loading' : 'loaded'}-${translationKeys.length}`;
+    // Note: Removed isTranslationKeysLoading to prevent re-mount during loading state changes
+    const translationState = `translation-${shouldEnableTranslations ? 'enabled' : 'disabled'}-${translationKeys.length}`;
 
     return `vars-${variableNames.length}-${variableNames.slice(0, 100)}-${translationState}`;
   }, [
@@ -230,7 +231,6 @@ export const EmailBody = () => {
     parsedVariables.arrays,
     parsedVariables.namespaces,
     shouldEnableTranslations,
-    isTranslationKeysLoading,
     translationKeys.length,
   ]);
 

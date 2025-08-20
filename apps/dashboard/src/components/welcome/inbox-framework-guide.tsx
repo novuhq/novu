@@ -166,7 +166,7 @@ export function InboxFrameworkGuide({
               Watching for Inbox Integration
             </span>
           </div>
-          <p className="text-foreground-400 text-xs">Follow the steps below to initialize your Inbox component</p>
+          <p className="text-foreground-400 text-xs">You're just a couple steps away from your first notification.</p>
         </div>
       </motion.div>
 

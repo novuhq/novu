@@ -84,6 +84,14 @@ const InboxLoadingSkeleton = () => {
           </div>
         </div>
       </div>
+
+      {/* Bottom action buttons skeleton */}
+      <div className="bg-muted">
+        <div className="flex justify-center gap-2 p-3">
+          <div className="h-8 w-24 animate-pulse rounded-lg bg-neutral-200"></div>
+          <div className="h-8 w-32 animate-pulse rounded-lg bg-neutral-200"></div>
+        </div>
+      </div>
     </div>
   );
 };

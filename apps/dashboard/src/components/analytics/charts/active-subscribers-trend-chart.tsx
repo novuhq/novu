@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { Line, LineChart, XAxis } from 'recharts';
 import { type ActiveSubscribersTrendDataPoint } from '../../../api/activity';
-import { Card, CardContent, CardHeader, CardTitle } from '../../primitives/card';
+
 import { ChartConfig, ChartContainer, ChartTooltip, NovuTooltip } from '../../primitives/chart';
 import { Skeleton } from '../../primitives/skeleton';
 import { ANALYTICS_TOOLTIPS } from '../constants/analytics-tooltips';
@@ -19,27 +19,17 @@ const chartConfig = {
 
 function ActiveSubscribersTrendChartSkeleton() {
   return (
-    <Card className="shadow-box-xs border-none">
-      <CardHeader className="bg-transparent p-3 pb-0">
-        <CardTitle className="text-label-sm text-text-sub">
-          <Skeleton className="h-4 w-48" />
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-3">
-        <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
-          {Array.from({ length: 15 }).map((_, i) => {
-            const height = Math.random() * 100 + 20;
+    <div className="h-[160px] w-full flex items-end justify-between gap-2 px-2">
+      {Array.from({ length: 30 }).map((_, i) => {
+        const height = Math.random() * 100 + 20;
 
-            return (
-              <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                <Skeleton className="w-full rounded-full" style={{ height: `${height}px` }} />
-                {(i === 0 || i === 14) && <Skeleton className="h-2 w-6 mt-2" />}
-              </div>
-            );
-          })}
-        </div>
-      </CardContent>
-    </Card>
+        return (
+          <div key={i} className="flex flex-col items-center gap-1 flex-1">
+            <Skeleton className="w-full rounded-sm" style={{ height: `${height}px` }} />
+          </div>
+        );
+      })}
+    </div>
   );
 }
 

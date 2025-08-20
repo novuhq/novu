@@ -5,10 +5,12 @@ import type { ActivityFilters } from '@/api/activity';
 import { ActivityTableRow } from '@/components/activity/components/activity-table-row';
 import { Button } from '@/components/primitives/button';
 import { LinkButton } from '@/components/primitives/button-link';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { Table, TableBody } from '@/components/primitives/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchActivities } from '@/hooks/use-fetch-activities';
+import { useFetchWorkflowRunsCount } from '@/hooks/use-fetch-workflow-runs-count';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import type { RequestLog } from '../../types/logs';
 import { ApiTracesContent } from './api-traces-content';
@@ -73,6 +75,12 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
       staleTime: 30000,
     }
   );
+
+  const { data: workflowRunsCount, isLoading: isCountLoading } = useFetchWorkflowRunsCount({
+    filters: activityFilters,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+  });
 
   useMemo(() => {
     setDisplayedItemsCount(ITEMS_PER_PAGE);
@@ -147,8 +155,14 @@ export function WorkflowRunsContent({ log }: WorkflowRunsContentProps) {
               <div className="flex w-full flex-col items-start gap-0.5 text-left font-['Inter'] font-medium">
                 <div className="flex flex-col justify-center text-[14px] tracking-[-0.084px] text-[#525866]">
                   <p className="leading-[20px]">
-                    <span className="text-[#525866]">{activities.length}</span>
-                    <span className="text-[#99a0ae]"> workflow runs created</span>
+                    {isCountLoading ? (
+                      <Skeleton className="h-5 w-32" />
+                    ) : (
+                      <>
+                        <span className="text-[#525866]">{workflowRunsCount ?? 0}</span>
+                        <span className="text-[#99a0ae]"> workflow runs created</span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
