@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
+import { DeliveryLifecycleStatus } from '@novu/shared';
 import { Trace, TraceLogRepository } from './analytic-logs/trace-log';
 import { WorkflowRunService } from './workflow-run.service';
 
@@ -23,34 +24,49 @@ export class MessageInteractionService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async trace(traces: MessageInteractionTrace[]): Promise<MessageInteractionResult> {
+  async trace(interactionsTraces: MessageInteractionTrace[]): Promise<MessageInteractionResult> {
     try {
-      if (traces.length > 0) {
-        await this.traceLogRepository.createStepRun(traces);
+      if (interactionsTraces.length > 0) {
+        await this.traceLogRepository.createStepRun(interactionsTraces.map(trace => ({
+          organization_id: trace.organization_id,
+          environment_id: trace.environment_id,
+          user_id: trace.user_id,
+          entity_id: trace.entity_id,
+          event_type: trace.event_type,
+          created_at: trace.created_at,
+          external_subscriber_id: trace.external_subscriber_id,
+          subscriber_id: trace.subscriber_id,
+          title: trace.title,
+          message: trace.message,
+          step_run_type: trace.step_run_type,
+          raw_data: trace.raw_data,
+          status: trace.status,
+          workflow_run_identifier: trace.workflow_run_identifier,
+        } satisfies Omit<Trace, 'id' | 'expires_at' | 'entity_type'>)));
         
         this.logger.debug(
           {
-            traceCount: traces.length,
-            organizationId: traces[0]?.organization_id,
-            environmentId: traces[0]?.environment_id,
+            traceCount: interactionsTraces.length,
+            organizationId: interactionsTraces[0]?.organization_id,
+            environmentId: interactionsTraces[0]?.environment_id,
           },
-          `Successfully logged ${traces.length} message interaction traces`
+          `Successfully logged ${interactionsTraces.length} message interaction traces`
         );
 
-        await this.updateDeliveryLifecycle(traces);
+        await this.updateDeliveryLifecycle(interactionsTraces);
       }
 
       return {
         success: true,
-        processedTraceCount: traces.length,
+        processedTraceCount: interactionsTraces.length,
       };
     } catch (error) {
       this.logger.warn(
         {
           err: error,
-          traceCount: traces.length,
-          organizationId: traces[0]?.organization_id,
-          environmentId: traces[0]?.environment_id,
+          traceCount: interactionsTraces.length,
+          organizationId: interactionsTraces[0]?.organization_id,
+          environmentId: interactionsTraces[0]?.environment_id,
         },
         `Failed to process message interaction traces`
       );
@@ -80,6 +96,7 @@ export class MessageInteractionService {
         environmentId: trace.environment_id,
         organizationId: trace.organization_id,
         subscriberId: trace.subscriber_id,
+        deliveryLifecycleStatus: DeliveryLifecycleStatus.INTERACTED,
       });
     }
   }

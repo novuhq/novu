@@ -10,6 +10,8 @@ interface WorkflowStatusUpdateParams {
   organizationId: string;
   subscriberId: string;
   error?: unknown;
+  deliveryLifecycleStatus?: DeliveryLifecycleStatus;
+  deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
 @Injectable()
@@ -29,15 +31,27 @@ export class WorkflowRunService {
     organizationId,
     subscriberId,
     error,
+    deliveryLifecycleStatus: providedStatus,
+    deliveryLifecycleDetail: providedDetail,
   }: WorkflowStatusUpdateParams): Promise<void> {
     try {
-      // todo skip on case of interacted, we do not care about the detail
-      const { deliveryLifecycleStatus, deliveryLifecycleDetail } = await this.getDeliveryLifecycle({
-        notificationId,
-        environmentId,
-        organizationId,
-        subscriberId,
-      });
+      let deliveryLifecycleStatus: DeliveryLifecycleStatus;
+      let deliveryLifecycleDetail: DeliveryLifecycleDetail | undefined;
+
+      if (providedStatus) {
+        deliveryLifecycleStatus = providedStatus;
+        deliveryLifecycleDetail = providedDetail;
+      } else {
+        const result = await this.getDeliveryLifecycle({
+          notificationId,
+          environmentId,
+          organizationId,
+          subscriberId,
+        });
+        deliveryLifecycleStatus = result.deliveryLifecycleStatus;
+        deliveryLifecycleDetail = result.deliveryLifecycleDetail;
+      }
+
       await this.workflowRunRepository.updateWorkflowRunState(notificationId, error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED, {
         organizationId,
         environmentId,
