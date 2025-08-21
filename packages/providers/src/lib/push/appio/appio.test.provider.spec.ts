@@ -1,3 +1,4 @@
+import { expect, describe, it } from 'vitest';
 import { AppioPushProvider } from './appio.provider';
 
 describe('AppioPushProvider', () => {
