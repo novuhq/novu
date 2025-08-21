@@ -1,9 +1,7 @@
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
-import * as Sentry from '@sentry/react';
 import { ReactNode } from 'react';
 import {
   RiBarChartBoxLine,
-  RiChat1Line,
   RiDatabase2Line,
   RiDiscussLine,
   RiGroup2Line,
@@ -21,10 +19,8 @@ import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { useTelemetry } from '@/hooks/use-telemetry';
 import { Protect } from '@/utils/protect';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { IS_SELF_HOSTED } from '../../config';
 import { useFetchSubscription } from '../../hooks/use-fetch-subscription';
 import { ChangelogStack } from './changelog-cards';
@@ -93,7 +89,6 @@ export const SideNavigation = () => {
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
   const isWebhooksManagementEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WEBHOOKS_MANAGEMENT_ENABLED);
   const isTopicsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_TOPICS_PAGE_ACTIVE, false);
-  const isEmailLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE, false);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isTranslationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
@@ -124,14 +119,13 @@ export const SideNavigation = () => {
                 </NavigationLink>
               </Protect>
 
-              {isEmailLayoutsPageActive && (
-                <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                  <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
-                    <RiLayout5Line className="size-4" />
-                    <span>Email Layouts</span>
-                  </NavigationLink>
-                </Protect>
-              )}
+              <Protect permission={PermissionsEnum.WORKFLOW_READ}>
+                <NavigationLink to={buildRoute(ROUTES.LAYOUTS, { environmentSlug: currentEnvironment?.slug ?? '' })}>
+                  <RiLayout5Line className="size-4" />
+                  <span>Email Layouts</span>
+                </NavigationLink>
+              </Protect>
+
               {isTranslationEnabled && (
                 <NavigationLink
                   to={buildRoute(ROUTES.TRANSLATIONS, { environmentSlug: currentEnvironment?.slug ?? '' })}

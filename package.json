@@ -13,6 +13,7 @@
     "build:web": "nx build @novu/web",
     "build:webhook": "nx build @novu/webhook",
     "build:with-ee": "pnpm build && pnpm build-ee",
+    "build:agents": "nx run-many --target=build --all --exclude=nextjs,nestjs,@novu/web,@novu/api-service,@novu/worker,@novu/dashboard && pnpm build-ee",
     "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
     "build": "nx run-many --target=build --all --exclude=nextjs,nestjs",

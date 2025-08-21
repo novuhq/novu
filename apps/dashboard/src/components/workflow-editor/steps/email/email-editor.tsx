@@ -1,14 +1,7 @@
-import {
-  EnvironmentTypeEnum,
-  FeatureFlagsKeysEnum,
-  UiComponentEnum,
-  type UiSchema,
-  UiSchemaGroupEnum,
-} from '@novu/shared';
+import { EnvironmentTypeEnum, UiComponentEnum, type UiSchema, UiSchemaGroupEnum } from '@novu/shared';
 import { getComponentByType } from '@/components/workflow-editor/steps/component-utils';
 import { EmailPreviewHeader } from '@/components/workflow-editor/steps/email/email-preview';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { cn } from '../../../../utils/ui';
 import { StepEditorUnavailable } from '../step-editor-unavailable';
 
@@ -17,8 +10,6 @@ type EmailEditorProps = { uiSchema: UiSchema; isEditorV2?: boolean };
 export const EmailEditor = (props: EmailEditorProps) => {
   const { currentEnvironment } = useEnvironment();
   const { uiSchema, isEditorV2 = false } = props;
-  const isHtmlEditorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED);
-  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
 
   if (uiSchema.group !== UiSchemaGroupEnum.EMAIL) {
     return null;
@@ -35,17 +26,14 @@ export const EmailEditor = (props: EmailEditorProps) => {
               getComponentByType({
                 component: disableOutputSanitization.component,
               })}
-            {isHtmlEditorEnabled &&
-              getComponentByType({ component: editorType?.component ?? UiComponentEnum.EMAIL_EDITOR_SELECT })}
+            {getComponentByType({ component: editorType?.component ?? UiComponentEnum.EMAIL_EDITOR_SELECT })}
           </EmailPreviewHeader>
         </div>
 
         <div className={cn(isEditorV2 && 'px-3 py-0')}>{getComponentByType({ component: subject.component })}</div>
-        {isLayoutsPageActive && (
-          <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-1">
-            {getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
-          </div>
-        )}
+        <div className="flex items-center gap-0.5 border-b border-t border-neutral-100 px-1 py-1">
+          {getComponentByType({ component: layoutId?.component ?? UiComponentEnum.LAYOUT_SELECT })}
+        </div>
       </div>
       {currentEnvironment?.type === EnvironmentTypeEnum.DEV ? (
         getComponentByType({ component: body.component })

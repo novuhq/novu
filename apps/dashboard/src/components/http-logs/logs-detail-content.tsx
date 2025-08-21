@@ -178,7 +178,7 @@ export function LogsDetailContent({ log }: LogsDetailContentProps) {
             <div className="flex items-center justify-between">
               <span className="text-text-soft font-mono text-xs font-medium tracking-[-0.24px]">Source</span>
               <span className="text-text-sub font-mono text-xs font-normal tracking-[-0.24px]">
-                {log.schemaType === 'Bearer' ? 'Dashboard' : 'API'}
+                {log.authType === 'Bearer' ? 'Dashboard' : 'API'}
               </span>
             </div>
           </div>

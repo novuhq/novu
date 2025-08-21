@@ -211,12 +211,7 @@ export function PayloadSchemaDrawer({
           <FormProvider {...payloadSchemaForm}>
             <FormRoot className="flex h-full flex-col">
               <SheetHeader className="space-y-1 px-3 py-4">
-                <SheetTitle className="text-label-lg flex items-center gap-2">
-                  Manage workflow schema
-                  <Badge color="gray" size="sm" variant="light" className="text-label-xs">
-                    BETA
-                  </Badge>
-                </SheetTitle>
+                <SheetTitle className="text-label-lg flex items-center gap-2">Manage workflow schema</SheetTitle>
                 <SheetDescription className="text-paragraph-xs mt-0">
                   Manage workflow schema for reliable notifications.{' '}
                   <ExternalLink href="https://docs.novu.co/platform/workflow/build-a-workflow#manage-payload-schema">

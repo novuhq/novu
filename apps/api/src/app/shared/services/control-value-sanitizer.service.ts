@@ -46,7 +46,6 @@ export class ControlValueSanitizerService {
   }
 
   processControlValues(
-    isHtmlEditorEnabled: boolean,
     controlValues: Record<string, unknown>,
     variableSchema: JSONSchemaDto,
     variablesObject: Record<string, unknown>
@@ -60,7 +59,6 @@ export class ControlValueSanitizerService {
 
     for (const [controlKey, controlValue] of Object.entries(controlValues || {})) {
       const variables = buildVariables({
-        useNewLiquidParser: isHtmlEditorEnabled,
         variableSchema,
         controlValue,
         logger: this.logger,

@@ -29,7 +29,7 @@ export function generateCurlCommand(userId: string, apiKey: string): string {
     throw new Error('API key not found');
   }
 
-  return `curl -X POST ${API_HOSTNAME}/api/v1/events/trigger \\
+  return `curl -X POST ${API_HOSTNAME}/v1/events/trigger \\
      -H "Content-Type: application/json" \\
      -H "Authorization: Bearer ${apiKey}" \\
      -d '{

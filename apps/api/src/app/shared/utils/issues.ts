@@ -135,17 +135,14 @@ export const processControlValuesByLiquid = ({
   currentPath,
   issues,
   variableSchema,
-  useNewLiquidParser,
 }: {
   currentValue: unknown;
   currentPath: string[];
   issues: ControlIssues;
   variableSchema: JSONSchemaDto | undefined;
-  useNewLiquidParser: boolean;
 }) => {
   if (!currentValue || typeof currentValue !== 'object') {
     const liquidTemplateIssues = buildVariables({
-      useNewLiquidParser,
       variableSchema,
       controlValue: currentValue,
       suggestPayloadNamespace: false,
@@ -159,18 +156,20 @@ export const processControlValuesByLiquid = ({
 
       issues.controls[controlKey] = liquidTemplateIssues.invalidVariables.map((invalidVariable) => {
         const message = invalidVariable.message ? invalidVariable.message.split(' line:')[0] : '';
+        const variableName = invalidVariable.name === 'unknown' ? '{{}}' : invalidVariable.name;
+
         if ('filterMessage' in invalidVariable) {
           return {
-            message: `Filter "${invalidVariable.filterMessage}" in "${invalidVariable.name}"`,
+            message: `Filter "${invalidVariable.filterMessage}" in "${variableName}"`,
             issueType: ContentIssueEnum.INVALID_FILTER_ARG_IN_VARIABLE,
-            variableName: invalidVariable.name,
+            variableName: variableName,
           };
         }
 
         return {
-          message: `Variable "${invalidVariable.name}" ${message}`.trim(),
+          message: `Variable "${variableName}" ${message}`.trim(),
           issueType: ContentIssueEnum.ILLEGAL_VARIABLE_IN_CONTROL_VALUE,
-          variableName: invalidVariable.name,
+          variableName: variableName,
         };
       });
     } else {
@@ -193,7 +192,6 @@ export const processControlValuesByLiquid = ({
       currentPath: [...currentPath, key],
       issues,
       variableSchema,
-      useNewLiquidParser,
     });
   }
 };
