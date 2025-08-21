@@ -8,7 +8,7 @@ export class AppIOHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    const config: { apiKey: string } = { apiKey: credentials.apiKey };
+    const config: { AppIOBaseUrl?: string } = { AppIOBaseUrl: credentials.apiKey };
 
     this.provider = new AppioPushProvider(config);
   }
