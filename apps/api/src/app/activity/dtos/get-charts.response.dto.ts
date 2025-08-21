@@ -125,13 +125,13 @@ export class WorkflowRunsTrendDataPointDto {
   @IsString()
   timestamp: string;
 
-  @ApiProperty({ description: 'Pending workflow runs count' })
+  @ApiProperty({ description: 'Processing workflow runs count' })
   @IsNumber()
-  pending: number;
+  processing: number;
 
-  @ApiProperty({ description: 'Successful workflow runs count' })
+  @ApiProperty({ description: 'Completed workflow runs count' })
   @IsNumber()
-  success: number;
+  completed: number;
 
   @ApiProperty({ description: 'Failed workflow runs count' })
   @IsNumber()

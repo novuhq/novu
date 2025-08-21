@@ -1,6 +1,7 @@
 import { WorkflowRunStatusEnum } from '@novu/application-generic';
 import { IsArray, IsInt, IsISO8601, IsOptional, IsString, Max, Min } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
 export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   @IsInt()
@@ -30,7 +31,7 @@ export class GetWorkflowRunsCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  statuses?: WorkflowRunStatusEnum[];
+  statuses?: WorkflowRunStatusDtoEnum[];
 
   @IsOptional()
   @IsArray()

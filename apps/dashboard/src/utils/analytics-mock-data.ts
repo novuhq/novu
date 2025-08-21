@@ -75,8 +75,8 @@ export function generateMockAnalyticsData(): GetChartsResponse {
   // Mock workflow runs trend data
   const workflowRunsTrendData: WorkflowRunsTrendDataPoint[] = timestamps.map((timestamp) => ({
     timestamp,
-    pending: randomBetween(5, 25),
-    success: randomBetween(80, 200),
+    processing: randomBetween(5, 25),
+    completed: randomBetween(80, 200),
     error: randomBetween(2, 15),
   }));
 

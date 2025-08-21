@@ -71,12 +71,12 @@ export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhou
 
 export enum WorkflowRunStatusEnum {
     /**
-   * @deprecated please use processing instead
+   * @deprecated please use processing instead nv-6562
    */
   PENDING = 'pending',
   PROCESSING = 'processing',
   /**
-   * @deprecated please use COMPLETED instead
+   * @deprecated please use COMPLETED instead nv-6562
    */
   SUCCESS = 'success',
   COMPLETED = 'completed',

@@ -9,11 +9,12 @@ import {
   WorkflowRun,
   WorkflowRunRepository,
   WorkflowRunService,
+  WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
-import { WorkflowRunDeliveryLifecycleStatusDtoEnum } from '../../dtos/shared.dto';
+import { WorkflowRunDeliveryLifecycleStatusDtoEnum, WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
 type CursorData = {
   created_at: string;
@@ -73,7 +74,19 @@ export class GetWorkflowRuns {
       }
 
       if (command.statuses?.length) {
-        queryBuilder.whereIn('status', command.statuses);
+        const statuses = command.statuses.map((status) => { //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
+          if (status === WorkflowRunStatusDtoEnum.PROCESSING) { 
+            return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
+          }
+          if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
+            return [WorkflowRunStatusEnum.SUCCESS, WorkflowRunStatusEnum.COMPLETED];
+          }
+          if (status === WorkflowRunStatusDtoEnum.ERROR) {
+            return [WorkflowRunStatusEnum.ERROR];
+          }
+          return status;
+        });
+        queryBuilder.whereIn('status', statuses.flat());
       }
 
       if (command.createdGte) {
