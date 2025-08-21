@@ -5,7 +5,10 @@ import { useTabsDropdown } from '../../helpers/useTabsDropdown';
 import { Check as DefaultCheck } from '../../icons';
 import { ArrowDown as DefaultArrowDown } from '../../icons/ArrowDown';
 import {
+  AvatarRenderer,
   BodyRenderer,
+  CustomActionsRenderer,
+  DefaultActionsRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
@@ -23,8 +26,11 @@ const tabsDropdownTriggerVariants = () =>
   `after:nt-w-full after:nt-h-[2px] after:nt-border-b-2 nt-mb-[0.625rem]`;
 type InboxTabsProps = {
   renderNotification?: NotificationRenderer;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -143,8 +149,11 @@ export const InboxTabs = (props: InboxTabsProps) => {
         >
           <NotificationList
             renderNotification={props.renderNotification}
+            renderAvatar={props.renderAvatar}
             renderSubject={props.renderSubject}
             renderBody={props.renderBody}
+            renderDefaultActions={props.renderDefaultActions}
+            renderCustomActions={props.renderCustomActions}
             onNotificationClick={props.onNotificationClick}
             onPrimaryActionClick={props.onPrimaryActionClick}
             onSecondaryActionClick={props.onSecondaryActionClick}

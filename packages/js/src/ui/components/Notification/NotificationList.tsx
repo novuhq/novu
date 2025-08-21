@@ -5,7 +5,10 @@ import { DEFAULT_LIMIT, useInboxContext, useNewMessagesCount } from '../../conte
 import { useStyle } from '../../helpers';
 import { useNotificationVisibility } from '../../helpers/useNotificationVisibility';
 import type {
+  AvatarRenderer,
   BodyRenderer,
+  CustomActionsRenderer,
+  DefaultActionsRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
@@ -17,8 +20,11 @@ import { NotificationListSkeleton } from './NotificationListSkeleton';
 
 type NotificationListProps = {
   renderNotification?: NotificationRenderer;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -100,8 +106,11 @@ export const NotificationList = (props: NotificationListProps) => {
                   <Notification
                     notification={notification()}
                     renderNotification={props.renderNotification}
+                    renderAvatar={props.renderAvatar}
                     renderSubject={props.renderSubject}
                     renderBody={props.renderBody}
+                    renderDefaultActions={props.renderDefaultActions}
+                    renderCustomActions={props.renderCustomActions}
                     onNotificationClick={props.onNotificationClick}
                     onPrimaryActionClick={props.onPrimaryActionClick}
                     onSecondaryActionClick={props.onSecondaryActionClick}
