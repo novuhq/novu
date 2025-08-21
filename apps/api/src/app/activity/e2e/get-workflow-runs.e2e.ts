@@ -78,6 +78,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
         payload,
         controls: undefined,
         tags: [],
+        createdAt: new Date().toISOString(),
       };
 
       promises.push(
@@ -248,6 +249,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       });
 
       expect(body.data).to.be.an('array');
+      expect(body.data.length).to.be.at.least(1);
       expect(body.data.length).to.be.at.most(2);
 
       // Check for duplicates and collect runNumbers
