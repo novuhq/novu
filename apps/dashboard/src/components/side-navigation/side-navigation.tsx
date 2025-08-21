@@ -101,7 +101,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col overflow-auto">
+    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] flex-shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -109,7 +109,7 @@ export const SideNavigation = () => {
           data={environments}
           onChange={onEnvironmentChange}
         />
-        <nav className="flex h-full flex-1 flex-col">
+        <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
