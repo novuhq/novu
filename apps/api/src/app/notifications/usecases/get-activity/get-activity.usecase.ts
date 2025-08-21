@@ -40,53 +40,28 @@ const workflowRunSelectColumns = [
   'environment_id',
   'subscriber_id',
   'external_subscriber_id',
-  'status',
   'trigger_identifier',
   'transaction_id',
   'channels',
   'subscriber_to',
   'payload',
-  'control_values',
   'topics',
-  'is_digest',
-  'digested_workflow_run_id',
   'created_at',
   'updated_at',
 ] as const;
-type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
 const stepRunSelectColumns = [
   'step_run_id',
   'step_id',
-  'workflow_run_id',
-  'subscriber_id',
-  'external_subscriber_id',
-  'message_id',
   'step_type',
-  'step_name',
   'provider_id',
   'status',
-  'error_code',
-  'error_message',
-  'transaction_id',
   'created_at',
   'updated_at',
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
-const traceSelectColumns = [
-  'trace_id',
-  'entity_id',
-  'entity_type',
-  'event_type',
-  'organization_id',
-  'environment_id',
-  'user_id',
-  'parent_trace_id',
-  'data',
-  'created_at',
-] as const;
-type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
+const traceSelectColumns = ['id', 'entity_id', 'title', 'status', 'created_at', 'raw_data'] as const;
 
 @Injectable()
 export class GetActivity {
@@ -135,7 +110,7 @@ export class GetActivity {
       workflowRunsEnabled,
     });
 
-    let feedItem;
+    let feedItem: NotificationFeedItemEntity | null = null;
 
     if (workflowRunsEnabled && stepRunsEnabled && tracesEnabled) {
       this.logger.debug('analytics full ingegration enabled');
@@ -201,7 +176,7 @@ export class GetActivity {
       where: traceQuery,
       orderBy: 'created_at',
       orderDirection: 'ASC',
-      select: '*',
+      select: traceSelectColumns,
     });
 
     const executionDetailsByEntityId = new Map<string, ExecutionDetailFeedItem[]>();
@@ -212,6 +187,7 @@ export class GetActivity {
       if (!traceLogsByEntityId.has(trace.entity_id)) {
         traceLogsByEntityId.set(trace.entity_id, []);
       }
+      // biome-ignore lint/style/noNonNullAssertion: <explanation> we we create it in the if above
       traceLogsByEntityId.get(trace.entity_id)!.push(trace);
     }
 

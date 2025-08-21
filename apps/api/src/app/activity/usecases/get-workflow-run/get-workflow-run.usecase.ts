@@ -9,9 +9,8 @@ import {
   WorkflowRun,
   WorkflowRunRepository,
 } from '@novu/application-generic';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto';
-import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
+import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
+import { mapExecutionDetailsToDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 
 const workflowRunSelectColumns = [
@@ -56,18 +55,7 @@ const stepRunSelectColumns = [
 ] as const;
 type StepRunFetchResult = Pick<StepRun, (typeof stepRunSelectColumns)[number]>;
 
-const traceSelectColumns = [
-  'trace_id',
-  'entity_id',
-  'entity_type',
-  'event_type',
-  'organization_id',
-  'environment_id',
-  'user_id',
-  'parent_trace_id',
-  'data',
-  'created_at',
-] as const;
+const traceSelectColumns = ['entity_id', 'id', 'status', 'title', 'raw_data', 'created_at'] as const;
 type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
 
 interface IStepRunWithDetails extends StepRunFetchResult {
@@ -199,7 +187,10 @@ export class GetWorkflowRun {
           executionDetailsByEntityId.set(trace.entity_id, []);
         }
 
-        executionDetailsByEntityId.get(trace.entity_id)!.push(trace);
+        const existingTraces = executionDetailsByEntityId.get(trace.entity_id);
+        if (existingTraces) {
+          existingTraces.push(trace);
+        }
       }
 
       return executionDetailsByEntityId;
@@ -213,42 +204,17 @@ export class GetWorkflowRun {
     }
   }
 
-  private mapTraceStatusToExecutionStatus(traceStatus: string): ExecutionDetailsStatusEnum {
-    switch (traceStatus.toLowerCase()) {
-      case 'success':
-        return ExecutionDetailsStatusEnum.SUCCESS;
-      case 'error':
-      case 'failed':
-        return ExecutionDetailsStatusEnum.FAILED;
-      case 'warning':
-        return ExecutionDetailsStatusEnum.WARNING;
-      case 'pending':
-        return ExecutionDetailsStatusEnum.PENDING;
-      case 'queued':
-        return ExecutionDetailsStatusEnum.QUEUED;
-      default:
-        return ExecutionDetailsStatusEnum.PENDING;
-    }
-  }
-
-  /**
-   * Parses ClickHouse timestamp format as UTC
-   * ClickHouse returns timestamps in format "YYYY-MM-DD HH:mm:ss.SSS" which should be treated as UTC
-   * but JavaScript's Date constructor interprets them as local time by default
-   */
-  private parseClickHouseTimestamp(timestamp: string | Date): Date {
-    // If already a Date object, return as-is
-    if (timestamp instanceof Date) {
-      return timestamp;
-    }
-
-    /*
-     * ClickHouse format: "2025-07-23 13:52:52.860"
-     * Convert to ISO format with explicit UTC: "2025-07-23T13:52:52.860Z"
-     */
-    const isoFormat = `${timestamp.replace(' ', 'T')}Z`;
-
-    return new Date(isoFormat);
+  private mapStepRunToDto(stepRun: IStepRunWithDetails): StepRunDto {
+    return {
+      stepRunId: stepRun.step_run_id,
+      stepId: stepRun.step_id,
+      stepType: stepRun.step_type,
+      providerId: stepRun.provider_id || undefined,
+      status: stepRun.status,
+      createdAt: new Date(stepRun.created_at),
+      updatedAt: new Date(stepRun.updated_at),
+      executionDetails: mapExecutionDetailsToDto(stepRun.executionDetails || []),
+    };
   }
 
   private mapWorkflowRunToDto(
@@ -272,16 +238,7 @@ export class GetWorkflowRun {
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
       updatedAt: new Date(`${workflowRun.updated_at} UTC`).toISOString(),
       payload: workflowRun.payload ? JSON.parse(workflowRun.payload) : {},
-      steps: stepRuns.map((stepRun) => ({
-        stepRunId: stepRun.step_run_id,
-        stepId: stepRun.step_id,
-        stepType: stepRun.step_type,
-        providerId: stepRun.provider_id || undefined,
-        status: stepRun.status,
-        createdAt: new Date(stepRun.created_at),
-        updatedAt: new Date(stepRun.updated_at),
-        executionDetails: stepRun.executionDetails || [],
-      })),
+      steps: stepRuns.map((stepRun) => this.mapStepRunToDto(stepRun)),
     };
   }
 }

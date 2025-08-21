@@ -1,45 +1,43 @@
-import { RequestLog, StepRunNonFinalStatus, StepType, Trace, WorkflowRunStatusEnum } from '@novu/application-generic';
-import { TraceResponseDto } from '../dtos/get-request-traces.response.dto';
+import { StepType, Trace, TraceStatus, WorkflowRunStatusEnum } from '@novu/application-generic';
+import { ExecutionDetailsStatusEnum } from '@novu/shared';
+import { TraceResponseDto } from '../dtos/get-request.response.dto';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
 import { WorkflowRunStatusDtoEnum } from '../dtos/shared.dto';
+import { StepExecutionDetailDto } from '../dtos/workflow-run-response.dto';
 
-export function mapRequestLogToResponseDto(log: RequestLog): RequestLogResponseDto {
+export function mapRequestLogToResponseDto({
+  id,
+  createdAt,
+  method,
+  path,
+  statusCode,
+  transactionId,
+  requestBody,
+  responseBody,
+}: {
+  id: string;
+  createdAt: Date;
+  method: string;
+  path: string;
+  statusCode: number;
+  transactionId: string;
+  requestBody: string;
+  responseBody: string;
+}): RequestLogResponseDto {
   return {
-    id: log.id,
-    createdAt: new Date(`${log.created_at} UTC`).toISOString(),
-    url: log.url,
-    urlPattern: log.url_pattern,
-    method: log.method,
-    path: log.path,
-    statusCode: log.status_code,
-    hostname: log.hostname,
-    transactionId: log.transaction_id,
-    ip: log.ip,
-    userAgent: log.user_agent,
-    requestBody: log.request_body,
-    responseBody: log.response_body,
-    userId: log.user_id,
-    organizationId: log.organization_id,
-    environmentId: log.environment_id,
-    authType: log.auth_type,
-    durationMs: log.duration_ms,
+    id,
+    createdAt: new Date(`${createdAt} UTC`).toISOString(),
+    method,
+    path,
+    statusCode,
+    transactionId,
+    requestBody,
+    responseBody,
   };
 }
 
-/**
- * Maps workflow run status to response DTO status based on step runs
- * Logic based on channel steps (step runs) as defined in the specification:
- * - Pending: Is not Success, waiting on one or more channel steps
- * - Success: At least one channel step sent
- * - Error: All channel steps failed
- * - Skipped: Intentionally not sent due to user preferences or logic
- * - Cancelled: Explicitly aborted before sending
- * - Merged: Workflow was merged with another and suppressed sending
- */
-export function mapWorkflowRunStatusToDto(
-  workflowRunStatus: WorkflowRunStatusEnum,
-  stepRunsType: StepType[]
-): WorkflowRunStatusDtoEnum {
+// tmp workaround to map workflow run status to response DTO status, this logic will be overridden by the new status and delivery lifecycle feature.
+export function mapWorkflowRunStatusToDto(workflowRunStatus: WorkflowRunStatusEnum, stepRunsType: StepType[]): any {
   // Filter for channel steps (exclude non-channel steps like trigger, delay, digest, custom)
   const channelSteps = stepRunsType.filter((stepType) => ['in_app', 'email', 'sms', 'chat', 'push'].includes(stepType));
 
@@ -58,69 +56,80 @@ export function mapWorkflowRunStatusToDto(
         return WorkflowRunStatusDtoEnum.PENDING;
     }
   }
-
-  // Check for specific statuses first
-  if (channelSteps.some((step) => step.status === 'canceled')) {
-    return WorkflowRunStatusDtoEnum.CANCELED;
-  }
-
-  if (channelSteps.some((step) => step.status === 'merged')) {
-    return WorkflowRunStatusDtoEnum.MERGED;
-  }
-
-  if (channelSteps.some((step) => step.status === 'skipped')) {
-    return WorkflowRunStatusDtoEnum.SKIPPED;
-  }
-
-  // Check completion status
-  const completedSteps = channelSteps.filter((step) => step.status === 'completed');
-  // Success: At least one channel step sent (completed)
-  if (completedSteps.length > 0) {
-    return WorkflowRunStatusDtoEnum.SUCCESS;
-  }
-
-  const failedSteps = channelSteps.filter((step) => step.status === 'failed');
-  // Error: All channel steps failed
-  if (failedSteps.length === channelSteps.length && channelSteps.length > 0) {
-    return WorkflowRunStatusDtoEnum.ERROR;
-  }
-
-  // Pending: Default state when waiting on steps
-  const nonFinalStatuses: StepRunNonFinalStatus[] = ['pending', 'queued', 'running', 'delayed'];
-  const nonFinalStatusSteps = channelSteps.filter((step) =>
-    nonFinalStatuses.includes(step.status as StepRunNonFinalStatus)
-  );
-
-  if (nonFinalStatusSteps.length === channelSteps.length && channelSteps.length > 0) {
-    return WorkflowRunStatusDtoEnum.PENDING;
-  }
-
-  this.logger.warn(
-    {
-      WorkflowRunStatusEnum: workflowRunStatus,
-      channelSteps,
-    },
-    'Unknown workflow run status, fallback to error'
-  );
-
-  return WorkflowRunStatusDtoEnum.ERROR;
 }
 
-export function mapTraceToResponseDto(trace: Trace): TraceResponseDto {
+export function mapTraceToResponseDto({
+  id,
+  createdAt,
+  eventType,
+  title,
+  message,
+  rawData,
+  status,
+  entityType,
+  entityId,
+  organizationId,
+  environmentId,
+  userId,
+  externalSubscriberId,
+  subscriberId,
+}: {
+  id: string;
+  createdAt: Date;
+  eventType: string;
+  title: string;
+  message: string;
+  rawData: string;
+  status: string;
+  entityType: string;
+  entityId: string;
+  organizationId: string;
+  environmentId: string;
+  userId: string;
+  externalSubscriberId: string;
+  subscriberId: string;
+}): TraceResponseDto {
   return {
-    id: trace.id,
-    createdAt: new Date(`${trace.created_at} UTC`).toISOString(),
-    eventType: trace.event_type,
-    title: trace.title,
-    message: trace.message,
-    rawData: trace.raw_data,
-    status: trace.status,
-    entityType: trace.entity_type,
-    entityId: trace.entity_id,
-    organizationId: trace.organization_id,
-    environmentId: trace.environment_id,
-    userId: trace.user_id,
-    externalSubscriberId: trace.external_subscriber_id,
-    subscriberId: trace.subscriber_id,
+    id,
+    createdAt: new Date(`${createdAt} UTC`).toISOString(),
+    eventType,
+    title,
+    message,
+    rawData,
+    status,
+    entityType,
+    entityId,
+    organizationId,
+    environmentId,
+    userId,
+    externalSubscriberId,
+    subscriberId,
   };
+}
+
+export function mapExecutionDetailsToDto(
+  traces: Pick<Trace, 'entity_id' | 'id' | 'status' | 'title' | 'raw_data' | 'created_at'>[]
+): StepExecutionDetailDto[] {
+  return traces.map((trace) => ({
+    _id: trace.id,
+    createdAt: new Date(`${trace.created_at} UTC`).toISOString(),
+    status: mapTraceStatusToExecutionDetailsStatus(trace.status),
+    detail: trace.title,
+    raw: trace.raw_data,
+  }));
+}
+
+function mapTraceStatusToExecutionDetailsStatus(traceStatus: TraceStatus): ExecutionDetailsStatusEnum {
+  switch (traceStatus) {
+    case 'success':
+      return ExecutionDetailsStatusEnum.SUCCESS;
+    case 'error':
+      return ExecutionDetailsStatusEnum.FAILED;
+    case 'warning':
+      return ExecutionDetailsStatusEnum.WARNING;
+    case 'pending':
+      return ExecutionDetailsStatusEnum.PENDING;
+    default:
+      return ExecutionDetailsStatusEnum.FAILED;
+  }
 }

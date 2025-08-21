@@ -1,39 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { QueryBuilder, RequestLog, RequestLogRepository, Trace, TraceLogRepository } from '@novu/application-generic';
-import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request-traces.response.dto';
+import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request.response.dto';
 import { mapRequestLogToResponseDto, mapTraceToResponseDto } from '../../shared/mappers';
+import { requestLogSelectColumns, traceSelectColumns } from '../../shared/select.const';
 import { GetRequestCommand } from './get-request.command';
-
-// Define minimal required columns for request logs
-const requestLogSelectColumns = [
-  'id',
-  'environment_id',
-  'organization_id',
-  'user_id',
-  'request_method',
-  'request_url',
-  'request_headers',
-  'request_body',
-  'response_status',
-  'response_headers',
-  'response_body',
-  'created_at',
-] as const;
-type RequestLogFetchResult = Pick<RequestLog, (typeof requestLogSelectColumns)[number]>;
-
-const traceSelectColumns = [
-  'trace_id',
-  'entity_id',
-  'entity_type',
-  'event_type',
-  'organization_id',
-  'environment_id',
-  'user_id',
-  'parent_trace_id',
-  'data',
-  'created_at',
-] as const;
-type TraceFetchResult = Pick<Trace, (typeof traceSelectColumns)[number]>;
 
 @Injectable()
 export class GetRequest {
@@ -72,8 +42,34 @@ export class GetRequest {
       select: traceSelectColumns,
     });
 
-    const mappedRequest = mapRequestLogToResponseDto(request.data);
-    const mappedTraces: TraceResponseDto[] = traceResult.data.map(mapTraceToResponseDto);
+    const mappedRequest = mapRequestLogToResponseDto({
+      id: request.data.id,
+      createdAt: request.data.created_at,
+      method: request.data.method,
+      path: request.data.path,
+      statusCode: request.data.status_code,
+      transactionId: request.data.transaction_id,
+      requestBody: request.data.request_body,
+      responseBody: request.data.response_body,
+    });
+    const mappedTraces: TraceResponseDto[] = traceResult.data.map((trace) =>
+      mapTraceToResponseDto({
+        id: trace.id,
+        createdAt: trace.created_at,
+        eventType: trace.event_type,
+        title: trace.title,
+        message: trace.message ?? '',
+        rawData: trace.raw_data ?? '',
+        status: trace.status,
+        entityType: trace.entity_type,
+        entityId: trace.entity_id,
+        organizationId: trace.organization_id,
+        environmentId: trace.environment_id,
+        userId: trace.user_id ?? '',
+        externalSubscriberId: trace.external_subscriber_id ?? '',
+        subscriberId: trace.subscriber_id ?? '',
+      })
+    );
 
     return {
       request: mappedRequest,

@@ -1,14 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import {
-  EnforcedContext,
-  LogRepository,
-  QueryBuilder,
-  RequestLog,
-  RequestLogRepository,
-  Where,
-} from '@novu/application-generic';
+import { LogRepository, QueryBuilder, RequestLog, RequestLogRepository } from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { mapRequestLogToResponseDto } from '../../shared/mappers';
+import { requestLogSelectColumns } from '../../shared/select.const';
 import { GetRequestsCommand } from './get-requests.command';
 
 @Injectable()
@@ -54,11 +48,23 @@ export class GetRequests {
         offset,
         orderBy: 'created_at',
         orderDirection: 'DESC',
+        select: requestLogSelectColumns,
       }),
       this.requestLogRepository.count({ where: safeWhere }),
     ]);
 
-    const mappedData: RequestLogResponseDto[] = findResult.data.map(mapRequestLogToResponseDto);
+    const mappedData: RequestLogResponseDto[] = findResult.data.map((request) =>
+      mapRequestLogToResponseDto({
+        id: request.id,
+        createdAt: request.created_at,
+        method: request.method,
+        path: request.path,
+        statusCode: request.status_code,
+        transactionId: request.transaction_id,
+        requestBody: request.request_body,
+        responseBody: request.response_body,
+      })
+    );
 
     return {
       data: mappedData,

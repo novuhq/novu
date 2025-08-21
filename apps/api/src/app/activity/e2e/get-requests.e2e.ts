@@ -2,7 +2,7 @@ import { Novu } from '@novu/api';
 import { LogRepository, RequestLog, RequestLogRepository } from '@novu/application-generic';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { format, isAfter, isBefore, subHours } from 'date-fns';
+import { format, isAfter, subHours } from 'date-fns';
 import { generateTransactionId } from '../../shared/helpers';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { RequestLogResponseDto } from '../dtos/get-requests.response.dto';
@@ -53,7 +53,18 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
     expect(body.total).to.be.equal(2);
     expect(body.pageSize).to.be.equal(10);
 
-    const expectedLog = normalizeRequestLogForTesting(mapRequestLogToResponseDto(requestLog as RequestLog));
+    const expectedLog = normalizeRequestLogForTesting(
+      mapRequestLogToResponseDto({
+        id: 'req_123',
+        createdAt: requestLog.created_at,
+        method: requestLog.method,
+        path: requestLog.path,
+        statusCode: requestLog.status_code,
+        transactionId: requestLog.transaction_id,
+        requestBody: requestLog.request_body,
+        responseBody: requestLog.response_body,
+      })
+    );
     const responseLog = normalizeRequestLogForTesting(body.data[0]);
     expect(responseLog).to.deep.equal(expectedLog);
   });
@@ -137,7 +148,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
     expect(urlFilterResponse.body.data.length, 'urlFilterResponse.body.data.length').to.be.equal(3);
     expect(urlFilterResponse.body.total, 'urlFilterResponse.body.total').to.be.equal(3);
 
-    const urls = urlFilterResponse.body.data.map((log: RequestLogResponseDto) => log.url);
+    const urls = urlFilterResponse.body.data.map((log: RequestLogResponseDto) => log.path);
     urls.forEach((url: string) => {
       expect(url).to.include('api');
     });
@@ -153,7 +164,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
 
     const combinedResult = combinedFilterResponse.body.data[0];
     expect(combinedResult.statusCode).to.be.equal(200);
-    expect(combinedResult.url).to.include('workflows');
+    expect(combinedResult.path).to.include('workflows');
 
     // Test 4: Filter by transaction ID
     const transactionFilterResponse = await session.testAgent

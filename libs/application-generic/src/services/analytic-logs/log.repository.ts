@@ -3,6 +3,7 @@ import { ClickhouseSchema, InferClickhouseSchemaType } from 'clickhouse-schema';
 import { addDays } from 'date-fns';
 import { PinoLogger } from 'nestjs-pino';
 import { generateObjectId } from '../../utils/generate-id';
+import { Prettify } from '../../utils/prettify.type';
 import { FeatureFlagsService } from '../feature-flags/feature-flags.service';
 import { ClickHouseService, InsertOptions } from './clickhouse.service';
 
@@ -284,7 +285,7 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     useFinal?: boolean;
     select: T;
   }): Promise<{
-    data: Pick<TEnhancedType, T[number]>[];
+    data: Prettify<Pick<TEnhancedType, T[number]>>[];
     rows: number;
   }>;
 
@@ -312,7 +313,9 @@ export abstract class LogRepository<TSchema extends ClickhouseSchema<any>, TEnha
     useFinal?: boolean;
     select: T;
   }): Promise<{
-    data: TEnhancedType[] | Pick<TEnhancedType, T extends readonly (keyof TEnhancedType)[] ? T[number] : never>[];
+    data:
+      | TEnhancedType[]
+      | Prettify<Pick<TEnhancedType, T extends readonly (keyof TEnhancedType)[] ? T[number] : never>>[];
     rows: number;
   }> {
     const { where, limit = 100, offset = 0, orderBy, orderDirection = 'DESC', useFinal = false, select } = options;
