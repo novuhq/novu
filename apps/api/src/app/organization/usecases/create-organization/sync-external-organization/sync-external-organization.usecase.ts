@@ -1,8 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { AnalyticsService, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
@@ -33,7 +32,6 @@ export class SyncExternalOrganization {
     private readonly createNovuIntegrations: CreateNovuIntegrations,
     private readonly upsertLayoutUsecase: UpsertLayout,
     private analyticsService: AnalyticsService,
-    private featureFlagsService: FeatureFlagsService,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
   ) {
@@ -71,30 +69,22 @@ export class SyncExternalOrganization {
       })
     );
 
-    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-      defaultValue: false,
-      organization: { _id: organization._id },
-    });
-
-    if (isLayoutsPageActive) {
-      await this.upsertLayoutUsecase.execute(
-        UpsertLayoutCommand.create({
-          environmentId: devEnv._id,
-          organizationId: devEnv._organizationId,
-          userId: user._id,
-          layoutDto: {
-            name: 'Default layout',
-            controlValues: {
-              email: {
-                body: JSON.stringify(createDefaultLayout(organization.name)),
-                editorType: 'block',
-              },
+    await this.upsertLayoutUsecase.execute(
+      UpsertLayoutCommand.create({
+        environmentId: devEnv._id,
+        organizationId: devEnv._organizationId,
+        userId: user._id,
+        layoutDto: {
+          name: 'Default layout',
+          controlValues: {
+            email: {
+              body: JSON.stringify(createDefaultLayout(organization.name)),
+              editorType: 'block',
             },
           },
-        })
-      );
-    }
+        },
+      })
+    );
 
     const prodEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
@@ -115,24 +105,22 @@ export class SyncExternalOrganization {
       })
     );
 
-    if (isLayoutsPageActive) {
-      await this.upsertLayoutUsecase.execute(
-        UpsertLayoutCommand.create({
-          environmentId: prodEnv._id,
-          organizationId: prodEnv._organizationId,
-          userId: user._id,
-          layoutDto: {
-            name: 'Default layout',
-            controlValues: {
-              email: {
-                body: JSON.stringify(createDefaultLayout(organization.name)),
-                editorType: 'block',
-              },
+    await this.upsertLayoutUsecase.execute(
+      UpsertLayoutCommand.create({
+        environmentId: prodEnv._id,
+        organizationId: prodEnv._organizationId,
+        userId: user._id,
+        layoutDto: {
+          name: 'Default layout',
+          controlValues: {
+            email: {
+              body: JSON.stringify(createDefaultLayout(organization.name)),
+              editorType: 'block',
             },
           },
-        })
-      );
-    }
+        },
+      })
+    );
 
     this.analyticsService.upsertGroup(organization._id, organization, user);
 

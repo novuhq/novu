@@ -708,7 +708,7 @@ export class Client {
    * Transforms {{t.key}} to {{t.key | default: "{{t.key}}"}}
    */
   private preprocessTranslationPatterns(template: string): string {
-    return template.replace(/\{\{\s*t\.(\w+(?:\.\w+)*)\s*\}\}/g, '{{ t.$1 | default: "{{t.$1}}" }}');
+    return template.replace(/\{\{\s*t\.([\p{L}\p{N}_.-]+)\s*\}\}/gu, '{{ t.$1 | default: "{{t.$1}}" }}');
   }
 
   /**

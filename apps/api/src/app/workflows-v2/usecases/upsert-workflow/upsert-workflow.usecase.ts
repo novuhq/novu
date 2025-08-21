@@ -1,8 +1,7 @@
-import { BadRequestException, Injectable, Optional } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
   EmailControlType,
-  FeatureFlagsService,
   GetWorkflowByIdsCommand,
   GetWorkflowByIdsUseCase,
   Instrument,
@@ -25,7 +24,6 @@ import {
 import {
   ControlValuesLevelEnum,
   DEFAULT_WORKFLOW_PREFERENCES,
-  FeatureFlagsKeysEnum,
   ResourceOriginEnum,
   ResourceTypeEnum,
   StepTypeEnum,
@@ -66,7 +64,6 @@ export class UpsertWorkflowUseCase {
     private previewUsecase: PreviewUsecase,
     private getLayoutUseCase: GetLayoutUseCase,
     private analyticsService: AnalyticsService,
-    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger,
     private sendWebhookMessage: SendWebhookMessage
   ) {}
@@ -391,15 +388,7 @@ export class UpsertWorkflowUseCase {
         command.workflowDto.origin === ResourceOriginEnum.NOVU_CLOUD_V1)
     ) {
       const emailControlValues = newControlValues as EmailControlType;
-
-      const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-        defaultValue: false,
-        environment: { _id: command.user.environmentId },
-        organization: { _id: command.user.organizationId },
-      });
-
-      if (isLayoutsPageActive && typeof emailControlValues.layoutId === 'string') {
+      if (typeof emailControlValues.layoutId === 'string') {
         const layout = await this.getLayoutUseCase.execute(
           GetLayoutCommand.create({
             layoutIdOrInternalId: emailControlValues.layoutId,

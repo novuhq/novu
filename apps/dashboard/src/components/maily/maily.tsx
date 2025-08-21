@@ -206,7 +206,6 @@ export const Maily = ({
         {...rest}
       >
         <MailyEditor
-          key={value ? 'has-content' : 'empty'}
           config={DEFAULT_EDITOR_CONFIG}
           blocks={blocks}
           extensions={extensions}
