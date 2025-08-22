@@ -6,7 +6,7 @@ import { ChannelPreference, ChannelType, Preference } from '../../../../types';
 import { StringLocalizationKey, useLocalization } from '../../../context';
 import { cn, useStyle } from '../../../helpers';
 import { Cogs, ArrowDropDown as DefaultArrowDropDown } from '../../../icons';
-import { AppearanceKey, IconKey, IconOverrides } from '../../../types';
+import { AppearanceCallback, AppearanceKey, IconKey } from '../../../types';
 import { Collapsible } from '../../primitives/Collapsible';
 import { SwitchState } from '../../primitives/Switch';
 import { IconRendererWrapper } from '../../shared/IconRendererWrapper';
@@ -21,7 +21,7 @@ const iconKeyToComponentMap: { [key in IconKey]?: IconComponentType } = {
 
 export const PreferencesRow = (props: {
   iconKey: IconKey;
-  preference?: Preference;
+  preference: Preference;
   onChange: (workflowIdentifier?: string) => (channels: ChannelPreference) => void;
 }) => {
   const style = useStyle();
@@ -35,11 +35,15 @@ export const PreferencesRow = (props: {
     }))
   );
 
-  const iconClass = style('workflowLabelIcon', 'nt-text-foreground-alpha-600 nt-size-3.5', {
+  const iconClass = style({
+    key: 'workflowLabelIcon',
+    className: 'nt-text-foreground-alpha-600 nt-size-3.5',
     iconKey: 'cogs',
   });
 
-  const arrowDropDownIconClass = style('workflowArrow__icon', 'nt-text-foreground-alpha-600 nt-size-4', {
+  const arrowDropDownIconClass = style({
+    key: 'workflowArrow__icon',
+    className: 'nt-text-foreground-alpha-600 nt-size-4',
     iconKey: 'arrowDropDown',
   });
 
@@ -48,23 +52,37 @@ export const PreferencesRow = (props: {
   return (
     <Show when={channels().length > 0}>
       <div
-        class={style(
-          'workflowContainer',
-          `nt-p-1 nt-bg-neutral-alpha-25 nt-rounded-lg nt-border nt-border-neutral-alpha-50`
-        )}
+        class={style({
+          key: 'workflowContainer',
+          className: 'nt-p-1 nt-bg-neutral-alpha-25 nt-rounded-lg nt-border nt-border-neutral-alpha-50',
+          context: {
+            preference: props.preference,
+          } satisfies Parameters<AppearanceCallback['workflowContainer']>[0],
+        })}
         data-open={isOpenChannels()}
       >
         <div
-          class={style(
-            'workflowLabelContainer',
-            'nt-flex nt-justify-between nt-p-1 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden'
-          )}
+          class={style({
+            key: 'workflowLabelContainer',
+            className:
+              'nt-flex nt-justify-between nt-p-1 nt-flex-nowrap nt-self-stretch nt-cursor-pointer nt-items-center nt-overflow-hidden',
+          })}
           onClick={() => {
             setIsOpenChannels((prev) => !prev);
           }}
         >
-          <div class={style('workflowLabelHeader', 'nt-overflow-hidden')}>
-            <div class={style('workflowLabelHeaderContainer', 'nt-flex nt-items-center nt-gap-1')}>
+          <div
+            class={style({
+              key: 'workflowLabelHeader',
+              className: 'nt-overflow-hidden',
+            })}
+          >
+            <div
+              class={style({
+                key: 'workflowLabelHeaderContainer',
+                className: 'nt-flex nt-items-center nt-gap-1',
+              })}
+            >
               <IconRendererWrapper
                 iconKey={props.iconKey}
                 class={iconClass}
@@ -76,7 +94,10 @@ export const PreferencesRow = (props: {
                 }
               />
               <span
-                class={style('workflowLabel', 'nt-text-sm nt-font-semibold nt-truncate nt-text-start')}
+                class={style({
+                  key: 'workflowLabel',
+                  className: 'nt-text-sm nt-font-semibold nt-truncate nt-text-start',
+                })}
                 data-localization={props.preference?.workflow?.identifier ?? 'preferences.global'}
                 data-open={isOpenChannels()}
               >
@@ -92,10 +113,11 @@ export const PreferencesRow = (props: {
             </Collapsible>
           </div>
           <span
-            class={style(
-              'workflowContainerRight__icon',
-              `nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180`
-            )}
+            class={style({
+              key: 'workflowContainerRight__icon',
+              className:
+                'nt-text-foreground-alpha-600 nt-transition-all nt-duration-200 data-[open=true]:nt-transform data-[open=true]:nt-rotate-180',
+            })}
             data-open={isOpenChannels()}
           >
             <IconRendererWrapper
@@ -107,10 +129,11 @@ export const PreferencesRow = (props: {
         </div>
         <Collapsible open={isOpenChannels()}>
           <div
-            class={style(
-              'channelsContainer',
-              'nt-flex nt-bg-background nt-border nt-border-neutral-alpha-200 nt-rounded-lg nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden'
-            )}
+            class={style({
+              key: 'channelsContainer',
+              className:
+                'nt-flex nt-bg-background nt-border nt-border-neutral-alpha-200 nt-rounded-lg nt-p-2 nt-flex-col nt-gap-1 nt-overflow-hidden',
+            })}
           >
             <Index each={channels()}>
               {(channel) => (
@@ -145,7 +168,10 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
 
         const element = (
           <span
-            class={style('channelName', 'data-[disabled=true]:nt-text-foreground-alpha-400')}
+            class={style({
+              key: 'channelName',
+              className: 'data-[disabled=true]:nt-text-foreground-alpha-400',
+            })}
             data-disabled={isDisabled}
           >
             {getLabel(key as ChannelType)}
@@ -164,7 +190,12 @@ const WorkflowDescription = (props: WorkflowDescriptionProps) => {
   };
 
   return (
-    <div class={style(props.appearanceKey, cn('nt-text-sm nt-text-foreground-alpha-600 nt-text-start', props.class))}>
+    <div
+      class={style({
+        key: props.appearanceKey,
+        className: cn('nt-text-sm nt-text-foreground-alpha-600 nt-text-start', props.class),
+      })}
+    >
       {channelNames()}
     </div>
   );

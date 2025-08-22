@@ -1,6 +1,6 @@
 import type { Notification } from '../notifications';
 import { Novu } from '../novu';
-import type { NotificationFilter, NovuOptions, Preference, UnreadCount } from '../types';
+import { type NotificationFilter, type NovuOptions, type Preference, type UnreadCount } from '../types';
 import { appearanceKeys } from './config';
 import { Localization } from './context/LocalizationContext';
 
@@ -51,8 +51,24 @@ export type Variables = {
   colorSeverityLow?: string;
 };
 
+export type AppearanceCallback = {
+  bellContainer: (context: { unreadCount: { total: number; severity: Record<string, number> } }) => string;
+  workflowContainer: (context: { preference: Preference }) => string;
+  preferencesGroupContainer: (context: { preferenceGroup: { name: string; preferences: Preference[] } }) => string;
+  notification: (context: { notification: Notification }) => string;
+};
+export type AppearanceCallbackKeys = keyof AppearanceCallback;
+export type AppearanceCallbackFunction<K extends AppearanceCallbackKeys> = AppearanceCallback[K];
 export type AppearanceKey = (typeof appearanceKeys)[number];
-export type Elements = Partial<Record<AppearanceKey, ElementStyles>>;
+export type Elements = Partial<
+  {
+    // regular appearance keys with static styles
+    [K in Exclude<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles;
+  } & {
+    // callback keys that can be either static styles or callback functions
+    [K in Extract<AppearanceKey, AppearanceCallbackKeys>]: ElementStyles | AppearanceCallbackFunction<K>;
+  }
+>;
 
 export type IconKey =
   | 'bell'

@@ -59,7 +59,7 @@ export const TooltipTrigger = (props: PopoverTriggerProps) => {
       onMouseLeave={() => {
         setOpen(false);
       }}
-      class={style(local.appearanceKey || 'tooltipTrigger')}
+      class={style({ key: local.appearanceKey || 'tooltipTrigger' })}
       {...rest}
     >
       {props.children}

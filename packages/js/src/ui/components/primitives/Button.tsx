@@ -46,10 +46,10 @@ export const Button = (props: ButtonProps) => {
     <button
       data-variant={props.variant}
       data-size={props.size}
-      class={style(
-        local.appearanceKey || 'button',
-        cn(buttonVariants({ variant: props.variant, size: props.size }), local.class)
-      )}
+      class={style({
+        key: local.appearanceKey || 'button',
+        className: cn(buttonVariants({ variant: props.variant, size: props.size }), local.class),
+      })}
       {...rest}
     />
   );

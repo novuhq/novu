@@ -23,7 +23,7 @@ export const Preferences = () => {
   });
 
   const allPreferences = createMemo(() => {
-    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL);
+    const globalPreference = preferences()?.find((preference) => preference.level === PreferenceLevel.GLOBAL)!;
     const workflowPreferences = preferences()?.filter((preference) => preference.level === PreferenceLevel.TEMPLATE);
 
     return { globalPreference, workflowPreferences };
@@ -103,10 +103,11 @@ export const Preferences = () => {
 
   return (
     <div
-      class={style(
-        'preferencesContainer',
-        'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]'
-      )}
+      class={style({
+        key: 'preferencesContainer',
+        className:
+          'nt-px-3 nt-py-4 nt-flex nt-flex-col nt-gap-1 nt-overflow-y-auto nt-h-full nt-pr-0 [scrollbar-gutter:stable]',
+      })}
     >
       <PreferencesRow
         iconKey="cogs"

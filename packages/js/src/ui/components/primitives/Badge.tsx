@@ -30,10 +30,10 @@ export const Badge = (props: BadgeProps) => {
     <span
       data-variant={props.variant}
       data-size={props.size}
-      class={style(
-        local.appearanceKey || 'badge',
-        cn(badgeVariants({ variant: props.variant, size: props.size }), local.class)
-      )}
+      class={style({
+        key: local.appearanceKey || 'badge',
+        className: cn(badgeVariants({ variant: props.variant, size: props.size }), local.class),
+      })}
       {...rest}
     />
   );

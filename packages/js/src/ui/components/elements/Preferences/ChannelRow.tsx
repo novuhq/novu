@@ -35,23 +35,41 @@ export const ChannelRow = (props: ChannelRowProps) => {
 
   return (
     <div
-      class={style(
-        'channelContainer',
-        'nt-flex nt-justify-between nt-items-center nt-gap-2 data-[disabled=true]:nt-text-foreground-alpha-600'
-      )}
+      class={style({
+        key: 'channelContainer',
+        className:
+          'nt-flex nt-justify-between nt-items-center nt-gap-2 data-[disabled=true]:nt-text-foreground-alpha-600',
+      })}
     >
-      <div class={style('channelLabelContainer', 'nt-flex nt-items-center nt-gap-2 nt-text-foreground')}>
+      <div
+        class={style({
+          key: 'channelLabelContainer',
+          className: 'nt-flex nt-items-center nt-gap-2 nt-text-foreground',
+        })}
+      >
         <div
-          class={style(
-            'channelIconContainer',
-            'nt-p-1 nt-rounded-md nt-bg-neutral-alpha-25 nt-text-foreground-alpha-300'
-          )}
+          class={style({
+            key: 'channelIconContainer',
+            className: 'nt-p-1 nt-rounded-md nt-bg-neutral-alpha-25 nt-text-foreground-alpha-300',
+          })}
         >
           <ChannelIcon appearanceKey="channel__icon" channel={channel()} class="nt-size-3" />
         </div>
-        <span class={style('channelLabel', 'nt-text-sm nt-font-semibold')}>{getLabel(channel())}</span>
+        <span
+          class={style({
+            key: 'channelLabel',
+            className: 'nt-text-sm nt-font-semibold',
+          })}
+        >
+          {getLabel(channel())}
+        </span>
       </div>
-      <div class={style('channelSwitchContainer', 'nt-flex nt-items-center')}>
+      <div
+        class={style({
+          key: 'channelSwitchContainer',
+          className: 'nt-flex nt-items-center',
+        })}
+      >
         <Switch state={state()} onChange={(newState) => onChange(newState === 'enabled')} />
       </div>
     </div>
@@ -70,7 +88,9 @@ const ChannelIcon = (props: ChannelIconProps) => {
       key: 'inApp',
       component: (
         <DefaultInApp
-          class={style(props.appearanceKey, props.class, {
+          class={style({
+            key: props.appearanceKey,
+            className: props.class,
             iconKey: 'inApp',
           })}
         />
@@ -78,19 +98,51 @@ const ChannelIcon = (props: ChannelIconProps) => {
     },
     [ChannelType.EMAIL]: {
       key: 'email',
-      component: <DefaultEmail class={style(props.appearanceKey, props.class, { iconKey: 'email' })} />,
+      component: (
+        <DefaultEmail
+          class={style({
+            key: props.appearanceKey,
+            className: props.class,
+            iconKey: 'email',
+          })}
+        />
+      ),
     },
     [ChannelType.PUSH]: {
       key: 'push',
-      component: <DefaultPush class={style(props.appearanceKey, props.class, { iconKey: 'push' })} />,
+      component: (
+        <DefaultPush
+          class={style({
+            key: props.appearanceKey,
+            className: props.class,
+            iconKey: 'push',
+          })}
+        />
+      ),
     },
     [ChannelType.SMS]: {
       key: 'sms',
-      component: <DefaultSms class={style(props.appearanceKey, props.class, { iconKey: 'sms' })} />,
+      component: (
+        <DefaultSms
+          class={style({
+            key: props.appearanceKey,
+            className: props.class,
+            iconKey: 'sms',
+          })}
+        />
+      ),
     },
     [ChannelType.CHAT]: {
       key: 'chat',
-      component: <DefaultChat class={style(props.appearanceKey, props.class, { iconKey: 'chat' })} />,
+      component: (
+        <DefaultChat
+          class={style({
+            key: props.appearanceKey,
+            className: props.class,
+            iconKey: 'chat',
+          })}
+        />
+      ),
     },
   };
 
@@ -104,7 +156,9 @@ const ChannelIcon = (props: ChannelIconProps) => {
     <IconRendererWrapper
       iconKey={iconData.key}
       fallback={iconData.component}
-      class={style(props.appearanceKey, props.class, {
+      class={style({
+        key: props.appearanceKey,
+        className: props.class,
         iconKey: iconData.key,
       })}
     />
