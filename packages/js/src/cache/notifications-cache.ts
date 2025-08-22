@@ -252,7 +252,9 @@ export class NotificationsCache {
 
         value.notifications
           .filter((el) => typeof read === 'undefined' || read === el.isRead)
-          .forEach((notification) => uniqueNotifications.set(notification.id, notification));
+          .forEach((notification) => {
+            uniqueNotifications.set(notification.id, notification);
+          });
       }
     });
 
