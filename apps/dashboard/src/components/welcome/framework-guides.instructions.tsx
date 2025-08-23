@@ -52,7 +52,7 @@ export const commonInstallStep = (packageName: string): InstallationStep => ({
 
 export const commonCLIInstallStep = (): InstallationStep => ({
   title: 'Run the CLI command in an existing project',
-  description: `This adds an inbox component to your project that works out of the box. You can style it to match your app.`,
+  description: `Adds an inbox component that works out of the box; style it to match your app.`,
   code: `npx add-inbox@latest --appId YOUR_APPLICATION_IDENTIFIER --subscriberId YOUR_SUBSCRIBER_ID${IS_EU ? ' --region=eu' : ''}`,
   codeLanguage: 'shell',
   codeTitle: 'Terminal',

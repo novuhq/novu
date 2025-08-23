@@ -45,7 +45,7 @@ export function useFirstTriggerDetection({ enabled = true, onFirstTriggerDetecte
   // Extract workflow slug from the search results
   useEffect(() => {
     if (workflowsData?.workflows) {
-      const demoWorkflow = workflowsData.workflows.find((w) => w.workflowId?.includes(ONBOARDING_DEMO_WORKFLOW_ID));
+      const demoWorkflow = workflowsData.workflows.find((w) => w.workflowId === ONBOARDING_DEMO_WORKFLOW_ID);
       if (demoWorkflow?.slug && demoWorkflow.slug !== workflowSlug) {
         setWorkflowSlug(demoWorkflow.slug);
       }

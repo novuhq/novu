@@ -97,13 +97,6 @@ function StylePreviewCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault();
-      onSelect();
-    }
-  };
-
   return (
     <button
       key={style.id}
@@ -116,7 +109,6 @@ function StylePreviewCard({
         backgroundPosition: 'top',
       }}
       onClick={onSelect}
-      onKeyDown={handleKeyDown}
       aria-pressed={isSelected}
       type="button"
     >

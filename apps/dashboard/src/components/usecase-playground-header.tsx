@@ -91,7 +91,7 @@ export function UsecasePlaygroundHeader({
         </div>
       ) : (
         <div className="flex items-center gap-4">
-          {showStepper ? <Stepper currentStep={currentStep} totalSteps={totalSteps} /> : null}
+          {showStepper && <Stepper currentStep={currentStep} totalSteps={totalSteps} />}
         </div>
       )}
     </div>

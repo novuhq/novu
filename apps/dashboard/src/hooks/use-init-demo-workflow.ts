@@ -4,19 +4,42 @@ import { createWorkflow } from '../api/workflows';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../config';
 import { useFetchWorkflows } from './use-fetch-workflows';
 
-// Global state to prevent multiple simultaneous creations
-const creationState = {
-  isCreating: false,
-  hasCreated: false,
-};
+// Environment-scoped state to prevent multiple simultaneous creations per environment
+const creationStateMap = new Map<string, { isCreating: boolean; hasCreated: boolean }>();
+
+// Helper functions to manage creation state per environment
+function getCreationState(envId: string) {
+  if (!creationStateMap.has(envId)) {
+    creationStateMap.set(envId, { isCreating: false, hasCreated: false });
+  }
+  return creationStateMap.get(envId) as { isCreating: boolean; hasCreated: boolean };
+}
+
+function isCreating(envId: string): boolean {
+  return getCreationState(envId).isCreating;
+}
+
+function setCreating(envId: string, value: boolean): void {
+  getCreationState(envId).isCreating = value;
+}
+
+function hasCreated(envId: string): boolean {
+  return getCreationState(envId).hasCreated;
+}
+
+function setHasCreated(envId: string, value: boolean): void {
+  getCreationState(envId).hasCreated = value;
+}
 
 async function createDemoWorkflow({ environment }: { environment: IEnvironment }) {
-  // Prevent multiple simultaneous creations
-  if (creationState.isCreating || creationState.hasCreated) {
+  const envId = environment._id;
+
+  // Prevent multiple simultaneous creations for this environment
+  if (isCreating(envId) || hasCreated(envId)) {
     return;
   }
 
-  creationState.isCreating = true;
+  setCreating(envId, true);
 
   try {
     await createWorkflow({
@@ -70,43 +93,50 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
       },
     });
 
-    creationState.hasCreated = true;
+    setHasCreated(envId, true);
   } catch (error) {
     console.error('Failed to create demo workflow:', error);
-    // Reset creation state on error to allow retry
-    creationState.isCreating = false;
+    // Reset creation state on error to allow retry for this environment
+    setCreating(envId, false);
     throw error;
   } finally {
-    creationState.isCreating = false;
+    setCreating(envId, false);
   }
 }
 
 export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
   const { data, refetch } = useFetchWorkflows({ query: ONBOARDING_DEMO_WORKFLOW_ID });
-  const hasInitialized = useRef(false);
+  const initializedSet = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    if (!data || !environment || hasInitialized.current) return;
+    if (!data || !environment) return;
+
+    const envKey = environment.identifier;
+    const envId = environment._id;
+
+    // Check if this environment has already been initialized
+    if (initializedSet.current.has(envKey)) return;
 
     const initializeDemoWorkflow = async () => {
       // Double-check if workflow exists (in case of race conditions)
-      const workflow = data?.workflows.find((workflow) => workflow.workflowId?.includes(ONBOARDING_DEMO_WORKFLOW_ID));
+      const workflow = data?.workflows.find((workflow) => workflow.workflowId === ONBOARDING_DEMO_WORKFLOW_ID);
 
-      if (!workflow && !creationState.isCreating && !creationState.hasCreated) {
-        hasInitialized.current = true;
-
+      if (!workflow && !isCreating(envId) && !hasCreated(envId)) {
         try {
           await createDemoWorkflow({ environment });
+          // Mark this environment as initialized after successful creation
+          initializedSet.current.add(envKey);
           // Refetch workflows after creation to update the cache
           await refetch();
         } catch (error) {
-          // Reset on error to allow retry
-          hasInitialized.current = false;
           console.error('Failed to initialize demo workflow:', error);
         }
+      } else if (workflow) {
+        // If workflow already exists, mark this environment as initialized
+        initializedSet.current.add(envKey);
       }
     };
 
     initializeDemoWorkflow();
-  }, [data, environment, refetch]);
+  }, [data, environment?._id, refetch]);
 }
