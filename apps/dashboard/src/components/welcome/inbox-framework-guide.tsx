@@ -53,8 +53,6 @@ const iconVariants = {
   },
 };
 
-type PackageManager = 'npm' | 'pnpm' | 'yarn';
-
 interface InboxFrameworkGuideProps {
   currentEnvironment: IEnvironment | undefined;
   subscriberId: string;
@@ -94,7 +92,6 @@ export function InboxFrameworkGuide({
     getFrameworks('cli').find((f) => f.selected) || getFrameworks('cli')[0]
   );
   const [installationMethod, setInstallationMethod] = useState<'cli' | 'manual'>('cli');
-  const [packageManager, setPackageManager] = useState<PackageManager>('npm');
 
   useEffect(() => {
     if (!currentEnvironment?.identifier || !subscriberId) return;
@@ -127,27 +124,6 @@ export function InboxFrameworkGuide({
 
     setSelectedFramework(framework);
   }
-
-  const getCliCommand = (framework: Framework) => {
-    const packageName =
-      framework.name.toLowerCase() === 'next.js'
-        ? '@novu/nextjs'
-        : framework.name.toLowerCase() === 'react'
-          ? '@novu/react'
-          : '@novu/js';
-
-    const command = `add inbox --appId ${currentEnvironment?.identifier} --subscriberId ${subscriberId}`;
-
-    switch (packageManager) {
-      case 'pnpm':
-        return `pnpm dlx novu ${command}`;
-      case 'yarn':
-        return `yarn dlx novu ${command}`;
-      case 'npm':
-      default:
-        return `npx novu ${command}`;
-    }
-  };
 
   const frameworks = getFrameworks(installationMethod);
 

@@ -1,6 +1,5 @@
 import { useUser } from '@clerk/clerk-react';
 import { Inbox, InboxContent, InboxProps } from '@novu/react';
-import { useNavigate } from 'react-router-dom';
 import { API_HOSTNAME, WEBSOCKET_HOSTNAME } from '../../config';
 import { useAuth } from '../../context/auth/hooks';
 import { useFetchEnvironments } from '../../context/environment/hooks';
@@ -21,7 +20,6 @@ const defaultTabs = [
 ];
 
 export function InboxPreviewContent() {
-  const navigate = useNavigate();
   const auth = useAuth();
   const { user } = useUser();
   const { environments } = useFetchEnvironments({ organizationId: auth?.currentOrganization?._id });

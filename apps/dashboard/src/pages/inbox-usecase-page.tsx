@@ -168,7 +168,7 @@ export function InboxUsecasePage() {
       organization?.reload();
       setEnvLoaded(true);
     }
-  }, [environments]);
+  }, [environments, user, organization]);
 
   const shouldShowLoading = !requiredData || loadingPhase !== 'ready';
 

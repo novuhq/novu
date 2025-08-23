@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import { ChannelTypeEnum } from '@novu/shared';
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AnimatedPage } from '@/components/onboarding/animated-page';
 import { AuthCard } from '../components/auth/auth-card';
@@ -29,6 +29,8 @@ export function InboxEmbedPage() {
 
   const isConnected = foundIntegration?.connected;
 
+
+
   useEffect(() => {
     telemetry(TelemetryEvent.INBOX_EMBED_PAGE_VIEWED);
   }, [telemetry]);
@@ -39,8 +41,10 @@ export function InboxEmbedPage() {
         <div className="w-full">
           <div className="flex flex-1 flex-col overflow-hidden">
             <UsecasePlaygroundHeader
-              title={isConnected ? "Confirm Your Integration" : "Minutes to a fully functional <Inbox/>"}
-              description={isConnected ? "Send a test notification to verify your connection." : "Let's connect your inbox to Novu"}
+              title={isConnected ? 'Confirm Your Integration' : 'Minutes to a fully functional <Inbox/>'}
+              description={
+                isConnected ? 'Send a test notification to verify your connection.' : "Let's connect your inbox to Novu"
+              }
               skipPath={ROUTES.WELCOME}
               onSkip={() =>
                 telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {

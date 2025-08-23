@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 import { getWorkflow, getWorkflows } from '@/api/workflows';
-import { useEnvironment } from '../context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../config';
+import { useEnvironment } from '../context/environment/hooks';
 
 type FirstTriggerDetectionOptions = {
   enabled?: boolean;
@@ -11,17 +11,13 @@ type FirstTriggerDetectionOptions = {
 };
 
 /**
- * Hook to detect the first API trigger event for a workflow
- * Uses the workflow's lastTriggeredAt field to detect when it has been triggered
- * Only detects triggers that occur after the user has visited the page/component
+ * Hook to detect if a workflow has been triggered
+ * Uses the workflow's lastTriggeredAt field to detect if it has been triggered at any point
+ * If the workflow was already triggered before, it's considered as completed
  */
-export function useFirstTriggerDetection({
-  enabled = true,
-  onFirstTriggerDetected,
-}: FirstTriggerDetectionOptions) {
+export function useFirstTriggerDetection({ enabled = true, onFirstTriggerDetected }: FirstTriggerDetectionOptions) {
   const [hasDetectedFirstTrigger, setHasDetectedFirstTrigger] = useState(false);
   const [isWaitingForTrigger, setIsWaitingForTrigger] = useState(false);
-  const [visitTimestamp, setVisitTimestamp] = useState<string | null>(null);
   const [workflowSlug, setWorkflowSlug] = useState<string | null>(null);
   const { currentEnvironment } = useEnvironment();
 
@@ -29,15 +25,16 @@ export function useFirstTriggerDetection({
   const { data: workflowsData } = useQuery({
     queryKey: [QueryKeys.fetchWorkflows, currentEnvironment?._id, ONBOARDING_DEMO_WORKFLOW_ID],
     queryFn: () => {
-      return getWorkflows({ 
-        environment: currentEnvironment!, 
-        limit: 50, 
-        offset: 0, 
+      if (!currentEnvironment) throw new Error('Environment not available');
+      return getWorkflows({
+        environment: currentEnvironment,
+        limit: 50,
+        offset: 0,
         query: ONBOARDING_DEMO_WORKFLOW_ID,
         orderBy: '',
         orderDirection: 'DESC',
         tags: [],
-        status: []
+        status: [],
       });
     },
     enabled: enabled && !!currentEnvironment?._id && !workflowSlug,
@@ -56,12 +53,17 @@ export function useFirstTriggerDetection({
   }, [workflowsData, workflowSlug]);
 
   // Now fetch the specific workflow using the slug for polling
-  const { data: workflow, isPending, error } = useQuery({
+  const {
+    data: workflow,
+    isPending,
+    error,
+  } = useQuery({
     queryKey: [QueryKeys.fetchWorkflow, currentEnvironment?._id, workflowSlug],
     queryFn: () => {
-      return getWorkflow({ 
-        environment: currentEnvironment!, 
-        workflowSlug: workflowSlug!
+      if (!currentEnvironment || !workflowSlug) throw new Error('Environment or workflow slug not available');
+      return getWorkflow({
+        environment: currentEnvironment,
+        workflowSlug: workflowSlug,
       });
     },
     enabled: enabled && !!currentEnvironment?._id && !!workflowSlug,
@@ -70,24 +72,19 @@ export function useFirstTriggerDetection({
     staleTime: 0,
   });
 
-  // Initialize visit timestamp when first loaded
+  // Check if workflow was already triggered (either before or during current session)
   useEffect(() => {
-    if (!enabled || !currentEnvironment || isPending) return;
-
-    if (error) {
+    if (!enabled || isPending || hasDetectedFirstTrigger || !workflow) {
       return;
     }
 
-    if (!workflow) {
-      return;
+    // If lastTriggeredAt exists, the workflow has been triggered
+    if (workflow.lastTriggeredAt) {
+      setHasDetectedFirstTrigger(true);
+      setIsWaitingForTrigger(false);
+      onFirstTriggerDetected?.();
     }
-
-    // Set visit timestamp on first load (when user sees the component)
-    if (!visitTimestamp) {
-      const timestamp = new Date().toISOString();
-      setVisitTimestamp(timestamp);
-    }
-  }, [enabled, currentEnvironment, workflow, isPending, error, visitTimestamp]);
+  }, [workflow, isPending, hasDetectedFirstTrigger, enabled, onFirstTriggerDetected]);
 
   // Start waiting for trigger
   const startWaiting = useCallback(() => {
@@ -97,32 +94,10 @@ export function useFirstTriggerDetection({
     setIsWaitingForTrigger(true);
   }, [hasDetectedFirstTrigger]);
 
-  // Detect when lastTriggeredAt changes (first trigger after visit)
-  useEffect(() => {
-    if (!isWaitingForTrigger || isPending || hasDetectedFirstTrigger || !workflow || !visitTimestamp) {
-      return;
-    }
-
-    const currentLastTriggeredAt = workflow.lastTriggeredAt;
-    const visitTime = new Date(visitTimestamp);
-    
-    // Check if lastTriggeredAt exists and is after the visit timestamp
-    if (currentLastTriggeredAt) {
-      const triggerTime = new Date(currentLastTriggeredAt);
-      
-      if (triggerTime > visitTime) {
-        setHasDetectedFirstTrigger(true);
-        setIsWaitingForTrigger(false);
-        onFirstTriggerDetected?.();
-      }
-    }
-  }, [workflow, isPending, isWaitingForTrigger, hasDetectedFirstTrigger, visitTimestamp, onFirstTriggerDetected]);
-
   // Reset detection state
   const resetDetection = useCallback(() => {
     setHasDetectedFirstTrigger(false);
     setIsWaitingForTrigger(false);
-    setVisitTimestamp(null);
     setWorkflowSlug(null);
   }, []);
 
@@ -135,7 +110,6 @@ export function useFirstTriggerDetection({
     workflow,
     workflowSlug,
     lastTriggeredAt: workflow?.lastTriggeredAt,
-    visitTimestamp,
     error,
   };
 }

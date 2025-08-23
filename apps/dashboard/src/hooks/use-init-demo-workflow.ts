@@ -31,8 +31,8 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             type: StepTypeEnum.IN_APP,
             controlValues: {
               subject: 'Notification with Multiple Actions',
-              body: "Add **Primary** and **Secondary Actions** to give users more choices, like **View** or **Dismiss**.",
-              avatar: window.location.origin + '/images/novu.svg',
+              body: 'Add **Primary** and **Secondary Actions** to give users more choices, like **View** or **Dismiss**.',
+              avatar: `${window.location.origin}/images/novu.svg`,
               primaryAction: {
                 label: 'Primary Action',
                 redirect: {},
@@ -48,8 +48,8 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             type: StepTypeEnum.IN_APP,
             controlValues: {
               subject: 'Notification with a Single Action',
-              body: "Use a single, clear **Primary Action** to send users to a specific page or feature",
-              avatar: window.location.origin + '/images/novu.svg',
+              body: 'Use a single, clear **Primary Action** to send users to a specific page or feature',
+              avatar: `${window.location.origin}/images/novu.svg`,
               primaryAction: {
                 label: 'Primary Action',
                 redirect: {},
@@ -61,15 +61,15 @@ async function createDemoWorkflow({ environment }: { environment: IEnvironment }
             type: StepTypeEnum.IN_APP,
             controlValues: {
               subject: 'Basic Notification',
-              body: "No buttons, just a simple message. Perfect for announcements or alerts",
-              avatar: window.location.origin + '/images/novu.svg',
+              body: 'No buttons, just a simple message. Perfect for announcements or alerts',
+              avatar: `${window.location.origin}/images/novu.svg`,
             },
           },
         ],
         __source: WorkflowCreationSourceEnum.DASHBOARD,
       },
     });
-    
+
     creationState.hasCreated = true;
   } catch (error) {
     console.error('Failed to create demo workflow:', error);
@@ -94,7 +94,7 @@ export function useInitDemoWorkflow(environment: IEnvironment | undefined) {
 
       if (!workflow && !creationState.isCreating && !creationState.hasCreated) {
         hasInitialized.current = true;
-        
+
         try {
           await createDemoWorkflow({ environment });
           // Refetch workflows after creation to update the cache

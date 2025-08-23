@@ -1,7 +1,7 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
 import ReactConfetti from 'react-confetti';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/auth/hooks';
 import { useEnvironment } from '../../context/environment/hooks';
 import { useFetchIntegrations } from '../../hooks/use-fetch-integrations';
@@ -43,13 +43,13 @@ export function InboxEmbed(): JSX.Element | null {
     }
   }, [foundIntegration]);
 
-  if (!subscriberId || !foundIntegration) return null;
+  if (!subscriberId || !foundIntegration || !selectedEnvironment) return null;
 
   return (
     <main className="pl-[100px]">
       {showConfetti && <ReactConfetti recycle={false} numberOfPieces={1000} />}
-      {foundIntegration && foundIntegration.connected ? (
-        <InboxConnectedGuide subscriberId={subscriberId} environment={selectedEnvironment!} />
+      {foundIntegration?.connected ? (
+        <InboxConnectedGuide subscriberId={subscriberId} environment={selectedEnvironment} />
       ) : (
         <InboxFrameworkGuide
           currentEnvironment={selectedEnvironment}
@@ -58,17 +58,17 @@ export function InboxEmbed(): JSX.Element | null {
           foregroundColor={foregroundColor}
         />
       )}
-      
+
       <footer className="pt-32 pb-6 -ml-[100px]">
         <div className="flex justify-center">
-          <button 
+          <button
             className="px-6 py-2 text-xs font-medium hover:underline hover:underline-offset-2 transition-colors"
             style={{ color: 'rgb(82, 88, 102)' }}
             onClick={() => {
               navigate(ROUTES.WELCOME);
               telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
                 skippedFrom: foundIntegration?.connected ? 'inbox-connected-guide' : 'inbox-embed',
-              })
+              });
             }}
           >
             Skip to the Dashboard

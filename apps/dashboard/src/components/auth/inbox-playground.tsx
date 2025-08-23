@@ -8,7 +8,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 
 import { useInitDemoWorkflow } from '@/hooks/use-init-demo-workflow';
 import { useTriggerWorkflow } from '@/hooks/use-trigger-workflow';
-import { API_HOSTNAME, ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
+import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
@@ -70,7 +70,7 @@ export function InboxPlayground({ appId, subscriberId }: { appId: string; subscr
         name: ONBOARDING_DEMO_WORKFLOW_ID,
         to: subscriberId,
         payload: {
-          triggerSource: 'inbox-onboarding',
+          __source: 'inbox-onboarding',
         },
       });
 

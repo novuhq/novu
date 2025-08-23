@@ -1,27 +1,19 @@
 import { IEnvironment } from '@novu/shared';
+import { useEffect } from 'react';
 import { RiCheckboxCircleFill, RiLoader3Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useFirstTriggerDetection } from '@/hooks/use-first-trigger-detection';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { type CodeSnippet, createCurlSnippet } from '@/utils/code-snippets';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { ONBOARDING_DEMO_WORKFLOW_ID } from '../../config';
 import { useInitDemoWorkflow } from '../../hooks/use-init-demo-workflow';
 import { ROUTES } from '../../utils/routes';
 import { Button } from '../primitives/button';
+import { CodeBlock } from '../primitives/code-block';
 import { ToastIcon } from '../primitives/sonner';
 import { showToast } from '../primitives/sonner-helpers';
-import { TelemetryEvent } from '@/utils/telemetry';
-import {
-  createCurlSnippet,
-  type CodeSnippet,
-} from '@/utils/code-snippets';
-import { CodeBlock } from '../primitives/code-block';
-
-
-
-
 
 type InboxConnectedGuideProps = {
   subscriberId: string;
@@ -43,18 +35,10 @@ function generateCurlSnippet(userId: string, apiKey: string): string {
   return createCurlSnippet(snippetProps);
 }
 
-
-
-
-
 function WorkflowIntegrationSteps({ userId, apiKey }: { userId: string; apiKey: string }) {
   return (
     <div className="mt-5 w-full min-w-0">
-      <CodeBlock 
-        code={generateCurlSnippet(userId, apiKey)} 
-        language="shell"
-        title="Terminal"
-      />
+      <CodeBlock code={generateCurlSnippet(userId, apiKey)} language="shell" title="Terminal" />
     </div>
   );
 }
@@ -87,12 +71,7 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   const hasValidApiKey = !apiKeysQuery.isLoading && !apiKeysQuery.error && apiKey;
 
   // First trigger detection
-  const {
-    hasDetectedFirstTrigger,
-    isWaitingForTrigger,
-    startWaiting,
-    workflowSlug,
-  } = useFirstTriggerDetection({
+  const { hasDetectedFirstTrigger, isWaitingForTrigger, startWaiting } = useFirstTriggerDetection({
     enabled: true,
     onFirstTriggerDetected: () => {
       showStatusToast('success', 'API trigger detected');
@@ -106,12 +85,12 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
       const timer = setTimeout(() => {
         startWaiting();
       }, 2000); // Increased delay to 2 seconds
-      
+
       return () => {
         clearTimeout(timer);
       };
     }
-  }, [hasValidApiKey, hasDetectedFirstTrigger, isWaitingForTrigger, workflowSlug, startWaiting]);
+  }, [hasValidApiKey, hasDetectedFirstTrigger, isWaitingForTrigger, startWaiting]);
 
   function handleCompleteOnboarding() {
     telemetry(TelemetryEvent.ONBOARDING_COMPLETED);
@@ -119,123 +98,117 @@ export function InboxConnectedGuide({ subscriberId, environment }: InboxConnecte
   }
 
   return (
-    <>
-      <div className="flex flex-col pl-[72px]">
-        {/* Combined section with left content and right code snippets */}
-        <div className="relative p-8 pb-12 pt-16">
-          <div className="absolute left-1 top-0 bottom-0 w-px bg-[#eeeef0]"></div>
-          <div className="relative mt-8 flex gap-8 first:mt-0 min-w-0">
-            {/* Left side - both status sections stacked */}
-            <div className="flex w-[350px] flex-col gap-8">
-              {/* First section - Inbox connected */}
-              <div className="relative flex gap-8">
-                <div className="absolute -left-[38px] flex h-5 w-5 items-center justify-center rounded-full bg-white">
+    <div className="flex flex-col pl-[72px]">
+      {/* Combined section with left content and right code snippets */}
+      <div className="relative p-8 pb-12 pt-16">
+        <div className="absolute left-1 top-0 bottom-0 w-px bg-[#eeeef0]"></div>
+        <div className="relative mt-8 flex gap-8 first:mt-0 min-w-0">
+          {/* Left side - both status sections stacked */}
+          <div className="flex w-[350px] flex-col gap-8">
+            {/* First section - Inbox connected */}
+            <div className="relative flex gap-8">
+              <div className="absolute -left-[38px] flex h-5 w-5 items-center justify-center rounded-full bg-white">
+                <RiCheckboxCircleFill className="text-success h-4 w-4" />
+              </div>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-success text-sm font-medium">In-App Channel Integration Activated</span>
+                </div>
+                <p className="text-foreground-400 text-xs">
+                  You've initialized your Inbox. The last step is to make an API call to confirm everything is working.
+                </p>
+              </div>
+            </div>
+
+            {/* Second section - Waiting for trigger */}
+            <div className="relative flex gap-8">
+              <div className="absolute -left-[38px] flex h-5 w-5 items-center justify-center rounded-full bg-white">
+                {hasDetectedFirstTrigger ? (
                   <RiCheckboxCircleFill className="text-success h-4 w-4" />
+                ) : (
+                  <RiLoader3Line className="h-4 w-4 text-primary animate-spin" />
+                )}
+              </div>
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {hasDetectedFirstTrigger ? 'Ready to complete onboarding' : 'Waiting for your first API trigger...'}
+                  </span>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-success text-sm font-medium">In-App Channel Integration Activated</span>
-                  </div>
-                  <p className="text-foreground-400 text-xs">
-                    You've initialized your Inbox. The last step is to make an API call to confirm everything is working.
-                  </p>
+                <p className="text-foreground-400 text-xs">
+                  {hasDetectedFirstTrigger
+                    ? 'Great! We detected your API trigger. Click the button to complete your onboarding.'
+                    : "Copy and run the code snippet below to trigger your first notification. We'll detect it automatically."}
+                </p>
+
+                {/* Complete onboarding button - positioned under the waiting text */}
+                <div className="flex justify-start mt-4">
+                  <Button
+                    onClick={handleCompleteOnboarding}
+                    disabled={!hasDetectedFirstTrigger}
+                    variant="primary"
+                    className={`px-6 py-2 ${
+                      !hasDetectedFirstTrigger
+                        ? 'cursor-not-allowed bg-gray-800 text-white border-gray-900 hover:bg-gray-800'
+                        : ''
+                    }`}
+                  >
+                    <RiCheckboxCircleFill className="mr-2 h-4 w-4" />
+                    Complete Onboarding
+                  </Button>
                 </div>
               </div>
+            </div>
+          </div>
 
-              {/* Second section - Waiting for trigger */}
-              <div className="relative flex gap-8">
-                <div className="absolute -left-[38px] flex h-5 w-5 items-center justify-center rounded-full bg-white">
-                  {hasDetectedFirstTrigger ? (
-                    <RiCheckboxCircleFill className="text-success h-4 w-4" />
-                  ) : (
-                    <RiLoader3Line className="h-4 w-4 text-primary animate-spin" />
-                  )}
+          {/* Right side - code snippets spanning full height */}
+          <div className="flex w-[480px] flex-col gap-6 -mt-4">
+            {apiKeysQuery.isLoading ? (
+              <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-8">
+                <div className="flex items-center justify-center gap-3 text-gray-600">
+                  <RiLoader3Line className="h-5 w-5 animate-spin" />
+                  <span>Loading API key...</span>
                 </div>
-                <div className="flex flex-col gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">
-                      {hasDetectedFirstTrigger 
-                        ? "Ready to complete onboarding" 
-                        : "Waiting for your first API trigger..."
-                      }
-                    </span>
-                  </div>
-                  <p className="text-foreground-400 text-xs">
-                    {hasDetectedFirstTrigger 
-                      ? "Great! We detected your API trigger. Click the button to complete your onboarding." 
-                      : "Copy and run the code snippet below to trigger your first notification. We'll detect it automatically."
-                    }
-                  </p>
-                  
-                  {/* Complete onboarding button - positioned under the waiting text */}
-                  <div className="flex justify-start mt-4">
-                    <Button
-                      onClick={handleCompleteOnboarding}
-                      disabled={!hasDetectedFirstTrigger}
-                      variant="primary"
-                      className={`px-6 py-2 ${
-                        !hasDetectedFirstTrigger 
-                          ? 'cursor-not-allowed bg-gray-800 text-white border-gray-900 hover:bg-gray-800' 
-                          : ''
-                      }`}
+              </div>
+            ) : apiKeysQuery.error ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+                <div className="flex flex-col gap-3 text-center">
+                  <div className="text-red-600 font-medium">⚠️ Error loading API key</div>
+                  <div className="text-gray-600 text-sm">
+                    Please check your connection and{' '}
+                    <button
+                      onClick={() => apiKeysQuery.refetch()}
+                      className="text-blue-600 underline hover:text-blue-700 font-medium"
                     >
-                      <RiCheckboxCircleFill className="mr-2 h-4 w-4" />
-                      Complete Onboarding
-                    </Button>
+                      try again
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right side - code snippets spanning full height */}
-            <div className="flex w-[480px] flex-col gap-6 -mt-4">
-              {apiKeysQuery.isLoading ? (
-                <div className="rounded-lg border border-gray-200 bg-white shadow-sm p-8">
-                  <div className="flex items-center justify-center gap-3 text-gray-600">
-                    <RiLoader3Line className="h-5 w-5 animate-spin" />
-                    <span>Loading API key...</span>
+            ) : !apiKey ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
+                <div className="flex flex-col gap-3 text-center">
+                  <div className="text-amber-600 font-medium">⚠️ No API key found</div>
+                  <div className="text-gray-600 text-sm">
+                    Please generate an API key in your{' '}
+                    <a
+                      href="/settings"
+                      className="text-blue-600 underline hover:text-blue-700 font-medium"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      settings
+                    </a>{' '}
+                    first.
                   </div>
                 </div>
-              ) : apiKeysQuery.error ? (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-                  <div className="flex flex-col gap-3 text-center">
-                    <div className="text-red-600 font-medium">⚠️ Error loading API key</div>
-                    <div className="text-gray-600 text-sm">
-                      Please check your connection and{' '}
-                      <button 
-                        onClick={() => apiKeysQuery.refetch()}
-                        className="text-blue-600 underline hover:text-blue-700 font-medium"
-                      >
-                        try again
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : !apiKey ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
-                  <div className="flex flex-col gap-3 text-center">
-                    <div className="text-amber-600 font-medium">⚠️ No API key found</div>
-                    <div className="text-gray-600 text-sm">
-                      Please generate an API key in your{' '}
-                      <a 
-                        href="/settings" 
-                        className="text-blue-600 underline hover:text-blue-700 font-medium"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        settings
-                      </a>{' '}
-                      first.
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <WorkflowIntegrationSteps userId={subscriberId} apiKey={apiKey} />
-              )}
-            </div>
+              </div>
+            ) : (
+              <WorkflowIntegrationSteps userId={subscriberId} apiKey={apiKey} />
+            )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
