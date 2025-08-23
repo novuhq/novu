@@ -63,7 +63,7 @@ export class GetChannelEndpoint {
 
   private mapChannelEndpointToDto(
     endpoint: ChannelEndpointEntity,
-    integration?: IntegrationEntity
+    integration: IntegrationEntity | null
   ): GetChannelEndpointResponseDto {
     return {
       identifier: endpoint.identifier,
