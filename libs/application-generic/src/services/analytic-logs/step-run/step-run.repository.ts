@@ -418,6 +418,9 @@ export class StepRunRepository extends LogRepository<typeof stepRunSchema, StepR
       // Execution details
       status: options?.status || job.status,
 
+      // Digest data
+      digest: job.digest ? JSON.stringify(job.digest) : null,
+
       // Error handling
       error_code: options?.errorCode || null,
       error_message: options?.errorMessage || null,

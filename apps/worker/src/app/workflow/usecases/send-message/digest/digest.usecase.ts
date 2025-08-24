@@ -90,8 +90,14 @@ export class Digest extends SendMessageType {
       }
     );
 
+    const updatedJob = await this.jobRepository.findOne({
+      _id: command.job._id,
+      _environmentId: command.environmentId,
+    });
+
     return {
       status: 'success',
+      job: updatedJob ?? undefined,
     };
   }
 

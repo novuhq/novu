@@ -1,10 +1,11 @@
 import { CreateExecutionDetails } from '@novu/application-generic';
-import { MessageEntity, MessageRepository } from '@novu/dal';
+import { JobEntity, MessageEntity, MessageRepository } from '@novu/dal';
 import { SendMessageChannelCommand } from './send-message-channel.command';
 
 export type SendMessageResult = {
   status: 'success' | 'failed' | 'skipped';
   reason?: string;
+  job?: JobEntity;
 };
 
 export abstract class SendMessageType {
