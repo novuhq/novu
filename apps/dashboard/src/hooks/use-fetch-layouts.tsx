@@ -1,9 +1,8 @@
-import { DirectionEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { DirectionEnum } from '@novu/shared';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getLayouts } from '@/api/layouts';
 import { QueryKeys } from '@/utils/query-keys';
 import { useEnvironment } from '../context/environment/hooks';
-import { useFeatureFlag } from './use-feature-flag';
 
 interface UseLayoutsParams {
   limit?: number;
@@ -23,13 +22,12 @@ export const useFetchLayouts = ({
   refetchOnWindowFocus = true,
 }: UseLayoutsParams = {}) => {
   const { currentEnvironment } = useEnvironment();
-  const isLayoutsPageActive = useFeatureFlag(FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE);
 
   const layoutsQuery = useQuery({
     queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id, { limit, offset, query, orderBy, orderDirection }],
     queryFn: () => getLayouts({ environment: currentEnvironment!, limit, offset, query, orderBy, orderDirection }),
     placeholderData: keepPreviousData,
-    enabled: !!currentEnvironment?._id && isLayoutsPageActive,
+    enabled: !!currentEnvironment?._id,
     refetchOnWindowFocus,
   });
 

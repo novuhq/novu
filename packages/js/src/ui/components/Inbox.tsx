@@ -3,8 +3,11 @@ import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { useInboxContext } from '../context';
 import { cn, useStyle } from '../helpers';
 import type {
+  AvatarRenderer,
   BellRenderer,
   BodyRenderer,
+  CustomActionsRenderer,
+  DefaultActionsRenderer,
   NotificationActionClickHandler,
   NotificationClickHandler,
   NotificationRenderer,
@@ -18,20 +21,29 @@ import { Button, Popover } from './primitives';
 
 export type NotificationRendererProps = {
   renderNotification: NotificationRenderer;
+  renderAvatar?: never;
   renderSubject?: never;
   renderBody?: never;
+  renderDefaultActions?: never;
+  renderCustomActions?: never;
 };
 
 export type SubjectBodyRendererProps = {
   renderNotification?: never;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
 };
 
 export type NoRendererProps = {
   renderNotification?: undefined;
+  renderAvatar?: undefined;
   renderSubject?: undefined;
   renderBody?: undefined;
+  renderDefaultActions?: undefined;
+  renderCustomActions?: undefined;
 };
 
 export type InboxProps = {
@@ -92,8 +104,11 @@ export const InboxContent = (props: InboxContentProps) => {
             fallback={
               <NotificationList
                 renderNotification={props.renderNotification}
+                renderAvatar={props.renderAvatar}
                 renderSubject={props.renderSubject}
                 renderBody={props.renderBody}
+                renderDefaultActions={props.renderDefaultActions}
+                renderCustomActions={props.renderCustomActions}
                 onNotificationClick={props.onNotificationClick}
                 onPrimaryActionClick={props.onPrimaryActionClick}
                 onSecondaryActionClick={props.onSecondaryActionClick}
@@ -103,8 +118,11 @@ export const InboxContent = (props: InboxContentProps) => {
           >
             <InboxTabs
               renderNotification={props.renderNotification}
+              renderAvatar={props.renderAvatar}
               renderSubject={props.renderSubject}
               renderBody={props.renderBody}
+              renderDefaultActions={props.renderDefaultActions}
+              renderCustomActions={props.renderCustomActions}
               onNotificationClick={props.onNotificationClick}
               onPrimaryActionClick={props.onPrimaryActionClick}
               onSecondaryActionClick={props.onSecondaryActionClick}
@@ -141,8 +159,11 @@ export const Inbox = (props: InboxProps) => {
           when={props.renderNotification}
           fallback={
             <InboxContent
+              renderAvatar={props.renderAvatar}
               renderSubject={props.renderSubject}
               renderBody={props.renderBody}
+              renderDefaultActions={props.renderDefaultActions}
+              renderCustomActions={props.renderCustomActions}
               onNotificationClick={props.onNotificationClick}
               onPrimaryActionClick={props.onPrimaryActionClick}
               onSecondaryActionClick={props.onSecondaryActionClick}

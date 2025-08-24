@@ -1,7 +1,6 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
   dashboardSanitizeControlValues,
-  FeatureFlagsService,
   Instrument,
   InstrumentUsecase,
   PinoLogger,
@@ -12,7 +11,6 @@ import { ControlValuesRepository, IntegrationRepository } from '@novu/dal';
 import {
   ContentIssueEnum,
   ControlValuesLevelEnum,
-  FeatureFlagsKeysEnum,
   IntegrationIssueEnum,
   ResourceOriginEnum,
   RuntimeIssue,
@@ -48,8 +46,7 @@ export class BuildStepIssuesUsecase {
     @Inject(forwardRef(() => TierRestrictionsValidateUsecase))
     private tierRestrictionsValidateUsecase: TierRestrictionsValidateUsecase,
     private logger: PinoLogger,
-    private integrationsRepository: IntegrationRepository,
-    private featureFlagsService: FeatureFlagsService
+    private integrationsRepository: IntegrationRepository
   ) {}
 
   @InstrumentUsecase()
@@ -90,14 +87,6 @@ export class BuildStepIssuesUsecase {
       )?.controls;
     }
 
-    const isHtmlEditorEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_HTML_EDITOR_ENABLED,
-      organization: { _id: command.user.organizationId },
-      environment: { _id: command.user.environmentId },
-      user: { _id: command.user._id },
-      defaultValue: false,
-    });
-
     const sanitizedControlValues = this.sanitizeControlValues(newControlValues, workflowOrigin, stepType);
 
     const schemaIssues = processControlValuesBySchema({
@@ -111,7 +100,6 @@ export class BuildStepIssuesUsecase {
       currentValue: newControlValues || {},
       currentPath: [],
       issues: liquidIssues,
-      useNewLiquidParser: isHtmlEditorEnabled,
     });
     const customIssues = await this.processControlValuesByCustomeRules(user, stepType, sanitizedControlValues || {});
     const skipLogicIssues = sanitizedControlValues?.skip

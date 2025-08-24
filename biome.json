@@ -26,7 +26,8 @@
       "!libs/design-system",
       "!.github",
       "!scripts",
-      "!packages/framework/scripts"
+      "!packages/framework/scripts",
+      "!packages/framework/src/jsonSchemaFaker.js"
     ]
   },
   "formatter": {

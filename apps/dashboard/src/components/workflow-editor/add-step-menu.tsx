@@ -70,9 +70,11 @@ const MenuItem = ({
 
 export const AddStepMenu = ({
   visible = false,
+  className,
   onMenuItemClick,
 }: {
   visible?: boolean;
+  className?: string;
   onMenuItemClick: (stepType: StepTypeEnum) => void;
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -93,9 +95,13 @@ export const AddStepMenu = ({
         <span data-testid="add-step-menu-button">
           <Node
             variant="sm"
-            className={cn('opacity-0 transition duration-300 ease-out hover:opacity-100', {
-              'opacity-100': isPopoverOpen || visible,
-            })}
+            className={cn(
+              'opacity-0 transition duration-300 ease-out hover:opacity-100',
+              {
+                'opacity-100': isPopoverOpen || visible,
+              },
+              className
+            )}
           >
             <RiAddLine className="h-4 w-4" />
           </Node>

@@ -21,6 +21,10 @@ const chartConfig = {
     label: 'Push',
     color: '#06b6d4',
   },
+  chat: {
+    label: 'Chat',
+    color: '#10b981',
+  },
   sms: {
     label: 'SMS',
     color: '#facc15',
@@ -182,6 +186,7 @@ export function DeliveryTrendsChart({ data, isLoading }: DeliveryTrendsChartProp
             strokeWidth={2}
           />
           <Bar dataKey="push" stackId="a" barSize={20} fill="#06b6d4" radius={3} stroke="#ffffff" strokeWidth={2} />
+          <Bar dataKey="chat" stackId="a" barSize={20} fill="#10b981" radius={3} stroke="#ffffff" strokeWidth={2} />
           <Bar dataKey="sms" stackId="a" barSize={20} fill="#facc15" radius={3} stroke="#ffffff" strokeWidth={2} />
           <Bar
             dataKey="inApp"

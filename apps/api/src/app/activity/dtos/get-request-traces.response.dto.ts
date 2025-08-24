@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { RequestLogResponseDto } from './get-requests.response.dto';
 
 export class TraceResponseDto {
@@ -74,4 +74,4 @@ export class GetRequestResponseDto {
   @ApiProperty({ description: 'Associated traces', type: [TraceResponseDto] })
   @Type(() => TraceResponseDto)
   traces: TraceResponseDto[];
-} 
+}

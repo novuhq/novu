@@ -721,8 +721,8 @@ describe('EmailOutputRendererUsecase', () => {
         stepId: 'fake_step_id',
       };
       const result = await emailOutputRendererUsecase.execute(renderCommand);
-      expect(result.body).to.include('This is an author: <!-- -->John<!-- -->Post Title');
-      expect(result.body).to.include('This is an author: <!-- -->Jane<!-- -->Post Title');
+      expect(result.body).to.include('This is an author: JohnPost Title');
+      expect(result.body).to.include('This is an author: JanePost Title');
 
       // Verify exact number of items rendered matches input array
       const matches = result.body.match(/This is an author:/g);
@@ -1468,40 +1468,6 @@ describe('EmailOutputRendererUsecase', () => {
 
     afterEach(() => {
       sinon.restore();
-    });
-
-    describe('when layouts feature flag is disabled', () => {
-      beforeEach(() => {
-        featureFlagsServiceMock.getFlag.resolves(false);
-      });
-
-      it('should render without layout when feature flag is disabled', async () => {
-        const renderCommand: EmailOutputRendererCommand = {
-          environmentId: 'fake_env_id',
-          organizationId: 'fake_org_id',
-          controlValues: {
-            subject: 'Layout Test',
-            body: simpleBodyContent,
-            layoutId: 'test_layout_id',
-          },
-          fullPayloadForRender: {
-            ...mockFullPayload,
-            payload: { name: 'John' },
-          },
-          workflowId: mockDbWorkflow._id,
-          stepId: 'fake_step_id',
-        };
-
-        const result = await emailOutputRendererUsecase.execute(renderCommand);
-
-        expect(result.body).to.include('Step content John');
-        expect(result.body).to.not.include('class="layout"');
-        expect(result.body).to.not.include('<html>');
-
-        // Verify that repository methods were not called when feature flag is disabled
-        expect(controlValuesRepositoryMock.findOne.called).to.be.false;
-        expect(getLayoutUseCase.execute.called).to.be.false;
-      });
     });
 
     describe('when layouts feature flag is enabled', () => {

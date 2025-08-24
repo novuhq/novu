@@ -7,7 +7,10 @@ import { cn, formatSnoozedUntil, formatToRelativeTime, useStyle } from '../../he
 import { Clock as DefaultClock } from '../../icons/Clock';
 import {
   AppearanceKey,
+  AvatarRenderer,
   type BodyRenderer,
+  CustomActionsRenderer,
+  DefaultActionsRenderer,
   type NotificationActionClickHandler,
   type NotificationClickHandler,
   type SubjectRenderer,
@@ -21,8 +24,11 @@ import { renderNotificationActions } from './NotificationActions';
 
 type DefaultNotificationProps = {
   notification: Notification;
+  renderAvatar?: AvatarRenderer;
   renderSubject?: SubjectRenderer;
   renderBody?: BodyRenderer;
+  renderDefaultActions?: DefaultActionsRenderer;
+  renderCustomActions?: CustomActionsRenderer;
   onNotificationClick?: NotificationClickHandler;
   onPrimaryActionClick?: NotificationActionClickHandler;
   onSecondaryActionClick?: NotificationActionClickHandler;
@@ -151,19 +157,31 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
           })
         )}
       />
+
       <Show
-        when={props.notification.avatar}
+        when={props.renderAvatar}
         fallback={
-          <div
-            class={style('notificationImageLoadingFallback', 'nt-size-8 nt-rounded-lg nt-shrink-0 nt-aspect-square')}
-          />
+          <Show
+            when={props.notification.avatar}
+            fallback={
+              <div
+                class={style(
+                  'notificationImageLoadingFallback',
+                  'nt-size-8 nt-rounded-lg nt-shrink-0 nt-aspect-square'
+                )}
+              />
+            }
+          >
+            <img
+              class={style('notificationImage', 'nt-size-8 nt-rounded-lg nt-object-cover nt-aspect-square')}
+              src={props.notification.avatar}
+            />
+          </Show>
         }
       >
-        <img
-          class={style('notificationImage', 'nt-size-8 nt-rounded-lg nt-object-cover nt-aspect-square')}
-          src={props.notification.avatar}
-        />
+        {(renderAvatar) => <ExternalElementRenderer render={(el) => renderAvatar()(el, props.notification)} />}
       </Show>
+
       <div class={style('notificationContent', 'nt-flex nt-flex-col nt-gap-2 nt-w-full')}>
         <div class={style('notificationTextContainer')}>
           <Show
@@ -199,70 +217,89 @@ export const DefaultNotification = (props: DefaultNotificationProps) => {
             {(renderBody) => <ExternalElementRenderer render={(el) => renderBody()(el, props.notification)} />}
           </Show>
         </div>
-        <div
-          class={style(
-            'notificationDefaultActions',
-            `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`
-          )}
+
+        <Show
+          when={props.renderDefaultActions}
+          fallback={
+            <div
+              class={style(
+                'notificationDefaultActions',
+                `nt-absolute nt-transition nt-duration-100 nt-ease-out nt-gap-0.5 nt-flex nt-shrink-0 nt-opacity-0 group-hover:nt-opacity-100 group-focus-within:nt-opacity-100 nt-justify-center nt-items-center nt-bg-background/90 nt-right-3 nt-top-3 nt-border nt-border-neutral-alpha-100 nt-rounded-lg nt-backdrop-blur-lg nt-p-0.5`
+              )}
+            >
+              {renderNotificationActions(props.notification, status)}
+            </div>
+          }
         >
-          {renderNotificationActions(props.notification, status)}
-        </div>
-        <Show when={props.notification.primaryAction || props.notification.secondaryAction}>
-          <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-2')}>
-            <Show when={props.notification.primaryAction} keyed>
-              {(primaryAction) => (
-                <Button
-                  appearanceKey="notificationPrimaryAction__button"
-                  variant="default"
-                  onClick={(e) => handleActionButtonClick(ActionTypeEnum.PRIMARY, e)}
-                >
-                  {primaryAction.label}
-                </Button>
-              )}
-            </Show>
-            <Show when={props.notification.secondaryAction} keyed>
-              {(secondaryAction) => (
-                <Button
-                  appearanceKey="notificationSecondaryAction__button"
-                  variant="secondary"
-                  onClick={(e) => handleActionButtonClick(ActionTypeEnum.SECONDARY, e)}
-                >
-                  {secondaryAction.label}
-                </Button>
-              )}
-            </Show>
-          </div>
+          {(renderDefaultActions) => (
+            <ExternalElementRenderer render={(el) => renderDefaultActions()(el, props.notification)} />
+          )}
         </Show>
+
+        <Show
+          when={props.renderCustomActions}
+          fallback={
+            <Show when={props.notification.primaryAction || props.notification.secondaryAction}>
+              <div class={style('notificationCustomActions', 'nt-flex nt-flex-wrap nt-gap-2')}>
+                <Show when={props.notification.primaryAction} keyed>
+                  {(primaryAction) => (
+                    <Button
+                      appearanceKey="notificationPrimaryAction__button"
+                      variant="default"
+                      onClick={(e) => handleActionButtonClick(ActionTypeEnum.PRIMARY, e)}
+                    >
+                      {primaryAction.label}
+                    </Button>
+                  )}
+                </Show>
+                <Show when={props.notification.secondaryAction} keyed>
+                  {(secondaryAction) => (
+                    <Button
+                      appearanceKey="notificationSecondaryAction__button"
+                      variant="secondary"
+                      onClick={(e) => handleActionButtonClick(ActionTypeEnum.SECONDARY, e)}
+                    >
+                      {secondaryAction.label}
+                    </Button>
+                  )}
+                </Show>
+              </div>
+            </Show>
+          }
+        >
+          {(renderCustomActions) => (
+            <ExternalElementRenderer render={(el) => renderCustomActions()(el, props.notification)} />
+          )}
+        </Show>
+
         <div class={style('notificationDate', 'nt-text-foreground-alpha-400 nt-flex nt-items-center nt-gap-1')}>
           <Show
             when={snoozedUntil()}
             fallback={
-              <>
-                <Show when={deliveredAt()} fallback={<>{createdAt()}</>}>
-                  {(deliveredAt) => (
-                    <Show when={deliveredAt().length >= 2}>
-                      {' '}
-                      <For each={deliveredAt().slice(-2)}>
-                        {(date, index) => (
-                          <>
-                            <Show when={index() === 0}>{date} ·</Show>
-                            <Show when={index() === 1}>
-                              <Badge appearanceKey="notificationDeliveredAt__badge">
-                                <IconRendererWrapper
-                                  iconKey="clock"
-                                  class={deliveredAtIconClass}
-                                  fallback={<DefaultClock class={deliveredAtIconClass} />}
-                                />
-                                {date}
-                              </Badge>
-                            </Show>
-                          </>
-                        )}
-                      </For>
-                    </Show>
-                  )}
-                </Show>
-              </>
+              <Show when={deliveredAt()} fallback={createdAt()}>
+                {(deliveredAt) => (
+                  <Show when={deliveredAt().length >= 2}>
+                    {' '}
+                    <For each={deliveredAt().slice(-2)}>
+                      {(date, index) => (
+                        <>
+                          <Show when={index() === 0}>{date} ·</Show>
+                          <Show when={index() === 1}>
+                            <Badge appearanceKey="notificationDeliveredAt__badge">
+                              <IconRendererWrapper
+                                iconKey="clock"
+                                class={deliveredAtIconClass}
+                                fallback={<DefaultClock class={deliveredAtIconClass} />}
+                              />
+                              {date}
+                            </Badge>
+                          </Show>
+                        </>
+                      )}
+                    </For>
+                  </Show>
+                )}
+              </Show>
             }
           >
             {(snoozedUntil) => (

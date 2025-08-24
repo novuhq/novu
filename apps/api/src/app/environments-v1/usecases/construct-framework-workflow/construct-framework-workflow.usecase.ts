@@ -1,11 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import {
-  emailControlSchema,
-  FeatureFlagsService,
-  Instrument,
-  InstrumentUsecase,
-  PinoLogger,
-} from '@novu/application-generic';
+import { emailControlSchema, Instrument, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   EnvironmentRepository,
   NotificationStepEntity,
@@ -14,12 +8,7 @@ import {
 } from '@novu/dal';
 import { workflow } from '@novu/framework/express';
 import { ActionStep, ChannelStep, Schema, Step, StepOutput, Workflow } from '@novu/framework/internal';
-import {
-  FeatureFlagsKeysEnum,
-  LAYOUT_PREVIEW_EMAIL_STEP,
-  LAYOUT_PREVIEW_WORKFLOW_ID,
-  StepTypeEnum,
-} from '@novu/shared';
+import { LAYOUT_PREVIEW_EMAIL_STEP, LAYOUT_PREVIEW_WORKFLOW_ID, StepTypeEnum } from '@novu/shared';
 import { AdditionalOperation, RulesLogic } from 'json-logic-js';
 import _ from 'lodash';
 import { evaluateRules } from '../../../shared/services/query-parser/query-parser.service';
@@ -50,19 +39,12 @@ export class ConstructFrameworkWorkflow {
     private chatOutputRendererUseCase: ChatOutputRendererUsecase,
     private pushOutputRendererUseCase: PushOutputRendererUsecase,
     private delayOutputRendererUseCase: DelayOutputRendererUsecase,
-    private digestOutputRendererUseCase: DigestOutputRendererUsecase,
-    private featureFlagsService: FeatureFlagsService
+    private digestOutputRendererUseCase: DigestOutputRendererUsecase
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
-    const isLayoutsPageActive = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_LAYOUTS_PAGE_ACTIVE,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-    });
-
-    if (isLayoutsPageActive && command.workflowId === LAYOUT_PREVIEW_WORKFLOW_ID) {
+    if (command.workflowId === LAYOUT_PREVIEW_WORKFLOW_ID) {
       return this.constructLayoutPreviewWorkflow(command);
     }
 

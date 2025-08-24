@@ -16,8 +16,6 @@ describe('Upsert Layout #novu-v2', () => {
   let layoutRepository: LayoutRepository;
 
   beforeEach(async () => {
-    // @ts-ignore
-    process.env.IS_HTML_EDITOR_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     novuClient = initNovuClassSdkInternalAuth(session);

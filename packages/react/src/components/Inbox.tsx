@@ -15,8 +15,11 @@ const DefaultInbox = (props: DefaultInboxProps) => {
   const {
     open,
     renderNotification,
+    renderAvatar,
     renderSubject,
     renderBody,
+    renderDefaultActions,
+    renderCustomActions,
     renderBell,
     onNotificationClick,
     onPrimaryActionClick,
@@ -52,10 +55,17 @@ const DefaultInbox = (props: DefaultInboxProps) => {
         name: 'Inbox',
         props: {
           open,
+          renderAvatar: renderAvatar ? (el, notification) => mountElement(el, renderAvatar(notification)) : undefined,
           renderSubject: renderSubject
             ? (el, notification) => mountElement(el, renderSubject(notification))
             : undefined,
           renderBody: renderBody ? (el, notification) => mountElement(el, renderBody(notification)) : undefined,
+          renderDefaultActions: renderDefaultActions
+            ? (el, notification) => mountElement(el, renderDefaultActions(notification))
+            : undefined,
+          renderCustomActions: renderCustomActions
+            ? (el, notification) => mountElement(el, renderCustomActions(notification))
+            : undefined,
           renderBell: renderBell ? (el, unreadCount) => mountElement(el, renderBell(unreadCount)) : undefined,
           onNotificationClick,
           onPrimaryActionClick,
@@ -69,8 +79,11 @@ const DefaultInbox = (props: DefaultInboxProps) => {
     [
       open,
       renderNotification,
+      renderAvatar,
       renderSubject,
       renderBody,
+      renderDefaultActions,
+      renderCustomActions,
       renderBell,
       onNotificationClick,
       onPrimaryActionClick,
@@ -167,8 +180,11 @@ const InboxChild = withRenderer(
     const {
       open,
       renderNotification,
+      renderAvatar,
       renderSubject,
       renderBody,
+      renderDefaultActions,
+      renderCustomActions,
       renderBell,
       onNotificationClick,
       onPrimaryActionClick,
@@ -182,8 +198,11 @@ const InboxChild = withRenderer(
         <DefaultInbox
           open={open}
           renderNotification={renderNotification}
+          renderAvatar={renderAvatar}
           renderSubject={renderSubject}
           renderBody={renderBody}
+          renderDefaultActions={renderDefaultActions}
+          renderCustomActions={renderCustomActions}
           renderBell={renderBell}
           onNotificationClick={onNotificationClick}
           onPrimaryActionClick={onPrimaryActionClick}
