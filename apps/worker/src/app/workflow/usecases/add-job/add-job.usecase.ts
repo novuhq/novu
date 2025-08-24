@@ -82,7 +82,6 @@ export class AddJob {
     private executeBridgeJob: ExecuteBridgeJob,
     private stepRunRepository: StepRunRepository,
     private subscriberRepository: SubscriberRepository,
-    // private workflowRunService: WorkflowRunService
   ) {}
 
   @InstrumentUsecase()

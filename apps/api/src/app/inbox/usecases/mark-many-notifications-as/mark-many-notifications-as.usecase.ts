@@ -182,7 +182,6 @@ export class MarkManyNotificationsAs {
 
     if (allTraceData.length > 0) {
       try {
-        console.error('@@@@@@@ ALL TRACE DATA', allTraceData);
         await this.messageInteractionService.trace(allTraceData);
       } catch (error) {
         this.logger.warn({ err: error }, `Failed to create engagement traces for ${allTraceData.length} messages`);

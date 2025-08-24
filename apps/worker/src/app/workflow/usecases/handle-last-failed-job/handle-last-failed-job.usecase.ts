@@ -18,7 +18,6 @@ export class HandleLastFailedJob {
     private createExecutionDetails: CreateExecutionDetails,
     private queueNextJob: QueueNextJob,
     private jobRepository: JobRepository,
-    // private workflowRunService: WorkflowRunService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -62,40 +61,6 @@ export class HandleLastFailedJob {
           userId: job?._userId,
           subscriberId: job?._subscriberId,
         })
-      );
-    } else {
-      // Update workflow run status to failed when job fails and we should halt
-      // await this.updateWorkflowRunStatusToFailed(job, error);
-    }
-  }
-
-  private async updateWorkflowRunStatusToFailed(job: JobEntity, error: Error): Promise<void> {
-    try {
-      // await this.workflowRunService.updateDeliveryLifecycle({
-      //   notificationId: job._notificationId,
-      //   environmentId: job._environmentId,
-      //   organizationId: job._organizationId,
-      //   subscriberId: job._subscriberId,
-      //   error: error,
-      // });
-
-      this.logger.debug(
-        {
-          jobId: job._id,
-          notificationId: job._notificationId,
-          organizationId: job._organizationId,
-          environmentId: job._environmentId,
-        },
-        'Updated workflow run status to failed'
-      );
-    } catch (error) {
-      this.logger.error(
-        {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          jobId: job._id,
-          notificationId: job._notificationId,
-        },
-        'Failed to update workflow run status to failed'
       );
     }
   }

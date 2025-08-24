@@ -14,7 +14,7 @@ import {
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
-import { WorkflowRunDeliveryLifecycleStatusDtoEnum, WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
+import { DeliveryLifecycleStatusDtoEnum, WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
 type CursorData = {
   created_at: string;
@@ -340,7 +340,7 @@ export class GetWorkflowRuns {
         environmentId: workflowRun.environment_id,
         organizationId: workflowRun.organization_id,
         subscriberId: workflowRun.subscriber_id,
-      })).deliveryLifecycleStatus as unknown as WorkflowRunDeliveryLifecycleStatusDtoEnum,
+      })).deliveryLifecycleStatus as unknown as DeliveryLifecycleStatusDtoEnum,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

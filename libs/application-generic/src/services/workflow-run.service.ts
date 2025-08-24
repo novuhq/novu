@@ -14,6 +14,28 @@ interface WorkflowStatusUpdateParams {
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
+type JobResult = Pick<JobEntity, 'type' |'status' | 'deliveryLifecycleState' | '_id'>;
+type MessageResult = Pick<MessageEntity, 'seen'| 'read' | 'snoozedUntil'| 'archived'| 'channel'>;
+
+type ProjectionFromPick<T> = {
+  [K in keyof T]: 1;
+};
+
+const jobResultProjection: ProjectionFromPick<JobResult> = {
+  _id: 1,
+  type: 1,
+  status: 1,
+  deliveryLifecycleState: 1,
+};
+
+const messageResultProjection: ProjectionFromPick<MessageResult> = {
+  seen: 1,
+  read: 1,
+  snoozedUntil: 1,
+  archived: 1,
+  channel: 1,
+};
+
 @Injectable()
 export class WorkflowRunService {
   constructor(
@@ -112,7 +134,7 @@ export class WorkflowRunService {
     environmentId: string,
     organizationId: string,
     subscriberId: string
-  ) {
+  ): Promise<JobResult[]> {
     const jobs = await this.jobRepository.find(
       {
         _notificationId: workflowRunId,
@@ -120,9 +142,9 @@ export class WorkflowRunService {
         _organizationId: organizationId,
         _subscriberId: subscriberId,
       },
-      undefined,
+      jobResultProjection,
       {
-        limit: 50, // Should be enough for most workflows
+        limit: 100, // Should be enough for most workflows
         sort: { updatedAt: 1 },
       }
     );
@@ -135,7 +157,7 @@ export class WorkflowRunService {
     environmentId: string,
     organizationId: string,
     subscriberId: string
-  ): Promise<MessageEntity[]> {
+  ): Promise<MessageResult[]> {
     const messages = await this.messageRepository.find(
       {
         _notificationId: workflowRunId,
@@ -143,7 +165,7 @@ export class WorkflowRunService {
         _organizationId: organizationId,
         _subscriberId: subscriberId,
       },
-      undefined,
+      messageResultProjection,
       {
         limit: 50, // Should be enough for most workflows
         sort: { updatedAt: 1 },
@@ -166,16 +188,16 @@ export class WorkflowRunService {
    * 6. ERRORED - If any step has FAILED status
    * 7. MERGED - If all steps are MERGED
    */
-  private buildDeliveryLifecycle(jobs: JobEntity[], messages: MessageEntity[]): {
+  private buildDeliveryLifecycle(jobs: JobResult[], messages: MessageResult[]): {
     deliveryLifecycleStatus: DeliveryLifecycleStatus;
     deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   } {
-    // Filter for channel steps (exclude non-channel steps like trigger, delay, digest, custom)
-    const channelSteps = jobs.filter(
+    // Filter for channel jobs (exclude non-channel jobs like trigger, delay, digest, custom)
+    const channelJobs = jobs.filter(
       (job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type)
     );
 
-    if (channelSteps.length === 0) {
+    if (channelJobs.length === 0) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED, deliveryLifecycleDetail: DeliveryLifecycleDetail.WORKFLOW_MISSING_CHANNEL_STEP };
     }
 
@@ -194,13 +216,13 @@ export class WorkflowRunService {
     }
 
     // Priority 3: SENT - If any step is COMPLETED, workflow delivery lifecycle is SENT
-    const hasCompletedSteps = channelSteps.some((job) => job.status === JobStatusEnum.COMPLETED);
+    const hasCompletedSteps = channelJobs.some((job) => job.status === JobStatusEnum.COMPLETED);
     if (hasCompletedSteps) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.SENT };
     }
 
     // Priority 4: SKIPPED - Any job with SKIPPED status OR delivery lifecycle status is "skipped"
-    const skippedJobs = channelSteps.filter(
+    const skippedJobs = channelJobs.filter(
       (job) => job.status === JobStatusEnum.SKIPPED ||
         (job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped')
     );
@@ -241,19 +263,19 @@ export class WorkflowRunService {
     }
 
     // Priority 5: CANCELED - Any job with CANCELED status (only if no SKIPPED found)
-    const hasUserCanceled = channelSteps.some((job) => job.status === JobStatusEnum.CANCELED);
+    const hasUserCanceled = channelJobs.some((job) => job.status === JobStatusEnum.CANCELED);
     if (hasUserCanceled) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.CANCELED };
     }
 
     // Priority 6: ERRORED - If any step has failed
-    const hasFailedSteps = channelSteps.some((job) => job.status === JobStatusEnum.FAILED);
+    const hasFailedSteps = channelJobs.some((job) => job.status === JobStatusEnum.FAILED);
     if (hasFailedSteps) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED };
     }
 
     // Priority 7: MERGED - If all steps are merged
-    const allStepsMerged = channelSteps.every((job) => job.status === JobStatusEnum.MERGED);
+    const allStepsMerged = channelJobs.every((job) => job.status === JobStatusEnum.MERGED);
     if (allStepsMerged) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED };
     }
@@ -263,8 +285,8 @@ export class WorkflowRunService {
     // Default fallback - if no clear status can be determined
     this.logger.warn(
       {
-        jobIds: channelSteps.map((job) => job._id),
-        statuses: channelSteps.map((job) => ({ status: job.status, deliveryLifecycleState: job.deliveryLifecycleState })),
+        jobIds: channelJobs.map((job) => job._id),
+        statuses: channelJobs.map((job) => ({ status: job.status, deliveryLifecycleState: job.deliveryLifecycleState })),
       },
       'WorkflowRunDeliveryLifecycle: No matching delivery lifecycle found for jobs, falling back to ERRORED'
     );

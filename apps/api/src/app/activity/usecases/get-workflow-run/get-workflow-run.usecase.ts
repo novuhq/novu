@@ -16,7 +16,7 @@ import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto'
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
 import { WorkflowRunService } from '@novu/application-generic';
-import { WorkflowRunDeliveryLifecycleStatusDtoEnum } from '../../dtos/shared.dto';
+import { DeliveryLifecycleStatusDtoEnum } from '../../dtos/shared.dto';
 
 interface IStepRunWithDetails extends StepRun {
   executionDetails?: any[];
@@ -254,7 +254,7 @@ export class GetWorkflowRun {
         environmentId: workflowRun.environment_id,
         organizationId: workflowRun.organization_id,
         subscriberId: workflowRun.subscriber_id,
-      })).deliveryLifecycleStatus as unknown as WorkflowRunDeliveryLifecycleStatusDtoEnum,
+      })).deliveryLifecycleStatus as unknown as DeliveryLifecycleStatusDtoEnum,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
