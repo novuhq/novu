@@ -8,15 +8,13 @@ export enum SendMessageStatus {
   SKIPPED = 'skipped',
 }
 
-
-
 export type SendMessageResultPassed = {
-  status: SendMessageStatus.SUCCESS ;
+  status: SendMessageStatus.SUCCESS;
   extraData?: string;
 };
 
 export type SendMessageResultSkipped = {
-  status:  SendMessageStatus.SKIPPED;
+  status: SendMessageStatus.SKIPPED;
   deliveryLifecycleState?: DeliveryLifecycleState;
   extraData?: string;
 };
@@ -27,7 +25,7 @@ export type SendMessageResultFailed = {
   extraData?: string;
 };
 
-export type SendMessageResult = SendMessageResultPassed | SendMessageResultSkipped| SendMessageResultFailed;
+export type SendMessageResult = SendMessageResultPassed | SendMessageResultSkipped | SendMessageResultFailed;
 
 export abstract class SendMessageType {
   protected constructor(

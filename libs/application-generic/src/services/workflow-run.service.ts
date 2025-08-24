@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { JobEntity, JobRepository, JobStatusEnum, MessageEntity, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, DeliveryLifecycleDetail, DeliveryLifecycleStatus } from '@novu/shared';
-import { WorkflowRunRepository, WorkflowRunStatusEnum } from './analytic-logs';
 import { PinoLogger } from '../logging';
+import { WorkflowRunRepository, WorkflowRunStatusEnum } from './analytic-logs';
 
 interface WorkflowStatusUpdateParams {
   notificationId: string;
@@ -14,8 +14,8 @@ interface WorkflowStatusUpdateParams {
   deliveryLifecycleDetail?: DeliveryLifecycleDetail;
 }
 
-type JobResult = Pick<JobEntity, 'type' |'status' | 'deliveryLifecycleState' | '_id'>;
-type MessageResult = Pick<MessageEntity, 'seen'| 'read' | 'snoozedUntil'| 'archived'| 'channel'>;
+type JobResult = Pick<JobEntity, 'type' | 'status' | 'deliveryLifecycleState' | '_id'>;
+type MessageResult = Pick<MessageEntity, 'seen' | 'read' | 'snoozedUntil' | 'archived' | 'channel'>;
 
 type ProjectionFromPick<T> = {
   [K in keyof T]: 1;
@@ -74,10 +74,16 @@ export class WorkflowRunService {
         deliveryLifecycleDetail = result.deliveryLifecycleDetail;
       }
 
-      await this.workflowRunRepository.updateWorkflowRunState(notificationId, error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED, {
-        organizationId,
-        environmentId,
-      }, deliveryLifecycleStatus, deliveryLifecycleDetail);
+      await this.workflowRunRepository.updateWorkflowRunState(
+        notificationId,
+        error ? WorkflowRunStatusEnum.ERROR : WorkflowRunStatusEnum.COMPLETED,
+        {
+          organizationId,
+          environmentId,
+        },
+        deliveryLifecycleStatus,
+        deliveryLifecycleDetail
+      );
 
       this.logger.debug(
         {
@@ -100,7 +106,6 @@ export class WorkflowRunService {
     }
   }
 
-
   async getDeliveryLifecycle({
     notificationId,
     environmentId,
@@ -113,7 +118,7 @@ export class WorkflowRunService {
     try {
       const [jobs, messages] = await Promise.all([
         this.getJobsForWorkflowRun(notificationId, environmentId, organizationId, subscriberId),
-        this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, subscriberId)
+        this.getMessagesForWorkflowRun(notificationId, environmentId, organizationId, subscriberId),
       ]);
 
       return this.buildDeliveryLifecycle(jobs, messages);
@@ -127,7 +132,6 @@ export class WorkflowRunService {
       );
     }
   }
-
 
   private async getJobsForWorkflowRun(
     workflowRunId: string,
@@ -177,7 +181,7 @@ export class WorkflowRunService {
 
   /**
    * Maps workflow run delivery lifecycle based on jobs and messages using priority-based business logic.
-   * 
+   *
    * Priority Order (highest → lowest):
    * 1. INTERACTED - If any message has seen/read/snoozedUntil/archived as true
    * 2. DELIVERED - If any in-app message exists and no interaction found
@@ -188,22 +192,26 @@ export class WorkflowRunService {
    * 6. ERRORED - If any step has FAILED status
    * 7. MERGED - If all steps are MERGED
    */
-  private buildDeliveryLifecycle(jobs: JobResult[], messages: MessageResult[]): {
+  private buildDeliveryLifecycle(
+    jobs: JobResult[],
+    messages: MessageResult[]
+  ): {
     deliveryLifecycleStatus: DeliveryLifecycleStatus;
     deliveryLifecycleDetail?: DeliveryLifecycleDetail;
   } {
     // Filter for channel jobs (exclude non-channel jobs like trigger, delay, digest, custom)
-    const channelJobs = jobs.filter(
-      (job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type)
-    );
+    const channelJobs = jobs.filter((job) => job.type && ['in_app', 'email', 'sms', 'chat', 'push'].includes(job.type));
 
     if (channelJobs.length === 0) {
-      return { deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED, deliveryLifecycleDetail: DeliveryLifecycleDetail.WORKFLOW_MISSING_CHANNEL_STEP };
+      return {
+        deliveryLifecycleStatus: DeliveryLifecycleStatus.ERRORED,
+        deliveryLifecycleDetail: DeliveryLifecycleDetail.WORKFLOW_MISSING_CHANNEL_STEP,
+      };
     }
 
     // Priority 1: INTERACTED - If any message has seen/read/snoozedUntil/archived as true
-    const hasInteractedMessage = messages.some((message) => 
-      message.seen || message.read || message.snoozedUntil || message.archived
+    const hasInteractedMessage = messages.some(
+      (message) => message.seen || message.read || message.snoozedUntil || message.archived
     );
     if (hasInteractedMessage) {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.INTERACTED };
@@ -223,7 +231,8 @@ export class WorkflowRunService {
 
     // Priority 4: SKIPPED - Any job with SKIPPED status OR delivery lifecycle status is "skipped"
     const skippedJobs = channelJobs.filter(
-      (job) => job.status === JobStatusEnum.SKIPPED ||
+      (job) =>
+        job.status === JobStatusEnum.SKIPPED ||
         (job.deliveryLifecycleState?.status && job.deliveryLifecycleState.status === 'skipped')
     );
     if (skippedJobs.length > 0) {
@@ -244,7 +253,7 @@ export class WorkflowRunService {
       // Find the highest priority detail among skipped jobs
       let selectedDetail: DeliveryLifecycleDetail | undefined;
       for (const detail of priorityOrder) {
-        const jobWithDetail = skippedJobs.find(job => job.deliveryLifecycleState?.detail === detail);
+        const jobWithDetail = skippedJobs.find((job) => job.deliveryLifecycleState?.detail === detail);
         if (jobWithDetail) {
           selectedDetail = detail;
           break;
@@ -258,7 +267,7 @@ export class WorkflowRunService {
 
       return {
         deliveryLifecycleStatus: DeliveryLifecycleStatus.SKIPPED,
-        deliveryLifecycleDetail: selectedDetail
+        deliveryLifecycleDetail: selectedDetail,
       };
     }
 
@@ -280,13 +289,14 @@ export class WorkflowRunService {
       return { deliveryLifecycleStatus: DeliveryLifecycleStatus.MERGED };
     }
 
-
-
     // Default fallback - if no clear status can be determined
     this.logger.warn(
       {
         jobIds: channelJobs.map((job) => job._id),
-        statuses: channelJobs.map((job) => ({ status: job.status, deliveryLifecycleState: job.deliveryLifecycleState })),
+        statuses: channelJobs.map((job) => ({
+          status: job.status,
+          deliveryLifecycleState: job.deliveryLifecycleState,
+        })),
       },
       'WorkflowRunDeliveryLifecycle: No matching delivery lifecycle found for jobs, falling back to ERRORED'
     );
