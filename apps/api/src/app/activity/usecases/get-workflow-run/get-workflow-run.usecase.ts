@@ -15,8 +15,6 @@ import { mapDigest } from '../../../notifications/usecases/get-activity-feed/map
 import { GetWorkflowRunResponseDto } from '../../dtos/workflow-run-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
-import { WorkflowRunService } from '@novu/application-generic';
-import { DeliveryLifecycleStatusDtoEnum } from '../../dtos/shared.dto';
 
 interface IStepRunWithDetails extends StepRun {
   executionDetails?: any[];
@@ -30,7 +28,6 @@ export class GetWorkflowRun {
     private stepRunRepository: StepRunRepository,
     private traceLogRepository: TraceLogRepository,
     private jobRepository: JobRepository,
-    private workflowRunService: WorkflowRunService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -149,6 +146,7 @@ export class GetWorkflowRun {
           executionDetailsByEntityId.set(trace.entity_id, []);
         }
 
+        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
         executionDetailsByEntityId.get(trace.entity_id)!.push({
           _id: trace.id,
           detail: trace.title,
@@ -239,7 +237,10 @@ export class GetWorkflowRun {
     return new Date(isoFormat);
   }
 
-  private async mapWorkflowRunToDto(workflowRun: WorkflowRun, stepRuns: IStepRunWithDetails[]): Promise<GetWorkflowRunResponseDto> {
+  private async mapWorkflowRunToDto(
+    workflowRun: WorkflowRun,
+    stepRuns: IStepRunWithDetails[]
+  ): Promise<GetWorkflowRunResponseDto> {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -249,12 +250,7 @@ export class GetWorkflowRun {
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
       status: mapWorkflowRunStatusToDto(workflowRun.status),
-      deliveryLifecycleStatus: (await this.workflowRunService.getDeliveryLifecycle({
-        notificationId: workflowRun.workflow_run_id,
-        environmentId: workflowRun.environment_id,
-        organizationId: workflowRun.organization_id,
-        subscriberId: workflowRun.subscriber_id,
-      })).deliveryLifecycleStatus as unknown as DeliveryLifecycleStatusDtoEnum,
+      deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),

@@ -1,3 +1,4 @@
+import { DeliveryLifecycleStatus } from '@novu/shared';
 import {
   CHDateTime64,
   CHLowCardinality,
@@ -7,7 +8,6 @@ import {
   InferClickhouseSchemaType,
 } from 'clickhouse-schema';
 import { Prettify } from '../../../utils/prettify.type';
-import { DeliveryLifecycleStatus } from '@novu/shared';
 
 export const TABLE_NAME = 'workflow_runs';
 
@@ -32,8 +32,8 @@ const schemaDefinition = {
 
   // Execution metadata
   status: { type: CHLowCardinality(CHString()) }, // processing, error, completed
-  delivery_lifecycle_status: { type: CHLowCardinality(CHString("")) },
-  delivery_lifecycle_detail: { type: CHString("") },
+  delivery_lifecycle_status: { type: CHLowCardinality(CHString('')) },
+  delivery_lifecycle_detail: { type: CHString('') },
   trigger_identifier: { type: CHString() }, // The event identifier that triggered the workflow
 
   // Correlation and grouping
@@ -70,7 +70,7 @@ const clickhouseSchemaOptions = {
 export const workflowRunSchema = new ClickhouseSchema(schemaDefinition, clickhouseSchemaOptions);
 
 export enum WorkflowRunStatusEnum {
-    /**
+  /**
    * @deprecated please use processing instead nv-6562
    */
   PENDING = 'pending',
@@ -82,8 +82,6 @@ export enum WorkflowRunStatusEnum {
   COMPLETED = 'completed',
   ERROR = 'error',
 }
-
- 
 
 type NativeWorkflowRun = InferClickhouseSchemaType<typeof workflowRunSchema>;
 

@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
-  EnforcedContext,
   PinoLogger,
   QueryBuilder,
   StepRun,
@@ -8,13 +7,12 @@ import {
   Where,
   WorkflowRun,
   WorkflowRunRepository,
-  WorkflowRunService,
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
+import { WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 import { GetWorkflowRunsDto, GetWorkflowRunsResponseDto } from '../../dtos/workflow-runs-response.dto';
 import { mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunsCommand } from './get-workflow-runs.command';
-import { DeliveryLifecycleStatusDtoEnum, WorkflowRunStatusDtoEnum } from '../../dtos/shared.dto';
 
 type CursorData = {
   created_at: string;
@@ -34,6 +32,7 @@ const workflowRunSelectColumns = [
   'transaction_id',
   'created_at',
   'updated_at',
+  'delivery_lifecycle_status',
 ] as const;
 type WorkflowRunFetchResult = Pick<WorkflowRun, (typeof workflowRunSelectColumns)[number]>;
 
@@ -42,7 +41,6 @@ export class GetWorkflowRuns {
   constructor(
     private workflowRunRepository: WorkflowRunRepository,
     private stepRunRepository: StepRunRepository,
-    private workflowRunService: WorkflowRunService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(GetWorkflowRuns.name);
@@ -74,8 +72,9 @@ export class GetWorkflowRuns {
       }
 
       if (command.statuses?.length) {
-        const statuses = command.statuses.map((status) => { //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
-          if (status === WorkflowRunStatusDtoEnum.PROCESSING) { 
+        const statuses = command.statuses.map((status) => {
+          //backward compatibility: if new statuses are used, append old status until renewed in the database, nv-6562
+          if (status === WorkflowRunStatusDtoEnum.PROCESSING) {
             return [WorkflowRunStatusEnum.PENDING, WorkflowRunStatusEnum.PROCESSING];
           }
           if (status === WorkflowRunStatusDtoEnum.COMPLETED) {
@@ -162,8 +161,9 @@ export class GetWorkflowRuns {
       // Fetch step runs for all workflow runs efficiently
       const stepRunsByCompositeKey = await this.getStepRunsForWorkflowRuns(command, workflowRuns);
 
-      const data = await Promise.all(workflowRuns.map((workflowRun) => {
-        const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
+      const data = await Promise.all(
+        workflowRuns.map((workflowRun) => {
+          const compositeKey = `${workflowRun.subscriber_id}:${workflowRun.transaction_id}`;
 
           return this.mapWorkflowRunToDto(workflowRun, stepRunsByCompositeKey.get(compositeKey) || []);
         })
@@ -310,6 +310,7 @@ export class GetWorkflowRuns {
         if (!stepRunsByCompositeKey.has(compositeKey)) {
           stepRunsByCompositeKey.set(compositeKey, []);
         }
+        // biome-ignore lint/style/noNonNullAssertion: <explanation> because we otherwise the if statement would set it to the map
         stepRunsByCompositeKey.get(compositeKey)!.push(stepRun);
       }
 
@@ -325,7 +326,10 @@ export class GetWorkflowRuns {
     }
   }
 
-  private async mapWorkflowRunToDto(workflowRun: WorkflowRunFetchResult, stepRuns: StepRun[]): Promise<GetWorkflowRunsDto> {
+  private async mapWorkflowRunToDto(
+    workflowRun: WorkflowRunFetchResult,
+    stepRuns: StepRun[]
+  ): Promise<GetWorkflowRunsDto> {
     return {
       id: workflowRun.workflow_run_id,
       workflowId: workflowRun.workflow_id,
@@ -335,12 +339,7 @@ export class GetWorkflowRuns {
       internalSubscriberId: workflowRun.subscriber_id,
       subscriberId: workflowRun.external_subscriber_id || undefined,
       status: mapWorkflowRunStatusToDto(workflowRun.status),
-      deliveryLifecycleStatus: (await this.workflowRunService.getDeliveryLifecycle({
-        notificationId: workflowRun.workflow_run_id,
-        environmentId: workflowRun.environment_id,
-        organizationId: workflowRun.organization_id,
-        subscriberId: workflowRun.subscriber_id,
-      })).deliveryLifecycleStatus as unknown as DeliveryLifecycleStatusDtoEnum,
+      deliveryLifecycleStatus: workflowRun.delivery_lifecycle_status,
       triggerIdentifier: workflowRun.trigger_identifier,
       transactionId: workflowRun.transaction_id,
       createdAt: new Date(`${workflowRun.created_at} UTC`).toISOString(),
